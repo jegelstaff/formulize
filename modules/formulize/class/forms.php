@@ -32,6 +32,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+use rachid\pluralizer\Pluralizer;
+
 include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
@@ -155,7 +157,15 @@ class formulizeForm extends FormulizeObject {
 	 * @return string The value of singular for the form, or the title if there isn't a singular value
 	 */
 	function getSingular() {
-		return $this->getVar('singular') ? $this->getVar('singular') : $this->getVar('title');
+		if($this->getVar('singular')) {
+			return $this->getVar('singular');
+	 	} else {
+			include_once XOOPS_ROOT_PATH."/libraries/php-pluralizer/Pluralizer.php";
+			$words = explode(" ", trans($this->getVar('title')));
+			$lastWord = count($words) - 1;
+			$words[$lastWord] = Pluralizer::singularize($words[$lastWord]);
+			return implode(" ", $words);
+		}
 	}
 
 	/**
@@ -164,7 +174,15 @@ class formulizeForm extends FormulizeObject {
 	 * @return string The value of plural for the form, or the title if there isn't a plural value
 	 */
 	function getPlural() {
-		return $this->getVar('plural') ? $this->getVar('plural') : $this->getVar('title');
+		if($this->getVar('plural')) {
+			return $this->getVar('plural');
+	 	} else {
+			include_once XOOPS_ROOT_PATH."/libraries/php-pluralizer/Pluralizer.php";
+			$words = explode(" ", trans($this->getVar('title')));
+			$lastWord = count($words) - 1;
+			$words[$lastWord] = Pluralizer::pluralize($words[$lastWord]);
+			return implode(" ", $words);
+		}
 	}
 
     /* Get the views for the supplied form id
