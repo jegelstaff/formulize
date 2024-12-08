@@ -612,6 +612,53 @@ class formulizeApplicationsHandler {
         }
     }
 
+	/**
+	 * Get the admin UI metadata necessary to display the form listings for the application
+	 * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
+	 * @return array formsInApp An array of the metadata necessary for the form listings
+	 */
+	function getFormMetadataForAdminUI($aid) {
+		global $xoopsUser;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$aid = intval($aid);
+		$formsInApp = array();
+		$adminLayoutTopAndLeftForForms = $this->getAdminLayoutTopAndLeftForForms($aid);
+		$formObjects = $form_handler->getFormsByApplication($aid);
+		if(is_array($formObjects)) {
+			foreach($formObjects as $thisFormObject) {
+				if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
+						continue;
+				}
+				$formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+				$formsInApp[$thisFormObject->getVar('id_form')]['fid'] = $thisFormObject->getVar('id_form'); // forms tab uses fid
+				$hasDelete = $gperm_handler->checkRight("delete_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId());
+				$formsInApp[$thisFormObject->getVar('id_form')]['hasdelete'] = $hasDelete;
+				// get the default screens for each form too
+				$defaultFormScreen = $thisFormObject->getVar('defaultform');
+				$defaultListScreen = $thisFormObject->getVar('defaultlist');
+				$defaultFormObject = $screen_handler->get($defaultFormScreen);
+				if (is_object($defaultFormObject)) {
+						$defaultFormName = $defaultFormObject->getVar('title');
+				}
+				$defaultListObject = $screen_handler->get($defaultListScreen);
+				if (is_object($defaultListObject)) {
+						$defaultListName = $defaultListObject->getVar('title');
+				}
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
+				$formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');
+				$formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
+				$formsInApp[$thisFormObject->getVar('id_form')]['top'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']: '0px';
+				$formsInApp[$thisFormObject->getVar('id_form')]['left'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']: '0px';
+			}
+		}
+		return $formsInApp;
+	}
+
   /**
    * Fetch the top and left values for the admin layout of the forms in the given application
    * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
@@ -634,17 +681,36 @@ class formulizeApplicationsHandler {
   }
 
   /**
-   * Set the top and left values for the forms in the given application
-   * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
-   * @param array positions A multidimensional array of the positions for the forms. Top level key is the form id, second level keys are top and left, for the top and left css values (ie: 345.677px)
+   * Set the top and left values for forms based on what was passed back through the admin UI, which will include the aid
    * @return boolean True or false depending on the result of the query
    */
-  function setAdminLayoutTopAndLeftForForm($aid, $positions) {
-    
-  }
+  function setAdminLayoutTopAndLeftForForms() {
+		global $xoopsDB;
+		$adminLayoutTopAndLeftForForms = array();
+		$positions = array(); // will be a multidimensional array of the positions for the forms. Top level key is the appid, second is form id, third level keys are top and left, for the top and left css values (ie: 345.677px)
+		foreach($_POST['formTop'] as $appidDotFid=>$topValue) {
+			$leftValue = $_POST['formLeft'][$appidDotFid];
+			list($aid, $fid) = explode('.',$appidDotFid);
+			$aid = intval($aid);
+			$fid = intval($fid);
+			$adminLayoutTopAndLeftForForms[$aid] = $this->getAdminLayoutTopAndLeftForForms($aid);
+			if($topValue != '0px' AND $leftValue != '0px' AND ($adminLayoutTopAndLeftForForms[$aid][$fid]['top'] != $topValue OR $adminLayoutTopAndLeftForForms[$aid][$fid]['left'] != $leftValue)) {
+				$positions[$aid][$fid]['top'] = $topValue;
+				$positions[$aid][$fid]['left'] = $leftValue;
+			}
+		}
+		foreach($positions as $aid=>$formPositions) {
+			foreach($formPositions as $fid=>$topAndLeft) {
+				$sql = 'UPDATE '.$xoopsDB->prefix('formulize_application_form_link')." SET `top` = '".$topAndLeft['top']."', `left` = '".$topAndLeft['left']."' WHERE appid = $aid AND fid = $fid";
+				if(!$res = $xoopsDB->query($sql)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 }
-
 
 function buildMenuLinkURL($menulink) {
     $url = $menulink->getVar("url");
