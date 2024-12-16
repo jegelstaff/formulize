@@ -1,4 +1,6 @@
 <div class="organize-toggle">
+<p class="organize-toggle-title">Filter forms:</p>
+<input type="text" id="filter-forms-<{$sectionContent.aid}>" appid="<{$sectionContent.aid}>">
 <p class="organize-toggle-title">Organize forms:</p>
 <p class="organize-toggle-buttons"><input type='checkbox' name='organize-toggle' id='otbn<{$sectionContent.aid}>' class='organize-toggle-by-name' value='by-name' <{php}>if(!isset($_COOKIE['currentOrganize']) OR $_COOKIE['currentOrganize'] == 'by-name') {<{/php}>checked="checked"<{php}>}<{/php}>> <label for='otbn<{$sectionContent.aid}>'>List by name</label><br>
 <input type='checkbox' name='organize-toggle' class='organize-toggle-custom' id='otc<{$sectionContent.aid}>' value='custom' <{php}>if($_COOKIE['currentOrganize'] AND $_COOKIE['currentOrganize'] == 'custom') {<{/php}>checked="checked"<{php}>}<{/php}>> <label for='otc<{$sectionContent.aid}>'>Click and drag</label></p>
@@ -11,7 +13,7 @@
 	 Experiment with one link in the form boxes, not three? -->
 </div>
 
-<div class="form-listing-container">
+<div class="form-listing-container" id="form-list-for-app-<{$sectionContent.aid}>">
 
 <{foreach from=$sectionContent.forms item=form}>
 
