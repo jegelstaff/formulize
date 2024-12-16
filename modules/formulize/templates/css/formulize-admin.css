@@ -1805,7 +1805,15 @@ form.formulize-admin-form input[type=text] {
 	position: absolute;
 	right: 4em;
 	top: 3em;
+  z-index: 10;
+  background-color: white;
+  padding: 0.5em;
 }
+
+.organize-toggle input[type=text] {
+  width: 10em;
+}
+
 .organize-toggle-title {
 	font-weight: bold;
 }
