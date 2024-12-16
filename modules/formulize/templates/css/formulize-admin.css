@@ -1808,6 +1808,8 @@ form.formulize-admin-form input[type=text] {
   z-index: 10;
   background-color: white;
   padding: 0.5em;
+	border: 1px solid #d3d3d3;
+	border-radius: 4px;
 }
 
 .organize-toggle input[type=text] {

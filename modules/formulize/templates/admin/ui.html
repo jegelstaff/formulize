@@ -412,6 +412,7 @@ $(document).ready(function() {
 			$('input[type=checkbox][class=organize-toggle-by-name]').each(function() {
 				$(this).attr('checked', 'checked');
 			})
+			applyCSSAlpha();
 		}
 
 		function organizeCustom() {
@@ -433,6 +434,7 @@ $(document).ready(function() {
 			$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
 				$(this).attr('checked', 'checked');
 			});
+			applyCSSCustom();
 		}
 
 		$('input[name=organize-toggle]').change(function() {
@@ -471,7 +473,7 @@ $(document).ready(function() {
 			}
 		});
 
-		$('.form-admin-link').click(function() {
+		$('div[id^=form-details-box]').click(function() {
 			var formid = $(this).attr('formid');
 			var appid = $(this).attr('appid');
 			$('div[id^=form-details-box]').removeClass('selected-form');
@@ -480,12 +482,16 @@ $(document).ready(function() {
 			return false;
 		});
 
+		$('div[id^=form-details-box] a').click(function(event) {
+			event.stopPropagation();
+		});
+
 		$('.form-listing-details-close').click(function() {
 			var appid = $(this).attr('appid');
 			$('#form-listing-details-'+appid).hide(250);
 			$('div[id^=form-details-box]').removeClass('selected-form');
 			return false;
-		})
+		});
 
 		// Thanks to Shankar Sangoli - https://stackoverflow.com/a/8795791
 		$.extend($.expr[':'], {
@@ -535,6 +541,35 @@ $(document).ready(function() {
 			$('.form-name:not(:containsi("'+filterText+'"))').parent("[appid="+appid+"]").css('opacity', 0);
 		}
 
+		function applyCSSAlpha() {
+			$('div.form-name').removeClass('ui-corner-top');
+			$('div.form-name').addClass('ui-corner-left');
+			$('div.form-screen-list').removeClass('ui-corner-bottom');
+			$('div.form-screen-list').addClass('ui-corner-right');
+			$('div.form-screen-list').css('border-left', '0');
+			$('div.form-screen-list').css('border-top', '1px solid #94daf2');
+			$('div[id^=form-details-box]').css('display', 'flex');
+			$('div[id^=form-details-box]').css('flex-direction', 'row');
+			$('div[id^=form-details-box]').css('width', 'auto');
+			$('div[id^=form-details-box]').css('margin-bottom', '0');
+			$('div.form-name').css('width', '340px');
+			$('div.form-screen-list').css('width', '100%');
+
+		}
+
+		function applyCSSCustom() {
+			$('div.form-name').addClass('ui-corner-top');
+			$('div.form-name').removeClass('ui-corner-left');
+			$('div.form-screen-list').addClass('ui-corner-bottom');
+			$('div.form-screen-list').removeClass('ui-corner-right');
+			$('div.form-screen-list').css('border-top', '0');
+			$('div.form-screen-list').css('border-left', '1px solid #94daf2');
+			$('div[id^=form-details-box]').css('display', 'block');
+			$('div[id^=form-details-box]').css('width', '340px');
+			$('div[id^=form-details-box]').css('margin-bottom', '1.5em');
+			$('div.form-name').css('width', 'auto');
+			$('div.form-screen-list').css('width', 'auto');
+		}
 
 
 </script>
