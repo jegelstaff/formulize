@@ -439,8 +439,24 @@ $(document).ready(function() {
 			var classToSet = $(this).attr('value');
 			if(currentOrganize != classToSet) {
 				if(classToSet == 'custom') {
+					$('input[id^=filter-forms-]').each(function() {
+						var appid = $(this).attr('appid');
+						var filterText = $(this).val();
+						if(filterText) {
+							showAllByName(appid);
+							filterClickAndDrag(appid, filterText);
+						}
+					});
 					organizeCustom();
 				} else {
+					$('input[id^=filter-forms-]').each(function() {
+						var appid = $(this).attr('appid');
+						var filterText = $(this).val();
+						if(filterText) {
+							showAllClickAndDrag(appid);
+							filterByName(appid, filterText);
+						}
+					});
 					organizeAlpha();
 				}
 				currentOrganize = classToSet;
@@ -471,27 +487,53 @@ $(document).ready(function() {
 			return false;
 		})
 
-		/* need to handle switching organize type while filter is active! filter on/off selectors need to be encapsulated so they can be called in sequence as necessary when organize option changes
-		and need a activate button or something? Need to ensure that pressing enter works and does not submit form! */
-		$('input[id^=filter-forms-]').change(function() {
-			var appid = $(this).attr('appid');
-			var filterText = $(this).val();
-			if(filterText) {
-				if(currentOrganize == 'custom') {
-					$('.form-name:contains("'+filterText+'")').parent().css('opacity', 1);
-					$('.form-name:not(:contains("'+filterText+'"))').parent().css('opacity', 0);
+		// Thanks to Shankar Sangoli - https://stackoverflow.com/a/8795791
+		$.extend($.expr[':'], {
+			'containsi': function(elem, i, match, array)
+			{
+				return (elem.textContent || elem.innerText || '').toLowerCase()
+				.indexOf((match[3] || "").toLowerCase()) >= 0;
+			}
+		});
+
+		$('input[id^=filter-forms-]').keydown(function(event){
+			if(event.keyCode == 13) {
+				event.preventDefault();
+				var appid = $(this).attr('appid');
+				var filterText = $(this).val();
+				if(filterText) {
+					if(currentOrganize == 'custom') {
+						filterClickAndDrag(appid, filterText);
+					} else {
+						filterByName(appid, filterText);
+					}
 				} else {
-					$('.form-name:contains("'+filterText+'")').parent().show();
-					$('.form-name:not(:contains("'+filterText+'"))').parent().hide();
-				}
-			} else {
-				if(currentOrganize == 'custom') { 
-					$('.form-name').parent().css('opacity', 1);
-				} else {
-					$('.form-name').parent().show();
+					if(currentOrganize == 'custom') {
+						showAllClickAndDrag(appid);
+					} else {
+						showAllByName(appid);
+					}
 				}
 			}
 		});
+
+		function showAllByName(appid) {
+			$('.form-name').parent("[appid="+appid+"]").show();
+		}
+
+		function showAllClickAndDrag(appid) {
+			$('.form-name').parent("[appid="+appid+"]").css('opacity', 1);
+		}
+
+		function filterByName(appid, filterText) {
+			$('.form-name:containsi("'+filterText+'")').parent("[appid="+appid+"]").show();
+			$('.form-name:not(:containsi("'+filterText+'"))').parent("[appid="+appid+"]").hide();
+		}
+
+		function filterClickAndDrag(appid, filterText) {
+			$('.form-name:containsi("'+filterText+'")').parent("[appid="+appid+"]").css('opacity', 1);
+			$('.form-name:not(:containsi("'+filterText+'"))').parent("[appid="+appid+"]").css('opacity', 0);
+		}
 
 
 
