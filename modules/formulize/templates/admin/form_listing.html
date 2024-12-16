@@ -28,9 +28,7 @@
 <input type='hidden' name='formLeft[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
   <div class="form-name ui-corner-top"><div><{$form.name}></div><div class="form-id-number">(id: <{$form.fid}>)</div></div>
   <div class="form-screen-list ui-corner-bottom">
-		<div><a href='' class='form-configure form-admin-link' formid='<{$form.fid}>' appid='<{$sectionContent.aid}>'><img src="../images/kedit.png"> <{$smarty.const._AM_APP_CONFIGURE}></a></div>
-		<div><a href='' class='form-view form-admin-link' formid='<{$form.fid}>' appid='<{$sectionContent.aid}>'><img src="../images/kfind.png"> <{$smarty.const._AM_APP_VIEW}></a></div>
-		<div><a href='' class='form-ops form-admin-link' formid='<{$form.fid}>' appid='<{$sectionContent.aid}>'><img src="../images/clonedata.gif"> <{$smarty.const._AM_APP_OPS}></a></div>
+		<div><a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>' class='form-configure form-admin-link' formid='<{$form.fid}>' appid='<{$sectionContent.aid}>'><img src="../images/kedit.png"> <{$smarty.const._AM_APP_CONFIGURE}></a></div>
 		<!--
 
 		<{if $form.lockedform != 1}> <{/if}>
