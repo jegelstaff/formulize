@@ -52,7 +52,8 @@ $(window).load(function() {
 
 	$('.form-listing-details-close').click(function() {
 		var appid = $(this).attr('appid');
-		$('#form-listing-details-'+appid).hide(250);
+		var formid = $(this).attr('formid');
+		$('#form-listing-details-'+appid+'-'+formid).hide(250);
 		$('div[id^=form-details-box]').removeClass('selected-form');
 		return false;
 	});
@@ -97,7 +98,7 @@ function organizeAlpha() {
 		$(this).css('left', 0);
 	});
 	$( "div[id^=form-details-box]" ).draggable( "destroy" );
-	$("div.accordion-box").css('cursor', 'auto');
+	$("div.accordion-box").css('cursor', 'help');
 	$('input[type=checkbox][class=organize-toggle-custom]').each(function() {
 		$(this).removeAttr('checked');
 	});
@@ -140,9 +141,15 @@ function setupDraggableBoxes() {
 function clickFormDetails(jQFormDetailsBox) {
 	var formid = jQFormDetailsBox.attr('formid');
 	var appid = jQFormDetailsBox.attr('appid');
-	$('div[id^=form-details-box]').removeClass('selected-form');
-	$('#form-details-box-'+formid).toggleClass('selected-form');
-	$('#form-listing-details-'+appid).show(250);
+	if($('#form-details-box-'+formid).hasClass('selected-form')) {
+		$('#form-details-box-'+formid).toggleClass('selected-form');
+		$('#form-listing-details-'+appid+'-'+formid).hide(250);
+	} else {
+		$('div[id^=form-details-box]').removeClass('selected-form');
+		$('#form-details-box-'+formid).toggleClass('selected-form');
+		$('#form-listing-details-'+appid+'-'+formid).show(250);
+		$('div[id^=form-listing-details-]:not(#form-listing-details-'+appid+'-'+formid+')').hide();
+	}
 	return false;
 }
 
@@ -181,6 +188,7 @@ function applyCSSAlpha() {
 	$('div[id^=form-details-box]').css('margin-bottom', '0');
 	$('div.form-name').css('width', '340px');
 	$('div.form-screen-list').css('width', '100%');
+	$('div.form-data').css('display', 'flex');
 
 }
 
@@ -196,4 +204,5 @@ function applyCSSCustom() {
 	$('div[id^=form-details-box]').css('margin-bottom', '1.5em');
 	$('div.form-name').css('width', 'auto');
 	$('div.form-screen-list').css('width', 'auto');
+	$('div.form-data').css('display', 'none');
 }
