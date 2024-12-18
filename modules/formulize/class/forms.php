@@ -1432,7 +1432,7 @@ class formulizeFormsHandler {
 			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
-			$insert_sql .= $field;
+			$insert_sql .= "`$field`";
 		}
 		$insert_sql .= ") VALUES (";
 		$start = 1;
