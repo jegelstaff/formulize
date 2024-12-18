@@ -89,8 +89,7 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 }
 
 if($ele_type == "textarea" AND $_POST['formlink'] != "none") {
-  $ele_value_key = $ele_type == "text" ? 4 : 3; // two types keep this info in diff key
-  $processedValues['elements']['ele_value'][$ele_value_key] = $_POST['formlink'];
+  $processedValues['elements']['ele_value'][3] = $_POST['formlink'];
 }
 
 if($_POST['element_delimit']) {
@@ -186,16 +185,29 @@ if($ele_type == "select") {
     $res_link = $xoopsDB->query($sql_link);
     $array_link = $xoopsDB->fetchArray($res_link);
     $processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
-  } else {
+		// ensure there is a primary relationship link representing this connection / update existing connection
+    // Get existing linked settings, if any
+		$currentLinkedFormId = 0;
+		$currentLinkedElementId = 0;
+		$currentEleValue = $element->getVar('ele_value');
+		if($element->isLinked) {
+				$currentEleValue2Parts = explode('#*=:*', $currentEleValue[2]);
+				$currentLinkedFormId = $currentEleValue2Parts[0];
+				$currentLinkedElementId = convertElementHandlesToElementIds(array($currentEleValue2Parts[1]));
+				$currentLinkedElementId = $currentLinkedElementId[0];
+		}
+		updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId);
+	} else {
     // a user requests to unlink the select box and select box is currently linked
     if ($_POST['formlink'] == "none" AND $element->isLinked){
       $form_handler->updateField($element, $element->getVar("ele_handle"), "text");
+			// remove any primary relationship link representing this connection
+			deleteLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
     }
-
     list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
     foreach($_POST['ele_value'] as $id=>$text) {
       if($text !== "") {
-	$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+				$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
       }
     }
   }
