@@ -532,14 +532,70 @@ EOF;
     }
 
     public function entry_count() {
-        global $xoopsDB;
-        $result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
-        if (false == $result) {
-            error_log($xoopsDB->error());
-        }
-        list($count) = $xoopsDB->fetchRow($result);
-        return $count;
+			global $xoopsDB;
+			$result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
+			if (false == $result) {
+				error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
     }
+
+		public function user_count() {
+			global $xoopsDB;
+			$result = $xoopsDB->query("select count(distinct(creation_uid)) as user_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
+			if (false == $result) {
+				error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
+		}
+
+		public function group_count() {
+			global $xoopsDB;
+			$result = $xoopsDB->query("select count(distinct(gperm_groupid)) as group_count from ".$xoopsDB->prefix("group_permission")." WHERE gperm_name = 'view_form' AND gperm_modid = ".getFormulizeModId()." AND gperm_itemid = ".$this->getVar('fid'));
+			if (false == $result) {
+					error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
+		}
+
+		public function entry_created_last_week() {
+			return $this->get_entry_metadata(7, 'created');
+		}
+
+		public function entry_created_last_month() {
+			return $this->get_entry_metadata(30, 'created');
+		}
+
+		public function entry_created_last_year() {
+			return $this->get_entry_metadata(365, 'created');
+		}
+
+		public function entry_updated_last_week() {
+			return $this->get_entry_metadata(7, 'updated');
+		}
+
+		public function entry_updated_last_month() {
+			return $this->get_entry_metadata(30, 'updated');
+		}
+
+		public function entry_updated_last_year() {
+			return $this->get_entry_metadata(365, 'updated');
+		}
+
+		private function get_entry_metadata($windowInDays, $createdOrUpdated) {
+			global $xoopsDB;
+			$dateField = $createdOrUpdated == 'created' ? 'creation_datetime' : 'mod_datetime';
+			$updateFilter = $createdOrUpdated == 'updated' ? ' AND creation_datetime != mod_datetime ' : '';
+			$result = $xoopsDB->query("select count(distinct(entry_id)) as count from ".$xoopsDB->prefix("formulize_".$this->form_handle)." WHERE $dateField >= '".date('Y-m-d', strtotime("-".$windowInDays." days"))."' $updateFilter");
+			if (false == $result) {
+					error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
+		}
 
     function __get($name) {
         if (!isset($this->$name)) {
