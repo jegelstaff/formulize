@@ -238,6 +238,10 @@ $(document).ready(function() {
 
 	function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
+		$("div[id^='form-details-box-']").each(function() {
+			$("input[name=formTop["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('top'));
+			$("input[name=formLeft["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('left'));
+		});
     var formulize_formlist = $(".formulize-admin-form");
     saveCounter = 0;
     saveTarget = 0;
@@ -372,12 +376,5 @@ $(document).ready(function() {
         window.document.scrollposition.seedtemplates.value = 1;
         reloadWithScrollPosition();
     });
-
-		$(".savebutton").click(function (event) {
-			$("div[id^='form-details-box-']").each(function() {
-				$("input[name=formTop["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('top'));
-				$("input[name=formLeft["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('left'));
-			});
-		});
 
 </script>
