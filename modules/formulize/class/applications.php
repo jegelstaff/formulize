@@ -646,6 +646,7 @@ class formulizeApplicationsHandler {
 				if (is_object($defaultListObject)) {
 						$defaultListName = $defaultListObject->getVar('title');
 				}
+				$formsInApp[$thisFormObject->getVar('id_form')]['form'] = $thisFormObject;
 				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
 				$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
 				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
