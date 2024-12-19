@@ -79,8 +79,10 @@ function createPrimaryRelationship() {
 		$k2 = $row['fl_key2'];
 		$rel = $row['fl_relationship'];
 		$cv = $row['fl_common_value'];
+		$con = $row['fl_one2one_conditional'];
+		$book = $row['fl_one2one_bookkeeping'];
 		if($k1 AND $k2) { // 0,0 indicates a "user who made the entries" relationship. Ancient and never used??
-			$primaryRelationshipError = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2);
+			$primaryRelationshipError = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $con, $book);
 		}
 	}
 
@@ -144,9 +146,11 @@ function mirrorRelationship($relationship) {
  * @param int f2 - the id number of form 2 in the link
  * @param int k1 - the id number of the element in form 1 used in the link
  * @param int k2 - the id number of the element in form 2 used in the link
+ * @param int con - 1 or 0 indicating if a one to one connection should trigger conditional behaviour when forms displayed together. Defaults to 1.
+ * @param int book - 1 or 0 indicating if a one to one connection should trigger creation of entries in one form when an entry is saved in the other. Defaults to 1.
  * @return boolean|string - False if no error, or a string containing the error text
  */
-function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2) {
+function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $con=1, $book=1) {
 	static $linkPairs = array();
 	$primaryRelationshipError = '';
 	$mrel = mirrorRelationship($rel);
@@ -164,7 +168,9 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2) {
 			`fl_relationship`,
 			`fl_unified_display`,
 			`fl_unified_delete`,
-			`fl_common_value`)
+			`fl_common_value`,
+			`fl_one2one_conditional`,
+			`fl_one2one_bookkeeping`)
 			VALUES
 			(-1,
 			$f1,
@@ -174,7 +180,9 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2) {
 			$rel,
 			1,
 			0,
-			$cv)";
+			$cv,
+			$con,
+			$book)";
 		if(!$xoopsDB->queryF($sql)) {
 			$primaryRelationshipError = "Could not insert an existing link into the Primary Relationship with this SQL:<br>$sql";
 		}

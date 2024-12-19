@@ -928,15 +928,17 @@ a.tooltip:hover {
   background-color: transparent;
 }
 
-a.tooltip:hover > span {
-  position: absolute;
-  top: 2em;
-  left: -5em;
+/* try fiddling with visibility not display and do css transitions, which might need to affect height of parent?? */
+a.tooltip:hover > span,
+a.tooltip > span:hover {
+  position: relative;
+  top: -2em;
+  left: 5em;
   width: 25em;
   display: block;
   background-color: #ffffff;
   color: #000;
-  padding: 1.5em;
+  padding: 1em;
   line-height: 1.5em;
   border: 2px solid #59a7d4;
   border-radius: 6px;
@@ -1898,3 +1900,23 @@ p.form-listing-id {
 	width: 30px;
 }
 
+.relationship-links {
+	margin-bottom: 1em;
+	margin-top: 0.5em;
+}
+
+p.title {
+	font-weight: bold;
+	margin-top: 0;
+}
+
+div#tabs ul.connections li {
+	list-style-type: disc;
+  list-style-position: inside;
+}
+
+label[for^=relationships-] {
+	margin-top: 0.5em;
+	padding-left: 2em;
+  text-indent: -1.8em;
+}

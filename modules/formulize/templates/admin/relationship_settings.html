@@ -105,7 +105,7 @@ function checkForCommon(Obj, form1, form2, lid) {
                         <{/if}>
                     </td>
                     <td style="white-space:nowrap;">
-                        <input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><label for="relationships-delete<{$link->lid}>">Delete linked entries</label>
+                        <input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><label for="relationships-delete<{$link->lid}>">When you delete an entry in one form, delete the linked entries in the other form</label>
 												<br>
 												<{if $link->relationship eq 1}>
 													<input type="checkbox"<{if $link->one2one_conditional}> checked="checked"<{/if}> value="1" name="relationships-conditional<{$link->lid}>" id="relationships-conditional<{$link->lid}>"><label for="relationships-conditional<{$link->lid}>">When you display the forms together, dynamically change the entry displayed, if the linking value changes</label>

@@ -490,20 +490,28 @@ class formulizeFrameworksHandler {
 			switch($link->getVar('relationship')) {
 				case 3:
 					$normalizedLinks[$link->getVar('form2')][] = array(
+						'lid' => $link->getVar('lid'),
 						'form1' => $link->getVar('form2'),
 						'form2' => $link->getVar('form1'),
 						'type' => 3,
 						'key1' => $link->getVar('key2'),
-						'key2' => $link->getVar('key1')
+						'key2' => $link->getVar('key1'),
+						'del' => $link->getVar('unified_delete'),
+						'con' => $link->getVar('one2one_conditional'),
+						'book' => $link->getVar('one2one_bookkeeping')
 					);
 					break;
 				default:
 					$normalizedLinks[$link->getVar('form1')][] = array(
+						'lid' => $link->getVar('lid'),
 						'form1' => $link->getVar('form1'),
 						'form2' => $link->getVar('form2'),
 						'type' => $link->getVar('relationship'),
 						'key1' => $link->getVar('key1'),
-						'key2' => $link->getVar('key2')
+						'key2' => $link->getVar('key2'),
+						'del' => $link->getVar('unified_delete'),
+						'con' => $link->getVar('one2one_conditional'),
+						'book' => $link->getVar('one2one_bookkeeping')
 					);
 			}
 		}
@@ -511,49 +519,76 @@ class formulizeFrameworksHandler {
 		return $normalizedLinks;
 	}
 
-    function formatFrameworksAsRelationships($frameworks) {
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			$relationships = array();
-			$relationshipIndices = array();
-			$i = 1;
-			foreach($frameworks as $framework) {
-				$frid = $framework->getVar('frid');
-				if (isset($relationshipIndices[$frid])) { continue; }
-				$frameworkLinks = $this->getLinksGroupedByForm($framework);
-				$links = array();
-				foreach($frameworkLinks as $fid=>$fidLinks) {
-					foreach($fidLinks as $link) {
-						$form1Object = $form_handler->get($link['form1']);
-						$form2Object = $form_handler->get($link['form2']);
-						$form1Text = $form1Object->getSingular();
-						$form2TextSingular = $form2Object->getSingular();
-						$form2Text = $link['type'] == 1 ? $form2TextSingular : $form2Object->getPlural();
-						$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
-						if(!$link['key1'] AND !$link['key2']) {
-							$helpText = _AM_FRAME_UIDLINK;
-						} else {
-							$element1Text = $this->getElementDescriptor($link['key1']);
-							$element2Text = $this->getElementDescriptor($link['key2']);
-							$helpText = "> $form1Text: $element1Text<br>> $form2TextSingular: $element2Text";
-						}
-						$links[] = array(
-							'each'=>ucfirst(_AM_FRAME_EACH),
-							'form1'=>$form1Text,
-							'has'=>_AM_FRAME_HAS.' '.$connectionText,
-							'form2'=>$form2Text,
-							'help'=>$helpText
-						);
+	function formatFrameworksAsRelationships($frameworks) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$relationships = array();
+		$relationshipIndices = array();
+		$i = 1;
+		foreach($frameworks as $framework) {
+			$frid = $framework->getVar('frid');
+			if (isset($relationshipIndices[$frid])) { continue; }
+			$frameworkLinks = $this->getLinksGroupedByForm($framework);
+			$links = array();
+			foreach($frameworkLinks as $fid=>$fidLinks) {
+				foreach($fidLinks as $link) {
+					$form1Object = $form_handler->get($link['form1']);
+					$form2Object = $form_handler->get($link['form2']);
+					$form1Text = $form1Object->getSingular();
+					$form2TextSingular = $form2Object->getSingular();
+					$form2Text = $link['type'] == 1 ? $form2TextSingular : $form2Object->getPlural();
+					$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+					if(!$link['key1'] AND !$link['key2']) {
+						$helpText = _AM_FRAME_UIDLINK;
+					} else {
+						$helpText = $this->formatRelationshipHelpTextAndUI($link, $form1Object, $form2Object);
 					}
+					$links[] = array(
+						'each'=>ucfirst(_AM_FRAME_EACH),
+						'form1'=>$form1Text,
+						'has'=>_AM_FRAME_HAS.' '.$connectionText,
+						'form2'=>$form2Text,
+						'help'=>$helpText
+					);
 				}
-				$relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
-				$relationships[$i]['content']['frid'] = $frid;
-				$relationships[$i]['content']['links'] = $links;
-				$relationshipIndices[$frid] = true;
-				$i++;
 			}
-			return $relationships;
-    }
+			$relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
+			$relationships[$i]['content']['frid'] = $frid;
+			$relationships[$i]['content']['links'] = $links;
+			$relationshipIndices[$frid] = true;
+			$i++;
+		}
+		return $relationships;
+	}
+
+	/**
+	 * Format the help/options popup for displaying relationship details to the user on the admin side
+	 * @param array link - the link data from the database, as returned from getLinksGroupedByForm
+	 * @return string The formatted HTML for the admin help text and UI
+	 */
+	function formatRelationshipHelpTextAndUI($link) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$lid = $link['lid'];
+		$form1Object = $form_handler->get($link['form1']);
+		$form2Object = $form_handler->get($link['form2']);
+		$element1Text = $this->getElementDescriptor($link['key1']);
+		$element2Text = $this->getElementDescriptor($link['key2']);
+		$delChecked = $link['del'] ? "checked='checked'" : '';
+		$conChecked = $link['con'] ? "checked='checked'" : '';
+		$bookChecked = $link['book'] ? "checked='checked'" : '';
+		$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+		$title = ucfirst(_AM_FRAME_EACH).' '.$form1Object->getSingular().' '._AM_FRAME_HAS.' '.$connectionText.' '.($link['type'] == 1 ? $form2Object->getSingular() : $form2Object->getPlural());
+		$content = "<p class='title'>$title</p>
+		<p>Connected by:</p>
+		<ul class='connections'><li>$element1Text</li><li>$element2Text</li></ul>
+		<p>Options:</p>
+		<input type='hidden' class='option-flag-$lid' name='lids[]' value=''>
+		<label for='relationships-delete$lid'><input lid='$lid' type='checkbox' $delChecked value='1' name='relationships-delete$lid' id='relationships-delete$lid'> When you delete an entry in one form, delete the linked entries in the other form</label><br>";
+		if($link['type'] == 1) {
+			$content .= "<label for='relationships-conditional$lid'><input lid='$lid' type='checkbox' $conChecked value='1' name='relationships-conditional$lid' id='relationships-conditional$lid'> When you display the forms together, dynamically change the entry displayed, if the linking value changes</label><br>
+			<label for='relationships-bookkeeping$lid'><input lid='$lid' type='checkbox' $bookChecked value='1' name='relationships-bookkeeping$lid' id='relationships-bookkeeping$lid'> When you save an entry in one form, automatically create an entry in the other</label>";
+		}
+		return $content;
+	}
 
 	/**
 	 * Return the descriptor of the passed element ID
