@@ -377,4 +377,9 @@ $(document).ready(function() {
         reloadWithScrollPosition();
     });
 
+		$('label[for^=relationships-] input[type=checkbox]').change(function() {
+			var lid = $(this).attr('lid');
+			$('.option-flag-'+lid).val(lid);
+		})
+
 </script>

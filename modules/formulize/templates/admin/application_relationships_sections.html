@@ -5,15 +5,15 @@
     <{assign var=prevOne value=''}>
 	  <{foreach from=$sectionContent.links key=linkNumber item=link}>
       <{if $prevOne && $prevOne != $link.form1}>
-        </p>
+        </div>
       <{/if}>
       <{if $prevOne != $link.form1}>
-        <p><{$link.each}> <em><{$link.form1}></em>...
+        <div class="relationship-links"><{$link.each}> <em><{$link.form1}></em>...
         <{assign var=prevOne value=$link.form1}>
       <{/if}>
       <br>&nbsp;&nbsp;&nbsp;<{$link.has}> <em><{$link.form2}></em> <a class="tooltip"><span><{$link.help}></span></a>
-  	<{/foreach}>
+		<{/foreach}>
     <{if $prevOne}>
-      </p>
+      </div>
     <{/if}>
 </div>

@@ -35,6 +35,19 @@ if(!isset($processedValues)) {
 	return;
 }
 
+global $xoopsDB;
+foreach($_POST['lids'] as $lid) {
+	if($lid = intval($lid)) {
+		$del = isset($_POST["relationships-delete$lid"]) ? intval($_POST["relationships-delete$lid"]) : 0;
+		$con = isset($_POST["relationships-conditional$lid"]) ? intval($_POST["relationships-conditional$lid"]) : 0;
+		$book = isset($_POST["relationships-bookkeeping$lid"]) ? intval($_POST["relationships-bookkeeping$lid"]) : 0;
+		$sql = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')." SET fl_unified_delete = $del, fl_one2one_conditional = $con, fl_one2one_bookkeeping = $book WHERE fl_id = $lid";
+		if(!$res = $xoopsDB->query($sql)) {
+			print "Error: could not update link options with this SQL: $sql\n\n".$xoopsDB->error();
+		}
+	}
+}
+
 if($_POST['deleteframework']) {
 	$framework_handler = xoops_getmodulehandler('frameworks','formulize');
 	$frameworkObject = $framework_handler->get($_POST['deleteframework']);
