@@ -51,6 +51,8 @@ if ($_GET['fid'] != "new") {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
     $formName = $formObject->getVar('title');
+		$singular = $formObject->getVar('singular');
+		$plural = $formObject->getVar('plural');
     $singleentry = $formObject->getVar('single');
     $tableform = $formObject->getVar('tableform');
     $headerlist = $formObject->getVar('headerlist');
@@ -415,13 +417,16 @@ if ($_GET['fid'] != "new") {
     if ($_GET['tableform']) {
     $newtableform = true;
     }
-    $formName = _AM_APP_NEWFORM;
+    $formName = "";
+		$singular = "";
+		$plural = "";
     $singleentry = "off"; // need to send a default for this
     $defaultform = 0;
     $defaultlist = 0;
     $menutext = _AM_APP_USETITLE;
     $form_handle = "";
     $store_revisions = 0;
+		$send_digests = 0;
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -471,6 +476,8 @@ foreach($allApps as $thisApp) {
 
 // common values should be assigned to all tabs
 $common['name'] = $formName;
+$common['singular'] = $singular;
+$common['plural'] = $plural;
 $common['fid'] = $fid;
 $common['aid'] = $aid;
 $common['defaultform'] = $defaultform;
