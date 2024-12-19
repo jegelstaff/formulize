@@ -577,6 +577,24 @@ function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $lo
 }
 
 /**
+ * Take the value of a file upload element, and return an anchor tag of the image thumbnail if applicable
+ *
+ * @param array $entryOrDataset The record from a dataset, or the entire dataset, as returned from getData
+ * @param string $elementHandle The element handle of the file upload element we're working with
+ * @param int $dataSetKey Optional. The key in the dataset array of the entry record we want to work with. Required if $entryOrDataset is the entire dataset.
+ * @param int $localId Optional. The ordinal id of the instance of the element handle we want to work with. Only required if there are multiple entries represented in this dataset record which all include data attached to this element handle, ie: if the handle is on the many side of a one to many connection in the dataset.
+ * @return string Returns the an HTML a tag referring to the file if the file is an image, and using the thumbnail as the clickable element, or returns the url for the file otherwise. If the file upload failed, this will return the error message from when the upload failed.
+ */
+function displayFileImageLink($entryOrDataset, $elementHandle, $dataSetKey=null, $localId='NULL') {
+	$image = displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $localId='NULL');
+	if(substr($image, 0, 4) == '<img') {
+		$url = display($entryOrDataset, $elementHandle, $dataSetKey, $localId);
+		$image = "<a href='$url' target='_blank'>$image</a>";
+	}
+	return $image;
+}
+
+/**
  * Check if a filename has one of various common image file type extensions.
  *
  * @param string $displayName The name of the file
