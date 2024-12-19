@@ -1127,6 +1127,7 @@ function processGetDataResults($resultData) {
 		$this_userid = 0;
 	}
 
+	$totalMainFormEntryIdIndex = array(); // catalog all the entry ids in the main form, for deducing the groups later
 	$entryIdIndex = array(); // set to the entry ids once we're in the loops
 	foreach($queryRes as $queryResIndex => $thisRes) {
         // loop through the found data and create the dataset array in "getData" format
@@ -1171,6 +1172,9 @@ function processGetDataResults($resultData) {
                     $curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
                     if(strstr($field, 'entry_id')) {
                         $entryIdIndex[$curFormAlias] = $value;
+												if($curFormAlias == 'main') {
+													$totalMainFormEntryIdIndex[] = $value;
+												}
                     }
                     if($curFormAlias == 'main') {
                         if(strstr($field, "creation_uid")) {
@@ -1228,6 +1232,28 @@ function processGetDataResults($resultData) {
 	    }
           }
     }
+
+		// deduce the owner_groups data
+		// 2. select the entry owner groups for the entry id that are in the view form list
+		foreach($totalMainFormEntryIdIndex as $entry_id) {
+			$sql = "SELECT eog.entry_id, GROUP_CONCAT(g.name SEPARATOR ', ')
+				FROM ".$xoopsDB->prefix('formulize_entry_owner_groups')." AS eog
+				LEFT JOIN ".$xoopsDB->prefix('groups')." AS g
+				ON eog.groupid = g.groupid
+				INNER JOIN ".$xoopsDB->prefix('groups')." AS p
+				ON eog.groupid = p.gperm_groupid AND eog.entry_id = p.gperm_itemid
+				WHERE eog.fid=$fid
+				AND eog.entry_id IN (".implode(', ', $entry_id).")
+				AND p.gperm_modid = ".getFormulizeModId()."
+				AND p.gperm_name = 'view_form'
+				ORDER BY eog.entry_id";
+			if($res = $xoopsDB->query($sql)) {
+				while($row = $xoopsDB->fetchRow($res)) {
+					$masterResults[$masterIndexer][getFormTitle($fid)][$row[0]]['owner_groups'] = $row[1];
+				}
+			}
+		}
+
     return $masterResults;
     }
 

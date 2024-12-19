@@ -2255,20 +2255,21 @@ function getCalcHandleAndFidAlias($id, $fid) {
   if($id == "proxyid") { $id = "mod_uid"; }
   if($id == "creation_date") { $id = "mod_datetime"; }
   if($id == "mod_date") { $id = "mod_datetime"; }
-  if($id == "creation_uid" OR $id == "mod_uid" OR $id == "mod_datetime" OR $id == "creation_datetime") {
-	return array(0=>$id, 1=>"main", 2=>$fid);
+	$dataHandler = new formulizeDataHandler($fid);
+	if(in_array($id, $dataHandler->metadataFields)) {
+		return array(0=>$id, 1=>"main", 2=>$fid);
   }
   if($id == "creator_email") {
-	return array(0=>"email", 1=>"usertable", 2=>"xoopsusertable"); // special handlefid so we can pickup e-mail field correctly, this flag is used to construct the allowed/excluded statements correctly.
+		return array(0=>"email", 1=>"usertable", 2=>"xoopsusertable"); // special handlefid so we can pickup e-mail field correctly, this flag is used to construct the allowed/excluded statements correctly.
   }
   $elementMetaData = formulize_getElementMetaData($id, false);
   $handle = $elementMetaData['ele_handle'];
   $handleFid = $elementMetaData['id_form'];
   if($handleFid == $fid) {
-	   $handleFidAlias = "main";
+	  $handleFidAlias = "main";
   } else {
-	   $handleFidAlias = array_keys($GLOBALS['formulize_linkformidsForCalcs'], $handleFid); // position of this form in the linking relationships is important for identifying which form alias to use
-	   $handleFidAlias = "f".$handleFidAlias[0];
+	  $handleFidAlias = array_keys($GLOBALS['formulize_linkformidsForCalcs'], $handleFid); // position of this form in the linking relationships is important for identifying which form alias to use
+	  $handleFidAlias = "f".$handleFidAlias[0];
   }
   return array(0=>$handle, 1=>$handleFidAlias, 2=>$handleFid);
 }
@@ -2943,8 +2944,9 @@ function calcParseBlanksSetting($setting) {
 // This is only used when determining the item values for percentage breakdown calculations
 function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
 
-  if($handle == "entry_id" OR $handle=="creation_date" OR $handle == "mod_date" OR $handle == "creation_datetime" OR $handle == "mod_datetime" OR $handle == "creator_email") {
-	return $value;
+	$dataHandler = new formulizeDataHandler();
+	if(in_array($handle, $dataHandler->metadataFields)) {
+  	return $value;
   }
   if($handle == "uid" OR $handle=="proxyid" OR $handle == "creation_uid" OR $handle == "mod_uid") {
 	$member_handler = xoops_gethandler('member');

@@ -118,7 +118,7 @@ if($fid AND $uid) {
             }
         }
     }
-    
+
     // hacked in processing of filters, based on code in entriesdisplay.php
     $searches = array();
     foreach($_GET as $getKey=>$getValue) {
@@ -129,7 +129,7 @@ if($fid AND $uid) {
             $searches[$getKey] = $getValue;
         }
     }
-    
+
     $searchFilter = formulize_parseSearchesIntoFilter($searches);
     if($searchFilter AND !is_array($searchFilter)) { // if search is a string, append it to any existing filter or use it outright
         $filter .= $filter ? $filter.']['.$searchFilter : $searchFilter;
@@ -144,27 +144,28 @@ if($fid AND $uid) {
     $filterElements = count((array) $filterElements) == 0 ? null : $filterElements;
     $GLOBALS['formulize_setQueryForExport'] = true;
     $data = getData($frid, $fid, $filter, $andor, $scope, $limitStart, $limitSize, $sortHandle, $sortDir, false, 0, false, "", false, 'bypass', $filterElements); // 'bypass' before filterElements means don't even do the query, just prep eveything - avoids potentially expensive query and expensive pass through all the data!
-    if($data === true) { // we'll get back false if we weren't able to 
+    if($data === true) { // we'll get back false if we weren't able to
         $exportTime = formulize_catchAndWriteExportQuery($fid);
         $_GET['cols'] = "";
         if(isset($_GET['includeMetadata'])) {
-            foreach(array('entry_id','creation_uid','mod_uid','creation_datetime','mod_datetime','creator_email') as $metadataField) {
-                if(in_array($metadataField,$excludeFields)) {continue;}
-                $_GET['cols'] .= $metadataField.',';
-            }
-        } 
+					$dataHandler = new formulizeDataHandler($fid);
+					foreach($dataHandler->metadataFields as $metadataField) {
+							if(in_array($metadataField,$excludeFields)) {continue;}
+							$_GET['cols'] .= $metadataField.',';
+					}
+        }
         $_GET['cols'] .= implode(",", $allCols);
         $_GET['eq'] = $exportTime; // set this so we can load the cached query file when doing the export
         $_POST['metachoice'] = 0; // necessary so when we call the export file, it will trigger a download instead of showing UI
         if(isset($_GET['excelutf8'])) {
             $_POST['excel'] = 1; // will cause the byte marker for excel to be included, so accents, etc, work right
         }
-        
+
         /*print_r($_GET['cols']);
         print "<br>";
         print_r($data);
         exit();*/
-        
+
         include XOOPS_ROOT_PATH . "/modules/formulize/include/export.php"; // actually generates the csv and makes it available as a download
     } else {
         print "No data found";
@@ -173,7 +174,7 @@ if($fid AND $uid) {
     // print out help info
     print "<pre>
 Valid URL parameters for the Formulize makecsv.php file:
-    
+
 key,a valid authentication key issued by a webmaster for your site (if there is no key, a user must be logged in)
 fid,required,the id number of the form you are querying - if absent this help text is displayed
 showHandles,optional,a flag to trigger showing data handles as the second line of the spreadsheet - value doesn't matter
@@ -204,7 +205,7 @@ http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&province=Newfoundland&s
 Include only the 'population' and 'language' fields
 http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&province=Newfoundland&fields=pop,lang
 
-Filter on the 'pop' field for greater than 1000 
+Filter on the 'pop' field for greater than 1000
 http://mysite.com/formulize/makecsv.php?key=ABC123&fid=2&pop=>1000
 (note the > is included in the search term, but the = sign is still necessary because this is a URL)
 

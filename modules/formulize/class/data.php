@@ -58,14 +58,16 @@ class formulizeDataHandler  {
 		   						"creation_uid",
 		   						"creator_email",
 		  						"mod_datetime",
-		   						"mod_uid");
+		   						"mod_uid",
+									"owner_groups");
 
         $this->metadataFieldTypes = array("entry_id" => "text",
                                     "mod_uid" => "text",
                                     "creation_uid" => "text",
                                     "creator_email" => "text",
                                     "mod_datetime" => "date",
-                                    "creation_datetime" => "date");
+                                    "creation_datetime" => "date",
+																		"owner_groups" => "text");
 	}
 
 	// this function copies data from one form to another
