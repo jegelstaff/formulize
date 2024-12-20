@@ -43,7 +43,7 @@ class formulizeDataHandler  {
     var $dataTypeMap; // an array of field, data type pairs, generated when data is written to the DB
 
 	// $fid must be an id
-	function __construct($fid){
+	function __construct($fid=null){
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(is_object($formObject = $form_handler->get($fid))) {
 			$this->fid = intval($fid);
