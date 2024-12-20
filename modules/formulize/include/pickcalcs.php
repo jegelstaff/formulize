@@ -374,7 +374,8 @@ if(!in_array("creator_email", (array)$_POST['column']) AND !$_POST['reqdcalc_col
 	$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
 }
 if(!in_array("owner_groups", (array)$_POST['column']) AND !$_POST['reqdcalc_column_owner_groups']) {
-	$columns->addOption("owner_groups", _formulize_DE_CALC_OWNERGROUPS);
+	// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+	// $columns->addOption("owner_groups", _formulize_DE_CALC_OWNERGROUPS);
 }
 $columns->addOptionArray($options);
 
@@ -427,7 +428,8 @@ foreach($returned['rc'] as $hidden) {
 			$colname = _formulize_DE_CALC_CREATOR_EMAIL;
 			break;
 		case "owner_groups":
-			$colname = _formulize_DE_CALC_OWNERGROUPS;
+			// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+			//$colname = _formulize_DE_CALC_OWNERGROUPS;
 			break;
 		default:
 			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'");
@@ -521,7 +523,8 @@ foreach($returned['rc'] as $hidden) {
 		$grouping->addOption("creation_datetime", _formulize_DE_GROUPBYCREATEDATE);
 		$grouping->addOption("mod_datetime", _formulize_DE_GROUPBYMODDATE);
 		$grouping->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
-		$grouping->addOption("owner_groups", _formulize_DE_GROUPBYOWNERGROUPS);
+		// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+		//$grouping->addOption("owner_groups", _formulize_DE_GROUPBYOWNERGROUPS);
 		$grouping->addOptionArray($options2);
 
 		// grouping option
@@ -532,7 +535,8 @@ foreach($returned['rc'] as $hidden) {
 		$grouping2->addOption("creation_datetime", _formulize_DE_GROUPBYCREATEDATE);
 		$grouping2->addOption("mod_datetime", _formulize_DE_GROUPBYMODDATE);
 		$grouping2->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
-		$grouping2->addOption("owner_groups", _formulize_DE_GROUPBYOWNERGROUPS);
+		// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+		//$grouping2->addOption("owner_groups", _formulize_DE_GROUPBYOWNERGROUPS);
 		$grouping2->addOptionArray($options2);
 
 
