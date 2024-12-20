@@ -1237,6 +1237,7 @@ function processGetDataResults($resultData) {
 		// efficient single add in to dataset, since we don't cache this info in each entry, and gathering it as part of every getData query would be unnecessarily expensive
 		// If the user searches for a group name, then we do an unavoidable expensive subquery at that time, and we include the search term here to limit the groups shown,
 		// See origin of $ownerGroupSearchClause in the formulize_parseFilter function
+		// Funky ORDER BY using FIELD function. Wow!
 		if(count($totalMainFormEntryIdIndex) > 0) {
 			global $ownerGroupSearchClause;
 			$groupsTableJoinType = $ownerGroupSearchClause ? "INNER" : "LEFT";
@@ -1252,7 +1253,7 @@ function processGetDataResults($resultData) {
 				AND p.gperm_name = 'view_form'
 				$ownerGroupSearchClause
 				GROUP BY eog.entry_id
-				ORDER BY eog.entry_id";
+				ORDER BY FIELD(eog.entry_id, ".implode(', ', $totalMainFormEntryIdIndex).")";
 			$masterIndexer = 0;
 			if($res = $xoopsDB->query($sql)) {
 				while($row = $xoopsDB->fetchRow($res)) {
