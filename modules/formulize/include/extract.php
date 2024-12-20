@@ -1127,6 +1127,7 @@ function processGetDataResults($resultData) {
 		$this_userid = 0;
 	}
 
+	$totalMainFormEntryIdIndex = array(); // catalog all the entry ids in the main form, for deducing the groups later
 	$entryIdIndex = array(); // set to the entry ids once we're in the loops
 	foreach($queryRes as $queryResIndex => $thisRes) {
         // loop through the found data and create the dataset array in "getData" format
@@ -1171,6 +1172,9 @@ function processGetDataResults($resultData) {
                     $curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
                     if(strstr($field, 'entry_id')) {
                         $entryIdIndex[$curFormAlias] = $value;
+												if($curFormAlias == 'main') {
+													$totalMainFormEntryIdIndex[] = $value;
+												}
                     }
                     if($curFormAlias == 'main') {
                         if(strstr($field, "creation_uid")) {
@@ -1228,6 +1232,36 @@ function processGetDataResults($resultData) {
 	    }
           }
     }
+
+		// deduce the owner_groups data
+		// efficient single add in to dataset, since we don't cache this info in each entry, and gathering it as part of every getData query would be unnecessarily expensive
+		// If the user searches for a group name, then we do an unavoidable expensive subquery at that time, and we include the search term here to limit the groups shown,
+		// See origin of $ownerGroupSearchClause in the formulize_parseFilter function
+		if(count($totalMainFormEntryIdIndex) > 0) {
+			global $ownerGroupSearchClause;
+			$groupsTableJoinType = $ownerGroupSearchClause ? "INNER" : "LEFT";
+			$sql = "SELECT eog.entry_id, GROUP_CONCAT(g.name ORDER BY g.name ASC SEPARATOR '*/-+,')
+				FROM ".$xoopsDB->prefix('formulize_entry_owner_groups')." AS eog
+				$groupsTableJoinType JOIN ".$xoopsDB->prefix('groups')." AS g
+				ON eog.groupid = g.groupid
+				INNER JOIN ".$xoopsDB->prefix('group_permission')." AS p
+				ON eog.groupid = p.gperm_groupid AND eog.fid = p.gperm_itemid
+				WHERE eog.fid=$fid
+				AND eog.entry_id IN (".implode(', ', $totalMainFormEntryIdIndex).")
+				AND p.gperm_modid = ".getFormulizeModId()."
+				AND p.gperm_name = 'view_form'
+				$ownerGroupSearchClause
+				GROUP BY eog.entry_id
+				ORDER BY eog.entry_id";
+			$masterIndexer = 0;
+			if($res = $xoopsDB->query($sql)) {
+				while($row = $xoopsDB->fetchRow($res)) {
+					$masterResults[$masterIndexer][getFormTitle($fid)][$row[0]]['owner_groups'] = explode('*/-+,', $row[1]);
+					$masterIndexer++;
+				}
+			}
+		}
+
     return $masterResults;
     }
 
@@ -1325,17 +1359,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
             $sid = intval(str_replace('formulize_passCode_', '', $key));
             $screenObject = $screen_handler->get($sid);
             if($fid == $screenObject->getVar('fid')) {
-            $formObject = $form_handler->get($screenObject->getVar('fid'));
-            $elementTypes = $formObject->getVar('elementTypes');
-            $passcodeElementId = array_search('anonPasscode', $elementTypes);
-            if(!isset($fundamental_filters[0]) OR !in_array($passcodeElementId, $fundamental_filters[0])) {
-                $fundamental_filters[0][] = $passcodeElementId;
-                $fundamental_filters[1][] = '=';
-                $fundamental_filters[2][] = $value;
-                $fundamental_filters[3][] = 'all';
-            }
-        }
-    }
+								$formObject = $form_handler->get($screenObject->getVar('fid'));
+								$elementTypes = $formObject->getVar('elementTypes');
+								$passcodeElementId = array_search('anonPasscode', $elementTypes);
+								if(!isset($fundamental_filters[0]) OR !in_array($passcodeElementId, $fundamental_filters[0])) {
+										$fundamental_filters[0][] = $passcodeElementId;
+										$fundamental_filters[1][] = '=';
+										$fundamental_filters[2][] = $value;
+										$fundamental_filters[3][] = 'all';
+								}
+						}
+				}
     }
 
      $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1427,14 +1461,31 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                     $formFieldFilterMap['creator_email'] = true;
                     $newWhereClause = "usertable.email" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
                     $mappedForm = $fid;
-	       } elseif($ifParts[0] == "entry_id") {
-		    $formFieldFilterMap['entry_id'] = true;
-		    $newWhereClause = "main.entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
-		    $mappedForm = $fid;
-           } elseif($ifParts[0] == "revision_id" AND is_numeric($ifParts[1])) {
-            $formFieldFilterMap['revision_id'] = true;
-		    $newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
-		    $mappedForm = $fid;
+							 } elseif($ifParts[0] == "owner_groups") {
+										// insert a subquery only if there's a search on the field. Don't want to add expensive joins, etc, to every query
+										// search term is picked up at the end of building the result set if necessary, when there's a single query to generate the group names for this field
+                    $formFieldFilterMap['owner_groups'] = true;
+										global $ownerGroupSearchClause;
+										$ownerGroupSearchClause = "AND g.name $operator $quotes$likebits".formulize_db_escape($ifParts[1])."$likebits$quotes";
+										$newWhereClause = "EXISTS(SELECT 1 FROM ".$xoopsDB->prefix('groups')." AS g
+											INNER JOIN ".$xoopsDB->prefix('formulize_entry_owner_groups')." AS eog
+											ON eog.groupid = g.groupid
+											INNER JOIN ".$xoopsDB->prefix('group_permission')." AS p
+											ON eog.groupid = p.gperm_groupid AND eog.fid = p.gperm_itemid
+											WHERE eog.fid=$fid
+											AND eog.entry_id = main.entry_id
+											AND p.gperm_modid = ".getFormulizeModId()."
+											AND p.gperm_name = 'view_form'
+											$ownerGroupSearchClause)";
+                    $mappedForm = $fid;
+				       } elseif($ifParts[0] == "entry_id") {
+										$formFieldFilterMap['entry_id'] = true;
+										$newWhereClause = "main.entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+										$mappedForm = $fid;
+							 } elseif($ifParts[0] == "revision_id" AND is_numeric($ifParts[1])) {
+										$formFieldFilterMap['revision_id'] = true;
+										$newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+										$mappedForm = $fid;
                } else {
 
                     // do non-metadata queries
@@ -2059,7 +2110,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
 		$term = str_replace("\$formName", $formNames[$fid], $term);
 	}
 
-    if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
+    if($term == "uid" OR $term == "proxyid" OR $term == "creation_date" OR $term == "mod_date" OR $term == "creator_email" OR $term == "owner_groups" OR $term == "creation_uid" OR $term == "mod_uid" OR $term == "creation_datetime" OR $term == "mod_datetime") {
         return array($term, $fid);
     }
 

@@ -627,6 +627,11 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
                         unset($headerlist[$headerid]);
                         continue;
                     }
+										if ($thisheaderid == "owner_groups") {
+											$metaHeaderlist[] = _formulize_DE_CALC_OWNERGROUPS;
+											unset($headerlist[$headerid]);
+											continue;
+										}
                     if ($start) {
                         $where_clause = "ele_id='$thisheaderid'";
                         $start = 0;
@@ -1345,8 +1350,8 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
                 $data_to_write = $c_date;
             } elseif($col == 'mod_datetime') {
                 $data_to_write = $m_date;
-            } elseif($col == 'creator_email') {
-                $data_to_write = display($entry, 'creator_email');
+            } elseif($col == 'creator_email' OR $col == 'owner_groups') {
+                $data_to_write = display($entry, $col);
             } else {
                 $data_to_write = prepareCellForSpreadsheetExport($col, $entry);
             }
@@ -1639,6 +1644,8 @@ function getCalcHandleText($handle, $forceColhead=true) {
         return _formulize_DE_CALC_MODDATE;
     } elseif ($handle == "creator_email") {
         return _formulize_DE_CALC_CREATOR_EMAIL;
+		} elseif ($handle == "owner_groups") {
+        return _formulize_DE_CALC_OWNERGROUPS;
     } elseif (is_numeric($handle)) {
         $caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = '$handle'");
         if ($forceColhead AND $caption[0]['ele_colhead'] != "") {
@@ -3700,6 +3707,8 @@ function getHeaders($cols, $colsIsElementHandles = true) {
             $headers[$col] = _formulize_DE_CALC_MODDATE;
         } elseif ($col=="creator_email") {
             $headers[$col] = _formulize_DE_CALC_CREATOR_EMAIL;
+				} elseif ($col == "owner_groups") {
+						$headers[$col] = _formulize_DE_CALC_OWNERGROUPS;
         } else {
             if ($colsIsElementHandles) {
                 $whereClause = "ele_handle = '$col'";
@@ -4324,6 +4333,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
         $cachedElementHandles[$frid]['mod_uid'] = "mod_uid";
         $cachedElementHandles[$frid]['mod_datetime'] = "mod_datetime";
         $cachedElementHandles[$frid]['creator_email'] = "creator_email";
+				$cachedElementHandles[$frid]['owner_groups'] = "owner_groups";
         $cachedElementHandles[$frid]['uid'] = "creation_uid"; // must put these deprecated ones last, so that searches through the cached values will find the true values first
         $cachedElementHandles[$frid]['creation_date'] = "creation_datetime";
         $cachedElementHandles[$frid]['proxyid'] = "mod_uid";
@@ -4339,6 +4349,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
         if (in_array("mod_date",$handles)) { $to_return[] = "mod_datetime"; }
         if (in_array("mod_datetime",$handles)) { $to_return[] = "mod_datetime"; }
         if (in_array("creator_email",$handles)) { $to_return[] = "creator_email"; }
+				if (in_array("owner_groups",$handles)) { $to_return[] = "owner_groups"; }
 
         $cachedElementIds[$frid] = $cachedElementHandles[$frid];
         if ($fid) {
@@ -6301,13 +6312,15 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     static $cachedElementIds = array();
     static $cached_object_type = array();
     if (!isset($cachedFormIds[$handle])) {
-        if ($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email") {
+        if ($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email" OR $handle == "owner_groups") {
             $cachedFormIds[$handle] = $fid;
             $cachedElementIds[$handle] = $handle;
             $cached_object_type[$handle] = "email";
             if ($handle == "mod_datetime" OR $handle == "creation_datetime") {
-                $cached_object_type[$handle] = "date";
-            }
+              $cached_object_type[$handle] = "date";
+            } elseif($handle == "owner_groups") {
+							$cached_object_type[$handle] = "text";
+						}
         } else {
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
             $elementObject = $element_handler->get($handle);
@@ -6799,7 +6812,8 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
                 array('ele_handle'=>'mod_uid', 'ele_caption' => _formulize_DE_CALC_MODIFIER),
                 array('ele_handle'=>'creation_datetime', 'ele_caption' => _formulize_DE_CALC_CREATEDATE),
                 array('ele_handle'=>'mod_datetime', 'ele_caption' => _formulize_DE_CALC_MODDATE),
-                array('ele_handle'=>'creator_email', 'ele_caption' => _formulize_DE_CALC_CREATOR_EMAIL));
+                array('ele_handle'=>'creator_email', 'ele_caption' => _formulize_DE_CALC_CREATOR_EMAIL),
+								array('ele_handle'=>'owner_groups', 'ele_caption' => _formulize_DE_CALC_OWNERGROUPS));
         }
         foreach($columns as $column) {
             $counter++;
@@ -7710,6 +7724,10 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                 $row[] =  display($entry, 'creator_email');
                             break;
 
+														case "owner_groups":
+															$row[] =  '"'.displayTogether($entry, 'owner_groups', ", ").'"';
+														break;
+
                             default:
                             // two possible situations
                             // 1. regular, all values in one column
@@ -7773,14 +7791,18 @@ function export_prepColumns($columns,$include_metadata=0) {
     $explodedColumns = array();
     $superHeaders = array();
     $superHeaderAssigned = false;
-    $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL);
-    $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email");
+    $metaDataHeaders = array(_formulize_ENTRY_ID, _formulize_DE_CALC_CREATOR, _formulize_DE_CALC_MODIFIER, _formulize_DE_CALC_CREATEDATE, _formulize_DE_CALC_MODDATE, _formulize_DE_CALC_CREATOR_EMAIL, _formulize_DE_CALC_OWNERGROUPS);
+    $metaDataColsToAdd = array("entry_id","creation_uid","mod_uid","creation_datetime","mod_datetime","creator_email", "owner_groups");
     foreach ($columns as $thiscol) {
         $handles[] = $thiscol;
         if ("creator_email" == $thiscol) {
             $headers[] = _formulize_DE_CALC_CREATOR_EMAIL;
             unset($metaDataColsToAdd[5]);
             unset($metaDataHeaders[5]);
+				} elseif ("owner_groups" == $thiscol) {
+            $headers[] = _formulize_DE_CALC_OWNERGROUPS;
+            unset($metaDataColsToAdd[6]);
+            unset($metaDataHeaders[6]);
         } elseif ("entry_id" == $thiscol) {
             $headers[] = _formulize_ENTRY_ID;
             unset($metaDataColsToAdd[0]);

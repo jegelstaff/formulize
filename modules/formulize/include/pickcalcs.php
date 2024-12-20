@@ -96,7 +96,7 @@ foreach($_POST as $k=>$v) {
 		$columns[] = $v;
 		$calcs[] = $_POST['reqdcalc_calcs_' . $v];
 //		$thesecalcs = explode(",", $_POST['reqdcalc_calcs_' . $v]);
-				
+
 	}
 }
 
@@ -241,7 +241,7 @@ function setURLCalcs() {
 	}
 //	print_r($_POST);
 
-} 
+}
 
 
 require_once "../../../mainfile.php";
@@ -266,7 +266,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 	}
 	$frid = "";
 	if(!$frid = $_GET['frid']) {
-		$frid = intval($_POST['frid']);	
+		$frid = intval($_POST['frid']);
 	}
 
 	$gperm_handler = &xoops_gethandler('groupperm');
@@ -293,7 +293,7 @@ percentage breakdowns
 Need subtotalling/grouping capability, ie: show intermediate totals for the sum of all students in activity logs for each student, or show percentage breakdown of 1-5 ratings of all activities for each volunteer
 --premise is that subtotalling/grouping can be done by any value in another column, or by any metadata for entries.
 
-UI:  semi-wizard based.  pick a column (or pick add calculation column), pick calculation options, including grouping results.  
+UI:  semi-wizard based.  pick a column (or pick add calculation column), pick calculation options, including grouping results.
 
 Note:  calculation columns (difference between order date and ship date for this record, for instance) will be implemented later, if necessary.
 
@@ -304,7 +304,7 @@ setURLCalcs();
 
 $cols = getAllColList($fid, $frid, $groups);
 
-$deleted = handleDelete(); // returns 1 if a deletion was made, 0 if not.  
+$deleted = handleDelete(); // returns 1 if a deletion was made, 0 if not.
 
 $visible_columns = explode(",", $_GET['cols']);
 
@@ -314,7 +314,7 @@ foreach($cols as $f=>$vs) {
     foreach($vs as $row=>$values) {
         if (in_array($values['ele_handle'], $visible_columns)) {
             $reqdcol = 'reqdcalc_column_' . $values['ele_id'];
-            if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.  
+            if(!in_array($values['ele_id'], $usedvals)) { // exclude duplicates...the array is not uniqued above because we don't want to merge it an unique it since that throws things out of order.
                 $usedvals[] = $values['ele_id'];
                 if(!$_POST[$reqdcol] AND (!is_array($_POST['column']) OR !in_array($values['ele_id'], $_POST['column']))) { // Also exclude columns that have been used already.
                     if($values['ele_colhead'] != "") {
@@ -350,7 +350,7 @@ $themecss = xoops_getcss();
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
 
 print "</head>";
-print "<body style=\"background: white; margin-top:20px;\"><center>"; 
+print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table width=100%><tr><td width=5%></td><td width=90%>";
 $pickcalc = new xoopsThemeForm(_formulize_DE_PICKCALCS, 'pickcalc', $_SERVER["REQUEST_URI"]);
 
@@ -372,6 +372,10 @@ if(!in_array("mod_datetime", (array)$_POST['column']) AND !$_POST['reqdcalc_colu
 }
 if(!in_array("creator_email", (array)$_POST['column']) AND !$_POST['reqdcalc_column_creator_email']) {
 	$columns->addOption("creator_email", _formulize_DE_CALC_CREATOR_EMAIL);
+}
+if(!in_array("owner_groups", (array)$_POST['column']) AND !$_POST['reqdcalc_column_owner_groups']) {
+	// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+	// $columns->addOption("owner_groups", _formulize_DE_CALC_OWNERGROUPS);
 }
 $columns->addOptionArray($options);
 
@@ -423,11 +427,15 @@ foreach($returned['rc'] as $hidden) {
 		case "creator_email":
 			$colname = _formulize_DE_CALC_CREATOR_EMAIL;
 			break;
+		case "owner_groups":
+			// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+			//$colname = _formulize_DE_CALC_OWNERGROUPS;
+			break;
 		default:
-			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'"); 
+			$temp_cap = q("SELECT ele_caption FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = '" . $hidden['column'] . "'");
 			$colname = trans($temp_cap[0]['ele_caption']);
 	}
-    
+
 	$pickcalc->addElement(new xoopsFormButton($colname, "delete_" . $hidden['column'], _formulize_DE_REMOVECALC, 'submit'));
 	$calcs = explode(",", (string)$hidden['calcs']);
 	foreach($calcs as $calc) {
@@ -480,7 +488,7 @@ foreach($returned['rc'] as $hidden) {
 			case "per":
 				$calc_name = _formulize_DE_CALC_PER;
 				break;
-		}		
+		}
 
 		$tray = new xoopsFormElementTray("&nbsp;&nbsp&nbsp;" . $calc_name, "<br>");
 		$tempcalc1 = new xoopsFormSelect("", $tempname, $current_val);
@@ -491,11 +499,11 @@ foreach($returned['rc'] as $hidden) {
 		$tempcalc1->addOption("justnozeros", _formulize_DE_CALCJUSTNOZEROS);
 		$tempcalc1->addOption("custom", _formulize_DE_CALCCUSTOM);
 		$tempcalc1->setExtra("class='exclude-options' onchange='javascript:setCalcCustom(\"".$calc.$hidden['column']."\");'");
-		
+
 		$tempcalcCustom = new xoopsFormText("", $tempname."_custom", 12, 255, $current_val_custom);
 		$tempcalcCustom->setExtra("class='exclude-options-custom' onclick='javascript:window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].options[5].selected = true;window.document.pickcalc.elements[\"".$calc.$hidden['column']."\"].value=\"custom\"'");
 		$tempcalclabel = new xoopsFormLabel("", _formulize_DE_CALC_BTEXT . "<br>". $tempcalc1->render(). " ".$tempcalcCustom->render());
-		
+
 		$groupingDefaults = explode("!@^%*", (string)$_POST['grouping_' . $calc . "_" . $hidden['column']]); // get the individual grouping settings from the one value that has been passed back
 		$groupingDefaults1 = $groupingDefaults[0];
 		if(isset($_POST['grouping2_' . $calc . "_" . $hidden['column']])) {
@@ -505,7 +513,7 @@ foreach($returned['rc'] as $hidden) {
 		} else {
 			$groupingDefaults2 = "";
 		}
-		
+
 		// grouping option
 		$grouping = new xoopsFormSelect(_formulize_DE_CALC_GTEXT, 'grouping_' . $calc . "_" . $hidden['column'], $groupingDefaults1);
         $grouping->setExtra('class="first-grouping"');
@@ -515,6 +523,8 @@ foreach($returned['rc'] as $hidden) {
 		$grouping->addOption("creation_datetime", _formulize_DE_GROUPBYCREATEDATE);
 		$grouping->addOption("mod_datetime", _formulize_DE_GROUPBYMODDATE);
 		$grouping->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
+		// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+		//$grouping->addOption("owner_groups", _formulize_DE_GROUPBYOWNERGROUPS);
 		$grouping->addOptionArray($options2);
 
 		// grouping option
@@ -525,6 +535,8 @@ foreach($returned['rc'] as $hidden) {
 		$grouping2->addOption("creation_datetime", _formulize_DE_GROUPBYCREATEDATE);
 		$grouping2->addOption("mod_datetime", _formulize_DE_GROUPBYMODDATE);
 		$grouping2->addOption("creator_email", _formulize_DE_GROUPBYCREATOREMAIL);
+		// Do nothing, no underlying data in the query so we cannot operate over this data for calculations
+		//$grouping2->addOption("owner_groups", _formulize_DE_GROUPBYOWNERGROUPS);
 		$grouping2->addOptionArray($options2);
 
 
