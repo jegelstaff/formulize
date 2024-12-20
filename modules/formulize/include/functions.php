@@ -7725,7 +7725,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             break;
 
 														case "owner_groups":
-															$row[] =  display($entry, 'owner_groups');
+															$row[] =  '"'.displayTogether($entry, 'owner_groups', ", ").'"';
 														break;
 
                             default:
