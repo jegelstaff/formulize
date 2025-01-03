@@ -175,7 +175,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                 ";
             }
             // if the designer is sending the user into an entry, then we need various apparatus in the page to make this work
-            if(strstr($codeContents,"viewEntryLink(") OR strstr($codeContents,"viewEntryButton(")) {
+            if(strstr($codeContents,"viewEntryLink(") OR strstr($codeContents,"viewEntryButton(") OR strstr($codeContents,"formulize_buildDateRangeFilter") OR strstr($codeContents,"formulize_buildFilter")) {
 
                 // handle a click for an entry... hand off to the screen
                 if(isset($_POST['ventry']) AND $_POST['ventry']) {
@@ -206,7 +206,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                     print "<form name='controls' method='post'>
                         <input type='hidden' name='ventry' value=''>
                         <input type='hidden' name='overridescreen' value=''>
-                        <input type='hidden' name='loadreport' value=''>";
+                        <input type='hidden' name='loadreport' value=''>
+												<input type='hidden' name='formulize_scrollx' value=''>
+												<input type='hidden' name='formulize_scrolly' value=''>";
                     $xoopsTpl->display("file:".$template_filename);
                     print "</form>";
                     // pretty hacky! include the js for lists, so that the viewEntryLink etc will work
