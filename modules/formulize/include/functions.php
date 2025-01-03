@@ -4729,14 +4729,15 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     if (!isset($cachedResults[$frid][$fid][$savedView])) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
 
-		// preload searches from current context
-		$searches = array();
-		foreach ($_POST as $k=>$v) {
-				if (substr($k, 0, 7) == "search_" AND $v != "") {
-						$thiscol = substr($k, 7);
-						$searches[$thiscol] = $v;
+				// preload searches from current context
+				$searches = array();
+				foreach ($_POST as $k=>$v) {
+						if (substr($k, 0, 7) == "search_" AND $v != "") {
+								$thiscol = substr($k, 7);
+								$searches[$thiscol] = $v;
+						}
 				}
-		}
+
         $settings = array();
         // load the saved view requested, and get everything ready for calling gatherDataSet
         // pubfilters are ignored, not relevant for just getting calculations
