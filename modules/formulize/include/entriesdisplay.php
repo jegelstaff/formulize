@@ -2016,7 +2016,8 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
 }
 
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
-function formulize_buildDateRangeFilter($handle, $search_text) {
+function formulize_buildDateRangeFilter($handle, $search_text="") {
+		$search_text = ($search_text === "" AND isset($_POST['search_'.$handle])) ? $_POST['search_'.$handle] : $search_text;
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = false;
     if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
