@@ -34,7 +34,7 @@
 include_once '../../../mainfile.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showTooltips = 'all', $smoothedLine = false, $showCursor = true) {
+function displayGraph($type, $data, $dataElements=array(), $yElements=array(), $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showTooltips = 'all', $smoothedLine = false, $showCursor = true) {
 
 	$jsTimeFormat = convertPHPTimeFormatToJSTimeFormat($timeFormat);
 	$xAxisStart = 0;
@@ -553,6 +553,313 @@ function displayGraph($type, $data, $dataElements, $yElements, $xAxisType='time'
 
 			<?php
 			break;
+
+		case "pie":
+			?>
+			<!-- Styles -->
+			<style>
+			#chartdiv {
+				width: 100%;
+				height: 500px;
+			}
+			</style>
+
+			<!-- Resources -->
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+			<!-- Chart code -->
+			<script>
+			am5.ready(function() {
+
+			// Create root element
+			// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+			var root = am5.Root.new("chartdiv");
+
+			// Set themes
+			// https://www.amcharts.com/docs/v5/concepts/themes/
+			root.setThemes([
+				am5themes_Animated.new(root)
+			]);
+
+			// Create chart
+			// https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/
+			var chart = root.container.children.push(
+				am5percent.PieChart.new(root, {
+					endAngle: 270
+				})
+			);
+
+			// Create series
+			// https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Series
+			var series = chart.series.push(
+				am5percent.PieSeries.new(root, {
+					valueField: "value",
+					categoryField: "category",
+					endAngle: 270
+				})
+			);
+
+			series.labels.template.setAll({
+				text: "{category}"
+			});
+
+			series.slices.template.setAll({
+				tooltipText: "{valuePercentTotal.formatNumber('0.00')}% (n={value})"
+			});
+
+			series.states.create("hidden", {
+				endAngle: -90
+			});
+
+			// Set data
+			// https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Setting_data
+			series.data.setAll([<?php
+
+			foreach($data as $i=>$dataPoint) {
+				print $i ? ", " : "";
+				print "{
+				category: ".$dataPoint['category'].",
+				value: ".$dataPoint['value']."
+			}";
+			}
+
+			?>]);
+
+			series.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML -->
+			<div id="chartdiv"></div>
+
+			<?php
+			break;
+
+		case "bar":
+			?>
+			<!-- Styles -->
+			<style>
+			#chartdiv {
+				width: 100%;
+				height: 500px;
+			}
+			</style>
+
+			<!-- Resources -->
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+			<!-- Chart code -->
+			<script>
+			am5.ready(function() {
+
+			// Create root element
+			// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+			var root = am5.Root.new("chartdiv");
+
+			// Set themes
+			// https://www.amcharts.com/docs/v5/concepts/themes/
+			root.setThemes([
+				am5themes_Animated.new(root)
+			]);
+
+			// Create chart
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/
+			var chart = root.container.children.push(am5xy.XYChart.new(root, {
+				/*panX: true,
+				panY: true,
+				wheelX: "panX",
+				wheelY: "zoomX",
+				pinchZoomX: true,
+				paddingLeft:0,
+				paddingRight:1*/
+				panX: false,
+				panY: false,
+				wheelX: "none",
+				wheelY: "none",
+				paddingBottom: 50,
+				paddingTop: 40,
+				paddingLeft:0,
+				paddingRight:0
+			}));
+
+			// Add cursor
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
+			var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
+			cursor.lineY.set("visible", false);
+
+
+			// Create axes
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+			var xRenderer = am5xy.AxisRendererX.new(root, {
+				minGridDistance: 30,
+				minorGridEnabled: true
+			});
+
+			xRenderer.grid.template.setAll({
+				location: 1
+			})
+
+			var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+				maxDeviation: 0.3,
+				categoryField: "category",
+				renderer: xRenderer,
+			}));
+
+			xAxis.get("renderer").labels.template.adapters.add("text", function(text, target) {
+				return ''
+			});
+
+			var yRenderer = am5xy.AxisRendererY.new(root, {
+				strokeOpacity: 0.1
+			})
+
+			var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+				maxDeviation: 0.3,
+				min: 0,
+				renderer: yRenderer
+			}));
+
+			// Create series
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+			var series = chart.series.push(
+				am5xy.ColumnSeries.new(root, {
+					name: "Series 1",
+					xAxis: xAxis,
+					yAxis: yAxis,
+					valueYField: "value",
+					maskBullets: false,
+					sequencedInterpolation: true,
+					calculateAggregates: true,
+					categoryXField: "category",
+					tooltip: am5.Tooltip.new(root, {
+						labelText: "{category}: {value}"
+					})
+				})
+			);
+
+			series.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
+			series.columns.template.adapters.add("fill", function (fill, target) {
+				return chart.get("colors").getIndex(series.columns.indexOf(target));
+			});
+
+			series.columns.template.adapters.add("stroke", function (stroke, target) {
+				return chart.get("colors").getIndex(series.columns.indexOf(target));
+			});
+
+			// Set data
+			var data = [<?php
+
+			foreach($data as $i=>$dataPoint) {
+				print $i ? ", " : "";
+				print "{
+				category: ".$dataPoint['category'].",
+				value: ".$dataPoint['value'].",
+				icon: { src: \"".$dataPoint['icon']."\" }
+			}";
+			}
+
+			?>];
+
+			/* bullet animations */
+			var currentlyHovered;
+
+			series.columns.template.events.on("pointerover", function (e) {
+				handleHover(e.target.dataItem);
+			});
+
+			series.columns.template.events.on("pointerout", function (e) {
+				handleOut();
+			});
+
+			function handleHover(dataItem) {
+				if (dataItem && currentlyHovered != dataItem) {
+					handleOut();
+					currentlyHovered = dataItem;
+					var bullet = dataItem.bullets[0];
+					bullet.animate({
+						key: "locationY",
+						to: 1,
+						duration: 1200,
+						easing: am5.ease.out(am5.ease.cubic)
+					});
+				}
+			}
+
+			function handleOut() {
+				if (currentlyHovered) {
+					var bullet = currentlyHovered.bullets[0];
+					bullet.animate({
+						key: "locationY",
+						to: 0,
+						duration: 1200,
+						easing: am5.ease.out(am5.ease.cubic)
+					});
+				}
+			}
+
+			var circleTemplate = am5.Template.new({});
+
+			series.bullets.push(function (root, series, dataItem) {
+				var bulletContainer = am5.Container.new(root, {});
+
+				// only containers can be masked, so we add image to another container
+				var imageContainer = bulletContainer.children.push(
+					am5.Container.new(root, {})
+				);
+
+				var image = imageContainer.children.push(
+					am5.Picture.new(root, {
+						templateField: "icon",
+						centerX: am5.p50,
+						centerY: -4,
+						cornerRadius: 5,
+						width: 100,
+					})
+				);
+
+				return am5.Bullet.new(root, {
+					locationY: 0,
+					sprite: bulletContainer
+				});
+			});
+
+
+			xAxis.data.setAll(data);
+			series.data.setAll(data);
+
+			/* bullet animations */
+			var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
+			cursor.lineX.set("visible", false);
+			cursor.lineY.set("visible", false);
+
+			cursor.events.on("cursormoved", function () {
+				var dataItem = series.get("tooltip").dataItem;
+				if (dataItem) {
+					handleHover(dataItem);
+				} else {
+					handleOut();
+				}
+			});
+
+			// Make stuff animate on load
+			// https://www.amcharts.com/docs/v5/concepts/animations/
+			series.appear(1000);
+			chart.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML -->
+			<div id="chartdiv"></div>
+
+			<?php
+			break;
+
 		}
 }
 
