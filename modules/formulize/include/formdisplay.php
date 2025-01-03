@@ -2877,7 +2877,11 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
      								break;
      						}
      					}
-	     				return $ele_value;
+	     				// If the value is blank, and the element is required, or the element has the use-defaults-when-blank option on
+                    // then do not load in saved value over top of ele_value, just return the default instead
+						if(($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_req')) AND !$value) {
+							return $ele_value;
+					}
                 } else {
                     // if we're still here, not returned, and there is a saved value to grab, then grab it
 						if($key !== "") {
