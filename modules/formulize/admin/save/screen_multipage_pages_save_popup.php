@@ -88,4 +88,3 @@ if(!$screen_handler->insert($screen)) {
 if($conditionsStateChanged) {
     print "/* eval */ reloadPopup();";
 }
-?>
