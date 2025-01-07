@@ -81,16 +81,18 @@ $(".conditionsdelete").click(function () {
 	$(".savebuttonpopup").click(function() {
     if(validateRequired()) {
 			var pagedata = window.document.getElementsByName("popupform");
-			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
-				if(data) {
-					if(data.substr(0,10)=="/* eval */") {
-						eval(data);
-					} else {
-						alert(data);
+			$('#dialog-page-settings').fadeTo(1, 0.25, function() {
+				$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
+					if(data) {
+						if(data.substr(0,10)=="/* eval */") {
+							eval(data);
+						} else {
+							alert(data);
+						}
 					}
-				}
-				window.document.getElementById('popupsavewarning').style.display = 'none';
-
+					window.document.getElementById('popupsavewarning').style.display = 'none';
+					$('#dialog-page-settings').fadeTo(1, 1);
+				});
 			});
     }
     $(".savebuttonpopup").blur();

@@ -718,9 +718,15 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/managepermissions.html',
 	'description' => '');
-	$modversion['templates'][] = array(
-		'file' => 'admin/variable_template_help.html',
-		'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/variable_template_help.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_listing.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_options.html',
+	'description' => '');
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']

@@ -125,6 +125,7 @@ function organizeCustom() {
 	applyCSSCustom();
 }
 
+// https://stackoverflow.com/questions/11611765/jquery-ui-draggable-snap-event << to get the snapee??
 function setupDraggableBoxes() {
 	$( "div[id^=form-details-box]" ).draggable({
 		snap: true,

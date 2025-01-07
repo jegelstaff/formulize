@@ -27,20 +27,37 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the application_relationships page of the new admin UI
-// deletes frameworks
+// this file gets all the data about a particular page of a screen, so it can be edited
 
-// if we aren't coming from what appears to be save.php, then return nothing
-if(!isset($processedValues)) {
-	return;
+require_once "../../../mainfile.php";
+include_once("admin_header.php");
+
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
+$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+
+// setup a smarty object that we can use for templating our own pages
+
+global $icmsConfig;
+require_once XOOPS_ROOT_PATH.'/class/template.php';
+require_once XOOPS_ROOT_PATH.'/class/theme.php';
+require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
+$xoopsThemeFactory = new icms_view_theme_Factory();
+$xoopsThemeFactory->allowedThemes = $icmsConfig['theme_set_allowed'];
+$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
+$xoTheme = $xoopsThemeFactory->createInstance();
+$xoopsTpl = $xoTheme->template;
+
+$linkId = intval($_GET['linkId']);
+$link = new formulizeFrameworkLink($linkId);
+$content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link);
+$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
+
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
 }
 
-if($_POST['deleteframework']) {
-	$framework_handler = xoops_getmodulehandler('frameworks','formulize');
-	$frameworkObject = $framework_handler->get($_POST['deleteframework']);
-	if(!$framework_handler->delete($frameworkObject)) {
-		print "Error: could not delete the requested relationship.";
-	} else {
-		print "/* eval */ reloadWithScrollPosition();";
-	}
-}
+$xoopsTpl->assign("content",$content);
+$xoopsTpl->display("db:admin/relationship_options.html");
+
