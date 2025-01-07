@@ -111,6 +111,7 @@ function createPrimaryRelationship() {
 		}
 	}
 
+	// NEED TO CONSIDER IF THIS IS THE BEST APPROACH... CAN PRIMARY RELATIONSHIP WORK CLEANLY IN ALL CASES OF NO RELATIONSHIP RIGHT NOW?? -- WHAT ABOUT PROGRAMS IN ESAT, ETC??
 	if(!empty($linkForms)) {
 		$linkForms = array_unique($linkForms);
 		$sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET `frid` = -1 WHERE `frid` = 0 AND `fid` IN (".implode(', ', $linkForms).")";

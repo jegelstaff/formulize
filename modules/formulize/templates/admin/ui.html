@@ -3,6 +3,7 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin.js?v=2"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-organize-forms.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-relationships.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css">
@@ -149,6 +150,8 @@ $(document).ready(function() {
 <{/if}>
 
 <p class="versionnumber">Version <{$version}></p>
+
+<div id="dialog-relationship-options" title="Relationship Details" style="display:none"><div id="dialog-relationship-options-content"></div></div>
 
 </div><!-- End admin-ui -->
 
@@ -376,10 +379,5 @@ $(document).ready(function() {
         window.document.scrollposition.seedtemplates.value = 1;
         reloadWithScrollPosition();
     });
-
-		$('label[for^=relationships-] input[type=checkbox]').change(function() {
-			var lid = $(this).attr('lid');
-			$('.option-flag-'+lid).val(lid);
-		})
 
 </script>

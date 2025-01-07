@@ -480,13 +480,14 @@ class formulizeFrameworksHandler {
 	 * @param object relationship The relationship we're getting links from
 	 * @return array An array of the links in the form, ordered by form, normalized into one to many and one to one for each form (many to one switched around)
 	 */
-	function getLinksGroupedByForm($relationship) {
+	function getLinksGroupedByForm($relationship, $fid=null) {
 		$normalizedLinks = array();
 		if(!is_a($relationship, 'formulizeFramework')) {
 			return $normalizedLinks;
 		}
 		$relationshipLinks = $relationship->getVar('links');
 		foreach($relationshipLinks as $link) {
+			if($fid AND $link->getVar('form2') != $fid AND $link->getVar('form1') != $fid) { continue; }
 			switch($link->getVar('relationship')) {
 				case 3:
 					$normalizedLinks[$link->getVar('form2')][] = array(
@@ -519,35 +520,34 @@ class formulizeFrameworksHandler {
 		return $normalizedLinks;
 	}
 
-	function formatFrameworksAsRelationships($frameworks) {
+	function formatFrameworksAsRelationships($frameworks=null, $limitToFid=null) {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$relationships = array();
 		$relationshipIndices = array();
-		$i = 1;
+		$i = 0;
+		if(!$frameworks AND $limitToFid) {
+			$frameworks = $this->getFrameworksByForm($limitToFid, true);
+		}
 		foreach($frameworks as $framework) {
 			$frid = $framework->getVar('frid');
 			if (isset($relationshipIndices[$frid])) { continue; }
-			$frameworkLinks = $this->getLinksGroupedByForm($framework);
+			$frameworkLinks = $this->getLinksGroupedByForm($framework, $limitToFid);
 			$links = array();
 			foreach($frameworkLinks as $fid=>$fidLinks) {
 				foreach($fidLinks as $link) {
 					$form1Object = $form_handler->get($link['form1']);
 					$form2Object = $form_handler->get($link['form2']);
+					if($limitToFid AND $form1Object->getVar('fid') != $limitToFid AND $form2Object->getVar('fid') != $limitToFid) { continue; }
 					$form1Text = $form1Object->getSingular();
 					$form2TextSingular = $form2Object->getSingular();
 					$form2Text = $link['type'] == 1 ? $form2TextSingular : $form2Object->getPlural();
 					$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
-					if(!$link['key1'] AND !$link['key2']) {
-						$helpText = _AM_FRAME_UIDLINK;
-					} else {
-						$helpText = $this->formatRelationshipHelpTextAndUI($link, $form1Object, $form2Object);
-					}
 					$links[] = array(
+						'linkId'=>$link['lid'],
 						'each'=>ucfirst(_AM_FRAME_EACH),
 						'form1'=>$form1Text,
 						'has'=>_AM_FRAME_HAS.' '.$connectionText,
-						'form2'=>$form2Text,
-						'help'=>$helpText
+						'form2'=>$form2Text
 					);
 				}
 			}
@@ -561,33 +561,31 @@ class formulizeFrameworksHandler {
 	}
 
 	/**
-	 * Format the help/options popup for displaying relationship details to the user on the admin side
+	 * Gets all data related to displaying the help text and options for a relationship link on the admin side
 	 * @param array link - the link data from the database, as returned from getLinksGroupedByForm
-	 * @return string The formatted HTML for the admin help text and UI
+	 * @return array all the data needed for the help text and options
 	 */
-	function formatRelationshipHelpTextAndUI($link) {
+	function gatherRelationshipHelpAndOptionsContent($link) {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$lid = $link['lid'];
-		$form1Object = $form_handler->get($link['form1']);
-		$form2Object = $form_handler->get($link['form2']);
-		$element1Text = $this->getElementDescriptor($link['key1']);
-		$element2Text = $this->getElementDescriptor($link['key2']);
-		$delChecked = $link['del'] ? "checked='checked'" : '';
-		$conChecked = $link['con'] ? "checked='checked'" : '';
-		$bookChecked = $link['book'] ? "checked='checked'" : '';
-		$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
-		$title = ucfirst(_AM_FRAME_EACH).' '.$form1Object->getSingular().' '._AM_FRAME_HAS.' '.$connectionText.' '.($link['type'] == 1 ? $form2Object->getSingular() : $form2Object->getPlural());
-		$content = "<p class='title'>$title</p>
-		<p>Connected by:</p>
-		<ul class='connections'><li>$element1Text</li><li>$element2Text</li></ul>
-		<p>Options:</p>
-		<input type='hidden' class='option-flag-$lid' name='lids[]' value=''>
-		<label for='relationships-delete$lid'><input lid='$lid' type='checkbox' $delChecked value='1' name='relationships-delete$lid' id='relationships-delete$lid'> When you delete an entry in one form, delete the linked entries in the other form</label><br>";
-		if($link['type'] == 1) {
-			$content .= "<label for='relationships-conditional$lid'><input lid='$lid' type='checkbox' $conChecked value='1' name='relationships-conditional$lid' id='relationships-conditional$lid'> When you display the forms together, dynamically change the entry displayed, if the linking value changes</label><br>
-			<label for='relationships-bookkeeping$lid'><input lid='$lid' type='checkbox' $bookChecked value='1' name='relationships-bookkeeping$lid' id='relationships-bookkeeping$lid'> When you save an entry in one form, automatically create an entry in the other</label>";
-		}
-		return $content;
+		$form1Object = $form_handler->get($link->getVar('form1'));
+		$form2Object = $form_handler->get($link->getVar('form2'));
+		$element1Text = $this->getElementDescriptor($link->getVar('key1'));
+		$element2Text = $this->getElementDescriptor($link->getVar('key2'));
+		$delChecked = $link->getVar('unified_delete') ? "checked='checked'" : '';
+		$conChecked = $link->getVar('one2one_conditional') ? "checked='checked'" : '';
+		$bookChecked = $link->getVar('one2one_bookkeeping') ? "checked='checked'" : '';
+		$connectionText = $link->getVar('relationship') == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+		$title = ucfirst(_AM_FRAME_EACH).' '.$form1Object->getSingular().' '._AM_FRAME_HAS.' '.$connectionText.' '.($link->getVar('relationship') == 1 ? $form2Object->getSingular() : $form2Object->getPlural());
+		return array(
+			'linkId'=>$link->getVar('lid'),
+			'element1Text'=>$element1Text,
+			'element2Text'=>$element2Text,
+			'type'=>$link->getVar('relationship'),
+			'delChecked'=>$delChecked,
+			'conChecked'=>$conChecked,
+			'bookChecked'=>$bookChecked,
+			'title'=>$title
+		);
 	}
 
 	/**
