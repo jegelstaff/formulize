@@ -928,12 +928,11 @@ a.tooltip:hover {
   background-color: transparent;
 }
 
-/* try fiddling with visibility not display and do css transitions, which might need to affect height of parent?? */
 a.tooltip:hover > span,
 a.tooltip > span:hover {
-  position: relative;
+  position: absolute;
   top: -2em;
-  left: 5em;
+  left: -5em;
   width: 25em;
   display: block;
   background-color: #ffffff;
@@ -1325,6 +1324,16 @@ label {
   font-style: normal; }
 
 div.accordion-box {
+	float: left;
+	margin: 0 2em 1.5em 0;
+}
+
+div.accordion-box p {
+	width: 400px;
+	margin-bottom: 0.5em;
+}
+
+div.form-listing-box {
   width: 340px;
   margin: 0 2em 1.5em 0;
 	cursor: move;
@@ -1337,7 +1346,8 @@ div.accordion-box-wide {
   width: 500px;
   margin: 0 2em 1.5em 0; }
 
-div.accordion-box .form-name {
+div.accordion-box .form-name,
+div.form-listing-box .form-name {
   margin: 0;
   padding: 0.5em;
   background-color: #0085b6;
@@ -1350,7 +1360,8 @@ div.accordion-box .form-name {
 	align-items: center;
 }
 
-div.accordion-box .form-name a {
+div.accordion-box .form-name a,
+div.form-listing-box .form-name a {
   display: block;
   margin: 0;
   /*padding-left: 35px;
@@ -1361,11 +1372,13 @@ div.accordion-box .form-name a {
   color: #FFF;
   text-decoration: none; }
 
-div.accordion-box .form-name a:hover {
+div.accordion-box .form-name a:hover,
+div.form-listing-box .form-name a:hover {
   color: #FFF;
   text-decoration: none; }
 
-div.accordion-box .form-screen-list {
+div.accordion-box .form-screen-list,
+div.form-listing-box .form-screen-list {
   margin: 0;
   padding: 0.5em;
   border: 1px solid #94daf2;
@@ -1390,7 +1403,8 @@ div.accordion-box .form-screen-list {
 	font-size: 9pt;
 	display: none;
 }
-div.accordion-box div.form-data > p {
+div.accordion-box div.form-data > p,
+div.form-listing-box div.form-data > p {
 	margin-left: 0.5em;
 }
 
@@ -1405,13 +1419,16 @@ div.accordion-box div.form-data > p {
   margin-top: 1em;
   margin-left: 2em; }
 
-div.accordion-box .form-screen-list ul {
+div.accordion-box .form-screen-list ul,
+div.form-listing-box .form-screen-list.ul {
   margin: 0.5em; }
 
-div.accordion-box .form-screen-list p {
+div.accordion-box .form-screen-list p,
+div.form-listing-box .form-screen-list p {
   margin: 0; }
 
-div.accordion-box .no-bullets {
+div.accordion-box .no-bullets,
+div.form-listing-box .no-bullets {
   list-style-type: none; }
 
 /* table overrides */
@@ -1493,13 +1510,16 @@ div.save-view-access {
   padding: 1.5em;
   border: solid 1px #1D65A5; }
 
-#savebutton input, #popupsavebutton input {
+#savebutton input, #popupsavebutton input,
+#relationship-options-popupsavebutton input {
   float: left;
   font-size: 1.1rem;
   width: 150px;
   text-align: center;
   margin-bottom: 1em;
-  font-weight: normal; }
+  font-weight: normal;
+	margin-right: 1em;
+}
 
 #savewarning, #derivedfinished {
   display: none;
@@ -1515,7 +1535,8 @@ div.save-view-access {
   padding: 10px 5px 10px 40px;
   border: solid 1px #9F6000; }
 
-#popupsavewarning {
+#popupsavewarning,
+#relationship-options-popupsavewarning {
   padding-top: 0.2em;
   display: none;
   color: red; }
@@ -1640,9 +1661,6 @@ input:focus, select:focus, textarea:focus {
 form .form-radios, form .form-multiple-select {
   /*margin: 0.5em 0 0.25em 1em;*/ }
 
-form .radio-inline {
-  float: left; }
-
 form fieldset ol {
   margin: 0;
   padding: 0; }
@@ -1653,6 +1671,10 @@ form fieldset li {
 
 form .groupselectionbox, form .permissiongroup {
   margin-left: 30px; }
+
+form .permissiongroup label {
+	width: 350px;
+}
 
 form .groupselectionbox {
   margin-bottom: 20px; }
@@ -1870,6 +1892,8 @@ form.formulize-admin-form input[type=text].filter-forms {
 	padding: 0.5em;
 	z-index: 100;
 	background-color: #fff;
+	overflow-y: auto;
+	height: 675px;
 }
 
 .form-listing-title-id {
@@ -1910,13 +1934,27 @@ p.title {
 	margin-top: 0;
 }
 
-div#tabs ul.connections li {
+#dialog-relationship-options-content p.title {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+#dialog-relationship-options-content ul.connections {
+	margin-bottom: 1em;
+}
+
+#dialog-relationship-options-content ul.connections li {
 	list-style-type: disc;
   list-style-position: inside;
+	padding: 0;
 }
 
 label[for^=relationships-] {
 	margin-top: 0.5em;
 	padding-left: 2em;
   text-indent: -1.8em;
+}
+
+.relationship-link-options {
+	font-size: 8pt;
 }

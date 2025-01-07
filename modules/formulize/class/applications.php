@@ -622,6 +622,7 @@ class formulizeApplicationsHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$gperm_handler = xoops_gethandler('groupperm');
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$aid = intval($aid);
 		$formsInApp = array();
 		$adminLayoutTopAndLeftForForms = $this->getAdminLayoutTopAndLeftForForms($aid);
@@ -646,6 +647,7 @@ class formulizeApplicationsHandler {
 				if (is_object($defaultListObject)) {
 						$defaultListName = $defaultListObject->getVar('title');
 				}
+				$formLinks = $framework_handler->formatFrameworksAsRelationships(array($framework_handler->get(-1)), $thisFormObject->getVar('id_form'));
 				$formsInApp[$thisFormObject->getVar('id_form')]['form'] = $thisFormObject;
 				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
 				$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
@@ -655,6 +657,7 @@ class formulizeApplicationsHandler {
 				$formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
 				$formsInApp[$thisFormObject->getVar('id_form')]['top'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']: '0px';
 				$formsInApp[$thisFormObject->getVar('id_form')]['left'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']: '0px';
+				$formsInApp[$thisFormObject->getVar('id_form')]['links'] = $formLinks[0]['content']['links'];
 			}
 		}
 		return $formsInApp;
