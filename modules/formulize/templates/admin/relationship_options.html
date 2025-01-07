@@ -1,0 +1,66 @@
+<div>
+	<form name="relationship-options-popupform">
+		<input type="hidden" name="formulize_admin_handler" value="relationship_options">
+		<input type="hidden" name="formulize_admin_key" value="<{$content.linkId}>">
+		<div id="relationship-options-popupsavebutton"><input type="button" class="relationship-options-savebuttonpopup" id="relationship-options-savebuttonpopup" value="Save your changes"/></div>
+		<div id="relationship-options-popupsavewarning">You have unsaved changes!</div>
+		<div style="clear: both"></div>
+		<p class='title'><{$content.title}></p>
+		<p>Connected by:</p>
+		<{if $content.element1Text AND $content.element2Text }>
+		<ul class='connections'><li><{$content.element1Text}></li><li><{$content.element2Text}></li></ul>
+		<{else}>
+		<{$smarty.const._AM_FRAME_UIDLINK}>;
+		<{/if}>
+		<p>Options:</p>
+		<input type='hidden' name='lid' value='<{$content.linkId}>'>
+		<label for='relationships-delete-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.delChecked}> value='1' name='relationships-delete-<{$content.linkId}>' id='relationships-delete-<{$content.linkId}>'> When you delete an entry in one form, delete the linked entries in the other form</label><br>
+		<{if $content.type == 1}>
+			<label for='relationships-conditional-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.conChecked}> value='1' name='relationships-conditional-<{$content.linkId}>' id='relationships-conditional-<{$content.linkId}>'> When you display the forms together, dynamically change the entry displayed, if the linking value changes</label><br>
+			<label for='relationships-bookkeeping-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.bookChecked}> value='1' name='relationships-bookkeeping-<{$content.linkId}>' id='relationships-bookkeeping-<{$content.linkId}>'> When you save an entry in one form, automatically create an entry in the other</label><br>
+		<{/if}>
+	</form>
+</div>
+
+<script type="text/javascript">
+
+	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+	$( document ).ready(function() {
+		<{if $content.isSaveLocked}>
+			document.getElementById('relationship-options-savebuttonpopup').style.visibility = 'hidden';
+			document.getElementById('relationship-options-popupsavebutton').innerHTML = "READ ONLY";
+		<{/if}>
+	});
+
+  $("input").change(function() {
+    window.document.getElementById('relationship-options-popupsavewarning').style.display = 'block';
+    });
+  $("input[type=text]").keydown(function() {
+    window.document.getElementById('relationship-options-popupsavewarning').style.display = 'block';
+    });
+  $("select").change(function() {
+    window.document.getElementById('relationship-options-popupsavewarning').style.display = 'block';
+    });
+  $("textarea").keydown(function() {
+    window.document.getElementById('relationship-options-popupsavewarning').style.display = 'block';
+    });
+
+	$(".relationship-options-savebuttonpopup").click(function() {
+		var pagedata = window.document.getElementsByName("relationship-options-popupform");
+		$('#dialog-relationship-options').fadeTo(1, 0.25, function() {
+			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
+				if(data) {
+					if(data.substr(0,10)=="/* eval */") {
+						eval(data);
+					} else {
+						alert(data);
+					}
+				}
+				window.document.getElementById('relationship-options-popupsavewarning').style.display = 'none';
+				$('#dialog-relationship-options').fadeTo(1, 1);
+			});
+		});
+    $(".relationship-options-savebuttonpopup").blur();
+  });
+
+</script>
