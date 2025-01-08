@@ -671,9 +671,12 @@ class formulizeFormsHandler {
 
 	}
 
-	function getAllForms($includeAllElements=false) {
+	function getAllForms($includeAllElements=false, $formIds=array(), $excludeFormsConnectedToFormIdInPrimaryRelationship=0) {
 		global $xoopsDB;
-		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
+		$whereClause = $formIds ? " WHERE id_form IN (".implode(",",array_filter($formIds, 'is_numeric')).") " : "";
+		$excludeClause = $excludeFormsConnectedToFormIdInPrimaryRelationship ? " NOT EXISTS(SELECT 1 FROM ". $xoopsDB->prefix("formulize_framework_links") ." AS l WHERE l.fl_frame_id = -1 AND i.id_form = l.fl_form1_id AND l.fl_form2_id = ".intval($excludeFormsConnectedToFormIdInPrimaryRelationship).") AND NOT EXISTS(SELECT 1 FROM ". $xoopsDB->prefix("formulize_framework_links") ." AS l WHERE l.fl_frame_id = -1 AND i.id_form = l.fl_form2_id AND l.fl_form1_id = ".intval($excludeFormsConnectedToFormIdInPrimaryRelationship).")" : "";
+		$excludeClause = ($whereClause AND $excludeClause) ? " AND $excludeClause " : $excludeClause;
+		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause $excludeClause ORDER BY desc_form";
 		$allFidsRes = $xoopsDB->query($allFidsQuery);
 		$foundFormObjects = array();
 		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {

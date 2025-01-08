@@ -125,18 +125,32 @@ function organizeCustom() {
 	applyCSSCustom();
 }
 
-// https://stackoverflow.com/questions/11611765/jquery-ui-draggable-snap-event << to get the snapee??
+// thanks to https://stackoverflow.com/questions/11611765/jquery-ui-draggable-snap-event for insight into getting the snapElements from the draggable data!
 function setupDraggableBoxes() {
 	$( "div[id^=form-details-box]" ).draggable({
 		snap: true,
 		snapMode: 'outer',
 		snapTolerance: 20,
 		cursor: 'move',
-		stop: function( event, ui ) { setDisplay('savewarning','block'); }
+		stop: function( event, ui ) {
+			setDisplay('savewarning','block');
+			setupConnectionUI($(this).data("draggable").snapElements, $(this));
+		}
 	});
 	$('div[id^=form-details-box]').click(function() {
 		clickFormDetails($(this));
 	});
+}
+
+function setupConnectionUI(snapElements, snapElement) {
+	let form1Id = snapElement.attr('id').replace('form-details-box-', '');
+	let form2Ids = [];
+	$.each(snapElements, function(index, element) {
+		if(element.snapping) {
+			form2Ids.push($(element.item).attr('id').replace('form-details-box-', ''));
+		}
+	});
+	createRelationshipConnections(form1Id, form2Ids);
 }
 
 function clickFormDetails(jQFormDetailsBox) {
