@@ -1511,7 +1511,8 @@ div.save-view-access {
   border: solid 1px #1D65A5; }
 
 #savebutton input, #popupsavebutton input,
-#relationship-options-popupsavebutton input {
+#relationship-options-popupsavebutton input,
+#relationship-create-connection-popupsavebutton input {
   float: left;
   font-size: 1.1rem;
   width: 150px;
@@ -1536,7 +1537,8 @@ div.save-view-access {
   border: solid 1px #9F6000; }
 
 #popupsavewarning,
-#relationship-options-popupsavewarning {
+#relationship-options-popupsavewarning,
+#relationship-create-connection-popupsavewarning {
   padding-top: 0.2em;
   display: none;
   color: red; }
@@ -1913,6 +1915,12 @@ p.form-listing-id {
 	font-size: 14pt;
 	font-weight: bold;
 }
+
+.form-subtitle {
+	font-size: 12pt;
+	font-weight: bold;
+}
+
 .form-listing-links,
 .form-listing-data {
 	display: flex;
@@ -1929,12 +1937,24 @@ p.form-listing-id {
 	margin-top: 0.5em;
 }
 
-p.title {
+p.title,
+span.title {
 	font-weight: bold;
 	margin-top: 0;
 }
 
-#dialog-relationship-options-content p.title {
+#create-connection-title-options {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+#create-connection-title-options div {
+	padding-left: 1em;
+	padding-right: 1em;
+}
+
+#dialog-relationship-options-content p.title,
+#dialog-relationship-create-connection-content p.title {
 	margin-top: 1em;
 	margin-bottom: 1em;
 }

@@ -27,35 +27,9 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-require_once "../../../mainfile.php";
-include_once("admin_header.php");
-
-include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
-include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-
-// setup a smarty object that we can use for templating our own pages
-
-global $icmsConfig;
-require_once XOOPS_ROOT_PATH.'/class/template.php';
-require_once XOOPS_ROOT_PATH.'/class/theme.php';
-require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
-$xoopsThemeFactory = new icms_view_theme_Factory();
-$xoopsThemeFactory->allowedThemes = $icmsConfig['theme_set_allowed'];
-$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
-$xoTheme = $xoopsThemeFactory->createInstance();
-$xoopsTpl = $xoTheme->template;
-
-$linkId = intval($_GET['linkId']);
-$link = new formulizeFrameworkLink($linkId);
-$content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link);
-$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
-
-icms::$logger->disableLogger();
-while(ob_get_level()) {
-    ob_end_clean();
+// if we aren't coming from what appears to be save.php, then return nothing
+if(!isset($processedValues)) {
+	return;
 }
 
-$xoopsTpl->assign("content",$content);
-$xoopsTpl->display("db:admin/relationship_options.html");
 
