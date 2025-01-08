@@ -27,20 +27,9 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the application_relationships page of the new admin UI
-// deletes frameworks
-
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
 	return;
 }
 
-if($_POST['deleteframework']) {
-	$framework_handler = xoops_getmodulehandler('frameworks','formulize');
-	$frameworkObject = $framework_handler->get($_POST['deleteframework']);
-	if(!$framework_handler->delete($frameworkObject)) {
-		print "Error: could not delete the requested relationship.";
-	} else {
-		print "/* eval */ reloadWithScrollPosition();";
-	}
-}
+

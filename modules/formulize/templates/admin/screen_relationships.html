@@ -15,25 +15,29 @@
   <input type="hidden" name="aid" value="<{$content.aid}>">
   <input type="hidden" name="screens-type" value="<{$content.type}>">
   <fieldset>
-    <legend>Screen Relationship Settings</legend>
-    <label for="screens-frid">Is this screen based on the form alone, or on a relationship with another form?</label>
+    <legend>Relationship Settings</legend>
+    <label for="screens-frid">The dataset in effect on this screen will be based on the forms in this relationship:</label>
     <select id="screens-frid" name="screens-frid">
       <option value="0"<{if $content.frid eq 0}> selected="selected"<{/if}>>The form alone, no relationship</option>
-      <{foreach from=$content.relationships key=linkNumber item=relationship}>
+      <{assign var=openrel value=0 }>
+      <{foreach from=$content.relationships key=linkNumber item=relationship name=rels}>
         <option value="<{$relationship.content.frid}>" 
                 <{if $content.frid eq $relationship.content.frid}>
                   selected="selected"
+                  <{assign var="openrel" value=$smarty.foreach.rels.iteration-1}>
                 <{/if}>>
           <{$relationship.name}>
         </option>
       <{/foreach}>
     </select>
+    <div class="description">The Primary Relationship is the default. It contains all the connections between all forms. If this form has no connections to other forms, then the dataset will be based on this form's data only.</div>
   </fieldset>
   <fieldset>
-    <legend>Relationships Based on this Form</legend>
+    <legend>Relationships that include this form</legend>
     <{include file="db:admin/ui-accordion.html" 
               sectionTemplate="db:admin/application_relationships_sections.html" 
-              sections=$content.relationships}>
+              sections=$content.relationshipsIncludingThisForm
+              openAccordionOrdinal=$openrel}>
   </fieldset>
 </form>
 <script type="text/javascript">

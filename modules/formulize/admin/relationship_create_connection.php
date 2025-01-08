@@ -27,20 +27,55 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// this file handles saving of submissions from the application_relationships page of the new admin UI
-// deletes frameworks
+require_once "../../../mainfile.php";
 
-// if we aren't coming from what appears to be save.php, then return nothing
-if(!isset($processedValues)) {
-	return;
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+		ob_end_clean();
 }
 
-if($_POST['deleteframework']) {
-	$framework_handler = xoops_getmodulehandler('frameworks','formulize');
-	$frameworkObject = $framework_handler->get($_POST['deleteframework']);
-	if(!$framework_handler->delete($frameworkObject)) {
-		print "Error: could not delete the requested relationship.";
-	} else {
-		print "/* eval */ reloadWithScrollPosition();";
+include_once("admin_header.php");
+
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
+
+// setup a smarty object that we can use for templating our own pages
+
+global $icmsConfig;
+require_once XOOPS_ROOT_PATH.'/class/template.php';
+require_once XOOPS_ROOT_PATH.'/class/theme.php';
+require_once XOOPS_ROOT_PATH.'/class/theme_blocks.php';
+$xoopsThemeFactory = new icms_view_theme_Factory();
+$xoopsThemeFactory->allowedThemes = $icmsConfig['theme_set_allowed'];
+$xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
+$xoTheme = $xoopsThemeFactory->createInstance();
+$xoopsTpl = $xoTheme->template;
+
+$oneFormNames = array();
+$manyFormNames = array();
+$form1Id = intval($_GET['form1Id']);
+$form2Ids = (isset($_GET['form2Ids']) AND is_array($_GET['form2Ids']) AND count($_GET['form2Ids']) > 0) ? $_GET['form2Ids'] : array();
+$getAllElementsEvenUnDisplayedOnes = true;
+$withNoConnectionsToThisFormId = $form1Id;
+$formObjects = $form_handler->getAllForms($getAllElementsEvenUnDisplayedOnes, $form2Ids, $withNoConnectionsToThisFormId);
+
+if($formObjects) {
+	foreach($formObjects as $formObject) {
+		$oneFormNames[$formObject->getVar('fid')] = $formObject->getSingular();
+		$manyFormNames[$formObject->getVar('fid')] = $formObject->getPlural();
 	}
+
+	$formObject = $form_handler->get($form1Id);
+	$content = array(
+		'formTitle'=>$formObject->getVar('title'),
+		'formSingular'=>$formObject->getSingular(),
+		'oneFormNames'=>$oneFormNames,
+		'manyFormNames'=>$manyFormNames
+	);
+	$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
+
+	$xoopsTpl->assign("content",$content);
+	$xoopsTpl->display("db:admin/relationship_create_connection.html");
+
 }
