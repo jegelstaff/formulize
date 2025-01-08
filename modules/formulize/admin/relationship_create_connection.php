@@ -28,11 +28,17 @@
 ###############################################################################
 
 require_once "../../../mainfile.php";
+
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+		ob_end_clean();
+}
+
 include_once("admin_header.php");
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
-$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 // setup a smarty object that we can use for templating our own pages
 
@@ -46,16 +52,30 @@ $xoopsThemeFactory->defaultTheme = $icmsConfig['theme_set'];
 $xoTheme = $xoopsThemeFactory->createInstance();
 $xoopsTpl = $xoTheme->template;
 
-$linkId = intval($_GET['linkId']);
-$link = new formulizeFrameworkLink($linkId);
-$content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link);
-$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
+$oneFormNames = array();
+$manyFormNames = array();
+$form1Id = intval($_GET['form1Id']);
+$form2Ids = (isset($_GET['form2Ids']) AND is_array($_GET['form2Ids']) AND count($_GET['form2Ids']) > 0) ? $_GET['form2Ids'] : array();
+$getAllElementsEvenUnDisplayedOnes = true;
+$withNoConnectionsToThisFormId = $form1Id;
+$formObjects = $form_handler->getAllForms($getAllElementsEvenUnDisplayedOnes, $form2Ids, $withNoConnectionsToThisFormId);
 
-icms::$logger->disableLogger();
-while(ob_get_level()) {
-    ob_end_clean();
+if($formObjects) {
+	foreach($formObjects as $formObject) {
+		$oneFormNames[$formObject->getVar('fid')] = $formObject->getSingular();
+		$manyFormNames[$formObject->getVar('fid')] = $formObject->getPlural();
+	}
+
+	$formObject = $form_handler->get($form1Id);
+	$content = array(
+		'formTitle'=>$formObject->getVar('title'),
+		'formSingular'=>$formObject->getSingular(),
+		'oneFormNames'=>$oneFormNames,
+		'manyFormNames'=>$manyFormNames
+	);
+	$content['isSaveLocked'] = sendSaveLockPrefToTemplate();
+
+	$xoopsTpl->assign("content",$content);
+	$xoopsTpl->display("db:admin/relationship_create_connection.html");
+
 }
-
-$xoopsTpl->assign("content",$content);
-$xoopsTpl->display("db:admin/relationship_options.html");
-
