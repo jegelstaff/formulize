@@ -48,8 +48,6 @@ class icms_form_elements_Colorpicker extends icms_form_elements_Text {
 	public function render() {
 		return "<input type='color' name='" . $this->getName()
 			. "' id='" . $this->getName()
-			. "' size='" . $this->getSize()
-			. "' maxlength='" . $this->getMaxlength()
 			. "' aria-describedby='" . $this->getName() . "-help-text"
 			. "' value='" . $this->getValue() . "'" . $this->getExtra()
 			. " />";
