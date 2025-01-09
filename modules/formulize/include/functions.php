@@ -5548,6 +5548,7 @@ function removeNotApplicableRequireds($type, $req=0) {
         case "checkbox":
         case "date":
         case "yn":
+				case "colorpick":
             return $req;
     }
 

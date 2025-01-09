@@ -491,6 +491,9 @@ if ($ele_type=='textarea') {
 } elseif ($ele_type=="ib") {
     $options['ib_style_options']['head'] = "head";
     $options['ib_style_options']['form-heading'] = "form-heading";
+} elseif ($ele_type == "colorpick") {
+	// Set default colour for to white
+	$ele_value = $ele_id == "new" ? array("#FFFFFF") : $ele_value;
 }
 
 
