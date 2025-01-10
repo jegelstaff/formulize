@@ -709,7 +709,7 @@ function patch40() {
 					}
 
 					// Same operation on the custom button effects
-					$customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+					$customButtonsNeedingOpeningPHPTagsSQL = "SELECT `sid`, `customactions` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." WHERE customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%' OR customactions LIKE '%\"custom_code_once\";%'";
 					if($res = $xoopsDB->queryF($customButtonsNeedingOpeningPHPTagsSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
@@ -725,6 +725,7 @@ function patch40() {
 											}
 											break;
 										case 'custom_code':
+										case 'custom_code_once':
 											if(substr($effectSettings['code'], 0, 5) != '<?php') {
 												$customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
 											}
@@ -824,7 +825,7 @@ function patch40() {
 						FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
 						LEFT JOIN ".$xoopsDB->prefix('formulize_screen')." AS s
 						ON l.sid = s.sid
-						WHERE l.customactions LIKE '%\"custom_code\";%' OR customactions LIKE '%\"custom_html\";%'";
+						WHERE l.customactions LIKE '%\"custom_code\";%' OR l.customactions LIKE '%\"custom_html\";%' OR l.customactions LIKE '%\"custom_code_once\";%'";
 					if($res = $xoopsDB->queryF($customButtonCodeSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
@@ -833,19 +834,22 @@ function patch40() {
 							foreach($customActions as $actionId=>$actionSettings) {
 								foreach($actionSettings as $effectId=>$effectSettings) {
 									if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
-                                    $code = '';
+									$code = '';
 									switch($actionSettings['applyto']) {
 										case 'custom_html':
 											$code = $effectSettings['html'];
+											$applyTo = 'custom_html';
 											break;
 										case 'custom_code':
+										case 'custom_code_once':
 											$code = $effectSettings['code'];
+											$applyTo = 'custom_code';
 											break;
 									}
-                  if($code) {
-									    $filename = $actionSettings['applyto'].'_'.$effectId.'_'.$actionSettings['handle'].'_'.$record['screen_handle'].'.php';
-									    file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
-                  }
+									if($code) {
+										$filename = $applyTo.'_'.$effectId.'_'.$actionSettings['handle'].'_'.$record['screen_handle'].'.php';
+										file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+									}
 								}
 							}
 						}
