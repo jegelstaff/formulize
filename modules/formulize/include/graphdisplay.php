@@ -403,7 +403,8 @@ function displayGraph($type, $data, $dataElements=array(), $yElements=array(), $
 			}); // end am5.ready()
 			</script>
 
-			<!-- HTML -->
+			<!-- HTML
+			 // need ID to somehow be specific to this image, so we can have multiple on the page at once! Tricky because some code can be repeated or must be, but others we would want to keep as functions? -->
 			<div id="chartdiv"></div>
 
 			<?php
