@@ -491,6 +491,9 @@ if ($ele_type=='textarea') {
 } elseif ($ele_type=="ib") {
     $options['ib_style_options']['head'] = "head";
     $options['ib_style_options']['form-heading'] = "form-heading";
+} elseif ($ele_type == "colorpick") {
+	// Set default colour for to white
+	$ele_value = $ele_id == "new" ? array("#FFFFFF") : $ele_value;
 }
 
 
@@ -525,14 +528,12 @@ $adminPage['tabs'][$tabindex]['name'] = _AM_ELE_NAMEANDSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
 $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 
-if ($ele_type!='colorpick') {
-    $adminPage['tabs'][++$tabindex]['name'] = "Options";
-    $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
-    if (count((array) $customValues)>0) {
-    $adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
-    } else {
-    $adminPage['tabs'][$tabindex]['content'] = $options + $common;
-    }
+$adminPage['tabs'][++$tabindex]['name'] = "Options";
+$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
+if (count((array) $customValues)>0) {
+	$adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
+} else {
+	$adminPage['tabs'][$tabindex]['content'] = $options + $common;
 }
 
 $adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
@@ -626,7 +627,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $dateType->addOption('date', _AM_FORM_DATATYPE_DATE);
         $dateTimeType = new XoopsFormRadio('', 'element_datatype', $defaultType);
         $dateTimeType->addOption('datetime', _AM_FORM_DATATYPE_DATETIME);
-        if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char" AND $defaultType != "date") {
+				if ($defaultType != "text" AND $defaultType != "int" AND $defaultType != "decimal" AND $defaultType != "varchar" AND $defaultType != "char" AND $defaultType != "date") {
             $otherType = new XoopsFormRadio('', 'element_datatype', $defaultType);
             $otherType->addOption($defaultType, _AM_FORM_DATATYPE_OTHER.$defaultType);
             $dataTypeTray->addElement($otherType);

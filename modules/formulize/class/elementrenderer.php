@@ -892,26 +892,13 @@ class formulizeElementRenderer{
 			 * Adding colorpicker form element
 			 */
 			case 'colorpick':
-				if($ele_value[0] == "") // if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-				{
-					//print "Bad date";
-				$form_ele = new XoopsFormColorPicker (
-					$ele_caption,
-					$renderedElementMarkupName,
-					""
-				);
-
-				}
-				else
-				{
-					//print "good date";
+				$ele_value[0] = $ele_value[0] ? $ele_value[0] : "#FFFFFF";
 				$form_ele = new XoopsFormColorPicker (
 					$ele_caption,
 					$renderedElementMarkupName,
 					$ele_value[0]
 				);
 
-				} // end of check to see if the default setting is for real
 			break;
 
 
