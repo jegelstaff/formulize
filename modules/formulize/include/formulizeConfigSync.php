@@ -217,31 +217,33 @@ class FormulizeConfigSync
 	 */
 	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
 	{
-		foreach ($configElements as $element) {
+		foreach ($configElements as $index => $element) {
 			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
-			$preparedElement = $this->prepareElementForDb($element);
-			$metadata = [];
+			$preparedElement = $this->prepareElementForDb($element, $index + 1);
+			$configMetadata = [
+				'form_handle' => $formHandle,
+				'data_type' => $element['metadata']['data_type'],
+				'data_type_size' => $element['metadata']['data_type_size'] ?? "",
+			];
 
 			if (!$dbElement) {
-				$metadata = [
-					'form_handle' => $formHandle,
-					'data_type' => $element['data_type']
-				];
-				$this->addChange('elements', 'create', $preparedElement['ele_handle'], $preparedElement, [], $metadata);
+				$this->addChange('elements', 'create', $preparedElement['ele_handle'], $preparedElement, [], $configMetadata);
 				continue;
-			} else {
-				$formulizeDbElement = $this->elementHandler->get($dbElement['ele_handle']);
-				$formulizeDbElementDataType = $formulizeDbElement->getDataTypeInformation();
-				if ($formulizeDbElementDataType['dataType'] !== $element['data_type']) {
-					$metadata = [
-						'data_type' => $element['data_type']
-					];
-				}
 			}
+
+			$formulizeDbElement = $this->elementHandler->get($dbElement['ele_handle']);
+			$formulizeDbElementDataType = $formulizeDbElement->getDataTypeInformation();
+
+			$dbMetadata = [
+				'form_handle' => $formHandle,
+				'data_type' => $formulizeDbElementDataType['dataType'],
+				'data_type_size' => $formulizeDbElementDataType['dataTypeSize'],
+			];
+
 			// Compare the element fields
-			$differences = $this->compareElementFields($preparedElement, $dbElement, $element['data_type'], $formulizeDbElementDataType['dataType']);
+			$differences = $this->compareElementFields($preparedElement, $dbElement, $configMetadata, $dbMetadata);
 			if (!empty($differences)) {
-				$this->addChange('elements', 'update', $preparedElement['ele_handle'], $preparedElement, $differences, $metadata);
+				$this->addChange('elements', 'update', $preparedElement['ele_handle'], $preparedElement, $differences, $configMetadata);
 			}
 		}
 
@@ -302,9 +304,11 @@ class FormulizeConfigSync
 	 *
 	 * @param array $configElement Config element configuration
 	 * @param array $dbElement Database element configuration
+	 * @param array $configMetadata Metadata from the configuration
+	 * @param array $dbMetadata Metadata from the database
 	 * @return array
 	 */
-	private function compareElementFields(array $configElement, array $dbElement, string $configDataType = NULL, string $dbDataType = NULL): array
+	private function compareElementFields(array $configElement, array $dbElement, array $configMetadata = [], array $dbMetadata = []): array
 	{
 		$differences = [];
 
@@ -333,10 +337,16 @@ class FormulizeConfigSync
 			}
 		}
 
-		if ($configDataType !== $dbDataType) {
+		if ($dbMetadata['data_type'] !== $configMetadata['data_type']) {
 			$differences['data_type'] = [
-				'config_value' => $configDataType,
-				'db_value' => $dbDataType
+				'config_value' => $configMetadata['data_type'],
+				'db_value' => $dbMetadata['data_type']
+			];
+		}
+		if ($dbMetadata['data_type_size'] !== $configMetadata['data_type_size']) {
+			$differences['data_type_size'] = [
+				'config_value' => $configMetadata['data_type_size'],
+				'db_value' => $dbMetadata['data_type_size']
 			];
 		}
 
@@ -347,9 +357,10 @@ class FormulizeConfigSync
 	 * Prepare an element for database storage
 	 *
 	 * @param array $element
+	 * @param int $orderIndex The value to use for the ele_order field
 	 * @return array
 	 */
-	private function prepareElementForDb(array $element): array
+	private function prepareElementForDb(array $element, int $orderIndex): array
 	{
 		$preparedElement = $element;
 		foreach ($preparedElement as $key => $value) {
@@ -361,8 +372,10 @@ class FormulizeConfigSync
 				}
 			}
 		}
-		// Remove the data_type field
-		unset($preparedElement['data_type']);
+		// Remove metadata type fields
+		unset($preparedElement['metadata']);
+		// Add the ele_order field
+		$preparedElement['ele_order'] = $orderIndex;
 		return $preparedElement;
 	}
 
@@ -504,6 +517,7 @@ class FormulizeConfigSync
 	{
 		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
+		$dataType = $change['metadata']['data_type_size'] ? "{$change['metadata']['data_type']}({$change['metadata']['data_type_size']})" : $change['metadata']['data_type'];
 
 		switch ($change['operation']) {
 			case 'create':
@@ -520,8 +534,7 @@ class FormulizeConfigSync
 					$formId = $form->getVar('id_form');
 					$change['data']['id_form'] = $formId;
 					$elementId = $this->insertRecord($table, $change['data']);
-					$elementType = $change['metadata']['data_type'];
-					$this->formHandler->insertElementField($elementId, $elementType);
+					$this->formHandler->insertElementField($elementId, $dataType);
 				}
 				break;
 
@@ -533,9 +546,7 @@ class FormulizeConfigSync
 				}
 				$this->updateRecord($table, $change['data'], $primaryKey);
 				// Apply data type changes to the element
-				if ($change['metadata']['data_type']) {
-					$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $change['metadata']['data_type']);
-				}
+				$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
 				break;
 
 			case 'delete':
@@ -710,14 +721,11 @@ class FormulizeConfigSync
 	 */
 	private function exportElementsForForm(int $formId): array
 	{
-
-		$dataHandler = new formulizeDataHandler($formId);
-		$dataTypes = $dataHandler->gatherDataTypes();
 		$elements = [];
 		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order");
 
 		foreach ($elementRows as $elementRow) {
-			$elements[] = $this->prepareElementForExport($elementRow, $dataTypes);
+			$elements[] = $this->prepareElementForExport($elementRow);
 		}
 
 		return $elements;
@@ -729,8 +737,12 @@ class FormulizeConfigSync
 	 * @param array $elementRow Raw element data from database
 	 * @return array Prepared element data for export
 	 */
-	private function prepareElementForExport(array $elementRow, array $dataTypes): array
+	private function prepareElementForExport(array $elementRow): array
 	{
+
+		$elementHandler = $this->elementHandler->get($elementRow['ele_handle']);
+		$elementDataType = $elementHandler->getDataTypeInformation();
+
 		$serializeFields = ['ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
 		$preparedElement = [];
 		foreach ($elementRow as $field => $value) {
@@ -745,11 +757,16 @@ class FormulizeConfigSync
 				$preparedElement[$field] = $value;
 			}
 		}
-		$preparedElement['data_type'] = $dataTypes[$elementRow['ele_handle']] ?? 'text';
+		// Add element Metadata
+		$preparedElement['metadata'] = [
+			'data_type' => $elementDataType['dataType'],
+			'data_type_size' => $elementDataType['dataTypeSize']
+		];
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
 		unset($preparedElement['ele_id']);
 		unset($preparedElement['form_handle']);
+		unset($preparedElement['ele_order']);
 		return $preparedElement;
 	}
 
