@@ -218,8 +218,9 @@ class FormulizeConfigSync
 	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
 	{
 		foreach ($configElements as $index => $element) {
+			$eleOrder = $index + 1;
 			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
-			$preparedElement = $this->prepareElementForDb($element, $index + 1);
+			$preparedElement = $this->prepareElementForDb($element, $eleOrder);
 			$configMetadata = [
 				'form_handle' => $formHandle,
 				'data_type' => $element['metadata']['data_type'],
@@ -357,10 +358,10 @@ class FormulizeConfigSync
 	 * Prepare an element for database storage
 	 *
 	 * @param array $element
-	 * @param int $orderIndex The value to use for the ele_order field
+	 * @param int $eleOrder The value to use for the ele_order field
 	 * @return array
 	 */
-	private function prepareElementForDb(array $element, int $orderIndex): array
+	private function prepareElementForDb(array $element, int $eleOrder): array
 	{
 		$preparedElement = $element;
 		foreach ($preparedElement as $key => $value) {
@@ -375,7 +376,7 @@ class FormulizeConfigSync
 		// Remove metadata type fields
 		unset($preparedElement['metadata']);
 		// Add the ele_order field
-		$preparedElement['ele_order'] = $orderIndex;
+		$preparedElement['ele_order'] = $eleOrder;
 		return $preparedElement;
 	}
 
