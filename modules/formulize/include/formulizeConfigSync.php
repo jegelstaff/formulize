@@ -741,8 +741,8 @@ class FormulizeConfigSync
 	private function prepareElementForExport(array $elementRow): array
 	{
 
-		$elementHandler = $this->elementHandler->get($elementRow['ele_handle']);
-		$elementDataType = $elementHandler->getDataTypeInformation();
+		$elementObject = $this->elementHandler->get($elementRow['ele_handle']);
+		$elementDataType = $elementObject->getDataTypeInformation();
 
 		$serializeFields = ['ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
 		$preparedElement = [];
