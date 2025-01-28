@@ -518,7 +518,7 @@ class FormulizeConfigSync
 	{
 		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
-		$dataType = $change['metadata']['data_type_size'] ? "{$change['metadata']['data_type']}({$change['metadata']['data_type_size']})" : $change['metadata']['data_type'];
+		$dataType = $this->generateDataTypeString($change['metadata']['data_type'], $change['metadata']['data_type_size']);
 
 		switch ($change['operation']) {
 			case 'create':
@@ -841,5 +841,22 @@ class FormulizeConfigSync
 			default:
 				throw new \Exception("Unknown configuration type: {$type}");
 		}
+	}
+
+	/**
+	 * Generate a data type string
+	 * @param string $dataType
+	 * @param string $dataTypeSize
+	 * @return string
+	 */
+	private function generateDataTypeString($dataType, $dataTypeSize = ""): string
+	{
+		if (!$dataTypeSize) {
+			return $dataType;
+		}
+		if ($dataType == 'decimal') {
+			return "{$dataType}(11,$dataTypeSize)";
+		}
+		return "{$dataType}({$dataTypeSize})";
 	}
 }
