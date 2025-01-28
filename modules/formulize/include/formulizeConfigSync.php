@@ -223,8 +223,7 @@ class FormulizeConfigSync
 			$preparedElement = $this->prepareElementForDb($element, $eleOrder);
 			$configMetadata = [
 				'form_handle' => $formHandle,
-				'data_type' => $element['metadata']['data_type'],
-				'data_type_size' => $element['metadata']['data_type_size'] ?? "",
+				'data_type' => $element['metadata']['data_type']
 			];
 
 			if (!$dbElement) {
@@ -237,8 +236,7 @@ class FormulizeConfigSync
 
 			$dbMetadata = [
 				'form_handle' => $formHandle,
-				'data_type' => $formulizeDbElementDataType['dataType'],
-				'data_type_size' => $formulizeDbElementDataType['dataTypeSize'],
+				'data_type' => $formulizeDbElementDataType['dataTypeString']
 			];
 
 			// Compare the element fields
@@ -342,12 +340,6 @@ class FormulizeConfigSync
 			$differences['data_type'] = [
 				'config_value' => $configMetadata['data_type'],
 				'db_value' => $dbMetadata['data_type']
-			];
-		}
-		if ($dbMetadata['data_type_size'] !== $configMetadata['data_type_size']) {
-			$differences['data_type_size'] = [
-				'config_value' => $configMetadata['data_type_size'],
-				'db_value' => $dbMetadata['data_type_size']
 			];
 		}
 
@@ -518,7 +510,7 @@ class FormulizeConfigSync
 	{
 		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
-		$dataType = $this->generateDataTypeString($change['metadata']['data_type'], $change['metadata']['data_type_size']);
+		$dataType = $change['metadata']['data_type'];
 
 		switch ($change['operation']) {
 			case 'create':
@@ -760,8 +752,7 @@ class FormulizeConfigSync
 		}
 		// Add element Metadata
 		$preparedElement['metadata'] = [
-			'data_type' => $elementDataType['dataType'],
-			'data_type_size' => $elementDataType['dataTypeSize']
+			'data_type' => $elementDataType['dataTypeString']
 		];
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
