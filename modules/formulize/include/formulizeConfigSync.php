@@ -833,21 +833,4 @@ class FormulizeConfigSync
 				throw new \Exception("Unknown configuration type: {$type}");
 		}
 	}
-
-	/**
-	 * Generate a data type string
-	 * @param string $dataType
-	 * @param string $dataTypeSize
-	 * @return string
-	 */
-	private function generateDataTypeString($dataType, $dataTypeSize = ""): string
-	{
-		if (!$dataTypeSize) {
-			return $dataType;
-		}
-		if ($dataType == 'decimal') {
-			return "{$dataType}(11,$dataTypeSize)";
-		}
-		return "{$dataType}({$dataTypeSize})";
-	}
 }
