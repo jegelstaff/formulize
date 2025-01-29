@@ -236,7 +236,7 @@ class FormulizeConfigSync
 
 			$dbMetadata = [
 				'form_handle' => $formHandle,
-				'data_type' => $formulizeDbElementDataType['dataTypeString']
+				'data_type' => $formulizeDbElementDataType['dataTypeCompleteString']
 			];
 
 			// Compare the element fields
@@ -752,7 +752,7 @@ class FormulizeConfigSync
 		}
 		// Add element Metadata
 		$preparedElement['metadata'] = [
-			'data_type' => $elementDataType['dataTypeString']
+			'data_type' => $elementDataType['dataTypeCompleteString']
 		];
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
