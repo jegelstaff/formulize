@@ -109,7 +109,7 @@ class formulizeElement extends FormulizeObject {
 			$defaultTypeSize = '';
 		}
 		//define array and return type and size
-		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize);
+		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize, "dataTypeCompleteString" => $defaultTypeComplete);
 
 	}
 
