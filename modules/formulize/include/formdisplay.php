@@ -1455,7 +1455,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                 $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
 			}
 
-			drawJavascript($nosave, $entry, $screen); // must be called after compileElements, for entry locking to work, and probably other things!
+			drawJavascript($nosave, $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
             $form->addElement(new xoopsFormHidden('save_and_leave', 0));
 		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
@@ -1778,8 +1778,9 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries = "", $subformConditions = null, $subformElementId = 0,
-	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null)
+	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null, $firstRowToDisplay = 0, $numberOfEntriesToDisplay = null)
 {
+
     require_once XOOPS_ROOT_PATH.'/modules/formulize/include/subformSaveFunctions.php';
 
     $renderingSubformUIInModal = strstr($_SERVER['SCRIPT_NAME'], 'subformdisplay-elementsonly.php') ? true : false;
@@ -2202,8 +2203,27 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             }
         }
 
+		// construct the limit based on what is passed in via $numberOfEntriesToDisplay and $firstRowToDisplay
+		$limitClause = "";
+		$pageNav = "";
+		$numberOfEntriesToDisplay = $numberOfEntriesToDisplay ? $numberOfEntriesToDisplay : $subform_element_object->ele_value['numberOfEntriesPerPage'];
+		if($numberOfEntriesToDisplay AND $numberOfEntriesToDisplay < count($sub_entries[$subform_id])) {
+			$firstRowToDisplay = intval($firstRowToDisplay);
+			if(isset($_POST['formulizeFirstRowToDisplay']) AND isset($_POST['formulizeSubformPagingInstance']) AND $_POST['formulizeSubformPagingInstance'] == $subformElementId.$subformInstance) {
+				$firstRowToDisplay = intval($_POST['formulizeFirstRowToDisplay']);
+			}
+			$limitClause = "LIMIT $firstRowToDisplay, ".intval($numberOfEntriesToDisplay);
+
+			$lastPageNumber = ceil(count($sub_entries[$subform_id]) / $numberOfEntriesToDisplay);
+			$firstDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 - 4;
+			$lastDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 + 4;
+			$firstDisplayPageNumber = $firstDisplayPageNumber < 1 ? 1 : $firstDisplayPageNumber;
+			$lastDisplayPageNumber = $lastDisplayPageNumber > $lastPageNumber ? $lastPageNumber : $lastDisplayPageNumber;
+			$pageNav = formulize_buildPageNavMarkup('gotoSubPage'.$subformElementId.$subformInstance, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
+		}
+
 		$sformObject = $form_handler->get($subform_id);
-		$subEntriesOrderSQL = "SELECT sub.entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." as sub $joinClause WHERE sub.entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause";
+		$subEntriesOrderSQL = "SELECT sub.entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." as sub $joinClause WHERE sub.entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause $limitClause";
 		if($subEntriesOrderRes = $xoopsDB->query($subEntriesOrderSQL)) {
 			$sub_entries[$subform_id] = array();
 			while($subEntriesOrderArray = $xoopsDB->fetchArray($subEntriesOrderRes)) {
@@ -2353,7 +2373,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         // close of the subform-accordion-container, unless we're on a printable view
 		$col_two .= "</div>\n";
 	}
-    $subformJS = '';
+
+	$col_two .= $pageNav; // figured out above
+
+	  $subformJS = '';
     if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms
         $subformJS .= "
             jQuery(document).ready(function() {
@@ -2386,6 +2409,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 jQuery(\".subform-delete-clone-buttons\"+elementInstance).hide(200);
             }
         }
+				function gotoSubPage".$subformElementId.$subformInstance."(firstRecordOrdinalOfPage) {
+					jQuery.post(FORMULIZE.XOOPS_URL+'/modules/formulize/formulize_xhr_responder.php?uid='+FORMULIZE.XOOPS_UID+'&op=get_element_row_html&elementId=".$subformElementId."&entryId=".$entry."&fid=".$fid."&frid=".$frid."', { formulizeFirstRowToDisplay: firstRecordOrdinalOfPage, formulizeSubformPagingInstance: ".$subformElementId.$subformInstance." }, function(data) {
+						if(data) {
+							jQuery('#formulize-de_".$fid."_".$entry."_".$subformElementId."').empty();
+							jQuery('#formulize-de_".$fid."_".$entry."_".$subformElementId."').append(JSON.parse(data).elements[0].data);
+						}
+					});
+				}
     ";
     $col_two .= "
         <script type='text/javascript'>
@@ -3171,7 +3202,11 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave=false, $entryId=null, $screen=null) {
+function drawJavascript($nosave=false, $entryId=null, $screen=null, $frid=null) {
+
+if($screen AND !$frid) {
+	$frid = $screen->getVar('frid');
+}
 
 global $xoopsUser, $xoopsConfig, $actionFunctionName, $formulizeRemoveEntryIdentifier;
 
@@ -3225,6 +3260,7 @@ var FORMULIZE = {
 	XOOPS_URL : \"".XOOPS_URL."\",
 	XOOPS_UID : ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).",
 	SCREEN_ID : ".($screen ? $screen->getVar('sid') : 0).",
+	FRID : ".intval($frid)."
 }
 ";
 $split = random_int(8, strlen(getCurrentURL())-2);

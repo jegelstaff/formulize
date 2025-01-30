@@ -419,8 +419,7 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry) {
 	}
 
 	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
-	$evaluationCondition = "\$passedCondition = false;\n";
-	$evaluationCondition .= "if(";
+	$evaluationCondition = "if(";
 
 	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
 	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
@@ -438,6 +437,7 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry) {
 	$evaluationCondition .= "  \$passedCondition = true;\n";
 	$evaluationCondition .= "}\n";
 
+	$passedCondition = false;
 	eval($evaluationCondition);
 
 	$allowed = 1;
