@@ -1,0 +1,56 @@
+<div id="relationship-create-connection-options">
+
+
+</div>
+
+
+<script>
+
+// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+$( document ).ready(function() {
+	<{if $content.isSaveLocked}>
+		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
+		document.getElementById('relationship-create-connection-popupsavebutton').innerHTML = "READ ONLY";
+	<{/if}>
+});
+
+$("input").change(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+$("input[type=text]").keydown(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+$("select").change(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+$("textarea").keydown(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+
+	$(".relationship-create-connection-savebuttonpopup").click(function() {
+		var pagedata = window.document.getElementsByName("relationship-create-connection-popupform");
+		$('#dialog-relationship-create-connection').fadeTo(1, 0.25, function() {
+			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
+				if(data) {
+					if(data.substr(0,10)=="/* eval */") {
+						eval(data);
+					} else {
+						alert(data);
+					}
+				}
+				window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'none';
+				$('#dialog-relationship-create-connection').fadeTo(1, 1);
+			});
+		});
+    $(".relationship-create-connection-savebuttonpopup").blur();
+  });
+
+	function showRelationshipCreationOptions(form1, form2) {
+		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2, function(data) {
+				if(data) {
+					$('div#relationship-create-connection-options').html(data);
+				}
+			});
+	}
+
+</script>

@@ -1333,12 +1333,51 @@ div.accordion-box p {
 	margin-bottom: 0.5em;
 }
 
-div.form-listing-box {
+div.form-listing-box,
+div.create-connection-box {
   width: 340px;
   margin: 0 2em 1.5em 0;
 	cursor: move;
 	border: 3px solid white;
 	border-radius: 7px;
+}
+
+div.create-connection-box {
+	float: left;
+	width: 275px;
+}
+
+div.create-connection-box .form-name,
+div.target-box .form-name {
+	height: 36px;
+}
+
+div#create-connection-form1-target .form-name,
+div#create-connection-form2-target .form-name {
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 4px;
+	line-height: normal;
+}
+
+div#create-connection-form1-target .form-name div,
+div#create-connection-form2-target .form-name div {
+	margin-left: 0;
+	margin-right: 0;
+	text-align: left;
+}
+
+#create-connection-title-options div.target-box {
+	height: 60px;
+	width: 275px;
+	border: 1px solid black;
+	padding-top: 0.1em;
+	padding-bottom: 0.1em;
+	padding-left: 0.3em;
+	padding-right: 0.3em;
+	line-height: 55px;
+	text-align: center;
+	margin-left: 1em;
 }
 
 div.accordion-box-wide {
@@ -1347,7 +1386,9 @@ div.accordion-box-wide {
   margin: 0 2em 1.5em 0; }
 
 div.accordion-box .form-name,
-div.form-listing-box .form-name {
+div.form-listing-box .form-name,
+div.create-connection-box .form-name,
+div.target-box .form-name {
   margin: 0;
   padding: 0.5em;
   background-color: #0085b6;
@@ -1943,14 +1984,18 @@ span.title {
 	margin-top: 0;
 }
 
-#create-connection-title-options {
+#create-connection-title-options,
+#form-toolbox-title {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	clear: both;
+	justify-content: center;
 }
+
 #create-connection-title-options div {
-	padding-left: 1em;
-	padding-right: 1em;
+	margin-left: 1em;
+	margin-right: 1em;
 }
 
 #dialog-relationship-options-content p.title,

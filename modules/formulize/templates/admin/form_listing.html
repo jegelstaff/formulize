@@ -88,7 +88,7 @@
 <{assign var="defaultTab" value="elements"}>
 <{/if}>
 
-<div class="dockable-box form-listing-box" formid='<{$form.fid}>' appid='<{$sectionContent.aid}>' id="form-details-box-<{$form.fid}>" style="position: relative; top: <{$form.top}>; left: <{$form.left}>;">
+<div class="dockable-box form-listing-box" formid='<{$form.fid}>' appid='<{$sectionContent.aid}>' id="form-details-box-<{$sectionContent.aid}>-<{$form.fid}>" style="position: relative; top: <{$form.top}>; left: <{$form.left}>;">
 <input type='hidden' name='formTop[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
 <input type='hidden' name='formLeft[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
   <div class="form-name ui-corner-top"><div><{$form.name}></div><div class="form-id-number">(id: <{$form.fid}>)</div></div>

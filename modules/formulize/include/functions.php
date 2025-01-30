@@ -3679,7 +3679,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 		if(!$fid) {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$allFormObjects = $form_handler->getAllForms();
-			$firstFormObject = $allFormObjects[0];
+			$firstFormObject = $allFormObjects[key($allFormObjects)];
 			$fid = $firstFormObject->getVar('id_form');
 			subscribeUidsToEvent($uids_to_notify, $fid, $event);
 		}

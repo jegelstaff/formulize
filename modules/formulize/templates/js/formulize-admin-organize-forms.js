@@ -126,6 +126,7 @@ function organizeCustom() {
 }
 
 // thanks to https://stackoverflow.com/questions/11611765/jquery-ui-draggable-snap-event for insight into getting the snapElements from the draggable data!
+let snapNeighbours = [];
 function setupDraggableBoxes() {
 	$( "div[id^=form-details-box]" ).draggable({
 		snap: true,
@@ -134,7 +135,7 @@ function setupDraggableBoxes() {
 		cursor: 'move',
 		stop: function( event, ui ) {
 			setDisplay('savewarning','block');
-			setupConnectionUI($(this).data("draggable").snapElements, $(this));
+			setupConnectionUI($(this).data("draggable").snapElements, $(this)); // "ui-draggable" in jQuery 1.9+
 		}
 	});
 	$('div[id^=form-details-box]').click(function() {
@@ -143,25 +144,71 @@ function setupDraggableBoxes() {
 }
 
 function setupConnectionUI(snapElements, snapElement) {
-	let form1Id = snapElement.attr('id').replace('form-details-box-', '');
-	let form2Ids = [];
+	let form1Id = snapElement.attr('formid');
+	let appid = snapElement.attr('appid');
+	removeFormFromNeighbourhood(appid, form1Id);
 	$.each(snapElements, function(index, element) {
 		if(element.snapping) {
-			form2Ids.push($(element.item).attr('id').replace('form-details-box-', ''));
+			let thisFormId = $(element.item).attr('formid');
+			recordNewNeighbours(appid, form1Id, thisFormId);
 		}
 	});
-	createRelationshipConnections(form1Id, form2Ids);
+	let form2Ids = gatherAllConnectedBoxes(appid, form1Id, []);
+	if(form2Ids.length > 0) {
+		createRelationshipConnections(form1Id, form2Ids);
+	}
+}
+
+function removeFormFromNeighbourhood(appid, form1Id) {
+	if(snapNeighbours[appid] === undefined) {
+		snapNeighbours[appid] = [];
+	}
+	snapNeighbours[appid][form1Id] = [];
+	snapNeighbours[appid].forEach(function (item, index) {
+		if(index != form1Id) {
+			const i = snapNeighbours[appid][index].indexOf(form1Id);
+			if (i > -1) {
+  			snapNeighbours[appid][index].splice(i, 1);
+			}
+		}
+	});
+}
+
+function recordNewNeighbours(appid, form1Id, thisFormId) {
+	snapNeighbours[appid][form1Id].push(thisFormId);
+	if(snapNeighbours[appid][thisFormId] === undefined) {
+		snapNeighbours[appid][thisFormId] = [];
+	}
+	if(snapNeighbours[appid][thisFormId].indexOf(form1Id) === -1) {
+		snapNeighbours[appid][thisFormId].push(form1Id);
+	}
+}
+
+// only figures out adjacent boxes that you've snapped to on this page load :(
+// because jQuery only tracks snap events live, doesn't deduce them based on adjacent starting positions
+// but that's better than nothing, since often forms would be organized together in the same session.
+// at load time, we could run some math and figure this all out (setup snapNeighbours) based on the top and left offsets.
+function gatherAllConnectedBoxes(appid, form1Id, form2Ids) {
+	if(typeof snapNeighbours[appid][form1Id] !== 'undefined') {
+		for (const formId of snapNeighbours[appid][form1Id]) {
+			if(form2Ids.indexOf(formId) === -1) {
+				form2Ids.push(formId);
+				form2Ids = gatherAllConnectedBoxes(appid, formId, form2Ids);
+			}
+		}
+	}
+	return form2Ids;
 }
 
 function clickFormDetails(jQFormDetailsBox) {
 	var formid = jQFormDetailsBox.attr('formid');
 	var appid = jQFormDetailsBox.attr('appid');
-	if($('#form-details-box-'+formid).hasClass('selected-form')) {
-		$('#form-details-box-'+formid).toggleClass('selected-form');
+	if($('#form-details-box-'+appid+'-'+formid).hasClass('selected-form')) {
+		$('#form-details-box-'+appid+'-'+formid).toggleClass('selected-form');
 		$('#form-listing-details-'+appid+'-'+formid).hide(250);
 	} else {
 		$('div[id^=form-details-box]').removeClass('selected-form');
-		$('#form-details-box-'+formid).toggleClass('selected-form');
+		$('#form-details-box-'+appid+'-'+formid).toggleClass('selected-form');
 		$('#form-listing-details-'+appid+'-'+formid).show(250);
 		$('div[id^=form-listing-details-]:not(#form-listing-details-'+appid+'-'+formid+')').hide();
 	}

@@ -730,6 +730,13 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/relationship_create_connection.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_multi.html',
+	'description' => '');
+	$modversion['templates'][] = array(
+		'file' => 'admin/relationship_create_connection_common.html',
+		'description' => '');
+
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']
