@@ -36,7 +36,7 @@ if (empty($user) || !is_object($user)) {
 			} elseif($_POST['tfaremember']) {
 				rememberDevice($user);
 			}
-            global $xoopsDB;
+			global $xoopsDB;
 			$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uidToCheck).' AND method != '.TFA_APP;
 			$xoopsDB->queryF($sql);
 		}
