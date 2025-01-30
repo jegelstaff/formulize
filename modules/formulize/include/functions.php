@@ -6432,18 +6432,17 @@ function convertSelectBoxToSingle($table, $column) {
     return true;
 }
 
+/**
+ * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
+ * IMPORTANT: queries relying on this function MUST use single quotes to encapsulate what it returns
+ * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out.
+ * @param mixed value - The value to run through the database quote method (PDO quote currently)
+ * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
+ */
 function formulize_db_escape($value) {
   global $xoopsDB;
-  static $methodExists;
-  if(!isset($methodExists)) {
-    $methodExists = method_exists($xoopsDB, 'escape');
-  }
-  if($methodExists) {
-    return $xoopsDB->escape($value);
-  } else {
-    $value = $xoopsDB->quote($value);
-    return substr($value, 1,-1);
-  }
+  $value = $xoopsDB->quote($value);
+  return substr($value, 1,-1);
 }
 
 // THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function:
