@@ -179,7 +179,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                 print "
                     <script>function xoopsFormValidate_formulize_mainform(leave, myform){return true;}</script>
                     <style> #savingmessage { display: none !important; } </style>".
-                    drawJavascript().
+                    drawJavascript(entryId: $entry_id, screen: $screen).
                     "<div id='formulizeform' style='display: none;'><form id='formulize_mainform' name='formulize_mainform' action='$doneDestination' method='post'>".
                     writeHiddenSettings($settings, null, array($screen->getVar('fid')=>array($entry_id)), array(), $screen).
                     "</form></div>
