@@ -16,11 +16,9 @@
 if (!defined('ICMS_ROOT_PATH')) {
 	exit();
 }
-global $xoopsDB;
 icms_loadLanguageFile('core', 'user');
 $uname = !isset($_POST['uname']) ? '' : trim($_POST['uname']);
 $pass = !isset($_POST['pass']) ? '' : trim($_POST['pass']);
-$uname = $xoopsDB->escape($uname);
 
 $member_handler = icms::handler('icms_member');
 
@@ -38,6 +36,7 @@ if (empty($user) || !is_object($user)) {
 			} elseif($_POST['tfaremember']) {
 				rememberDevice($user);
 			}
+			global $xoopsDB;
 			$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uidToCheck).' AND method != '.TFA_APP;
 			$xoopsDB->queryF($sql);
 		}

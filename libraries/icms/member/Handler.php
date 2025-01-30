@@ -309,6 +309,7 @@ class icms_member_Handler {
 	 */
 	public function loginUser($uname, $pwd) {
 
+		$uname = $this->db->escape($uname);
 		$icmspass = new icms_core_Password();
 
 		if (strstr($uname, '@')) {
@@ -322,7 +323,7 @@ class icms_member_Handler {
 		$salt = $icmspass->getUserSalt($uname);
 		$enc_type = $icmspass->getUserEncType($uname);
 		$pwd = $icmspass->encryptPass($pwd, $salt, $enc_type);
-		
+
 		$table = new icms_db_legacy_updater_Table('users');
 		if ($table->fieldExists('loginname')) {
 			$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('loginname', $uname));
