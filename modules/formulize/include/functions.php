@@ -8581,3 +8581,45 @@ function stripEntryFromDoneDestination($done_dest) {
 	}
 	return $done_dest;
 }
+
+/**
+ * Create the markup for the page selector used at the bottom of lists of entries, and on subform elements that page paging
+ * @param string jsFunctionname - the name of the javascript function to trigger when the user clicks on a page number
+ * @param int numberPerPage - the number of entries per page
+ * @param int currentPageFirstRecord - the ordinal number of the first record on the current page, ie: 11 if there are five entries per page and the current page is 3
+ * @param int firstDisplayPage - the first number that is shown in the pager, if the user is deep into a long series of pages, this won't be 1
+ * @param int lastDisplayPage - the last number that is shown in the pager, if the user is in the middle of a long series of pages, this won't be the last page
+ * @param int numberOfPages - the total number of pages, will be equal to the readable number of the last page
+ * @param string entriesPerPageSelector - the markup for the entries per page selector, only used by lists of entries
+ * @return string The markup for the pager
+ */
+
+function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentPageFirstRecord, $firstDisplayPage, $lastDisplayPage, $numberOfPages, $entriesPerPageSelector=null) {
+
+	$pageNav = "<div class=\"formulize-page-navigation\">";
+	$pageNav .= $entriesPerPageSelector ? "<span class=\"page-navigation-label\">". $entriesPerPageSelector."</span>" : "";
+	if ($currentPageFirstRecord > 1) {
+		$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:$jsFunctionName('".($currentPageFirstRecord - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
+	}
+	if($firstDisplayPage > 1) {
+		$pageNav .= "<a href=\"\" onclick=\"javascript:$jsFunctionName('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
+	}
+	for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
+		$thisPageStart = ($i * $numberPerPage) - $numberPerPage;
+		if($thisPageStart == $currentPageFirstRecord) {
+			$pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:$jsFunctionName('$thisPageStart');return false;\">$i</a>";
+		} else {
+			$pageNav .= "<a href=\"\" onclick=\"javascript:$jsFunctionName('$thisPageStart');return false;\">$i</a>";
+		}
+	}
+	$lastPageStart = ($numberOfPages * $numberPerPage) - $numberPerPage;
+	if($lastDisplayPage < $numberOfPages) {
+		$pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:$jsFunctionName('$lastPageStart');return false;\">" . $numberOfPages . "</a>";
+	}
+	if ($currentPageFirstRecord < $lastPageStart) {
+		$pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:$jsFunctionName('".($currentPageFirstRecord + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+	}
+	$pageNav .= "</div>";
+	return $pageNav;
+
+}
