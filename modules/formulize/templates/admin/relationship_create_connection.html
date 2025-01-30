@@ -5,41 +5,33 @@
 		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Save your changes"/></div>
 		<div id="relationship-create-connection-popupsavewarning">You have unsaved changes!</div>
 		<div style="clear: both"></div>
-		<div id="create-connection-title-options"><span class="title">Each <{$content.formSingular}> has...</span>
-			<div><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1' checked="checked">One</label><br>
-			<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Many</label></div>
+
+		<div id="create-connection-title-options"><span class="title">Each <{$content.formSingular}></span>
+			<div><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1' checked="checked">Has One</label><br>
+			<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label></div>
+			<input type="hidden" name="form1" value="<{$content.form1Id}>">
 			<select name='form2' id='1names'>
 				<{html_options options=$content.oneFormNames}>
 			</select>
 			<select name='form2x' id='2names' style="display: none;">
 				<{html_options options=$content.manyFormNames}>
 			</select>
-		</p>
+		</div>
+
+		<br>
+		<hr>
+
 	</form>
 </div>
+
+<{include file="db:admin/relationship_create_connection_common.html" content=$content}>
 
 <script type="text/javascript">
 
 	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 	$( document ).ready(function() {
-		<{if $content.isSaveLocked}>
-			document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
-			document.getElementById('relationship-create-connection-popupsavebutton').innerHTML = "READ ONLY";
-		<{/if}>
+		show2Names();
 	});
-
-  $("input").change(function() {
-    window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-    });
-  $("input[type=text]").keydown(function() {
-    window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-    });
-  $("select").change(function() {
-    window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-    });
-  $("textarea").keydown(function() {
-    window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-    });
 
 	$('input[name=relationship]').change(function() {
 		$('#form2').empty();
@@ -48,6 +40,10 @@
 		} else {
 			show2Names();
 		}
+	});
+
+	$('select[name=form2]').change(function() {
+		showRelationshipCreationOptions(<{$content.form1Id}>, $('select[name=form2]').val());
 	});
 
 	function show1Names() {
@@ -69,23 +65,5 @@
 		$('#1names').hide();
 		$('#2names').show();
 	}
-
-	$(".relationship-create-connection-savebuttonpopup").click(function() {
-		var pagedata = window.document.getElementsByName("relationship-create-connection-popupform");
-		$('#dialog-relationship-create-connection').fadeTo(1, 0.25, function() {
-			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
-				if(data) {
-					if(data.substr(0,10)=="/* eval */") {
-						eval(data);
-					} else {
-						alert(data);
-					}
-				}
-				window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'none';
-				$('#dialog-relationship-create-connection').fadeTo(1, 1);
-			});
-		});
-    $(".relationship-create-connection-savebuttonpopup").blur();
-  });
 
 </script>
