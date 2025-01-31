@@ -6229,8 +6229,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         // so we can build this odd comparison value that repeats the "handle op" part internally, to catch all the cases for checkboxes. Ugh.
         if($multiValueSearchMetadata = mustMatchOneOfMultiplePossibleValuesInElement($filterElementObject, $filterOps[$filterId])) {
             $useAndOr = $multiValueSearchMetadata['andOr'];
-            $filterOps[$filterId] = $multiValueSearchMetadata['operator'];    
-            $conditionsFilterComparisonValue = " \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."*=+*:%\" $useAndOr ".$filterElementObject->getVar('ele_handle')." ".$filterOps[$filterId]." \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."\" ";        
+            $filterOps[$filterId] = $multiValueSearchMetadata['operator'];
+            $conditionsFilterComparisonValue = " \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."*=+*:%\" $useAndOr ".$filterElementObject->getVar('ele_handle')." ".$filterOps[$filterId]." \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."\" ";
         } else {
             $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         }
@@ -8709,7 +8709,7 @@ function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $oper
         return $returnValue;
     }
     $allowableOperators = array('=', '!=', '<=>', 'LIKE', 'NOT LIKE');
-    if($element->canHaveMultipleValues 
+    if($element->canHaveMultipleValues
       AND !$element->isLinked
       AND in_array($operator, $allowableOperators)) {
           $returnValue = array(
@@ -8718,4 +8718,28 @@ function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $oper
       );
     }
     return $returnValue;
+}
+
+/**
+ * Find the first application for a given form.
+ * @param mixed form_id_or_object - the form id number of a formulize form object
+ * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application the form belongs to, if any, or the application object if returnObject was true. Returns false if form id or object was invalid, and null if there is no application for the form.
+ */
+function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject = false) {
+	$firstApp = false;
+	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
+	$formId = $form_id_or_object;
+	if(is_object($form_id_or_object) AND is_a($form_id_or_object, 'formulizeForm')) {
+		$formId = $form_id_or_object->getVar('fid');
+	}
+	if(is_numeric($formId) AND $formId) {
+		$firstApp = null;
+		if($apps = $applications_handler->getApplicationsByForm($formId)) {
+			if(is_array($apps) AND count($apps)>0) {
+				$firstApp = $returnObject ? $apps[key($apps)] : $apps[key($apps)]->getVar('appid');
+			}
+		}
+	}
+	return $firstApp;
 }

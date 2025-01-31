@@ -4213,18 +4213,12 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
                 return "<input type='button' class='formulize_button' id='formulize_$button' name='moreActions' value='$buttonText' onclick='showMoreActionButtons();'></input>";
                 break;
 			case "modifyScreenLink":
-				$applications_handler = xoops_getmodulehandler('applications', 'formulize');
-				$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
-				if(is_array($apps) AND count((array) $apps)>0) {
-					$firstAppId = $apps[key($apps)]->getVar('appid');
-				} else {
-					$firstAppId = 0;
-				}
-                $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".$firstAppId;
+				$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
+        $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
 				$link = "<a href='".$url."'>" . $buttonText . "</a>";
-                global $xoopsTpl;
-                $xoopsTpl->assign('modifyScreenUrl', $url);
-                return $link;
+				global $xoopsTpl;
+				$xoopsTpl->assign('modifyScreenUrl', $url);
+				return $link;
 				break;
 			case "changeColsButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
