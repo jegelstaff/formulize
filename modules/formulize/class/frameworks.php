@@ -567,10 +567,20 @@ class formulizeFrameworksHandler {
 	 */
 	function gatherRelationshipHelpAndOptionsContent($link) {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$form1Object = $form_handler->get($link->getVar('form1'));
-		$form2Object = $form_handler->get($link->getVar('form2'));
+		$firstApp1 = 0;
+		$firstApp2 = 0;
+		$element1Id = 0;
+		$element2Id = 0;
 		$element1Text = $this->getElementDescriptor($link->getVar('key1'));
 		$element2Text = $this->getElementDescriptor($link->getVar('key2'));
+		if($form1Object = $form_handler->get($link->getVar('form1'))) {
+			$firstApp1 = formulize_getFirstApplicationForForm($form1Object);
+			$element1Id = $link->getVar('key1');
+		}
+		if($form2Object = $form_handler->get($link->getVar('form2'))) {
+			$firstApp2 = formulize_getFirstApplicationForForm($form2Object);
+			$element2Id = $link->getVar('key2');
+		}
 		$delChecked = $link->getVar('unified_delete') ? "checked='checked'" : '';
 		$conChecked = $link->getVar('one2one_conditional') ? "checked='checked'" : '';
 		$bookChecked = $link->getVar('one2one_bookkeeping') ? "checked='checked'" : '';
@@ -578,6 +588,10 @@ class formulizeFrameworksHandler {
 		$title = ucfirst(_AM_FRAME_EACH).' '.$form1Object->getSingular().' '._AM_FRAME_HAS.' '.$connectionText.' '.($link->getVar('relationship') == 1 ? $form2Object->getSingular() : $form2Object->getPlural());
 		return array(
 			'linkId'=>$link->getVar('lid'),
+			'element1Id'=>$element1Id,
+			'element2Id'=>$element2Id,
+			'firstApp1'=>$firstApp1,
+			'firstApp2'=>$firstApp2,
 			'element1Text'=>$element1Text,
 			'element2Text'=>$element2Text,
 			'type'=>$link->getVar('relationship'),

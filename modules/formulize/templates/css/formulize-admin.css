@@ -2020,6 +2020,7 @@ label[for^=relationships-] {
   text-indent: -1.8em;
 }
 
-.relationship-link-options {
+.relationship-link-options,
+.relationship-element-details {
 	font-size: 8pt;
 }
