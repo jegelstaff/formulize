@@ -8768,5 +8768,28 @@ function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentP
 	}
 	$pageNav .= "</div>";
 	return $pageNav;
+}
 
+/**
+ * Find the first application for a given form.
+ * @param mixed form_id_or_object - the form id number of a formulize form object
+ * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application the form belongs to, if any, or the application object if returnObject was true. Returns false if form id or object was invalid, and null if there is no application for the form.
+ */
+function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject = false) {
+	$firstApp = false;
+	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
+	$formId = $form_id_or_object;
+	if(is_object($form_id_or_object) AND is_a($form_id_or_object, 'formulizeForm')) {
+		$formId = $form_id_or_object->getVar('fid');
+	}
+	if(is_numeric($formId) AND $formId) {
+		$firstApp = null;
+		if($apps = $applications_handler->getApplicationsByForm($formId)) {
+			if(is_array($apps) AND count($apps)>0) {
+				$firstApp = $returnObject ? $apps[key($apps)] : $apps[key($apps)]->getVar('appid');
+			}
+		}
+	}
+	return $firstApp;
 }
