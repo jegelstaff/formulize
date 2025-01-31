@@ -38,9 +38,10 @@
 // - any linked element in form 2 that points to any element in form 1 (would be a pair)
 // -- also take vice versa for multiselect linked elements, if relationship is one to many
 // -- also take vice versa for non-multiselect linked elements, if relationship is one to one
-// - any textbox element as a common value to PI form 1 (would be pair of PI form 1 plus an element selector for form 2)
+// - any textbox element in form 2 as a common value to PI form 1 (would be pair of PI form 1 plus an element selector for form 2)
 // - a new element option in selector for form 2 (above) to create a connection to PI form 1:
 // -- textbox (common value), or checkboxes or dropdown or autocomplete or multiselect autocomplete (linked element)
+// -- Offer the name of the form or the caption of PI for name of new element, or let them type in a name?
 
 // OPTIONS FOR CONNECTION MUST BE SET, INCLUDING EXTRA ONES FOR ONE TO ONE
 // IF ONE TO MANY, ADDITIONAL OPTION FOR SUBFORM ELEMENT CREATION
