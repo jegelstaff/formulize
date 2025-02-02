@@ -49,4 +49,11 @@
 // - ONLY AVAILABLE IF THERE ISN'T A SUBFORM ELEMENT ALREADY INSIDE FORM 1 THAT SHOWS FORM 2
 // - GIVE AN OPTION FOR WHICH PAGE OF THE DEFAULT SCREEN THE ELEMENT SHOULD SHOW UP ON, OR ADD A NEW PAGE FOR IT
 
-// ADD LINKS TO THE ELEMENT CONFIG PAGES IN THE CONNECTION DETAILS READOUT!!
+include "mainfile.php";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+
+$form1Id = intval($_GET['form1']);
+$form2Id = intval($_GET['form2']);
+$rel = intval($_GET['rel']);
+
+

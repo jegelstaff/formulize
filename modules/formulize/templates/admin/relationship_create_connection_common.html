@@ -46,8 +46,10 @@ $("textarea").keydown(function() {
   });
 
 	function showRelationshipCreationOptions(form1, form2) {
-		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2, function(data) {
+		let rel = $('input[name=relationship]:checked').val();
+		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel, function(data) {
 				if(data) {
+					$('input[name=relationship]').attr('disabled', true);
 					$('div#relationship-create-connection-options').html(data);
 				}
 			});
