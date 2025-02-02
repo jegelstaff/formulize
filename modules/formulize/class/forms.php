@@ -121,8 +121,8 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("fid", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
-		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], true, 255);
-		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], true, 255);
+		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
+		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
