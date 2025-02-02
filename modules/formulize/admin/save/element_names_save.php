@@ -128,6 +128,15 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the element: ".$xoopsDB->error();
 }
 
+// handle principal identifier
+if($_POST['principalidentifier']) {
+	$formObject->setVar('pi', $ele_id);
+	$form_handler->insert($formObject);
+} elseif($formObject->getVar('pi') == $ele_id) {
+	$formObject->setVar('pi', 0);
+	$form_handler->insert($formObject);
+}
+
 if($original_handle) {
 	if($ele_handle != $original_handle) {
 		// rewrite references in other elements to this handle (linked selectboxes)

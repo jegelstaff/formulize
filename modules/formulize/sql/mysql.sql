@@ -128,7 +128,7 @@ CREATE TABLE `formulize_application_form_link` (
   `appid` int(11) NOT NULL default 0,
   `fid` int(11) NOT NULL default 0,
   `top` varchar(255) NOT NULL default '',
-  `left` varchar(255) NOT NULL default '', 
+  `left` varchar(255) NOT NULL default '',
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
@@ -379,6 +379,7 @@ CREATE TABLE formulize_id (
   store_revisions tinyint(1) NOT NULL default '0',
   note text,
   send_digests tinyint(1) NOT NULL default 0,
+	`pi` int(5) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=InnoDB;
 

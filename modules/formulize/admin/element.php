@@ -190,7 +190,7 @@ if ($_GET['ele_id'] != "new") {
             break;
     }
 
- $ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+ 		$ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
     $common['ele_req_on'] = $ele_req === false ? false : true;
 
     $names['ele_req_no_on'] = " checked";
@@ -223,6 +223,7 @@ $formHandle=printSmart($formObject->getVar('form_handle'), 30);
 $orderOptions = array();
 $ele_colheads = $formObject->getVar('elementColheads');
 $ele_captions = $formObject->getVar('elementCaptions');
+$defaultpi = $formObject->getVar('pi');
 foreach($formObject->getVar('elements') as $elementId) {
     $elementTextToDisplay = $ele_colheads[$elementId] ? printSmart($ele_colheads[$elementId]) : printSmart($ele_captions[$elementId]);
     if ($ele_id != $elementId) {
@@ -235,6 +236,8 @@ $names['defaultorder'] = $defaultOrder;
 $names['firstelementorder'] = $firstElementOrder;
 $names['sortoptions'] = $sortOptions;
 $names['defaultsort'] = $defaultSort;
+$names['principalidentifier_off'] = $defaultpi == $ele_id ? "" : " checked='checked' ";
+$names['principalidentifier_on'] = $defaultpi != $ele_id ? "" : " checked='checked' ";
 
 // common values should be assigned to all tabs
 $common['name'] = '';

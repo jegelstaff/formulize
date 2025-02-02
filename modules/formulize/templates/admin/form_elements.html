@@ -143,4 +143,14 @@ $("#accordion-2").bind( "sortupdate", function(event, ui) {
   setDisplay('savewarning','block');
 });
 
+$("input[name=principalidentifier]").change(function() {
+	setPI($(this).val());
+});
+
+function setPI(elementId) {
+	$("select[name=forms-pi]").val(elementId);
+	$("input[name=principalidentifier]").attr("checked", false);
+	$("input[name=principalidentifier][value="+elementId+"]").attr("checked", true);
+}
+
 </script>

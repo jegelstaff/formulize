@@ -149,6 +149,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $this->getVar('custom_edit_check'));
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
+		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi'], false);
     }
 
 	/**
@@ -772,14 +773,14 @@ class formulizeFormsHandler {
 
                 if($formObject->isNew() || empty($id_form)) {
                     $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singular`, `plural`, `singleentry`, `tableform`, ".
-                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`) VALUES (".
+                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
                         $this->db->quoteString($title).", ".
                         $this->db->quoteString($singular).", ".
                         $this->db->quoteString($plural).", ".
 												$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).")";
+                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
                         " `desc_form` = ".$this->db->quoteString($title).
@@ -794,6 +795,7 @@ class formulizeFormsHandler {
                         ", `store_revisions` = ".intval($store_revisions).
                         ", `note` = ".$this->db->quoteString($note).
                         ", `send_digests` = ".intval($send_digests).
+												", `pi` = ".intval($pi).
                         " WHERE id_form = ".intval($id_form);
                 }
 
