@@ -56,6 +56,7 @@ class formulizeElement extends FormulizeObject {
         parent::__construct();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
+		$this->initVar("fid", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 100);
 		$this->initVar("ele_caption", XOBJ_DTYPE_TXTAREA);
@@ -82,6 +83,15 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
         $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
+	}
+
+	/**
+	 * Return the name that should be used for the element in UI - colhead if there is one, or caption
+	 * @return string The name that should be used
+	 */
+	public function getUIName() {
+		$colhead = trans(strip_tags($this->getVar('ele_colhead')));
+		return $colhead ? $colhead : trans(strip_tags($this->getVar('ele_caption')));
 	}
 
 	//this method is used to to retreive the elements dataType and size
@@ -299,6 +309,7 @@ class formulizeElementsHandler {
         $element->isLinked = false;
         $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
         $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
+				$element->setVar('fid', $element->getVar('id_form'));
         $ele_type = $element->getVar('ele_type');
         $ele_value = $element->getVar('ele_value');
         if($ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
@@ -449,28 +460,16 @@ class formulizeElementsHandler {
 		return $ele_id;
 	}
 
-	function delete(&$element, $force = false){
-
-		if( strtolower(get_class($this)) != 'formulizeelementshandler') {
-			return false;
-		}
-
+	function delete($element, $force = false){
 		global $xoopsDB;
-
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
-        if( false != $force ){
-            $result = $this->db->queryF($sql);
-        }else{
-            $result = $this->db->query($sql);
-        }
-		// delete from frameworks table too -- added July 27 2006
-		$sql = "DELETE FROM ". $xoopsDB->prefix('formulize_framework_elements') . " WHERE fe_element_id=".$element->getVar("ele_id");
-	        if( false != $force ){
-      	      $result = $this->db->queryF($sql);
-	        }else{
-      	      $result = $this->db->query($sql);
-	        }
-		return true;
+		if( false != $force ){
+			$result1 = $this->db->queryF($sql);
+		}else{
+			$result1 = $this->db->query($sql);
+		}
+		$result2 = deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
+		return ($result1 AND $result2) ? true : false;
 	}
 
 	// this function added by jwe Aug 14 2005 -- deletes the data associated with a particular element in a particular form

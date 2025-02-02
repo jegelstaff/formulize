@@ -1,0 +1,12 @@
+<div class="form-item">
+	<fieldset>
+		<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_PI1}> <{$content.formTitle}> <{$smarty.const._AM_SETTINGS_FORM_PI2}></label></legend>
+		<select name="forms-pi" size=1>
+			<option value=""><{$smarty.const._AM_SETTINGS_FORM_PI_NONE}></option>
+			<{html_options options=$content.pioptions selected=$content.defaultpi}>
+		</select>
+		<div class="description">
+			<p><{$smarty.const._AM_SETTINGS_FORM_PI_DESC}></p>
+		</div>
+	</fieldset>
+</div>

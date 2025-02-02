@@ -62,6 +62,7 @@ if (typeof jQuery.ui == 'undefined') {
 ";
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 
 function getFormFramework($formframe, $mainform=0) {
@@ -946,6 +947,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     $one_to_one = array();
     $many_to_one = array();
     $one_to_many = array();
+    $sub_fids = array();
     foreach ($one_q1 as $res1) {
         $one_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
         $one_to_one[$indexer]['keyself'] = $res1['fl_key1'];
@@ -3625,7 +3627,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 		if(!$fid) {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$allFormObjects = $form_handler->getAllForms();
-			$firstFormObject = $allFormObjects[0];
+			$firstFormObject = $allFormObjects[key($allFormObjects)];
 			$fid = $firstFormObject->getVar('id_form');
 			subscribeUidsToEvent($uids_to_notify, $fid, $event);
 		}
@@ -8580,4 +8582,28 @@ function stripEntryFromDoneDestination($done_dest) {
 		}
 	}
 	return $done_dest;
+}
+
+/**
+ * Find the first application for a given form.
+ * @param mixed form_id_or_object - the form id number of a formulize form object
+ * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application the form belongs to, if any, or the application object if returnObject was true. Returns false if form id or object was invalid, and null if there is no application for the form.
+ */
+function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject = false) {
+	$firstApp = false;
+	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
+	$formId = $form_id_or_object;
+	if(is_object($form_id_or_object) AND is_a($form_id_or_object, 'formulizeForm')) {
+		$formId = $form_id_or_object->getVar('fid');
+	}
+	if(is_numeric($formId) AND $formId) {
+		$firstApp = null;
+		if($apps = $applications_handler->getApplicationsByForm($formId)) {
+			if(is_array($apps) AND count($apps)>0) {
+				$firstApp = $returnObject ? $apps[key($apps)] : $apps[key($apps)]->getVar('appid');
+			}
+		}
+	}
+	return $firstApp;
 }

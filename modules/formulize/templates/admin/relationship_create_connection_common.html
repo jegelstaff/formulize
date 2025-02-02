@@ -1,0 +1,83 @@
+<script>
+	if (typeof form1Id === undefined) {
+		let form1Id = 0;
+		let form2Id = 0;
+	} else {
+		form1Id = 0;
+		form2Id = 0;
+	}
+</script>
+
+<div>
+	<form name="relationship-create-connection-popupform">
+		<input type="hidden" name="formulize_admin_handler" value="relationship_options">
+		<input type="hidden" name="formulize_admin_key" value="<{$content.linkId}>">
+		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Save your changes"/></div>
+		<div id="relationship-create-connection-popupsavewarning">You have unsaved changes!</div>
+		<div style="clear: both"></div>
+
+		<{if $content.forms}>
+			<{include file="db:admin/relationship_create_connection_multi.html" content=$content}>
+		<{else}>
+			<{include file="db:admin/relationship_create_connection_pair.html" content=$content}>
+		<{/if}>
+
+		<div id="relationship-create-connection-options">
+		</div>
+
+	</form>
+</div>
+
+<script>
+
+// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+$( document ).ready(function() {
+	<{if $content.isSaveLocked}>
+		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
+		document.getElementById('relationship-create-connection-popupsavebutton').innerHTML = "READ ONLY";
+	<{/if}>
+});
+
+$("input").change(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+$("input[type=text]").keydown(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+$("select").change(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+$("textarea").keydown(function() {
+	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
+	});
+
+	$(".relationship-create-connection-savebuttonpopup").click(function() {
+		var pagedata = window.document.getElementsByName("relationship-create-connection-popupform");
+		$('#dialog-relationship-create-connection').fadeTo(1, 0.25, function() {
+			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
+				if(data) {
+					if(data.substr(0,10)=="/* eval */") {
+						eval(data);
+					} else {
+						alert(data);
+					}
+				}
+				window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'none';
+				$('#dialog-relationship-create-connection').fadeTo(1, 1);
+			});
+		});
+    $(".relationship-create-connection-savebuttonpopup").blur();
+  });
+
+	function showRelationshipCreationOptions(form1, form2, pi=0) {
+		let rel = $('input[name=relationship]:checked').val();
+		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi, function(data) {
+				if(data) {
+					$('input[name=relationship]').attr('disabled', true);
+					$('select[name=form2]').attr('disabled', true);
+					$('div#relationship-create-connection-options').html(data);
+				}
+			});
+	}
+
+</script>
