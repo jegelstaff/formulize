@@ -8,7 +8,7 @@
 		<p class='title'><{$content.title}></p>
 		<p>Connected by:</p>
 		<{if $content.element1Text AND $content.element2Text }>
-		<ul class='connections admin-ui'><li><{$content.element1Text}><{if $content.element1Id > 0}> &mdash; <a class='relationship-element-details' href='/modules/formulize/admin/ui.php?page=element&aid=<{$content.firstApp1}>&ele_id=<{$content.element1Id}>'>Configure</a><{/if}></li><li><{$content.element2Text}><{if $content.element2Id > 0}> &mdash; <a class='relationship-element-details' href='/modules/formulize/admin/ui.php?page=element&aid=<{$content.firstApp2}>&ele_id=<{$content.element2Id}>'>Configure</a><{/if}></li></ul>
+		<ul class='connections admin-ui'><li><{if $content.element1Id > 0}><a href='/modules/formulize/admin/ui.php?page=element&aid=<{$content.firstApp1}>&ele_id=<{$content.element1Id}>'><{/if}><{$content.element1Text}><{if $content.element1Id > 0}></a><{/if}></li><li><{if $content.element2Id > 0}><a href='/modules/formulize/admin/ui.php?page=element&aid=<{$content.firstApp2}>&ele_id=<{$content.element2Id}>'><{/if}><{$content.element2Text}><{if $content.element2Id > 0}></a><{/if}></li></ul>
 		<{else}>
 		<{$smarty.const._AM_FRAME_UIDLINK}>;
 		<{/if}>
