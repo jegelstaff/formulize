@@ -64,9 +64,12 @@ if ($_GET['fid'] != "new") {
     $store_revisions = $formObject->getVar('store_revisions');
     $note = $formObject->getVar('note');
     $send_digests = $formObject->getVar('send_digests');
+		$defaultpi = $formObject->getVar('pi');
+		$pioptions = array();
 
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
+		$elementIdsWithData = $formObject->getVar('elementsWithData');
     $elements = array();
     $elementHeadings = array();
     $formApplications = array();
@@ -76,10 +79,15 @@ if ($_GET['fid'] != "new") {
     $i = 1;
     foreach($elementObjects as $thisElement) {
         if($thisElement->isSystemElement) { continue; }
-        $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
-        $colhead = strip_tags($thisElement->getVar('ele_colhead'));
+        $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
+        $colhead = trans(strip_tags($thisElement->getVar('ele_colhead')));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
         $ele_id = $thisElement->getVar('ele_id');
+				$elements[$i]['content']['hasData'] = 0;
+				if(isset($elementIdsWithData[$ele_id])) {
+					$pioptions[$ele_id] = $colhead ? $colhead : $elementCaption;
+					$elements[$i]['content']['hasData'] = 1;
+				}
         $ele_handle = $thisElement->getVar('ele_handle');
         $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
         $elements[$i]['name'] = "<span style='font-size: 125%;'>$nameText</span><br>$cleanType - $ele_handle";
@@ -428,6 +436,8 @@ if ($_GET['fid'] != "new") {
     $form_handle = "";
     $store_revisions = 0;
 		$send_digests = 0;
+		$defaultpi = 0;
+		$pioptions = array();
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -485,6 +495,8 @@ $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
 $common['form_object'] = $formObject;
 $common['note'] = $note;
+$common['defaultpi'] = $defaultpi;
+$common['pioptions'] = $pioptions;
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";

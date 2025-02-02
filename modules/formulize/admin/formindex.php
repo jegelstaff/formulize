@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_application_form_link';
-    $checkThisField = 'top';
+    $checkThisTable = 'formulize_id';
+    $checkThisField = 'pi';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -488,6 +488,7 @@ function patch40() {
 				$sql['plural'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `plural` varchar(255) NULL default ''";
         $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
         $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
+				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
 
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
@@ -619,6 +620,8 @@ function patch40() {
                     print "Singluar/Plural form names already added. result: OK<br>";
                 } elseif($key === "add_form_top" OR $key === "add_form_left") {
                     print "Form top/left admin positions already added. result: OK<br>";
+								} elseif($key === "add_pi") {
+										print "Principal Identifier already added. result: OK<br>";
                 }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
