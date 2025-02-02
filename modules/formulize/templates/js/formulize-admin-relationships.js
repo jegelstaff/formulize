@@ -18,6 +18,10 @@ $(document).ready(function() {
 	});
 });
 
+$('select[name=form2]').live('change', function() {
+	showRelationshipCreationOptions($('input[type=hidden][name=form1]').val(), $('select[name=form2]').val());
+});
+
 $("#relationship-create-connection-options select[name=forms-pi]").live('change', function() {
 	if(typeof form1Id === 'undefined' || form1Id == 0) {
 		var form1 = $('input[type=hidden][name=form1]').val();
