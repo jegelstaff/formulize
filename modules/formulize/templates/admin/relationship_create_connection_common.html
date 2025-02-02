@@ -1,18 +1,34 @@
-<div id="relationship-create-connection-options">
+<script>
+	if (typeof form1Id === undefined) {
+		let form1Id = 0;
+		let form2Id = 0;
+	} else {
+		form1Id = 0;
+		form2Id = 0;
+	}
+</script>
 
+<div>
+	<form name="relationship-create-connection-popupform">
+		<input type="hidden" name="formulize_admin_handler" value="relationship_options">
+		<input type="hidden" name="formulize_admin_key" value="<{$content.linkId}>">
+		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Save your changes"/></div>
+		<div id="relationship-create-connection-popupsavewarning">You have unsaved changes!</div>
+		<div style="clear: both"></div>
 
+		<{if $content.forms}>
+			<{include file="db:admin/relationship_create_connection_multi.html" content=$content}>
+		<{else}>
+			<{include file="db:admin/relationship_create_connection_pair.html" content=$content}>
+		<{/if}>
+
+		<div id="relationship-create-connection-options">
+		</div>
+
+	</form>
 </div>
 
-
 <script>
-
-if (typeof form1Id === undefined) {
-	let form1Id = 0;
-	let form2Id = 0;
-} else {
-	form1Id = 0;
-	form2Id = 0;
-}
 
 // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 $( document ).ready(function() {
@@ -58,6 +74,7 @@ $("textarea").keydown(function() {
 		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi, function(data) {
 				if(data) {
 					$('input[name=relationship]').attr('disabled', true);
+					$('select[name=form2]').attr('disabled', true);
 					$('div#relationship-create-connection-options').html(data);
 				}
 			});

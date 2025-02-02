@@ -130,7 +130,7 @@ if(empty($form2Ids)) { // manually creating connection from form settings
 			'manyFormNames'=>array('0'=>'Choose a form') + $manyFormNames,
 			'isSaveLocked'=>sendSaveLockPrefToTemplate()
 		);
-		$template = "db:admin/relationship_create_connection.html";
+		$template = "db:admin/relationship_create_connection_common.html";
 	}
 
 } elseif(!empty($form2Ids)) { // click and dragging forms together
@@ -147,7 +147,7 @@ if(empty($form2Ids)) { // manually creating connection from form settings
 			'plural'=>trans($thisFormObject->getPlural())
 		);
 	}
-	$template = "db:admin/relationship_create_connection_multi.html";
+	$template = "db:admin/relationship_create_connection_common.html";
 }
 
 // prepare the contents if there are any
