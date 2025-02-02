@@ -43,15 +43,11 @@
 	// Thanks to https://stackoverflow.com/questions/1254665/jquery-draggable-droppable-how-to-snap-dropped-element-to-dropped-on-element
 	$('.create-connection-box').draggable();
 
-	if (typeof form1Id === undefined) {
-		let form1Id = 0;
-		let form2Id = 0;
+	if (typeof existingOneConnections === undefined) {
 		let existingOneConnections = [];
 		let existingManyConnections = [];
 		let allForms = [];
 	} else {
-		form1Id = 0;
-		form2Id = 0;
 		existingOneConnections = [];
 		existingManyConnections = [];
 		allForms = [];

@@ -733,9 +733,12 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/relationship_create_connection_multi.html',
 	'description' => '');
-	$modversion['templates'][] = array(
-		'file' => 'admin/relationship_create_connection_common.html',
-		'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_common.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/primary_identifier_selection.html',
+	'description' => '');
 
 
 //	Module Configs

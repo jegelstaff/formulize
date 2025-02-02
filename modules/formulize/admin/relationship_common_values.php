@@ -34,6 +34,11 @@
 
 require_once "../../../mainfile.php";
 
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 // setup a smarty object that we can use for templating our own pages
 require_once XOOPS_ROOT_PATH.'/class/template.php';
 require_once XOOPS_ROOT_PATH.'/class/theme.php';
