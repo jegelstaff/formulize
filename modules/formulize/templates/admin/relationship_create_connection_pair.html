@@ -1,0 +1,52 @@
+<div id="create-connection-title-options"><span class="title">Each <{$content.formSingular}></span>
+	<div><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1' checked="checked">Has One</label><br>
+	<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label></div>
+	<input type="hidden" name="form1" value="<{$content.form1Id}>">
+	<select name='form2' id='1names'>
+		<{html_options options=$content.oneFormNames}>
+	</select>
+	<select name='form2x' id='2names' style="display: none;">
+		<{html_options options=$content.manyFormNames}>
+	</select>
+</div>
+
+<br>
+<hr>
+
+<script type="text/javascript">
+
+	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
+	$( document ).ready(function() {
+		show2Names();
+	});
+
+	$('input[name=relationship]').change(function() {
+		$('#form2').empty();
+		if($(this).val()==1) {
+			show1Names();
+		} else {
+			show2Names();
+		}
+	});
+
+	function show1Names() {
+		$('#manyentries').removeAttr('checked');
+		$('#oneentry').attr('checked', 'checked');
+		$('#1names').val($('#2names').val());
+		$('#1names').attr('name', 'form2');
+		$('#2names').attr('name', 'form2x');
+		$('#2names').hide();
+		$('#1names').show();
+	}
+
+	function show2Names() {
+		$('#oneentry').removeAttr('checked');
+		$('#manyentries').attr('checked','checked');
+		$('#2names').val($('#1names').val());
+		$('#1names').attr('name', 'form2x');
+		$('#2names').attr('name', 'form2');
+		$('#1names').hide();
+		$('#2names').show();
+	}
+
+</script>

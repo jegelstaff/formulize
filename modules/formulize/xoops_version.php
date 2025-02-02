@@ -728,7 +728,7 @@ $modversion['templates'][] = array(
 	'file' => 'admin/relationship_options.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/relationship_create_connection.html',
+	'file' => 'admin/relationship_create_connection_pair.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/relationship_create_connection_multi.html',
@@ -738,6 +738,12 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/primary_identifier_selection.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_options.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_connection_options.html',
 	'description' => '');
 
 

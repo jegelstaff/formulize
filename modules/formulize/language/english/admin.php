@@ -10,6 +10,10 @@ define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
 define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
+define("_AM_APP_RELATIONSHIP_UNIFIEDDELETE", "When you delete an entry in one form, delete the linked entries in the other form");
+define("_AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER", "When you display the forms together, dynamically change the entry displayed, if the linking value changes");
+define("_AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES", "When you save an entry in one form, automatically create an entry in the other");
+
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
 define("_AM_APP_ELEMENTS","Elements");

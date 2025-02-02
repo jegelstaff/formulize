@@ -85,6 +85,15 @@ class formulizeElement extends FormulizeObject {
         $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 	}
 
+	/**
+	 * Return the name that should be used for the element in UI - colhead if there is one, or caption
+	 * @return string The name that should be used
+	 */
+	public function getUIName() {
+		$colhead = trans(strip_tags($this->getVar('ele_colhead')));
+		return $colhead ? $colhead : trans(strip_tags($this->getVar('ele_caption')));
+	}
+
 	//this method is used to to retreive the elements dataType and size
 	function getDataTypeInformation() {
 		$defaultType = "text";

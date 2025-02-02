@@ -1,42 +1,31 @@
+
+<input type="hidden" name="form1" value="">
+<input type="hidden" name="form2" value="">
 <div>
-	<form name="relationship-create-connection-popupform">
-		<input type="hidden" name="formulize_admin_handler" value="relationship_options">
-		<input type="hidden" name="formulize_admin_key" value="<{$content.linkId}>">
-		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Save your changes"/></div>
-		<div id="relationship-create-connection-popupsavewarning">You have unsaved changes!</div>
-		<div style="clear: both"></div>
-		<input type="hidden" name="form1" value="">
-		<input type="hidden" name="form2" value="">
-		<div>
+	<div id="create-connection-title-options" class="multi-connection">
+		<span class="title">Each</span>
+		<div id="create-connection-form1-target" class="target-box">Drag in form 1</div>
+		<div id="create-connection-type" style="visibility: hidden;"><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1'>Has One</label><br>
+		<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label></div>
+		<div id="create-connection-form2-target" class="target-box" style="visibility: hidden;">Drag in form 2</div>
+	</div>
 
-			<div id="create-connection-title-options" class="multi-connection">
-				<span class="title">Each</span>
-				<div id="create-connection-form1-target" class="target-box">Drag in form 1</div>
-				<div id="create-connection-type" style="visibility: hidden;"><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1'>Has One</label><br>
-				<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label></div>
-				<div id="create-connection-form2-target" class="target-box" style="visibility: hidden;">Drag in form 2</div>
-			</div>
+	<br>
+	<hr>
 
-			<br>
-			<hr>
+	<div id="form-toolbox-title">
+		<p class="title">Available Forms:</p>
+	</div>
 
-			<div id="form-toolbox-title">
-				<p class="title">Available Forms:</p>
-			</div>
-
-			<div id="form-toolbox">
-			<{foreach item=form from=$content.forms}>
-				<div class="create-connection-box" formid='<{$form.formId}>' singular='<{$form.singular}>' plural='<{$form.plural}>' id="create-connection-box-<{$form.formId}>">
-					<div class="form-name ui-corner-top ui-corner-bottom"><div><{$form.formTitle}></div><div class="form-id-number">(id: <{$form.formId}>)</div></div>
-				</div>
-			<{/foreach}>
-			</div>
-
+	<div id="form-toolbox">
+	<{foreach item=form from=$content.forms}>
+		<div class="create-connection-box" formid='<{$form.formId}>' singular='<{$form.singular}>' plural='<{$form.plural}>' id="create-connection-box-<{$form.formId}>">
+			<div class="form-name ui-corner-top ui-corner-bottom"><div><{$form.formTitle}></div><div class="form-id-number">(id: <{$form.formId}>)</div></div>
 		</div>
-	</form>
-</div>
+	<{/foreach}>
+	</div>
 
-<{include file="db:admin/relationship_create_connection_common.html" content=$content}>
+</div>
 
 <script type="text/javascript">
 

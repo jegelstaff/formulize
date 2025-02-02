@@ -12,13 +12,8 @@
 		<{else}>
 		<{$smarty.const._AM_FRAME_UIDLINK}>;
 		<{/if}>
-		<p>Options:</p>
 		<input type='hidden' name='lid' value='<{$content.linkId}>'>
-		<label for='relationships-delete-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.delChecked}> value='1' name='relationships-delete-<{$content.linkId}>' id='relationships-delete-<{$content.linkId}>'> When you delete an entry in one form, delete the linked entries in the other form</label><br>
-		<{if $content.type == 1}>
-			<label for='relationships-conditional-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.conChecked}> value='1' name='relationships-conditional-<{$content.linkId}>' id='relationships-conditional-<{$content.linkId}>'> When you display the forms together, dynamically change the entry displayed, if the linking value changes</label><br>
-			<label for='relationships-bookkeeping-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.bookChecked}> value='1' name='relationships-bookkeeping-<{$content.linkId}>' id='relationships-bookkeeping-<{$content.linkId}>'> When you save an entry in one form, automatically create an entry in the other</label><br>
-		<{/if}>
+		<{include file="db:admin/relationship_connection_options.html" content=$content}>
 	</form>
 </div>
 
