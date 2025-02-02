@@ -33,6 +33,10 @@
             </fieldset>
 		</div>
 
+		<{if $content.istableform == false}>
+			<{include file="db:admin/primary_identifier_selection.html" content=$content}>
+		<{/if}>
+
 		<div class="form-item">
 			<fieldset>
 					<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APP_PART}></label></legend>
@@ -70,18 +74,6 @@
 		<{/if}>
 
 		<{if $content.istableform == false}>
-		<div class="form-item">
-			<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_PI}></label></legend>
-				<select name="forms-pi" size=1>
-					<option value=""><{$smarty.const._AM_SETTINGS_FORM_PI_NONE}></option>
-					<{html_options options=$content.pioptions selected=$content.defaultpi}>
-				</select>
-				<div class="description">
-					<p><{$smarty.const._AM_SETTINGS_FORM_PI_DESC}></p>
-				</div>
-			</fieldset>
-		</div>
 
 			<div class="form-item">
         	<fieldset>

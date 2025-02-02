@@ -6,6 +6,14 @@
 
 <script>
 
+if (typeof form1Id === undefined) {
+	let form1Id = 0;
+	let form2Id = 0;
+} else {
+	form1Id = 0;
+	form2Id = 0;
+}
+
 // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 $( document ).ready(function() {
 	<{if $content.isSaveLocked}>
@@ -45,9 +53,9 @@ $("textarea").keydown(function() {
     $(".relationship-create-connection-savebuttonpopup").blur();
   });
 
-	function showRelationshipCreationOptions(form1, form2) {
+	function showRelationshipCreationOptions(form1, form2, pi=0) {
 		let rel = $('input[name=relationship]:checked').val();
-		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel, function(data) {
+		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi, function(data) {
 				if(data) {
 					$('input[name=relationship]').attr('disabled', true);
 					$('div#relationship-create-connection-options').html(data);

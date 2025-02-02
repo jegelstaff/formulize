@@ -118,7 +118,8 @@ define("_AM_SETTINGS_FORM_SHOWING_LIST","If a List Screen has no columns specifi
 define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
-define("_AM_SETTINGS_FORM_PI","Which element in the form is the principal identifier?");
+define("_AM_SETTINGS_FORM_PI1","Which element in");
+define("_AM_SETTINGS_FORM_PI2","is the principal identifier?");
 define("_AM_SETTINGS_FORM_PI_NONE","No principal identifer");
 define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
 

@@ -1611,13 +1611,13 @@ div.save-view-access {
 div.customeffect {
   padding-left: 1em; }
 
-form fieldset {
+fieldset {
   margin-bottom: 10px;
   border: 1px solid #0085b6;
   /*padding: 6px;*/
   padding: 0.5em; }
 
-form legend {
+legend {
   padding: 0 2px;
   font-weight: bold;
   color: #0085b6;
@@ -1641,29 +1641,16 @@ li.user_perms_li_li {
   margin-left: 50px !important;
   padding: 0; }
 
-form div.form-item {
+div.form-item {
   margin: 0 0 0em 0;
 }
 
-form div.form-item > fieldset {
+div.form-item > fieldset {
   border-radius: 5px; }
 
 form label {
   display: inline-block;
   padding: 0 4px 0 0; }
-
-form fieldset fieldset {
-  /*  border: none;
-    margin: 3px 0 0 0;
-      padding: 0;*/ }
-
-form fieldset fieldset legend {
-  /*padding: 0 0 5px;
-  font-weight: normal;*/ }
-
-form fieldset fieldset label {
-  /*  display: block;
-    width: auto; */ }
 
 form .required em {
   font-weight: bold;

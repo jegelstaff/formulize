@@ -18,6 +18,17 @@ $(document).ready(function() {
 	});
 });
 
+$("#relationship-create-connection-options select[name=forms-pi]").live('change', function() {
+	if(typeof form1Id === 'undefined' || form1Id == 0) {
+		var form1 = $('input[type=hidden][name=form1]').val();
+		var form2 = $('select[name=form2]').val();
+	} else {
+		var form1 = form1Id;
+		var form2 = form2Id;
+	}
+	showRelationshipCreationOptions(form1, form2, $(this).val());
+});
+
 function editRelationshipOptions(linkId) {
 	$("#dialog-relationship-options-content").empty();
 	$("#dialog-relationship-options-content").append("<h1>Loading...</h1>");
