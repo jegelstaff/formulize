@@ -49,7 +49,7 @@ class formulizeFramework extends XoopsObject {
 			// but we'll keep it around if it did exist (prior to an upgrade) so we can check framework handles first when necessary
 			$handles = array();
 			$element_ids = array();
-			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id=\"" . formulize_db_escape($frid). "\"");
+			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id='" . formulize_db_escape($frid). "'");
 			if(!isset($frame_links_q[0])) {
 				$notAFramework = true;
 			} else {
@@ -172,7 +172,7 @@ class formulizeFrameworkLink extends XoopsObject {
 			$one2one_conditional = 1;
 			$one2one_bookkeeping = 1;
 		} else {
-			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = \"" . formulize_db_escape($lid). "\"");
+			$link_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_id = '" . formulize_db_escape($lid). "'");
 			if(!isset($link_q[0])) {
 				// set empty defaults
 				$lid = "";
