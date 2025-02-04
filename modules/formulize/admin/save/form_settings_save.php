@@ -128,13 +128,14 @@ if($_POST['formulize_admin_key'] == "new") {
   if(!$form_handler->insert($formObject)) {
     print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
   }
-  // add edit permissions for the selected groups
+  // add edit permissions for the selected groups, and view_form for Webmasters
   $gperm_handler = xoops_gethandler('groupperm');
   $selectedAdminGroupIdsForMenu = array();
   foreach($_POST['groups_can_edit'] as $thisGroupId) {
     $selectedAdminGroupIdsForMenu[] = intval($thisGroupId);
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
+	$gperm_handler->addRight('view_form', $fid, XOOPS_GROUP_ADMIN, getFormulizeModId());
 
 } else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
   //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );

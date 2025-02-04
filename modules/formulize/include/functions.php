@@ -505,7 +505,7 @@ function getFormulizeModId() {
         $res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
         if ($res4) {
             while ($row = $xoopsDB->fetchRow($res4))
-                $mid = $row[0];
+                $mid = intval($row[0]);
         }
     }
     return $mid;

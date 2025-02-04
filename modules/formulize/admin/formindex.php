@@ -640,6 +640,24 @@ function patch40() {
 						}
         }
 
+				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
+				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
+				$viewFormAssigned = false;
+				if($res = $xoopsDB->query($sql)) {
+					$viewFormAssigned = true;
+					$formulizeModId = getFormulizeModId();
+					while($row = $xoopsDB->fetchRow($res)) {
+						$formId = intval($row[0]);
+						$sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_itemid`, `gperm_groupid`, `gperm_name`, `gperm_modid`) VALUES ($formId, 1, 'view_form', $formulizeModId)";
+						if($xoopsDB->queryF($sql) == false) {
+							$viewFormAssigned = false;
+						}
+					}
+				}
+				if(!$viewFormAssigned) {
+						print "Error: could assign 'View Form' permission for Webmasters to all forms.<br>".$xoopsDB->error()."<br>Assign this permission manually for Webmasters to all forms, or please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+				}
+
 				// add opening <?php tags to code snippets that don't have them... only if we haven't yet moved custom_code to a renamed code folder!
 				// 1. derived value formulas $ele_value[0]
 				// 2. Textbox $ele_value[2] if they contain $default

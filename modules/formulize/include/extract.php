@@ -1172,7 +1172,7 @@ function processGetDataResults($resultData) {
                     $curFormId = $curFormAlias == 'main' ? $fid : $linkformids[substr($curFormAlias, 1)]; // the table aliases are based on the keys of the linked forms in the linkformids array, so if we get the number out of the table alias, that key will give us the form id of the linked form as stored in the linkformids array
                     if(strstr($field, 'entry_id')) {
                         $entryIdIndex[$curFormAlias] = $value;
-												if($curFormAlias == 'main') {
+												if($curFormAlias == 'main' AND !in_array($value, $totalMainFormEntryIdIndex)) {
 													$totalMainFormEntryIdIndex[] = $value;
 												}
                     }
