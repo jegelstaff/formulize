@@ -106,9 +106,9 @@ foreach($group_list as $group_id) {
     // collect the list of enabled permissions submitted through the form
     $enabled_permissions = array();
     foreach(formulizePermHandler::getPermissionList() as $permission_name) {
-        if ($_POST[$form_id."_".$group_id."_".$permission_name]) {
+        if ($_POST[$form_id."_".$group_id."_".$permission_name] OR ($permission_name == 'view_form' AND $group_id == 1)) { // always enable view_form for webmasters!
             $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, '$permission_name')";
-  }
+  			}
   }
 
     // enable only the selected permissions
