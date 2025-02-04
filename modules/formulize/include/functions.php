@@ -5608,7 +5608,7 @@ function catalogDynamicFilterConditionElements($renderedElementMarkupName, $cond
 /**
  * This function will build a SQL-ready string, based on a data from a standard Formulize Conditions UI, plus parameters like the table it's supposed to look in
  * @param array $conditions - the conditions as specified in the Formulize conditions UI, a multidimensional array, each condition is one element in the array, and each condition is made up of four elements itself: 0 - element id (the left side), 1 - operator, 2 - term (the right side), 3 - condition type (oom or all, 'match one or more' vs 'match all')
- * @param int|array $targetFormId - the id number of the form where things are being looked up. Or an array, in which the keys are the form ids and the values are the aliases of the forms in the query being constructed. If an array, the first key-value pair refers to the main form.
+ * @param int|array $targetFormId - the id number of the form where things are being looked up. Or an array when doing an extraction query, in which the keys are the form ids and the values are the aliases of the forms in the query being constructed. If an array, the first key-value pair refers to the main form.
  * @param int|string $curlyBracketEntry - the id number of the entry from which curly bracket references to element handles should be resolved, or 'new' if we are working with a new record not saved yet
  * @param int $userComparisonId - is the id that should be used to compare {USER} to when $entry is not "new".  In some cases we may want to pass in the owner of the entry rather than the current user.  When entry is "new" then the current user is always used.
  * @param int|object $curlyBracketForm - either the id or the form object for the form that should be used as the source form for any { } terms, ie: if the term is = {handleX} then this param is the form that handleX would be part of
@@ -5634,6 +5634,9 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
     global $nonLinkedCurlyBracketSelfReference;
     $nonLinkedCurlyBracketSelfReference = false;
 
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
     $conditionsfilter = "";
     $conditionsfilter_oom = "";
     $conditionsfilterArray = array();
@@ -5642,15 +5645,26 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
     $curlyBracketFormconditionsfilter = "";
     $curlyBracketFormconditionsfilter_oom = "";
 
-		$targetFormIdForConversion = $extractionQuery ? key($targetFormId) : $targetFormId;
-		$filterElementHandles = convertElementIdsToElementHandles($conditions[0], $targetFormIdForConversion);
+		// targetFormId could be an array of ids, and if it is, we need to sort out the element handles differently
+		if($extractionQuery) {
+			$filterElementHandles = array();
+			foreach($conditions[0] as $i=>$elementId) {
+				$elementHandle = $elementId;
+				if(is_numeric($elementId)) {
+					$elementObject = $element_handler->get($elementId);
+					$elementHandle = $elementObject->getVar('ele_handle');
+				}
+				$filterElementHandles[] = $elementHandle;
+			}
+		} else {
+			$filterElementHandles = convertElementIdsToElementHandles($conditions[0], $targetFormId);
+		}
+
 		$filterElementIds = $conditions[0];
 		$filterOps = $conditions[1];
 		$filterTerms = $conditions[2];
 		$filterTypes = $conditions[3];
 		$targetFormObject = "";
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		for ($filterId = 0;$filterId<count((array) $filterElementHandles);$filterId++) {
 
 				$filterOps[$filterId] = $filterOps[$filterId] == 'NOT' ? '!=' : $filterOps[$filterId]; // convert NOT to != to avoid syntax error
