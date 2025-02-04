@@ -270,9 +270,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 		$qsearches = implode("&*=%4#", $allquicksearches);
 
-		$savename = formulize_db_escape($savename);
-		$qsearches = formulize_db_escape($qsearches);
-
 		if($frid) {
 			$saveformframe = $frid;
 			$savemainform = $fid;
@@ -317,56 +314,56 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					"sv_use_features, " .
 					"sv_searches_are_fundamental" .
 				") VALUES (" .
-					"\"".formulize_db_escape($savename)					."\", ".
-					"\"".formulize_db_escape($savegroups)				."\", ".
-					"\"".formulize_db_escape($owneruid)					."\", ".
-					"\"".formulize_db_escape($moduid)					."\", ".
-					"\"".formulize_db_escape($saveformframe)			."\", ".
-					"\"".formulize_db_escape($savemainform)				."\", ".
-					"\"".formulize_db_escape($_POST['savelock'])		."\", ".
+					"'".formulize_db_escape($savename)					."', ".
+					"'".formulize_db_escape($savegroups)				."', ".
+					"'".formulize_db_escape($owneruid)					."', ".
+					"'".formulize_db_escape($moduid)					."', ".
+					"'".formulize_db_escape($saveformframe)			."', ".
+					"'".formulize_db_escape($savemainform)				."', ".
+					"'".formulize_db_escape($_POST['savelock'])		."', ".
 					intval($_POST['hlist'])                             .", ".
 					intval($_POST['hcalc'])			                    .", ".
-					"\"".formulize_db_escape($_POST['sort'])			."\", ".
-					"\"".formulize_db_escape($_POST['order'])			."\", ".
-					"\"".formulize_db_escape($_POST['oldcols'])			."\", ".
-					"\"".formulize_db_escape($_POST['savescope'])		."\", ".
-					"\"".formulize_db_escape($_POST['calc_cols'])		."\", ".
-					"\"".formulize_db_escape($_POST['calc_calcs'])		."\", ".
-					"\"".formulize_db_escape($_POST['calc_blanks'])		."\", ".
-					"\"".formulize_db_escape($_POST['calc_grouping'])	."\", ".
-					"\"".formulize_db_escape($qsearches)				."\", ".
-					"\"".formulize_db_escape($_POST['global_search'])	."\", ".
-					"\"".formulize_db_escape($_POST['pubfilters'])      ."\", ".
-          "\"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : ""). "\", ".
-					"\"".formulize_db_escape($_POST['sv_use_features'])      ."\", ".
+					"'".formulize_db_escape($_POST['sort'])			."', ".
+					"'".formulize_db_escape($_POST['order'])			."', ".
+					"'".formulize_db_escape($_POST['oldcols'])			."', ".
+					"'".formulize_db_escape($_POST['savescope'])		."', ".
+					"'".formulize_db_escape($_POST['calc_cols'])		."', ".
+					"'".formulize_db_escape($_POST['calc_calcs'])		."', ".
+					"'".formulize_db_escape($_POST['calc_blanks'])		."', ".
+					"'".formulize_db_escape($_POST['calc_grouping'])	."', ".
+					"'".formulize_db_escape($qsearches)				."', ".
+					"'".formulize_db_escape($_POST['global_search'])	."', ".
+					"'".formulize_db_escape($_POST['pubfilters'])      ."', ".
+          "'".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : ""). "', ".
+					"'".formulize_db_escape($_POST['sv_use_features'])      ."', ".
 					intval($_POST['searches_are_fundamental']).
 				")";
 		} else {
 			$savesql =
 				"UPDATE " . $xoopsDB->prefix("formulize_saved_views") .
 				" SET " .
-					"sv_name 			= \"".formulize_db_escape($savename) 				."\", ".
-					"sv_pubgroups 		= \"".formulize_db_escape($savegroups) 				."\", ".
-					"sv_mod_uid 		= \"".formulize_db_escape($uid) 					."\", ".
-					"sv_lockcontrols 	= \"".formulize_db_escape($_POST['savelock'])		."\", ".
+					"sv_name 			= '".formulize_db_escape($savename) 				."', ".
+					"sv_pubgroups 		= '".formulize_db_escape($savegroups) 				."', ".
+					"sv_mod_uid 		= '".formulize_db_escape($uid) 					."', ".
+					"sv_lockcontrols 	= '".formulize_db_escape($_POST['savelock'])		."', ".
 					"sv_hidelist 		= ".intval($_POST['hlist'])                         .", ".
 					"sv_hidecalc 		= ".intval($_POST['hcalc']) 			            .", ".
-					"sv_sort 			= \"".formulize_db_escape($_POST['sort']) 			."\", ".
-					"sv_order 			= \"".formulize_db_escape($_POST['order']) 			."\", ".
-					"sv_oldcols 		= \"".formulize_db_escape($_POST['oldcols']) 		."\", ".
-					"sv_currentview 	= \"".formulize_db_escape($_POST['savescope']) 		."\", ".
-					"sv_calc_cols 		= \"".formulize_db_escape($_POST['calc_cols']) 		."\", ".
-					"sv_calc_calcs 		= \"".formulize_db_escape($_POST['calc_calcs']) 	."\", ".
-					"sv_calc_blanks 	= \"".formulize_db_escape($_POST['calc_blanks']) 	."\", ".
-					"sv_calc_grouping 	= \"".formulize_db_escape($_POST['calc_grouping']) 	."\", ".
-					"sv_quicksearches 	= \"".formulize_db_escape($qsearches) 				."\", ".
-					"sv_global_search   = \"".formulize_db_escape($_POST['global_search'])	."\", ".
-					"sv_pubfilters      = \"".formulize_db_escape($_POST['pubfilters'])	    ."\", ".
-          "sv_entriesperpage  = \"".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "")."\", ".
-					"sv_use_features      = \"".formulize_db_escape($_POST['sv_use_features'])	    ."\", ".
+					"sv_sort 			= '".formulize_db_escape($_POST['sort']) 			."', ".
+					"sv_order 			= '".formulize_db_escape($_POST['order']) 			."', ".
+					"sv_oldcols 		= '".formulize_db_escape($_POST['oldcols']) 		."', ".
+					"sv_currentview 	= '".formulize_db_escape($_POST['savescope']) 		."', ".
+					"sv_calc_cols 		= '".formulize_db_escape($_POST['calc_cols']) 		."', ".
+					"sv_calc_calcs 		= '".formulize_db_escape($_POST['calc_calcs']) 	."', ".
+					"sv_calc_blanks 	= '".formulize_db_escape($_POST['calc_blanks']) 	."', ".
+					"sv_calc_grouping 	= '".formulize_db_escape($_POST['calc_grouping']) 	."', ".
+					"sv_quicksearches 	= '".formulize_db_escape($qsearches) 				."', ".
+					"sv_global_search   = '".formulize_db_escape($_POST['global_search'])	."', ".
+					"sv_pubfilters      = '".formulize_db_escape($_POST['pubfilters'])	    ."', ".
+          "sv_entriesperpage  = '".((isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : "")."', ".
+					"sv_use_features      = '".formulize_db_escape($_POST['sv_use_features'])	    ."', ".
 					"sv_searches_are_fundamental = ".intval($_POST['searches_are_fundamental']).
 				" WHERE " .
-					"sv_id = \"" . substr($saveid_formulize, 1) . "\"";
+					"sv_id = '" . substr($saveid_formulize, 1) . "'";
 		}
 
 		// save the report
@@ -2418,7 +2415,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
 		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-			$allowedWhere .= " $allowedWhereConjunction $calcElement=".formulize_db_escape($value);
+			$allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
 		  } else {
 			$allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
 		  }
@@ -2451,7 +2448,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
 		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-			$excludedWhere .= " $excludedWhereConjunction $calcElement!=".formulize_db_escape($value);
+			$excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
 		  } else {
 			$excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
 		  }

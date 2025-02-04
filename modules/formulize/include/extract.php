@@ -252,7 +252,7 @@ function prepvalues($value, $field, $entry_id) {
 
 	// Convert 'Other' options into the actual text the user typed
 	if(($type == "radio") AND preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle=\"" . formulize_db_escape($field) . "\" AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
+		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle='" . formulize_db_escape($field) . "' AND " . DBPRE . "formulize_other.id_req='".intval($entry_id)."' LIMIT 0,1");
 		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
         // removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
         $value_other = $newValueq[0]['other_text'];
@@ -2147,15 +2147,15 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term) {
     foreach($formList as $form_id) {
         if(isset($results_array[$form_id][$term][$frid])) { return $results_array[$form_id][$term][$frid]; }
 		// first check if this is a handle
-		$handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = \"".formulize_db_escape($term)."\"");
+		$handle_query = go("SELECT ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND ele_handle = '".formulize_db_escape($term)."'");
 		if(count((array) $handle_query) > 0) { // if this is a valid handle, then use it
 			$handle = $term;
 		} else {
-			$colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = \"" . formulize_db_escape($term) . "\" OR ele_colhead LIKE '%]".formulize_db_escape($term)."[/%')");
+			$colhead_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_colhead = '" . formulize_db_escape($term) . "' OR ele_colhead LIKE '%]".formulize_db_escape($term)."[/%')");
 			if(count((array) $colhead_query) > 0) {
 				$handle = $colhead_query[0]['ele_handle'];
 			} else {
-				$caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = \"" . formulize_db_escape($term) . "\" OR ele_caption LIKE '%]".formulize_db_escape($term)."[/%')");
+				$caption_query = go("SELECT ele_id, ele_handle FROM " . DBPRE . "formulize WHERE id_form = " . $form_id . " AND (ele_caption = '" . formulize_db_escape($term) . "' OR ele_caption LIKE '%]".formulize_db_escape($term)."[/%')");
 				if(count((array) $caption_query) > 0 ) {
 					$handle = $caption_query[0]['ele_handle'];
 				}

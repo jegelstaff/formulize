@@ -84,10 +84,10 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $screen->assignVar('sid', $sid);
 
         if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
+            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, '%s', '%s', '%s', '%s', '%s', '%s')", $this->db->prefix('formulize_screen_template'),
                 $screen->getVar('sid'), $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('viewentryscreen'))));
         } else {
-            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
+            $sql = sprintf("UPDATE %s SET custom_code = '%s', template = '%s', donedest = '%s', savebuttontext = '%s', donebuttontext = '%s', viewentryscreen = '%s' WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
                 $this->db->quoteString(formulize_db_escape($screen->getVar('custom_code'))), $this->db->quoteString(formulize_db_escape($screen->getVar('template'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donedest'))), $this->db->quoteString(formulize_db_escape($screen->getVar('savebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('donebuttontext'))), $this->db->quoteString(formulize_db_escape($screen->getVar('viewentryscreen'))), $sid);
         }
         $result = $this->db->query($sql);

@@ -554,12 +554,12 @@ class formulizeApplicationsHandler {
         $linkValues = explode("::",$menuitems);
 	//error_log("link values ".print_r($linkValues));
         $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links").
-	"` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."',note='".formulize_db_escape($linkValues[6])."' where menu_id=".formulize_db_escape($linkValues[0])." AND appid=".$appid.";";
+	"` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."',note='".formulize_db_escape($linkValues[6])."' where menu_id='".formulize_db_escape($linkValues[0])."' AND appid=".$appid.";";
         if(!$result = $xoopsDB->query($updatesql)) {
             exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }else{
         	//delete existing permissions for this menu item
-        	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=".formulize_db_escape($linkValues[0]).";";
+        	$deletepermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id='".formulize_db_escape($linkValues[0])."';";
        	 	$result = $xoopsDB->query($deletepermissions);
 
        	 	if($linkValues[4] != "null" and count((array) $linkValues[4]) > 0){
@@ -573,7 +573,7 @@ class formulizeApplicationsHandler {
                     if (in_array($groupid, $groupsWithDefaultPage)){
                         $defaultScreen = 1;
                     }
-                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".formulize_db_escape($linkValues[0]).",". $groupid.",".$defaultScreen.")";
+                    $permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,'".formulize_db_escape($linkValues[0])."',". $groupid.",".$defaultScreen.")";
            	     if(!$result = $xoopsDB->query($permissionsql)) {
            	     	exit("Error updating Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
            	 		}
