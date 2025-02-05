@@ -1584,6 +1584,12 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid) {
                        $queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
                                $ele_value = unserialize($queryElementMetaData['ele_value']);
                                if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox' OR (($ele_value[0] > 1 OR $ele_value[8]) AND $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
+																		if(is_numeric($ifParts[1])) {
+																			$operator = "=";
+																			$quotes = "";
+																			$likebits = "";
+																			$search_column = "source.`entry_id`";
+																		}
                                     $newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE (
                                     $queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%') OR $queryElement LIKE CONCAT(source.entry_id,',%') OR $queryElement LIKE CONCAT('%,',source.entry_id)
                                     ) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
