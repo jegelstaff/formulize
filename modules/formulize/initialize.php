@@ -45,7 +45,7 @@ $GLOBALS['formulize_subformInstance'] = 100;
 
 $GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set to the screen id if we're displaying a multipage screen, or just true if we're displaying a multipage form without a screen specified
 
-global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen;
+global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen, $formulizeCanonicalURI;
 
 $thisRendering = microtime(true); // setup a flag that is common to this instance of rendering a formulize page
 if(!isset($prevRendering)) {
@@ -121,7 +121,7 @@ $title = $myts->displayTarea($desc_form);
 
 $currentURL = getCurrentURL();
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
-    if(strstr($currentURL, "/modules/formulize/")) { // if it's a formulize page, reload to login screen
+    if(strstr($currentURL, "/modules/formulize/") OR $formulizeCanonicalURI) { // if it's a formulize page reload to login screen (check URL and check if there was a valid Formulize clean URL)
         $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
         redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);
     } else { // if formulize is just being included elsewhere, then simply show error and end script
