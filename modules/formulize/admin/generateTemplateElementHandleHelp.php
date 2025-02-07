@@ -5,11 +5,14 @@
   //also, collect the handles from a framework if any, and prep the list of possible handles/ids for the list template
 	if(isset($allFidsToUse)) {
 		$allFids = $allFidsToUse;
+		$allLinkedFids = $allFids;
   } elseif ($selectedFramework and isset($frameworks[$selectedFramework])) {
+		$allFids = $frameworks[$selectedFramework]->getVar('fids');
 		$linkedForms = checkForLinks($selectedFramework, array($form_id), $form_id);
-		$allFids = array_merge($linkedForms['fids'], (array) $linkedForms['sub_fids']);
+		$allLinkedFids = array_merge($linkedForms['fids'], (array) $linkedForms['sub_fids']);
   } else {
     $allFids = array(0=>$form_id);
+		$allLinkedFids = $allFids;
   }
   $thisFidObj = "";
   $allFidObjs = array();
@@ -26,11 +29,14 @@
       $thisFidColheads = $thisFidObj->getVar('elementColheads');
       $thisFidHandles = $thisFidObj->getVar('elementHandles');
       foreach($thisFidElements as $zz => $thisFidElement) {
-        $elementHeading = $thisFidColheads[$zz] ? $thisFidColheads[$zz] : $thisFidCaptions[$zz];
-        $elementOptions[$thisFidHandles[$zz]] = (isset($allFidsToUse) OR $selectedFramework) ? printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125) : printSmart(trans(strip_tags($elementHeading)), 40);
-        // for passing to custom button logic, so we know all the element options for each form in framework
+				$elementHeading = $thisFidColheads[$zz] ? $thisFidColheads[$zz] : $thisFidCaptions[$zz];
+        // Base on all fids in relationship - for passing to custom button logic, so we know all the element options for each form in framework
         $elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
-        $class = $class == "even" ? "odd" : "even";
-        $listTemplateHelp[$thisFidObj->title][] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$zz]."</nobr></td></tr>";
+				// Base on only fids linked to mainform in relationship...
+				if(in_array($thisFid, $allLinkedFids)) {
+        	$elementOptions[$thisFidHandles[$zz]] = (isset($allFidsToUse) OR $selectedFramework) ? printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125) : printSmart(trans(strip_tags($elementHeading)), 40);
+					$class = $class == "even" ? "odd" : "even";
+        	$listTemplateHelp[$thisFidObj->title][] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$zz]."</nobr></td></tr>";
+				}
       }
   }
