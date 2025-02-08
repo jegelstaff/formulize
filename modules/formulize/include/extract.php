@@ -2375,8 +2375,8 @@ function display($entry, $handle, $id=null, $localid="NULL") {
 			if(is_array($elements[$handle])) { // will only ever be one item in this array! holdover from when we used to prep values as part of preparing dataset, and everything, even single values, was put into an array. Now we put the raw DB value into an array, and prep it here. Sticking with it in an array is consistent for existing logic that expects only metadata values to not be in an array, which is hacky, but less disruptive.
 				foreach(prepvalues($elements[$handle][0], $handle, $lid) as $thisValue) {
 					$foundValues[] = $thisValue;
+					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 				}
-				$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 			} else { // the handle is for metadata, all other fields will be arrays in the dataset
 		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
         return prepvalues($elements[$handle], $handle, $lid);
