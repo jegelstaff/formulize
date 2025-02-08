@@ -62,14 +62,14 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 // Note about scopes: scopes must be converted to the format described for the $scope param for the getData function
 
 function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $filters, $viewPrefixes, $scopes, $hidden, $type, $toptemplate, $bottomtemplate, $viewentryscreens, $useaddicons, $usedeleteicons, $textcolors, $start="", $multiPageData="") {
-    
+
     // hack to handle the switching of dateHandles...
     if($_POST['datetype']=='due') {
         $dateHandles[0] = 'contacts_last_due_date';
     }
-    
+
     $type = $type ? $type : 'month';
-    
+
     global $xoopsDB, $xoopsUser;
 
     global $xoopsTpl;
@@ -130,7 +130,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
         } else {
             $this_ent = $_POST['ventry'];
         }
-        
+
         // CAN'T ACTUALLY DISTINGUISH BETWEEN DATASET CLICKS RIGHT NOW, FOR GOING TO DIFFERENT VIEWENTRYSCREENS!
         if($viewentryscreens[0]) {
             $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -141,7 +141,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
                 return;
             }
         }
-        
+
         if($_POST['calfrid']) {
             if(isset($multiPageData[$_POST['calfid']])) {
                 if(is_numeric($multiPageData[$_POST['calfid']])) { // numeric value indicates a screen id
@@ -338,7 +338,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
             } else {
                 $elementObject = $element_handler->get($viewHandles[$i]);
             }
-            $ids = internalRecordIds($entry, $elementObject->getVar('id_form')); 
+            $ids = internalRecordIds($entry, $elementObject->getVar('id_form'));
 
             if(is_array($viewHandles[$i])) {
                 $needsep = 0;
@@ -365,7 +365,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
             $calendarDataItem[1] = $frids[$i];
             $calendarDataItem[2] = $fids[$i];
             $calendarDataItem[3] = $textToDisplay;
-            $calendarDataItem[4] = $usedeleteicons[$i] AND ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], display($entry, "uid"), $ids[0])); // only active for the first dataset??
+            $calendarDataItem[4] = $usedeleteicons[$i] AND ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], display($entry, "creation_uid"), $ids[0])); // only active for the first dataset??
 
             if($type == "month"
                 || $type == "mini_month"
@@ -428,7 +428,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
 
     $xoopsTpl->assign('delete', _formulize_DELETE);
     $xoopsTpl->assign('delconf', _formulize_DELCONF);
-    
+
     $xoopsTpl->assign('toptemplate', $toptemplate);
     $xoopsTpl->assign('bottomtemplate', $bottomtemplate);
 

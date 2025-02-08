@@ -661,7 +661,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$showcols = removeNotAllowedCols($fid, $frid, $showcols, $groups); // converts old format metadata fields to new ones too if necessary
 
 	/**
-	 * STAGE 9 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
+	 * STAGE 10 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
 	 */
 	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);
 	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView, $screen, $_POST['lastloaded']); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
@@ -675,7 +675,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	/**
-	 * STAGE 10 - TIDY UP SEARCHES BASED ON THE ACTUAL SEARCHES / COLUMNS WE'RE SHOWING, NOW THAT WE KNOW ALL THE DETAILS OF WHAT WE'RE SHOWING THE USER
+	 * STAGE 11 - TIDY UP SEARCHES BASED ON THE ACTUAL SEARCHES / COLUMNS WE'RE SHOWING, NOW THAT WE KNOW ALL THE DETAILS OF WHAT WE'RE SHOWING THE USER
 	 */
 
 	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : array();
@@ -733,7 +733,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	/**
-	 * STAGE 11 - CATALOGUE SETTINGS, FIGURE OUT IF THE CONTROLS ARE LOCKED (OLD FEATURE)
+	 * STAGE 12 - CATALOGUE SETTINGS, FIGURE OUT IF THE CONTROLS ARE LOCKED (OLD FEATURE)
 	 */
 
 	$settings['pubfilters'] = $pubfilters;
@@ -832,7 +832,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
 
 	/**
-	 * STAGE 12 - PROCESS CUSTOM BUTTON CLICKS
+	 * STAGE 13 - PROCESS CUSTOM BUTTON CLICKS
 	 */
 
 	// must do this before gathering the data, because it might alter the data!
@@ -846,7 +846,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	/**
-	 * STAGE 13 - JUMP TO DISPLAYING AN ENTRY IF REQUIRED, EITHER ONE THE USER CLICKED ON IN THE LIST, OR ONE THEY'RE GOING BACK TO IF THEY'RE ALREADY A FEW LEVELS DEEP IN SOME FORM SCREENS. PROBABLY HAVE TO DO THIS LATE IN THE PROCESS BECAUSE WE PASS THE DEDUCED SETTINGS TO THE FORM, SO IT CAN PROPGATE THEM BACK TO THE LIST.
+	 * STAGE 14 - JUMP TO DISPLAYING AN ENTRY IF REQUIRED, EITHER ONE THE USER CLICKED ON IN THE LIST, OR ONE THEY'RE GOING BACK TO IF THEY'RE ALREADY A FEW LEVELS DEEP IN SOME FORM SCREENS. PROBABLY HAVE TO DO THIS LATE IN THE PROCESS BECAUSE WE PASS THE DEDUCED SETTINGS TO THE FORM, SO IT CAN PROPGATE THEM BACK TO THE LIST.
 	 */
 
 	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
@@ -936,7 +936,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	/**
-	 * STAGE 14 - GATHER THE STUFF WE'RE GOING TO SHOW, EITHER A DATASET OR CALCULATIONS, SINCE THE USER HASN'T JUMPED INTO A FORM -- NOTE THAT formulize_gatherDataSet STARTS OUTPUTING MARKUP! UGH.
+	 * STAGE 15 - GATHER THE STUFF WE'RE GOING TO SHOW, EITHER A DATASET OR CALCULATIONS, SINCE THE USER HASN'T JUMPED INTO A FORM -- NOTE THAT formulize_gatherDataSet STARTS OUTPUTING MARKUP! UGH.
 	 */
 
 	// user is still here, so go get the data and start building the page...
@@ -958,7 +958,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	//formulize_benchmark("after performing calcs");
 
 	/**
-	 * STAGE 15 - DRAW THE PAGE, PREPARE ALL THE INTERACTIVE COMPONENTS, MOSTLY IN THE drawInterface FUNCTION (which renders the top template), AND THEN RENDER THE REST OF THE PAGE INCLUDING EACH ENTRY IN THE DATASET IF WE'RE SHOWING DATA.
+	 * STAGE 16 - DRAW THE PAGE, PREPARE ALL THE INTERACTIVE COMPONENTS, MOSTLY IN THE drawInterface FUNCTION (which renders the top template), AND THEN RENDER THE REST OF THE PAGE INCLUDING EACH ENTRY IN THE DATASET IF WE'RE SHOWING DATA.
 	 */
 
 	//formulize_benchmark("after generating calcs/before creating pagenav");
@@ -971,7 +971,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// drawEntries ... renders the openlist, list and closelist templates
 	formulize_benchmark("before entries");
-	drawEntries($fid, $showcols, $searches, $frid, $scope, "", $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $formulize_buttonCodeArray); // , $loadview); // -- loadview not passed any longer since the lockcontrols indicator is used to handle whether things should appear or not.
+	drawEntries($fid, $showcols, $frid, $currentURL, $uid, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $cResults, $formulize_buttonCodeArray);
 	formulize_benchmark("after entries");
 
 	// render the bottomtemplate
@@ -1558,14 +1558,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=formulize_scrollx id=formulize_scrollx value=\"\"></input>\n";
 	print "<input type=hidden name=formulize_scrolly id=formulize_scrolly value=\"\"></input>\n";
 
-	$useXhr = false;
-	if($screen) {
-		if($screen->getVar('dedisplay')) {
-			$useXhr = true;
-		}
-	}
-
-	interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $settings['lockedColumns']); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns']); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$buttonCodeArray['quickSearches'] = $quickSearches;
 
@@ -1591,15 +1584,13 @@ function screenUsesSearchStringWithHandle($screenOrScreenType, $searchString, $h
 }
 
 // THIS FUNCTION DRAWS IN THE RESULTS OF THE QUERY
-function drawEntries($fid, $cols, $searches, $frid, $scope, $standalone, $currentURL, $gperm_handler, $uid, $mid, $groups, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $hiddenQuickSearches, $cResults, $buttonCodeArray) { // , $loadview="") { // -- loadview removed from this function sept 24 2005
+function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_handler, $screen, $data, $regeneratePageNumbers, $cResults, $buttonCodeArray) {
 	// determine if the query reached a limit in the number of entries to return
 	$LOE_limit = 0;
 	if(!is_array($data)) {
 		$LOE_limit = is_numeric($data) ? $data : 0;
 		$data = array();
 	}
-
-	global $xoopsDB;
 
 	$useScrollBox = true;
 	$useHeadings = true;

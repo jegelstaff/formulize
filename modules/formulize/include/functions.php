@@ -193,7 +193,7 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
         $profileData = getData("", $fid, $filterText, "AND", makeUidFilter($found_uids));
         $real_found_names = array();
         foreach ($profileData as $thisData) {
-            $thisUid = display($thisData, "uid");
+            $thisUid = display($thisData, "creation_uid");
             $real_found_names[$thisUid] = $found_names[$thisUid];
         }
         unset($found_names);
@@ -6355,16 +6355,16 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         }
         $thisEntryId = isset($localIds[$valueId]) ? $localIds[$valueId] : $entryId;
         if ($counter == 1 AND $deDisplay AND $element_type != 'derived') {
-            $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
+           $output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$thisEntryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
         }
-        if ("date" == $element_type) {
-            $time_value = strtotime($v);
-            global $xoopsUser;
-            $offset = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? formulize_getUserServerOffsetSecs(timestamp: $time_value) : 0; // no hours/mins in plain dates, but for metadata, get user offset from server timezone which DB should have used to make the dates in question
-            $dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
-            $v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
-        }
-        $output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId, $fid)), $handle);
+				if ("date" == $element_type) {
+					$time_value = strtotime($v);
+					global $xoopsUser;
+					$offset = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? formulize_getUserServerOffsetSecs(timestamp: $time_value) : 0; // no hours/mins in plain dates, but for metadata, get user offset from server timezone which DB should have used to make the dates in question
+					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
+					$v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
+				}
+				$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId, $fid)), $handle);
         $output .= '</span>';
         $counter++;
     }
@@ -6761,14 +6761,12 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 
 //Function used to check if the given field is within the list of metadata fields.
 function isMetaDataField($field){
-    $dataHandler = new formulizeDataHandler(false);
-    $metadataFields = $dataHandler->metadataFields;
-    foreach ($metadataFields as $value)
-    {
-        if($value == $field)
-        {
-            return true;
-        }
+		static $dataHandler;
+		if(!$dataHandler) {
+    	$dataHandler = new formulizeDataHandler(false);
+		}
+		if(in_array($field, $dataHandler->metadataFields)) {
+      return true;
     }
     return false;
 }
