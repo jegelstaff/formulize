@@ -1212,12 +1212,13 @@ function processGetDataResults($resultData) {
                 // Check to see if this is a main entry that has already been catalogued, and if so, then skip it
                 if($curFormAlias == "main" AND isset($writtenMains[$entryIdIndex['main']])) {
                     continue;
-                }
-                formulize_benchmark("processing ".$field.": $value");
-                //formulize_benchmark("preping value...");
-                $valueArray = prepvalues($value, $elementHandle, $entryIdIndex[$curFormAlias]); // note...metadata fields must not be in an array for compatibility with the 'display' function.
-                //formulize_benchmark("done preping value");
-                $masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
+						  	}
+								if(isMetaDataField($elementHandle)) {
+									$valueArray = $value;
+								} else {
+									$valueArray = array($value);
+								}
+								$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
 		    } // end of foreach field loop within a record
 	    } // end of main while loop for all records
         unset($queryRes[$queryResIndex]);
@@ -2365,23 +2366,20 @@ function getFormHandlesFromEntry($entry) {
 
 function display($entry, $handle, $id=null, $localid="NULL") {
 
-  if(is_numeric($id)) {
-		$entry = $entry[$id];
-	}
-
+	$entry = is_numeric($id) ? $entry[$id] : $entry;
   if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
 
   $GLOBALS['formulize_mostRecentLocalId'] = array();
 	foreach($entry[$formhandle] as $lid=>$elements) {
 		if($localid == "NULL" OR $lid == $localid) {
-			if(is_array($elements[$handle])) {
-				foreach($elements[$handle] as $value) {
-					$foundValues[] = $value;
-					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
+			if(is_array($elements[$handle])) { // will only ever be one item in this array! holdover from when we used to prep values as part of preparing dataset, and everything, even single values, was put into an array. Now we put the raw DB value into an array, and prep it here. Sticking with it in an array is consistent for existing logic that expects only metadata values to not be in an array, which is hacky, but less disruptive.
+				foreach(prepvalues($elements[$handle][0], $handle, $lid) as $thisValue) {
+					$foundValues[] = $thisValue;
 				}
+				$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 			} else { // the handle is for metadata, all other fields will be arrays in the dataset
 		    $GLOBALS['formulize_mostRecentLocalId'] = $lid;
-        return $elements[$handle];
+        return prepvalues($elements[$handle], $handle, $lid);
 			}
 		}
 	}
