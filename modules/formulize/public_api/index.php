@@ -44,6 +44,7 @@ require_once '../../../mainfile.php';
 if(!defined('XOOPS_MAINFILE_INCLUDED')) {
     exit();
 }
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 // clear out any extra stuff that would otherwise be appended to the http stream
 icms::$logger->disableLogger();
 while(ob_get_level()) {
@@ -53,9 +54,9 @@ while(ob_get_level()) {
 // check if the API is enabled, if so, set a flag that the rest of the API can use to tell if it should run or not
 // call the right version of the API
 $apiPathParts = explode('/', $_GET['apiPath']);
-$version = floatval($apiPathParts[1]);
-$objectOrAction = $apiPathParts[2];
-$id = $apiPathParts[3];
+$version = FormulizeObject::sanitize_handle_name($apiPathParts[1]);
+$objectOrAction = FormulizeObject::sanitize_handle_name($apiPathParts[2]);
+$id = FormulizeObject::sanitize_handle_name($apiPathParts[3]);
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'status' AND $id == 'formulize-check-if-public-api-is-properly-enabled-please')) {
