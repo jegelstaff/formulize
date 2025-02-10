@@ -2,7 +2,7 @@
 
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) Formulize Project												 ##
+##                    Copyright (c) Formulize Project                        ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -27,7 +27,7 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Formulize Project  					     									 ##
+##  Author of this file: Formulize Project                                   ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
