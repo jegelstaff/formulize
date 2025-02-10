@@ -32,6 +32,7 @@
 ###############################################################################
 
 if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
+	http_response_code(500);
     exit();
 }
 print '{
