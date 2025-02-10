@@ -34,4 +34,8 @@
 if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
     exit();
 }
-print "1";
+print '{
+	"status": "healthy",
+	"timestamp": '.time().',
+	"version": "1"
+}';
