@@ -107,14 +107,23 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 		/**
 		 * MAJOR HACK TO VERIFY IF FORMULIZE REWRITE URL SETTING IS CAPABLE OF BEING ENABLED
 		 */
-		if($config->getVar('conf_name') == 'formulizeRewriteRulesEnabled'
+		if(($config->getVar('conf_name') == 'formulizeRewriteRulesEnabled'
+			OR $config->getVar('conf_name') == 'formulizeRESTAPIEnabled')
 			AND $config->getVar('conf_value') == 1
 			AND function_exists('curl_version')) {
+			switch($config->getVar('conf_name')) {
+				case 'formulizeRewriteRulesEnabled':
+					$url = XOOPS_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
+					break;
+				case 'formulizeRESTAPIEnabled':
+					$url = XOOPS_URL.'/ping/formulize-rest-api/0.1/formulize-check-if-rest-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
+					break;
+			}
 			$curl = curl_init();
-			curl_setopt($curl, CURLOPT_URL, XOOPS_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'); // will resolve based on DNS available to server, so Docker gets confused by localhost!
+			curl_setopt($curl, CURLOPT_URL, $url);
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-    	curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    	curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+    		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    		curl_setopt($curl, CURLINFO_HEADER_OUT, true);
 			$response = curl_exec($curl);
 			curl_close($curl);
 			if($response != 1) {
