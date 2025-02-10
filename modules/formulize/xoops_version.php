@@ -1014,6 +1014,15 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
+$modversion['config'][] = array(
+	'name' => 'formulizeRESTAPIEnabled',
+	'title' => '_MI_formulize_RESTAPIENABLED',
+	'description' => '_MI_formulize_RESTAPIENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
