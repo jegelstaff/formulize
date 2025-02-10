@@ -125,8 +125,9 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
     		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
     		curl_setopt($curl, CURLINFO_HEADER_OUT, true);
 			$response = curl_exec($curl);
+			$json = json_decode($response);
 			curl_close($curl);
-			if($response != 1) {
+			if($response != 1 AND (!is_object($json) OR $json->status != "healthy")) {
 				$config->setVar('conf_value', 0);
 				$config->cleanVars();
 			}

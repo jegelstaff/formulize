@@ -31,13 +31,13 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// handle rest api requests, sent to /formulize-rest-api/
+// handle public api requests, sent to /formulize-public-api/
 // URL syntax should be:
-// /formulize-rest-api/{version}/{object-or-action}
+// /formulize-public-api/{version}/{object-or-action}/{id}/etc...
 
 // supported actions are:
-// ping - responds with a 1, to show the API is active/available
-// queue/{id} - triggers parsing of the queue specified, if no {id} then runs all queues
+// status - responds with JSON object of metadata
+// queue/{id}/process - triggers parsing of the queue specified, if no {id} then runs all queues - queues currently only setup by internal APIs, and triggered by cron using the public API because cron is not logged in
 
 // include mainfile, exit if that failed somehow, without a fatal PHP error
 require_once '../../../mainfile.php';
@@ -58,7 +58,7 @@ $objectOrAction = $apiPathParts[2];
 $id = $apiPathParts[3];
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'ping' AND $id == 'formulize-check-if-public-api-is-properly-enabled-please')) {
+if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'status' AND $id == 'formulize-check-if-public-api-is-properly-enabled-please')) {
     define('FORMULIZE_PUBLIC_API_REQUEST', 1);
     $apiFilePath = XOOPS_ROOT_PATH."/modules/formulize/public_api/$version/$objectOrAction.php";
     if(file_exists($apiFilePath)) {
