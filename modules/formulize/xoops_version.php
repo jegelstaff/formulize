@@ -1015,9 +1015,9 @@ $modversion['config'][] = array(
 );
 
 $modversion['config'][] = array(
-	'name' => 'formulizeRESTAPIEnabled',
-	'title' => '_MI_formulize_RESTAPIENABLED',
-	'description' => '_MI_formulize_RESTAPIENABLED_DESC',
+	'name' => 'formulizePublicAPIEnabled',
+	'title' => '_MI_formulize_PUBLICAPIENABLED',
+	'description' => '_MI_formulize_PUBLICAPIENABLED_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
