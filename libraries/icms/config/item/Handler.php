@@ -116,7 +116,7 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					$url = XOOPS_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
 				case 'formulizePublicAPIEnabled':
-					$url = XOOPS_URL.'/formulize-public-api/0.1/status/formulize-check-if-public-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
+					$url = XOOPS_URL.'/formulize-public-api/v1/status/formulize-check-if-public-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
 			}
 			$curl = curl_init();
