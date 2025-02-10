@@ -58,9 +58,9 @@ $objectOrAction = $apiPathParts[2];
 $id = $apiPathParts[3];
 $config_handler = $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-if($formulizeConfig['formulizeRESTAPIEnabled'] OR ($objectOrAction == 'ping' AND $id == 'formulize-check-if-rest-api-is-properly-enabled-please')) {
-    define('FORMULIZE_RESTAPI_REQUEST', 1);
-    $apiFilePath = XOOPS_ROOT_PATH."/modules/formulize/rest/$version/$objectOrAction.php";
+if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'ping' AND $id == 'formulize-check-if-public-api-is-properly-enabled-please')) {
+    define('FORMULIZE_PUBLIC_API_REQUEST', 1);
+    $apiFilePath = XOOPS_ROOT_PATH."/modules/formulize/public_api/$version/$objectOrAction.php";
     if(file_exists($apiFilePath)) {
         include_once $apiFilePath;
     } else {
@@ -68,7 +68,7 @@ if($formulizeConfig['formulizeRESTAPIEnabled'] OR ($objectOrAction == 'ping' AND
         http_response_code(404);
     }
 
-// API disabled, fail with 503 - service unavailable 
+// API disabled, fail with 503 - service unavailable
 } else {
     http_response_code(503);
 }

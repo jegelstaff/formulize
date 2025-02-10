@@ -31,7 +31,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-if(!defined('FORMULIZE_RESTAPI_REQUEST')) {
+if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
     exit();
 }
 print "1";
