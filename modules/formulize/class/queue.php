@@ -30,8 +30,6 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-use function Safe\file_put_contents;
-
 if (!defined("XOOPS_ROOT_PATH")) {
     die("XOOPS root path not defined");
 }
@@ -73,19 +71,26 @@ class formulizeQueueHandler {
 		return $instance;
 	}
 
-	function &create() {
-		return new formulizeQueue();
+	/**
+	 * Create a new queue object with the handle name passed in, and and empty item list
+	 * @param string queue_handle The identifier of the queue we're creating
+	 * @return object The new queue object with this identifier
+	 */
+	function &create($queue_handle) {
+		$queue = new formulizeQueue();
+		$queue->setVar('queue_handle', FormulizeObject::sanitize_handle_name($queue_handle));
+		$queue->setVar('items', serialize(array()));
+		return $queue;
 	}
 
 	/**
-	 * Get a queue based on the queued items identified by the given handle
+	 * Get a queue based on the queued items identified by the given handle. Will create the queue if necessary.
 	 * @param string queue_handle The identifier of the queue we're getting
-	 * @return object The queue object based on the identifier
+	 * @return object The queue object based on the identifier, with all items already in the queue
 	 */
 	function get($queue_handle) {
-		$queue = $this->create();
-		$queue->setVar('queue_handle', $this->sanitize_handle_name($queue_handle));
-		$queue->setVar('items', formulize_scandirAndClean($this->queueDir, "_".$queue_handle."_"));
+		$queue = $this->create($queue_handle);
+		$queue->setVar('items', serialize(formulize_scandirAndClean($this->queueDir, "_".$queue->getVar('queue_handle')."_")));
 		return $queue;
 	}
 
@@ -94,22 +99,35 @@ class formulizeQueueHandler {
 	 * @param mixed queue_or_queue_handle The queue object or a queue handle to identify the queue we are deleting.
 	 */
 	function delete($queue_or_queue_handle) {
-		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : $queue_or_queue_handle;
+		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : FormulizeObject::sanitize_handle_name($queue_or_queue_handle);
 		formulize_scandirAndClean($this->queueDir, "_".$queue_handle."_", 1);
 		return true;
 	}
 
 	/**
-	 * Append code to a queue, so it can be run later when the queue is processed
+	 * Append code to a queue, so it can be run later when the queue is processed. A passed queue object has its items updated to include the newly appended item/file. Objects are passed by reference by default in PHP since v5.
 	 * @param mixed queue_or_queue_handle The queue object or a queue handle to identify the queue we are appending to.
 	 * @param string code The code that we should add to the queue
 	 * @param string item Optional. A string that provides a description of what this code is for. Meant to make the filename more intelligible.
 	 * @return mixed Returns the number of bytes that were written, or false on failure. This is the return value of file_put_contents.
 	 */
 	function append($queue_or_queue_handle, $code, $item='') {
-		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : $this->santitize_handle_name($queue_or_queue_handle);
+		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : FormulizeObject::santitize_handle_name($queue_or_queue_handle);
 		$fileName = microtime(true)."_".$queue_handle."_".$item.".php";
-		return file_put_contents($this->queueDir.$fileName, "<?php\n$code");
+		$writeResult = false;
+		$code = "<?php \n$code";
+		if(formulize_validatePHPCode($code) == '') { // no errors returned
+			if($writeResult = file_put_contents($this->queueDir.$fileName, $code)) {
+				if(is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) {
+					$items = $queue_or_queue_handle->getVar('items');
+					$items[] = $fileName;
+					$queue_or_queue_handle->setVar('items', serialize($items));
+				}
+			}
+		} else {
+			error_log("Formulize Queue Error: the code for the queue item $item has syntax errors. This item will not be processed.");
+		}
+		return $writeResult;
 	}
 
 	/**
@@ -133,8 +151,8 @@ class formulizeQueueHandler {
 		foreach($queueFiles as $file) {
 			$curTime = microtime(true);
 			if($curTime - $startTime < $maxExec - 10) { // ten second window because we hope no single queue operation takes over ten seconds by itself??
-				include $queueDir.$file;
-				unlink($queueDir.$file);
+				include $this->queueDir.$file;
+				unlink($this->queueDir.$file);
 				$processedFiles[] = $file;
 			} else {
 				break;

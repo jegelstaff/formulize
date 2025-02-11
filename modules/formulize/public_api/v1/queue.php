@@ -51,7 +51,7 @@ switch($method) {
 	case "process":
 		$queue = null;
 		$queue_handler = xoops_getmodulehandler('queue', 'formulize');
-		$queue = $id ? $queue_handler->get($id) : null;
+		$queue = ($id AND $id != 'all') ? $queue_handler->get($id) : null;
 		ob_start();
 		$files = $queue_handler->process($queue);
 		ob_end_clean();
