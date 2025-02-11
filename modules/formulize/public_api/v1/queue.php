@@ -50,7 +50,7 @@ if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
 switch($method) {
 	case "process":
 		$queueDir = XOOPS_ROOT_PATH.'/modules/formulize/queue/';
-		$queueFilter = ($id AND $id != 'all') ? "_".$id."_" : "";
+		$queueFilter = ($id AND $id != 'all') ? "_".$id."_" : ".php";
 		$queueFiles = formulize_scandirAndClean($queueDir, $queueFilter);
 		$processedFiles = array();
 		foreach($queueFiles as $file) {
