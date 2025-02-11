@@ -4013,21 +4013,20 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
  * @param string $dir The directory to look in
  * @param string $filter Optional. A string that the filenames must contain. Non-matching files will be excluded. By default all files are included.
  * @param int $timeWindow Optional. The number of seconds old a file must be to be included. Older files will be deleted. Default is 21600 (6 hours).
+ * @param int $sortingOrder Optional. The sorting order for scandir to use. Same values as the $sorting_order param of the PHP scandir function.
  * @return array An array of the files found
  **/
-function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600) {
-    // filter must be present
-    if (!$filter) {
-        return false;
-    }
-
+function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600, $sortingOrder=SCANDIR_SORT_ASCENDING) {
     $currentTime = time();
     $targetTime = $currentTime - $timeWindow;
     $foundFiles = array();
 
 		$dir = rtrim($dir, '/');
-    foreach (scandir($dir) as $fileName) {
-        if (strstr($fileName, $filter)) {
+    foreach (scandir($dir, $sortingOrder) as $fileName) {
+				if($fileName == '.' OR $fileName == '..') {
+					continue;
+				}
+        if (!$filter OR strstr($fileName, $filter)) {
             if (filemtime($dir.'/'.$fileName) < $targetTime) {
                 unlink($dir.'/'.$fileName);
             } else {
