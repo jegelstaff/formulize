@@ -49,25 +49,13 @@ if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
 
 switch($method) {
 	case "process":
-		$queueDir = XOOPS_ROOT_PATH.'/modules/formulize/queue/';
-		$queueFilter = ($id AND $id != 'all') ? "_".$id."_" : ".php";
-		$queueFiles = formulize_scandirAndClean($queueDir, $queueFilter);
-		$processedFiles = array();
-		foreach($queueFiles as $file) {
-			$curTime = microtime(true);
-			if($curTime - $startTime < $maxExec - 10) { // ten second window because we hope no single queue operation takes over ten seconds by itself??
-				include $queueDir.$file;
-				unlink($queueDir.$file);
-				$processedFiles[] = $file;
-			} else {
-				break;
-			}
-		}
-		writeToFormulizeLog(array(
-			'formulize_event'=>'processing-queue',
-			'queue_id'=>$id,
-			'queue_items'=>implode(',',$processedFiles)
-		));
+		$queue = null;
+		$queue_handler = xoops_getmodulehandler('queue', 'formulize');
+		$queue = $id ? $queue_handler->get($id) : null;
+		ob_start();
+		$files = $queue_handler->process($queue);
+		ob_end_clean();
+		print json_encode($files);
 		break;
 }
 
