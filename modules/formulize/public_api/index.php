@@ -41,6 +41,7 @@
 
 $startTime = microtime(true);
 $maxExec = 60; // max seconds the script has to execute in. Based on the lowest time limit the script is operating under, could be fastcgi limit, php limit, something else...we could set this with config option in xoopsVersion.php if we want to get fancy and give the user control
+set_time_limit(60);
 
 // include mainfile, exit if that failed somehow, without a fatal PHP error
 require_once '../../../mainfile.php';
