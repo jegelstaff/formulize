@@ -31,50 +31,43 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// handle public api requests, sent to /formulize-public-api/
-// URL syntax should be:
-// /formulize-public-api/{version}/{object-or-action}/{id}/etc...
-
-// supported actions are:
-// status - responds with JSON object of metadata
-// queue/{id}/process - triggers parsing of the queue specified, if no {id} then runs all queues - queues currently only setup by internal APIs, and triggered by cron using the public API because cron is not logged in
-
-$startTime = microtime(true);
-$maxExec = 60; // max seconds the script has to execute in. Based on the lowest time limit the script is operating under, could be fastcgi limit, php limit, something else...we could set this with config option in xoopsVersion.php if we want to get fancy and give the user control
-
-// include mainfile, exit if that failed somehow, without a fatal PHP error
-require_once '../../../mainfile.php';
-if(!defined('XOOPS_MAINFILE_INCLUDED')) {
-    exit();
-}
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
-// clear out any extra stuff that would otherwise be appended to the http stream
-icms::$logger->disableLogger();
-while(ob_get_level()) {
-    ob_end_clean();
+if(!defined('FORMULIZE_PUBLIC_API_REQUEST')) {
+	http_response_code(500);
+  exit();
 }
 
-// check if the API is enabled, if so, set a flag that the rest of the API can use to tell if it should run or not
-// call the right version of the API
-$apiPathParts = explode('/', $_GET['apiPath']);
-$version = FormulizeObject::sanitize_handle_name($apiPathParts[1]);
-$objectOrAction = FormulizeObject::sanitize_handle_name($apiPathParts[2]);
-$id = FormulizeObject::sanitize_handle_name($apiPathParts[3]);
-$method = FormulizeObject::sanitize_handle_name($apiPathParts[4]);
-$config_handler = $config_handler = xoops_gethandler('config');
-$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'status' AND $id == 'formulize-check-if-public-api-is-properly-enabled-please')) {
-    define('FORMULIZE_PUBLIC_API_REQUEST', 1);
-    $apiFilePath = XOOPS_ROOT_PATH."/modules/formulize/public_api/$version/$objectOrAction.php";
-    if(file_exists($apiFilePath)) {
-        include_once $apiFilePath;
-    } else {
-        // no file for the requested api object or action, 404
-        http_response_code(404);
-    }
+// $id and $method set in the controller that landed us here
+// $id will be queue id or 0 or 'all' for all queues
+// $method will be what to do with the queue - initial support only for 'process' to run the queue
 
-// API disabled, fail with 503 - service unavailable
-} else {
-    http_response_code(503);
+// goal is that we could hook in various queue processing systems perhaps, but for now queues handled natively in PHP
+// queues will be snippets of PHP code that need to run
+// each snippet is its own file, in the queue folder, named with its own queue id, plus an identifier (could be just a timestamp of creation)
+// ie: {timestamp}_queueX_newuser.php
+
+// An alternate queue handling system could read all the files in sequence and execute each one in the context of PHP. Each queue file must be executed in the context of /mainfile.php having been included, and /modules/formulize/include/common.php. Anything that can invoke that context and then just read and execute the files could process the queue.
+
+switch($method) {
+	case "process":
+		$queueDir = XOOPS_ROOT_PATH.'/modules/formulize/queue/';
+		$queueFilter = ($id AND $id != 'all') ? "_".$id."_" : "";
+		$queueFiles = formulize_scandirAndClean($queueDir, $queueFilter);
+		$processedFiles = array();
+		foreach($queueFiles as $file) {
+			$curTime = microtime(true);
+			if($curTime - $startTime < $maxExec - 10) { // ten second window because we hope no single queue operation takes over ten seconds by itself??
+				include $queueDir.$file;
+				unlink($queueDir.$file);
+				$processedFiles[] = $file;
+			} else {
+				break;
+			}
+		}
+		writeToFormulizeLog(array(
+			'formulize_event'=>'processing-queue',
+			'queue_id'=>$id,
+			'queue_items'=>implode(',',$processedFiles)
+		));
+		break;
 }
 
