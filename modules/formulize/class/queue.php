@@ -90,7 +90,7 @@ class formulizeQueueHandler {
 	 */
 	function get($queue_handle) {
 		$queue = $this->create($queue_handle);
-		$queue->setVar('items', serialize(formulize_scandirAndClean($this->queueDir, "_".$queue->getVar('queue_handle')."_")));
+		$queue->setVar('items', serialize(formulize_scandirAndClean($this->queueDir, "_".$queue->getVar('queue_handle')."_", 0)));
 		return $queue;
 	}
 
@@ -109,61 +109,90 @@ class formulizeQueueHandler {
 	 * @param mixed queue_or_queue_handle The queue object or a queue handle to identify the queue we are appending to.
 	 * @param string code The code that we should add to the queue
 	 * @param string item Optional. A string that provides a description of what this code is for. Meant to make the filename more intelligible.
-	 * @return mixed Returns the number of bytes that were written, or false on failure. This is the return value of file_put_contents.
+	 * @param bool allowDuplicates Optional. A flag to indicate whether we allow a duplicate item into the queue. Use the item descriptor thoughtfully.
+	 * @return mixed Returns the number of bytes that were written (this is the return value of file_put_contents), or null if the item is already in the queue, or false on failure to write.
 	 */
-	function append($queue_or_queue_handle, $code, $item='') {
+	function append($queue_or_queue_handle, $code, $item='', $allowDuplicates=false) {
 		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : FormulizeObject::santitize_handle_name($queue_or_queue_handle);
 		$fileName = microtime(true)."_".$queue_handle."_".$item.".php";
-		$writeResult = false;
-		$code = "<?php \n$code";
-		if(formulize_validatePHPCode($code) == '') { // no errors returned
-			if($writeResult = file_put_contents($this->queueDir.$fileName, $code)) {
-				if(is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) {
-					$items = $queue_or_queue_handle->getVar('items');
-					$items[] = $fileName;
-					$queue_or_queue_handle->setVar('items', serialize($items));
+		if(!$allowDuplicates) {
+			$existingQueueItems = formulize_scandirAndClean($this->queueDir, "_".$queue_handle."_".$item.".php", 0); // check for files with same queue_handle and item descriptor
+		}
+		$writeResult = null;
+		if($allowDuplicates OR count($existingQueueItems) == 0) {
+			$writeResult = false;
+			$code = "<?php
+try {
+	writeToFormulizeLog(array(
+		'formulize_event'=>'processing-queue-item',
+		'queue_id'=>'$queue_handle',
+		'queue_item_or_items'=>'$fileName'
+	));
+	$code
+} catch (Exception \$e) {
+	error_log('Formulize Queue Error: queue item: $fileName, message: '.\$e->getMessage().', line: '.\$e->getLine());
+	writeToFormulizeLog(array(
+		'formulize_event'=>'error-processing-queue-item',
+		'queue_id'=>'$queue_handle',
+		'queue_item_or_items'=>'$fileName',
+		'PHP_error_string'=>\$e->getMessage(),
+		'PHP_error_file'=>'$fileName',
+		'PHP_error_errline'=>\$e->getLine()
+	));
+}";
+			if(formulize_validatePHPCode($code) == '') { // no errors returned
+				if($writeResult = file_put_contents($this->queueDir.$fileName, $code)) {
+					if(is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) {
+						$items = $queue_or_queue_handle->getVar('items');
+						$items[] = $fileName;
+						$queue_or_queue_handle->setVar('items', serialize($items));
+					}
+					writeToFormulizeLog(array(
+						'formulize_event'=>'item-written-to-queue',
+						'queue_id'=>$queue_handle,
+						'queue_item_or_items'=>$fileName
+					));
+				} else {
+					writeToFormulizeLog(array(
+						'formulize_event'=>'error-writing-item-to-queue',
+						'queue_id'=>$queue_handle,
+						'queue_item_or_items'=>$fileName
+					));
 				}
+			} else {
+				error_log("Formulize Queue Error: the code for item $item in queue $queue_handle has syntax errors. This item has not been added to the queue.");
+				writeToFormulizeLog(array(
+					'formulize_event'=>'syntax-error-in-queue-item',
+					'queue_id'=>$queue_handle,
+					'queue_item_or_items'=>$fileName
+				));
 			}
-		} else {
-			error_log("Formulize Queue Error: the code for the queue item $item has syntax errors. This item will not be processed.");
 		}
 		return $writeResult;
 	}
 
 	/**
-	 * Process a queue or all the queues
+	 * Process a queue or all the queues. If command line execution is available, entire queue processed that way without time limit. If not, then attempt as many queue items as possible in the time available for the current request.
 	 * @param object queue Optional. A queue object that represents the queue we're processing. If omitted, all queues are processed, items handled in the order they were created.
-	 * @return array An array of the queue filenames that were processed
+	 * @return mixed An array of the queue filenames that were processed, if done as part of this request. True if the queue was handed off to the command line
 	 */
 	function process($queue_or_queue_handle=null) {
-		global $startTime, $maxExec;
-		$startTime = $startTime ? $startTime : microtime(true);
-		$maxExec = $maxExec ? $maxExec : 60;
 		if(is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) {
-			$queueFiles = $queue_or_queue_handle->getVar('items');
+			$queue_handle = $queue_or_queue_handle->getVar('queue_handle');
 		} elseif($queue_or_queue_handle) {
-			$queue = $this->get($queue_or_queue_handle);
-			$queueFiles = $queue->getVar('items');
+			$queue_handle = $queue_or_queue_handle;
 		} else {
-			$queueFiles = formulize_scandirAndClean($this->queueDir, ".php");
+			$queue_handle = 'all';
 		}
-		$processedFiles = array();
-		foreach($queueFiles as $file) {
-			$curTime = microtime(true);
-			if($curTime - $startTime < $maxExec - 10) { // ten second window because we hope no single queue operation takes over ten seconds by itself??
-				include $this->queueDir.$file;
-				unlink($this->queueDir.$file);
-				$processedFiles[] = $file;
-			} else {
-				break;
-			}
+		$queueDir = $this->queueDir;
+		$queueIncludeFile = XOOPS_ROOT_PATH.'/modules/formulize/include/queue.php';
+		if(isEnabled('exec')) {
+			$output = exec('php -f '.$queueIncludeFile.' "'.escapeshellarg($queue_handle).'" "'.escapeshellarg($queueDir).'" > /dev/null 2>&1 & echo $!');
+			return true;
+		} else {
+			include $queueIncludeFile; // sets processedFiles
+			return $processedFiles;
 		}
-		writeToFormulizeLog(array(
-			'formulize_event'=>'processing-queue',
-			'queue_id'=>$id,
-			'queue_items'=>implode(',',$processedFiles)
-		));
-		return $processedFiles;
 	}
 
 }

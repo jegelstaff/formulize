@@ -98,7 +98,7 @@ function writeToFormulizeLog($data) {
 		'PHP_error_file' => (isset($data['PHP_error_file']) ? $data['PHP_error_file'] : ''),
 		'PHP_error_errline' => (isset($data['PHP_error_errline']) ? $data['PHP_error_errline'] : ''),
 		'queue_id' => (isset($data['queue_id']) ? $data['queue_id'] : ''),
-		'queue_items' => (isset($data['queue_items']) ? $data['queue_items'] : ''),
+		'queue_item_or_items' => (isset($data['queue_item_or_items']) ? $data['queue_item_or_items'] : ''),
 	);
 
 	// write the new log entry (to a new file if necessary, active file has generic name, archived files are named with the current date based on server timezone)
