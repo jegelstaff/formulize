@@ -97,7 +97,7 @@ $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
 
-if(!$element_handler) {
+if(!isset($element_handler) OR !$element_handler) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 }
 
@@ -397,9 +397,10 @@ if(isset($_POST['overridescreen']) AND $_POST['overridescreen'] AND is_numeric($
 synchExistingSubformEntries($overrideFrid);
 synchSubformBlankDefaults();
 
-
-foreach($notEntriesList['update_entry'] as $updateFid=>$updateEntries) {
-    $GLOBALS['formulize_snapshotRevisions'][$updateFid] = formulize_getCurrentRevisions($updateFid, $updateEntries);
+if(isset($notEntriesList['update_entry'])) {
+    foreach($notEntriesList['update_entry'] as $updateFid=>$updateEntries) {
+        $GLOBALS['formulize_snapshotRevisions'][$updateFid] = formulize_getCurrentRevisions($updateFid, $updateEntries);
+    }
 }
 
 // update the derived values for all forms that we saved data for, now that we've saved all the data from all the forms

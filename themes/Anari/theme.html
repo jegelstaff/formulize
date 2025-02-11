@@ -35,7 +35,7 @@
     <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
 
     <!-- CSS -->
-    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if $icms_rtl}>rtl/<{/if}>css/style.css?v=1.6" />
+    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) AND $icms_rtl}>rtl/<{/if}>css/style.css?v=1.6" />
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
@@ -145,7 +145,7 @@ if($xoopsUser) {
                   <{if $xoops_isuser}>
                   <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
                   <a class="user-actions__link" href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
-                  <{elseif !$openMenuClass }>
+                  <{elseif !isset($openMenuClass) OR !$openMenuClass }>
                   <a class="user-actions__link" href="<{$icms_url}>" title="Login">Login</a>
                   <{/if}>
 
@@ -182,7 +182,7 @@ if($xoopsUser) {
     });
   </script>
 
-    <{ if $masquerade_username }>
+    <{ if isset($masquerade_username) AND $masquerade_username }>
         <div id="formulize-masquerade-block">
             Masquerading as <b><{$masquerade_username}></b>
             <form method="post" action="<{$smarty.const.XOOPS_URL}>/modules/formulize/">

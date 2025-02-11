@@ -137,7 +137,7 @@ class icms_view_theme_Object {
 					: ICMS_THEME_URL . '/' . $this->folderName . '/',
 				'icms_themecss'=> xoops_getcss($this->folderName),
 				'icms_requesturi' => htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES),
-				'icms_redirect' => htmlspecialchars(trim($_GET['xoops_redirect']), ENT_QUOTES),
+				'icms_redirect' => (isset($_GET['xoops_redirect']) ? htmlspecialchars(trim($_GET['xoops_redirect']), ENT_QUOTES) : ''),
 				'icms_sitename' => htmlspecialchars($icmsConfig['sitename'], ENT_QUOTES),
 				'icms_slogan' => htmlspecialchars($icmsConfig['slogan'], ENT_QUOTES),
 				'icms_dirname' => @$icmsModule ? $icmsModule->getVar('dirname') : 'system',

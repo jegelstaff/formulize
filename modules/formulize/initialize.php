@@ -147,7 +147,7 @@ if($sid) {
         $screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
         $screen = $screen_handler->get($sid); // get the full screen object
 
-        if($_POST['ventry'] AND $screen->getVar('type') == 'listOfEntries' AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen") AND !strstr($screen->getVar("viewentryscreen"), "p")) { // if the user is viewing an entry off a list, then check what screen gets used to display entries instead, since that's what we're doing (but only if there is a screen specified, and it's not a pageworks page)
+        if(isset($_POST['ventry']) AND $_POST['ventry'] AND $screen->getVar('type') == 'listOfEntries' AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen") AND !strstr($screen->getVar("viewentryscreen"), "p")) { // if the user is viewing an entry off a list, then check what screen gets used to display entries instead, since that's what we're doing (but only if there is a screen specified, and it's not a pageworks page)
             // do all this to set the Frid properly. That's it. Otherwise, no change. Frid affects behaviour in readelements.php
             $base_screen_handler = xoops_getmodulehandler('screen', 'formulize');
             $viewEntryScreenObject = $base_screen_handler->get(intval($screen->getVar('viewentryscreen')));
@@ -167,7 +167,7 @@ if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
     $entry = "";
 }
 
-$formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? intval($_GET['loadview']) : $formulize_screen_loadview;
+$formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? (isset($_GET['loadview']) ? intval($_GET['loadview']) : 0) : $formulize_screen_loadview;
 $loadThisView = (isset($formulize_screen_loadview) AND is_numeric($formulize_screen_loadview)) ? $formulize_screen_loadview : "";
 if (!$loadThisView) {
     // a 0 could possibly screw things up, so change to ""
