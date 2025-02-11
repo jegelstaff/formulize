@@ -7095,9 +7095,6 @@ function isEnabled($func) {
  * @return string An empty string if no errors, or details about the error found
  */
 function formulize_validatePHPCode($theCode) {
-    while(ob_get_level()) {
-        ob_end_clean();
-    }
     if (isEnabled('shell_exec') AND $theCode = trim($theCode)) {
         $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
         file_put_contents($tmpfname, trim($theCode));
