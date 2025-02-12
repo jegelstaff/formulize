@@ -39,8 +39,8 @@
 // status - responds with JSON object of metadata
 // queue/{id}/process - triggers parsing of the queue specified, if no {id} then runs all queues - queues currently only setup by internal APIs, and triggered by cron using the public API because cron is not logged in
 
-$startTime = microtime(true);
-$maxExec = 60; // max seconds the script has to execute in. Based on the lowest time limit the script is operating under, could be fastcgi limit, php limit, something else...we could set this with config option in xoopsVersion.php if we want to get fancy and give the user control
+$formulize_publicApiStartTime = microtime(true);
+$formulize_publicApiMaxExec = 60; // max seconds the script has to execute in. Based on the lowest time limit the script is operating under, could be fastcgi limit, php limit, something else...we could set this with config option in xoopsVersion.php if we want to get fancy and give the user control
 set_time_limit(60);
 
 // include mainfile, exit if that failed somehow, without a fatal PHP error
@@ -78,4 +78,3 @@ if($formulizeConfig['formulizePublicAPIEnabled'] OR ($objectOrAction == 'status'
 } else {
     http_response_code(503);
 }
-
