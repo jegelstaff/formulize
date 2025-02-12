@@ -187,7 +187,7 @@ try {
 		$queueDir = $this->queueDir;
 		$queueIncludeFile = XOOPS_ROOT_PATH.'/modules/formulize/include/queue.php';
 		if(isEnabled('exec')) {
-			$output = exec('php -f '.$queueIncludeFile.' "'.escapeshellarg($queue_handle).'" "'.escapeshellarg($queueDir).'" > /dev/null 2>&1 & echo $!');
+			exec('php -f '.$queueIncludeFile.' '.escapeshellarg($queue_handle).' '.escapeshellarg($queueDir).' > /dev/null 2>&1 & echo $!');
 			return true;
 		} else {
 			include $queueIncludeFile; // sets processedFiles

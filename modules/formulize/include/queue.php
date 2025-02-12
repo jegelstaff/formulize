@@ -30,21 +30,26 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-if(!defined(XOOPS_MAINFILE_INCLUDED)) {
+
+if(!defined("XOOPS_MAINFILE_INCLUDED")) {
 	include_once "../../../mainfile.php";
 	include_once XOOPS_ROOT_PATH."/modules/formulize/include/common.php";
-	$queue_handle = $argv[1];
-	$queueDir = $argv[2];
 	set_time_limit(0);
 	ignore_user_abort(true);
+	$queue_handle = $argv[1];
+	$queueDir = $argv[2];
 } else {
-	global $startTime, $maxExec;
-	$startTime = $startTime ? $startTime : microtime(true);
-	$maxExec = $maxExec ? $maxExec : 60;
+	global $formulize_publicApiStartTime, $formulize_publicApiMaxExec;
+	$formulize_publicApiStartTime = $formulize_publicApiStartTime ? $formulize_publicApiStartTime : microtime(true);
+	$formulize_publicApiMaxExec = $formulize_publicApiMaxExec ? $formulize_publicApiMaxExec : 60;
 }
 
+global $xoopsDB;
+$xoopsDB->allowWebChanges = true;
+define('FORMULIZE_QUEUE_PROCESSING', true);
+
 if(!$queue_handle OR $queue_handle == 'all') {
-	$queueFiles = formulize_scandirAndClean($this->queueDir, ".php", 0);
+	$queueFiles = formulize_scandirAndClean($queueDir, ".php", 0);
 } else {
 	$queue_handler = xoops_getmodulehandler('queue', 'formulize');
 	$queue = $queue_handler->get($queue_handle);
@@ -55,7 +60,7 @@ $processedFiles = array();
 
 foreach($queueFiles as $file) {
 	$curTime = microtime(true);
-	if(!isset($startTime) OR $curTime - $startTime < $maxExec - 10) { // if we're running in an http request context (not command line), then ten second window when running inside a request because we hope no single queue operation takes over ten seconds by itself??
+	if(!isset($formulize_publicApiStartTime) OR $curTime - $formulize_publicApiStartTime < $formulize_publicApiMaxExec - 10) { // if we're running in an http request context (not command line), then ten second window when running inside a request because we hope no single queue operation takes over ten seconds by itself??
 		writeToFormulizeLog(array(
 			'formulize_event'=>'processing-queue-item',
 			'queue_id'=>$queue_handle,
