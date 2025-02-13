@@ -1324,10 +1324,13 @@ class formulizeFormsHandler {
                     if($filterSettings[1][$i] == "NOT") {
                         $filterSettings[1][$i] = "NOT LIKE";
                     }
-                    $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."*=+*:"."$likeBits\" OR $formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."\")";
+					$termToUse = formulize_db_escape($termToUse);
+					$opToUse = htmlspecialchars_decode($filterSettings[1][$i]);
+					$fieldToUse = "$formAlias`{$filterSettings[0][$i]}`";
+                    $perGroupFilter .= "($fieldToUse $opToUse '$likeBits*=+*:$termToUse*=+*:$likeBits' OR $fieldToUse $opToUse '$likeBits*=+*:$termToUse')";
                     continue; // in this case, skip the rest, we don't want to set the $perGroupFilter in the normal way below
                 } else {
-                    $termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
+                    $termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "'$likeBits".formulize_db_escape($termToUse)."$likeBits'";
                 }
                 $filterSettings[1][$i] = ($filterSettings[1][$i] == "NOT") ? "!=" : $filterSettings[1][$i];
                 $perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=

@@ -2330,10 +2330,10 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
             $value = $myts->htmlSpecialChars($value);
             if ($value != "" AND $existing_value) {
                 // update
-                $sql = "UPDATE " . $xoopsDB->prefix("formulize_other") . " SET other_text=\"" . formulize_db_escape($value) . "\" WHERE id_req='$id_req' AND ele_id='$ele_id'";
+                $sql = "UPDATE " . $xoopsDB->prefix("formulize_other") . " SET other_text='" . formulize_db_escape($value) . "' WHERE id_req='$id_req' AND ele_id='$ele_id'";
             }elseif ($value != "" AND !$existing_value) {
                 // add
-                $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$id_req\", \"$ele_id\", \"" . formulize_db_escape($value) . "\")";
+                $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$id_req\", \"$ele_id\", '" . formulize_db_escape($value) . "')";
             }elseif ($value == "" AND $existing_value) {
                 // delete
                 $sql = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id='$ele_id'";
@@ -3107,7 +3107,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
     // 1.  get all conditions for this fid and event
-    $cons = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_fid=".intval($fid)." AND not_cons_event=\"".formulize_db_escape($event)."\"");
+    $cons = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_fid=".intval($fid)." AND not_cons_event='".formulize_db_escape($event)."'");
     if (count((array) $cons) == 0) {
         return;
     }
@@ -3572,7 +3572,7 @@ function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 	$notification_handler = xoops_gethandler('notification');
 
 	$uidsSubscribed = array();
-	$uidsSubdSQL = "SELECT not_uid FROM " . $xoopsDB->prefix("xoopsnotifications") . " WHERE not_event=\"".formulize_db_escape($event)."\" AND not_category=\"form\" AND not_modid=$mid AND not_itemid=$fid";
+	$uidsSubdSQL = "SELECT not_uid FROM " . $xoopsDB->prefix("xoopsnotifications") . " WHERE not_event='".formulize_db_escape($event)."' AND not_category='form' AND not_modid=$mid AND not_itemid=$fid";
 	if($res = $xoopsDB->query($uidsSubdSQL)) {
 		while($row = $xoopsDB->fetchArray($res)) {
 			$uid = $row['not_uid'];
@@ -6432,18 +6432,17 @@ function convertSelectBoxToSingle($table, $column) {
     return true;
 }
 
+/**
+ * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
+ * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out, and just be happy we have an escaped string.
+ * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
+ * @param mixed value - The value to run through the database quote method (PDO quote currently)
+ * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
+ */
 function formulize_db_escape($value) {
   global $xoopsDB;
-  static $methodExists;
-  if(!isset($methodExists)) {
-    $methodExists = method_exists($xoopsDB, 'escape');
-  }
-  if($methodExists) {
-    return $xoopsDB->escape($value);
-  } else {
-    $value = $xoopsDB->quote($value);
-    return substr($value, 1,-1);
-  }
+  $value = $xoopsDB->quote($value);
+  return substr($value, 1,-1);
 }
 
 // THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function:
@@ -6459,7 +6458,6 @@ function formulize_db_escape($value) {
  * @return string
  */
 function dateFormatToStrftime($dateFormat) {
-
 
 /*
     // UNCOMMENT THIS BLOCK TO GET A DEBUG OUTPUT THAT SHOWS WHAT FORMAT CODES ARE SUPPORTED ON YOUR CURRENT SERVER!!
@@ -8435,7 +8433,7 @@ function formulize_getSidFromRewriteAddress($address="", $entryIdentifier="") {
 			exit();
 		}
 
-		$sql = 'SELECT sid, type FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'"';
+		$sql = "SELECT sid, type FROM ".$xoopsDB->prefix('formulize_screen')." WHERE MATCH(`rewriteruleAddress`) AGAINST('".formulize_db_escape($address)."') AND `rewriteruleAddress` = '".formulize_db_escape($address)."'";
 		if($res = $xoopsDB->query($sql)) {
 			$candidateScreen = 0;
 			$rowsFound = $xoopsDB->getRowsNum($res);
