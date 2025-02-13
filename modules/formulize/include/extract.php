@@ -2369,25 +2369,31 @@ function getFormHandlesFromEntry($entry) {
 	return "";
 }
 
-// THIS FUNCTION IS USED AFTER THE MASTERRESULT HAS BEEN RETURNED.  THIS FUNCTION RETURNS THE VALUE OF THE CORRESPONDING ELEMENT HANDLE FOR THE GIVEN MASTER ENTRY ID.
-// Returns the value if there's only one, or an array if there are more than one
-// $entry is normally the master result MINUS the id, ie: it's everything after the initial ID key, so one complete entry from the master result array
-// if $id is specified, then $entry is assumed to be the entire result set, in which case the $id is used to isolate the specific entry in the set you want
-// $localid is the id of a specific entry to get, ie: if there is more than one instance of handle and we only want one in particular
+/**
+ * Return the human readable value from a dataset, for the specified field (and entry)
+ * Except in the case of canonical metdata, such as creation_uid, where the raw metadata is returned
+ * Returns an array of values if there is more than one value in the dataset for the given field in the entry
+ * Returns a single value if there is only one value in the dataset for the given field in the entry
+ * Values have html special characters converted back to normal characters
+ * @param array entry The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, if the getData operation was done in the context of a relationship among forms. Can also be the entire dataset returned from getData. In this case the id param must be used to indicate which entry you are working with.
+ * @param string handle The element handle for the field that you want to retrieve
+ * @param int datasetKey Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset, starting with 0 for the first entry.
+ * @param int localEntryId Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
+ * @return string|int|float|array Returns the human readable value for the specified handle in the entry, optionally limited to the specified localEntryId. If there is more than one value for the handle, then an array of values is returned.
+ */
+function display($entry, $handle, $datasetKey=null, $localEntryId=null) {
 
-function display($entry, $handle, $id=null, $localid="NULL") {
-
-	$entry = is_numeric($id) ? $entry[$id] : $entry;
+  $entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
   if(!$formhandle = getFormHandleFromEntry($entry, $handle)) { return ""; } // return nothing if handle is not part of entry
 
   $GLOBALS['formulize_mostRecentLocalId'] = array();
 	foreach($entry[$formhandle] as $lid=>$elements) {
-		if($localid == "NULL" OR $lid == $localid) {
+		if(!$localEntryId OR $localEntryId == "NULL" OR $lid == $localEntryId) { // legacy "NULL" string value is valid :(
 			if($handle == "owner_groups") { // owner groups is always a simple array, return as is
 				return $elements[$handle];
 			} elseif(is_array($elements[$handle])) { // will only ever be one item in this array! holdover from when we used to prep values as part of preparing dataset, and everything, even single values, was put into an array. Now we put the raw DB value into an array, and prep it here. Sticking with it in an array is consistent for existing logic that expects only metadata values to not be in an array, which is hacky, but less disruptive.
 				foreach(prepvalues($elements[$handle][0], $handle, $lid) as $thisValue) {
-					$foundValues[] = $thisValue;
+					$foundValues[] = htmlspecialchars_decode($thisValue);
 					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
 				}
 			} else { // the handle is for non-owner-groups metadata, all other fields will be arrays in the dataset
@@ -2398,8 +2404,8 @@ function display($entry, $handle, $id=null, $localid="NULL") {
 	}
 
 	if(count((array) $foundValues) == 1) {
-    $GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
-		return htmlspecialchars_decode($foundValues[0], ENT_QUOTES);
+        $GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
+		return $foundValues[0];
 	} else {
 		return $foundValues;
 	}
