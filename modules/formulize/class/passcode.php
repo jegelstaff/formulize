@@ -162,7 +162,7 @@ class formulizePassCodeHandler {
         $code = formulize_db_escape($code);
         $notes = formulize_db_escape($notes);
         $expiry = $expiry ? '"'.date('Y-m-d', strtotime($expiry)).'"' : 'NULL';
-        $sql = "INSERT INTO ".$xoopsDB->prefix('formulize_passcodes')." (passcode, notes, screen, expiry) VALUES ('".$code."', '".$notes."', '".$sid."', '".$expiry."')";
+        $sql = "INSERT INTO ".$xoopsDB->prefix('formulize_passcodes')." (passcode, notes, screen, expiry) VALUES ('".$code."', '".$notes."', ".$sid.", ".$expiry.")";
         if(!$res = $xoopsDB->queryF($sql)) {
             print "Error: could not insert passcode with this SQL: $sql<br>".$xoopsDB->error();
             return false;
@@ -176,7 +176,7 @@ class formulizePassCodeHandler {
         $sid = intval($sid);
         $oldCode = formulize_db_escape($oldCode);
         $newCode = formulize_db_escape($newCode);
-        $sql = "UPDATE ".$xoopsDB->prefix('formulize_passcodes')." SET passcode = '".$newCode."' WHERE passcode = '".$oldCode."' AND screen = '".$sid;
+        $sql = "UPDATE ".$xoopsDB->prefix('formulize_passcodes')." SET passcode = '".$newCode."' WHERE passcode = '".$oldCode."' AND screen = ".$sid;
         if(!$res = $xoopsDB->queryF($sql)) {
             print "Error: could not update passcode with this SQL: $sql<br>".$xoopsDB->error();
             return false;

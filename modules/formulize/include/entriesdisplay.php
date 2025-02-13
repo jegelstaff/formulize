@@ -2415,7 +2415,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
 		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
-			$allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
+			$allowedWhere .= " $allowedWhereConjunction $calcElement=".formulize_db_escape($value);
 		  } else {
 			$allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
 		  }
@@ -2496,9 +2496,6 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	$calcResult = array();
 	$calcResultSQL = "$select $thisBaseQuery $allowedWhere $excludedWhere) as tempQuery $groupByClause $orderByClause ";
 	global $xoopsUser;
-	/*if($xoopsUser->getVar('uid') == 1) {
-	  print "$calcResultSQL<br><br>";
-	}*/
 	$calcResultRes = $xoopsDB->query($calcResultSQL);
 	while($calcResultArray = $xoopsDB->fetchArray($calcResultRes)) {
 	  $calcResult[] = $calcResultArray;
