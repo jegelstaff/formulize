@@ -91,7 +91,7 @@ ob_start();
 <div class="blokSQL">
 <div class="dbconn_line"><label> <?php echo LEGEND_DATABASE; ?><br />
 <select size="2" name="DB_TYPE" class="db_select">
-	<option value="pdo.mysql" selected="selected">mysql</option>
+	<option value="pdo.mysql" selected="selected">MariaDB/MySQL</option>
 </select> </label>
 <div class='clear'>&nbsp;</div>
 </div>
