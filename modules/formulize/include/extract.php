@@ -2374,7 +2374,7 @@ function getFormHandlesFromEntry($entry) {
  * Except in the case of canonical metdata, such as creation_uid, where the raw metadata is returned
  * Returns an array of values if there is more than one value in the dataset for the given field in the entry
  * Returns a single value if there is only one value in the dataset for the given field in the entry
- * Values have html special characters converted back to normal characters
+ * Values have html special characters converted back to normal characters (not all entities, just the ones with htmlspecialchars) - this behaviour could be removed if/when user submitted data entering the database through Formulize forms, stops having htmlspecialchars applied to it. Then there would not be any special chars in the database, so we wouldn't need to decode them coming out.
  * @param array entry The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, if the getData operation was done in the context of a relationship among forms. Can also be the entire dataset returned from getData. In this case the id param must be used to indicate which entry you are working with.
  * @param string handle The element handle for the field that you want to retrieve
  * @param int datasetKey Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset, starting with 0 for the first entry.
