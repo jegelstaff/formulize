@@ -112,7 +112,10 @@ function patch40() {
         }
     }
 
-    if (!$needsPatch AND !file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
+		// we need to convert code if the custom_code folder exists, or if there is no code in the 'code' folder, but we have elements, forms, or screens that have code in them in the DB
+		$needToConvertDBCodeToCodeFolder = file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
+
+    if (!$needsPatch AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
         return;
     }
 
@@ -665,7 +668,7 @@ function patch40() {
 				// 4. ib $ele_value[0] if they contain $value
 				// 5. areamodif $ele_value[0] if they contain $value
 
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
+				if($needToConvertDBCodeToCodeFolder) {
 
 					// query for the elements...
 					$elementsNeedingOpeningPHPTagsSQL = "SELECT ele_id, ele_type, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE
@@ -738,13 +741,13 @@ function patch40() {
 									if(!is_numeric($effectId)) { continue; } // ugly, effects are all numeric keys, other keys at same level are strings for other metadata
 									switch($actionSettings['applyto']) {
 										case 'custom_html':
-											if(substr($effectSettings['html'], 0, 5) != '<?php') {
+											if(substr(trim($effectSettings['html']), 0, 5) != '<?php') {
 												$customActions[$actionId][$effectId]['html'] = "<?php\n".$effectSettings['html']; // assign update to the source array
 											}
 											break;
 										case 'custom_code':
 										case 'custom_code_once':
-											if(substr($effectSettings['code'], 0, 5) != '<?php') {
+											if(substr(trim($effectSettings['code']), 0, 5) != '<?php') {
 												$customActions[$actionId][$effectId]['code'] = "<?php\n".$effectSettings['code']; // assign update to the source array
 											}
 											break;
@@ -776,8 +779,10 @@ function patch40() {
                             }
                         }
                     }
-                    if(rmdir(XOOPS_ROOT_PATH."/modules/formulize/custom_code") === false) {
+                    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/custom_code")) {
+											if(rmdir(XOOPS_ROOT_PATH."/modules/formulize/custom_code") === false) {
                         exit("Error: could not remove the custom_code folder.<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+											}
                     }
 
                     // transplant all userland code to the code folder, if necessary
@@ -878,73 +883,77 @@ function patch40() {
 				}
 
         // convert any code files to use handles instead of id numbers (which was the original implementation in the patch code above, since updated to use handles instead of ids)
+				// will almost certainly never run, because only required in the tiny window between the original implementation, and the switch to using handles
         $codeFiles = scandir(XOOPS_ROOT_PATH.'/modules/formulize/code');
         foreach($codeFiles as $file) {
-            if($file !== '.' AND $file !== '..' AND $file !== 'index.html') {
-                /**
-                 * Names are in the formats:
-                 * derived_[element_id]
-                 * areamodif_[element_id]
-                 * ib_[element_id]
-                 * text_[element_id]
-                 * textarea_[element_id]
-                 * on_before_save_[form_id]
-                 * on_after_save_[form_id]
-                 * on_delete_[form_id]
-                 * custom_edit_check_[form_id]
-                 * custom_html_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
-                 * custom_code_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
-                 *
-                 * We will change element_id to element handle
-                 * We will change form_id to form handle
-                 * We will change button_id to the button handle, and screen_id to a newly created screen handle
-                 *
-                 */
-                $fileNameParts = explode('_', substr($file, 0, -4));
-                $firstPart = $fileNameParts[0];
-                $secondPart = $fileNameParts[1];
-                $thirdPart = $fileNameParts[2];
-                if($firstPart == "derived"
-                  OR $firstPart == "areamodif"
-                  OR $firstPart == "ib"
-                  OR $firstPart == "text"
-                  OR $firstPart == "textarea") {
-                    $element_handler = xoops_getmodulehandler('elements','formulize');
-                    $element_id = $fileNameParts[1];
-                    if(is_numeric($element_id)) {
-                        $elementObject = $element_handler->get($element_id);
-                        $elementHandle = $elementObject->getVar('ele_handle');
-                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$elementHandle.'.php');
-                    }
-                } elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save"
-                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save"
-                  OR $firstPart.'_'.$secondPart == "on_delete"
-                  OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "custom_edit_check") {
-                    $form_handler = xoops_getmodulehandler('forms','formulize');
-                    $form_id = $fileNameParts[count($fileNameParts)-1];
-                    if(is_numeric($form_id)) {
-                        $fileType = $firstPart.'_'.$secondPart == "on_delete" ? "on_delete" : $firstPart.'_'.$secondPart.'_'.$thirdPart;
-                        $formObject = $form_handler->get($form_id);
-                        $formHandle = $formObject->getVar('form_handle');
-                        rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
-                    }
-                } elseif($firstPart.'_'.$secondPart == "custom_html"
-                  OR $firstPart.'_'.$secondPart == "custom_code") {
-										$effect_id = $fileNameParts[2];
-										$button_id = $fileNameParts[3]; // might be text! might include underscore!
-										$screen_id = str_replace($firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$button_id.'_', '', $file); // hopefully remove everything up to the screen identifier, but might not work if the button id is a handle with underscores!
-										$screen_id = substr($screen_id, 0, -4); // cut off .php
-                    $screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
-                    if($screenObject = $screen_handler->get($screen_id)) {
-                    	$screen_handle = $screenObject->getVar('screen_handle');
-                    	$customActions = $screenObject->getVar('customactions');
-                    	$buttonHandle = $customActions[$button_id]['handle'];
-											if($file != $firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php') {
-                      	rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
-                    	}
+					if($file !== '.' AND $file !== '..' AND $file !== 'index.html') {
+						/**
+						 * Names are in the formats:
+						 * derived_[element_id]
+						 * areamodif_[element_id]
+						 * ib_[element_id]
+						 * text_[element_id]
+						 * textarea_[element_id]
+						 * on_before_save_[form_id]
+						 * on_after_save_[form_id]
+						 * on_delete_[form_id]
+						 * custom_edit_check_[form_id]
+						 * custom_html_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
+						 * custom_code_[effect_id - likely 1 in all cases]_[button_id - also called caid in code elsewhere]_[screen_id]
+						 *
+						 * We will change element_id to element handle
+						 * We will change form_id to form handle
+						 * We will change button_id to the button handle, and screen_id to a newly created screen handle
+						 *
+						 */
+						$fileNameParts = explode('_', substr($file, 0, -4));
+						$firstPart = $fileNameParts[0];
+						$secondPart = $fileNameParts[1];
+						$thirdPart = $fileNameParts[2];
+						if($firstPart == "derived"
+							OR $firstPart == "areamodif"
+							OR $firstPart == "ib"
+							OR $firstPart == "text"
+							OR $firstPart == "textarea") {
+								$element_handler = xoops_getmodulehandler('elements','formulize');
+								$element_id = $fileNameParts[1];
+								if(is_numeric($element_id)) {
+										$elementObject = $element_handler->get($element_id);
+										$elementHandle = $elementObject->getVar('ele_handle');
+										rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$elementHandle.'.php');
+								}
+						} elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save"
+							OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "on_after_save"
+							OR $firstPart.'_'.$secondPart == "on_delete"
+							OR $firstPart.'_'.$secondPart.'_'.$thirdPart == "custom_edit_check") {
+								$form_handler = xoops_getmodulehandler('forms','formulize');
+								$form_id = $fileNameParts[count($fileNameParts)-1];
+								if(is_numeric($form_id)) {
+										$fileType = $firstPart.'_'.$secondPart == "on_delete" ? "on_delete" : $firstPart.'_'.$secondPart.'_'.$thirdPart;
+										$formObject = $form_handler->get($form_id);
+										$formHandle = $formObject->getVar('form_handle');
+										rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileType.'_'.$formHandle.'.php');
+								}
+						} elseif($firstPart.'_'.$secondPart == "custom_html" OR $firstPart.'_'.$secondPart == "custom_code") {
+							$effect_id = $fileNameParts[2];
+							$button_id = $fileNameParts[3];
+							if(is_numeric($button_id)) {
+								$screen_id = str_replace($firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$button_id.'_', '', $file);
+								$screen_id = substr($screen_id, 0, -4); // cut off .php
+								if(is_numeric($screen_id)) {
+									$screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
+									if($screenObject = $screen_handler->get($screen_id)) {
+										$screen_handle = $screenObject->getVar('screen_handle');
+										$customActions = $screenObject->getVar('customactions');
+										$buttonHandle = $customActions[$button_id]['handle'];
+										if($file != $firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php') {
+											rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
 										}
-                }
-            }
+									}
+								}
+							}
+						}
+					}
         }
 
         global $xoopsConfig;
@@ -1592,6 +1601,57 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
             }
         }
     }
+}
+
+/**
+ * Check if there is no element, form, or screen code in the code folder, and if there are elements, forms, or screens for which we should have code
+ * @return bool A flag indicating if there is code in the DB, and it seems there has never been a conversion to the code folder
+ */
+function codeInNeedOfConversion() {
+	global $xoopsDB;
+	$codeConvertedAlready = 0;
+	foreach (scandir(XOOPS_ROOT_PATH.'/modules/formulize/code') as $fileName) {
+		$fileName = trim($fileName);
+		if (substr($fileName, -4) ==  ".php" AND (
+			substr($fileName, 0, 11) == 'custom_code'
+			OR substr($fileName, 0, 11) == 'custom_html'
+			OR substr($fileName, 0, 11) == 'custom_edit'
+			OR substr($fileName, 0, 9) == 'on_delete'
+			OR substr($fileName, 0, 9) == 'on_before'
+			OR substr($fileName, 0, 8) == 'on_after'
+			OR substr($fileName, 0, 7) == 'derived'
+			OR substr($fileName, 0, 2) == 'ib'
+			OR substr($fileName, 0, 4) == 'text'
+			OR substr($fileName, 0, 9) == 'areamodif'
+		)) {
+			$codeConvertedAlready++;
+			break; // once we've found one, that's good enough
+		}
+	}
+	if(!$codeConvertedAlready) {
+		$customCodePatchNeededSQL = array(
+			"SELECT ele_handle FROM ".$xoopsDB->prefix('formulize')." WHERE
+				((ele_type = 'derived')
+				OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
+				OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%'))",
+			"SELECT form_handle	FROM ".$xoopsDB->prefix('formulize_id')." WHERE
+				(on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != '')",
+			"SELECT s.`screen_handle` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
+				LEFT JOIN ".$xoopsDB->prefix('formulize_screen')." AS s
+				ON l.sid = s.sid
+				WHERE (l.customactions LIKE '%\"custom_code\";%' OR l.customactions LIKE '%\"custom_html\";%' OR l.customactions LIKE '%\"custom_code_once\";%')"
+		);
+		foreach($customCodePatchNeededSQL as $thisSQL) {
+			if($res = $xoopsDB->queryF($thisSQL)) {
+				if($xoopsDB->getRowsNum($res)) {
+					return true;
+				}
+			} else {
+				exit("ERROR: could not determine whether code files are present in the code folder. SQL dump:<br>".$thisSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+			}
+		}
+	}
+	return false;
 }
 
 if (!defined('_FORMULIZE_UI_PHP_INCLUDED')) {
