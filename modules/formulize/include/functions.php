@@ -2860,10 +2860,10 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
 	    }
 	  } elseif($selfListType AND !$otherListType) { // convert found value to a user id
 	    $nameType = $selfListType == "{FULLNAMES}" ? 'name' : 'uname';
-	    $criteria = new Criteria($nameType, $foundValue, "=");
+	    $criteria = new Criteria($nameType, formulize_db_escape(htmlspecialchars_decode($foundValue)), "=");
 	    $users = $member_handler->getUsers($criteria);
 	    if(empty($users) AND $selfListType == "{FULLNAMES}") {
-              $criteria = new Criteria('uname', $foundValue, "=");
+              $criteria = new Criteria('uname', formulize_db_escape(htmlspecialchars_decode($foundValue)), "=");
 	      $users = $member_handler->getUsers($criteria);
 	    }
 	    if(isset($users[0])) {
@@ -7941,7 +7941,7 @@ function getEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
   $criteria->add(new Criteria('ele_type', 'select'), 'OR');
 	$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
-  $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form
+  $elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid)); // get all the text or textarea elements in the form
 
   foreach($elementsForDefaults as $thisDefaultEle) {
     $defaultTextToWrite = "";

@@ -31,7 +31,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// read digest notification data out of the database and send messages 
+// read digest notification data out of the database and send messages
 
 $startTime = microtime(TRUE);
 $maxExec = 60; // max seconds the script has to execute in. Based on the lowest time limit the script is operating under, could be fastcgi limit, php limit, something else...we could set this with config option in xoopsVersion.php if we want to get fancy and give the user control
@@ -43,7 +43,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
     $elementHandler = xoops_getmodulehandler('elements', 'formulize');
     $memberHandler = xoops_gethandler('member');
-    
+
     global $xoopsDB, $xoopsConfig;
     while(formulize_notifyStillTime($startTime, $maxExec)) {
         $sql = "SELECT * FROM ".$xoopsDB->prefix("formulize_digest_data")." WHERE email = (SELECT email FROM ".$xoopsDB->prefix("formulize_digest_data")." ORDER BY email LIMIT 0,1) ORDER BY fid, digest_id ASC";
@@ -59,7 +59,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             if(!isset($email)) {
                 $email = $array['email'];
             }
-            $criteria = new Criteria('email', $email);
+            $criteria = new Criteria('email', formulize_db_esacpe($email));
             $targetUsers = $memberHandler->getUsers($criteria);
             $targetUser = $targetUsers[0];
             $fid = $array['fid'];
@@ -69,7 +69,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                 switch($event) {
                     case("new_entry"):
                         $thisMailTemplate = 'form_newentry.tpl';
-                        break;  
+                        break;
                     case("update_entry"):
                         $thisMailTemplate = 'form_upentry.tpl';
                         break;
@@ -83,7 +83,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             switch($event) {
                 case("new_entry"):
                     $revisionDescriptor = "added:";
-                    break;  
+                    break;
                 case("update_entry"):
                     $revisionDescriptor = "changed:";
                     break;
@@ -149,7 +149,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                 } elseif($groupTitle) { // grouped message, store for later, don't append right now
                     $groupedMessages[$groupTitle]['theseMailTemplates'][] = $thisMailTemplate;
                     $thisMailTemplate = "";
-                } 
+                }
             }
             if($thisMailTemplate) { // add non-grouped messages to the mail template
                 $mailTemplate .= $thisMailTemplate."\n\n---\n\n";
@@ -212,11 +212,11 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
 // figure out if we have enough time left to send another message.
 // SAME IN NOTIFY.PHP
 function formulize_notifyStillTime($startTime, $maxExec) {
-    
+
     static $prevTimes = array();
     static $durations = array();
     static $iteration = 0;
-    
+
     // if we've done this before, calculate the duration since the last time
     $curTime = microtime(TRUE);
     if($iteration) {
