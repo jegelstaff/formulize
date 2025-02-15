@@ -270,7 +270,7 @@ class formulizeElementsHandler {
 				return false;
 			}
 		} else {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_handle="'.formulize_db_escape($id).'"';
+			$sql = "SELECT * FROM ".formulize_TABLE." WHERE ele_handle='".formulize_db_escape($id)."'";
 			if (!$result = $this->db->query($sql)) {
 				$cachedElements[$id] = false;
 				return false;

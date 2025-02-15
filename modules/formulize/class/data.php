@@ -99,7 +99,7 @@ class formulizeDataHandler  {
 				}
 				if(isset($map[$field])) { $field = $map[$field]; } // if this field is in the map, then use the value from the map as the field name (this will match the field name in the cloned form)
 				if(!$start) { $insertSQL .= ", "; }
-				$insertSQL .= "`$field` = \"" . formulize_db_escape($value) . "\"";
+				$insertSQL .= "`$field` = '" . formulize_db_escape($value) . "'";
 				$start = false;
 			}
 			if(!$insertResult = $xoopsDB->queryF($insertSQL)) {
@@ -265,7 +265,7 @@ class formulizeDataHandler  {
 			$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 			$context = serialize(array("get"=>$_GET, "post"=>$_POST));
 			foreach($ids as $id) {
-				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id, context) VALUES (" . formulize_db_escape($this->fid) . ", " . $id . ", " . formulize_db_escape($uid) . ", \"" . formulize_db_escape($context) . "\")";
+				$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_deletion_logs") . " (form_id, entry_id, user_id, context) VALUES (" . formulize_db_escape($this->fid) . ", " . $id . ", " . formulize_db_escape($uid) . ", '" . formulize_db_escape($context) . "')";
 				if(!$deleteLoggingSuccess = $xoopsDB->query($sql)) {
 					print "Error: could not insert delete log entry information for form " . formulize_db_escape($this->fid) . ", entry " . $id . ", user " . formulize_db_escape($uid) . ". Check the DB queries debug info for details.";
 				}
@@ -607,7 +607,7 @@ class formulizeDataHandler  {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$queryValue = "\"" . formulize_db_escape($value) . "\"";
+		$queryValue = "'" . formulize_db_escape($value) . "'";
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";

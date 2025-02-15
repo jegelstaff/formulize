@@ -1324,10 +1324,13 @@ class formulizeFormsHandler {
                     if($filterSettings[1][$i] == "NOT") {
                         $filterSettings[1][$i] = "NOT LIKE";
                     }
-                    $perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."*=+*:"."$likeBits\" OR $formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . "\"$likeBits"."*=+*:".formulize_db_escape($termToUse)."\")";
+					$termToUse = formulize_db_escape($termToUse);
+					$opToUse = htmlspecialchars_decode($filterSettings[1][$i]);
+					$fieldToUse = "$formAlias`{$filterSettings[0][$i]}`";
+                    $perGroupFilter .= "($fieldToUse $opToUse '$likeBits*=+*:$termToUse*=+*:$likeBits' OR $fieldToUse $opToUse '$likeBits*=+*:$termToUse')";
                     continue; // in this case, skip the rest, we don't want to set the $perGroupFilter in the normal way below
                 } else {
-                    $termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "\"$likeBits".formulize_db_escape($termToUse)."$likeBits\"";
+                    $termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "'$likeBits".formulize_db_escape($termToUse)."$likeBits'";
                 }
                 $filterSettings[1][$i] = ($filterSettings[1][$i] == "NOT") ? "!=" : $filterSettings[1][$i];
                 $perGroupFilter .= "$formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " " . $termToUse; // htmlspecialchars_decode is used because &lt;= might be the operator coming out of the DB instead of <=
@@ -1600,13 +1603,13 @@ class formulizeFormsHandler {
 	{
         // replicate permissions of the original form on the new cloned form
 		$criteria = new CriteriaCompo();
-		$criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
+		$criteria->add(new Criteria('gperm_itemid', intval($fid)), 'AND');
 		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
 		$gperm_handler = xoops_gethandler('groupperm');
 		$oldFormPerms = $gperm_handler->getObjects($criteria);
 		foreach ($oldFormPerms as $thisOldPerm) {
 			// do manual inserts, since addRight uses the xoopsDB query method, which won't do updates/inserts on GET requests
-			$sql = "INSERT INTO " . $this->db->prefix("group_permission") . " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('" . $thisOldPerm->getVar('gperm_name') . "', $newfid, " . $thisOldPerm->getVar('gperm_groupid') . ", " . getFormulizeModId() . ")";
+			$sql = "INSERT INTO " . $this->db->prefix("group_permission") . " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('" . $thisOldPerm->getVar('gperm_name') . "', ".intval($newfid).", " . $thisOldPerm->getVar('gperm_groupid') . ", " . getFormulizeModId() . ")";
 			$res = $this->db->queryF($sql);
         }
 	}
@@ -1619,7 +1622,7 @@ class formulizeFormsHandler {
 		$screens = array();
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
-		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		$formScreens = $screen_handler->getObjects($criteria_object,intval($fid));
 		foreach($formScreens as $screen) {
 			$sid = $screen->getVar('sid');
 			$screenData = $screen_handler->get($sid);

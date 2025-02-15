@@ -205,7 +205,7 @@ if ($_GET['fid'] != "new") {
     if (!isset($selectedGroups)) {
         if ($_POST['search_by_user']) {
             $submitted_user = $_POST['submitted_user'];
-            $requestedUser = $member_handler->getUsers(new Criteria('uname', $submitted_user));
+            $requestedUser = $member_handler->getUsers(new Criteria('uname', formulize_db_escape($submitted_user)));
             if (is_object($requestedUser[0])) {
                 $selectedGroups = $requestedUser[0]->getGroups();
             }
@@ -213,6 +213,7 @@ if ($_GET['fid'] != "new") {
             $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();
         }
     }
+		$selectedGroups = array_filter($selectedGroups, 'is_numeric');
     $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
     foreach($allGroups as $thisGroup) {
         $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
@@ -411,7 +412,7 @@ if ($_GET['fid'] != "new") {
         }
     }
 } else {
-    $fid = $_GET['fid'];
+    $fid = $_GET['fid']; // guaranteed to be 'new' based on if condition
     if ($_GET['tableform']) {
     $newtableform = true;
     }
