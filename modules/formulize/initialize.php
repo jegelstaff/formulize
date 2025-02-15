@@ -41,7 +41,7 @@ if (file_exists(XOOPS_ROOT_PATH.'/class/mail/phpmailer/class.phpmailer.php'))
 $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'] = array();
 $GLOBALS['formulize_asynchronousFormDataInAPIFormat'] = array();
 
-$GLOBALS['formulize_subformInstance'] = 100;
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
 $GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set to the screen id if we're displaying a multipage screen, or just true if we're displaying a multipage form without a screen specified
 

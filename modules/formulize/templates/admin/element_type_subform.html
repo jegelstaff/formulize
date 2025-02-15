@@ -22,23 +22,29 @@
 		 <div class="form-radios">
 		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_FORM}></label>
 		 </div>
-         <div class="form-radios">
+     <div class="form-radios">
 		     <label for="elements-ele_value[8]-flatform"><input type="radio" id="elements-ele_value[8]-flatform" name="elements-ele_value[8]" value="flatform"<{if $content.ele_value[8] eq 'flatform'}> checked="checked"<{/if}>/>Display each subform entry using the full form, NOT inside a collapsable area</label>
 		 </div>
+		</div>
+		<div class="form-item" id="rowsPerPage" <{if $content.ele_value[8] neq 'row' AND $content.ele_value[8] neq ''}>style='display: none;'<{/if}>>
+			<p>When shown as rows, subform listings can be split into multiple pages. How many rows should appear on each page? <input name="elements-ele_value[numberOfEntriesPerPage]" size="2" value="<{$content.ele_value.numberOfEntriesPerPage}>"></p>
+			<div class="description">
+				Enter 0 for all entries on one page.
+			</div>
 		</div>
 
         <div class="form-item">
             <p>Show the button to add entries?</p>
-            <div class="description">The "Add x Entries" button lets users create additional entries in the subform.</div>
             <div class="form-radios">
                 <label for="elements-ele_value[6]-subform"><input type="radio" id="elements-ele_value[6]-subform" name="elements-ele_value[6]" value="subform"<{if $content.ele_value[6] eq 'subform' OR $content.ele_value[6] eq '1'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_SUBFORM}></label>
             </div>
             <div class="form-radios">
                 <label for="elements-ele_value[6]-parent"><input type="radio" id="elements-ele_value[6]-parent" name="elements-ele_value[6]" value="parent"<{if $content.ele_value[6] eq 'parent'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_PARENT}></label>
             </div>
-	    <div class="form-radios">
+	    			<div class="form-radios">
                 <label for="elements-ele_value[6]-no"><input type="radio" id="elements-ele_value[6]-no" name="elements-ele_value[6]" value="hideaddentries"<{if $content.ele_value[6] eq 'hideaddentries' OR $content.ele_value[6] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_ADD_NONE}></label>
             </div>
+						<div class="description">The "Add x Entries" button lets users create additional entries in the subform.</div>
         </div>
 
         <div class="form-item">
@@ -277,6 +283,14 @@
         }
         removeNonDisplayedElementsFromDisabledList();
     });
+
+		$("input[name=elements-ele_value\\[8\\]]").change(function() {
+			if($(this).val() == 'row') {
+				$("#rowsPerPage").show(200);
+			} else {
+				$("#rowsPerPage").hide(200);
+			}
+		});
 
     removeNonDisplayedElementsFromDisabledList()
 
