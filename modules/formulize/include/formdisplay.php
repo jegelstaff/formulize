@@ -2579,12 +2579,12 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 	$criteriaBase = new CriteriaCompo();
 	$criteriaBase->add(new Criteria('ele_display', 1), 'OR');
 	foreach($groups as $thisgroup) {
-		$criteriaBase->add(new Criteria('ele_display', '%,'.$thisgroup.',%', 'LIKE'), 'OR');
+		$criteriaBase->add(new Criteria('ele_display', '%,'.formulize_db_escape($thisgroup).',%', 'LIKE'), 'OR');
 	}
 	if(is_array($elements_allowed) and count((array) $elements_allowed) > 0) {
 		// if we're limiting the elements, then add a criteria for that (multiple criteria are joined by AND unless you specify OR manually when adding them (as in the base above))
 		$criteria = new CriteriaCompo();
-		$criteria->add(new Criteria('ele_id', "(".implode(",",$elements_allowed).")", "IN"));
+		$criteria->add(new Criteria('ele_id', "(".implode(",",array_filter($elements_allowed, 'is_numeric')).")", "IN"));
 		$criteria->add($criteriaBase);
 	} else {
 		$criteria = $criteriaBase; // otherwise, just use the base
@@ -2597,7 +2597,7 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
     }
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
-	$elements = $element_handler->getObjects($criteria,$fid,true); // true makes the keys of the returned array be the element ids
+	$elements = $element_handler->getObjects($criteria,intval($fid),true); // true makes the keys of the returned array be the element ids
 
 	$GLOBALS['elementsInGridsAndTheirContainers'] = array();
 

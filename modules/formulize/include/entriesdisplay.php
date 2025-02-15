@@ -2865,7 +2865,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 		$criteria = new CriteriaCompo();
 		foreach($allRealValuesNames as $thisUid) {
 			if(is_numeric($thisUid)) {
-				$criteria->add(new Criteria('uid', $thisUid), 'OR');
+				$criteria->add(new Criteria('uid', intval($thisUid)), 'OR');
 			}
 		}
 		$users = $user_handler->getObjects($criteria, true); // true causes key of returned array to be uids

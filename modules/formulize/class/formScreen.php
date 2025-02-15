@@ -278,7 +278,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
-		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		$formScreens = $screen_handler->getObjects($criteria_object,intval($fid));
 		foreach($formScreens as $screen) {
 			$sid = $screen->getVar('sid');
 		  	$screens[$sid]['sid'] = $screen->getVar('sid');
@@ -292,7 +292,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$selected_screens = array();
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','form'));
-		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		$formScreens = $screen_handler->getObjects($criteria_object,intval($fid));
 		foreach($formScreens as $screen) {
 			$sid = $screen->getVar('sid');
 

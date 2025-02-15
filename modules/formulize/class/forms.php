@@ -1603,13 +1603,13 @@ class formulizeFormsHandler {
 	{
         // replicate permissions of the original form on the new cloned form
 		$criteria = new CriteriaCompo();
-		$criteria->add(new Criteria('gperm_itemid', $fid), 'AND');
+		$criteria->add(new Criteria('gperm_itemid', intval($fid)), 'AND');
 		$criteria->add(new Criteria('gperm_modid', getFormulizeModId()), 'AND');
 		$gperm_handler = xoops_gethandler('groupperm');
 		$oldFormPerms = $gperm_handler->getObjects($criteria);
 		foreach ($oldFormPerms as $thisOldPerm) {
 			// do manual inserts, since addRight uses the xoopsDB query method, which won't do updates/inserts on GET requests
-			$sql = "INSERT INTO " . $this->db->prefix("group_permission") . " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('" . $thisOldPerm->getVar('gperm_name') . "', $newfid, " . $thisOldPerm->getVar('gperm_groupid') . ", " . getFormulizeModId() . ")";
+			$sql = "INSERT INTO " . $this->db->prefix("group_permission") . " (gperm_name, gperm_itemid, gperm_groupid, gperm_modid) VALUES ('" . $thisOldPerm->getVar('gperm_name') . "', ".intval($newfid).", " . $thisOldPerm->getVar('gperm_groupid') . ", " . getFormulizeModId() . ")";
 			$res = $this->db->queryF($sql);
         }
 	}
@@ -1622,7 +1622,7 @@ class formulizeFormsHandler {
 		$screens = array();
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
-		$formScreens = $screen_handler->getObjects($criteria_object,$fid);
+		$formScreens = $screen_handler->getObjects($criteria_object,intval($fid));
 		foreach($formScreens as $screen) {
 			$sid = $screen->getVar('sid');
 			$screenData = $screen_handler->get($sid);
