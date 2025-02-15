@@ -47,6 +47,10 @@ $GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set t
 
 global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen, $formulizeCanonicalURI;
 
+if(is_object($xoopsTpl) AND !$xoopsUser) {
+	$xoopsTpl->assign('formulize_redirect', '/user.php?xoops_redirect='.urlencode(getCurrentURL()));
+}
+
 $thisRendering = microtime(true); // setup a flag that is common to this instance of rendering a formulize page
 if(!isset($prevRendering)) {
     $prevRendering = array();
