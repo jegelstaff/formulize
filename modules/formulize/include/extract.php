@@ -1239,6 +1239,7 @@ function processGetDataResults($resultData) {
 		// If the user searches for a group name, then we do an unavoidable expensive subquery at that time, and we include the search term here to limit the groups shown,
 		// See origin of $ownerGroupSearchClause in the formulize_parseFilter function
 		// Funky ORDER BY using FIELD function. Wow!
+		// Both the ownerGroupSearchClause and the FIELD function may be redundant, since we're going off the totalMainFormEntryIdIndex
 		if(count($totalMainFormEntryIdIndex) > 0) {
 			global $ownerGroupSearchClause;
 			$groupsTableJoinType = $ownerGroupSearchClause ? "INNER" : "LEFT";
@@ -1255,10 +1256,20 @@ function processGetDataResults($resultData) {
 				$ownerGroupSearchClause
 				GROUP BY eog.entry_id
 				ORDER BY FIELD(eog.entry_id, ".implode(', ', $totalMainFormEntryIdIndex).")";
-			$masterIndexer = 0;
 			if($res = $xoopsDB->query($sql)) {
+				$masterIndexer = 0;
+				$ownershipData = array();
 				while($row = $xoopsDB->fetchRow($res)) {
-					$masterResults[$masterIndexer][getFormTitle($fid)][$row[0]]['owner_groups'] = explode('*/-+,', $row[1]);
+					$ownershipData[$row[0]] = explode('*/-+,', $row[1]);
+				}
+				foreach($totalMainFormEntryIdIndex as $entryId) {
+					if(isset($ownershipData[$entryId])) {
+						$ownershipDataToAdd =  $ownershipData[$entryId];
+					} else {
+						error_log("Formulize error: ownership information missing for entry $entryId in form $fid. Try repairing the Ownership Table via the Settings tab of the Form.");
+						$ownershipDataToAdd = array("Could not determine groups");
+					}
+					$masterResults[$masterIndexer][getFormTitle($fid)][$entryId]['owner_groups'] = $ownershipDataToAdd;
 					$masterIndexer++;
 				}
 			}
