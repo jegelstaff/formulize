@@ -8590,3 +8590,18 @@ function stripEntryFromDoneDestination($done_dest) {
 	}
 	return $done_dest;
 }
+
+/**
+ * Handle special character conversion in strings, when the string needs special characters to work inside a DB query
+ * Note the strange reversion of &amp; to &, which is part of the icms htmlspecialchars method, which is done to allow strings
+ * to be sent through it multiple times without nested htmlspecialchars conversions going on.
+ * Text elements and possibly others store data in the database currently with this conversion applied. So when querying the DB the search terms
+ * need this conversion applied in order to work.
+ * Originally, Formulize stored user data with special characters in the DB. This will change. When it changes, this function is not needed. Until then, it is needed.
+ * At the right time, this function will be modified to simply return the strings that are passed to it, without modification.
+ * @param string String - the string to be converted
+ * @return string The string with characters converted to special chars
+ */
+function convertStringToUseSpecialCharsToMatchDB($string) {
+	return str_replace('&amp;', '&', htmlspecialchars($string));
+}
