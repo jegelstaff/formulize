@@ -270,8 +270,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        // this needs to be refactored to take into account what is happening in the function of the same name in the modules/formulize/include/functions.php file!
-        return $value;
+      return convertStringToUseSpecialCharsToMatchDB($value); // function required as long as $myts->htmlSpecialChars is used in prepareDataForSavingMethod
     }
 
     // this method will format a dataset value for display on screen when a list of entries is prepared
