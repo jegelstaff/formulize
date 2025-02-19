@@ -2097,11 +2097,19 @@ function getLinkedOptionsSourceForm($elementIdOrObject) {
 }
 
 
-// this function takes a literal text value and converts it to a value that is valid for storing in the database.
-// it is similiar to prepdataforwrite except pdfw takes values submitted through a form and converts them for storage, and this takes literal values that people might have typed into a box somewhere, like in the conditions boxes
-// curly brackey entry is the id number for the entry that we're supposed to check { } terms against.
-// userComparisonId is the ID of the user that should be used for {USER} when the entry is new - optional, will default to the current user's id
-function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = null, $userComparisonId = "") {
+/**
+ * This function takes a literal text value (usually typed in by a user) and converts it to a value that is valid for the database, either for storing later or for using in a query to compare with DB values.
+ * @param int|string|object elementObjectOrIdentifier This is either an element ID number, element handle, or element object of the element for which the text value is being prepared
+ * @param string value The text value that is being prepared
+ * @param int curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
+ * @param int userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
+ * @return string The prepared value compatible with data in the databse, or the value passed in if the elementObjectOrIdentifier is not valid.
+ */
+function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null) {
+
+		if(!$elementObject = _getElementObject($elementObjectOrIdentifier)) {
+			return false;
+		}
 
     static $cachedLiteralTexts = array();
     $cacheKey = serialize(func_get_args());
@@ -2121,56 +2129,56 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = nu
     // convert { } terms to their actual values
     $elementHandler = xoops_getmodulehandler('elements', 'formulize');
 
-    if(substr($value,0,1) == "{" AND substr($value,-1)=="}" AND $curlyBracketEntry) {
-        $sourceHandle = substr($value, 1, -1); // remove brackets, gives us the handle
-        if($sourceElementObject = $elementHandler->get($sourceHandle)) {
-        if($curlyBracketEntry != 'new') {
-            // get the value of the handle in this entry
-            $dataHandler = new formulizeDataHandler($sourceElementObject->getVar('id_form'));
-            $value = $dataHandler->getElementValueInEntry($curlyBracketEntry, $sourceHandle);
-            if($value !== false) {
-                    $cachedLiteralTexts[$cacheKey] = $value;
-                return $value;
-            }
-        } elseif(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)])) {
-                $cachedLiteralTexts[$cacheKey] = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
-            return $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
-        }
-        } else {
-            // source handle is an invalid reference, return false
-            $cachedLiteralTexts[$cacheKey] = false;
-            return false;
-        }
+    if(substr($value,0,1) == "{" AND substr($value,-1)=="}" AND $curlyBracketEntryId) {
+			$sourceHandle = substr($value, 1, -1); // remove brackets, gives us the handle
+			if($sourceElementObject = $elementHandler->get($sourceHandle)) {
+				if($curlyBracketEntryId != 'new') {
+					// get the value of the handle in this entry
+					$dataHandler = new formulizeDataHandler($sourceElementObject->getVar('id_form'));
+					$value = $dataHandler->getElementValueInEntry($curlyBracketEntryId, $sourceHandle);
+					if($value !== false) {
+						$cachedLiteralTexts[$cacheKey] = $value;
+						return $value;
+					}
+				} elseif(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)])) {
+					$cachedLiteralTexts[$cacheKey] = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
+					return $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
+				}
+			} else {
+				// source handle is an invalid reference, return false
+				$cachedLiteralTexts[$cacheKey] = false;
+				return false;
+			}
     }
 
     switch ($ele_type) {
 
         case "yn":
-        // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-        if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
-            $value = 1;
-        } elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
-            $value = 2;
-        } else {
-            $value = "";
-        }
-        break;
+					// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
+					if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
+						$value = 1;
+					} elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
+						$value = 2;
+					} elseif(!is_numeric($value)) {
+						$value = "";
+					}
+					break;
 
         case "select":
         case "checkbox":
-            if($elementObject->isLinked AND $ele_value['snapshot'] != 1) {
-                list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
-                // get the entry id of the value in the linked source of the elementObject selectbox
-                $dataHandler = new formulizeDataHandler($sourceFidOfElement);
-                $value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value);
-            } else {
-                // otherwise, if the element is not linked, or the element and the comparison value are both linked to the same source, use the $value as is
-                // unless it's a multi selection element (checkboxes or listbox)
-                if(($ele_type == "checkbox" OR $ele_value[1]) AND $value != "{BLANK}") {
-                    $value = "*=+*:".$value;
-                }
-            }
-            break;
+					if($elementObject->isLinked AND $ele_value['snapshot'] != 1) {
+						list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
+						// get the entry id of the value in the linked source of the elementObject selectbox
+						$dataHandler = new formulizeDataHandler($sourceFidOfElement);
+						$value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value);
+					} else {
+						// otherwise, if the element is not linked, or the element and the comparison value are both linked to the same source, use the $value as is
+						// unless it's a multi selection element (checkboxes or listbox)
+						if(($ele_type == "checkbox" OR $ele_value[1]) AND $value != "{BLANK}") {
+							$value = "*=+*:".$value;
+						}
+					}
+					break;
 
 				case "textarea":
 					$value = convertStringToUseSpecialCharsToMatchDB($value);
@@ -2184,7 +2192,7 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = nu
     }
 
     if ($value == "{USER}") {
-        if ($curlyBracketEntry != "new") {
+        if ($curlyBracketEntryId != "new") {
             // use the defined value for USER if this is an existing entry, and one was passed in (if none was passed in, this is set to match the current user at the top of this function.
             $value = $userComparisonId;
         } else {
