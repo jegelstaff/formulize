@@ -2141,7 +2141,7 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = nu
             $cachedLiteralTexts[$cacheKey] = false;
             return false;
         }
-        	}
+    }
 
     switch ($ele_type) {
 
@@ -2171,6 +2171,10 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = nu
                 }
             }
             break;
+
+				case "textarea":
+					$value = convertStringToUseSpecialCharsToMatchDB($value);
+					break;
 
         default:
         if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
