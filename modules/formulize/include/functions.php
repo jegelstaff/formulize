@@ -7235,8 +7235,8 @@ function convertDynamicFilterTerms($term) {
     if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
         $searchgetkey = substr($valueToCheck, 1, -1);
         if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-            $term = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-            $term = ($term==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $term;
+            $term = isset($_POST[$searchgetkey]) ? convertStringToUseSpecialCharsToMatchDB(strip_tags(trim($_POST[$searchgetkey]))) : "";
+            $term = ($term==="" AND isset($_GET[$searchgetkey])) ? convertStringToUseSpecialCharsToMatchDB(strip_tags(trim($_GET[$searchgetkey]))) : $term;
             if($term==="") {
                 $term = "";
             }
