@@ -6003,7 +6003,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								$thisLiteralTermToUse = formulize_db_escape($thisLiteralTermToUse);
 								$literalQuotes = (is_numeric($thisLiteralTermToUse) AND !$likebits) ? "" : "'";
 								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$thisLiteralTermToUse.$likebits.$literalQuotes;
-								$specialCharsTerm = htmlspecialchars($thisLiteralTermToUse, ENT_QUOTES);
+								$specialCharsTerm = convertStringToUseSpecialCharsToMatchDB($thisLiteralTermToUse);
 								if($specialCharsTerm != $thisLiteralTermToUse) {
 										$literalTermInSQL .= " OR ".str_replace($thisLiteralTermToUse, $specialCharsTerm, $literalTermInSQL);
 								}
@@ -6172,7 +6172,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($conditionsFilterComparisonValue === NULL) {
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
-            $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
+            $specialCharsTerm = convertStringToUseSpecialCharsToMatchDB($plainLiteralValue);
             if($specialCharsTerm != $plainLiteralValue) {
                 $quotes = (is_numeric($specialCharsTerm) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
