@@ -713,18 +713,24 @@ class formulizeFormsHandler {
 					$this->insert($formObject, $force);
 				}
 
-				$on_before_save = trim($on_before_save) != "<?php" ? $on_before_save : "";
-				$on_after_save = trim($on_after_save) != "<?php" ? $on_after_save : "";
-				$on_delete = trim($on_delete) != "<?php" ? $on_delete : "";
-				$custom_edit_check = trim($custom_edit_check) != "<?php" ? $custom_edit_check : "";
-
-				formulize_writeCodeToFile('on_before_save_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_before_save);
-				formulize_writeCodeToFile('on_after_save_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_after_save);
-				formulize_writeCodeToFile('on_delete_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $on_delete);
-				formulize_writeCodeToFile('custom_edit_check_'.formulizeForm::sanitize_handle_name($form_handle).'.php', $custom_edit_check);
+				$procedures = array(
+					'on_before_save',
+					'on_after_save',
+					'on_delete',
+					'custom_edit_check'
+				);
+				foreach($procedures as $procedure) {
+					$code = removeOpeningPHPTag(${$procedure}) != "" ? ${$procedure} : "";
+					$fileName = $procedure."_".formulizeForm::sanitize_handle_name($form_handle).'.php';
+					$filePath = XOOPS_ROOT_PATH . "/modules/formulize/code/" . $fileName;
+					if($code) {
+						formulize_writeCodeToFile($fileName, $code);
+					} elseif(file_exists($filePath)) {
+						unlink($filePath);
+					}
+				}
 
 				return $id_form;
-
 	}
 
 	function createTableFormElements($targetTableName, $fid) {
