@@ -113,6 +113,7 @@ class formulizeQueueHandler {
 	 * @return mixed Returns the number of bytes that were written (this is the return value of file_put_contents), or null if the item is already in the queue, or false on failure to write.
 	 */
 	function append($queue_or_queue_handle, $code, $item='', $allowDuplicates=false) {
+		global $xoopsUser;
 		$queue_handle = (is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) ? $queue_or_queue_handle->getVar('queue_handle') : FormulizeObject::santitize_handle_name($queue_or_queue_handle);
 		$fileName = microtime(true)."_".$queue_handle."_".$item.".php";
 		if(!$allowDuplicates) {
@@ -150,13 +151,15 @@ try {
 					writeToFormulizeLog(array(
 						'formulize_event'=>'item-written-to-queue',
 						'queue_id'=>$queue_handle,
-						'queue_item_or_items'=>$fileName
+						'queue_item_or_items'=>$fileName,
+						'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0)
 					));
 				} else {
 					writeToFormulizeLog(array(
 						'formulize_event'=>'error-writing-item-to-queue',
 						'queue_id'=>$queue_handle,
-						'queue_item_or_items'=>$fileName
+						'queue_item_or_items'=>$fileName,
+						'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0)
 					));
 				}
 			} else {
@@ -164,7 +167,8 @@ try {
 				writeToFormulizeLog(array(
 					'formulize_event'=>'syntax-error-in-queue-item',
 					'queue_id'=>$queue_handle,
-					'queue_item_or_items'=>$fileName
+					'queue_item_or_items'=>$fileName,
+					'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0)
 				));
 			}
 		}
