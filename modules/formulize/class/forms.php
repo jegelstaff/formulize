@@ -47,7 +47,6 @@ class formulizeForm extends FormulizeObject {
 		if(!is_numeric($id_form)) {
 			include XOOPS_ROOT_PATH.'/modules/formulize/class/formSetEmptyDefaults.php';
 		} else {
-			include XOOPS_ROOT_PATH.'/modules/formulize/class/formSetEmptyDefaults.php';
 			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
 			if(!isset($formq[0])) {
 				unset($formq);
