@@ -162,7 +162,7 @@ if($original_handle) {
 						$eleValueZero = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $eleValueZero);
 						$thisEleValue[0] = $eleValueZero;
 						$thisEleValue = serialize($thisEleValue);
-						$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = \"".formulize_db_escape($thisEleValue)."\" WHERE ele_id = $thisEleId";
+						$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId";
 						$xoopsDB->query($updateSQL);
 				}
 		}

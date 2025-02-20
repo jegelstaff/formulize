@@ -20,7 +20,7 @@ include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 $member_handler = xoops_gethandler('member');
 
 // check if the account id is at least valid...
-$sql = 'SELECT uid, login_name FROM '.$xoopsDB->prefix('users').' WHERE login_name = "'.formulize_db_escape($_GET['a']).'" OR email = "'.formulize_db_escape($_GET['a']).'"';
+$sql = "SELECT uid, login_name FROM ".$xoopsDB->prefix('users')." WHERE login_name = '".formulize_db_escape($_GET['a'])."' OR email = '".formulize_db_escape($_GET['a'])."'";
 $res = $xoopsDB->query($sql);
 $rowsFound = $xoopsDB->getRowsNum($res);
 if($rowsFound != 1 ) { // if account identifier does not identify one account
