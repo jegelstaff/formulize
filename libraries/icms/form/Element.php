@@ -298,7 +298,7 @@ abstract class icms_form_Element {
 		if (!empty($this->customValidationCode)) {
 			return implode("\n", $this->customValidationCode);
 			// generate validation code if required
-		} elseif ($this->isRequired() AND !is_a($this, 'icms_form_elements_Label')) {
+		} elseif ($this->isRequired() AND (!property_exists($this, 'formulize_element') OR $this->formulize_element->getVar('ele_type') != 'grid')) {
 			$eltname    = $this->getName();
 			$eltcaption = $this->getCaption();
 			$eltmsg = empty($eltcaption)
