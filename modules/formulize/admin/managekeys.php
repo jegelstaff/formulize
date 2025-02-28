@@ -35,10 +35,10 @@ foreach($apiKeyHandler->get() as $key) {
 // if user has searched for a username, find the matches...
 $foundUsers = array();
 if($_POST['usersearch']) {
-    $criteria = new CriteriaCompo(new Criteria('email', $_POST['usersearch']));
-    $criteria->add(new Criteria('login_name', $_POST['usersearch']), 'OR');
-    $criteria->add(new Criteria('uname', $_POST['usersearch']), 'OR');
-    $criteria->add(new Criteria('name', $_POST['usersearch']), 'OR');
+    $criteria = new CriteriaCompo(new Criteria('email', formulize_db_escape($_POST['usersearch'])));
+    $criteria->add(new Criteria('login_name', formulize_db_escape($_POST['usersearch'])), 'OR');
+    $criteria->add(new Criteria('uname', formulize_db_escape($_POST['usersearch'])), 'OR');
+    $criteria->add(new Criteria('name', formulize_db_escape($_POST['usersearch'])), 'OR');
     $users = $member_handler->getUsers($criteria);
     foreach($users as $user) {
         $foundUsers[$user->getVar('uid')] = $user->getVar('name') ? $user->getVar('name') : $user->getVar('uname');

@@ -557,7 +557,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
 		global $xoopsDB;
-		$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle=\"" . formulize_db_escape($handle) . "\" AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
+		$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle='" . formulize_db_escape($handle) . "' AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
 		// removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
 		if (!empty($newValueq)) {
 			$value_other = $newValueq[0]['other_text'];

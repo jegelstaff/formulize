@@ -2097,11 +2097,19 @@ function getLinkedOptionsSourceForm($elementIdOrObject) {
 }
 
 
-// this function takes a literal text value and converts it to a value that is valid for storing in the database.
-// it is similiar to prepdataforwrite except pdfw takes values submitted through a form and converts them for storage, and this takes literal values that people might have typed into a box somewhere, like in the conditions boxes
-// curly brackey entry is the id number for the entry that we're supposed to check { } terms against.
-// userComparisonId is the ID of the user that should be used for {USER} when the entry is new - optional, will default to the current user's id
-function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = null, $userComparisonId = "") {
+/**
+ * This function takes a literal text value (usually typed in by a user) and converts it to a value that is valid for the database, either for storing later or for using in a query to compare with DB values.
+ * @param int|string|object elementObjectOrIdentifier This is either an element ID number, element handle, or element object of the element for which the text value is being prepared
+ * @param string value The text value that is being prepared
+ * @param int curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
+ * @param int userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
+ * @return string The prepared value compatible with data in the databse, or the value passed in if the elementObjectOrIdentifier is not valid.
+ */
+function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null) {
+
+		if(!$elementObject = _getElementObject($elementObjectOrIdentifier)) {
+			return false;
+		}
 
     static $cachedLiteralTexts = array();
     $cacheKey = serialize(func_get_args());
@@ -2121,56 +2129,60 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = nu
     // convert { } terms to their actual values
     $elementHandler = xoops_getmodulehandler('elements', 'formulize');
 
-    if(substr($value,0,1) == "{" AND substr($value,-1)=="}" AND $curlyBracketEntry) {
-        $sourceHandle = substr($value, 1, -1); // remove brackets, gives us the handle
-        if($sourceElementObject = $elementHandler->get($sourceHandle)) {
-        if($curlyBracketEntry != 'new') {
-            // get the value of the handle in this entry
-            $dataHandler = new formulizeDataHandler($sourceElementObject->getVar('id_form'));
-            $value = $dataHandler->getElementValueInEntry($curlyBracketEntry, $sourceHandle);
-            if($value !== false) {
-                    $cachedLiteralTexts[$cacheKey] = $value;
-                return $value;
-            }
-        } elseif(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)])) {
-                $cachedLiteralTexts[$cacheKey] = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
-            return $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
-        }
-        } else {
-            // source handle is an invalid reference, return false
-            $cachedLiteralTexts[$cacheKey] = false;
-            return false;
-        }
-        	}
+    if(substr($value,0,1) == "{" AND substr($value,-1)=="}" AND $curlyBracketEntryId) {
+			$sourceHandle = substr($value, 1, -1); // remove brackets, gives us the handle
+			if($sourceElementObject = $elementHandler->get($sourceHandle)) {
+				if($curlyBracketEntryId != 'new') {
+					// get the value of the handle in this entry
+					$dataHandler = new formulizeDataHandler($sourceElementObject->getVar('id_form'));
+					$value = $dataHandler->getElementValueInEntry($curlyBracketEntryId, $sourceHandle);
+					if($value !== false) {
+						$cachedLiteralTexts[$cacheKey] = $value;
+						return $value;
+					}
+				} elseif(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)])) {
+					$cachedLiteralTexts[$cacheKey] = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
+					return $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][substr($value, 1, -1)];
+				}
+			} else {
+				// source handle is an invalid reference, return false
+				$cachedLiteralTexts[$cacheKey] = false;
+				return false;
+			}
+    }
 
     switch ($ele_type) {
 
         case "yn":
-        // since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-        if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
-            $value = 1;
-        } elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
-            $value = 2;
-        } else {
-            $value = "";
-        }
-        break;
+					// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
+					if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
+						$value = 1;
+					} elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
+						$value = 2;
+					} elseif(!is_numeric($value)) {
+						$value = "";
+					}
+					break;
 
         case "select":
         case "checkbox":
-            if($elementObject->isLinked AND $ele_value['snapshot'] != 1) {
-                list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
-                // get the entry id of the value in the linked source of the elementObject selectbox
-                $dataHandler = new formulizeDataHandler($sourceFidOfElement);
-                $value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value);
-            } else {
-                // otherwise, if the element is not linked, or the element and the comparison value are both linked to the same source, use the $value as is
-                // unless it's a multi selection element (checkboxes or listbox)
-                if(($ele_type == "checkbox" OR $ele_value[1]) AND $value != "{BLANK}") {
-                    $value = "*=+*:".$value;
-                }
-            }
-            break;
+					if($elementObject->isLinked AND $ele_value['snapshot'] != 1) {
+						list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
+						// get the entry id of the value in the linked source of the elementObject selectbox
+						$dataHandler = new formulizeDataHandler($sourceFidOfElement);
+						$value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value);
+					} else {
+						// otherwise, if the element is not linked, or the element and the comparison value are both linked to the same source, use the $value as is
+						// unless it's a multi selection element (checkboxes or listbox)
+						if(($ele_type == "checkbox" OR $ele_value[1]) AND $value != "{BLANK}") {
+							$value = "*=+*:".$value;
+						}
+					}
+					break;
+
+				case "textarea":
+					$value = convertStringToUseSpecialCharsToMatchDB($value);
+					break;
 
         default:
         if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
@@ -2180,7 +2192,7 @@ function prepareLiteralTextForDB($elementObject, $value, $curlyBracketEntry = nu
     }
 
     if ($value == "{USER}") {
-        if ($curlyBracketEntry != "new") {
+        if ($curlyBracketEntryId != "new") {
             // use the defined value for USER if this is an existing entry, and one was passed in (if none was passed in, this is set to match the current user at the top of this function.
             $value = $userComparisonId;
         } else {
@@ -2330,10 +2342,10 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
             $value = $myts->htmlSpecialChars($value);
             if ($value != "" AND $existing_value) {
                 // update
-                $sql = "UPDATE " . $xoopsDB->prefix("formulize_other") . " SET other_text=\"" . formulize_db_escape($value) . "\" WHERE id_req='$id_req' AND ele_id='$ele_id'";
+                $sql = "UPDATE " . $xoopsDB->prefix("formulize_other") . " SET other_text='" . formulize_db_escape($value) . "' WHERE id_req='$id_req' AND ele_id='$ele_id'";
             }elseif ($value != "" AND !$existing_value) {
                 // add
-                $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$id_req\", \"$ele_id\", \"" . formulize_db_escape($value) . "\")";
+                $sql = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$id_req\", \"$ele_id\", '" . formulize_db_escape($value) . "')";
             }elseif ($value == "" AND $existing_value) {
                 // delete
                 $sql = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id='$ele_id'";
@@ -2860,10 +2872,10 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
 	    }
 	  } elseif($selfListType AND !$otherListType) { // convert found value to a user id
 	    $nameType = $selfListType == "{FULLNAMES}" ? 'name' : 'uname';
-	    $criteria = new Criteria($nameType, $foundValue, "=");
+	    $criteria = new Criteria($nameType, formulize_db_escape(htmlspecialchars_decode($foundValue)), "=");
 	    $users = $member_handler->getUsers($criteria);
 	    if(empty($users) AND $selfListType == "{FULLNAMES}") {
-              $criteria = new Criteria('uname', $foundValue, "=");
+              $criteria = new Criteria('uname', formulize_db_escape(htmlspecialchars_decode($foundValue)), "=");
 	      $users = $member_handler->getUsers($criteria);
 	    }
 	    if(isset($users[0])) {
@@ -3107,7 +3119,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
     // 1.  get all conditions for this fid and event
-    $cons = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_fid=".intval($fid)." AND not_cons_event=\"".formulize_db_escape($event)."\"");
+    $cons = q("SELECT * FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " WHERE not_cons_fid=".intval($fid)." AND not_cons_event='".formulize_db_escape($event)."'");
     if (count((array) $cons) == 0) {
         return;
     }
@@ -3572,7 +3584,7 @@ function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 	$notification_handler = xoops_gethandler('notification');
 
 	$uidsSubscribed = array();
-	$uidsSubdSQL = "SELECT not_uid FROM " . $xoopsDB->prefix("xoopsnotifications") . " WHERE not_event=\"".formulize_db_escape($event)."\" AND not_category=\"form\" AND not_modid=$mid AND not_itemid=$fid";
+	$uidsSubdSQL = "SELECT not_uid FROM " . $xoopsDB->prefix("xoopsnotifications") . " WHERE not_event='".formulize_db_escape($event)."' AND not_category='form' AND not_modid=$mid AND not_itemid=$fid";
 	if($res = $xoopsDB->query($uidsSubdSQL)) {
 		while($row = $xoopsDB->fetchArray($res)) {
 			$uid = $row['not_uid'];
@@ -6002,7 +6014,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								$thisLiteralTermToUse = formulize_db_escape($thisLiteralTermToUse);
 								$literalQuotes = (is_numeric($thisLiteralTermToUse) AND !$likebits) ? "" : "'";
 								$literalTermInSQL = "`$targetSourceHandle` ".$subQueryOp.$literalQuotes.$likebits.$thisLiteralTermToUse.$likebits.$literalQuotes;
-								$specialCharsTerm = htmlspecialchars($thisLiteralTermToUse, ENT_QUOTES);
+								$specialCharsTerm = convertStringToUseSpecialCharsToMatchDB($thisLiteralTermToUse);
 								if($specialCharsTerm != $thisLiteralTermToUse) {
 										$literalTermInSQL .= " OR ".str_replace($thisLiteralTermToUse, $specialCharsTerm, $literalTermInSQL);
 								}
@@ -6171,7 +6183,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     if ($conditionsFilterComparisonValue === NULL) {
         $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         if($plainLiteralValue) {
-            $specialCharsTerm = htmlspecialchars($plainLiteralValue, ENT_QUOTES);
+            $specialCharsTerm = convertStringToUseSpecialCharsToMatchDB($plainLiteralValue);
             if($specialCharsTerm != $plainLiteralValue) {
                 $quotes = (is_numeric($specialCharsTerm) AND !$likebits) ? "" : "'";
                 $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
@@ -6431,18 +6443,17 @@ function convertSelectBoxToSingle($table, $column) {
     return true;
 }
 
+/**
+ * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
+ * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out, and just be happy we have an escaped string.
+ * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
+ * @param mixed value - The value to run through the database quote method (PDO quote currently)
+ * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
+ */
 function formulize_db_escape($value) {
   global $xoopsDB;
-  static $methodExists;
-  if(!isset($methodExists)) {
-    $methodExists = method_exists($xoopsDB, 'escape');
-  }
-  if($methodExists) {
-    return $xoopsDB->escape($value);
-  } else {
-    $value = $xoopsDB->quote($value);
-    return substr($value, 1,-1);
-  }
+  $value = $xoopsDB->quote($value);
+  return substr($value, 1,-1);
 }
 
 // THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function:
@@ -6458,7 +6469,6 @@ function formulize_db_escape($value) {
  * @return string
  */
 function dateFormatToStrftime($dateFormat) {
-
 
 /*
     // UNCOMMENT THIS BLOCK TO GET A DEBUG OUTPUT THAT SHOWS WHAT FORMAT CODES ARE SUPPORTED ON YOUR CURRENT SERVER!!
@@ -7224,8 +7234,8 @@ function convertDynamicFilterTerms($term) {
     if(substr($valueToCheck, 0, 1) == "{" AND substr($valueToCheck, -1) == "}") {
         $searchgetkey = substr($valueToCheck, 1, -1);
         if(isset($_POST[$searchgetkey]) OR isset($_GET[$searchgetkey])) {
-            $term = isset($_POST[$searchgetkey]) ? htmlspecialchars(strip_tags(trim($_POST[$searchgetkey])), ENT_QUOTES) : "";
-            $term = ($term==="" AND isset($_GET[$searchgetkey])) ? htmlspecialchars(strip_tags(trim($_GET[$searchgetkey])), ENT_QUOTES) : $term;
+            $term = isset($_POST[$searchgetkey]) ? convertStringToUseSpecialCharsToMatchDB(strip_tags(trim($_POST[$searchgetkey]))) : "";
+            $term = ($term==="" AND isset($_GET[$searchgetkey])) ? convertStringToUseSpecialCharsToMatchDB(strip_tags(trim($_GET[$searchgetkey]))) : $term;
             if($term==="") {
                 $term = "";
             }
@@ -7942,7 +7952,7 @@ function getEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
   $criteria->add(new Criteria('ele_type', 'select'), 'OR');
 	$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
-  $elementsForDefaults = $element_handler->getObjects($criteria,$target_fid); // get all the text or textarea elements in the form
+  $elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid)); // get all the text or textarea elements in the form
 
   foreach($elementsForDefaults as $thisDefaultEle) {
     $defaultTextToWrite = "";
@@ -8434,7 +8444,7 @@ function formulize_getSidFromRewriteAddress($address="", $entryIdentifier="") {
 			exit();
 		}
 
-		$sql = 'SELECT sid, type FROM '.$xoopsDB->prefix('formulize_screen').' WHERE MATCH(`rewriteruleAddress`) AGAINST("'.formulize_db_escape($address).'") AND `rewriteruleAddress` = "'.formulize_db_escape($address).'"';
+		$sql = "SELECT sid, type FROM ".$xoopsDB->prefix('formulize_screen')." WHERE MATCH(`rewriteruleAddress`) AGAINST('".formulize_db_escape($address)."') AND `rewriteruleAddress` = '".formulize_db_escape($address)."'";
 		if($res = $xoopsDB->query($sql)) {
 			$candidateScreen = 0;
 			$rowsFound = $xoopsDB->getRowsNum($res);

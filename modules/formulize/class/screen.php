@@ -256,7 +256,7 @@ class formulizeScreenHandler {
 		if (is_numeric($sid_or_screen_handle)) {
 			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.intval($sid_or_screen_handle);
 		} else {
-				$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE screen_handle="'.formulize_db_escape($sid_or_screen_handle).'"';
+				$sql = "SELECT * FROM ".$this->db->prefix('formulize_screen')." WHERE screen_handle='".formulize_db_escape($sid_or_screen_handle)."'";
 		}
 		if (!$result = $this->db->query($sql)) {
 				return false;
@@ -357,7 +357,7 @@ class formulizeScreenHandler {
             if($field == "title") { $value = $newtitle; }
             if(!$start) { $insert_sql .= ", "; }
             $start = 0;
-            $insert_sql .= '"'.formulize_db_escape($value).'"';
+            $insert_sql .= "'".formulize_db_escape($value)."'";
         }
         $insert_sql .= ")";
         if(!$result = $this->db->query($insert_sql)) {
@@ -392,7 +392,7 @@ class formulizeScreenHandler {
             if($field == "title") { $value = $newtitle; }
             if(!$start) { $insert_sql .= ", "; }
             $start = 0;
-            $insert_sql .= '"'.formulize_db_escape($value).'"';
+            $insert_sql .= "'".formulize_db_escape($value)."'";
         }
         $insert_sql .= ")";
         if(!$result = $this->db->query($insert_sql)) {

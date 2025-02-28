@@ -586,7 +586,7 @@ class SyncCompareCatalog {
             if(is_numeric($value)) {
                 $sql .= $value.", ";
             } else {
-                $sql .= '"'.formulize_db_escape($value).'", ';
+                $sql .= "'".formulize_db_escape($value)."', ";
             }
 
         }
@@ -636,7 +636,7 @@ class SyncCompareCatalog {
         $sql = 'UPDATE '.prefixTable($tableName).' SET ';
 
         foreach ($record as $field => $value) {
-            $value = is_numeric($value) ? $value : '"'.formulize_db_escape($value).'"';
+            $value = is_numeric($value) ? $value : "'".formulize_db_escape($value)."'";
             $sql .= "`$field` = $value, ";
         }
 
@@ -649,7 +649,7 @@ class SyncCompareCatalog {
         } else {
             $primaryField = $this->getPrimaryField($tableName);
             $recPrimaryValue = $record[$primaryField];
-            $recPrimaryValue = is_numeric($recPrimaryValue) ? $recPrimaryValue : '"'.formulize_db_escape($recPrimaryValue).'"';
+            $recPrimaryValue = is_numeric($recPrimaryValue) ? $recPrimaryValue : "'".formulize_db_escape($recPrimaryValue)."'";
             $sql .= ' WHERE '.$primaryField.' = '.$recPrimaryValue.';';
         }
 
