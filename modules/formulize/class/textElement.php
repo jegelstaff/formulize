@@ -67,7 +67,11 @@ class formulizeTextElement extends formulizeElement {
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value' AND is_array($value)) {
 				$filename ='text_'.$this->getVar('ele_handle').'.php';
-				$fileValue = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+				$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+				$fileValue = "";
+				if(file_exists($filePath)) {
+					$fileValue = strval(file_get_contents($filePath));
+				}
 				$value[2] = $fileValue ? $fileValue : $value[2];
 			}
 			return $value;
