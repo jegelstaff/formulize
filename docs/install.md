@@ -10,11 +10,13 @@ permalink: install/
 3. Copy the files to your web root (you do not need to include the ci or docs folders)
 4. Make sure the following folders are writable by the server:
    - /cache
+   - /logs
    - /templates_c
    - /uploads
    - /modules/formulize/cache
    - /modules/formulize/code
    - /modules/formuilze/export
+   - /modules/formuilze/queue
    - /modules/formulize/temp
    - /modules/formulize/templates/screens (and all subs)
    - /modules/formulize/upload

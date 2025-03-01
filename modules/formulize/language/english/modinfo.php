@@ -136,7 +136,7 @@ if(isset($GLOBALS['config'])) {
 	global $config;
 	foreach($config as $thisConfig) {
 		if(is_object($thisConfig) AND $thisConfig->getVar('conf_name') == 'formulizePublicAPIEnabled' AND $thisConfig->getVar('conf_value') == 0) {
-			$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+			$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website. Make sure to put it above any rewrite rules that handle alternate URLs.
 			<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
 			RewriteEngine On<br>
 			RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]

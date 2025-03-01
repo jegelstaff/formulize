@@ -27,13 +27,15 @@ Some of the folders and files are not necessary for the operation of Formulize o
 # <a name="installing-formulize"></a>Installing Formulize
 
 1. If you are installing Formulize for the first time, make sure you do include the /install/ folder when you deploy the files to the website. You can exclude all [the other files and folders listed above](#deploying-formulize).
-2. Make sure the following folders are writable by the server:
+2. <a name="writable-folders"></a>Make sure the following folders are writable by the server:
    - /cache
+   - /logs
    - /templates_c
    - /uploads
    - /modules/formulize/cache
    - /modules/formulize/code
    - /modules/formuilze/export
+   - /modules/formuilze/queue
    - /modules/formulize/temp
    - /modules/formulize/templates/screens (and all subs)
    - /modules/formulize/upload
@@ -50,15 +52,16 @@ Some of the folders and files are not necessary for the operation of Formulize o
 
 1. Backup your files and database.
 2. Deploy the new files to your website. You can exclude all [the files and folders listed above](#deploying-formulize).
-3. Login to your website and go to the admin side, click on the Modules menu heading. Do not click on any of the menu entries under Modules, click on the heading itself.
-4. In the list of installed modules, click the circular arrows on the row where Formulize is listed:
+3. Make sure [the folders that need to be writable](#writable-folders) are writable by the web server (the update might include new folders you did not have previously). 
+4. Login to your website and go to the admin side, click on the Modules menu heading. Do not click on any of the menu entries under Modules, click on the heading itself.
+5. In the list of installed modules, click the circular arrows on the row where Formulize is listed:
 
 	![Click the circular arrows to update Formulize](../../images/formulize-update.PNG)
-5. On the next page that appears, click the Update button to update Formulize configuration settings.
-6. Go to the main admin page for Formulize. This is accessible from the Modules menu, by selecting 'Forms'
+6. On the next page that appears, click the Update button to update Formulize configuration settings.
+7. Go to the main admin page for Formulize. This is accessible from the Modules menu, by selecting 'Forms'
 
 	![Go to the Formulize main admin page](../../images/menu-forms.PNG)
-7. If a database update is required, there will be a large message about this in the upper right of the screen. If no update is required, then no message will appear. Click the "Apply Database Patch for Formulize" button to update the database.
+8. If a database update is required, there will be a large message about this in the upper right of the screen. If no update is required, then no message will appear. Click the "Apply Database Patch for Formulize" button to update the database.
 	![Update the database](../../images/formulize-database-update.PNG)
 
 

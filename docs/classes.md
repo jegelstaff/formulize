@@ -12,6 +12,8 @@ permalink: developers/API/classes/
 * [element handler](../classes/element_handler/) (coming soon)
 * [form objects](../classes/form_objects/) (coming soon)
 * [form handler](../classes/form_handler/) (coming soon)
+* [queue object](../classes/queue_object)
+* [queue handler](../classes/queue_handler)
 * [relationship objects](../classes/relationship_objects/) (coming soon)
 * [relationship handler](../classes/relationship_handler/) (coming soon)
 * [screen objects](../classes/screen_objects/) (coming soon)
