@@ -100,12 +100,31 @@ function getFormFramework($formframe, $mainform=0) {
 
 // get the title of a form
 function getFormTitle($fid) {
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($fid);
-    if(!$formObject) {
-        debug_print_backtrace();
-    }
-	return html_entity_decode($formObject->getVar('title'),ENT_QUOTES);
+	if($formObject = getFormObject($fid)) {
+		return html_entity_decode($formObject->getVar('title'));
+	} else {
+		return "";
+	}
+}
+
+// get the form_handle of a form
+function getFormHandle($fid) {
+	if($formObject = getFormObject($fid)) {
+		return html_entity_decode($formObject->getVar('form_handle'));
+	} else {
+		return "";
+	}
+}
+
+// get a form object based on id
+function getFormObject($fid) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if($formObject = $form_handler->get($fid)) {
+		return $formObject;
+	} else {
+		error_log("Formulize error: could not retrieve form object with form id $fid");
+		return false;
+	}
 }
 
 //this function returns the list of all the user's full names for all the users in the specified group(s)

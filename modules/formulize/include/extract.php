@@ -1243,9 +1243,9 @@ function processGetDataResults($resultData)
 					// will be collected with mainform ($fid) data
 					if ($field == 'main_email') {
 						if ($is_webmaster or $view_private_fields or $creatorAllowsEmailViewing or $creatorUid == $this_userid) {
-							$masterResults[$masterIndexer][getFormTitle($fid)][$entryIdIndex['main']]['creator_email'] = $value;
+							$masterResults[$masterIndexer][getFormHandle($fid)][$entryIdIndex['main']]['creator_email'] = $value;
 						} else {
-							$masterResults[$masterIndexer][getFormTitle($fid)][$entryIdIndex['main']]['creator_email'] = "";
+							$masterResults[$masterIndexer][getFormHandle($fid)][$entryIdIndex['main']]['creator_email'] = "";
 						}
 					}
 					continue;
@@ -1298,7 +1298,7 @@ function processGetDataResults($resultData)
 				if ($curFormAlias == "main" and isset($writtenMains[$entryIdIndex['main']])) {
 					continue;
 				}
-				$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
+				$masterResults[$masterIndexer][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
 			} // end of foreach field loop within a record
 		} // end of main while loop for all records
 		unset($queryRes[$queryResIndex]);
@@ -1349,7 +1349,7 @@ function processGetDataResults($resultData)
 					error_log("Formulize error: ownership information missing for entry $entryId in form $fid. Try repairing the Ownership Table via the Settings tab of the Form.");
 					$ownershipDataToAdd = array("Could not determine groups");
 				}
-				$masterResults[$masterIndexer][getFormTitle($fid)][$entryId]['owner_groups'] = $ownershipDataToAdd;
+				$masterResults[$masterIndexer][getFormHandle($fid)][$entryId]['owner_groups'] = $ownershipDataToAdd;
 				$masterIndexer++;
 			}
 		}
@@ -2487,7 +2487,7 @@ function getFormHandleFromEntry($entry, $handle)
 			}
 		}
 	} else {
-		return ""; // exit("Error: no form handle found for element handle '$handle'");
+		return "";
 	}
 }
 
