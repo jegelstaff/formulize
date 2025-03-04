@@ -375,7 +375,7 @@ function getData(
 	// check to see if this form is a "tableform", ie: a reference to plain db table
 	$isTableForm = false;
 	if (is_numeric($form)) {
-		$checkTableForm = $xoopsDB->query("SELECT tableform, desc_form FROM " . DBPRE . "formulize_id WHERE id_form=$form");
+		$checkTableForm = $xoopsDB->query("SELECT tableform, form_handle FROM " . DBPRE . "formulize_id WHERE id_form=$form");
 		$tableFormRow = $xoopsDB->fetchRow($checkTableForm);
 		$isTableForm = $tableFormRow[0] == "" ? false : true;
 	}
@@ -2675,10 +2675,9 @@ function displayList($entry, $handle, $type = "bulleted", $id = "NULL", $localid
 }
 
 // THIS FUNCTION RETURNS AN ARRAY OF ALL THE INTERNAL IDS ASSOCIATED WITH THE ENTRIES OF A PARTICULAR FORM
-// $formhandle can be an array of handles, or if not specified then all entries for all handles are returned
-// $formhandle can all just be a single handle
-// $formhandle values can be: the title of the form, or the id number of the form
-// If formhandle is an array, then $ids becomes a two dimensional array:  $ids[$formhandle][] = $id
+// $formhandle can be an array of form handles or form ids, or if not specified then all entries for all handles are returned
+// $formhandle can just be a single handle or form id
+// If formhandle is an array, then $ids returned becomes a two dimensional array:  $ids[$formhandle][] = $id
 function internalRecordIds($entry, $formhandle = "", $id = "NULL", $fidAsKeys = false)
 {
 	$ids = array();
@@ -2716,21 +2715,27 @@ function internalRecordIds($entry, $formhandle = "", $id = "NULL", $fidAsKeys = 
 	return $ids;
 }
 
-// this function takes a formhandle and if it's numeric, returns the title for that form
-function _parseInternalRecordIdsFormHandle($formhandle)
+/**
+ * Takes a form handle or form id, and if it is an id, then fetches the form handle and returns that
+ * @param string|int form_handle_or_id Either a form handle string, or an id number of a form
+ * @return string Returns any string passed to it as is, or returns the form handle for the form of the id number passed to it. Returns false if an invalid ID number is passed.
+ */
+function _parseInternalRecordIdsFormHandle($form_handle_or_id)
 {
 	global $xoopsDB;
-	if (!is_numeric($formhandle)) {
-		return $formhandle;
+	if (!is_numeric($form_handle_or_id)) {
+		return $form_handle_or_id;
 	}
-	static $cachedDescForm = array();
-	if (!isset($cachedDescForm[$formhandle])) {
-		$sql = "SELECT desc_form FROM " . DBPRE . "formulize_id WHERE id_form=" . intval($formhandle);
-		$res = $xoopsDB->query($sql);
-		$array = $xoopsDB->fetchArray($res);
-		$cachedDescForm[$formhandle] = $array['desc_form'];
+	static $cachedFormHandles = array();
+	if (!isset($cachedFormHandles[$form_handle_or_id])) {
+		$cachedFormHandles[$form_handle_or_id] = false;
+		$sql = "SELECT form_handle FROM " . DBPRE . "formulize_id WHERE id_form=" . intval($form_handle_or_id);
+		if($res = $xoopsDB->query($sql)) {
+			$array = $xoopsDB->fetchArray($res);
+			$cachedFormHandles[$form_handle_or_id] = (is_array($array) AND count($array) > 0) ? $array['form_handle'] : false;
+		}
 	}
-	return $cachedDescForm[$formhandle];
+	return $cachedFormHandles[$form_handle_or_id];
 }
 
 // THIS FUNCTION SORTS A RESULT SET, BASED ON THE VALUES OF ONE NON-MULTI FIELD (IE: CANNOT SORT BY CHECKBOX FIELD)
