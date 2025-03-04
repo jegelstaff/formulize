@@ -929,6 +929,8 @@ function makeUidFilter($users) {
 function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false, $unified_delete=false)
 {
 
+		$GLOBALS['formulize_checkForLinks_oneToOneMetaData'] = array();
+
     if(!$frid) {
         if(is_array($entries)) {
             return array('fids'=>$fids, 'entries'=>$entries);

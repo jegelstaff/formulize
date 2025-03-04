@@ -594,6 +594,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 		// FIGURE OUT JOIN CLAUSES FOR ANY RELATED FORMS THAT ARE INVOLVED IN THIS QUERY
 		$linkSelect = "";
+		$existsJoinText = "";
 		if ($frid) {
 			$joinHandles = formulize_getJoinHandles(array(0 => $linkselfids, 1 => $linktargetids)); // get the element handles for these elements, since we need those to properly construct the join clauses
 			$newJoinText = ""; // "new" variables initilized in each loop
@@ -601,7 +602,6 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$linkSelectIndex = array();
 			$newexistsJoinText = "";
 			$joinText = ""; // not "new" variables persist (with .= operator)
-			$existsJoinText = "";
 			foreach ($linkformids as $id => $linkedFid) {
 
 				// ignore recursive connections if...
@@ -800,7 +800,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
 			}
 		}
-		$mainSelectFields = $sqlFilterElementsIndex['main'] ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
+		$mainSelectFields = (isset($sqlFilterElementsIndex['main']) AND $sqlFilterElementsIndex['main'])  ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
 		$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
 		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
 		$firstTimeGetAllMainFields = "$mainSelectFields , ";
@@ -1423,7 +1423,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 {
 	global $xoopsDB;
 	if ($filtertemp == "") {
-		return array(0 => array(), "", "");
+		return array(array(), "", "", array(), "", "");
 	}
 
 	$formFieldFilterMap = array();
@@ -1496,8 +1496,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 			// Use the local andor setting ($filterParts[0]) between terms
 
 			$ifParts = explode("/**/", $indivFilter);
-
-			// FINAL NOTE ABOUT SLASHES...Oct 19 2006...patch 22 corrects this slash/magic quote mess.  However, to ensure compatibility with existing Pageworks applications, we are continuing to strip out all slashes in the filterparts[1], the filter strings that are passed in, and then we apply HTML special chars to the filter so that it can match up with the contents of the DB.  Only challenge is that extract.php is meant to be standalone, but we have to refer to the text sanitizer class in XOOPS in order to do the HTML special chars thing correctly.
+			// if the indivFilter does not have all possible values, provide empty strings for the missing ones
+			if(!isset($ifParts[1])) {
+				$ifParts[1] = "";
+			}
+			if(!isset($ifParts[2])) {
+				$ifParts[2] = "";
+			}
 
 			$ifParts[1] = str_replace("\\", "", $ifParts[1]);
 
