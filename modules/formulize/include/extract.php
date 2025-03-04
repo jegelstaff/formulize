@@ -1298,12 +1298,7 @@ function processGetDataResults($resultData)
 				if ($curFormAlias == "main" and isset($writtenMains[$entryIdIndex['main']])) {
 					continue;
 				}
-				if (isMetaDataField($elementHandle)) {
-					$valueArray = $value;
-				} else {
-					$valueArray = array($value);
-				}
-				$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $valueArray;
+				$masterResults[$masterIndexer][getFormTitle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
 			} // end of foreach field loop within a record
 		} // end of main while loop for all records
 		unset($queryRes[$queryResIndex]);
@@ -2521,31 +2516,32 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null)
 {
 
 	$entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
+
+	// return nothing if handle is not part of entry
 	if (!$formhandle = getFormHandleFromEntry($entry, $handle)) {
 		return "";
-	} // return nothing if handle is not part of entry
+	}
 
-	$GLOBALS['formulize_mostRecentLocalId'] = array();
+	$formulize_mostRecentLocalId = array();
 	foreach ($entry[$formhandle] as $lid => $elements) {
 		if (!$localEntryId or $localEntryId == "NULL" or $lid == $localEntryId) { // legacy "NULL" string value is valid :(
-			if ($handle == "owner_groups") { // owner groups is always a simple array, return as is
-				return $elements[$handle];
-			} elseif (is_array($elements[$handle])) { // will only ever be one item in this array! holdover from when we used to prep values as part of preparing dataset, and everything, even single values, was put into an array. Now we put the raw DB value into an array, and prep it here. Sticking with it in an array is consistent for existing logic that expects only metadata values to not be in an array, which is hacky, but less disruptive.
-				foreach (prepvalues($elements[$handle][0], $handle, $lid) as $thisValue) {
-					$foundValues[] = htmlspecialchars_decode($thisValue);
-					$GLOBALS['formulize_mostRecentLocalId'][] = $lid;
-				}
-			} else { // the handle is for non-owner-groups metadata, all other fields will be arrays in the dataset
+			if (isMetaDataField($handle)) {
 				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
-				return prepvalues($elements[$handle], $handle, $lid);
+				return $elements[$handle];
+			} else {
+				foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
+					$foundValues[] = htmlspecialchars_decode($thisValue);
+					$formulize_mostRecentLocalId[] = $lid;
+				}
 			}
 		}
 	}
 
 	if (count((array) $foundValues) == 1) {
-		$GLOBALS['formulize_mostRecentLocalId'] = $GLOBALS['formulize_mostRecentLocalId'][0];
+		$GLOBALS['formulize_mostRecentLocalId'] = $formulize_mostRecentLocalId[0];
 		return $foundValues[0];
 	} else {
+		$GLOBALS['formulize_mostRecentLocalId'] = $formulize_mostRecentLocalId;
 		return $foundValues;
 	}
 }
