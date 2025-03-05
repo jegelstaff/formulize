@@ -1526,7 +1526,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 
 			$newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
 
-			$operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
 			if (trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") {
 				if (strlen($ifParts[1]) > 1 and (substr($ifParts[1], 0, 1) == "%" or substr($ifParts[1], -1) == "%")) { // if the query term includes % at the front or back (or both), then we let that work as the "likebits" and don't put in any ourselves
 					$likebits = "";
