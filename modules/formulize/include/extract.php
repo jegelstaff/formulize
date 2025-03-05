@@ -1544,7 +1544,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 			// FIRST: NUMERIC FILTERS ARE INTERPRETTED AS ENTRY IDS IN THE MAIN FORM
 			if (is_numeric($ifParts[0]) and $ifParts[0] == $indivFilter) {
 				// if this is a numeric value, then we must treat it specially
-				$newWhereClause = "main.entry_id=" . $ifParts[0];
+				$newWhereClause = "main.entry_id=" . intval($ifParts[0]);
 				$mappedForm = $fid;
 
 				// SECOND: HANDLE ANY METADATA FILTER TERMS
