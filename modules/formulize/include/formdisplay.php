@@ -2308,15 +2308,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
 					}
-                    $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : '';
+                    $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : 0;
 					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n";
 					// check to see if we draw a delete box or not
 					if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
 					}
-                    $modalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', " : "";
-                    if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<td class='subentry-view-cell'><a href='' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $modalParams".$subform_element_object->getVar('ele_id').",0);return false;\">&nbsp;</a></td>\n"; }
+                    $additionalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', $subElementId, 0" : $subElementId;
+                    if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<td class='subentry-view-cell'><a href='' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $additionalParams);return false;\">&nbsp;</a></td>\n"; }
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 					foreach($elementsToDraw as $thisele) {
 						if($thisele) {
