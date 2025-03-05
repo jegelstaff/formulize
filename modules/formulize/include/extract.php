@@ -1501,7 +1501,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 				$ifParts[1] = "";
 			}
 			if(!isset($ifParts[2])) {
-				$ifParts[2] = "";
+				$ifParts[2] = "LIKE";
 			}
 
 			$ifParts[1] = str_replace("\\", "", $ifParts[1]);
