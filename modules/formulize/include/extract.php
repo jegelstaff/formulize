@@ -2157,7 +2157,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 						if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
 							$elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
 							$dataToWrite[$elementID] = $derivedValue;
-							$entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
+							$entry[$formHandle][$primary_entry_id][$thisMetaData['handle']] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
 						}
 					}
 					if (count((array) $dataToWrite) > 0) {
