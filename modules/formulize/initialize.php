@@ -277,11 +277,11 @@ if (!$rendered AND $uid) {
 								if (isset($frid) AND is_numeric($frid) AND $frid) {
 										// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
 										include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-										displayEntries($frid, $fid);
+										displayEntries($frid, $fid, $loadThisView);
 								} else {
                 		// this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
                 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-									  displayEntries($fid);
+									  displayEntries($fid, "", $loadThisView);
 								}
             }
         } else {
