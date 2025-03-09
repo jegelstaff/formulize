@@ -1023,6 +1023,15 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
+$modversion['config'][] = array(
+	'name' => 'formulizeRevisionsForAllForms',
+	'title' => '_MI_formulize_REVISIONSFORALLFORMS',
+	'description' => '_MI_formulize_REVISIONSFORALLFORMS_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,

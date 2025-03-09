@@ -152,6 +152,10 @@ if(isset($GLOBALS['config'])) {
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API".$publicAPIInstructions);
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/");
 
+define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
+define("_MI_formulize_REVISIONSFORALLFORMS_DESC", "Normally, you can turn on revision history for each form as you see fit. If you want to turn it on for all forms always, turn this preference on, and the option will be disabled in each form's settings.");
+
+
 // The name of this module
 define("_MI_formulizeMENU_NAME","MyMenu");
 
