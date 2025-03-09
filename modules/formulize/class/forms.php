@@ -137,7 +137,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
 		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
-		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
+		$this->initVar("store_revisions", XOBJ_DTYPE_INT, (formulizeRevisionsForAllFormsIsOn() ? 1 : $formq[0]['store_revisions']), true); // override based on module preference
 		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_before_save'));
 		$this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_after_save'));
 		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $this->getVar('on_delete'));

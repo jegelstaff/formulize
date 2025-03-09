@@ -529,6 +529,7 @@ $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
 $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
+$settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
