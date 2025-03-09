@@ -1051,44 +1051,23 @@ class formulizeFormsHandler {
 		return true;
 	}
 
-	// this function deletes an element field from the data table
-	// $id can be numeric or an object
-	function deleteElementField($element) {
-		if(!$element = _getElementObject($element)) {
-			return false;
-		}
-		global $xoopsDB;
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
-		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
-		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
-			return false;
-		}
-		if($this->revisionsTableExists($element->getVar('id_form'))) {
-			$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
-			if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
-				print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
-				return false;
-			}
-		}
-		return true;
-	}
-
     // this function checks if an element field exists on the form's datatable
     // $element can be numeric or an object
     // $elementHandle is an alternative handle that we're going to look for...necessary for when elements are cloned since the element object retrieved might have a different handle already from the one we're looking for
-    function elementFieldMissing($element, $elementHandle="") {
+		// $revisionsTable indicates if we should look in revisions table or regular table
+    function elementFieldMissing($element, $elementHandle="", $revisionsTable = false) {
         if(!$element = _getElementObject($element)) {
 			return false;
 		}
         if($element->hasData == false) {
             return false;
         }
+				$revisionsTableSQL = $revisionsTable ? "_revisions" : "";
         global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($element->getVar('id_form'));
         $elementHandle = $elementHandle ? $elementHandle : $element->getVar('ele_handle'); // use the element's current handle, unless we passed in an alternate to validate
-        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) .$revisionsTableSQL." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
         if($fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
             if($xoopsDB->getRowsNum($fieldStateRes)==0) {
                 return true;
@@ -1096,6 +1075,13 @@ class formulizeFormsHandler {
         }
         return false;
     }
+
+		// opposite of elementFieldMissing
+		function elementFieldPresent($element, $elementHandle="", $revisionsTable = false) {
+			$missing = $this->elementFieldMissing($element, $elementHandle, $revisionsTable);
+			return $missing ? false : true;
+		}
+
 
 	// this function adds an element field to the data table
 	// $element can be numeric or an object
@@ -1114,7 +1100,7 @@ class formulizeFormsHandler {
             print $xoopsDB->error().'<br>';
 			return false;
 		}
-		if($this->revisionsTableExists($element->getVar('id_form'))) {
+		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldMissing($element, revisionsTable: true)) {
 			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 				print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
@@ -1152,11 +1138,34 @@ class formulizeFormsHandler {
           print $xoopsDB->error();
 		  return false;
 		}
-		if($this->revisionsTableExists($element->getVar('id_form'))) {
+		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, $oldName, revisionsTable: true)) {
 			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
 			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 			  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
 			  return false;
+			}
+		}
+		return true;
+	}
+
+	// this function deletes an element field from the data table
+	// $id can be numeric or an object
+	function deleteElementField($element) {
+		if(!$element = _getElementObject($element)) {
+			return false;
+		}
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
+		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
+		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+			return false;
+		}
+		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, revisionsTable: true)) {
+			$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
+			if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+				print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
+				return false;
 			}
 		}
 		return true;
