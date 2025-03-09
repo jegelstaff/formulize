@@ -18,7 +18,7 @@
         	<fieldset>
                 <legend><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE_QUESTION}></label></legend>
                 <p><{$smarty.const._AM_SETTINGS_FORM_TITLE}><input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" onkeyup="fillHandle()" /></p>
-            
+
             </fieldset>
 		</div>
 	</div>
@@ -65,13 +65,13 @@
 		</div>
 		<div style="clear: both;"></div>
 		<{/if}>
-	
+
 		<{if $content.istableform == false}>
 		<div class="accordion-box">
 			<div class="form-item">
         	<fieldset>
 				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED}></label></legend>
-				
+
 				<div class="form-radios">
 					<label for="group"><input type="radio" id="group" name="forms-single" value="group" /><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP}></label>
 				</div>
@@ -85,7 +85,7 @@
 		</div>
 	</div>
 	<div style="clear: both;"></div>
-	
+
 		<{if $content.fid == "new"}>
 			<div class="accordion-box">
 			<div class="form-item">
@@ -99,7 +99,7 @@
 			</div>
 			<div style="clear: both;"></div>
 		<{/if}>
-	
+
 		<{if $content.fid != "new" AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
 		<div class="accordion-box">
 			<div class="form-item">
@@ -120,18 +120,18 @@
 				<fieldset>
 					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
 					<div class="form-radios">
-						<label for="store_revisions-0"><input type="radio" id="store_revisions-0" name="forms-store_revisions" value="0" />No</label>
+						<label for="store_revisions-0"><input type="radio" <{$content.revisionsDisabled}> id="store_revisions-0" name="forms-store_revisions" value="0" />No</label>
 					</div>
 					<div class="form-radios">
-						<label for="store_revisions-1"><input type="radio" id="store_revisions-1" name="forms-store_revisions" value="1" />Yes, store revision history for this form</label>
+						<label for="store_revisions-1"><input type="radio" <{$content.revisionsDisabled}> id="store_revisions-1" name="forms-store_revisions" value="1" />Yes, store revision history for this form</label>
 					</div>
 					<div class="description">
-						<p>This can increase the size of your database <b>a lot</b> if you turn on revisions for a form where entries are updated very often!</p>
+						<p>This can increase the size of your database <b>a lot</b> if you turn on revisions for a form where entries are updated very often!</p><p>You can turn this on for all forms at once, through the <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>">Formulize preferences</a>. If you do that, then you cannot alter it here. This option becomes disabled.</p>
 					</div>
 				</fieldset>
 			</div>
 		</div>
-					
+
         <div class="accordion-box">
 			<div class="form-item">
 				<fieldset>
@@ -148,10 +148,10 @@
 				</fieldset>
 			</div>
 		</div>
-    
-    
+
+
 	<{/if}>
-	
+
 	<{if $content.applications|is_array AND $content.applications|@count > 0}>
 	<div class="accordion-box">
 		<div class="form-item">
@@ -183,18 +183,18 @@
 							</div>
             </fieldset>
 		</div>
-	</div> 
+	</div>
 
 </form>
 <script type="text/javascript">
   $("#<{$content.singleentry}>").attr('checked', true);
   $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);
   $("#send_digests-<{$content.send_digests}>").attr('checked', true);
-	
+
 	$("#forms-title").keydown(function () {
 		window.document.getElementById('reload_settings').value = 1;
 	});
-	
+
 	$('input:radio[name=new_app_yes_no]').change(function(){
 		if($('input:radio[name=new_app_yes_no]:checked').val() == 'yes') {
 			window.document.getElementById("new-application-box").style.display = 'block';
@@ -202,7 +202,7 @@
 			window.document.getElementById("new-application-box").style.display = 'none';
 		}
 		});
-	
+
 	$(".savebutton").click(function() {
 		if($("[name=forms-title]").val() == "") {
 			alert("Forms must have a name!");
@@ -211,7 +211,7 @@
 		if ($("[name=forms-form_handle]").val() == "") {
 			fillHandle();
 		}
-		
+
 	});
 	function fillHandle(){
 		//this function will be called when they are typing title to update handle
@@ -231,7 +231,7 @@
 				alert(response);
 			}
 		});
-	});	
+	});
 </script>
 <div style="clear: both"></div>
 </div> <!--// end content -->

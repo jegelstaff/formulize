@@ -8634,3 +8634,15 @@ function stripEntryFromDoneDestination($done_dest) {
 function convertStringToUseSpecialCharsToMatchDB($string) {
 	return str_replace('&amp;', '&', htmlspecialchars($string));
 }
+
+/**
+ * Check if the 'revision history on for all forms' preference is set
+ * @return bool Returns true if it is on, and false if it is not
+ */
+function formulizeRevisionsForAllFormsIsOn() {
+	$module_handler = xoops_gethandler('module');
+	$config_handler = xoops_gethandler('config');
+	$formulizeModule = $module_handler->getByDirname("formulize");
+	$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+	return $formulizeConfig['formulizeRevisionsForAllForms'] ? true : false;
+}

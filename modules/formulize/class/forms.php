@@ -39,42 +39,42 @@ class formulizeForm extends FormulizeObject {
 
     private array $onDeleteExistingValues;
 
-	function __construct($id_form="", $includeAllElements=false){
+	function __construct($form_id_or_handle="", $includeAllElements=false){
 
 		// validate $id_form
 		global $xoopsDB;
 
-		if(!is_numeric($id_form)) {
+		if(!is_numeric($form_id_or_handle)) {
+			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle='".formulize_db_escape($form_id_or_handle)."'");
+		} else {
+			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=".intval($form_id_or_handle));
+		}
+		if(!isset($formq[0])) {
+			unset($formq);
 			include XOOPS_ROOT_PATH.'/modules/formulize/class/formSetEmptyDefaults.php';
 		} else {
-			$formq = q("SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$id_form");
-			if(!isset($formq[0])) {
-				unset($formq);
-				include XOOPS_ROOT_PATH.'/modules/formulize/class/formSetEmptyDefaults.php';
-			} else {
-				// gather element ids for this form
-				$encryptedElements = array();
-				$elementTypesWithData = array();
-				$element_handler = xoops_getmodulehandler('elements', 'formulize');
-				$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
-				$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$id_form $displayFilter ORDER BY ele_order ASC");
-				foreach($elementsq as $row=>$value) {
-					if(!isset($elementTypesWithData[$value['ele_type']])) {
-						// instantiate element object for this element, and check if it has data. Only once per type, to avoid duplication, keep it as fast as possible.
-						$elementObject = $element_handler->get($value['ele_id']);
-						$elementTypesWithData[$value['ele_type']] = $elementObject->hasData ? true : false;
-					}
-					if($elementTypesWithData[$value['ele_type']]) {
-						$elementsWithData[$value['ele_id']] = $value['ele_id'];
-					}
-					$elements[$value['ele_id']] = $value['ele_id'];
-					$elementCaptions[$value['ele_id']] = $value['ele_caption'];
-					$elementColheads[$value['ele_id']] = $value['ele_colhead'];
-					$elementHandles[$value['ele_id']] = $value['ele_handle'];
-					$elementTypes[$value['ele_id']] = $value['ele_type'];
-					if($value['ele_encrypt']) {
-						$encryptedElements[$value['ele_id']] = $value['ele_handle'];
-					}
+			// gather element ids for this form
+			$encryptedElements = array();
+			$elementTypesWithData = array();
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
+			$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=".intval($formq[0]['id_form'])." $displayFilter ORDER BY ele_order ASC");
+			foreach($elementsq as $row=>$value) {
+				if(!isset($elementTypesWithData[$value['ele_type']])) {
+					// instantiate element object for this element, and check if it has data. Only once per type, to avoid duplication, keep it as fast as possible.
+					$elementObject = $element_handler->get($value['ele_id']);
+					$elementTypesWithData[$value['ele_type']] = $elementObject->hasData ? true : false;
+				}
+				if($elementTypesWithData[$value['ele_type']]) {
+					$elementsWithData[$value['ele_id']] = $value['ele_id'];
+				}
+				$elements[$value['ele_id']] = $value['ele_id'];
+				$elementCaptions[$value['ele_id']] = $value['ele_caption'];
+				$elementColheads[$value['ele_id']] = $value['ele_colhead'];
+				$elementHandles[$value['ele_id']] = $value['ele_handle'];
+				$elementTypes[$value['ele_id']] = $value['ele_type'];
+				if($value['ele_encrypt']) {
+					$encryptedElements[$value['ele_id']] = $value['ele_handle'];
 				}
 
 				// propertly format the single value
@@ -99,11 +99,11 @@ class formulizeForm extends FormulizeObject {
 			}
 
 			// gather the view information
-      list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($id_form);
+      list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($formq[0]['id_form']);
 
 
 			// setup the filter settings
-			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid='$id_form'");
+			$filterSettingsq = q("SELECT groupid, filter FROM " . $xoopsDB->prefix("formulize_group_filters") . " WHERE fid=".intval($formq[0]['id_form']));
 			if(!isset($filterSettingsq[0])) {
 				$filterSettings = array();
 			} else {
@@ -115,7 +115,7 @@ class formulizeForm extends FormulizeObject {
 
 		parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
-		$this->initVar("id_form", XOBJ_DTYPE_INT, $id_form, true);
+		$this->initVar("id_form", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
@@ -137,7 +137,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
 		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
-		$this->initVar("store_revisions", XOBJ_DTYPE_INT, $formq[0]['store_revisions'], true);
+		$this->initVar("store_revisions", XOBJ_DTYPE_INT, (formulizeRevisionsForAllFormsIsOn() ? 1 : $formq[0]['store_revisions']), true); // override based on module preference
 		$this->initVar("on_before_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_before_save'));
 		$this->initVar("on_after_save", XOBJ_DTYPE_TXTAREA, $this->getVar('on_after_save'));
 		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $this->getVar('on_delete'));
@@ -890,6 +890,7 @@ class formulizeFormsHandler {
 
 	// this method figures out if the revisions history table for a form exists or not
 	// variable passed in can be a form object, a form id or the text of the form handle itself, which is used as an override if you don't want to work with the object -- necessary when tables are being renamed!
+	// if the module pref to always have revisions is turned on, make revisions table if it doesn't exist
 	function revisionsTableExists($fid) {
 		if(is_object($fid)) {
 			if(!get_class($fid) == "formulizeForm") {
@@ -902,7 +903,8 @@ class formulizeFormsHandler {
 			$formObject = $this->get($fid);
 			$form_handle = $formObject->getVar('form_handle');
 		} else {
-			$form_handle = $fid;
+			$form_handle = $fid; // not fid, it's a form handle in this case
+			$formObject = $this->get($form_handle);
 		}
 		global $xoopsDB;
 		$existingTables = array();
@@ -914,6 +916,13 @@ class formulizeFormsHandler {
 			}
 		}
 		$foundval = in_array($xoopsDB->prefix("formulize_".$form_handle."_revisions"), $existingTables);
+		if(!$foundval AND formulizeRevisionsForAllFormsIsOn()) {
+			if(!$this->createDataTable($formObject->getVar('id_form'), revisionsTable: true)) {
+				print "Error: could not create the revision history table for the form";
+			} else {
+				$foundval = true;
+			}
+		}
 		return $foundval;
 	}
 
@@ -1042,44 +1051,23 @@ class formulizeFormsHandler {
 		return true;
 	}
 
-	// this function deletes an element field from the data table
-	// $id can be numeric or an object
-	function deleteElementField($element) {
-		if(!$element = _getElementObject($element)) {
-			return false;
-		}
-		global $xoopsDB;
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
-		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
-		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
-			return false;
-		}
-		if($this->revisionsTableExists($element->getVar('id_form'))) {
-			$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
-			if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
-				print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
-				return false;
-			}
-		}
-		return true;
-	}
-
     // this function checks if an element field exists on the form's datatable
     // $element can be numeric or an object
     // $elementHandle is an alternative handle that we're going to look for...necessary for when elements are cloned since the element object retrieved might have a different handle already from the one we're looking for
-    function elementFieldMissing($element, $elementHandle="") {
+		// $revisionsTable indicates if we should look in revisions table or regular table
+    function elementFieldMissing($element, $elementHandle="", $revisionsTable = false) {
         if(!$element = _getElementObject($element)) {
 			return false;
 		}
         if($element->hasData == false) {
             return false;
         }
+				$revisionsTableSQL = $revisionsTable ? "_revisions" : "";
         global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($element->getVar('id_form'));
         $elementHandle = $elementHandle ? $elementHandle : $element->getVar('ele_handle'); // use the element's current handle, unless we passed in an alternate to validate
-        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
+        $fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) .$revisionsTableSQL." LIKE '".formulize_db_escape($elementHandle)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
         if($fieldStateRes = $xoopsDB->queryF($fieldStateSQL)) {
             if($xoopsDB->getRowsNum($fieldStateRes)==0) {
                 return true;
@@ -1087,6 +1075,13 @@ class formulizeFormsHandler {
         }
         return false;
     }
+
+		// opposite of elementFieldMissing
+		function elementFieldPresent($element, $elementHandle="", $revisionsTable = false) {
+			$missing = $this->elementFieldMissing($element, $elementHandle, $revisionsTable);
+			return $missing ? false : true;
+		}
+
 
 	// this function adds an element field to the data table
 	// $element can be numeric or an object
@@ -1105,7 +1100,7 @@ class formulizeFormsHandler {
             print $xoopsDB->error().'<br>';
 			return false;
 		}
-		if($this->revisionsTableExists($element->getVar('id_form'))) {
+		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldMissing($element, revisionsTable: true)) {
 			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
 			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 				print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
@@ -1143,11 +1138,34 @@ class formulizeFormsHandler {
           print $xoopsDB->error();
 		  return false;
 		}
-		if($this->revisionsTableExists($element->getVar('id_form'))) {
+		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, $oldName, revisionsTable: true)) {
 			$updateFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
 			if(!$updateFieldRes = $xoopsDB->queryF($updateFieldSQL)) {
 			  print "Error: could not update the field name for $oldName in form ".$formObject->getVar('form_handle');
 			  return false;
+			}
+		}
+		return true;
+	}
+
+	// this function deletes an element field from the data table
+	// $id can be numeric or an object
+	function deleteElementField($element) {
+		if(!$element = _getElementObject($element)) {
+			return false;
+		}
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
+		$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP `" . $element->getVar('ele_handle') . "`";
+		if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+			return false;
+		}
+		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, revisionsTable: true)) {
+			$deleteFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " DROP `" . $element->getVar('ele_handle') . "`";
+			if(!$deleteFieldRes = $xoopsDB->queryF($deleteFieldSQL)) {
+				print "Error: could not remove element ".$element->getVar('ele_handle')." from the revisions table for form ". $formObject->getVar('form_handle');
+				return false;
 			}
 		}
 		return true;
@@ -1481,7 +1499,7 @@ class formulizeFormsHandler {
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$clonedFormObject = $form_handler->get($newfid);
 	if ($clonedFormObject->getVar('store_revisions')) {
-		if (!$tableCreationResult = $this->createDataTable($newfid, 0, array(), true)) {
+		if (!$tableCreationResult = $this->createDataTable($newfid, revisionsTable: true)) {
 			print "Error: could not create revisions table for form $newfid. ".
 				"Please delete the cloned form and report this error to ".
 				"<a href=\"mailto:info@formulize.org\">info@formulize.org</a>.<br>".$xoopsDB->error();
