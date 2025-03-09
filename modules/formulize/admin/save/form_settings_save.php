@@ -206,7 +206,7 @@ if(isset($_POST['forms-tableform'])) {
 
 // if the revision history flag was on, then create the revisions history table, if it doesn't exist already
 if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AND !$form_handler->revisionsTableExists($formObject)) {
-  if(!$form_handler->createDataTable($fid, 0, array(), true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
+  if(!$form_handler->createDataTable($fid, revisionsTable: true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
     print "Error: could not create the revision history table for the form";
   }
 }
