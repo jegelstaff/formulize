@@ -51,21 +51,36 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
-        $this->initVar("paraentryform", XOBJ_DTYPE_INT);
-        $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
-        $this->initVar("navstyle", XOBJ_DTYPE_INT);
-        $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
-        $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
-        $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
-        $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
-        $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-        $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-        $this->initVar('showpagetitles', XOBJ_DTYPE_INT);
-        $this->initVar('showpageindicator', XOBJ_DTYPE_INT);
-        $this->initVar('showpageselector', XOBJ_DTYPE_INT);
-        $this->initVar('displayheading', XOBJ_DTYPE_INT);
-        $this->initVar('reloadblank', XOBJ_DTYPE_INT);
-        $this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
+		$this->initVar("paraentryform", XOBJ_DTYPE_INT);
+		$this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
+		$this->initVar("navstyle", XOBJ_DTYPE_INT);
+		$this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
+		$this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
+		$this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
+		$this->initVar('displaycolumns', XOBJ_DTYPE_INT);
+		$this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initVar('showpagetitles', XOBJ_DTYPE_INT);
+		$this->initVar('showpageindicator', XOBJ_DTYPE_INT);
+		$this->initVar('showpageselector', XOBJ_DTYPE_INT);
+		$this->initVar('displayheading', XOBJ_DTYPE_INT);
+		$this->initVar('reloadblank', XOBJ_DTYPE_INT);
+		$this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
+	}
+
+	/**
+	 * Determine the page item type based on the elements recorded for displaying on the page
+	 * @param array|string pageElements - the items for showing on the page
+	 * @return string returns either pit-elements, pit-screen, or pit-custom, depending if the page contains elements, and entire screen, or custom code
+	 */
+	function determinePageItemType($pageElements) {
+		if($pageElements[0] == "PHP") {
+			return "pit-custom";
+		} elseif(substr($pageElements[0], 0, 4) == "sid:") {
+			return "pit-screen";
+		} else {
+			return "pit-elements";
+		}
 	}
 
 	// setup the conditions array...format has changed over time...
@@ -332,13 +347,61 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 }
 
 /**
+ * Generates an array for all the screens on forms in a one-to-one connection with this form
+ * If there is no relationship, return screens of the specified form, except for the excluded screen
+ * @param int fid The form id of the mainform
+ * @param int frid Optional. The relationship id if any
+ * @param int excludedSid Optional. A sid to not include in the results
+ * @return array an array of the compiled screens. Keys are 'sid:<screenId>' and values are the form titles and screen titles
+ */
+function multiPageScreenMakeScreenOptionsList($fid, $frid=0, $excludedSid=0) {
+	$options = multiPageScreenScreenOptionsList_append($fid, $excludedSid);
+	if($frid) {
+		// figure out which forms in the relationship we care about, and append them to the array
+		$framework_handler = xoops_getModuleHandler('frameworks', 'formulize');
+		$frameworkObject = $framework_handler->get($frid);
+		foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+			$form1 = $thisLinkObject->getVar("form1");
+			$form2 = $thisLinkObject->getVar("form2");
+			if ($thisLinkObject->getVar("unifiedDisplay")
+				AND $thisLinkObject->getVar("relationship") == 1
+				AND ($form1 == $fid OR $form2 == $fid)) {
+					$otherFid = $form1 == $fid ? $form2 : $form1;
+					$options = multiPageScreenScreenOptionsList_append($otherFid, $excludedSid, $options);
+			}
+		}
+	}
+	return $options;
+}
+
+/**
+ * Finds all the screens for a given form, except any specified excluded screen
+ * @param int fid The form id of the mainform
+ * @param int excludedSid Optional. A sid to not include in the results
+ * @param array screens Optional. An array of options to append to, if not specified then a new array is made
+ */
+function multiPageScreenScreenOptionsList_append($fid, $excludedSid=0, $screens=array()) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	$multiPageScreens = $form_handler->getMultiScreens($fid);
+	array_multisort(array_column($multiPageScreens, 'title'), $multiPageScreens);
+	foreach($multiPageScreens as $screenMetaData) {
+		if($excludedSid != $screenMetaData['sid']) {
+			$screens['sid:'.$screenMetaData['sid']] = printSmart($formObject->getVar('title').": ".$screenMetaData['title'], 100);
+		}
+	}
+	return $screens;
+}
+
+
+/**
  * Generates an array, keys are element ids, values are the element colhead or caption, for all the elements available in a dataset that should be shown in multipage form screen admin UI (based on the relationship id if any)
  * Originally created March 20 2008 - refactored Sep 22 2024 (!)
  * @param int fid The form id of the mainform
  * @param int frid Optional. The relationship id if any
  * @return array Returns the array of compiled elements
  */
-function multiPageScreen_addToOptionsList($fid, $frid) {
+function multiPageScreen_addToOptionsList($fid, $frid=0) {
 		// setup elements for the passed in fid
 		$options = multiPageScreen_addToOptionsListByFid($fid, $frid);
 		if($frid) {

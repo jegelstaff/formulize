@@ -2563,11 +2563,23 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			return $form;
 }
 
+/**
+ * Make a xoops form label element based on the string, and add it to the passed in form object
+ *
+ */
+function addLabelElementWithStringToForm($string, $form) {
+
+}
+
 
 //this function takes a formid and compiles all the elements for that form
 //elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
 function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
+
+	if(is_array($elements_allowed AND count($elements_allowed) == 1 AND is_string($elements_allowed[0])) {
+		return addLabelElementWithStringToForm($elements_allowed[0], $form);
+	}
 
 	global $xoopsDB, $xoopsUser;
 	$entry_id = is_numeric($entry_id) ? $entry_id : "new"; // if there is no entry, ie: a new entry, then $entry_id is "" so when writing the entry value into decue_ and other elements that go out to the HTML form, we need to use the keyword "new"

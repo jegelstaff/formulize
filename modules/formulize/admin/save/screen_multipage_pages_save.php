@@ -112,16 +112,6 @@ if($pagesHaveBeenReordered) {
 
 }
 
-
-// handle "deleting" conditions...
-/*foreach($conditions as $pagenum=>$datapiece) {
-   if(isset($datapiece['pagecons']) AND $datapiece['pagecons'] == "none") {
-        $conditions[$pagenum]['details']['elements'] = array();
-        $conditions[$pagenum]['details']['ops'] = array();
-        $conditions[$pagenum]['details']['terms'] = array();
-    }
-}*/
-
 // alter the information based on a user add or delete
 switch ($op) {
 	case "addpage":

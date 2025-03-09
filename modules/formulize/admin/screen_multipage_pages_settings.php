@@ -61,7 +61,8 @@ if (!is_object($screen)) {
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 $frid = $screen->getVar("frid");
 $fid = $screen->getVar('fid');
-$options = multiPageScreen_addToOptionsList($fid, $frid);
+$elementOptions = multiPageScreen_addToOptionsList($fid, $frid);
+$screenOptions = multiPageScreenMakeScreenOptionsList($fid, $frid, $sid);
 
 // get page titles
 $pageTitles = $screen->getVar("pagetitles");
@@ -71,6 +72,9 @@ $conditions = $screen->getVar("conditions");
 $pageTitle = $pageTitles[$pageIndex];
 $pageNumber = $pageIndex+1;
 $pageElements = $elements[$pageIndex];
+
+$pit = $screen->determinePageItemType($pageElements);
+
 $filterSettingsToSend = (is_array($conditions) AND isset($conditions[$pageIndex]) AND count($conditions[$pageIndex]) > 0) ? $conditions[$pageIndex] : "";
 if (isset($filterSettingsToSend['details'])) { // if this is in the old format (pre-version 4, these conditions used a non-standard syntax), convert it!
     $newFilterSettingsToSend = array();
@@ -90,7 +94,9 @@ $xoopsTpl->assign("pageNumber",$pageNumber);
 $xoopsTpl->assign("pageIndex",$pageIndex);
 $xoopsTpl->assign("pageElements",$pageElements);
 $xoopsTpl->assign("pageConditions",$pageConditions);
-$xoopsTpl->assign("options",$options);
+$xoopsTpl->assign("pit", $pit);
+$xoopsTpl->assign("elementOptions",$elementOptions);
+$xoopsTpl->assign("screenOptions",$screenOptions);
 $xoopsTpl->assign("sid",$sid);
 $xoopsTpl->display("db:admin/screen_multipage_pages_settings.html");
 
