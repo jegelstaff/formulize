@@ -1391,11 +1391,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$form->insertBreakFormulize("<table><th>$title</th></table>","head");
 			}
 
-			// if this form has a parent, then determine the $parentLinks
-			if($go_back['form'] AND !$parentLinks[$this_fid]) {
-				$parentLinks[$this_fid] = getParentLinks($this_fid, $frid);
-			}
-
 			formulize_benchmark("Before Compile Elements.");
 			$form = compileElements($this_fid, $form, $prevEntry, $entries[$this_fid][0], $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen, $printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
@@ -2565,19 +2560,27 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 
 /**
  * Make a xoops form label element based on the string, and add it to the passed in form object
- *
+ * Only add a given string once
+ * @param string string - the markup to add to the form
+ * @param object form - the xoopsForm object to which all the elements are being added
+ * @return object The xoopsForm object updated with the string added to it
  */
 function addLabelElementWithStringToForm($string, $form) {
-
+    static $cachedStrings = array();
+    if(!in_array($string, $cachedStrings)) {
+        $form->insertBreakFormulize($string, 'even', 'custom-content', 'custom-content');
+        $cachedStrings[] = $string;
+    }
+    return $form;
 }
 
-
-//this function takes a formid and compiles all the elements for that form
-//elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
+// this function takes a formid and compiles all the elements for that form
+// elements_allowed is NOT based off the display values.  It is based off of the elements that are specifically designated for the current displayForm function (used to display parts of forms at once)
 // $title is the title of a grid that is being displayed
+// called once per form included on the page
 function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen=null, $printViewPages=array(), $printViewPageTitles="") {
 
-	if(is_array($elements_allowed AND count($elements_allowed) == 1 AND is_string($elements_allowed[0])) {
+	if(is_array($elements_allowed) AND count($elements_allowed) == 1 AND !is_numeric($elements_allowed[0]) AND is_string($elements_allowed[0])) {
 		return addLabelElementWithStringToForm($elements_allowed[0], $form);
 	}
 

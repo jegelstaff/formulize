@@ -268,6 +268,33 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		array_unshift($pagetitles, "");
 		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
 		unset($pagetitles[0]);
+        // loop the pages and look for any form screen pages, and reconstruct this array so it is the complete representation of all elements, pulled in from the other screens if necessary
+        $newPages = array();
+        $newPageTitles = array();
+        $newPageNumber = 0;
+        foreach($pages as $pageNumber=>$items) {
+            foreach($items as $thisPageItem) {
+                if(!is_numeric($thisPageItem) AND $thisPageItem != "PHP") {
+                    $pageScreenId = substr($thisPageItem, 4);
+                    if($pageScreenObject = $this->get($pageScreenId)) {
+                        $pageScreenObjectPages = $pageScreenObject->getVar('pages');
+                        $pageScreenObjectPageTitles = $pageScreenObject->getVar('pagetitles');
+                        foreach($pageScreenObjectPages as $pageScreenObjectPageNumber => $pageScreenObjectItems) {
+                            $newPageNumber++;
+                            $newPages[$newPageNumber] = $pageScreenObjectItems;
+                            $newPageTitles[$newPageNumber] = $pageScreenObjectPageTitles[$pageScreenObjectPageNumber];
+                        }
+                    }
+                } else {
+                    $newPageNumber++;
+                    $newPages[$newPageNumber] = $items;
+                    $newPageTitles[$newPageNumber] = $pagetitles[$pageNumber];
+                    break;
+                }
+            }
+        }
+        $pages = $newPages;
+        $pagetitles = $newPageTitles;
         $pages['titles'] = $pagetitles;
 		$conditions = $screen->getConditions();
 		$doneDest = $screen->getVar('donedest');
@@ -568,4 +595,36 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
     return $data;
+}
+
+/**
+ * Gather the page description info that should show up on the admin UI for a given page
+ * 
+ */
+function generateElementInfoForScreenPage($itemsForPage, $fid, $frid) {
+    $options = multiPageScreen_addToOptionsList($fid, $frid);
+    $elements = array();
+    $pageItemTypeTitle = "Elements displayed on this page:"; // default, historically the only option
+    foreach($itemsForPage as $thisPageItem) {
+        // default is for the elements that make up the page to be a series of element ids
+        if(is_numeric($thisPageItem)) {
+            $elements[] = $options[$thisPageItem];
+        // alternatively, it could be a string of PHP code
+        } elseif($thisPageItem == "PHP") {
+            $pageItemTypeTitle = "This page uses custom code to display content.";
+            break;
+        // alternatively, it's a series of screen ids, prefixed by "sid:" which must be removed
+        } else {
+            $pageItemTypeTitle = "Screen displayed on this page:";
+            $pageScreenId = substr($thisPageItem, 4);
+            if(!isset($screen_handler)) {
+                $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            }
+            $pageScreenObject = $screen_handler->get($pageScreenId);
+            $pageFormObject = $form_handler->get($pageScreenObject->getVar('fid'));
+            $elements[] = printSmart($pageFormObject->getVar('title').": ".$pageScreenObject->getVar('title'), 200);
+        }
+    }
+    return array($pageItemTypeTitle, $elements);
 }

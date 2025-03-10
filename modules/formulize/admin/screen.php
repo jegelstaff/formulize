@@ -329,7 +329,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     // setup all the elements in this form for use in the listboxes
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 		$frid = $screen->getVar("frid");
-    $options = multiPageScreen_addToOptionsList($form_id, $frid);
+    
 
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
@@ -339,28 +339,11 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     // get details of each page
     $pages = array();
     for($i=0;$i<(count((array) $pageTitles)+$pageCounterOffset);$i++) {
-				$pages[$i]['name'] = $pageTitles[$i];
-				$pages[$i]['content']['index'] = $i;
-				$pages[$i]['content']['number'] = $i+1;
-				$pages[$i]['content']['title'] = $pageTitles[$i];
-				$pages[$i]['content']['pageItemTypeTitle'] = "Elements displayed on this page:"; // default, historically the only option
-        foreach($elements[$i] as $thisPageItem) {
-						// default is for the elements that make up the page to be a series of element ids
-						if(is_numeric($thisPageItem)) {
-            	$pages[$i]['content']['elements'][] = $options[$thisPageItem];
-						// alternatively, it could be a string of PHP code
-						} elseif($thisPageItem[0] == "PHP") {
-							$pages[$i]['content']['pageItemTypeTitle'] = "This page uses custom code to display content.";
-							$pages[$i]['content']['elements'] = array();
-						// alternatively, it's a series of screen ids, prefixed by "sid:" which must be removed
-						} else {
-							$pages[$i]['content']['pageItemTypeTitle'] = "Screen displayed on this page:";
-							$pageScreenId = substr($thisPageItem, 4);
-							$pageScreenObject = $screen_handler->get($pageScreenId);
-							$pageFormObject = $form_handler->get($pageScreenObject->getVar('id_form'));
-							$pages[$i]['content']['elements'][] = printSmart($pageFormObject->getVar('title').": ".$pageScreenObject->getVar('title'), 200);
-						}
-        }
+        $pages[$i]['name'] = $pageTitles[$i];
+        $pages[$i]['content']['index'] = $i;
+        $pages[$i]['content']['number'] = $i+1;
+        $pages[$i]['content']['title'] = $pageTitles[$i];
+        list($pages[$i]['content']['pageItemTypeTitle'], $pages[$i]['content']['elements']) = generateElementInfoForScreenPage($elements[$i], $form_id, $frid);       
     }
 
     // options data

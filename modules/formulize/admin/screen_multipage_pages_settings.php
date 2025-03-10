@@ -30,6 +30,11 @@
 // this file gets all the data about a particular page of a screen, so it can be edited
 
 require_once "../../../mainfile.php";
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 include_once("admin_header.php");
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
