@@ -1864,7 +1864,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     // if no sub entries, then go figure out sub entries again based on the correct main form id
     // This will return different sub entries when the mainform has a one to one form in the relationship, and then the subform is connected to the one to one. Sub is more than one hop away from main, so primary determination of entries does not pick up the sub entries
-    if($subform_element_object AND is_array($sub_entries[$subform_id]) AND count((array) $sub_entries[$subform_id]) == 0) {
+    if($subform_element_object AND (!is_array($sub_entries) OR (is_array($sub_entries[$subform_id]) AND count((array) $sub_entries[$subform_id]) == 0))) {
         $secondLinkResults = checkForLinks($frid, array($subform_element_object->getVar('id_form')), $subform_element_object->getVar('id_form'), array($subform_element_object->getVar('id_form') => array($entry)), true); // final true means only include entries from unified display linkages
         $sub_entries = $secondLinkResults['sub_entries'];
     }
