@@ -269,128 +269,140 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	$done_dest = stripEntryFromDoneDestination($done_dest);
 	$done_dest = substr($done_dest,0,4) == "http" ? $done_dest : "http://".$done_dest;
 
-	// display a form if that's what this page is...
-	if($currentPage != $thanksPage AND $pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
+	// setup elements for the page...
+	if($currentPage != $thanksPage) {
+		if($pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 
-        if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
-            print undoAllHTMLChars($introtext);
-        }
+		if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+				print undoAllHTMLChars($introtext);
+		}
 
-		foreach($pages[$currentPage] as $element) {
-            $elements_allowed[] = $element;
-	    }
-		$forminfo['elements'] = $elements_allowed;
-		$forminfo['formframe'] = $formframe;
-        $settings['formulize_currentPage'] = $currentPage;
-		$settings['formulize_prevPage'] = $prevPage;
-        $settings['formulize_prevScreen'] = $prevScreen;
+		$forminfo['elements'] = $pages[$currentPage];
 
-        $titleOverride = $elements_only ? 'formElementsOnly' : 'all';
+	} else {
+		$customPageContents = "";
+		ob_start();
+		// PHP
+		if($pages[$currentPage][0] === "PHP") {
+				eval(removeOpeningPHPTag($pages[$currentPage][1]));
+		// HTML
+		} else {
+				print undoAllHTMLChars($pages[$currentPage][1]);
+		}
+		$customPageContents = ob_get_clean();
+		$forminfo['elements'] = array($customPageContents);
+	}
+}
 
-		formulize_benchmark("Before drawing nav.");
+	$forminfo['formframe'] = $formframe;
+  $settings['formulize_currentPage'] = $currentPage;
+	$settings['formulize_prevPage'] = $prevPage;
+  $settings['formulize_prevScreen'] = $prevScreen;
 
-        if(!$elements_only) {
+  $titleOverride = $elements_only ? 'formElementsOnly' : 'all';
 
-            global $formulize_displayingMultipageScreen;
-            $formulize_displayingMultipageScreen = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
+	formulize_benchmark("Before drawing nav.");
 
-            $showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
-            $titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
+	if(!$elements_only) {
 
-            if(!is_array($saveAndContinueButtonText)) {
-                $saveAndContinueButtonText = array();
-                $saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
-                $saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
-                $saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
-                $saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
-                $saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
-                $saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
-            }
+			global $formulize_displayingMultipageScreen;
+			$formulize_displayingMultipageScreen = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
 
-            if($currentPage != 1) {
-                // previousButtonText used to be valid... backwards compatibility
-                $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
-                $previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
-            } else {
-                $previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
-            }
-            $saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
-            if($usersCanSave AND $nextPage==$thanksPage) {
-                $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
-            } else {
-                $nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
-            }
-            $previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-            $nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-            $savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
-            $totalPages = count((array) $pages);
-            $skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
-            $pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
+			$showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
+			$titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 
-            $pageIndicator = $screen->getUIOption("showpageindicator") ? "<div id='page-indicator'>"._formulize_DMULTI_PAGE." $currentPage "._formulize_DMULTI_OF." $totalPages</div>" : "";
-            $pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList<div>" : "";
+			if(!is_array($saveAndContinueButtonText)) {
+					$saveAndContinueButtonText = array();
+					$saveAndContinueButtonText['prevButtonText'] = trans(_formulize_DMULTI_PREV);
+					$saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_SAVE_AND_LEAVE);
+					$saveAndContinueButtonText['saveButtonText'] = trans(_formulize_SAVE);
+					$saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
+					$saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
+					$saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
+			}
 
-            // setting up the basic templateVars for all templates
-            $templateVariables = array(
-                // navstyle - 0 is buttons, 1 is tabs, 2 is tabs and buttons, 3 is nothing at all
-                'previousPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $previousPageButton),
-                'nextPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $nextPageButton),
-                'savePageButton' => $savePageButton,
-                'totalPages' => $totalPages,
-                'currentPage' => $currentPage,
-                'skippedPageMessage' => $skippedPageMessage,
-                'pageSelectionList' => $pageSelectionList,
-                'pageTitles' => $pageTitles,
-                'entry_id' => $entry,
-                'form_id' => $fid,
-                'owner' => $owner,
-                'saveAndLeaveText' => $saveAndContinueButtonText['leaveButtonText'],
-                'saveAndGoBackText' => $saveAndContinueButtonText['prevButtonText'],
-                'pageIndicator' => $pageIndicator,
-                'pageSelector' => $pageSelector,
-                'usersCanSave' => $usersCanSave,
-                'showpageindicator' => $screen->getUIOption("showpageindicator"),
-                'showpageselector' => $screen->getUIOption("showpageselector"),
-                'showTabs' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 2) ? true : false)
-                );
+			if($currentPage != 1) {
+					// previousButtonText used to be valid... backwards compatibility
+					$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['previousButtonText'])) ? $saveAndContinueButtonText['previousButtonText'] : '';
+					$previousButtonText = (!$previousButtonText AND is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
+			} else {
+					$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
+			}
+			$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
+			if($usersCanSave AND $nextPage==$thanksPage) {
+					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
+			} else {
+					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
+			}
+			$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+			$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+			$savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+			$totalPages = count((array) $pages);
+			$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
+			$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
 
-            $templatePageTitles = array();
-            unset($templateVariables['pageTitles'][0]);
-            foreach($templateVariables['pageTitles'] as $i=>$title) {
-                if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid)) {
-                    $templatePageTitles[$i] = $title;
-                }
-            }
-            $templateVariables['pageTitles'] = $templatePageTitles;
-            $templateVariables['aboveBelow'] = 'above';
+			$pageIndicator = $screen->getUIOption("showpageindicator") ? "<div id='page-indicator'>"._formulize_DMULTI_PAGE." $currentPage "._formulize_DMULTI_OF." $totalPages</div>" : "";
+			$pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList<div>" : "";
 
-            global $formulize_displayingSubform;
-            if($formulize_displayingSubform) {
-                $templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
-            } else {
-                $templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
-            }
+			// setting up the basic templateVars for all templates
+			$templateVariables = array(
+					// navstyle - 0 is buttons, 1 is tabs, 2 is tabs and buttons, 3 is nothing at all
+					'previousPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $previousPageButton),
+					'nextPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $nextPageButton),
+					'savePageButton' => $savePageButton,
+					'totalPages' => $totalPages,
+					'currentPage' => $currentPage,
+					'skippedPageMessage' => $skippedPageMessage,
+					'pageSelectionList' => $pageSelectionList,
+					'pageTitles' => $pageTitles,
+					'entry_id' => $entry,
+					'form_id' => $fid,
+					'owner' => $owner,
+					'saveAndLeaveText' => $saveAndContinueButtonText['leaveButtonText'],
+					'saveAndGoBackText' => $saveAndContinueButtonText['prevButtonText'],
+					'pageIndicator' => $pageIndicator,
+					'pageSelector' => $pageSelector,
+					'usersCanSave' => $usersCanSave,
+					'showpageindicator' => $screen->getUIOption("showpageindicator"),
+					'showpageselector' => $screen->getUIOption("showpageselector"),
+					'showTabs' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 2) ? true : false)
+					);
 
-            $printableViewButonText = $saveAndContinueButtonText['printableViewButtonText'] ? $saveAndContinueButtonText['printableViewButtonText'] : "{NOBUTTON}";
-            $buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$printableViewButonText);
-            $GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
-        }
+			$templatePageTitles = array();
+			unset($templateVariables['pageTitles'][0]);
+			foreach($templateVariables['pageTitles'] as $i=>$title) {
+					if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid)) {
+							$templatePageTitles[$i] = $title;
+					}
+			}
+			$templateVariables['pageTitles'] = $templatePageTitles;
+			$templateVariables['aboveBelow'] = 'above';
 
-        if(count((array) $elements_allowed)==0) {
-          print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
-        } else {
-					writeToFormulizeLog(array(
-						'formulize_event'=>'rendering-form-screen-page',
-						'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
-						'form_id'=>$fid,
-						'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
-						'entry_id'=>$entry,
-						'form_screen_page_number'=>$currentPage
-					));
-          displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
-        }
+			global $formulize_displayingSubform;
+			if($formulize_displayingSubform) {
+					$templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
+			} else {
+					$templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
+			}
 
-    }
+			$printableViewButonText = $saveAndContinueButtonText['printableViewButtonText'] ? $saveAndContinueButtonText['printableViewButtonText'] : "{NOBUTTON}";
+			$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$printableViewButonText);
+			$GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
+	}
+
+	if(count((array) $forminfo['elements'])==0) {
+		print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
+	} else {
+		writeToFormulizeLog(array(
+			'formulize_event'=>'rendering-form-screen-page',
+			'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+			'form_id'=>$fid,
+			'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
+			'entry_id'=>$entry,
+			'form_screen_page_number'=>$currentPage
+		));
+		displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+	}
 
 	if(!$elements_only AND !isset($GLOBALS['formulize_inlineSubformFrid']) AND !strstr(getCurrentURL(), 'subformdisplay-elementsonly.php')) {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';

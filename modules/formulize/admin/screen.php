@@ -147,7 +147,6 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // gather all the available views
   // setup an option list of all views, as well as one just for the currently selected Framework setting
   $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
-  $form_handler =& xoops_getmodulehandler('forms', 'formulize');
   $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
   $frameworks = $framework_handler->getFrameworksByForm($form_id);
   $selectedFramework = $settings['frid'];
@@ -330,23 +329,21 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     // setup all the elements in this form for use in the listboxes
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 		$frid = $screen->getVar("frid");
-    $options = multiPageScreen_addToOptionsList($form_id, $frid);
+    
 
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
     $elements = $screen->getVar("pages");
     $conditions = $screen->getVar("conditions");
 
-    // group entries
+    // get details of each page
     $pages = array();
     for($i=0;$i<(count((array) $pageTitles)+$pageCounterOffset);$i++) {
-    $pages[$i]['name'] = $pageTitles[$i];
-    $pages[$i]['content']['index'] = $i;
-    $pages[$i]['content']['number'] = $i+1;
-    $pages[$i]['content']['title'] = $pageTitles[$i];
-        foreach($elements[$i] as $thisElement) {
-            $pages[$i]['content']['elements'][] = $options[$thisElement];
-        }
+        $pages[$i]['name'] = $pageTitles[$i];
+        $pages[$i]['content']['index'] = $i;
+        $pages[$i]['content']['number'] = $i+1;
+        $pages[$i]['content']['title'] = $pageTitles[$i];
+        list($pages[$i]['content']['pageItemTypeTitle'], $pages[$i]['content']['elements']) = generateElementInfoForScreenPage($elements[$i], $form_id, $frid);       
     }
 
     // options data
