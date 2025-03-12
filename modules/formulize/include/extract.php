@@ -1807,8 +1807,16 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 						if ($searchTermToUse) { // set as an override value in certain cases above
 							$newWhereClause = $searchTermToUse;
 						} else {
-							// could/should put better handling in here of multiple value boxes, so = operators actually only look for matches within the individual values??  Is that possible?
-							$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($searchTerm) . $likebits . $quotes;
+							// for checkboxes when equals operator, look for matches within the prefix strings or with a prefix and then end of string
+							// could extend to other multi value elements, but they might potentially have different formats
+							// which is why the class should be extended to figure out this lookup... could be an evolution of the prepareLiteralTextForDB ??
+							if($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox' AND ($operator == "=" OR $operator == "!=")) {
+								$useAndOr = $operator == "=" ? "OR" : "AND";
+								$useOp = $operator == "=" ? "LIKE" : "NOT LIKE";
+								$newWhereClause = "( $queryElement $useOp \"%*=+*:$searchTerm*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:$searchTerm\" )";
+							} else {
+								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . $searchTerm . $likebits . $quotes;
+							}
 							// exclude 0 from searches for empty values (because we use lazy mode in MySQL we have to do this manually Argh!!)
 							if ($searchTerm === '' and ($operator == "=" or $operator == "!=")) {
 								$extraBoolean = $operator == "=" ? 'AND' : 'OR';
