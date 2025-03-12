@@ -1401,72 +1401,72 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			formulize_benchmark("After Compile Elements.");
 		}	// end of for each fids
 
-        // if a new entry was created in a subform element that displays in multipage, then jump to that entry
-        // VERY UGLY THAT WE ARE HAVING TO COMPILE ALL THE ELEMENTS JUST TO DETERMINE THIS??!! So messy and potentially slow!
-        global $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
-        global $xoopsUser;
+		// if a new entry was created in a subform element that displays in multipage, then jump to that entry
+		// VERY UGLY THAT WE ARE HAVING TO COMPILE ALL THE ELEMENTS JUST TO DETERMINE THIS??!! So messy and potentially slow!
+		global $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
+		global $xoopsUser;
 
-        // opens new entries in subform, if subform element is displaying sub entries via a multipage screen
-        // should it be any kind of screen??
-        // a multipage record is harder to represent as a row. A single page form could just be the more complete version of a row, so we show row and let people dive in.
-        // We could make a more complex series of view button options in the subform element controls
-        if(!$formulize_displayingSubform AND is_array($formulize_subformElementsWithNewEntries) AND is_array($formulize_newSubformEntries)) {
-            foreach($formulize_subformElementsWithNewEntries as $candidate) {
-                if($subformDisplayScreen = get_display_screen_for_subform($candidate)) {
-                    $screenHandler = xoops_getmodulehandler('screen', 'formulize');
-                    $plainScreenObject = $screenHandler->get($subformDisplayScreen);
-                    if($plainScreenObject->getVar('type') == 'multiPage') {
-                        $subformElementEleValue = $candidate->getVar('ele_value');
-                        $subformId = $subformElementEleValue[0];
-                        if($subformElementEleValue[3] == 1 AND isset($formulize_newSubformEntries[$subformId])) {
-                            $newSubEntry = $formulize_newSubformEntries[$subformId][0]; // go to the first entry created in the subform
-                            $newSubEntryScreen_handler = xoops_getmodulehandler($plainScreenObject->getVar('type').'Screen', 'formulize');
-                            $subScreenObject = $newSubEntryScreen_handler->get($subformDisplayScreen);
-                            $formulize_displayingSubform = array('originalFid'=>$fid, 'originalEntry'=>$entry);
-                            $_POST['goto_sfid'] = $subScreenObject->getVar('fid');
-                            $_POST['goto_sub'] = $newSubEntry;
-                            $_POST['goto_subformElementId'] = $candidate->getVar('ele_id');
-                            $_POST['formulize_prevPage'] = $_POST['formulize_currentPage'];
-                            $_POST['formulize_prevPage'] .= $screen ? '-'.$screen->getVar('sid') : '';
-                            unset($_POST['formulize_currentPage']); // want to make sure we land on page 1
-							$GLOBALS['formulize_subformInstance'] = 100; // reset the subform instance counter since we're throwing away this page rendering!
-                            $GLOBALS['formulize_unsetSelectboxCaches'] = true; // totally horrible hack to get around the fact that subforms don't figure out there is a new entry to display until we get here. They should do this without having to render the elements first! We have to basically undo any caching of selectbox options that happened when we were fake rendering the page just to figure out what new entry had been created.
-                            $newSubEntryScreen_handler->render($subScreenObject, $newSubEntry, $settings);
-                            unset($GLOBALS['formulize_unsetSelectboxCaches']);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+		// opens new entries in subform, if subform element is displaying sub entries via a multipage screen
+		// should it be any kind of screen??
+		// a multipage record is harder to represent as a row. A single page form could just be the more complete version of a row, so we show row and let people dive in.
+		// We could make a more complex series of view button options in the subform element controls
+		if(!$formulize_displayingSubform AND is_array($formulize_subformElementsWithNewEntries) AND is_array($formulize_newSubformEntries)) {
+				foreach($formulize_subformElementsWithNewEntries as $candidate) {
+						if($subformDisplayScreen = get_display_screen_for_subform($candidate)) {
+								$screenHandler = xoops_getmodulehandler('screen', 'formulize');
+								$plainScreenObject = $screenHandler->get($subformDisplayScreen);
+								if($plainScreenObject->getVar('type') == 'multiPage') {
+										$subformElementEleValue = $candidate->getVar('ele_value');
+										$subformId = $subformElementEleValue[0];
+										if($subformElementEleValue[3] == 1 AND isset($formulize_newSubformEntries[$subformId])) {
+												$newSubEntry = $formulize_newSubformEntries[$subformId][0]; // go to the first entry created in the subform
+												$newSubEntryScreen_handler = xoops_getmodulehandler($plainScreenObject->getVar('type').'Screen', 'formulize');
+												$subScreenObject = $newSubEntryScreen_handler->get($subformDisplayScreen);
+												$formulize_displayingSubform = array('originalFid'=>$fid, 'originalEntry'=>$entry);
+												$_POST['goto_sfid'] = $subScreenObject->getVar('fid');
+												$_POST['goto_sub'] = $newSubEntry;
+												$_POST['goto_subformElementId'] = $candidate->getVar('ele_id');
+												$_POST['formulize_prevPage'] = $_POST['formulize_currentPage'];
+												$_POST['formulize_prevPage'] .= $screen ? '-'.$screen->getVar('sid') : '';
+												unset($_POST['formulize_currentPage']); // want to make sure we land on page 1
+					$GLOBALS['formulize_subformInstance'] = 100; // reset the subform instance counter since we're throwing away this page rendering!
+												$GLOBALS['formulize_unsetSelectboxCaches'] = true; // totally horrible hack to get around the fact that subforms don't figure out there is a new entry to display until we get here. They should do this without having to render the elements first! We have to basically undo any caching of selectbox options that happened when we were fake rendering the page just to figure out what new entry had been created.
+												$newSubEntryScreen_handler->render($subScreenObject, $newSubEntry, $settings);
+												unset($GLOBALS['formulize_unsetSelectboxCaches']);
+												return;
+										}
+								}
+						}
+				}
+		}
 
-        if(!is_object($form)) {
-            exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?");
-        }
+		if(!is_object($form)) {
+				exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?");
+		}
 
-        if(is_array($settings) AND !$formElementsOnly) {
-            $form = writeHiddenSettings($settings, $form, $entries, $sub_entries, $screen);
-        }
+		if(is_array($settings) AND !$formElementsOnly) {
+				$form = writeHiddenSettings($settings, $form, $entries, $sub_entries, $screen);
+		}
 
-        if(count((array) $sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
-            // draw in special params for this form, but only once per page
-            global $formulize_subformHiddenFieldsDrawn;
-            if ($formulize_subformHiddenFieldsDrawn != true) {
-                $formulize_subformHiddenFieldsDrawn = true;
-                $form->addElement (new XoopsFormHidden ('target_sub', ''));
-                $form->addElement (new XoopsFormHidden ('target_sub_frid', ''));
-                $form->addElement (new XoopsFormHidden ('target_sub_fid', ''));
-                $form->addElement (new XoopsFormHidden ('target_sub_mainformentry', ''));
-                $form->addElement (new XoopsFormHidden ('target_sub_subformelement', ''));
-                $form->addElement (new XoopsFormHidden ('target_sub_parent_subformelement', '')); // used to pickup declared subform element when modals are rendered?
-                $form->addElement (new XoopsFormHidden ('target_sub_open_modal', ''));
-                $form->addElement (new XoopsFormHidden ('target_sub_instance', ''));
-                $form->addElement (new XoopsFormHidden ('numsubents', 1));
-                $form->addElement (new XoopsFormHidden ('del_subs', ''));
-                $form->addElement (new XoopsFormHidden ('goto_sub', ''));
-                $form->addElement (new XoopsFormHidden ('goto_sfid', ''));
-            }
+		// draw in special params for this form, but only once per page
+		global $formulize_subformHiddenFieldsDrawn;
+		if ($formulize_subformHiddenFieldsDrawn != true) {
+				$formulize_subformHiddenFieldsDrawn = true;
+				$form->addElement (new XoopsFormHidden ('target_sub', ''));
+				$form->addElement (new XoopsFormHidden ('target_sub_frid', ''));
+				$form->addElement (new XoopsFormHidden ('target_sub_fid', ''));
+				$form->addElement (new XoopsFormHidden ('target_sub_mainformentry', ''));
+				$form->addElement (new XoopsFormHidden ('target_sub_subformelement', ''));
+				$form->addElement (new XoopsFormHidden ('target_sub_parent_subformelement', '')); // used to pickup declared subform element when modals are rendered?
+				$form->addElement (new XoopsFormHidden ('target_sub_open_modal', ''));
+				$form->addElement (new XoopsFormHidden ('target_sub_instance', ''));
+				$form->addElement (new XoopsFormHidden ('numsubents', 1));
+				$form->addElement (new XoopsFormHidden ('del_subs', ''));
+				$form->addElement (new XoopsFormHidden ('goto_sub', ''));
+				$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
+		}
 
+    if(count((array) $sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
       // on the master.php page, draw in the subforms "raw"
 			if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
 			foreach($sub_fids as $subform_id) {
