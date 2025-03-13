@@ -167,8 +167,12 @@ if($csv_name != "")
 	$blank_template = prepExport($headers, $cols, "", "comma", "", $template, $fid);
 
 	$pkOptions = "<option value='"._formulize_ENTRY_ID."'>"._formulize_ENTRY_ID."</option>\n";
-	foreach($headers as $header) {
-		$pkOptions .= "<option value='".str_replace('"', "#&quot;", $header)."'>$header</option>\n";
+	$deleteOptions = "";
+	foreach($headers as $handle=>$header) {
+		$deleteOptions .= "<option value='$handle'>$header</option>\n";
+		if($header != _formulize_ENTRY_ID) {
+			$pkOptions .= "<option value='".str_replace('"', "#&quot;", $header)."'>$header</option>\n";
+		}
 	}
 
 	print "<tr><td class=head><p>" . _formulize_DE_IMPORT_STEP1 . "</p></td><td class=even>";
@@ -178,8 +182,18 @@ if($csv_name != "")
 	<input type=\"checkbox\" name=\"validatedata\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_VALIDATEDATA."<br>
 	<input type=\"checkbox\" name=\"updatederived\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_UPDATEDERIVED."<br>
 	<input type=\"checkbox\" name=\"sendnotifications\" value=\"1\" checked>&nbsp;"._formulize_DE_IMPORT_SENDNOTIFICATIONS."<br><br>
-	"._formulize_DE_IMPORT_IDENTIFIER_COLUMN."<select name='pkColumn' onchange=\"usePkValidate()\">".$pkOptions."</select><br>
+	"._formulize_DE_IMPORT_IDENTIFIER_COLUMN."<select name='pkColumn' onchange=\"usePkValidate()\">".$pkOptions."</select><br><br>
+	<b>"._formulize_DE_IMPORT_ADVANCEDOPTIONS."</b><br>
 	<input type=\"checkbox\" name=\"usePkColumnAsEntryId\" value=\"1\" disabled>&nbsp;"._formulize_DE_IMPORT_USEPKASID."<br></p>
+	<input type=\"checkbox\" name=\"deleteEntriesNotPresentInSheet\" value=\"1\" >&nbsp;"._formulize_DE_IMPORT_DELETENOTPRESENT."<br>
+	<div id='deletelimityn' style='display: none;'>
+	<lable for=\"deleteEntriesLimitN\"><input type=\"radio\" id=\"deleteEntriesLimitN\" name=\"deleteEntriesLimitYN\" value=\"0\" checked=\"checked\">"._formulize_DE_IMPORT_DELETENOLIMIT."</label><br>
+	<lable for=\"deleteEntriesLimitY\"><input type=\"radio\" id=\"deleteEntriesLimitY\" name=\"deleteEntriesLimitYN\" value=\"1\">"._formulize_DE_IMPORT_DELETELIMIT."</label><br><br>
+		<div id='deletelimit' style='display: none;'>
+		"._formulize_DE_IMPORT_DELETELIMIT1."<select name=\"deleteEntriesElementLimit\">$deleteOptions</select><br><br>"._formulize_DE_IMPORT_DELETELIMIT2." <input type=\"text\" name=\"deleteEntriesValueLimit\"></div><br>
+		</div>
+	</div>
+
 	<p><input type=\"submit\" value=\"" . _formulize_DE_IMPORT_GO . "\"></p>
 	</form></td></tr>\n";
 
@@ -209,6 +223,32 @@ function usePkValidate() {
 		document.getElementsByName('usePkColumnAsEntryId')[0].disabled = false;
 	}
 }
+
+document.getElementsByName('deleteEntriesNotPresentInSheet')[0].onchange = function() {
+    if (this.checked) {
+        document.getElementById('deletelimityn').style['display'] = 'block';
+    } else {
+        document.getElementById('deletelimityn').style['display'] = 'none';
+    }
+}
+
+
+document.getElementById('deleteEntriesLimitY').onchange = function() {
+	if (this.checked) {
+			document.getElementById('deletelimit').style['display'] = 'block';
+	} else {
+			document.getElementById('deletelimit').style['display'] = 'none';
+	}
+}
+
+document.getElementById('deleteEntriesLimitN').onchange = function() {
+	if (this.checked) {
+			document.getElementById('deletelimit').style['display'] = 'none';
+	} else {
+			document.getElementById('deletelimit').style['display'] = 'block';
+	}
+}
+
 </script>
 
 <style>
