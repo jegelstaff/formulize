@@ -1207,6 +1207,47 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
         }
     }
 
+		// need to verify that the user has delete perm, and then buildScope with the highest level of delete perm they have
+		// then pass that determined scope into makeScopeSQL and append to the query to limit deletion to the entries the user is allowed to delete
+		if(isset($_POST['deleteEntriesNotPresentInSheet']) AND $_POST['deleteEntriesNotPresentInSheet']) {
+			$scopeLevel = 'all';
+			if(!$delete_other_entries = $gperm_handler->checkRight("delete_other_entries", $importSet[4], ($xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS)), getFormulizeModId())) {
+				$scopeLevel = 'group';
+				if(!$delete_group_entries = $gperm_handler->checkRight("delete_group_entries", $importSet[4], ($xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS)), getFormulizeModId())) {
+					$scopeLevel = 'mine';
+					if(!$delete_own_entry = $gperm_handler->checkRight("delete_own_entry", $importSet[4], ($xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS)), getFormulizeModId())) {
+						$scopeLevel = '';
+					}
+				}
+			}
+			if($scopeLevel) {
+				// setup scope for deleted entries, based on user's permission
+				list($scopeData, $scopeType) = buildScope($scopeLevel, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $importSet[4]);
+				// setup limit of the user requested one
+				$deleteLimit = "";
+				if(isset($_POST['deleteEntriesLimitYN'])
+					AND $_POST['deleteEntriesLimitYN']
+					AND isset($_POST['deleteEntriesElementLimit'])
+					AND $_POST['deleteEntriesElementLimit']
+					AND isset($_POST['deleteEntriesValueLimit'])
+					AND $_POST['deleteEntriesValueLimit']) {
+					$filter = formulize_parseSearchesIntoFilter(array(
+						FormulizeObject::sanitize_handle_name($_POST['deleteEntriesElementLimit']) => $_POST['deleteEntriesValueLimit']
+					));
+					list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, 'AND', array(), $importSet[4], 0, tableAlias: "");
+					$deleteLimit = " AND $whereClause ";
+				}
+				$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_".$importSet[8])."
+				WHERE entry_id != ".implode(" AND entry_id != ",$entriesMap) .
+				makeScopeSQL($importSet[4], $scopeData, tableAlias: "") .
+				$form_handler->getPerGroupFilterWhereClause($importSet[4], "") .
+				$deleteLimit;
+				if(!$res = $xoopsDB->queryF($sql)) {
+					print "Error: could not delete entries not included in the spreadsheet, with SQL: $sql";
+				}
+			}
+		}
+
     if(isset($_POST['sendnotifications']) AND $_POST['sendnotifications']) {
     // send notifications
     foreach($notEntriesList as $notEvent=>$notDetails) {
