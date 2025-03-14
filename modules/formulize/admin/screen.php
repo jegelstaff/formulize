@@ -205,7 +205,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         'mod_datetime'=>_formulize_DE_CALC_MODDATE,
 				'creator_email'=>_formulize_DE_CALC_CREATOR_EMAIL,
 				'owner_groups'=>_formulize_DE_CALC_OWNERGROUPS)+$elementOptions; // add a 0 value default to the element list
-  $entries['advanceviewsearchtypeoptions'] = array('Box'=>'Search Box','Filter'=>'Dropdown List', 'MultiFilter'=>'Checkboxes', 'DateRange'=>'Date Range');
+  $entries['advanceviewsearchtypeoptions'] = array('Box'=>'Search Box','Filter'=>'Dropdown List - select value','NegativeFilter'=>'Dropdown List - exclude value','MultiFilter'=>'Checkboxes', 'DateRange'=>'Date Range');
   $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value
