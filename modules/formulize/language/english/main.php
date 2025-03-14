@@ -776,3 +776,4 @@ define("_formulize_CLOSE_FORM_ELEMENT", "You need to close the form element that
 define("_formulize_FROM", "From:");
 define("_formulize_TO", "To:");
 
+define("_formulize_NEGATIVEFILTER", "Not: ");
