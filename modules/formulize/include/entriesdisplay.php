@@ -1004,8 +1004,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		if( (isset($searches[$handle]) AND ($searches[$handle] OR is_numeric($searches[$handle])) AND !strstr($listOfEntriesBufferContents, $qsCode['search']))
 			AND (!isset($qsCode['filter']) OR !strstr($listOfEntriesBufferContents, $qsCode['filter']))
 			AND (!isset($qsCode['multiFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['multiFilter']))
+			AND (!isset($qsCode['negativeFilter']) OR !strstr($listOfEntriesBufferContents, $qsCode['negativeFilter']))
 			AND (!isset($qsCode['dateRange']) OR !strstr($listOfEntriesBufferContents, $qsCode['dateRange'])) ) {
-			foreach(array('search', 'filter', 'multiFilter', 'dateRange') as $searchType) {
+			foreach(array('search', 'filter', 'negativeFilter', 'multiFilter', 'dateRange') as $searchType) {
 					if(isset($qsCode[$searchType])) {
 							print $qsCode[$searchType]."\n";
 							break;
@@ -1433,7 +1434,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n";
 	}
 
-	$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickMultiFilter', '\$quickSearchFilter_', '\$quickSearchMultiFilter_', '\$quickSearchDateRange_');
+	$filterTypes = array('\$quickDateRange', '\$quickFilter', '\$quickNegativeFilter', '\$quickMultiFilter', '\$quickSearchFilter_', '\$quickSearchNegativeFilter_', '\$quickSearchMultiFilter_', '\$quickSearchDateRange_');
 	$screenOrScreenType = $screen ? $screen : 'listOfEntries';
 	$filterHandles = extractHandles($filterTypes, getTemplateToRender('toptemplate', $screenOrScreenType));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('listtemplate', $screenOrScreenType)));
@@ -1466,6 +1467,12 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
             OR in_array($handle, $settings['pubfilters'])) {
 				$buttonCodeArray['quickFilter' . $handle] = $qsCode['filter']; // set variables for use in the template
 				$buttonCodeArray['quickSearchFilter_'.$handle] = $qsCode['filter'];
+		}
+		if(screenUsesSearchStringWithHandle(
+			$screenOrScreenType, array('quickNegativeFilter', 'quickSearchNegativeFilter_'), $handle)
+			OR in_array($handle, $settings['pubfilters'])) {
+			$buttonCodeArray['quickNegativeFilter' . $handle] = $qsCode['negativeFilter']; // set variables for use in the template
+			$buttonCodeArray['quickSearchNegativeFilter_'.$handle] = $qsCode['negativeFilter'];
 		}
 		if(screenUsesSearchStringWithHandle(
             $screenOrScreenType, array('quickMultiFilter', 'quickSearchMultiFilter_'), $handle)
@@ -2126,6 +2133,7 @@ function packageSearches($handle, $search_text, $filtersRequired=true, $boxid=""
 	$quickSearches['search'] = "<input type=text $boxid name='search_$handle' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
 	if($filtersRequired === true OR (is_array($filtersRequired) AND in_array($handle, $filtersRequired))) {
 		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text);
+		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true);
 		$quickSearches['dateRange'] = formulize_buildDateRangeFilter($handle, $search_text);
 		$quickSearches['multiFilter'] = formulize_buildQSFilterMulti($handle, $search_text);
 	}
@@ -2139,7 +2147,7 @@ function formulize_buildQSFilterMulti($handle, $search_text) {
 
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
 // multi returns a checkbox set, not dropdown
-function formulize_buildQSFilter($handle, $search_text, $multi=false) {
+function formulize_buildQSFilter($handle, $search_text, $multi=false, $negativeFilter = false) {
 
     if(substr($search_text, 0, 1) == "{" AND substr($search_text, -1) == "}") {
         $requestKeyToUse = substr($search_text,1,-1);
@@ -2158,7 +2166,7 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false) {
     if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
       $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
     }
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi);
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi, $negativeFilter);
     return $filterHTML;
 
 }

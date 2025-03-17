@@ -70,7 +70,7 @@
 		<input type="text" name="search-value[0]"></input>
 	      </td>
           <td>
-            <select id="search-type-0" name="search-type[0]"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select>
+            <select id="search-type-0" name="search-type[0]"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List - select value" value="Filter">Dropdown List - select value</option><option label="Dropdown List - exclude value" value="NegativeFilter">Dropdown List - exclude value</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select>
           </td>
 	      <td>
 				  <input type="radio" name="sort-by" id="0-ASC" value="0-ASC"><label for="0-ASC">A..Z</label></input><input type="radio" name="sort-by" id="0-DESC" value="0-DESC"><label for="0-DESC">Z..A</label></input>
@@ -233,7 +233,7 @@
   function addAdvanceViewRow(number) {
     appendContents1 = '<td><span class="sorthandle">&equiv;</span> <select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
-    appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List" value="Filter">Dropdown List</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
+    appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List - select value" value="Filter">Dropdown List - select value</option><option label="Dropdown List - exclude value" value="NegativeFilter">Dropdown List - exclude value</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
     appendContents3 = '<td><input type="radio" name="sort-by" id="'+number+'-ASC" value="'+number+'-ASC"><label for="'+number+'-ASC">A..Z</label></input><input type="radio" name="sort-by" id="'+number+'-DESC" value="'+number+'-DESC"><label for="'+number+'-DESC">Z..A</label></input></td>';
     $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
     $(".advanceviewcol:last").append(appendContents1);
