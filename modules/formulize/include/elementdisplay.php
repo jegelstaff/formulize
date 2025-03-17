@@ -542,7 +542,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			if($thisOp == "!=") {
 				$thisOp = "NOT LIKE";
 			}
-			$compValue = implode(",",$compValue);
+			$compValue = addslashes(implode(",",$compValue));
 		} else {
 			$compValue = addslashes($compValue);
 		}
