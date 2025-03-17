@@ -16,3 +16,7 @@ If the queue is processed asynchronously, enabling logging in the Formulize pref
 See the documentation on the [Queue Handler's Process method](../API/classes/queue_handler/process) for more details about queue processing.
 
 If the API is not enabled, a 503 http error is returned.
+
+## XOOPS_URL not necessarily available when queue is processed
+
+If you have code in a queue, that relies on the XOOPS_URL constant, you should hard code the constant in your mainfile.php. Normally, XOOPS_URL is determined at runtime from the setup of the files on the server. However, the queue may be processed using a command line instance of PHP, and in that case there are not the same environment variables available and the determination of the XOOPS_URL will be incorrect.
