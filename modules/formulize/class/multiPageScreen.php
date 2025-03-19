@@ -255,66 +255,80 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
 
 		if(!is_array($settings)) {
-				$settings = array();
+			$settings = array();
 		}
 
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
-		$pages = $screen->getVar('pages');
-		$pagetitles = $screen->getVar('pagetitles');
-		ksort($pages); // make sure the arrays are sorted by key, ie: page number
-		ksort($pagetitles);
-		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
-		array_unshift($pagetitles, "");
-		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
-		unset($pagetitles[0]);
-        // loop the pages and look for any form screen pages, and reconstruct this array so it is the complete representation of all elements, pulled in from the other screens if necessary
-        $newPages = array();
-        $newPageTitles = array();
-        $newPageNumber = 0;
-        foreach($pages as $pageNumber=>$items) {
-            foreach($items as $thisPageItem) {
-                if(!is_numeric($thisPageItem) AND $thisPageItem != "PHP") {
-                    $pageScreenId = substr($thisPageItem, 4);
-                    if($pageScreenObject = $this->get($pageScreenId)) {
-                        $pageScreenObjectPages = $pageScreenObject->getVar('pages');
-                        $pageScreenObjectPageTitles = $pageScreenObject->getVar('pagetitles');
-                        foreach($pageScreenObjectPages as $pageScreenObjectPageNumber => $pageScreenObjectItems) {
-                            $newPageNumber++;
-                            $newPages[$newPageNumber] = $pageScreenObjectItems;
-                            $newPageTitles[$newPageNumber] = $pageScreenObjectPageTitles[$pageScreenObjectPageNumber];
-                        }
-                    }
-                } else {
-                    $newPageNumber++;
-                    $newPages[$newPageNumber] = $items;
-                    $newPageTitles[$newPageNumber] = $pagetitles[$pageNumber];
-                    break;
-                }
-            }
-        }
-        $pages = $newPages;
-        $pagetitles = $newPageTitles;
-        $pages['titles'] = $pagetitles;
+		list($pages, $pageTitles) = $this->traverseScreenPages($screen);
+		$pages['titles'] = $pageTitles;
 		$conditions = $screen->getConditions();
 		$doneDest = $screen->getVar('donedest');
 		if(substr($doneDest, 0, 1)=='/') {
-		    $doneDest = XOOPS_URL.$doneDest;
+		  $doneDest = XOOPS_URL.$doneDest;
 		}
-    	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
-        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+    $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 
-        // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
-        $buttonText = $screen->getVar('buttontext');
-        $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
-        $buttonText = is_array($buttonText) ? $buttonText : array();
+    // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
+    $buttonText = $screen->getVar('buttontext');
+    $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
+    $buttonText = is_array($buttonText) ? $buttonText : array();
 
-        updateMultipageTemplates($screen);
+    updateMultipageTemplates($screen);
 
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
-        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
+    $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
+	/**
+	 * Loop through all the pages in multipage screen, and add their contents and titles to the master list of pages and titles we're building
+	 * Recursive, because we can have pages that reference other screens
+	 * @param object screen - a multipage screen object
+	 * @param array completePages - an array of the pages compiled from all the screens we've traversed
+	 * @param array completePageTitles - an array of the all the page titles compiled from the screens we've traversed
+	 * @return array An array with two items, one is completePages, one is completePageTitles
+	 */
+	function traverseScreenPages($screen, $completePages=array(), $completePageTitles=array()) {
+		static $screenCatalogue = array();
+		if(!isset($screenCatalogue[$screen->getVar('sid')])) { // avoid an infinite loop, don't redo a screen, until we're finished with that screen
+			$screenCatalogue[$screen->getVar('sid')] = true;
+			list($pages, $pageTitles) = $this->gatherPagesAndTitlesFromScreen($screen);
+			foreach($pages as $pageNumber=>$items) {
+				if(!is_numeric($items[0]) AND $items[0] != "PHP") {
+					$pageScreenId = substr($items[0], 4);
+					if($pageScreenObject = $this->get($pageScreenId)) {
+						list($completePages, $completePageTitles) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles);
+					} else {
+						error_log("Formulize Error: invalid screen reference on page ".$pageTitles[$pageNumber]." ($pageNumber) of screen ".$screen->getVar('title'));
+					}
+				} else {
+					$completePageNumber = count($completePages) + 1;
+					$completePages[$completePageNumber] = $items;
+					$completePageTitles[$completePageNumber] = $pageTitles[$pageNumber];
+				}
+			}
+			unset($screenCatalogue[$screen->getVar('sid')]); // we can revisit this screen now safely, since we're done traversing it.
+		}
+		return array($completePages, $completePageTitles);
+	}
+
+	/**
+	 * Gather the pages and page titles from a multipage screen object, ensuring the keys (page numbers) start with 1, and the pages are in the correct order
+	 * @param object screen - a multipage screen object
+	 * @return array An array where first value is the pages array, and second is the pageTitles array
+	 */
+	function gatherPagesAndTitlesFromScreen($screen) {
+		$pages = $screen->getVar('pages');
+		$pageTitles = $screen->getVar('pagetitles');
+		ksort($pages); // make sure the arrays are sorted by key, ie: page number
+		ksort($pageTitles);
+		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
+		array_unshift($pageTitles, "");
+		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
+		unset($pageTitles[0]);
+		return array($pages, $pageTitles);
+	}
 
     // THIS METHOD CLONES A MULTIPAGE SCREEN
     function cloneScreen($sid) {
@@ -599,7 +613,7 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
 
 /**
  * Gather the page description info that should show up on the admin UI for a given page
- * 
+ *
  */
 function generateElementInfoForScreenPage($itemsForPage, $fid, $frid) {
     $options = multiPageScreen_addToOptionsList($fid, $frid);
