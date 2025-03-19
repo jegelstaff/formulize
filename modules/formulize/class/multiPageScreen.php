@@ -428,7 +428,7 @@ function multiPageScreenScreenOptionsList_append($fid, $excludedSid=0, $screens=
 	array_multisort(array_column($multiPageScreens, 'title'), $multiPageScreens);
 	foreach($multiPageScreens as $screenMetaData) {
 		if($excludedSid != $screenMetaData['sid']) {
-			$screens['sid:'.$screenMetaData['sid']] = printSmart($formObject->getVar('title').": ".$screenMetaData['title'], 100);
+			$screens['sid:'.$screenMetaData['sid']] = printSmart(trans(strip_tags($formObject->getVar('title'))), 25).": ".printSmart(trans(strip_tags($screenMetaData['title'])), 25);
 		}
 	}
 	return $screens;
@@ -477,7 +477,7 @@ function multiPageScreen_addToOptionsListByFid($fid, $frid=0, $options=array()) 
 		$elementColheads = $formObject->getVar('elementColheads');
 		foreach($elementCaptions as $key=>$elementCaption) {
 			$elementLabel = $elementColheads[$key] ? $elementColheads[$key] : $elementCaption;
-			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title.': '.$elementLabel)), 125) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
+			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title)), 25).': '.printSmart(trans(strip_tags($elementLabel)), 25) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
 		}
 	}
 	return $options;
