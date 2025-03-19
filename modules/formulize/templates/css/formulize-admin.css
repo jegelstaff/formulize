@@ -1766,3 +1766,7 @@ div.flex-box {
 	justify-content: space-between;
 	gap: 2em;
 }
+
+.pit-contents {
+	width: 440px;
+}
