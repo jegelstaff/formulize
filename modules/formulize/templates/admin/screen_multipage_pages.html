@@ -67,12 +67,12 @@
   });
   
   
-	$("[name=editpage]").click(function () {
+	$("[name=editpage]").live('click', function () {
 		editPageSettings($(this).attr('target'));
 		return false;
 	});
 	
-	$("[name=delpage]").click(function () {
+	$("[name=delpage]").live('click', function () {
 			var answer = confirm('Are you sure you want to delete this page?');
 			if (answer)	{
 		    $("[name=formulize_admin_op]").val('delpage');

@@ -97,11 +97,11 @@ $(document).ready(function() {
 			<{assign var=formscreenpages value=$form_screen.pages}>
 			<li><input type="checkbox" name="multi_page_screens[]" value=all><label><{$form_screen.title}></label>
 			<{foreach from=$formscreenpages key=k item=screen_page}>
-				<{if in_array($content.ele_id, $screen_page)}>
+				<{if !strstr($screen_page.0, 'sid:') AND $screen_page.0 != 'PHP' AND in_array($content.ele_id, $screen_page)}>
 				 <ul>
 	                <li><input type="checkbox" name="multi_page_screens[]" id="<{$formscreenid|cat:'-'|cat:$k}>" value="<{$formscreenid|cat:'-'|cat:$k}>" checked><label for="<{$formscreenid|cat:'-'|cat:$k}>"><{$form_screen.pagetitles[$k]}></label>
 	            </ul>
-	            <{else}>
+	            <{elseif !strstr($screen_page.0, 'sid:') AND $screen_page.0 != 'PHP'}>
 	            <ul>
 	                <li><input type="checkbox" name="multi_page_screens[]" id="<{$formscreenid|cat:'-'|cat:$k}>" value="<{$formscreenid|cat:'-'|cat:$k}>"><label for="<{$formscreenid|cat:'-'|cat:$k}>"><{$form_screen.pagetitles[$k]}></label>
 	            </ul>

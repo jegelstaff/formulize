@@ -555,7 +555,7 @@ function q($query, $keyfield="", $keyfieldOnly = false) {
 }
 
 // this function truncates a string to a certain number of characters
-function printSmart($value, $chars="35") {
+function printSmart($value, $chars=35) {
     if($chars AND !strstr(getCurrentURL(), 'master.php?')) {
         if (!is_numeric($value) AND $value == "") {
             $value = "&nbsp;";
@@ -5165,9 +5165,9 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
             foreach ($vs as $row=>$values) {
 								$thisFidObj = $form_handler->get($fid);
                 if ($values['ele_colhead'] != "") {
-                    $options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
+                    $options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title)), 25).': '.printSmart(trans(strip_tags($values['ele_colhead'])), 25) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
                 } else {
-                    $options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
+                    $options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title)), 25).': '.printSmart(trans(strip_tags($values['ele_caption'])), 25) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
                 }
             }
         }

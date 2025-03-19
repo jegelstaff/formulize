@@ -51,21 +51,36 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("pagetitles", XOBJ_DTYPE_ARRAY);
 		$this->initVar("conditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
-        $this->initVar("paraentryform", XOBJ_DTYPE_INT);
-        $this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
-        $this->initVar("navstyle", XOBJ_DTYPE_INT);
-        $this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
-        $this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
-        $this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
-        $this->initVar('displaycolumns', XOBJ_DTYPE_INT);
-        $this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-        $this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-        $this->initVar('showpagetitles', XOBJ_DTYPE_INT);
-        $this->initVar('showpageindicator', XOBJ_DTYPE_INT);
-        $this->initVar('showpageselector', XOBJ_DTYPE_INT);
-        $this->initVar('displayheading', XOBJ_DTYPE_INT);
-        $this->initVar('reloadblank', XOBJ_DTYPE_INT);
-        $this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
+		$this->initVar("paraentryform", XOBJ_DTYPE_INT);
+		$this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
+		$this->initVar("navstyle", XOBJ_DTYPE_INT);
+		$this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
+		$this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
+		$this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
+		$this->initVar('displaycolumns', XOBJ_DTYPE_INT);
+		$this->initVar("column1width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initVar("column2width", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+		$this->initVar('showpagetitles', XOBJ_DTYPE_INT);
+		$this->initVar('showpageindicator', XOBJ_DTYPE_INT);
+		$this->initVar('showpageselector', XOBJ_DTYPE_INT);
+		$this->initVar('displayheading', XOBJ_DTYPE_INT);
+		$this->initVar('reloadblank', XOBJ_DTYPE_INT);
+		$this->initVar('elementdefaults', XOBJ_DTYPE_ARRAY);
+	}
+
+	/**
+	 * Determine the page item type based on the elements recorded for displaying on the page
+	 * @param array|string pageElements - the items for showing on the page
+	 * @return string returns either pit-elements, pit-screen, or pit-custom, depending if the page contains elements, and entire screen, or custom code
+	 */
+	function determinePageItemType($pageElements) {
+		if($pageElements[0] == "PHP") {
+			return "pit-custom";
+		} elseif(substr($pageElements[0], 0, 4) == "sid:") {
+			return "pit-screen";
+		} else {
+			return "pit-elements";
+		}
 	}
 
 	// setup the conditions array...format has changed over time...
@@ -240,39 +255,80 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		$previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
 
 		if(!is_array($settings)) {
-				$settings = array();
+			$settings = array();
 		}
 
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
-		$pages = $screen->getVar('pages');
-		$pagetitles = $screen->getVar('pagetitles');
-		ksort($pages); // make sure the arrays are sorted by key, ie: page number
-		ksort($pagetitles);
-		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
-		array_unshift($pagetitles, "");
-		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
-		unset($pagetitles[0]);
-        $pages['titles'] = $pagetitles;
+		list($pages, $pageTitles) = $this->traverseScreenPages($screen);
+		$pages['titles'] = $pageTitles;
 		$conditions = $screen->getConditions();
 		$doneDest = $screen->getVar('donedest');
 		if(substr($doneDest, 0, 1)=='/') {
-		    $doneDest = XOOPS_URL.$doneDest;
+		  $doneDest = XOOPS_URL.$doneDest;
 		}
-    	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
-        $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
+    $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 
-        // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
-        $buttonText = $screen->getVar('buttontext');
-        $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
-        $buttonText = is_array($buttonText) ? $buttonText : array();
+    // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
+    $buttonText = $screen->getVar('buttontext');
+    $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
+    $buttonText = is_array($buttonText) ? $buttonText : array();
 
-        updateMultipageTemplates($screen);
+    updateMultipageTemplates($screen);
 
 		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
-        $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
+    $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
+	/**
+	 * Loop through all the pages in multipage screen, and add their contents and titles to the master list of pages and titles we're building
+	 * Recursive, because we can have pages that reference other screens
+	 * @param object screen - a multipage screen object
+	 * @param array completePages - an array of the pages compiled from all the screens we've traversed
+	 * @param array completePageTitles - an array of the all the page titles compiled from the screens we've traversed
+	 * @return array An array with two items, one is completePages, one is completePageTitles
+	 */
+	function traverseScreenPages($screen, $completePages=array(), $completePageTitles=array()) {
+		static $screenCatalogue = array();
+		if(!isset($screenCatalogue[$screen->getVar('sid')])) { // avoid an infinite loop, don't redo a screen, until we're finished with that screen
+			$screenCatalogue[$screen->getVar('sid')] = true;
+			list($pages, $pageTitles) = $this->gatherPagesAndTitlesFromScreen($screen);
+			foreach($pages as $pageNumber=>$items) {
+				if(!is_numeric($items[0]) AND $items[0] != "PHP") {
+					$pageScreenId = substr($items[0], 4);
+					if($pageScreenObject = $this->get($pageScreenId)) {
+						list($completePages, $completePageTitles) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles);
+					} else {
+						error_log("Formulize Error: invalid screen reference on page ".$pageTitles[$pageNumber]." ($pageNumber) of screen ".$screen->getVar('title'));
+					}
+				} else {
+					$completePageNumber = count($completePages) + 1;
+					$completePages[$completePageNumber] = $items;
+					$completePageTitles[$completePageNumber] = $pageTitles[$pageNumber];
+				}
+			}
+			unset($screenCatalogue[$screen->getVar('sid')]); // we can revisit this screen now safely, since we're done traversing it.
+		}
+		return array($completePages, $completePageTitles);
+	}
+
+	/**
+	 * Gather the pages and page titles from a multipage screen object, ensuring the keys (page numbers) start with 1, and the pages are in the correct order
+	 * @param object screen - a multipage screen object
+	 * @return array An array where first value is the pages array, and second is the pageTitles array
+	 */
+	function gatherPagesAndTitlesFromScreen($screen) {
+		$pages = $screen->getVar('pages');
+		$pageTitles = $screen->getVar('pagetitles');
+		ksort($pages); // make sure the arrays are sorted by key, ie: page number
+		ksort($pageTitles);
+		array_unshift($pages, ""); // displayFormPages looks for the page array to start with [1] and not [0], for readability when manually using the API, so we bump up all the numbers by one by adding something to the front of the array
+		array_unshift($pageTitles, "");
+		unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
+		unset($pageTitles[0]);
+		return array($pages, $pageTitles);
+	}
 
     // THIS METHOD CLONES A MULTIPAGE SCREEN
     function cloneScreen($sid) {
@@ -332,13 +388,61 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 }
 
 /**
+ * Generates an array for all the screens on forms in a one-to-one connection with this form
+ * If there is no relationship, return screens of the specified form, except for the excluded screen
+ * @param int fid The form id of the mainform
+ * @param int frid Optional. The relationship id if any
+ * @param int excludedSid Optional. A sid to not include in the results
+ * @return array an array of the compiled screens. Keys are 'sid:<screenId>' and values are the form titles and screen titles
+ */
+function multiPageScreenMakeScreenOptionsList($fid, $frid=0, $excludedSid=0) {
+	$options = multiPageScreenScreenOptionsList_append($fid, $excludedSid);
+	if($frid) {
+		// figure out which forms in the relationship we care about, and append them to the array
+		$framework_handler = xoops_getModuleHandler('frameworks', 'formulize');
+		$frameworkObject = $framework_handler->get($frid);
+		foreach($frameworkObject->getVar("links") as $thisLinkObject) {
+			$form1 = $thisLinkObject->getVar("form1");
+			$form2 = $thisLinkObject->getVar("form2");
+			if ($thisLinkObject->getVar("unifiedDisplay")
+				AND $thisLinkObject->getVar("relationship") == 1
+				AND ($form1 == $fid OR $form2 == $fid)) {
+					$otherFid = $form1 == $fid ? $form2 : $form1;
+					$options = multiPageScreenScreenOptionsList_append($otherFid, $excludedSid, $options);
+			}
+		}
+	}
+	return $options;
+}
+
+/**
+ * Finds all the screens for a given form, except any specified excluded screen
+ * @param int fid The form id of the mainform
+ * @param int excludedSid Optional. A sid to not include in the results
+ * @param array screens Optional. An array of options to append to, if not specified then a new array is made
+ */
+function multiPageScreenScreenOptionsList_append($fid, $excludedSid=0, $screens=array()) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	$multiPageScreens = $form_handler->getMultiScreens($fid);
+	array_multisort(array_column($multiPageScreens, 'title'), $multiPageScreens);
+	foreach($multiPageScreens as $screenMetaData) {
+		if($excludedSid != $screenMetaData['sid']) {
+			$screens['sid:'.$screenMetaData['sid']] = printSmart(trans(strip_tags($formObject->getVar('title'))), 25).": ".printSmart(trans(strip_tags($screenMetaData['title'])), 25);
+		}
+	}
+	return $screens;
+}
+
+
+/**
  * Generates an array, keys are element ids, values are the element colhead or caption, for all the elements available in a dataset that should be shown in multipage form screen admin UI (based on the relationship id if any)
  * Originally created March 20 2008 - refactored Sep 22 2024 (!)
  * @param int fid The form id of the mainform
  * @param int frid Optional. The relationship id if any
  * @return array Returns the array of compiled elements
  */
-function multiPageScreen_addToOptionsList($fid, $frid) {
+function multiPageScreen_addToOptionsList($fid, $frid=0) {
 		// setup elements for the passed in fid
 		$options = multiPageScreen_addToOptionsListByFid($fid, $frid);
 		if($frid) {
@@ -373,7 +477,7 @@ function multiPageScreen_addToOptionsListByFid($fid, $frid=0, $options=array()) 
 		$elementColheads = $formObject->getVar('elementColheads');
 		foreach($elementCaptions as $key=>$elementCaption) {
 			$elementLabel = $elementColheads[$key] ? $elementColheads[$key] : $elementCaption;
-			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title.': '.$elementLabel)), 125) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
+			$options[$elements[$key]] = $frid ? printSmart(trans(strip_tags($formObject->title)), 25).': '.printSmart(trans(strip_tags($elementLabel)), 25) : printSmart(trans(strip_tags($elementLabel)), 40); // need to pull out potential HTML tags from the caption/colhead
 		}
 	}
 	return $options;
@@ -505,4 +609,39 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
     return $data;
+}
+
+/**
+ * Gather the page description info that should show up on the admin UI for a given page
+ * @param array itemsForPage - an array of the items that make up the contents of the page
+ * @param int fid - the form id
+ * @param int frid - the form relationship id, if any
+ * @return array An array with two items, the descriptor for this type of page, and the items that make up the page
+ */
+function generateElementInfoForScreenPage($itemsForPage, $fid, $frid) {
+    $options = multiPageScreen_addToOptionsList($fid, $frid);
+    $elements = array();
+    $pageItemTypeTitle = "Elements displayed on this page:"; // default, historically the only option
+    foreach($itemsForPage as $thisPageItem) {
+        // default is for the elements that make up the page to be a series of element ids
+        if(is_numeric($thisPageItem)) {
+            $elements[] = $options[$thisPageItem];
+        // alternatively, it could be a string of PHP code
+        } elseif($thisPageItem == "PHP") {
+            $pageItemTypeTitle = "This page uses custom code to display content.";
+            break;
+        // alternatively, it's a series of screen ids, prefixed by "sid:" which must be removed
+        } else {
+            $pageItemTypeTitle = "Screen displayed on this page:";
+            $pageScreenId = substr($thisPageItem, 4);
+            if(!isset($screen_handler)) {
+                $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+                $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            }
+            $pageScreenObject = $screen_handler->get($pageScreenId);
+            $pageFormObject = $form_handler->get($pageScreenObject->getVar('fid'));
+            $elements[] = printSmart($pageFormObject->getVar('title').": ".$pageScreenObject->getVar('title'), 200);
+        }
+    }
+    return array($pageItemTypeTitle, $elements);
 }

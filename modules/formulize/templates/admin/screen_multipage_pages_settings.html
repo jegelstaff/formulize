@@ -6,34 +6,61 @@
 	<input type="hidden" name="conditionsdelete" value="">
 	<input type="hidden" name="piforjquery" value=<{$pageIndex}>>
 	<div id=popupsavebutton><input type="button" class="savebuttonpopup" id="savebuttonpopup" value="Save your changes"/></div>
-	<div id="popupsavewarning">You have unsaved changes!</div>
+	<div id="popupsavewarning">&nbsp;&nbsp;You have unsaved changes!</div>
 	<div style="clear: both"></div>
-	<div class="accordion-box">
-	  <div class="form-item required">
-		  <label for="screens-pagetitle_<{$pageIndex}>">Title for page number <{$pageNumber}></label>
-      <input type="text" class="required_formulize_element" id="screens-pagetitle_<{$pageIndex}>" name="screens-pagetitle_<{$pageIndex}>" value="<{$pageTitle}>" size="30" maxlength="255"/>
-		  <div class="description"></div>
-	  </div>
-	  <div class="form-item">
-		  <label for="screens-page<{$pageIndex}>">Form elements to display on page <{$pageNumber}></label><br>
-	    <select id="screens-page<{$pageIndex}>" name="screens-page<{$pageIndex}>[]" size="10" multiple>
-        <{html_options options=$options selected=$pageElements}>
-	    </select>
-		  <div class="description"></div>
-	  </div>
-	</div>
+	<div class="flex-box">
+		<div>
+			<div class="form-item required">
+				<label for="screens-pagetitle_<{$pageIndex}>">Title for page number <{$pageNumber}></label>
+				<input type="text" class="required_formulize_element" id="screens-pagetitle_<{$pageIndex}>" name="screens-pagetitle_<{$pageIndex}>" value="<{$pageTitle}>" size="30" maxlength="255"/>
+			</div>
 
-	<div class="accordion-box">
-				<p>What conditions are there on the display of this page?</p>
-				<{$pageConditions}>
-				<div class="description"><p>If you don't specify any conditions, the page will always be included in the form.</p></div>
-	</div>
+			<div class="form-item">
+				<br>
+				<label for="pit-elements"><input id="pit-elements" type="radio" name="pageItemType" value="0"> This page displays form elements</label><br>
+				<{if $screenOptions}><label for="pit-screen"><input id="pit-screen" type="radio" name="pageItemType" value="1"> This page displays a specific screen</label><br><{/if}>
+				<label for="pit-custom"><input id="pit-custom" type="radio" name="pageItemType" value="2"> This page displays custom code</label><br>
+				<br>
+			</div>
 
+			<div class="form-item pit-contents" id="pit-elements-contents">
+				<label for="screens-page<{$pageIndex}>">Form elements to display on page <{$pageNumber}>:</label><br>
+				<select id="screens-page<{$pageIndex}>" name="screensx-page<{$pageIndex}>[]" size="10" multiple>
+					<{html_options options=$elementOptions selected=$pageElements}>
+				</select>
+			</div>
+
+			<{if $screenOptions}>
+			<div class="form-item pit-contents" id="pit-screen-contents">
+				<label for="screens-page<{$pageIndex}>">Screen to display on page <{$pageNumber}>:</label><br>
+				<select id="screens-page<{$pageIndex}>" name="screensx-page<{$pageIndex}>[]" size="1">
+					<{html_options options=$screenOptions selected=$pageElements}>
+				</select>
+				<div class="description">All pages of the selected screen will be included as pages in this screen.</div>
+			</div>
+			<{/if}>
+
+			<div class="form-item pit-contents" id="pit-custom-contents">
+				<input type="hidden" name="screensx-page<{$pageIndex}>[0]" value="PHP">
+				<textarea id="pit-custom-textarea" name="screensx-page<{$pageIndex}>[1]" class="code-textarea canValidate"><{if $pageElements[1] AND $pageElements[1]|is_numeric == false}><{$pageElements[1]}><{else}><?php
+<{/if}></textarea>
+			</div>
+		</div>
+
+		<div>
+			<p>What conditions are there on the display of this page?</p>
+			<{$pageConditions}>
+			<div class="description"><p>If you don't specify any conditions, the page will always be included in the form.</p></div>
+		</div>
+
+	</div>
 
 </form>
 </div>
 
 <script type="text/javascript">
+
+	var multipagePopupTextareaInitialized = false;
 
 	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 	$( document ).ready(function() {
@@ -41,8 +68,44 @@
 			document.getElementById('savebuttonpopup').style.visibility = 'hidden';
 			document.getElementById('popupsavebutton').innerHTML = "READ ONLY";
 		<{/if}>
+		$('div.pit-contents').hide();
+		$('div#<{$pit}>-contents').show();
+		enablePitContents('<{$pit}>');
+		$('input#<{$pit}>').attr('checked', true);
+		<{if $pit == 'pit-custom'}>
+		initializeMultipagePopupTextarea()
+		<{/if}>
 
 	});
+
+	function enablePitContents(pit) {
+		$('div.pit-contents [name^=screens-page]').each(function() {
+			$(this).attr('name', $(this).attr('name').replace('screens-', 'screensx-'));
+		});
+		$('div#'+pit+'-contents [name^=screensx-page').each(function() {
+			$(this).attr('name', $(this).attr('name').replace('screensx-', 'screens-'));
+		})
+	}
+
+	function initializeMultipagePopupTextarea() {
+		if(!multipagePopupTextareaInitialized) {
+			CodeMirror.fromTextArea($('textarea#pit-custom-textarea')[0], {
+				lineNumbers: true,
+				matchBrackets: true,
+				mode: "application/x-httpd-php",
+				indentUnit: 4,
+				indentWithTabs: true,
+				enterMode: "keep",
+				tabMode: "shift",
+				lineWrapping: true,
+				onChange: function(instance) {
+					setDisplay('popupsavewarning','block');
+					instance.save(); // Call this to update the textarea value for the ajax post
+				}
+			});
+		}
+		multipagePopupTextareaInitialized = true;
+	}
 
   $("input").change(function() {
     window.document.getElementById('popupsavewarning').style.display = 'block';
@@ -55,8 +118,16 @@
     });
   $("textarea").keydown(function() {
     window.document.getElementById('popupsavewarning').style.display = 'block';
-    });
+  });
 
+$('input[name=pageItemType]').click(function() {
+	$('div.pit-contents').hide();
+	$('div#'+$(this).attr('id')+'-contents').show();
+	enablePitContents($(this).attr('id'));
+	if($(this).attr('id')=='pit-custom') {
+		initializeMultipagePopupTextarea();
+	}
+});
 
 $(".savebuttonpopup").click(function() {
   $(".required_formulize_element").each(function() {
@@ -79,6 +150,56 @@ $(".conditionsdelete").click(function () {
 });
 
 	$(".savebuttonpopup").click(function() {
+		<{php}>
+		// if user wants it, and server can validate code, validate code blocks, which will then validateRequired, etc
+		global $xoopsModuleConfig;
+		if ($xoopsModuleConfig['validateCode'] AND isEnabled('shell_exec')) {
+			print "\t\tvalidateMultiPageScreenPageCode();\n";
+		} else {
+			print "\t\trunMultiPageScreenPageSettingsSaveEvent();\n";
+		}
+		<{/php}>
+	});
+
+	async function validateMultiPageScreenPageCode() {
+		let error = ''
+		let errorMsg = ''
+		let code = $("input[id=pit-custom]:checked").length ? $("#pit-custom-textarea").val() : '';
+		if(code && code.trim() != '<?php') {
+			if(typeof checkedBlocks[99] === 'undefined' || (code != checkedBlocks[99].code)) {
+				error = await fz_check_php_code(code);
+				if(error.valid === false) {
+					errorMsg = `The custom code has an error:\n\n${error.result}`
+					checkedBlocks[99] = {
+						code: code,
+						valid: false,
+						error: errorMsg
+					}
+				} else {
+					checkedBlocks[99] = {
+						code: code,
+						valid: true,
+						error: ''
+					}
+				}
+			} else if(checkedBlocks[99].valid === false) {
+				errorMsg = checkedBlocks[99].error;
+			}
+		} else {
+			checkedBlocks[99] = {
+				code: code,
+				valid: true,
+				error: ''
+			}
+		}
+		if(errorMsg) {
+			alert(errorMsg)
+		} else {
+			runMultiPageScreenPageSettingsSaveEvent();
+		}
+	}
+
+	function runMultiPageScreenPageSettingsSaveEvent() {
     if(validateRequired()) {
 			var pagedata = window.document.getElementsByName("popupform");
 			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
@@ -89,12 +210,16 @@ $(".conditionsdelete").click(function () {
 						alert(data);
 					}
 				}
+				$('div#drawer-5-<{$pageIndex}> span.accordion-name').text($('input#screens-pagetitle_<{$pageIndex}>').val());
+				$.get('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/multipageScreenGeneratePageItemDescription.php?sid=<{$sid}>&page=<{$pageIndex}>', function(data) {
+					$('div#drawer-5-<{$pageIndex}> div.accordion-content').empty();
+					$('div#drawer-5-<{$pageIndex}> div.accordion-content').append(data);
+				});
 				window.document.getElementById('popupsavewarning').style.display = 'none';
-
 			});
     }
     $(".savebuttonpopup").blur();
-  });
+  }
 
 	function reloadPopup() {
 		$("#dialog-page-settings-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/screen_multipage_pages_settings.php?page=<{$pageIndex}>&sid=<{$sid}>');

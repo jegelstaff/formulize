@@ -143,35 +143,3 @@ if($currentPage == $thanksPage) {
         }
 
 }
-
-// display an HTML or PHP page if that's what this page is...
-if($currentPage != $thanksPage AND ($pages[$currentPage][0] === "HTML" OR $pages[$currentPage][0] === "PHP")) {
-    // PHP
-    if($pages[$currentPage][0] === "PHP") {
-        eval($pages[$currentPage][1]);
-    // HTML
-    } else {
-        print undoAllHTMLChars($pages[$currentPage][1]);
-    }
-
-    // put in the form that passes the entry, page we're going to and page we were on
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-    ?>
-
-
-    <form name=formulize id=formulize_mainform action=<?php print getCurrentURL(); ?> method=post>
-    <input type=hidden name=entry<?php print $fid; ?> id=entry<?php print $fid; ?> value=<?php print $entry ?>>
-    <input type=hidden name=formulize_currentPage id=formulize_currentPage value="">
-    <input type=hidden name=formulize_prevPage id=formulize_prevPage value="">
-    writeHiddenSettings($settings, null, array(), array(), $screen);
-    </form>
-
-    <script type="text/javascript">
-        function validateAndSubmit() {
-            window.document.formulize_mainform.submit();
-        }
-    </script>
-
-    <?php
-
-}
