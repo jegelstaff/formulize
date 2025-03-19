@@ -273,26 +273,41 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	if($currentPage != $thanksPage) {
 		if($pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 
-		if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
-				print undoAllHTMLChars($introtext);
-		}
+			if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+					print undoAllHTMLChars($introtext);
+			}
 
-		$forminfo['elements'] = $pages[$currentPage];
+			$forminfo['elements'] = $pages[$currentPage];
+			if(!$usersCanSave) {
+				// check perm for add perm on forms of any subform elements
+				foreach($forminfo['elements'] as $elementId) {
+					if($candidateSubformElementObject = $element_handler->get($elementId)) {
+						if($candidateSubformElementObject->getVar('ele_type') == 'subform') {
+							$candidateSubformElementEleValue = $candidateSubformElementObject->getVar('ele_value');
+							// could be made smarter if we went and figured out exactly which entries are connected through an active relationship, etc
+							// but all that metadata is not available here, so we simply go off of whether people can add entries
+							if($usersCanSave = formulizePermHandler::user_can_edit_entry($candidateSubformElementEleValue[0], $uid, 'new')) {
+								break;
+							}
+						}
+					}
+				}
+			}
 
-	} else {
-		$customPageContents = "";
-		ob_start();
-		// PHP
-		if($pages[$currentPage][0] === "PHP") {
-				eval(removeOpeningPHPTag($pages[$currentPage][1]));
-		// HTML
 		} else {
-				print undoAllHTMLChars($pages[$currentPage][1]);
+			$customPageContents = "";
+			ob_start();
+			// PHP
+			if($pages[$currentPage][0] === "PHP") {
+					eval(removeOpeningPHPTag($pages[$currentPage][1]));
+			// HTML
+			} else {
+					print undoAllHTMLChars($pages[$currentPage][1]);
+			}
+			$customPageContents = ob_get_clean();
+			$forminfo['elements'] = array($customPageContents);
 		}
-		$customPageContents = ob_get_clean();
-		$forminfo['elements'] = array($customPageContents);
 	}
-}
 
 	$forminfo['formframe'] = $formframe;
   $settings['formulize_currentPage'] = $currentPage;
