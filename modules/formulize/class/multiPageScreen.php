@@ -613,7 +613,10 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
 
 /**
  * Gather the page description info that should show up on the admin UI for a given page
- *
+ * @param array itemsForPage - an array of the items that make up the contents of the page
+ * @param int fid - the form id
+ * @param int frid - the form relationship id, if any
+ * @return array An array with two items, the descriptor for this type of page, and the items that make up the page
  */
 function generateElementInfoForScreenPage($itemsForPage, $fid, $frid) {
     $options = multiPageScreen_addToOptionsList($fid, $frid);
