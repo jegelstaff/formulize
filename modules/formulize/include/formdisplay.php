@@ -2920,7 +2920,11 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
 			switch ($type)
 			{
 				case "derived":
-					$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
+					if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')])) {
+						$ele_value[5] = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')];
+					} else {
+						$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
+					}
 					break;
 
 
