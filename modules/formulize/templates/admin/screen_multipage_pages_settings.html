@@ -150,7 +150,58 @@ $(".conditionsdelete").click(function () {
 });
 
 	$(".savebuttonpopup").click(function() {
-    if(validateRequired()) { // code validation not happening yet for custom code in multipage screen pages!
+		<{php}>
+		// if user wants it, and server can validate code, validate code blocks, which will then validateRequired, etc
+		global $xoopsModuleConfig;
+		if ($xoopsModuleConfig['validateCode'] AND isEnabled('shell_exec')) {
+			print "\t\tvalidateMultiPageScreenPageCode();\n";
+		} else {
+			print "\t\trunMultiPageScreenPageSettingsSaveEvent();\n";
+		}
+		<{/php}>
+	});
+
+	async function validateMultiPageScreenPageCode() {
+		let error = ''
+		let errorMsg = ''
+		let code = $("#pit-custom-textarea").val();
+		let codePitSelected = $("input[id=pit-custom]:checked").length;
+		if(codePitSelected && code && code.trim() != '<?php') {
+			if(typeof checkedBlocks[99] === 'undefined' || (code != checkedBlocks[99].code)) {
+				error = await fz_check_php_code(code);
+				if(error.valid === false) {
+					errorMsg = `The custom code has an error:\n\n${error.result}`
+					checkedBlocks[99] = {
+						code: code,
+						valid: false,
+						error: errorMsg
+					}
+				} else {
+					checkedBlocks[99] = {
+						code: code,
+						valid: true,
+						error: ''
+					}
+				}
+			} else if(checkedBlocks[99].valid === false) {
+				errorMsg = checkedBlocks[99].error;
+			}
+		} else if(codePitSelected) {
+			checkedBlocks[99] = {
+				code: code,
+				valid: true,
+				error: ''
+			}
+		}
+		if(errorMsg) {
+			alert(errorMsg)
+		} else {
+			runMultiPageScreenPageSettingsSaveEvent();
+		}
+	}
+
+	function runMultiPageScreenPageSettingsSaveEvent() {
+    if(validateRequired()) {
 			var pagedata = window.document.getElementsByName("popupform");
 			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
 				if(data) {
@@ -163,13 +214,13 @@ $(".conditionsdelete").click(function () {
 				$('div#drawer-5-<{$pageIndex}> span.accordion-name').text($('input#screens-pagetitle_<{$pageIndex}>').val());
 				$.get('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/multipageScreenGeneratePageItemDescription.php?sid=<{$sid}>&page=<{$pageIndex}>', function(data) {
 					$('div#drawer-5-<{$pageIndex}> div.accordion-content').empty();
-					$('div#drawer-5-<{$pageIndex}> div.accordion-content').append(data);	
+					$('div#drawer-5-<{$pageIndex}> div.accordion-content').append(data);
 				});
 				window.document.getElementById('popupsavewarning').style.display = 'none';
 			});
     }
     $(".savebuttonpopup").blur();
-  });
+  }
 
 	function reloadPopup() {
 		$("#dialog-page-settings-content").load('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/screen_multipage_pages_settings.php?page=<{$pageIndex}>&sid=<{$sid}>');
