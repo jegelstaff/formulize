@@ -164,9 +164,8 @@ $(".conditionsdelete").click(function () {
 	async function validateMultiPageScreenPageCode() {
 		let error = ''
 		let errorMsg = ''
-		let code = $("#pit-custom-textarea").val();
-		let codePitSelected = $("input[id=pit-custom]:checked").length;
-		if(codePitSelected && code && code.trim() != '<?php') {
+		let code = $("input[id=pit-custom]:checked").length ? $("#pit-custom-textarea").val() : '';
+		if(code && code.trim() != '<?php') {
 			if(typeof checkedBlocks[99] === 'undefined' || (code != checkedBlocks[99].code)) {
 				error = await fz_check_php_code(code);
 				if(error.valid === false) {
@@ -186,7 +185,7 @@ $(".conditionsdelete").click(function () {
 			} else if(checkedBlocks[99].valid === false) {
 				errorMsg = checkedBlocks[99].error;
 			}
-		} else if(codePitSelected) {
+		} else {
 			checkedBlocks[99] = {
 				code: code,
 				valid: true,
