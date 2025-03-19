@@ -227,6 +227,14 @@ switch($op) {
     $json = '{ "elements" : [';
     foreach(explode(',',$elementId) as $thisElementId) {
       $elementObject = $element_handler->get($thisElementId);
+			if($elementObject->getVar('ele_type') == "derived") {
+				// if it's a derived value, we need to do an update of the derived values based on this changed value... but not save it!!
+				// When the global formulize_asynchronousFormDataInAPIFormat has values in it, the derived value computation will put
+				// the values into asynch space to later be picked up when rendered. Does not write values to the database.
+				// However, if derived value code is specifically writing anything anywhere because someone wrote it that way, those writing operations may happen now!
+				// People should not be using derived values for that kind of thing. They should be using on_before_save and on_after_save.
+				formulize_updateDerivedValues($entryId, $fid, $frid);
+			}
 			$html = "";
       $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$_GET['fid'].'_'.$_GET['entryId'].'_'.$thisElementId);
       if(security_check($fid, $entryId)) {

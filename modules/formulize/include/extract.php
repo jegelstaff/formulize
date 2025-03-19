@@ -2162,15 +2162,20 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 							$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 						}
 						// if the new value is the same as the previous one, then skip updating and saving
-						if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']][0]) {
-							$elementID = formulize_getIdFromElementHandle($thisMetaData['handle']);
-							$dataToWrite[$elementID] = $derivedValue;
+						if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']]) {
+							$dataToWrite[$thisMetaData['handle']] = $derivedValue;
 							$entry[$formHandle][$primary_entry_id][$thisMetaData['handle']] = $derivedValue === '{WRITEASNULL}' ? NULL : $derivedValue;
 						}
 					}
 					if (count((array) $dataToWrite) > 0) {
-						// false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
-						$data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
+						if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat']) AND count($GLOBALS['formulize_asynchronousFormDataInAPIFormat']) > 0) {
+							foreach($dataToWrite as $handle => $value) {
+								$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$primary_entry_id][$handle] = $value;
+							}
+						} else {
+							// false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
+							$data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
+						}
 					}
 				}
 			}
@@ -2200,12 +2205,11 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 						// not in the entire relationship. If a user wants all the values for this field from including all other
 						// entries in the relationship, they will have to use the display function manually in the derived value formula.
 						$replacement = "display(\$entry, '$newterm', '', \$entry_id)";
-						$numberOfChars = 34; // 34 is the number of extra characters besides the term
 					} else {
 						$replacement = "display(\$entry, '$newterm')";
-						$numberOfChars = 19; // 19 is the length of the extra characters in the display function
 					}
-					$quotePos = $quotePos + $numberOfChars + strlen($newterm);
+					$replacement = "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id][\"$newterm\"]) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id][\"$newterm\"] : $replacement)";
+					$quotePos = $quotePos + strlen($replacement);
 					$formula = str_replace($term, $replacement, $formula);
 				} else {
 					$quotePos = $quotePos + strlen($term);
