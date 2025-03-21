@@ -1635,8 +1635,8 @@ function codeInNeedOfConversion() {
 				OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
 				OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%'))",
 			"SELECT form_handle	FROM ".$xoopsDB->prefix('formulize_id')." WHERE
-				(on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != '')",
-			"SELECT s.`screen_handle` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
+				(on_before_save != '' OR on_after_save != '' OR on_delete != '' OR custom_edit_check != '')",
+			"SELECT s.`sid` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
 				LEFT JOIN ".$xoopsDB->prefix('formulize_screen')." AS s
 				ON l.sid = s.sid
 				WHERE (l.customactions LIKE '%\"custom_code\";%' OR l.customactions LIKE '%\"custom_html\";%' OR l.customactions LIKE '%\"custom_code_once\";%')"
