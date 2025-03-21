@@ -73,17 +73,6 @@ if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
     $sid="";
 }
 
-// get the global or group permission
-$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-$mid = getFormulizeModId();
-$gperm_handler = &xoops_gethandler('groupperm');
-$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
-$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
-
-$config_handler =& xoops_gethandler('config');
-$formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
-
 // query added Oct 2013
 // get the default menu link for the current user, and set the fid or sid based on it
 
@@ -122,8 +111,17 @@ if ( $res ) {
 
 $myts =& MyTextSanitizer::getInstance();
 $title = $myts->displayTarea($desc_form);
-
 $currentURL = getCurrentURL();
+
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+$mid = getFormulizeModId();
+$gperm_handler = &xoops_gethandler('groupperm');
+$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+$config_handler =& xoops_gethandler('config');
+$formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
+
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
     if(strstr($currentURL, "/modules/formulize/") OR $formulizeCanonicalURI) { // if it's a formulize page reload to login screen (check URL and check if there was a valid Formulize clean URL)
         $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
