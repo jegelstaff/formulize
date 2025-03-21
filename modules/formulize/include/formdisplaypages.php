@@ -153,6 +153,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
 	$single_result = getSingle($fid, $uid, $groups, $member_handler, $gperm_handler, $mid);
+	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+	$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 
 	// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
 	// no handling of cookies here, so anonymous multi-page surveys will not benefit from that feature
@@ -258,6 +260,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 	$nextPage = $currentPage+1;
 
+	// done destination used in the multipage boilerplate included below
+	$originalDoneDest = $done_dest;
 	if(!$done_dest) {
 			// check for a dd in get and use that as a screen id
 			if(isset($_GET['dd']) AND is_numeric($_GET['dd'])) {
@@ -394,12 +398,24 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			$templateVariables['aboveBelow'] = 'above';
 
 			global $formulize_displayingSubform;
+
+			// if viewing a subform, we use the "save and go back" text.
 			if($formulize_displayingSubform) {
 					$templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
-			} else {
-					$templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
-			}
 
+			// otherwise... if there was an originally specified done destination,
+			// or the user has permission to see a list of entries, then "save and leave"
+			} elseif($originalDoneDest
+				OR ($single_result['flag'] == 0 AND $xoopsUser)
+				OR $view_globalscope
+				OR ($view_groupscope AND $single_result['flag'] != "group")
+				) {
+					$templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
+
+			// else... no where for the user to go, no text
+			} else {
+				$templateVariables['saveAndLeave'] = "";
+			}
 			$printableViewButonText = $saveAndContinueButtonText['printableViewButtonText'] ? $saveAndContinueButtonText['printableViewButtonText'] : "{NOBUTTON}";
 			$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$printableViewButonText);
 			$GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
