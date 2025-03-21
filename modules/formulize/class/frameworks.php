@@ -168,7 +168,6 @@ class formulizeFrameworkLink extends XoopsObject {
 			$key2 = "";
 			$common = "";
 			$relationship = "";
-			$unified_display = "";
 			$one2one_conditional = 1;
 			$one2one_bookkeeping = 1;
 		} else {
@@ -183,7 +182,6 @@ class formulizeFrameworkLink extends XoopsObject {
 				$key2 = "";
 				$common = "";
 				$relationship = "";
-				$unified_display = "";
 				$unified_delete = "";
 				$one2one_conditional = 1;
 				$one2one_bookkeeping = 1;
@@ -196,7 +194,6 @@ class formulizeFrameworkLink extends XoopsObject {
 				$key2 = $link_q[0]['fl_key2'];
 				$common = $link_q[0]['fl_common_value'];
 				$relationship = $link_q[0]['fl_relationship'];
-				$unified_display = $link_q[0]['fl_unified_display'];
 				$unified_delete = $link_q[0]['fl_unified_delete'];
 				$one2one_conditional = $link_q[0]['fl_one2one_conditional'];
 				$one2one_bookkeeping = $link_q[0]['fl_one2one_bookkeeping'];
@@ -213,7 +210,7 @@ class formulizeFrameworkLink extends XoopsObject {
 		$this->initVar("key2", XOBJ_DTYPE_INT, $key2, true);
 		$this->initVar("common", XOBJ_DTYPE_INT, $common, true);
 		$this->initVar("relationship", XOBJ_DTYPE_INT, $relationship, true);
-		$this->initVar("unifiedDisplay", XOBJ_DTYPE_INT, $unified_display, true);
+		$this->initVar("unifiedDisplay", XOBJ_DTYPE_INT, 1, true);
 		$this->initVar("unified_delete", XOBJ_DTYPE_INT, $unified_delete, true);
 		$this->initVar("one2one_conditional", XOBJ_DTYPE_INT, $one2one_conditional, true);
 		$this->initVar("one2one_bookkeeping", XOBJ_DTYPE_INT, $one2one_bookkeeping, true);
@@ -246,7 +243,7 @@ class formulizeFrameworkLink extends XoopsObject {
         $formulize_mgr =& xoops_getmodulehandler('elements');
 
         // get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
-        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_type=\"select\" AND ele_value LIKE '%#*=:*%' AND (id_form = ".intval($this->getVar('form1'))." OR id_form = ".intval($this->getVar('form2')).") ORDER BY id_form");
+        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE (ele_type=\"select\" OR ele_type=\"checkbox\") AND ele_value LIKE '%#*=:*%' AND (id_form = ".intval($this->getVar('form1'))." OR id_form = ".intval($this->getVar('form2')).") ORDER BY id_form");
         while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq)) {
             $target_form_ids[] = $rowlinksq[0];
             $target_captions[] = $rowlinksq[1];
@@ -318,12 +315,12 @@ class formulizeFrameworkLink extends XoopsObject {
             if (is_object($ele1)) {
                 $name1 = $ele1->getVar('ele_colhead') ? printSmart($ele1->getVar('ele_colhead')) : printSmart($ele1->getVar('ele_caption'));
             } else {
-                $name1 = $this->getVar('key1') == -1 ? 'Entry ID (experimental!)' : '';
+                $name1 = $this->getVar('key1') == -1 ? _AM_FRAME_KEY_ENTRYID : '';
             }
             if (is_object($ele2)) {
                 $name2 = $ele2->getVar('ele_colhead') ? printSmart($ele2->getVar('ele_colhead')) : printSmart($ele2->getVar('ele_caption'));
             } else {
-                $name2 = $this->getVar('key2') == -1 ? 'Entry ID (experimental!)' : '';
+                $name2 = $this->getVar('key2') == -1 ? _AM_FRAME_KEY_ENTRYID : '';
             }
             $link_options[$loi]['value'] = $this->getVar('key1') . "+" . $this->getVar('key2');
             $link_options[$loi]['name'] = _AM_FRAME_COMMON_VALUES . printSmart($name1,20) . " & " . printSmart($name2,20);
@@ -453,18 +450,19 @@ class formulizeFrameworksHandler {
 		if(isset($cachedFrameworks[$frid])) {
 			return $cachedFrameworks[$frid];
 		}
-		if($frid > 0) {
+		if($frid != 0) {
 			$cachedFrameworks[$frid] = new formulizeFramework($frid);
 			return $cachedFrameworks[$frid];
 		}
 		return false;
 	}
 
-	function getFrameworksByForm($fid) {
+	function getFrameworksByForm($fid, $includePrimaryRelationship=false) {
 		static $cachedResults = array();
 		if(isset($cachedResults[$fid])) { return $cachedResults[$fid]; }
 		$ret = array();
-		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links").' WHERE fl_form1_id='.intval($fid).' OR fl_form2_id='.intval($fid);
+		$includePrimaryRelationship = $includePrimaryRelationship ? "" : "fl_frame_id > 0 AND";
+		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links")." WHERE $includePrimaryRelationship (fl_form1_id=".intval($fid).' OR fl_form2_id='.intval($fid).') ORDER BY fl_frame_id ASC';
 
 		$result = $this->db->query($sql);
 
@@ -477,44 +475,251 @@ class formulizeFrameworksHandler {
 		return $ret;
 	}
 
-    function formatFrameworksAsRelationships($frameworks) {
-        $relationships = array();
-        $relationshipIndices = array();
-        $i = 1;
-        foreach($frameworks as $framework) {
-            $frid = $framework->getVar('frid');
-            if (isset($relationshipIndices[$frid])) { continue; }
+	/**
+	 * Get the links in a relationship, and return them in an ordered array, grouped by form
+	 * @param object relationship The relationship we're getting links from
+	 * @return array An array of the links in the form, ordered by form, normalized into one to many and one to one for each form (many to one switched around)
+	 */
+	function getLinksGroupedByForm($relationship, $fid=null) {
+		$normalizedLinks = array();
+		if(!is_a($relationship, 'formulizeFramework')) {
+			return $normalizedLinks;
+		}
+		$relationshipLinks = $relationship->getVar('links');
+		foreach($relationshipLinks as $link) {
+			if($fid AND $link->getVar('form2') != $fid AND $link->getVar('form1') != $fid) { continue; }
+			switch($link->getVar('relationship')) {
+				case 3:
+					$normalizedLinks[$link->getVar('form2')][] = array(
+						'lid' => $link->getVar('lid'),
+						'form1' => $link->getVar('form2'),
+						'form2' => $link->getVar('form1'),
+						'type' => 3,
+						'key1' => $link->getVar('key2'),
+						'key2' => $link->getVar('key1'),
+						'del' => $link->getVar('unified_delete'),
+						'con' => $link->getVar('one2one_conditional'),
+						'book' => $link->getVar('one2one_bookkeeping')
+					);
+					break;
+				default:
+					$normalizedLinks[$link->getVar('form1')][] = array(
+						'lid' => $link->getVar('lid'),
+						'form1' => $link->getVar('form1'),
+						'form2' => $link->getVar('form2'),
+						'type' => $link->getVar('relationship'),
+						'key1' => $link->getVar('key1'),
+						'key2' => $link->getVar('key2'),
+						'del' => $link->getVar('unified_delete'),
+						'con' => $link->getVar('one2one_conditional'),
+						'book' => $link->getVar('one2one_bookkeeping')
+					);
+			}
+		}
+		ksort($normalizedLinks);
+		return $normalizedLinks;
+	}
 
-            $relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
-            $relationships[$i]['content']['frid'] = $frid;
+	function formatFrameworksAsRelationships($frameworks=null, $limitToFid=null) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$relationships = array();
+		$relationshipIndices = array();
+		$i = 0;
+		if(!$frameworks AND $limitToFid) {
+			$frameworks = $this->getFrameworksByForm($limitToFid, true);
+		}
+		foreach($frameworks as $framework) {
+			$frid = $framework->getVar('frid');
+			if (isset($relationshipIndices[$frid])) { continue; }
+			$frameworkLinks = $this->getLinksGroupedByForm($framework, $limitToFid);
+			$links = array();
+			foreach($frameworkLinks as $fid=>$fidLinks) {
+				foreach($fidLinks as $link) {
+					$form1Object = $form_handler->get($link['form1']);
+					$form2Object = $form_handler->get($link['form2']);
+					if($limitToFid AND $form1Object->getVar('fid') != $limitToFid AND $form2Object->getVar('fid') != $limitToFid) { continue; }
+					$form1Text = $form1Object->getSingular();
+					$form2TextSingular = $form2Object->getSingular();
+					$form2Text = $link['type'] == 1 ? $form2TextSingular : $form2Object->getPlural();
+					$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+					$links[] = array(
+						'linkId'=>$link['lid'],
+						'each'=>ucfirst(_AM_FRAME_EACH),
+						'form1'=>$form1Text,
+						'has'=>_AM_FRAME_HAS.' '.$connectionText,
+						'form2'=>$form2Text
+					);
+				}
+			}
+			$relationships[$i]['name'] = $framework->getVar('name') . ' (id: '.$framework->getVar('frid').')';
+			$relationships[$i]['content']['frid'] = $frid;
+			$relationships[$i]['content']['links'] = $links;
+			$relationshipIndices[$frid] = true;
+			$i++;
+		}
+		return $relationships;
+	}
 
-            $frameworkLinks = $framework->getVar('links');
+	/**
+	 * Gets all data related to displaying the help text and options for a relationship link on the admin side
+	 * @param array link - the link data from the database, as returned from getLinksGroupedByForm
+	 * @return array all the data needed for the help text and options
+	 */
+	function gatherRelationshipHelpAndOptionsContent($link) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$firstApp1 = 0;
+		$firstApp2 = 0;
+		$element1Id = 0;
+		$element2Id = 0;
+		$element1Text = $this->getElementDescriptor($link->getVar('key1'));
+		$element2Text = $this->getElementDescriptor($link->getVar('key2'));
+		if($form1Object = $form_handler->get($link->getVar('form1'))) {
+			$firstApp1 = formulize_getFirstApplicationForForm($form1Object);
+			$element1Id = $link->getVar('key1');
+		}
+		if($form2Object = $form_handler->get($link->getVar('form2'))) {
+			$firstApp2 = formulize_getFirstApplicationForForm($form2Object);
+			$element2Id = $link->getVar('key2');
+		}
+		$delChecked = $link->getVar('unified_delete') ? "checked='checked'" : '';
+		$conChecked = $link->getVar('one2one_conditional') ? "checked='checked'" : '';
+		$bookChecked = $link->getVar('one2one_bookkeeping') ? "checked='checked'" : '';
+		$connectionText = $link->getVar('relationship') == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
+		$title = ucfirst(_AM_FRAME_EACH).' '.$form1Object->getSingular().' '._AM_FRAME_HAS.' '.$connectionText.' '.($link->getVar('relationship') == 1 ? $form2Object->getSingular() : $form2Object->getPlural());
+		return array(
+			'linkId'=>$link->getVar('lid'),
+			'element1Id'=>$element1Id,
+			'element2Id'=>$element2Id,
+			'firstApp1'=>$firstApp1,
+			'firstApp2'=>$firstApp2,
+			'element1Text'=>trans($form1Object->getVar('title').': '.$element1Text),
+			'element2Text'=>trans($form2Object->getVar('title').': '.$element2Text),
+			'type'=>$link->getVar('relationship'),
+			'delChecked'=>$delChecked,
+			'conChecked'=>$conChecked,
+			'bookChecked'=>$bookChecked,
+			'title'=>$title
+		);
+	}
 
-            $li = 1;
-            $links = array();
-            foreach($frameworkLinks as $link) {
-                $links[$li]['form1'] = printSmart(getFormTitle($link->getVar('form1')));
-                $links[$li]['form2'] = printSmart(getFormTitle($link->getVar('form2')));
+	/**
+	 * Return the descriptor of the passed element ID
+	 * @param mixed elementIdentifier The element ID number, or handle, or the full element object. Or -1 to indicate the Entry ID of the record, instead of a regular element.
+	 * @return string The readable descriptor to use for this element, or false if the elementIdentifier is invalid
+	 */
+	function getElementDescriptor($elementIndentifier) {
+		if(!$elementIndentifier) {
+			return false;
+		}
+		if($elementIndentifier == -1) {
+			return _AM_FRAME_KEY_ENTRYID;
+		}
+		if(!$elementObject = _getElementObject($elementIndentifier)) {
+			return false;
+		}
+		return $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
+	}
 
-                switch($link->getVar('relationship')) {
-                    case 1:
-                        $relationship = _AM_FRAME_ONETOONE;
-                        break;
-                    case 2:
-                        $relationship = _AM_FRAME_ONETOMANY;
-                        break;
-                    case 3:
-                        $relationship = _AM_FRAME_MANYTOONE;
-                        break;
-                }
-                $links[$li]['relationship'] = printSmart($relationship);
-                $li++;
-            }
-            $relationships[$i]['content']['links'] = $links;
-            $relationshipIndices[$frid] = true;
-            $i++;
-        }
+}
 
-        return $relationships;
-    }
+
+
+/**
+ * Insert/Update relationship links between two forms/form elements. Only operates on one-to-many (2) and many-to-one (3) connections,
+ * that are not common value. When passed a form/element id pair, and a source for the link (the element the options are being drawn from),
+ * this function will create the link in the primary relationship if no link exists yet, or it will update all links for the form/element id
+ * pair and any previously connected source that may have been updated to the new source.
+ * @param int fid The form id where the linked element exists
+ * @param int elementId The element id of the linked element
+ * @param int sourceFid The form id of the source element from which options are gathered for the linked element
+ * @param int sourceElementId The element id of the source element from which options are gathered for the linked element
+ * @param int currentSourceFid The form id of the source element that the linked element is pointing to prior to this update
+ * @param int currentSourceElementId The element id of the source element that the linked element is point to prior to this update
+ * @return boolean Returns true or false indicating if the update operation succeeded
+ */
+function updateLinkedElementConnectionsInRelationships($fid, $elementId, $sourceFid, $sourceElementId, $currentSourceFid, $currentSourceElementId) {
+	global $xoopsDB;
+	$fid = intval($fid);
+	$elementId = intval($elementId);
+	$sourceFid = intval($sourceFid);
+	$sourceElementId = intval($sourceElementId);
+	$currentSourceFid = intval($currentSourceFid);
+	$currentSourceElementId = intval($currentSourceElementId);
+	// updating existing link...
+	if($currentSourceFid AND $currentSourceElementId) {
+		// if there's been a change to the source of this link...
+		if($currentSourceFid != $sourceFid OR $currentSourceElementId != $sourceElementId) {
+			$sql1 = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
+				SET fl_form1_id = $sourceFid,
+				fl_key1 = $sourceElementId
+				WHERE fl_common_value = 0
+				AND fl_relationship = 2
+				AND fl_form1_id = $currentSourceFid
+				AND fl_form2_id = $fid
+				AND fl_key1 = $currentSourceElementId
+				AND fl_key2 = $elementId";
+			$sql2 = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
+				SET fl_form2_id = $sourceFid,
+				fl_key2 = $sourceElementId
+				WHERE fl_common_value = 0
+				AND fl_relationship = 3
+				AND fl_form2_id = $currentSourceFid
+				AND fl_form1_id = $fid
+				AND fl_key2 = $currentSourceElementId
+				AND fl_key1 = $elementId";
+			$result1 = $xoopsDB->query($sql1);
+			$result2 = $xoopsDB->query($sql2);
+		}
+	// adding a link to primary relationship (element not currently linked)
+	} else {
+		$result1 = insertLinkIntoPrimaryRelationship(0, 2, $sourceFid, $fid, $sourceElementId, $elementId);
+		$result2 = true;
+	}
+	return ($result1 AND $result2) ? true : false;
+}
+
+/**
+ * Delete all links involving the specified element. Intended to be called when an element is deleted.
+ * @param int fid The form id where the linked element exists
+ * @param int elementId The element id of the linked element
+ * @return boolean Returns true or false indicating if the update operation succeeded
+ */
+function deleteElementConnectionsInRelationships($fid, $elementId) {
+	global $xoopsDB;
+	$fid = intval($fid);
+	$elementId = intval($elementId);
+	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE (
+			fl_form2_id = $fid
+			AND fl_key2 = $elementId
+		) OR (
+			fl_form1_id = $fid
+			AND fl_key1 = $elementId
+		)";
+	return $xoopsDB->query($sql);
+}
+
+/**
+ * Delete all links involving the specified linked element, so long as they are one-to-many (2) or many-to-one (3) connections,
+ * that are not common value. Intended to be called when an element is no longer linked.
+ * @param int fid The form id where the linked element exists
+ * @param int elementId The element id of the linked element
+ * @return boolean Returns true or false indicating if the update operation succeeded
+ */
+function deleteLinkedElementConnectionsInRelationships($fid, $elementId) {
+	global $xoopsDB;
+	$fid = intval($fid);
+	$elementId = intval($elementId);
+	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE fl_common_value = 0
+		AND ((
+				fl_relationship = 2
+				AND fl_form2_id = $fid
+				AND fl_key2 = $elementId
+			) OR (
+				fl_relationship = 3
+				AND fl_form1_id = $fid
+				AND fl_key1 = $elementId
+		))";
+	return $xoopsDB->query($sql);
 }

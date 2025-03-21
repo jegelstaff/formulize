@@ -349,19 +349,19 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         }
     }
 
-    public function setDefaultFormScreenVars($defaultFormScreen, $formTitle, $fid, $pageOneTitle='')
+    public function setDefaultFormScreenVars($defaultFormScreen, $formObject)
 	{
         global $xoopsConfig;
         $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
-        $defaultFormScreen->setVar('title', $formTitle);
+        $defaultFormScreen->setVar('title', sprintf(_AM_FORMULIZE_FORM_SCREEN_TITLE, $formObject->getSingular()));
         $defaultFormScreen->setVar('displayheading', 0);
 		$defaultFormScreen->setVar('reloadblank', 0);
         $defaultFormScreen->setVar('finishisdone', 1);
-		$defaultFormScreen->setVar('fid', $fid);
-		$defaultFormScreen->setVar('frid', 0);
+		$defaultFormScreen->setVar('fid', $formObject->getVar('fid'));
+		$defaultFormScreen->setVar('frid', -1);
 		$defaultFormScreen->setVar('type', 'multiPage');
 		$defaultFormScreen->setVar('useToken', 1);
-        $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$pageOneTitle)));
+        $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$formObject->getSingular())));
         $defaultFormScreen->setVar('pages', serialize(array(0=>array())));
         $defaultFormScreen->setVar('navstyle', 1);
         $defaultFormScreen->setVar('buttontext', serialize(array(

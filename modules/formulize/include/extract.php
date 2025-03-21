@@ -482,6 +482,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$formObject = $form_handler->get($fid);
 
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
+    // if there are no links from the mainform to others in the active relationship, then don't bother with the relationship
+    if(empty($linkkeys)) {
+        $frid = "";
+    }
 
 	//print_r( $linkformids );
 	if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) or isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
@@ -2150,7 +2154,8 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 					} // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
 					$dataToWrite = array();
 					foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
-						$functionName = "derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $relationship_id . "_" . $form_id . "_" . $formulaNumber;
+						$fridForName = $relationship_id == -1 ? 'primary' : $relationship_id;
+						$functionName = "derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName. "_" . $form_id . "_" . $formulaNumber;
 						// want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
 						$resetDerivedValueFlag = false;
 						if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -2224,10 +2229,11 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 			}
 			$formula = implode("\n", $formulaLines);
 		}
-		$fileName = XOOPS_ROOT_PATH . '/modules/formulize/cache/Derived_value_formula_for_' . trans($thisMetaData['handle'], 'en') . '_in_form_' . $thisMetaData['form_id'] . "_(fid_" . $fid . "_frid_" . $frid . "_fn_" . $formulaNumber . ").php";
+		$fridForName = $frid == -1 ? 'primary' : $frid;
+		$fileName = XOOPS_ROOT_PATH . '/modules/formulize/cache/Derived_value_formula_for_' . trans($thisMetaData['handle'], 'en') . '_in_form_' . $thisMetaData['form_id'] . "_(fid_" . $fid . "_frid_" . $fridForName . "_fn_" . $formulaNumber . ").php";
 		$formula = removeOpeningPHPTag($formula);
 		file_put_contents($fileName, "<?php
-    function derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $frid . "_" . $fid . "_" . $formulaNumber . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
+    function derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName . "_" . $fid . "_" . $formulaNumber . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
         $formula
         return \$value;
     }\r\n");

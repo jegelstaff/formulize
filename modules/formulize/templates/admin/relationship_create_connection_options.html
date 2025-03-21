@@ -1,0 +1,12 @@
+<div>
+<{foreach item=pair from=$content.pairs}>
+	<{$pair.form1.elementName}> <{$pair.form1.elementId}> <-> <{$pair.form2.elementName}> <{$pair.form2.elementId}> - <{$pair.type}> <br>
+<{/foreach}>
+
+<{foreach key=id item=candidate from=$content.candidates}>
+	Form 1 PI <-> <{$candidate}> - <{$id}> <br>
+<{/foreach}>
+
+</div>
+
+<{include file="db:admin/relationship_connection_options.html" content=$content}>
