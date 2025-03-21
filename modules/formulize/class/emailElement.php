@@ -87,7 +87,6 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
     function loadValue($value, $ele_value, $element) {
-
         $ele_value = $value;
         return $ele_value;
     }
@@ -103,7 +102,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-        // dummy element is rendered as a textboxes, with the values set by the user in the admin side smushed together as the default value for the textbox
+			  $ele_value = (is_array($ele_value) AND count($ele_value) == 0) ? "" : $ele_value; // default ele_value for new entries, will be an empty array, so just make a string in that case, otherwise, go with loaded value (ie: existing value in DB)
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $ele_value);
         } else {
