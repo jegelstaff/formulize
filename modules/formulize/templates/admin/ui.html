@@ -352,27 +352,36 @@ $(document).ready(function() {
     }
   }
 
-  $(document).ready(
+	let codemirrors = [];
+  $(document).ready(function() {
     $('.code-textarea').each(function() {
-        if (this.type !== 'textarea') {
-            return true; // continue
-        }
-        CodeMirror.fromTextArea(this, {
-            lineNumbers: true,
-            matchBrackets: true,
-            mode: "application/x-httpd-php",
-            indentUnit: 4,
-            indentWithTabs: true,
-            enterMode: "keep",
-            tabMode: "shift",
-            lineWrapping: true,
-            onChange: function(instance) {
-                setDisplay('savewarning','block');
-                instance.save(); // Call this to update the textarea value for the ajax post
-            }
-        });
-    })
-  );
+			if (this.type !== 'textarea') {
+					return true; // continue
+			}
+			cm = CodeMirror.fromTextArea(this, {
+					lineNumbers: true,
+					matchBrackets: true,
+					mode: "application/x-httpd-php",
+					indentUnit: 4,
+					indentWithTabs: true,
+					enterMode: "keep",
+					tabMode: "shift",
+					lineWrapping: true,
+					onChange: function(instance) {
+							setDisplay('savewarning','block');
+							instance.save(); // Call this to update the textarea value for the ajax post
+					}
+			});
+			codemirrors.push(cm);
+		});
+		refreshCodemirrors();
+	});
+
+	function refreshCodemirrors() {
+		for (var x = 0; x < codemirrors.length; x++) {
+			codemirrors[x].refresh();
+		}
+	}
 
     // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
     $("[name='screens-theme']").change(function() {
