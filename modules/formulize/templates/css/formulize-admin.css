@@ -1854,6 +1854,8 @@ div.flex-box {
 
 .pit-contents {
 	width: 440px;
+}
+
 #form-names-flex {
 	display: flex;
   flex-direction: row;
