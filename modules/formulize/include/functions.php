@@ -2185,7 +2185,7 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 
         case "select":
         case "checkbox":
-					if($elementObject->isLinked AND $ele_value['snapshot'] != 1) {
+					if($elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1)) {
 						list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
 						// get the entry id of the value in the linked source of the elementObject selectbox
 						$dataHandler = new formulizeDataHandler($sourceFidOfElement);
@@ -6205,7 +6205,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 		// *** OPTION 4: IF WE HAVEN'T SET IT ALREADY, FIGURE OUT THE COMPARISON VALUE (POSSIBLY BASED ON THE PLAIN LITERAL AND LITERAL-TO-DB DETERMINATIONS ABOVE)
     if ($conditionsFilterComparisonValue === NULL) {
-        $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
+        $ele_type = $filterElementObject->getVar('ele_type');
+        // messy... if it's a checkbox, do a much more complex comparison value.
+        // comparison values are prepended with "handle op" and wrapped in ( ), later in the _appendToCondition function
+        // so we can build this odd comparison value that repeats the "handle op" part internally, to catch all the cases for checkboxes. Ugh.
+        if($multiValueSearchMetadata = mustMatchOneOfMultiplePossibleValuesInElement($filterElementObject, $filterOps[$filterId])) {
+            $useAndOr = $multiValueSearchMetadata['andOr'];
+            $filterOps[$filterId] = $multiValueSearchMetadata['operator'];    
+            $conditionsFilterComparisonValue = " \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."*=+*:%\" $useAndOr ".$filterElementObject->getVar('ele_handle')." ".$filterOps[$filterId]." \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."\" ";        
+        } else {
+            $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
+        }
         if($plainLiteralValue) {
             $specialCharsTerm = convertStringToUseSpecialCharsToMatchDB($plainLiteralValue);
             if($specialCharsTerm != $plainLiteralValue) {
@@ -8667,4 +8677,27 @@ function formulizeRevisionsForAllFormsIsOn() {
 	$formulizeModule = $module_handler->getByDirname("formulize");
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 	return $formulizeConfig['formulizeRevisionsForAllForms'] ? true : false;
+}
+
+/**
+ * Check if an element stores multiple values, and return necessary metadata for adapting the search operation if so.
+ * @param int|string|object elementIdentifier - either an element id, or handle, or object
+ * @param string operator - the operator being used in the search. Only LIKE, NOT LIKE, <=>, = and != trigger this behaviour
+ * @return array|boolean Returns an array of the necessary AND/OR value to use in a search of the multiple values, and the operator to use. Keys are 'andOr' and 'operator'. Returns false if the target element does not have multiple values, or the operator is not suitable for searching multiple values, or if the elementIdentifier is invalid.
+ */
+function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $operator) {
+    $returnValue = false;
+    if(!$element = _getElementObject($elementIdentifier) OR !$operator) {
+        return $returnValue;
+    }
+    $allowableOperators = array('=', '!=', '<=>', 'LIKE', 'NOT LIKE');
+    if($element->canHaveMultipleValues 
+      AND !$element->isLinked
+      AND in_array($operator, $allowableOperators)) {
+          $returnValue = array(
+          'andOr' => (($operator == "!=" OR $operator == "NOT LIKE") ? "AND" : "OR"),
+          'operator' => ($operator == "!=" ? "NOT LIKE" : "LIKE")
+      );
+    }
+    return $returnValue;
 }
