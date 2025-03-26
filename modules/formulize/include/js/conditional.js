@@ -9,16 +9,22 @@ var conditionalCheckInProgress = 0;
 function callCheckCondition(name) {
 	const checks = [];
     const relevantElementSets = [];
+	var oneToOne;
 	for(key in governedElements[name]) {
 		var markupHandle = governedElements[name][key];
-		elementValuesForURL = getRelevantElementValues(relevantElements[markupHandle]);
+		var oneToOneKey = relevantElements[markupHandle].findIndex(element => element === name);
+		oneToOne = false;
+		if(oneToOneKey > -1) {
+			oneToOne = oneToOneElements[markupHandle][oneToOneKey];
+		}
+		elementValuesForURL = getRelevantElementValues(markupHandle, oneToOne);
         if(elementValuesForURL in relevantElementSets == false) {
             relevantElementSets[elementValuesForURL] = new Array();
         }
         relevantElementSets[elementValuesForURL].push(markupHandle);
     }
     for(elementValuesForURL in relevantElementSets) {
-        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL));
+        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL, oneToOne));
     }
     var results = jQuery.when.apply(jQuery, checks);
     results.done(function(){
@@ -97,7 +103,7 @@ function conditionalHTMLHasChanged(handle, data) {
   return conditionalHTML[handle] != captureDataAsInDOM(data);
 }
 
-function checkCondition(relevantElementSet, elementValuesForURL) {
+function checkCondition(relevantElementSet, elementValuesForURL, oneToOne) {
 	var oneToOneAdded = false;
 	var elementIds = '';
 	var elementIdsSep = '';
@@ -108,7 +114,7 @@ function checkCondition(relevantElementSet, elementValuesForURL) {
 		elementIds = elementIds + elementIdsSep + partsArray[3];
 		entryId = partsArray[2]; // assuming all the same!
 		fid = partsArray[1]; // assuming all the same!
-		if(oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
+		if(oneToOne && oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
 				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
 				oneToOneAdded = true;
 		}
@@ -117,9 +123,13 @@ function checkCondition(relevantElementSet, elementValuesForURL) {
 	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+FORMULIZE.SCREEN_ID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+"&frid="+FORMULIZE.FRID+elementValuesForURL);
 }
 
-function getRelevantElementValues(elements) {
+function getRelevantElementValues(markupHandle, oneToOne=false) {
 	var ret = '';
+	elements = relevantElements[markupHandle];
 	for(key in elements) {
+		if(oneToOne && oneToOneElements[markupHandle][key] == false) {
+			continue;
+		}
 		var handle = elements[key];
 		if(handle.indexOf('[]')!=-1) { // grab multiple value elements from a different tag
 			nameToUse = '[jquerytag='+handle.substring(0, handle.length-2)+']';
@@ -159,7 +169,7 @@ function getRelevantElementValues(elements) {
 			} else {
 				ret = ret + '&'+handle+'='+encodeURIComponent(formulize_selectedItems);
 			}
-    }
+    	}
 	}
 	return ret;
 }
