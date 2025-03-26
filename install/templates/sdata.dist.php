@@ -39,3 +39,8 @@ define('SDATA_DB_PREFIX', '');
 // This salt will be appended to passwords in the icms_encryptPass() function.
 // Do NOT change this once your site is Live, doing so will invalidate everyones Password.
 define('SDATA_DB_SALT', '');
+
+// Additional database options
+// If you need to specify additional options for the database connection, you can do so here.
+// For example, to specify the charset to be used, you can set the PDO::MYSQL_ATTR_INIT_COMMAND option to "SET NAMES utf8"
+define('SDATA_DB_OPTIONS', []);
