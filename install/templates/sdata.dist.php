@@ -42,5 +42,5 @@ define('SDATA_DB_SALT', '');
 
 // Additional database options
 // If you need to specify additional options for the database connection, you can do so here.
-// For example, to specify the charset to be used, you can set the PDO::MYSQL_ATTR_INIT_COMMAND option to "SET NAMES utf8"
+// For example, to specify the charset to be used, you can set the PDO::ATTR_ERRMODE option to "PDO::ERRMODE_EXCEPTION"
 define('SDATA_DB_OPTIONS', []);
