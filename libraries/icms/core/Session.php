@@ -671,6 +671,12 @@ class icms_core_Session {
 			'DELETE FROM %s WHERE sess_id = %s',
 			icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id)
 		);
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
+		writeToFormulizeLog(array(
+			'formulize_event'=>'session-being-destroyed',
+			'destroyed_session_id'=>$sess_id,
+			'user_id'=>intval($_SESSION['xoopsUserId'])
+		));
 		if (!$result = icms::$xoopsDB->queryF($sql)) {
 			return false;
 		}
@@ -686,6 +692,11 @@ class icms_core_Session {
 		if (empty($expire)) {
 			return true;
 		}
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
+		writeToFormulizeLog(array(
+			'formulize_event'=>'session-garbage-collection',
+			'user_id'=>intval($_SESSION['xoopsUserId'])
+		));
 		$mintime = time() - (int) $expire;
 		$sql = sprintf("DELETE FROM %s WHERE sess_updated < '%u'", icms::$xoopsDB->prefix('session'), $mintime);
 		if(icms::$xoopsDB->queryF($sql)) { return true; } else { return false; }
