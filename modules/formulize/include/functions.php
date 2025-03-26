@@ -912,7 +912,7 @@ function getEntryOwner($entry, $fid) {
 function makeUidFilter($users) {
     if (is_array($users)) {
         if (count((array) $users) > 1) {
-            return "uid=" . implode(" OR uid=", $users);
+            return "uid=" . implode(" OR uid=", array_map('intval', array_filter($users, 'is_numeric')));
         } else {
             return "uid=" . intval($users[0]);
         }
@@ -920,7 +920,6 @@ function makeUidFilter($users) {
         return "uid=" . intval($users);
     }
 }
-
 
 // FUNCTION HANDLES CHECKING FOR ALL LINKING RELATIONSHIPS FOR THE FORM
 // returns the fids and entries passed to it, plus any others in a framework relationship
@@ -1677,6 +1676,63 @@ function getCalcHandleText($handle, $forceColhead=true) {
     }
 }
 
+/**
+ * Create a SQL string suitable for putting into a query being performed on a Formulize form data table, that will restrict the records returned to the ones the user has permission to see.
+ * @param int fid - The form id of the form the scope is being generated for.
+ * @param string|array scopeData - Optional - If present, can be an array of group ids, or an arbitrary string that will be put inside "AND ( )". In the string, 'uid' will be replaced with $tableAlias.creation_uid. Typically the string would be in "uid=X OR uid=Y" format (as produced by the buildScope function).
+ * @param object|int - userObjectOrUserId - Optional - If no scopeData is passed in, this specifies the user for whom the scope should be determined. If not specified, then the active user is used
+ * @param string - tableAlias - Optional - The table alias being used to refer to the Formulize form data table in the SQL query where this SQL will be used. Defaults to 'main'.
+ * @return string - Returns the SQL, if any, that is required to limit a query on the Formulize form data table
+ */
+function makeScopeSQL($fid, $scopeData=null, $userObjectOrUserId = null, $tableAlias="main") {
+
+	$tableAlias = $tableAlias ? $tableAlias."." : "";
+
+	// determine the user's scope on the declared form, if no scope data was provided
+	// start with 'all' and buildScope will ratchet down to the most appropriate scope based on user's permissions
+	if(!is_array($scopeData) AND !$scopeData AND intval($fid)) {
+		// the user is the passed in user, or the active user if none passed in
+		if(is_object($userObjectOrUserId)) {
+			if(!$uid = $userObjectOrUserId->getVar('uid')) {
+				error_log("Fatal Formulize Error: invalid user object passed in to makeScopeSQL().");
+				exit();
+			}
+		} elseif($userObjectOrUserId) {
+			$uid = intval($userObjectOrUserId);
+		} else {
+			global $xoopsUser;
+			$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+		}
+		list($scopeData, $scopeType) = buildScope('all', $uid, intval($fid));
+	}
+
+	$scopeFilter = ""; // default to no scope (see all entries). Passed in scope, or a scope determined for the user on the fid, if any, will be either an array or a string of uids
+
+	// if scope info is an array of group ids...
+	if(is_array($scopeData)) {
+		if	(count($scopeData) > 0 ) {
+			global $xoopsDB;
+			$start = true;
+			foreach($scopeData as $groupId) { // need to loop through the array, and not use implode, so we can sanitize the values
+				if(!$start) {
+					$scopeFilter .= " OR scope.groupid=".intval($groupId);
+				} else {
+					$start = false;
+					$scopeFilter = " AND EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS scope WHERE (scope.entry_id=".$tableAlias."entry_id AND scope.fid=".intval($fid).") AND (scope.groupid=".intval($groupId);
+				}
+			}
+			$scopeFilter .= ")) "; // need two closing brackets for the exists statement and its where clause
+		} else { // no valid entries found, so show no entries
+			$scopeFilter = " AND ".$tableAlias."entry_id<0 ";
+		}
+
+	// if scope is a string...
+	} elseif($scopeData) { // need to handle old "uid = X OR..." syntax
+		$scopeFilter = " AND (".str_replace("uid", $tableAlias."creation_uid", formulize_db_escape($scopeData)).") ";
+	}
+
+	return $scopeFilter;
+}
 
 // this function builds the scope used for passing to the getData function
 // based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
@@ -1694,7 +1750,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
 
     $scope = "";
     if ($currentView == "blank") { // send an invalid scope
-        $scope = "uid=\"blankscope\"";
+        $scope = 'uid="blankscope"';
     } elseif (strstr($currentView, ",")) { // advanced scope, or oldscope
         $grouplist = explode("," , trim($currentView, ","));
         if ($grouplist[0] == "onlymembergroups") { // first key may be a special flag to cause the scope to be handled differently
@@ -1705,10 +1761,9 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
         }
         // safeguard against empty or invalid grouplists
         if (count((array) $grouplist)==0) {
-            $all_users[] = "";
-            $scope = makeUidFilter($all_users);
+          $scope = 'uid="blankscope"'; // show nothing because there are no defined groups
         } else {
-            $scope = $grouplist;
+          $scope = $grouplist;
         }
     } elseif ($currentView == "all") {
         if ($hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid) OR $currentViewCanExpand) {
@@ -1723,7 +1778,7 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
     // do this second last, just in case currentview =all was passed in but not valid and defaulted back to group
     if ($currentView == "group") {
 
-        if (!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand) {
+        if (!$hasGroupScope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid) AND !$currentViewCanExpand AND !$hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) { // odd checking of global here, but 'group' could have been specifically requested even though user only has global. So in that case, checking for groupscope would fail, but user still has rights to the entries due to global scope, so don't default to 'mine' in this case
             $currentView = "mine";
         } else {
             $formulize_permHandler = new formulizePermHandler($fid);
@@ -1734,18 +1789,16 @@ function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
             }
             // safeguard against empty or invalid grouplists
             if (count((array) $scopeGroups)==0) {
-                $all_users[] = $uid;
-                $scope = makeUidFilter($all_users);
+              $scope = makeUidFilter(array($uid)); // limit user to themselves since no their groupscope is empty
             } else {
-                $scope = $scopeGroups;
+              $scope = $scopeGroups;
             }
         }
     }
 
     // catch all. if it's "mine" or an old view, or there's no scope yet defined, then treat it as just the user's own entries
     if ($currentView == "mine" OR substr($currentView, 0, 4) == "old_" OR ($scope == "" AND $currentView != "all")) {
-        $all_users[] = $uid;
-        $scope = makeUidFilter($all_users);
+      $scope = makeUidFilter(array($uid));
     }
     return array($scope, $currentView);
 }
