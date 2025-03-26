@@ -26,13 +26,13 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	// This constant also causes errors to still be logged (but not displayed) when the Developer Dashboard setting is off.
 	// Comment out this constant if you don't want any of this behaviour
 	define("ICMS_ERROR_LOG_SEVERITY", E_WARNING);
-	
+
 	// ADDED BY FREEFORM SOLUTIONS
 	// Set the default timezone to UTC if there is no other timezone specifically set already
 	if ("UTC" == @date_default_timezone_get()) {
 		date_default_timezone_set("UTC");
 	}
-		
+
 	// XOOPS Physical Path
 	// Physical path to your main XOOPS directory WITHOUT trailing slash
 	// Example: define('XOOPS_ROOT_PATH', '/path/to/xoops/directory');
@@ -127,9 +127,9 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	    // Set the database charset if applicable
     if (defined('XOOPS_DB_CHARSET')) die();
     define('XOOPS_DB_CHARSET', '');
-	
+
 	$xoopsDBCharset = XOOPS_DB_CHARSET ? XOOPS_DB_CHARSET : 'utf8mb4';
-	define('XOOPS_DB_DSN', 'host='.SDATA_DB_HOST.';dbname='.SDATA_DB_NAME.';charset='.$xoopsDBCharset); 
+	define('XOOPS_DB_DSN', 'host='.SDATA_DB_HOST.';dbname='.SDATA_DB_NAME.';charset='.$xoopsDBCharset);
 
 	// Table Prefix
 	// This prefix will be added to all new tables created to avoid name conflict in the database. If you are unsure, just use the default 'icms'.
@@ -155,7 +155,14 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	// This salt will be appended to passwords in the icms_encryptPass() function.
 	// Do NOT change this once your site is Live, doing so will invalidate everyones Password.
 	define('XOOPS_DB_SALT', '');
-	
+
+	// Additional database options
+	if (defined('SDATA_DB_OPTIONS') && is_array(SDATA_DB_OPTIONS) && !empty(SDATA_DB_OPTIONS)) {
+		define ('XOOPS_DB_OPTIONS', SDATA_DB_OPTIONS);
+	} else {
+		define ('XOOPS_DB_OPTIONS', NULL);
+	}
+
 	// Use persistent connection? (Yes=1 No=0)
 	// Default is 'Yes'. Choose 'Yes' if you are unsure.
 	define('XOOPS_DB_PCONNECT', 0);

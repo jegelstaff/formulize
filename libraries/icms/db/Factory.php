@@ -29,7 +29,7 @@ abstract class icms_db_Factory {
 		if (!class_exists($class)) {
 			$class = "icms_db_Connection";
 		}
-		return self::$pdoInstance = new $class($dsn, XOOPS_DB_USER, XOOPS_DB_PASS);
+		return self::$pdoInstance = new $class($dsn, XOOPS_DB_USER, XOOPS_DB_PASS, XOOPS_DB_OPTIONS);
 	}
 	/**
 	 * Get a reference to the only instance of database class and connects to DB
