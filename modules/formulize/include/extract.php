@@ -2208,7 +2208,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 					} else {
 						$replacement = "display(\$entry, '$newterm')";
 					}
-					$replacement = "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm']) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm\'] : $replacement)";
+					$replacement = "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm']) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm'] : $replacement)";
 					$quotePos = $quotePos + strlen($replacement);
 					$formula = str_replace($term, $replacement, $formula);
 				} else {
