@@ -1814,7 +1814,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 								$useAndOr = $multiValueSearchMetadata['andOr'];
 								$useOp = $multiValueSearchMetadata['operator'];
 								$newWhereClause = "( $queryElement $useOp \"%*=+*:$searchTerm*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:$searchTerm\" )";
-							} else { 
+							} else {
 								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . $searchTerm . $likebits . $quotes;
 							}
 							// exclude 0 from searches for empty values (because we use lazy mode in MySQL we have to do this manually Argh!!)
@@ -2208,7 +2208,7 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 					} else {
 						$replacement = "display(\$entry, '$newterm')";
 					}
-					$replacement = "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id][\"$newterm\"]) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id][\"$newterm\"] : $replacement)";
+					$replacement = "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm']) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm'] : $replacement)";
 					$quotePos = $quotePos + strlen($replacement);
 					$formula = str_replace($term, $replacement, $formula);
 				} else {
