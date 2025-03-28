@@ -24,6 +24,26 @@ if(isset($_SESSION['google_xoops_redirect'])) {
     exit();
 }
 
+/**
+ * HTTP Security Headers
+ */
+// HTTP Strict Transport Security (HSTS) - two years
+header("Strict-Transport-Security: max-age=63072000");
+// Content Security Policy (CSP) - starting with recommended locked down policy
+header("Content-Security-Policy: default-src 'none';
+	img-src 'self';
+	script-src 'self' ajax.googleapis.com use.fontawesome.com;
+	style-src 'self' fonts.googleapis.com ajax.googleapis.com use.fontawesome.com;
+	font-src fonts.gstatic.com;
+	connect-src 'self'"
+);
+// X-Frame-Options to prevent clickjacking
+header("X-Frame-Options: DENY");
+// Referrer Policy to prevent URL leakage
+header("Referrer-Policy: same-origin");
+// X-Content-Type-Options to prevent MIME sniffing
+header("X-Content-Type-Options: nosniff");
+
 // added failover to default startpage for the registered users group -- JULIAN EGELSTAFF Apr 3 2017
 $groups = @is_object(icms::$user) ? icms::$user->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 if(($icmsConfig['startpage'][$group] == "" OR $icmsConfig['startpage'][$group] == "--")
