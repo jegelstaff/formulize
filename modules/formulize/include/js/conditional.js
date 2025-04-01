@@ -9,6 +9,7 @@ var conditionalCheckInProgress = 0;
 function callCheckCondition(name) {
 	const checks = [];
     const relevantElementSets = [];
+	const relevantElementSetsUseOneToOne = [];
 	var oneToOne;
 	for(key in governedElements[name]) {
 		var markupHandle = governedElements[name][key];
@@ -19,12 +20,13 @@ function callCheckCondition(name) {
 		}
 		elementValuesForURL = getRelevantElementValues(markupHandle, oneToOne);
         if(elementValuesForURL in relevantElementSets == false) {
+			relevantElementSetsUseOneToOne[elementValuesForURL] = oneToOne;
             relevantElementSets[elementValuesForURL] = new Array();
         }
         relevantElementSets[elementValuesForURL].push(markupHandle);
     }
     for(elementValuesForURL in relevantElementSets) {
-        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL, oneToOne));
+        checks.push(checkCondition(relevantElementSets[elementValuesForURL], elementValuesForURL, relevantElementSetsUseOneToOne[elementValuesForURL]));
     }
     var results = jQuery.when.apply(jQuery, checks);
     results.done(function(){
