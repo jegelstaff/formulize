@@ -29,6 +29,9 @@ abstract class icms_db_Factory {
 		if (!class_exists($class)) {
 			$class = "icms_db_Connection";
 		}
+		if (!defined('XOOPS_DB_OPTIONS')) {
+			define('XOOPS_DB_OPTIONS', NULL);
+		}
 		return self::$pdoInstance = new $class($dsn, XOOPS_DB_USER, XOOPS_DB_PASS, XOOPS_DB_OPTIONS);
 	}
 	/**
