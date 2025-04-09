@@ -612,22 +612,6 @@ class icms_core_Session {
 			$sessionLoaded = true;
 			error_log('Formulize Standalone Error: After 10 seconds the session data was still locked by a prior request, so we\'re going with the current state of the session data anyway! URI: '.str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI']))));
 		}
-		if($sess_data) {
-			// validate the IP and check that it's consistent with the previous
-			$pos = 0;
-			if ($this->ipv6securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv6')) {
-				$pos = 3; // for IPv6 localhost
-				if ($_SERVER['REMOTE_ADDR'] != "::1") { // or if not localhost...
-						$pos = strpos($sess_ip, ":", $this->ipv6securityLevel - 1);
-				}
-			} elseif ($this->securityLevel > 1 && icms_core_DataFilter::checkVar($sess_ip, 'ip', 'ipv4')) {
-					$pos = strpos($sess_ip, ".", $this->securityLevel - 1);
-			}
-			if ($pos AND strncmp($sess_ip, $_SERVER['REMOTE_ADDR'], $pos)!=0) { // if not consistent then kill the session
-				$sess_data = '';
-				$this->destroySession($sess_id);
-			}
-		}
 		$sess_data = !is_string($sess_data) ? '' : $sess_data; // must return a string!
 		if($sess_data) { $cachedSessionIds[$sess_id] = $sess_data; }
     return $sess_data;
