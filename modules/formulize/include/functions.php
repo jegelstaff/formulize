@@ -6319,7 +6319,7 @@ function formulize_xhr_send(op,params) {
 // provides the token that is associated witht he entry locking/unlocking for this page load
 function getEntryLockSecurityToken() {
     static $token;
-    $token = $token ? $token : $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_entry_lock_token');
+    $token = $token ? $token : hash('sha256',(uniqid(rand(), true).$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX.$_SERVER['REMOTE_ADDR']));
     return $token;
 }
 
