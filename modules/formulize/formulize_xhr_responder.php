@@ -345,7 +345,7 @@ switch($op) {
 function renderElement($elementObject, $entryId, $frid, $screenObject) {
 
 	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
-	$deReturnValue = displayElement("", $elementObject, $entryId, false, $screenObject, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+	$deReturnValue = displayElement("", $elementObject, $entryId, false, $screenObject, null, false); // false, means it's not a noSave element, null, false means no prevEntry data passed in, and do not render the element on screen
 	unset($GLOBALS['formulize_asynchronousRendering']);
 
 	// element is allowed, so prep some stuff for rendering...
