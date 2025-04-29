@@ -209,11 +209,16 @@ switch($op) {
       }
     }
 		$screenObject = null;
-		if($sid) {
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+		$gperm_handler = xoops_gethandler('groupperm');
+		if($sid AND $viewFormPermission = $gperm_handler->checkRight("view_form", $fid, $groups, getFormulizeModId())) {
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 			if($screenObject = $screen_handler->get($sid)) {
 				$screen_handler = xoops_getmodulehandler($screenObject->getVar('type').'Screen', 'formulize');
 				$screenObject = $screen_handler->get($sid);
+				if($screenObject->getVar('fid') != $fid) {
+					$screenObject = null;
+				}
 			}
 		}
 		// Normally, the entryId we're rendering is the one displayed in the form at load time, elements are dependent on conditions, but always rendered as in that entry.
