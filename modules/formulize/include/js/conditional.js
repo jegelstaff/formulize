@@ -114,7 +114,7 @@ function checkCondition(relevantElementSet, elementValuesForURL) {
         }
         elementIdsSep = ',';
     }
-	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+elementValuesForURL);
+	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+FORMULIZE.SCREEN_ID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+elementValuesForURL);
 }
 
 function getRelevantElementValues(elements) {

@@ -117,7 +117,8 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // $isDisabled flags whether the element is disabled or not so we know how to render it
     // $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
+    // $screen is the screen object that is in effect, if any (may be null)
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		$provinceList = $this->getProvinceList();
 
 		if($isDisabled) {

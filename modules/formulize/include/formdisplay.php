@@ -118,15 +118,8 @@ class formulize_themeForm extends XoopsThemeForm {
         $template = '';
 				global $xoopsUser;
 				$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-        if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
-            $template = getTemplateToRender($type, $this->screen);
-        } elseif(isset($_SESSION['formulizeScreenId'][$uid]) AND $sid = $_SESSION['formulizeScreenId'][$uid]) {
-            // retrieve the cached screen id from when the form was first rendered, if we're rendering a disembodied element now as part of an asynchronous conditional call -- screen object is not available in this case because we are only working with the individual element
-            $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-            $screen = $screen_handler->get($sid);
-            $screenType = $screen->getVar('type');
-            $screen_handler = xoops_getmodulehandler($screenType.'Screen', 'formulize');
-            $template = getTemplateToRender($type, $screen_handler->get($sid));
+        if(is_object($this->screen)) {
+          $template = getTemplateToRender($type, $this->screen);
         }
         if(!$template) {
             $template = getTemplateToRender($type, 'multiPage');
@@ -192,7 +185,7 @@ class formulize_themeForm extends XoopsThemeForm {
             }
         }
 
-        if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
+        if(is_object($this->screen)) {
             $modifyScreenLink = $this->modifyScreenLink;
         }
 
@@ -241,85 +234,35 @@ class formulize_themeForm extends XoopsThemeForm {
 		return $js;
 	}
 
-    // reset will cause the cached copy of columns to be bypassed - this is done when a form is rendered, so that we don't reuse the setting for an element when it appeared on a different screen in the past in this same session
-    function _getColumns($ele, $reset = false) {
-        global $xoopsUser, $xoopsConfig;
-        $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-        // cache in the session the column setting we used for a given element last time it was rendered
-        // should be unnecessary to segregate by uid in the session superglobal, but can't hurt
-        // This caching is necessary so that conditional calls for rendering the element work as expected!
-
-        // cache also the screen id since we need to lookup the template according to the screen object settings
-
-        // if a numeric value is passed as ele, that is an element id, sent specifically so we can seed the right column value based on the screen setting
-        if(is_numeric($ele)) {
-            $eleKey = $ele;
-        } elseif(is_object($ele) AND isset($ele->formulize_element)) {
-            $eleKey = $ele->formulize_element->getVar('ele_id');
-        } elseif(is_object($ele)) {
-			$eleKey = md5(serialize($ele));
-        } elseif(strstr($ele, "<<||>>")) {
-            $ele = explode("<<||>>", $ele);
-            $parts = explode('_', $ele[1]);
-            $ele_id = $parts[3];
-            $eleKey = $ele_id;
-        } else {
-            $eleKey = md5($ele);
-        }
-
-        if(isset($_SESSION['columns'][$uid][$eleKey]) AND !$reset) {
-            $columns = $_SESSION['columns'][$uid][$eleKey];
-        } elseif($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
-            $_SESSION['formulizeScreenId'][$uid] = $this->screen->getVar('sid');
-            $columns = $this->screen->getVar('displaycolumns') == 1 ? 1 : 2;
-            if($this->screen->getVar('column1width')) {
-                $column1width = $this->screen->getVar('column1width');
-            } elseif($columns == 2) {
-                $column1width = '20%';
-            } else {
-                $column1width = 'auto';
-            }
-            $column2width = $this->screen->getVar('column2width') ? $this->screen->getVar('column2width') : 'auto';
-            $columns = array($columns, $column1width, $column2width);
-        } elseif($_SERVER['SCRIPT_NAME'] == '/modules/formulize/admin/fakeform.php') {
-						$columns = array(2, '20%', 'auto');
-        } else {
-            $columns = array(1, 'auto', 'auto');
-        }
-        $_SESSION['columns'][$uid][$eleKey] = $columns;
-        return $columns;
+    function _getColumns() {
+			if(is_object($this->screen)) {
+					$columns = $this->screen->getVar('displaycolumns') == 1 ? 1 : 2;
+					if($this->screen->getVar('column1width')) {
+							$column1width = $this->screen->getVar('column1width');
+					} elseif($columns == 2) {
+							$column1width = '20%';
+					} else {
+							$column1width = 'auto';
+					}
+					$column2width = $this->screen->getVar('column2width') ? $this->screen->getVar('column2width') : 'auto';
+					$columns = array($columns, $column1width, $column2width);
+			} elseif($_SERVER['SCRIPT_NAME'] == '/modules/formulize/admin/fakeform.php') {
+					$columns = array(2, '20%', 'auto');
+			} else {
+					$columns = array(1, 'auto', 'auto');
+			}
+			return $columns;
     }
 
 	function _drawElements($elements, $ret, $hidden) {
 
 		foreach ( $elements as $ele ) {
 
-            if(is_string($ele) AND isset($GLOBALS['formulize_renderedElementHasConditions'])) {
-                // check if this is a placeholder row for an element that has conditions, and if so, deduce the element ID from the key in the global array of rendered elements that had conditions
-                foreach($GLOBALS['formulize_renderedElementHasConditions'] as $deKey=>$conditions) {
-                    if(strstr($ele, $deKey)) {
-                        $deParts = explode('_', $deKey);
-                        $eleToSetForColumns = $deParts[3];
-                        break;
-                    }
-                }
-            } else {
-                $eleToSetForColumns = $ele;
-            }
-
-            // set the column value for all elements, regardless of if they're being rendered or not, so we can pick up the value from session if a conditional element is activated later asynchronously
-            // but only do this when rendering the screen that the element is natively part of! -- conditionally hidden elements could otherwise end up with a different screen's settings as their cached-in-session settings
-            $eleToCheckForReset = is_numeric($eleToSetForColumns) ? $eleToSetForColumns : $ele->formulize_element;
-            if(($this->screen AND $this->screen->elementIsPartOfScreen($eleToCheckForReset))
-               OR (is_object($ele) AND ($ele->getName() == 'button-controls' OR $ele->getName() == 'proxyuser' OR substr($ele->getName(), 0, 12) == 'updateowner_'))) {
-                $columnData = $this->_getColumns($eleToSetForColumns, 'reset');
-            } else {
-                $columnData = $this->_getColumns($ele);
-            }
-            $columns = $columnData[0];
-            $column1Width = str_replace(';','',$columnData[1]);
-            $column2Width = str_replace(';','',$columnData[2]);
-            $startHidden = false;
+			$columnData = $this->_getColumns();
+			$columns = $columnData[0];
+			$column1Width = str_replace(';','',$columnData[1]);
+			$column2Width = str_replace(';','',$columnData[2]);
+			$startHidden = false;
 
 			$containerOpen = '';
 			$containerContents = '';
@@ -459,7 +402,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
 		static $show_element_edit_link = null;
 		global $formulize_drawnElements;
-        $columnData = $this->_getColumns($ele);
+    $columnData = $this->_getColumns();
 		// initialize things first time through...
 		if($show_element_edit_link === null) {
 			$formulize_drawnElements = array();
@@ -587,7 +530,7 @@ class formulize_themeForm extends XoopsThemeForm {
                         }
                     }
                     $js .= ")==false) {\n".$validationJs."\n}";
-                    $columnData = $this->_getColumns($ele);
+                    $columnData = $this->_getColumns();
                     $columns = $columnData[0];
                     if(strstr($this->getTemplate('elementcontainero'), "\$elementContainerId") OR strstr($this->getTemplate('elementtemplate'.$columns), "\$elementContainerId")) {
                         $checkConditionalRow = true;
@@ -3281,6 +3224,7 @@ var formulize_xhr_returned_check_for_unique_value = new Array();
 var FORMULIZE = {
 	XOOPS_URL : \"".XOOPS_URL."\",
 	XOOPS_UID : ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).",
+	SCREEN_ID : ".($screen ? $screen->getVar('sid') : 0).",
 }
 ";
 $split = random_int(8, strlen(getCurrentURL())-2);
