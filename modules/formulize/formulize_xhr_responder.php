@@ -213,11 +213,10 @@ switch($op) {
 		$gperm_handler = xoops_gethandler('groupperm');
 		if($sid AND $viewFormPermission = $gperm_handler->checkRight("view_form", $fid, $groups, getFormulizeModId())) {
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			if($screenObject = $screen_handler->get($sid)) {
-				$screen_handler = xoops_getmodulehandler($screenObject->getVar('type').'Screen', 'formulize');
-				$screenObject = $screen_handler->get($sid);
-				if($screenObject->getVar('fid') != $fid) {
-					$screenObject = null;
+			if($candidateScreenObject = $screen_handler->get($sid)) {
+				if($candidateScreenObject->getVar('fid') == $fid) {
+					$screen_handler = xoops_getmodulehandler($candidateScreenObject->getVar('type').'Screen', 'formulize');
+					$screenObject = $screen_handler->get($sid);
 				}
 			}
 		}
