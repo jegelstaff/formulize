@@ -118,15 +118,8 @@ class formulize_themeForm extends XoopsThemeForm {
         $template = '';
 				global $xoopsUser;
 				$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-        if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
-            $template = getTemplateToRender($type, $this->screen);
-        } elseif(isset($_SESSION['formulizeScreenId'][$uid]) AND $sid = $_SESSION['formulizeScreenId'][$uid]) {
-            // retrieve the cached screen id from when the form was first rendered, if we're rendering a disembodied element now as part of an asynchronous conditional call -- screen object is not available in this case because we are only working with the individual element
-            $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-            $screen = $screen_handler->get($sid);
-            $screenType = $screen->getVar('type');
-            $screen_handler = xoops_getmodulehandler($screenType.'Screen', 'formulize');
-            $template = getTemplateToRender($type, $screen_handler->get($sid));
+        if(is_object($this->screen)) {
+          $template = getTemplateToRender($type, $this->screen);
         }
         if(!$template) {
             $template = getTemplateToRender($type, 'multiPage');
@@ -192,7 +185,7 @@ class formulize_themeForm extends XoopsThemeForm {
             }
         }
 
-        if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
+        if(is_object($this->screen)) {
             $modifyScreenLink = $this->modifyScreenLink;
         }
 
@@ -241,8 +234,8 @@ class formulize_themeForm extends XoopsThemeForm {
 		return $js;
 	}
 
-    function _getColumns($ele) {
-			if($this->getTitle() != 'formulizeAsynchElementRender' AND is_object($this->screen)) {
+    function _getColumns() {
+			if(is_object($this->screen)) {
 					$columns = $this->screen->getVar('displaycolumns') == 1 ? 1 : 2;
 					if($this->screen->getVar('column1width')) {
 							$column1width = $this->screen->getVar('column1width');
@@ -265,7 +258,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
 		foreach ( $elements as $ele ) {
 
-			$columnData = $this->_getColumns($ele);
+			$columnData = $this->_getColumns();
 			$columns = $columnData[0];
 			$column1Width = str_replace(';','',$columnData[1]);
 			$column2Width = str_replace(';','',$columnData[2]);
@@ -409,7 +402,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
 		static $show_element_edit_link = null;
 		global $formulize_drawnElements;
-        $columnData = $this->_getColumns($ele);
+    $columnData = $this->_getColumns();
 		// initialize things first time through...
 		if($show_element_edit_link === null) {
 			$formulize_drawnElements = array();
@@ -537,7 +530,7 @@ class formulize_themeForm extends XoopsThemeForm {
                         }
                     }
                     $js .= ")==false) {\n".$validationJs."\n}";
-                    $columnData = $this->_getColumns($ele);
+                    $columnData = $this->_getColumns();
                     $columns = $columnData[0];
                     if(strstr($this->getTemplate('elementcontainero'), "\$elementContainerId") OR strstr($this->getTemplate('elementtemplate'.$columns), "\$elementContainerId")) {
                         $checkConditionalRow = true;
