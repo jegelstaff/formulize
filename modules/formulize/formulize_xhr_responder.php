@@ -182,7 +182,7 @@ switch($op) {
     $sendBackValue = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
     foreach($_GET as $k=>$v) {
-      if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' OR $k == 'frid' OR substr($k, 0, 8) == 'onetoone') { // serveral onetoone keys can be passed back too
+      if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' OR $k == 'frid' OR substr($k, 0, 8) == 'onetoone' OR $k == 'sid') { // serveral onetoone keys can be passed back too
         if($k == 'onetooneentries' OR $k == 'onetoonefids') {
             ${$k} = unserialize($v);
         } else {
@@ -208,6 +208,14 @@ switch($op) {
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
       }
     }
+		$screenObject = null;
+		if($sid) {
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if($screenObject = $screen_handler->get($sid)) {
+				$screen_handler = xoops_getmodulehandler($screenObject->getVar('type').'Screen', 'formulize');
+				$screenObject = $screen_handler->get($sid);
+			}
+		}
 		// Normally, the entryId we're rendering is the one displayed in the form at load time, elements are dependent on conditions, but always rendered as in that entry.
 		// In a one-to-one situation, if the relationship is based on a linked element, we need to render elements from the entry selected in the governing element
 		// If the relationship is common value then we need to try to determine which entry is connected to it, if any
@@ -238,7 +246,7 @@ switch($op) {
 			$html = "";
       $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$_GET['fid'].'_'.$_GET['entryId'].'_'.$thisElementId);
       if(security_check($fid, $entryId)) {
-        $html = renderElement($elementObject, $entryId);
+        $html = renderElement($elementObject, $entryId, $frid, $screenObject);
         $json .= ', "data" : '.json_encode($html);
       } else {
        	$json .= ', "data" : '.json_encode('{NOCHANGE}');
@@ -280,7 +288,7 @@ switch($op) {
                     )
                 )
             ) {
-                if($html = renderElement($elementObject, $entryID)) {
+                if($html = renderElement($elementObject, $entryID, $frid, $screenObject)) {
                     $derivedValueMarkup[$elementId] = $html;
                 }
             }
@@ -329,10 +337,10 @@ switch($op) {
 
 }
 
-function renderElement($elementObject, $entryId) {
+function renderElement($elementObject, $entryId, $frid, $screenObject) {
 
 	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
-	$deReturnValue = displayElement("", $elementObject, $entryId, false, null, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
+	$deReturnValue = displayElement("", $elementObject, $entryId, false, $screenObject, null, false); // false, null, null, false means it's not a noSave element, no screen, no prevEntry data passed in, and do not render the element on screen
 	unset($GLOBALS['formulize_asynchronousRendering']);
 
 	// element is allowed, so prep some stuff for rendering...
@@ -345,7 +353,7 @@ function renderElement($elementObject, $entryId) {
 		$elementContents = $form_ele;
 
 		// prepare empty form object just for rendering element
-		$form = new formulize_themeForm('formulizeAsynchElementRender','','');
+		$form = new formulize_themeForm('formulizeAsynchElementRender','','','post', false, $frid, $screenObject);
 
 		// figure out what we've got on our hands to render
 		$breakClass = 'head';

@@ -114,9 +114,10 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // $caption is the prepared caption for the element
     // $markupName name of rendered element in the HTML
     // $isDisabled flags whether the element should be rendered or not
-    // $element is the element object
-    // $entry_id is the ID of the entry for the element
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
+		// $element is the element object
+    // $entry_id is the ID number of the entry where this particular element comes from
+    // $screen is the screen object that is in effect, if any (may be null)
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
         $slider_html = "<input type=\"range\" ";
         $slider_html .= "name=\"{$markupName}\"";
         $slider_html .= "id=\"{$markupName}\"";

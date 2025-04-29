@@ -117,9 +117,10 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $caption is the prepared caption for the element
     // $markupName is what we have to call the rendered element in HTML
     // $isDisabled flags whether the element is disabled or not so we know how to render it
-    // $element is the element object
+		// $element is the element object
     // $entry_id is the ID number of the entry where this particular element comes from
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id) {
+    // $screen is the screen object that is in effect, if any (may be null)
+    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
         // ele_value[3] is the fileName or error message
         // ele_value[4] is the displayName version of the fileName (only going to be diff from fileName if there is no direct linking to files allowed)
         // ele_value[5] is the flag for whether there's a file or not
