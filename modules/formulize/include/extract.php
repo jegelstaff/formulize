@@ -164,9 +164,9 @@ function prepvalues($value, $field, $entry_id)
 			// save the value before convertElementIdsToElementHandles()
 			$before_conversion = $sourceMeta[1];
 			$altFieldSource = "";
-			if ($GLOBALS['formulize_doingExport'] and isset($source_ele_value[11]) and $source_ele_value[11] != "none") {
+			if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
 				$altFieldSource = $source_ele_value[11];
-			} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) and $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
+			} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
 				$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
 			}
 			if ($altFieldSource) {
@@ -484,7 +484,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
 
 	//print_r( $linkformids );
-	if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) or isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
+	if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
 		$GLOBALS['formulize_linkformidsForCalcs'] = $linkformids;
 	}
 
@@ -842,12 +842,14 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
 		}
 
-		if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) or isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
+		if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
 			$GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
 			$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 			$GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
-			unset($GLOBALS['formulize_setBaseQueryForCalcs']);
-			if ($GLOBALS['formulize_returnAfterSettingBaseQuery']) {
+			if(isset($GLOBALS['formulize_setBaseQueryForCalcs'])) {
+				unset($GLOBALS['formulize_setBaseQueryForCalcs']);
+			}
+			if (isset($GLOBALS['formulize_returnAfterSettingBaseQuery']) AND $GLOBALS['formulize_returnAfterSettingBaseQuery']) {
 				return true;
 			} // if we are only setting up calculations, then return now that the base query is built
 		}
@@ -1865,9 +1867,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 	$oneSideFilters = array();
 	foreach ($oneSideFiltersTemp as $mappedForm => $oneSideParts) {
 		foreach ($oneSideParts as $type => $expressions) {
-			foreach ($expressions as $expression) {
-				$oneSideFilters[$mappedForm][$type] .= isset($oneSideFilters[$mappedForm][$type]) ? " $andor ( $expression ) " : " ( $expression ) ";
-			}
+			$oneSideFilters[$mappedForm][$type] = " ( ".implode(" ) $andor ( ", $expressions)." ) ";
 		}
 	}
 
