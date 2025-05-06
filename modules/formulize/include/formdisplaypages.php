@@ -421,20 +421,25 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			$GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
 	}
 
-	if(count((array) $forminfo['elements'])==0) {
-		print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
-	} else {
-		writeToFormulizeLog(array(
-			'formulize_event'=>'rendering-form-screen-page',
-			'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
-			'form_id'=>$fid,
-			'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
-			'entry_id'=>$entry,
-			'form_screen_page_number'=>$currentPage
-		));
-		displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+	writeToFormulizeLog(array(
+		'formulize_event'=>'rendering-form-screen-page',
+		'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+		'form_id'=>$fid,
+		'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
+		'entry_id'=>$entry,
+		'form_screen_page_number'=>$currentPage
+	));
+
+	// display the form if applicable...
+	if($currentPage != $thanksPage) {
+		if(count((array) $forminfo['elements'])==0) {
+			print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
+		} else {
+			displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+		}
 	}
 
+	// put in boilerplate code etc, and handle thanks page if applicable...
 	if(!$elements_only AND !isset($GLOBALS['formulize_inlineSubformFrid']) AND !strstr(getCurrentURL(), 'subformdisplay-elementsonly.php')) {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_boilerplate.php';
 	}
