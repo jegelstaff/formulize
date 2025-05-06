@@ -1325,18 +1325,12 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
 
         $c_uid = display($entry, 'creation_uid');
         $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-        $c_name = $c_name_q[0]['name'];
-        if (!$c_name) {
-            $c_name = $c_name_q[0]['uname'];
-        }
+        $c_name = $c_name_q[0]['name'] ? $c_name_q[0]['name'] : $c_name_q[0]['uname'];
         $c_date = display($entry, 'creation_datetime');
         $m_uid = display($entry, 'mod_uid');
         if ($m_uid) {
             $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-            $m_name = $m_name_q[0]['name'];
-            if (!$m_name) {
-                $m_name = $m_name_q[0]['uname'];
-            }
+            $m_name = $m_name_q[0]['name'] ? $m_name_q[0]['name'] : $m_name_q[0]['uname'];
         } else {
             $m_name = $c_name;
         }
@@ -1361,16 +1355,17 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
             }
             if ($col == "creation_uid" OR $col == "mod_uid" OR $col == "uid" OR $col == "proxyid") {
                 $name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
-                $data_to_write = $name_q[0]['name'];
-                if (!$data_to_write) { $data_to_write = $name_q[0]['uname']; }
+                $data_to_write = $name_q[0]['name'] ? quoteCellContentsForSpreadsheetExport($name_q[0]['name']) : quoteCellContentsForSpreadsheetExport($name_q[0]['uname']);
             } elseif($col == 'entry_id') {
                 $data_to_write = $id;
             } elseif($col == 'creation_datetime') {
                 $data_to_write = $c_date;
             } elseif($col == 'mod_datetime') {
                 $data_to_write = $m_date;
-            } elseif($col == 'creator_email' OR $col == 'owner_groups') {
+            } elseif($col == 'creator_email') {
                 $data_to_write = display($entry, $col);
+						} elseif($col == 'owner_groups') {
+								$data_to_write = quoteCellContentsForSpreadsheetExport(display($entry, $col));
             } else {
                 $data_to_write = prepareCellForSpreadsheetExport($col, $entry);
             }
@@ -1411,7 +1406,6 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
 
 function prepareCellForSpreadsheetExport($column, $entry) {
     static $formDataTypes = array();
-    static $exportIntroChar = null;
     $data_to_write = '';
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $thisColumnElement = $element_handler->get($column);
@@ -1420,26 +1414,6 @@ function prepareCellForSpreadsheetExport($column, $entry) {
     if(!isset($formDataTypes[$columnFid])) {
         $data_handler = new formulizeDataHandler($columnFid);
         $formDataTypes[$columnFid] = $data_handler->gatherDataTypes();
-    }
-    if($exportIntroChar === null) {
-        $config_handler = xoops_gethandler('config');
-        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-        switch($formulizeConfig['exportIntroChar']) {
-            case 4:
-                $exportIntroChar = "";
-                break;
-            case 3:
-                $exportIntroChar = "\t";
-                break;
-            case 2:
-                $exportIntroChar = "'";
-                break;
-            case 1:
-            default:
-                // Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel - default preference for handling strings in csv's, so they import without being mangled. Setting for no intro char may be useful when exporting to other programs that suck in raw data.
-								// Exception: if makecsv is called from the import.php popup, because we need to use it there to make a simple spreadsheet, that will probably be edited on a desktop with Excel
-                $exportIntroChar = (strstr(getCurrentURL(),'makecsv') AND !strstr($_SERVER['HTTP_REFERER'], '/modules/formulize/include/import.php')) ? "'" : "\t";
-        }
     }
 
     // experimental, replace displayTogether with a technique for splitting contents onto other lines below...
@@ -1462,12 +1436,52 @@ function prepareCellForSpreadsheetExport($column, $entry) {
         stristr($formDataTypes[$columnFid][$column], 'binary') OR
         strtolower($formDataTypes[$columnFid][$column]) == 'json'
     ) {
-        $data_to_write = str_replace("\r\n", "\n", $data_to_write); // convert lines
-        $data_to_write = str_replace('"', '""', $data_to_write); // escape quotes
-        $data_to_write = undoAllHTMLChars(str_replace("&quot;", '""', $data_to_write)); // escape quotes
-        $data_to_write = '"'.$exportIntroChar. trans($data_to_write).'"'; // encapsulate string with quotes
+        $data_to_write = quoteCellContentsForSpreadsheetExport($data_to_write);
     }
     return $data_to_write;
+}
+
+/**
+ * Wrap a value in quotes for proper inclusion in a csv file
+ * @param int|float|string data_to_write The value that is being quoted
+ * @return string The value properly quoted and escaped for inclusion in the csv
+ */
+function quoteCellContentsForSpreadsheetExport($data_to_write) {
+	$exportIntroChar = getExportIntroChar();
+	$data_to_write = str_replace("\r\n", "\n", $data_to_write); // convert lines
+  $data_to_write = str_replace('"', '""', $data_to_write); // escape quotes
+  $data_to_write = undoAllHTMLChars(str_replace("&quot;", '""', $data_to_write)); // escape quotes
+  $data_to_write = '"'.$exportIntroChar. trans($data_to_write).'"'; // encapsulate string with quotes
+	return $data_to_write;
+}
+
+/**
+ * Determine what intro character should be used in cells when making csv files. This is controlled in the Formulize preferences, and relates to getting strings and numbers to be read and formatted cleanly by Excel or Google Sheets.
+ * @return string The intro character to use, if any
+ */
+function getExportIntroChar() {
+	static $exportIntroChar = null;
+	if($exportIntroChar === null) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		switch($formulizeConfig['exportIntroChar']) {
+			case 4:
+				$exportIntroChar = "";
+				break;
+			case 3:
+				$exportIntroChar = "\t";
+				break;
+			case 2:
+				$exportIntroChar = "'";
+				break;
+			case 1:
+			default:
+				// Google wants a ' and Excel wants a tab...assume makecsv is going to be imported into Google, and otherwise we're downloading for Excel - default preference for handling strings in csv's, so they import without being mangled. Setting for no intro char may be useful when exporting to other programs that suck in raw data.
+				// Exception: if makecsv is called from the import.php popup, because we need to use it there to make a simple spreadsheet, that will probably be edited on a desktop with Excel
+				$exportIntroChar = (strstr(getCurrentURL(),'makecsv') AND !strstr($_SERVER['HTTP_REFERER'], '/modules/formulize/include/import.php')) ? "'" : "\t";
+		}
+	}
+	return $exportIntroChar;
 }
 
 // draw in secondary data rows (unique to AOHC)
@@ -7764,7 +7778,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                 if(!isset($GLOBALS['formulize_useForeignKeysInDataset']['creation_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
                                     $c_uid = display($entry, 'creation_uid');
                                     $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
-                                    $row[] = (isset($c_name_q[0]['name']) AND $c_name_q[0]['name']) ? $c_name_q[0]['name'] : $c_name_q[0]['uname'];
+                                    $row[] = (isset($c_name_q[0]['name']) AND $c_name_q[0]['name']) ? quoteCellContentsForSpreadsheetExport($c_name_q[0]['name']) : quoteCellContentsForSpreadsheetExport($c_name_q[0]['uname']);
                                 } else {
                                     $row[] = display($entry, 'creation_uid');
                                 }
@@ -7775,7 +7789,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             $m_uid = display($entry, 'mod_uid');
                             if ($m_uid AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['mod_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
                                 $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
-                                $row[] = (isset($m_name_q[0]['name']) AND $m_name_q[0]['name']) ? $m_name_q[0]['name'] : $m_name_q[0]['uname'];
+                                $row[] = (isset($m_name_q[0]['name']) AND $m_name_q[0]['name']) ? quoteCellContentsForSpreadsheetExport($m_name_q[0]['name']) : quoteCellContentsForSpreadsheetExport($m_name_q[0]['uname']);
                             } else {
                                 $row[] = $m_uid;
                             }
@@ -7796,7 +7810,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             break;
 
 														case "owner_groups":
-															$row[] =  '"'.displayTogether($entry, 'owner_groups', ", ").'"';
+															$row[] =  quoteCellContentsForSpreadsheetExport(displayTogether($entry, 'owner_groups', ", "));
 														break;
 
                             default:
