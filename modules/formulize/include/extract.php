@@ -519,25 +519,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		// FIGURE OUT THE SCOPE (WHICH ENTRIES ARE INCLUDED BASED ON GROUPS ETC)
-		$scopeFilter = "";
-		if (is_array($scope)) { // assume any arrays are groupid arrays, and so make a valid scope string based on this.  Use the new entry owner table.
-			if (count((array) $scope) > 0) {
-				$start = true;
-				foreach ($scope as $groupid) { // need to loop through the array, and not use implode, so we can sanitize the values
-					if (!$start) {
-						$scopeFilter .= " OR scope.groupid=" . intval($groupid);
-					} else {
-						$start = false;
-						$scopeFilter = " AND EXISTS(SELECT 1 FROM " . DBPRE . "formulize_entry_owner_groups AS scope WHERE (scope.entry_id=main.entry_id AND scope.fid=" . intval($fid) . ") AND (scope.groupid=" . intval($groupid);
-					}
-				}
-				$scopeFilter .= ")) "; // need two closing brackets for the exists statement and its where clause
-			} else { // no valid entries found, so show no entries
-				$scopeFilter = " AND main.entry_id<0 ";
-			}
-		} elseif ($scope) { // need to handle old "uid = X OR..." syntax
-			$scopeFilter = " AND (" . str_replace("uid", "main.creation_uid", $scope) . ") ";
-		}
+		$scopeFilter = makeScopeSQL($fid, $scope);
 
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
 		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
@@ -1419,12 +1401,13 @@ function formulize_getFormIdFromName($nameHandle)
 
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
-function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
+function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $tableAlias = "main")
 {
 	global $xoopsDB;
 	if ($filtertemp == "") {
 		return array(0 => array(), "", "");
 	}
+	$tableAlias = $tableAlias ? $tableAlias . "." : "";
 
 	$formFieldFilterMap = array();
 	$whereClause = "";
@@ -1513,7 +1496,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 				if ($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") {
 					$queryElement = $ifParts[0];
 				} else {
-					list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
+					list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap, trim($tableAlias, "."));
 				}
 				$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
 				continue;
@@ -1539,7 +1522,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 			// FIRST: NUMERIC FILTERS ARE INTERPRETTED AS ENTRY IDS IN THE MAIN FORM
 			if (is_numeric($ifParts[0]) and $ifParts[0] == $indivFilter) {
 				// if this is a numeric value, then we must treat it specially
-				$newWhereClause = "main.entry_id=" . $ifParts[0];
+				$newWhereClause = $tableAlias."entry_id=" . $ifParts[0];
 				$mappedForm = $fid;
 
 				// SECOND: HANDLE ANY METADATA FILTER TERMS
@@ -1559,7 +1542,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 				} else { // need to put mysql_real_escape_string around $ifParts[1] only when it's a date field, since that escaping requirement has been handled already in the subquery for uid filters
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				}
-				$newWhereClause = "main." . $ifParts[0]  . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
+				$newWhereClause = $tableAlias . $ifParts[0]  . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "creator_email") {
 				$formFieldFilterMap['creator_email'] = true;
@@ -1577,24 +1560,24 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 					INNER JOIN " . $xoopsDB->prefix('group_permission') . " AS p
 					ON eog.groupid = p.gperm_groupid AND eog.fid = p.gperm_itemid
 					WHERE eog.fid=$fid
-					AND eog.entry_id = main.entry_id
+					AND eog.entry_id = ".$tableAlias."entry_id
 					AND p.gperm_modid = " . getFormulizeModId() . "
 					AND p.gperm_name = 'view_form'
 					$ownerGroupSearchClause)";
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "entry_id") {
 				$formFieldFilterMap['entry_id'] = true;
-				$newWhereClause = "main.entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				$newWhereClause = $tableAlias."entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "revision_id" and is_numeric($ifParts[1])) {
 				$formFieldFilterMap['revision_id'] = true;
-				$newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				$newWhereClause = $tableAlias."revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
 				$mappedForm = $fid;
 
 				//THIRD: NON-METADATA QUERIES
 			} else {
 
-				list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
+				list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap, trim($tableAlias, "."));
 
 				// set query term for yes/no questions
 				if ($formFieldFilterMap[$mappedForm][$element_id]['isyn'] and $ifParts[1] !== "") {
@@ -1613,7 +1596,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 				// instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
 				if ($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
 					$subquery = "(SELECT id_req FROM " . DBPRE . "formulize_other WHERE ele_id=" . intval($element_id) . " AND other_text " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
-					$newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . "))"; // need to look in the other box and the main field, and return values that match in either case
+					$newWhereClause = "((".$elementPrefix."entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . "))"; // need to look in the other box and the main field, and return values that match in either case
 
 					// HANDLE LINKED ELEMENTS
 				} elseif ($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
@@ -1733,7 +1716,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 							$newWhereClause .= ") ";
 						}
 					} else {
-						$newWhereClause = "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
+						$newWhereClause = $tableAlias."entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
 					}
 
 					// HANDLE ALL OTHER ELEMENT TYPES (not other box, not linked, not username/fullname list)
@@ -1807,6 +1790,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 						if ($searchTermToUse) { // set as an override value in certain cases above
 							$newWhereClause = $searchTermToUse;
 						} else {
+							$searchTerm = formulize_db_escape($searchTerm);
 							// for checkboxes when equals operator, look for matches within the prefix strings or with a prefix and then end of string
 							// could extend to other multi value elements, but they might potentially have different formats
 							// which is why the class should be extended to figure out this lookup... could be an evolution of the prepareLiteralTextForDB ??
@@ -1848,12 +1832,12 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 			$numIndivFilters++;
 		}
 
-		if ($whereClause == "(") { // if no contents for the whereclause where generated...make a fake contents (should only happen if the only filter term passed in is a newest operator)
-			$whereClause .= "main.entry_id>0";
-		}
-		$whereClause .= ")";
-		$numSeachExps++;
-	}
+					if($whereClause == "(") { // if no contents for the whereclause where generated...make a fake contents (should only happen if the only filter term passed in is a newest operator)
+							 $whereClause .= $tableAlias."entry_id>0";
+					}
+          $whereClause .= ")";
+          $numSeachExps++;
+     }
 
 	// sort out the one side filters that have been generated and cached per form, put the global and/or between the expressions produced by the distinct filter sets that were passed in
 	// this allows two different filter sets that have local "or" booleans, to get concatenated correctly. OR filters in a single set: red or blue or apples or oranges. OR filters in two sets: (red or blue) AND (apples or oranges)
@@ -1907,8 +1891,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 
 
 // THIS FUNCTION TAKES INPUTS ABOUT AND ELEMENT, AND RETURNS A SET OF INFORMATION THAT IS NECESSARY WHEN BUILDING VARIOUS PARTS OF THE WHERE CLAUSE
-function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formFieldFilterMap)
+function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formFieldFilterMap, $tableAlias = "")
 {
+
 	// first convert any handles to element Handles, and/or get the element id if necessary...element id is necessary for creating the formfieldfiltermap, since that function was written the first time we tried to do this, when there were no element handles in the mix
 	if ($frid and !is_numeric($ifPartsZero)) {
 		$element_id = formulize_getIdFromElementHandle($ifPartsZero);
@@ -1925,7 +1910,8 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 print_r($formFieldFilterMap);
 		 print "<br>Mappedform: $mappedForm<br>";
 		 print "<br>fid: $fid";*/
-	$elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
+		 $elementPrefix = $tableAlias != "main" ? $tableAlias : ($mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids));
+		 $elementPrefix = $elementPrefix ? $elementPrefix."." : "";
 
 	// check if its encrypted or not, and setup the proper field reference
 	$queryElementMetaData = formulize_getElementMetaData($ifPartsZero, true);
@@ -1933,11 +1919,11 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 	// add ` ` around ifParts[0]...
 	$ifPartsZero = "`" . $ifPartsZero . "`";
 
-	if ($queryElementMetaData['ele_encrypt']) {
-		$queryElement = "AES_DECRYPT($elementPrefix." . $ifPartsZero . ", '" . getAESPassword() . "')";
-	} else {
-		$queryElement = "$elementPrefix." . $ifPartsZero;
-	}
+		 if($queryElementMetaData['ele_encrypt']) {
+					$queryElement = "AES_DECRYPT($elementPrefix".$ifPartsZero.", '".getAESPassword()."')";
+		 } else {
+					$queryElement = "$elementPrefix" . $ifPartsZero;
+		 }
 
 	// return in this order:  $ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement
 	$to_return = array();

@@ -673,8 +673,14 @@ define("_formulize_DE_IMPORT_GO", "Upload");
 define("_formulize_DE_IMPORT_VALIDATEDATA", "Automatically validate the structure and data in the .csv file before actually importing (highly recommended!)");
 define("_formulize_DE_IMPORT_UPDATEDERIVED", "Automatically updated derived values in the form");
 define("_formulize_DE_IMPORT_SENDNOTIFICATIONS", "Automatically send notifications to users based on the imported data");
+define("_formulize_DE_IMPORT_DELETENOTPRESENT", "Delete entries that are not present in the imported data");
+define("_formulize_DE_IMPORT_DELETENOLIMIT", "Do not limit which entries are deleted");
+define("_formulize_DE_IMPORT_DELETELIMIT", "Limit the deleted entries based on the value of an element");
+define("_formulize_DE_IMPORT_DELETELIMIT1", "Only delete entries where this element: ");
+define("_formulize_DE_IMPORT_DELETELIMIT2", "matches this search term: ");
+define("_formulize_DE_IMPORT_ADVANCEDOPTIONS", "Advanced Options:");
 define("_formulize_DE_IMPORT_IDENTIFIER_COLUMN", "This column uniquely identifies each entry in the spreadsheet:");
-define("_formulize_DE_IMPORT_USEPKASID", "Advanced option: the value of the unique identifier column is also the internal entry id");
+define("_formulize_DE_IMPORT_USEPKASID", "The value of the unique identifier column is also the internal entry id");
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Open the file you downloaded in a spreadsheet program, like Excel, and modify it</b> so it contains the data you want to upload.  You don't have to do this right now, you can modify the file and come back later to upload it.</p>
 
 <p>When you save the file, <b>make sure you save it in .csv format.</b>  If you save it in a different format, like .xls, then the import process won't work!</p>
