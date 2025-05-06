@@ -2064,11 +2064,14 @@ function formulize_getJoinHandles($elementArrays)
 	foreach ($elementArrays as $elementArray) { // must be a multidimensional array, ie: even if we're only asking for one element, it's got to be $elementsArrays[0][0] = idnumber
 		foreach ($elementArray as $element) {
 			if (!isset($cachedJoinHandles[$element])) {
-				if ($element == -1) {
+				if($element === "" OR $element === 0 OR $element === "0") {
+					$cachedJoinHandles[$element] = 'creation_uid';
+				} elseif ($element == -1) {
 					$cachedJoinHandles[$element] = 'entry_id';
-				} else {
-					$metaData = formulize_getElementMetaData($element);
+				} elseif($metaData = formulize_getElementMetaData($element)) {
 					$cachedJoinHandles[$element] = $metaData['ele_handle'];
+				} else {
+					$cachedJoinHandles[$element] = ''; // no valid join element
 				}
 			}
 		}
