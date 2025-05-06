@@ -959,7 +959,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 */
 
 	//formulize_benchmark("after generating calcs/before creating pagenav");
-	list($formulize_LOEPageNav, $formulize_LOEEntryCount, $entriesPerPageSelector) = formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers);
+	list($formulize_LOEPageNav, $formulize_LOEEntryCount, $entriesPerPageSelector) = formulize_LOEbuildPageNav($screen, $regeneratePageNumbers);
 	//formulize_benchmark("after nav/before interface");
 
 	ob_start();
@@ -4434,11 +4434,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 }
 
 // THIS FUNCTION CALCULATES THE NUMBER OF PAGES AND DRAWS HTML FOR NAVIGATING THEM
-function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
-	if(!is_array($data)) {
-		// $data can now be a flag that says "Limit Reached"
-		$data = array();
-	}
+function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
 
     // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
     $pageNav = "";
@@ -4458,11 +4454,11 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
     }
 
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
-    $numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND intval($_POST['formulize_entriesPerPage']) > 0) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
+ 	$numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND intval($_POST['formulize_entriesPerPage']) > 0) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
 
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
 	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
-    $userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
+ 	$userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
 
     $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
     $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
@@ -4510,29 +4506,9 @@ function formulize_LOEbuildPageNav($data, $screen, $regeneratePageNumbers) {
             $lastDisplayPage = $pageNumbers;
         }
 
-        $pageNav = "<p></p><div class=\"formulize-page-navigation\"><span class=\"page-navigation-label\">". $entriesPerPageSelector."</span>";
-        if ($currentPage > 1) {
-            $pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:pageJump('".($currentPage - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
-        }
-        if($firstDisplayPage > 1) {
-            $pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
-        }
-        for($i = $firstDisplayPage; $i <= $lastDisplayPage; $i++) {
-            $thisPageStart = ($i * $numberPerPage) - $numberPerPage;
-            if($thisPageStart == $currentPage) {
-                $pageNav .= "<a href=\"\" class=\"page-navigation-active\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
-            } else {
-                $pageNav .= "<a href=\"\" onclick=\"javascript:pageJump('$thisPageStart');return false;\">$i</a>";
-            }
-        }
-        if($lastDisplayPage < $pageNumbers) {
-            $lastPageStart = ($pageNumbers * $numberPerPage) - $numberPerPage;
-            $pageNav .= "<span class=\"page-navigation-skip\">—</span><a href=\"\" onclick=\"javascript:pageJump('$lastPageStart');return false;\">" . $pageNumbers . "</a>";
-        }
-        if ($currentPage < ($GLOBALS['formulize_countMasterResultsForPageNumbers'] - $numberPerPage)) {
-            $pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:pageJump('".($currentPage + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
-        }
-        $pageNav .= "</div>";
+				$jsFunctionName = 'pageJump';
+				$pageNav = formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentPage, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
+
     }
 
 	return array($pageNav,$entryTotals,$entriesPerPageSelector);

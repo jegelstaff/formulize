@@ -98,23 +98,23 @@ function conditionalHTMLHasChanged(handle, data) {
 }
 
 function checkCondition(relevantElementSet, elementValuesForURL) {
-    var oneToOneAdded = false;
-    var elementIds = '';
-    var elementIdsSep = '';
-    for(k in relevantElementSet) {
-        conditionalCheckInProgress = conditionalCheckInProgress + 1;
-        var markupHandle = relevantElementSet[k];
+	var oneToOneAdded = false;
+	var elementIds = '';
+	var elementIdsSep = '';
+	for(k in relevantElementSet) {
+		conditionalCheckInProgress = conditionalCheckInProgress + 1;
+		var markupHandle = relevantElementSet[k];
 		partsArray = markupHandle.split('_');
-        elementIds = elementIds + elementIdsSep + partsArray[3];
-        entryId = partsArray[2]; // assuming all the same!
-        fid = partsArray[1]; // assuming all the same!
-        if(oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
-            elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
-            oneToOneAdded = true;
-        }
-        elementIdsSep = ',';
-    }
-	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+FORMULIZE.SCREEN_ID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+elementValuesForURL);
+		elementIds = elementIds + elementIdsSep + partsArray[3];
+		entryId = partsArray[2]; // assuming all the same!
+		fid = partsArray[1]; // assuming all the same!
+		if(oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
+				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
+				oneToOneAdded = true;
+		}
+		elementIdsSep = ',';
+	}
+	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+FORMULIZE.SCREEN_ID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+"&frid="+FORMULIZE.FRID+elementValuesForURL);
 }
 
 function getRelevantElementValues(elements) {

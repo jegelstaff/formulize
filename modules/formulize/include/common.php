@@ -65,3 +65,5 @@ if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['l
 }
 
 formulize_handleHtaccessRewriteRule();
+
+$GLOBALS['formulize_subformInstance'] = 100;
