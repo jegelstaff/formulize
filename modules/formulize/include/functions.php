@@ -8558,7 +8558,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id) {
 				$dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
 				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
 				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
-				$entryIdentifier = urlencode($preppedValue);
+				$entryIdentifier = urlencode(htmlspecialchars_decode($preppedValue));
 			}
 			$code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
     }
