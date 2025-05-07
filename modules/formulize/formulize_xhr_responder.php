@@ -181,6 +181,7 @@ switch($op) {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $sendBackValue = array();
     $element_handler = xoops_getmodulehandler('elements','formulize');
+    $elementsToProcess = array();
     foreach($_GET as $k=>$v) {
       if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' OR $k == 'frid' OR substr($k, 0, 8) == 'onetoone' OR $k == 'sid') { // serveral onetoone keys can be passed back too
         if($k == 'onetooneentries' OR $k == 'onetoonefids') {
@@ -189,25 +190,29 @@ switch($op) {
             ${$k} = $v;
         }
       } elseif(substr($k, 0, 3) == 'de_') {
-        $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
-        $passedEntryId = $keyParts[2];
-        $passedElementId = $keyParts[3];
-        $passedElementObject = $element_handler->get($passedElementId);
-        $handle = $passedElementObject->getVar('ele_handle');
-        if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
-					$databaseReadyValue = 'new';
-				} else {
-					$databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
-					$databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
-				}
-        $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
-        $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
-        if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {
-          $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
-        }
-        $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
+        $elementsToProcess[$k] = $v;
       }
     }
+    foreach($elementsToProcess as $k => $v) {
+      $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
+      $passedEntryId = $keyParts[2];
+      $passedElementId = $keyParts[3];
+      $passedElementObject = $element_handler->get($passedElementId);
+      $handle = $passedElementObject->getVar('ele_handle');
+      if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
+        $databaseReadyValue = 'new';
+      } else {
+        $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
+        $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? NULL : $databaseReadyValue;
+      }
+      $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
+      $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
+      if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {
+        $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
+      }
+      $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
+    }
+
 		$screenObject = null;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		$gperm_handler = xoops_gethandler('groupperm');
@@ -220,20 +225,7 @@ switch($op) {
 				}
 			}
 		}
-		// Normally, the entryId we're rendering is the one displayed in the form at load time, elements are dependent on conditions, but always rendered as in that entry.
-		// In a one-to-one situation, if the relationship is based on a linked element, we need to render elements from the entry selected in the governing element
-		// If the relationship is common value then we need to try to determine which entry is connected to it, if any
-		if($onetoonekey) {
-			if(oneToOneRelationshipLinkBasedOnCommonValue($onetoonefrid, $onetoonefids)) {
-				$onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
-				$onetoonefids = array($onetoonefid);
-				$checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries);
-				$entryId = $checkForLinksResults['entries'][$fid][0];
-				$entryId = $entryId ? $entryId : 'new';
-			} else {
-				$entryId = $databaseReadyValue;
-			}
-		}
+
 		// render the elements and package them in JSON
     $jsonSep = '';
     $json = '{ "elements" : [';
@@ -247,10 +239,31 @@ switch($op) {
 				// People should not be using derived values for that kind of thing. They should be using on_before_save and on_after_save.
 				formulize_updateDerivedValues($entryId, $fid, $frid);
 			}
+      $entryIdToUse = $entryId;
+      $originalEntryIdInMarkup = $_GET['entryId'];
+      if($onetoonekey) {
+        $originalEntryIdInMarkup = $onetooneentries[$elementObject->getVar('id_form')][0];
+        $entryIdToUse = $onetooneentries[$elementObject->getVar('id_form')][0];
+        if($elementObject->getVar('id_form') != intval($onetoonefid)) {
+          // We only invoke this if the element is not in the onetoonefid, because that fid is the one that has the governing element (which determines the entryId normally), and so we need to swap the entryId when rendering the other form.
+          // Normally, the entryId we're rendering is the one displayed in the form at load time, elements are dependent on conditions, but always rendered as in that entry.
+          // In a one-to-one situation, if the relationship is based on a linked element, we need to render elements from the entry selected in the governing element
+          // If the relationship is common value then we need to try to determine which entry is connected to it, if any.
+          if(oneToOneRelationshipLinkBasedOnCommonValue($onetoonefrid, $onetoonefids)) {
+            $onetooneentries = array($onetoonefid => array($onetooneentries[$onetoonefid][0]));
+            $onetoonefids = array($onetoonefid);
+            $checkForLinksResults = checkForLinks($onetoonefrid, $onetoonefids, $onetoonefid, $onetooneentries); // listens for asynchronous values in GLOBALS, set above
+            $entryIdToUse = $checkForLinksResults['entries'][$fid][0];
+            $entryIdToUse = $entryIdToUse ? $entryIdToUse : 'new';
+          } else {
+            $entryIdToUse = $databaseReadyValue; // use the DB value of the governing element that triggered the conditional check, since that will be the entry selected by the user, that we need to render in the other one to one form
+          }
+        }
+      }
 			$html = "";
-      $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$_GET['fid'].'_'.$_GET['entryId'].'_'.$thisElementId);
-      if(security_check($fid, $entryId)) {
-        $html = renderElement($elementObject, $entryId, $frid, $screenObject);
+      $json .= $jsonSep.'{ "handle" : '.json_encode('de_'.$elementObject->getVar('id_form').'_'.$originalEntryIdInMarkup.'_'.$thisElementId); // have to reference the element markup name that was used when originally rendering the page, ugh.
+      if(security_check($fid, $entryIdToUse)) {
+        $html = renderElement($elementObject, $entryIdToUse, $frid, $screenObject);
         $json .= ', "data" : '.json_encode($html);
       } else {
        	$json .= ', "data" : '.json_encode('{NOCHANGE}');
@@ -262,8 +275,7 @@ switch($op) {
     print $json;
     break;
 
-
-    case "update_derived_value":
+  case "update_derived_value":
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     $formID = $_GET['fid'];
     $formRelationID = $_GET['frid'];
@@ -304,12 +316,12 @@ switch($op) {
     break;
 
 
-    case "validate_php_code":
+  case "validate_php_code":
         echo formulize_validatePHPCode($_POST["the_code"]);
     break;
 
 
-    case "get_views_for_form":
+  case "get_views_for_form":
     //This is to respond to an Ajax request from the file screen_list_entries.html
     $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
