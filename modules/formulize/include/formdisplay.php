@@ -282,7 +282,7 @@ class formulize_themeForm extends XoopsThemeForm {
                         'elementCaption'=>'',
                         'elementHelpText'=>'',
                         'renderedElement'=>$ele[0],
-                        'labelClass'=>"formulize-label-".$ele[2],
+                        'labelClass'=>"formulize-label-".(isset($ele[2]) ? $ele[2] : 'no-handle'),
                         'columns'=>$columns,
                         'column1Width'=>$column1Width,
                         'column2Width'=>$column2Width,
@@ -440,12 +440,12 @@ class formulize_themeForm extends XoopsThemeForm {
             }
         }
 
-        $templateVariables['elementContainerId'] = 'formulize-'.$ele->getName();
         $templateVariables['elementName'] = $element_name;
-        $templateVariables['elementCaption'] = $ele->getCaption();
-        $templateVariables['elementHelpText'] = $ele->getDescription();
-        $templateVariables['elementIsRequired'] = $ele->isRequired();
-        $templateVariables['elementObject'] = $ele->formulize_element;
+				$templateVariables['elementContainerId'] = 'formulize-'.$ele->getName();
+				$templateVariables['elementCaption'] = $ele->getCaption();
+				$templateVariables['elementHelpText'] = $ele->getDescription();
+				$templateVariables['elementIsRequired'] = $ele->isRequired();
+				$templateVariables['elementObject'] = isset($ele->formulize_element) ? $ele->formulize_element : null;
 
         // make numeric values align right (probably derived values) - only takes effect in the two column layout by default
         // Super hack, replace the placeholder in the HTML after we've rendered all elements, because until then, we don't know what the width should be!
@@ -2759,7 +2759,7 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 	$placeholder = "";
 	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
 	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
-		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName;
+		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName."<<||>>".$elementObject->getVar('ele_handle');
 		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName])) {
 			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
 			if($js) {
@@ -3010,12 +3010,12 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
     }
     $formulize_settingsWritten = 1;
 	//unpack settings
-	$sort = $settings['sort'];
-	$order = $settings['order'];
-	$oldcols = $settings['oldcols'];
-	$currentview = $settings['currentview'];
-	$global_search = $settings['global_search'];
-    $pubfilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
+	$sort = isset($settings['sort']) ? $settings['sort'] : null;
+	$order = isset($settings['order']) ? $settings['order'] : null;
+	$oldcols = isset($settings['oldcols']) ? $settings['oldcols'] : null;
+	$currentview = isset($settings['currentview']) ? $settings['currentview'] : null;
+	$global_search = isset($settings['global_search']) ? $settings['global_search'] : null;
+  $pubfilters = (isset($settings['pubfilters']) AND is_array($settings['pubfilters'])) ? $settings['pubfilters'] : array();
 	$searches = array();
 	if (!isset($settings['calhidden']) and !is_array($settings['calhidden']))
 		$settings['calhidden'] = array();
@@ -3026,21 +3026,21 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		}
 	}
 	//calculations:
-	$calc_cols = $settings['calc_cols'];
-	$calc_calcs = $settings['calc_calcs'];
-	$calc_blanks = $settings['calc_blanks'];
-	$calc_grouping = $settings['calc_grouping'];
+	$calc_cols = isset($settings['calc_cols']) ? $settings['calc_cols'] : null;
+	$calc_calcs = isset($settings['calc_calcs']) ? $settings['calc_calcs'] : null;
+	$calc_blanks = isset($settings['calc_blanks']) ? $settings['calc_blanks'] : null;
+	$calc_grouping = isset($settings['calc_grouping']) ? $settings['calc_grouping'] : null;
 
-	$hlist = $settings['hlist'];
-	$hcalc = $settings['hcalc'];
-	$lockcontrols = $settings['lockcontrols'];
-	$asearch = $settings['asearch'];
-	$lastloaded = $settings['lastloaded'];
+	$hlist = isset($settings['hlist']) ? $settings['hlist'] : null;
+	$hcalc = isset($settings['hcalc']) ? $settings['hcalc'] : null;
+	$lockcontrols = isset($settings['lockcontrols']) ? $settings['lockcontrols'] : null;
+	$asearch = isset($settings['asearch']) ? $settings['asearch'] : null;
+	$lastloaded = isset($settings['lastloaded']) ? $settings['lastloaded'] : null;
 
 	// used for calendars...
-	$calview = $settings['calview'];
-	$calfrid = $settings['calfrid'];
-	$calfid = $settings['calfid'];
+	$calview = isset($settings['calview']) ? $settings['calview'] : null;
+	$calfrid = isset($settings['calfrid']) ? $settings['calfrid'] : null;
+	$calfid = isset($settings['calfid']) ? $settings['calfid'] : null;
 	// plus there's the calhidden key that is handled below
 	// plus there's the page number on the LOE screen that is handled below...
 	// plus there's the multipage prev and current page
@@ -3080,8 +3080,8 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		}
 		$form->addElement (new XoopsFormHidden ('formulize_LOEPageStart', $_POST['formulize_LOEPageStart']));
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
-            $currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
-            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
+			$currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
+			$prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
 			$form->addElement( new XoopsFormHidden ('formulize_currentPage', $currentPageToSend));
 			$form->addElement( new XoopsFormHidden ('formulize_prevPage', $prevPageToSend));
 			$form->addElement( new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']));
@@ -3138,8 +3138,8 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		}
 		print "<input type=hidden name=formulize_LOEPageStart value='" . $_POST['formulize_LOEPageStart'] . "'>";
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
-            $currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
-            $prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
+			$currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
+			$prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
 			print "<input type=hidden name=formulize_currentPage value='".$currentPageToSend."'>";
 			print "<input type=hidden name=formulize_prevPage value='".$prevPageToSend."'>";
 			print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";

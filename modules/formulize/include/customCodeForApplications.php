@@ -11,6 +11,9 @@ if($res = $xoopsDB->query($sql)) {
 	while($row = $xoopsDB->fetchRow($res)) {
 		$aid=$row[0];
 		if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/application_custom_code_'.$aid.'.php')) {
+				if(!isset($GLOBALS['formulize_customCodeForApplications'])) {
+					$GLOBALS['formulize_customCodeForApplications'] = '';
+				}
 				ob_start();
 				include_once(XOOPS_ROOT_PATH.'/modules/formulize/code/application_custom_code_'.$aid.'.php');
 				$GLOBALS['formulize_customCodeForApplications'] .= ob_get_clean()."\n";

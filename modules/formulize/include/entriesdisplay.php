@@ -2623,7 +2623,14 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  $rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
 		}
 		foreach($rawIndivValues as $thisIndivValue) {
-		  $indivCounts[$cols[$i]][$calc][$indexerToUse][trans(calcValuePlusText($thisIndivValue, $handle, $cols[$i], $calc, $indexerToUse))] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
+			$thisIndivCountKey = trans(calcValuePlusText($thisIndivValue, $handle, $cols[$i], $calc, $indexerToUse));
+			if(!isset($indivCounts[$cols[$i]][$calc][$indexerToUse][$thisIndivCountKey])) {
+				$indivCounts[$cols[$i]][$calc][$indexerToUse][$thisIndivCountKey] = 0;
+			}
+			if(!isset($groupCounts[$groupingWhere]['responseCountValue'])) {
+				$groupCounts[$groupingWhere]['responseCountValue'] = 0;
+			}
+		  $indivCounts[$cols[$i]][$calc][$indexerToUse][$thisIndivCountKey] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for this particular item
 		  $groupCounts[$groupingWhere]['responseCountValue'] += $thisResult["percount$fidAlias$handle"]; // add this count to the total count for all items
 		}
 		break;
@@ -3922,9 +3929,9 @@ function processCustomButton($caid, $thisCustomAction, $sid, $entry_id="", $entr
 	$isHTML = false;
 	foreach($thisCustomAction as $effectid=>$effectProperties) {
 		if(!is_numeric($effectid)) { continue; } // effectid, as second key, could be buttontext, messagetext, etc, so ignore those and focus on actual effects which will have numeric keys
-		$caElements[] = $effectProperties['element'];
-		$caActions[] = $effectProperties['action'];
-		$caValues[] = $effectProperties['value'];
+		$caElements[] = isset($effectProperties['element']) ? $effectProperties['element'] : null;
+		$caActions[] = isset($effectProperties['action']) ? $effectProperties['action'] : null;
+		$caValues[] = isset($effectProperties['value']) ? $effectProperties['value'] : null;
 		if(isset($effectProperties['code'])) {
 			$filename = "custom_code_".$effectid."_".$thisCustomAction['handle']."_".$screenObject->getVar('screen_handle').".php";
 			$caPHP[] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
