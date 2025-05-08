@@ -1,39 +1,104 @@
 ---
 ---
-
 @import "jekyll-theme-minimal";
 
-li.slack {
-	padding-left: 2em;
-	background: transparent url(../img/slack-icon.png) 1em 50% no-repeat;
+div.downloads {
+  height:40px;
+  padding:0;
+  border-radius:5px;
+  border:1px solid #e0e0e0;
+	display: flex;
+	justify-content: space-evenly;
+	overflow: hidden;
+	margin-bottom: 20px;
+
+	.downloads-icon-link {
+		background: #f4f4f4;
+		display: flex;
+		flex-grow: 1;
+		align-items: center;
+		justify-content: center;
+		font-size:11px;
+		color:#676767;
+		height: 100%;
+		line-height: 1.1em;
+		padding: 0 4px;
+		border-right: 1px solid #e0e0e0;
+
+		.downloads-icon-link-icon {
+			text-align: right;
+		}
+
+		.downloads-icon-link-text {
+			max-width: 60px;
+			text-align: center;
+
+			strong {
+				font-size:13px;
+				color: #222;
+			}
+		}
+	}
+
+	a:last-of-type {
+		border: 0;
+	}
+
+	a:hover {
+		color:#675C5C;
+		background: #ffffff;
+	}
 }
 
-li.github {
-	padding-left: 2em;
-	background: transparent url(../img/octocat-icon.png) 1em 50% no-repeat;
+div.hero {
+	background-color: rgba(61,161,197,0.9);
+	background-image: url('../img/pattern.png');
+	background-repeat: repeat;
+	background-blend-mode: darken;
+	background-size: 200px 200px;
+	border-radius: 7px;
+	min-height: 250px;
+	padding: 20px;
+	box-sizing: border-box;
+	border: 1px solid #f0f0f0;
+	display: flex;
+	align-items: center;
+	margin-bottom: 20px;
+	gap: 20px;
+	color: #ffffff;
+
+	.hero-text {
+		filter: drop-shadow(2px 2px 5px rgb(36, 107, 133));
+
+		h1 {
+			font-size: 3em;
+			color: #f0f0f0;
+			line-height: 1em;
+		}
+
+		p {
+			margin: 0;
+			padding: 0;
+			line-height: 1.3em;
+		}
+	}
+
+	.hero-thumbnail {
+		flex-shrink: 0;
+		max-width: 350px;
+		filter: drop-shadow(5px 5px 10px rgb(36, 107, 133));
+		img {
+			border-radius: 10px;
+		}
+	}
 }
 
-li.zip {
-	padding-left: 2em;
-	background: transparent url(../img/zip-icon.png) 1em 50% no-repeat;
+@media print, screen and (max-width: 960px) {
+	div.hero {
+		flex-direction: column;
+		align-items: center;
+	}
 }
-
-ul.downloads {
-	width: 353px;
-}
-
-header {
-	width: 353px;
-}
-
-.wrapper {
-	width: 890px;
-}
-
-.center {
-	text-align: center;
-}
-
-.tagline {
-	font-size: 120%;
-}
+// .tagline {
+// 	font-size: 120%;
+// }

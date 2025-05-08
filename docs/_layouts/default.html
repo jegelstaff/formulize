@@ -3,84 +3,36 @@
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
 
-<!-- { % seo % } Should sort out bypassing this when running locally for testing, so we can leverage in live -->
+		<!-- { % seo % } Should sort out bypassing this when running locally for testing, so we can leverage in live -->
     <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
     <!--[if lt IE 9]>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+    	<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
     <![endif]-->
     {% include head-custom.html %}
   </head>
   <body>
     <div class="wrapper">
-      <header>
-				<a href="{{ "/" | absolute_url }}"><img src="{{site.logo | relative_url}}" alt="Logo" /></a>
-
-				<p class="center tagline">{{ site.title | default: site.github.repository_name }}</p>
-
-				<p class="center">{{ site.description | default: site.github.project_tagline }}</p>
-
-				<ul class="downloads">
-					<li class="zip"><a href="https://github.com/jegelstaff/formulize/zipball/v7.3">Download <strong>v7.3</strong></a></li>
-					<li class="slack"><a href="https://join.slack.com/t/formulize/shared_invite/zt-1f3qfgcip-fSdTuE4LEBfEfefd2S~EUg">Join us on <strong>Slack</strong></a></li>
-					<li class="github"><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
-				</ul>
-
+			<header>
+				<div class="header-logo">
+					<a href="{{ "/" | absolute_url }}"><img src="{{site.logo | relative_url}}" alt="Logo" /></a>
+					<p class="center tagline">{{ site.title | default: site.github.repository_name }}</p>
+				</div>
+				{% include sidebar.html %}
 			</header>
+
       <section>
-
-				<p>
-				<script type='text/javascript'>
-
-					// Thanks to Donald Sutherland for this function
-					// http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
-					function eachWord(str){
-						 return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-					}
-
-					var path = new String(window.document.location);
-					var pathParts = new Array();
-					var crumbPath = '';
-					var homePath = '';
-					var crumbSep = '&nbsp;&nbsp;>&nbsp;&nbsp;';
-					var startCrumbsNextTime = false;
-					var crumbsStarted = false;
-					pathParts = path.split('/');
-					for(i in pathParts) {
-							crumbPath = crumbPath + pathParts[i] + '/';
-							if(!startCrumbsNextTime) {
-									if(pathParts[i] == 'localhost:4000' || pathParts[i] == 'www.formulize.org' || pathParts[i] == 'formulize.org') {
-											startCrumbsNextTime = true;
-											homePath = crumbPath;
-									}
-									continue;
-							} else if(!crumbsStarted) {
-									crumbsStarted = true;
-									window.document.write('<a href="'+homePath+'">Home</a>\n');
-							}
-							if(pathParts[i] == '') { continue; }
-							pathParts[i] = pathParts[i].replace('_', ' ');
-							if (/[A-Z]/.test(pathParts[i]) == false) {
-								pathParts[i] = eachWord(pathParts[i]);
-							}
-							window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
-					}
-
-			</script>
-			</p>
-			<hr>
-
-      {{ content }}
-
+				{{ content }}
       </section>
-      <footer>
-        {% if site.github.is_project_page %}
-        <p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>
-        {% endif %}
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
     </div>
-    <script src="{{ "/assets/js/scale.fix.js" | relative_url }}"></script>
+		<!-- <div class="wrapper">
+			<footer>
+				{% if site.github.is_project_page %}
+				<p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>
+				{% endif %}
+				<p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+			</footer>
+		</div> -->
   </body>
 </html>
