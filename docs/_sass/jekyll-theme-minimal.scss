@@ -22,6 +22,10 @@ p, ul, ol, table, pre, dl {
   margin:0 0 10px;
 }
 
+ul, ol {
+	padding: 0 0 0 30px;
+}
+
 h1, h2, h3 {
   line-height:1.1;
 }
@@ -60,16 +64,6 @@ a small {
 a:hover small {
   color:#777;
 }
-
-.wrapper {
-  max-width: $total-max-width;
-	padding: 50px 20px 0 20px;
-  margin: 0 auto;
-	display: flex;
-	align-items: flex-start;
-	gap: 3em;
-}
-
 blockquote {
   border-left:1px solid #e5e5e5;
   margin:0;
@@ -128,20 +122,29 @@ img {
 //   vertical-align: middle;
 // }
 
+.wrapper {
+  max-width: $total-max-width;
+	padding: 30px 20px 0 20px;
+  margin: 0 auto;
+	display: flex;
+	align-items: flex-start;
+	gap: 3em;
+}
+
 header {
 	flex: 0 0 $side-width;
-	top: 50px;
+	top: 30px;
 	position: sticky;
   -webkit-font-smoothing:subpixel-antialiased;
 }
 
 section {
-  padding:20px 0;
+  padding: 50px 0 20px 0;
 	width: 100%;
 }
 
 small {
-  font-size:11px;
+  font-size: 11px;
 }
 
 hr {
@@ -152,14 +155,14 @@ hr {
 }
 
 footer {
-  max-width:$total-max-width;
-  position:fixed;
-  bottom:50px;
+	max-width: $total-max-width;
+	padding: 10px 20px 0 20px;
+	margin: 0 auto;
 	text-align: center;
-  -webkit-font-smoothing:subpixel-antialiased;
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
-@media print, screen and (max-width: 960px) {
+@media print, screen and (max-width: 1024px) {
   div.wrapper {
     margin: 0;
 		padding: 10px 10px 0 10px;
@@ -171,7 +174,7 @@ footer {
 	}
 }
 
-@media print, screen and (max-width: 720px) {
+@media print, screen and (max-width: 768px) {
   body {
     word-wrap:break-word;
   }
@@ -201,10 +204,6 @@ footer {
 	footer {
 		position: relative;
 		bottom: 0;
-	}
-
-	p, ul, ol, table, pre, dl {
-		margin:0 0 5px;
 	}
 
   pre, code {
