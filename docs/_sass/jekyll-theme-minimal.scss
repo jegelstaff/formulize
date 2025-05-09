@@ -1,4 +1,3 @@
-// @import "fonts";
 @import "rouge-github";
 
 $total-max-width: 1200px;
@@ -15,11 +14,11 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   color:#222;
-  margin:0 0 10px;
+  margin:0 0 15px;
 }
 
 p, ul, ol, table, pre, dl {
-  margin:0 0 10px;
+  margin:0 0 15px;
 }
 
 ul, ol {
@@ -108,20 +107,6 @@ img {
   max-width:100%;
 }
 
-// kbd {
-//   background-color: #fafbfc;
-//   border: 1px solid #c6cbd1;
-//   border-bottom-color: #959da5;
-//   border-radius: 3px;
-//   box-shadow: inset 0 -1px 0 #959da5;
-//   color: #444d56;
-//   display: inline-block;
-//   font-size: 11px;
-//   line-height: 10px;
-//   padding: 3px 5px;
-//   vertical-align: middle;
-// }
-
 .wrapper {
   max-width: $total-max-width;
 	padding: 30px 20px 0 20px;
@@ -155,9 +140,7 @@ hr {
 }
 
 footer {
-	max-width: $total-max-width;
-	padding: 10px 20px 0 20px;
-	margin: 0 auto;
+	padding: 10px 0 0 0;
 	text-align: center;
   -webkit-font-smoothing: subpixel-antialiased;
 }

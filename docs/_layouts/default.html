@@ -17,7 +17,7 @@
 			<header>
 				<div class="header-logo">
 					<a href="{{ "/" | absolute_url }}"><img src="{{site.logo | relative_url}}" alt="Logo" /></a>
-					<p class="center tagline">{{ site.title | default: site.github.repository_name }}</p>
+					<p>{{ site.title | default: site.github.repository_name }}</p>
 				</div>
 				{% include sidebar.html %}
 			</header>
