@@ -117,15 +117,23 @@ img {
 }
 
 header {
+	display: flex;
+	flex-direction: column;
 	flex: 0 0 $side-width;
 	top: 30px;
 	position: sticky;
   -webkit-font-smoothing:subpixel-antialiased;
+	order: 1;
 }
 
 section {
   padding: 50px 0 20px 0;
 	width: 100%;
+	order: 2;
+
+	.links {
+		display: none;
+	}
 }
 
 small {
@@ -171,6 +179,10 @@ footer {
 		top: 0;
 		position: relative;
 		flex: 0 0 100%;
+
+		.links {
+			display: none;
+		}
 	}
 
 	.header-logo {
@@ -182,6 +194,10 @@ footer {
 
 	section {
 		padding: 0;
+
+		.links {
+			display: block;
+		}
 	}
 
 	footer {

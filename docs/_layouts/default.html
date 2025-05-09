@@ -17,13 +17,38 @@
 			<header>
 				<div class="header-logo">
 					<a href="{{ "/" | absolute_url }}"><img src="{{site.logo | relative_url}}" alt="Logo" /></a>
-					<p>{{ site.title | default: site.github.repository_name }}</p>
+					<div>{{ site.title | default: site.github.repository_name }}</div>
 				</div>
-				{% include sidebar.html %}
+
+				<div class="downloads">
+					<a class="downloads-icon-link" href="https://github.com/jegelstaff/formulize/zipball/v7.3" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img src="/assets/img/zip-icon.png" alt="Download Icon" />
+						</span>
+						<span class="downloads-icon-link-text">Download <strong>v7.3</strong></span>
+					</a>
+					<a class="downloads-icon-link" href="https://join.slack.com/t/formulize/shared_invite/zt-1f3qfgcip-fSdTuE4LEBfEfefd2S~EUg" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img src="/assets/img/slack-icon.png" alt="Slack Icon" />
+						</span>
+						<span class="downloads-icon-link-text">Join us on <strong>Slack</strong></span>
+					</a>
+					<a class="downloads-icon-link" href="{{ site.github.repository_url }}" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img class="downloads-icon-link-icon" src="/assets/img/octocat-icon.png" alt="Github Icon" />
+						</span>
+						<span class="downloads-icon-link-text">View On <strong>GitHub</strong></span>
+					</a>
+				</div>
+
+				{% include links.html %}
+
 			</header>
 
       <section>
 				{{ content }}
+
+				{% include links.html %}
       </section>
     </div>
 		<footer>

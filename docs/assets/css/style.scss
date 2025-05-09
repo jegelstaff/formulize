@@ -10,7 +10,7 @@ div.downloads {
 	display: flex;
 	justify-content: space-evenly;
 	overflow: hidden;
-	margin-bottom: 20px;
+	margin: 20px 0;
 
 	.downloads-icon-link {
 		background: #f4f4f4;
@@ -98,3 +98,5 @@ div.hero {
 		align-items: center;
 	}
 }
+
+
