@@ -24,7 +24,7 @@ Returns __false__ if the query failed or if the element identifier is invalid, o
 
 ## Example
 
-~~~
+~~~php
 // get the value of the order_details element from entry 19 in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
@@ -33,9 +33,9 @@ $element_handle = "order_details";
 $order_details = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
 ~~~
 
-~~~
+~~~php
 // get the value of order_customer from entry 19 in form 6
-// imagine order_customer is a linked selectbox pointing to the customer name in a customer form 
+// imagine order_customer is a linked selectbox pointing to the customer name in a customer form
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $entry_id = 19;
@@ -45,15 +45,15 @@ $order_customer = $dataHandler->getElementValueInEntry($entry_id, $element_handl
 // $order_customer will be a foreign key, the entry id of a record in another form
 // imagine the foreign key is entry id number 56 in the customer form
 // this will display the number 56:
-var_dump($order_customer); 
+var_dump($order_customer);
 
 // convert the raw database value to a human readable value
 $order_customer = prepValues($order_customer, $element_handle, $entry_id);
 
-var_dump($order_customer); // $order_customer is now the name from entry 56 of the customer form 
+var_dump($order_customer); // $order_customer is now the name from entry 56 of the customer form
 ~~~
 
-~~~
+~~~php
 // get the value of order_categories from entry 19 in form 6
 // imagine order_categories is a checkbox series where multiple categories can be selected
 // imagine the categories 'Rush Order' and 'Repeat Customer' are selected

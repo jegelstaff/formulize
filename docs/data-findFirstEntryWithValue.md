@@ -26,21 +26,21 @@ Returns __false__ if the element identifier is invalid, or if the query fails, o
 
 ## Example
 
-~~~
+~~~php
 // find the first entry created that has 'blue' as the value for the 'colour' element, in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $entry_id = $dataHandler->findFirstEntryWithValue('colour', 'blue');
 ~~~
 
-~~~
+~~~php
 // find the first entry created where the value for element 33 is greater than 100, in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $entry_id = $dataHandler->findFirstEntryWithValue(33, 100, ">");
 ~~~
 
-~~~
+~~~php
 // find the first entry created where the order_customer value is 56, in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

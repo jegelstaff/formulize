@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/classes/data_handler/getEntryOwnerGroups/
 ---
 
-# getEntryOwnerGroups( <span style='font-size: 14pt;'>(int) $entry_id = 0</span> ) 
+# getEntryOwnerGroups( <span style='font-size: 14pt;'>(int) $entry_id = 0</span> )
 
 ## Description
 
@@ -15,19 +15,19 @@ __$entry_id__ - Optional. An entry id number.
 
 ## Return Values
 
-Returns __an array of distinct group ids__. Returns __false__ if the query failed. 
+Returns __an array of distinct group ids__. Returns __false__ if the query failed.
 
 
 ## Examples
 
-~~~
+~~~php
 // Get all the groups associated with entry 44 in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $group_ids = $dataHandler->getEntryOwnerGroups(44);
 ~~~
 
-~~~
+~~~php
 // Get all the groups associated with any entry in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

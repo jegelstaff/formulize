@@ -19,14 +19,14 @@ Returns __true__ if the entry or entries were deleted. Returns __false__ if the 
 
 ## Examples
 
-~~~
+~~~php
 // delete entry 19 in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $dataHandler->deleteEntries(19);
 ~~~
 
-~~~
+~~~php
 // delete a series of entries in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

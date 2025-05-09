@@ -24,7 +24,7 @@ Returns __false__ if the given element does not have a value, or if the query fa
 
 ## Example
 
-~~~
+~~~php
 // check if the order_details form element has a value in entry 19 in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

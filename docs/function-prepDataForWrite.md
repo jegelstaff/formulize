@@ -29,14 +29,14 @@ Returns __false__ if the element_identifier is invalid.
 
 ## Examples
 
-~~~
+~~~php
 // radio buttons submit the ordinal number of the option that was selected
 // convert a 3 to the text for the third radio button option
 // entry id we are going to write to is 27
 $value = prepDataForWrite('fruit_choices', 3, 27);
 ~~~
 
-~~~
+~~~php
 // take a date value and prepare it for saving into a date element in a new entry in the database
 $value = "May 9, 1969";
 $value = prepDataForWrite('date_element_handle', $value, 'new');

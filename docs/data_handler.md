@@ -26,9 +26,9 @@ This file is normally included as part of any Formulize page load. If it is not 
 
 A data handler object can be created using the _new_ keyword in PHP and by passing a form id number to the constructor.
 
-## Example 
+## Example
 
-~~~
+~~~php
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 ~~~

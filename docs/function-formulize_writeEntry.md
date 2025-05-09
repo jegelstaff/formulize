@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/functions/formulize_writeEntry/
 ---
 
-# formulize_writeEntry( <span style='font-size: 14pt;'>(array) $values, (int | string) $entry_id = "new", $action, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $writeOwnerInfo = true</span> ) 
+# formulize_writeEntry( <span style='font-size: 14pt;'>(array) $values, (int | string) $entry_id = "new", $action, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $writeOwnerInfo = true</span> )
 
 ## Location
 
@@ -40,7 +40,7 @@ If the query fails, then page execution terminates and an error message is displ
 
 ## Examples
 
-~~~
+~~~php
 // write a new entry in the database
 $values = array(
     'survey_first_name'=>'John',
@@ -49,7 +49,7 @@ $values = array(
 formulize_writeEntry($values);
 ~~~
 
-~~~
+~~~php
 // Update entry 6 in the survey form with a new value for first name
 $values = array(
     'survey_first_name'=>'Jonathan'
@@ -57,7 +57,7 @@ $values = array(
 formulize_writeEntry($values, 6);
 ~~~
 
-~~~
+~~~php
 // get the entry id of the 'Toronto' entry in form 6 (a catalogue of cities),
 // and write a new entry in a survey form, with 'Toronto' as the value for a
 // linked element that points to form 6
@@ -67,7 +67,7 @@ $entry_id = $dataHandler->findFirstEntryWithValue('cities_name', 'Toronto');
 formulize_writeEntry(array('survey_city_name'=>$entry_id));
 ~~~
 
-~~~
+~~~php
 // Write a new entry to the database, and record the owner as user 24
 $values = array(
     'survey_first_name'=>'John',
@@ -76,7 +76,7 @@ $values = array(
 formulize_writeEntry($values, proxyUser: 24);
 ~~~
 
-~~~
+~~~php
 // Write a new entry to the database as part of a regular page load that is
 // not the result of a form submission
 $values = array(

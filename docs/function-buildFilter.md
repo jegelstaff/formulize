@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/functions/buildFilter/
 ---
 
-# buildFilter( <span style='font-size: 14pt;'>(string) $name, (int | string | object) $element_identifier, (string) $defaultText = "Choose an option", (string) $formDOMId = "", (bool | string | array) $defaultValue = false, (bool) $multi = false</span> ) 
+# buildFilter( <span style='font-size: 14pt;'>(string) $name, (int | string | object) $element_identifier, (string) $defaultText = "Choose an option", (string) $formDOMId = "", (bool | string | array) $defaultValue = false, (bool) $multi = false</span> )
 
 ## Location
 
@@ -15,7 +15,7 @@ Creates a dropdown list or checkbox series based on the given form element. Typi
 
 If the filter is based on an element that is a list of users (ie: the {FULLNAMES} or {USERNAMES} flag is used to generate the options for the element), then the values of the options will be the user id numbers.
 
-If the form element is a linked element (where the options are based on the entries in another form), the values of the options will be the entry id numbers of the source entries. 
+If the form element is a linked element (where the options are based on the entries in another form), the values of the options will be the entry id numbers of the source entries.
 
 Otherwise, the values of the options will be the same as the visible labels.
 
@@ -34,7 +34,7 @@ Returns the HTML markup for the element, ready to be included in the page.
 
 ## Examples
 
-~~~
+~~~php
 // make a dropdown list based on the 'student_names' form element
 // use 'selectedStudent' as the name of the dropdown list
 print buildFilter('selectedStudent', 'student_names');
@@ -46,23 +46,23 @@ if(isset($_POST['selectedStudent])) {
 }
 ~~~
 
-~~~
-// use alternate text for the top option 
+~~~php
+// use alternate text for the top option
 // (which is normally visible when the page loads)
 print buildFilter('selectedStudent', 'student_names', defaultText: 'Choose a student');
 ~~~
 
-~~~
+~~~php
 // set a certain student to be the initially selected option
 print buildFilter('selectedStudent', 'student_names', defaultValue: 'Tara');
 ~~~
 
-~~~
+~~~php
 // make a checkbox series instead of a dropdown list
 print buildFilter('selectedStudent', 'student_names', multi: true);
 ~~~
 
-~~~
+~~~php
 // when a user selects a value in the filter, submit the form it's part of
 print "
     <form id='test_form'>".
@@ -71,7 +71,7 @@ print "
 ";
 ~~~
 
-~~~
+~~~php
 // Imagine this is inside the top template of a list of entries screen.
 // When the user picks a value, trigger a submission of the page
 

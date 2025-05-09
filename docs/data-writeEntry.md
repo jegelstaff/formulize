@@ -7,7 +7,7 @@ permalink: developers/API/classes/data_handler/writeEntry/
 
 ## Description
 
-Writes values to the database for a given record, or for a new record. Values are meant to be the database-ready values, ie: foreign keys rather than human-readable values in the case of linked elements, multiple values joined with a separator string in the case of checkboxes, etc. 
+Writes values to the database for a given record, or for a new record. Values are meant to be the database-ready values, ie: foreign keys rather than human-readable values in the case of linked elements, multiple values joined with a separator string in the case of checkboxes, etc.
 
 Note that the form id does not need to be specified, since element ids and handles are globally unique, so they identify the form implicitly.
 
@@ -25,7 +25,7 @@ __$entry_id__ - The entry id being updated, or "new" for creating a new entry.<b
 __$values__ - An array of the values to write to the database. The keys must be the element ids or element handles. Values must be the database-ready values for the element. "{WRITEASNULL}" indicates to write null as the value of the element. You can also simply use NULL.<br>
 __$proxyUser__ - Optional. An alternate user id to use as the creator of new entries. By default, the creator is the user of the active session.<br>
 __$forceUpdate__ - Optional. A boolean to indicate whether the query should be performed on GET requests. By default data can only be written to the database through a POST request.<br>
-__$update_metadata__ - Optional. A boolean to indicate whether the modification user id and modification datatime should be updated when writing to an existing entry. Defaults to true. Set to false if you are updating an existing record and you do not want the modification metadata to change. 
+__$update_metadata__ - Optional. A boolean to indicate whether the modification user id and modification datatime should be updated when writing to an existing entry. Defaults to true. Set to false if you are updating an existing record and you do not want the modification metadata to change.
 
 ## Return Values
 
@@ -37,7 +37,7 @@ If the query fails, page execution terminates and an error is displayed.
 
 ## Examples
 
-~~~
+~~~php
 // write a new entry in the database in form 6
 $values = array(
     'survey_first_name'=>'John',
@@ -48,7 +48,7 @@ $dataHandler = new formulizeDataHandler($form_id);
 $entry_id = $dataHandler->writeEntry("new", $values);
 ~~~
 
-~~~
+~~~php
 // Update entry 29 in the survey form with a new value for first name
 // Skip updating the modification user and datetime metadata
 $values = array(

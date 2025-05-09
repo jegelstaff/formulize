@@ -28,7 +28,7 @@ permalink: developers/API/classes/
 
 ## About ImpressCMS and XOOPS
 
-Formulize is built on top of ImpressCMS, which was a fork of the XOOPS cms. ImpressCMS rewrote the core functions of XOOPS, but maintained backwards compatibility with older code that predates the fork. 
+Formulize is built on top of ImpressCMS, which was a fork of the XOOPS cms. ImpressCMS rewrote the core functions of XOOPS, but maintained backwards compatibility with older code that predates the fork.
 
 For example, the core _xoopsObject_ class is found in the file _kernel/object.php_ but all it does is extend the _icms_core_object_ class (found in _libraries/icms/core/Object.php_) and call the parent class's constructor.
 
@@ -44,10 +44,10 @@ The handler classes contain methods that do things with the data access objects,
 
 Examples:
 
-~~~
+~~~php
 // bootstrap XOOPS
 // in this example the web root is one directory up (../) from the current file
-include_once "../mainfile.php"; 
+include_once "../mainfile.php";
 
 // get the member handler which lets you interact with users and related objects
 $member_handler = xoops_gethandler('member');
@@ -62,7 +62,7 @@ $userObject->setVar('uname', 'John Smith');
 $member_handler->insertUser($userObject);
 ~~~
 
-~~~
+~~~php
 // bootstrap XOOPS
 include_once "mainfile.php";
 
@@ -73,7 +73,7 @@ print $xoopsUser->getVar("uname");
 
 In Formulize itself, this same pattern is followed by some classes. However because Formulize is technically a module inside the XOOPS system, a different function gets the handlers:
 
-~~~
+~~~php
 // bootstrap XOOPS
 include_once "mainfile.php";
 
@@ -88,7 +88,7 @@ $elementObject = $element_handler->get(9);
 
 Formulize also has a unique data handler class which is invoked more directly:
 
-~~~
+~~~php
 // bootstrap XOOPS
 include_once "mainfile.php";
 

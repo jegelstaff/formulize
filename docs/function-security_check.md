@@ -29,7 +29,7 @@ Returns __true__ or __false__, depending if the user has access to the form, or 
 
 ## Examples
 
-~~~
+~~~php
 // Check if the current user has access to form 6
 if(security_check(6) {
     echo "User has access!";
@@ -38,7 +38,7 @@ if(security_check(6) {
 }
 ~~~
 
-~~~
+~~~php
 // Check if the current user has access to entry 99 in form 6
 if(security_check(6, 99) {
     echo "User has access!";
@@ -47,7 +47,7 @@ if(security_check(6, 99) {
 }
 ~~~
 
-~~~
+~~~php
 // Check if user 17 has access to entry 99 in form 6
 if(security_check(6, 99, 17) {
     echo "User has access!";
