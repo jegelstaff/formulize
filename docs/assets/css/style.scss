@@ -2,6 +2,16 @@
 ---
 @import "jekyll-theme-minimal";
 
+#home {
+	.breadcrumbs {
+		display: none;
+	}
+}
+
+div.header-logo-text {
+	font-weight: 500;
+}
+
 div.downloads {
   height:40px;
   padding:0;
@@ -97,6 +107,15 @@ div.hero {
 		flex-direction: column;
 		align-items: center;
 	}
+
+	div.header-logo-text {
+		max-width: 70px;
+		padding-bottom: 10px;
+	}
 }
 
-
+@media print, screen and (max-width: 480px) {
+		div.header-logo-text {
+		padding-bottom: 0;
+	}
+}

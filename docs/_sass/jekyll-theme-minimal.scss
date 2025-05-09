@@ -153,6 +153,11 @@ footer {
   -webkit-font-smoothing: subpixel-antialiased;
 }
 
+.breadcrumbs {
+	margin-bottom: 10px;
+	font-style: italic;
+}
+
 @media print, screen and (max-width: 1024px) {
   div.wrapper {
     margin: 0;
@@ -197,6 +202,10 @@ footer {
 
 		.links {
 			display: block;
+			padding: 10px;
+			border: 1px solid #e0e0e0;
+			border-radius: 10px;
+			background-color: #f9f9f9;
 		}
 	}
 
