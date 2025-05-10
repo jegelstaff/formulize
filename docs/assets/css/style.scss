@@ -95,6 +95,12 @@ div.hero {
 	}
 }
 
+#home {
+	.breadcrumbs {
+		display: none;
+	}
+}
+
 @media print, screen and (max-width: 1024px) {
 	div.hero {
 		flex-direction: column;
