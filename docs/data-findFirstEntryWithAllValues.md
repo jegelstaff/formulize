@@ -25,7 +25,7 @@ Returns __false__ if the query fails.
 
 ## Example
 
-~~~
+~~~php
 // find the first entry created that has 'blue' as the value for the 'colour' element,
 // and 'hot' as the value for the 'temperature' element, in form 6
 $form_id = 6;
@@ -36,7 +36,7 @@ $entry_id = $dataHandler->findFirstEntryWithAllValues(array(
 ));
 ~~~
 
-~~~
+~~~php
 // find the first entry created where the value for element 33 contains 'foo'
 // and the value for element 99 contains 'bar', in form 6
 $form_id = 6;
@@ -48,7 +48,7 @@ $values = array(
 $entry_id = $dataHandler->findFirstEntryWithAllValues($values, "LIKE");
 ~~~
 
-~~~
+~~~php
 // find the first entry created where the value for element 99 is 'goals' or 'assists'
 // uses the IN operator to simulate 'or'
 $form_id = 6;
@@ -59,7 +59,7 @@ $values = array(
 $entry_id = $dataHandler->findFirstEntryWithAllValues($values, "IN");
 ~~~
 
-~~~
+~~~php
 // return the entry id and the player from the first entry in form 6 where the city is Toronto
 // Note the operator will be = implicitly, because that parameter has been skipped when the method is called
 // Note also that the third parameter has to be named specifically in order to skip the operator parameter

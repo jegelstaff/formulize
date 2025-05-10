@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/functions/viewEntryLink/
 ---
 
-# viewEntryLink( <span style='font-size: 14pt;'>(string) $clickable_text, (int | array) $entry_id_or_dataset_record, (int) $override_screen_id </span> ) 
+# viewEntryLink( <span style='font-size: 14pt;'>(string) $clickable_text, (int | array) $entry_id_or_dataset_record, (int) $override_screen_id </span> )
 
 ## Location
 
@@ -25,19 +25,19 @@ Returns the HTML markup for the link.
 
 ## Examples
 
-~~~
+~~~php
 // Inside a List Template, control where the link for editing the entry appears
 print display($entry, 'title');
 print display($entry, 'summary');
 print viewEntryLink('Edit this record');
 ~~~
 
-~~~
+~~~php
 // Make a link that uses a different screen to edit the entry than the standard screen
 print viewEntryLink('Edit this record', override_screen_id: 993);
 ~~~
 
-~~~
+~~~php
 // Inside Template screen code, make links to edit entries that have been gathered
 // The second parameter is required in order to identify which entry the link should go to
 $relationship_id = 0;

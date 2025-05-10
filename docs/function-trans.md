@@ -28,17 +28,17 @@ Returns __the string with the text for the other language(s) removed__.
 
 ## Examples
 
-~~~
+~~~php
 // convert the string to the currently active language
 $string = trans("[en]English text[/en][fr]texte fran&ccedil;ais[/fr]");
 ~~~
 
-~~~
+~~~php
 // convert the string to the French, regardless of the active language
 $string = trans("[en]English text[/en][fr]texte fran&ccedil;ais[/fr]", "fr");
 ~~~
 
-~~~
+~~~php
 // convert the string to the currently active language, then truncate it to five characters
 $string = trans("[en]English text[/en][fr]texte fran&ccedil;ais[/fr]");
 $string = printSmart($string, 5);

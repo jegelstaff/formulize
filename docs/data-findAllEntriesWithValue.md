@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/classes/data_handler/findAllEntriesWithValue/
 ---
 
-# findAllEntriesWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (array)&nbsp;$scope_uids&nbsp;=&nbsp;array(), (array) $scope_group_ids = array(), (string) $operator = "="</span> ) 
+# findAllEntriesWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (array)&nbsp;$scope_uids&nbsp;=&nbsp;array(), (array) $scope_group_ids = array(), (string) $operator = "="</span> )
 
 ## Description
 
@@ -25,21 +25,21 @@ Returns __false__ if the query fails, or the element identifier is invalid.
 
 ## Example
 
-~~~
+~~~php
 // find the entries that have 'foo' as the value for the element 'bar', in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $entry_ids = $dataHandler->findAllEntriesWithValue('bar', 'foo');
 ~~~
 
-~~~
+~~~php
 // find the entries that contain 'foo' in the value for the element 'bar', in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $entry_ids = $dataHandler->findAllEntriesWithValue('bar', '%foo%', operator: 'LIKE');
 ~~~
 
-~~~
+~~~php
 // find the entries that contain 'foo' in the value for the element 'bar',
 // created by either group 526 or 707, in form 6
 $form_id = 6;

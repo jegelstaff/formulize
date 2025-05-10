@@ -17,13 +17,13 @@ __$scope_group_ids__ - Optional. An array of group ids that should be used to li
 
 ## Return Values
 
-Returns __an array containing the entries found__. If only one entry id is found the array will have one value. 
+Returns __an array containing the entries found__. If only one entry id is found the array will have one value.
 
-Returns __false__ if the query failed or if the element identifier is invalid, or if the query found no records in the database. 
+Returns __false__ if the query failed or if the element identifier is invalid, or if the query found no records in the database.
 
 ## Example
 
-~~~
+~~~php
 // find the entries created by a user 29 in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

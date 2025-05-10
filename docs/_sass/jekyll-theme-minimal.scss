@@ -1,0 +1,223 @@
+@import "rouge-github";
+
+$total-max-width: 1200px;
+$side-width: 350px;
+
+body {
+	background-color: #fff;
+	padding: 0;
+	margin: 0;
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color:#595959;
+  font-weight:400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color:#222;
+  margin:0 0 15px;
+}
+
+p, ul, ol, table, pre, dl {
+  margin:0 0 15px;
+}
+
+ul, ol {
+	padding: 0 0 0 30px;
+}
+
+h1, h2, h3 {
+  line-height:1.1;
+}
+
+h1 {
+  font-size:28px;
+	font-weight: 500;
+}
+
+h2 {
+  color:#393939;
+	font-weight: 500;
+}
+
+h3, h4, h5, h6 {
+  color:#494949;
+	font-weight: 500;
+}
+
+a {
+  color:#267CB9;
+  text-decoration:none;
+}
+
+a:hover, a:focus {
+  color:#069;
+}
+
+a small {
+  font-size:11px;
+  color:#777;
+  margin-top:-0.3em;
+  display:block;
+}
+
+a:hover small {
+  color:#777;
+}
+blockquote {
+  border-left:1px solid #e5e5e5;
+  margin:0;
+  padding:0 0 0 20px;
+  font-style:italic;
+}
+
+code, pre {
+  font-family:Monaco, Bitstream Vera Sans Mono, Lucida Console, Terminal, Consolas, Liberation Mono, DejaVu Sans Mono, Courier New, monospace;
+  color:#333;
+}
+
+pre {
+  padding:8px 15px;
+  background: #f8f8f8;
+  border-radius:5px;
+  border:1px solid #e5e5e5;
+  overflow-x: auto;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+th, td {
+  text-align:left;
+  padding:5px 10px;
+  border-bottom:1px solid #e5e5e5;
+}
+
+dt {
+  color:#444;
+  font-weight:500;
+}
+
+th {
+  color:#444;
+}
+
+img {
+  max-width:100%;
+}
+
+.wrapper {
+  max-width: $total-max-width;
+	padding: 30px 20px 0 20px;
+  margin: 0 auto;
+	display: flex;
+	align-items: flex-start;
+	gap: 3em;
+}
+
+header {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 $side-width;
+	top: 30px;
+	position: sticky;
+  -webkit-font-smoothing:subpixel-antialiased;
+	order: 1;
+}
+
+section {
+  padding: 20px 0 20px 0;
+	width: 100%;
+	order: 2;
+
+	.links {
+		display: none;
+	}
+}
+
+small {
+  font-size: 11px;
+}
+
+hr {
+  border:0;
+  background:#e5e5e5;
+  height:1px;
+  margin:0 0 20px;
+}
+
+footer {
+	padding: 10px 0 0 0;
+	text-align: center;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.breadcrumbs {
+	margin-bottom: 10px;
+	font-style: italic;
+}
+
+@media print, screen and (max-width: 1024px) {
+  div.wrapper {
+    margin: 0;
+		padding: 10px 10px 0 10px;
+		gap: 2em;
+  }
+
+	header {
+		top: 10px;
+	}
+}
+
+@media print, screen and (max-width: 768px) {
+  body {
+    word-wrap:break-word;
+  }
+
+	div.wrapper {
+		flex-direction: column;
+		gap: 1em;
+	}
+
+	header {
+		top: 0;
+		position: relative;
+		flex: 0 0 100%;
+
+		.links {
+			display: none;
+		}
+	}
+
+	.header-logo {
+		display: flex;
+		align-items: flex-end;
+		gap: 1em;
+		font-size: 0.9em;
+	}
+
+	section {
+		padding: 0;
+
+		.links {
+			display: block;
+			padding: 10px;
+			border: 1px solid #e0e0e0;
+			border-radius: 10px;
+			background-color: #f9f9f9;
+		}
+	}
+
+	footer {
+		position: relative;
+		bottom: 0;
+	}
+
+  pre, code {
+    word-wrap:normal;
+  }
+}
+
+@media print, screen and (max-width: 480px) {
+}

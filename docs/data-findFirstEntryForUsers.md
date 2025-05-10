@@ -21,7 +21,7 @@ Returns __false__ if the query failed, or if the query found no records in the d
 
 ## Example
 
-~~~
+~~~php
 // find the first entry created by user 905, in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

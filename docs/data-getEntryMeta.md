@@ -26,7 +26,7 @@ Returns __false__ if the query failed.
 
 ## Example
 
-~~~
+~~~php
 // get metadata for entry 19 exist in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
@@ -36,4 +36,4 @@ list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $dataHandler-
 // (UTC in this example, your server may be different)
 $creationDateTimeObject = new DateTime($creation_datetime, new DateTimeZone('UTC'));
 ~~~
- 
+

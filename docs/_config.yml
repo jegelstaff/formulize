@@ -1,4 +1,7 @@
+title: Improvise. Organize. Customize.
+logo: /assets/img/formulize-logo.png
+description: Your very own database. 100% free and open source.
 markdown: kramdown
 baseurl: /
-url: http://www.formulize.org/
+url: https://formulize.org/
 permalink: /:title/

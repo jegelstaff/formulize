@@ -3,7 +3,7 @@ layout: default
 permalink: developers/API/classes/data_handler/setEntryOwnerGroups/
 ---
 
-# setEntryOwnerGroups( <span style='font-size: 14pt;'>(int | array) $user_ids, (int | array) $entry_ids</span> ) 
+# setEntryOwnerGroups( <span style='font-size: 14pt;'>(int | array) $user_ids, (int | array) $entry_ids</span> )
 
 ## Description
 
@@ -15,26 +15,26 @@ The association between groups and entries is recorded at the time the entry is 
 
 ## Parameters
 
-__$user_ids__ - A user id number or an array of user id numbers. Must have an equal number of values as the entry_ids paremeter.<br> 
+__$user_ids__ - A user id number or an array of user id numbers. Must have an equal number of values as the entry_ids paremeter.<br>
 __$entry_ids__ - A entry id number or an array of entry id numbers. Must have an equal number of values as the uids parameter<br>
 
 ## Return Values
 
 Returns __true__ if the operation is successful.
 
-Returns __false__ if the uids and entry_ids parameters do not have an equal number of values. Returns false if a query failed. 
+Returns __false__ if the uids and entry_ids parameters do not have an equal number of values. Returns false if a query failed.
 
 
 ## Examples
 
-~~~
+~~~php
 // Update the entry ownership information for entry 71 in form 6, to be user 399
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $dataHandler->setEntryOwnerGroups(399, 71);
 ~~~
 
-~~~
+~~~php
 // Update the entry ownership information for entries 71 through 75 in form 6, to all be user 399
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
@@ -43,7 +43,7 @@ $entry_ids = array(71, 72, 73, 74, 75);
 $dataHandler->setEntryOwnerGroups($uids, $entry_ids);
 ~~~
 
-~~~
+~~~php
 // Make a new entry and set its ownership to user 12
 // ** It's easier to just use the formulize_writeEntry function instead **
 $form_id = 6;

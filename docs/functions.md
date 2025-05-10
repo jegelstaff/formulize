@@ -19,7 +19,7 @@ To use any Formulize function, you simply have to make sure the file with the fu
 
 Examples:
 
-~~~
+~~~php
 // include the functions file
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 

@@ -23,7 +23,7 @@ Returns __the URL of the current page__.
 
 ## Examples
 
-~~~
+~~~php
 // check if the current URL includes sid=25
 if(strstr(getCurrentURL(), 'sid=25')) {
     echo "screen 25 is the requested page (but not necessarily the displayed screen,

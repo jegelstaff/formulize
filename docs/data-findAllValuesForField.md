@@ -19,20 +19,20 @@ __$usePerGroupFilters__ -  Optional.  A boolean to indicate whether the current 
 
 ## Return Values
 
-Returns __an array__ containing the values found. _The keys are the entry ids of the records that each value is from_. If no entries are found that match the criteria, the array will be empty. 
+Returns __an array__ containing the values found. _The keys are the entry ids of the records that each value is from_. If no entries are found that match the criteria, the array will be empty.
 
 Returns __false__ if the query fails.
 
 ## Examples
 
-~~~
+~~~php
 // find the all the values for the 'cities' element in form 6
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
 $values = $dataHandler->findAllValuesForField('cities');
 ~~~
 
-~~~
+~~~php
 // find the all the values for the 'cities' element in form 6, created by groups 5 and 10.
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);
@@ -40,7 +40,7 @@ $scope_group_ids = array(5, 10);
 $values = $dataHandler->findAllValuesForField('cities', scope_group_ids: $scope_group_ids);
 ~~~
 
-~~~
+~~~php
 // same as above, but in ascending order
 $form_id = 6;
 $dataHandler = new formulizeDataHandler($form_id);

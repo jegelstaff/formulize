@@ -30,25 +30,25 @@ Returns the __truncated string__, or the __original string__ if it is shorter th
 
 ## Examples
 
-~~~
+~~~php
 // Shorten a string
 $string = "Now is the time for all good men to come to the aid of the party";
 $string = printSmart($string);
 ~~~
 
-~~~
+~~~php
 // Shorten a string only if it is longer than 100 characters
 $string = "Now is the time for all good men to come to the aid of the party";
 $string = printSmart($string, 100);
 ~~~
 
-~~~
+~~~php
 // Remove HTML tags and convert special chars before running text through printSmart
 $string = htmlspecialchars_decode(strip_tags("<strong>Now&#039;s the time for<br>all good men to come to the aid of the party</strong>"), ENT_QUOTES);
 $string = printSmart($string);
 ~~~
 
-~~~
+~~~php
 // Translate langauge strings before before running text through printSmart
 $string = trans("[en]Now is the time for all good men to come to the aid of the party[/en][fr]Il est maintenant temps pour tous les bons hommes de venir en aide au parti politique[/fr].");
 $string = printSmart($string);

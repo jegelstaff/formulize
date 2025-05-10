@@ -1,94 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ site.lang | default: "en-US" }}">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="/stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="/stylesheets/print.css" media="print" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta content="width=device-width, initial-scale=1" name="viewport" />
+
+		<!-- { % seo % } Should sort out bypassing this when running locally for testing, so we can leverage in live -->
+    <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
     <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    	<script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
     <![endif]-->
-    <title>Formulize|data, workflows, reporting</title>
-    <style>
-        pre {
-          background: #303030 !important;
-        }
-    </style>
+
+		<script src="{{ '/assets/js/helpers.js' | relative_url }}"></script>
+
+    {% include head-custom.html %}
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				// Replace with your GitHub repository information
+				updateGitHubReleaseLink('jegelstaff', 'formulize');
+			});
+		</script>
   </head>
+  <body {% if page.custom_id %}id="{{ page.custom_id }}"{% endif %} {% if page.class %}class="{{ page.class }}"{% endif %}>
+    <div class="wrapper">
+			<header>
+				<div class="header-logo">
+					<a href="{{ "/" | absolute_url }}"><img src="{{site.logo | relative_url}}" alt="Logo" /></a>
+					<div class="header-logo-text">{{ site.title | default: site.github.repository_name }}</div>
+				</div>
 
-  <body>
-    <div id="container">
-      <div class="inner">
+				<div class="downloads">
+					<a class="downloads-icon-link" href="https://github.com/jegelstaff/formulize/releases/latest" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img src="/assets/img/zip-icon.png" alt="Download Icon" />
+						</span>
+						<span class="downloads-icon-link-text">Download <strong>Latest</strong></span>
+					</a>
+					<a class="downloads-icon-link" href="https://join.slack.com/t/formulize/shared_invite/zt-1f3qfgcip-fSdTuE4LEBfEfefd2S~EUg" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img src="/assets/img/slack-icon.png" alt="Slack Icon" />
+						</span>
+						<span class="downloads-icon-link-text">Join us on <strong>Slack</strong></span>
+					</a>
+					<a class="downloads-icon-link" href="{{ site.github.repository_url }}" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img class="downloads-icon-link-icon" src="/assets/img/octocat-icon.png" alt="Github Icon" />
+						</span>
+						<span class="downloads-icon-link-text">View On <strong>GitHub</strong></span>
+					</a>
+				</div>
 
-        <header>
-          <h1><a href='/' class='header-home'>Formulize</a> <img src='/images/icon_big.png' id='icon'></h1>
-          <h2>Forms, workflows, and reporting. 100% free and open source.</h2>
-          <h2><a href='https://github.com/jegelstaff/formulize/releases' target='_blank'>Version 7.43 out now!</a> &mdash; <a href='/developers/deploying_formulize#installing-formulize'>How to install</a> &mdash; <a href='/developers/deploying_formulize#updating-formulize'>How to update</a></h2>
-        </header>
+				{% include links.html %}
+			</header>
 
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/jegelstaff/formulize/zipball/v7.43" id="download-zip" class="button"><span>Download .zip</span></a>
-          <!-- <a href="https://github.com/jegelstaff/formulize/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a> -->
-          <a href="https://github.com/jegelstaff/formulize" id="view-on-github" class="button"><span>View on GitHub</span></a>
-          <a href="https://join.slack.com/t/formulize/shared_invite/zt-1f3qfgcip-fSdTuE4LEBfEfefd2S~EUg" id="join-slack" class="button"><span>Join us on Slack</span></a>
-          <a href="https://twitter.com/formulize_info" id="follow-twitter" class="button"><span>Follow on Twitter</span></a>
-        </section>
+      <section>
+				{% include breadcrumbs.html %}
 
-        <hr>
+				{{ content }}
 
-        <script type='text/javascript'>
-
-            // Thanks to Donald Sutherland for this function
-            // http://mynameisdonald.com/javascript-functions-how-to-capitalize-words/
-            function eachWord(str){
-               return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-            }
-
-            var path = new String(window.document.location);
-            var pathParts = new Array();
-            var crumbPath = '';
-            var homePath = '';
-            var crumbSep = ' >> ';
-            var startCrumbsNextTime = false;
-            var crumbsStarted = false;
-            pathParts = path.split('/');
-            for(i in pathParts) {
-                crumbPath = crumbPath + pathParts[i] + '/';
-                if(!startCrumbsNextTime) {
-                    if(pathParts[i] == 'localhost:4000' || pathParts[i] == 'www.formulize.org' || pathParts[i] == 'formulize.org') {
-                        startCrumbsNextTime = true;
-                        homePath = crumbPath;
-                    }
-                    continue;
-                } else if(!crumbsStarted) {
-                    crumbsStarted = true;
-                    window.document.write('<a href="'+homePath+'">Home</a>\n');
-                }
-                if(pathParts[i] == '') { continue; }
-                pathParts[i] = pathParts[i].replace('_', ' ');
-                if (/[A-Z]/.test(pathParts[i]) == false) {
-                  pathParts[i] = eachWord(pathParts[i]);
-                }
-                window.document.write(crumbSep+'<a href="'+crumbPath+'">'+pathParts[i]+'</a>\n');
-            }
-            window.document.write('<hr>');
-
-        </script>
-
-        <section id="main_content">
-
-          {{ content }}
-
-        </section>
-
-        <footer>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
-
-
-      </div>
+				{% include links.html %}
+      </section>
     </div>
+		<footer>
+			{% if site.github.is_project_page %}
+			<p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>
+			{% endif %}
+			<p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a></small></p>
+		</footer>
   </body>
 </html>
