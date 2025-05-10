@@ -15,6 +15,8 @@
 
     {% include head-custom.html %}
 
+		<title>Formulize{% if page.title %} | {{ page.title }}{% endif %}</title>
+
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
 				// Replace with your GitHub repository information
