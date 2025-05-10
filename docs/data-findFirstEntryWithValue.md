@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findFirstEntryWithValue/
+title: findFirstEntryWithValue
 ---
 
 # findFirstEntryWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (string)&nbsp;$operator&nbsp;= "=", (array) $scope_uids = array()</span> )

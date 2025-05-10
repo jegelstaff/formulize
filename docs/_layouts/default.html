@@ -55,7 +55,7 @@
 			</header>
 
       <section>
-				{% include breadcrumbs.html %}
+				 {% include nav-breadcrumbs.html %}
 
 				{{ content }}
 
@@ -63,10 +63,12 @@
       </section>
     </div>
 		<footer>
-			{% if site.github.is_project_page %}
-			<p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>
-			{% endif %}
-			<p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a></small></p>
+			<p>
+				<small>
+					Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a> &mdash; project maintained by <a href="www.google.com" target="_BLANK">jegelstaff</a>
+					<!-- Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a>{% if site.github.is_project_page %} &mdash; project maintained by <a href="{{ site.github.owner_url }}" target="_BLANK">{{ site.github.owner_name }}</a>{% endif %} -->
+				</small>
+			</p>
 		</footer>
   </body>
 </html>

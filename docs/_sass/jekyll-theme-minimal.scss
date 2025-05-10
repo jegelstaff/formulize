@@ -153,9 +153,18 @@ footer {
   -webkit-font-smoothing: subpixel-antialiased;
 }
 
-.breadcrumbs {
+nav.breadcrumbs ol {
+  margin: 0;
+	padding: 0;
+	display: flex;
+	gap: 5px;
+	list-style: none;
 	margin-bottom: 10px;
 	font-style: italic;
+}
+nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
+  margin-right: 5px;
+	content: "»";
 }
 
 @media print, screen and (max-width: 1024px) {

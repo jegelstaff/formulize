@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/github_pages/
+title: Github Pages
 ---
 
 # GitHub Pages and Jekyll Configuration

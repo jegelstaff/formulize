@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/configuration_as_code/
+title: Configuration as Code
 ---
 
 # Configuration as code

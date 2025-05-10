@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/elementHasValueInEntry/
+title: elementHasValueInEntry
 ---
 
 # elementHasValueInEntry( <span style='font-size: 14pt;'>(int) $entry_id, (int | string | object) $element_identifier</span> )

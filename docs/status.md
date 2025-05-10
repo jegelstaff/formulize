@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/Public_API/status
+title: status
 ---
 
 # formulize-public-api/v1/status

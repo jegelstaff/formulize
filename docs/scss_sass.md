@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/scss-sass/
+title: SCSS and Sass
 ---
 
 # SCSS and Sass

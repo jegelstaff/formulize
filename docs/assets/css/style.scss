@@ -2,12 +2,6 @@
 ---
 @import "jekyll-theme-minimal";
 
-#home {
-	.breadcrumbs {
-		display: none;
-	}
-}
-
 div.header-logo-text {
 	font-weight: 500;
 }
@@ -62,9 +56,8 @@ div.downloads {
 
 div.hero {
 	background-color: rgba(61,161,197,0.9);
-	background-image: url('../img/pattern.png');
+	background-image: url('../img/hero-pattern.png');
 	background-repeat: repeat;
-	background-blend-mode: darken;
 	background-size: 200px 200px;
 	border-radius: 10px;
 	min-height: 250px;
@@ -112,10 +105,14 @@ div.hero {
 		max-width: 70px;
 		padding-bottom: 10px;
 	}
+
+	div.downloads {
+		margin: 15px 0 5px 0;
+	}
 }
 
 @media print, screen and (max-width: 480px) {
-		div.header-logo-text {
+	div.header-logo-text {
 		padding-bottom: 0;
 	}
 }

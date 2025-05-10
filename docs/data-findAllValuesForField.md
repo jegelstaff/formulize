@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findAllValuesForField/
+title: findAllValuesForField
 ---
 
 # findAllValuesForField( <span style='font-size: 14pt;'>(string) $element_handle, (string) $sort = "", (array)&nbsp;$scope_group_ids&nbsp;=&nbsp;array(), (array) $scope_uids = array(), (bool) $usePerGroupFilters = false</span> )

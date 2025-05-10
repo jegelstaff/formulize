@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: install/
+title: Installing Formulize
 ---
 
 # Installing Formulize
@@ -23,5 +24,5 @@ permalink: install/
 5. Open a web browser and go to your site.
    - _If you're installing fresh_, go to your webroot and the installer will appear.
    - _If you're upgrading_, login as the webmaster, and...
-       - go to the admin page for Formulize. You will be prompted to update the database. 
+       - go to the admin page for Formulize. You will be prompted to update the database.
        - click on the 'Modules' heading in the menu across the top of the admin page (the heading, not the Formulize link in the menu). The module list will appear. Click the circular arrows on the right side of the Formulize row. This will prompt you to update Formulize, which handles changes in templates and configuration settings.

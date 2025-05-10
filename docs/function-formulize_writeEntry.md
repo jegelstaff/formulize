@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/functions/formulize_writeEntry/
+title: formulize_writeEntry
 ---
 
 # formulize_writeEntry( <span style='font-size: 14pt;'>(array) $values, (int | string) $entry_id = "new", $action, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $writeOwnerInfo = true</span> )

@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/functions/formulize_updateDerivedValues/
+title: formulize_updateDerivedValues
 ---
 
 # formulize_updateDerivedValues( <span style='font-size: 14pt;'>(mixed) $entry_id_or_filter, (int) $fid, (int) $frid = 0</span> )
@@ -32,13 +33,13 @@ formulize_updateDerivedValues(7, 88);
 
 ~~~
 // update all the derived values in entry 7 in form 88, and make sure all the data
-// connected to that entry within relationship 12 is available when the derived 
+// connected to that entry within relationship 12 is available when the derived
 // values are updated
 formulize_updateDerivedValues(7, 88, 12);
 ~~~
 
 ~~~
-// update all the derived values in form 88 where the value of the 
+// update all the derived values in form 88 where the value of the
 // full_name element contains 'John'
 $filter = "full_name/**/John";
 formulize_updateDerivedValues($filter, 88);

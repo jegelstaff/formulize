@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/functions/printSmart/
+title: printSmart
 ---
 
 # printSmart( <span style='font-size: 14pt;'>(string) $value, (int) $chars = 35</span> )

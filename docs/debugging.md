@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/debugging/
+title: Debugging
 ---
 
 # Debugging with XDebug

@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/
+title: API
 ---
 
 # API

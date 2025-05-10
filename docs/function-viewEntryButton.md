@@ -1,9 +1,10 @@
 ---
 layout: default
+title: viewEntryButton
 permalink: developers/API/functions/viewEntryButton/
 ---
 
-# viewEntryButton( <span style='font-size: 14pt;'>(string) $clickable_text, (int | array) $entry_id_or_dataset_record, (int) $override_screen_id </span> ) 
+# viewEntryButton( <span style='font-size: 14pt;'>(string) $clickable_text, (int | array) $entry_id_or_dataset_record, (int) $override_screen_id </span> )
 
 ## Location
 

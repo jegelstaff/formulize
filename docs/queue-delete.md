@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/queue_handler/delete/
+title: delete
 ---
 
 # delete( <span style='font-size: 14pt;'>(string) $queue_handle</span> )

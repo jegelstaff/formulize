@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/development_environment/
+title: Development Environment
 ---
 
 # Development Environment

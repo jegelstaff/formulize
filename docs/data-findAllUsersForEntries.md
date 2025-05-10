@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findAllUsersForEntries/
+title: findAllUsersForEntries
 ---
 
 # findAllUsersForEntries( <span style='font-size: 14pt;'>(int | array) $entry_ids, (array) $scope_uids = array()</span> )

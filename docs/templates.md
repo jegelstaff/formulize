@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/templates/
+title: Templates
 ---
 
 # Working With Templates

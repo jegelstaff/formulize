@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/functions/getCurrentURL/
+title: getCurrentURL
 ---
 
 # getCurrentURL()

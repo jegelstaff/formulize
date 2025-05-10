@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/version_control/testing/creating_tests/
+title: Creating Tests
 ---
 
 # Creating Selenium 2 Tests with Selenium Builder
