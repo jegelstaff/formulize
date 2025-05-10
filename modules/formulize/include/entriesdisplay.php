@@ -2130,7 +2130,7 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 // go make all the necessary searches/filters for a given element
 function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="") {
 	$quickSearches = array();
-	$quickSearches['search'] = "<input type=text $boxid name='search_$handle' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
+	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
 	if($filtersRequired === true OR (is_array($filtersRequired) AND in_array($handle, $filtersRequired))) {
 		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text);
 		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true);
