@@ -73,7 +73,7 @@ div.hero {
 		filter: drop-shadow(2px 2px 5px rgb(36, 107, 133));
 
 		h1 {
-			font-size: 3em;
+			font-size: 2em;
 			color: #f0f0f0;
 			line-height: 1em;
 		}
@@ -81,6 +81,7 @@ div.hero {
 		p {
 			margin: 0;
 			padding: 0;
+			padding-top: 0.75em;
 			line-height: 1.3em;
 		}
 	}
@@ -93,6 +94,10 @@ div.hero {
 			border-radius: 10px;
 		}
 	}
+}
+
+h2 {
+	margin-bottom: 0.25em;
 }
 
 #home {
