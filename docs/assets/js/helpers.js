@@ -4,20 +4,18 @@
  * @param {string} repo - Repository name
  * @param {string} linkSelector - CSS selector for the link to update
  */
-function updateGitHubReleaseLink(owner, repo, linkSelector = '.downloads-icon-link') {
-  // Get the link element
-  const linkElement = document.querySelector(linkSelector);
+function updateGitHubReleaseLink(owner, repo, linkSelectors = ['.downloads-icon-link', '.download-latest-release-link']) {
+  // Get the icon link element
+  const iconLinkElement = document.querySelector(linkSelectors[0]);
+	// Get the latest release link
+	const latestReleaseLinkElement = document.querySelector(linkSelectors[1])
+	// Find the text element that should contain the version number
+  const textElement = iconLinkElement.querySelector('.downloads-icon-link-text');
 
   // If the link doesn't exist, exit early
-  if (!linkElement) {
-    console.error(`Link element with selector "${linkSelector}" not found`);
+  if (!iconLinkElement) {
+    console.error(`Icon Link Element could not be found`);
     return;
-  }
-  // Find the text element that should contain the version number
-  const textElement = linkElement.querySelector('.downloads-icon-link-text');
-  if (textElement) {
-    // Store original text as fallback
-    const originalText = textElement.innerHTML;
   }
 
   // Fetch the latest release data from GitHub API
@@ -32,13 +30,15 @@ function updateGitHubReleaseLink(owner, repo, linkSelector = '.downloads-icon-li
       // Extract the tag name
       const tagName = data.tag_name;
 
-      // Update the link's href to point to the specific version zip
-      linkElement.href = `https://github.com/${owner}/${repo}/zipball/${tagName}`;
+      // Update the link hrefs to point to the specific version zip
+      iconLinkElement.href = `https://github.com/${owner}/${repo}/zipball/${tagName}`;
+			latestReleaseLinkElement.href = `https://github.com/${owner}/${repo}/zipball/${tagName}`;
 
       // Update the text content if the text element exists
       if (textElement) {
         textElement.innerHTML = `Download <strong>${tagName}</strong>`;
       }
+
     })
     .catch(error => {
       console.error('Error fetching GitHub release:', error);
