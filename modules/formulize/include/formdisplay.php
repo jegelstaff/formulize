@@ -2073,6 +2073,27 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $col_two .= $deleteButton."</div>";
     }
 
+	// construct the limit based on what is passed in via $numberOfEntriesToDisplay and $firstRowToDisplay
+	$limitClause = "";
+	$pageNav = "";
+	$numberOfEntriesToDisplay = $numberOfEntriesToDisplay ? $numberOfEntriesToDisplay : $subform_element_object->ele_value['numberOfEntriesPerPage'];
+	if($numberOfEntriesToDisplay AND $numberOfEntriesToDisplay < count($sub_entries[$subform_id])) {
+		$firstRowToDisplay = intval($firstRowToDisplay);
+		if(isset($_POST['formulizeFirstRowToDisplay']) AND isset($_POST['formulizeSubformPagingInstance']) AND $_POST['formulizeSubformPagingInstance'] == $subformElementId.$subformInstance) {
+			$firstRowToDisplay = intval($_POST['formulizeFirstRowToDisplay']);
+		}
+		$limitClause = "LIMIT $firstRowToDisplay, ".intval($numberOfEntriesToDisplay);
+
+		$lastPageNumber = ceil(count($sub_entries[$subform_id]) / $numberOfEntriesToDisplay);
+		$firstDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 - 4;
+		$lastDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 + 4;
+		$firstDisplayPageNumber = $firstDisplayPageNumber < 1 ? 1 : $firstDisplayPageNumber;
+		$lastDisplayPageNumber = $lastDisplayPageNumber > $lastPageNumber ? $lastPageNumber : $lastDisplayPageNumber;
+		$pageNav = formulize_buildPageNavMarkup('gotoSubPage'.$subformElementId.$subformInstance, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
+	}
+
+	$col_two .= $pageNav; // figured out above
+
 	if($rowsOrForms=="row" OR $rowsOrForms =='') {
 		$col_two .= "<div class='formulize-subform-table-scrollbox'><table id=\"formulize-subform-table-$subform_id\" class=\"formulize-subform-table\">";
 	} else {
@@ -2202,25 +2223,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $filterClause = " AND false ";
             }
         }
-
-		// construct the limit based on what is passed in via $numberOfEntriesToDisplay and $firstRowToDisplay
-		$limitClause = "";
-		$pageNav = "";
-		$numberOfEntriesToDisplay = $numberOfEntriesToDisplay ? $numberOfEntriesToDisplay : $subform_element_object->ele_value['numberOfEntriesPerPage'];
-		if($numberOfEntriesToDisplay AND $numberOfEntriesToDisplay < count($sub_entries[$subform_id])) {
-			$firstRowToDisplay = intval($firstRowToDisplay);
-			if(isset($_POST['formulizeFirstRowToDisplay']) AND isset($_POST['formulizeSubformPagingInstance']) AND $_POST['formulizeSubformPagingInstance'] == $subformElementId.$subformInstance) {
-				$firstRowToDisplay = intval($_POST['formulizeFirstRowToDisplay']);
-			}
-			$limitClause = "LIMIT $firstRowToDisplay, ".intval($numberOfEntriesToDisplay);
-
-			$lastPageNumber = ceil(count($sub_entries[$subform_id]) / $numberOfEntriesToDisplay);
-			$firstDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 - 4;
-			$lastDisplayPageNumber = ($firstRowToDisplay / $numberOfEntriesToDisplay) + 1 + 4;
-			$firstDisplayPageNumber = $firstDisplayPageNumber < 1 ? 1 : $firstDisplayPageNumber;
-			$lastDisplayPageNumber = $lastDisplayPageNumber > $lastPageNumber ? $lastPageNumber : $lastDisplayPageNumber;
-			$pageNav = formulize_buildPageNavMarkup('gotoSubPage'.$subformElementId.$subformInstance, $numberOfEntriesToDisplay, $firstRowToDisplay, $firstDisplayPageNumber, $lastDisplayPageNumber, $lastPageNumber, _formulize_DMULTI_PAGE.":");
-		}
 
 		$sformObject = $form_handler->get($subform_id);
 		$subEntriesOrderSQL = "SELECT sub.entry_id FROM ".$xoopsDB->prefix("formulize_".$sformObject->getVar('form_handle'))." as sub $joinClause WHERE sub.entry_id IN (".implode(",", $sub_entries[$subform_id]).") $filterClause ORDER BY $sortClause $limitClause";
@@ -2373,8 +2375,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         // close of the subform-accordion-container, unless we're on a printable view
 		$col_two .= "</div>\n";
 	}
-
-	$col_two .= $pageNav; // figured out above
 
 	  $subformJS = '';
     if($rowsOrForms=='form') { // if we're doing accordions, put in the JS, otherwise it's flat-forms

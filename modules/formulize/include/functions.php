@@ -8734,6 +8734,8 @@ function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentP
 	$pageNav .= $entriesPerPageSelector ? "<span class=\"page-navigation-label\">". $entriesPerPageSelector."</span>" : "";
 	if ($currentPageFirstRecord > 1) {
 		$pageNav .= "<a href=\"\" class=\"page-navigation-prev\" onclick=\"javascript:$jsFunctionName('".($currentPageFirstRecord - $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_PREVIOUS."</a>";
+	} else {
+				$pageNav .= "<span>"._AM_FORMULIZE_LOE_PREVIOUS."</span>";
 	}
 	if($firstDisplayPage > 1) {
 		$pageNav .= "<a href=\"\" onclick=\"javascript:$jsFunctionName('0');return false;\">1</a><span class=\"page-navigation-skip\">—</span>";
@@ -8752,6 +8754,8 @@ function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentP
 	}
 	if ($currentPageFirstRecord < $lastPageStart) {
 		$pageNav .= "<a href=\"\" class=\"page-navigation-next\" onclick=\"javascript:$jsFunctionName('".($currentPageFirstRecord + $numberPerPage)."');return false;\">"._AM_FORMULIZE_LOE_NEXT."</a>";
+	} else {
+		$pageNav .= "<span>"._AM_FORMULIZE_LOE_NEXT."</span>";
 	}
 	$pageNav .= "</div>";
 	return $pageNav;
