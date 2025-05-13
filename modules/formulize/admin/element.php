@@ -190,7 +190,7 @@ if ($_GET['ele_id'] != "new") {
             break;
     }
 
- $ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+ 		$ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
     $common['ele_req_on'] = $ele_req === false ? false : true;
 
     $names['ele_req_no_on'] = " checked";
@@ -223,6 +223,7 @@ $formHandle=printSmart($formObject->getVar('form_handle'), 30);
 $orderOptions = array();
 $ele_colheads = $formObject->getVar('elementColheads');
 $ele_captions = $formObject->getVar('elementCaptions');
+$defaultpi = $formObject->getVar('pi');
 foreach($formObject->getVar('elements') as $elementId) {
     $elementTextToDisplay = $ele_colheads[$elementId] ? printSmart($ele_colheads[$elementId]) : printSmart($ele_captions[$elementId]);
     if ($ele_id != $elementId) {
@@ -235,6 +236,8 @@ $names['defaultorder'] = $defaultOrder;
 $names['firstelementorder'] = $firstElementOrder;
 $names['sortoptions'] = $sortOptions;
 $names['defaultsort'] = $defaultSort;
+$names['principalidentifier_off'] = $defaultpi == $ele_id ? "" : " checked='checked' ";
+$names['principalidentifier_on'] = $defaultpi != $ele_id ? "" : " checked='checked' ";
 
 // common values should be assigned to all tabs
 $common['name'] = '';
@@ -301,9 +304,15 @@ if ($ele_type=='textarea') {
         $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
     }
     global $xoopsDB;
+		$allFormsQuery = q("SELECT id_form, desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY desc_form");
+		$allForms = array();
+		foreach($allFormsQuery as $thisForm) {
+			$allForms[$thisForm['id_form']] = $thisForm['desc_form'];
+		}
     $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
     $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
     $caughtfirst = false;
+		$validForms = array();
     foreach($validForms1 as $vf1) {
         $validForms[$vf1['fl_form1_id']] = $vf1['desc_form'];
         if (!$caughtfirst) {
@@ -320,9 +329,8 @@ if ($ele_type=='textarea') {
             }
         }
     }
-    if (count((array) $validForms) == 0) {
-        $validForms['none'] = _AM_ELE_SUBFORM_NONE;
-    }
+    $allForms['new'] = _AM_ELE_SUBFORM_NEW;
+		$options['allforms'] = $allForms;
     $options['subforms'] = $validForms;
     if ($caughtfirst) {
         $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found

@@ -84,17 +84,11 @@ class formulize_themeForm extends XoopsThemeForm {
         $this->screen = $screen;
         parent::__construct($title, $name, $action, $method, $addtoken);
         if($screen) {
-            $applications_handler = xoops_getmodulehandler('applications', 'formulize');
-			$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
-			if(is_array($apps) AND count($apps)>0) {
-				$firstAppId = $apps[key($apps)]->getVar('appid');
-			} else {
-				$firstAppId = 0;
-			}
-            $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".$firstAppId;
-            global $xoopsTpl;
-            $xoopsTpl->assign('modifyScreenUrl', $url);
-            $this->modifyScreenLink = "<a href='".$url."'>Configure this Screen</a>";
+					$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
+					$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
+					global $xoopsTpl;
+					$xoopsTpl->assign('modifyScreenUrl', $url);
+					$this->modifyScreenLink = "<a href='".$url."'>Configure this Screen</a>";
         }
     }
 

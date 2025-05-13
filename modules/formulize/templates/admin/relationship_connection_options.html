@@ -1,0 +1,9 @@
+<div>
+	<p>Options:</p>
+	<label for='relationships-delete-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.delChecked}> value='1' name='relationships-delete-<{$content.linkId}>' id='relationships-delete-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_UNIFIEDDELETE}></label><br>
+	<{if $content.type == 1}>
+		<label for='relationships-conditional-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.conChecked}> value='1' name='relationships-conditional-<{$content.linkId}>' id='relationships-conditional-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER}></label><br>
+		<label for='relationships-bookkeeping-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.bookChecked}> value='1' name='relationships-bookkeeping-<{$content.linkId}>' id='relationships-bookkeeping-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES}></label><br>
+	<{/if}>
+</div>
+

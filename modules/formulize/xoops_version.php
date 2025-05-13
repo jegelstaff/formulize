@@ -718,9 +718,34 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/managepermissions.html',
 	'description' => '');
-	$modversion['templates'][] = array(
-		'file' => 'admin/variable_template_help.html',
-		'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/variable_template_help.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_listing.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_options.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_pair.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_multi.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_common.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/primary_identifier_selection.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_create_connection_options.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/relationship_connection_options.html',
+	'description' => '');
+
 
 //	Module Configs
 // $xoopsModuleConfig['t_width']
