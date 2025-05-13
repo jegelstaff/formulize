@@ -5,6 +5,8 @@ markdown: kramdown
 baseurl: /
 url: https://formulize.org/
 permalink: /:title/
+plugins:
+  - breadcrumbs
 breadcrumbs:
   root:
     hide: false  # show breadcrumbs on root/home page
