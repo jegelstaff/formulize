@@ -247,7 +247,12 @@ class formulizeElement extends FormulizeObject {
 }
 
 class formulizeElementsHandler {
+
 	var $db;
+	var $clickable; // used in formatDataForList
+	var $striphtml; // used in formatDataForList
+	var $length; // used in formatDataForList
+
 	function __construct(&$db) {
 		$this->db =& $db;
 	}
@@ -550,7 +555,7 @@ class formulizeElementsHandler {
 		if( !$result ){
 			return 0;
 		}
-		list($count) = $xoopsDB->fetchRow($result);
+		list($count) = $this->db->fetchRow($result);
 		return $count;
 	}
 
