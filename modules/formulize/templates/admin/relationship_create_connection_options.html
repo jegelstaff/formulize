@@ -1,10 +1,17 @@
 <div>
+PAIRS:<br>
 <{foreach item=pair from=$content.pairs}>
 	<{$pair.form1.elementName}> <{$pair.form1.elementId}> <-> <{$pair.form2.elementName}> <{$pair.form2.elementId}> - <{$pair.type}> <br>
 <{/foreach}>
 
-<{foreach key=id item=candidate from=$content.candidates}>
-	Form 1 PI <-> <{$candidate}> - <{$id}> <br>
+<br>FORM 1 candidates:<br>
+<{foreach key=id item=candidate from=$content.candidates.form1}>
+	<{$id}> - <{$candidate}> <br>
+<{/foreach}>
+
+<br>FORM 2 candidates:<br>
+<{foreach key=id item=candidate from=$content.candidates.form2}>
+	<{$id}> - <{$candidate}> <br>
 <{/foreach}>
 
 </div>

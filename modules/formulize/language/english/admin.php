@@ -863,3 +863,9 @@ define("_AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE", "Value to show if an opt
 
 define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
 define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");
+
+define("CREATE_CONNECTION_PI_LABEL", " &mdash; (Primary Indentifier)");
+define("CREATE_CONNECTION_COMMON_VALUE_TEXTBOX", "Create a new textbox, to store the value from form 1");
+define("CREATE_CONNECTION_COMMON_VALUE_PARALLEL", "Create a new element, a copy of the element in form 1");
+define("CREATE_CONNECTION_LINKED_SINGLE", "Create a new element, linked to a single entry in form 1");
+define("CREATE_CONNECTION_LINKED_MULTI", "Create a new element, linked to multiple entries in form 1");

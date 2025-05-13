@@ -23,7 +23,7 @@
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
 ##  Author of this file: Freeform Solutions                                  ##
-##  URL: http://www.formulize.org                           ##
+##  URL: http://www.formulize.org                           								 ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
@@ -67,7 +67,11 @@ if($form1Object = $form_handler->get($form1Id)) {
 	// save PI if applicable
 	} elseif(!$currentPI) {
 		$form1Object->setVar('pi', $submittedPI);
-		$form_handler->insert($form1Object);
+		if($form_handler->insert($form1Object) == false) {
+			print "Error: could not save the Primary Identifier for Form 1";
+			exit();
+		}
+		$currentPI = $submittedPI;
 	}
 
 	// prepare the options for the new connection, based on form 1 PI and the elements in the forms already
@@ -78,9 +82,9 @@ if($form1Object = $form_handler->get($form1Id)) {
 	// -- also take vice versa for multiselect linked elements, if relationship is one to many
 	// -- also take vice versa for non-multiselect linked elements, if relationship is one to one
 	// -- also any linked elements in form 1 that don't point to form 2, with an option to create a matching element in form 2 (common value)
-	// - any textbox element in form 2 as a common value to PI form 1 (would be pair of PI form 1 plus an element selector for form 2)
-	// - a new element option in selector for form 2 (above) to create a connection to PI form 1:
-	// -- textbox (common value), or checkboxes or dropdown or autocomplete or multiselect autocomplete (linked element)
+	// - any element in form 2 as a common value to PI form 1 (would be pair of PI form 1 plus an element selector for form 2)
+	// - a new element option in selector for form 2 (above) to create a connection to any element in form 1 (defaults to PI):
+	// -- textbox (common value), parallel element, or checkboxes or dropdown or autocomplete or multiselect autocomplete (linked element)
 	// -- Offer the name of form 1 or the caption of PI/target for name of new element in form 2, or let them type in a name?
 
  	// IF ONE TO MANY, ADDITIONAL OPTION FOR SUBFORM ELEMENT CREATION
@@ -121,7 +125,6 @@ if($form1Object = $form_handler->get($form1Id)) {
 				if($rel == 1 AND $form1Link['object']->canHaveMultipleValues == false AND $form1Link['sourceFid'] == $form2Id) {
 					addPair($pairs, $form1Link['object'], $form1Link['sourceObject']);
 				}
-
 			}
 		}
 
@@ -129,30 +132,48 @@ if($form1Object = $form_handler->get($form1Id)) {
 		// have to do this in separate second loop, so that common source linked elements would have already been catalogued
 		foreach($form1LinkedElementMetadata as $form1Link) {
 			if($form1Link['sourceFid'] != $form2Id AND !isset($form2LinkSources[$form1Link['sourceHandle']])) {
-				addPair($pairs, $form1Link['object'], null, 'new-matching-common');
+				addPair($pairs, $form1Link['object'], null, 'new-common-parallel');
 			}
 		}
 
-		// also, PI form 1 linking to any textbox in form 2 as common value, plus a trigger for making a new element linked to PI form 1
-		// DO WE NEED COMMON VALUE WITH ANYTHING TO ANYTHING??!!
-		// form 1 side is a list of all elements, default to PI 1
-		// form 2 side is a list of all elements, default to 'new' ??
-		// when making a new element, have option of a textbox for common value, or a parallel element, same as in form 1
-		// or a link from 2 to 1, in any of the supported types
-		$candidatesForPairWithForm1PI = array();
+		// lists of elements in both forms, and options for making new elements in form 2 referencing elements in form 1
+		// if two existing elements are selected, link will need to be common value
+		$candidateElementsForm1 = array(
+			$currentPI => $form1PIObject->getUIName() . CREATE_CONNECTION_PI_LABEL
+		);
+		foreach($form1Elements as $elementId) {
+			if($elementId == $currentPI) { continue; }
+			$form1ElementObject = $element_handler->get($elementId);
+			$candidateElementsForm1[$elementId] = $form1ElementObject->getUIName();
+		}
 		foreach($form2Elements as $elementId) {
 			$form2ElementObject = $element_handler->get($elementId);
-			if($form2ElementObject->getVar('ele_type') == 'text') {
-				$candidatesForPairWithForm1PI[$elementId] = $form2ElementObject->getUIName();
+			$candidateElementsForm2[$elementId] = $form2ElementObject->getUIName();
+		}
+		$candidateElementsForm2 = array(
+			'new-common-textbox' => CREATE_CONNECTION_COMMON_VALUE_TEXTBOX,
+			'new-common-parallel' => CREATE_CONNECTION_COMMON_VALUE_PARALLEL,
+			'new-linked-single' => CREATE_CONNECTION_LINKED_SINGLE
+		);
+		if($rel == 2) {
+			$candidateElementsForm2['new-linked-multi'] = CREATE_CONNECTION_LINKED_MULTI;
+		}
+		foreach($form2Elements as $elementId) {
+			$form2ElementObject = $element_handler->get($elementId);
+			$candidateElementsForm2[$elementId] = $form2ElementObject->getUIName();
+			if($elementId == $form2Object->getVar('pi')) {
+				$candidateElementsForm2[$elementId] .= CREATE_CONNECTION_PI_LABEL;
 			}
 		}
-		$candidatesForPairWithForm1PI['new'] = 'New element in form 2';
 
 		$content = array(
 			'linkId'=>'new',
 			'type'=>$rel,
 			'pairs'=>$pairs,
-			'candidates'=>$candidatesForPairWithForm1PI
+			'candidates'=>array(
+				'form1'=>$candidateElementsForm1,
+				'form2'=>$candidateElementsForm2
+			)
 		);
 		$xoopsTpl->assign('content', $content);
 		$xoopsTpl->display("db:admin/relationship_create_connection_options.html");
@@ -165,7 +186,7 @@ if($form1Object = $form_handler->get($form1Id)) {
  * @param array pairs - the array of pairs that we will add to
  * @param object form1ElementObject - the formulize element object for the candidate element in form 1
  * @param mixed form2ElementObject - either the formulize element object for the candidate element in form 2, or null if this pair indicates a new element possibility
- * @param string type - a string flag indicating the type of connection, empty for regular linked pair, 'common' for a common value pair, 'new-matching-common' for making a new common value element in form 2 that is the same as the element in form 1
+ * @param string type - a string flag indicating the type of connection, empty for regular linked pair, 'common' for a common value pair, 'new-common-parallel' for making a new common value element in form 2 that is the same as the element in form 1
  * @return nothing. pairs are added to in this function only if we haven't included the pair already
  */
 function addPair(&$pairs, $form1ElementObject, $form2ElementObject, $type='regular') {
