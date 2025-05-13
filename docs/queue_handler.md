@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/queue_handler/
+title: Queue Handler
 ---
 {% assign pages = site.pages | where_exp: "page", "page.name contains 'queue-'" %}
 
@@ -26,7 +27,7 @@ This file is normally included as part of any Formulize page load. If it is not 
 
 A queue handler object can be created using the _xoops_getModuleHandler_ function like below:
 
-## Example 
+## Example
 
 ~~~
 $queueHandler = xoops_getModuleHandler('queue', 'formulize');

@@ -1,5 +1,6 @@
 ---
 layout: default
+title: trans
 permalink: developers/API/functions/trans/
 ---
 

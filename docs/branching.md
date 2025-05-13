@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/version_control/branching/
+title: Branching
 ---
 
 # Branching

@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findFirstEntryWithAllValues/
+title: findFirstEntryWithAllValues
 ---
 
 # findFirstEntryWithAllValues( <span style='font-size: 14pt;'>(array) $elementsAndValues, (string | array) $operator = "=", (string) $fieldsToReturn = "entry_id" </span> )

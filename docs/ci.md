@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/ci/
+title: Continuous Integration
 ---
 
 # Continuous Integration

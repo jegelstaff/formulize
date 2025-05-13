@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findAllEntriesWithValue/
+title: findAllEntriesWithValue
 ---
 
 # findAllEntriesWithValue( <span style='font-size: 14pt;'>(int | string | object) $element_identifier, (string) $value, (array)&nbsp;$scope_uids&nbsp;=&nbsp;array(), (array) $scope_group_ids = array(), (string) $operator = "="</span> )

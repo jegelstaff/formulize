@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/writeEntry/
+title: writeEntry
 ---
 
 # writeEntry( <span style='font-size: 14pt;'>(int | string) $entry_id, (array) $values, (int) $proxyUser, (bool) $forceUpdate = false, (bool) $update_metadata = true</span> )

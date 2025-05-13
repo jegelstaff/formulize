@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/deleteEntries/
+title: deleteEntries
 ---
 
 # deleteEntries( <span style='font-size: 14pt;'>(int | array) $entry_ids</span> )

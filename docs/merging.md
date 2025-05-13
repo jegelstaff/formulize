@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/version_control/merging/
+title: Merging
 ---
 
 # Merging

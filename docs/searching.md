@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: searching/
+title: Searching
 ---
 
 # Cheat Sheet for searching through your entries

@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: summit/
+title: Formulize Summit - August 30 - Toronto
 ---
 
 # Formulize Summit - August 30 - Toronto

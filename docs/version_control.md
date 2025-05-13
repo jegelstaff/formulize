@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/version_control/
+title: Version Control
 ---
 
 # Version Control

@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/setEntryOwnerGroups/
+title: setEntryOwnerGroups
 ---
 
 # setEntryOwnerGroups( <span style='font-size: 14pt;'>(int | array) $user_ids, (int | array) $entry_ids</span> )

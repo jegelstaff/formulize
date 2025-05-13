@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/getEntryMeta/
+title: getEntryMeta
 ---
 
 # getEntryMeta( <span style='font-size: 14pt;'>(int) $entry_id, (bool) $updateCache = false</span> )

@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/getEntryOwnerGroups/
+title: getEntryOwnerGroups
 ---
 
 # getEntryOwnerGroups( <span style='font-size: 14pt;'>(int) $entry_id = 0</span> )

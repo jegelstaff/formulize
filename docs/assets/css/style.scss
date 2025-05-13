@@ -2,18 +2,12 @@
 ---
 @import "jekyll-theme-minimal";
 
-#home {
-	.breadcrumbs {
-		display: none;
-	}
-}
-
 div.header-logo-text {
 	font-weight: 500;
 }
 
 div.downloads {
-  height:40px;
+  height:75px;
   padding:0;
   border-radius:5px;
   border:1px solid #e0e0e0;
@@ -25,6 +19,7 @@ div.downloads {
 	.downloads-icon-link {
 		background: #f4f4f4;
 		display: flex;
+		flex-direction: column;
 		flex-grow: 1;
 		align-items: center;
 		justify-content: center;
@@ -62,9 +57,8 @@ div.downloads {
 
 div.hero {
 	background-color: rgba(61,161,197,0.9);
-	background-image: url('../img/pattern.png');
+	background-image: url('../img/hero-pattern.png');
 	background-repeat: repeat;
-	background-blend-mode: darken;
 	background-size: 200px 200px;
 	border-radius: 10px;
 	min-height: 250px;
@@ -80,7 +74,7 @@ div.hero {
 		filter: drop-shadow(2px 2px 5px rgb(36, 107, 133));
 
 		h1 {
-			font-size: 3em;
+			font-size: 2em;
 			color: #f0f0f0;
 			line-height: 1em;
 		}
@@ -88,6 +82,7 @@ div.hero {
 		p {
 			margin: 0;
 			padding: 0;
+			padding-top: 0.75em;
 			line-height: 1.3em;
 		}
 	}
@@ -102,6 +97,16 @@ div.hero {
 	}
 }
 
+h2 {
+	margin-bottom: 0.25em;
+}
+
+#home {
+	.breadcrumbs {
+		display: none;
+	}
+}
+
 @media print, screen and (max-width: 1024px) {
 	div.hero {
 		flex-direction: column;
@@ -112,10 +117,14 @@ div.hero {
 		max-width: 70px;
 		padding-bottom: 10px;
 	}
+
+	div.downloads {
+		margin: 15px 0 5px 0;
+	}
 }
 
 @media print, screen and (max-width: 480px) {
-		div.header-logo-text {
+	div.header-logo-text {
 		padding-bottom: 0;
 	}
 }

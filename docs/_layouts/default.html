@@ -15,6 +15,8 @@
 
     {% include head-custom.html %}
 
+		<title>Formulize{% if page.title %} | {{ page.title }}{% endif %}</title>
+
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
 				// Replace with your GitHub repository information
@@ -49,13 +51,19 @@
 						</span>
 						<span class="downloads-icon-link-text">View On <strong>GitHub</strong></span>
 					</a>
-				</div>
+					<a class="downloads-icon-link" href="https://ko-fi.com/formulize/" target="_BLANK">
+						<span class="downloads-icon-link-icon">
+							<img class="downloads-icon-link-icon" src="/assets/img/cup-border.png" alt="Ko-fi Icon" />
+						</span>
+						<span class="downloads-icon-link-text">Support us on <strong>Ko-fi</strong></span>
+					</a>
 
+				</div>
 				{% include links.html %}
 			</header>
 
       <section>
-				{% include breadcrumbs.html %}
+				 {% include nav-breadcrumbs.html %}
 
 				{{ content }}
 
@@ -63,10 +71,11 @@
       </section>
     </div>
 		<footer>
-			{% if site.github.is_project_page %}
-			<p>This project is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></p>
-			{% endif %}
-			<p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a></small></p>
+			<p>
+				<small>
+					Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist/minimal" target="_BLANK">orderedlist</a> &mdash; project maintained by <a href="www.google.com" target="_BLANK">jegelstaff</a>
+				</small>
+			</p>
 		</footer>
   </body>
 </html>

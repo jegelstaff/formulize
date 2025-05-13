@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/functions/security_check/
+title: security_check
 ---
 
 # security_check( <span style='font-size: 14pt;'>(int) $form_id, (int) $entry_id = "", (int) $user_id = ""</span> )

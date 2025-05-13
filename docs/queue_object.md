@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/queue_object/
+title: Queue Object
 ---
 
 # Queue Object

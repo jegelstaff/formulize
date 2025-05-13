@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/deploying_formulize/
+title: Depoying
 ---
 
 # <a name="deploying-formulize"></a>Deploying Formulize
@@ -52,7 +53,7 @@ Some of the folders and files are not necessary for the operation of Formulize o
 
 1. Backup your files and database.
 2. Deploy the new files to your website. You can exclude all [the files and folders listed above](#deploying-formulize).
-3. Make sure [the folders that need to be writable](#writable-folders) are writable by the web server (the update might include new folders you did not have previously). 
+3. Make sure [the folders that need to be writable](#writable-folders) are writable by the web server (the update might include new folders you did not have previously).
 4. Login to your website and go to the admin side, click on the Modules menu heading. Do not click on any of the menu entries under Modules, click on the heading itself.
 5. In the list of installed modules, click the circular arrows on the row where Formulize is listed:
 

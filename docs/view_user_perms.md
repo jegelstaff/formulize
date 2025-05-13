@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: view_user_perms/
+title: View User Permissions
 ---
 
 ## View User Permissions

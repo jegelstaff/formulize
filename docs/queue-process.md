@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/queue_handler/process/
+title: process
 ---
 
 # process( <span style='font-size: 14pt;'>(object|string) $queue_or_queue_handle</span> )
@@ -13,7 +14,7 @@ Queue processing can be triggered by the [Public API](../../../../Public_API).
 
 If the queue is processed asynchronously, certain PHP environment constraints may timeout the processing after many minutes, depending on your server configuration. If this is a problem, you should work with your server admin to remove or extend the timeout limits.
 
-If the queue processing times out, triggering the processing of the queue again will pick up where the previous process left off. It is possible that the last item from the timed out processing will be processed again when the queue resumes. 
+If the queue processing times out, triggering the processing of the queue again will pick up where the previous process left off. It is possible that the last item from the timed out processing will be processed again when the queue resumes.
 
 ## Parameters
 

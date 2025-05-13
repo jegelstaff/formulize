@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/queue_handler/create/
+title: create
 ---
 
 # create( <span style='font-size: 14pt;'>(string) $queue_handle</span> )

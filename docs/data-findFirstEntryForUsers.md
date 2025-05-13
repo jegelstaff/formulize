@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findFirstEntryForUsers/
+title: findFirstEntryForUsers
 ---
 
 # findFirstEntryForUsers( <span style='font-size: 14pt;'>(int | array) $user_ids</span> )

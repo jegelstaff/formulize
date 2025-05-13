@@ -1,5 +1,6 @@
 ---
 layout: default
+title: viewEntryLink
 permalink: developers/API/functions/viewEntryLink/
 ---
 

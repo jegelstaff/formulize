@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/getElementValueInEntry/
+title: getElementValueInEntry
 ---
 
 # getElementValueInEntry( <span style='font-size: 14pt;'>(int) $entry_id, (int | string | object) $element_identifier, (array)&nbsp;$scope_uids = array(), (array) $scope_group_ids = array()</span> )

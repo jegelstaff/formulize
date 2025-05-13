@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/data_handler/findFirstEntryForGroups/
+title: findFirstEntryForGroups
 ---
 
 # findFirstEntryForGroups( <span style='font-size: 14pt;'>(int | array) $group_ids</span> )

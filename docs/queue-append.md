@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/classes/queue_handler/append/
+title: append
 ---
 
 # append( <span style='font-size: 14pt;'>(object|string) $queue_or_queue_handle, (string) $code, (string), $item = '', (boolean) $allowDuplicates = false</span> )
@@ -37,11 +38,11 @@ $queueHandler = xoops_getModuleHandler('queue', 'formulize');
 $queue = $queueHandler->create('my-queue');
 
 foreach($entryIds as $entryId) {
-    // Note that $entryId and $formId will be inserted into this string as their 
+    // Note that $entryId and $formId will be inserted into this string as their
     // literal values because variables in double quotes are evaluated by PHP when
     // strings are assigned.
-    // This is important because when the queue is processed, only the code in the 
-    // string is executed, and the declared value of the variables above will not 
+    // This is important because when the queue is processed, only the code in the
+    // string is executed, and the declared value of the variables above will not
     // be available, so by ensuring the literal values are part of the string,
     // the code will explicitly reference the correct entry and form.
     $code = "formulize_updateDerivedValues($entryId, $formId)";

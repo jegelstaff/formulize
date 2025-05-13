@@ -1,6 +1,7 @@
 ---
 layout: default
 permalink: developers/API/functions/buildFilter/
+title: buildFilter
 ---
 
 # buildFilter( <span style='font-size: 14pt;'>(string) $name, (int | string | object) $element_identifier, (string) $defaultText = "Choose an option", (string) $formDOMId = "", (bool | string | array) $defaultValue = false, (bool) $multi = false</span> )
