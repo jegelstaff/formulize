@@ -1438,9 +1438,13 @@ div.form-listing-box .form-screen-list {
 	padding-right: 0.5em;
 }
 
+.form-data img {
+	margin-left: 0.25em;
+}
+
 .form-data {
-	width: 225px;
-	text-align: center;
+	width: 235px;
+	text-align: left;
 	font-size: 9pt;
 	display: none;
 }
@@ -1918,7 +1922,7 @@ form.formulize-admin-form input[type=text].filter-forms {
 	position: absolute;
 	top: 3em;
 	right: 4em;
-	width: 350px;
+	width: 370px;
 	border: 3px solid #6eac2c;
 	border-radius: 7px;
 	padding: 0.5em;

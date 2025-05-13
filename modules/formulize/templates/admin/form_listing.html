@@ -104,7 +104,7 @@
 		</div>
 		<div class="form-list-link form-data">
 			<img src="../images/formdata.gif">
-			<p>&nbsp;<{if $form.form->elementHandles|is_array}><{$form.form->elementHandles|@count|number_format}><{else}>0<{/if}> <{$smarty.const._AM_APP_ELEMENTS}>&nbsp;&mdash;&nbsp;<{$form.form->entry_count|number_format}> <{$smarty.const._AM_APP_ENTRIES}><br><{$form.form->user_count|number_format}> <{$smarty.const._AM_APP_USERS}>&nbsp;&mdash;&nbsp;<{$form.form->group_count|number_format}> <{$smarty.const._AM_APP_GROUPS}></p>
+			<p><{if $form.form->elementHandles|is_array}><{$form.form->elementHandles|@count|number_format}><{else}>0<{/if}> <{$smarty.const._AM_APP_ELEMENTS}>&nbsp;&mdash;&nbsp;<{$form.form->entry_count|number_format}> <{$smarty.const._AM_APP_ENTRIES}><br><{$form.form->user_count|number_format}> <{$smarty.const._AM_APP_USERS}>&nbsp;&mdash;&nbsp;<{$form.form->group_count|number_format}> <{$smarty.const._AM_APP_GROUPS}></p>
 		</div>
 	</div>
 </div>
