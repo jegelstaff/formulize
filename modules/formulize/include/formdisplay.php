@@ -1826,14 +1826,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
 
     if (0 == strlen($element_to_write)) {
-        error_log("Relationship $frid for subform $subform_id on form $fid is invalid.");
+        error_log("Relationship $frid does not include subform $subform_id, when displaying the main form $fid.");
         $to_return = array("c1"=>"", "c2"=>"", "sigle"=>"");
         if (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
             if (0 == $frid) {
                 $to_return['single'] = "This subform cannot be shown because no relationship is active.";
             } else {
-                $to_return['single'] = "This subform cannot be shown because relationship $frid for subform ".
-                    "$subform_id on form $fid is invalid.";
+                $to_return['single'] = "This subform interface cannot be shown because the the form to be displayed (id: $subform_id) is not part of the active relationship (id: $frid). Check if the active screen is using the relationship, or just \"the form only.\", and check whether the relationship includes all the forms it should.";
             }
         }
         return $to_return;
