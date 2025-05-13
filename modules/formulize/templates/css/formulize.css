@@ -203,7 +203,8 @@
 .page-navigation-label {
   margin-right: 1em; }
 
-.formulize-page-navigation a {
+.formulize-page-navigation a,
+.formulize-page-navigation span {
   margin: 0 0.1em;
   padding: 0.4em 0.5em;
   font-weight: normal; }

@@ -43,7 +43,7 @@ define("_AM_HOME_CONFIRMLOCKDOWN","Are you sure you want to lockdown this form? 
 define("_AM_HOME_APP_CONFIG","Configure this application and the relationships of its forms");
 define("_AM_HOME_APP_DELETE","Delete this application");
 define("_AM_HOME_APP_DESC","To assign a form to an application, look on the Settings tab when configuring the form.");
-define("_AM_HOME_APP_RELATION","Configure relationships (frameworks) for these forms");
+define("_AM_HOME_APP_RELATION","Configure relationships for these forms");
 define("_AM_HOME_GOBACKTO","Go Back to ");
 define("_AM_HOME_SAVECHANGES","Save your changes");
 define("_AM_HOME_WARNING_UNSAVED","You have unsaved changes!");
@@ -349,9 +349,9 @@ define("_AM_ELE_SUBFORM_FORM", "Which form do you want to include as a subform?"
 define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
-define("_AM_ELE_SUBFORM", "Subform (from a form framework)");
-define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
-define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a framework first");
+define("_AM_ELE_SUBFORM", "Subform (from a Relationship)");
+define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a Relationship, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all Relationships that this form is part of.");
+define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a Relationship first");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Element options");
 define("_AM_ELE_SUBFORM_ELEMENT_LIST", "Choose the elements to show in the row, or to use as the heading if you're showing the full form");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "When displayed in a row, about three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form. <b>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.</b>");
@@ -399,7 +399,7 @@ define("_AM_ELE_GRID_START_DESC", "Each table will have a number of elements in 
 // derived columns
 define("_AM_ELE_DERIVED", "Value derived from other elements");
 define("_AM_ELE_DERIVED_CAP", "Formula for generating values in this element");
-define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formula.  You can also use element ID numbers or Framework handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100<br /><br />Note: only use double quotes (\") to refer to a field.  If you need to use quotes in a line of PHP code, use single quotes (').");
+define("_AM_ELE_DERIVED_DESC", "Select an element above to add it to your formula.  You can also use element ID numbers or Relationship handles in your formula, as long as they are inside double quotes.  The formula can have multiple lines, or steps, and you can use PHP code in the formula.  The last line should be of the format <i>\$value = \$something</i> where \$something is the final number or formula that you want use.<br /><br />Example:<br />\$value = \"Number of hits\" / \"Total shots\" * 100<br /><br />Note: only use double quotes (\") to refer to a field.  If you need to use quotes in a line of PHP code, use single quotes (').");
 define("_AM_ELE_DERIVED_ADD", "Add to Formula");
 define("_AM_ELE_DERIVED_DONE","Finished updating values!");
 define("_AM_ELE_DERIVED_UPDATE", "Update Derived Values");
@@ -471,7 +471,7 @@ define("_AM_VIEW_FORM", "View this form");
 define("_AM_GOTO_PARAMS", "Edit the form's settings");
 define("_AM_PARAMS_EXTRA", "(Specify what elements appear<br>on the <i>View Entries</i> page)");
 define("_AM_GOTO_MAIN", "Return to main page");
-define("_AM_GOTO_MODFRAME", "Back to first<br>Frameworks page");
+define("_AM_GOTO_MODFRAME", "Back to first<br>Relationships page");
 
 define("_AM_CLEAR_DEFAULT", "Clear Default");
 
@@ -567,8 +567,8 @@ define("_AM_FORMULIZE_SCREENTYPE_LISTOFENTRIES", "List of Entries in this Form")
 define("_AM_FORMULIZE_ADD_SCREEN_NOW", "Add it Now!");
 define("_AM_FORMULIZE_SCREEN_FORM", "Create or Modify a Screen");
 define("_AM_FORMULIZE_SCREEN_TITLE", "Title of this screen");
-define("_AM_FORMULIZE_USE_NO_FRAMEWORK", "Use this form only, no Framework");
-define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Framework to use on this screen, if any");
+define("_AM_FORMULIZE_USE_NO_FRAMEWORK", "Use this form only, no Relationship");
+define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Relationship to use on this screen, if any");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Use the XOOPS security token on this screen?");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "The XOOPS security token is a defense against cross-site scripting attacks.  However, it can cause problems if you are using an advanced Ajax-based UI in a List of Entries screen, and possibly other screen types.");
 
@@ -646,8 +646,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_DESC_DEFAULTVIEW", "If you are customizing the 
 define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LIMITVIEWS", "If you include the basic views (\"Entries by...\"), then the selected view will switch to a basic view when the user makes a change, such as a sort or Quicksearch.");
 define("_AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT", "Include all views");
-define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME", "only avail. in framework: ");
-define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME", "only avail. with no framework");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME", "only avail. in Relationship: ");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME", "only avail. with no Relationship");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK", "Leave blank to turn this button off");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LEAVEBLANK_LIST", "Leave blank to turn off the list");
 define("_AM_FORMULIZE_SCREEN_LOE_NOPUBDVIEWS", "There are no published views for this form");
@@ -755,7 +755,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3", "Customize the Templates"
 define("_AM_FORMULIZE_SCREEN_LOE_BOTTOMTEMPLATE", "Template for the bottom portion of the page, below the list:");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the list portion of the page:");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_LISTTEMPLATE", "If you specify a List Item Template, certain buttons and configuration options mentioned above may be unavailable.");
-define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the main form's entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the id number of the main form.");
+define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Relationship.  Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the main form's entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the id number of the main form.");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element data handles for all the elements in this form. Use them with the <i>display</i> function.<br><br>Use \"<i>\$entry_id</i>\" to refer to the entry id number.<br><br>Use \"<i>\$form_id</i>\" to refer to the form id number.");
 
 define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these columns");
