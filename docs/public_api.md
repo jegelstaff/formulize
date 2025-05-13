@@ -4,6 +4,8 @@ permalink: developers/Public_API/
 title: Public API
 ---
 
+# Public API
+
 Formulize has a public API that currently behaves in a REST-like manner. There are two initial operations that the public API supports:
 
 * [api status](status)
