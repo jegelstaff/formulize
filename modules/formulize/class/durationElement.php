@@ -53,6 +53,10 @@ class formulizeDurationElement extends formulizeElement
 class formulizeDurationElementHandler extends formulizeElementsHandler
 {
 	var $db;
+	var $clickable; // used in formatDataForList
+	var $striphtml; // used in formatDataForList
+	var $length; // used in formatDataForList
+
 	// Conversion factors to minutes
 	private $timeUnits = array(
 		'days' => 1440,
@@ -295,7 +299,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 				}
 			}
 			$validationCode[] = "if(!hasValue) {\n";
-			$validationCode[] = "    window.alert('Please enter a value for ${caption}.');\n";
+			$validationCode[] = "    window.alert('Please enter a value for {$caption}.');\n";
 			$validationCode[] = "    myform['{$firstInputName}'].focus();\n";
 			$validationCode[] = "    return false;\n";
 			$validationCode[] = "}\n";
@@ -313,7 +317,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 
 		if ($ele_value['min_minutes'] > 0) {
 			$validationCode[] = "if(totalMinutes < {$ele_value['min_minutes']}) {\n";
-			$validationCode[] = "    window.alert('${caption} must be at least {$ele_value['min_minutes']} minutes.');\n";
+			$validationCode[] = "    window.alert('{$caption} must be at least {$ele_value['min_minutes']} minutes.');\n";
 			$validationCode[] = "    myform['{$firstInputName}'].focus();\n";
 			$validationCode[] = "    return false;\n";
 			$validationCode[] = "}\n";
@@ -321,7 +325,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 
 		if ($ele_value['max_minutes'] > 0) {
 			$validationCode[] = "if(totalMinutes > {$ele_value['max_minutes']}) {\n";
-			$validationCode[] = "    window.alert('${caption} must not exceed {$ele_value['max_minutes']} minutes.');\n";
+			$validationCode[] = "    window.alert('{$caption} must not exceed {$ele_value['max_minutes']} minutes.');\n";
 			$validationCode[] = "    myform['{$firstInputName}'].focus();\n";
 			$validationCode[] = "    return false;\n";
 			$validationCode[] = "}\n";
@@ -354,6 +358,6 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		$this->striphtml = true;
 		$this->length = 0;
 
-		return implode(", ", $output);
+		return parent::formatDataForList(implode(", ", $output));
 	}
 }
