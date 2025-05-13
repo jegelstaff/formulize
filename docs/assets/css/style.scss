@@ -7,7 +7,7 @@ div.header-logo-text {
 }
 
 div.downloads {
-  height:40px;
+  height:75px;
   padding:0;
   border-radius:5px;
   border:1px solid #e0e0e0;
@@ -19,6 +19,7 @@ div.downloads {
 	.downloads-icon-link {
 		background: #f4f4f4;
 		display: flex;
+		flex-direction: column;
 		flex-grow: 1;
 		align-items: center;
 		justify-content: center;
