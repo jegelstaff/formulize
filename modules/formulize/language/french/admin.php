@@ -38,7 +38,7 @@ define("_AM_HOME_CONFIRMLOCKDOWN","Etes vous sur de vouloir verrouiller ce formu
 define("_AM_HOME_APP_CONFIG","Configurer ce regroupement ainsi que les inter relations entre les formulaires y figurant");
 define("_AM_HOME_APP_DELETE","Effacer ce regroupement");
 define("_AM_HOME_APP_DESC","Pour mettre un formulaire dans un regroupement, regardez dans les réglages du formulaire.");
-define("_AM_HOME_APP_RELATION","Configurer les inter-relations (frameworks) pour ces formulaires");
+define("_AM_HOME_APP_RELATION","Configurer les inter-relations pour ces formulaires");
 define("_AM_HOME_GOBACKTO","Retourner sur ");
 define("_AM_HOME_SAVECHANGES","Sauver modifications");
 define("_AM_HOME_WARNING_UNSAVED","Vous avez des changements non sauvegardés!");
@@ -220,7 +220,7 @@ define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défen
 define("_AM_ELE_DERIVED", "Valeur dérivée venant d'autres éléments (calculs...)");
 define("_AM_ELE_DERIVED_ADD", "Ajouter à la formule");
 define("_AM_ELE_DERIVED_CAP", "Formule pour générer des valeurs dans cet élément");
-define("_AM_ELE_DERIVED_DESC", "Sélectionner un element ci dessous pour l'ajouter à votre formule.  Vous pouvez aussi utiliser le numéro ID d'un élément ouh d'un Framework dans votre code, tant qu'il est entre les doubles guillemets.  Vous pouvez utiliser un code PHP, avec de multiples lignes.  Format de la dernière ligne obligatoire: <i>\$value = \$something</i> où \$something est le nombre final ou le code que vous souhaitez utiliser.<br /><br />Exemple:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
+define("_AM_ELE_DERIVED_DESC", "Sélectionner un element ci dessous pour l'ajouter à votre formule.  Vous pouvez aussi utiliser le numéro ID d'un élément ouh d'un inter-relation dans votre code, tant qu'il est entre les doubles guillemets.  Vous pouvez utiliser un code PHP, avec de multiples lignes.  Format de la dernière ligne obligatoire: <i>\$value = \$something</i> où \$something est le nombre final ou le code que vous souhaitez utiliser.<br /><br />Exemple:<br />\$value = \"Number of hits\" / \"Total shots\" * 100");
 define("_AM_ELE_DERIVED_NUMBER_OPTS","Si cette formule produit un nombre ...");
 define("_AM_ELE_DESC","texte descriptif");
 define("_AM_ELE_DESC_HELP","quoique vous tapiez ici, cela apparaitra comme cette ligne de texte le fait.");
@@ -300,9 +300,9 @@ define("_AM_ELE_SEP","Ligne de séparation");
 define("_AM_ELE_SIZE","Taille");
 define("_AM_ELE_SOUL","Souligné");
 // subforms
-define("_AM_ELE_SUBFORM", "Sous formulaire (venant d'un framework de formulaires)");
+define("_AM_ELE_SUBFORM", "Sous formulaire (venant d'un inter-relation de formulaires)");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
-define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a framework, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all frameworks that this form is part of.");
+define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a Relationship, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all Relationships that this form is part of.");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Which elements should be displayed as part of the subform interface?");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "About three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form.<br><br>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.");
 define("_AM_ELE_SUBFORM_FORM", "Quel formulaire voulez vous inclure en tant que sous formulaire?");
@@ -312,7 +312,7 @@ define("_AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS", "En-têtes de colonnes (le
 define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
-define("_AM_ELE_SUBFORM_NONE", "Pas de sous formulaires valides - définissez d'abord un Framework");
+define("_AM_ELE_SUBFORM_NONE", "Pas de sous formulaires valides - définissez d'abord un inter-relation");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
 define("_AM_ELE_SUBFORM_VIEW", "Montrer les boutons<i>Voir</i> a coté de chaque entrée du sous formulaire?");
 define("_AM_ELE_SUBFORM_VIEW_DESC", "The <i>View</i> buttons let users click through to the complete entry in the subform.  This may be useful when only some elements in the subform are visible in the main interface.");
@@ -429,7 +429,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_HIDDENCOLUMNS", "Sélectionnez toutes les colon
 define("_AM_FORMULIZE_SCREEN_LOE_LIMITVIEWS", "If the 'Current View' list is in use, include these views:");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE", "Template for each entry in the list portion of the page:");
 define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FORM", "Below is a list of element IDs for all the elements in this form. Use them with the <i>display</i> function.");
-define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Framework.  Use them with the <i>display</i> function.");
+define("_AM_FORMULIZE_SCREEN_LOE_LISTTEMPLATE_HELPINTRO_FRAMEWORK", "Below is a list of handles for all the form elements in this Relationship.  Use them with the <i>display</i> function.");
 define("_AM_FORMULIZE_SCREEN_LOE_NOPUBDVIEWS", "Il n'y a pas de vue publiée pour ce formulaire");
 define("_AM_FORMULIZE_SCREEN_LOE_NOVIEWSAVAIL", "Il n'y a aucune vue disponible");
 define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "Si vous utilisez des en-têtes, au bout de combien de lignes doivent-ils se répéter?");
@@ -513,7 +513,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 </td>
 </tr>
 </table>
-<p>For Quicksearch boxes, use \"\$quickSearch<i>Column</i>\" where <i>Column</i> is either the element ID number, or the element handle if using a Framework.</p>\n<p>For Custom Buttons, use \"\$handle\" where <i>handle</i> is the handle you specified for that button.  You can use \"\$messageText\" to control where the clicked button's message will appear on the screen.  By default, the message appears centred at the top.</p>\n<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether <i>\$The_view_name</i> is true or not.  You can also check <i>\$viewX</i> where X is a number corresponding to the position of the view in the list, 1 through n.  You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>\n<p><b>List Item Template</b></p>\n<p>If you specify any PHP code for the List Item Template, it will be used to draw in each row of the list.</p>\n<p>You do not need to create a foreach loop or any other loop structure in this template.  The PHP code you specify will be executed inside a loop that runs once for each entry.</p>\n<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including <i>\$fid</i> for the form ID.  Use \$entry to refer to the current entry in the list.  For example:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>That code will display the phone number recorded in that entry (assuming \"phonenumber\" is a valid element handle).</p><p>You can use \"\$selectionCheckbox\" to display the special checkbox used to select an entry.</p><p>You can use a special function called \"viewEntryLink\" to create a link to the entry so users can edit it.  This function takes one parameter, which is the text that will be clickable.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Click to view this entry\");<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(display(\$entry, \"taskname\"));<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(\"&lt;img src='\" . XOOPS_ROOT_PATH . \"/images/button.jpg'&gt;\");</p></span>\n");
+<p>For Quicksearch boxes, use \"\$quickSearch<i>Column</i>\" where <i>Column</i> is either the element ID number, or the element handle if using a Relationship.</p>\n<p>For Custom Buttons, use \"\$handle\" where <i>handle</i> is the handle you specified for that button.  You can use \"\$messageText\" to control where the clicked button's message will appear on the screen.  By default, the message appears centred at the top.</p>\n<p>If the current view list is available, you can determine which view was last selected from the list, by checking whether <i>\$The_view_name</i> is true or not.  You can also check <i>\$viewX</i> where X is a number corresponding to the position of the view in the list, 1 through n.  You can use this to put if..else clauses into your template, so it changes depending what view is selected.</p>\n<p><b>List Item Template</b></p>\n<p>If you specify any PHP code for the List Item Template, it will be used to draw in each row of the list.</p>\n<p>You do not need to create a foreach loop or any other loop structure in this template.  The PHP code you specify will be executed inside a loop that runs once for each entry.</p>\n<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including <i>\$fid</i> for the form ID.  Use \$entry to refer to the current entry in the list.  For example:</p>\n<p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;display(\$entry, \"phonenumber\");</p>\n<p>That code will display the phone number recorded in that entry (assuming \"phonenumber\" is a valid element handle).</p><p>You can use \"\$selectionCheckbox\" to display the special checkbox used to select an entry.</p><p>You can use a special function called \"viewEntryLink\" to create a link to the entry so users can edit it.  This function takes one parameter, which is the text that will be clickable.  Examples:</p><p style=\"font-family: courier\">&nbsp;&nbsp;&nbsp;print viewEntryLink(\"Click to view this entry\");<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(display(\$entry, \"taskname\"));<br>&nbsp;&nbsp;&nbsp;print viewEntryLink(\"&lt;img src='\" . XOOPS_ROOT_PATH . \"/images/button.jpg'&gt;\");</p></span>\n");
 define("_AM_ELE_CAPTION","Affichage");
 define("_AM_FORMULIZE_SCREENTYPE_LISTOFENTRIES", "Liste des entrées dans ce formulaire");
 define("_AM_FORMULIZE_SCREENTYPE_MULTIPAGE", "Version multi pages du formulaire");
@@ -537,8 +537,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_USEWORKING", "Est ce que le message 'Working' d
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYPAGEWORKS", "Page des pageworks");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN", "Quel écran par défaut doit être montré aux utilisateurs lorsqu'ils souhaitent rentrer une nouvelle entrée?");
 define("_AM_FORMULIZE_SCREEN_LOE_VIEWENTRYSCREEN_DEFAULT", "Utilise la version par défault de ce formulaire");
-define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME", "dispo. seulement dans un framework: ");
-define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME", "dispo. seulement sans framework");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME", "dispo. seulement dans un inter-relation: ");
+define("_AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME", "dispo. seulement sans inter-relation");
 define("_AM_FORMULIZE_SCREEN_PAGETITLE", "Titre pour le numéro de page");
 define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM", "Est ce que les réponses d'une entrée précédente doivent être montrée comme partie du formulaire?  Si c'est le cas choisissez le formulaire.");
 define("_AM_FORMULIZE_SCREEN_PARAENTRYFORM_FALSE", "Non, ne pas montrer les réponses précédentes.");
@@ -553,11 +553,11 @@ define("_AM_FORMULIZE_SCREEN_SAVED", "Les détails pour cet écran ont été sau
 define("_AM_FORMULIZE_SCREEN_THANKS", "Texte de remerciement pour la dernière page de ce formulaire");
 define("_AM_FORMULIZE_SCREEN_TITLE", "Titre de cet écran");
 define("_AM_FORMULIZE_SCREEN_TYPE", "Type: ");
-define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Framework utilisé sur cet écran, s'il y en a un");
-define("_AM_FORMULIZE_USE_NO_FRAMEWORK", "Utilisez ce formulaire seulement, pas de Framework");
+define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Inter-relation utilisé sur cet écran, s'il y en a un");
+define("_AM_FORMULIZE_USE_NO_FRAMEWORK", "Utilisez ce formulaire seulement, pas de inter-relation");
 define("_AM_FUNCTION","Fonction");
 define("_AM_GOTO_MAIN", "Retourner au menu");
-define("_AM_GOTO_MODFRAME", "Retourner à la première page<br> du Frameworks");
+define("_AM_GOTO_MODFRAME", "Retourner à la première page<br> du inter-relations");
 define("_AM_GOTO_PARAMS", "Editer les paramètres du formulaire");
 define("_AM_ID","NÂ°");
 define("_AM_INACTIVE","inactif");
