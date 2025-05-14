@@ -6,4 +6,5 @@ gemspec
 
 group :jekyll_plugins do
   gem "breadcrumbs"
+	gem "jekyll-github-metadata"
 end

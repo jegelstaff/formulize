@@ -5,8 +5,10 @@ markdown: kramdown
 baseurl: /
 url: https://formulize.org/
 permalink: /:title/
+repository: jegelstaff/formulize
 plugins:
   - breadcrumbs
+  - jekyll-github-metadata
 breadcrumbs:
   root:
     hide: false  # show breadcrumbs on root/home page
