@@ -1166,6 +1166,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
         }
     }
 
+    $sub_entries = array();
     foreach ($one_to_many as $many_fid) {
         $sub_fids[] = $many_fid['fid'];
         if (isset($entries[$fid][0])) {
@@ -1174,7 +1175,9 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
                 $entries_found = findLinkedEntries($fid, $many_fid, $entries[$fid][0]);
                 if (is_array($entries_found)) {
                     foreach ($entries_found as $many_entry) {
-                        $sub_entries[$many_fid['fid']][] = $many_entry;
+                        if(!isset($sub_entries[$many_fid['fid']]) OR !in_array($many_entry, $sub_entries[$many_fid['fid']])) {
+                            $sub_entries[$many_fid['fid']][] = $many_entry;
+                        }
                     }
                 }
             }
@@ -1190,7 +1193,9 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
             if ($thisent = $entries[$fid][0]) {
                 $entries_found = findLinkedEntries($fid, $manyToOneFid, $entries[$fid][0]);
                 foreach ($entries_found as $many_entry) {
-                    $entries[$manyToOneFid['fid']][] = $many_entry;
+                    if(!isset($entries[$manyToOneFid['fid']]) OR !in_array($many_entry, $entries[$manyToOneFid['fid']])) {
+                        $entries[$manyToOneFid['fid']][] = $many_entry;
+                    }
                 }
             }
         } else {
