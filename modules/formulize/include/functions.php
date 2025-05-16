@@ -8793,3 +8793,44 @@ function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject 
 	}
 	return $firstApp;
 }
+
+/**
+ * Check if two elements are actually linked to each other
+ * @param int|string|object element1Indentifier - element id, handle or object for the first element
+ * @param int|string|object element2Indentifier - element id, handle or object for the second element
+ * @return boolean Return true or false, depending if the elements are linked to each other or not
+ */
+function elementsAreLinked($element1Identifier, $element2Identifier) {
+	if($element1 = _getElementObject($element1Identifier)
+		AND $element2 = _getElementObject($element2Identifier)
+		AND (
+			$element1->getVar('ele_handle') == sourceHandleForElement($element2)
+			OR $element2->getVar('ele_handle') == sourceHandleForElement($element1)
+		)) {
+			return true;
+	}
+	return false;
+}
+
+/**
+ * Find the element handle of the source element for a linked element
+ * @param int|string|object elementIndentifier - element id, handle or object for the element
+ * @return string|boolean Return the element handle of the source of the link, or false if the element is not linked
+ */
+function sourceHandleForElement($element) {
+	$sourceHandle = false;
+	if($element = _getElementObject($element)) {
+    $ele_value = $element->getVar('ele_value');
+		if(is_array($ele_value)
+			AND isset($ele_value[2])
+			AND is_string($ele_value[2])
+			AND strstr($ele_value[2], "#*=:*")
+			AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])) {
+        $boxproperties = explode("#*=:*", $ele_value[2]);
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $sourceElement = $element_handler->get($boxproperties[1]);
+        $sourceHandle = $sourceElement->getVar('ele_handle');
+    }
+	}
+  return $sourceHandle;
+}

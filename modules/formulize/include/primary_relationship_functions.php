@@ -50,26 +50,21 @@ function createPrimaryRelationship() {
 	// Create a relationship with id -1 and call it Primary Relationship
 	// Add all existing links from all existing relationships, to this relationship
 	// Add extra links to this relationship that represent every linked element connection in the database, which was not in an existing relationship
-	// For the extra links, the linked element form will be on Many form, the target form will be the One form
-
-	// Set the Primary Relationship as the relationship in effect on all screens that are 'Form Only' right now
+	// For the extra links, the linked element form will be the Many form, the target form will be the One form
+	// DO NOT Set the Primary Relationship as the relationship in effect on all screens that are 'Form Only' right now. See comment below.
 
 	global $xoopsDB, $linkForms;
 	$linkForms = array();
-	$primaryRelationshipError = false;
+	$primaryRelationshipError = '';
 
-	$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship')";
-	if(!$res = $xoopsDB->queryF($sql)) {
-		$primaryRelationshipError = 'Could not create relationship entry';
-	}
 	$sql = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')." SET fl_unified_display = 1";
 	if(!$res = $xoopsDB->queryF($sql)) {
-		$primaryRelationshipError = 'Could not set all links to unified display';
+		$primaryRelationshipError .= '<br>Could not set all links to unified display';
 	}
 
 	$sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_framework_links');
 	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-		$primaryRelationshipError = 'Could not check existing links';
+		$primaryRelationshipError .= '<br>Could not check existing links';
 	}
 
 	while(!$primaryRelationshipError AND $row = $xoopsDB->fetchArray($res)) {
@@ -82,16 +77,27 @@ function createPrimaryRelationship() {
 		$del = $row['fl_unified_delete'];
 		$con = $row['fl_one2one_conditional'];
 		$book = $row['fl_one2one_bookkeeping'];
-		if(elementExists($k1) AND elementExists($k2)) { // 0,0 indicates a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
-			$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book);
-			$primaryRelationshipError = $result === true ? $primaryRelationshipError : $result;
+		// 0 and 0 would indicate a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
+		if($k1 AND $k2) {
+			// validate that the elements are real and are common value or link to each other
+			if(elementExists($k1) AND elementExists($k2) AND ($cv == 1 OR elementsAreLinked($k1, $k2))) {
+				if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book)) {
+					$primaryRelationshipError .= "<br>Error inserting existing relationship link into primary relationship";
+				}
+			} else {
+				// linkage is not involving real elements, or they are not linked together properly, so remove the linkage
+					$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE fl_id = ".intval($row['fl_id']);
+					if(!$res = $xoopsDB->queryF($sql)) {
+						print "<br>Warning: could not delete invalid link from relationship ".intval($row['fl_frame_id']);
+					}
+			}
 		}
 	}
 
 	// lookup all other linked elements not already in a relationship, add them to the Primary Relationship
 	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox') AND ele_value LIKE '%#*=:*%'";
 	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
-		$primaryRelationshipError = 'Could not collate list of existing linked elements';
+		$primaryRelationshipError .= '<br>Could not collate list of existing linked elements';
 	}
 
 	while(!$primaryRelationshipError AND $row = $xoopsDB->fetchArray($res)) {
@@ -102,7 +108,7 @@ function createPrimaryRelationship() {
 		$sourceElementHandle = $boxproperties[1];
 		$sourceFormLookup = "SELECT id_form, ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE ele_handle = '".formulize_db_escape($sourceElementHandle)."'";
 		if(!$sourceFormLookupResult = $xoopsDB->query($sourceFormLookup)) {
-			$primaryRelationshipError = "Could not lookup source details of linked form element with this SQL:<br>$sourceFormLookup";
+			$primaryRelationshipError .= "<br>Could not lookup source details of linked form element with this SQL:<br>$sourceFormLookup";
 		}
 		if(!$primaryRelationshipError) {
 			$sourceFormLookupRow = $xoopsDB->fetchArray($sourceFormLookupResult);
@@ -110,8 +116,26 @@ function createPrimaryRelationship() {
 			$k1 = $sourceFormLookupRow['ele_id'];
 			$rel = 2;
 			$cv = 0;
-			$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2);
-			$primaryRelationshipError = $result === true ? $primaryRelationshipError : $result;
+			if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2)) {
+				$primaryRelationshipError .= "<br>Error inserting non-relationship link into primary relationship";
+			}
+		}
+	}
+
+	if(!$primaryRelationshipError) {
+		$sql = "INSERT INTO ".$xoopsDB->prefix('formulize_frameworks')." (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship')";
+		if(!$res = $xoopsDB->queryF($sql)) {
+			$primaryRelationshipError .= '<br>Could not create relationship entry';
+		}
+	}
+	if($primaryRelationshipError) {
+		$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE fl_frame_id = -1";
+		if(!$res = $xoopsDB->queryF($sql)) {
+			$primaryRelationshipError .= '<br>Could not cleanup primary relationship links';
+		}
+		$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_frameworks')." WHERE frame_id = -1";
+		if(!$res = $xoopsDB->queryF($sql)) {
+			$primaryRelationshipError .= '<br>Could not cleanup primary relationship entry';
 		}
 	}
 
@@ -172,7 +196,7 @@ function mirrorRelationship($relationship) {
  * @param int del - 1 or 0 indicating if a entries should be deleted from one form when deleted from the other. Defaults to 0.
  * @param int con - 1 or 0 indicating if a one to one connection should trigger conditional behaviour when forms displayed together. Defaults to 1.
  * @param int book - 1 or 0 indicating if a one to one connection should trigger creation of entries in one form when an entry is saved in the other. Defaults to 1.
- * @return boolean|string - Returns boolean true on success, including if the link already exists, or False if no error, or a string containing the error text
+ * @return boolean|string - Returns boolean true on success, including if the link already exists, or false if insert failed. Prints out error text.
  */
 function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0, $con=1, $book=1) {
 	static $linkPairs = array();
@@ -197,22 +221,31 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 			`fl_one2one_bookkeeping`)
 			VALUES
 			(-1,
-			$f1,
-			$f2,
-			$k1,
-			$k2,
-			$rel,
+			".intval($f1).",
+			".intval($f2).",
+			".intval($k1).",
+			".intval($k2).",
+			".intval($rel).",
 			1,
-			$del,
-			$cv,
-			$con,
-			$book)";
+			".intval($del).",
+			".intval($cv).",
+			".intval($con).",
+			".intval($book).")";
 		if(!$xoopsDB->queryF($sql)) {
 			$result = false;
-			$primaryRelationshipError = "Could not insert an existing link into the Primary Relationship with this SQL:<br>$sql<br>".$xoopsDB->error();
+			print "<br>Could not insert a link into the Primary Relationship with this SQL:<br>$sql<br>".$xoopsDB->error();
+		} else {
+			$e1 = _getElementObject($k1);
+			$e2 = _getElementObject($k2);
+			if(strlen($e1->has_index()) == 0){
+        $e1->createIndex();
+      }
+			if(strlen($e2->has_index()) == 0){
+        $e2->createIndex();
+      }
 		}
 	}
-	return $result ? true : $primaryRelationshipError;
+	return $result;
 }
 
 /**
