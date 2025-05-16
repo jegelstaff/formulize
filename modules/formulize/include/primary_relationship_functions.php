@@ -82,7 +82,7 @@ function createPrimaryRelationship() {
 		$del = $row['fl_unified_delete'];
 		$con = $row['fl_one2one_conditional'];
 		$book = $row['fl_one2one_bookkeeping'];
-		if($k1 AND $k2) { // 0,0 indicates a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
+		if(elementExists($k1) AND elementExists($k2)) { // 0,0 indicates a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
 			$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book);
 			$primaryRelationshipError = $result === true ? $primaryRelationshipError : $result;
 		}
@@ -127,6 +127,21 @@ function createPrimaryRelationship() {
 
 	return $primaryRelationshipError;
 }
+
+/**
+ * A function to check that the elementId is real, because we don't want to insert old garbage into the Primary Relationship
+ */
+function elementExists($elementId) {
+	static $existingElements = array();
+	if(count($existingElements) == 0) {
+		global $xoopsDB;
+		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix('formulize');
+		$res = $xoopsDB->query($sql);
+		$existingElements = $xoopsDB->fetchAll($res, column: 0);
+	}
+	return in_array($elementId, $existingElements);
+}
+
 
 /**
  * Returns the mirror relationship type: 1 -> 1 || 2 -> 3 || 3 -> 2
