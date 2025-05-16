@@ -149,7 +149,9 @@
 
   $('input[name=relationship]').change(function() {
 		$('#create-connection-form2-target').css('visibility', 'visible');
-		$('#create-connection-form2-target').html(setSingularPlural($('#create-connection-box-'+form2Id), $('#create-connection-form2-target')));
+		$('div.create-connection-box').each(function() {
+			$(this).html(setSingularPlural($(this), $('#create-connection-form2-target')));
+		});
 		setAvailableForms();
 	});
 

@@ -10,9 +10,12 @@ define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
 define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
-define("_AM_APP_RELATIONSHIP_UNIFIEDDELETE", "When you delete an entry in one form, delete the linked entries in the other form");
-define("_AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER", "When you display the forms together, dynamically change the entry displayed, if the linking value changes");
-define("_AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES", "When you save an entry in one form, automatically create an entry in the other");
+define("_AM_APP_RELATIONSHIP_CREATESUBFORM1", "Embed the <i>");
+define("_AM_APP_RELATIONSHIP_CREATESUBFORM2", "</i> form inside the <i>");
+define("_AM_APP_RELATIONSHIP_CREATESUBFORM3", "</i> form, so users can interact with them both at once");
+define("_AM_APP_RELATIONSHIP_UNIFIEDDELETE", "When the user deletes an entry in one form, delete the linked entries in the other form");
+define("_AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER", "When the forms are shown together, and the linking value is changed, change the entry in the other form to match");
+define("_AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES", "When the user saves an entry in one form, create a matching entry in the other form if one does not exist already");
 
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
@@ -126,10 +129,22 @@ define("_AM_SETTINGS_FORM_PI1","Which element in");
 define("_AM_SETTINGS_FORM_PI2","is the principal identifier?");
 define("_AM_SETTINGS_FORM_PI_NONE","No principal identifer");
 define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
+define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
+define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");
+define("_AM_SETTINGS_NEW_CONNECTION_REGULAR", "A new element, linked to<br>%s");
+define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS", "Connecting Elements");
+define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS_DESC", "Select the elements in the two forms that have corresponding values. For example, an Activity Log and a Municipalities List might be connected by a dropdown list in the Activity Log, in which users can choose the name of the Municipality where the Activity happened. Or a Teacher Profile and a Class List might both have a Teacher Name element.");
+define("CREATE_CONNECTION_PI_LABEL", " &mdash; (PI)");
+define("CREATE_CONNECTION_COMMON_VALUE_TEXTBOX", "New element: create a textbox");
+define("CREATE_CONNECTION_COMMON_VALUE_PARALLEL", "New element: copy element from other form");
+define("CREATE_CONNECTION_LINKED_DROPDOWN", "New element: link a dropdown list");
+define("CREATE_CONNECTION_LINKED_AUTOCOMPLETE", "New element: link an autocomplete box");
+define("CREATE_CONNECTION_LINKED_MULTI_AUTOCOMPLETE", "New element: link a multi-autocomplete box");
+define("CREATE_CONNECTION_LINKED_CHECKBOXES", "New element: link checkboxes");
+define("_AM_SETTINGS_SELECT_CONNECTION_OPTION", "Option");
 
 define("_AM_CAL_SCREEN_TEMPLATES","Templates");
 define("_AM_CAL_SCREEN_DATA","Datasets");
-
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
@@ -863,9 +878,3 @@ define("_AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE", "Value to show if an opt
 
 define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
 define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");
-
-define("CREATE_CONNECTION_PI_LABEL", " &mdash; (Primary Indentifier)");
-define("CREATE_CONNECTION_COMMON_VALUE_TEXTBOX", "Create a new textbox, to store the value from form 1");
-define("CREATE_CONNECTION_COMMON_VALUE_PARALLEL", "Create a new element, a copy of the element in form 1");
-define("CREATE_CONNECTION_LINKED_SINGLE", "Create a new element, linked to a single entry in form 1");
-define("CREATE_CONNECTION_LINKED_MULTI", "Create a new element, linked to multiple entries in form 1");

@@ -355,7 +355,7 @@ CREATE TABLE formulize_framework_links (
   fl_key1 smallint(5),
   fl_key2 smallint(5),
   fl_relationship smallint(5),
-  fl_unified_display smallint(5),
+  fl_unified_display smallint(5) NULL default 1,
   fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
 	fl_one2one_conditional smallint(5) NULL default 1,

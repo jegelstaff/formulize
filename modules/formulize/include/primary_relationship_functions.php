@@ -79,13 +79,16 @@ function createPrimaryRelationship() {
 		$k2 = $row['fl_key2'];
 		$rel = $row['fl_relationship'];
 		$cv = $row['fl_common_value'];
+		$del = $row['fl_unified_delete'];
 		$con = $row['fl_one2one_conditional'];
 		$book = $row['fl_one2one_bookkeeping'];
-		if($k1 AND $k2) { // 0,0 indicates a "user who made the entries" relationship. Ancient and never used??
-			$primaryRelationshipError = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $con, $book);
+		if($k1 AND $k2) { // 0,0 indicates a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
+			$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book);
+			$primaryRelationshipError = $result === true ? $primaryRelationshipError : $result;
 		}
 	}
 
+	// lookup all other linked elements not already in a relationship, add them to the Primary Relationship
 	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox') AND ele_value LIKE '%#*=:*%'";
 	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
 		$primaryRelationshipError = 'Could not collate list of existing linked elements';
@@ -107,18 +110,20 @@ function createPrimaryRelationship() {
 			$k1 = $sourceFormLookupRow['ele_id'];
 			$rel = 2;
 			$cv = 0;
-			$primaryRelationshipError = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2);
+			$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2);
+			$primaryRelationshipError = $result === true ? $primaryRelationshipError : $result;
 		}
 	}
 
-	// NEED TO CONSIDER IF THIS IS THE BEST APPROACH... CAN PRIMARY RELATIONSHIP WORK CLEANLY IN ALL CASES OF NO RELATIONSHIP RIGHT NOW?? -- WHAT ABOUT PROGRAMS IN ESAT, ETC??
-	if(!empty($linkForms)) {
+	// NOT CURRENTLY CHANGING EXISTING SCREENS TO USE PRIMARY RELATIONSHIP ON UPGRADE... PERHAPS WE SHOULD. PERHAPS IT SHOULD BE AN OPTION.
+	// PROBLEM IS THAT FOR SOME SCREENS, THERE WOULD BE PERFORMANCE ISSUES IF A FORM THAT HAS TONS OF LINKS, SUDDENLY HAS WAY MORE DATA INVOLVED IN ITS SCREENS, WHICH WERE PERFECTLY FINE AND SPEEDY UP TILL NOW.
+	/*if(!empty($linkForms)) {
 		$linkForms = array_unique($linkForms);
 		$sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET `frid` = -1 WHERE `frid` = 0 AND `fid` IN (".implode(', ', $linkForms).")";
 		if(!$primaryRelationshipError AND !$res = $xoopsDB->queryF($sql)) {
 			$primaryRelationshipError = 'Could not update existing screens to use Primary Relationship';
 		}
-	}
+	}*/
 
 	return $primaryRelationshipError;
 }
@@ -139,21 +144,24 @@ function mirrorRelationship($relationship) {
 }
 
 /**
- * Inserts a link into the primary relationship, if that link doesn't already exist
- * Maintains a global variable array of the form ids of all links added to the primary relationship this way
+ * Inserts a link into the primary relationship.
+ * Maintains a static array of all links added to the primary relationship this way, so that when first creating the Primary Relationship, we don't create duplicates.
+ * Maintains a global array of all forms involved in links this page load, in case we want to do something with them later, may be relevant in migrations to F8.
+ * Will create duplicates if passed duplicate settings, after the initial creation of the Primary Relationship! So use linkExistsInPrimaryRelationship function to determine if you should call this!
  * @param int cv - 1 or 0 depending if the link is based on a common value
  * @param int rel - a number representing the relationship type, 1 for one to one, 2 for one to many, 3 for many to one
  * @param int f1 - the id number of form 1 in the link
  * @param int f2 - the id number of form 2 in the link
  * @param int k1 - the id number of the element in form 1 used in the link
  * @param int k2 - the id number of the element in form 2 used in the link
+ * @param int del - 1 or 0 indicating if a entries should be deleted from one form when deleted from the other. Defaults to 0.
  * @param int con - 1 or 0 indicating if a one to one connection should trigger conditional behaviour when forms displayed together. Defaults to 1.
  * @param int book - 1 or 0 indicating if a one to one connection should trigger creation of entries in one form when an entry is saved in the other. Defaults to 1.
- * @return boolean|string - False if no error, or a string containing the error text
+ * @return boolean|string - Returns boolean true on success, including if the link already exists, or False if no error, or a string containing the error text
  */
-function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $con=1, $book=1) {
+function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0, $con=1, $book=1) {
 	static $linkPairs = array();
-	$primaryRelationshipError = '';
+	$result = true;
 	$mrel = mirrorRelationship($rel);
 	if(!isset($linkPairs[$cv][$rel][$k1][$k2]) AND !isset($linkPairs[$cv][$mrel][$k2][$k1])) {
 		global $xoopsDB, $linkForms;
@@ -180,13 +188,377 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $con=1
 			$k2,
 			$rel,
 			1,
-			0,
+			$del,
 			$cv,
 			$con,
 			$book)";
 		if(!$xoopsDB->queryF($sql)) {
-			$primaryRelationshipError = "Could not insert an existing link into the Primary Relationship with this SQL:<br>$sql";
+			$result = false;
+			$primaryRelationshipError = "Could not insert an existing link into the Primary Relationship with this SQL:<br>$sql<br>".$xoopsDB->error();
 		}
 	}
-	return $primaryRelationshipError;
+	return $result ? true : $primaryRelationshipError;
+}
+
+/**
+ * Check whether a link exists in the Primary Relationship
+ * @param int cv - 1 or 0 depending if the link is based on a common value
+ * @param int rel - a number representing the relationship type, 1 for one to one, 2 for one to many, 3 for many to one
+ * @param int k1 - the id number of the element in form 1 used in the link
+ * @param int k2 - the id number of the element in form 2 used in the link
+ * @return boolean True or False depending if a link with these properties exists in the Primary Relationship or not. Returns false if query fails.
+ */
+function linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2) {
+	global $xoopsDB;
+	$result = false;
+	$sql = "SELECT `fl_id`
+		FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE
+			`fl_frame_id` = -1
+			AND `fl_common_value` = ".intval($cv)."
+			AND ((
+				`fl_key1` = ".intval($k1)."
+				AND `fl_key2` = ".intval($k2)."
+				AND `fl_relationship` = ".intval($rel)."
+			) OR (
+				`fl_key1` = ".intval($k2)."
+				AND `fl_key2` = ".intval($k1)."
+				AND `fl_relationship` = ".mirrorRelationship(intval($rel))."
+			))";
+		if($res = $xoopsDB->query($sql)) {
+			$result = $xoopsDB->getRowsNum($res);
+		}
+		return $result;
+}
+
+/**
+ * Make a new element in a form, with some association with another element
+ * @param string type - Indicator of what kind of element we're making: new-common-parallel, new-common-textbox, new-linked-dropdown, new-linked-autocomplete, new-linked-multiselect-autocomplete, new-linked-checkboxes
+ * @param int fid - The form id of the form where the element should be made
+ * @param int otherElementId - The element id of an element associated with the new element we're making
+ * @return boolean|int - Returns the id number of the element that was made, or false on failure
+ */
+function makeNewConnectionElement($type, $fid, $otherElementId) {
+	global $xoopsDB;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$result = false;
+	if($otherElement = $element_handler->get($otherElementId) AND $otherForm = $form_handler->get($otherElement->getVar('fid'))) {
+		$dataTypeInfo = $otherElement->getDataTypeInformation();
+		$form = $form_handler->get($fid);
+		$element = $element_handler->create();
+		$ele_handle = substr($form::sanitize_handle_name(strtolower($form->getVar('form_handle')."_".$otherElement->getVar('ele_handle'))), 0, 40);
+		$firstUniqueCheck = true;
+		while (!$uniqueCheck = $form_handler->isElementHandleUnique($ele_handle)) {
+			if ($firstUniqueCheck) {
+					$ele_handle = $ele_handle . "_".$fid;
+					$firstUniqueCheck = false;
+			} else {
+					$ele_handle = $ele_handle . "_copy";
+			}
+		}
+		// set basics common to every element
+		$element->setVar('id_form', $fid);
+		$element->setVar('ele_caption', $otherForm->getVar('title').': '.$otherElement->getVar('ele_caption'));
+		$element->setVar('ele_handle', $ele_handle);
+		$element->setVar('ele_order', 1);
+		$element->setVar('ele_display', 1);
+		// shunt everything else down one
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= 1 AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+		// set stuff uniquely for the different situations...
+		switch($type) {
+			case 'new-common-textbox':
+				$config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+				$ele_value = array();
+				$ele_value[0] = $formulizeConfig['t_width'];
+				$ele_value[1] = $formulizeConfig['t_max'];
+				$ele_value[3] = ($otherElement->hasNumericDataType() ? 1 : 0);
+				$ele_value[5] = ($dataTypeInfo['dataType'] == 'decimal' ? $dataTypeInfo['dataTypeSize'] : (isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0));
+				$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+				$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+				$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+				$ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+				$ele_value[12] = 1; // Default trim option to enabled
+				$element->setVar('ele_value', $ele_value); // does not need to be serialized, because element handler insert method applies cleanVars to everything, which will serialize it for us, and we don't want double serialization!
+				$element->setVar('ele_type', 'text');
+				if($ele_value[3] AND $dataTypeInfo['dataType'] == 'decimal') {
+					$fieldDataType = $dataTypeInfo['dataTypeCompleteString'];
+				} elseif($ele_value[3]) {
+					$fieldDataType = 'int';
+				} else {
+					$fieldDataType = 'text';
+				}
+				break;
+			case 'new-common-parallel':
+				$element->setVar('ele_value', $otherElement->getVar('ele_value')); // does not need to be serialized, because element handler insert method applies cleanVars to everything, which will serialize it for us, and we don't want double serialization!
+				$element->setVar('ele_type', $otherElement->getVar('ele_type'));
+				$element->setVar('ele_desc', $otherElement->getVar('ele_desc'));
+				$element->setVar('ele_caption', $otherElement->getVar('ele_caption'));
+				$element->setVar('ele_colhead', $otherElement->getVar('ele_colhead'));
+				$element->setVar('ele_req', $otherElement->getVar('ele_req'));
+				$element->setVar('ele_uitext', $otherElement->getVar('ele_uitext'));
+				$element->setVar('ele_uitextshow', $otherElement->getVar('ele_uitextshow'));
+				$element->setVar('ele_delim', $otherElement->getVar('ele_delim'));
+				$element->setVar('ele_private', $otherElement->getVar('ele_private'));
+				$element->setVar('ele_disabled', $otherElement->getVar('ele_disabled'));
+				$element->setVar('ele_display', $otherElement->getVar('ele_display'));
+				$element->setVar('ele_encrypt', $otherElement->getVar('ele_encrypt'));
+				$element->setVar('ele_filtersettings', $otherElement->getVar('ele_filtersettings'));
+				$element->setVar('ele_disabledconditions', $otherElement->getVar('ele_disabledconditions'));
+				$element->setVar('ele_use_default_when_blank', $otherElement->getVar('ele_use_default_when_blank'));
+				$element->setVar('ele_exportoptions', $otherElement->getVar('ele_exportoptions'));
+				$fieldDataType = $dataTypeInfo['dataTypeCompleteString'];
+				break;
+			case 'new-linked-dropdown':
+				$element->setVar('ele_value', array(
+					0 => 1,
+					1 => 0,
+					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
+					8 => 0
+				));
+				$element->setVar('ele_type', 'select');
+				$fieldDataType = 'bigint';
+				break;
+			case 'new-linked-autocomplete':
+				$element->setVar('ele_value', array(
+					0 => 1,
+					1 => 0,
+					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
+					8 => 1
+				));
+				$element->setVar('ele_type', 'select');
+				$fieldDataType = 'bigint';
+				break;
+			case 'new-linked-multiselect-autocomplete':
+				$element->setVar('ele_value', array(
+					0 => 1,
+					1 => 1,
+					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
+					8 => 1
+				));
+				$element->setVar('ele_type', 'select');
+				$fieldDataType = 'text';
+				break;
+			case 'new-linked-checkboxes':
+				$element->setVar('ele_value', array(2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle')));
+				$element->setVar('ele_type', 'checkbox');
+				$fieldDataType = 'text';
+				break;
+		}
+		if($result = $element_handler->insert($element)) { // false on failure, element id on success
+			$elementId = $result;
+			addElementToMultipageScreens($fid, $elementId);
+			if($form_handler->insertElementField($element, $fieldDataType)) {
+				if($element->createIndex() == false) {
+					print "Error: could not create an index in the database for the new element. Please contact info@formulize.org for assistance.";
+				}
+			} else {
+				print "Error: could not create the field in the database for the new element. Please contact info@formulize.org for assistance.";
+			}
+		} else {
+			print "Error: could not save the new element. Please contact info@formulize.org for assistance.";
+		}
+
+	}
+	return $result;
+}
+
+/**
+ * Attempt to make a subform interface involving the specified forms, connected by the linking element,
+ * and add it to all appropriate screens. Or use an existing element if there is one.
+ * Subform interface element will added to screens only if it has not been assigned to screens already.
+ * The subform interface will be added to pages of screens that have all the form's elements on them already,
+ * and it will be added to new pages on screens where there were no pages that had all the form elements already.
+ * @param object|int mainFormObjectOrId - a form object or id representing the main form in the connection
+ * @param object|int subformObjectOrId - a form object or id representing the subform in the connection
+ * @param int|string|object elementIdentifier - the element id, handle or object of the subform element that connects to the main form
+ * @return boolean|int Returns the element id of the subform element created, or an existing subform element found, or false on failure.
+ */
+function makeSubformInterface($mainFormObjectOrId, $subformObjectOrId, $elementIdentifier) {
+	$subformElementId = false;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$mainFormObject = is_a($mainFormObjectOrId, 'formulizeForm') ? $mainFormObjectOrId : $form_handler->get($mainFormObjectOrId);
+	$subformObject = is_a($subformObjectOrId, 'formulizeForm') ? $subformObjectOrId : $form_handler->get($subformObjectOrId);
+	if($mainFormObject AND $subformObject) {
+		if($subformElementId = findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdentifier)) {
+			$makeNewPageIfNotAddedToExistingPages = true;
+			addElementToMultiPageScreens($mainFormObject->getVar('fid'), $subformElementId, $makeNewPageIfNotAddedToExistingPages);
+		} else {
+			print "Error: could not create subform element to show entries in ".$subformObject->getVar('title').". Please contact info@formulize.org for assistance.";
+		}
+	}
+	return $subformElementId;
+}
+
+/**
+ * Create a subform element on the form that is the mainform of a connection. Or find an existing element that serves that purpose if any exists.
+ * Existing element is found by convention in the name of the screen handle.
+ * Also will make a subform screen for the subform interface to use, if one does not exist already.
+ * @param object mainFormObject - the form object of the main form in the connection, where the subform element will be made
+ * @param object subformObject - the form object of the subform in the connection, that the subform element will point to
+ * @param int|string|object elementIdentifier - the element id, handle or object of the subform element that connects to the main form
+ * @return int|boolean return the element id of the element created or found, or false on failure
+ */
+function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdentifier) {
+	global $xoopsDB;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$element = $element_handler->create();
+	$ele_handle = substr($mainFormObject::sanitize_handle_name(strtolower($mainFormObject->getVar('form_handle')."_subform_".$subformObject->getVar('title'))), 0, 40);
+	if($form_handler->isElementHandleUnique($ele_handle)) {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = ".$mainFormObject->getVar('fid');
+		$res = $xoopsDB->query($sql);
+		$array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+		$element->setVar('id_form', $mainFormObject->getVar('fid'));
+		$element->setVar('ele_handle', $ele_handle);
+		$element->setVar('ele_order', $orderChoice);
+		$element->setVar('ele_display', 1);
+		$element->setVar('ele_caption', $subformObject->getPlural());
+		$element->setVar('ele_type', 'subform');
+		$element->setVar('ele_value', array(
+			0 => $subformObject->getVar('fid'),
+			1 => $subformObject->getVar('pi'),
+			2 => 0,
+			3 => 1,
+			4 => 0,
+			5 => 0,
+			6 => 1,
+			8 => 'row',
+			'simple_add_one_button' => 1,
+			'disabledelements' => $subformObject->getVar('pi'),
+			'subform_prepop_element' => 0,
+			'enforceFilterChanges' => 1,
+			'show_delete_button' => 1,
+			'show_clone_button' => 0,
+			'display_screen' => findOrMakeSubformScreen($elementIdentifier, $mainFormObject)
+		));
+		return $element_handler->insert($element);
+	} else {
+		$subformElement = $element_handler->get($ele_handle);
+		return $subformElement->getVar('ele_id');
+	}
+}
+
+/**
+ * Find a "subform screen" on the element's form, for displaying entries in subform interfaces
+ * Or make one if none found. Do not include the specified element in the new screen, since that would be redundant, as it's the linking element
+ * @param int|string|object elementIdentifier - an element id, handle or object, of the linking element in the subform that connects it to the mainform
+ * @param object mainFormObject - the form object of the main form that is used in this subform context
+ * @return int|boolean Returns the screen id of the screen that was found or made, or false on failure
+ */
+function findOrMakeSubformScreen($elementIdentifier, $mainFormObject) {
+	$subformScreenFound = false;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if($element = _getElementObject($elementIdentifier)) {
+		if($form = $form_handler->get($element->getVar('fid'))) {
+			foreach($screens = $form->getMultiScreens() as $screen) {
+				if($screen->getVar('screen_handle') == 'subform_for_form_'.$mainFormObject->getVar('fid')) {
+					$subformScreenFound = $screen->getVar('sid');
+					break;
+				}
+			}
+			if($subformScreenFound == false) {
+				$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+				$newScreen = $screen_handler->create();
+				$screen_handler->setDefaultFormScreenVars($newScreen, $form);
+				$title = sprintf(_AM_FORMULIZE_FORM_SCREEN_TITLE, $form->getSingular()).' - subform of '.$mainFormObject->getPlural();
+				$newScreen->setVar('title', $title);
+				$newScreen->setVar('screen_handle', $screen_handler->makeHandleUnique('subform_for_form_'.$mainFormObject->getVar('fid'), ""));
+				$elements = $form->getVar('elements');
+				if(isset($elements[$element->getVar('ele_id')])) {
+					unset($elements[$element->getVar('ele_id')]);
+				}
+				$newScreen->setVar('pages', serialize(array(0=>array($elements))));
+				$newScreen->setVar('pagetitles', serialize(array(0=>$form->getSingular())));
+				$newScreenId = $screen_handler->insert($newScreen);
+				if($newScreenId == false) {
+					print "Error: could not create subform screen for displaying the subform entries. Please contact info@formulize.org for assistance.";
+				}
+			}
+		}
+	}
+	return $subformScreenFound ? $subformScreenFound : $newScreenId;
+}
+
+/**
+ * Add an element to multipage screen pages where all elements in the form are already present
+ * Do this for all the screens that a form has
+ * But abort if any screen has the element already, since we then leave it up to the webmaster who has already been at work with this element
+ * Optionally, create a new page and add the element to the page. Name the new page with the element colhead or caption.
+ * @param int fid - the form id number that we're looking for screens in
+ * @param int elementId - the element id number that we're adding to the pages
+ * @param boolean makeNewPageIfNotAddedToExistingPages - a flag to indicate whether a new page should be added to the screen if the element wasn't added to an existing page
+ * @return boolean Return true, or false if one or more additions to pages failed
+ */
+function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedToExistingPages = false) {
+	$result = true;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$element = $element_handler->get($elementId);
+	if($element AND $form = $form_handler->getVar($fid)) {
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
+		$screens = $screen_handler->getObjects($criteria_object,intval($fid));
+		foreach($screens as $screen) {
+			$sid = $screen->getVar('sid');
+			$screenObject = $screen_handler->get($sid); // strangely getting over again, but getObjects returns plain screen objects and we need to get the whole screen with all metadata, so must be getted again :(
+			$pages = $screenObject->getVar('pages');
+			// find the pages that contain all elements in this form
+			$candidatePages = array();
+			$candidateScreensForNewPages = array();
+		  ksort($pages);
+			foreach($pages as $i=>$page) {
+				// element is in this page already, stop looking, element has already been managed on screens
+				if(in_array($elementId, $page)) {
+					return false;
+				}
+				foreach($form->getVar('elements') as $ele_id) {
+					if(!in_array($ele_id, $page)) {
+						continue 2; // go to next page
+					}
+				}
+				// page did contain all the elements, so this page is a candidate for adding the element to
+				$candidatePages[$sid][] = $i;
+			}
+			if(!isset($candidatePages[$sid])) {
+				$candidateScreensForNewPages[$sid] = ($i+1);
+			}
+		}
+		foreach($candidatePages as $sid=>$pageOrdinals) {
+			$screenObject = $screen_handler->get($sid); // strangely getting over again, but getObjects returns plain screen objects and we need to get the whole screen with all metadata, so must be getted again :(
+			$pages = $screenObject->getVar('pages');
+			foreach($pageOrdinals as $i) {
+				$pages[$i][] = $elementId;
+			}
+			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+			$insertResult = $screen_handler->insert($screenObject);
+			if($insertResult == false) {
+				print "Error: could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.";
+				$result = false;
+			}
+		}
+		if($makeNewPageIfNotAddedToExistingPages AND count($candidateScreensForNewPages)>0) {
+			foreach($candidateScreensForNewPages as $sid=>$newPageOrdinal) {
+				$screenObject = $screen_handler->get($sid); // strangely getting over again, but getObjects returns plain screen objects and we need to get the whole screen with all metadata, so must be getted again :(
+				$pages = $screenObject->getVar('pages');
+				$pagetitles = $screenObject->getVar('pagetitles');
+				$conditions = $screenObject->getVar('conditions');
+				$pages[$newPageOrdinal] = array($elementId);
+				$pagetitles[$newPageOrdinal] = $element->getUIName();
+				$conditions[$newPageOrdinal] = array();
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$screenObject->setVar('pagetitles', serialize($pagetitles));
+				$screenObject->setVar('conditions', serialize($conditions));
+				$insertResult = $screen_handler->insert($screenObject);
+				if($insertResult == false) {
+					print "Error: could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.";
+					$result = false;
+				}
+			}
+		}
+	}
+	return $result;
 }
