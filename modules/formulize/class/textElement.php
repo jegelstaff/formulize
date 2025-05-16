@@ -104,14 +104,16 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$dataToSendToTemplate['formlink'] = $formlink->render();
 				$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
 			} else { // new element
-				global $xoopsModuleConfig;
-				$ele_value[0] = $xoopsModuleConfig['t_width'];
-				$ele_value[1] = $xoopsModuleConfig['t_max'];
+				$config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+				$ele_value[0] = $formulizeConfig['t_width'];
+				$ele_value[1] = $formulizeConfig['t_max'];
 				$ele_value[3] = 0;
 				$ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
 				$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
 				$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
 				$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+				$ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
 				$ele_value[12] = 1; // Default trim option to enabled
 				$dataToSendToTemplate['ele_value'] = $ele_value;
 			}
