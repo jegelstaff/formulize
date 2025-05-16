@@ -71,8 +71,8 @@ $content['lid'] = $lid;
 $formObj1 = new formulizeForm($form1, true); // true causes elements shown to no one, to be included
 $formObj2 = new formulizeForm($form2, true);
 
-$content['form1']['name'] = $formObj1->getVar('title');
-$content['form2']['name'] = $formObj2->getVar('title');
+$content['form1']['name'] = trans($formObj1->getVar('title'));
+$content['form2']['name'] = trans($formObj2->getVar('title'));
 
 $content['form1']['elements'] = generateElementList($formObj1);
 $content['form2']['elements'] = generateElementList($formObj2);
@@ -93,7 +93,7 @@ function generateElementList($form) {
     $element_handler =& xoops_getmodulehandler('elements', 'formulize');
     foreach($form->getVar('elementsWithData') as $element) {
         $ele = $element_handler->get($element);
-        $saveoptions[$ele->getVar('ele_id')] = $ele->getVar('ele_colhead') ? $ele->getVar('ele_colhead') : $ele->getVar('ele_caption');
+        $saveoptions[$ele->getVar('ele_id')] = $ele->getVar('ele_colhead') ? trans(strip_tags($ele->getVar('ele_colhead'))) : trans(strip_tags($ele->getVar('ele_caption')));
     }
     $saveoptions[-1] = 'Entry ID (experimental!)';
     return $saveoptions;
