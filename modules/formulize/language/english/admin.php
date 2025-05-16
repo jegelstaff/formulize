@@ -132,7 +132,7 @@ define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that yo
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_REGULAR", "A new element, linked to<br>%s");
-define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS", "Connecting Elements");
+define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS", "Which elements connect these forms?");
 define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS_DESC", "Select the elements in the two forms that have corresponding values. For example, an Activity Log and a Municipalities List might be connected by a dropdown list in the Activity Log, in which users can choose the name of the Municipality where the Activity happened. Or a Teacher Profile and a Class List might both have a Teacher Name element.");
 define("CREATE_CONNECTION_PI_LABEL", " &mdash; (PI)");
 define("CREATE_CONNECTION_COMMON_VALUE_TEXTBOX", "New element: create a textbox");
