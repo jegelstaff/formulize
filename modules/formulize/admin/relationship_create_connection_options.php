@@ -247,23 +247,74 @@ function getLinkedElementsAndSource($elementIdsArray) {
 
 /**
  * Gather element options from a form object for the PI, put into template and exit so user can choose
+ * Alternatively, if there are no elements in the form, make a textbox called Name and use that as the PI
  * @param object formObject - The form object we're dealing with to set the PI
- * @return nothing. Exit PHP at end.
+ * @return mixed Either returns nothing because PHP has exited by the end if we need to prompt, or returns the element ID of the newly created element
  */
 function promptForPIAndExit($formObject) {
 	global $xoopsTpl;
+	$elementId = false;
 	$pioptions = array();
 	$captions = $formObject->getVar('elementCaptions');
 	$headings = $formObject->getVar('elementColheads');
 	foreach($formObject->getVar('elementsWithData') as $elementId) {
 		$pioptions[$elementId] = $headings[$elementId] ? trans(strip_tags($headings[$elementId])) : trans(strip_tags($captions[$elementId]));
 	}
-	$content['formTitle'] = trans($formObject->getVar('title'));
-	$content['defaultpi'] = 0;
-	$content['pioptions'] = $pioptions;
-	$xoopsTpl->assign('content', $content);
-	$xoopsTpl->display("db:admin/primary_identifier_selection.html");
-	exit(); // nothing further to do at this moment
+
+	// prompt user to pick from existing elements
+	if(!empty($pioptions)) {
+		$content['formTitle'] = trans($formObject->getVar('title'));
+		$content['defaultpi'] = 0;
+		$content['pioptions'] = $pioptions;
+		$xoopsTpl->assign('content', $content);
+		$xoopsTpl->display("db:admin/primary_identifier_selection.html");
+		exit(); // nothing further to do at this moment
+
+	// No elements, so make a Name textbox and use that
+	} else {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element = $element_handler->create();
+		$ele_handle = substr($formObject::sanitize_handle_name(strtolower($formObject->getVar('form_handle')."_"._AM_ITEMNAME)), 0, 40);
+		$firstUniqueCheck = true;
+		while (!$uniqueCheck = $form_handler->isElementHandleUnique($ele_handle)) {
+			if ($firstUniqueCheck) {
+				$ele_handle = $ele_handle . "_".$formObject->getVar('fid');
+				$firstUniqueCheck = false;
+			} else {
+					$ele_handle = $ele_handle . "_copy";
+			}
+		}
+		$config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$element->setVar('id_form', $formObject->getVar('fid'));
+		$element->setVar('ele_caption', _AM_ITEMNAME);
+		$element->setVar('ele_handle', $ele_handle);
+		$element->setVar('ele_order', 1);
+		$element->setVar('ele_display', 1);
+		$ele_value = array();
+		$ele_value[0] = $formulizeConfig['t_width'];
+		$ele_value[1] = $formulizeConfig['t_max'];
+		$ele_value[3] = 0;
+		$ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+		$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+		$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+		$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+		$ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+		$ele_value[12] = 1; // Default trim option to enabled
+		$element->setVar('ele_value', $ele_value); // does not need to be serialized, because element handler insert method applies cleanVars to everything, which will serialize it for us, and we don't want double serialization!
+		$element->setVar('ele_type', 'text');
+		$fieldDataType = 'text';
+		if($elementId = $element_handler->insert($element)) { // false on failure, element id on success
+			addElementToMultipageScreens($formObject->getVar('fid'), $elementId);
+			if($form_handler->insertElementField($element, $fieldDataType) == false) {
+				print "Error: could not create the field in the database for the Name element (PI) on form ".$formObject->getVar('fid').". Please contact info@formulize.org for assistance.";
+			}
+		} else {
+			print "Error: could not save the Name element (PI) on form ".$formObject->getVar('fid').". Please contact info@formulize.org for assistance.";
+		}
+	}
+	return $elementId;
 }
 
 /**
@@ -288,7 +339,7 @@ function confirmPIAndReturnFormObject($formId, &$submittedPI) {
 				}
 				$submittedPI = 0; // kill it because we can only use the submitted PI once, on the appropriate form
 			} else {
-				promptForPIAndExit($formObject);
+				$formPI = promptForPIAndExit($formObject);
 			}
 		}
 		return array($formObject, $formPI);
