@@ -10,8 +10,14 @@
 
 <div>
 	<form name="relationship-create-connection-popupform">
-		<input type="hidden" name="formulize_admin_handler" value="relationship_options">
-		<input type="hidden" name="formulize_admin_key" value="<{$content.linkId}>">
+		<input type="hidden" name="formulize_admin_handler" value="relationship_create_connection">
+		<input type="hidden" name="formulize_admin_key" value="0">
+		<input type="hidden" name="rel" value="0">
+		<input type="hidden" name="cv" value="0">
+		<input type="hidden" name="f1" value="0">
+		<input type="hidden" name="f2" value="0">
+		<input type="hidden" name="k1" value="0">
+		<input type="hidden" name="k2" value="0">
 		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Save your changes"/></div>
 		<div id="relationship-create-connection-popupsavewarning">You have unsaved changes!</div>
 		<div style="clear: both"></div>
@@ -35,6 +41,8 @@ $( document ).ready(function() {
 	<{if $content.isSaveLocked}>
 		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
 		document.getElementById('relationship-create-connection-popupsavebutton').innerHTML = "READ ONLY";
+	<{else}>
+		$('.relationship-create-connection-savebuttonpopup').attr('disabled', 'disabled');
 	<{/if}>
 });
 
@@ -51,6 +59,10 @@ $("textarea").keydown(function() {
 	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
 	});
 
+	$("input[name=pairSelection]").live('click', function() {
+		$('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
+	});
+
 	$(".relationship-create-connection-savebuttonpopup").click(function() {
 		var pagedata = window.document.getElementsByName("relationship-create-connection-popupform");
 		$('#dialog-relationship-create-connection').fadeTo(1, 0.25, function() {
@@ -59,10 +71,12 @@ $("textarea").keydown(function() {
 					if(data.substr(0,10)=="/* eval */") {
 						eval(data);
 					} else {
-						alert(data);
+						$("#relationship-create-connection-options").html(data);
 					}
+				} else {
+					$("#relationship-create-connection-options").html("<h1>Link Made Successfully!</h1>");
 				}
-				window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'none';
+				//window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'none';
 				$('#dialog-relationship-create-connection').fadeTo(1, 1);
 			});
 		});
@@ -73,8 +87,15 @@ $("textarea").keydown(function() {
 		let rel = $('input[name=relationship]:checked').val();
 		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi, function(data) {
 				if(data) {
+					$('input[name=rel]').val(rel);
+					$('input[name=f1]').val($('input[name=form1]').val());
 					$('input[name=relationship]').attr('disabled', true);
-					$('select[name=form2]').attr('disabled', true);
+					<{if $content.forms}>
+						$('input[name=f2]').val($('input[name=form2]').val());
+					<{else}>
+						$('input[name=f2]').val($('select[name=form2]').val());
+						$('select[name=form2]').attr('disabled', true);
+					<{/if}>
 					$('div#relationship-create-connection-options').html(data);
 				}
 			});

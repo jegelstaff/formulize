@@ -1977,6 +1977,39 @@ span.title {
 	margin-top: 0;
 }
 
+.create-connection-link-choices {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	justify-content: center;
+	margin-bottom: 0.4em;
+}
+.create-connection-link-choices label {
+	display: flex;
+	width: 80%;
+	gap: 2em;
+}
+.create-connection-link-choices label span {
+	flex: 1;
+}
+#create-connection-desc-container {
+	display: flex;
+  justify-content: center;
+}
+#create-connection-desc-container div.description {
+	width: 75%;
+}
+.connection-title-spacer {
+	visibility: hidden;
+	margin-left: 2em;
+}
+.italic {
+	font-style: italic;
+}
+.bold {
+	font-weight: bold;
+}
+
 #create-connection-title-options,
 #form-toolbox-title {
 	display: flex;
@@ -2010,7 +2043,11 @@ span.title {
 label[for^=relationships-] {
 	margin-top: 0.5em;
 	padding-left: 2em;
-  text-indent: -1.8em;
+  text-indent: -1.5em;
+}
+
+form[name=relationship-options-popupform] label[for^=relationships-] {
+	text-indent: -1.8em;
 }
 
 .relationship-link-options {

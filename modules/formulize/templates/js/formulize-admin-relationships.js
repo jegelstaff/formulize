@@ -9,7 +9,7 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
-	$("#dialog-relationship-create-connection").dialog({ autoOpen: false, modal: true, width: 970, height: 450, close: function(event, ui) {
+	$("#dialog-relationship-create-connection").dialog({ autoOpen: false, modal: true, width: 970, height: 550, close: function(event, ui) {
 		}
 	});
 	$('.relationship-link-create-connection').click(function() {

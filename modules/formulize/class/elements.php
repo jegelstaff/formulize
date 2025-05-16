@@ -65,11 +65,11 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
-        $this->initVar("ele_sort", XOBJ_DTYPE_INT);
+    $this->initVar("ele_sort", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
-        $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
+    $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
 		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
@@ -82,7 +82,7 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
-        $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
+    $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 	}
 
 	/**
@@ -120,10 +120,19 @@ class formulizeElement extends FormulizeObject {
 		}
 		//define array and return type and size
 		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize, "dataTypeCompleteString" => $defaultTypeComplete);
-
 	}
 
-    function createIndex(){
+	/**
+	 * Check if the element's data type in the database is numeric
+	 * @return boolean Returns true or false
+	 */
+	function hasNumericDataType() {
+		$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
+		$dataTypeInfo = $this->getDataTypeInformation();
+		return isset($numericDataTypes[$dataTypeInfo['dataType']]);
+	}
+
+  function createIndex(){
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->getVar('id_form'));
@@ -136,6 +145,7 @@ class formulizeElement extends FormulizeObject {
 
 		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".formulize_db_escape($formObject->getVar('form_handle')))." ADD $index_fulltext `". formulize_db_escape($this->getVar('ele_handle')) ."` (`".formulize_db_escape($this->getVar('ele_handle'))."`)";
 		$res = $xoopsDB->query($sql);
+		return $res ? true : false;
 	}
 
 	function deleteIndex($original_index_name){
@@ -664,3 +674,4 @@ function optionIsValidForElement($option, $elementHandleOrId) {
     }
     return $element->optionIsValid($option);
 }
+
