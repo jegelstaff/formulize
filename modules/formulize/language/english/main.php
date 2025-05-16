@@ -144,6 +144,7 @@ define("_AM_FRAME_MANY", "many");
 define("_AM_FRAME_ONETOMANY", "One to Many");
 define("_AM_FRAME_MANYTOONE", "Many to One");
 define("_AM_FRAME_LINKAGE", "Link between these forms:");
+define("_AM_FRAME_SETTINGS", "Settings:");
 define("_AM_FRAME_DISPLAY", "Show to users as a single form?");
 define("_AM_FRAME_UIDLINK", "User ID of the person who filled them in");
 define("_AM_FRAME_UPDATEBUTTON", "Update this Framework with these settings");
