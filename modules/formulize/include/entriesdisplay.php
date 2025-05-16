@@ -2396,13 +2396,14 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	// figure out the special where clause conditions that need to be added for this calculation
 	list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
 
-	$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
     if($calcElementObject) {
         $dataTypeInfo = $calcElementObject->getDataTypeInformation();
+				$numericDataType = $calcElementObject->hasNumericDataType();
     } else {
         $dataHandler = new formulizeDataHandler($fid);
         if(isset($dataHandler->metadataFieldTypes[$handle])) {
             $dataTypeInfo = array('dataType'=>$dataHandler->metadataFieldTypes[$handle]);
+						$numericDataType = false;
         } else {
             print "Error: could not determine datatype for element '$handle'<br>";
         }
@@ -2422,7 +2423,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  $allowedWhere .= " $allowedWhereConjunction ($calcElement='' OR $calcElement IS NULL)";
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
+		  if(is_numeric($value) AND $numericDataType) {
 			$allowedWhere .= " $allowedWhereConjunction $calcElement=".formulize_db_escape($value);
 		  } else {
 			$allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
@@ -2455,7 +2456,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  $excludedWhere .= " $excludedWhereConjunction ($calcElement!='' AND $calcElement IS NOT NULL)";
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
+		  if(is_numeric($value) AND $numericDataType) {
 			$excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
 		  } else {
 			$excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
