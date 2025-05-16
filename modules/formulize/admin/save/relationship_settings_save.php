@@ -240,39 +240,22 @@ function updatelinks($fl_id, $value) {
         $common = 0;
     }
 
-    $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . $keys[0] . "', fl_key2='" . $keys[1] . "', fl_common_value='$common' WHERE fl_id='$fl_id'";
+    $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_key1='" . intval($keys[0]) . "', fl_key2='" . intval($keys[1]) . "', fl_common_value='".intval($common)."' WHERE fl_id='".intval($fl_id)."'";
     if(!$res = $xoopsDB->query($sql)) {
         print "Error: could not update key fields for framework link $fl_id";
     }
-}
-
-function elementsAreLinked($element1, $element2) {
-    if(is_object($element1)
-       AND is_object($element2)
-       AND ($element1->getVar('ele_handle') == sourceHandleForElement($element2)
-           OR $element2->getVar('ele_handle') == sourceHandleForElement($element1))
-      ) {
-        return true;
-    }
-    return false;
-}
-
-// element must be an element object
-function sourceHandleForElement($element) {
-    $sourceHandle = false;
-    $ele_value = $element->getVar('ele_value');
-    if(is_array($ele_value)
-       AND isset($ele_value[2])
-       AND is_string($ele_value[2])
-       AND strstr($ele_value[2], "#*=:*")
-       AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])
-      ) {
-        $boxproperties = explode("#*=:*", $ele_value[2]);
-        $element_handler = xoops_getmodulehandler('elements','formulize');
-        $sourceElement = $element_handler->get($boxproperties[1]);
-        $sourceHandle = $sourceElement->getVar('ele_handle');
-    }
-    return $sourceHandle;
+		$rel = isset($_POST['relationships-rel'.$fl_id]) ? $_POST['relationships-rel'.$fl_id] : 2;
+		if($keys[0] AND $keys[1] AND !linkExistsInPrimaryRelationship($common, $rel, $keys[0], $keys[1])) { // must have actual element keys, don't do "user who created" links in primary relationship yet
+			$e1Object = _getElementObject($keys[0]);
+			$e2Object = _getElementObject($keys[1]);
+			$del = (isset($_POST['relationships-delete'.$fl_id]) AND $_POST['relationships-delete'.$fl_id]) ? 1 : 0;
+			$con = (isset($_POST['relationships-conditional'.$fl_id]) AND $_POST['relationships-conditional'.$fl_id]) ? 1 : 0;
+			$book = (isset($_POST['relationships-bookkeeping'.$fl_id]) AND $_POST['relationships-bookkeeping'.$fl_id]) ? 1 : 0;
+			$result = insertLinkIntoPrimaryRelationship($common, $rel, $e1Object->getVar('fid'), $e2Object->getVar('fid'), $keys[0], $keys[1], $del, $con, $book);
+			if($result !== true) { // result will be text error message on failure
+				print $result;
+			}
+		}
 }
 
 function updatedeletes($fl_id, $value) {
