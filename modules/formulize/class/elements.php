@@ -480,7 +480,10 @@ class formulizeElementsHandler {
 	}
 
 	function delete($element, $force = false){
-		global $xoopsDB;
+		if($element->isSystemElement) {
+			return false;
+		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
 		if( false != $force ){
 			$result1 = $this->db->queryF($sql);
@@ -488,20 +491,20 @@ class formulizeElementsHandler {
 			$result1 = $this->db->query($sql);
 		}
 		$result2 = deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
-		return ($result1 AND $result2) ? true : false;
-	}
+		if($element->hasData) {
+			if(!$result3 = $form_handler->deleteElementField($element->getVar('ele_id'))) {
+				print "Error: could not drop field from data table";
+			}
+    }
+		$result4 = true;
+		if($formObject = $form_handler->get($element->getVar('fid'))) {
+			if($element->getVar('ele_id') == $formObject->getVar('pi')) {
+				$formObject->setVar('pi', 0);
+				$result4 = $form_handler->insert($formObject);
+			}
+		}
 
-	// this function added by jwe Aug 14 2005 -- deletes the data associated with a particular element in a particular form
-	function deleteData(&$element, $force = false){
-		if( strtoupper(get_class($this)) != strtoupper('formulizeelementshandler')) {
-			return false;
-		}
-		$form_handler =& xoops_getmodulehandler('forms', 'formulize');
-		if(!$deleteResult = $form_handler->deleteElementField($element->getVar('ele_id'))) {
-			print "Error: could not drop field from data table";
-			return false;
-		}
-		return true;
+		return ($result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
