@@ -306,6 +306,8 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 			}
 		}
 		// set basics common to every element
+    $element->hasData = true;
+    $element->isSystemElement = false;
 		$element->setVar('id_form', $fid);
 		$element->setVar('ele_caption', $otherForm->getVar('title').': '.$otherElement->getVar('ele_caption'));
 		$element->setVar('ele_handle', $ele_handle);
@@ -317,6 +319,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 		// set stuff uniquely for the different situations...
 		switch($type) {
 			case 'new-common-textbox':
+				$element->isLinked = false;
 				$config_handler = xoops_gethandler('config');
         $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 				$ele_value = array();
@@ -340,6 +343,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				}
 				break;
 			case 'new-common-parallel':
+				$element->isLinked = $otherElement->isLinked;
 				$element->setVar('ele_value', $otherElement->getVar('ele_value')); // does not need to be serialized, because element handler insert method applies cleanVars to everything, which will serialize it for us, and we don't want double serialization!
 				$element->setVar('ele_type', $otherElement->getVar('ele_type'));
 				$element->setVar('ele_desc', $otherElement->getVar('ele_desc'));
@@ -360,6 +364,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$fieldDataType = $dataTypeInfo['dataTypeCompleteString'];
 				break;
 			case 'new-linked-dropdown':
+				$element->isLinked = true;
 				$element->setVar('ele_value', array(
 					0 => 1,
 					1 => 0,
@@ -370,6 +375,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$fieldDataType = 'bigint';
 				break;
 			case 'new-linked-autocomplete':
+				$element->isLinked = true;
 				$element->setVar('ele_value', array(
 					0 => 1,
 					1 => 0,
@@ -380,6 +386,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$fieldDataType = 'bigint';
 				break;
 			case 'new-linked-multiselect-autocomplete':
+				$element->isLinked = true;
 				$element->setVar('ele_value', array(
 					0 => 1,
 					1 => 1,
@@ -390,6 +397,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$fieldDataType = 'text';
 				break;
 			case 'new-linked-checkboxes':
+				$element->isLinked = true;
 				$element->setVar('ele_value', array(2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle')));
 				$element->setVar('ele_type', 'checkbox');
 				$fieldDataType = 'text';
@@ -397,7 +405,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 		}
 		if($result = $element_handler->insert($element)) { // false on failure, element id on success
 			$elementId = $result;
-			addElementToMultipageScreens($fid, $elementId);
+			addElementToMultipageScreens($fid, $elementId, positionAtTopOfPage: 1);
 			if($form_handler->insertElementField($element, $fieldDataType)) {
 				if($element->createIndex() == false) {
 					print "Error: could not create an index in the database for the new element. Please contact info@formulize.org for assistance.";
@@ -476,6 +484,7 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
 			6 => 1,
 			8 => 'row',
 			'simple_add_one_button' => 1,
+			'simple_add_one_button_text' => 'Add One',
 			'disabledelements' => $subformObject->getVar('pi'),
 			'subform_prepop_element' => 0,
 			'enforceFilterChanges' => 1,
@@ -502,14 +511,16 @@ function findOrMakeSubformScreen($elementIdentifier, $mainFormObject) {
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	if($element = _getElementObject($elementIdentifier)) {
 		if($form = $form_handler->get($element->getVar('fid'))) {
-			foreach($screens = $form->getMultiScreens() as $screen) {
+			$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			$criteria = new Criteria('type','multiPage');
+			$screens = $screen_handler->getObjects($criteria, $element->getVar('fid'));
+			foreach($screens as $screen) {
 				if($screen->getVar('screen_handle') == 'subform_for_form_'.$mainFormObject->getVar('fid')) {
 					$subformScreenFound = $screen->getVar('sid');
 					break;
 				}
 			}
 			if($subformScreenFound == false) {
-				$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 				$newScreen = $screen_handler->create();
 				$screen_handler->setDefaultFormScreenVars($newScreen, $form);
 				$title = sprintf(_AM_FORMULIZE_FORM_SCREEN_TITLE, $form->getSingular()).' - subform of '.$mainFormObject->getPlural();
@@ -519,7 +530,7 @@ function findOrMakeSubformScreen($elementIdentifier, $mainFormObject) {
 				if(isset($elements[$element->getVar('ele_id')])) {
 					unset($elements[$element->getVar('ele_id')]);
 				}
-				$newScreen->setVar('pages', serialize(array(0=>array($elements))));
+				$newScreen->setVar('pages', serialize(array(array_values($elements))));
 				$newScreen->setVar('pagetitles', serialize(array(0=>$form->getSingular())));
 				$newScreenId = $screen_handler->insert($newScreen);
 				if($newScreenId == false) {
@@ -539,14 +550,15 @@ function findOrMakeSubformScreen($elementIdentifier, $mainFormObject) {
  * @param int fid - the form id number that we're looking for screens in
  * @param int elementId - the element id number that we're adding to the pages
  * @param boolean makeNewPageIfNotAddedToExistingPages - a flag to indicate whether a new page should be added to the screen if the element wasn't added to an existing page
+ * @param int positionAtTopOfPage - passing any non null, non false value will position the element at the top of the page. Default is zero, for bottom of the page.
  * @return boolean Return true, or false if one or more additions to pages failed
  */
-function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedToExistingPages = false) {
+function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedToExistingPages = false, $positionAtTopOfPage = 0) {
 	$result = true;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$element = $element_handler->get($elementId);
-	if($element AND $form = $form_handler->getVar($fid)) {
+	if($element AND $form = $form_handler->get($fid)) {
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
 		$screens = $screen_handler->getObjects($criteria_object,intval($fid));
@@ -564,11 +576,11 @@ function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedTo
 					return false;
 				}
 				foreach($form->getVar('elements') as $ele_id) {
-					if(!in_array($ele_id, $page)) {
+					if($ele_id != $elementId AND !in_array($ele_id, $page)) {
 						continue 2; // go to next page
 					}
 				}
-				// page did contain all the elements, so this page is a candidate for adding the element to
+				// page did contain all the elements (except for this one), so this page is a candidate for adding the element to
 				$candidatePages[$sid][] = $i;
 			}
 			if(!isset($candidatePages[$sid])) {
@@ -579,7 +591,11 @@ function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedTo
 			$screenObject = $screen_handler->get($sid); // strangely getting over again, but getObjects returns plain screen objects and we need to get the whole screen with all metadata, so must be getted again :(
 			$pages = $screenObject->getVar('pages');
 			foreach($pageOrdinals as $i) {
-				$pages[$i][] = $elementId;
+				if($positionAtTopOfPage) {
+					array_unshift($pages[$i], $elementId);
+				} else {
+					$pages[$i][] = $elementId;
+				}
 			}
 			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
 			$insertResult = $screen_handler->insert($screenObject);
