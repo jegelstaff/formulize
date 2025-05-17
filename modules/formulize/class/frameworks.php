@@ -526,7 +526,7 @@ class formulizeFrameworksHandler {
 		$relationshipIndices = array();
 		$i = 0;
 		if(!$frameworks AND $limitToFid) {
-			$frameworks = $this->getFrameworksByForm($limitToFid, true);
+			$frameworks = $this->getFrameworksByForm($limitToFid, includePrimaryRelationship: true);
 		}
 		foreach($frameworks as $framework) {
 			$frid = $framework->getVar('frid');

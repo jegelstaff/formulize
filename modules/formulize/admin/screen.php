@@ -151,9 +151,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // view data
   // gather all the available views
   // setup an option list of all views, as well as one just for the currently selected Framework setting
-  $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
   $formObj = $form_handler->get($form_id, true); // true causes all elements to be included even if they're not visible.
-  $frameworks = $framework_handler->getFrameworksByForm($form_id);
   $selectedFramework = $settings['frid'];
   $views = $formObj->getVar('views');
   $viewNames = $formObj->getVar('viewNames');
@@ -169,11 +167,6 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   for($i=0;$i<count((array) $views);$i++) {
       if (!$viewPublished[$i]) { continue; }
       $viewOptionsC[$views[$i]] = $viewNames[$i];
-      if ($viewFrids[$i]) {
-          $viewOptionsC[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . (is_object($frameworks[$viewFrids[$i]]) ? $frameworks[$viewFrids[$i]]->getVar('name') : "Deleted??") . ")";
-      } else {
-          $viewOptionsC[$views[$i]] .= " (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
-      }
   }
   $limitViewOptions['allviews'] = _AM_FORMULIZE_SCREEN_LOE_DEFAULTVIEWLIMIT;
   asort($viewOptionsC);
@@ -334,7 +327,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     // setup all the elements in this form for use in the listboxes
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
 		$frid = $screen->getVar("frid");
-    
+
 
     // get page titles
     $pageTitles = $screen->getVar("pagetitles");
@@ -348,7 +341,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
         $pages[$i]['content']['index'] = $i;
         $pages[$i]['content']['number'] = $i+1;
         $pages[$i]['content']['title'] = $pageTitles[$i];
-        list($pages[$i]['content']['pageItemTypeTitle'], $pages[$i]['content']['elements']) = generateElementInfoForScreenPage($elements[$i], $form_id, $frid);       
+        list($pages[$i]['content']['pageItemTypeTitle'], $pages[$i]['content']['elements']) = generateElementInfoForScreenPage($elements[$i], $form_id, $frid);
     }
 
     // options data
@@ -476,7 +469,8 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
     $templates['viewentryscreenoptions'] = generateViewEntryScreenOptions($screen->getVar('frid'), $screen->getVar('fid'));
 
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-		$frameworks = $framework_handler->getFrameworksByForm($form_id);
+		$includePrimaryRelationship = true;
+		$frameworks = $framework_handler->getFrameworksByForm($form_id, $includePrimaryRelationship);
 		$selectedFramework = $settings['frid'];
 
 		// included file sets up $elementOptions and other variables relied upon below
@@ -506,7 +500,8 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
         $data['data'][$i]['content']['clicktemplate'] = $dataset->getVar('clicktemplate');
         $data['data'][$i]['content']['datehandle'] = $dataset->getVar('datehandle');
     }
-    $frameworks = $framework_handler->getFrameworksByForm($form_id);
+		$includePrimaryRelationship = true;
+    $frameworks = $framework_handler->getFrameworksByForm($form_id, $includePrimaryRelationship);
     if($selectedFramework = $screen->getVar('frid')) {
         $frameworkObject = $frameworks[$selectedFramework];
     } else {
@@ -690,7 +685,8 @@ function generateViewEntryScreenOptions($relationship_id, $form_id) {
     }
 
     $relationshipHandler = xoops_getmodulehandler('frameworks', 'formulize');
-    $relationships = $relationshipHandler->getFrameworksByForm($form_id);
+		$includePrimaryRelationship = true;
+    $relationships = $relationshipHandler->getFrameworksByForm($form_id, $includePrimaryRelationship);
 
     // if a relationship is in effect, get the screens on the other forms
     if($relationship_id) {

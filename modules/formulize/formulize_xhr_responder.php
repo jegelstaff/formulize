@@ -323,24 +323,18 @@ switch($op) {
 
   case "get_views_for_form":
     //This is to respond to an Ajax request from the file screen_list_entries.html
-    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
 
     $formulizeForm = new formulizeForm();
 
     list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
-    $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
     $sendNames = array();
     foreach($viewNames as $i=>$viewName) {
         if(!$viewPublished[$i]) {
             continue;
         }
-        if($viewFrids[$i]) {
-            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
-        } else {
-            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
-        }
+        $sendNames[$views[$i]] = $viewName;
     }
     asort($sendNames);
     // make an array where each value is an array made up of the values from the passed arrays, ie: the key from each entry in sendNames, and the value
