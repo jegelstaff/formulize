@@ -268,7 +268,7 @@ if ($ele_type=='textarea') {
 
     //new relationship dropdown
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-    $allRelationships = $framework_handler->getFrameworksByForm($fid);
+    $allRelationships = $framework_handler->getFrameworksByForm($fid, true);
     $relationships = array();
     $relationshipIndex = array();
     $relationships[""] = "this form only, no relationship.";
