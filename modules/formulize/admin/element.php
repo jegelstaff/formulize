@@ -236,8 +236,8 @@ $names['defaultorder'] = $defaultOrder;
 $names['firstelementorder'] = $firstElementOrder;
 $names['sortoptions'] = $sortOptions;
 $names['defaultsort'] = $defaultSort;
-$names['principalidentifier_off'] = $defaultpi == $ele_id ? "" : " checked='checked' ";
-$names['principalidentifier_on'] = $defaultpi != $ele_id ? "" : " checked='checked' ";
+$names['principalidentifier_off'] = ($defaultpi != $ele_id AND ($ele_id != 'new' OR count($formObject->getVar('elements')) > 0)) ? " checked='checked' " : "";
+$names['principalidentifier_on'] = ($defaultpi == $ele_id OR ($ele_id == 'new' AND count($formObject->getVar('elements')) == 0)) ? " checked='checked' " : "";
 
 // common values should be assigned to all tabs
 $common['name'] = '';
