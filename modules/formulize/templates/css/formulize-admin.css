@@ -1333,11 +1333,13 @@ div.accordion-box p {
 	margin-bottom: 0.5em;
 }
 
+div.dockable-box.ui-draggable {
+	cursor: move;
+}
 div.form-listing-box,
 div.create-connection-box {
   width: 340px;
   margin: 0 2em 1.5em 0;
-	cursor: move;
 	border: 3px solid white;
 	border-radius: 7px;
 }
