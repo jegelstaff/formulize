@@ -87,6 +87,7 @@ class formulizeForm extends FormulizeObject {
 					case "on":
 						$single = "user";
 						break;
+					case "off":
 					case "":
 						$single = "off";
 						break;
@@ -94,11 +95,12 @@ class formulizeForm extends FormulizeObject {
 						$single = "";
 						break;
 				}
-				// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
-				$headerlist = $formq[0]['headerlist'];
-				$defaultform = $formq[0]['defaultform'];
-				$defaultlist = $formq[0]['defaultlist'];
 			}
+
+			// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
+			$headerlist = $formq[0]['headerlist'];
+			$defaultform = $formq[0]['defaultform'];
+			$defaultlist = $formq[0]['defaultlist'];
 
 			// gather the view information
       list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($formq[0]['id_form']);
@@ -763,6 +765,7 @@ class formulizeFormsHandler {
 						$singleToWrite = "on";
 						break;
 					case('off'):
+					case(''):
 						$singleToWrite = "";
 						break;
 					default:

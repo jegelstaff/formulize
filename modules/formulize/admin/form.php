@@ -53,7 +53,7 @@ if ($_GET['fid'] != "new") {
     $formName = $formObject->getVar('title');
 		$singular = $formObject->getVar('singular');
 		$plural = $formObject->getVar('plural');
-    $singleentry = $formObject->getVar('single');
+    $singleentry = $formObject->getVar('single') ? $formObject->getVar('single') : 'off';
     $tableform = $formObject->getVar('tableform');
     $headerlist = $formObject->getVar('headerlist');
     $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));

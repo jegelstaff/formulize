@@ -2288,7 +2288,7 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
     global $xoopsDB, $xoopsUser;
     // determine single/multi status
     $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
-    if ($smq[0]['singleentry'] != "") {
+    if ($smq[0]['singleentry'] == "on" OR $smq[0]['singleentry'] == "group") {
         // find the entry that applies
         $single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
         // if we're looking for a regular single, find first entry for this user
