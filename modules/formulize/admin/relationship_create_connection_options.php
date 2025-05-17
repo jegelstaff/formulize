@@ -287,6 +287,9 @@ function promptForPIAndExit($formObject) {
 		}
 		$config_handler = xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$element->hasData = true;
+    $element->isSystemElement = false;
+		$element->isLinked = false;
 		$element->setVar('id_form', $formObject->getVar('fid'));
 		$element->setVar('ele_caption', _AM_ITEMNAME);
 		$element->setVar('ele_handle', $ele_handle);
@@ -306,8 +309,16 @@ function promptForPIAndExit($formObject) {
 		$element->setVar('ele_type', 'text');
 		$fieldDataType = 'text';
 		if($elementId = $element_handler->insert($element)) { // false on failure, element id on success
-			addElementToMultipageScreens($formObject->getVar('fid'), $elementId);
-			if($form_handler->insertElementField($element, $fieldDataType) == false) {
+			if($form_handler->insertElementField($element, $fieldDataType)) {
+				$formObject->setVar('pi', $elementId);
+				if($form_handler->insert($formObject)) {
+					if(addElementToMultipageScreens($formObject->getVar('fid'), $elementId) == false) {
+						print "Error: could add Name element to one or more screens on form ".$formObject->getVar('fid').". Please contact info@formulize.org for assistance.";
+					}
+				} else {
+					print "Error: could not update the PI on form ".$formObject->getVar('fid')." with the new Name element. Please contact info@formulize.org for assistance.";
+				}
+			} else {
 				print "Error: could not create the field in the database for the Name element (PI) on form ".$formObject->getVar('fid').". Please contact info@formulize.org for assistance.";
 			}
 		} else {
