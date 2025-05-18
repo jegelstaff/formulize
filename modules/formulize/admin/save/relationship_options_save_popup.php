@@ -31,14 +31,27 @@
 if(!isset($processedValues)) {
 	return;
 }
+
 global $xoopsDB;
 $lid = $_POST['lid'];
-if($lid = intval($lid)) {
+$deleteLid = $_POST['delete-link-id'];
+if($deleteLid = intval($deleteLid)) {
+	if(deleteLinkFromDatabase($deleteLid)) {
+		print "/* eval */ reloadWithScrollPosition();";
+	} else {
+		print "Error: could not delete link number $lid from the database.";
+	}
+} elseif($lid = intval($lid)) {
 	$del = isset($_POST["relationships-delete-$lid"]) ? intval($_POST["relationships-delete-$lid"]) : 0;
 	$con = isset($_POST["relationships-conditional-$lid"]) ? intval($_POST["relationships-conditional-$lid"]) : 0;
 	$book = isset($_POST["relationships-bookkeeping-$lid"]) ? intval($_POST["relationships-bookkeeping-$lid"]) : 0;
 	$sql = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')." SET fl_unified_delete = $del, fl_one2one_conditional = $con, fl_one2one_bookkeeping = $book WHERE fl_id = $lid";
 	if(!$res = $xoopsDB->query($sql)) {
 		print "Error: could not update link options with this SQL: $sql\n\n".$xoopsDB->error();
+	}
+	if(isset($_POST["relationships-create-subform"]) AND intval($_POST["relationships-create-subform"])) {
+		$link = new formulizeFrameworkLink($lid);
+		makeSubformInterface($link->getVar('form1'), $link->getVar('form2'), $link->getVar('key2'));
+		print "/* eval */ jQuery('label[for^=relationships-create-subform]').remove(); $('#dialog-relationship-options').fadeTo(1, 1); window.document.getElementById('relationship-options-popupsavewarning').style.display = 'none';";
 	}
 }

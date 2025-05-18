@@ -33,6 +33,7 @@ include_once("admin_header.php");
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH."/class/xoopsformloader.php";
 $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 // setup a smarty object that we can use for templating our own pages
 
@@ -48,9 +49,21 @@ $xoopsTpl = $xoTheme->template;
 
 $linkId = intval($_GET['linkId']);
 $link = new formulizeFrameworkLink($linkId);
+$rel = $link->getVar('relationship');
 $content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link);
 $content['isSaveLocked'] = sendSaveLockPrefToTemplate();
-
+$content['allowLinkDeletion'] = ($link->getVar('frid') != -1 OR $framework_handler->linkIsOnlyInPrimaryRelationship($link));
+$content['allowSubformInterfaceCreation'] = ($framework_handler->subformInterfaceExistsForLink($link) ? false : true);
+$content['linkId'] = intval($linkId);
+$content['type'] = intval($rel);
+if($rel > 1) {
+	$mainFormId = $rel == 2 ? $link->getVar('form1') : $link->getVar('form2');
+	$subformId = $rel == 2 ? $link->getVar('form2') : $link->getVar('form1');
+	$mainFormObject = $form_handler->get($mainFormId);
+	$subformObject = $form_handler->get($subformId);
+	$content['form1Title'] = trans(strip_tags($mainFormObject->getVar('title')));
+	$content['form2Title'] = trans(strip_tags($subformObject->getVar('title')));
+}
 icms::$logger->disableLogger();
 while(ob_get_level()) {
     ob_end_clean();

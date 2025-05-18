@@ -492,6 +492,7 @@ class formulizeFrameworksHandler {
 				case 3:
 					$normalizedLinks[$link->getVar('form2')][] = array(
 						'lid' => $link->getVar('lid'),
+						'frid' => $link->getVar('frid'),
 						'form1' => $link->getVar('form2'),
 						'form2' => $link->getVar('form1'),
 						'type' => 3,
@@ -505,6 +506,7 @@ class formulizeFrameworksHandler {
 				default:
 					$normalizedLinks[$link->getVar('form1')][] = array(
 						'lid' => $link->getVar('lid'),
+						'frid' => $link->getVar('frid'),
 						'form1' => $link->getVar('form1'),
 						'form2' => $link->getVar('form2'),
 						'type' => $link->getVar('relationship'),
@@ -543,6 +545,7 @@ class formulizeFrameworksHandler {
 					$form2Text = $link['type'] == 1 ? $form2TextSingular : $form2Object->getPlural();
 					$connectionText = $link['type'] == 1 ? _AM_FRAME_ONE : _AM_FRAME_MANY;
 					$links[] = array(
+						'frid'=>$link['frid'],
 						'linkId'=>$link['lid'],
 						'each'=>ucfirst(_AM_FRAME_EACH),
 						'form1'=>$form1Text,
@@ -562,7 +565,7 @@ class formulizeFrameworksHandler {
 
 	/**
 	 * Gets all data related to displaying the help text and options for a relationship link on the admin side
-	 * @param array link - the link data from the database, as returned from getLinksGroupedByForm
+	 * @param object link - the link data from the database, a formulizeFrameworkLink object
 	 * @return array all the data needed for the help text and options
 	 */
 	function gatherRelationshipHelpAndOptionsContent($link) {
@@ -600,6 +603,71 @@ class formulizeFrameworksHandler {
 			'bookChecked'=>$bookChecked,
 			'title'=>$title
 		);
+	}
+
+	/**
+	 * Check if there is a subform interface on the main form of this link, pointing to the subform of this link
+	 * @param object link - A formulize framework link object. Framework is the original name for Relationship.
+	 * @return boolean Return true or false depending if a subform interface exists on the main form that points to the subform, or not
+	 */
+	function subformInterfaceExistsForLink($link) {
+		if(is_a($link, 'formulizeFrameworkLink')) {
+			if($rel = $link->getVar('relationship')) {
+				if($rel > 1) {
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					$mainFormId = $rel == 2 ? $link->getVar('form1') : $link->getVar('form2');
+					$subformId = $rel == 2 ? $link->getVar('form2') : $link->getVar('form1');
+					if($mainFormObject = $form_handler->get($mainFormId, includeAllElements: true)) {
+						$subformElementIds = array_keys($mainFormObject->getVar('elementTypes'), 'subform');
+						foreach($subformElementIds as $subformElementId) {
+							if($subformElementObject = $element_handler->get($subformElementId)) {
+								$ele_value = $subformElementObject->getVar('ele_value');
+								if(is_array($ele_value) AND isset($ele_value[0]) AND $ele_value[0] == $subformId) {
+									return true;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if this link exists in other relationships besides the primary relationship
+	 * @param object link - A formulize framework link object. Framework is the original name for Relationship.
+	 * @return boolean Returns true or false depending if the link is only present in the primary relationship, or not.
+	 */
+	function linkIsOnlyInPrimaryRelationship($link) {
+		$result = false;
+		if(is_a($link, 'formulizeFrameworkLink')) {
+			$sql = "SELECT fl_id FROM ".$this->db->prefix("formulize_framework_links")."
+			WHERE fl_frame_id != -1
+			AND fl_common_value = ".intval($link->getVar('common'))."
+			AND ((
+				fl_relationship = ".intval($link->getVar('relationship'))."
+				AND fl_form1_id = ".intval($link->getVar('form1'))."
+				AND fl_form2_id = ".intval($link->getVar('form2'))."
+				AND fl_key1 = ".intval($link->getVar('key1'))."
+				AND fl_key2 = ".intval($link->getVar('key2'))."
+			) ";
+			if($link->getVar('relationship') == 1) {
+				$sql .= ")"; // simply close out, nothing more to do
+			} else {
+				// need to add an OR for the inverse of the relationship direction
+				$sql .= " OR (fl_relationship = ".mirrorRelationship(intval($link->getVar('relationship')))."
+				AND fl_form1_id = ".intval($link->getVar('form2'))."
+				AND fl_form2_id = ".intval($link->getVar('form1'))."
+				AND fl_key1 = ".intval($link->getVar('key2'))."
+				AND fl_key2 = ".intval($link->getVar('key1'))."
+				))";
+			}
+			$res = $this->db->query($sql);
+			$result = $this->db->getRowsNum($res) === 0 ? true : false;
+		}
+		return $result;
 	}
 
 	/**
@@ -721,5 +789,17 @@ function deleteLinkedElementConnectionsInRelationships($fid, $elementId) {
 				AND fl_form1_id = $fid
 				AND fl_key1 = $elementId
 		))";
+	return $xoopsDB->query($sql);
+}
+
+/**
+ * Delete a specified link from a relationship
+ * @param int linkId - The primary key id of the link in the database that is being removed
+ * @return boolean Returns true or false based on whether the operation succeeded
+ */
+function deleteLinkFromDatabase($linkId) {
+	global $xoopsDB;
+	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE fl_id = ".intval($linkId);
 	return $xoopsDB->query($sql);
 }

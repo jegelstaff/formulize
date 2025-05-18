@@ -13,7 +13,9 @@
 		<{$smarty.const._AM_FRAME_UIDLINK}>;
 		<{/if}>
 		<input type='hidden' name='lid' value='<{$content.linkId}>'>
+		<input type='hidden' name='delete-link-id' value=''>
 		<{include file="db:admin/relationship_connection_options.html" content=$content}>
+		<{if $content.allowLinkDeletion}><input type="button" name="delete-link-button" value="Delete connection"><{/if}>
 	</form>
 </div>
 
@@ -40,7 +42,10 @@
     window.document.getElementById('relationship-options-popupsavewarning').style.display = 'block';
     });
 
-	$(".relationship-options-savebuttonpopup").click(function() {
+	$(".relationship-options-savebuttonpopup, input[name=delete-link-button]").click(function() {
+		if($(this).attr('name') == 'delete-link-button') {
+			$('div#dialog-relationship-options-content input[name=delete-link-id]').val($('div#dialog-relationship-options-content input[name=lid]').val());
+		}
 		var pagedata = window.document.getElementsByName("relationship-options-popupform");
 		$('#dialog-relationship-options').fadeTo(1, 0.25, function() {
 			$.post("save.php?popupsave=1", $(pagedata).serialize(), function(data) {
@@ -48,11 +53,13 @@
 					if(data.substr(0,10)=="/* eval */") {
 						eval(data);
 					} else {
+						$('#dialog-relationship-options').fadeTo(1, 1);
 						alert(data);
 					}
+				} else {
+					window.document.getElementById('relationship-options-popupsavewarning').style.display = 'none';
+					$('#dialog-relationship-options').fadeTo(1, 1);
 				}
-				window.document.getElementById('relationship-options-popupsavewarning').style.display = 'none';
-				$('#dialog-relationship-options').fadeTo(1, 1);
 			});
 		});
     $(".relationship-options-savebuttonpopup").blur();

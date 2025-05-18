@@ -1559,7 +1559,8 @@ div.save-view-access {
 
 #savebutton input, #popupsavebutton input,
 #relationship-options-popupsavebutton input,
-#relationship-create-connection-popupsavebutton input {
+#relationship-create-connection-popupsavebutton input,
+input[name=delete-link-button] {
   float: left;
   font-size: 1.1rem;
   width: 150px;
@@ -1567,6 +1568,10 @@ div.save-view-access {
   margin-bottom: 1em;
   font-weight: normal;
 	margin-right: 1em;
+}
+
+input[name=delete-link-button] {
+	float: right;
 }
 
 #savewarning, #derivedfinished {
