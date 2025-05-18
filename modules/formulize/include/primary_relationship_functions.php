@@ -309,7 +309,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
     $element->hasData = true;
     $element->isSystemElement = false;
 		$element->setVar('id_form', $fid);
-		$element->setVar('ele_caption', $otherForm->getVar('title').': '.$otherElement->getVar('ele_caption'));
+		$element->setVar('ele_caption', htmlspecialchars_decode($otherForm->getVar('title')).': '.htmlspecialchars_decode($otherElement->getVar('ele_caption')));
 		$element->setVar('ele_handle', $ele_handle);
 		$element->setVar('ele_order', 1);
 		$element->setVar('ele_display', 1);
@@ -346,9 +346,9 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$element->isLinked = $otherElement->isLinked;
 				$element->setVar('ele_value', $otherElement->getVar('ele_value')); // does not need to be serialized, because element handler insert method applies cleanVars to everything, which will serialize it for us, and we don't want double serialization!
 				$element->setVar('ele_type', $otherElement->getVar('ele_type'));
-				$element->setVar('ele_desc', $otherElement->getVar('ele_desc'));
-				$element->setVar('ele_caption', $otherElement->getVar('ele_caption'));
-				$element->setVar('ele_colhead', $otherElement->getVar('ele_colhead'));
+				$element->setVar('ele_desc', htmlspecialchars_decode($otherElement->getVar('ele_desc')));
+				$element->setVar('ele_caption', htmlspecialchars_decode($otherElement->getVar('ele_caption')));
+				$element->setVar('ele_colhead', htmlspecialchars_decode($otherElement->getVar('ele_colhead')));
 				$element->setVar('ele_req', $otherElement->getVar('ele_req'));
 				$element->setVar('ele_uitext', $otherElement->getVar('ele_uitext'));
 				$element->setVar('ele_uitextshow', $otherElement->getVar('ele_uitextshow'));
