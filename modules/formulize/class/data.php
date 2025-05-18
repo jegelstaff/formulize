@@ -1286,11 +1286,11 @@ class formulizeDataHandler  {
 				break;
 			case "checkbox":
 			case "select":
-				$oldValues = array_keys($ele_value[2]);
 				// special check...if this is a linked selectbox or a fullnames/usernames selectbox, then fail
 				if(!is_array($ele_value[2]) OR isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"])) {
 					return false;
 				}
+				$oldValues = array_keys($ele_value[2]);
 				break;
 		}
 		$prefix = ($ele_type == "checkbox" OR ($ele_type == "select" AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix

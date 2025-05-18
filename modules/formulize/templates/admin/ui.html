@@ -290,6 +290,7 @@ $(document).ready(function() {
           eval(redirect);
         } else {
           $(".admin-ui").fadeTo(1,1);
+					$('input[clearAfterSave=1]').removeAttr('checked');
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
         sendFormData(formdata[saveCounter], ele_id);

@@ -50,6 +50,7 @@ if ($aid == 0) {
     $appName = $appObject->getVar('name');
 }
 
+$common = array();
 $names = array();
 $display = array();
 $advanced = array();
@@ -218,6 +219,8 @@ $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
 $formHandle=printSmart($formObject->getVar('form_handle'), 30);
 
+$common['formTitle'] = strip_tags($formName);
+
 // package up the elements into a list for ordering purposes
 // also, the sort options
 $orderOptions = array();
@@ -382,7 +385,7 @@ if ($ele_type=='textarea') {
         $options['multiple'] = 0;
         $options['multiple_auto'] = 0;
         $ele_value[0] = 6;
-        $options['islinked'] = 0;
+        $options['islinked'] = 'new';
         $options['formlink_scope'] = array(0=>'all');
     } else {
         $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
@@ -397,6 +400,7 @@ if ($ele_type=='textarea') {
                 $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
             }
             $options['useroptions'] = $ele_value[2];
+						$options['usernameslist'] = (key($options['useroptions']) == '{USERNAMES}' OR key($options['useroptions']) == '{FULLNAMES}') ? true : false;
         }
 
         $options['formlink_scope'] = explode(",",$ele_value[3]);
@@ -416,6 +420,7 @@ if ($ele_type=='textarea') {
 
 
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
+		$options['subformInterfaceAdminUrl'] = '';
     if ($options['islinked']) {
         $linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
         $linkedSourceFid = $linkedMetaDataParts[0];
@@ -462,6 +467,14 @@ if ($ele_type=='textarea') {
             list($sourceFormFieldList, $sourceFormFieldListSelected) = createFieldList('throwawayvalue', false, $linkedSourceFid, 'throwawayname', 'Source Form');
             $options['mappingsourceformoptions'] = $sourceFormFieldList->getOptions();
             $options['linkedSourceMappings'] = $ele_value['linkedSourceMappings'];
+
+						if($mainFormObject = $form_handler->get($linkedSourceFid)) {
+							if($subformElementId = $mainFormObject->hasSubformInterfaceForForm($fid)) {
+								$bestAppId = formulize_getFirstApplicationForBothForms($mainFormObject, $formObject);
+								$bestAppId = $bestAppId ? $bestAppId : 0;
+								$options['subformInterfaceAdminUrl'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=element&aid=$bestAppId&ele_id=$subformElementId&tab=options";
+							}
+						}
 
         }
     }

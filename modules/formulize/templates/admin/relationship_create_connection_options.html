@@ -10,7 +10,7 @@
 		</div>
 		<{foreach item=pair from=$content.pairs}>
 			<div class="create-connection-link-choices">
-				<span class="bold"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter}>:</span><input type="radio" name="pairSelection" value="<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>" id="pair+<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>">
+				<span class="bold"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter print=true assign=numPairs}>:</span><input type="radio" name="pairSelection" value="<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>" id="pair+<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>">
 				<label for="pair+<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>">
 					<span><{$pair.form1.elementName}></span>
 					<span><{$pair.form2.elementName}></span>
@@ -18,7 +18,7 @@
 			</div>
 		<{/foreach}>
 		<div class="create-connection-link-choices">
-			<span class="bold"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter}>:</span><input type="radio" name="pairSelection" value="pair-manual" id="pair-manual">
+			<span class="bold"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter print=true assign=numPairs}>:</span><input type="radio" name="pairSelection" value="pair-manual" id="pair-manual">
 			<label for="pair-manual">
 				<span><select name="form1ElementId"><{html_options options=$content.candidates.form1}></select></span>
 				<span><select name="form2ElementId"><{html_options options=$content.candidates.form2}></select></span>
@@ -34,9 +34,15 @@
 </div>
 
 <script>
+
+	<{if $numPairs == 1}>
+	enableCreateConnectionButton();
+	jQuery('#pair-manual').attr('checked', true);
+	<{/if}>
+
 	jQuery('select[name=form1ElementId],select[name=form2ElementId]').change(function() {
 		jQuery('#pair-manual').attr('checked', true);
-		jQuery('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
+		enableCreateConnectionButton();
 		if(jQuery('select[name=form1ElementId]').val().substring(0,3) == 'new') {
 			jQuery("select[name=form2ElementId] option[value=new-common-parallel]").remove();
 			jQuery("select[name=form2ElementId] option[value=new-common-textbox]").remove();

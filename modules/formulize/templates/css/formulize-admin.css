@@ -1562,13 +1562,24 @@ div.save-view-access {
 #relationship-options-popupsavebutton input,
 #relationship-create-connection-popupsavebutton input,
 input[name=delete-link-button] {
-  float: left;
   font-size: 1.1rem;
   width: 150px;
   text-align: center;
   margin-bottom: 1em;
   font-weight: normal;
 	margin-right: 1em;
+}
+
+#savebutton input, #popupsavebutton input,
+#relationship-options-popupsavebutton input,
+input[name=delete-link-button] {
+	float: left;
+}
+
+div#relationship-create-connection-popupsavebutton {
+	display: flex;
+	justify-content: center;
+	margin-top: 1.5em;
 }
 
 input[name=delete-link-button] {
@@ -1682,7 +1693,8 @@ div.description {
   font-style: italic;
   font-size: 80%;
   color: #666;
-  padding-top: 10px;
+  padding-bottom: 10px;
+	margin-top: 4px;
   text-align: left !important; }
 
 .homepage-description {
@@ -2016,6 +2028,10 @@ span.title {
 }
 .bold {
 	font-weight: bold;
+}
+
+div#dialog-relationship-create-connection-content {
+	padding-top: 1em;
 }
 
 #create-connection-title-options,

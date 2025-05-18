@@ -619,14 +619,8 @@ class formulizeFrameworksHandler {
 					$mainFormId = $rel == 2 ? $link->getVar('form1') : $link->getVar('form2');
 					$subformId = $rel == 2 ? $link->getVar('form2') : $link->getVar('form1');
 					if($mainFormObject = $form_handler->get($mainFormId, includeAllElements: true)) {
-						$subformElementIds = array_keys($mainFormObject->getVar('elementTypes'), 'subform');
-						foreach($subformElementIds as $subformElementId) {
-							if($subformElementObject = $element_handler->get($subformElementId)) {
-								$ele_value = $subformElementObject->getVar('ele_value');
-								if(is_array($ele_value) AND isset($ele_value[0]) AND $ele_value[0] == $subformId) {
-									return true;
-								}
-							}
+						if($mainFormObject->hasSubformInterfaceForForm($subformId)) {
+							return true;
 						}
 					}
 				}
@@ -802,4 +796,29 @@ function deleteLinkFromDatabase($linkId) {
 	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')."
 		WHERE fl_id = ".intval($linkId);
 	return $xoopsDB->query($sql);
+}
+
+/**
+ * Get a list of which elements are in relationship links. Optionally, specify a list of elements to limit the checking to.
+ * @param array elementIdentifiers - Optional. An array of element id, handles or objects. If present, limit checking to these elements only.
+ * @return array Returns an array where the keys and values are the element ids that were found in relationship links.
+ */
+function getElementsInRelationshipLinks($elementIdentifiers = array()) {
+	$elementsInRelationshipLinks = array();
+	$whereClause = "";
+	if(is_array($elementIdentifiers)) {
+		foreach($elementIdentifiers as $elementIdentifier) {
+			$elementObject = _getElementObject($elementIdentifier);
+			$elementId = $elementObject->getVar('ele_id');
+			$whereClause .= $whereClause ? " OR " : "";
+			$whereClause .= "fl_key = $elementId";
+		}
+	}
+	global $xoopsDB;
+	foreach(array("fl_key1", "fl_key2") as $field) {
+		$sql = str_replace("fl_key", $field, "SELECT fl_key FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE $whereClause");
+		$res = $xoopsDB->query($sql);
+		$elementsInRelationshipLinks = array_merge($elementsInRelationshipLinks, (array)$xoopsDB->fetchAll($res, column: 0));
+	}
+	return $elementsInRelationshipLinks;
 }

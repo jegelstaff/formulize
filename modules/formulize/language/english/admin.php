@@ -359,17 +359,20 @@ define("_MI_formulize_DELIMETER_CUSTOM","Custom HTML");
 //added to handle the formlink part of the selectbox element -- jwe 7/29/04
 define("_AM_ELE_FORMLINK", "Options linked from another form");
 define("_AM_ELE_FORMLINK_DESC","Select a field in another form and use those entries for the options in this Select Box. (This setting overrides any options specified above.)");
-define("_AM_FORMLINK_NONE", "No link -- options below are in effect");
+define("_AM_FORMLINK_NONE", "Select the source element");
 define("_AM_ELE_FORMLINK_TEXTBOX", "Associate values with another form element");
 define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
 define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
 define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
-define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>The groups you pick define the total possible options to be used.  Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.</p><p>Also, you can specify whether entries must be created by users who are members of all the groups, or just any one group.  Note that this option can interact powerfully with \"Use only groups that the current user is also a member of\", to let you limit the options to ones from entries created by users who are members of <b>all</b> the same groups as the current user.</p><p><b>Exception:</b> If you limit to only the groups the user is a member of, and you also require users to be members of all selected groups, the system will ignore any groups that do not contain at least one user who has at least one of these groups in common with the current user.  This is to meant to support situations where you have sets of groups in parallel, and you want the interpretation to be based on only the current user's set of groups, ie: East Coast Staff and East Coast Volunteers vs. West Coast Staff and West Coast Volunteers.  If the current user belongs to the East Coast set, then all West Coast groups will be ignored in this case.</p>");
+define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.</p>");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Use all groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Use all these groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Use only groups that the current user is also a member of");
-define("_AM_ELE_FORMLINK_ANYALL_ANY", "Include entries by users who are members of any selected group");
-define("_AM_ELE_FORMLINK_ANYALL_ALL", "Include entries by users who are members of all selected groups");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_INTRO", "Should the active user limit the scope?");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "No. Use all selected groups.");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Yes. Only use groups that the current user is a member of");
+define("_AM_ELE_FORMLINK_ANYALL_INTRO", "Include data as long as it belongs to:");
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Any one of the groups in scope");
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "All of the groups in scope");
+define("_AM_ELE_FORMLINK_ANYALL_DESC", "If the active user is limiting the scope, then the <b>All</b> option may not necessarily mean all the groups selected, depending on the group memberships of the active user.");
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");
@@ -447,6 +450,7 @@ define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how ma
 
 define("_AM_ELE_SELECT_NONE","No element selected");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
+define("_AM_ELE_CONFIRM_DELETE_INLINK","THIS FORM ELEMENT IS PART OF RELATIONSHIPS WITH OTHER FORMS! Are you sure you want to delete this form element? The relationships will break, and all data anyone has ever entered into this form element will be deleted as well.");
 
 // Duration
 define("_AM_ELE_DURATION", "Duration");

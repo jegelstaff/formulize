@@ -31,8 +31,8 @@
 <hr style='margin-top: 1em; border: 0px; border-top: 1px dashed black; height: 1px;'>
 <div>
     <p>If you are using the pipe character to store alternative values in the database:<br />
-    <label for="showalt"><input type="radio" id="showalt" name="elements-ele_uitextshow" value=0>Show the alternative values in lists of entries (and use them in the API)</label><br />
-    <label for="showuitext"><input type="radio" id="showuitext" name="elements-ele_uitextshow" value=1>Show the same values the user sees in the form, in the list of entries (and use them in the API)</label>
+    <label for="showalt"><input type="radio" id="showalt" name="elements-ele_uitextshow" value=0> Show the alternative values in lists of entries (and use them in the API)</label><br />
+    <label for="showuitext"><input type="radio" id="showuitext" name="elements-ele_uitextshow" value=1> Show the same values the user sees in the form, in the list of entries (and use them in the API)</label>
     </p>
 </div>
 
@@ -40,16 +40,11 @@
   <p>The second option is for use only in cases where you need an alternative value in the database for some third party integration, but a different value shown throughout Formulize. Regardless of your choice, if you use alternative values in the database then searches will only work when you search for those alternative values (because they are what is actually stored in the database).</p>
 </div>
 
-</fieldset>
+<p><label for="element-changeuservalues"><input type="checkbox" id="element-changeuservalues" name="changeuservalues" clearAfterSave=1 value="1"/> Resynch existing entries with any option changes?</label></p>
+<div class="description">
+	<p><{$smarty.const._AM_ELE_OPT_CHANGEUSERVALUES}></p>
 </div>
 
-<div class="form-item">
-<fieldset>
-  <legend>Resynch existing entries with any option changes?</legend>
-  <p><label for="element-changeuservalues">
-<input type="checkbox" id="element-changeuservalues" name="changeuservalues" value="1"/>
-<{$smarty.const._AM_ELE_OPT_CHANGEUSERVALUES}></label></p>
-</fieldset>
 
 <script type="text/javascript">
 
@@ -73,18 +68,22 @@
     $("[name=defaultoption]").attr('checked',0);
     $("[name=cleardef]").blur();
   });
-  <{/if}>
+  <{else}>
 
-  <{if $content.type eq "select"}>
-  checkForNames();
+	checkForNames();
 
   function checkForNames() {
     if ($("[name=ele_value[0]]").val() == "{USERNAMES}" || $("[name=ele_value[0]]").val() == "{FULLNAMES}"){
-      disableForAutocomplete();
+      <{if $content.type eq "select"}>disableForAutocomplete();<{/if}>
+			$('div#linked-or-usernames-options').show(200);
     }else{
-      enableForAutocomplete();
+      <{if $content.type eq "select"}>enableForAutocomplete();<{/if}>
+			$('div#linked-or-usernames-options').hide(200);
     }
   }
+	<{/if}>
+
+  <{if $content.type eq "select"}>
 
   function disableForAutocomplete(){
     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled","disabled");

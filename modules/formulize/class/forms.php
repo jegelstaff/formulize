@@ -213,6 +213,29 @@ class formulizeForm extends FormulizeObject {
 		return array($views, $viewNames, $viewFrids, $viewPublished);
 	}
 
+		public function getVar($key, $format = 's') {
+			if($key == 'on_before_save'
+			  OR $key == 'on_after_save'
+			  OR $key == 'on_delete'
+			  OR $key == 'custom_edit_check') {
+				$contents = '';
+				if(is_numeric($this->getVar('id_form'))) {
+					$form_handle = $this->getVar('form_handle');
+				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
+				  if(file_exists($filename)) {
+						$contents = file_get_contents($filename);
+				  }
+				}
+				return $contents;
+			}
+			$return_value = parent::getVar($key, $format);
+			if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
+					// now it's an array
+					$return_value = array();
+			}
+			return $return_value;
+    }
+
     public function assignVar($key, $value) {
         if ("form_handle" == $key) {
             $value = self::sanitize_handle_name($value);
@@ -611,28 +634,25 @@ EOF;
         return $this->$name;
     }
 
-    public function getVar($key, $format = 's') {
-			if($key == 'on_before_save'
-			  OR $key == 'on_after_save'
-			  OR $key == 'on_delete'
-			  OR $key == 'custom_edit_check') {
-				$contents = '';
-				if(is_numeric($this->getVar('id_form'))) {
-					$form_handle = $this->getVar('form_handle');
-				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
-				  if(file_exists($filename)) {
-						$contents = file_get_contents($filename);
-				  }
+		/**
+		 * Check if the form includes a subform element that points to the given subform id
+		 * @param int subformId - the id number of a form that is acting as the subform in this case
+		 * @return boolean Returns the element Id if there is one, or false depending if there is no subform element
+		 */
+		function hasSubformInterfaceForForm($subformId) {
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$subformElementIds = array_keys($this->getVar('elementTypes'), 'subform');
+			foreach($subformElementIds as $subformElementId) {
+				if($subformElementObject = $element_handler->get($subformElementId)) {
+					$ele_value = $subformElementObject->getVar('ele_value');
+					if(is_array($ele_value) AND isset($ele_value[0]) AND $ele_value[0] == $subformId) {
+						return $subformElementObject->getVar('ele_id');
+					}
 				}
-				return $contents;
 			}
-			$return_value = parent::getVar($key, $format);
-			if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
-					// now it's an array
-					$return_value = array();
-			}
-			return $return_value;
-    }
+			return false;
+		}
+
 }
 
 

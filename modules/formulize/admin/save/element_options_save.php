@@ -197,6 +197,11 @@ if($ele_type == "select") {
 				$currentLinkedElementId = $currentLinkedElementId[0];
 		}
 		updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId);
+		if(isset($_POST['makeSubformInterface']) AND $_POST['makeSubformInterface']) {
+			if(makeSubformInterface($array_link['id_form'], $element->getVar('fid'), $element->getVar('ele_id'))) {
+				$_POST['reload_option_page'] = true;
+			}
+		}
 	} else {
     // a user requests to unlink the select box and select box is currently linked
     if ($_POST['formlink'] == "none" AND $element->isLinked){
@@ -257,7 +262,7 @@ if($ele_type == "select") {
 
 	list($processedValues['elements']['ele_value'][5], $formLinkFilterChanged) = parseSubmittedConditions('formlinkfilter', 'optionsconditionsdelete');
   list($processedValues['elements']['ele_value']['optionsLimitByElementFilter'], $optionsLimitChanged) = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete');
-	$_POST['reload_option_page'] = ($formLinkFilterChanged OR $optionsLimitChanged) ? true : false;
+	$_POST['reload_option_page'] = ($formLinkFilterChanged OR $optionsLimitChanged OR $_POST['reload_option_page']) ? true : false;
 
   /**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
     *ele_value[8] ==1 will make sure it's an autocomplete box

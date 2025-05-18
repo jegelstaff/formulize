@@ -18,7 +18,6 @@
 		<input type="hidden" name="f2" value="0">
 		<input type="hidden" name="k1" value="0">
 		<input type="hidden" name="k2" value="0">
-		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Create Connection"/></div>
 		<div style="clear: both"></div>
 
 		<{if $content.forms}>
@@ -29,7 +28,7 @@
 
 		<div id="relationship-create-connection-options">
 		</div>
-
+		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Create Connection"/></div>
 	</form>
 </div>
 
@@ -37,16 +36,15 @@
 
 // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 $( document ).ready(function() {
+	document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
+	$('.relationship-create-connection-savebuttonpopup').attr('disabled', 'disabled');
 	<{if $content.isSaveLocked}>
-		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
 		document.getElementById('relationship-create-connection-popupsavebutton').innerHTML = "READ ONLY";
-	<{else}>
-		$('.relationship-create-connection-savebuttonpopup').attr('disabled', 'disabled');
 	<{/if}>
 });
 
 	$("input[name=pairSelection]").live('click', function() {
-		$('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
+		enableCreateConnectionButton();
 	});
 
 	$(".relationship-create-connection-savebuttonpopup").click(function() {
@@ -68,6 +66,11 @@ $( document ).ready(function() {
 		});
     $(".relationship-create-connection-savebuttonpopup").blur();
   });
+
+	function enableCreateConnectionButton() {
+		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'visible';
+		$('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
+	}
 
 	function showRelationshipCreationOptions(form1, form2, pi=0) {
 		let rel = $('input[name=relationship]:checked').val();

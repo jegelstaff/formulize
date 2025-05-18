@@ -77,6 +77,7 @@ if ($_GET['fid'] != "new") {
     // a 'name' key and a 'content' key for each form that is found
     // Name will be the heading of the section, content is data used in the template for each section
     $i = 1;
+		$elementsInRelationshipLinks = getElementsInRelationshipLinks($elementObjects);
     foreach($elementObjects as $thisElement) {
         if($thisElement->isSystemElement) { continue; }
         $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
@@ -93,6 +94,7 @@ if ($_GET['fid'] != "new") {
         $elements[$i]['name'] = "<span style='font-size: 125%;'>$nameText</span><br>$cleanType - $ele_handle";
         $elements[$i]['content']['ele_id'] = $ele_id;
         $elements[$i]['content']['ele_handle'] = $ele_handle;
+				$elements[$i]['content']['inLink'] = in_array($ele_id, $elementsInRelationshipLinks);
         $ele_type = $thisElement->getVar('ele_type');
         switch($ele_type) {
           case("text"):

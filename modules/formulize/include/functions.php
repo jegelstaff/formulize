@@ -8795,6 +8795,56 @@ function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject 
 }
 
 /**
+ * Find the first application that both forms are part of, or if none, first application for the first form.
+ * @param mixed first_form_id_or_object - the form id number of a formulize form object of the first form
+ * @param mixed second_form_id_or_object - the form id number of a formulize form object of the first form
+ * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application that both forms belong to, if any, otherwise the first application the first form belongs to. Returns the application object if returnObject was true. Returns false if form ids or objects were invalid, and null if there is no application for the form.
+ */
+function formulize_getFirstApplicationForBothForms($first_form_id_or_object, $second_form_id_or_object, $returnObject = false) {
+	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
+	$firstFormId = $first_form_id_or_object;
+	if(is_object($first_form_id_or_object) AND is_a($first_form_id_or_object, 'formulizeForm')) {
+		$firstFormId = $first_form_id_or_object->getVar('fid');
+	}
+	$firstAppIds = array();
+	if(is_numeric($firstFormId) AND $firstFormId) {
+		if($firstApps = $applications_handler->getApplicationsByForm($firstFormId)) {
+			foreach($firstApps as $i=>$thisApp) {
+				$firstAppIds[$i] = $thisApp->getVar('appid');
+			}
+		}
+	} else {
+		return false;
+	}
+	$secondFormId = $second_form_id_or_object;
+	if(is_object($second_form_id_or_object) AND is_a($second_form_id_or_object, 'formulizeForm')) {
+		$secondFormId = $second_form_id_or_object->getVar('fid');
+	}
+	$secondAppIds = array();
+	if(is_numeric($secondFormId) AND $secondFormId) {
+		if($secondApps = $applications_handler->getApplicationsByForm($secondFormId)) {
+			foreach($secondApps as $i=>$thisApp) {
+				$secondAppIds[$i] = $thisApp->getVar('appid');
+			}
+		}
+	} else {
+		return false;
+	}
+	if(empty($firstAppIds)) {
+		return null;
+	} else {
+		if(empty($secondAppIds)) {
+			return $returnObject ? $firstApps[key($firstAppIds)] : $firstAppIds[key($firstAppIds)];
+		} elseif($intersection = array_intersect($firstAppIds, $secondAppIds)) { // array_intersect preserves keys
+			return $returnObject ? $firstApps[key($intersection)] : $intersection[key($intersection)];
+		} else {
+			return $returnObject ? $firstApps[key($firstAppIds)] : $firstAppIds[key($firstAppIds)];
+		}
+	}
+}
+
+/**
  * Check if two elements are actually linked to each other
  * @param int|string|object element1Indentifier - element id, handle or object for the first element
  * @param int|string|object element2Indentifier - element id, handle or object for the second element
