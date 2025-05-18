@@ -100,9 +100,10 @@ if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
 			addPair($pairs, $form1Link['object'], null, 'new-common-parallel');
 		}
 		// linked multi select elements in form 1 if they point to form 2, only if rel is one to many (2)
-		if($rel == 2 AND $form1Link['object']->canHaveMultipleValues AND $form1Link['sourceFid'] == $form2Id) {
+		// this is a the same kind of option/issue as discussed in GitHub issue 661, see comment below.
+		/*if($rel == 2 AND $form1Link['object']->canHaveMultipleValues AND $form1Link['sourceFid'] == $form2Id) {
 			addPair($pairs, $form1Link['object'], $form1Link['sourceObject']);
-		}
+		}*/
 		// linked non multi select elements in form 1 if they point to form 2, only if rel is one to one (1)
 		if($rel == 1 AND $form1Link['object']->canHaveMultipleValues == false AND $form1Link['sourceFid'] == $form2Id) {
 			addPair($pairs, $form1Link['object'], $form1Link['sourceObject']);
@@ -129,18 +130,16 @@ if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
 		}
 	}
 	$candidateElementsForm1['new-common-parallel'] = CREATE_CONNECTION_COMMON_VALUE_PARALLEL;
+	// This is a seductive option that almost works. See issue 661 on GitHub for more details.
+	// See comment above referencing same issue.
+	//$candidateElementsForm1['new-linked-multiselect-autocomplete'] = CREATE_CONNECTION_LINKED_MULTI_AUTOCOMPLETE;
+	//$candidateElementsForm1['new-linked-checkboxes'] = CREATE_CONNECTION_LINKED_CHECKBOXES;
 	$candidateElementsForm2 = array(
 		'new-linked-dropdown' => CREATE_CONNECTION_LINKED_DROPDOWN,
 		'new-linked-autocomplete' => CREATE_CONNECTION_LINKED_AUTOCOMPLETE,
-		'new-linked-multiselect-autocomplete' => CREATE_CONNECTION_LINKED_MULTI_AUTOCOMPLETE,
-		'new-linked-checkboxes' => CREATE_CONNECTION_LINKED_CHECKBOXES,
 		'new-common-parallel' => CREATE_CONNECTION_COMMON_VALUE_PARALLEL,
 		'new-common-textbox' => CREATE_CONNECTION_COMMON_VALUE_TEXTBOX
 	);
-	if($rel == 1) {
-		unset($candidateElementsForm2['new-linked-multiselect-autocomplete']);
-		unset($candidateElementsForm2['new-linked-checkboxes']);
-	}
 	foreach($form2Elements as $elementId) {
 		$form2ElementObject = $element_handler->get($elementId);
 		if($form2ElementObject->hasData) {
@@ -222,6 +221,7 @@ function generateNewElementPairNameFromType($type, $otherElementObject) {
 
 /**
  * Given an array of element Ids, returns a structured array with the element id, element colhead/caption, and link target form and target element, if and only if the element is linked
+ * Only include elements that store a single value -- we may want to include multiselect elements later, See gitHub issue 661
  * @param array elementIdsArray - an array of element id numbers
  * @return array An array of metadata about the linked elements
  */
@@ -230,7 +230,7 @@ function getLinkedElementsAndSource($elementIdsArray) {
 	$linkedElementMetadata = array();
 	foreach($elementIdsArray as $elementId) {
 		if($elementObject = $element_handler->get($elementId)) {
-			if($elementObject->isLinked) {
+			if($elementObject->isLinked AND $elementObject->canHaveMultipleValues == false) {
 				$ele_value = $elementObject->getVar('ele_value');
 				$boxproperties = explode("#*=:*", $ele_value[2]);
       	$sourceFid = $boxproperties[0];
