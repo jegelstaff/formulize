@@ -33,6 +33,8 @@ while(ob_get_level()) {
     ob_end_clean();
 }
 
+require_once "checkThatUserIsAFormulizeModuleAdminAndSystemIsNotSaveLocked.php";
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH.'/header.php';
 global $xoopsTpl;
