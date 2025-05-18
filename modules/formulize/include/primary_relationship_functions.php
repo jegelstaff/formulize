@@ -199,11 +199,11 @@ function mirrorRelationship($relationship) {
  * @return boolean|string - Returns boolean true on success, including if the link already exists, or false if insert failed. Prints out error text.
  */
 function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0, $con=1, $book=1) {
+	global $xoopsDB, $linkForms;
 	static $linkPairs = array();
 	$result = true;
-	$mrel = mirrorRelationship($rel);
-	if(!isset($linkPairs[$cv][$rel][$k1][$k2]) AND !isset($linkPairs[$cv][$mrel][$k2][$k1])) {
-		global $xoopsDB, $linkForms;
+	$mrel = mirrorRelationship(intval($rel));
+	if(!isset($linkPairs[intval($cv)][intval($rel)][intval($k1)][intval($k2)]) AND !isset($linkPairs[intval($cv)][$mrel][intval($k2)][intval($k1)])) {
 		$linkPairs[$cv][$rel][$k1][$k2] = true;
 		$linkForms[] = $f1;
 		$linkForms[] = $f2;
@@ -244,6 +244,23 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
         $e2->createIndex();
       }
 		}
+	} elseif(intval($del) == 0) {
+		// Already created the primary relationship entry for this link, but need to validate the del option
+		// (ie: already created this page load, but we don't make more than one link per request in normal operation)
+		// If this version of the link has del off, then we must update the PR to have del off. Only want to apply
+		// the delete behaviour in the specific circumstances it was requested for. PR will inherit that only if
+		// there is only one link that connects the forms and del is on for that one link, implying they should
+		// always use that behaviour.
+		$sql = "UPDATE ".$xoopsDB->prefix('formulize_framework_links')."
+			SET fl_unified_delete = 0
+			WHERE `fl_common_value` = ".intval($cv)."
+			AND ((`fl_key1` = ".intval($k1)."
+			AND `fl_key2` = ".intval($k2)."
+			AND `fl_relationship` = ".intval($rel).")
+			OR (`fl_key1` = ".intval($k2)."
+			AND `fl_key2` = ".intval($k1)."
+			AND `fl_relationship` = $mrel))";
+		$xoopsDB->queryF($sql);
 	}
 	return $result;
 }
