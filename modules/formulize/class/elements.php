@@ -70,7 +70,7 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
     $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
-		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
+		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
  		// changed - start - August 19 2005 - jpc
