@@ -36,16 +36,17 @@
 <script>
 	jQuery('select[name=form1ElementId],select[name=form2ElementId]').change(function() {
 		jQuery('#pair-manual').attr('checked', true);
+		jQuery('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
 		if(jQuery('select[name=form1ElementId]').val().substring(0,3) == 'new') {
 			jQuery("select[name=form2ElementId] option[value=new-common-parallel]").remove();
 			jQuery("select[name=form2ElementId] option[value=new-common-textbox]").remove();
 			jQuery("select[name=form2ElementId] option[value=new-linked-dropdown]").remove();
-			jQuery("select[name=form2ElementId] option[value=new-linked-autocomplete]").remove();
-			jQuery("select[name=form2ElementId] option[value=new-linked-multiselect-autocomplete]").remove();
 			jQuery("select[name=form2ElementId] option[value=new-linked-checkboxes]").remove();
 		}
 		if(jQuery('select[name=form2ElementId]').val().substring(0,3) == 'new') {
 			jQuery("select[name=form1ElementId] option[value=new-common-parallel]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-linked-autocomplete]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-linked-multiselect-autocomplete]").remove();
 		}
 	});
 

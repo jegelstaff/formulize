@@ -18,8 +18,7 @@
 		<input type="hidden" name="f2" value="0">
 		<input type="hidden" name="k1" value="0">
 		<input type="hidden" name="k2" value="0">
-		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Save your changes"/></div>
-		<div id="relationship-create-connection-popupsavewarning">You have unsaved changes!</div>
+		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Create Connection"/></div>
 		<div style="clear: both"></div>
 
 		<{if $content.forms}>
@@ -46,19 +45,6 @@ $( document ).ready(function() {
 	<{/if}>
 });
 
-$("input").change(function() {
-	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-	});
-$("input[type=text]").keydown(function() {
-	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-	});
-$("select").change(function() {
-	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-	});
-$("textarea").keydown(function() {
-	window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'block';
-	});
-
 	$("input[name=pairSelection]").live('click', function() {
 		$('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
 	});
@@ -71,13 +57,13 @@ $("textarea").keydown(function() {
 					if(data.substr(0,10)=="/* eval */") {
 						eval(data);
 					} else {
+						$('#dialog-relationship-create-connection').fadeTo(1, 1);
 						$("#relationship-create-connection-options").html(data);
 					}
 				} else {
-					$("#relationship-create-connection-options").html("<h1>Link Made Successfully!</h1>");
+					// upon successful saving we need to reload the page, to respawn the page so the connection info in the panels is up to date
+					reloadWithScrollPosition();
 				}
-				//window.document.getElementById('relationship-create-connection-popupsavewarning').style.display = 'none';
-				$('#dialog-relationship-create-connection').fadeTo(1, 1);
 			});
 		});
     $(".relationship-create-connection-savebuttonpopup").blur();
