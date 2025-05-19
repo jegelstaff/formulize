@@ -87,7 +87,6 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             $ele_value[2] = formulize_mergeUIText($ele_value[2], $element->getVar('ele_uitext'));
 						$dataToSendToTemplate['islinked'] = 0;
 						$dataToSendToTemplate['useroptions'] = $ele_value[2];
-						$dataToSendToTemplate['usernameslist'] = (key($dataToSendToTemplate['useroptions']) == '{USERNAMES}' OR key($dataToSendToTemplate['useroptions']) == '{FULLNAMES}') ? true : false;
 					} else { // options are linked from another source
 						$dataToSendToTemplate['islinked'] = 1;
         	}

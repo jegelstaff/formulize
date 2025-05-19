@@ -68,7 +68,9 @@
     $("[name=defaultoption]").attr('checked',0);
     $("[name=cleardef]").blur();
   });
-  <{else}>
+  <{/if}>
+
+	<{if $content.type eq "select"}>
 
 	checkForNames();
 
@@ -81,9 +83,6 @@
 			$('div#linked-or-usernames-options').hide(200);
     }
   }
-	<{/if}>
-
-  <{if $content.type eq "select"}>
 
   function disableForAutocomplete(){
     $("input[name=elements-ele_value[16]]:eq(1)").attr("disabled","disabled");

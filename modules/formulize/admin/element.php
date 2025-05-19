@@ -314,39 +314,27 @@ if ($ele_type=='textarea') {
 		}
     $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
     $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
-    $caughtfirst = false;
 		$validForms = array();
     foreach($validForms1 as $vf1) {
         $validForms[$vf1['fl_form1_id']] = $vf1['desc_form'];
-        if (!$caughtfirst) {
-            $firstform = $vf1['fl_form1_id'];
-            $caughtfirst = true;
-        }
     }
     foreach($validForms2 as $vf2) {
         if (!isset($validForms[$vf2['fl_form2_id']])) {
             $validForms[$vf2['fl_form2_id']] = $vf2['desc_form'];
-            if (!$caughtfirst) {
-                $firstform = $vf2['fl_form2_id'];
-                $caughtfirst = true;
-            }
         }
     }
     $allForms['new'] = _AM_ELE_SUBFORM_NEW;
 		$options['allforms'] = $allForms;
-    $options['subforms'] = $validForms;
-    if ($caughtfirst) {
-        $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
-        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
-        $options['subformUserFilterElements'][0] = _formulize_NONE;
-        foreach($elementsq as $oneele) {
-            $options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-            $options['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-        }
-    } else {
-        $options['subformelements'][0] = "";
-        $options['subformUserFilterElements'][0] = "";
-    }
+    $options['validForms'] = $validForms;
+		$options['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
+		$formtouse = $ele_value[0] ? $ele_value[0] : key($allForms); // use the user's selection, unless there isn't one, then use the first form found
+		array_unshift($options['allforms'], _AM_FORMLINK_PICK);
+		$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+		$options['subformUserFilterElements'][0] = _formulize_NONE;
+		foreach($elementsq as $oneele) {
+				$options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
+				$options['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
+		}
 
     // compile a list of data-entry screens for this form
     $options['subform_screens'] = array();
@@ -355,6 +343,14 @@ if ($ele_type=='textarea') {
     foreach($screen_options as $screen_option) {
         $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
     }
+		$options['selectedSubformScreenAdminURL'] = '';
+		if($formtouse AND $subformObject = $form_handler->get($formtouse)) {
+			$bestAppId = formulize_getFirstApplicationForBothForms($formObject, $subformObject);
+			$bestAppId = $bestAppId ? $bestAppId : 0;
+			$subformScreenId = $ele_value['display_screen'];
+			$subformScreenId = $subformScreenId ? $subformScreenId : $subformObject->getVar('defaultform');
+			$options['selectedSubformScreenAdminURL'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=$bestAppId&fid=$formtouse&sid=$subformScreenId";
+		}
 
     // setup the UI for the subform conditions filter
     $options['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");

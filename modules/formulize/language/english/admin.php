@@ -391,7 +391,7 @@ define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM", "Subform (from a Relationship)");
-define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a Relationship, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all Relationships that this form is part of.");
+define("_AM_ELE_SUBFORM_DESC", "A subform interface allows users to create and modify entries in a related subform without leaving the main form.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a Relationship first");
 define("_AM_ELE_SUBFORM_NEW", "Add a new form");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Element options");

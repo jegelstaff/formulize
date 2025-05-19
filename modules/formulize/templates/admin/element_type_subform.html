@@ -2,9 +2,15 @@
     <div class="form-item">
     <fieldset>
         <legend><{$smarty.const._AM_ELE_SUBFORM_FORM}></legend>
+        <{if $content.ele_id != 'new' && $content.ele_id}>
+					<p><b><{$content.subformTitle}></b></p>
+					<input type="hidden" id="elements-ele_value[0]" name="elements-ele_value[0]" value="<{$content.ele_value[0]}>">
+				<{else}>
         <select id="element-subform" name="elements-ele_value[0]" size="1">
         <{html_options options=$content.allforms selected=$content.ele_value[0]}>
         </select>
+					<input type="hidden" id="hidden-ele_value_zero">
+				<{/if}>
         <div class="description">
             <{$smarty.const._AM_ELE_SUBFORM_DESC}>
         </div>
@@ -145,6 +151,9 @@
             <select id="element-subform-screen" name="elements-ele_value[display_screen]" size="1">
                 <{html_options options=$content.subform_screens selected=$content.ele_value.display_screen}>
             </select>
+						<{if $content.ele_id != 'new'}>
+						<p><a id="subform-screen-config-url" href="<{$content.selectedSubformScreenAdminURL}>" target="_blank">Open the Configuration page for this screen</a></p>
+						<{/if}>
             <div class="description"><{$smarty.const._AM_ELE_SUBFORM_SCREEN_HELP}></div>
         </fieldset>
     </div>
