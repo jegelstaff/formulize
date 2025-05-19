@@ -33,6 +33,7 @@ if(!isset($processedValues)) {
 }
 
 $makeSubformInterface = (isset($_POST['relationships-create-subform']) AND $_POST['relationships-create-subform']) ? true : false;
+$makeSubformScreenOnF2 = (isset($_POST['makeSubformScreenOnF2']) AND intval($_POST['makeSubformScreenOnF2'])) ? true : false;
 $del = isset($_POST['relationships-delete-0']) ? intval($_POST['relationships-delete-0']) : 0; // normally this would have a link id after the last hyphen, but when creating there is no link id yet
 $con = isset($_POST['relationships-conditional-0']) ? intval($_POST['relationships-conditional-0']) : 0;
 $book = isset($_POST['relationships-bookkeeping-0']) ? intval($_POST['relationships-bookkeeping-0']) : 0;
@@ -84,6 +85,9 @@ if($f1 AND $f2 AND $k1 AND $k2) {
 	}
 	if($makeSubformInterface) {
 		makeSubformInterface($f1, $f2, $k2);
+	}
+	if($makeSubformScreenOnF2) {
+		print findOrMakeSubformScreen($k2, $f1);
 	}
 }
 

@@ -6,13 +6,13 @@
 					<p><b><{$content.subformTitle}></b></p>
 					<input type="hidden" id="elements-ele_value[0]" name="elements-ele_value[0]" value="<{$content.ele_value[0]}>">
 				<{else}>
-        <select id="element-subform" name="elements-ele_value[0]" size="1">
-        <{html_options options=$content.allforms selected=$content.ele_value[0]}>
-        </select>
+					<select id="element-subform" name="elements-ele_value[0]" size="1">
+        		<{html_options options=$content.allforms selected=$content.ele_value[0]}>
+        	</select>
 					<input type="hidden" id="hidden-ele_value_zero">
 				<{/if}>
         <div class="description">
-            <{$smarty.const._AM_ELE_SUBFORM_DESC}>
+          <{$smarty.const._AM_ELE_SUBFORM_DESC}>
         </div>
     </fieldset>
     </div>
@@ -221,33 +221,55 @@
 
 <script type="text/javascript">
 
+	let sneakyPassBackToSubformOptionsTab = 0;
 	let validForms = []
-	<{foreach key=validForm item=formTitle from=$content.subforms}>
-	<{if $validForm != 'new'}>
-	validForms.push(<{$validForm}>)
-	<{/if}>
+	<{foreach key=validForm item=formTitle from=$content.validForms}>
+		validForms.push(<{$validForm}>)
 	<{/foreach}>
 
 	$("#element-subform").change(function() {
-		subfid = $("#element-subform").val();
+		// look in hidden field in case we just created a new form, and use that
+		subfid = $("input#hidden-ele_value_zero").val();
+		if(!subfid) {
+			subfid = $("#element-subform").val();
+		}
 		if(subfid == 'new') {
-			alert('adding new form');
+			var newFormName = prompt('What is the name for the new form?');
+			if(newFormName) {
+				createRelationshipConnections(<{$content.fid}>, [<{$content.fid}>, 'new'], newFormName);
+			}
 		} else {
 			$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_element_option_list&fid="+subfid, function(data) {
 				results = eval('('+data+')');
 				if(results) {
 					$("[name=elements_ele_value_1[]]").empty();
 					$("[name=elements_ele_value_disabledelements[]]").empty();
+					$("[name=elements-ele_value[SortingElement]]").empty();
 					for( var i in results.options) {
 						if(typeof(results.options[i]) == "object") {
-							$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
-							$("[name=elements_ele_value_disabledelements[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</value>");
+							$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
+							$("[name=elements_ele_value_disabledelements[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
+							$("[name=elements-ele_value[SortingElement]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
 						}
 					}
 				}
 			});
-			if(validForms.includes(parseInt(subfid))===false) {
-
+			$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_form_screens_for_form&fid="+subfid, function(data) {
+				results = JSON.parse(data);
+				if(results) {
+					$("select#element-subform-screen").find('option:not(:first)').remove();
+					for( var i in results.screens) {
+						if(typeof(results.screens[i]) == "object") {
+							$("select#element-subform-screen").append("<option value='"+results.screens[i].sid+"'>"+results.screens[i].title+"</option>");
+						}
+					}
+					if(sneakyPassBackToSubformOptionsTab) {
+						$("select#element-subform-screen").val(sneakyPassBackToSubformOptionsTab);
+					}
+				}
+			});
+			if(validForms.includes(parseInt(subfid))===false && parseInt(subfid) > 0) {
+				createRelationshipConnections(<{$content.fid}>, [<{$content.fid}>, subfid], 'subform-interface');
 			}
 		}
 	});

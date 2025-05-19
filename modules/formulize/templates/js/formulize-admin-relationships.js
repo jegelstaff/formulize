@@ -40,11 +40,12 @@ function editRelationshipOptions(linkId) {
 	$("#dialog-relationship-options-content").load('/modules/formulize/admin/relationship_options.php?linkId=' + linkId);
 }
 
-function createRelationshipConnections(form1Id, form2Ids=[]) {
+function createRelationshipConnections(form1Id, formIds=[], subformInterface='') {
 	$("#dialog-relationship-create-connection-content").empty();
 	$("#dialog-relationship-create-connection-content").append("<h1>Loading...</h1>");
-	let urlForm2Ids = form2Ids.length > 0 ? '&form2Ids[]=' + form2Ids.join('&form2Ids[]=') : '';
-	$("#dialog-relationship-create-connection-content").load('/modules/formulize/admin/relationship_create_connection.php?form1Id=' + form1Id + urlForm2Ids, function() {
+	let urlFormIds = formIds.length > 0 ? '&formIds[]=' + formIds.join('&formIds[]=') : '';
+	let si = subformInterface ? encodeURIComponent(subformInterface) : 0;
+	$("#dialog-relationship-create-connection-content").load('/modules/formulize/admin/relationship_create_connection.php?subformInterface='+si+'&form1Id=' + form1Id + urlFormIds, function() {
 		if($("#dialog-relationship-create-connection-content").html()) {
 			$("#dialog-relationship-create-connection").dialog('open');
 		}

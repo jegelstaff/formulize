@@ -12,12 +12,22 @@
 	<form name="relationship-create-connection-popupform">
 		<input type="hidden" name="formulize_admin_handler" value="relationship_create_connection">
 		<input type="hidden" name="formulize_admin_key" value="0">
-		<input type="hidden" name="rel" value="0">
-		<input type="hidden" name="cv" value="0">
-		<input type="hidden" name="f1" value="0">
-		<input type="hidden" name="f2" value="0">
-		<input type="hidden" name="k1" value="0">
-		<input type="hidden" name="k2" value="0">
+		<{if $content.creatingFromSubformOptions}>
+			<input type="hidden" name="rel" value="2">
+			<input type="hidden" name="cv" value="0">
+			<input type="hidden" name="f1" value="<{$content.form1Id}>">
+			<input type="hidden" name="f2" value="<{$content.form2Id}>">
+			<input type="hidden" name="k1" value="0">
+			<input type="hidden" name="k2" value="0">
+			<input type="hidden" name="makeSubformScreenOnF2" value="1">
+		<{else}>
+			<input type="hidden" name="rel" value="0">
+			<input type="hidden" name="cv" value="0">
+			<input type="hidden" name="f1" value="0">
+			<input type="hidden" name="f2" value="0">
+			<input type="hidden" name="k1" value="0">
+			<input type="hidden" name="k2" value="0">
+		<{/if}>
 		<div style="clear: both"></div>
 
 		<{if $content.forms}>
@@ -27,6 +37,7 @@
 		<{/if}>
 
 		<div id="relationship-create-connection-options">
+		<{$content.creatingFromSubformOptions}>
 		</div>
 		<div id="relationship-create-connection-popupsavebutton"><input type="button" class="relationship-create-connection-savebuttonpopup" id="relationship-create-connection-savebuttonpopup" value="Create Connection"/></div>
 	</form>
@@ -55,17 +66,48 @@ $( document ).ready(function() {
 					if(data.substr(0,10)=="/* eval */") {
 						eval(data);
 					} else {
-						$('#dialog-relationship-create-connection').fadeTo(1, 1);
-						$("#relationship-create-connection-options").html(data);
+						// echo anything we got back to the user, unless we're creating subforms and then the data is the ID of the new subform screen
+						// then we just close the popup and do some bookkeeping
+						<{if $content.creatingFromSubformOptions}>
+							if(parseInt(data)>0) {
+								// set this value as the selected subform screen
+								closeAndUpdateSubformInterfaceUI(data);
+							} else {
+								$('#dialog-relationship-create-connection').fadeTo(1, 1);
+								$("#relationship-create-connection-options").html(data);
+							}
+						<{else}>
+							$('#dialog-relationship-create-connection').fadeTo(1, 1);
+							$("#relationship-create-connection-options").html(data);
+						<{/if}>
 					}
 				} else {
 					// upon successful saving we need to reload the page, to respawn the page so the connection info in the panels is up to date
-					reloadWithScrollPosition();
+					// unless we're finishing from a subform, and then we need to refresh things, but no reload
+					<{if $content.creatingFromSubformOptions}>
+						closeAndUpdateSubformInterfaceUI();
+					<{else}>
+						reloadWithScrollPosition();
+					<{/if}>
 				}
 			});
 		});
     $(".relationship-create-connection-savebuttonpopup").blur();
   });
+
+	function closeAndUpdateSubformInterfaceUI(newSubformScreen=0) {
+		$("#dialog-relationship-create-connection").dialog("close");
+		$("input#hidden-ele_value_zero").attr('name', 'elements-ele_value[0]');
+		if($("select#element-subform").val()=='new') {
+			$("select#element-subform").append('<option value='+parseInt(<{$content.form2Id}>)+'><{$content.form2Title}></option>');
+			$("select#element-subform").val(parseInt(<{$content.form2Id}>));
+		}
+		$("input#hidden-ele_value_zero").val($("select#element-subform").val());
+		validForms.push(parseInt($("select#element-subform").val()));
+		$("#element-subform").change();
+		$("select#element-subform").attr('disabled', 'disabled');
+		sneakyPassBackToSubformOptionsTab = newSubformScreen;
+	}
 
 	function enableCreateConnectionButton() {
 		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'visible';
@@ -73,17 +115,24 @@ $( document ).ready(function() {
 	}
 
 	function showRelationshipCreationOptions(form1, form2, pi=0) {
-		let rel = $('input[name=relationship]:checked').val();
+		let rel = 0;
+		if($('input[name=relationship]:checked').length) {
+			rel = $('input[name=relationship]:checked').val();
+		} else {
+			rel = 2;
+		}
 		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi, function(data) {
 				if(data) {
-					$('input[name=rel]').val(rel);
-					$('input[name=f1]').val($('input[name=form1]').val());
-					$('input[name=relationship]').attr('disabled', true);
-					<{if $content.forms}>
-						$('input[name=f2]').val($('input[name=form2]').val());
-					<{else}>
-						$('input[name=f2]').val($('select[name=form2]').val());
-						$('select[name=form2]').attr('disabled', true);
+					<{if $content.creatingFromSubformOptions == ''}>
+						$('input[name=rel]').val(rel);
+						$('input[name=f1]').val($('input[name=form1]').val());
+						$('input[name=relationship]').attr('disabled', true);
+						<{if $content.forms}>
+							$('input[name=f2]').val($('input[name=form2]').val());
+						<{else}>
+							$('input[name=f2]').val($('select[name=form2]').val());
+							$('select[name=form2]').attr('disabled', true);
+						<{/if}>
 					<{/if}>
 					$('div#relationship-create-connection-options').html(data);
 				}

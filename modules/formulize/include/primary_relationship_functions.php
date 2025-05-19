@@ -520,13 +520,14 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
  * Find a "subform screen" on the element's form, for displaying entries in subform interfaces
  * Or make one if none found. Do not include the specified element in the new screen, since that would be redundant, as it's the linking element
  * @param int|string|object elementIdentifier - an element id, handle or object, of the linking element in the subform that connects it to the mainform
- * @param object mainFormObject - the form object of the main form that is used in this subform context
+ * @param int|object mainForm - the form id or object of the main form that is used in this subform context
  * @return int|boolean Returns the screen id of the screen that was found or made, or false on failure
  */
-function findOrMakeSubformScreen($elementIdentifier, $mainFormObject) {
+function findOrMakeSubformScreen($elementIdentifier, $mainForm) {
 	$subformScreenFound = false;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	if($element = _getElementObject($elementIdentifier)) {
+	$mainFormObject = is_int($mainForm) ? $form_handler->get($mainForm) : $mainForm;
+	if(is_a($mainFormObject, 'formulizeForm') AND $element = _getElementObject($elementIdentifier)) {
 		if($form = $form_handler->get($element->getVar('fid'))) {
 			$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 			$criteria = new Criteria('type','multiPage');
@@ -638,6 +639,91 @@ function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedTo
 					print "Error: could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.";
 					$result = false;
 				}
+			}
+		}
+	}
+	return $result;
+}
+
+/**
+ * Create a new form with the given name, including setting up default screens, etc, as if the user created it normally themselves
+ * @param string name - The name to use for the form
+ * @param int|string|object - activeFormIndentifier - the id, handle or object of the form that was active when this creation event was triggered
+ * @return int|boolean Returns the new form id, or false if creation failed
+ */
+function createNewFormWithName($name, $activeFormIndentifer) {
+	$result = false;
+	if($name AND $activeForm = _getElementObject($activeFormIndentifer)) {
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->create();
+		$handle = formulizeForm::sanitize_handle_name($name);
+		if (strlen($handle)) {
+    	$uniqueCheckCounter = 0;
+			while (!$uniqueCheck = $form_handler->isFormHandleUnique($handle, "")) {
+        $handle = str_replace('_'.$uniqueCheckCounter,'',$handle);
+        $uniqueCheckCounter++;
+        $handle = $handle . "_".$uniqueCheckCounter;
+			}
+    }
+		if(strlen($handle)) {
+			$formObject->setVar('form_handle', $handle);
+			$formObject->setVar('title', $name);
+			$formObject->setVar('single', '');
+			if($fid = $form_handler->insert($formObject, force: true)) {
+
+				$formObject->setVar('id_form', $fid);
+				$formObject->setVar('fid', $fid);
+ 				$form_handler->createDataTable($fid);
+
+				// setup default screens...
+				$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+  			$defaultFormScreen = $multiPageScreenHandler->create();
+  			$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
+  			if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen, force: true)) {
+    			print "Error: could not create default form screen: ".$xoopsDB->error();
+  			}
+  			$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+    		$screen = $listScreenHandler->create();
+    		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
+  			if(!$defaultListScreenId = $listScreenHandler->insert($screen, force: true)) {
+    			print "Error: could not create default list screen: ".$xoopsDB->error();
+  			}
+				if($defaultFormScreenId AND $defaultListScreenId) {
+					$formObject->setVar('defaultform', $defaultFormScreenId);
+					$formObject->setVar('defaultlist', $defaultListScreenId);
+					if(!$form_handler->insert($formObject, force: true)) {
+						print "Error: could not update form with default screens: ".$xoopsDB->error();
+					}
+				}
+
+				// assign this form as required to the active form's applications (the form which gave rise to this once)
+				$application_handler = xoops_getmodulehandler('applications', 'formulize');
+				$apps = $application_handler->getApplicationsByForm($activeForm->getVar('fid'));
+
+				$selectedAppIds = array();
+				foreach($apps as $thisAppObject) {
+					$selectedAppIds[] = $thisAppObject->getVar('appid');
+					$thisAppForms = $thisAppObject->getVar('forms');
+					$thisAppForms[] = $fid;
+					$thisAppObject->setVar('forms', serialize($thisAppForms));
+					if(!$application_handler->insert($thisAppObject, force: true)) {
+						print "Error: could not add the form to one of the applications properly: ".$xoopsDB->error();
+					}
+				}
+
+				// setup the menu links
+				$selectedAdminGroupIdsForMenu = array(XOOPS_GROUP_ADMIN);
+				$menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
+				if(!empty($selectedAppIds)) {
+					foreach($selectedAppIds as $appid) {
+						$application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems, force: true);
+					}
+				} else {
+					$application_handler->insertMenuLink(0, $menuitems, force: true);
+				}
+
+				$result = $fid;
 			}
 		}
 	}

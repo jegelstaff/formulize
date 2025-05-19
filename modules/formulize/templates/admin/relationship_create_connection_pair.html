@@ -1,13 +1,23 @@
 <div id="create-connection-title-options"><span class="title">Each <{$content.formSingular}></span>
-	<div><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1' checked="checked">Has One</label><br>
-	<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label></div>
+	<div>
+		<{if $content.creatingFromSubformOptions}>
+			Has Many
+		<{else}>
+			<label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1' checked="checked">Has One</label><br>
+			<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label>
+		<{/if}>
+	</div>
 	<input type="hidden" name="form1" value="<{$content.form1Id}>">
-	<select name='form2' id='1names'>
-		<{html_options options=$content.oneFormNames}>
-	</select>
-	<select name='form2x' id='2names' style="display: none;">
-		<{html_options options=$content.manyFormNames}>
-	</select>
+	<{if $content.creatingFromSubformOptions}>
+		<span class="title"><{$content.form2Plural}></span>
+	<{else}>
+		<select name='form2' id='1names'>
+			<{html_options options=$content.oneFormNames}>
+		</select>
+		<select name='form2x' id='2names' style="display: none;">
+			<{html_options options=$content.manyFormNames}>
+		</select>
+	<{/if}>
 </div>
 
 <br>
@@ -19,6 +29,11 @@
 	$( document ).ready(function() {
 		show2Names();
 	});
+
+	<{if $content.creatingFromSubformOptions}>
+	form1Id = <{$content.form1Id}>;
+	form2Id = <{$content.form2Id}>;
+	<{/if}>
 
 	$('input[name=relationship]').change(function() {
 		$('#form2').empty();

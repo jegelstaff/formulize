@@ -30,7 +30,7 @@
 require_once "../../../mainfile.php";
 icms::$logger->disableLogger();
 while(ob_get_level()) {
-    ob_end_clean();
+		ob_end_clean();
 }
 
 require_once "checkThatUserIsAFormulizeModuleAdminAndSystemIsNotSaveLocked.php";
@@ -39,6 +39,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 include_once XOOPS_ROOT_PATH.'/header.php';
 global $xoopsTpl;
 
+$calledFromSubformInterface = isset($calledFromSubformInterface) ? $calledFromSubformInterface : false;
 $form1Id = intval($_GET['form1']);
 $form2Id = intval($_GET['form2']);
 $rel = intval($_GET['rel']);
@@ -48,6 +49,16 @@ $element_handler = xoops_getmodulehandler('elements', 'formulize');
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 list($form1Object, $form1PI) = confirmPIAndReturnFormObject($form1Id, $submittedPI); // will prompt user for PI if necessary
 list($form2Object, $form2PI) = confirmPIAndReturnFormObject($form2Id, $submittedPI); // will prompt user for PI if necessary
+
+// if we have markup to send to the user now, either set it and return to the calling file (if a subform creation scenario is underway)
+// or send it to client and exit
+$optionsMarkup = !is_numeric($form1PI) ? $form1PI : (!is_numeric($form2PI) ? $form2PI : '');
+if($optionsMarkup AND $calledFromSubformInterface) {
+	return;
+} elseif($optionsMarkup) {
+	print $optionsMarkup;
+	exit();
+}
 
 if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
 
@@ -152,6 +163,7 @@ if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
 	$content = array(
 		'linkId'=>0,
 		'type'=>$rel,
+		'allowSubformInterfaceCreation'=>($rel != 1 AND !$calledFromSubformInterface ? true : false),
 		'form1Title'=>trans($form1Object->getVar('title')),
 		'form2Title'=>trans($form2Object->getVar('title')),
 		'pairs'=>$pairs,
@@ -161,7 +173,12 @@ if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
 		)
 	);
 	$xoopsTpl->assign('content', $content);
-	$xoopsTpl->display("db:admin/relationship_create_connection_options.html");
+	if($calledFromSubformInterface) {
+		$optionsMarkup = $xoopsTpl->fetch("db:admin/relationship_create_connection_options.html");
+	} else {
+		$xoopsTpl->display("db:admin/relationship_create_connection_options.html");
+	}
+
 }
 
 /**
@@ -251,7 +268,7 @@ function getLinkedElementsAndSource($elementIdsArray) {
  * Gather element options from a form object for the PI, put into template and exit so user can choose
  * Alternatively, if there are no elements in the form, make a textbox called Name and use that as the PI
  * @param object formObject - The form object we're dealing with to set the PI
- * @return mixed Either returns nothing because PHP has exited by the end if we need to prompt, or returns the element ID of the newly created element
+ * @return mixed Either returns a string of markup that needs to be passed to the page, or returns the element ID of the newly created element, or false if element creation failed.
  */
 function promptForPIAndExit($formObject) {
 	global $xoopsTpl;
@@ -269,8 +286,8 @@ function promptForPIAndExit($formObject) {
 		$content['defaultpi'] = 0;
 		$content['pioptions'] = $pioptions;
 		$xoopsTpl->assign('content', $content);
-		$xoopsTpl->display("db:admin/primary_identifier_selection.html");
-		exit(); // nothing further to do at this moment
+		return $xoopsTpl->fetch("db:admin/primary_identifier_selection.html");
+
 
 	// No elements, so make a Name textbox and use that
 	} else {
@@ -332,11 +349,10 @@ function promptForPIAndExit($formObject) {
 
 /**
  * Make sure a form has a PI, and if not, prompt the user for one. Otherwise, return the form object and the PI
- * May cause an early exit if we need to prompt for the PI
  * Called in order, first for form 1, second for form 2, which is important
  * @param int formId - the id number of the form we're concerned with
  * @param int submittedId - the ID number of an element that was submitted to us as the PI for the form. Passed by reference and cleared to zero if saved successfully.
- * @return array Returns an array of form object and PI. Returns false, false if form id was invalid.
+ * @return array Returns an array of form object and PI. Returns false, false if form id was invalid. If the form needs a PI, then it returns a string of markup for prompting the user for the PI
  */
 function confirmPIAndReturnFormObject($formId, &$submittedPI) {
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');

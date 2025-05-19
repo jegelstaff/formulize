@@ -76,12 +76,27 @@ if($op != "check_for_unique_value"
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
    AND $op != 'get_views_for_form'
+	 AND $op != 'get_form_screens_for_form'
   ) {
   exit();
 }
 
 // unpack params based on op, and do whatever we're supposed to do
 switch($op) {
+
+	case 'get_form_screens_for_form':
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$criteria_object = new Criteria('type','multiPage');
+		$multiPageFormScreens = $screen_handler->getObjects($criteria_object,intval($_GET['fid']));
+		$screens = array();
+		foreach($multiPageFormScreens as $screen) {
+			$screens[] = '{ "sid" : '.$screen->getVar('sid').', "title" : "'.$screen->getVar('title').'"}';
+		}
+		$screens = '{ "screens" : ['.implode(",",$screens).']}';
+		print $screens;
+		break;
+
   case 'check_for_unique_value':
     $value = $_GET['param1'];
     $element = $_GET['param2'];
