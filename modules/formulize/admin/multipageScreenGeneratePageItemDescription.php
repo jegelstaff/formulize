@@ -34,7 +34,7 @@
 
 // end point for async update when altering the contents of a multipage screen's page
 
-include "../../../mainfile.php";
+require_once "../../../mainfile.php";
 icms::$logger->disableLogger();
 while(ob_get_level()) {
     ob_end_clean();

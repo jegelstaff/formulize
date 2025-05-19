@@ -479,7 +479,7 @@ class formulizeApplicationsHandler {
 
 
     //modified Oct 2013 W.R.
-    function insertMenuLink($appid,$menuitem){
+    function insertMenuLink($appid,$menuitem, $force=false){
 
         global $xoopsDB;
 
@@ -495,7 +495,12 @@ class formulizeApplicationsHandler {
         $linkValues = explode("::",$menuitem);
 //	error_log("link values ".print_r($linkValues));
         $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
-		if(!$result = $xoopsDB->query($insertsql)) {
+				if($force) {
+					$result = $xoopsDB->queryF($insertsql);
+				} else {
+					$result = $xoopsDB->query($insertsql);
+				}
+		if(!$result) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 		}else{
 
@@ -512,7 +517,12 @@ class formulizeApplicationsHandler {
 						$defaultScreen = 1;
 					}
 					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.", ".$defaultScreen.")";
-					if(!$result = $xoopsDB->query($permissionsql)) {
+					if($force) {
+						$result = $xoopsDB->queryF($permissionsql);
+					} else {
+						$result = $xoopsDB->query($permissionsql);
+					}
+					if(!$result) {
 						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
                     $defaultScreen = 0;

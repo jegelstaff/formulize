@@ -615,7 +615,7 @@ function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedTo
 				}
 			}
 			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-			$insertResult = $screen_handler->insert($screenObject);
+			$insertResult = $screen_handler->insert($screenObject, force: true);
 			if($insertResult == false) {
 				print "Error: could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.";
 				$result = false;
@@ -633,7 +633,7 @@ function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedTo
 				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
 				$screenObject->setVar('pagetitles', serialize($pagetitles));
 				$screenObject->setVar('conditions', serialize($conditions));
-				$insertResult = $screen_handler->insert($screenObject);
+				$insertResult = $screen_handler->insert($screenObject, force: true);
 				if($insertResult == false) {
 					print "Error: could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.";
 					$result = false;
