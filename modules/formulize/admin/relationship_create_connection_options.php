@@ -327,10 +327,10 @@ function promptForPIAndExit($formObject) {
 		$element->setVar('ele_value', $ele_value); // does not need to be serialized, because element handler insert method applies cleanVars to everything, which will serialize it for us, and we don't want double serialization!
 		$element->setVar('ele_type', 'text');
 		$fieldDataType = 'text';
-		if($elementId = $element_handler->insert($element)) { // false on failure, element id on success
+		if($elementId = $element_handler->insert($element, force: true)) { // false on failure, element id on success
 			if($form_handler->insertElementField($element, $fieldDataType)) {
 				$formObject->setVar('pi', $elementId);
-				if($form_handler->insert($formObject)) {
+				if($form_handler->insert($formObject, force: true)) {
 					if(addElementToMultipageScreens($formObject->getVar('fid'), $elementId) == false) {
 						print "Error: could add Name element to one or more screens on form ".$formObject->getVar('fid').". Please contact info@formulize.org for assistance.";
 					}
