@@ -83,10 +83,10 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_id';
-    $checkThisField = 'pi';
-    $checkThisProperty = '';
-    $checkPropertyForValue = '';
+    $checkThisTable = 'formulize_saved_views';
+    $checkThisField = 'sv_formframe';
+    $checkThisProperty = 'Type';
+    $checkPropertyForValue = 'int(5)';
 
     /*
     * ====================================== */
@@ -489,6 +489,8 @@ function patch40() {
         $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
         $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
 				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
+				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
+				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
 
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
