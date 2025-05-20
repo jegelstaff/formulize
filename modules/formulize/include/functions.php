@@ -591,147 +591,176 @@ function cutString($string, $maxlen) {
 
 
 // this function returns the headerlist for a form and gracefully degrades to other inputs if the headerlist itself is not specified.
+// Step 1: primary relationship is set in URL and there's a PI, then use the PI
+// Step 2: if nothing so far, use the defined headerlist for the form (in its admin settings)
+// Step 3: if nothing so far, use the PI
+// Step 4: if nothing so far, use the first three required fields
+// Step 5: if nothing so far, use the first three fields
 // need ids flag will cause the returned array to be IDs instead of header text
 // convertIdsToElementHandles flag will have effect if ids have been returned, and will do one query to get all the element handles that patch the ids selected
 // we do not filter the headerlist for private elements, because the columns in entriesdisplay are filtered for private columns (and display columns) after being gathered.
 function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false) {
     global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if(!$formObject = $form_handler->get($fid)) {
+			return array(); // invalid form
+		}
 
     $headerlist = array();
+		$piText = "";
+		if($pi = $formObject->getVar('pi')) {
+			if($piElementObject = $element_handler->get($pi)) {
+				$piText = $piElementObject->getVar('ele_colhead') ? trans($piElementObject->getVar('ele_colhead')) : trans($piElementObject->getVar('ele_caption'));
+			}
+		}
+		// when the primary relationship is active in the URL, just go with PI, if set
+		if(isset($_GET['frid']) AND intval($_GET['frid']) == -1 AND $pi) {
+			$headerlist[] = $needids ? $pi : $piText;
+		} else {
 
-    $hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid'";
-    if ($result = $xoopsDB->query($hlq)) {
-        while ($row = $xoopsDB->fetchRow($result)) {
-            // check to see if there is actually any real data specified in this string, make sure it's not all separators.
-            if ($somethingLeft = str_replace("*=+*:", "", $row[0])) {
-                $headerlist = explode("*=+*:", $row[0]);
-                array_shift($headerlist);
-            }
-        }
+			$hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid'";
+			if ($result = $xoopsDB->query($hlq)) {
+					while ($row = $xoopsDB->fetchRow($result)) {
+							// check to see if there is actually any real data specified in this string, make sure it's not all separators.
+							if ($somethingLeft = str_replace("*=+*:", "", $row[0])) {
+									$headerlist = explode("*=+*:", $row[0]);
+									array_shift($headerlist);
+							}
+					}
 
-        // if the headerlist is using the new ID based system
-        if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
-            // if we want actual text headers, convert ids to text
-            if (!$needids) {
-                $start = 1;
-                $metaHeaderlist = array();
-								$where_clause = '';
-                foreach ($headerlist as $headerid=>$thisheaderid) {
-                    if ($thisheaderid == "entry_id") {
-                        $metaHeaderlist[] = _formulize_ENTRY_ID;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "creator_email") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-										if ($thisheaderid == "owner_groups") {
-											$metaHeaderlist[] = _formulize_DE_CALC_OWNERGROUPS;
-											unset($headerlist[$headerid]);
-											continue;
+					// if the headerlist is using the new ID based system
+					if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
+							// if we want actual text headers, convert ids to text
+							if (!$needids) {
+									$start = 1;
+									$metaHeaderlist = array();
+									$where_clause = '';
+									foreach ($headerlist as $headerid=>$thisheaderid) {
+											if ($thisheaderid == "entry_id") {
+													$metaHeaderlist[] = _formulize_ENTRY_ID;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
+													$metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
+													$metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
+													$metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
+													$metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "creator_email") {
+													$metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "owner_groups") {
+												$metaHeaderlist[] = _formulize_DE_CALC_OWNERGROUPS;
+												unset($headerlist[$headerid]);
+												continue;
+											}
+											if ($start) {
+													$where_clause = "ele_id='$thisheaderid'";
+													$start = 0;
+											} else {
+													$where_clause .= " OR ele_id='$thisheaderid'";
+											}
+									}
+									if ($where_clause) {
+											$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
+											if ($rescaptionq = $xoopsDB->query($captionq)) {
+													unset($headerlist);
+													$headerlist = $metaHeaderlist;
+													while ($row = $xoopsDB->fetchArray($rescaptionq)) {
+															if ($row['ele_colhead'] != "") {
+																	$headerlist[] = $row['ele_colhead'];
+															} else {
+																	$headerlist[] = $row['ele_caption'];
+															}
+													}
+											} else {
+													exit("Error returning the default list of captions.");
+											}
+									}
+							} else { // if getting ids, need to convert old metadata values to new ones
+									foreach ($headerlist as $headerListIndex=>$thisheaderid) {
+											if ($thisheaderid == "uid") {
+													$headerlist[$headerListIndex] = "creation_uid";
+											} elseif ($thisheaderid == "proxyid") {
+													$headerlist[$headerListIndex] = "mod_uid";
+											} elseif ($thisheaderid == "creation_date") {
+													$headerlist[$headerListIndex] = "creation_datetime";
+											} elseif ($thisheaderid == "mod_date") {
+													$headerlist[$headerListIndex] = $thisheaderid == "mod_datetime";
+											}
+									}
+							}
+					} else { // not using new ID based system, so convert to ids if needids is true
+							if ($needids) {
+									$tempheaderlist = $headerlist;
+									unset($headerlist);
+									$headerlist = convertHeadersToIds($tempheaderlist, $fid);
+							}
+					}
+			}
+
+			if (count((array) $headerlist)==0) { // if no header fields specified, then
+
+					// just go with the PI if there is one
+
+					if($pi) {
+						$headerlist[] = $needids ? $pi : $piText;
+
+					// gather required fields for this form
+					} else {
+						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+						if ($result = $xoopsDB->query($reqfq)) {
+								while ($row = $xoopsDB->fetchArray($result)) {
+										if ($needids) {
+												$headerlist[] = $row['ele_id'];
+										} else {
+												if ($row['ele_colhead'] != "") {
+														$headerlist[] = $row['ele_colhead'];
+												} else {
+														$headerlist[] = $row['ele_caption'];
+												}
 										}
-                    if ($start) {
-                        $where_clause = "ele_id='$thisheaderid'";
-                        $start = 0;
-                    } else {
-                        $where_clause .= " OR ele_id='$thisheaderid'";
-                    }
-                }
-                if ($where_clause) {
-                    $captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
-                    if ($rescaptionq = $xoopsDB->query($captionq)) {
-                        unset($headerlist);
-                        $headerlist = $metaHeaderlist;
-                        while ($row = $xoopsDB->fetchArray($rescaptionq)) {
-                            if ($row['ele_colhead'] != "") {
-                                $headerlist[] = $row['ele_colhead'];
-                            } else {
-                                $headerlist[] = $row['ele_caption'];
-                            }
-                        }
-                    } else {
-                        exit("Error returning the default list of captions.");
-                    }
-                }
-            } else { // if getting ids, need to convert old metadata values to new ones
-                foreach ($headerlist as $headerListIndex=>$thisheaderid) {
-                    if ($thisheaderid == "uid") {
-                        $headerlist[$headerListIndex] = "creation_uid";
-                    } elseif ($thisheaderid == "proxyid") {
-                        $headerlist[$headerListIndex] = "mod_uid";
-                    } elseif ($thisheaderid == "creation_date") {
-                        $headerlist[$headerListIndex] = "creation_datetime";
-                    } elseif ($thisheaderid == "mod_date") {
-                        $headerlist[$headerListIndex] = $thisheaderid == "mod_datetime";
-                    }
-                }
-            }
-        } else { // not using new ID based system, so convert to ids if needids is true
-            if ($needids) {
-                $tempheaderlist = $headerlist;
-                unset($headerlist);
-                $headerlist = convertHeadersToIds($tempheaderlist, $fid);
-            }
-        }
-    }
+								}
+						}
+					}
+			}
 
-    if (count((array) $headerlist)==0) { // if no header fields specified, then
-        // gather required fields for this form
-        $reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
-        if ($result = $xoopsDB->query($reqfq)) {
-            while ($row = $xoopsDB->fetchArray($result)) {
-                if ($needids) {
-                    $headerlist[] = $row['ele_id'];
-                } else {
-                    if ($row['ele_colhead'] != "") {
-                        $headerlist[] = $row['ele_colhead'];
-                    } else {
-                        $headerlist[] = $row['ele_caption'];
-                    }
-                }
-            }
-        }
-    }
-
-    if (count((array) $headerlist) == 0) {
-        // IF there are no required fields THEN ... go with first three fields
-        $firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
-        if ($result = $xoopsDB->query($firstfq)) {
-            while ($row = $xoopsDB->fetchArray($result)) {
-                if ($needids) {
-                    $headerlist[] = $row['ele_id'];
-                } else {
-                    if ($row['ele_colhead'] != "") {
-                        $headerlist[] = $row['ele_colhead'];
-                    } else {
-                        $headerlist[] = $row['ele_caption'];
-                    }
-                }
-            }
-        }
-    }
+			if (count((array) $headerlist) == 0) {
+					// IF there is no pi and no required fields THEN ... go with first three fields
+					$firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+					if ($result = $xoopsDB->query($firstfq)) {
+							while ($row = $xoopsDB->fetchArray($result)) {
+									if ($needids) {
+											$headerlist[] = $row['ele_id'];
+									} else {
+											if ($row['ele_colhead'] != "") {
+													$headerlist[] = $row['ele_colhead'];
+											} else {
+													$headerlist[] = $row['ele_caption'];
+											}
+									}
+							}
+					}
+			}
+		}
     if ($needids AND $convertIdsToElementHandles) {
         $savedMetaHeaders = array();
         foreach ($headerlist as $thisheaderkey=>$thisheaderid) {
@@ -3797,7 +3826,7 @@ function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
 									$prevFid = $fid;
 								}
 							}
-            }
+						}
         }
     }
     return $headers;
