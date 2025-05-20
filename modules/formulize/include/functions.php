@@ -3744,10 +3744,22 @@ function formulize_getLock($fileResource) {
 }
 
 
-// this function takes a series of columns and gets the headers for them
-function getHeaders($cols, $colsIsElementHandles = true) {
+/**
+ * Takes a series of columns and gets the headers for them
+ * @param array cols - An array of element ids or element handles
+ * @param boolean colsIsElementHandles - a flag indicating if the cols array is using ids or handles
+ * @param int frid - Optional. The form relationship id in effect, if any. Causes headers to get the form title prefixed to them, on the first column from that form.
+ * @return array Returns an array of the headers, corresponding to the order of the cols that were passed in.
+ */
+
+function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
     global $xoopsDB;
 
+		$fid = 0;
+		$prevFid = 0;
+		$headers = array();
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
     foreach ($cols as $col) {
         if($col == "entry_id") {
             $headers[$col] = _formulize_ENTRY_ID;
@@ -3769,11 +3781,22 @@ function getHeaders($cols, $colsIsElementHandles = true) {
             } else {
                 $whereClause = "ele_id = '$col'";
             }
-            $temp_cap = q("SELECT ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause");
+						$queryForEleId = ($colsIsElementHandles AND $frid) ? "ele_id, " : "";
+            $temp_cap = q("SELECT $queryForEleId ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause");
             if ($temp_cap[0]['ele_colhead'] != "") {
                 $headers[$temp_cap[0]['ele_handle']] = $temp_cap[0]['ele_colhead'];
             } else {
                 $headers[$temp_cap[0]['ele_handle']] = $temp_cap[0]['ele_caption'];
+            }
+						if($frid) {
+							$ele_id = !$colsIsElementHandles ? $col : $temp_cap[0]['ele_id'];
+							if($elementObject = $element_handler->get($ele_id)) {
+								$fid = $elementObject->getVar('fid');
+								if($fid != $prevFid AND $formObject = $form_handler->get($fid)) {
+									$headers[$temp_cap[0]['ele_handle']] = $formObject->getVar('title').": ".$headers[$temp_cap[0]['ele_handle']];
+									$prevFid = $fid;
+								}
+							}
             }
         }
     }

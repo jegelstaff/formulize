@@ -1720,7 +1720,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		'scrollBoxClassOnOff' => $scrollBoxClassOnOff,
 		'headingHelpAndLockShown' => $headingHelpAndLockShown,
 		'headersShown' => $useHeadings,
-		'headers' => ($useHeadings ? getHeaders($cols) : array()),
+		'headers' => ($useHeadings ? getHeaders($cols, frid: $frid) : array()),
 		'checkBoxesShown' => ($useCheckboxes != 2 ? true : false),
 		'viewEntryLinksShown' => $useViewEntryLinks,
 		'lockedColumns' => $settings['lockedColumns'],
