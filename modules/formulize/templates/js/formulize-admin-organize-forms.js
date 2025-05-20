@@ -1,12 +1,12 @@
-let currentOrganize = 'custom';
+let currentOrganize = getCookie('currentOrganize');
+currentOrganize = currentOrganize != 'by-name' && currentOrganize != 'custom' ? 'by-name' : currentOrganize;
 let tops = [];
 let lefts = [];
 
 $(window).load(function() {
 	$('.admin-ui').show(250);
 	setupDraggableBoxes();
-	if(getCookie('currentOrganize') == 'by-name') {
-		currentOrganize = 'by-name';
+	if(currentOrganize == 'by-name') {;
 		organizeAlpha();
 	}
 
