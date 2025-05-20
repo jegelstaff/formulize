@@ -729,3 +729,32 @@ function createNewFormWithName($name, $activeFormIndentifer) {
 	}
 	return $result;
 }
+
+/**
+ * Check the primary relationship and return all forms that are directly connected to this form
+ * @param int fid - the id number of the form in question
+ * @return array Returns an array of the form ids found, if any. Array can be empty.
+ */
+function connectedFormsToThisForm($fid) {
+	global $xoopsDB;
+	$fid = intval($fid);
+	$formIds = array();
+	$sql = array(
+		"SELECT DISTINCT(fl_form1_id)
+		FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE fl_frame_id = -1
+		AND fl_form2_id = $fid
+		AND fl_form1_id != $fid",
+		"SELECT DISTINCT(fl_form2_id)
+		FROM ".$xoopsDB->prefix('formulize_framework_links')."
+		WHERE fl_frame_id = -1
+		AND fl_form1_id = $fid
+		AND fl_form2_id != $fid"
+	);
+	foreach($sql as $thisSql) {
+		if($res = $xoopsDB->query($thisSql)) {
+			$formIds = array_merge($formIds, $xoopsDB->fetchColumn($res, column: 0));
+		}
+	}
+	return $formIds;
+}

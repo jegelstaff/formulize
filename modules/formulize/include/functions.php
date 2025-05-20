@@ -289,31 +289,48 @@ function availReports($uid, $groups, $fid, $frid="0") {
     global $xoopsDB;
 
     // get new saved reports
-    if ($frid) {
+		if($frid == -1) {
+			$connectedForms = implode(",",connectedFormsToThisForm($fid));
+			$connectedForms .= $connectedForms ? ",$fid" : $fid;
+			$saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE (
+				(sv_formframe IS NOT NULL AND sv_formframe != 0 AND sv_mainform IN ($connectedForms))
+				OR ((sv_mainform IS NULL OR sv_mainform = 0) AND sv_formframe IN ($connectedForms))
+				) AND sv_owner_uid='$uid'");
+    } elseif ($frid) {
         $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_owner_uid='$uid'");
     } else {
         $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_owner_uid='$uid'");
     }
 
     // get new published reports
-    if ($frid) {
+		if($frid == -1) {
+			$published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE (
+				(sv_formframe IS NOT NULL AND sv_formframe != 0 AND sv_mainform IN ($connectedForms))
+				OR ((sv_mainform IS NULL OR sv_mainform = 0) AND sv_formframe IN ($connectedForms))
+				) AND sv_pubgroups != \"\"");
+    } elseif ($frid) {
         $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_pubgroups != \"\"");
     } else {
         $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_pubgroups != \"\"");
     }
 
     // cull published reports to ones that are published to a group that the user belongs to
-    $indexer = 0;
-    $available_published_reports = array();
-    for ($i = 0; $i < count((array) $published_reports); $i++) {
-        $report_groups = explode(",", $published_reports[$i]['sv_pubgroups']);
-        if (array_intersect($groups, $report_groups)) {
-            $available_published_reports[$indexer]['sv_id']   = $published_reports[$i]['sv_id'];
-            $available_published_reports[$indexer]['sv_name'] = $published_reports[$i]['sv_name'];
-            $available_published_reports[$indexer]['sv_uid']  = $published_reports[$i]['sv_owner_uid'];
-            $indexer++;
-        }
-    }
+		// except for webmasters, who can see everything
+		if(!in_array(XOOPS_GROUP_ADMIN, $groups)) {
+			$indexer = 0;
+			$available_published_reports = array();
+			for ($i = 0; $i < count((array) $published_reports); $i++) {
+				$report_groups = explode(",", $published_reports[$i]['sv_pubgroups']);
+				if (array_intersect($groups, $report_groups)) {
+						$available_published_reports[$indexer]['sv_id']   = $published_reports[$i]['sv_id'];
+						$available_published_reports[$indexer]['sv_name'] = $published_reports[$i]['sv_name'];
+						$available_published_reports[$indexer]['sv_uid']  = $published_reports[$i]['sv_owner_uid'];
+						$indexer++;
+				}
+			}
+		} else {
+			$available_published_reports = $published_reports;
+		}
 
     // parse out details from arrays for passing back
     $sortnames = array();
