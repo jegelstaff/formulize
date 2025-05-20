@@ -129,7 +129,7 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	public function fetchBoth($result) {
 		return $result ? $result->fetch( PDO::FETCH_BOTH ) : false;
 	}
-	public function fetchAll($result, $column) { // return array of all the values in this column (referenced by position in result, 0-based index)
+	public function fetchColumn($result, $column) { // return array of all the values in this column (referenced by position in result, 0-based index)
 		return $result ? $result->fetchAll( PDO::FETCH_COLUMN, intval($column) ) : false;
 	}
 	public function getRowsNum($result) {

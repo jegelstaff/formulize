@@ -818,7 +818,7 @@ function getElementsInRelationshipLinks($elementIdentifiers = array()) {
 	foreach(array("fl_key1", "fl_key2") as $field) {
 		$sql = str_replace("fl_key", $field, "SELECT fl_key FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE $whereClause");
 		$res = $xoopsDB->query($sql);
-		$elementsInRelationshipLinks = array_merge($elementsInRelationshipLinks, (array)$xoopsDB->fetchAll($res, column: 0));
+		$elementsInRelationshipLinks = array_merge($elementsInRelationshipLinks, (array)$xoopsDB->fetchColumn($res, column: 0));
 	}
 	return $elementsInRelationshipLinks;
 }

@@ -161,7 +161,7 @@ function elementExists($elementId) {
 		global $xoopsDB;
 		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix('formulize');
 		$res = $xoopsDB->query($sql);
-		$existingElements = $xoopsDB->fetchAll($res, column: 0);
+		$existingElements = $xoopsDB->fetchColumn($res, column: 0);
 	}
 	return in_array($elementId, $existingElements);
 }
