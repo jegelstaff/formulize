@@ -171,6 +171,8 @@ function clickableSortLink($elementHandle, $clickableContent) {
 
 /**
  * Gets the aria sort value for the current element handle
+ * @param string elementHandle - handle of the element being checked
+ * @return string Returns the aria sort value
  */
 function getAriaSort($elementHandle) {
 	$sort = $_POST['sort'];
@@ -185,4 +187,23 @@ function getAriaSort($elementHandle) {
 		}
 	}
 	return 'none';
+}
+
+/**
+ * Keep track of prior column contents and compare to what is passed in.
+ * Return the class name 'same-contents-as-prior-cell' if appropriate.
+ * @param string content - the cell contents
+ * @param int columnNumber - the number of the column, starting from zero
+ * @return string An empty string if content is different, or a css class name if content is the same
+ */
+function checkIfContentIsTheSameAsPrior($content, $columnNumber) {
+	static $contents = array();
+	$class = '';
+	$cleanContents = trim(strip_tags($content));
+	if(isset($contents[$columnNumber]) AND $cleanContents === $contents[$columnNumber]) {
+		$class = 'same-contents-as-prior-cell';
+	} else {
+		$contents[$columnNumber] = $cleanContents;
+	}
+	return $class;
 }

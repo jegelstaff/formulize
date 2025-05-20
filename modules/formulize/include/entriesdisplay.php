@@ -1402,6 +1402,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
     $buttonCodeArray['numberOfEntries'] = $entryTotals;
+		$buttonCodeArray['toggleRepeatData'] = '<label for="toggleRepeatData">'._AM_FORMULIZE_LOE_HIDE_REPEATS.' <input id="toggleRepeatData" type="checkbox"></label>';
     $buttonCodeArray['entriesPerPageSelector'] = $entriesPerPageSelector;
 
 	$currentViewName = $settings['loadviewname'];
@@ -1861,10 +1862,10 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 					$templateVariables['class'] = ($templateVariables['class'] == 'even' ? 'odd' : 'even');
 					$templateVariables['rowNumber'] = $id+2;
 					$templateVariables['columnContents'] = array();
-                    $templateVariables['columnHandles'] = array();
-                    $templateVariables['columnFormIds'] = array();
-                    $templateVariables['entry'] = $entry;
-                    $templateVariables['entry_id'] = $entry_id;
+					$templateVariables['columnHandles'] = array();
+					$templateVariables['columnFormIds'] = array();
+					$templateVariables['entry'] = $entry;
+					$templateVariables['entry_id'] = $entry_id;
 
 					$cellRowAddress = $templateVariables['rowNumber'];
 					for($i=0;$i<count((array) $cols);$i++) {
@@ -4466,7 +4467,7 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
     $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
     $firstEntryNumber = $GLOBALS['formulize_countMasterResultsForPageNumbers'] > 0 ? ((($userPageNumber-1)*$numberPerPage)+1) : 0;
 	$entryTotals = "<span class=\"page-navigation-total\">".
-        sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
+        sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span>\n";
 
     $entriesPerPageSelector = "<select name='formulize_entriesPerPage'>";
     $maxPerPage = $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 < 100 ? $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 : 100;
