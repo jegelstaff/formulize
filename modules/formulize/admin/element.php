@@ -50,6 +50,7 @@ if ($aid == 0) {
     $appName = $appObject->getVar('name');
 }
 
+$common = array();
 $names = array();
 $display = array();
 $advanced = array();
@@ -190,7 +191,7 @@ if ($_GET['ele_id'] != "new") {
             break;
     }
 
- $ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+ 		$ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
     $common['ele_req_on'] = $ele_req === false ? false : true;
 
     $names['ele_req_no_on'] = " checked";
@@ -218,11 +219,14 @@ $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
 $formHandle=printSmart($formObject->getVar('form_handle'), 30);
 
+$common['formTitle'] = strip_tags($formName);
+
 // package up the elements into a list for ordering purposes
 // also, the sort options
 $orderOptions = array();
 $ele_colheads = $formObject->getVar('elementColheads');
 $ele_captions = $formObject->getVar('elementCaptions');
+$defaultpi = $formObject->getVar('pi');
 foreach($formObject->getVar('elements') as $elementId) {
     $elementTextToDisplay = $ele_colheads[$elementId] ? printSmart($ele_colheads[$elementId]) : printSmart($ele_captions[$elementId]);
     if ($ele_id != $elementId) {
@@ -235,6 +239,8 @@ $names['defaultorder'] = $defaultOrder;
 $names['firstelementorder'] = $firstElementOrder;
 $names['sortoptions'] = $sortOptions;
 $names['defaultsort'] = $defaultSort;
+$names['principalidentifier_off'] = ($defaultpi != $ele_id AND ($ele_id != 'new' OR count($formObject->getVar('elements')) > 0)) ? " checked='checked' " : "";
+$names['principalidentifier_on'] = ($defaultpi == $ele_id OR ($ele_id == 'new' AND count($formObject->getVar('elements')) == 0)) ? " checked='checked' " : "";
 
 // common values should be assigned to all tabs
 $common['name'] = '';
@@ -265,7 +271,7 @@ if ($ele_type=='textarea') {
 
     //new relationship dropdown
     $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-    $allRelationships = $framework_handler->getFrameworksByForm($fid);
+    $allRelationships = $framework_handler->getFrameworksByForm($fid, true);
     $relationships = array();
     $relationshipIndex = array();
     $relationships[""] = "this form only, no relationship.";
@@ -301,41 +307,34 @@ if ($ele_type=='textarea') {
         $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
     }
     global $xoopsDB;
+		$allFormsQuery = q("SELECT id_form, desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY desc_form");
+		$allForms = array();
+		foreach($allFormsQuery as $thisForm) {
+			$allForms[$thisForm['id_form']] = $thisForm['desc_form'];
+		}
     $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
     $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
-    $caughtfirst = false;
+		$validForms = array();
     foreach($validForms1 as $vf1) {
         $validForms[$vf1['fl_form1_id']] = $vf1['desc_form'];
-        if (!$caughtfirst) {
-            $firstform = $vf1['fl_form1_id'];
-            $caughtfirst = true;
-        }
     }
     foreach($validForms2 as $vf2) {
         if (!isset($validForms[$vf2['fl_form2_id']])) {
             $validForms[$vf2['fl_form2_id']] = $vf2['desc_form'];
-            if (!$caughtfirst) {
-                $firstform = $vf2['fl_form2_id'];
-                $caughtfirst = true;
-            }
         }
     }
-    if (count((array) $validForms) == 0) {
-        $validForms['none'] = _AM_ELE_SUBFORM_NONE;
-    }
-    $options['subforms'] = $validForms;
-    if ($caughtfirst) {
-        $formtouse = $ele_value[0] ? $ele_value[0] : $firstform; // use the user's selection, unless there isn't one, then use the first form found
-        $elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
-        $options['subformUserFilterElements'][0] = _formulize_NONE;
-        foreach($elementsq as $oneele) {
-            $options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-            $options['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-        }
-    } else {
-        $options['subformelements'][0] = "";
-        $options['subformUserFilterElements'][0] = "";
-    }
+    $allForms['new'] = _AM_ELE_SUBFORM_NEW;
+		$options['allforms'] = $allForms;
+    $options['validForms'] = $validForms;
+		$options['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
+		$formtouse = $ele_value[0] ? $ele_value[0] : key($allForms); // use the user's selection, unless there isn't one, then use the first form found
+		array_unshift($options['allforms'], _AM_FORMLINK_PICK);
+		$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+		$options['subformUserFilterElements'][0] = _formulize_NONE;
+		foreach($elementsq as $oneele) {
+				$options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
+				$options['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
+		}
 
     // compile a list of data-entry screens for this form
     $options['subform_screens'] = array();
@@ -344,6 +343,14 @@ if ($ele_type=='textarea') {
     foreach($screen_options as $screen_option) {
         $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
     }
+		$options['selectedSubformScreenAdminURL'] = '';
+		if($formtouse AND $subformObject = $form_handler->get($formtouse)) {
+			$bestAppId = formulize_getFirstApplicationForBothForms($formObject, $subformObject);
+			$bestAppId = $bestAppId ? $bestAppId : 0;
+			$subformScreenId = $ele_value['display_screen'];
+			$subformScreenId = $subformScreenId ? $subformScreenId : $subformObject->getVar('defaultform');
+			$options['selectedSubformScreenAdminURL'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=$bestAppId&fid=$formtouse&sid=$subformScreenId";
+		}
 
     // setup the UI for the subform conditions filter
     $options['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
@@ -374,7 +381,7 @@ if ($ele_type=='textarea') {
         $options['multiple'] = 0;
         $options['multiple_auto'] = 0;
         $ele_value[0] = 6;
-        $options['islinked'] = 0;
+        $options['islinked'] = 'new';
         $options['formlink_scope'] = array(0=>'all');
     } else {
         $options['listordd'] = $ele_value[0] == 1 ? 0 : 1;
@@ -389,6 +396,7 @@ if ($ele_type=='textarea') {
                 $ele_value[2] = formulize_mergeUIText($ele_value[2], $ele_uitext);
             }
             $options['useroptions'] = $ele_value[2];
+						$options['usernameslist'] = (key($options['useroptions']) == '{USERNAMES}' OR key($options['useroptions']) == '{FULLNAMES}') ? true : false;
         }
 
         $options['formlink_scope'] = explode(",",$ele_value[3]);
@@ -408,6 +416,7 @@ if ($ele_type=='textarea') {
 
 
     // setup the list value and export value option lists, and the default sort order list, and the list of possible default values
+		$options['subformInterfaceAdminUrl'] = '';
     if ($options['islinked']) {
         $linkedMetaDataParts = explode("#*=:*", $ele_value[2]);
         $linkedSourceFid = $linkedMetaDataParts[0];
@@ -454,6 +463,14 @@ if ($ele_type=='textarea') {
             list($sourceFormFieldList, $sourceFormFieldListSelected) = createFieldList('throwawayvalue', false, $linkedSourceFid, 'throwawayname', 'Source Form');
             $options['mappingsourceformoptions'] = $sourceFormFieldList->getOptions();
             $options['linkedSourceMappings'] = $ele_value['linkedSourceMappings'];
+
+						if($mainFormObject = $form_handler->get($linkedSourceFid)) {
+							if($subformElementId = $mainFormObject->hasSubformInterfaceForForm($fid)) {
+								$bestAppId = formulize_getFirstApplicationForBothForms($mainFormObject, $formObject);
+								$bestAppId = $bestAppId ? $bestAppId : 0;
+								$options['subformInterfaceAdminUrl'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=element&aid=$bestAppId&ele_id=$subformElementId&tab=options";
+							}
+						}
 
         }
     }

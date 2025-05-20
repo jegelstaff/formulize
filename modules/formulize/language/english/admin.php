@@ -10,16 +10,32 @@ define("_AM_APP_RELATIONSHIPS_CREATE"," Create a new relationship");
 define("_AM_APP_RELATIONSHIPS_MANAGE"," Manage existing relationships");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Are you sure you want to delete this relationship, and all its links?");
 define("_AM_APP_RELATIONSHIPS","Relationships");
+define("_AM_APP_RELATIONSHIP_CREATESUBFORM1", "Embed the <i>");
+define("_AM_APP_RELATIONSHIP_CREATESUBFORM2", "</i> form inside the <i>");
+define("_AM_APP_RELATIONSHIP_CREATESUBFORM3", "</i> form, so users can interact with them both at once");
+define("_AM_APP_RELATIONSHIP_UNIFIEDDELETE", "When the user deletes an entry in one form, delete the linked entries in the other form");
+define("_AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER", "When the forms are shown together, and the linking value is changed, change the entry in the other form to match");
+define("_AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES", "When the user saves an entry in one form, create a matching entry in the other form if one does not exist already");
+
 define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
-define("_AM_APP_NEWFORM","New form");
+define("_AM_APP_ELEMENTS","Elements");
+define("_AM_APP_ENTRIES","Entries");
+define("_AM_APP_USERS","Users");
+define("_AM_APP_IN","in");
+define("_AM_APP_GROUPS","Groups");
+define("_AM_APP_NEWFORM","ie: Museum Exhibits");
+define("_AM_APP_NEWSINGULAR","ie: Exhibit");
+define("_AM_APP_NEWPLURAL","ie: Exhibits");
 define("_AM_APP_USETITLE","Use the form's title");
 define("_AM_APP_NAMEQUESTION","What is the name of this Application?");
 define("_AM_APP_DESCQUESTION","Description of this application:");
 define("_AM_APP_FORMSIN","Forms in this application:");
 define("_AM_APP_CONFIGURE","Configure");
+define("_AM_APP_VIEW","View");
+define("_AM_APP_OPS","Ops");
 define("_AM_APP_VIEW_DEFAULT_SCREEN","View (with the Default Screen's options)");
-define("_AM_APP_VIEW_OPTIONS_SCREEN","View (with all screen options on)");
+define("_AM_APP_VIEW_OPTIONS_SCREEN","Master List");
 define("_AM_APP_CLONE_SIMPLY","Clone");
 define("_AM_APP_CLONE_WITHDATA","Clone with data");
 define("_AM_APP_LOCKDOWN","Lockdown");
@@ -88,25 +104,47 @@ define("_AM_FORM_SCREEN_CUSTOM_BUTTONS","Custom buttons");
 define("_AM_FORM_SCREEN_TEMPLATES","Templates");
 define("_AM_SETTINGS_FORM_TITLE_QUESTION","What is the name of the form?");
 define("_AM_SETTINGS_FORM_TITLE","Form title: ");
+define("_AM_SETTINGS_FORM_SINGULAR","Singular: ");
+define("_AM_SETTINGS_FORM_PLURAL","Plural: ");
+define("_AM_SETTINGS_FORM_TITLE_EXPLAIN","The official title of the form, ie: Museum Exhibits");
+define("_AM_SETTINGS_FORM_SINGULAR_EXPLAIN","How you refer to a single entry in the form, ie: Exhibit");
+define("_AM_SETTINGS_FORM_PLURAL_EXPLAIN","How you refer to multiple entries in the form, ie: Exhibits");
 define("_AM_SETTINGS_MENU_ENTRY","Menu entry: ");
 define("_AM_SETTINGS_MENU_LEAVE","Leave the 'menu entry' blank to remove this form from the default menu block");
 define("_AM_SETTINGS_FORM_HANDLE","Form handle");
 define("_AM_EOG_Repair","Repair entry ownership table");
-define("_AM_SETTINGS_FORM_HANDLE_EXPLAIN","Optional. The name will you use to refer to this form in programming code and in the database. Defaults to the form ID number.");
+define("_AM_SETTINGS_FORM_HANDLE_EXPLAIN","Optional. The name will you use to refer to this form in programming code and in the database.");
 define("_AM_SETTINGS_FORM_DATABASE","Which database table should this 'form' point to?");
 define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Type the exact name, including the prefix, ie: mysite_groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","How many entries are allowed in this form?");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","One entry per <b>group</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERUSER","One entry per <b>user</b>");
 define("_AM_SETTINGS_FORM_ENTRIES_MORETHANONE","<b>More than one entry</b> per user");
-define("_AM_SETTINGS_FORM_SHOWING_LIST","When showing a list of entries in this form, which elements should be available by default?");
+define("_AM_SETTINGS_FORM_SHOWING_LIST_TITLE","Default Columns");
+define("_AM_SETTINGS_FORM_SHOWING_LIST","If a List Screen has no columns specified and no active Saved View, which columns should be displayed by default?");
 define("_AM_SETTINGS_FORM_APP_PART","Which applications is this form part of?");
 define("_AM_SETTINGS_FORM_APPNEW","Create a new application for this form to be part of?");
 define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have permission to alter this form's settings?");
+define("_AM_SETTINGS_FORM_PI1","Which element in");
+define("_AM_SETTINGS_FORM_PI2","is the principal identifier?");
+define("_AM_SETTINGS_FORM_PI_NONE","No principal identifer");
+define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
+define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
+define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");
+define("_AM_SETTINGS_NEW_CONNECTION_REGULAR", "A new element, linked to<br>%s");
+define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS", "Which elements connect these forms?");
+define("_AM_SETTINGS_SELECT_CONNECTION_ELEMENTS_DESC", "Select the elements in the two forms that have corresponding values. For example, an Activity Log and a Municipalities List might be connected by a dropdown list in the Activity Log, in which users can choose the name of the Municipality where the Activity happened. Or a Teacher Profile and a Class List might both have a Teacher Name element.");
+define("CREATE_CONNECTION_PI_LABEL", " &mdash; (PI)");
+define("CREATE_CONNECTION_COMMON_VALUE_TEXTBOX", "New element: create a textbox");
+define("CREATE_CONNECTION_COMMON_VALUE_PARALLEL", "New element: copy element from other form");
+define("CREATE_CONNECTION_LINKED_DROPDOWN", "New element: link a dropdown list");
+define("CREATE_CONNECTION_LINKED_AUTOCOMPLETE", "New element: link an autocomplete box");
+define("CREATE_CONNECTION_LINKED_MULTI_AUTOCOMPLETE", "New element: link a multi-autocomplete box");
+define("CREATE_CONNECTION_LINKED_CHECKBOXES", "New element: link checkboxes");
+define("_AM_SETTINGS_SELECT_CONNECTION_OPTION", "Option");
 
 define("_AM_CAL_SCREEN_TEMPLATES","Templates");
 define("_AM_CAL_SCREEN_DATA","Datasets");
-
 
 /*mod Language for permissions*/
 define("_AM_PERMISSIONS_CHOOSE_GROUPS","Which groups do you want to set permissions for?");
@@ -321,17 +359,20 @@ define("_MI_formulize_DELIMETER_CUSTOM","Custom HTML");
 //added to handle the formlink part of the selectbox element -- jwe 7/29/04
 define("_AM_ELE_FORMLINK", "Options linked from another form");
 define("_AM_ELE_FORMLINK_DESC","Select a field in another form and use those entries for the options in this Select Box. (This setting overrides any options specified above.)");
-define("_AM_FORMLINK_NONE", "No link -- options below are in effect");
+define("_AM_FORMLINK_NONE", "Select the source element");
 define("_AM_ELE_FORMLINK_TEXTBOX", "Associate values with another form element");
 define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
 define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
 define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
-define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>The groups you pick define the total possible options to be used.  Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.</p><p>Also, you can specify whether entries must be created by users who are members of all the groups, or just any one group.  Note that this option can interact powerfully with \"Use only groups that the current user is also a member of\", to let you limit the options to ones from entries created by users who are members of <b>all</b> the same groups as the current user.</p><p><b>Exception:</b> If you limit to only the groups the user is a member of, and you also require users to be members of all selected groups, the system will ignore any groups that do not contain at least one user who has at least one of these groups in common with the current user.  This is to meant to support situations where you have sets of groups in parallel, and you want the interpretation to be based on only the current user's set of groups, ie: East Coast Staff and East Coast Volunteers vs. West Coast Staff and West Coast Volunteers.  If the current user belongs to the East Coast set, then all West Coast groups will be ignored in this case.</p>");
+define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.</p>");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Use all groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "Use all these groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Use only groups that the current user is also a member of");
-define("_AM_ELE_FORMLINK_ANYALL_ANY", "Include entries by users who are members of any selected group");
-define("_AM_ELE_FORMLINK_ANYALL_ALL", "Include entries by users who are members of all selected groups");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_INTRO", "Should the active user limit the scope?");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "No. Use all selected groups.");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Yes. Only use groups that the current user is a member of");
+define("_AM_ELE_FORMLINK_ANYALL_INTRO", "Include data as long as it belongs to:");
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Any one of the groups in scope");
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "All of the groups in scope");
+define("_AM_ELE_FORMLINK_ANYALL_DESC", "If the active user is limiting the scope, then the <b>All</b> option may not necessarily mean all the groups selected, depending on the group memberships of the active user.");
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");
@@ -350,8 +391,9 @@ define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM", "Subform (from a Relationship)");
-define("_AM_ELE_SUBFORM_DESC", "When you display the current form as part of a Relationship, the subform interface can be included in the form.  The subform interface allows users to create and modify entries in a related subform without leaving the main form.  The list here shows all the possible subforms from all Relationships that this form is part of.");
+define("_AM_ELE_SUBFORM_DESC", "A subform interface allows users to create and modify entries in a related subform without leaving the main form.");
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a Relationship first");
+define("_AM_ELE_SUBFORM_NEW", "Add a new form");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Element options");
 define("_AM_ELE_SUBFORM_ELEMENT_LIST", "Choose the elements to show in the row, or to use as the heading if you're showing the full form");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "When displayed in a row, about three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form. <b>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.</b>");
@@ -408,6 +450,7 @@ define("_AM_ELE_DERIVED_UPDATE_DESC", "This may take a while depending on how ma
 
 define("_AM_ELE_SELECT_NONE","No element selected");
 define("_AM_ELE_CONFIRM_DELETE","Are you sure you want to delete this form element? All data anyone has ever entered into this form element will be deleted as well.");
+define("_AM_ELE_CONFIRM_DELETE_INLINK","THIS FORM ELEMENT IS PART OF RELATIONSHIPS WITH OTHER FORMS! Are you sure you want to delete this form element? The relationships will break, and all data anyone has ever entered into this form element will be deleted as well.");
 
 // Duration
 define("_AM_ELE_DURATION", "Duration");
@@ -836,3 +879,6 @@ define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_OFF", "Show as a comma separated
 define("_AM_FORMULIZE_EXPLODE_COLUMNS_ON_EXPORT_ON", "Show one column per option in this element, and use the following values in the cells:");
 define("_AM_FORMULIZE_EXPORTOPTIONS_HASVALUE", "Value to show if an option is selected:");
 define("_AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE", "Value to show if an option is NOT selected:");
+
+define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
+define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");

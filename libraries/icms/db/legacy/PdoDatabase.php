@@ -44,7 +44,7 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
             }
         }
         if(!$modesSet) {
-            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');            
+            exit('Error: the database mode could not be set for proper operation of Formulize. Please notify a webmaster immediately. Thank you.');
         }
 	}
 	public function connect($selectdb = true) {
@@ -129,6 +129,9 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 	public function fetchBoth($result) {
 		return $result ? $result->fetch( PDO::FETCH_BOTH ) : false;
 	}
+	public function fetchColumn($result, $column) { // return array of all the values in this column (referenced by position in result, 0-based index)
+		return $result ? $result->fetchAll( PDO::FETCH_COLUMN, intval($column) ) : false;
+	}
 	public function getRowsNum($result) {
 		return $result ? $result->rowCount() : false;
 	}
@@ -140,7 +143,7 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 			return true;
 		}
 	}
-    
+
     public function queryFromFile($file) {
         if (false !== ($fp = fopen($file, 'r'))) {
 			$sql_queries = trim(fread($fp, filesize($file)));
@@ -158,7 +161,7 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 		}
 		return false;
     }
-    
+
 
 }
 

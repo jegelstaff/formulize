@@ -56,6 +56,7 @@ class formulizeElement extends FormulizeObject {
         parent::__construct();
 	//	key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, NULL, false);
+		$this->initVar("fid", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_id", XOBJ_DTYPE_INT, NULL, false);
 		$this->initVar("ele_type", XOBJ_DTYPE_TXTBOX, NULL, true, 100);
 		$this->initVar("ele_caption", XOBJ_DTYPE_TXTAREA);
@@ -64,12 +65,12 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
-        $this->initVar("ele_sort", XOBJ_DTYPE_INT);
+    $this->initVar("ele_sort", XOBJ_DTYPE_INT);
 		$this->initVar("ele_req", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
-        $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
-		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, true, 255);
+    $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
+		$this->initVar("ele_delim", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_forcehidden", XOBJ_DTYPE_INT);
 		$this->initVar("ele_private", XOBJ_DTYPE_INT);
  		// changed - start - August 19 2005 - jpc
@@ -81,7 +82,16 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_filtersettings", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
-        $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
+    $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
+	}
+
+	/**
+	 * Return the name that should be used for the element in UI - colhead if there is one, or caption
+	 * @return string The name that should be used
+	 */
+	public function getUIName() {
+		$colhead = trans(strip_tags($this->getVar('ele_colhead')));
+		return $colhead ? $colhead : trans(strip_tags($this->getVar('ele_caption')));
 	}
 
 	//this method is used to to retreive the elements dataType and size
@@ -110,10 +120,19 @@ class formulizeElement extends FormulizeObject {
 		}
 		//define array and return type and size
 		return array("dataType" => $defaultType, "dataTypeSize" => $defaultTypeSize, "dataTypeCompleteString" => $defaultTypeComplete);
-
 	}
 
-    function createIndex(){
+	/**
+	 * Check if the element's data type in the database is numeric
+	 * @return boolean Returns true or false
+	 */
+	function hasNumericDataType() {
+		$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
+		$dataTypeInfo = $this->getDataTypeInformation();
+		return isset($numericDataTypes[$dataTypeInfo['dataType']]);
+	}
+
+  function createIndex(){
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->getVar('id_form'));
@@ -126,6 +145,7 @@ class formulizeElement extends FormulizeObject {
 
 		$sql = "ALTER TABLE ".$xoopsDB->prefix("formulize_".formulize_db_escape($formObject->getVar('form_handle')))." ADD $index_fulltext `". formulize_db_escape($this->getVar('ele_handle')) ."` (`".formulize_db_escape($this->getVar('ele_handle'))."`)";
 		$res = $xoopsDB->query($sql);
+		return $res ? true : false;
 	}
 
 	function deleteIndex($original_index_name){
@@ -308,6 +328,7 @@ class formulizeElementsHandler {
         $element->isLinked = false;
         $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
         $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
+				$element->setVar('fid', $element->getVar('id_form'));
         $ele_type = $element->getVar('ele_type');
         $ele_value = $element->getVar('ele_value');
         if($ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
@@ -458,41 +479,32 @@ class formulizeElementsHandler {
 		return $ele_id;
 	}
 
-	function delete(&$element, $force = false){
-
-		if( strtolower(get_class($this)) != 'formulizeelementshandler') {
+	function delete($element, $force = false){
+		if($element->isSystemElement) {
 			return false;
 		}
-
-		global $xoopsDB;
-
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
-        if( false != $force ){
-            $result = $this->db->queryF($sql);
-        }else{
-            $result = $this->db->query($sql);
-        }
-		// delete from frameworks table too -- added July 27 2006
-		$sql = "DELETE FROM ". $xoopsDB->prefix('formulize_framework_elements') . " WHERE fe_element_id=".$element->getVar("ele_id");
-	        if( false != $force ){
-      	      $result = $this->db->queryF($sql);
-	        }else{
-      	      $result = $this->db->query($sql);
-	        }
-		return true;
-	}
+		if( false != $force ){
+			$result1 = $this->db->queryF($sql);
+		}else{
+			$result1 = $this->db->query($sql);
+		}
+		$result2 = deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
+		if($element->hasData) {
+			if(!$result3 = $form_handler->deleteElementField($element->getVar('ele_id'))) {
+				print "Error: could not drop field from data table";
+			}
+    }
+		$result4 = true;
+		if($formObject = $form_handler->get($element->getVar('fid'))) {
+			if($element->getVar('ele_id') == $formObject->getVar('pi')) {
+				$formObject->setVar('pi', 0);
+				$result4 = $form_handler->insert($formObject);
+			}
+		}
 
-	// this function added by jwe Aug 14 2005 -- deletes the data associated with a particular element in a particular form
-	function deleteData(&$element, $force = false){
-		if( strtoupper(get_class($this)) != strtoupper('formulizeelementshandler')) {
-			return false;
-		}
-		$form_handler =& xoops_getmodulehandler('forms', 'formulize');
-		if(!$deleteResult = $form_handler->deleteElementField($element->getVar('ele_id'))) {
-			print "Error: could not drop field from data table";
-			return false;
-		}
-		return true;
+		return ($result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
@@ -665,3 +677,4 @@ function optionIsValidForElement($option, $elementHandleOrId) {
     }
     return $element->optionIsValid($option);
 }
+

@@ -1,8 +1,9 @@
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/formulize-admin.js?v=2"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/selenium_debug.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin.js?v=2"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-organize-forms.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-relationships.js"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css">
@@ -68,7 +69,21 @@ $(document).ready(function() {
 	<link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/ie6.css" />
 <![endif]-->
 
-<div class="admin-ui">
+<div class="admin-ui" style="display: none;">
+
+<{if $adminPage.template == 'db:admin/home.html'}>
+<div style="float: right;">
+	<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
+		<p style="text-align: right;"><a  href="ui.php?page=managepermissions">Copy Group Permissions</a></p>
+	<p style="text-align: right;"><a  href="ui.php?page=synchronize">Synchronize With Another System</a></p>
+	<p style="text-align: right;"><a  href="ui.php?page=config-sync">Configuration Synchronization</a></p>
+		<p style="text-align: right;"><a href="ui.php?page=managekeys">Manage API keys</a></p>
+		<!--<p style="text-align: right;"><a href="ui.php?page=manageaccess">Manage Access to Forms</a></p>-->
+		<p style="text-align: right;"><a href="ui.php?page=managetokens">Manage Account Creation Tokens</a></p>
+		<p style="text-align: right;"><a href="ui.php?page=mailusers">Email Users</a></p>
+		<br>
+</div>
+<{/if}>
 
 <{if $opResults}>
 <div id="formulize-patch-panel"><{$opResults}><p><a href='<{$xoops_url}>/modules/formulize/admin/'><{$smarty.const._CLOSE}></a></p></div>
@@ -136,6 +151,14 @@ $(document).ready(function() {
 
 <p class="versionnumber">Version <{$version}></p>
 
+<div id="dialog-relationship-options" title="Relationship Details" style="display:none">
+	<div id="dialog-relationship-options-content"></div>
+</div>
+
+<div id="dialog-relationship-create-connection" title="Create Connection" style="display:none">
+	<div id="dialog-relationship-create-connection-content"></div>
+</div>
+
 </div><!-- End admin-ui -->
 
 <script type="text/javascript">
@@ -148,10 +171,10 @@ $(document).ready(function() {
   var newhandle = "";
   var formdata = new Array();
 
-  $("input").change(function() {
+  $("input:not(input[name=organize-toggle],input[id^=filter-forms-])").change(function() {
     setDisplay('savewarning','block');
     });
-  $("input[type=text]").keydown(function() {
+  $("input[type=text]:not(input[id^=filter-forms-])").keydown(function() {
     setDisplay('savewarning','block');
     });
   $("select").change(function() {
@@ -224,6 +247,10 @@ $(document).ready(function() {
 
 	function runSaveEvent() {
     $(".admin-ui").fadeTo(1,0.5);
+		$("div[id^='form-details-box-']").each(function() {
+			$("input[name=formTop["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('top'));
+			$("input[name=formLeft["+$(this).attr('appid')+"."+$(this).attr('formid')+"]]").val($(this).css('left'));
+		});
     var formulize_formlist = $(".formulize-admin-form");
     saveCounter = 0;
     saveTarget = 0;
@@ -263,6 +290,7 @@ $(document).ready(function() {
           eval(redirect);
         } else {
           $(".admin-ui").fadeTo(1,1);
+					$('input[clearAfterSave=1]').removeAttr('checked');
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
         sendFormData(formdata[saveCounter], ele_id);
@@ -294,7 +322,8 @@ $(document).ready(function() {
     var requiredok = true;
     $(".required_formulize_element").each(function () {
       if(($(this).val().length) == 0) {
-        requiredok = false;
+        requiredok = false
+				$('.admin-ui').fadeTo(1, 1)
       }
     });
     return requiredok;
@@ -324,27 +353,38 @@ $(document).ready(function() {
     }
   }
 
-  $(document).ready(
+	let codemirrors = [];
+  $(document).ready(function() {
     $('.code-textarea').each(function() {
-        if (this.type !== 'textarea') {
-            return true; // continue
-        }
-        CodeMirror.fromTextArea(this, {
-            lineNumbers: true,
-            matchBrackets: true,
-            mode: "application/x-httpd-php",
-            indentUnit: 4,
-            indentWithTabs: true,
-            enterMode: "keep",
-            tabMode: "shift",
-            lineWrapping: true,
-            onChange: function(instance) {
-                setDisplay('savewarning','block');
-                instance.save(); // Call this to update the textarea value for the ajax post
-            }
-        });
-    })
-  );
+			if (this.type !== 'textarea') {
+					return true; // continue
+			}
+			cm = CodeMirror.fromTextArea(this, {
+					lineNumbers: true,
+					matchBrackets: true,
+					mode: "application/x-httpd-php",
+					indentUnit: 4,
+					indentWithTabs: true,
+					enterMode: "keep",
+					tabMode: "shift",
+					lineWrapping: true,
+					onChange: function(instance) {
+							setDisplay('savewarning','block');
+							instance.save(); // Call this to update the textarea value for the ajax post
+					}
+			});
+			codemirrors.push(cm);
+		});
+	});
+	$(window).load(function() {
+		refreshCodemirrors();
+	});
+
+	function refreshCodemirrors() {
+		for (var x = 0; x < codemirrors.length; x++) {
+			codemirrors[x].refresh();
+		}
+	}
 
     // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
     $("[name='screens-theme']").change(function() {

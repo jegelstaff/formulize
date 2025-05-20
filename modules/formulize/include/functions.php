@@ -62,6 +62,7 @@ if (typeof jQuery.ui == 'undefined') {
 ";
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 
 function getFormFramework($formframe, $mainform=0) {
@@ -288,31 +289,48 @@ function availReports($uid, $groups, $fid, $frid="0") {
     global $xoopsDB;
 
     // get new saved reports
-    if ($frid) {
+		if($frid == -1) {
+			$connectedForms = implode(",",connectedFormsToThisForm($fid));
+			$connectedForms .= $connectedForms ? ",$fid" : $fid;
+			$saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE (
+				(sv_formframe IS NOT NULL AND sv_formframe != 0 AND sv_mainform IN ($connectedForms))
+				OR ((sv_mainform IS NULL OR sv_mainform = 0) AND sv_formframe IN ($connectedForms))
+				) AND sv_owner_uid='$uid'");
+    } elseif ($frid) {
         $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_owner_uid='$uid'");
     } else {
         $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_owner_uid='$uid'");
     }
 
     // get new published reports
-    if ($frid) {
+		if($frid == -1) {
+			$published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE (
+				(sv_formframe IS NOT NULL AND sv_formframe != 0 AND sv_mainform IN ($connectedForms))
+				OR ((sv_mainform IS NULL OR sv_mainform = 0) AND sv_formframe IN ($connectedForms))
+				) AND sv_pubgroups != \"\"");
+    } elseif ($frid) {
         $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_pubgroups != \"\"");
     } else {
         $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_pubgroups != \"\"");
     }
 
     // cull published reports to ones that are published to a group that the user belongs to
-    $indexer = 0;
-    $available_published_reports = array();
-    for ($i = 0; $i < count((array) $published_reports); $i++) {
-        $report_groups = explode(",", $published_reports[$i]['sv_pubgroups']);
-        if (array_intersect($groups, $report_groups)) {
-            $available_published_reports[$indexer]['sv_id']   = $published_reports[$i]['sv_id'];
-            $available_published_reports[$indexer]['sv_name'] = $published_reports[$i]['sv_name'];
-            $available_published_reports[$indexer]['sv_uid']  = $published_reports[$i]['sv_owner_uid'];
-            $indexer++;
-        }
-    }
+		// except for webmasters, who can see everything
+		if(!in_array(XOOPS_GROUP_ADMIN, $groups)) {
+			$indexer = 0;
+			$available_published_reports = array();
+			for ($i = 0; $i < count((array) $published_reports); $i++) {
+				$report_groups = explode(",", $published_reports[$i]['sv_pubgroups']);
+				if (array_intersect($groups, $report_groups)) {
+						$available_published_reports[$indexer]['sv_id']   = $published_reports[$i]['sv_id'];
+						$available_published_reports[$indexer]['sv_name'] = $published_reports[$i]['sv_name'];
+						$available_published_reports[$indexer]['sv_uid']  = $published_reports[$i]['sv_owner_uid'];
+						$indexer++;
+				}
+			}
+		} else {
+			$available_published_reports = $published_reports;
+		}
 
     // parse out details from arrays for passing back
     $sortnames = array();
@@ -590,147 +608,176 @@ function cutString($string, $maxlen) {
 
 
 // this function returns the headerlist for a form and gracefully degrades to other inputs if the headerlist itself is not specified.
+// Step 1: primary relationship is set in URL and there's a PI, then use the PI
+// Step 2: if nothing so far, use the defined headerlist for the form (in its admin settings)
+// Step 3: if nothing so far, use the PI
+// Step 4: if nothing so far, use the first three required fields
+// Step 5: if nothing so far, use the first three fields
 // need ids flag will cause the returned array to be IDs instead of header text
 // convertIdsToElementHandles flag will have effect if ids have been returned, and will do one query to get all the element handles that patch the ids selected
 // we do not filter the headerlist for private elements, because the columns in entriesdisplay are filtered for private columns (and display columns) after being gathered.
 function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false) {
     global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if(!$formObject = $form_handler->get($fid)) {
+			return array(); // invalid form
+		}
 
     $headerlist = array();
+		$piText = "";
+		if($pi = $formObject->getVar('pi')) {
+			if($piElementObject = $element_handler->get($pi)) {
+				$piText = $piElementObject->getVar('ele_colhead') ? trans($piElementObject->getVar('ele_colhead')) : trans($piElementObject->getVar('ele_caption'));
+			}
+		}
+		// when the primary relationship is active in the URL, just go with PI, if set
+		if(isset($_GET['frid']) AND intval($_GET['frid']) == -1 AND $pi) {
+			$headerlist[] = $needids ? $pi : $piText;
+		} else {
 
-    $hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid'";
-    if ($result = $xoopsDB->query($hlq)) {
-        while ($row = $xoopsDB->fetchRow($result)) {
-            // check to see if there is actually any real data specified in this string, make sure it's not all separators.
-            if ($somethingLeft = str_replace("*=+*:", "", $row[0])) {
-                $headerlist = explode("*=+*:", $row[0]);
-                array_shift($headerlist);
-            }
-        }
+			$hlq = "SELECT headerlist FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form='$fid'";
+			if ($result = $xoopsDB->query($hlq)) {
+					while ($row = $xoopsDB->fetchRow($result)) {
+							// check to see if there is actually any real data specified in this string, make sure it's not all separators.
+							if ($somethingLeft = str_replace("*=+*:", "", $row[0])) {
+									$headerlist = explode("*=+*:", $row[0]);
+									array_shift($headerlist);
+							}
+					}
 
-        // if the headerlist is using the new ID based system
-        if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
-            // if we want actual text headers, convert ids to text
-            if (!$needids) {
-                $start = 1;
-                $metaHeaderlist = array();
-								$where_clause = '';
-                foreach ($headerlist as $headerid=>$thisheaderid) {
-                    if ($thisheaderid == "entry_id") {
-                        $metaHeaderlist[] = _formulize_ENTRY_ID;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-                    if ($thisheaderid == "creator_email") {
-                        $metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
-                        unset($headerlist[$headerid]);
-                        continue;
-                    }
-										if ($thisheaderid == "owner_groups") {
-											$metaHeaderlist[] = _formulize_DE_CALC_OWNERGROUPS;
-											unset($headerlist[$headerid]);
-											continue;
+					// if the headerlist is using the new ID based system
+					if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
+							// if we want actual text headers, convert ids to text
+							if (!$needids) {
+									$start = 1;
+									$metaHeaderlist = array();
+									$where_clause = '';
+									foreach ($headerlist as $headerid=>$thisheaderid) {
+											if ($thisheaderid == "entry_id") {
+													$metaHeaderlist[] = _formulize_ENTRY_ID;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "uid" OR $thisheaderid == "creation_uid") {
+													$metaHeaderlist[] = _formulize_DE_CALC_CREATOR;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "proxyid" OR $thisheaderid == "mod_uid") {
+													$metaHeaderlist[] = _formulize_DE_CALC_MODIFIER;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "creation_date" OR $thisheaderid == "creation_datetime") {
+													$metaHeaderlist[] = _formulize_DE_CALC_CREATEDATE;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "mod_date" OR $thisheaderid == "mod_datetime") {
+													$metaHeaderlist[] = _formulize_DE_CALC_MODDATE;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "creator_email") {
+													$metaHeaderlist[] = _formulize_DE_CALC_CREATOR_EMAIL;
+													unset($headerlist[$headerid]);
+													continue;
+											}
+											if ($thisheaderid == "owner_groups") {
+												$metaHeaderlist[] = _formulize_DE_CALC_OWNERGROUPS;
+												unset($headerlist[$headerid]);
+												continue;
+											}
+											if ($start) {
+													$where_clause = "ele_id='$thisheaderid'";
+													$start = 0;
+											} else {
+													$where_clause .= " OR ele_id='$thisheaderid'";
+											}
+									}
+									if ($where_clause) {
+											$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
+											if ($rescaptionq = $xoopsDB->query($captionq)) {
+													unset($headerlist);
+													$headerlist = $metaHeaderlist;
+													while ($row = $xoopsDB->fetchArray($rescaptionq)) {
+															if ($row['ele_colhead'] != "") {
+																	$headerlist[] = $row['ele_colhead'];
+															} else {
+																	$headerlist[] = $row['ele_caption'];
+															}
+													}
+											} else {
+													exit("Error returning the default list of captions.");
+											}
+									}
+							} else { // if getting ids, need to convert old metadata values to new ones
+									foreach ($headerlist as $headerListIndex=>$thisheaderid) {
+											if ($thisheaderid == "uid") {
+													$headerlist[$headerListIndex] = "creation_uid";
+											} elseif ($thisheaderid == "proxyid") {
+													$headerlist[$headerListIndex] = "mod_uid";
+											} elseif ($thisheaderid == "creation_date") {
+													$headerlist[$headerListIndex] = "creation_datetime";
+											} elseif ($thisheaderid == "mod_date") {
+													$headerlist[$headerListIndex] = $thisheaderid == "mod_datetime";
+											}
+									}
+							}
+					} else { // not using new ID based system, so convert to ids if needids is true
+							if ($needids) {
+									$tempheaderlist = $headerlist;
+									unset($headerlist);
+									$headerlist = convertHeadersToIds($tempheaderlist, $fid);
+							}
+					}
+			}
+
+			if (count((array) $headerlist)==0) { // if no header fields specified, then
+
+					// just go with the PI if there is one
+
+					if($pi) {
+						$headerlist[] = $needids ? $pi : $piText;
+
+					// gather required fields for this form
+					} else {
+						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+						if ($result = $xoopsDB->query($reqfq)) {
+								while ($row = $xoopsDB->fetchArray($result)) {
+										if ($needids) {
+												$headerlist[] = $row['ele_id'];
+										} else {
+												if ($row['ele_colhead'] != "") {
+														$headerlist[] = $row['ele_colhead'];
+												} else {
+														$headerlist[] = $row['ele_caption'];
+												}
 										}
-                    if ($start) {
-                        $where_clause = "ele_id='$thisheaderid'";
-                        $start = 0;
-                    } else {
-                        $where_clause .= " OR ele_id='$thisheaderid'";
-                    }
-                }
-                if ($where_clause) {
-                    $captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
-                    if ($rescaptionq = $xoopsDB->query($captionq)) {
-                        unset($headerlist);
-                        $headerlist = $metaHeaderlist;
-                        while ($row = $xoopsDB->fetchArray($rescaptionq)) {
-                            if ($row['ele_colhead'] != "") {
-                                $headerlist[] = $row['ele_colhead'];
-                            } else {
-                                $headerlist[] = $row['ele_caption'];
-                            }
-                        }
-                    } else {
-                        exit("Error returning the default list of captions.");
-                    }
-                }
-            } else { // if getting ids, need to convert old metadata values to new ones
-                foreach ($headerlist as $headerListIndex=>$thisheaderid) {
-                    if ($thisheaderid == "uid") {
-                        $headerlist[$headerListIndex] = "creation_uid";
-                    } elseif ($thisheaderid == "proxyid") {
-                        $headerlist[$headerListIndex] = "mod_uid";
-                    } elseif ($thisheaderid == "creation_date") {
-                        $headerlist[$headerListIndex] = "creation_datetime";
-                    } elseif ($thisheaderid == "mod_date") {
-                        $headerlist[$headerListIndex] = $thisheaderid == "mod_datetime";
-                    }
-                }
-            }
-        } else { // not using new ID based system, so convert to ids if needids is true
-            if ($needids) {
-                $tempheaderlist = $headerlist;
-                unset($headerlist);
-                $headerlist = convertHeadersToIds($tempheaderlist, $fid);
-            }
-        }
-    }
+								}
+						}
+					}
+			}
 
-    if (count((array) $headerlist)==0) { // if no header fields specified, then
-        // gather required fields for this form
-        $reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
-        if ($result = $xoopsDB->query($reqfq)) {
-            while ($row = $xoopsDB->fetchArray($result)) {
-                if ($needids) {
-                    $headerlist[] = $row['ele_id'];
-                } else {
-                    if ($row['ele_colhead'] != "") {
-                        $headerlist[] = $row['ele_colhead'];
-                    } else {
-                        $headerlist[] = $row['ele_caption'];
-                    }
-                }
-            }
-        }
-    }
-
-    if (count((array) $headerlist) == 0) {
-        // IF there are no required fields THEN ... go with first three fields
-        $firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
-        if ($result = $xoopsDB->query($firstfq)) {
-            while ($row = $xoopsDB->fetchArray($result)) {
-                if ($needids) {
-                    $headerlist[] = $row['ele_id'];
-                } else {
-                    if ($row['ele_colhead'] != "") {
-                        $headerlist[] = $row['ele_colhead'];
-                    } else {
-                        $headerlist[] = $row['ele_caption'];
-                    }
-                }
-            }
-        }
-    }
+			if (count((array) $headerlist) == 0) {
+					// IF there is no pi and no required fields THEN ... go with first three fields
+					$firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+					if ($result = $xoopsDB->query($firstfq)) {
+							while ($row = $xoopsDB->fetchArray($result)) {
+									if ($needids) {
+											$headerlist[] = $row['ele_id'];
+									} else {
+											if ($row['ele_colhead'] != "") {
+													$headerlist[] = $row['ele_colhead'];
+											} else {
+													$headerlist[] = $row['ele_caption'];
+											}
+									}
+							}
+					}
+			}
+		}
     if ($needids AND $convertIdsToElementHandles) {
         $savedMetaHeaders = array();
         foreach ($headerlist as $thisheaderkey=>$thisheaderid) {
@@ -967,6 +1014,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     $one_to_one = array();
     $many_to_one = array();
     $one_to_many = array();
+    $sub_fids = array();
     foreach ($one_q1 as $res1) {
         $one_to_one[$indexer]['fid'] = $res1['fl_form1_id'];
         $one_to_one[$indexer]['keyself'] = $res1['fl_key1'];
@@ -2286,7 +2334,7 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
     global $xoopsDB, $xoopsUser;
     // determine single/multi status
     $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
-    if ($smq[0]['singleentry'] != "") {
+    if ($smq[0]['singleentry'] == "on" OR $smq[0]['singleentry'] == "group") {
         // find the entry that applies
         $single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
         // if we're looking for a regular single, find first entry for this user
@@ -3677,7 +3725,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 		if(!$fid) {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$allFormObjects = $form_handler->getAllForms();
-			$firstFormObject = $allFormObjects[0];
+			$firstFormObject = $allFormObjects[key($allFormObjects)];
 			$fid = $firstFormObject->getVar('id_form');
 			subscribeUidsToEvent($uids_to_notify, $fid, $event);
 		}
@@ -3742,10 +3790,22 @@ function formulize_getLock($fileResource) {
 }
 
 
-// this function takes a series of columns and gets the headers for them
-function getHeaders($cols, $colsIsElementHandles = true) {
+/**
+ * Takes a series of columns and gets the headers for them
+ * @param array cols - An array of element ids or element handles
+ * @param boolean colsIsElementHandles - a flag indicating if the cols array is using ids or handles
+ * @param int frid - Optional. The form relationship id in effect, if any. Causes headers to get the form title prefixed to them, on the first column from that form.
+ * @return array Returns an array of the headers, corresponding to the order of the cols that were passed in.
+ */
+
+function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
     global $xoopsDB;
 
+		$fid = 0;
+		$prevFid = 0;
+		$headers = array();
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
     foreach ($cols as $col) {
         if($col == "entry_id") {
             $headers[$col] = _formulize_ENTRY_ID;
@@ -3767,12 +3827,23 @@ function getHeaders($cols, $colsIsElementHandles = true) {
             } else {
                 $whereClause = "ele_id = '$col'";
             }
-            $temp_cap = q("SELECT ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause");
+						$queryForEleId = ($colsIsElementHandles AND $frid) ? "ele_id, " : "";
+            $temp_cap = q("SELECT $queryForEleId ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE $whereClause");
             if ($temp_cap[0]['ele_colhead'] != "") {
                 $headers[$temp_cap[0]['ele_handle']] = $temp_cap[0]['ele_colhead'];
             } else {
                 $headers[$temp_cap[0]['ele_handle']] = $temp_cap[0]['ele_caption'];
             }
+						if($frid) {
+							$ele_id = !$colsIsElementHandles ? $col : $temp_cap[0]['ele_id'];
+							if($elementObject = $element_handler->get($ele_id)) {
+								$fid = $elementObject->getVar('fid');
+								if($fid != $prevFid AND $formObject = $form_handler->get($fid)) {
+									$headers[$temp_cap[0]['ele_handle']] = $formObject->getVar('title').": ".$headers[$temp_cap[0]['ele_handle']];
+									$prevFid = $fid;
+								}
+							}
+						}
         }
     }
     return $headers;
@@ -8766,5 +8837,119 @@ function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentP
 	}
 	$pageNav .= "</div>";
 	return $pageNav;
+}
 
+/**
+ * Find the first application for a given form.
+ * @param mixed form_id_or_object - the form id number of a formulize form object
+ * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application the form belongs to, if any, or the application object if returnObject was true. Returns false if form id or object was invalid, and null if there is no application for the form.
+ */
+function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject = false) {
+	$firstApp = false;
+	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
+	$formId = $form_id_or_object;
+	if(is_object($form_id_or_object) AND is_a($form_id_or_object, 'formulizeForm')) {
+		$formId = $form_id_or_object->getVar('fid');
+	}
+	if(is_numeric($formId) AND $formId) {
+		$firstApp = null;
+		if($apps = $applications_handler->getApplicationsByForm($formId)) {
+			if(is_array($apps) AND count($apps)>0) {
+				$firstApp = $returnObject ? $apps[key($apps)] : $apps[key($apps)]->getVar('appid');
+			}
+		}
+	}
+	return $firstApp;
+}
+
+/**
+ * Find the first application that both forms are part of, or if none, first application for the first form.
+ * @param mixed first_form_id_or_object - the form id number of a formulize form object of the first form
+ * @param mixed second_form_id_or_object - the form id number of a formulize form object of the first form
+ * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application that both forms belong to, if any, otherwise the first application the first form belongs to. Returns the application object if returnObject was true. Returns false if form ids or objects were invalid, and null if there is no application for the form.
+ */
+function formulize_getFirstApplicationForBothForms($first_form_id_or_object, $second_form_id_or_object, $returnObject = false) {
+	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
+	$firstFormId = $first_form_id_or_object;
+	if(is_object($first_form_id_or_object) AND is_a($first_form_id_or_object, 'formulizeForm')) {
+		$firstFormId = $first_form_id_or_object->getVar('fid');
+	}
+	$firstAppIds = array();
+	if(is_numeric($firstFormId) AND $firstFormId) {
+		if($firstApps = $applications_handler->getApplicationsByForm($firstFormId)) {
+			foreach($firstApps as $i=>$thisApp) {
+				$firstAppIds[$i] = $thisApp->getVar('appid');
+			}
+		}
+	} else {
+		return false;
+	}
+	$secondFormId = $second_form_id_or_object;
+	if(is_object($second_form_id_or_object) AND is_a($second_form_id_or_object, 'formulizeForm')) {
+		$secondFormId = $second_form_id_or_object->getVar('fid');
+	}
+	$secondAppIds = array();
+	if(is_numeric($secondFormId) AND $secondFormId) {
+		if($secondApps = $applications_handler->getApplicationsByForm($secondFormId)) {
+			foreach($secondApps as $i=>$thisApp) {
+				$secondAppIds[$i] = $thisApp->getVar('appid');
+			}
+		}
+	} else {
+		return false;
+	}
+	if(empty($firstAppIds)) {
+		return null;
+	} else {
+		if(empty($secondAppIds)) {
+			return $returnObject ? $firstApps[key($firstAppIds)] : $firstAppIds[key($firstAppIds)];
+		} elseif($intersection = array_intersect($firstAppIds, $secondAppIds)) { // array_intersect preserves keys
+			return $returnObject ? $firstApps[key($intersection)] : $intersection[key($intersection)];
+		} else {
+			return $returnObject ? $firstApps[key($firstAppIds)] : $firstAppIds[key($firstAppIds)];
+		}
+	}
+}
+
+/**
+ * Check if two elements are actually linked to each other
+ * @param int|string|object element1Indentifier - element id, handle or object for the first element
+ * @param int|string|object element2Indentifier - element id, handle or object for the second element
+ * @return boolean Return true or false, depending if the elements are linked to each other or not
+ */
+function elementsAreLinked($element1Identifier, $element2Identifier) {
+	if($element1 = _getElementObject($element1Identifier)
+		AND $element2 = _getElementObject($element2Identifier)
+		AND (
+			$element1->getVar('ele_handle') == sourceHandleForElement($element2)
+			OR $element2->getVar('ele_handle') == sourceHandleForElement($element1)
+		)) {
+			return true;
+	}
+	return false;
+}
+
+/**
+ * Find the element handle of the source element for a linked element
+ * @param int|string|object elementIndentifier - element id, handle or object for the element
+ * @return string|boolean Return the element handle of the source of the link, or false if the element is not linked
+ */
+function sourceHandleForElement($element) {
+	$sourceHandle = false;
+	if($element = _getElementObject($element)) {
+    $ele_value = $element->getVar('ele_value');
+		if(is_array($ele_value)
+			AND isset($ele_value[2])
+			AND is_string($ele_value[2])
+			AND strstr($ele_value[2], "#*=:*")
+			AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])) {
+        $boxproperties = explode("#*=:*", $ele_value[2]);
+        $element_handler = xoops_getmodulehandler('elements','formulize');
+        $sourceElement = $element_handler->get($boxproperties[1]);
+        $sourceHandle = $sourceElement->getVar('ele_handle');
+    }
+	}
+  return $sourceHandle;
 }

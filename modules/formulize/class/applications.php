@@ -287,9 +287,9 @@ class formulizeApplicationsHandler {
         }
       }
       if($fid > 0) {
-        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' as t1, '.$xoopsDB->prefix("formulize_application_form_link").' as t2 WHERE t1.appid = t2.appid AND t2.fid = '.$fid.' ORDER BY t1.name';
+        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' as t1, '.$xoopsDB->prefix("formulize_application_form_link").' as t2 WHERE t1.appid = t2.appid AND t2.fid = '.$fid.' AND t2.appid > 0 ORDER BY t1.name';
       } else {
-        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' ORDER BY name';
+        $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' WHERE appid > 0 ORDER BY name';
       }
     }
 
@@ -479,7 +479,7 @@ class formulizeApplicationsHandler {
 
 
     //modified Oct 2013 W.R.
-    function insertMenuLink($appid,$menuitem){
+    function insertMenuLink($appid,$menuitem, $force=false){
 
         global $xoopsDB;
 
@@ -495,7 +495,12 @@ class formulizeApplicationsHandler {
         $linkValues = explode("::",$menuitem);
 //	error_log("link values ".print_r($linkValues));
         $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
-		if(!$result = $xoopsDB->query($insertsql)) {
+				if($force) {
+					$result = $xoopsDB->queryF($insertsql);
+				} else {
+					$result = $xoopsDB->query($insertsql);
+				}
+		if(!$result) {
 			exit("Error inserting Menu Item. SQL dump:\n" . $insertsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 		}else{
 
@@ -512,7 +517,12 @@ class formulizeApplicationsHandler {
 						$defaultScreen = 1;
 					}
 					$permissionsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_permissions")."` VALUES (null,".$menuid.",". $groupid.", ".$defaultScreen.")";
-					if(!$result = $xoopsDB->query($permissionsql)) {
+					if($force) {
+						$result = $xoopsDB->queryF($permissionsql);
+					} else {
+						$result = $xoopsDB->query($permissionsql);
+					}
+					if(!$result) {
 						exit("Error inserting Menu Item permissions.".$linkValues[4]." SQL dump:\n" . $permissionsql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
                     $defaultScreen = 0;
@@ -611,8 +621,110 @@ class formulizeApplicationsHandler {
             exit("Error checking default screen. SQL dump:\n" . $checksql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
     }
-}
 
+	/**
+	 * Get the admin UI metadata necessary to display the form listings for the application
+	 * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
+	 * @return array formsInApp An array of the metadata necessary for the form listings
+	 */
+	function getFormMetadataForAdminUI($aid) {
+		global $xoopsUser;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$aid = intval($aid);
+		$formsInApp = array();
+		$adminLayoutTopAndLeftForForms = $this->getAdminLayoutTopAndLeftForForms($aid);
+		$formObjects = $form_handler->getFormsByApplication($aid);
+		if(is_array($formObjects)) {
+			foreach($formObjects as $thisFormObject) {
+				if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
+						continue;
+				}
+				$formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
+				$formsInApp[$thisFormObject->getVar('id_form')]['fid'] = $thisFormObject->getVar('id_form'); // forms tab uses fid
+				$hasDelete = $gperm_handler->checkRight("delete_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId());
+				$formsInApp[$thisFormObject->getVar('id_form')]['hasdelete'] = $hasDelete;
+				// get the default screens for each form too
+				$defaultFormScreen = $thisFormObject->getVar('defaultform');
+				$defaultListScreen = $thisFormObject->getVar('defaultlist');
+				$defaultFormObject = $screen_handler->get($defaultFormScreen);
+				if (is_object($defaultFormObject)) {
+						$defaultFormName = $defaultFormObject->getVar('title');
+				}
+				$defaultListObject = $screen_handler->get($defaultListScreen);
+				if (is_object($defaultListObject)) {
+						$defaultListName = $defaultListObject->getVar('title');
+				}
+				$formLinks = $framework_handler->formatFrameworksAsRelationships(array($framework_handler->get(-1)), $thisFormObject->getVar('id_form'));
+				$formsInApp[$thisFormObject->getVar('id_form')]['form'] = $thisFormObject;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
+				$formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
+				$formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');
+				$formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
+				$formsInApp[$thisFormObject->getVar('id_form')]['top'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['top']: '0px';
+				$formsInApp[$thisFormObject->getVar('id_form')]['left'] = (isset($adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) AND $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']) ? $adminLayoutTopAndLeftForForms[$thisFormObject->getVar('id_form')]['left']: '0px';
+				$formsInApp[$thisFormObject->getVar('id_form')]['links'] = $formLinks[0]['content']['links'];
+			}
+		}
+		return $formsInApp;
+	}
+
+  /**
+   * Fetch the top and left values for the admin layout of the forms in the given application
+   * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
+   * @return array Returns a multidimensional array, first level key is the form id, second level has two keys, top and left, for the top and left css values (ie: 345.677px). Or an empty array if the application id is not valid.
+   */
+  function getAdminLayoutTopAndLeftForForms($aid) {
+    global $xoopsDB;
+    $positions = array();
+    $aid = intval($aid);
+    if($aid) {
+      $sql = 'SELECT `fid`, `top`, `left` FROM '.$xoopsDB->prefix('formulize_application_form_link').' WHERE appid = '.$aid;
+      if($res = $xoopsDB->query($sql)) {
+        while($row = $xoopsDB->fetchRow($res)) {
+          $positions[$row[0]]['top'] = $row[1];
+          $positions[$row[0]]['left'] = $row[2];
+        }
+      }
+    }
+    return $positions;
+  }
+
+  /**
+   * Set the top and left values for forms based on what was passed back through the admin UI, which will include the aid
+   * @return boolean True or false depending on the result of the query
+   */
+  function setAdminLayoutTopAndLeftForForms() {
+		global $xoopsDB;
+		$adminLayoutTopAndLeftForForms = array();
+		$positions = array(); // will be a multidimensional array of the positions for the forms. Top level key is the appid, second is form id, third level keys are top and left, for the top and left css values (ie: 345.677px)
+		foreach($_POST['formTop'] as $appidDotFid=>$topValue) {
+			$leftValue = $_POST['formLeft'][$appidDotFid];
+			list($aid, $fid) = explode('.',$appidDotFid);
+			$aid = intval($aid);
+			$fid = intval($fid);
+			$adminLayoutTopAndLeftForForms[$aid] = $this->getAdminLayoutTopAndLeftForForms($aid);
+			if($topValue != '0px' AND $leftValue != '0px' AND ($adminLayoutTopAndLeftForForms[$aid][$fid]['top'] != $topValue OR $adminLayoutTopAndLeftForForms[$aid][$fid]['left'] != $leftValue)) {
+				$positions[$aid][$fid]['top'] = $topValue;
+				$positions[$aid][$fid]['left'] = $leftValue;
+			}
+		}
+		foreach($positions as $aid=>$formPositions) {
+			foreach($formPositions as $fid=>$topAndLeft) {
+				$sql = 'UPDATE '.$xoopsDB->prefix('formulize_application_form_link')." SET `top` = '".$topAndLeft['top']."', `left` = '".$topAndLeft['left']."' WHERE appid = $aid AND fid = $fid";
+				if(!$res = $xoopsDB->query($sql)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+}
 
 function buildMenuLinkURL($menulink) {
     $url = $menulink->getVar("url");

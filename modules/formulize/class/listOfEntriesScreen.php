@@ -122,9 +122,9 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     }
 
 
-    function insert($screen) {
+    function insert($screen, $force=false) {
         $update = !$screen->getVar('sid') ? false : true;
-        if (!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
+        if (!$sid = parent::insert($screen, $force)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
             return false;
         }
         $screen->assignVar('sid', $sid);
@@ -255,7 +255,11 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         } else {
             $sql = sprintf("UPDATE %s SET useworkingmsg = %u, repeatheaders = %u, useaddupdate = %s, useaddmultiple = %s, useaddproxy = %s, usecurrentviewlist = %s, limitviews = %s, defaultview = %s, advanceview = %s, usechangecols = %s, usecalcs = %s, useadvcalcs = %s, useadvsearch = %s, useexport = %s, useexportcalcs = %s, useimport = %s, useclone = %s, usedelete = %s, useselectall = %s, useclearall = %s, usenotifications = %s, usereset = %s, usesave = %s, usedeleteview = %s, useheadings = %u, usesearch = %u, usecheckboxes = %u, useviewentrylinks = %u, usescrollbox = %u, usesearchcalcmsgs = %u, hiddencolumns = %s, decolumns = %s, desavetext = %s, columnwidth = %u, textwidth = %u, customactions = %s, entriesperpage = %u, viewentryscreen = %s, dedisplay = %u, fundamental_filters = %s WHERE sid = %u", $this->db->prefix('formulize_screen_listofentries'), $screen->getVar('useworkingmsg'), $screen->getVar('repeatheaders'), $this->db->quoteString($screen->getVar('useaddupdate')), $this->db->quoteString($screen->getVar('useaddmultiple')), $this->db->quoteString($screen->getVar('useaddproxy')), $this->db->quoteString($screen->getVar('usecurrentviewlist')), $this->db->quoteString(serialize($screen->getVar('limitviews'))), $this->db->quoteString(serialize($screen->getVar('defaultview'))), $this->db->quoteString(serialize($screen->getVar('advanceview'))), $this->db->quoteString($screen->getVar('usechangecols')), $this->db->quoteString($screen->getVar('usecalcs')), $this->db->quoteString($screen->getVar('useadvcalcs')), $this->db->quoteString($screen->getVar('useadvsearch')), $this->db->quoteString($screen->getVar('useexport')), $this->db->quoteString($screen->getVar('useexportcalcs')), $this->db->quoteString($screen->getVar('useimport')), $this->db->quoteString($screen->getVar('useclone')), $this->db->quoteString($screen->getVar('usedelete')), $this->db->quoteString($screen->getVar('useselectall')), $this->db->quoteString($screen->getVar('useclearall')), $this->db->quoteString($screen->getVar('usenotifications')), $this->db->quoteString($screen->getVar('usereset')), $this->db->quoteString($screen->getVar('usesave')), $this->db->quoteString($screen->getVar('usedeleteview')), $screen->getVar('useheadings'), $screen->getVar('usesearch'), $screen->getVar('usecheckboxes'), $screen->getVar('useviewentrylinks'), $screen->getVar('usescrollbox'), $screen->getVar('usesearchcalcmsgs'), $this->db->quoteString(serialize($screen->getVar('hiddencolumns'))), $this->db->quoteString(serialize($screen->getVar('decolumns'))), $this->db->quoteString($screen->getVar('desavetext')), $screen->getVar('columnwidth'), $screen->getVar('textwidth'), $this->db->quoteString(serialize($screen->getVar('customactions'))), $screen->getVar('entriesperpage'), $this->db->quoteString($screen->getVar('viewentryscreen')), $screen->getVar('dedisplay'), $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))), $screen->getVar('sid'));
         }
-        $result = $this->db->query($sql);
+				if($force) {
+					$result = $this->db->queryF($sql);
+				} else {
+        	$result = $this->db->query($sql);
+				}
         if (!$result) {
             return false;
         }
@@ -343,53 +347,52 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
-    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formTitle, $fid)
-    {
-        global $xoopsConfig;
-        // View
-        $defaultListScreen->setVar('defaultview', serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)));
-        $defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
-        $defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
-        $defaultListScreen->setVar('useworkingmsg', 1);
-        $defaultListScreen->setVar('usescrollbox', 1);
-        $defaultListScreen->setVar('entriesperpage', 10);
-        $defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
-        // Headings
-        $defaultListScreen->setVar('useheadings', 1);
-        $defaultListScreen->setVar('repeatheaders', 0);
-        $defaultListScreen->setVar('usesearchcalcmsgs', 1);
-        $defaultListScreen->setVar('usesearch', 1);
-        $defaultListScreen->setVar('columnwidth', 0);
-        $defaultListScreen->setVar('textwidth', 35);
-        $defaultListScreen->setVar('usecheckboxes', 0);
-        $defaultListScreen->setVar('useviewentrylinks', 1);
-        $defaultListScreen->setVar('desavetext', _formulize_SAVE);
-        // Buttons
-        $defaultListScreen->setVar('useaddupdate', _formulize_DE_ADDENTRY);
-        $defaultListScreen->setVar('useaddmultiple', _formulize_DE_ADD_MULTIPLE_ENTRY);
-        $defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
-        $defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
-        $defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);
-        $defaultListScreen->setVar('usenotifications', _formulize_DE_NOTBUTTON);
-        $defaultListScreen->setVar('usechangecols', _formulize_DE_CHANGECOLS);
-        $defaultListScreen->setVar('usecalcs', _formulize_DE_CALCS);
-        $defaultListScreen->setVar('useadvcalcs', _formulize_DE_ADVCALCS);
-        $defaultListScreen->setVar('useexportcalcs', _formulize_DE_EXPORT_CALCS);
-        $defaultListScreen->setVar('useadvsearch', '');
-        $defaultListScreen->setVar('useclone', _formulize_DE_CLONESEL);
-        $defaultListScreen->setVar('usedelete', _formulize_DE_DELETESEL);
-        $defaultListScreen->setVar('useselectall', _formulize_DE_SELALL);
-        $defaultListScreen->setVar('useclearall', _formulize_DE_CLEARALL);
-        $defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
-        $defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
-        $defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
-        $defaultListScreen->setVar('title', $formTitle);
-        $defaultListScreen->setVar('fid', $fid);
-        $defaultListScreen->setVar('frid', 0);
-        $defaultListScreen->setVar('type', 'listOfEntries');
-        $defaultListScreen->setVar('useToken', 1);
-        $defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
-				$defaultListScreen->setVar('anonNeedsPasscode', 1);
+    public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formObject) {
+			global $xoopsConfig;
+			// View
+			$defaultListScreen->setVar('defaultview', serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)));
+			$defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
+			$defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
+			$defaultListScreen->setVar('useworkingmsg', 1);
+			$defaultListScreen->setVar('usescrollbox', 1);
+			$defaultListScreen->setVar('entriesperpage', 10);
+			$defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
+			// Headings
+			$defaultListScreen->setVar('useheadings', 1);
+			$defaultListScreen->setVar('repeatheaders', 0);
+			$defaultListScreen->setVar('usesearchcalcmsgs', 1);
+			$defaultListScreen->setVar('usesearch', 1);
+			$defaultListScreen->setVar('columnwidth', 0);
+			$defaultListScreen->setVar('textwidth', 35);
+			$defaultListScreen->setVar('usecheckboxes', 0);
+			$defaultListScreen->setVar('useviewentrylinks', 1);
+			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
+			// Buttons
+			$defaultListScreen->setVar('useaddupdate', ($formObject->getVar('singular') ? sprintf(_formulize_DE_ADDSINGULAR, $formObject->getVar('singular')) : _formulize_DE_ADDENTRY));
+			$defaultListScreen->setVar('useaddmultiple', ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
+			$defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
+			$defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
+			$defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);
+			$defaultListScreen->setVar('usenotifications', _formulize_DE_NOTBUTTON);
+			$defaultListScreen->setVar('usechangecols', _formulize_DE_CHANGECOLS);
+			$defaultListScreen->setVar('usecalcs', _formulize_DE_CALCS);
+			$defaultListScreen->setVar('useadvcalcs', _formulize_DE_ADVCALCS);
+			$defaultListScreen->setVar('useexportcalcs', _formulize_DE_EXPORT_CALCS);
+			$defaultListScreen->setVar('useadvsearch', '');
+			$defaultListScreen->setVar('useclone', _formulize_DE_CLONESEL);
+			$defaultListScreen->setVar('usedelete', _formulize_DE_DELETESEL);
+			$defaultListScreen->setVar('useselectall', _formulize_DE_SELALL);
+			$defaultListScreen->setVar('useclearall', _formulize_DE_CLEARALL);
+			$defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
+			$defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
+			$defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
+			$defaultListScreen->setVar('title', sprintf(_AM_FORMULIZE_LIST_SCREEN_TITLE, $formObject->getSingular()));
+			$defaultListScreen->setVar('fid', $formObject->getVar('fid'));
+			$defaultListScreen->setVar('frid', -1);
+			$defaultListScreen->setVar('type', 'listOfEntries');
+			$defaultListScreen->setVar('useToken', 1);
+			$defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
+			$defaultListScreen->setVar('anonNeedsPasscode', 1);
     }
 }
 

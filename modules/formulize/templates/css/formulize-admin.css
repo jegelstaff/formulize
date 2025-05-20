@@ -205,7 +205,7 @@ h6 {
 /* ---------- Column left/right rules ---------- */
 /* ------ Main content ------ */
 #xo-canvas-content {
-  line-height: 1.3em; }
+  line-height: 1.3; }
 
 /* lists */
 #xo-canvas-content ul {
@@ -908,7 +908,6 @@ a.tooltip {
   text-transform: none;
   -webkit-font-smoothing: antialiased;
   text-decoration: inherit;
-  font-size: 11pt;
   cursor: help;
   position: relative;
   background: transparent;
@@ -916,27 +915,30 @@ a.tooltip {
 
 a.tooltip:before {
   content: "\f110";
-  font-size: 15pt;
+  font-size: 13pt;
   color: #59a7d4; }
 
 a.tooltip > span {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	z-index: 10;
   display: none; }
 
 a.tooltip:hover {
-  background: transparent;
-  background-color: transparent; }
+  background: transparent !important;
+  background-color: transparent;
+}
 
-a.tooltip:hover > span {
+a.tooltip:hover > span,
+a.tooltip > span:hover {
   position: absolute;
-  top: 2em;
+  top: -2em;
   left: -5em;
   width: 25em;
   display: block;
   background-color: #ffffff;
   color: #000;
-  padding: 1.5em;
+  padding: 1em;
   line-height: 1.5em;
-  opacity: 0.95;
   border: 2px solid #59a7d4;
   border-radius: 6px;
   -moz-border-radius: 6px;
@@ -1301,15 +1303,10 @@ ul.admin-application-form-list li {
 label {
   text-align: left !important; }
 
-.form-screen-list .imageicon {
-  clear: both;
-  float: left; }
-
-.form-screen-list .formaction {
-  padding-left: 38px; }
-
 #formlisting {
-  overflow: hidden; }
+  overflow: hidden;
+	position: relative;
+}
 
 .paging {
   overflow: auto;
@@ -1327,24 +1324,92 @@ label {
   font-style: normal; }
 
 div.accordion-box {
-  float: left;
-  width: 385px;
-  margin: 0 2em 1.5em 0; }
+	float: left;
+	margin: 0 2em 1.5em 0;
+}
+
+div.accordion-box p {
+	width: 400px;
+	margin-bottom: 0.5em;
+}
+
+div.dockable-box.ui-draggable,
+div.create-connection-box.ui-draggable {
+	cursor: move;
+}
+div.form-listing-box,
+div.create-connection-box {
+  width: 340px;
+  margin: 0 2em 1.5em 0;
+	border: 3px solid white;
+	border-radius: 7px;
+}
+
+div.create-connection-box {
+	float: left;
+	width: 275px;
+}
+
+div.create-connection-box .form-name,
+div.target-box .form-name {
+	height: 36px;
+}
+
+div#create-connection-form1-target .form-name,
+div#create-connection-form2-target .form-name {
+	margin-left: 0;
+	margin-right: 0;
+	margin-top: 4px;
+	line-height: normal;
+}
+
+div#create-connection-form1-target .form-name div,
+div#create-connection-form2-target .form-name div {
+	margin-left: 0;
+	margin-right: 0;
+	text-align: left;
+}
+
+#create-connection-title-options div.target-box {
+	height: 60px;
+	width: 275px;
+	border: 1px solid black;
+	padding-top: 0.1em;
+	padding-bottom: 0.1em;
+	padding-left: 0.3em;
+	padding-right: 0.3em;
+	line-height: 55px;
+	text-align: center;
+	margin-left: 1em;
+}
 
 div.accordion-box-wide {
   float: left;
   width: 500px;
   margin: 0 2em 1.5em 0; }
 
-div.accordion-box .form-name {
+div.accordion-box .form-name,
+div.form-listing-box .form-name,
+div.create-connection-box .form-name,
+div.target-box .form-name {
   margin: 0;
   padding: 0.5em;
-  font-weight: bold;
   background-color: #0085b6;
   border: 1px solid #94daf2;
-  border-bottom: 0; }
+  border-bottom: 0;
+	color: #FFF;
+	display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+	align-items: center;
+	height: 31px;
+}
+div.form-listing-box .form-name {
+	border: 1px solid #0085b6;
+}
 
-div.accordion-box .form-name a {
+div.accordion-box .form-name a,
+div.form-listing-box .form-name a {
   display: block;
   margin: 0;
   /*padding-left: 35px;
@@ -1355,15 +1420,60 @@ div.accordion-box .form-name a {
   color: #FFF;
   text-decoration: none; }
 
-div.accordion-box .form-name a:hover {
-  color: #aee7f9;
+div.accordion-box .form-name a:hover,
+div.form-listing-box .form-name a:hover {
+  color: #FFF;
   text-decoration: none; }
 
-div.accordion-box .form-screen-list {
+div.accordion-box .form-screen-list,
+div.form-listing-box .form-screen-list {
   margin: 0;
   padding: 0.5em;
   border: 1px solid #94daf2;
-  border-top: 0; }
+  border-top: 0;
+	display: flex;
+	align-items: top;
+	justify-content: space-evenly;
+	flex-direction: row;
+	background-color: #FFF;
+}
+div.form-listing-box .form-screen-list-outer {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	display: block;
+	align-items: top;
+	justify-content: space-evenly;
+	flex-direction: row;
+	background-color: #FFF;
+	width: 100%;
+}
+
+.form-list-link {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding-right: 0.5em;
+}
+
+.form-data img {
+	margin-left: 0.25em;
+}
+
+.form-data {
+	width: 235px;
+	text-align: left;
+	font-size: 9pt;
+	display: none;
+}
+div.accordion-box div.form-data > p,
+div.form-listing-box div.form-data > p {
+	margin-left: 0.5em;
+}
+
+.form-id-number {
+	text-wrap: nowrap;
+}
 
 .formbox-title {
   font-weight: bold; }
@@ -1372,13 +1482,16 @@ div.accordion-box .form-screen-list {
   margin-top: 1em;
   margin-left: 2em; }
 
-div.accordion-box .form-screen-list ul {
+div.accordion-box .form-screen-list ul,
+div.form-listing-box .form-screen-list.ul {
   margin: 0.5em; }
 
-div.accordion-box .form-screen-list p {
+div.accordion-box .form-screen-list p,
+div.form-listing-box .form-screen-list p {
   margin: 0; }
 
-div.accordion-box .no-bullets {
+div.accordion-box .no-bullets,
+div.form-listing-box .no-bullets {
   list-style-type: none; }
 
 /* table overrides */
@@ -1460,13 +1573,33 @@ div.save-view-access {
   padding: 1.5em;
   border: solid 1px #1D65A5; }
 
-#savebutton input, #popupsavebutton input {
-  float: left;
+#savebutton input, #popupsavebutton input,
+#relationship-options-popupsavebutton input,
+#relationship-create-connection-popupsavebutton input,
+input[name=delete-link-button] {
   font-size: 1.1rem;
   width: 150px;
   text-align: center;
   margin-bottom: 1em;
-  font-weight: normal; }
+  font-weight: normal;
+	margin-right: 1em;
+}
+
+#savebutton input, #popupsavebutton input,
+#relationship-options-popupsavebutton input,
+input[name=delete-link-button] {
+	float: left;
+}
+
+div#relationship-create-connection-popupsavebutton {
+	display: flex;
+	justify-content: center;
+	margin-top: 1.5em;
+}
+
+input[name=delete-link-button] {
+	float: right;
+}
 
 #savewarning, #derivedfinished {
   display: none;
@@ -1482,7 +1615,9 @@ div.save-view-access {
   padding: 10px 5px 10px 40px;
   border: solid 1px #9F6000; }
 
-#popupsavewarning {
+#popupsavewarning,
+#relationship-options-popupsavewarning,
+#relationship-create-connection-popupsavewarning {
   padding-top: 0.2em;
   display: none;
   color: red; }
@@ -1514,13 +1649,13 @@ div.save-view-access {
 div.customeffect {
   padding-left: 1em; }
 
-form fieldset {
+fieldset {
   margin-bottom: 10px;
   border: 1px solid #0085b6;
   /*padding: 6px;*/
   padding: 0.5em; }
 
-form legend {
+legend {
   padding: 0 2px;
   font-weight: bold;
   color: #0085b6;
@@ -1544,29 +1679,16 @@ li.user_perms_li_li {
   margin-left: 50px !important;
   padding: 0; }
 
-form div.form-item {
+div.form-item {
   margin: 0 0 0em 0;
 }
 
-form div.form-item > fieldset {
+div.form-item > fieldset {
   border-radius: 5px; }
 
 form label {
   display: inline-block;
   padding: 0 4px 0 0; }
-
-form fieldset fieldset {
-  /*  border: none;
-    margin: 3px 0 0 0;
-      padding: 0;*/ }
-
-form fieldset fieldset legend {
-  /*padding: 0 0 5px;
-  font-weight: normal;*/ }
-
-form fieldset fieldset label {
-  /*  display: block;
-    width: auto; */ }
 
 form .required em {
   font-weight: bold;
@@ -1586,7 +1708,8 @@ div.description {
   font-style: italic;
   font-size: 80%;
   color: #666;
-  padding-top: 10px;
+  padding-bottom: 10px;
+	margin-top: 4px;
   text-align: left !important; }
 
 .homepage-description {
@@ -1607,9 +1730,6 @@ input:focus, select:focus, textarea:focus {
 form .form-radios, form .form-multiple-select {
   /*margin: 0.5em 0 0.25em 1em;*/ }
 
-form .radio-inline {
-  float: left; }
-
 form fieldset ol {
   margin: 0;
   padding: 0; }
@@ -1620,6 +1740,10 @@ form fieldset li {
 
 form .groupselectionbox, form .permissiongroup {
   margin-left: 30px; }
+
+form .permissiongroup label {
+	width: 350px;
+}
 
 form .groupselectionbox {
   margin-bottom: 20px; }
@@ -1693,7 +1817,9 @@ form .groupselectionbox {
   width: 50%;
   height: 13em;
   overflow: auto;
-  border: 1px solid blue; }
+  border: 1px solid blue;
+	margin-right: 3em;
+}
 
 p.useroptions input[type="text"] {
     width: 50em;
@@ -1769,4 +1895,252 @@ div.flex-box {
 
 .pit-contents {
 	width: 440px;
+}
+
+#form-names-flex {
+	display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+	margin-left: 1em;
+	border-left: 1px solid black;
+	margin-bottom: 1em;
+}
+
+#form-names-flex div.spacer-line {
+	border-bottom: 1px solid black;
+	display: inline-block;
+	padding-right: 1em;
+}
+
+#form-names-flex div.spacer {
+	display: inline-block;
+	padding-right: 1em;
+}
+
+.form-listing-container {
+	height: 700px;
+	overflow: auto;
+	margin-left: 1.5em;
+	margin-top: 1em;
+}
+
+.organize-toggle {
+	position: absolute;
+	right: 4em;
+	top: 3em;
+  z-index: 1;
+  background-color: white;
+  padding: 0.5em;
+	border: 1px solid #d3d3d3;
+	border-radius: 4px;
+}
+
+.organize-toggle input[type=text] {
+  width: 10em;
+}
+
+p.organize-toggle-title {
+	font-weight: bold;
+	margin: 0;
+}
+p.organize-toggle-buttons {
+	margin: 0;
+}
+form.formulize-admin-form input[type=text].filter-forms {
+	margin-bottom: 0.75em;
+}
+
+.selected-form {
+	border: 3px solid #6eac2c !important;
+}
+
+.form-listing-details {
+	display: none;
+	position: relative;
+}
+
+.form-listing-details.current-organize-custom {
+	position: fixed;
+	display: block;
+	bottom: 4.9em;
+	right: 3.3em;
+	width: 370px;
+	border: 3px solid #6eac2c;
+	border-radius: 7px;
+	padding: 0.5em;
+	z-index: 100;
+	background-color: #fff;
+	height: 78%;
+	z-index: 100;
+	overflow-y: auto;
+}
+
+.form-listing-title-id {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+p.form-listing-id {
+	white-space: nowrap;
+}
+.form-listing-content {
+	display: flex;
+	justify-content: space-evenly;
+	margin-top: 1em;
+	flex-direction: column;
+}
+.form-listing-actions-info {
+	flex-direction: row;
+  display: flex;
+}
+div.form-name {
+	height: 31px;
+}
+div[id^=form-details-box-] {
+	height: auto;
+	z-index: 1;
+	background-color: white;
+}
+div[id^=form-details-box-].open-accordion-listing {
+	align-items: flex-start !important;
+	div.form-screen-list {
+		border: 0;
+	}
+	z-index: 10;
+}
+div[id^=form-listing-details-].open-accordion-listing {
+	width: 100%;
+	height: 320px;
+	div.form-listing-content {
+		flex-direction: row;
+		margin-top: 1.5em;
+		display: flex;
+	}
+	a.form-listing-details-close,
+	div.form-listing-content hr {
+		display: none;
+	}
+	p.form-title,
+	div.form-listing-title-id {
+		display: none;
+	}
+	div.form-listing-connections {
+		margin-left: 3em;
+    margin-top: -0.5em;
+		overflow-y: auto;
+    height: 280px;
+	}
+}
+
+.form-title {
+	font-size: 14pt;
+	font-weight: bold;
+}
+
+.form-subtitle {
+	font-size: 12pt;
+	font-weight: bold;
+}
+
+.form-listing-links,
+.form-listing-data {
+	display: flex;
+	gap: 1em;
+	margin-bottom: 1em;
+}
+
+.form-listing-image {
+	width: 30px;
+}
+
+.relationship-links {
+	margin-bottom: 1em;
+	margin-top: 0.5em;
+}
+
+p.title,
+span.title {
+	font-weight: bold;
+	margin-top: 0;
+}
+
+.create-connection-link-choices {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	justify-content: center;
+	margin-bottom: 0.4em;
+}
+.create-connection-link-choices label {
+	display: flex;
+	width: 80%;
+	gap: 2em;
+}
+.create-connection-link-choices label span {
+	flex: 1;
+}
+#create-connection-desc-container {
+	display: flex;
+  justify-content: center;
+}
+#create-connection-desc-container div.description {
+	width: 75%;
+}
+.connection-title-spacer {
+	visibility: hidden;
+	margin-left: 2em;
+}
+.italic {
+	font-style: italic;
+}
+.bold {
+	font-weight: bold;
+}
+
+div#dialog-relationship-create-connection-content {
+	padding-top: 1em;
+}
+
+#create-connection-title-options,
+#form-toolbox-title {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	clear: both;
+	justify-content: center;
+}
+
+#create-connection-title-options div {
+	margin-left: 1em;
+	margin-right: 1em;
+}
+
+#dialog-relationship-options-content p.title,
+#dialog-relationship-create-connection-content p.title {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+#dialog-relationship-options-content ul.connections {
+	margin-bottom: 1em;
+}
+
+#dialog-relationship-options-content ul.connections li {
+	list-style-type: disc;
+  list-style-position: inside;
+	padding: 0;
+}
+
+label[for^=relationships-] {
+	margin-top: 0.5em;
+	padding-left: 2em;
+  text-indent: -1.5em;
+}
+
+form[name=relationship-options-popupform] label[for^=relationships-] {
+	text-indent: -1.8em;
+}
+
+.relationship-link-options {
+	font-size: 8pt;
 }

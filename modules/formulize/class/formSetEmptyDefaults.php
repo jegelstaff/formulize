@@ -3,6 +3,8 @@
 // set empty defaults
 $id_form = "";
 $formq[0]['desc_form'] = "";
+$formq[0]['singular'] = "";
+$formq[0]['plural'] = "";
 $formq[0]['tableform'] = "";
 $formq[0]['store_revisions'] = 0;
 $formq[0]['lockedform'] = 0;
@@ -14,7 +16,7 @@ $elementColheads = array();
 $elementHandles = array();
 $elementTypes = array();
 $encryptedElements = array();
-$headerlist = array();
+$headerlist = "";
 $defaultform = "";
 $defaultlist = "";
 $views = array();

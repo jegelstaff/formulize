@@ -1,46 +1,113 @@
-<{foreach from=$sectionContent.forms item=form}>
-  
-<{if $form.istableform}>
-<{assign var="defaulttab" value="settings"}>
-<{else}>
-<{assign var="defaulttab" value="elements"}>    
-<{/if}>
-  
-<div class="accordion-box">
-  <p class="form-name ui-corner-top"><{if $form.lockedform != 1}><a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>" class="form-name-icon"><{/if}>Form: <{$form.name}> (id: <{$form.fid}>)<{if $form.lockedform != 1}></a><{/if}></p>
-  <div class="form-screen-list ui-corner-bottom">
-		<p class="formbox-title">Actions:</p>
-		<div class="formactions-list">
-		<{if $form.lockedform != 1}>
-		<a rel="tooltip" title="Change the form's behaviour, add elements, set permissions, create new screens, etc." href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaulttab}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$smarty.const._AM_APP_CONFIGURE}></div></a><br />
-		<{/if}>
-		<a rel="tooltip" title="View the form as users will see it.<br>This will show the default list screen, and from there you can add an entry to see the form itself." href="../index.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction"><{$smarty.const._AM_APP_VIEW_DEFAULT_SCREEN}></div></a><br />
-		<{if $form.lockedform != 1}>
-		<a rel="tooltip" title="View the form with all controls available.<br>This will show the form with all the default options in place, the same way it would appear if there were no modifications to the default screens (or if it had no screens at all).<br>This is useful for interacting with the form when your default screen has been stripped down to remove features that regular users don't need, but administrators do need." href="../master.php?fid=<{$form.fid}>" target="_blank"><div class="imageicon"><img src="../images/kfind.png"></div><div class="formaction"><{$smarty.const._AM_APP_VIEW_OPTIONS_SCREEN}></div></a><br />
-		<{/if}>
-		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>None of the information collected is copied." class="cloneform" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clone.gif"></div><div class="formaction"><{$smarty.const._AM_APP_CLONE_SIMPLY}></div></a><br />
-		<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>The new form will have a copy of all the entries collected in the original form." class="cloneformdata" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/clonedata.gif"></div><div class="formaction"><{$smarty.const._AM_APP_CLONE_WITHDATA}></div></a><br />
-		<{if $form.lockedform != 1 && $form.hasdelete}>
-		<a rel="tooltip" title="Use this to prevent any changes to the form or its settings, even by the webmaster.<br>This action cannot be undone!" class="lockdown" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/perm.png"></div><div class="formaction"><{$smarty.const._AM_APP_LOCKDOWN}></div></a><br />
-		<a rel="tooltip" title="Delete a form plus all the entries people have made in it.<br>This action cannot be undone!" class="deleteformlink" target="<{$form.fid}>" href=""><div class="imageicon"><img src="../images/editdelete.gif"></div><div class="formaction"><{$smarty.const._AM_APP_DELETE_FORM}></div></a><br />
-		<{/if}>
-		<{if !$form.defaultformscreenid && !$form.defaultlistscreenid}>
-		<p><a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=new"><div class="imageicon"><img src="../images/filenew2.png"></div><div class="formaction"><{$smarty.const._AM_APP_CREATE_NEW_SCREEN}></div></a></p>
-		<{/if}>
-		</div>
+<div class="organize-toggle">
+<p class="organize-toggle-title">Filter forms:</p>
+<input type="text" class="filter-forms" id="filter-forms-<{$sectionContent.aid}>" appid="<{$sectionContent.aid}>">
+<p class="organize-toggle-title">Organize forms:</p>
+<p class="organize-toggle-buttons"><input type='checkbox' name='organize-toggle' id='otbn<{$sectionContent.aid}>' class='organize-toggle-by-name' value='by-name' <{php}>if(!isset($_COOKIE['currentOrganize']) OR $_COOKIE['currentOrganize'] == 'by-name') {<{/php}>checked="checked"<{php}>}<{/php}>> <label for='otbn<{$sectionContent.aid}>'>List by name</label><br>
+<input type='checkbox' name='organize-toggle' class='organize-toggle-custom' id='otc<{$sectionContent.aid}>' value='custom' <{php}>if($_COOKIE['currentOrganize'] AND $_COOKIE['currentOrganize'] == 'custom') {<{/php}>checked="checked"<{php}>}<{/php}>> <label for='otc<{$sectionContent.aid}>'>Click and drag</label></p>
+</div>
 
-		<{if $form.defaultformscreenid || $form.defaultlistscreenid}>
-		<p class="formbox-title"><{$smarty.const._AM_APP_DEFAULTSCREENS}></p>
-		<div class="formactions-list">
-		<{if $form.defaultlistscreenid}>
-		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultlistscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultlistscreenname}></div></a><br />
-		<{/if}>
-		<{if $form.defaultformscreenid}>  
-		<a href="ui.php?page=screen&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&sid=<{$form.defaultformscreenid}>"><div class="imageicon"><img src="../images/kedit.png"></div><div class="formaction"><{$form.defaultformscreenname}></div></a><br />
-		<{/if}>
-		<a href="ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens"><div class="formaction"><i><{$smarty.const._AM_APP_MORESCREENS}></i></div></a>
-		</div>	
-    <{/if}>
+<div class="form-listing-container" id="form-list-for-app-<{$sectionContent.aid}>">
+
+<{foreach from=$sectionContent.forms item=form}>
+
+<{if $form.istableform}>
+<{assign var="defaultTab" value="settings"}>
+<{else}>
+<{assign var="defaultTab" value="elements"}>
+<{/if}>
+
+<div class="dockable-box form-listing-box" formid='<{$form.fid}>' appid='<{$sectionContent.aid}>' id="form-details-box-<{$sectionContent.aid}>-<{$form.fid}>" style="position: relative; top: <{$form.top}>; left: <{$form.left}>;">
+	<div class="form-screen-list-outer">
+		<input type='hidden' name='formTop[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
+		<input type='hidden' name='formLeft[<{$sectionContent.aid}>.<{$form.fid}>]' value=''>
+		<div class="form-name ui-corner-top"><div><{$form.name}></div><div class="form-id-number">(id: <{$form.fid}>)</div></div>
+		<div class="form-screen-list ui-corner-bottom">
+			<div class="form-list-link">
+				<img src="../images/kedit.png">
+				&nbsp;<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=<{$defaultTab}>' class='form-configure form-admin-link' formid='<{$form.fid}>' appid='<{$sectionContent.aid}>'><{$smarty.const._AM_APP_ELEMENTS}></a>
+				&nbsp;&mdash;&nbsp;<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens' class='form-configure form-admin-link' formid='<{$form.fid}>' appid='<{$sectionContent.aid}>'><{$smarty.const._AM_APP_SCREENS}></a>
+			</div>
+			<div class="form-list-link">
+				<img src="../images/kfind.png">
+				&nbsp;<a href="../master.php?fid=<{$form.fid}>" target="_blank"><{$smarty.const._AM_APP_VIEW_OPTIONS_SCREEN}></a>
+			</div>
+			<div class="form-list-link form-data">
+				<img src="../images/formdata.gif">
+				<p><{if $form.form->elementHandles|is_array}><{$form.form->elementHandles|@count|number_format}><{else}>0<{/if}> <{$smarty.const._AM_APP_ELEMENTS}>&nbsp;&mdash;&nbsp;<{$form.form->entry_count|number_format}> <{$smarty.const._AM_APP_ENTRIES}><br><{$form.form->user_count|number_format}> <{$smarty.const._AM_APP_USERS}>&nbsp;&mdash;&nbsp;<{$form.form->group_count|number_format}> <{$smarty.const._AM_APP_GROUPS}></p>
+			</div>
+		</div>
+	</div>
+	<div id="form-listing-details-<{$sectionContent.aid}>-<{$form.fid}>" class="form-listing-details">
+		<a href='' class='form-listing-details-close' appid='<{$sectionContent.aid}>' formid='<{$form.fid}>'>Close</a>
+		<div class='form-listing-title-id'><p class='form-title'><{$form.name}></p><p class='form-listing-id'>(id: <{$form.fid}>)</p></div>
+		<div class='form-listing-content'>
+			<div class="form-listing-actions-info">
+				<div>
+					<div class='form-listing-links'>
+						<div class='form-listing-image'><img src="../images/kedit.png"></div>
+						<div>
+							<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=settings'>Settings</a><br>
+							<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=elements'>Elements</a><br>
+							<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=permissions'>Permissions</a><br>
+							<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=screens'>Screens</a><br>
+							<a href='ui.php?page=form&aid=<{$sectionContent.aid}>&fid=<{$form.fid}>&tab=procedures'>Procedures</a>
+						</div>
+					</div>
+					<div class='form-listing-links'>
+						<div class='form-listing-image'><img src="../images/clone.gif"></div>
+						<div>
+							<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>None of the information collected is copied." class="cloneform" target="<{$form.fid}>" href=""><{$smarty.const._AM_APP_CLONE_SIMPLY}></a>
+						</div>
+					</div>
+					<div class='form-listing-links'>
+						<div class='form-listing-image'><img src="../images/clonedata.gif"></div>
+						<div>
+							<a rel="tooltip" title="Copy the structure of an existing form into a new form with a different name.<br>The new form will have a copy of all the entries collected in the original form." class="cloneformdata" target="<{$form.fid}>" href=""><{$smarty.const._AM_APP_CLONE_WITHDATA}></a>
+						</div>
+					</div>
+					<div class='form-listing-links'>
+						<div class='form-listing-image'><img src="../images/perm.png"></div>
+						<div>
+							<a rel="tooltip" title="Use this to prevent any changes to the form or its settings, even by the webmaster.<br>This action cannot be undone!" class="lockdown" target="<{$form.fid}>" href=""><{$smarty.const._AM_APP_LOCKDOWN}></a>
+						</div>
+					</div>
+					<div class='form-listing-links'>
+						<div class='form-listing-image'><img src="../images/editdelete.gif"></div>
+						<div>
+							<a rel="tooltip" title="Delete a form plus all the entries people have made in it.<br>This action cannot be undone!" class="deleteformlink" target="<{$form.fid}>" href=""><{$smarty.const._AM_APP_DELETE_FORM}></a>
+						</div>
+					</div>
+				</div>
+				<div class='form-listing-data'>
+					<div class='form-listing-image'><img src="../images/formdata.gif"></div>
+					<div>
+						<{if $form.form->elementHandles|is_array|number_format}><{$form.form->elementHandles|@count}><{else}>0<{/if}> <{$smarty.const._AM_APP_ELEMENTS}><br>
+						<{$form.form->entry_count|number_format}> <{$smarty.const._AM_APP_ENTRIES}><br>
+						<{$form.form->user_count|number_format}> <{$smarty.const._AM_APP_USERS}><br>
+						<{$form.form->group_count|number_format}> <{$smarty.const._AM_APP_GROUPS}><br>
+						<br>
+						Entries <i>created</i>...<br>
+						&nbsp;Past week: <{$form.form->entry_created_last_week|number_format}><br>
+						&nbsp;Past month: <{$form.form->entry_created_last_month|number_format}><br>
+						&nbsp;Past year: <{$form.form->entry_created_last_year|number_format}><br>
+						<br>
+						Entries <i>updated</i>...<br>
+						&nbsp;Past week: <{$form.form->entry_updated_last_week|number_format}><br>
+						&nbsp;Past month: <{$form.form->entry_updated_last_month|number_format}><br>
+						&nbsp;Past year: <{$form.form->entry_updated_last_year|number_format}><br>
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div class="form-listing-connections">
+				<p class='form-title'>Connections</p>
+				<{include file="db:admin/relationship_listing.html" sectionContent=$form}>
+				<p><a class='relationship-link-create-connection' target='<{$form.fid}>' href=""><img src="../images/filenew2.png"> Create a Connection</a></p>
+			</div>
+		</div>
 	</div>
 </div>
 <{/foreach}>
+
+</div>
+

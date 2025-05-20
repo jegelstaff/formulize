@@ -69,14 +69,14 @@ function checkForCommon(Obj, form1, form2, lid) {
         <input type=hidden name=relationships-common2choice value="">
         <input type=hidden name=relationships-common_fl_id value="">
         <h2><{$smarty.const._AM_FRAME_FORMSIN}></h2>
-        <table>
+        <table style="width: 100%">
             <tr>
                 <th></th>
                 <th><{$smarty.const._AM_FRAME_AVAILFORMS1}></th>
                 <th><{$smarty.const._AM_FRAME_AVAILFORMS2}></th>
                 <th><{$smarty.const._AM_FRAME_RELATIONSHIP}></th>
                 <th><{$smarty.const._AM_FRAME_LINKAGE}></th>
-                <th>Options</th>
+                <th><{$smarty.const._AM_FRAME_SETTINGS}></th>
             </tr>
             <{foreach from=$content.relationship->links key=linkNumber item=link}>
                 <tr class="<{cycle values='even,odd'}>">
@@ -104,16 +104,13 @@ function checkForCommon(Obj, form1, form2, lid) {
                             <input type="hidden" name="relationships-preservecommon<{$link->lid}>" value="<{$link->key1}>+<{$link->key2}>"></input>
                         <{/if}>
                     </td>
-                    <td style="white-space:nowrap;">
-                        <input type="checkbox"<{if $link->unifiedDisplay}> checked="checked"<{/if}> value="1" name="relationships-display<{$link->lid}>" id="relationships-display<{$link->lid}>"><label for="relationships-display<{$link->lid}>">Display as a single form</label>
-                        <input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><label for="relationships-delete<{$link->lid}>">Delete linked entries</label>
+                    <td>
+                        <label for="relationships-delete<{$link->lid}>"><input type="checkbox"<{if $link->unified_delete}> checked="checked"<{/if}> value="1" name="relationships-delete<{$link->lid}>" id="relationships-delete<{$link->lid}>"><{$smarty.const._AM_APP_RELATIONSHIP_UNIFIEDDELETE}></label>
 												<br>
 												<{if $link->relationship eq 1}>
-													<input type="checkbox"<{if $link->one2one_conditional}> checked="checked"<{/if}> value="1" name="relationships-conditional<{$link->lid}>" id="relationships-conditional<{$link->lid}>"><label for="relationships-conditional<{$link->lid}>">When you display the forms together, dynamically change the entry displayed, if the linking value changes</label>
+													<label for="relationships-conditional<{$link->lid}>"><input type="checkbox"<{if $link->one2one_conditional}> checked="checked"<{/if}> value="1" name="relationships-conditional<{$link->lid}>" id="relationships-conditional<{$link->lid}>"><{$smarty.const._AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER}></label>
 													<br>
-													<input type="checkbox"<{if $link->one2one_bookkeeping}> checked="checked"<{/if}> value="1" name="relationships-bookkeeping<{$link->lid}>" id="relationships-bookkeeping<{$link->lid}>"><label for="relationships-bookkeeping<{$link->lid}>">When you save an entry in one form, automatically create an entry in the other</label>
-												<{else}>
-													&nbsp;<br>&nbsp;
+													<label for="relationships-bookkeeping<{$link->lid}>"><input type="checkbox"<{if $link->one2one_bookkeeping}> checked="checked"<{/if}> value="1" name="relationships-bookkeeping<{$link->lid}>" id="relationships-bookkeeping<{$link->lid}>"><{$smarty.const._AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES}></label>
 												<{/if}>
                     </td>
                 </tr>

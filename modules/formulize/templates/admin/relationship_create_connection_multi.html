@@ -1,0 +1,160 @@
+
+<input type="hidden" name="form1" value="">
+<input type="hidden" name="form2" value="">
+<div>
+	<div id="create-connection-title-options" class="multi-connection">
+		<span class="title">Each</span>
+		<div id="create-connection-form1-target" class="target-box">Drag in form 1</div>
+		<div id="create-connection-type" style="visibility: hidden;"><label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1'>Has One</label><br>
+		<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label></div>
+		<div id="create-connection-form2-target" class="target-box" style="visibility: hidden;">Drag in form 2</div>
+	</div>
+
+	<br>
+	<hr>
+
+	<div id="form-toolbox-title">
+		<p class="title">Available Forms:</p>
+	</div>
+
+	<div id="form-toolbox">
+	<{foreach item=form from=$content.forms}>
+		<div class="create-connection-box" formid='<{$form.formId}>' singular='<{$form.singular}>' plural='<{$form.plural}>' id="create-connection-box-<{$form.formId}>">
+			<div class="form-name ui-corner-top ui-corner-bottom"><div><{$form.formTitle}></div><div class="form-id-number">(id: <{$form.formId}>)</div></div>
+		</div>
+	<{/foreach}>
+	</div>
+
+</div>
+
+<script type="text/javascript">
+
+	// Thanks to https://stackoverflow.com/questions/1254665/jquery-draggable-droppable-how-to-snap-dropped-element-to-dropped-on-element
+	$('.create-connection-box').draggable();
+
+	if (typeof existingOneConnections === undefined) {
+		let existingOneConnections = [];
+		let existingManyConnections = [];
+		let allForms = [];
+	} else {
+		existingOneConnections = [];
+		existingManyConnections = [];
+		allForms = [];
+	}
+	// setup existing connections data
+	<{foreach item=connections key=form1Id from=$content.existingOneConnections}>
+		existingOneConnections[<{$form1Id}>] = [];
+		<{foreach item=form2Id from=$connections}>
+			existingOneConnections[<{$form1Id}>].push(<{$form2Id}>);
+		<{/foreach}>
+	<{/foreach}>
+	<{foreach item=connections key=form1Id from=$content.existingManyConnections}>
+		existingManyConnections[<{$form1Id}>] = [];
+		<{foreach item=form2Id from=$connections}>
+			existingManyConnections[<{$form1Id}>].push(<{$form2Id}>);
+		<{/foreach}>
+	<{/foreach}>
+	<{foreach item=form from=$content.forms}>
+		allForms.push(<{$form.formId}>);
+	<{/foreach}>
+	$('.target-box').droppable({
+    drop: function(ev, ui) {
+			var dropped = ui.draggable;
+			var droppedOn = $(this);
+			var curDrop = $(dropped).get(0).outerHTML;
+			var formAllowedInPosition = true;
+			// show the one/many UI if we dragged to form1
+			if($(droppedOn).attr('id').indexOf('e-connection-form1') > 0) {
+				if(formAllowedInPosition = formCanBeForm1($(dropped).attr('formId'))) {
+					form1Id = $(dropped).attr('formId');
+					$('input[name=form1]').val(form1Id);
+					$('#create-connection-type').css('visibility', 'visible');
+				} else {
+					alert('This form already has connections to all the other forms');
+				}
+			} else {
+				form2Id = $(dropped).attr('formId');
+				$('input[name=form2]').val(form2Id);
+				$('div[id^=form-toolbox]').hide();
+				showRelationshipCreationOptions(form1Id, form2Id);
+			}
+			if(formAllowedInPosition) {
+				// set the contents of the box we dragged to
+				$(droppedOn).empty();
+				$(droppedOn).html(setSingularPlural(dropped, droppedOn));
+			}
+			// reset the draggable item position, and the form toolbox
+			$(dropped).css('top', 0).css('left', 0);
+			if($(droppedOn).attr('id').indexOf('e-connection-form') > 0) {
+				setAvailableForms();
+			}
+    }
+	});
+
+	function setAvailableForms() {
+		$('#form-toolbox .create-connection-box').each(function() {
+			if($(this).attr('formId') == form1Id || $(this).attr('formId') == form2Id
+				|| ($('input[name=relationship]:checked').val() == 1 && existingOneConnections[form1Id] !== undefined && existingOneConnections[form1Id].indexOf(parseInt($(this).attr('formId'))) !== -1)
+				|| ($('input[name=relationship]:checked').val() == 2 && existingManyConnections[form1Id] !== undefined && existingManyConnections[form1Id].indexOf(parseInt($(this).attr('formId'))) !== -1)) {
+				$(this).hide();
+			} else {
+				$(this).show();
+			}
+		});
+	}
+
+	function formCanBeForm1(formId) {
+		var onePartners = [];
+		var manyPartners = [];
+		if(existingOneConnections[formId] === undefined) {
+			onePartners = allForms;
+		} else {
+			onePartners = allForms.filter(x => !existingOneConnections[formId].includes(x));
+		}
+		if(existingManyConnections[formId] === undefined) {
+			manyPartners = allForms;
+		} else {
+			manyPartners = allForms.filter(x => !existingManyConnections[formId].includes(x));
+		}
+		if(onePartners.length > 0) {
+			$('label[for=oneentry]').show();
+		} else {
+			$('label[for=oneentry]').hide();
+		}
+		if(manyPartners.length > 0) {
+			$('label[for=manyentries]').show();
+		} else {
+			$('label[for=manyentries]').hide();
+		}
+		return (onePartners.length > 0 || manyPartners.length > 0);
+	}
+
+	function setSingularPlural(boxElement, targetBox) {
+		var text = $('#create-connection-box-'+$(boxElement).attr('formId')+' div.form-name div').html();
+		var boxContent = $(boxElement).html();
+		var singular = $(boxElement).attr('singular');
+		var plural = $(boxElement).attr('plural');
+		if($(targetBox).attr('id') == 'create-connection-form1-target'
+			|| $('input[name=relationship]:checked').val() == 1) {
+			var replace = singular;
+		} else {
+			var replace = plural;
+		}
+		if(text != replace) {
+			boxContent = boxContent.replace('>'+text+'<', '>{REPLACEHERE}<');
+			boxContent = boxContent.replace('{REPLACEHERE}', replace);
+		}
+		return boxContent;
+	}
+
+  $('input[name=relationship]').change(function() {
+		$('#create-connection-form2-target').css('visibility', 'visible');
+		$('div.create-connection-box').each(function() {
+			$(this).html(setSingularPlural($(this), $('#create-connection-form2-target')));
+		});
+		setAvailableForms();
+	});
+
+</script>
+
+

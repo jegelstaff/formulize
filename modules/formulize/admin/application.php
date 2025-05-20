@@ -113,37 +113,9 @@ $options['listsofscreenoptions'] = $forms;
 
 $screen_handler = xoops_getmodulehandler('screen', 'formulize');
 $gperm_handler = xoops_gethandler('groupperm');
-$formsInApp = array();
-global $xoopsUser;
-foreach($formObjects as $thisFormObject) {
-    if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {
-        continue;
-    }
-    $formsInApp[$thisFormObject->getVar('id_form')]['name'] = $thisFormObject->getVar('title');
-    $formsInApp[$thisFormObject->getVar('id_form')]['fid'] = $thisFormObject->getVar('id_form'); // forms tab uses fid
-    $hasDelete = $gperm_handler->checkRight("delete_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId());
-    $formsInApp[$thisFormObject->getVar('id_form')]['hasdelete'] = $hasDelete;
-    // get the default screens for each form too
-    $defaultFormScreen = $thisFormObject->getVar('defaultform');
-    $defaultListScreen = $thisFormObject->getVar('defaultlist');
-    $defaultFormObject = $screen_handler->get($defaultFormScreen);
-    if (is_object($defaultFormObject)) {
-        $defaultFormName = $defaultFormObject->getVar('title');
-    }
-    $defaultListObject = $screen_handler->get($defaultListScreen);
-    if (is_object($defaultListObject)) {
-        $defaultListName = $defaultListObject->getVar('title');
-    }
-    $formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenid'] = $defaultFormScreen;
-    $formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenid'] = $defaultListScreen;
-    $formsInApp[$thisFormObject->getVar('id_form')]['defaultformscreenname'] = $defaultFormName;
-    $formsInApp[$thisFormObject->getVar('id_form')]['defaultlistscreenname'] = $defaultListName;
-    $formsInApp[$thisFormObject->getVar('id_form')]['lockedform'] = $thisFormObject->getVar('lockedform');
-    $formsInApp[$thisFormObject->getVar('id_form')]['istableform'] = $thisFormObject->getVar('tableform');
-}
+$formsInApp = $application_handler->getFormMetadataForAdminUI($aid);
 
-
-$allRelationships = array();
+$allRelationships = array($framework_handler->get(-1)); // start with primary relationship
 foreach($formObjects as $thisForm) {
     $allRelationships = array_merge($allRelationships, $framework_handler->getFrameworksByForm($thisForm->getVar('id_form'))); // returns array of objects
     if ($aid) {

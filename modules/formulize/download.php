@@ -29,7 +29,7 @@
 // this file checks the entry id and form element id passed to it, and also the current user's permissions,
 // and if they have access to the entry and element, then it queues up a download for the user
 
-include "../../mainfile.php";
+require_once "../../mainfile.php";
 session_write_close(); // nothing that happens will affect the session, so let's close early to play nice with other concurrent requests
 
 icms::$logger->disableLogger();

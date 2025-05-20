@@ -482,6 +482,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$formObject = $form_handler->get($fid);
 
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
+    // if there are no links from the mainform to others in the active relationship, then don't bother with the relationship
+    if(empty($linkkeys)) {
+        $frid = "";
+    }
 
 	//print_r( $linkformids );
 	if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
@@ -587,7 +591,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$perGroupFiltersPerForms[$fid] = $perGroupFilter;
 			if ($frid) {
 				foreach ($linkformids as $id => $thisLinkFid) {
-					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f" . $id);
+					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f" . array_search($thisLinkFid, $linkformids));
 				}
 			}
 		}
@@ -603,6 +607,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$newexistsJoinText = "";
 			$joinText = ""; // not "new" variables persist (with .= operator)
 			foreach ($linkformids as $id => $linkedFid) {
+
+				$formAliasId = array_search($linkedFid, $linkformids);
 
 				// ignore recursive connections if...
 				// 1. they are not 'parent' connections
@@ -624,18 +630,18 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 				if (($joinHandles[$linkselfids[$id]] and $joinHandles[$linktargetids[$id]]) or ($linkselfids[$id] == '' and $linktargetids[$id] == '')) {
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-					$linkSelectIndex[$linkedFid] = "f$id.entry_id AS f" . $id . "_entry_id, f$id.creation_uid AS f" . $id . "_creation_uid, f$id.mod_uid AS f" . $id . "_mod_uid, f$id.creation_datetime AS f" . $id . "_creation_datetime, f$id.mod_datetime AS f" . $id . "_mod_datetime, f$id.*";
-					$linkSelect .= ", f$id.entry_id AS f" . $id . "_entry_id, f$id.creation_uid AS f" . $id . "_creation_uid, f$id.mod_uid AS f" . $id . "_mod_uid, f$id.creation_datetime AS f" . $id . "_creation_datetime, f$id.mod_datetime AS f" . $id . "_mod_datetime, f$id.*";
+					$linkSelectIndex[$linkedFid] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
+					$linkSelect .= ", f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
 					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
-					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
+					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
 					$newexistsJoinText = $existsJoinText ? " $andor " : "";
-					$newexistsJoinText .= " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$id WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
-					$newJoinText = formulize_generateJoinSQL($id, $linkcommonvalue, $linkselfids, $linktargetids);
+					$newexistsJoinText .= " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
+					$newJoinText = formulize_generateJoinSQL($id, $formAliasId, $linkcommonvalue, $linkselfids, $linktargetids);
 					if (isset($perGroupFiltersPerForms[$linkedFid])) {
 						$newJoinText .= $perGroupFiltersPerForms[$linkedFid];
 					}
-					$joinTextIndex["f" . $id] = $newJoinText;
+					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
 					if (is_array($oneSideFilters[$linkedFid]) and count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 						$existsJoinText .= $newexistsJoinText . $newJoinText;
@@ -987,7 +993,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 // linkOrdinal is which item in the metadata arrays we are concerned with, ie: which link, numbered from 0, and based on the way they come out of the db in the gatherLinkMetadata operation - easiest to do array_search in linkformids to find the ordinal for the non-main form you're concerned about. Problem is if there is more than one link between the same pair of forms??
 // $linkcommonvalue, $linkselfids, $linktargetids are the standard metadata coming out of the gatherLinkMetadata function
 // tableAliases is optional and can be used to insert your own table aliases into the SQL, rather than use the extraction layer defaults (which are main and f0, f1, f2 for the different linked forms) - use keys 0 for mainform alias, and 1 for subform alias
-function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids, $linktargetids, $tableAliases = false)
+function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue, $linkselfids, $linktargetids, $tableAliases = false)
 {
 
 	if ($tableAliases) {
@@ -995,7 +1001,7 @@ function formulize_generateJoinSQL($linkOrdinal, $linkcommonvalue, $linkselfids,
 		$subAlias = $tableAliases[1];
 	} else {
 		$mainAlias = 'main';
-		$subAlias = "f$linkOrdinal";
+		$subAlias = "f$formAliasId";
 	}
 
 	$joinHandles = formulize_getJoinHandles(array(0 => $linkselfids, 1 => $linktargetids));
@@ -1878,7 +1884,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 		// apply relevant terms to the oneSideFilters
 		$aliasMap = array($fid => 'main');
 		foreach ($linkfids as $id => $linkfid) {
-			$aliasMap[$linkfid] = 'f' . $id;
+			$aliasMap[$linkfid] = 'f' . array_search($linkfid, $linkfids);
 		}
 		list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($fundamental_filters, $aliasMap);
 		// first item coming back is the 'and' filters, grouped by form id, with the 0 key set as the entire string together
@@ -2158,7 +2164,8 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 					} // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
 					$dataToWrite = array();
 					foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
-						$functionName = "derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $relationship_id . "_" . $form_id . "_" . $formulaNumber;
+						$fridForName = $relationship_id == -1 ? 'primary' : $relationship_id;
+						$functionName = "derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName. "_" . $form_id . "_" . $formulaNumber;
 						// want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
 						$resetDerivedValueFlag = false;
 						if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
@@ -2232,10 +2239,11 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 			}
 			$formula = implode("\n", $formulaLines);
 		}
-		$fileName = XOOPS_ROOT_PATH . '/modules/formulize/cache/Derived_value_formula_for_' . trans($thisMetaData['handle'], 'en') . '_in_form_' . $thisMetaData['form_id'] . "_(fid_" . $fid . "_frid_" . $frid . "_fn_" . $formulaNumber . ").php";
+		$fridForName = $frid == -1 ? 'primary' : $frid;
+		$fileName = XOOPS_ROOT_PATH . '/modules/formulize/cache/Derived_value_formula_for_' . trans($thisMetaData['handle'], 'en') . '_in_form_' . $thisMetaData['form_id'] . "_(fid_" . $fid . "_frid_" . $fridForName . "_fn_" . $formulaNumber . ").php";
 		$formula = removeOpeningPHPTag($formula);
 		file_put_contents($fileName, "<?php
-    function derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $frid . "_" . $fid . "_" . $formulaNumber . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
+    function derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName . "_" . $fid . "_" . $formulaNumber . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
         $formula
         return \$value;
     }\r\n");

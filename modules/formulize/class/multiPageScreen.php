@@ -149,9 +149,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		return new formulizeMultiPageScreen();
 	}
 
-	function insert($screen) {
+	function insert($screen, $force=false) {
 		$update = !$screen->getVar('sid') ? false : true;
-		if(!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
+		if(!$sid = parent::insert($screen, $force)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
 			return false;
 		}
 		$screen->assignVar('sid', $sid);
@@ -190,7 +190,11 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
              } else {
                  $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
-		 $result = $this->db->query($sql);
+					if($force) {
+						$result = $this->db->queryF($sql);
+					} else {
+		 				$result = $this->db->query($sql);
+					}
          if(!$result) {
             print $this->db->error(). "<br>\n $sql <br>\n";
             return false;
@@ -349,19 +353,19 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         }
     }
 
-    public function setDefaultFormScreenVars($defaultFormScreen, $formTitle, $fid, $pageOneTitle='')
+    public function setDefaultFormScreenVars($defaultFormScreen, $formObject)
 	{
         global $xoopsConfig;
         $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
-        $defaultFormScreen->setVar('title', $formTitle);
+        $defaultFormScreen->setVar('title', sprintf(_AM_FORMULIZE_FORM_SCREEN_TITLE, $formObject->getSingular()));
         $defaultFormScreen->setVar('displayheading', 0);
 		$defaultFormScreen->setVar('reloadblank', 0);
         $defaultFormScreen->setVar('finishisdone', 1);
-		$defaultFormScreen->setVar('fid', $fid);
-		$defaultFormScreen->setVar('frid', 0);
+		$defaultFormScreen->setVar('fid', $formObject->getVar('fid'));
+		$defaultFormScreen->setVar('frid', -1);
 		$defaultFormScreen->setVar('type', 'multiPage');
 		$defaultFormScreen->setVar('useToken', 1);
-        $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$pageOneTitle)));
+        $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$formObject->getSingular())));
         $defaultFormScreen->setVar('pages', serialize(array(0=>array())));
         $defaultFormScreen->setVar('navstyle', 1);
         $defaultFormScreen->setVar('buttontext', serialize(array(

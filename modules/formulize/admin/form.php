@@ -51,7 +51,9 @@ if ($_GET['fid'] != "new") {
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
     $formName = $formObject->getVar('title');
-    $singleentry = $formObject->getVar('single');
+		$singular = $formObject->getVar('singular');
+		$plural = $formObject->getVar('plural');
+    $singleentry = $formObject->getVar('single') ? $formObject->getVar('single') : 'off';
     $tableform = $formObject->getVar('tableform');
     $headerlist = $formObject->getVar('headerlist');
     $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
@@ -62,9 +64,15 @@ if ($_GET['fid'] != "new") {
     $store_revisions = $formObject->getVar('store_revisions');
     $note = $formObject->getVar('note');
     $send_digests = $formObject->getVar('send_digests');
+		$defaultpi = $formObject->getVar('pi');
+		$pioptions = array();
 
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
+
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
+		$elementIdsWithData = $formObject->getVar('elementsWithData');
     $elements = array();
     $elementHeadings = array();
     $formApplications = array();
@@ -72,17 +80,24 @@ if ($_GET['fid'] != "new") {
     // a 'name' key and a 'content' key for each form that is found
     // Name will be the heading of the section, content is data used in the template for each section
     $i = 1;
+		$elementsInRelationshipLinks = getElementsInRelationshipLinks($elementObjects);
     foreach($elementObjects as $thisElement) {
         if($thisElement->isSystemElement) { continue; }
-        $elementCaption = strip_tags($thisElement->getVar('ele_caption'));
-        $colhead = strip_tags($thisElement->getVar('ele_colhead'));
+        $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
+        $colhead = trans(strip_tags($thisElement->getVar('ele_colhead')));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
         $ele_id = $thisElement->getVar('ele_id');
+				$elements[$i]['content']['hasData'] = 0;
+				if(isset($elementIdsWithData[$ele_id])) {
+					$pioptions[$ele_id] = $colhead ? $colhead : $elementCaption;
+					$elements[$i]['content']['hasData'] = 1;
+				}
         $ele_handle = $thisElement->getVar('ele_handle');
         $nameText = $colhead ? printSmart($colhead,55) : printSmart($elementCaption,55);
         $elements[$i]['name'] = "<span style='font-size: 125%;'>$nameText</span><br>$cleanType - $ele_handle";
         $elements[$i]['content']['ele_id'] = $ele_id;
         $elements[$i]['content']['ele_handle'] = $ele_handle;
+				$elements[$i]['content']['inLink'] = in_array($ele_id, $elementsInRelationshipLinks);
         $ele_type = $thisElement->getVar('ele_type');
         switch($ele_type) {
           case("text"):
@@ -416,13 +431,18 @@ if ($_GET['fid'] != "new") {
     if ($_GET['tableform']) {
     $newtableform = true;
     }
-    $formName = _AM_APP_NEWFORM;
+    $formName = "";
+		$singular = "";
+		$plural = "";
     $singleentry = "off"; // need to send a default for this
     $defaultform = 0;
     $defaultlist = 0;
     $menutext = _AM_APP_USETITLE;
     $form_handle = "";
     $store_revisions = 0;
+		$send_digests = 0;
+		$defaultpi = 0;
+		$pioptions = array();
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -436,6 +456,7 @@ if ($_GET['fid'] != "new") {
     foreach($allGroups as $thisGroup) {
         $groupsCanEditOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
     }
+		$connections = array();
 }
 
 // get a list of all the custom element types that are present
@@ -472,12 +493,17 @@ foreach($allApps as $thisApp) {
 
 // common values should be assigned to all tabs
 $common['name'] = $formName;
+$common['singular'] = $singular;
+$common['plural'] = $plural;
 $common['fid'] = $fid;
 $common['aid'] = $aid;
 $common['defaultform'] = $defaultform;
 $common['defaultlist'] = $defaultlist;
 $common['form_object'] = $formObject;
 $common['note'] = $note;
+$common['defaultpi'] = $defaultpi;
+$common['pioptions'] = $pioptions;
+$common['formTitle'] = "this form"; // used to refer to the form in the primary identifier selection UI
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";
@@ -531,6 +557,7 @@ $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
+$settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
     $settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;

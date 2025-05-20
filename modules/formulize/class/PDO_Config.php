@@ -1,6 +1,6 @@
 <?php
 
-include "../../../mainfile.php";
+require_once "../../../mainfile.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 global $xoopsUser;

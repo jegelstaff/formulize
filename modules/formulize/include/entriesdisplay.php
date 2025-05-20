@@ -1402,6 +1402,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
     $buttonCodeArray['numberOfEntries'] = $entryTotals;
+		$buttonCodeArray['toggleRepeatData'] = '<label for="toggleRepeatData">'._AM_FORMULIZE_LOE_HIDE_REPEATS.' <input id="toggleRepeatData" type="checkbox"></label>';
     $buttonCodeArray['entriesPerPageSelector'] = $entriesPerPageSelector;
 
 	$currentViewName = $settings['loadviewname'];
@@ -1598,7 +1599,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
 	$useScrollBox = true;
 	$useHeadings = true;
-	$repeatHeaders = 5;
+	$repeatHeaders = 0;
 	$columnWidth = 0;
 	$textWidth = 35;
 	$useCheckboxes = $settings['lockcontrols'] ? 2 : 0;
@@ -1720,7 +1721,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		'scrollBoxClassOnOff' => $scrollBoxClassOnOff,
 		'headingHelpAndLockShown' => $headingHelpAndLockShown,
 		'headersShown' => $useHeadings,
-		'headers' => ($useHeadings ? getHeaders($cols) : array()),
+		'headers' => ($useHeadings ? getHeaders($cols, frid: $frid) : array()),
 		'checkBoxesShown' => ($useCheckboxes != 2 ? true : false),
 		'viewEntryLinksShown' => $useViewEntryLinks,
 		'lockedColumns' => $settings['lockedColumns'],
@@ -1861,10 +1862,10 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 					$templateVariables['class'] = ($templateVariables['class'] == 'even' ? 'odd' : 'even');
 					$templateVariables['rowNumber'] = $id+2;
 					$templateVariables['columnContents'] = array();
-                    $templateVariables['columnHandles'] = array();
-                    $templateVariables['columnFormIds'] = array();
-                    $templateVariables['entry'] = $entry;
-                    $templateVariables['entry_id'] = $entry_id;
+					$templateVariables['columnHandles'] = array();
+					$templateVariables['columnFormIds'] = array();
+					$templateVariables['entry'] = $entry;
+					$templateVariables['entry_id'] = $entry_id;
 
 					$cellRowAddress = $templateVariables['rowNumber'];
 					for($i=0;$i<count((array) $cols);$i++) {
@@ -2396,13 +2397,14 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	// figure out the special where clause conditions that need to be added for this calculation
 	list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
 
-	$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
     if($calcElementObject) {
         $dataTypeInfo = $calcElementObject->getDataTypeInformation();
+				$numericDataType = $calcElementObject->hasNumericDataType();
     } else {
         $dataHandler = new formulizeDataHandler($fid);
         if(isset($dataHandler->metadataFieldTypes[$handle])) {
             $dataTypeInfo = array('dataType'=>$dataHandler->metadataFieldTypes[$handle]);
+						$numericDataType = false;
         } else {
             print "Error: could not determine datatype for element '$handle'<br>";
         }
@@ -2422,7 +2424,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  $allowedWhere .= " $allowedWhereConjunction ($calcElement='' OR $calcElement IS NULL)";
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
+		  if(is_numeric($value) AND $numericDataType) {
 			$allowedWhere .= " $allowedWhereConjunction $calcElement=".formulize_db_escape($value);
 		  } else {
 			$allowedWhere .= " $allowedWhereConjunction $calcElement='".formulize_db_escape($value)."'";
@@ -2455,7 +2457,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		  $excludedWhere .= " $excludedWhereConjunction ($calcElement!='' AND $calcElement IS NOT NULL)";
 		} else {
 		  $value = parseUserAndToday($value); // translate {USER} and {TODAY} into literals
-		  if(is_numeric($value) AND isset($numericDataTypes[$dataTypeInfo['dataType']])) {
+		  if(is_numeric($value) AND $numericDataType) {
 			$excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
 		  } else {
 			$excludedWhere .= " $excludedWhereConjunction $calcElement!='".formulize_db_escape($value)."'";
@@ -4213,18 +4215,12 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
                 return "<input type='button' class='formulize_button' id='formulize_$button' name='moreActions' value='$buttonText' onclick='showMoreActionButtons();'></input>";
                 break;
 			case "modifyScreenLink":
-				$applications_handler = xoops_getmodulehandler('applications', 'formulize');
-				$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
-				if(is_array($apps) AND count((array) $apps)>0) {
-					$firstAppId = $apps[key($apps)]->getVar('appid');
-				} else {
-					$firstAppId = 0;
-				}
-                $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".$firstAppId;
+				$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
+        $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
 				$link = "<a href='".$url."'>" . $buttonText . "</a>";
-                global $xoopsTpl;
-                $xoopsTpl->assign('modifyScreenUrl', $url);
-                return $link;
+				global $xoopsTpl;
+				$xoopsTpl->assign('modifyScreenUrl', $url);
+				return $link;
 				break;
 			case "changeColsButton":
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
@@ -4471,7 +4467,7 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
     $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
     $firstEntryNumber = $GLOBALS['formulize_countMasterResultsForPageNumbers'] > 0 ? ((($userPageNumber-1)*$numberPerPage)+1) : 0;
 	$entryTotals = "<span class=\"page-navigation-total\">".
-        sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span></p>\n";
+        sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span>\n";
 
     $entriesPerPageSelector = "<select name='formulize_entriesPerPage'>";
     $maxPerPage = $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 < 100 ? $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 : 100;

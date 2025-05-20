@@ -84,17 +84,11 @@ class formulize_themeForm extends XoopsThemeForm {
         $this->screen = $screen;
         parent::__construct($title, $name, $action, $method, $addtoken);
         if($screen) {
-            $applications_handler = xoops_getmodulehandler('applications', 'formulize');
-			$apps = $applications_handler->getApplicationsByForm($screen->getVar('fid'));
-			if(is_array($apps) AND count($apps)>0) {
-				$firstAppId = $apps[key($apps)]->getVar('appid');
-			} else {
-				$firstAppId = 0;
-			}
-            $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".$firstAppId;
-            global $xoopsTpl;
-            $xoopsTpl->assign('modifyScreenUrl', $url);
-            $this->modifyScreenLink = "<a href='".$url."'>Configure this Screen</a>";
+					$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
+					$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
+					global $xoopsTpl;
+					$xoopsTpl->assign('modifyScreenUrl', $url);
+					$this->modifyScreenLink = "<a href='".$url."'>Configure this Screen</a>";
         }
     }
 
@@ -1405,16 +1399,18 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 
     if(count((array) $sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
-      // on the master.php page, draw in the subforms "raw"
+      // on the master.php page, draw in the subforms "raw", only if there has been no rendering of these subforms already in a regular subform element
 			if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
-			foreach($sub_fids as $subform_id) {
-				$subUICols = drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
-				unset($subLinkUI);
-				if(isset($subUICols['single'])) {
-					$form->insertBreakFormulize($subUICols['single'], "even");
-				} else {
-						$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']); // no third param (name) since there's no element to construct it with
-					$form->addElement($subLinkUI);
+				foreach($sub_fids as $subform_id) {
+					if(!isset($GLOBALS['formulizeCatalogueOfRenderedSubforms']) OR !isset($GLOBALS['formulizeCatalogueOfRenderedSubforms']["$frid-$fid-$subform_id"])) {
+						$subUICols = drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
+						unset($subLinkUI);
+						if(isset($subUICols['single'])) {
+							$form->insertBreakFormulize($subUICols['single'], "even");
+						} else {
+							$subLinkUI = new XoopsFormLabel($subUICols['c1'], $subUICols['c2']); // no third param (name) since there's no element to construct it with
+							$form->addElement($subLinkUI);
+						}
 					}
 				}
 			}
@@ -1780,6 +1776,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries = "", $subformConditions = null, $subformElementId = 0,
 	$rowsOrForms = 'row', $addEntriesText = _formulize_ADD_ENTRIES, $subform_element_object = null, $firstRowToDisplay = 0, $numberOfEntriesToDisplay = null)
 {
+
+		$GLOBALS['formulizeCatalogueOfRenderedSubforms']["$frid-$fid-$subform_id"] = true;
 
     require_once XOOPS_ROOT_PATH.'/modules/formulize/include/subformSaveFunctions.php';
 

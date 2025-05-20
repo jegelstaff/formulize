@@ -3,9 +3,9 @@
 * --------------------------------------------------------------------
 *      Portuguese Translation by Paulo Sergio de Araujo alias Gopala
 *                     gopala at harekrishna dot org dot br
-*    http://www.x-trad.org the XOOPS Official Brazilian Translate Site            
-* Translation version 3.0 by GibaPhp - http://br.impresscms.org   
-* -------------------------------------------------------------------- 
+*    http://www.x-trad.org the XOOPS Official Brazilian Translate Site
+* Translation version 3.0 by GibaPhp - http://br.impresscms.org
+* --------------------------------------------------------------------
 */
 // Module main
 define("_formulize_FORM_TITLE", "Formulários");
@@ -108,8 +108,8 @@ define("_AM_FORMUL","Formulários");
 
 //added by jwe - 7/28/04
 define("_AM_FORM_TITLE", "Permissões de acesso ao formulário"); // not used
-define("_AM_FORM_CURPERM", "Permissões atuais:"); 
-define("_AM_FORM_CURPERMLINKS", "Caixa de seleção linkada atual:"); 
+define("_AM_FORM_CURPERM", "Permissões atuais:");
+define("_AM_FORM_CURPERMLINKS", "Caixa de seleção linkada atual:");
 define("_AM_FORM_PERMVIEW", "Ver");
 define("_AM_FORM_PERMADD", "Adicionar/atualizar");
 define("_AM_FORM_PERMADMIN", "Administrador");
@@ -137,7 +137,7 @@ define("_AM_FRAME_AVAILFORMS1", "Formulário um:");
 define("_AM_FRAME_AVAILFORMS2", "Formulário dois:");
 define("_AM_FRAME_DELETE", "Excluir um framework existente:");
 define("_AM_FRAME_SUBFORM_OF", "Torná-lo um subformulário de:");
-define("_AM_FRAME_NOPARENTS", "Nenhum formulário no Framework"); 
+define("_AM_FRAME_NOPARENTS", "Nenhum formulário no Framework");
 define("_AM_FRAME_TYPENEWFORMNAME", "Digite um nome curto aqui");
 define("_AM_FRAME_NEWFORMBUTTON", "Adicionar formulário!");
 define("_AM_FRAME_NOKEY", "Nenhum especificado!");
@@ -378,7 +378,9 @@ define("_formulize_DE_EXPORT_CALCS", "Exportar cálculos");
 define("_formulize_DE_SAVE", "Salvar a visão atual");
 define("_formulize_DE_DELETE", "Excluir a visão atual");
 define("_formulize_DE_ADDENTRY", "Adicionar uma entrada");
+define("_formulize_DE_ADDSINGULAR", "Adicionar uma entrada");
 define("_formulize_DE_ADD_MULTIPLE_ENTRY", "Adicionar múltiplas entradas");
+define("_formulize_DE_ADD_PLURAL_ENTRY", "Adicionar múltiplas entradas");
 define("_formulize_DE_PROXYENTRY", "Fazer uma entrada proxy");
 define("_formulize_DE_UPDATEENTRY", "Atualizar sua entrada");
 define("_formulize_DE_DELETESEL", "Excluir a selecionada");
@@ -416,7 +418,7 @@ define("_formulize_DE_CALCSUB", "Adicione o(s) cálculo(s) à lista");
 define("_formulize_DE_CALC_CALCS", "Cálculos a efetuar na(s) coluna(s):");
 define("_formulize_DE_CALCGO", "Executar os cálculos solicitados");
 define("_formulize_DE_REQDCALCS", "Solicitar cálculos:");
-define("_formulize_DE_CALCALL", "Incluir brancos/zeros"); 
+define("_formulize_DE_CALCALL", "Incluir brancos/zeros");
 define("_formulize_DE_CALCNOBLANKS", "Excluir brancos/zeros");
 define("_formulize_DE_CALCONLYBLANKS", "Incluir somente brancos/zeros");
 define("_formulize_DE_CALCJUSTNOBLANKS", "Excluir brancos"); //GibaPhp 3.0
@@ -631,7 +633,7 @@ define("_formulize_DE_IMPORT_STEP1", "Passo 1: baixe um arquivo de modelo em bra
 define("_formulize_DE_IMPORT_STEP2", "Passo 2: modifique o arquivo que você baixou");
 define("_formulize_DE_IMPORT_STEP3", "Passo 3: suba o arquivo modificado");
 define("_formulize_DE_IMPORT_FILE", "Selecione o arquivo que você modificou e importe-o.");
-define("_formulize_DE_IMPORT_GO", "Importar"); 
+define("_formulize_DE_IMPORT_GO", "Importar");
 define("_formulize_DE_IMPORT_VALIDATEDATA", "Validar automaticamente a estrutura e os dados contidos no arquivo .csv antes de realmente fazer a importação (altamente recomendado!)"); //GibaPhp 3.0
 define("_formulize_DE_IMPORT_INSTRUCTIONS", "<p><b>Abra o arquivo que você baixou em um programa de planilha eletrônica tal como o Excel, e modifique-o</b> de forma que ele contenha os dados que você quer importar. Você não tem que fazer isso de imediato: modifique o arquivo e, mais tarde, retorne aqui para importá-lo.</p>
 
@@ -674,7 +676,7 @@ define("_AM_FORMULIZE_LOE_TOTAL", "Total Entries: %d");
 define("_formulize_DE_LOE_LIMIT_REACHED1", "Lá estão"); //GibaPhp 3.0
 define("_formulize_DE_LOE_LIMIT_REACHED2", "entradas na lista. Seria preciso um longo tempo para recuperá-los. Você pode usar termos de pesquisa para limitar o número de entradas, ou"); //GibaPhp 3.0
 define("_formulize_DE_LOE_LIMIT_REACHED3", "você pode clicar aqui para que o sistema possa recuperar todas as entradas."); //GibaPhp 3.0
-       
+
 define("_formulize_OUTOFRANGE_DATA","Preservar valor não-padrão encontrado na base de dados: "); //GibaPhp 3.0
 
 define("_AM_FORMULIZE_PREVIOUS_OPTION", "Use uma resposta anterior:"); //GibaPhp 3.0

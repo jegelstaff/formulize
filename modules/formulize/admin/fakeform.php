@@ -1,6 +1,6 @@
 <?php
 
-include "../../../mainfile.php";
+require_once "../../../mainfile.php";
 icms::$logger->disableLogger();
 
 while(ob_get_level()) {

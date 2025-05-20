@@ -1,50 +1,75 @@
-		  <div class="form-item">
-			  <fieldset>
-				  <legend>Filter options based on these properties of their entry in the source form</legend>
-				  <div id="filterdiv">
-				  <{$content.formlinkfilter}>
-				  </div>
-				  <div class="description">
-					  <{$smarty.const._AM_ELE_FORMLINK_SCOPEFILTER_DESC}>
-				  </div>
-			  </fieldset>
-		  </div>
+<div class="form-item">
+	<fieldset>
+		<legend>Only include certain values in the options</legend>
+
+		<div id="filterdiv">
+		<{$content.formlinkfilter}>
+		</div>
+		<div class="description">
+			<{$smarty.const._AM_ELE_FORMLINK_SCOPEFILTER_DESC}>
+		</div>
+
+		<{if $content.type == 'select'}>
+		<div class="form-select" id="optionsLimitByElementFilterDiv">
+			<p>Limit based on the values selected in this other element: <{$content.optionsLimitByElement}></p><br />
+			<{if isset($content.optionsLimitByElementFilter) AND $content.optionsLimitByElementFilter}>
+			<{$content.optionsLimitByElementFilter}><br />
+			<div class="description">Use the filter options to isolate a specific entry in the other form. Dynamic { } references are possible for referring to the values of elements in this form.</div>
+			<{else}>
+			<div class="description">Select an element and then save, to get filter options for isolating a single entry in the selected form.</div>
+			<{/if}>
+		</div>
+		<{/if}>
+
+	</fieldset>
+</div>
 
 
 <script type='text/javascript'>
 
-    $("#formlink").change(function() {
+	$("#formlink").change(function() {
 		$("#yes").attr('checked',1);
 		$("[name=reload_option_page]").val(1);
 		$("#filterdiv").empty();
 		$("#filterdiv").append('<p><input type="button" class="formButton" name="refreshfilter" onclick="refreshfilterjq()" value="Save changes to update filter options"></p>');
-    });
-
-    function refreshfilterjq() {
-        $("[name=reload_option_page]").val(1);
-        $(".savebutton").click();
-	}
-
-    $("[name=ele_value[0]]").keydown(function () {
-        $("#no").attr('checked',1);
-        $("#formlink").val('none');
-        $("#filterdiv").empty();
-        $("#filterdiv").append('<p>The options are not linked.</p>');
 	});
 
-    $("div#filterdiv > a.conditionsdelete").click(function () {
+	$("div#optionsLimitByElementFilterDiv > a.conditionsdelete").click(function () {
+		$(".optionsLimitByElementFilterDelete").val($(this).attr('target'));
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+ 	$("div#optionsLimitByElementFilterDiv > input[name=addcon]").click(function () {
+		$("[name=reload_option_page]").val(1);
+	  $(".savebutton").click();
+		return false;
+	});
+
+  function refreshfilterjq() {
+    $("[name=reload_option_page]").val(1);
+    $(".savebutton").click();
+	}
+
+  $("[name=ele_value[0]]").keydown(function () {
+    $("#no").attr('checked',1);
+    $("#formlink").val('none');
+    $("#filterdiv").empty();
+    $("#filterdiv").append('<p>The options are not linked.</p>');
+	});
+
+  $("div#filterdiv > a.conditionsdelete").click(function () {
 		$(".optionsconditionsdelete").val($(this).attr('target'));
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
 	});
 
-
 	$("div#filterdiv > input[name=addcon]").click(function () {
 		$("[name=reload_option_page]").val(1);
 	  $(".savebutton").click();
 		return false;
 	});
-
 
 </script>

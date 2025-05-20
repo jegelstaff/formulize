@@ -1,0 +1,59 @@
+<div class="form-item">
+	<fieldset>
+		<legend><label class="question"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_ELEMENTS}></label></legend>
+		<div class="create-connection-link-choices">
+			<span class="bold connection-title-spacer"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter start=0}>:</span>
+			<label>
+				<span class="bold"><{$content.form1Title}>:</span>
+				<span class="bold"><{$content.form2Title}>:</span>
+			</label>
+		</div>
+		<{foreach item=pair from=$content.pairs}>
+			<div class="create-connection-link-choices">
+				<span class="bold"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter print=true assign=numPairs}>:</span><input type="radio" name="pairSelection" value="<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>" id="pair+<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>">
+				<label for="pair+<{$pair.form1.elementId}>+<{$pair.form2.elementId}>+<{$pair.type}>">
+					<span><{$pair.form1.elementName}></span>
+					<span><{$pair.form2.elementName}></span>
+				</label>
+			</div>
+		<{/foreach}>
+		<div class="create-connection-link-choices">
+			<span class="bold"><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_OPTION}> <{counter print=true assign=numPairs}>:</span><input type="radio" name="pairSelection" value="pair-manual" id="pair-manual">
+			<label for="pair-manual">
+				<span><select name="form1ElementId"><{html_options options=$content.candidates.form1}></select></span>
+				<span><select name="form2ElementId"><{html_options options=$content.candidates.form2}></select></span>
+			</label>
+		</div>
+		<div id="create-connection-desc-container">
+			<div class="description">
+				<p><{$smarty.const._AM_SETTINGS_SELECT_CONNECTION_ELEMENTS_DESC}></p>
+			</div>
+		</div>
+		<{include file="db:admin/relationship_connection_options.html" content=$content}>
+	</fieldset>
+</div>
+
+<script>
+
+	<{if $numPairs == 1}>
+	enableCreateConnectionButton();
+	jQuery('#pair-manual').attr('checked', true);
+	<{/if}>
+
+	jQuery('select[name=form1ElementId],select[name=form2ElementId]').change(function() {
+		jQuery('#pair-manual').attr('checked', true);
+		enableCreateConnectionButton();
+		if(jQuery('select[name=form1ElementId]').val().substring(0,3) == 'new') {
+			jQuery("select[name=form2ElementId] option[value=new-common-parallel]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-common-textbox]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-linked-dropdown]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-linked-checkboxes]").remove();
+		}
+		if(jQuery('select[name=form2ElementId]').val().substring(0,3) == 'new') {
+			jQuery("select[name=form1ElementId] option[value=new-common-parallel]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-linked-autocomplete]").remove();
+			jQuery("select[name=form2ElementId] option[value=new-linked-multiselect-autocomplete]").remove();
+		}
+	});
+
+</script>

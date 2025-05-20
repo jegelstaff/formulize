@@ -1,30 +1,48 @@
 <div class="form-item">
 	<fieldset>
-		<legend>What are the options the user can choose from?</legend>
+		<legend>What is the source of the options the user can choose from?</legend>
 		<div class="form-radios">
-			<input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/>Use the values that people have entered in this form element: <{$content.linkedoptions}>
+			<label for="yes"><input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/> The values that people have entered in another form element</label>
+		</div>
+		<div class="form-radios">
+			<label for="no"><input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/> Values from a fixed list of options</label>
 		</div>
 
-        <div class="form-radios" id="snapshot-values" style="<{if $content.islinked neq 1}>display: none; <{/if}>padding-top: 1em; padding-left: 2em;">
-            <input type="radio" id="snapshot-0" name="elements-ele_value[snapshot]" value=0 checked> When people select a value, save a reference to the source (so when the source changes, the values people have entered here will change too).<br>
-            <input type="radio" id="snapshot-1" name="elements-ele_value[snapshot]" value=1> When people select a value, save a snapshot of the value (so it will stay as-is regardless of changes to the source).
-        </div>
-				<div id="form-radios" style="<{if $content.islinked neq 1}>display: none; <{/if}>padding-bottom: 1em; padding-top: 1em; padding-left: 2em;">
-					<p>If this element is linked to its own form, can the current entry be selected?<br>
-					<input type="radio" id="selfreference-0" name="elements-ele_value[selfreference]" value=0 checked><label for="selfreference-0"> No</label>&nbsp;&nbsp;&nbsp;<input type="radio" id="selfreference-1" name="elements-ele_value[selfreference]" value=1><label for="selfreference-1"> Yes</label></p>
-					<div class="description">
-						<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
-					</div>
+		<hr style="margin-top: 1em; margin-bottom: 1em;">
+
+		<div id="linkedSourceOptions" <{if $content.islinked != 1}>style="display: none;"<{/if}>>
+			<{$content.linkedoptions}>
+			<div class="form-radios" id="snapshot-values" style="padding-top: 1em;">
+				<label for="snapshot-0"><input type="radio" id="snapshot-0" name="elements-ele_value[snapshot]" value=0 checked> When people select a value, save a reference to the source</label><br>
+				<label for="snapshot-1"><input type="radio" id="snapshot-1" name="elements-ele_value[snapshot]" value=1> When people select a value, save a snapshot of the value</label>
+				<div class="description">
+					<p>When you save a reference to the source, the values in this form will change when people change the source value. If you save a snapshot, then the values in this form will not be affected by changes in the source form.</p>
 				</div>
-
-				<{if $content.islinked eq 1}><hr><br><{/if}>
-
-		<div class="form-radios">
-			<input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/>Use the options specified below:
+			</div>
+			<div class="form-radios">
+				<p>If this element is linked to its own form, can the current entry be selected?<br>
+				<label for="selfreference-0"><input type="radio" id="selfreference-0" name="elements-ele_value[selfreference]" value=0 checked> No</label>&nbsp;&nbsp;&nbsp;<label for="selfreference-1"><input type="radio" id="selfreference-1" name="elements-ele_value[selfreference]" value=1> Yes</label></p>
+				<div class="description">
+					<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
+				</div>
+			</div>
+			<div class="form-radios">
+			<{if $content.subformInterfaceAdminUrl}>
+				<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
+			<{elseif $content.type == "select"}>
+				<p><label for="makeSubformInterface"><input type="checkbox" id="makeSubformInterface" name="makeSubformInterface" clearAfterSave=1 value=1> Create a Subform interface for the <i><{$content.formTitle}></i> form inside the other form?</label></p>
+				<div class="description">
+					<p>If you check this option, a Subform interface will be created <b>in the source form</b> (not this form). A Subform interface allows users to interact with the linked entries from this form, inside the other form. You can control when and how the Subform interface shows up for users, just like any other element. If a Subform interface for <b><{$content.formTitle}></b> already exists in the other form, then this option will have no effect.</p>
+				</div>
+			<{/if}>
+			</div>
 		</div>
-		<{include file="db:admin/element_optionlist.html"}>
 
-	</div>
+		<div id="fixedListOptions" <{if $content.islinked == 1}>style="display: none;"<{/if}>>
+			<{include file="db:admin/element_optionlist.html"}>
+		</div>
+	</fieldset>
+</div>
 
 
 

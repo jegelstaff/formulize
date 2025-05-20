@@ -32,6 +32,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+use rachid\pluralizer\Pluralizer;
+
 include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
@@ -85,6 +87,7 @@ class formulizeForm extends FormulizeObject {
 					case "on":
 						$single = "user";
 						break;
+					case "off":
 					case "":
 						$single = "off";
 						break;
@@ -92,11 +95,12 @@ class formulizeForm extends FormulizeObject {
 						$single = "";
 						break;
 				}
-				// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
-				$headerlist = $formq[0]['headerlist'];
-				$defaultform = $formq[0]['defaultform'];
-				$defaultlist = $formq[0]['defaultlist'];
 			}
+
+			// setup the headerlist -- note...it's still in screwed up string format and must be processed after this by the user code that gets it
+			$headerlist = $formq[0]['headerlist'];
+			$defaultform = $formq[0]['defaultform'];
+			$defaultlist = $formq[0]['defaultlist'];
 
 			// gather the view information
       list($views, $viewNames, $viewFrids, $viewPublished) = self::getFormViews($formq[0]['id_form']);
@@ -116,8 +120,11 @@ class formulizeForm extends FormulizeObject {
 		parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("id_form", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
+		$this->initVar("fid", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
+		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
+		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
@@ -144,7 +151,42 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $this->getVar('custom_edit_check'));
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
+		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi'], false);
     }
+
+	/**
+	 * Return the singular language term for the form
+	 * Useful for backwards compatibility
+	 * @return string The value of singular for the form, or the title if there isn't a singular value
+	 */
+	function getSingular() {
+		if($this->getVar('singular')) {
+			return $this->getVar('singular');
+	 	} else {
+			include_once XOOPS_ROOT_PATH."/libraries/php-pluralizer/Pluralizer.php";
+			$words = explode(" ", trans($this->getVar('title')));
+			$lastWord = count($words) - 1;
+			$words[$lastWord] = Pluralizer::singularize($words[$lastWord]);
+			return implode(" ", $words);
+		}
+	}
+
+	/**
+	 * Return the plural language term for the form
+	 * Useful for backwards compatibility
+	 * @return string The value of plural for the form, or the title if there isn't a plural value
+	 */
+	function getPlural() {
+		if($this->getVar('plural')) {
+			return $this->getVar('plural');
+	 	} else {
+			include_once XOOPS_ROOT_PATH."/libraries/php-pluralizer/Pluralizer.php";
+			$words = explode(" ", trans($this->getVar('title')));
+			$lastWord = count($words) - 1;
+			$words[$lastWord] = Pluralizer::pluralize($words[$lastWord]);
+			return implode(" ", $words);
+		}
+	}
 
     /* Get the views for the supplied form id
 	*  This function also gets invoked by an ajax call from screen_list_entries.html to reload all available views on the dropdown menu.
@@ -170,6 +212,29 @@ class formulizeForm extends FormulizeObject {
 		}
 		return array($views, $viewNames, $viewFrids, $viewPublished);
 	}
+
+		public function getVar($key, $format = 's') {
+			if($key == 'on_before_save'
+			  OR $key == 'on_after_save'
+			  OR $key == 'on_delete'
+			  OR $key == 'custom_edit_check') {
+				$contents = '';
+				if(is_numeric($this->getVar('id_form'))) {
+					$form_handle = $this->getVar('form_handle');
+				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
+				  if(file_exists($filename)) {
+						$contents = file_get_contents($filename);
+				  }
+				}
+				return $contents;
+			}
+			$return_value = parent::getVar($key, $format);
+			if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
+					// now it's an array
+					$return_value = array();
+			}
+			return $return_value;
+    }
 
     public function assignVar($key, $value) {
         if ("form_handle" == $key) {
@@ -493,14 +558,70 @@ EOF;
     }
 
     public function entry_count() {
-        global $xoopsDB;
-        $result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
-        if (false == $result) {
-            error_log($xoopsDB->error());
-        }
-        list($count) = $xoopsDB->fetchRow($result);
-        return $count;
+			global $xoopsDB;
+			$result = $xoopsDB->query("select count(*) as row_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
+			if (false == $result) {
+				error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
     }
+
+		public function user_count() {
+			global $xoopsDB;
+			$result = $xoopsDB->query("select count(distinct(creation_uid)) as user_count from ".$xoopsDB->prefix("formulize_".$this->form_handle));
+			if (false == $result) {
+				error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
+		}
+
+		public function group_count() {
+			global $xoopsDB;
+			$result = $xoopsDB->query("select count(distinct(gperm_groupid)) as group_count from ".$xoopsDB->prefix("group_permission")." WHERE gperm_name = 'view_form' AND gperm_modid = ".getFormulizeModId()." AND gperm_itemid = ".$this->getVar('fid'));
+			if (false == $result) {
+					error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
+		}
+
+		public function entry_created_last_week() {
+			return $this->get_entry_metadata(7, 'created');
+		}
+
+		public function entry_created_last_month() {
+			return $this->get_entry_metadata(30, 'created');
+		}
+
+		public function entry_created_last_year() {
+			return $this->get_entry_metadata(365, 'created');
+		}
+
+		public function entry_updated_last_week() {
+			return $this->get_entry_metadata(7, 'updated');
+		}
+
+		public function entry_updated_last_month() {
+			return $this->get_entry_metadata(30, 'updated');
+		}
+
+		public function entry_updated_last_year() {
+			return $this->get_entry_metadata(365, 'updated');
+		}
+
+		private function get_entry_metadata($windowInDays, $createdOrUpdated) {
+			global $xoopsDB;
+			$dateField = $createdOrUpdated == 'created' ? 'creation_datetime' : 'mod_datetime';
+			$updateFilter = $createdOrUpdated == 'updated' ? ' AND creation_datetime != mod_datetime ' : '';
+			$result = $xoopsDB->query("select count(distinct(entry_id)) as count from ".$xoopsDB->prefix("formulize_".$this->form_handle)." WHERE $dateField >= '".date('Y-m-d', strtotime("-".$windowInDays." days"))."' $updateFilter");
+			if (false == $result) {
+					error_log($xoopsDB->error());
+			}
+			list($count) = $xoopsDB->fetchRow($result);
+			return $count;
+		}
 
     function __get($name) {
         if (!isset($this->$name)) {
@@ -513,28 +634,25 @@ EOF;
         return $this->$name;
     }
 
-    public function getVar($key, $format = 's') {
-			if($key == 'on_before_save'
-			  OR $key == 'on_after_save'
-			  OR $key == 'on_delete'
-			  OR $key == 'custom_edit_check') {
-				$contents = '';
-				if(is_numeric($this->getVar('id_form'))) {
-					$form_handle = $this->getVar('form_handle');
-				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
-				  if(file_exists($filename)) {
-						$contents = file_get_contents($filename);
-				  }
+		/**
+		 * Check if the form includes a subform element that points to the given subform id
+		 * @param int subformId - the id number of a form that is acting as the subform in this case
+		 * @return boolean Returns the element Id if there is one, or false depending if there is no subform element
+		 */
+		function hasSubformInterfaceForForm($subformId) {
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			$subformElementIds = array_keys($this->getVar('elementTypes'), 'subform');
+			foreach($subformElementIds as $subformElementId) {
+				if($subformElementObject = $element_handler->get($subformElementId)) {
+					$ele_value = $subformElementObject->getVar('ele_value');
+					if(is_array($ele_value) AND isset($ele_value[0]) AND $ele_value[0] == $subformId) {
+						return $subformElementObject->getVar('ele_id');
+					}
 				}
-				return $contents;
 			}
-			$return_value = parent::getVar($key, $format);
-			if (XOBJ_DTYPE_ARRAY == $this->vars[$key]['data_type'] && !is_array($return_value)) {
-					// now it's an array
-					$return_value = array();
-			}
-			return $return_value;
-    }
+			return false;
+		}
+
 }
 
 
@@ -576,13 +694,17 @@ class formulizeFormsHandler {
 
 	}
 
-	function getAllForms($includeAllElements=false) {
+	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true) {
 		global $xoopsDB;
-		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
+		$formLimitClause = $formIds ? " id_form IN (".implode(",",array_filter($formIds, 'is_numeric')).") " : "";
+		$excludeTableFormsClause = $includeTableForms == false ? " tableform = '' " : "";
+		$excludeTableFormsClause = ($formLimitClause AND $excludeTableFormsClause) ? " AND $excludeTableFormsClause " : $excludeTableFormsClause;
+		$whereClause = ($formLimitClause OR $excludeTableFormsClause) ? " WHERE $formLimitClause $excludeTableFormsClause " : "";
+		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY desc_form";
 		$allFidsRes = $xoopsDB->query($allFidsQuery);
 		$foundFormObjects = array();
 		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
-			$foundFormObjects[] = $this->get($allFidsArray['id_form'],$includeAllElements);
+			$foundFormObjects[$allFidsArray['id_form']] = $this->get($allFidsArray['id_form'],$includeAllElements);
 		}
 		return $foundFormObjects;
 	}
@@ -629,7 +751,7 @@ class formulizeFormsHandler {
 			}
 		} else {
 			// no application specified, so get forms that do not belong to an application
-			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form) ORDER BY formtable.desc_form";
+			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.desc_form";
 			if($res = $this->db->query($sql)) {
 				while($array = $this->db->fetchArray($res)) {
 					if($returnIds) {
@@ -663,6 +785,7 @@ class formulizeFormsHandler {
 						$singleToWrite = "on";
 						break;
 					case('off'):
+					case(''):
 						$singleToWrite = "";
 						break;
 					default:
@@ -672,15 +795,20 @@ class formulizeFormsHandler {
 				}
 
                 if($formObject->isNew() || empty($id_form)) {
-                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singleentry`, `tableform`, ".
-                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`) VALUES (".
-                        $this->db->quoteString($title).", ".$this->db->quoteString($singleToWrite).", ".
+                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singular`, `plural`, `singleentry`, `tableform`, ".
+                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
+                        $this->db->quoteString($title).", ".
+                        $this->db->quoteString($singular).", ".
+                        $this->db->quoteString($plural).", ".
+												$this->db->quoteString($singleToWrite).", ".
                         $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
                         ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).")";
+                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
                         " `desc_form` = ".$this->db->quoteString($title).
+												", `singular` = ".$this->db->quoteString($singular).
+												", `plural` = ".$this->db->quoteString($plural).
                         ", `singleentry` = ".$this->db->quoteString($singleToWrite).
                         ", `headerlist` = ".$this->db->quoteString($headerlist).
                         ", `defaultform` = ".intval($defaultform).
@@ -690,6 +818,7 @@ class formulizeFormsHandler {
                         ", `store_revisions` = ".intval($store_revisions).
                         ", `note` = ".$this->db->quoteString($note).
                         ", `send_digests` = ".intval($send_digests).
+												", `pi` = ".intval($pi).
                         " WHERE id_form = ".intval($id_form);
                 }
 
@@ -700,7 +829,7 @@ class formulizeFormsHandler {
                 }
 
 				if( !$result ){
-					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$xoopsDB->error();
+					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$this->db->error();
 					return false;
 				}
 				if( empty($id_form) ){
@@ -1388,7 +1517,7 @@ class formulizeFormsHandler {
 			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
 			if(!$start) { $insert_sql .= ", "; }
 			$start = 0;
-			$insert_sql .= $field;
+			$insert_sql .= "`$field`";
 		}
 		$insert_sql .= ") VALUES (";
 		$start = 1;
@@ -1509,9 +1638,9 @@ class formulizeFormsHandler {
 
 		$this->setPermissionsForClonedForm($fid, $newfid);
 
-		// create and insert new defaultlist screen and defaultform screen using $newfid and $newtitle
-		$defaultFormScreenId = $this->formScreenForClonedForm($newtitle, $newfid);
-		$defaultListScreenId = $this->listScreenForClonedForm($defaultFormScreenId, $newtitle, $newfid);
+		// create and insert new defaultlist screen and defaultform screen
+		$defaultFormScreenId = $this->formScreenForClonedForm($clonedFormObject);
+		$defaultListScreenId = $this->listScreenForClonedForm($defaultFormScreenId, $clonedFormObject);
 		$clonedFormObject->setVar('defaultform', $defaultFormScreenId);
 		$clonedFormObject->setVar('defaultlist', $defaultListScreenId);
 		if(!$form_handler->insert($clonedFormObject)) {
@@ -1535,11 +1664,11 @@ class formulizeFormsHandler {
 	 * @param $newfid
 	 * @return mixed
 	 */
-	public function formScreenForClonedForm($newtitle, $newfid)
+	public function formScreenForClonedForm($formObject)
 	{
 		$formScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$defaultFormScreen = $formScreenHandler->create();
-		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $newtitle.' Form', $newfid, $newtitle);
+		$formScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
 		if(!$defaultFormScreenId = $formScreenHandler->insert($defaultFormScreen)) {
 			print "Error: could not create default form screen";
 			return $defaultFormScreenId;
@@ -1553,11 +1682,11 @@ class formulizeFormsHandler {
 	 * @param $newfid
 	 * @return mixed
 	 */
-	public function listScreenForClonedForm($defaultFormScreenId, $newtitle, $newfid)
+	public function listScreenForClonedForm($defaultFormScreenId, $formObject)
 	{
 		$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 		$screen = $listScreenHandler->create();
-		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $newtitle.' List', $newfid);
+		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
 
 		if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
 			print "Error: could not create default list screen";

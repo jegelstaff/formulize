@@ -39,17 +39,10 @@ while(ob_get_level()) {
 $module_handler = xoops_gethandler('module');
 $config_handler = xoops_gethandler('config');
 
-$formulizeModule = $module_handler->getByDirname("formulize");
-$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-if ($formulizeConfig['isSaveLocked']){
-  exit();
-}
+require_once "checkThatUserIsAFormulizeModuleAdminAndSystemIsNotSaveLocked.php";
 
 global $xoopsUser, $xoopsConfig;
-if (!$xoopsUser) {
-    print "Error: you are not logged in";
-    return;
-}
+
 
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
@@ -58,18 +51,6 @@ if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['la
 } else {
     include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/main.php";
     include_once XOOPS_ROOT_PATH."/modules/formulize/language/english/admin.php";
-}
-
-$gperm_handler = xoops_gethandler('groupperm');
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-$groups = $xoopsUser->getGroups();
-$mid = getFormulizeModId();
-$permissionToCheck = "module_admin";
-$itemToCheck = $mid;
-$moduleToCheck = 1; // system module
-if (!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $moduleToCheck)) {
-    print "Error: you do not have permission to save this data";
-    return;
 }
 
 // process all the submitted form values, looking for ones that can be immediately assigned to objects

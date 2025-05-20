@@ -83,14 +83,13 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
+    $checkThisTable = 'formulize_saved_views';
+    $checkThisField = 'sv_formframe';
+    $checkThisProperty = 'Type';
+    $checkPropertyForValue = 'int(5)';
 
-    $checkThisTable = 'formulize_framework_links';
-		$checkThisField = 'fl_one2one_conditional';
-		$checkThisProperty = '';
-		$checkPropertyForValue = '';
-
-		/*
-		* ====================================== */
+    /*
+    * ====================================== */
 
 		global $xoopsDB;
     $module_handler = xoops_gethandler('module');
@@ -115,7 +114,7 @@ function patch40() {
 		// we need to convert code if the custom_code folder exists, or if there is no code in the 'code' folder, but we have elements, forms, or screens that have code in them in the DB
 		$needToConvertDBCodeToCodeFolder = file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
 
-    if (!$needsPatch AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
+    if (!$needsPatch AND primaryRelationshipExists() AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
         return;
     }
 
@@ -231,6 +230,8 @@ function patch40() {
   `linkid` int(11) NOT NULL auto_increment,
   `appid` int(11) NOT NULL default 0,
   `fid` int(11) NOT NULL default 0,
+  `top` varchar(255) NOT NULL default '',
+  `left` varchar(255) NOT NULL default '',
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
@@ -433,7 +434,7 @@ function patch40() {
         $sql['add_backdrop_group'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_resource_mapping") . " ADD external_id_string text NULL default NULL";
         $sql['add_backdrop_group_index'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_resource_mapping") ." ADD INDEX i_external_id_string (external_id_string(10))";
         $sql['add_advance_view_field'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " ADD `advanceview` text NOT NULL";
-		$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
+				$sql['defaultview_ele_type_text'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_listofentries") . " CHANGE `defaultview` `defaultview` TEXT NOT NULL ";
         $sql['add_ele_uitextshow'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_uitextshow` tinyint(1) NOT NULL default 0";
         $sql['add_send_digests'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD send_digests tinyint(1) NOT NULL default 0";
         $sql['add_template_donedest'] = "ALTER TABLE ". $xoopsDB->prefix("formulize_screen_template") . " ADD `donedest` varchar(255) NOT NULL default ''";
@@ -477,13 +478,21 @@ function patch40() {
         $sql['screenTableIndex1'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD FULLTEXT i_rewrite (`rewriteruleAddress`)";
         $sql['screenTableIndex2'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_fid (`fid`)";
         $sql['screenTableIndex3'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen"). " ADD INDEX i_frid (`frid`)";
-        unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
         $sql['sv_use_features'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_use_features` varchar(255) NULL default NULL";
         $sql['searches_are_fundamental'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " ADD `sv_searches_are_fundamental` tinyint(1) NULL default NULL";
         $sql['add_screen_handle'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD `screen_handle` text NOT NULL default ''";
         $sql['add_screen_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen")." ADD FULLTEXT i_screen_handle (`screen_handle`)";
 				$sql['add_one2one_conditional'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_conditional smallint(5) NULL default 1";
 				$sql['add_one2one_bookkeeping'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_framework_links")." ADD fl_one2one_bookkeeping smallint(5) NULL default 1";
+				$sql['singular'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `singular` varchar(255) NULL default ''";
+				$sql['plural'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `plural` varchar(255) NULL default ''";
+        $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
+        $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
+				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
+				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
+				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
+
+				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
@@ -609,6 +618,12 @@ function patch40() {
                   	print "One-to-one link conditional flag already added. result: OK<br>";
 								} elseif($key === "add_one2one_bookkeeping") {
                     print "One-to-one link bookkeeping flag already added. result: OK<br>";
+    						} elseif($key === "singular" OR $key === "plural") {
+                    print "Singluar/Plural form names already added. result: OK<br>";
+                } elseif($key === "add_form_top" OR $key === "add_form_left") {
+                    print "Form top/left admin positions already added. result: OK<br>";
+								} elseif($key === "add_pi") {
+										print "Principal Identifier already added. result: OK<br>";
                 }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -1527,8 +1542,14 @@ function patch40() {
 					print "<script>alert(\" Some of your form elements have the 'force hidden' setting turned on. They are listed at the end of this message. \\n\\n The 'force hidden' setting caused hidden versions of elements to be included in forms, when the user did not have permission to view them. This setting is now deprecated and non-functional. You should verify that the affected forms are working properly for all users. \\n\\n In the highly unlikely event that something is not working, please contact info@formulize.org for assistance. \\n\\n You can turn off this warning in the database, by setting the value of 'ele_forcehidden' in the 'formulize' table to 0 for all these elements: \\n\\n $forceHiddenElements \");</script>";
 				}
 
+				if(primaryRelationshipExists() === false) {
+					if($primaryRelationshipError = createPrimaryRelationship()) {
+						print "ERROR: There was a problem when setting up the Primary Relationship:<br>$primaryRelationshipError<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
+					}
+				}
+
         print "DB updates completed.  result: OK";
-    }
+    	}
 }
 
 // Fixes the format if the template is empty

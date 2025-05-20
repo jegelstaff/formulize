@@ -24,7 +24,7 @@
 								<input type="button" name="showperms" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />
 								<input type="hidden" name="useselection" value="" />
 								<br /><br />
-								<label class="question"><{$smarty.const._AM_PERMISSIONS_LIST_GROUPS}></label>
+								<p class="question"><{$smarty.const._AM_PERMISSIONS_LIST_GROUPS}></p>
 								<div class="form-radios radio-inline">
                     <label for="alpha"><input type="radio" id="alpha" name="order" value="alpha"/><{$smarty.const._AM_PERMISSIONS_LIST_ALPHA}></label>
                 </div>
@@ -46,6 +46,7 @@
                         <option value=<{$grouplist.id}><{$grouplist.selected}>><{$grouplist.name}></option>
                     <{/foreach}>
                 </select>
+								<br /><br />
 								<input type="hidden" name="loadthislist" value="">
 								<input type="button" name="removegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_REMOVE}>">
 								<input type="hidden" name="removelistid" value="">
@@ -331,7 +332,6 @@
     <{else}>
         <{foreach from=$content.groupperms item=groupperm}>
             <input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
-            <div class="accordion-box">
                 <div class="form-item">
                     <fieldset>
                         <legend><label class="question"><{$groupperm.name}></label></legend>
@@ -386,7 +386,6 @@
                         </div>
                     </fieldset>
                 </div>
-            </div>
         <{/foreach}>
     <{/if}>
 </div>

@@ -3143,15 +3143,29 @@ a.de-edit-icon:hover{
     margin-top: 1em;
 }
 
-.list-of-entries table.outer .head {
-    border-bottom: 1px solid #d1d1df;
+.list-of-entries table.outer tr:not(.entry-row) .head {
+    border-bottom: 1px solid var(--light-border-color);
 }
-
 .list-of-entries table.outer td:not(.head) {
-    border-bottom: 1px dotted #d1d1df;
-    border-left: 1px dotted #d1d1df;
+    border-top: 1px dotted var(--light-border-color);
+    border-left: 1px dotted var(--light-border-color);
 }
-
+.list-of-entries table.outer tr.entry-row:last-of-type td {
+	border-bottom: 1px dotted var(--light-border-color);
+}
+.list-of-entries table.outer td.same-contents-as-prior-cell {
+	content-visibility: visible;
+	color: var(--text-color);
+	transition: visibility 0.4s linear, color 0.4s linear;
+}
+.list-of-entries table.outer td.hide-same-contents-as-prior-cell {
+	border-top: 0 !important;
+	color: white !important;
+	content-visibility: hidden !important;
+}
+.list-of-entries table.outer tr.entry-row td.column0 {
+	border-left: 0;
+}
 
 .list-of-entries table.outer {
     box-shadow: none;
@@ -3281,11 +3295,15 @@ input[name='pickdiffgroup'] {
     width: auto;
 }
 
+.list-of-entries table.outer tr.entry-row:last-of-type td.formulize-controls {
+	border-bottom: 1px dotted var(--light-border-color);
+}
+
 .list-of-entries table.outer td.formulize-controls {
-    border-bottom: 1px dotted #d1d1df;
+    border-top: 1px dotted var(--light-border-color);
     left: 0px;
     position: sticky;
-    border-right: 1px dotted #d1d1df;
+    border-right: 1px dotted var(--light-border-color);
     background-color: white;
 }
 
@@ -3583,3 +3601,46 @@ input.formulize-duration-element-input[type="number"] {
 	min-width: 50px;
 	max-width: 100px;
 }
+
+input#toggleRepeatData {
+	top: -0.1rem;
+	margin-left: 0.5rem;
+  appearance: none;
+  position:relative;
+  display:inline-block;
+  background:lightgrey;
+  height:1rem;
+  width:1.8rem;
+  vertical-align:middle;
+  border-radius:2rem;
+  box-shadow:0px 1px 3px #0003 inset;
+  transition: 0.25s linear background;
+}
+input#toggleRepeatData::before {
+  content:  '';
+  display:block;
+  width:0.75rem;
+  height:0.75rem;
+  background: #fff;
+  border-radius:1.2rem;
+  position: absolute;
+  top:0.1rem;
+  left:0.1rem;
+  box-shadow:0px 1px 3px #0003;
+  transition: 0.25s linear transform;
+  transform:translateX(0rem);
+}
+input#toggleRepeatData:checked {
+  background: var(--accent-color);
+}
+input#toggleRepeatData:checked::before {
+  transform:translateX(0.78rem)
+}
+input#toggleRepeatData:focus-visible {
+  outline:2px solid black;
+  outline-offset: 2px
+}
+span.page-navigation-total {
+	margin-right: 2em;
+}
+

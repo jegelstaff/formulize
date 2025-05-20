@@ -76,12 +76,27 @@ if($op != "check_for_unique_value"
    AND $op != 'update_derived_value'
    AND $op != 'validate_php_code'
    AND $op != 'get_views_for_form'
+	 AND $op != 'get_form_screens_for_form'
   ) {
   exit();
 }
 
 // unpack params based on op, and do whatever we're supposed to do
 switch($op) {
+
+	case 'get_form_screens_for_form':
+		$screens = array();
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$criteria_object = new Criteria('type','multiPage');
+		$multiPageFormScreens = $screen_handler->getObjects($criteria_object,intval($_GET['fid']));
+		$screens = array();
+		foreach($multiPageFormScreens as $screen) {
+			$screens[] = '{ "sid" : '.$screen->getVar('sid').', "title" : "'.$screen->getVar('title').'"}';
+		}
+		$screens = '{ "screens" : ['.implode(",",$screens).']}';
+		print $screens;
+		break;
+
   case 'check_for_unique_value':
     $value = $_GET['param1'];
     $element = $_GET['param2'];
@@ -323,24 +338,18 @@ switch($op) {
 
   case "get_views_for_form":
     //This is to respond to an Ajax request from the file screen_list_entries.html
-    $framework_handler =& xoops_getmodulehandler('frameworks', 'formulize');
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH ."/modules/formulize/class/forms.php";
 
     $formulizeForm = new formulizeForm();
 
     list($views, $viewNames, $viewFrids, $viewPublished) = $formulizeForm->getFormViews($_POST['form_id']);
-    $frameworks = $framework_handler->getFrameworksByForm($_POST['form_id']);
     $sendNames = array();
     foreach($viewNames as $i=>$viewName) {
         if(!$viewPublished[$i]) {
             continue;
         }
-        if($viewFrids[$i]) {
-            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_IN_FRAME . $frameworks[$viewFrids[$i]]->getVar('name') . ")";
-        } else {
-            $sendNames[$views[$i]] = $viewName." (" . _AM_FORMULIZE_SCREEN_LOE_VIEW_ONLY_NO_FRAME . ")";
-        }
+        $sendNames[$views[$i]] = $viewName;
     }
     asort($sendNames);
     // make an array where each value is an array made up of the values from the passed arrays, ie: the key from each entry in sendNames, and the value

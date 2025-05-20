@@ -99,7 +99,7 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 	}
 
 
-	function insert($screen) {
+	function insert($screen, $force=false) {
 		$update = !$screen->getVar('sid') ? false : true;
 		if(!$sid = parent::insert($screen)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
 			return false;
@@ -149,7 +149,11 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('displayType')),
                 $screen->getVar('sid'));
         }
-        $result = $this->db->query($sql);
+				if($force) {
+        	$result = $this->db->queryF($sql);
+				} else {
+					$result = $this->db->query($sql);
+				}
         if (!$result) {
             print "Error: could not save the screen properly: ".$this->db->error()." for query: $sql";
             return false;

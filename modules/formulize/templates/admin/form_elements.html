@@ -72,8 +72,13 @@ $(".clonelink").click(function () {
 	return cloneLinkSteps($(this).attr('target'));
 });
 
-function deleteLinkSteps(target) {
-	var answer = confirm("<{$smarty.const._AM_ELE_CONFIRM_DELETE}>");
+function deleteLinkSteps(target, inlink) {
+	if(inlink) {
+		var message = "<{$smarty.const._AM_ELE_CONFIRM_DELETE_INLINK}>";
+	} else {
+		var message = "<{$smarty.const._AM_ELE_CONFIRM_DELETE}>";
+	}
+	var answer = confirm(message);
 	if(answer) {
 		$("[name=deleteelement]").val(target);
 		$("[name=reload_elements]").val(1);
@@ -83,7 +88,7 @@ function deleteLinkSteps(target) {
 }
 
 $(".deleteelementlink").click(function () {
-	return deleteLinkSteps($(this).attr('target'));
+	return deleteLinkSteps($(this).attr('target'), $(this).attr('inlink'));
 });
 
 $(".converttotextarea").click(function () {
@@ -142,5 +147,15 @@ $(".savebutton").click(function () {
 $("#accordion-2").bind( "sortupdate", function(event, ui) {
   setDisplay('savewarning','block');
 });
+
+$("input[name=principalidentifier]").change(function() {
+	setPI($(this).val());
+});
+
+function setPI(elementId) {
+	$("select[name=forms-pi]").val(elementId);
+	$("input[name=principalidentifier]").attr("checked", false);
+	$("input[name=principalidentifier][value="+elementId+"]").attr("checked", true);
+}
 
 </script>

@@ -195,13 +195,7 @@ if($_POST['convertelement']) {
 
 if($_POST['deleteelement']) {
   $element = $element_handler->get($_POST['deleteelement']);
-  if(!$element->isSystemElement) {
-  $ele_type = $element->getVar('ele_type');
 	$element_handler->delete($element);
-  if($ele_type != "areamodif" AND $ele_type != "ib" AND $ele_type != "sep" AND $ele_type != "subform" AND $ele_type != "grid") {
-    $element_handler->deleteData($element); //added aug 14 2005 by jwe
-    }
-  }
 }
 
 if($_POST['cloneelement']) {

@@ -1,0 +1,12 @@
+<div class="relationship-connection-options">
+	<p class="bold"><{$smarty.const._AM_FRAME_SETTINGS}></p>
+	<{if $content.allowSubformInterfaceCreation}>
+	<label for='relationships-create-subform-<{$content.linkId}>'><input type='checkbox' <{if $content.linkId == 0 && $content.type != 1}>checked='checked'<{/if}> value='1' name='relationships-create-subform' id='relationships-create-subform-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_CREATESUBFORM1}><{$content.form2Title}><{$smarty.const._AM_APP_RELATIONSHIP_CREATESUBFORM2}><{$content.form1Title}><{$smarty.const._AM_APP_RELATIONSHIP_CREATESUBFORM3}></label>
+	<{/if}>
+	<label for='relationships-delete-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.delChecked}> value='1' name='relationships-delete-<{$content.linkId}>' id='relationships-delete-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_UNIFIEDDELETE}></label>
+	<{if $content.type == 1}>
+	<label for='relationships-conditional-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.conChecked}> value='1' name='relationships-conditional-<{$content.linkId}>' id='relationships-conditional-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_ONE2ONE_DISPLAYTOGETHER}></label>
+	<label for='relationships-bookkeeping-<{$content.linkId}>'><input lid='<{$content.linkId}>' type='checkbox' <{$content.bookChecked}> value='1' name='relationships-bookkeeping-<{$content.linkId}>' id='relationships-bookkeeping-<{$content.linkId}>'> <{$smarty.const._AM_APP_RELATIONSHIP_ONE2ONE_SYNCENTRIES}></label>
+	<{/if}>
+</div>
+

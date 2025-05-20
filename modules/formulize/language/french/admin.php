@@ -11,14 +11,21 @@ define("_AM_APP_FORMWITHNOAPP","Formulaire(s) hors d'un regroupement");
 define("_AM_APP_RELATIONSHIPS_CREATE","Créer une nouvelle Inter Relation entre des formulaires");
 define("_AM_APP_RELATIONSHIPS_DELETE_CONFIRM","Etes vous sur de vouloir effacer cette inter relation et tous ses liens?");
 define("_AM_APP_SCREENS","Ecrans");
+define("_AM_APP_ELEMENTS","Eléments");
+define("_AM_APP_ENTRIES","Entrées");
+define("_AM_APP_USERS","U.");
+define("_AM_APP_IN","dans");
+define("_AM_APP_GROUPS","Groupes");
 define("_AM_APP_NEWFORM","Nouveau Formulaire");
 define("_AM_APP_USETITLE","Utiliser le titre du formulaire");
 define("_AM_APP_NAMEQUESTION","Quel est le nom de ce regroupement?");
 define("_AM_APP_DESCQUESTION","Description de ce regroupement:");
 define("_AM_APP_FORMSIN","Formulaire(s) dans ce regroupement:");
 define("_AM_APP_CONFIGURE","Configurer");
+define("_AM_APP_VIEW","Voir");
+define("_AM_APP_OPS","Actions");
 define("_AM_APP_VIEW_DEFAULT_SCREEN","Voir (avec les options du screen par défaut)");
-define("_AM_APP_VIEW_OPTIONS_SCREEN","Voir (avec toutes les options du screen activées)");
+define("_AM_APP_VIEW_OPTIONS_SCREEN","Liste principale");
 define("_AM_APP_CLONE_SIMPLY","Cloner");
 define("_AM_APP_CLONE_WITHDATA","Cloner avec les données");
 define("_AM_APP_LOCKDOWN","Verrouiller");
@@ -313,6 +320,7 @@ define("_AM_ELE_SUBFORM_IFFORM", "Screen for displaying each entry:");
 define("_AM_ELE_SUBFORM_SCREEN", "Which screen should be used to display each entry?");
 define("_AM_ELE_SUBFORM_SCREEN_HELP", "The screen will be used for subform entries displayed as a form, or for displaying the entry in a row when its view button is clicked.");
 define("_AM_ELE_SUBFORM_NONE", "Pas de sous formulaires valides - définissez d'abord un inter-relation");
+define("_AM_ELE_SUBFORM_NEW", "Ajouter un formulaire nouveau");
 define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form");
 define("_AM_ELE_SUBFORM_VIEW", "Montrer les boutons<i>Voir</i> a coté de chaque entrée du sous formulaire?");
 define("_AM_ELE_SUBFORM_VIEW_DESC", "The <i>View</i> buttons let users click through to the complete entry in the subform.  This may be useful when only some elements in the subform are visible in the main interface.");
@@ -611,5 +619,8 @@ define("_formulize_CAPTION_LT", "Les légendes ne peuvent contenir de signe < . 
 define("_formulize_CAPTION_MATCH", "La légende que vous avez saisie et déjà utilisée. un '2' a été suffixé à cette dernière.");
 define("_formulize_CAPTION_QUOTES", "La légende ne peut contenir de quote. Ces derniers ont été enlevés.");
 define("_formulize_CAPTION_SLASH", "La ne peut contenir d'anti slash. Ces derniers ont été enlevés.");
+
+define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "Formulaire - %s");
+define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "Liste - %s");
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

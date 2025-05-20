@@ -100,6 +100,7 @@ if(!$form_handler->insert($formObject)) {
 }
 
 $fid = $formObject->getVar('id_form');
+$formObject->setVar('fid', $fid);
 if($_POST['formulize_admin_key'] == "new") {
 
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
@@ -110,14 +111,14 @@ if($_POST['formulize_admin_key'] == "new") {
   // create the default screens for this form
   $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
   $defaultFormScreen = $multiPageScreenHandler->create();
-  $multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title').' Form', $fid, $formObject->getVar('title')); // defaultFormScreen object "passed by reference by default" (or more precisely, the pointer to the object is passed by value, since that's "object variables" are)
+  $multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
 
   if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
     print "Error: could not create default form screen";
   }
   $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
     $screen = $listScreenHandler->create();
-    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title').' List', $fid);
+    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
 
   if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
     print "Error: could not create default list screen";

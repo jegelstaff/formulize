@@ -27,7 +27,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include "../../mainfile.php";
+require_once "../../mainfile.php";
 
 /*
     This is an access point for mobile clients to retrieve the list

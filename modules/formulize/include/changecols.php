@@ -143,15 +143,17 @@ print "</head>";
 print "<body style=\"background: white; margin-top:20px;\"><center>";
 print "<table style=\"width: 100%;\" role=\"presentation\"><tr><td style=\"width: 5%;\"></td><td style=\"width: 90%;\">";
 print "<form name=newcolform action=\"" . XOOPS_URL . "\" method=post>\n";
-
-print "<table class='outer popup' role='presentation'><tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
-print "<tr><td class=head><br>
-<input type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input>
+print "<table class='outer popup' role='presentation'>";
+print "<tr><th colspan=2>" . _formulize_DE_PICKNEWCOLS . "</th></tr>";
+print "<tr><td class=head style=\"position: fixed; width: 280px;text-align: center;\"><br>
+<input style=\"width: 241px;\" type=button name=newcolbutton value=\"" . _formulize_DE_CHANGECOLS . "\" onclick=\"javascript:updateCols(this.form);\"></input>
 <br><br><hr><br>
 <input type='button' name='clearall' style='cursor: pointer;' value='". _formulize_DE_CLEAR_ALL."'
 onclick=\"var boxes = document.getElementsByClassName('colbox');for(var i=0;i<boxes.length;i++){boxes[i].checked = false;}\" />
 <br><br>
-<input type='reset' name='reset' style='cursor: pointer;' value='". _formulize_DE_RESET_COLS."' /></td><td class=even style='width: 75%;'>";
+<input type='reset' name='reset' style='cursor: pointer; width: 241px; white-space: normal;' value='". _formulize_DE_RESET_COLS."' />
+<br><br><hr><br>Use SHIFT-click to select two checkboxes plus all the boxes in between them.</td>
+<td class=even style='width: 100%; padding-left: 300px;'>";
 
 print generateTidyElementList($fid, $cols, $selectedCols);
 

@@ -1,0 +1,50 @@
+<{if $content.type == "select"}>
+	<{assign var="ele_value_scopelimit_DOM" value="elements-ele_value[4]"}>
+	<{assign var="ele_value_scopelimit_SMARTY" value=$content.ele_value[4]}>
+	<{assign var="ele_value_anyorall_DOM" value="elements-ele_value[6]"}>
+	<{assign var="ele_value_anyorall_SMARTY" value=$content.ele_value[6]}>
+<{elseif $content.type == "checkbox"}>
+	<{assign var="ele_value_scopelimit_DOM" value="elements-ele_value[checkbox_scopelimit]"}>
+	<{assign var="ele_value_scopelimit_SMARTY" value=$content.ele_value.checkbox_scopelimit}>
+	<{assign var="ele_value_anyorall_DOM" value="elements-ele_value[checkbox_formlink_anyorall]"}>
+	<{assign var="ele_value_anyorall_SMARTY" value=$content.ele_value.checkbox_formlink_anyorall}>
+<{/if}>
+<fieldset>
+	<legend>Should the scope of the options be limited?</legend>
+	<div class="form-radios">
+		<label for="elements-ele_value[formlink_useonlyusersentries]-1"><input type="radio" id="elements-ele_value[formlink_useonlyusersentries]-1" name="elements-ele_value[formlink_useonlyusersentries]" value="1"<{if $content.ele_value.formlink_useonlyusersentries eq 1}> checked="checked"<{/if}>/> The scope is: <i>data belonging to the active user</i></label>
+	</div>
+	<div class="form-radios">
+		<label for="elements-ele_value[formlink_useonlyusersentries]-0"><input type="radio" id="elements-ele_value[formlink_useonlyusersentries]-0" name="elements-ele_value[formlink_useonlyusersentries]" value="0"<{if $content.ele_value.formlink_useonlyusersentries eq 0}> checked="checked"<{/if}>/> The scope is: <i>data belonging to <b>all users</b> in the selected groups:</i></label>
+	</div>
+	<br>
+	<select id="element-formlink_scope" name="element_formlink_scope[]" size="10" multiple>
+		<{html_options options=$content.formlink_scope_options selected=$content.formlink_scope}>
+	</select>
+	<br/><br/>
+	<fieldset>
+		<legend><{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_INTRO}></legend>
+		<div class="form-radios">
+			<label for="<{$ele_value_scopelimit_DOM}>-0"><input type="radio" id="<{$ele_value_scopelimit_DOM}>-0" name="<{$ele_value_scopelimit_DOM}>" value="0"<{if $ele_value_scopelimit_SMARTY eq 0}> checked="checked"<{/if}>/> <{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_NO}></label>
+		</div>
+		<div class="form-radios">
+			<label for="<{$ele_value_scopelimit_DOM}>-1"><input type="radio" id="<{$ele_value_scopelimit_DOM}>-1" name="<{$ele_value_scopelimit_DOM}>" value="1"<{if $ele_value_scopelimit_SMARTY eq 1}> checked="checked"<{/if}>/> <{$smarty.const._AM_ELE_FORMLINK_SCOPELIMIT_YES}></label>
+		</div>
+		<div class="description">
+			<{$smarty.const._AM_ELE_FORMLINK_SCOPE_DESC}>
+		</div>
+	</fieldset>
+	<fieldset>
+		<legend><{$smarty.const._AM_ELE_FORMLINK_ANYALL_INTRO}></legend>
+		<div class="form-radios">
+			<label for="<{$ele_value_anyorall_DOM}>-0"><input type="radio" id="<{$ele_value_anyorall_DOM}>-0" name="<{$ele_value_anyorall_DOM}>" value="0"<{if $ele_value_anyorall_SMARTY eq 0}> checked="checked"<{/if}>/> <{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
+		</div>
+		<div class="form-radios">
+			<label for="<{$ele_value_anyorall_DOM}>-1"><input type="radio" id="<{$ele_value_anyorall_DOM}>-1" name="<{$ele_value_anyorall_DOM}>" value="1"<{if $ele_value_anyorall_SMARTY eq 1}> checked="checked"<{/if}>/> <{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
+		</div>
+		<div class="description">
+			<{$smarty.const._AM_ELE_FORMLINK_ANYALL_DESC}>
+		</div>
+	</fieldset>
+</fieldset>
+

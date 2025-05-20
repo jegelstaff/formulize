@@ -127,6 +127,8 @@ CREATE TABLE `formulize_application_form_link` (
   `linkid` int(11) NOT NULL auto_increment,
   `appid` int(11) NOT NULL default 0,
   `fid` int(11) NOT NULL default 0,
+  `top` varchar(255) NOT NULL default '',
+  `left` varchar(255) NOT NULL default '',
   PRIMARY KEY (`linkid`),
   INDEX i_fid (`fid`),
   INDEX i_appid (`appid`)
@@ -308,8 +310,8 @@ CREATE TABLE formulize_saved_views (
   sv_pubgroups text,
   sv_owner_uid int(5),
   sv_mod_uid int(5),
-  sv_formframe varchar(255) default NULL,
-  sv_mainform varchar(255) default NULL,
+  sv_formframe int(5) default NULL,
+  sv_mainform int(5) default NULL,
   sv_lockcontrols tinyint(1),
   sv_hidelist tinyint(1),
   sv_hidecalc tinyint(1),
@@ -353,7 +355,7 @@ CREATE TABLE formulize_framework_links (
   fl_key1 smallint(5),
   fl_key2 smallint(5),
   fl_relationship smallint(5),
-  fl_unified_display smallint(5),
+  fl_unified_display smallint(5) NULL default 1,
   fl_unified_delete smallint(5),
   fl_common_value tinyint(1) NOT NULL default '0',
 	fl_one2one_conditional smallint(5) NULL default 1,
@@ -364,6 +366,8 @@ CREATE TABLE formulize_framework_links (
 CREATE TABLE formulize_id (
   id_form smallint(5) NOT NULL auto_increment,
   desc_form varchar(255) NOT NULL default '',
+	singular varchar(255) NULL default '',
+	plural varchar(255) NULL default '',
   singleentry varchar(5) default NULL,
   headerlist text,
   tableform varchar(255) default NULL,
@@ -375,6 +379,7 @@ CREATE TABLE formulize_id (
   store_revisions tinyint(1) NOT NULL default '0',
   note text,
   send_digests tinyint(1) NOT NULL default 0,
+	`pi` int(5) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=InnoDB;
 
