@@ -67,6 +67,9 @@ if ($_GET['fid'] != "new") {
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
 
+		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
+
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
 		$elementIdsWithData = $formObject->getVar('elementsWithData');
@@ -453,6 +456,7 @@ if ($_GET['fid'] != "new") {
     foreach($allGroups as $thisGroup) {
         $groupsCanEditOptions[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
     }
+		$connections = array();
 }
 
 // get a list of all the custom element types that are present
@@ -553,6 +557,7 @@ $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
+$settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
     $settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;

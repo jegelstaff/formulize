@@ -37,6 +37,16 @@
 			<{include file="db:admin/primary_identifier_selection.html" content=$content}>
 		<{/if}>
 
+		<{if $content.connections}>
+			<div class="form-item">
+       	<fieldset>
+					<legend><label class="question">Connections with other forms</label></legend>
+					<{include file="db:admin/relationship_listing.html" sectionContent=$content.connections}>
+					<p><a class='relationship-link-create-connection' target='<{$content.fid}>' href=""><img src="../images/filenew2.png"> Create a Connection</a></p>
+				</fieldset>
+			</div>
+		<{/if}>
+
 		<div class="form-item">
 			<fieldset>
 					<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_APP_PART}></label></legend>
