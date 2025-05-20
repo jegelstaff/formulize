@@ -1402,6 +1402,10 @@ div.target-box .form-name {
   flex-direction: row;
   justify-content: space-between;
 	align-items: center;
+	height: 31px;
+}
+div.form-listing-box .form-name {
+	border: 1px solid #0085b6;
 }
 
 div.accordion-box .form-name a,
@@ -1432,6 +1436,17 @@ div.form-listing-box .form-screen-list {
 	justify-content: space-evenly;
 	flex-direction: row;
 	background-color: #FFF;
+}
+div.form-listing-box .form-screen-list-outer {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	display: block;
+	align-items: top;
+	justify-content: space-evenly;
+	flex-direction: row;
+	background-color: #FFF;
+	width: 100%;
 }
 
 .form-list-link {
@@ -1802,7 +1817,9 @@ form .groupselectionbox {
   width: 50%;
   height: 13em;
   overflow: auto;
-  border: 1px solid blue; }
+  border: 1px solid blue;
+	margin-right: 3em;
+}
 
 p.useroptions input[type="text"] {
     width: 50em;
@@ -1911,7 +1928,7 @@ div.flex-box {
 	position: absolute;
 	right: 4em;
 	top: 3em;
-  z-index: 10;
+  z-index: 1;
   background-color: white;
   padding: 0.5em;
 	border: 1px solid #d3d3d3;
@@ -1939,17 +1956,23 @@ form.formulize-admin-form input[type=text].filter-forms {
 
 .form-listing-details {
 	display: none;
-	position: absolute;
-	top: 3em;
-	right: 4em;
+	position: relative;
+}
+
+.form-listing-details.current-organize-custom {
+	position: fixed;
+	display: block;
+	bottom: 4.9em;
+	right: 3.3em;
 	width: 370px;
 	border: 3px solid #6eac2c;
 	border-radius: 7px;
 	padding: 0.5em;
 	z-index: 100;
 	background-color: #fff;
+	height: 78%;
+	z-index: 100;
 	overflow-y: auto;
-	height: 675px;
 }
 
 .form-listing-title-id {
@@ -1964,7 +1987,51 @@ p.form-listing-id {
 	display: flex;
 	justify-content: space-evenly;
 	margin-top: 1em;
+	flex-direction: column;
 }
+.form-listing-actions-info {
+	flex-direction: row;
+  display: flex;
+}
+div.form-name {
+	height: 31px;
+}
+div[id^=form-details-box-] {
+	height: auto;
+	z-index: 1;
+	background-color: white;
+}
+div[id^=form-details-box-].open-accordion-listing {
+	align-items: flex-start !important;
+	div.form-screen-list {
+		border: 0;
+	}
+	z-index: 10;
+}
+div[id^=form-listing-details-].open-accordion-listing {
+	width: 100%;
+	height: 320px;
+	div.form-listing-content {
+		flex-direction: row;
+		margin-top: 1.5em;
+		display: flex;
+	}
+	a.form-listing-details-close,
+	div.form-listing-content hr {
+		display: none;
+	}
+	p.form-title,
+	div.form-listing-title-id {
+		display: none;
+	}
+	div.form-listing-connections {
+		margin-left: 3em;
+    margin-top: -0.5em;
+		overflow-y: auto;
+    height: 280px;
+	}
+}
+
 .form-title {
 	font-size: 14pt;
 	font-weight: bold;
