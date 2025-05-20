@@ -1598,7 +1598,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
 	$useScrollBox = true;
 	$useHeadings = true;
-	$repeatHeaders = 5;
+	$repeatHeaders = 0;
 	$columnWidth = 0;
 	$textWidth = 35;
 	$useCheckboxes = $settings['lockcontrols'] ? 2 : 0;
