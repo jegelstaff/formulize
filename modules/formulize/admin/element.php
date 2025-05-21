@@ -307,14 +307,16 @@ if ($ele_type=='textarea') {
         $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
     }
     global $xoopsDB;
-		$allFormsQuery = q("SELECT id_form, desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY desc_form");
-		$allForms = array();
-		foreach($allFormsQuery as $thisForm) {
-			$allForms[$thisForm['id_form']] = $thisForm['desc_form'];
-		}
+    $defaultSubformSelection = 0;
+    $allFormsQuery = q("SELECT id_form, desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY desc_form");
+    $allForms = array(_AM_FORMLINK_PICK);
+    foreach($allFormsQuery as $thisForm) {
+        $allForms[$thisForm['id_form']] = $thisForm['desc_form'];
+        $defaultSubformSelection = $defaultSubformSelection ? $defaultSubformSelection : $thisForm['id_form'];
+	}
     $validForms1 = q("SELECT t1.fl_form1_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
     $validForms2 = q("SELECT t1.fl_form2_id, t2.desc_form FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
-		$validForms = array();
+	$validForms = array();
     foreach($validForms1 as $vf1) {
         $validForms[$vf1['fl_form1_id']] = $vf1['desc_form'];
     }
@@ -327,8 +329,7 @@ if ($ele_type=='textarea') {
 		$options['allforms'] = $allForms;
     $options['validForms'] = $validForms;
 		$options['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
-		$formtouse = $ele_value[0] ? $ele_value[0] : key($allForms); // use the user's selection, unless there isn't one, then use the first form found
-		array_unshift($options['allforms'], _AM_FORMLINK_PICK);
+		$formtouse = $ele_value[0] ? $ele_value[0] : $defaultSubformSelection; // use the user's selection, unless there isn't one, then use the first form found
 		$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
 		$options['subformUserFilterElements'][0] = _formulize_NONE;
 		foreach($elementsq as $oneele) {
