@@ -119,10 +119,18 @@ if ($form_id != "new") {
 
 $elements = array();
 
-$frameworks = array($framework_handler->get(-1)); // start with primary relationship
 $includePrimaryRelationship = true;
 $relationshipsIncludingThisForm = $framework_handler->getFrameworksByForm($form_id, $includePrimaryRelationship);
-$frameworks = array_merge($frameworks, $relationshipsIncludingThisForm); // merge with primary relationship, in case the form is not in the primary relationship - we need it as the default option regardless
+if(isset($relationshipsIncludingThisForm[-1])) {
+    $frameworks = $relationshipsIncludingThisForm;
+} else {
+    // must include primary relationship regardless of whether the form is involved or not
+    // and merging or unshifting into the array would screw things up ID wise. The + operator might work, since there wouldn't be duplicates in the array?
+    $frameworks = array($framework_handler->get(-1)); // start with primary relationship
+    foreach($relationshipsIncludingThisForm as $thisFrid=>$relationshipObject) {
+        $frameworks[$thisFrid] = $relationshipObject;
+    }
+}
 $relationships = $framework_handler->formatFrameworksAsRelationships($frameworks);
 $relationshipsIncludingThisForm = $framework_handler->formatFrameworksAsRelationships($relationshipsIncludingThisForm);
 
