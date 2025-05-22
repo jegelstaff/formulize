@@ -3049,7 +3049,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
         if($entries_to_return !== false) {
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
-        if($selfEleValue[1]) {
+        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox') {
             if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
                 $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
                 if($entries_to_return !== false) {

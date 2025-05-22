@@ -1022,7 +1022,8 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 		if (($target_ele_value and !$main_ele_value)
 			or ($target_ele_value and $main_ele_value and $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])
 		) {
-			if ($target_ele_value[1]) {
+		    $metaData = formulize_getElementMetaData($joinHandles[$linktargetids[$linkOrdinal]], isHandle: true);
+			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox') {
 				// multiple values allowed
 				$newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
 			} else {
@@ -1033,7 +1034,8 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 		} elseif (($main_ele_value and !$target_ele_value)
 			or ($main_ele_value and $target_ele_value and $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])
 		) {
-			if ($main_ele_value[1]) {
+		    $metaData = formulize_getElementMetaData($joinHandles[$linkselfids[$linkOrdinal]], isHandle: true);
+			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox') {
 				// multiple values allowed
 				$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
 			} else {
