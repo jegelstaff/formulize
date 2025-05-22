@@ -332,6 +332,20 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             $sourceFid = $boxproperties[0];
             $sourceHandle = $boxproperties[1];
             $sourceEntryIds = explode(",", trim($boxproperties[2],","));
+            $form_handler = xoops_getmodulehandler('forms', 'formulize');
+            $sourceFormObject = $form_handler->get($sourceFid);
+
+            $linked_columns = array();
+			if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND 0 != count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+				$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+                // remove empty entries, which can happen if the "use the linked field selected above" option is selected
+                $linked_columns = array_filter($linked_columns);
+                if (is_array($linked_columns)) {
+			        $sourceHandle = implode("`, t1.`", $linked_columns);
+    			} else {
+    			    $sourceHandle = $linked_columns;	// in this case, it's just one linked column
+    			}
+			}
 
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $formObject = $form_handler->get($element->getVar('id_form'));
@@ -362,12 +376,29 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
                 $extra_clause $conditionsfilter $conditionsfilter_oom $selfReferenceExclusion $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
 
             if($sourceValuesRes = $xoopsDB->query($sourceValuesQ)) {
-                // rewrite the values and ui text based on the data coming out of the database
                 $ele_value = array();
                 $ele_uitext = array();
+                // rewrite the values and ui text based on the data coming out of the database
                 while($resultArray = $xoopsDB->fetchArray($sourceValuesRes)) {
+                    $optionText = $resultArray[$sourceHandle];
+                    if(count((array) $linked_columns)) {
+                        $linked_column_values = array();
+                        foreach($linked_columns as $thisLinkedColumn) {
+                            $linked_value = '';
+        					if ($resultArray[$thisLinkedColumn] !== "") {
+        						$linked_value = prepvalues($resultArray[$thisLinkedColumn], $thisLinkedColumn, $resultArray[0]);
+        						$linked_value = $linked_value[0];
+        					}
+                            if($linked_value != '' OR is_numeric($linked_value)) {
+                          	    $linked_column_values[] = $linked_value;
+                            }
+                        }
+                        if(count((array) $linked_column_values)>0) {
+                            $optionText = implode(" | ", $linked_column_values);
+                        }       
+                    } 
                     $ele_value[2][$resultArray['entry_id']] = in_array($resultArray['entry_id'],$sourceEntryIds) ? 1 : 0;
-                    $ele_uitext[$resultArray['entry_id']] = $resultArray[$sourceHandle];
+                    $ele_uitext[$resultArray['entry_id']] = $optionText;
                 }
             } else {
                 $ele_uitext = $element->getVar('ele_uitext');
