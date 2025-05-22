@@ -74,7 +74,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return new formulizeTemplateScreen();
     }
 
-    function insert($screen) {
+    function insert($screen, $force=false) {
 
         $update = !$screen->getVar('sid') ? false : true;
 
