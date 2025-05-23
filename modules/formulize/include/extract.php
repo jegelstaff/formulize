@@ -2540,25 +2540,29 @@ function getFormHandlesFromEntry($entry)
  * @param string handle The element handle for the field that you want to retrieve
  * @param int datasetKey Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset, starting with 0 for the first entry.
  * @param int localEntryId Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
+ * @param boolean returnRawDBValue Optional. A flag to indicate if the raw value from the database should be returned (for non-metadata elements), or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc.
  * @return string|int|float|array Returns the human readable value for the specified handle in the entry, optionally limited to the specified localEntryId. If there is more than one value for the handle, then an array of values is returned.
  */
-function display($entry, $handle, $datasetKey = null, $localEntryId = null)
+function display($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false)
 {
 
 	$entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
 
 	// return nothing if handle is not part of entry
-	if (!$formhandle = getFormHandleFromEntry($entry, $handle)) {
+	if (!$formHandle = getFormHandleFromEntry($entry, $handle)) {
 		return "";
 	}
 
 	$formulize_mostRecentLocalId = array();
-	foreach ($entry[$formhandle] as $lid => $elements) {
-		if (!$localEntryId or $localEntryId == "NULL" or $lid == $localEntryId) { // legacy "NULL" string value is valid :(
+	foreach ($entry[$formHandle] as $lid => $elements) {
+		if (!$localEntryId OR $localEntryId == "NULL" OR $lid == $localEntryId) { // legacy "NULL" string value is valid :(
 			if (isMetaDataField($handle)) {
 				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
 				return $elements[$handle];
-			} else {
+			} elseif($returnRawDBValue) {
+		        $foundValues[] = htmlspecialchars_decode($elements[$handle]);
+				$formulize_mostRecentLocalId[] = $lid;
+		    } else {
 				foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
 					$foundValues[] = htmlspecialchars_decode($thisValue);
 					$formulize_mostRecentLocalId[] = $lid;
@@ -2574,6 +2578,21 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null)
 		$GLOBALS['formulize_mostRecentLocalId'] = $formulize_mostRecentLocalId;
 		return $foundValues;
 	}
+}
+
+/**
+ * Return the raw value from the database for the specified field (and entry)
+ * Most useful for retrieving keys used in linked elements, without them being converted to the value of their source form entry
+ * Calls the display function, with a flag to turn off prepping of values
+ * Values have html special characters converted back to normal characters (not all entities, just the ones with htmlspecialchars) - this behaviour could be removed if/when user submitted data entering the database through Formulize forms, stops having htmlspecialchars applied to it. Then there would not be any special chars in the database, so we wouldn't need to decode them coming out.
+ * @param array entry The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, if the getData operation was done in the context of a relationship among forms. Can also be the entire dataset returned from getData. In this case the id param must be used to indicate which entry you are working with.
+ * @param string handle The element handle for the field that you want to retrieve
+ * @param int datasetKey Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset, starting with 0 for the first entry.
+ * @param int localEntryId Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
+ * @return string|int|float Returns the raw value from the database for the specified element in the passed in entry, optionally limited to the specified localEntryId. 
+ */
+function displayDB($entry, $handle, $datasetKey = null, $localEntryId = null) {
+  return display($entry, $handle, $datasetKey, $localEntryId, returnRawDBValue: true);  
 }
 
 /**
