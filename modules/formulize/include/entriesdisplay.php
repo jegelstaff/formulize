@@ -1402,7 +1402,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	$buttonCodeArray['pageNavControls'] = $pageNav; // put this unique UI element into the buttonCodeArray for use elsewhere if necessary
     $buttonCodeArray['numberOfEntries'] = $entryTotals;
-		$buttonCodeArray['toggleRepeatData'] = '<label for="toggleRepeatData">'._AM_FORMULIZE_LOE_HIDE_REPEATS.' <input id="toggleRepeatData" type="checkbox"></label>';
+	$buttonCodeArray['toggleRepeatData'] = (!isset($_POST['hlist']) OR !$_POST['hlist']) ?'<label for="toggleRepeatData">'._AM_FORMULIZE_LOE_HIDE_REPEATS.' <input id="toggleRepeatData" type="checkbox"></label>' : '';
     $buttonCodeArray['entriesPerPageSelector'] = $entriesPerPageSelector;
 
 	$currentViewName = $settings['loadviewname'];
@@ -4444,7 +4444,7 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
 
     if($_POST['hlist']) {
 		// return no navigation controls if the list is hidden.
-		return $pageNav;
+		return array("","","");
 	}
 
     global $xoopsConfig;
