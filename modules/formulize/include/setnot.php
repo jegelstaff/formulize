@@ -169,6 +169,7 @@ if($canSetNots) {
 	$set_groups2 = $gperm_handler->getGroupIds("view_globalscope", $fid, $mid);
 	$set_groups = array_merge((array)$set_groups1, (array)$set_groups2); // type casting required for php 5
 	$group_names = $member_handler->getGroups("", true);
+	$group_options = array();
 	foreach($set_groups as $thisgroup) {
 		$group_options[$thisgroup] = $group_names[$thisgroup]->getVar('name');
 	}
