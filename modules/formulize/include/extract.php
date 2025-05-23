@@ -306,6 +306,23 @@ function microtime_float()
 	return microtime(true);
 }
 
+// cleaner behaving alias of getData
+// mostly making frid default to PR, and just naming things more nicely
+// also surfacing the select of elementHandles nicely - multi dimensional array, keyed by fid first, and then each has an array of element handles in it
+// filter is the wild and crazy filter string, or array, etc
+function gatherDataset($fid,
+	$elementHandles=array(),
+	$filter="", 
+	$andOr="AND", 
+	$scope="", 
+	$limitStart = "",
+	$limitSize = "",
+	$sortField = "",
+	$sortOrder = "",
+	$frid=-1) {
+		return getData($frid, $fid, $filter, $andOr, $scope, $limitStart, $limitSize, $sortField, $sortOrder, filterElements: $elementHandles);
+}
+
 function getData(
 	$framework,
 	$form,
@@ -477,16 +494,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$frid = "";
 	if (is_numeric($frame)) {
 		$frid = $frame;
-	} elseif ($frame != "") {
-		$frameid = go("SELECT frame_id FROM " . DBPRE . "formulize_frameworks WHERE frame_name='$frame'");
-		$frid = $frameid[0]['frame_id'];
-	}
+	} 
 	$fid = "";
 	if (is_numeric($form)) {
 		$fid = $form;
-	} else {
-		exit("The passed in value $form does not correspond to an existing form");
-	}
+	} 
 
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formObject = $form_handler->get($fid);
@@ -2538,6 +2550,14 @@ function getFormHandlesFromEntry($entry)
 		return array_keys($entry);
 	}
 	return "";
+}
+
+// more semantically correct aliases for display and displayDB
+function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false ) {
+	return display($entry, $handle, $datasetKey, $localEntryId, $returnRawDBValue);
+}
+function fetchRawVal($entry, $handle, $datasetKey = null, $localEntryId = null) {
+	return display($entry, $handle, $datasetKey, $localEntryId, returnRawDBValue: true);
 }
 
 /**
