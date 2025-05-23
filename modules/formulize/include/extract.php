@@ -158,62 +158,72 @@ function prepvalues($value, $field, $entry_id)
 	) {
 		// value is an entry id in another form
 		// need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
+		// Also, value could be multiple entries in a comma separate list! So check for that and run in a loop.
+		$value = trim($value, ",");
 		$sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
-		if (trim($value, ",") and $sourceMeta[1]) {
-			// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-			// save the value before convertElementIdsToElementHandles()
-			$before_conversion = $sourceMeta[1];
-			$altFieldSource = "";
-			if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-				$altFieldSource = $source_ele_value[11];
-			} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
-				$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
-			}
-			if ($altFieldSource) {
-				$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
-				$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
-				// remove empty entries, which can happen if the "use the linked field selected above" option is selected
-				$sourceMeta[1] = array_filter($sourceMeta[1]);
-				// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
-				// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
-				// check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
-				if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) or $sourceMeta[1] == "none") {
-					$sourceMeta[1] = $before_conversion;
-				}
-			}
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$sourceFormObject = $form_handler->get($sourceMeta[0]);
-			$sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
-			$query_columns = array();
-			foreach ($sourceMeta[1] as $key => $handle) {
-				// check if this is a link to a link
-				if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
-					$secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-					$secondFormObject = $form_handler->get($secondSourceMeta[0]);
-					$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
-						" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` IN (" . trim($value, ",") .
-						") AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $handle . "`)) ORDER BY t2.`entry_id`";
-					if (!$res = $xoopsDB->query($sql)) {
-						print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
-					} else {
-						$row = $xoopsDB->fetchRow($res);
-						$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to
-						$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
-					}
-				} else {
-					$query_columns[] = "`$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
-				}
-			}
-			$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
-				" WHERE entry_id IN (" . trim($value, ",") . ") ORDER BY entry_id";
-			if (!$res = $xoopsDB->query($sql)) {
-				print "Error: could not retrieve the source values for a linked selectbox (for $field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+		if($value AND $sourceMeta[1]) {
+			if(strstr($value, ",")) {
+				$values = explode(",", $value);
 			} else {
-				$value = "";
-				while ($row = $xoopsDB->fetchRow($res)) {
-					$value .= "*=+*:" . implode(" - ", $row);
+				$values = array($value);
+			}
+			$newValue = "";
+			foreach($values as $value) {
+				$value = intval($value);
+				// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+				// save the value before convertElementIdsToElementHandles()
+				$before_conversion = $sourceMeta[1];
+				$altFieldSource = "";
+				if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
+					$altFieldSource = $source_ele_value[11];
+				} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
+					$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
+				}
+				if ($altFieldSource) {
+					$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
+					$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
+					// remove empty entries, which can happen if the "use the linked field selected above" option is selected
+					$sourceMeta[1] = array_filter($sourceMeta[1]);
+					// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
+					// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
+					// check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
+					if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) or $sourceMeta[1] == "none") {
+						$sourceMeta[1] = $before_conversion;
+					}
+				}
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$sourceFormObject = $form_handler->get($sourceMeta[0]);
+				$sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
+				$query_columns = array();
+				foreach ($sourceMeta[1] as $key => $handle) {
+					// check if this is a link to a link
+					if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
+						$secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
+						$secondFormObject = $form_handler->get($secondSourceMeta[0]);
+						$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
+							" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` = $value
+							AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $handle . "`)) ORDER BY t2.`entry_id`";
+						if (!$res = $xoopsDB->query($sql)) {
+							print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+						} else {
+							$row = $xoopsDB->fetchRow($res);
+							$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to    
+							$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
+						}
+					} else {
+						$query_columns[] = "`$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
+					}
+				}
+				$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
+					" WHERE entry_id = $value ORDER BY entry_id";
+				if (!$res = $xoopsDB->query($sql)) {
+					print "Error: could not retrieve the source values for a linked selectbox (for $field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+				} else {
+					$row = $xoopsDB->fetchRow($res);
+					$newValue .= "*=+*:" . implode(" - ", $row);
 				}
 			}
+			$value = $newValue;
 		} else {
 			$value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
 		}
