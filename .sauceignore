@@ -1,5 +1,0 @@
-# Ignore all files by default.
-/*
-
-# Re-include files we selectively want as part of the payload by prefixing the lines with '!'.
-!/tests/e2e
