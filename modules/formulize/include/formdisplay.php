@@ -1893,7 +1893,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	// preopulate entries, if there are no sub_entries yet, and prepop options is selected.
     // prepop will be based on the options in an element in the subform, and should also take into account the non OOM conditional filter choices where = is the operator.
-    if(count((array) $sub_entries[$subform_id]) == 0 AND $subform_element_object AND $subform_element_object->ele_value['subform_prepop_element']) {
+	// does not populate when the mainform entry is new, so the subform interface will be empty until the form is saved, and then the subs will populate, and be linked to the just saved mainform entry
+    if($entry AND $entry != 'new' AND count((array) $sub_entries[$subform_id]) == 0 AND $subform_element_object AND $subform_element_object->ele_value['subform_prepop_element']) {
 
         $optionElementObject = $element_handler->get($subform_element_object->ele_value['subform_prepop_element']);
 
