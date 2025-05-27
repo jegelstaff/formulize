@@ -43,8 +43,8 @@ function b_system_online_show() {
 		$members = '';
 		for ($i = 0; $i < $total; $i++) {
 			if ($onlines[$i]['online_uid'] > 0) {
-				$members .= ' <a href="' . ICMS_URL . '/userinfo.php?uid=' . $onlines[$i]['online_uid'] 
-					. '" title="' . $onlines[$i]['online_uname'] . '\'s ' . _PROFILE . '">' 
+				$members .= ' <a href="' . ICMS_URL . '/userinfo.php?uid=' . $onlines[$i]['online_uid']
+					. '" title="' . $onlines[$i]['online_uname'] . '\'s ' . _PROFILE . '">'
 					. $onlines[$i]['online_uname'] . '</a>, ';
 			} else {
 				$guests++;
@@ -90,25 +90,27 @@ function b_system_login_show() {
 		$block['lang_youoid'] = _MB_SYSTEM_OPENID_URL;
 		$block['lang_login_oid'] = _MB_SYSTEM_OPENID_LOGIN;
 		$block['lang_back2normoid'] = _MB_SYSTEM_OPENID_NORMAL_LOGIN;
+		$block['sslloginlink'] = '';
 		if ($icmsConfig['use_ssl'] == 1 && $icmsConfig['sslloginlink'] != '') {
-			$block['sslloginlink'] = "<a href=\"javascript:openWithSelfMain('" 
+			$block['sslloginlink'] = "<a href=\"javascript:openWithSelfMain('"
 				. $icmsConfig['sslloginlink'] . "', 'ssllogin', 300, 200);\">" . _MB_SYSTEM_SECURE . "</a>";
 		}
 
-		if ($icmsConfigUser['allow_register'] == 1) {
-			$block['registration'] = $icmsConfigUser['allow_register'];
-		}
+		$block['registration'] = (isset($icmsConfigUser['allow_register']) AND $icmsConfigUser['allow_register'] == 1 ? 1 : 0);
 
-		if ($icmsConfigUser['remember_me'] == 1) {
-			$block['rememberme'] = $icmsConfigUser['remember_me'];
-		}
+		$block['rememberme'] = (isset($icmsConfigUser['remember_me']) AND $icmsConfigUser['remember_me'] == 1 ? 1 : 0);
 
 		if ($icmsConfigAuth['auth_openid']) {
-			$block['auth_openid'] = TRUE;
-            $block['auth_googleonly'] = $icmsConfigAuth['auth_googleonly'];
+			$block['auth_openid'] = true;
+      $block['auth_googleonly'] = $icmsConfigAuth['auth_googleonly'];
 			$block['auth_url'] = authenticationURL($icmsConfigAuth['auth_openid']);
+		} else {
+			$block['auth_openid'] = false;
+      $block['auth_googleonly'] = false;
+			$block['auth_url'] = '';
 		}
-        $block['auth_okta'] = $icmsConfigAuth['auth_okta'];
+
+    $block['auth_okta'] = $icmsConfigAuth['auth_okta'];
 		return $block;
 	}
 	return FALSE;
@@ -144,7 +146,7 @@ function b_system_main_show() {
 			if ((count($sublinks) > 0) && (!empty($icmsModule)) && ($i == $icmsModule->getVar('mid'))) {
 				foreach ($sublinks as $sublink) {
 					$block['modules'][$i]['sublinks'][] = array(
-						'name' => $sublink['name'], 
+						'name' => $sublink['name'],
 						'url' => ICMS_MODULES_URL . '/' . $modules[$i]->getVar('dirname') . '/' . $sublink['url']);
 				}
 			} else {
@@ -202,9 +204,9 @@ function b_system_info_show($options) {
 	$block = array();
 	if (!empty($options[3])) {
 		$block['showgroups'] = TRUE;
-		$result = icms::$xoopsDB->query("SELECT u.uid, u.uname, u.email, u.user_viewemail, u.user_avatar, g.name AS groupname FROM " 
-			. icms::$xoopsDB->prefix("groups_users_link") . " l LEFT JOIN " . icms::$xoopsDB->prefix("users") 
-			. " u ON l.uid=u.uid LEFT JOIN " . icms::$xoopsDB->prefix("groups") 
+		$result = icms::$xoopsDB->query("SELECT u.uid, u.uname, u.email, u.user_viewemail, u.user_avatar, g.name AS groupname FROM "
+			. icms::$xoopsDB->prefix("groups_users_link") . " l LEFT JOIN " . icms::$xoopsDB->prefix("users")
+			. " u ON l.uid=u.uid LEFT JOIN " . icms::$xoopsDB->prefix("groups")
 			. " g ON l.groupid=g.groupid WHERE g.group_type='Admin' ORDER BY l.groupid, u.uid");
 		if (icms::$xoopsDB->getRowsNum($result) > 0) {
 			$prev_caption = "";
@@ -230,8 +232,8 @@ function b_system_info_show($options) {
 		$block['showgroups'] = FALSE;
 	}
 	$block['logourl'] = ICMS_URL . '/images/' . $options[2];
-	$block['recommendlink'] = "<a href=\"javascript:openWithSelfMain('" 
-		. ICMS_URL . "/misc.php?action=showpopups&amp;type=friend&amp;op=sendform&amp;t=" . time() 
+	$block['recommendlink'] = "<a href=\"javascript:openWithSelfMain('"
+		. ICMS_URL . "/misc.php?action=showpopups&amp;type=friend&amp;op=sendform&amp;t=" . time()
 		. "','friend'," . $options[0] . "," . $options[1] . ")\">" . _MB_SYSTEM_RECO . "</a>";
 	return $block;
 }
