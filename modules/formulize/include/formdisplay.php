@@ -2167,7 +2167,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                             }
 							$col_two .= "<td class='formulize_subform_".$thisele.$textAreaClass."'>$col_two_temp</td>\n";
 						} else {
-							$col_two .= "<td>******</td>";
+							$col_two .= "<td></td>";
 						}
 					}
 				}
@@ -2301,7 +2301,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                                 }
 								$col_two .= "<td class='formulize_subform_".$thisele."$textAlign$textAreaClass'>$col_two_temp</td>\n";
 							} else {
-								$col_two .= "<td>******</td>";
+								$col_two .= "<td></td>";
 							}
 						}
 					}
