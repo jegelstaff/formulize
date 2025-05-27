@@ -42,7 +42,7 @@ print "
                 print "
                     <td $columnWidthStyle class='head column column$columnNumber' id='celladdress_1_$columnNumber'>
                         <div class='main-cell-div' id='cellcontents_1_$columnNumber'>
-                            ${'quickSearch'.$searchTypes[$elementHandle].'_'.$elementHandle}
+                            {${'quickSearch'.$searchTypes[$elementHandle].'_'.$elementHandle}}
                         </div>
                     </td>";
             }
