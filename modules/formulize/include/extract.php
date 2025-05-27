@@ -306,20 +306,30 @@ function microtime_float()
 	return microtime(true);
 }
 
-// cleaner behaving alias of getData
-// mostly making frid default to PR, and just naming things more nicely
-// also surfacing the select of elementHandles nicely - multi dimensional array, keyed by fid first, and then each has an array of element handles in it
-// filter is the wild and crazy filter string, or array, etc
+/**
+ * Retrieve data from forms, based on their connections as defined in the Formulize admin UI
+ * Extensive documentation at https://formulize.org/developers/API/functions/gatherDataset/
+ * @param int fid - The id number of the main form. The main form is the form that defines the "context" of the dataset, ie: each item in the dataset will be one record from the main form.
+ * @param array elementHandles - Optional. An array of arrays, that defines the form elements to include in the dataset. If not specified, then all form elements are included. The outer array uses form ids as keys, and the value of each is an array of elements to gather from that form.  
+ * @param int|string|array filter - Optional. A filter that will limit the entries included in the dataset. A single number will be interpretted as an entry id in the main form. String and Array formats are documented in more detail at https://formulize.org/developers/API/functions/gatherDataset/
+ * @param string andOr - Optional. Indicates what logical operator should be used between multiple filters. Defaults to AND.
+ * @param array|string scope - Optional. An array of group ids, which define the scope of which entries should included in the dataset, based on the group ownership recorded when the entries were created. If not defined, all entries from all groups are included. You can use the buildScope function to create a valid $scope variable to pass into gatherDataset. Alternatively, this can be a snippet of SQL code that will be escaped and appended to the where clause of the query with: AND ( $scope )
+ * @param int limitStart - Optional. The ordinal number of the record in the database that the dataset should start with, as used in a MySQL/MariaDB LIMIT clause.
+ * @param int limitSize - Optional. The number of records after the limitStart that should be included in the dataset as used in a MySQL/MariaDB LIMIT clause.
+ * @param string sortField - Optional. The element that should be used to sort the entries in the dataset.
+ * @param string sortOrder - Optional. Either ASC or DESC to indicate the direction in which the entries should be sorted. Defaults to ASC.
+ * @param int frid - Optional. The form relationship id, that defines the set of connections, as defined in the Formulize admin UI, that should be taken into account when gathering the dataset. Defaults to the Primary Relationship, which includes all connections between all forms. Only forms directly connected to the main form are included in the dataset.
+ * @return array Returns the dataset as an array. You can use the functions fetch, fetchEntryIds
 function gatherDataset($fid,
-	$elementHandles=array(),
-	$filter="", 
-	$andOr="AND", 
-	$scope="", 
+	$elementHandles = array(),
+	$filter = "", 
+	$andOr = "AND", 
+	$scope = "", 
 	$limitStart = "",
 	$limitSize = "",
 	$sortField = "",
 	$sortOrder = "",
-	$frid=-1) {
+	$frid = -1) {
 		return getData($frid, $fid, $filter, $andOr, $scope, $limitStart, $limitSize, $sortField, $sortOrder, filterElements: $elementHandles);
 }
 
@@ -562,7 +572,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$scopeFilter = " AND main.entry_id<0 ";
 			}
 		} elseif ($scope) { // need to handle old "uid = X OR..." syntax
-			$scopeFilter = " AND (" . str_replace("uid", "main.creation_uid", $scope) . ") ";
+			$scopeFilter = formulize_db_escape(" AND (" . str_replace("uid", "main.creation_uid", $scope) . ") ");
 		}
 
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
@@ -2552,29 +2562,21 @@ function getFormHandlesFromEntry($entry)
 	return "";
 }
 
-// more semantically correct aliases for display and displayDB
-function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false ) {
-	return display($entry, $handle, $datasetKey, $localEntryId, $returnRawDBValue);
-}
-function fetchRawVal($entry, $handle, $datasetKey = null, $localEntryId = null) {
-	return display($entry, $handle, $datasetKey, $localEntryId, returnRawDBValue: true);
-}
-
 /**
- * Return the human readable value from a dataset, for the specified field (and entry)
- * Except in the case of canonical metdata, such as creation_uid, where the raw metadata is returned
- * Returns an array of values if there is more than one value in the dataset for the given field in the entry
- * Returns a single value if there is only one value in the dataset for the given field in the entry
+ * Return the value from an entry from a dataset, for the specified field
+ * By default, values saved in form elements will be prepped for human readability before being returned
+ * ie: foreign keys in linked elements will be returned as the actual value in their source form
+ * Optionally you can request the raw, unprepped version of form data, using the 'raw' parameter
+ * This function calls the old display function, optionally with a flag to turn off prepping of values
  * Values have html special characters converted back to normal characters (not all entities, just the ones with htmlspecialchars) - this behaviour could be removed if/when user submitted data entering the database through Formulize forms, stops having htmlspecialchars applied to it. Then there would not be any special chars in the database, so we wouldn't need to decode them coming out.
- * @param array entry The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, if the getData operation was done in the context of a relationship among forms. Can also be the entire dataset returned from getData. In this case the id param must be used to indicate which entry you are working with.
- * @param string handle The element handle for the field that you want to retrieve
- * @param int datasetKey Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset, starting with 0 for the first entry.
- * @param int localEntryId Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
- * @param boolean returnRawDBValue Optional. A flag to indicate if the raw value from the database should be returned (for non-metadata elements), or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc.
- * @return string|int|float|array Returns the human readable value for the specified handle in the entry, optionally limited to the specified localEntryId. If there is more than one value for the handle, then an array of values is returned.
- */
-function display($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false)
-{
+ * @param array entry - The entry as found in a dataset returned from the gatherDataset function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from gatherDataset. In this case the datasetKey param must be used to indicate which entry you are working with.
+ * @param string handle - The element handle for the field that you want to retrieve
+ * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
+ * @param int localEntryId - Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
+ * @param boolean raw - Optional. A flag to indicate if the raw value from the database should be returned for form elements, or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc. Default is false (ie: by default, prepped values are returned)
+ * @return string|int|float|array Returns the value for the specified element in the passed in entry, optionally limited to the specified localEntryId. If values are prepped and there are multiple values in the result (such as in the case of a checkbox element *with multiple boxes checked*) then the function will return an array of values. If a multiple option element only has one element checked, the function will return the single value selected. An array will also be returned if there are multiple records in the dataset from the form that the handle belongs to.
+ */ 
+function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false ) {
 
 	$entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
 
@@ -2589,7 +2591,7 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null, $ret
 			if (isMetaDataField($handle)) {
 				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
 				return $elements[$handle];
-			} elseif($returnRawDBValue) {
+			} elseif($raw) {
 		        $foundValues[] = htmlspecialchars_decode($elements[$handle]);
 				$formulize_mostRecentLocalId[] = $lid;
 		    } else {
@@ -2611,29 +2613,32 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null, $ret
 }
 
 /**
- * Return the raw value from the database for the specified field (and entry)
- * Most useful for retrieving keys used in linked elements, without them being converted to the value of their source form entry
- * Calls the display function, with a flag to turn off prepping of values
+ * Use the fetch function instead. This is the old original name for the function.
+ * Return the human readable value from a dataset, for the specified field (and entry)
+ * Except in the case of canonical metdata, such as creation_uid, where the raw metadata is returned
+ * Returns an array of values if there is more than one value in the dataset for the given field in the entry
+ * Returns a single value if there is only one value in the dataset for the given field in the entry
  * Values have html special characters converted back to normal characters (not all entities, just the ones with htmlspecialchars) - this behaviour could be removed if/when user submitted data entering the database through Formulize forms, stops having htmlspecialchars applied to it. Then there would not be any special chars in the database, so we wouldn't need to decode them coming out.
- * @param array entry The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, if the getData operation was done in the context of a relationship among forms. Can also be the entire dataset returned from getData. In this case the id param must be used to indicate which entry you are working with.
- * @param string handle The element handle for the field that you want to retrieve
- * @param int datasetKey Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset, starting with 0 for the first entry.
- * @param int localEntryId Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
- * @return string|int|float Returns the raw value from the database for the specified element in the passed in entry, optionally limited to the specified localEntryId. 
+ * @param array entry - The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from getData. In this case the datasetKey param must be used to indicate which entry you are working with.
+ * @param string handle - The element handle for the field that you want to retrieve
+ * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
+ * @param int localEntryId - Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
+ * @param boolean returnRawDBValue - Optional. A flag to indicate if the raw value from the database should be returned (for non-metadata elements), or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc.
+ * @return string|int|float|array Returns the human readable value for the specified handle in the entry, optionally limited to the specified localEntryId. If there is more than one value for the handle, then an array of values is returned.
  */
-function displayDB($entry, $handle, $datasetKey = null, $localEntryId = null) {
-  return display($entry, $handle, $datasetKey, $localEntryId, returnRawDBValue: true);  
+function display($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false) {
+	return fetch($entry, $handle, $datasetKey, $localEntryId, $returnRawDBValue);
 }
 
 /**
  * Take a value of a field from a dataset entry and decode the HTML characters so it displays as intended. Meant for use with values from rich text editors.
- *
- * @param array $entryOrDataset The record from a dataset, or the entire dataset, as returned from getData
+ * @param array $entryOrDataset The record from a dataset, or the entire dataset, as returned from gatherDataset
  * @param string $elementHandle The element handle of the file upload element we're working with
  * @param int $dataSetKey Optional. The key in the dataset array of the entry record we want to work with. Required if $entryOrDataset is the entire dataset.
  * @param int $localId Optional. The ordinal id of the instance of the element handle we want to work with. Only required if there are multiple entries represented in this dataset record which all include data attached to this element handle, ie: if the handle is on the many side of a one to many connection in the dataset.
  * @return string Returns the value of the element handle in the dataset record we're working with, with all the HTML characters decoded.
  */
+
 function displayRichText($entryOrDataset, $elementHandle, $dataSetKey = null, $localId = "NULL")
 {
 	return htmlspecialchars_decode(display($entryOrDataset, $elementHandle, $dataSetKey, $localId), ENT_QUOTES);
@@ -2753,45 +2758,49 @@ function displayList($entry, $handle, $type = "bulleted", $id = "NULL", $localid
 	return makeList($values, $type);
 }
 
+/**
+ * Retrieve the entry ids of entries included in a dataset returned from gatherDataset
+ * @param array entry - The entry as found in a dataset returned from the gatherDataset function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from gatherDataset. In this case the datasetKey param must be used to indicate which entry you are working with.
+ * @param int|string formIdOrHandle - Optional. The id of the form in the dataset that you want to get the entry ids for. If omitted, entry ids for all entries in all forms are returned in a multidimensional array. A form handle can be used instead of an id, but it is better to use an id if possible (reduces )
+ * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
+ * @param boolean
+ */
+
 // THIS FUNCTION RETURNS AN ARRAY OF ALL THE INTERNAL IDS ASSOCIATED WITH THE ENTRIES OF A PARTICULAR FORM
 // $formhandle can be an array of form handles or form ids, or if not specified then all entries for all handles are returned
 // $formhandle can just be a single handle or form id
 // If formhandle is an array, then $ids returned becomes a two dimensional array:  $ids[$formhandle][] = $id
-function internalRecordIds($entry, $formhandle = "", $id = "NULL", $fidAsKeys = false)
+function internalRecordIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKeys = false)
 {
-	$ids = array();
-	if (is_numeric($id)) {
-		$entry = $entry[$id];
+	$entryIds = array();
+	if (is_numeric($datasetKey)) {
+		$entry = $entry[$datasetKey];
 	}
-	if (!$formhandle) {
-		$formhandle = getFormHandlesFromEntry($entry);
+	if (!$formIdOrHandle) {
+		$formIdOrHandle = getFormHandlesFromEntry($entry);
 	}
-	if (is_array($formhandle)) {
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		foreach ($formhandle as $handle) {
-			$handle = _parseInternalRecordIdsFormHandle($handle);
-			foreach ($entry[$handle] as $id => $localEntry) {
-				if ($fidAsKeys) {
-					$offset = isset($localEntry['entry_id']) ? 5 : 0; // first five items will be the metadata fields if 'entry_id' is present, otherwise, take the first item from the array
-					$localEntryElement = array_slice($localEntry, $offset, 1);
-					$localEntryElement = key($localEntryElement);
-					$elementObject = $element_handler->get($localEntryElement);
-					$fid = $elementObject->getVar('id_form');
-					$ids[$fid][] = $id;
-				} else {
-					$ids[$handle][] = $id;
-				}
+	if (is_array($formIdOrHandle)) {
+		$form_handler = $fidAsKeys ? xoops_getmodulehandler('forms', 'formulize') : null;
+		foreach ($formIdOrHandle as $formHandle) {
+			$formHandle = _parseInternalRecordIdsFormHandle($formHandle);
+			if ($fidAsKeys) {
+				$formObject = $form_handler->get($formHandle);
+				$fid = $formObject->getVar('fid');
+			}
+			foreach ($entry[$formHandle] as $entryId => $localEntry) {
+				$key = $fidAsKeys ? $fid : $formHandle;
+				$entryIds[$key][] = $entryId;
 			}
 		}
 	} else {
-		$formhandle = _parseInternalRecordIdsFormHandle($formhandle);
-		if (is_array($entry[$formhandle])) {
-			foreach ($entry[$formhandle] as $id => $element) {
-				$ids[] = $id;
+		$formHandle = _parseInternalRecordIdsFormHandle($formIdOrHandle);
+		if (is_array($entry[$formHandle])) {
+			foreach ($entry[$formHandle] as $entryId => $localEntry) {
+				$entryIds[] = $entryId;
 			}
 		}
 	}
-	return $ids;
+	return $entryIds;
 }
 
 /**
@@ -2900,41 +2909,6 @@ function countHits($entry, $handle, $word)
 	$hits = substr_count(strtolower($value), strtolower($word));
 	return $hits;
 }
-
-
-// DEPRECATED -- this file used to be rigorously written so you could include it from another code base and access all functions in order to interact with form data
-// That architectural approach is now fully deprecated.  This file should not be preferenced directly.
-
-// Nonetheless, in accordance with the historical practice, for now, we will invoke certain objects and settings if this file appears to be launching outside the XOOPS core.  Watch for refactoring here in the future.
-
-// if XOOPS has not already connected to the database, then connect to it now using user defined constants that are set in another file
-// the idea is to include this file from another one
-
-global $xoopsDB, $myts;
-
-
-define("DBPRE", $xoopsDB->prefix('') . "_");
-if (!defined("_formulize_OPT_OTHER")) {
-	global $xoopsConfig;
-	switch ($xoopsConfig['language']) {
-		case "french":
-			define("_formulize_OPT_OTHER", "Autre : ");
-			define("_formulize_TEMP_QYES", "Oui");
-			define("_formulize_TEMP_QNO", "Non");
-			break;
-		case "english":
-		default:
-			define("_formulize_OPT_OTHER", "Other: ");
-			define("_formulize_TEMP_QYES", "Yes");
-			define("_formulize_TEMP_QNO", "No");
-			break;
-	}
-}
-$config_handler = &xoops_gethandler('config');
-
-$formulizeModuleConfig = &$config_handler->getConfigsByCat(0, getFormulizeModId()); // get the *Formulize* module config settings
-$GLOBALS['formulize_LOE_limit'] = $formulizeModuleConfig['LOE_limit'];
-
 
 function formulize_benchmark($text, $dumpLog = false)
 {
