@@ -1820,7 +1820,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
 					// get the entry_id of the mainform entry in this record from the dataset
 					unset($ids);
-					$ids = internalRecordIds($entry, $mainFormHandle);
+					$ids = getEntryIds($entry, $mainFormHandle);
 					$entry_id = $ids[0];
 					$GLOBALS['formulize_viewEntryId'] = $entry_id;
 
@@ -1840,7 +1840,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 						if($formulizeCanonicalURI) {
 							$entryIdentifier = $entry_id;
 							if($rewriteruleElement = $element_handler->get($screen->getVar('rewriteruleElement'))) {
-								$entryIdentifier = urlencode(display($entry, $rewriteruleElement->getVar('ele_handle')));
+								$entryIdentifier = urlencode(getValue($entry, $rewriteruleElement->getVar('ele_handle')));
 							}
 							$viewEntryLinkCode .= '/'.$entryIdentifier.'/';
 						} else {
@@ -1878,15 +1878,15 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 						$templateVariables['columnFormIds'][] = $colElementObject ? $colElementObject->getVar('id_form') : $fid;
 
 						if($col == "creation_uid" OR $col == "mod_uid") {
-							$userObject = $member_handler->getUser(display($entry, $col));
+							$userObject = $member_handler->getUser(getValue($entry, $col));
 							if($userObject) {
 								$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
 							} else {
 								$nameToDisplay = _FORM_ANON_USER;
 							}
-							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . display($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
+							$value = "<a href=\"" . XOOPS_URL . "/userinfo.php?uid=" . getValue($entry, $col) . "\" target=_blank>" . $nameToDisplay . "</a>";
 						} else {
-							$value = display($entry, $col);
+							$value = getValue($entry, $col);
 						}
 
 						ob_start();
@@ -2084,7 +2084,7 @@ function processViewEntryLinkOverrideId($overrideId) {
     } elseif(is_array($overrideId)) {
         // if the overrideId is not numeric, then it must be an array from a getData dataset
         // use the first entry id from the first form in the dataset (probably the only entry in the dataset since people wouldn't use this behaviour with a complex multiform dataset?)
-        $ids = internalRecordIds($overrideId);
+        $ids = getEntryIds($overrideId);
         if(!is_array($ids)) {
             ob_start();
             var_dump($overrideId);

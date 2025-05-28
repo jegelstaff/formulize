@@ -110,11 +110,9 @@ function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $ope
  * @param $operation the operation to be used on raw data
  */
 function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $operation) {
-	if (is_numeric($frid) && $frid > 0) {
-		$dbData = getData($frid, $fid, $filter);
-	} else {
-		$dbData = getData("", $fid, $filter);
-	}
+
+	$frid = (is_numeric($frid) AND $frid != 0) ? $frid : 0;
+	$dbData = gatherDataset($fid, filter: $filter, frid: $frid);
 
 	if (!is_array($dataElement)) {
 		$dataElement = array($dataElement);
@@ -129,11 +127,11 @@ function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $ope
 	foreach ($dbData as $entry) {
 		// mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
 		foreach($dataElement as $thisDataElement) {
-			$dataRawValue = display($entry, $thisDataElement);
+			$dataRawValue = getValue($entry, $thisDataElement);
 		}
 		// city_name;
 		foreach($labelElement as $thisLabelElement) {
-			$labelRawValue = display($entry, $thisLabelElement);
+			$labelRawValue = getValue($entry, $thisLabelElement);
 		}
 		if (!is_array($dataRawValue) && $dataRawValue) {
 			$dataRawValue = array($dataRawValue);

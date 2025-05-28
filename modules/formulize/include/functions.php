@@ -210,10 +210,10 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
             $start = false;
             $filterText .= $filterElements[$filterId]."/**/".$filterTerms[$filterId]."/**/".$filterOps[$filterId];
         }
-        $profileData = getData("", $fid, $filterText, "AND", makeUidFilter($found_uids));
+        $profileData = gatherDataset($fid, filter: $filterText, scope: makeUidFilter($found_uids), frid: $frids[$i]);
         $real_found_names = array();
         foreach ($profileData as $thisData) {
-            $thisUid = display($thisData, "creation_uid");
+            $thisUid = getValue($thisData, "creation_uid");
             $real_found_names[$thisUid] = $found_names[$thisUid];
         }
         unset($found_names);
@@ -1374,22 +1374,22 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
         $csvfile = prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData);
         $secondaryData = array(); // reset the secondary data
 
-        $ids = internalRecordIds($entry, $fid);
+        $ids = getEntryIds($entry, $fid);
         $id = $ids[0];
         $id_req[] = $id;
 
-        $c_uid = display($entry, 'creation_uid');
+        $c_uid = getValue($entry, 'creation_uid');
         $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
         $c_name = $c_name_q[0]['name'] ? $c_name_q[0]['name'] : $c_name_q[0]['uname'];
-        $c_date = display($entry, 'creation_datetime');
-        $m_uid = display($entry, 'mod_uid');
+        $c_date = getValue($entry, 'creation_datetime');
+        $m_uid = getValue($entry, 'mod_uid');
         if ($m_uid) {
             $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
             $m_name = $m_name_q[0]['name'] ? $m_name_q[0]['name'] : $m_name_q[0]['uname'];
         } else {
             $m_name = $c_name;
         }
-        $m_date = display($entry, 'mod_datetime');
+        $m_date = getValue($entry, 'mod_datetime');
 
         // write in metadata
         $lineStarted = false;
@@ -1409,7 +1409,7 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
                 continue;
             }
             if ($col == "creation_uid" OR $col == "mod_uid" OR $col == "uid" OR $col == "proxyid") {
-                $name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(display($entry, $col)));
+                $name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=".intval(getValue($entry, $col)));
                 $data_to_write = $name_q[0]['name'] ? quoteCellContentsForSpreadsheetExport($name_q[0]['name']) : quoteCellContentsForSpreadsheetExport($name_q[0]['uname']);
             } elseif($col == 'entry_id') {
                 $data_to_write = $id;
@@ -1418,9 +1418,9 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
             } elseif($col == 'mod_datetime') {
                 $data_to_write = $m_date;
             } elseif($col == 'creator_email') {
-                $data_to_write = display($entry, $col);
+                $data_to_write = getValue($entry, $col);
 						} elseif($col == 'owner_groups') {
-								$data_to_write = quoteCellContentsForSpreadsheetExport(display($entry, $col));
+								$data_to_write = quoteCellContentsForSpreadsheetExport(getValue($entry, $col));
             } else {
                 $data_to_write = prepareCellForSpreadsheetExport($col, $entry);
             }
@@ -1473,7 +1473,7 @@ function prepareCellForSpreadsheetExport($column, $entry) {
 
     // experimental, replace displayTogether with a technique for splitting contents onto other lines below...
     /*
-    $raw_data = display($entry, $column);
+    $raw_data = getValue($entry, $column);
     if(is_array($raw_data)) {
         $data_to_write = $raw_data[0];
         unset($raw_data[0]);
@@ -3111,9 +3111,9 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
             }
         }
     }
-    $entries_data = getData($frid, $fid, $entryOrFilter);
+    $entries_data = gatherDataset($fid, filter: $entryOrFilter, frid: $frid);
     foreach($entries_data as $entry_data) {
-        $ids = internalRecordIds($entry_data, "", "", true); // true causes the first key of the returned array to be the fids
+        $ids = getEntryIds($entry_data, fidAsKeys: true);
         foreach ($ids as $fid=>$entryids) {
             foreach ($entryids as $id) {
                 $entries_to_clone[$fid][] = $id;
@@ -3350,7 +3350,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                     $filter = array(0=>array(0=>"and",1=>$filter), 1=>array(0=>"or",1=>implode("][",$blankFilters['or'])));
                 }
                 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-                $data = getData("", $fid, $filter);
+                $data = gatherDataset($fid, filter: $filter, frid: 0);
                 if ($data[0] == "") {
                     continue;
                 }
@@ -3426,7 +3426,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                 // Only do this getData call if we don't already have data from the database. $notificationTemplateData[$entry][0] == "" will probably never be true in Formulize 3.0 and higher, but will evaluate as expected, with a warning about [0] being an invalid offset or something like that
                 if ($notificationTemplateData[$entry][0] == "" OR $notificationTemplateData[$entry] == "") {
                     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-                    $notificationTemplateData[$entry] = getData("", $fid, $entry);
+                    $notificationTemplateData[$entry] = gatherDataset($fid, filter: $entry, frid: 0);
                     // if the revision table is on for the form, then gather the data from the most revent revision for the entry
                     if(!isset($data_handler)) {
                         $data_handler = new formulizeDataHandler($fid);
@@ -7068,7 +7068,7 @@ function formulize_updateDerivedValues($entry_id_or_filter, $fid, $frid=0) {
 		$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 		$unsetDerivedValueIsRequired = true;
 	}
-	getData($frid, $fid, $entry_id_or_filter);
+	gatherDataset($fid, filter: $entry_id_or_filter, frid: $frid);
 	if($unsetDerivedValueIsRequired) {
 		unset($GLOBALS['formulize_forceDerivedValueUpdate']);
 	}
@@ -7687,7 +7687,7 @@ function do_update_export($queryData, $frid, $fid) {
     unset($queryData[0]); // get rid of the fid and userid lines
     unset($queryData[1]);
     $queryData = implode(" ", $queryData); // merge all remaining lines into one string to send to getData
-    $data = getData($frid, $fid, $queryData);
+    $data = gatherDataset($fid, filter: $queryData, frid: $frid);
 
     $cols = explode(",", $_GET['cols']);
 
@@ -7838,7 +7838,13 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
         do {
             // load part of the data, since a very large dataset could exceed the PHP memory limit
             $GLOBALS['formulize_doNotCacheDataSet'] = true;
-            $data = getData($frid, $fid, $data_sql, "AND", null, $limitStart, $limitSize);
+            $data = gatherDataset(
+							$fid,
+							filter: $data_sql,
+							limitStart: $limitStart,
+							limitSize: $limitSize,
+							frid: $frid
+						);
             if (is_array($data)) {
                 foreach ($data as $entry) {
                     $i = 0;
@@ -7847,24 +7853,24 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                         global $xoopsUser;
                         switch ($column) {
                             case "entry_id":
-                            $ids = internalRecordIds($entry, $fid);
+                            $ids = getEntryIds($entry, $fid);
                             $row[] = $ids[0];
                             break;
 
                             case "uid":
                             case "creation_uid":
                                 if(!isset($GLOBALS['formulize_useForeignKeysInDataset']['creation_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
-                                    $c_uid = display($entry, 'creation_uid');
+                                    $c_uid = getValue($entry, 'creation_uid');
                                     $c_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$c_uid'");
                                     $row[] = (isset($c_name_q[0]['name']) AND $c_name_q[0]['name']) ? quoteCellContentsForSpreadsheetExport($c_name_q[0]['name']) : quoteCellContentsForSpreadsheetExport($c_name_q[0]['uname']);
                                 } else {
-                                    $row[] = display($entry, 'creation_uid');
+                                    $row[] = getValue($entry, 'creation_uid');
                                 }
                             break;
 
                             case "proxyid":
                             case "mod_uid":
-                            $m_uid = display($entry, 'mod_uid');
+                            $m_uid = getValue($entry, 'mod_uid');
                             if ($m_uid AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['mod_uid']) AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
                                 $m_name_q = q("SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid='$m_uid'");
                                 $row[] = (isset($m_name_q[0]['name']) AND $m_name_q[0]['name']) ? quoteCellContentsForSpreadsheetExport($m_name_q[0]['name']) : quoteCellContentsForSpreadsheetExport($m_name_q[0]['uname']);
@@ -7875,16 +7881,16 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 
                             case "creation_date":
                             case "creation_datetime":
-                            $row[] = display($entry, 'creation_datetime');
+                            $row[] = getValue($entry, 'creation_datetime');
                             break;
 
                             case "mod_date":
                             case "mod_datetime":
-                            $row[] = display($entry, 'mod_datetime');
+                            $row[] = getValue($entry, 'mod_datetime');
                             break;
 
                             case "creator_email":
-                                $row[] =  display($entry, 'creator_email');
+                                $row[] =  getValue($entry, 'creator_email');
                             break;
 
 														case "owner_groups":
@@ -7896,7 +7902,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                             // 1. regular, all values in one column
                             // 2. multiple options, put each option in a column, and assign the value indicator defined for the element to the column(s) that have the value
                             if(isset($explodedColumns[$column])) {
-                                $colValues = display($entry, $column);
+                                $colValues = getValue($entry, $column);
                                 $colValues = is_array($colValues) ? $colValues : array($colValues);
                                 foreach($explodedColumns[$column] as $thisOption=>$indicators) {
                                     if(substr($thisOption, 0, 7) == "{OTHER|") {
@@ -7911,7 +7917,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
                                 // if the cell has an "OTHER" option and the value of this entry is not a standard option, then simply put Other, and put the value into the next column
                                 $columnMetadata = formulize_getElementMetaData($column, true);
                                 if(strstr($columnMetadata['ele_value'],"{OTHER|")) {
-                                    $valueToCheck = display($entry, $column);
+                                    $valueToCheck = getValue($entry, $column);
                                     if($valueToCheck == "" OR optionIsValidForElement($valueToCheck, $columnMetadata['ele_id'])) {
                                         $row[] = prepareCellForSpreadsheetExport($column, $entry);
                                         $row[] = "";

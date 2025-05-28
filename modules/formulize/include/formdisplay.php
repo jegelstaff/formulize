@@ -2208,9 +2208,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $matchingEntryIds = array();
             if(isset($_POST['subformFilterBox_'.$subformInstance]) AND $_POST['subformFilterBox_'.$subformInstance]) {
                 $filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
-                $matchingEntries = getData('',$subform_id, $filterElementObject->getVar('ele_handle').'/**/'.htmlspecialchars(strip_tags(trim($_POST['subformFilterBox_'.$subformInstance])), ENT_QUOTES));
+                $matchingEntries = gatherDataset($subform_id, $filterElementObject->getVar('ele_handle').'/**/'.htmlspecialchars(strip_tags(trim($_POST['subformFilterBox_'.$subformInstance])), ENT_QUOTES), frid: 0);
                 foreach($matchingEntries as $matchingEntry) {
-                    $matchingEntryIds = array_merge($matchingEntryIds, internalRecordIds($matchingEntry, $subform_id));
+                    $matchingEntryIds = array_merge($matchingEntryIds, getEntryIds($matchingEntry, $subform_id));
                 }
                 if(count($matchingEntryIds)>0) {
                     $filterClause = " AND sub.entry_id IN (".implode(",", $matchingEntryIds).")";

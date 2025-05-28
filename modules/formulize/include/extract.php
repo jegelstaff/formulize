@@ -207,7 +207,7 @@ function prepvalues($value, $field, $entry_id)
 							print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
 						} else {
 							$row = $xoopsDB->fetchRow($res);
-							$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to    
+							$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to
 							$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
 						}
 					} else {
@@ -310,7 +310,7 @@ function microtime_float()
  * Retrieve data from forms, based on their connections as defined in the Formulize admin UI
  * Extensive documentation at https://formulize.org/developers/API/functions/gatherDataset/
  * @param int fid - The id number of the main form. The main form is the form that defines the "context" of the dataset, ie: each item in the dataset will be one record from the main form.
- * @param array elementHandles - Optional. An array of arrays, that defines the form elements to include in the dataset. If not specified, then all form elements are included. The outer array uses form ids as keys, and the value of each is an array of elements to gather from that form.  
+ * @param array elementHandles - Optional. An array of arrays, that defines the form elements to include in the dataset. If not specified, then all form elements are included. The outer array uses form ids as keys, and the value of each is an array of elements to gather from that form.
  * @param int|string|array filter - Optional. A filter that will limit the entries included in the dataset. A single number will be interpretted as an entry id in the main form. String and Array formats are documented in more detail at https://formulize.org/developers/API/functions/gatherDataset/
  * @param string andOr - Optional. Indicates what logical operator should be used between multiple filters. Defaults to AND.
  * @param array|string scope - Optional. An array of group ids, which define the scope of which entries should included in the dataset, based on the group ownership recorded when the entries were created. If not defined, all entries from all groups are included. You can use the buildScope function to create a valid $scope variable to pass into gatherDataset. Alternatively, this can be a snippet of SQL code that will be escaped and appended to the where clause of the query with: AND ( $scope )
@@ -318,13 +318,15 @@ function microtime_float()
  * @param int limitSize - Optional. The number of records after the limitStart that should be included in the dataset as used in a MySQL/MariaDB LIMIT clause.
  * @param string sortField - Optional. The element that should be used to sort the entries in the dataset.
  * @param string sortOrder - Optional. Either ASC or DESC to indicate the direction in which the entries should be sorted. Defaults to ASC.
- * @param int frid - Optional. The form relationship id, that defines the set of connections, as defined in the Formulize admin UI, that should be taken into account when gathering the dataset. Defaults to the Primary Relationship, which includes all connections between all forms. Only forms directly connected to the main form are included in the dataset.
- * @return array Returns the dataset as an array. You can use the functions fetch, fetchEntryIds
-function gatherDataset($fid,
+ * @param int frid - Optional. The form relationship id, that defines the set of connections, as defined in the Formulize admin UI, that should be taken into account when gathering the dataset. Defaults to the Primary Relationship, which includes all connections between all forms. Only forms directly connected to the main form are included in the dataset. Set to zero to only include data from the main form itself, no connections.
+ * @return array Returns the dataset as an array. You can use the functions getValue and getEntryIds to work with the resulting dataset
+ */
+function gatherDataset(
+	$fid,
 	$elementHandles = array(),
-	$filter = "", 
-	$andOr = "AND", 
-	$scope = "", 
+	$filter = "",
+	$andOr = "AND",
+	$scope = "",
 	$limitStart = "",
 	$limitSize = "",
 	$sortField = "",
@@ -504,11 +506,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$frid = "";
 	if (is_numeric($frame)) {
 		$frid = $frame;
-	} 
+	}
 	$fid = "";
 	if (is_numeric($form)) {
 		$fid = $form;
-	} 
+	}
 
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formObject = $form_handler->get($fid);
@@ -2253,9 +2255,9 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 						// pass in a "local id" since we want the value of this field in this particular entry,
 						// not in the entire relationship. If a user wants all the values for this field from including all other
 						// entries in the relationship, they will have to use the display function manually in the derived value formula.
-						$replacement = "display(\$entry, '$newterm', '', \$entry_id)";
+						$replacement = "getValue(\$entry, '$newterm', '', \$entry_id)";
 					} else {
-						$replacement = "display(\$entry, '$newterm')";
+						$replacement = "getValue(\$entry, '$newterm')";
 					}
 					$replacement = "(isset(\$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm']) ? \$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][\$entry_id]['$newterm'] : $replacement)";
 					$quotePos = $quotePos + strlen($replacement);
@@ -2563,11 +2565,18 @@ function getFormHandlesFromEntry($entry)
 }
 
 /**
+ * An alias of the getValue function, kept here for backwards compatibility with historical code.
+ */
+function display($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false) {
+	return getValue($entry, $handle, $datasetKey, $localEntryId, $returnRawDBValue);
+}
+
+/**
  * Return the value from an entry from a dataset, for the specified field
  * By default, values saved in form elements will be prepped for human readability before being returned
  * ie: foreign keys in linked elements will be returned as the actual value in their source form
+ * and checkbox values will be an array of all the checked boxes (in the database they are a string with separator)
  * Optionally you can request the raw, unprepped version of form data, using the 'raw' parameter
- * This function calls the old display function, optionally with a flag to turn off prepping of values
  * Values have html special characters converted back to normal characters (not all entities, just the ones with htmlspecialchars) - this behaviour could be removed if/when user submitted data entering the database through Formulize forms, stops having htmlspecialchars applied to it. Then there would not be any special chars in the database, so we wouldn't need to decode them coming out.
  * @param array entry - The entry as found in a dataset returned from the gatherDataset function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from gatherDataset. In this case the datasetKey param must be used to indicate which entry you are working with.
  * @param string handle - The element handle for the field that you want to retrieve
@@ -2575,8 +2584,8 @@ function getFormHandlesFromEntry($entry)
  * @param int localEntryId - Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
  * @param boolean raw - Optional. A flag to indicate if the raw value from the database should be returned for form elements, or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc. Default is false (ie: by default, prepped values are returned)
  * @return string|int|float|array Returns the value for the specified element in the passed in entry, optionally limited to the specified localEntryId. If values are prepped and there are multiple values in the result (such as in the case of a checkbox element *with multiple boxes checked*) then the function will return an array of values. If a multiple option element only has one element checked, the function will return the single value selected. An array will also be returned if there are multiple records in the dataset from the form that the handle belongs to.
- */ 
-function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false ) {
+ */
+function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false ) {
 
 	$entry = is_numeric($datasetKey) ? $entry[$datasetKey] : $entry;
 
@@ -2585,6 +2594,7 @@ function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $raw =
 		return "";
 	}
 
+	$foundValues = array();
 	$formulize_mostRecentLocalId = array();
 	foreach ($entry[$formHandle] as $lid => $elements) {
 		if (!$localEntryId OR $localEntryId == "NULL" OR $lid == $localEntryId) { // legacy "NULL" string value is valid :(
@@ -2592,9 +2602,9 @@ function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $raw =
 				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
 				return $elements[$handle];
 			} elseif($raw) {
-		        $foundValues[] = htmlspecialchars_decode($elements[$handle]);
+		    $foundValues[] = htmlspecialchars_decode($elements[$handle]);
 				$formulize_mostRecentLocalId[] = $lid;
-		    } else {
+		  } else {
 				foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
 					$foundValues[] = htmlspecialchars_decode($thisValue);
 					$formulize_mostRecentLocalId[] = $lid;
@@ -2613,24 +2623,6 @@ function fetch($entry, $handle, $datasetKey = null, $localEntryId = null, $raw =
 }
 
 /**
- * Use the fetch function instead. This is the old original name for the function.
- * Return the human readable value from a dataset, for the specified field (and entry)
- * Except in the case of canonical metdata, such as creation_uid, where the raw metadata is returned
- * Returns an array of values if there is more than one value in the dataset for the given field in the entry
- * Returns a single value if there is only one value in the dataset for the given field in the entry
- * Values have html special characters converted back to normal characters (not all entities, just the ones with htmlspecialchars) - this behaviour could be removed if/when user submitted data entering the database through Formulize forms, stops having htmlspecialchars applied to it. Then there would not be any special chars in the database, so we wouldn't need to decode them coming out.
- * @param array entry - The entry as found in a dataset returned from the getData function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from getData. In this case the datasetKey param must be used to indicate which entry you are working with.
- * @param string handle - The element handle for the field that you want to retrieve
- * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
- * @param int localEntryId - Optional. The entry id of a specific record in the dataset, for which you want to retreive values. Relevant when there are multiple records from the same form in the dataset, and you only want to work with values from one of them.
- * @param boolean returnRawDBValue - Optional. A flag to indicate if the raw value from the database should be returned (for non-metadata elements), or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc.
- * @return string|int|float|array Returns the human readable value for the specified handle in the entry, optionally limited to the specified localEntryId. If there is more than one value for the handle, then an array of values is returned.
- */
-function display($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false) {
-	return fetch($entry, $handle, $datasetKey, $localEntryId, $returnRawDBValue);
-}
-
-/**
  * Take a value of a field from a dataset entry and decode the HTML characters so it displays as intended. Meant for use with values from rich text editors.
  * @param array $entryOrDataset The record from a dataset, or the entire dataset, as returned from gatherDataset
  * @param string $elementHandle The element handle of the file upload element we're working with
@@ -2641,7 +2633,7 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null, $ret
 
 function displayRichText($entryOrDataset, $elementHandle, $dataSetKey = null, $localId = "NULL")
 {
-	return htmlspecialchars_decode(display($entryOrDataset, $elementHandle, $dataSetKey, $localId), ENT_QUOTES);
+	return htmlspecialchars_decode(getValue($entryOrDataset, $elementHandle, $dataSetKey, $localId), ENT_QUOTES);
 }
 
 // this function puts the results of a display call together into a string using the separator specified.  Allows filtering based on a specific localid of an entry in the given master result entry
@@ -2649,7 +2641,7 @@ function displayRichText($entryOrDataset, $elementHandle, $dataSetKey = null, $l
 // used for export of data
 function displayTogether($entry, $handle, $sep, $id = "NULL", $localid = "NULL")
 {
-	$result = display($entry, $handle, $id, $localid);
+	$result = getValue($entry, $handle, $id, $localid);
 	if (is_array($result)) {
 		$result = implode($sep, $result);
 	}
@@ -2739,14 +2731,14 @@ function makeBR($string)
 
 function displayPara($entry, $handle, $id = "NULL", $parasToReturn = "NULL")
 {
-	$values = display($entry, $handle, $id);
+	$values = getValue($entry, $handle, $id);
 	return makePara($values, $parasToReturn);
 }
 
 // this function returns the contents of a text are with a BR between each line
 function displayBR($entry, $handle, $id = "NULL", $localid = "NULL")
 {
-	$values = display($entry, $handle, $id, $localid);
+	$values = getValue($entry, $handle, $id, $localid);
 	return makeBR($values);
 }
 
@@ -2754,8 +2746,15 @@ function displayBR($entry, $handle, $id = "NULL", $localid = "NULL")
 
 function displayList($entry, $handle, $type = "bulleted", $id = "NULL", $localid = "NULL")
 {
-	$values = display($entry, $handle, $id, $localid);
+	$values = getValue($entry, $handle, $id, $localid);
 	return makeList($values, $type);
+}
+
+/*
+ * An alias for getEntryIds. Here for backwards compatibility with older
+ */
+function internalRecordIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKeys = false) {
+	getEntryIds($entry, $formIdOrHandle, $datasetKey, $fidAsKeys);
 }
 
 /**
@@ -2763,37 +2762,32 @@ function displayList($entry, $handle, $type = "bulleted", $id = "NULL", $localid
  * @param array entry - The entry as found in a dataset returned from the gatherDataset function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from gatherDataset. In this case the datasetKey param must be used to indicate which entry you are working with.
  * @param int|string formIdOrHandle - Optional. The id of the form in the dataset that you want to get the entry ids for. If omitted, entry ids for all entries in all forms are returned in a multidimensional array. A form handle can be used instead of an id, but it is better to use an id if possible (reduces )
  * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
- * @param boolean
+ * @param boolean fidAsKeys - Optional. A flag to indicate if the form id should be used as the key of the top level of the returned array. Default is false, in which case the form handle is used.
+ * @return array Returns an array of the underlying entry ids of the individual records that are involved in this entry in the dataset. If formIdOrHandle was specified, will simply be an array of the entry ids in that form. If formIdOrHandle was not specified, an array of arrays will be returned, one for each form. The keys representing each form will be the form handles, or form ids if fidAsKeys was set to true.
  */
-
-// THIS FUNCTION RETURNS AN ARRAY OF ALL THE INTERNAL IDS ASSOCIATED WITH THE ENTRIES OF A PARTICULAR FORM
-// $formhandle can be an array of form handles or form ids, or if not specified then all entries for all handles are returned
-// $formhandle can just be a single handle or form id
-// If formhandle is an array, then $ids returned becomes a two dimensional array:  $ids[$formhandle][] = $id
-function internalRecordIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKeys = false)
-{
+function getEntryIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKeys = false) {
 	$entryIds = array();
 	if (is_numeric($datasetKey)) {
 		$entry = $entry[$datasetKey];
 	}
 	if (!$formIdOrHandle) {
-		$formIdOrHandle = getFormHandlesFromEntry($entry);
+		$formIdOrHandle = getFormHandlesFromEntry($entry); // returns array of all form handles in the entry
 	}
 	if (is_array($formIdOrHandle)) {
 		$form_handler = $fidAsKeys ? xoops_getmodulehandler('forms', 'formulize') : null;
 		foreach ($formIdOrHandle as $formHandle) {
-			$formHandle = _parseInternalRecordIdsFormHandle($formHandle);
+			$formHandle = getFormHandleFromId($formHandle);
+			$key = $formHandle;
 			if ($fidAsKeys) {
 				$formObject = $form_handler->get($formHandle);
-				$fid = $formObject->getVar('fid');
+				$key = $formObject->getVar('fid');
 			}
 			foreach ($entry[$formHandle] as $entryId => $localEntry) {
-				$key = $fidAsKeys ? $fid : $formHandle;
 				$entryIds[$key][] = $entryId;
 			}
 		}
 	} else {
-		$formHandle = _parseInternalRecordIdsFormHandle($formIdOrHandle);
+		$formHandle = getFormHandleFromId($formIdOrHandle);
 		if (is_array($entry[$formHandle])) {
 			foreach ($entry[$formHandle] as $entryId => $localEntry) {
 				$entryIds[] = $entryId;
@@ -2808,29 +2802,24 @@ function internalRecordIds($entry, $formIdOrHandle = "", $datasetKey = null, $fi
  * @param string|int form_handle_or_id Either a form handle string, or an id number of a form
  * @return string Returns any string passed to it as is, or returns the form handle for the form of the id number passed to it. Returns false if an invalid ID number is passed.
  */
-function _parseInternalRecordIdsFormHandle($form_handle_or_id)
+function getFormHandleFromId($form_handle_or_id)
 {
 	global $xoopsDB;
 	if (!is_numeric($form_handle_or_id)) {
 		return $form_handle_or_id;
 	}
-	static $cachedFormHandles = array();
-	if (!isset($cachedFormHandles[$form_handle_or_id])) {
-		$cachedFormHandles[$form_handle_or_id] = false;
-		$sql = "SELECT form_handle FROM " . DBPRE . "formulize_id WHERE id_form=" . intval($form_handle_or_id);
-		if($res = $xoopsDB->query($sql)) {
-			$array = $xoopsDB->fetchArray($res);
-			$cachedFormHandles[$form_handle_or_id] = (is_array($array) AND count($array) > 0) ? $array['form_handle'] : false;
-		}
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if($formObject = $form_handler->get($form_handle_or_id)) {
+		return $formObject->getVar('form_handle');
 	}
-	return $cachedFormHandles[$form_handle_or_id];
+	return false;
 }
 
 // THIS FUNCTION SORTS A RESULT SET, BASED ON THE VALUES OF ONE NON-MULTI FIELD (IE: CANNOT SORT BY CHECKBOX FIELD)
 function resultSort($data, $handle, $order = "", $type = "")
 {
 	foreach ($data as $id => $entry) {
-		$values = display($entry, $handle);
+		$values = getValue($entry, $handle);
 		if (is_array($values)) {
 			if ($order == "SORT_DESC") {
 				$sortedValues = rsort($values);
@@ -2902,7 +2891,7 @@ function resultSortRelevance($data, $handleArray, $wordArray, $weight = "")
 // THIS FUNCTION IS USED BY THE RESULTSORTRELEVANCE FUNCTION TO COUNT THE OCCURANCES OF A WORD IN A FIELD
 function countHits($entry, $handle, $word)
 {
-	$value = display($entry, $handle);
+	$value = getValue($entry, $handle);
 	if (is_array($value)) {
 		$value = implode(" ", $value);
 	}
