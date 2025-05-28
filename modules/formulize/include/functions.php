@@ -1746,19 +1746,29 @@ function getCalcHandleText($handle, $forceColhead=true) {
     }
 }
 
-
-// this function builds the scope used for passing to the getData function
-// based on values of either mine, group, all, or a groupid string formatted with start, end and inbetween commas: ,1,3,
-// will return array of the scope, and the value of currentView, which may have been modified depending on the user's permissions
-function buildScope($currentView, $uid, $fid, $currentViewCanExpand = false) {
+/**
+ * Creates a scope variable, suitable for passing to the gatherDataset function
+ * Limits the scope created based on the permissions of the user. Requesting 'all' scope on a user without permission to see all entries in the form, results in the highest level of scope the user is permitted on the form.
+ * @param string|int currentView - Can be one of the strings: mine, group, or all, signifying "the user's entries," or "their group's entries," or "all entries." Can be a comma separated list of group ids instead, or a single group id, to declare a specific scope based on that particular set of groups.
+ * @param object|int uidOrObject - The user id or the user object, representing the user for whom the scope is being created. This user's permissions on the form will be taken into account when building the scope.
+ * @param int fid - The id number of the form for which the scope is being built
+ * @param boolean - currentViewCanExpand - a flag used internally to allow for a scope that is beyond the user's permissions. Used when saved views publish data to a group of users, which those users would not normally see.
+ * @return array Returns an array with two values in it. Key zero is the scope which will be an array of groups or arbitrary SQL to append to a database query. Key one is the value of currentView, which may have changed if the specified user did not have permission for the requested currentView value.
+ */
+function buildScope($currentView, $uidOrObject, $fid, $currentViewCanExpand = false) {
 
     $gperm_handler = xoops_gethandler('groupperm');
-    $member_handler = xoops_gethandler('member');
     $mid = getFormulizeModId();
-    if($uidObject = $member_handler->getUser($uid)) {
-        $groups = $uidObject->getGroups();
-    } else {
-        $groups = array(XOOPS_GROUP_ANONYMOUS);
+		if(!is_object($uidOrObject) OR (!is_a($uidOrObject, 'xoopsUser') AND !is_a($uidOrObject, 'icms_member_user_Object'))) {
+			$member_handler = xoops_gethandler('member');
+			$uidOrObject = $member_handler->getUser(intval($uidOrObject));
+		}
+		if(is_object($uidOrObject) AND (is_a($uidOrObject, 'xoopsUser') OR is_a($uidOrObject, 'icms_member_user_Object'))) {
+			$groups = $uidOrObject->getGroups();
+			$uid = $uidOrObject->getVar('uid');
+		} else {
+      $groups = array(XOOPS_GROUP_ANONYMOUS);
+			$uid = 0;
     }
 
     $scope = "";
