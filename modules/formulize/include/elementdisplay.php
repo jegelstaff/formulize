@@ -313,7 +313,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		if(!$subformCreateEntry) {
 			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]));
 		}
-		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry_id);
+		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject);
 	}
 
 	$isDisabled = false;
@@ -325,7 +325,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		if($isDisabled) {
 			$disabledConditions = $elementObject->getVar('ele_disabledconditions');
 			if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
-				$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry_id);
+				$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry_id, $elementObject);
 				// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
 				// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
 				if($entry_id != 'new' AND !$subformCreateEntry) {
@@ -392,7 +392,7 @@ function removeFromConditionalCatalogue($renderedElementMarkupName) {
 /**
  *
  */
-function checkElementConditions($elementFilterSettings, $form_id, $entry) {
+function checkElementConditions($elementFilterSettings, $form_id, $entry, $elementObject) {
 	// need to check if there's a condition on this element that is met or not
 	static $cachedEntries = array();
 	if($entry != "new") {
@@ -423,6 +423,10 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry) {
 
 	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
 	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+
+	if($evaluationConditionAND === false OR $evaluationConditionOR === false) {
+		exit("Fatal Formulize Error: form element ".$elementObject->getVar('ele_id')." is misconfigured. Please notify the webmaster.");
+	}
 
 	$evaluationCondition .= $evaluationConditionAND;
 	if( $evaluationConditionOR ) {
@@ -464,7 +468,6 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 				if($filterElementObject = $element_handler->get($element)) {
 					$filterElements[$key] = $filterElementObject->getVar('ele_handle');
 				} else {
-					print "Formulize Error: a display or disabled condition for a form element, is referencing a non existent element in another form. Probably the element was deleted?<br>";
 					return false;
 				}
 				$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
