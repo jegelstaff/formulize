@@ -1324,11 +1324,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			$viewEntryScreenNumberOfPages = 0;
 			$viewEntryScreen = determineViewEntryScreen($screen, $fid);
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			$viewEntryScreenObject = $screen_handler->get($viewEntryScreen);
-			if($viewEntryScreenObject->getVar('type') == 'multiPage') {
-				$multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-				$viewEntryScreenObject = $multiPageScreen_handler->get($viewEntryScreen);
-				$viewEntryScreenNumberOfPages = count($viewEntryScreenObject->getVar('pages'));
+			if($viewEntryScreenObject = $screen_handler->get($viewEntryScreen) AND $viewEntryScreenObject->getVar('type') == 'multiPage') {
+			  $multiPageScreen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			  $viewEntryScreenObject = $multiPageScreen_handler->get($viewEntryScreen);
+			  $viewEntryScreenNumberOfPages = count($viewEntryScreenObject->getVar('pages'));
 			}
 			$screenButtonText['addMultiButton'] = (!$lockcontrols AND $viewEntryScreenNumberOfPages < 2)  ? $screen->getVar('useaddmultiple') : "";
 		} else {
