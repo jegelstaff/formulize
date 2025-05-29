@@ -27,6 +27,8 @@ Argentina<br>
 &nbsp;&nbsp;|_ Buenos Aires<br>
 &nbsp;&nbsp;|_ Puerto Iguazu
 
+The dataset above will have two entries, or items, in it. Each one one is made up of three underlying entries from the database: one country entry, and two cities entries.
+
 If you gather the same dataset, but based on the Cities form, the dataset will look like this:
 
 Toronto - Canada<br>
@@ -34,7 +36,9 @@ Halifax - Canada<br>
 Buenos Aires - Argentina<br>
 Puerto Iguazu - Argentina
 
-This is important to remember, because in the latter situation, data from the connected form is being repeated in each item in the dataset. In the former situation, all data is only included once.
+That dataset will have four entries, or items, and each one is made up of two underlying entries from the database: one city entry and one country entry. Importantly, the same underlying Country entry is repeated within the dataset because it connects to multiple entries in the main form.
+
+The number of top level items in the dataset corresponds to the number of entries in the main form that are part of the dataset. Each item in the dataset is made up of data from multiple underlying, individual entries in the database, from all the forms that are connected to the main form through the relationship.
 
 You can interate over the items in a dataset with __foreach__ in PHP, and you can interact with each item in the dataset using the functions [getValue](../getValue/) and [getEntryIds](../getEntryIds/). You can create a scope for _gatherDataset_ to use, based on the current user's permissions, using the [buildScope](../buildScope) function.
 
