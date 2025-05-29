@@ -1755,17 +1755,17 @@ function getCalcHandleText($handle, $forceColhead=true) {
  * @param boolean - currentViewCanExpand - a flag used internally to allow for a scope that is beyond the user's permissions. Used when saved views publish data to a group of users, which those users would not normally see.
  * @return array Returns an array with two values in it. Key zero is the scope which will be an array of groups or arbitrary SQL to append to a database query. Key one is the value of currentView, which may have changed if the specified user did not have permission for the requested currentView value.
  */
-function buildScope($currentView, $uidOrObject, $fid, $currentViewCanExpand = false) {
+function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand = false) {
 
     $gperm_handler = xoops_gethandler('groupperm');
     $mid = getFormulizeModId();
-		if(!is_object($uidOrObject) OR (!is_a($uidOrObject, 'xoopsUser') AND !is_a($uidOrObject, 'icms_member_user_Object'))) {
+		if(!is_object($userIdOrObject) OR (!is_a($userIdOrObject, 'xoopsUser') AND !is_a($userIdOrObject, 'icms_member_user_Object'))) {
 			$member_handler = xoops_gethandler('member');
-			$uidOrObject = $member_handler->getUser(intval($uidOrObject));
+			$userIdOrObject = $member_handler->getUser(intval($userIdOrObject));
 		}
-		if(is_object($uidOrObject) AND (is_a($uidOrObject, 'xoopsUser') OR is_a($uidOrObject, 'icms_member_user_Object'))) {
-			$groups = $uidOrObject->getGroups();
-			$uid = $uidOrObject->getVar('uid');
+		if(is_object($userIdOrObject) AND (is_a($userIdOrObject, 'xoopsUser') OR is_a($userIdOrObject, 'icms_member_user_Object'))) {
+			$groups = $userIdOrObject->getGroups();
+			$uid = $userIdOrObject->getVar('uid');
 		} else {
       $groups = array(XOOPS_GROUP_ANONYMOUS);
 			$uid = 0;

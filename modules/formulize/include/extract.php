@@ -327,10 +327,10 @@ function gatherDataset(
 	$filter = "",
 	$andOr = "AND",
 	$scope = "",
-	$limitStart = "",
-	$limitSize = "",
+	$limitStart = null,
+	$limitSize = null,
 	$sortField = "",
-	$sortOrder = "",
+	$sortOrder = "ASC",
 	$frid = -1) {
 		return getData($frid, $fid, $filter, $andOr, $scope, $limitStart, $limitSize, $sortField, $sortOrder, filterElements: $elementHandles);
 }
