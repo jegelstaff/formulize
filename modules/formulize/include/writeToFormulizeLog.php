@@ -44,10 +44,6 @@ function writeToFormulizeLog($data) {
 	static $formulizeLoggingOnOff = false;
 	static $formulizeLogFileLocation = XOOPS_ROOT_PATH.'/logs';
 	static $formulizeLogFileStorageDurationHours = 168;
-	static $logFilesCleanedUp = false;
-	static $phpUniqueId = '';
-	static $todayLogFileExists = null;
-	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('', true);
 	if(!$formulizeConfig) {
 		global $xoopsDB;
 		$config_handler = xoops_gethandler('config');
@@ -64,13 +60,20 @@ function writeToFormulizeLog($data) {
 	// check if logging is on and log file location is valid
 	if(!$formulizeLoggingOnOff OR !$formulizeLogFileLocation OR !is_dir($formulizeLogFileLocation)) { return false; }
 
+	// since logging is on, initialize rest of the stuff we'll need
+	static $logFilesCleanedUp = false;
+	static $phpUniqueId = '';
+	static $todayLogFileExists = null;
+	$phpUniqueId = $phpUniqueId ? $phpUniqueId : uniqid('', true);
+
 	// cleanup old log files (last param requires seconds) -- only once per page load
 	if(!$logFilesCleanedUp AND function_exists('formulize_scandirAndClean')) {
 		formulize_scandirAndClean($formulizeLogFileLocation, 'formulize_log_', $formulizeLogFileStorageDurationHours * 60 * 60);
 		$logFilesCleanedUp = true;
 	}
 
-	// UNIQUE ID is only available if the server has mod_unique_id turned on
+	// UNIQUE_ID is only available if the server has mod_unique_id turned on
+	// UNIQUE_ID can make it possible to cross reference with Apache logs to find the request
 	// All log lines have standard format, but values are dependent on the event that wrote to the log
 	$data = array(
 		'microtime' => microtime(true),
