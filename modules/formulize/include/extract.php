@@ -2110,9 +2110,10 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle = false, $fid 
 {
 	global $xoopsDB;
 	static $cachedElements = array();
+	static $seededFids = array();
 	$cacheType = $isHandle ? 'handles' : 'ids';
 	$elementOrHandle = str_replace("`", "", $elementOrHandle);
-	if (!isset($cachedElements[$cacheType][$elementOrHandle])) {
+	if (($fid AND !isset($seededFids[$fid])) OR ($elementOrHandle AND !isset($cachedElements[$cacheType][$elementOrHandle]))) {
 		if ($fid) {
 			$whereClause = "id_form=" . intval($fid);
 		} else {
@@ -2132,10 +2133,14 @@ function formulize_getElementMetaData($elementOrHandle, $isHandle = false, $fid 
 				$cachedElements['ids'][$elementOrHandle] = array();
 			}
 		}
+		if($fid) {
+			$seededFids[$fid] = true;
+		}
 	}
 	if (!$fid) {
 		return $cachedElements[$cacheType][$elementOrHandle];
 	}
+	// if there's a fid, return nothing, we're literally just seeding the cache for later reference, through a single query, more efficient than going element by element
 }
 
 
@@ -2267,6 +2272,15 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 // use a static array to cache results
 function formulize_convertCapOrColHeadToHandle($frid, $fid, $term)
 {
+
+	// Short circuit. If we've got an element handle, go with that!
+	// Dramatically faster.
+	$term = trim($term, "\"");
+	$elementMetaData = formulize_getElementMetaData($term, true);
+	if(!empty($elementMetaData)) {
+		return array($term, $elementMetaData['id_form']);
+	}
+
 	// first search the $fid, and then if we don't find anything, search the other forms in the $frid
 	// check first for a match in the colhead field, then in the caption field
 	// once a match is found return the handle
@@ -2276,7 +2290,6 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term)
 	static $framework_results = array();
 	static $formNames = array();
 	$handle = "";
-	$term = trim($term, "\"");
 
 	if ($term == "") {
 		return "{nonefound}";
