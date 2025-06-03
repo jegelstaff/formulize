@@ -3897,6 +3897,7 @@ function getDefaultCols($fid, $frid="") {
 // DEPRECATED. VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.  BETTER TO USE formulize_writeEntry, except in cases where you actually need to only update one field.  In most cases you want to update multiple fields in an entry, so don't use this inside a loop. it will generate more queries than you need
 // prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
 // linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
+// THIS IS APPLYING HTMLSPECIALCHARS TO ALL VALUES, REGARDLESS OF ELEMENT TYPE. WILL MAKE SANITIZING STUFF LATER WHEN WE RIP OUT THAT BEHAVIOUR, A LITTLE MORE DIFFICULT BECAUSE POTENTIALLY EVERYTHING HAS SPECIAL CHARS, THOUGH MOST THINGS DON'T.
 function writeElementValue($formframe, $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
 
     global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
@@ -6259,8 +6260,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			} elseif ($curlyBracketEntry == "new") {
 				$elementObject = $element_handler->get($bareFilterTerm);
 				if (is_object($elementObject)) {
-					$default = $elementObject->getDefaultValues($curlyBracketEntry); // only works for text, textarea, and non-linked selectboxes! all other elements will return an empty array
-					$default = $default[0];
+					$default = $elementObject->getDefaultValues($curlyBracketEntry); // initially, only works for text, textarea, and non-linked selectboxes! Sliders return integer. All other elements will return an empty array, until/unless they have their own method in their class that corrects this!
+					$default = is_array($default) ? $default[0] : $default;
 					if(is_numeric($default)) {
 							$conditionsFilterComparisonValue = $default;
 					} elseif($default) {
@@ -8070,7 +8071,7 @@ function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array())
 
 /**
  * Gets the default values for elements in an entry, usually a new entry, but some element types can have defaults that depend on data already saved in other elements in an entry
- * Such as when a multipage form as elements on page 2 that have default values determined by answers on page 1
+ * Such as when a multipage form has elements on page 2 that have default values determined by answers on page 1
  * @param int $target_fid - The form id for which we're getting default values
  * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry.
  * @return array Returns an array of element id/default value pairs
@@ -8106,6 +8107,15 @@ function getEntryDefaults($target_fid,$target_entry) {
       case "text":
       case "textarea":
         $defaultTextToWrite = interpretTextboxValue($thisDefaultEle, $target_entry);
+        // do not flag a default as a default if it is already in the database!
+        // text boxes might have dynamic defaults dependent on other values in their entry
+        // but if they don't and we'd just be overwriting the same value, skip it
+        if($target_entry AND $target_entry !== 'new') {
+            $dataHandler = new formulizeDataHandler($thisDefaultEle->getVar('id_form'));
+            if($defaultTextToWrite === $dataHandler->getElementValueInEntry($target_entry, $thisDefaultEle)) {
+                $defaultTextToWrite = null;
+            }
+        }
         break;
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
@@ -8141,12 +8151,12 @@ function getEntryDefaults($target_fid,$target_entry) {
             $linkMeta = explode('#*=:*', $thisDefaultEleValue[2]);
             $linkFormId = $linkMeta[0];
             $linkElementId = $linkMeta[1];
-            $data_handler = new formulizeDataHandler($linkFormId);
+            $dataHandler = new formulizeDataHandler($linkFormId);
             $thisDefaultEleValue[13] = is_array($thisDefaultEleValue[13]) ? $thisDefaultEleValue[13] : array($thisDefaultEleValue[13]);
             $defaultTextToWrite = "";
             foreach($thisDefaultEleValue[13] as $thisDefaultValue) {
                 $defaultTextToWrite .= strlen($defaultTextToWrite) > 0 ? '*=+*:' : '';
-                $thisDefaultValue = $data_handler->getElementValueInEntry($thisDefaultValue,$linkElementId);
+                $thisDefaultValue = $dataHandler->getElementValueInEntry($thisDefaultValue,$linkElementId);
                 $defaultTextToWrite .= $thisDefaultValue;
             }
         } else {
