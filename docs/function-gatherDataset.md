@@ -27,7 +27,7 @@ Argentina<br>
 &nbsp;&nbsp;|_ Buenos Aires<br>
 &nbsp;&nbsp;|_ Puerto Iguazu
 
-The dataset above will have two entries, or items, in it. Each one one is made up of three underlying entries from the database: one country entry, and two cities entries.
+The dataset above will have two entries, or items, in it. Each one is made up of three underlying entries from the database: one country entry, and two cities entries.
 
 If you gather the same dataset, but based on the Cities form, the dataset will look like this:
 
@@ -88,7 +88,18 @@ $data = gatherDataset($formId, scope: $scope);
 
 ~~~php
 // gather all the data in form 6, plus connected forms in the Primary Relationship
-// limit the data to only data where the value of the element 'fruit_name' is 'Strawberries' or 'Blueberries'
+// limit the data to only data where the value of the element 'fruit_name' is precisely 'Strawberries'
+// filter strings use /**/ to separate component parts
+// the final component is the operator. Defaults to LIKE if not specified.
+$formId = 6;
+$filter = "fruit_type/**/Strawberries/**/=";
+$data = gatherDataset($formId, filter: $filter);
+~~~
+
+~~~php
+// gather all the data in form 6, plus connected forms in the Primary Relationship
+// limit the data to only data where the value of the element 'fruit_name' contains the word 'berries'
+// ie: Strawberries, Blueberries, etc
 // filter strings use /**/ to separate component parts
 $formId = 6;
 $filter = "fruit_name/**/berries";
@@ -99,7 +110,7 @@ $data = gatherDataset($formId, filter: $filter);
 // Gather all the data in form 6, plus connected forms in the Primary Relationship
 // Limit the data to only data where the value of the element 'fruit_name' is like 'berries'
 // Include only the elements 'order_date' and 'fruit_name' in the dataset.
-// The elements are in  different forms.
+// The elements are in different forms.
 $fruitFormId = 6;
 $orderFormId = 11;
 $elementHandles = array(
@@ -137,17 +148,7 @@ foreach($data as $entry) {
 		'contents'=>getValue($entry, 'fruit_name')
 	);
 }
-// the 'contents' will be an array, if there were multiple fruit records in the dataset for that order
-~~~
-
-~~~php
-// gather all the data in form 6, plus connected forms in the Primary Relationship
-// limit the data to only data where the value of the element 'fruit_name' is precisely 'Strawberries'
-// filter strings use /**/ to separate component parts
-// the final component is the operator. Defaults to LIKE if not specified.
-$formId = 6;
-$filter = "fruit_type/**/Strawberries/**/=";
-$data = gatherDataset($formId, filter: $filter);
+// the 'contents' key will have an array, if there were multiple fruit records in the dataset for that order
 ~~~
 
 ~~~php
@@ -218,8 +219,8 @@ $data = gatherDataset($formId, filter: $filter);
 // To handle different boolean operators at different levels of a complex filter
 // use an array structure as shown below.
 // The andOr parameter is used between the different parts of the array, and
-// each array's own 0 key determines how multiple terms within that filter
-// are interpreted.
+// the first item in each lower level array determines how multiple terms within
+// that filter are interpreted.
 $formId = 6;
 $statusFilter = "order_status/**/Pending/**/=";
 $dateFilter = "order_date/**/2029-01-01/**/>=][order_date/**/2029-03-31/**/<=";

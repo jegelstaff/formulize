@@ -2613,12 +2613,16 @@ function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $ra
 		}
 	}
 
-	if (count((array) $foundValues) == 1) {
+	$count = count($foundValues);
+	if ($count == 1) {
 		$GLOBALS['formulize_mostRecentLocalId'] = $formulize_mostRecentLocalId[0];
 		return $foundValues[0];
-	} else {
+	} elseif($count > 1) {
 		$GLOBALS['formulize_mostRecentLocalId'] = $formulize_mostRecentLocalId;
 		return $foundValues;
+	} else {
+		$GLOBALS['formulize_mostRecentLocalId'] = null;
+		return null;
 	}
 }
 
@@ -2776,9 +2780,12 @@ function getEntryIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKey
 	if (is_array($formIdOrHandle)) {
 		$form_handler = $fidAsKeys ? xoops_getmodulehandler('forms', 'formulize') : null;
 		foreach ($formIdOrHandle as $formHandle) {
-			$formHandle = getFormHandleFromFormId($formHandle);
-			$key = $formHandle;
-			if ($fidAsKeys) {
+			$key = $formHandle; // default key to be the formHandle
+			if(is_numeric($formHandle)) { // except formHandle might be an ID, so then sort that out
+				$formId = $formHandle;
+				$formHandle = getFormHandleFromFormId($formHandle);
+				$key = $fidAsKeys ? $formId : $formHandle;
+			} elseif($fidAsKeys) { // formHandle is a handle, but we need form id for the key
 				$formObject = $form_handler->get($formHandle);
 				$key = $formObject->getVar('fid');
 			}
@@ -2787,7 +2794,7 @@ function getEntryIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKey
 			}
 		}
 	} else {
-		$formHandle = getFormHandleFromFormId($formIdOrHandle);
+		$formHandle = getFormHandleFromFormId($formIdOrHandle); // may or may not be a form handle, so we'll just cover our bases...
 		if (is_array($entry[$formHandle])) {
 			foreach ($entry[$formHandle] as $entryId => $localEntry) {
 				$entryIds[] = $entryId;

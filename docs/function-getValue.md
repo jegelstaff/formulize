@@ -16,7 +16,7 @@ Get the value of a particular form element in a particular entry in a dataset. D
 
 ## Parameters
 
-__$entry__ - A single item in a dataset, generally one entry in the main form of the dataset, plus any connected entries from other forms in the relationship the dataset was based on. An entire dataset can be passed, and then the _datasetKey_ parameter must be used to specify which item in the dataset you want to get entries for.<br>
+__$entry__ - A single item in a dataset, generally one entry in the main form of the dataset, plus any connected entries from other forms in the relationship the dataset was based on. An entire dataset can be passed, and then the _datasetKey_ parameter must be used to specify which item in the dataset you want to get a value from.<br>
 __$handle__ - The element handle of the element in the dataset that you want to get the value for.<br>
 __$datasetKey__ - Optional. If an entire dataset is passed in, then the number of the item in the dataset that you want to get ids for, must be specified. Items are numbered sequentially from 0. Generally this is not necessary and not used, because normally individual items within a dataset are passed to this function, see the examples.<br>
 __$localEntryId__ - Optional. If specified, the values included will be limited to the values from this particular underlying entry id in the form that the _handle_ belongs to. By default, all values of the specified _handle_ from all entries that are part of this dataset item will be returned.<br>
@@ -61,16 +61,16 @@ foreach($data as $entry) {
 
 ~~~php
 // Gather all the data in form 6 (fruit), plus connected forms in the Primary Relationship
-// For each fruit, print out some order info for the first order that in the dataset associated with that fruit
+// For each fruit, print out some order info for the first order in the dataset associated with that fruit
 // Isolate the first order based on the underlying entry ids of the Orders form, within each item in the dataset
 $fruitFormId = 6;
 $orderFormId = 11;
-$data = gatherDataset($fruitFormId, filter: $filter);
+$data = gatherDataset($fruitFormId);
 foreach($data as $entry) {
 	$orderFormEntryIds = getEntryids($entry, $orderFormId);
 	$firstOrderEntryId = $orderFormEntryIds[0];
 	$firstOrderDate = getValue($entry, 'order_date', localEntryId: $firstOrderEntryId);
-	$firstOrderIncoterms = getValue($entry, 'order_incoterms', localEntryId: $firstOrderEntryId);
+	$firstOrderIncoTerms = getValue($entry, 'order_incoterms', localEntryId: $firstOrderEntryId);
 	print "First order date and incoterms: $firstOrderDate, $firstOrderIncoTerms";
 }
 ~~~

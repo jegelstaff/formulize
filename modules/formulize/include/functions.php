@@ -210,7 +210,7 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
             $start = false;
             $filterText .= $filterElements[$filterId]."/**/".$filterTerms[$filterId]."/**/".$filterOps[$filterId];
         }
-        $profileData = gatherDataset($fid, filter: $filterText, scope: makeUidFilter($found_uids), frid: $frids[$i]);
+        $profileData = gatherDataset($fid, filter: $filterText, scope: makeUidFilter($found_uids), frid: 0);
         $real_found_names = array();
         foreach ($profileData as $thisData) {
             $thisUid = getValue($thisData, "creation_uid");
@@ -1749,11 +1749,11 @@ function getCalcHandleText($handle, $forceColhead=true) {
 /**
  * Creates a scope variable, suitable for passing to the gatherDataset function
  * Limits the scope created based on the permissions of the user. Requesting 'all' scope on a user without permission to see all entries in the form, results in the highest level of scope the user is permitted on the form.
- * @param string|int currentView - Can be one of the strings: mine, group, or all, signifying "the user's entries," or "their group's entries," or "all entries." Can be a comma separated list of group ids instead, or a single group id, to declare a specific scope based on that particular set of groups.
- * @param object|int uidOrObject - The user id or the user object, representing the user for whom the scope is being created. This user's permissions on the form will be taken into account when building the scope.
+ * @param string|int currentView - Can be one of the strings: mine, group, or all, signifying "the user's entries," or "their group's entries," or "all entries." Can be a comma separated list of group ids instead, or a single group id, to declare a specific scope based on that particular set of groups. If you pass specific group ids, they will be used as is. If you want specific group ids to be limited to the groups the user is a member of, put the string 'onlymembergroups' as the first item in the comma separated list.
+ * @param object|int uidOrObject - The user id or the user object, representing the user for whom the scope is being created. This user's permissions on the form will be taken into account when building the scope. If an invalid user id or object is passed, then the anonymous user, user 0, is assumed.
  * @param int fid - The id number of the form for which the scope is being built
  * @param boolean - currentViewCanExpand - a flag used internally to allow for a scope that is beyond the user's permissions. Used when saved views publish data to a group of users, which those users would not normally see.
- * @return array Returns an array with two values in it. Key zero is the scope which will be an array of groups or arbitrary SQL to append to a database query. Key one is the value of currentView, which may have changed if the specified user did not have permission for the requested currentView value.
+ * @return array Returns an array with two values in it. Key zero is the scope which will be an array of group ids or arbitrary SQL to append to a database query. Key one is the value of currentView, which may have changed if 'group' or 'all' was specified and the user did not have that level of permission.
  */
 function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand = false) {
 
