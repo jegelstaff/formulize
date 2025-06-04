@@ -389,7 +389,7 @@ class formulize_themeForm extends XoopsThemeForm {
 					AND !$templateVariables['renderedElement']
 					AND !is_numeric($templateVariables['renderedElement'])
 					) OR (
-						is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements())
+						is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements()) AND $ele->getName() != 'button-controls'
 					)) {
 						return "";
 				}
