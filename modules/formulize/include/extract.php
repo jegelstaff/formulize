@@ -32,6 +32,7 @@
 ###############################################################################
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+define('DBPRE', XOOPS_DB_PREFIX.'_');
 
 // this file contains the functions for gathering a dataset from the database and interacting with the dataset
 
@@ -755,10 +756,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 		if (isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 			// If there's an LOE Limit in place, check that we're not over it first
-			global $formulize_LOE_limit;
+			$config_handler = xoops_gethandler('config');
+			$formulizeModuleConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 			if ($countMasterResultsRes = $xoopsDB->query($countMasterResults)) {
 				$countMasterResultsRow = $xoopsDB->fetchRow($countMasterResultsRes);
-				if ($countMasterResultsRow[0] > $formulize_LOE_limit and $formulize_LOE_limit > 0 and !$forceQuery and !$limitClause) {
+				if ($countMasterResultsRow[0] > $formulizeModuleConfig['LOE_limit'] and $formulizeModuleConfig['LOE_limit'] > 0 and !$forceQuery and !$limitClause) {
 					return $countMasterResultsRow[0];
 				} else {
 					// if we're in a getData call from displayEntries, put the count in a special place for use in generating page numbers
