@@ -2,7 +2,7 @@
 
 print "
         <div id='formulize-list-of-entries-footer'>
-            <div>$numberOfEntries</div><div>$pageNavControls</div>
+            <div>$numberOfEntries $toggleRepeatData</div><div>$pageNavControls</div>
         </div>
     </div>
 </div>
@@ -181,5 +181,11 @@ function setSearchRowTop() {
     var topValue = headingHeight+1;
     jQuery('td[id^=celladdress_1_]').css('top',topValue+'px');
 }
+
+jQuery('input#toggleRepeatData').click(function() {
+	jQuery('.list-of-entries table.outer td.same-contents-as-prior-cell').each(function() {
+		jQuery(this).toggleClass('hide-same-contents-as-prior-cell');
+	});
+});
 
 </script>

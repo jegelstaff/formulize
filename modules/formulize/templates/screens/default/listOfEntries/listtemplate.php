@@ -19,7 +19,7 @@ print "
 
 	// draw in all the cells for the contents of this row
 	foreach($columnContents as $columnNumber=>$columnContent) {
-		$cellClass = $class." column column".$columnNumber;
+		$cellClass = "$class column column$columnNumber ".checkIfContentIsTheSameAsPrior($columnContent, $columnNumber);
 		print "
 			<td $columnWidthStyle class='$cellClass' id='celladdress_$rowNumber"."_"."$columnNumber'>
 				$columnContent
