@@ -2789,16 +2789,14 @@ function getEntryIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKey
 				$formObject = $form_handler->get($formHandle);
 				$key = $formObject->getVar('fid');
 			}
-			foreach ($entry[$formHandle] as $entryId => $localEntry) {
-				$entryIds[$key][] = $entryId;
+			if(is_array($entry[$formHandle])) {
+				$entryIds[$key] = array_keys($entry[$formHandle]);
 			}
 		}
 	} else {
 		$formHandle = getFormHandleFromFormId($formIdOrHandle); // may or may not be a form handle, so we'll just cover our bases...
 		if (is_array($entry[$formHandle])) {
-			foreach ($entry[$formHandle] as $entryId => $localEntry) {
-				$entryIds[] = $entryId;
-			}
+			$entryIds = array_keys($entry[$formHandle]);
 		}
 	}
 	return $entryIds;
