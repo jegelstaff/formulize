@@ -1352,9 +1352,21 @@ class formulizeDataHandler  {
         if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($this->fid)) {
             $GLOBALS['formulize_getDataFromRevisionsTable'] = true;
             if($revisionId) {
-                $data = getData("", $this->fid, 'revision_id/**/'.$revisionId.'/**/=');
+								$data = gatherDataset(
+									$this->fid,
+									filter: 'revision_id/**/'.$revisionId.'/**/=',
+									frid: 0
+								);
             } else {
-                $data = getData("", $this->fid, $id, "AND", "", 0, 1, "revision_id", "DESC");
+                $data = gatherDataset(
+									$this->fid,
+									filter: $id,
+									limitStart: 0,
+									limitSize: 1,
+									sortField: "revision_id",
+									sortOrder: "DESC",
+									frid: 0
+								);
             }
             unset($GLOBALS['formulize_getDataFromRevisionsTable']);
             return $data;

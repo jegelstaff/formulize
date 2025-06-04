@@ -259,7 +259,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         // make this a configuration option on the Templates tab!!!
         if (!empty($entry_id)) {
-            $templateScreenData = getData($screen->getVar('frid'), $screen->getVar('fid'), $entry_id);
+            $templateScreenData = gatherDataset($screen->getVar('fid'), filter: $entry_id, frid: $screen->getVar('frid'));
 						$formIds = array();
 						if($screen->getVar('frid')) {
 							$form_relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
@@ -272,9 +272,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 						foreach($formIds as $thisFid) {
             	$formObject = $form_handler->get($thisFid);
 							$elementTypes = $formObject->getVar('elementTypes');
-							$internalRecordIds = internalRecordIds($templateScreenData[0], $thisFid);
+							$internalRecordIds = getEntryIds($templateScreenData[0], $thisFid);
 							foreach($formObject->getVar('elementHandles') as $i=>$thisHandle) {
-								$$thisHandle = display($templateScreenData[0], $thisHandle);
+								$$thisHandle = getValue($templateScreenData[0], $thisHandle);
 								// if we've got a single value from the mainform, or a one to one form, or a single entry in a subform, format it for display as if in a list
 								if(count($internalRecordIds) == 1) {
 									$elementHandlerType = $elementTypes[$i]."Element";

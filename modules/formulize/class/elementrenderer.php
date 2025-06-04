@@ -132,7 +132,7 @@ class formulizeElementRenderer{
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
-					$creation_datetime = display($entry, "creation_datetime");
+					$creation_datetime = getValue($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
 					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
 					$evalResult = eval($ele_value[0]);
@@ -194,7 +194,7 @@ class formulizeElementRenderer{
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
-					$creation_datetime = display($entry, "creation_datetime");
+					$creation_datetime = getValue($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
 					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
 					$evalResult = eval($ele_value[0]);
@@ -1028,7 +1028,7 @@ class formulizeElementRenderer{
 					if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term])) {
 						$replacementTerm = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term];
 					} else {
-           	$replacementTerm = display($entryData, $term, '', $entry_id);
+           	$replacementTerm = getValue($entryData, $term, localEntryId: $entry_id);
 					}
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
@@ -1054,7 +1054,7 @@ class formulizeElementRenderer{
             return array();
 		}
 		if(!isset($cachedEntryData[$id_form][$entry_id])) {
-			$cachedEntryData[$id_form][$entry_id] = getData("", $id_form, $entry_id);
+			$cachedEntryData[$id_form][$entry_id] = gatherDataset($id_form, filter: $entry_id, frid: 0);
 		}
 		return $cachedEntryData[$id_form][$entry_id][0];
 	}
@@ -1268,7 +1268,7 @@ if($multiple ){
 			$singleData = getSingle($screen->getVar('paraentryform'), $owner, $owner_groups, $member_handler, $gperm_handler, $mid);
 			if($singleData['flag'] == "group" AND $singleData['entry'] > 0) { // only proceed if there is a one-entry-per-group situation in the target form
 				formulize_benchmark("Ready to do previous entry query.");
-				$cachedEntries[$screen->getVar('sid')] = getData("", $screen->getVar('paraentryform'), $singleData['entry']);
+				$cachedEntries[$screen->getVar('sid')] = gatherDataset($screen->getVar('paraentryform'), filter: $singleData['entry'], frid: 0);
 				formulize_benchmark("Done query.");
 			} else {
 				return "";
@@ -1311,7 +1311,7 @@ if($multiple ){
 		$previousOptions = array();
 		$prevOptionsExist = false;
 		foreach($entries as $id=>$entry) {
-			$value = htmlspecialchars(strip_tags(display($entry, $previousElementHandle)));
+			$value = htmlspecialchars(strip_tags(getValue($entry, $previousElementHandle)));
 			if(is_array($value)) {
 				$value = printSmart(implode(", ", $value));
 			}

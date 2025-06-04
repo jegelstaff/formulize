@@ -672,26 +672,19 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
-	function get($fid,$includeAllElements=false,$refreshCache=false) {
-		$fid = intval($fid);
+	function get($form_id_or_handle,$includeAllElements=false,$refreshCache=false) {
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();
-		if(!$refreshCache AND isset($cachedForms[$fid][$includeAllElements])) { return $cachedForms[$fid][$includeAllElements]; }
-		if($fid > 0) {
-			$cachedForms[$fid][$includeAllElements] = new formulizeForm($fid,$includeAllElements);
-			return $cachedForms[$fid][$includeAllElements];
+		if(!$refreshCache AND isset($cachedForms[$form_id_or_handle][$includeAllElements])) { return $cachedForms[$form_id_or_handle][$includeAllElements]; }
+		if($form_id_or_handle) {
+			$cachedForms[$form_id_or_handle][$includeAllElements] = new formulizeForm($form_id_or_handle,$includeAllElements);
+			return $cachedForms[$form_id_or_handle][$includeAllElements];
 		}
 		return false;
 	}
 
-	function getByHandle($handle) {
-		global $xoopsDB;
-		$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_handle = '".formulize_db_escape($handle) . "'";
-		if($res = $xoopsDB->query($sql)) {
-			$array = $xoopsDB->fetchArray($res);
-			return $this->get($array['id_form']);
-		}
-
+	function getByHandle($formHandle) {
+		return $this->get($formHandle);
 	}
 
 	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true) {

@@ -217,7 +217,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
             $filter[1][1] = $filters[$i];
         }
 
-        $data[$i] = getData($frids[$i], $fids[$i], $filter, "AND", $scope);
+        $data[$i] = gatherDataset($fids[$i], filter: $filter, scope: $scope, frid: $frids[$i]);
         $data[$i] = resultSort($data[$i], $dateField);
     }
 
@@ -338,7 +338,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
             } else {
                 $elementObject = $element_handler->get($viewHandles[$i]);
             }
-            $ids = internalRecordIds($entry, $elementObject->getVar('id_form'));
+            $ids = getEntryIds($entry, $elementObject->getVar('id_form'));
 
             if(is_array($viewHandles[$i])) {
                 $needsep = 0;
@@ -351,10 +351,10 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
                         $textToDisplay .= ", ";
                     }
                     $needsep = 1;
-                    $textToDisplay .= display($entry, $thisVH);
+                    $textToDisplay .= getValue($entry, $thisVH);
                 }
             } else {
-                $textToDisplay = display($entry, $viewHandles[$i]);
+                $textToDisplay = getValue($entry, $viewHandles[$i]);
             }
             if($viewPrefixes[$i]) {
                 $textToDisplay = $viewPrefixes[$i] . $textToDisplay;
@@ -365,15 +365,15 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
             $calendarDataItem[1] = $frids[$i];
             $calendarDataItem[2] = $fids[$i];
             $calendarDataItem[3] = $textToDisplay;
-            $calendarDataItem[4] = $usedeleteicons[$i] AND ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], display($entry, "creation_uid"), $ids[0])); // only active for the first dataset??
+            $calendarDataItem[4] = $usedeleteicons[$i] AND ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], getValue($entry, "creation_uid"), $ids[0])); // only active for the first dataset??
 
             if($type == "month"
                 || $type == "mini_month"
                 || $type == "micro_month")
             {
                 if(is_array($dateHandles[$i])) {
-                    $startValue = display($entry, $dateHandles[$i][0]);
-                    $endValue = display($entry, $dateHandles[$i][1]);
+                    $startValue = getValue($entry, $dateHandles[$i][0]);
+                    $endValue = getValue($entry, $dateHandles[$i][1]);
 
                     if($startValue && $endValue) {
                         $startDate = strtotime($startValue);
@@ -394,7 +394,7 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
                         $calendarData = assignItem($arrayDate, $calendarDataItem, $calendarData);
                     }
                 } else {
-                    $currentDate = display($entry, $dateHandles[$i]);
+                    $currentDate = getValue($entry, $dateHandles[$i]);
                     $arrayDate = getdate(strtotime($currentDate));
                     $calendarData = assignItem($arrayDate, $calendarDataItem, $calendarData);
                 }

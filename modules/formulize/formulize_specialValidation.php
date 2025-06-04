@@ -58,21 +58,21 @@ $value = strip_tags(htmlspecialchars($_GET['value']));
 if($element_id==88) {
     $specialValidationColor = 'red'; // will be specifiable by the user as part of the UI
     $specialValidationCode = '
-    
+
     // get the whole set of data for this section, based on relationship 1, which is the one the section records typically use in the standard forms
     // course component form is number 4
-    $data = getData(1, 4, $entry_id);
+    $data = gatherDataset(4, filter: $entry_id, frid: 1);
     $entry = $data[0];
 
     // for each of the day/time combinations, check for other day/times using the same room
-    $year = display($entry, "ro_module_year");
-    $days = display($entry, "section_times_day");
+    $year = getValue($entry, "ro_module_year");
+    $days = getValue($entry, "section_times_day");
     $days = is_array($days) ? $days : array($days);
-    $starts = display($entry, "section_times_start_time");
+    $starts = getValue($entry, "section_times_start_time");
     $starts = is_array($starts) ? $starts : array($starts);
-    $ends = display($entry, "section_times_end_time");
+    $ends = getValue($entry, "section_times_end_time");
     $ends = is_array($ends) ? $ends : array($ends);
-    $semester = display($entry, "ro_module_semester");
+    $semester = getValue($entry, "ro_module_semester");
     $totalConflictText = "";
     foreach($days as $i=>$day) {
         $start = $starts[$i];
@@ -81,7 +81,7 @@ if($element_id==88) {
         $startTime = mktime($startTimeParts[0],$startTimeParts[1],$startTimeParts[2]);
         $endTimeParts = explode(":",$end);
         $endTime = mktime($endTimeParts[0],$endTimeParts[1],$endTimeParts[2]);
-        
+
         // check for conflicts for every instructor for this time
         $conflictSections = array();
         $room = $value;
@@ -89,7 +89,7 @@ if($element_id==88) {
             $targetEnd = date("H:i:s",$endTime);
             $targetStart = date("H:i:s", $startTime);
             $dayCodes = array("Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"R","Friday"=>"F","Saturday"=>"Sat","Sunday"=>"Sun");
-			$baseFilter = "sections_practica_room/**/$room/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/1/**/="; 
+			$baseFilter = "sections_practica_room/**/$room/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/1/**/=";
             if($semester == "Fall-Winter - Y") {
                 $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
             } elseif($semester == "Fall - F") {
@@ -107,11 +107,11 @@ if($element_id==88) {
             $filter[0][1] = $baseFilter;
             $filter[1][0] = "OR";
             $filter[1][1] = $semFilter;
-            $conflicts = getData(7,4, $filter);
+            $conflicts = gatherDataset(4, filter: $filter, frid: 7);
             foreach($conflicts as $conflict) {
-                $conflictCode = display($conflict, "sections_practica_course_code");
+                $conflictCode = getValue($conflict, "sections_practica_course_code");
                 $conflictCode = substr($conflictCode,12,strpos($conflictCode," ",12)-12);
-                $conflictSections[] = $conflictCode."-".display($conflict,"sections_section_number");
+                $conflictSections[] = $conflictCode."-".getValue($conflict,"sections_section_number");
             }
         }
         if(count((array) $conflictSections)>0) {

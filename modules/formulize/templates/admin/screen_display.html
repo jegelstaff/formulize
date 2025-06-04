@@ -43,7 +43,7 @@
 							<li>$currentViewList</li>
 							<li>$changeColsButton</li>
 							<li>$saveButton (if any columns are displayed as form elements)</li>
-						</ul> 
+						</ul>
 					</td>
 					<td>
 						<ul>
@@ -77,12 +77,12 @@
 				<p>If you specify any PHP code for the List Item Template, it will be used to draw in each row of the list.</p>
 				<p>You do not need to create a foreach loop or any other loop structure in this template. The PHP code you specify will be executed inside a loop that runs once for each entry.</p>
 				<p>You have full access to XOOPS and Formulize objects, functions, variables and constants in this template, including $fid for the form ID. Use $entry to refer to the current entry in the list. For example:</p>
-				<code>display($entry, "phonenumber");</code>
+				<code>getValue($entry, "phonenumber");</code>
 				<p>That code will display the phone number recorded in that entry (assuming "phonenumber" is a valid element handle).</p>
 				<p>You can use "$selectionCheckbox" to display the special checkbox used to select an entry.</p>
 				<p>You can use a special function called "viewEntryLink" to create a link to the entry so users can edit it. This function takes one parameter, which is the text that will be clickable. Examples:</p>
 				<code>print viewEntryLink("Click to view this entry");<br/>
-				print viewEntryLink(display($entry, "taskname"));<br/>
+				print viewEntryLink(getValue($entry, "taskname"));<br/>
 				print viewEntryLink("<img src='" . XOOPS_ROOT_PATH . "/images/button.jpg'>");</code>
 			</div>
 		</fieldset>

@@ -507,7 +507,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
         if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
             $handle_reference = substr($filterTerms[$i],1,-1);
             if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
-                $filterTerms[$i] = $entry == 'new' ? '' : display($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
+                $filterTerms[$i] = $entry == 'new' ? '' : getValue($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
             } elseif($entry != 'new') { // comparing to user metadata field, entry is not new
                 // take a wild guess that the reference is to something that should be a uid in the db...
                 $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -536,7 +536,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 				$compValue = "";
 			}
 		} else {
-			$compValue = display($entryData[0], $filterElements[$i]);
+			$compValue = getValue($entryData[0], $filterElements[$i]);
 		}
 		if(is_array($compValue)) {
 			if($thisOp == "==") {

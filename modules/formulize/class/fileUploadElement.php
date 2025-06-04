@@ -560,7 +560,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
  */
 function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $localId='NULL') {
 	$displayName = "";
-	$url = display($entryOrDataset, $elementHandle, $dataSetKey, $localId);
+	$url = getValue($entryOrDataset, $elementHandle, $dataSetKey, $localId);
 	$element_handler = xoops_getmodulehandler('fileUploadElement', 'formulize');
 	list($entryId, $elementId, $fid) = $element_handler->extractEntryIdAndElementIdFromUrl($url);
 	// lookup the name
@@ -589,7 +589,7 @@ function displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $lo
 function displayFileImageLink($entryOrDataset, $elementHandle, $dataSetKey=null, $localId='NULL') {
 	$image = displayFileImage($entryOrDataset, $elementHandle, $dataSetKey=null, $localId='NULL');
 	if(substr($image, 0, 4) == '<img') {
-		$url = display($entryOrDataset, $elementHandle, $dataSetKey, $localId);
+		$url = getValue($entryOrDataset, $elementHandle, $dataSetKey, $localId);
 		$image = "<a href='$url' target='_blank'>$image</a>";
 	}
 	return $image;
