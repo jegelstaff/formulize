@@ -1159,7 +1159,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     }
 
 	// set the alldoneoverride if necessary -- August 22 2006
-	$config_handler =& xoops_gethandler('config');
+	$config_handler = xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, $mid);
 	// remove the all done button if the config option says 'no', and we're on a single-entry form, or the function was called to look at an existing entry, or we're on an overridden Multi-entry form
 	$allDoneOverride = (!$formulizeConfig['all_done_singles'] AND (($single OR $overrideMulti OR $original_entry) AND !$_POST['target_sub'] AND !$_POST['goto_sfid'] AND !$_POST['deletesubsflag'] AND !$_POST['parent_form'])) ? true : false;
@@ -1633,121 +1633,122 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
-	} else {
+	} 
 
-        drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
+	drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
 
-        $pv_text_temp = _formulize_PRINTVIEW;
-        if(!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'])) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
-        	$button_text = _formulize_DONE;
-        } elseif(is_array($button_text)) {
-            if(!$button_text[0]) {
-                $done_text_temp = _formulize_DONE;
-            } else {
-                $done_text_temp = $button_text[0];
-            }
-            if(!$button_text[1]) {
-                $save_text_temp = _formulize_SAVE;
-            } else {
-                $save_text_temp = $button_text[1];
-            }
-            if(!$button_text[2]) {
-                $save_and_leave_text_temp = _formulize_SAVE_AND_LEAVE;
-            } else {
-                $save_and_leave_text_temp = $button_text[2];
-            }
-            if($button_text[3]) {
-                $pv_text_temp = $button_text[3];
-            }
-        }
-
-        // formulize_displayingMultipageScreen is set in formdisplaypages to indicate we're displaying a multipage form
-        global $formulize_displayingMultipageScreen;
-        // do not use printable button for profile forms
-        if($pv_text_temp != "{NOBUTTON}") {
-
-            $newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
-            print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
-
-            // add security token
-            if(isset($GLOBALS['xoopsSecurity'])) {
-                print $GLOBALS['xoopsSecurity']->getTokenHTML();
-            }
-
-            $currentPage = "";
-            $screenid = "";
-            if($screen) {
-                $screenid = $screen->getVar('sid');
-                // check for a current page setting
-                if(isset($settings['formulize_currentPage'])) {
-                    $currentPage = $settings['formulize_currentPage'];
-                }
-            }
-
-            print "<input type=hidden name=screenid value='".$screenid."'>";
-            print "<input type=hidden name=currentpage value='".$currentPage."'>";
-
-            print "<input type=hidden name=lastentry value=".$cur_entry.">";
-            if($go_back['form']) { // we're on a sub, so display this form only
-                print "<input type=hidden name=formframe value=".$fids[0].">";
-            } else { // otherwise, display like normal
-                print "<input type=hidden name=formframe value='".$formframe."'>";
-                print "<input type=hidden name=mainform value='".$mainform."'>";
-            }
-            if(is_array($elements_allowed)) {
-                $ele_allowed = implode(",",$elements_allowed);
-                print "<input type=hidden name=elements_allowed value='".$ele_allowed."'>";
-            } else {
-                print "<input type=hidden name=elements_allowed value=''>";
-            }
-            print "</form>";
-            //added by Cory Aug 27, 2005 to make forms printable
-
-            $printbutton = new XoopsFormButton('', 'printbutton',  $pv_text_temp, 'button');
-            if(is_array($elements_allowed)) {
-                $ele_allowed = implode(",",$elements_allowed);
-            }
-            $printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
-            $rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
-            if ($printall) {																					// nmc 2007.03.24 - added
-                $printallbutton = new XoopsFormButton('', 'printallbutton', str_replace(_formulize_PRINTVIEW, $pv_text_temp, _formulize_PRINTALLVIEW), 'button');	// nmc 2007.03.24 - added
-                $printallbutton->setExtra("onclick='javascript:PrintAllPop();'");								// nmc 2007.03.24 - added
-                $rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();							// nmc 2007.03.24 - added
-                }
-            $buttontray = new XoopsFormElementTray($rendered_buttons, "", 'button-controls'); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
-        } else {
-            $buttontray = new XoopsFormElementTray("", "", 'button-controls');
-        }
-        $buttontray->setClass("no-print");
-
-        if($save_text_temp) { $subButtonText = $save_text_temp; }
-
-        if($subButtonText != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-            $saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
-            $saveButton->setExtra("onclick=javascript:validateAndSubmit();");
-            $buttontray->addElement($saveButton);
-        }
-
-        if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-            // also add in the save and leave button
-            $saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($save_and_leave_text_temp), 'button');
-            $saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
-            $buttontray->addElement($saveAndLeaveButton);
-        }
-
-        if((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) {
-            if($done_text_temp) { $button_text = $done_text_temp; }
-            $donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
-            $donebutton->setExtra("onclick=javascript:verifyDone();");
-            $buttontray->addElement($donebutton);
-        }
-
-        $trayElements = $buttontray->getElements();
-            if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
-            $form->addElement($buttontray);
-        }
-        return $form;
+	$pv_text_temp = _formulize_PRINTVIEW;
+	if(!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'])) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
+		$button_text = _formulize_DONE;
+	} elseif(is_array($button_text)) {
+		if(!$button_text[0]) {
+			$done_text_temp = _formulize_DONE;
+		} else {
+			$done_text_temp = $button_text[0];
+		}
+		if(!$button_text[1]) {
+			$save_text_temp = _formulize_SAVE;
+		} else {
+			$save_text_temp = $button_text[1];
+		}
+		if(!$button_text[2]) {
+			$save_and_leave_text_temp = _formulize_SAVE_AND_LEAVE;
+		} else {
+			$save_and_leave_text_temp = $button_text[2];
+		}
+		if($button_text[3]) {
+			$pv_text_temp = $button_text[3];
+		}
 	}
+
+	$config_handler = xoops_gethandler('config');
+	$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+	if($pv_text_temp != "{NOBUTTON}" AND $formulizeConfig['formulizeShowPrintableViewButtons']) {
+
+		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
+		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
+
+		// add security token
+		if(isset($GLOBALS['xoopsSecurity'])) {
+			print $GLOBALS['xoopsSecurity']->getTokenHTML();
+		}
+
+		$currentPage = "";
+		$screenid = "";
+		if($screen) {
+			$screenid = $screen->getVar('sid');
+			// check for a current page setting
+			if(isset($settings['formulize_currentPage'])) {
+				$currentPage = $settings['formulize_currentPage'];
+			}
+		}
+
+		print "<input type=hidden name=screenid value='".$screenid."'>";
+		print "<input type=hidden name=currentpage value='".$currentPage."'>";
+
+		print "<input type=hidden name=lastentry value=".$cur_entry.">";
+		if($go_back['form']) { // we're on a sub, so display this form only
+			print "<input type=hidden name=formframe value=".$fids[0].">";
+		} else { // otherwise, display like normal
+			print "<input type=hidden name=formframe value='".$formframe."'>";
+			print "<input type=hidden name=mainform value='".$mainform."'>";
+		}
+		if(is_array($elements_allowed)) {
+			$ele_allowed = implode(",",$elements_allowed);
+			print "<input type=hidden name=elements_allowed value='".$ele_allowed."'>";
+		} else {
+			print "<input type=hidden name=elements_allowed value=''>";
+		}
+		print "</form>";
+		//added by Cory Aug 27, 2005 to make forms printable
+
+		$printbutton = new XoopsFormButton('', 'printbutton',  $pv_text_temp, 'button');
+		if(is_array($elements_allowed)) {
+			$ele_allowed = implode(",",$elements_allowed);
+		}
+		$printbutton->setExtra("onclick='javascript:PrintPop(\"$ele_allowed\");'");
+		$rendered_buttons = $printbutton->render(); // nmc 2007.03.24 - added
+		if ($printall) {																					// nmc 2007.03.24 - added
+			$printallbutton = new XoopsFormButton('', 'printallbutton', str_replace(_formulize_PRINTVIEW, $pv_text_temp, _formulize_PRINTALLVIEW), 'button');	// nmc 2007.03.24 - added
+			$printallbutton->setExtra("onclick='javascript:PrintAllPop();'");								// nmc 2007.03.24 - added
+			$rendered_buttons .= "&nbsp;&nbsp;&nbsp;" . $printallbutton->render();							// nmc 2007.03.24 - added
+			}
+		$buttontray = new XoopsFormElementTray($rendered_buttons, "", 'button-controls'); // nmc 2007.03.24 - amended [nb: FormElementTray 'caption' is actually either 1 or 2 buttons]
+	} else {
+		$buttontray = new XoopsFormElementTray("", "", 'button-controls');
+	}
+	$buttontray->setClass("no-print");
+
+	if($save_text_temp) { $subButtonText = $save_text_temp; }
+
+	if($subButtonText != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+		$saveButton = new XoopsFormButton('', 'submitx', trans($subButtonText), 'button'); // doesn't use name submit since that conflicts with the submit javascript function
+		$saveButton->setExtra("onclick=javascript:validateAndSubmit();");
+		$buttontray->addElement($saveButton);
+	}
+
+	if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+		// also add in the save and leave button
+		$saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($save_and_leave_text_temp), 'button');
+		$saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
+		$buttontray->addElement($saveAndLeaveButton);
+	}
+
+	if((($button_text != "{NOBUTTON}" AND !$done_text_temp) OR (isset($done_text_temp) AND $done_text_temp != "{NOBUTTON}")) AND !$allDoneOverride) {
+		if($done_text_temp) { $button_text = $done_text_temp; }
+		$donebutton = new XoopsFormButton('', 'donebutton', trans($button_text), 'button');
+		$donebutton->setExtra("onclick=javascript:verifyDone();");
+		$buttontray->addElement($donebutton);
+	}
+
+	// formulize_displayingMultipageScreen is set in formdisplaypages to indicate we're displaying a multipage form
+	global $formulize_displayingMultipageScreen;
+	$trayElements = $buttontray->getElements();
+	if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
+		$form->addElement($buttontray);
+	}
+	return $form;
+	
 }
 
 // this function draws in the hidden form that handles the All Done logic that sends user off the form
