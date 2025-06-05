@@ -733,9 +733,11 @@ button:focus, input[type="submit"]:focus, input[type="button"]:focus, input[type
 button, input[type="submit"], input[type="button"], input[type="reset"],
 .btn {
     min-width: 200px;
-    max-width: 100%;
   }
 
+div#formulize-button-controls label[for=button-controls] {
+	display: flex;
+}
 
 @media print {
   button, input[type="submit"], input[type="button"], input[type="reset"],

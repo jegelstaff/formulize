@@ -384,13 +384,19 @@ class formulize_themeForm extends XoopsThemeForm {
 				// Only show elements if they have values
 				// unless the user has specifically said we should show all elements regardless through the config option.
 				// Also skip any element trays that have no elements in them (this is the case for the ancient printable view button, which is not currently active, and may be resurrected in a different form)
-        if((
-					(!isset($xoopsModuleConfig['show_empty_elements_when_read_only']) OR !$xoopsModuleConfig['show_empty_elements_when_read_only'])
-					AND !$templateVariables['renderedElement']
-					AND !is_numeric($templateVariables['renderedElement'])
-					) OR (
-						is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements()) AND $ele->getName() != 'button-controls'
-					)) {
+        if(
+						(
+							(
+								(!isset($xoopsModuleConfig['show_empty_elements_when_read_only']) OR !$xoopsModuleConfig['show_empty_elements_when_read_only'])
+								AND !$templateVariables['renderedElement']
+								AND !is_numeric($templateVariables['renderedElement'])
+							) OR (
+								is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements())
+							)
+						) AND (
+							$ele->getName() != 'button-controls'
+						)
+					) {
 						return "";
 				}
 

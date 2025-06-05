@@ -534,6 +534,14 @@ td.head div.xoops-form-element-caption, td.head div.xoops-form-element-caption-r
     font-weight: normal;
 }
 
+div#formulize-printpreview div.formulize-subform-table-scrollbox {
+		overflow-y: visible !important;
+}
+
+div#formulize-printpreview div#multipage-controls {
+	display: none !important
+}
+
 @media print {
 
   body {
