@@ -172,3 +172,5 @@ define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix strings with an apostrophe
 define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix strings with a TAB (for Excel)");
 define("_MI_formulize_EIC_PLAIN", "Never prefix strings (for programs that need clean, raw data)");
 
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', 'Enable Printable View buttons for all form screens (you can still turn them on and off per screen)');
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable View buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable View buttons will not show up on any screens.');
