@@ -31,7 +31,10 @@ define("_MI_formulize_NOTIFY_DELENTRY_MAILSUB", "Entry deleted from a Form");
 
 
 //	preferences
-define("_MI_formulize_TEXT_WIDTH","Default width of text boxes");
+define("_MI_formulize_PREFHEADSTART", "</span><h1>");
+define("_MI_formulize_PREFHEADEND", "</h1></td><td class='even'></td></tr><tr><td class='head'><div class='xoops-form-element-caption'><span class='caption-text'>");
+
+define("_MI_formulize_TEXT_WIDTH",_MI_formulize_PREFHEADSTART."Form Element Defaults"._MI_formulize_PREFHEADEND."Default width of text boxes");
 define("_MI_formulize_TEXT_MAX","Default maximum length of text boxes");
 define("_MI_formulize_TAREA_ROWS","Default rows of text areas");
 define("_MI_formulize_TAREA_COLS","Default columns of text areas");
@@ -50,10 +53,10 @@ define("_MI_formulize_PROFILEFORM","Which form is to be used as part of the regi
 define("_MI_formulize_ALL_DONE_SINGLES","Should the 'All Done' button appear at the bottom of the form when editing an entry, and creating a new entry in a 'one-entry-per-user' form? (Deprecated - use Form Screen settings)");
 define("_MI_formulize_SINGLESDESC","This option is overriden by the settings in Form screens. The 'All Done' button (Leave button) is used to leave a form without saving the information in the form.  If you have made changes to the information in a form and then you click 'All Done' without first clicking 'Save', you get a warning that your data has not been saved.  Because of the way the 'Save' button and 'All Done' button work in tandem, there is normally no way to save information and leave a form all at once.  This bothers/confuses some users.  Set this option to 'Yes' to remove the 'All Done' button and turn the behaviour of the 'Save' button to 'save-and-leave-the-form-all-at-once'.  This option does not affect situations where the user is adding multiple entries to a form (where the form reloads blank every time you click 'Save').");
 
-define("_MI_formulize_LOE_limit", "What is the maximum number of entries that should be displayed in a list of entries, without confirmation from the user that they want to see all entries?");
+define("_MI_formulize_LOE_limit", _MI_formulize_PREFHEADSTART."List Settings"._MI_formulize_PREFHEADEND."What is the maximum number of entries that should be displayed in one page of a list of entries, without confirmation from the user that they want to see all entries?");
 define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a list of entries screen can take a long time, several minutes even.  Use this preference to specify the maximum number of entries that your system should try to display at once.  If a dataset contains more entries than this limit, the user will be asked if they want to load the entire dataset or not.");
 
-define("_MI_formulize_USETOKEN", "Use the security token system to validate form submissions?");
+define("_MI_formulize_USETOKEN", _MI_formulize_PREFHEADSTART."The Basement (don't go here unless you have to)"._MI_formulize_PREFHEADEND."Use the security token system to validate form submissions?");
 define("_MI_formulize_USETOKENDESC", "By default, when a form is submitted, no data is saved unless Formulize can validate a unique token that was submitted with the form.  This is a partial defence against cross site scripting attacks, meant to ensure only people actually visiting your website can submit forms.  In some circumstances, depending on firewalls or other factors, the token cannot be validated even when it should be.  If this is happening to you repeatedly, you can turn off the token system for Formulize here.  <b>NOTE: you can override this global setting on a screen by screen basis.</b>");
 
 define("_MI_formulize_NUMBER_DECIMALS", "By default, how many decimal places should be displayed for numbers?");
@@ -65,7 +68,7 @@ define("_MI_formulize_NUMBER_SUFFIX_DESC", "For example, if your entire site onl
 define("_MI_formulize_NUMBER_DECIMALSEP", "By default, if decimals are used, what punctuation should separate them from the rest of the number?");
 define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used to separate thousands in numbers?");
 
-define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', "Show empty form elements when displaying forms in read-only mode");
+define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', _MI_formulize_PREFHEADSTART."Form Settings"._MI_formulize_PREFHEADEND."Show empty form elements when displaying them as read-only?");
 define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC', "When form elements are rendered in read-only mode, and there is no value to display, the element is skipped by default and not shown. If you want to show all elements even empty ones when users cannot edit the entry, turn this setting on.");
 
 define('_MI_formulize_VALIDATECODE', 'Check code blocks for syntax errors?');
@@ -77,7 +80,7 @@ define("_MI_formulize_HEADING_HELP_LINK_DESC", "The help link provides a popup w
 define("_MI_formulize_USECACHE", "Use caching to speed up Procedures?");
 define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
 
-define("_MI_formulize_DOWNLOADDEFAULT", "When users are exporting data, use a compatibility trick for some versions of Excel by default?");
+define("_MI_formulize_DOWNLOADDEFAULT", _MI_formulize_PREFHEADSTART."Exporting Data"._MI_formulize_PREFHEADEND."When users are exporting data, use a compatibility trick for some versions of Excel by default?");
 define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can check a box on the download page that adds a special code to the file which is necessary to make accented characters appear properly in some versions of Microsoft Excel.  This option controls whether that checkbox is checked by default or not.  You should experiment with your installation to see if exports work best with or without this option turned on.");
 
 define("_MI_formulize_LOGPROCEDURE", "Use logging to monitor Procedures and parameters?");
@@ -104,11 +107,11 @@ define("_MI_formulize_F7MENUTEMPLATEDESC", "If you have upgraded from an older v
 define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING", "Use the old method of writing effects for custom buttons");
 define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC", "This should always be \"No\" unless this is an older installation that already has custom buttons that are dependent on the old method, which was based on the declaring human readable values, instead of the database values for elements.");
 
-define("_MI_formulize_FORMULIZELOGGINGONOFF", "Logging: Record Formulize activity in a log file");
+define("_MI_formulize_FORMULIZELOGGINGONOFF", _MI_formulize_PREFHEADSTART."Logging"._MI_formulize_PREFHEADEND."Record Formulize activity in a log file");
 define("_MI_formulize_FORMULIZELOGGINGONOFFDESC", "If you are recording logs, you can specify the location to store them below, and the duration of logs to keep. Logs will contain information about user activity in JSON format and can be ingested by Grafana or other tools.");
-define("_MI_formulize_FORMULIZELOGFILELOCATION", "Logging: Location to store Formulize log files");
+define("_MI_formulize_FORMULIZELOGFILELOCATION", "Location to store Formulize log files");
 define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log files that contain the history of user actions, such as logging in and saving data. You can specify the full path to the folder where the log files are stored. Logging will not function if the path is empty or not valid.");
-define("_MI_formulize_formulizeLogFileStorageDurationHours", "Logging: How long should Formulize log files be kept (in hours)");
+define("_MI_formulize_formulizeLogFileStorageDurationHours", "How long should Formulize log files be kept (in hours)");
 define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
 
 $rewriteRuleInstructions = '';
@@ -128,7 +131,7 @@ if(isset($GLOBALS['config'])) {
 		}
 	}
 }
-define("_MI_formulize_rewriteRulesEnabled", "Enable alternate URLs for screens".$rewriteRuleInstructions);
+define("_MI_formulize_rewriteRulesEnabled", _MI_formulize_PREFHEADSTART."Core Formulize Configuration"._MI_formulize_PREFHEADEND."Enable alternate URLs for screens".$rewriteRuleInstructions);
 define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.");
 
 $publicAPIInstructions = '';
@@ -172,5 +175,5 @@ define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix strings with an apostrophe
 define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix strings with a TAB (for Excel)");
 define("_MI_formulize_EIC_PLAIN", "Never prefix strings (for programs that need clean, raw data)");
 
-define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', 'Enable Printable View buttons for all form screens (you can still turn them on and off per screen)');
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable View Buttons"._MI_formulize_PREFHEADEND.'Enable Printable View buttons (then you can turn them on and off per screen)');
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable View buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable View buttons will not show up on any screens.');

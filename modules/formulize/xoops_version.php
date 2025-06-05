@@ -751,16 +751,16 @@ $modversion['templates'][] = array(
 
 
 //	Module Configs
-// $xoopsModuleConfig['t_width']
+
+// Form element settings...
 $modversion['config'][1] = array(
 	'name' => 't_width',
-	'title' => '_MI_formulize_TEXT_WIDTH',
+	'title' => "_MI_formulize_TEXT_WIDTH",
 	'description' => '',
 	'formtype' => 'textbox',
 	'valuetype' => 'int',
 	'default' => '30',
 );
-
 // $xoopsModuleConfig['t_max']
 $modversion['config'][] = array(
 	'name' => 't_max',
@@ -770,7 +770,6 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => '255',
 );
-
 // $xoopsModuleConfig['ta_rows']
 $modversion['config'][] = array(
 	'name' => 'ta_rows',
@@ -780,7 +779,6 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => '5',
 );
-
 // $xoopsModuleConfig['ta_cols']
 $modversion['config'][] = array(
 	'name' => 'ta_cols',
@@ -789,53 +787,6 @@ $modversion['config'][] = array(
 	'formtype' => 'textbox',
 	'valuetype' => 'int',
 	'default' => '35',
-);
-
-$modversion['config'][] = array(
-	'name' => 'delimeter',
-	'title' => '_MI_formulize_DELIMETER',
-	'description' => '',
-	'formtype' => 'select',
-	'valuetype' => 'text',
-	'default' => 'br',
-	'options' => array(_MI_formulize_DELIMETER_BR=>'br', _MI_formulize_DELIMETER_SPACE=>'space'),
-);
-
-$modversion['config'][] = array(
-	'name' => 'all_done_singles',
-	'title' => '_MI_formulize_ALL_DONE_SINGLES',
-	'description' => '_MI_formulize_SINGLESDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 1,
-);
-
-$modversion['config'][] = array(
-	'name' => 'LOE_limit',
-	'title' => '_MI_formulize_LOE_limit',
-	'description' => '_MI_formulize_LOE_limit_DESC',
-	'formtype' => 'textbox',
-	'valuetype' => 'int',
-	'default' => '5000',
-);
-
-$modversion['config'][] = array(
-	'name' => 'useToken',
-	'title' => '_MI_formulize_USETOKEN',
-	'description' => '_MI_formulize_USETOKENDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 1,
-);
-
-// this preference is checked when save button is pressed on front end by user | 0 - False | 1 - True
-$modversion['config'][] = array(
-	'name' => 'isSaveLocked',
-	'title' => '_MI_formulize_ISSAVELOCKED',
-	'description' => '_MI_formulize_ISSAVELOCKEDDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 0
 );
 
 $modversion['config'][] = array(
@@ -883,33 +834,18 @@ $modversion['config'][] = array(
 	'default' => ",",
 );
 
-$modversion['config'][] = array(
-	'name' =>'show_empty_elements_when_read_only',
-	'title' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY',
-	'description' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 0,
-);
 
 $modversion['config'][] = array(
-	'name' =>'heading_help_link',
-	'title' => '_MI_formulize_HEADING_HELP_LINK',
-	'description' => '_MI_formulize_HEADING_HELP_LINK_DESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 1,
+	'name' => 'delimeter',
+	'title' => '_MI_formulize_DELIMETER',
+	'description' => '',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'default' => 'br',
+	'options' => array(_MI_formulize_DELIMETER_BR=>'br', _MI_formulize_DELIMETER_SPACE=>'space'),
 );
 
-$modversion['config'][] = array(
-	'name' => 'useCache',
-	'title' => '_MI_formulize_USECACHE',
-	'description' => '_MI_formulize_USECACHEDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 1,
-);
-
+// export stuff...
 $modversion['config'][] = array(
 	'name' => 'downloadDefaultToExcel',
 	'title' => '_MI_formulize_DOWNLOADDEFAULT',
@@ -918,43 +854,6 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => 0,
 );
-
-$modversion['config'][] = array(
-	'name' => 'logProcedure',
-	'title' => '_MI_formulize_LOGPROCEDURE',
-	'description' => '_MI_formulize_LOGPROCEDUREDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => 0,
-);
-
-$modversion['config'][] = array(
-	'name' => 'printviewStylesheets',
-	'title' => '_MI_formulize_PRINTVIEWSTYLESHEETS',
-	'description' => '_MI_formulize_PRINTVIEWSTYLESHEETSDESC',
-	'formtype' => 'textbox',
-	'valuetype' => 'text',
-	'default' => '',
-);
-
-$modversion['config'][] = array(
-	'name' => 'debugDerivedValues',
-	'title' => '_MI_formulize_DEBUGDERIVEDVALUES',
-	'description' => '_MI_formulize_DEBUGDERIVEDVALUESDESC',
-	'formtype' => 'yesno',
-	'valuetype' => 'int',
-	'default' => '0',
-);
-
-$modversion['config'][] = array(
-	'name' => 'customScope',
-	'title' => '_MI_formulize_CUSTOMSCOPE',
-	'description' => '_MI_formulize_CUSTOMSCOPEDESC',
-	'formtype' => 'textarea',
-	'valuetype' => 'text',
-	'default' => '',
-);
-
 $modversion['config'][] = array(
 	'name' => 'exportIntroChar',
 	'title' => '_MI_formulize_EXPORTINTROCHAR',
@@ -970,33 +869,54 @@ $modversion['config'][] = array(
         )
 );
 
+// form prefs...
 $modversion['config'][] = array(
-	'name' => 'notifyByCron',
-	'title' => '_MI_formulize_NOTIFYBYCRON',
-	'description' => '_MI_formulize_NOTIFYBYCRONDESC',
+	'name' =>'show_empty_elements_when_read_only',
+	'title' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY',
+	'description' => '_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => '0',
+	'default' => 0,
 );
-
 $modversion['config'][] = array(
-	'name' => 'f7MenuTemplate',
-	'title' => '_MI_formulize_F7MENUTEMPLATE',
-	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
+	'name' => 'formulizeRevisionsForAllForms',
+	'title' => '_MI_formulize_REVISIONSFORALLFORMS',
+	'description' => '_MI_formulize_REVISIONSFORALLFORMS_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => '1',
+	'default' => 0,
 );
 
+//printable view
+// set printable view default to one (1)
+// unless it does not exist in the database already, and there are forms in the database already
+global $xoopsDB;
+$printableViewButtonDefault = 1;
+if($xoopsDB) {
+	$printableViewConfigExists = q("SELECT 1 FROM ".$xoopsDB->prefix('config')." WHERE conf_name = 'formulizeShowPrintableViewButtons'");
+	$formsExist = q("SELECT 1 FROM ".$xoopsDB->prefix('formulize_id')." WHERE id_form > 0");
+	if($printableViewConfigExists == false AND $formsExist == true) {
+		$printableViewButtonDefault = 0;
+	}
+}
 $modversion['config'][] = array(
-	'name' => 'useOldCustomButtonEffectWriting',
-	'title' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING',
-	'description' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC',
+	'name' => 'formulizeShowPrintableViewButtons',
+	'title' => '_MI_formulize_SHOWPRINTABLEVIEWBUTTONS',
+	'description' => '_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => '0',
+	'default' => $printableViewButtonDefault,
+);
+$modversion['config'][] = array(
+	'name' => 'printviewStylesheets',
+	'title' => '_MI_formulize_PRINTVIEWSTYLESHEETS',
+	'description' => '_MI_formulize_PRINTVIEWSTYLESHEETSDESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => '',
 );
 
+// logging...
 $modversion['config'][] = array(
 	'name' => 'formulizeLoggingOnOff',
 	'title' => '_MI_formulize_FORMULIZELOGGINGONOFF',
@@ -1024,6 +944,25 @@ $modversion['config'][] = array(
 	'default' => '168',
 );
 
+// lists
+$modversion['config'][] = array(
+	'name' => 'LOE_limit',
+	'title' => '_MI_formulize_LOE_limit',
+	'description' => '_MI_formulize_LOE_limit_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'int',
+	'default' => '5000',
+);
+$modversion['config'][] = array(
+	'name' =>'heading_help_link',
+	'title' => '_MI_formulize_HEADING_HELP_LINK',
+	'description' => '_MI_formulize_HEADING_HELP_LINK_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+
+// system config
 $modversion['config'][] = array(
 	'name' => 'formulizeRewriteRulesEnabled',
 	'title' => '_MI_formulize_rewriteRulesEnabled',
@@ -1032,7 +971,6 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => 0,
 );
-
 $modversion['config'][] = array(
 	'name' => 'validateCode',
 	'title' => '_MI_formulize_VALIDATECODE',
@@ -1041,7 +979,14 @@ $modversion['config'][] = array(
 	'valuetype' => 'int',
 	'default' => 1,
 );
-
+$modversion['config'][] = array(
+	'name' => 'notifyByCron',
+	'title' => '_MI_formulize_NOTIFYBYCRON',
+	'description' => '_MI_formulize_NOTIFYBYCRONDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
+);
 $modversion['config'][] = array(
 	'name' => 'formulizePublicAPIEnabled',
 	'title' => '_MI_formulize_PUBLICAPIENABLED',
@@ -1051,33 +996,78 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
+// The basement...
 $modversion['config'][] = array(
-	'name' => 'formulizeRevisionsForAllForms',
-	'title' => '_MI_formulize_REVISIONSFORALLFORMS',
-	'description' => '_MI_formulize_REVISIONSFORALLFORMS_DESC',
+	'name' => 'useToken',
+	'title' => '_MI_formulize_USETOKEN',
+	'description' => '_MI_formulize_USETOKENDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+$modversion['config'][] = array(
+	'name' => 'isSaveLocked',
+	'title' => '_MI_formulize_ISSAVELOCKED',
+	'description' => '_MI_formulize_ISSAVELOCKEDDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0
+);
+$modversion['config'][] = array(
+	'name' => 'all_done_singles',
+	'title' => '_MI_formulize_ALL_DONE_SINGLES',
+	'description' => '_MI_formulize_SINGLESDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+$modversion['config'][] = array(
+	'name' => 'useCache',
+	'title' => '_MI_formulize_USECACHE',
+	'description' => '_MI_formulize_USECACHEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 1,
+);
+$modversion['config'][] = array(
+	'name' => 'logProcedure',
+	'title' => '_MI_formulize_LOGPROCEDURE',
+	'description' => '_MI_formulize_LOGPROCEDUREDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
 );
-
-// set printable view default to one (1)
-// unless it does not exist in the database already, and there are forms in the database already
-global $xoopsDB;
-$printableViewButtonDefault = 1;
-if($xoopsDB) {
-	$printableViewConfigExists = q("SELECT 1 FROM ".$xoopsDB->prefix('config')." WHERE conf_name = 'formulizeShowPrintableViewButtons'");
-	$formsExist = q("SELECT 1 FROM ".$xoopsDB->prefix('formulize_id')." WHERE id_form > 0");
-	if($printableViewConfigExists == false AND $formsExist == true) {
-		$printableViewButtonDefault = 0;
-	}
-}
 $modversion['config'][] = array(
-	'name' => 'formulizeShowPrintableViewButtons',
-	'title' => '_MI_formulize_SHOWPRINTABLEVIEWBUTTONS',
-	'description' => '_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC',
+	'name' => 'debugDerivedValues',
+	'title' => '_MI_formulize_DEBUGDERIVEDVALUES',
+	'description' => '_MI_formulize_DEBUGDERIVEDVALUESDESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
-	'default' => $printableViewButtonDefault,
+	'default' => '0',
+);
+$modversion['config'][] = array(
+	'name' => 'customScope',
+	'title' => '_MI_formulize_CUSTOMSCOPE',
+	'description' => '_MI_formulize_CUSTOMSCOPEDESC',
+	'formtype' => 'textsarea',
+	'valuetype' => 'text',
+	'default' => '',
+);
+$modversion['config'][] = array(
+	'name' => 'f7MenuTemplate',
+	'title' => '_MI_formulize_F7MENUTEMPLATE',
+	'description' => '_MI_formulize_F7MENUTEMPLATEDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '1',
+);
+$modversion['config'][] = array(
+	'name' => 'useOldCustomButtonEffectWriting',
+	'title' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING',
+	'description' => '_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => '0',
 );
 
 $modversion['blocks'][1] = array(

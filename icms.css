@@ -363,3 +363,6 @@ div.pagination.default span.disabled {
 	height: auto;
 }
 
+form#pref_form label {
+	display: inline-block;
+}
