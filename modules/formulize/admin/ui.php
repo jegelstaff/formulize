@@ -173,6 +173,9 @@ $adminPage['isSaveLocked'] = sendSaveLockPrefToTemplate();
 $module_handler = xoops_gethandler('module');
 $formulizeModule = $module_handler->getByDirname("formulize");
 $metadata = $formulizeModule->getInfo();
+$config_handler = xoops_gethandler('config');
+$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+$xoopsTpl->assign('formulizeConfig', $formulizeConfig);
 
 // assign the contents to the template and display
 $adminPage['formulizeModId'] = getFormulizeModId();
