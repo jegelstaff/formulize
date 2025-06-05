@@ -67,7 +67,10 @@ print "<HTML>
 print "<HEAD>";
 
 if (!$formulizeConfig['printviewStylesheets']) {
-    print "<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>\n";
+    print "
+		<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>
+		<link rel='stylesheet' type='text/css' media='all' href='".XOOPS_URL."/modules/formulize/templates/css/formulize.css'>
+";
 
     // figure out if this is XOOPS or ICMS
     if (file_exists(XOOPS_ROOT_PATH."/class/icmsform/index.html")) {
@@ -140,7 +143,12 @@ EOF;
         print "<link rel='stylesheet' type='text/css' media='all' href='$styleSheet' />\n";
     }
 }
-print "</HEAD>";
+print "
+	</HEAD>
+	<body>
+		<center>
+			<table width=100%><tr><td width=5%></td><td width=90%>
+				<div id=\"formulize-printpreview\">";
 
 } // end of if we're making a PDF - leave out the head and stuff
 
@@ -185,27 +193,7 @@ if (! is_array($formframe) && $screenid && !$ele_allowed) {
         $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
         $multiPageScreen = $screen_handler->get($screenid);
         $conditions = $multiPageScreen->getConditions();
-        $pages = $multiPageScreen->getVar('pages');
-
-        $elements = array();
-        $printed_elements = array();
-        foreach ($pages as $currentPage=>$page) {
-            if(pageMeetsConditions($conditions, $currentPage+1, $ventry, $fid, $frid)) {
-                foreach ($page as $element) {
-                    // on a multipage form, some elements such a persons name may repeat on each page. print only once
-                    if (!isset($printed_elements[$element])) {
-                        $elements[] = $element;
-                        $printed_elements[$element] = true;
-                    }
-                }
-            }
-        }
-
-        $formframetemp = $formframe;
-        unset($formframe);
-        $formframe['elements'] = $elements;
-        $formframe['formframe'] = $formframetemp;
-        $pages = $multiPageScreen->getVar('pages');
+				$pages = $multiPageScreen->getVar('pages');
         $pagetitles = $multiPageScreen->getVar('pagetitles');
         ksort($pages); // make sure the arrays are sorted by key, ie: page number
         ksort($pagetitles);
@@ -216,32 +204,34 @@ if (! is_array($formframe) && $screenid && !$ele_allowed) {
         array_unshift($pagetitles, "");
         unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
         unset($pagetitles[0]);
-        $formframe['pagetitles'] = $pagetitles;
-        $formframe['pages'] = $pages;
 
-        // use the screen title
-        $titleOverride = $multiPageScreen->getVar('title');
+        foreach ($pages as $currentPage=>$page) {
+            if(pageMeetsConditions($conditions, $currentPage, $ventry, $fid, $frid)) {
+								$elements = array();
+                foreach ($page as $element) {
+                  $elements[] = $element;
+                }
+								displayForm(array('formframe' => $formframe, 'elements' => $elements), $ventry, $mainform, "", "{NOBUTTON}", "", $pagetitles[$currentPage]);
+            }
+        }
     }
+} else {
+	// if it's a single
+	displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}", "", $titleOverride);
 }
+
 
 
 if(!$makingPDF) {
 
-print "<center>";
-print "<table width=100%><tr><td width=5%></td><td width=90%>";
-print "<div id=\"formulize-printpreview\">";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php"; // needed to get the benchmark function available
-// if it's a single and they don't have group or global scope
-displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}", "", $titleOverride);
-print "</div>";
-print "</td><td width=5%></td></tr></table>";
-    print "</center>";
+print "
+				</div>
+			</td><td width=5%></td></tr></table>
+		</center>
+	</body>
+</HTML>";
 
-    print "</body>";
-print "</HTML>";
-
-                    } else {
+} else {
 
     include_once XOOPS_ROOT_PATH.'/modules/formulize/include/elementdisplay.php';
     $element_handler = xoops_getmodulehandler('elements', 'formulize');

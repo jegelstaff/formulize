@@ -88,6 +88,7 @@
 		  <label for="finishButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT}></label><br>
       <input type="text" id="finishButtonText" name="finishButtonText" value="<{$content.finishButtonText}>" size="50" maxlength="255"/><br><br>
       </div>
+      <{if $formulizeConfig.formulizeShowPrintableViewButtons}>
       <div class="form-item">
         <label for="printableViewButtonText">Text for the Printable View button?</label><br>
 		<input type="text" id="printableViewButtonText" name="printableViewButtonText" value="<{$content.printableViewButtonText}>"/><br><br>
@@ -104,6 +105,7 @@
             <label for="2"><input type="radio" id="screens-printall" name="screens-printall"<{if $content.printall eq 2}> checked="checked"<{/if}> value="2"/><{$smarty.const._AM_FORMULIZE_SCREEN_PRINTALL_NONE}></label>
         </div>
       </div>
+      <{/if}>
 	</fieldset>
     
     <fieldset>

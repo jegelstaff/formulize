@@ -1060,6 +1060,26 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 
+// set printable view default to one (1)
+// unless it does not exist in the database already, and there are forms in the database already
+global $xoopsDB;
+$printableViewButtonDefault = 1;
+if($xoopsDB) {
+	$printableViewConfigExists = q("SELECT 1 FROM ".$xoopsDB->prefix('config')." WHERE conf_name = 'formulizeShowPrintableViewButtons'");
+	$formsExist = q("SELECT 1 FROM ".$xoopsDB->prefix('formulize_id')." WHERE id_form > 0");
+	if($printableViewConfigExists == false AND $formsExist == true) {
+		$printableViewButtonDefault = 0;
+	}
+}
+$modversion['config'][] = array(
+	'name' => 'formulizeShowPrintableViewButtons',
+	'title' => '_MI_formulize_SHOWPRINTABLEVIEWBUTTONS',
+	'description' => '_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => $printableViewButtonDefault,
+);
+
 $modversion['blocks'][1] = array(
 	'file' => "mymenu.php",
 	'name' => _MI_formulizeMENU_BNAME,
