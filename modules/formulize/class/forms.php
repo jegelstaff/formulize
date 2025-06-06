@@ -855,6 +855,43 @@ class formulizeFormsHandler {
 				return $id_form;
 	}
 
+	/**
+	 * Check if a form's Singular or Plural values have changed, and rename any screens and menu links involved if their titles match exactly the changed name
+	 * @param object formObject - The object representation of the form we're working with. Will include the new names as the singular and plural.
+	 * @param array originalFormNames - An array with two keys, singular and plural, which contain the old names that potentially need replacing
+	 * @return boolean Returns true if queries succeeded, or false if one or more failed.
+	 */
+	function renameScreensAndMenuLinks($formObject, $originalFormNames) {
+		global $xoopsDB;
+		$result = true;
+		$namesNeedingReplacement = array();
+		if($formObject->getPlural() != $originalFormNames['plural']) {
+			$namesNeedingReplacement[$originalFormNames['plural']] = $formObject->getPlural();
+		}
+		if($formObject->getSingular() != $originalFormNames['singular']) {
+			$namesNeedingReplacement[$originalFormNames['singular']] = $formObject->getSingular();
+		}
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$screens = $screen_handler->getObjects(null,$formObject->getVar('fid'));
+		$menuLinkScreenValues = array('fid='.$formObject->getVar('fid'));
+		foreach($screens as $screen) {
+			$menuLinkScreenValues[] = 'sid='.$screen->getVar('sid');
+		}
+		foreach($namesNeedingReplacement as $oldName => $newName) {
+			$sql = "UPDATE ".$xoopsDB->prefix('screen')." SET title = '".formulize_db_escape($newName)."' WHERE title = '".formulize_db_escape($oldName)."' AND fid = ".$formObject->getVar('fid');
+			if(!$res = $xoopsDB->query($sql)) {
+				print "Error: could not rename screens from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($oldName))."'";
+				$result = false;
+			}
+			$sql = "UPDATE ".$xoopsDB->prefix("formulize_menu_links")." SET link_text = '".formulize_db_escape($newName)."' WHERE link_text = '".formulize_db_escape($oldName)."' AND screen IN ('".implode("','",$menuLinkScreenValues)."')";
+			if(!$res = $xoopsDB->query($sql)) {
+				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($oldName))."'";
+				$result = false;
+			}
+		}
+		return $result;
+	} 
+
 	function createTableFormElements($targetTableName, $fid) {
 
 		$result = $this->db->query("SHOW COLUMNS FROM " . formulize_db_escape($targetTableName));
