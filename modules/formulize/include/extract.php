@@ -1864,7 +1864,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 							if($multiValueSearchMetadata = mustMatchOneOfMultiplePossibleValuesInElement($element_id, $operator)) {
 								$useAndOr = $multiValueSearchMetadata['andOr'];
 								$useOp = $multiValueSearchMetadata['operator'];
-								$newWhereClause = "( $queryElement $useOp \"%*=+*:$searchTerm*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:$searchTerm\" )";
+								$newWhereClause = "( $queryElement $useOp \"%*=+*:".trim($searchTerm, "*=+*:")."*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:".trim($searchTerm, "*=+*:")."\" )";
 							} else {
 								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . $searchTerm . $likebits . $quotes;
 							}
