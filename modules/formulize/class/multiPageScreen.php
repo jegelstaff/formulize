@@ -357,7 +357,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	{
         global $xoopsConfig;
         $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
-        $defaultFormScreen->setVar('title', sprintf(_AM_FORMULIZE_FORM_SCREEN_TITLE, $formObject->getSingular()));
+        $defaultFormScreen->setVar('title', $formObject->getSingular());
         $defaultFormScreen->setVar('displayheading', 0);
 		$defaultFormScreen->setVar('reloadblank', 0);
         $defaultFormScreen->setVar('finishisdone', 1);

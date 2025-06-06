@@ -41,9 +41,14 @@ $newAppObject = false;
 $selectedAppObjects = array();
 if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->create();
+  $originalFormNames = array();
 } else {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
+  $originalFormNames = array(
+    'singular' => $formObject->getSingular(),
+    'plural' => $formObject->getPlural()
+  );
 }
 
 // Check if the form is locked down
@@ -101,6 +106,11 @@ if(!$form_handler->insert($formObject)) {
 
 $fid = $formObject->getVar('id_form');
 $formObject->setVar('fid', $fid);
+
+if($_POST['formulize_admin_key'] != 'new') {
+  $singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
+}
+
 if($_POST['formulize_admin_key'] == "new") {
 
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
@@ -213,7 +223,7 @@ if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AN
 }
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
-if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
   if(!in_array($_POST['application_url_id'], $selectedAppIds)) {
     $appidToUse = intval($selectedAppIds[0]);
   } else {
@@ -234,7 +244,8 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
 // Auto menu link creation
 // The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
 if($_POST['formulize_admin_key'] == "new") {
-  $menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
+  $menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
+  $menuitems = "null::" . formulize_db_escape($menuLinkText) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
   if(!empty($selectedAppIds)) {
     foreach($selectedAppIds as $appid) {
       $application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems);
