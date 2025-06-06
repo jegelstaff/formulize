@@ -103,9 +103,14 @@ foreach($processedValues['forms'] as $property=>$value) {
 if(!$form_handler->insert($formObject)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
 }
-$singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
+
 $fid = $formObject->getVar('id_form');
 $formObject->setVar('fid', $fid);
+
+if($_POST['formulize_admin_key'] != 'new') {
+  $singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
+}
+
 if($_POST['formulize_admin_key'] == "new") {
 
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
@@ -239,7 +244,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
 // Auto menu link creation
 // The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
 if($_POST['formulize_admin_key'] == "new") {
-  $menuLinkText = $formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group' ? $formObject->getSingular() : $formObject->getPlural();
+  $menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
   $menuitems = "null::" . formulize_db_escape($menuLinkText) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
   if(!empty($selectedAppIds)) {
     foreach($selectedAppIds as $appid) {
