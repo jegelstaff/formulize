@@ -110,12 +110,12 @@ function createPrimaryRelationship() {
 		if(!$sourceFormLookupResult = $xoopsDB->query($sourceFormLookup)) {
 			$primaryRelationshipError .= "<br>Could not lookup source details of linked form element with this SQL:<br>$sourceFormLookup";
 		}
-		if(!$primaryRelationshipError) {
-			$sourceFormLookupRow = $xoopsDB->fetchArray($sourceFormLookupResult);
-			$f1 = $sourceFormLookupRow['id_form'];
-			$k1 = $sourceFormLookupRow['ele_id'];
-			$rel = 2;
-			$cv = 0;
+		$sourceFormLookupRow = $xoopsDB->fetchArray($sourceFormLookupResult);
+		$k1 = $sourceFormLookupRow['ele_id'];
+		$f1 = $sourceFormLookupRow['id_form'];
+		$rel = 2;
+		$cv = 0;
+		if(!$primaryRelationshipError AND elementExists($k1) AND elementExists($k2)) {
 			if(!$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2)) {
 				$primaryRelationshipError .= "<br>Error inserting non-relationship link into primary relationship";
 			}
