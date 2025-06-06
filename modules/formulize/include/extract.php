@@ -2773,7 +2773,7 @@ function displayList($entry, $handle, $type = "bulleted", $id = "NULL", $localid
  * An alias for getEntryIds. Here for backwards compatibility with older
  */
 function internalRecordIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKeys = false) {
-	getEntryIds($entry, $formIdOrHandle, $datasetKey, $fidAsKeys);
+	return getEntryIds($entry, $formIdOrHandle, $datasetKey, $fidAsKeys);
 }
 
 /**
