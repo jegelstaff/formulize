@@ -1663,6 +1663,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 
 	$config_handler = xoops_gethandler('config');
 	$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+	$rendered_buttons = "";
 	if($pv_text_temp != "{NOBUTTON}" AND $formulizeConfig['formulizeShowPrintableViewButtons']) {
 
 		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
@@ -1744,7 +1745,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 	// formulize_displayingMultipageScreen is set in formdisplaypages to indicate we're displaying a multipage form
 	global $formulize_displayingMultipageScreen;
 	$trayElements = $buttontray->getElements();
-	if(count((array) $trayElements) > 0 OR $formulize_displayingMultipageScreen) {
+	if(count((array) $trayElements) > 0 OR ($rendered_buttons AND $formulize_displayingMultipageScreen)) {
 		$form->addElement($buttontray);
 	}
 	return $form;
