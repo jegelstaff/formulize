@@ -221,7 +221,9 @@ function prepvalues($value, $field, $entry_id)
 					print "Error: could not retrieve the source values for a linked selectbox (for $field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
 				} else {
 					$row = $xoopsDB->fetchRow($res);
-					$newValue .= "*=+*:" . implode(" - ", $row);
+					if(!empty($row)) {
+						$newValue .= "*=+*:" . implode(" - ", $row);
+					}
 				}
 			}
 			$value = $newValue;
