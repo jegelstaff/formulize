@@ -103,7 +103,7 @@ foreach($processedValues['forms'] as $property=>$value) {
 if(!$form_handler->insert($formObject)) {
   print "Error: could not save the form properly: ".$xoopsDB->error();
 }
-$form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
+$singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
 $fid = $formObject->getVar('id_form');
 $formObject->setVar('fid', $fid);
 if($_POST['formulize_admin_key'] == "new") {
@@ -218,7 +218,7 @@ if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AN
 }
 
 // if the form name was changed, then force a reload of the page...reload will be the application id
-if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
   if(!in_array($_POST['application_url_id'], $selectedAppIds)) {
     $appidToUse = intval($selectedAppIds[0]);
   } else {

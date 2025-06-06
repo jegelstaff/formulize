@@ -863,13 +863,15 @@ class formulizeFormsHandler {
 	 */
 	function renameScreensAndMenuLinks($formObject, $originalFormNames) {
 		global $xoopsDB;
-		$result = true;
+		$result = null;
 		$namesNeedingReplacement = array();
 		if($formObject->getPlural() != $originalFormNames['plural']) {
 			$namesNeedingReplacement[$originalFormNames['plural']] = $formObject->getPlural();
+			$result = true;
 		}
 		if($formObject->getSingular() != $originalFormNames['singular']) {
 			$namesNeedingReplacement[$originalFormNames['singular']] = $formObject->getSingular();
+			$result = true;
 		}
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$screens = $screen_handler->getObjects(null,$formObject->getVar('fid'));
@@ -878,14 +880,14 @@ class formulizeFormsHandler {
 			$menuLinkScreenValues[] = 'sid='.$screen->getVar('sid');
 		}
 		foreach($namesNeedingReplacement as $oldName => $newName) {
-			$sql = "UPDATE ".$xoopsDB->prefix('screen')." SET title = '".formulize_db_escape($newName)."' WHERE title = '".formulize_db_escape($oldName)."' AND fid = ".$formObject->getVar('fid');
+			$sql = "UPDATE ".$xoopsDB->prefix('formulize_screen')." SET title = '".formulize_db_escape($newName)."' WHERE title = '".formulize_db_escape($oldName)."' AND fid = ".$formObject->getVar('fid');
 			if(!$res = $xoopsDB->query($sql)) {
-				print "Error: could not rename screens from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($oldName))."'";
+				print "Error: could not rename screens from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
 				$result = false;
-			}
+			} 
 			$sql = "UPDATE ".$xoopsDB->prefix("formulize_menu_links")." SET link_text = '".formulize_db_escape($newName)."' WHERE link_text = '".formulize_db_escape($oldName)."' AND screen IN ('".implode("','",$menuLinkScreenValues)."')";
 			if(!$res = $xoopsDB->query($sql)) {
-				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($oldName))."'";
+				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
 				$result = false;
 			}
 		}
