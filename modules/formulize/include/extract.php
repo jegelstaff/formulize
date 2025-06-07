@@ -1805,7 +1805,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 									if (!$start) {
 										$searchTermToUse .= " OR ";
 									}
-									$searchTermToUse .= "$queryElement " . $operator . $quotes . $likebits . $thisTerm . $likebits . $quotes;
+									$searchTermToUse .= "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($thisTerm) . $likebits . $quotes;
 									$start = false;
 								}
 								$searchTermToUse .= ") ";
@@ -1866,9 +1866,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 							if($multiValueSearchMetadata = mustMatchOneOfMultiplePossibleValuesInElement($element_id, $operator)) {
 								$useAndOr = $multiValueSearchMetadata['andOr'];
 								$useOp = $multiValueSearchMetadata['operator'];
-								$newWhereClause = "( $queryElement $useOp \"%*=+*:".trim($searchTerm, "*=+*:")."*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:".trim($searchTerm, "*=+*:")."\" )";
+								$newWhereClause = "( $queryElement $useOp \"%*=+*:".formulize_db_escape(trim($searchTerm, "*=+*:"))."*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:".formulize_db_escape(trim($searchTerm, "*=+*:"))."\" )";
 							} else {
-								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . $searchTerm . $likebits . $quotes;
+								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($searchTerm) . $likebits . $quotes;
 							}
 							// exclude 0 from searches for empty values (because we use lazy mode in MySQL we have to do this manually Argh!!)
 							if ($searchTerm === '' and ($operator == "=" or $operator == "!=")) {
