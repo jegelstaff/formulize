@@ -306,12 +306,15 @@ class formulizeApplicationsHandler {
         $menulinks = $links_handler->get($newAppId,true); // JAKEADDED
         $newApp->assignVar('all_links', serialize($menulinks));
         // add in the forms
-        $sql = 'SELECT link.fid FROM '.$xoopsDB->prefix("formulize_application_form_link").' as link, '.$xoopsDB->prefix("formulize_id").' as forms WHERE link.appid = '.$newAppId.' AND forms.id_form = link.fid ORDER BY forms.desc_form';
+        $sql = 'SELECT link.fid, forms.desc_form FROM '.$xoopsDB->prefix("formulize_application_form_link").' as link, '.$xoopsDB->prefix("formulize_id").' as forms WHERE link.appid = '.$newAppId.' AND forms.id_form = link.fid ORDER BY forms.desc_form';
         $foundForms = array();
+				$sortArray = array();
         if($formRes = $this->db->query($sql)) {
           while($formArray = $this->db->fetchArray($formRes)) {
             $foundForms[] = $formArray['fid'];
+						$sortArray[] = trans($formArray['desc_form']);
           }
+					array_multisort($sortArray, SORT_NATURAL, $foundForms);
         } else {
           print $xoopsDB->error();
         }

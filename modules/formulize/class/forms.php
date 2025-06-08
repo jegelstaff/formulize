@@ -744,15 +744,18 @@ class formulizeFormsHandler {
 			}
 		} else {
 			// no application specified, so get forms that do not belong to an application
-			$sql = "SELECT id_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.desc_form";
+			$sql = "SELECT id_form, desc_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.desc_form";
 			if($res = $this->db->query($sql)) {
+				$sortArray = array();
 				while($array = $this->db->fetchArray($res)) {
 					if($returnIds) {
 						$fids[] = $array['id_form'];
 					} else {
 						$fids[] = $this->get($array['id_form']);
 					}
+					$sortArray[] = trans($array['desc_form']);
 				}
+				array_multisort($sortArray, SORT_NATURAL, $fids);
 			}
 		}
 		return $fids;
@@ -884,7 +887,7 @@ class formulizeFormsHandler {
 			if(!$res = $xoopsDB->query($sql)) {
 				print "Error: could not rename screens from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
 				$result = false;
-			} 
+			}
 			$sql = "UPDATE ".$xoopsDB->prefix("formulize_menu_links")." SET link_text = '".formulize_db_escape($newName)."' WHERE link_text = '".formulize_db_escape($oldName)."' AND screen IN ('".implode("','",$menuLinkScreenValues)."')";
 			if(!$res = $xoopsDB->query($sql)) {
 				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
@@ -892,7 +895,7 @@ class formulizeFormsHandler {
 			}
 		}
 		return $result;
-	} 
+	}
 
 	function createTableFormElements($targetTableName, $fid) {
 
