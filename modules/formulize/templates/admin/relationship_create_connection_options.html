@@ -35,10 +35,23 @@
 
 <script>
 
+	function enableCreateConnectionButton() {
+		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'visible';
+		$('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
+	}
+
 	<{if $numPairs == 1}>
 	enableCreateConnectionButton();
 	jQuery('#pair-manual').attr('checked', true);
+	var doNotDisableConnectionButton = true;
+	<{else}>
+	document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
+	$('.relationship-create-connection-savebuttonpopup').attr('disabled', 'disabled');
 	<{/if}>
+
+	$("input[name=pairSelection]").live('click', function() {
+		enableCreateConnectionButton();
+	});
 
 	jQuery('select[name=form1ElementId],select[name=form2ElementId]').change(function() {
 		jQuery('#pair-manual').attr('checked', true);

@@ -47,16 +47,14 @@
 
 // If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 $( document ).ready(function() {
-	document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
-	$('.relationship-create-connection-savebuttonpopup').attr('disabled', 'disabled');
+	if(typeof doNotDisableConnectionButton == 'undefined' || doNotDisableConnectionButton != true) {
+		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'hidden';
+		$('.relationship-create-connection-savebuttonpopup').attr('disabled', 'disabled');
+	}
 	<{if $content.isSaveLocked}>
 		document.getElementById('relationship-create-connection-popupsavebutton').innerHTML = "READ ONLY";
 	<{/if}>
 });
-
-	$("input[name=pairSelection]").live('click', function() {
-		enableCreateConnectionButton();
-	});
 
 	$(".relationship-create-connection-savebuttonpopup").click(function() {
 		var pagedata = window.document.getElementsByName("relationship-create-connection-popupform");
@@ -107,11 +105,6 @@ $( document ).ready(function() {
 		$("#element-subform").change();
 		$("select#element-subform").attr('disabled', 'disabled');
 		sneakyPassBackToSubformOptionsTab = newSubformScreen;
-	}
-
-	function enableCreateConnectionButton() {
-		document.getElementById('relationship-create-connection-savebuttonpopup').style.visibility = 'visible';
-		$('.relationship-create-connection-savebuttonpopup').attr('disabled', '');
 	}
 
 	function showRelationshipCreationOptions(form1, form2, pi=0) {

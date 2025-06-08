@@ -1425,6 +1425,14 @@ div.form-listing-box .form-name a:hover {
   color: #FFF;
   text-decoration: none; }
 
+div.form-listing-box .form-name div {
+	display: flex;
+	align-items: center;
+}
+div.form-listing-box .form-name div img {
+	margin-right: 0.5em;
+}
+
 div.accordion-box .form-screen-list,
 div.form-listing-box .form-screen-list {
   margin: 0;
@@ -2143,4 +2151,17 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
 .relationship-link-options {
 	font-size: 8pt;
+}
+
+.create-connection-icon {
+	display: none;
+	opacity: 1;
+	transition: opacity 0.4s ease-in;
+	position: absolute;
+  top: 2.1em;
+  left: 7em;
+  background-color: white;
+  padding: 0.3em;
+  border-radius: 0.3em;
+  border: 2px solid #6eac2c;
 }
