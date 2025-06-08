@@ -3868,26 +3868,32 @@ function getDefaultCols($fid, $frid="") {
         return $cachedDefaultCols[$fid][$frid];
     }
 
-	if($frid) { // expand the headerlist to include the other forms
+	if($frid) { // expand the headerlist to include the other forms, but only the PIs
+		$ele_handles = getHeaderList($fid, true, true); // third param causes element handles to be returned instead of IDs
 		$fids[0] = $fid;
 		$check_results = checkForLinks($frid, $fids, $fid, "");
 		$fids = $check_results['fids'];
 		$sub_fids = $check_results['sub_fids'];
-		$gperm_handler = &xoops_gethandler('groupperm');
+		$gperm_handler = xoops_gethandler('groupperm');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 		$mid = getFormulizeModId();
-		$ele_handles = array();
-		$processedFids = array();
+		$processedFids = array($fid=>true);
 		foreach($fids as $this_fid) {
 			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				if($formObject = $form_handler->get($this_fid) AND $piId = $formObject->getVar('pi') AND $elementObject = $element_handler->get($piId)) {
+					$ele_handles[] = $elementObject->getVar('ele_handle');
+				}
 				$processedFids[$this_fid] = true;
 			}
 		}
 		foreach($sub_fids as $this_fid) {
 			if(security_check($this_fid, "", $uid, "", $groups, $mid, $gperm_handler) AND !isset($processedFids[$this_fid])) {
-				$ele_handles = array_merge($ele_handles, getHeaderList($this_fid, true, true));
+				if($formObject = $form_handler->get($this_fid) AND $piId = $formObject->getVar('pi') AND $elementObject = $element_handler->get($piId)) {
+					$ele_handles[] = $elementObject->getVar('ele_handle');
+				}
 				$processedFids[$this_fid] = true;
 			}
 		}

@@ -122,11 +122,7 @@ if (!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)
     exit;
 }
 
-$defaultCols = getDefaultCols($fid, $frid); // returns ele_handles
 $cols = getAllColList($fid, $frid, $groups); // $groups indicates that we only want columns which are visible to the current user
-
-// handle metadata columns
-
 
 print "<HTML>";
 print "<head>";
@@ -152,7 +148,7 @@ print "<tr><td class=head style=\"position: fixed; width: 280px;text-align: cent
 onclick=\"var boxes = document.getElementsByClassName('colbox');for(var i=0;i<boxes.length;i++){boxes[i].checked = false;}\" />
 <br><br>
 <input type='reset' name='reset' style='cursor: pointer; width: 241px; white-space: normal;' value='". _formulize_DE_RESET_COLS."' />
-<br><br><hr><br>Use SHIFT-click to select two checkboxes plus all the boxes in between them.</td>
+<br><br><hr><br>To select a range of columns, click the first one, then SHIFT-click on the last one.</td>
 <td class=even style='width: 100%; padding-left: 300px;'>";
 
 print generateTidyElementList($fid, $cols, $selectedCols);
