@@ -49,17 +49,17 @@ class formulizeFramework extends XoopsObject {
 			// but we'll keep it around if it did exist (prior to an upgrade) so we can check framework handles first when necessary
 			$handles = array();
 			$element_ids = array();
-			$frame_links_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id='" . formulize_db_escape($frid). "'");
-			if(!isset($frame_links_q[0])) {
+			$frame_links_q = "SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id='" . formulize_db_escape($frid). "'";
+			if(!$res = $xoopsDB->query($frame_links_q) OR $xoopsDB->getRowsNum($res) == 0) {
 				$notAFramework = true;
 			} else {
 				$links = array();
 				$fids = array();
-				foreach($frame_links_q as $row=>$value) {
-					$links[] = new formulizeFrameworkLink($value['fl_id']);
+				while($row = $xoopsDB->fetchArray($res)) {
+					$links[] = new formulizeFrameworkLink($row['fl_id']);
 					// note that you cannot query the framework_forms table to learn what forms are in a framework, since we keep entries in that table after links have been deleted, since forms might rejoin a framework and we don't want to lose their information.  The links table is the only authoritative source of information about what forms make up a framework.
-					$fids[] = $value['fl_form1_id'];
-					$fids[] = $value['fl_form2_id'];
+					$fids[] = $row['fl_form1_id'];
+					$fids[] = $row['fl_form2_id'];
 				}
 				$fids = array_unique($fids);
 			}

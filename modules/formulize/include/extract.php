@@ -2317,35 +2317,16 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 function formulize_convertCapOrColHeadToHandle($frid, $fid, $term)
 {
 
-	// Short circuit. If we've got an element handle, go with that!
-	// Dramatically faster.
-	$term = trim($term, "\"");
-	$elementMetaData = formulize_getElementMetaData($term, true);
-	if(!empty($elementMetaData)) {
-		return array($term, $elementMetaData['id_form']);
-	}
-
 	// first search the $fid, and then if we don't find anything, search the other forms in the $frid
 	// check first for a match in the colhead field, then in the caption field
 	// once a match is found return the handle
 
-	global $xoopsDB; // just used to check if XOOPS is in effect or not (in which case extract.php is being included directly)
 	static $results_array = array();
 	static $framework_results = array();
-	static $formNames = array();
 	$handle = "";
 
 	if ($term == "") {
 		return "{nonefound}";
-	}
-
-	if (strstr($term, "\$formName")) { 		 // setup the name of the form and replace that value in the term, only when $xoopsDB is in effect, ie: full XOOPS stack
-		if (!isset($formNames[$fid])) {
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$formObject = $form_handler->get($fid);
-			$formNames[$fid] = $formObject->getVar('title');
-		}
-		$term = str_replace("\$formName", $formNames[$fid], $term);
 	}
 
 	if ($term == "uid" or $term == "proxyid" or $term == "creation_date" or $term == "mod_date" or $term == "creator_email" or $term == "owner_groups" or $term == "creation_uid" or $term == "mod_uid" or $term == "creation_datetime" or $term == "mod_datetime") {
@@ -2361,6 +2342,14 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term)
 		$frameworkObject = $framework_handler->get($frid);
 		$formList = $frameworkObject->getVar('fids');
 		$framework_results[$frid] = $formList;
+	}
+
+	// Short circuit. If we've got an element handle in a valid form, go with that!
+	// Dramatically faster.
+	$term = trim($term, "\"");
+	$elementMetaData = formulize_getElementMetaData($term, true);
+	if(!empty($elementMetaData) AND in_array($elementMetaData['id_form'], $formList)) {
+		return array($term, $elementMetaData['id_form']);
 	}
 
 	foreach ($formList as $form_id) {
