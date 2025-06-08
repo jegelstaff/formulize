@@ -10,6 +10,7 @@ $(document).ready(function() {
 
 $(document).ready(function() {
 	$("#dialog-relationship-create-connection").dialog({ autoOpen: false, modal: true, width: 970, height: 550, close: function(event, ui) {
+			$("#dialog-relationship-create-connection-content").empty();
 		}
 	});
 	$('.relationship-link-create-connection').click(function() {
@@ -41,13 +42,14 @@ function editRelationshipOptions(linkId) {
 }
 
 function createRelationshipConnections(form1Id, formIds=[], subformInterface='') {
+	$("#dialog-relationship-create-connection-content").fadeOut(100);
 	$("#dialog-relationship-create-connection-content").empty();
-	$("#dialog-relationship-create-connection-content").append("<h1>Loading...</h1>");
 	let urlFormIds = formIds.length > 0 ? '&formIds[]=' + formIds.join('&formIds[]=') : '';
 	let si = subformInterface ? encodeURIComponent(subformInterface) : 0;
 	$("#dialog-relationship-create-connection-content").load('/modules/formulize/admin/relationship_create_connection.php?subformInterface='+si+'&form1Id=' + form1Id + urlFormIds, function() {
 		if($("#dialog-relationship-create-connection-content").html()) {
 			$("#dialog-relationship-create-connection").dialog('open');
+			$("#dialog-relationship-create-connection-content").fadeIn(100);
 		}
 	});
 }
