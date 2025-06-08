@@ -138,8 +138,10 @@ function setupDraggableBoxes() {
 			setupConnectionUI($(this).data("draggable").snapElements, $(this)); // "ui-draggable" in jQuery 1.9+
 		}
 	});
-	$('div[id^=form-details-box]').click(function() {
+	$('div[id^=form-details-box]').click(function(event) {
+		if (!$(event.target).closest('.create-connection-icon').length) {
 		clickFormDetails($(this));
+		}
 	});
 }
 
@@ -155,7 +157,14 @@ function setupConnectionUI(snapElements, snapElement) {
 	});
 	let form2Ids = gatherAllConnectedBoxes(appid, form1Id, []);
 	if(form2Ids.length > 0) {
-		createRelationshipConnections(form1Id, form2Ids);
+		snapElement.append("<div class='create-connection-icon'><a href='' onclick='createRelationshipConnections("+form1Id+", ["+form2Ids.join(',')+"]);return false;'>Create Connection</div>");
+		$('div.create-connection-icon').show("scale",{}, 400);
+		setTimeout(function() {
+			$('div.create-connection-icon').css('opacity', 0);
+			setTimeout(function() {
+				$('div.create-connection-icon').remove();
+			}, 400);
+		}, 4000);
 	}
 }
 
