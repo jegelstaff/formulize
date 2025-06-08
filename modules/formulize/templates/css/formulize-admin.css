@@ -1425,6 +1425,14 @@ div.form-listing-box .form-name a:hover {
   color: #FFF;
   text-decoration: none; }
 
+div.form-listing-box .form-name div {
+	display: flex;
+	align-items: center;
+}
+div.form-listing-box .form-name div img {
+	margin-right: 0.5em;
+}
+
 div.accordion-box .form-screen-list,
 div.form-listing-box .form-screen-list {
   margin: 0;
