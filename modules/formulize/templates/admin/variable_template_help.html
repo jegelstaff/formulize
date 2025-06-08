@@ -4,6 +4,13 @@
 <div id="formulize-open-close-section-<{$variableHelpCounter}>" style="display:none;">
 		<br />
 		<table>
+				<tr><th colspan=2>Metadata</th></tr>
+				<tr><td class='even'><nobr><b><{$smarty.const._formulize_DE_CALC_CREATOR}></b></nobr></td><td class='even'><nobr>creation_uid</nobr></td></tr>
+				<tr><td class='odd'><nobr><b><{$smarty.const._formulize_DE_CALC_MODIFIER}></b></nobr></td><td class='odd'><nobr>mod_uid</nobr></td></tr>
+				<tr><td class='even'><nobr><b><{$smarty.const._formulize_DE_CALC_CREATEDATE}></b></nobr></td><td class='even'><nobr>creation_datetime</nobr></td></tr>
+				<tr><td class='odd'><nobr><b><{$smarty.const._formulize_DE_CALC_MODDATE}></b></nobr></td><td class='odd'><nobr>mod_datetime</nobr></td></tr>
+				<tr><td class='even'><nobr><b><{$smarty.const._formulize_DE_CALC_CREATOR_EMAIL}></b></nobr></td><td class='even'><nobr>creator_email</nobr></td></tr>
+				<tr><td class='odd'><nobr><b><{$smarty.const._formulize_DE_CALC_OWNERGROUPS}></b></nobr></td><td class='odd'><nobr>owner_groups</nobr></td></tr>
 				<{foreach from=$variables item=vars key=form}>
 						<tr><th colspan=2><{$form}></th></tr>
 						<tr><th>Form element</th><th>handle</th></tr>
