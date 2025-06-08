@@ -1,67 +1,27 @@
-<div id="create-connection-title-options"><span class="title">Each <{$content.formSingular}></span>
-	<div>
-		<{if $content.creatingFromSubformOptions}>
+<input type="hidden" name="form1" value="<{$content.form1Id}>">
+<{if $content.creatingFromSubformOptions}>
+	<div id="create-connection-title-options"><span class="title">Each <{$content.formSingular}></span>
+		<div>
 			Has Many
-		<{else}>
-			<label for="oneentry"><input name='relationship' id="oneentry" type='radio' value='1' checked="checked">Has One</label><br>
-			<label for="manyentries"><input name='relationship' id="manyentries" type='radio' value='2'>Has Many</label>
-		<{/if}>
-	</div>
-	<input type="hidden" name="form1" value="<{$content.form1Id}>">
-	<{if $content.creatingFromSubformOptions}>
+		</div>
 		<span class="title"><{$content.form2Plural}></span>
-	<{else}>
-		<select name='form2' id='1names'>
-			<{html_options options=$content.oneFormNames}>
-		</select>
-		<select name='form2x' id='2names' style="display: none;">
+	</div>
+<{else}>
+	<div id="create-connection-title-options"><span class="title">Connect '<{$content.formPlural}>' with which other form?&nbsp;&nbsp;</span>
+		<select name='form2' id='2names'>
 			<{html_options options=$content.manyFormNames}>
 		</select>
-	<{/if}>
-</div>
+	</div>
+<{/if}>
 
 <br>
 <hr>
 
 <script type="text/javascript">
 
-	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
-	$( document ).ready(function() {
-		show2Names();
-	});
-
 	<{if $content.creatingFromSubformOptions}>
 	form1Id = <{$content.form1Id}>;
 	form2Id = <{$content.form2Id}>;
 	<{/if}>
-
-	$('input[name=relationship]').change(function() {
-		$('#form2').empty();
-		if($(this).val()==1) {
-			show1Names();
-		} else {
-			show2Names();
-		}
-	});
-
-	function show1Names() {
-		$('#manyentries').removeAttr('checked');
-		$('#oneentry').attr('checked', 'checked');
-		$('#1names').val($('#2names').val());
-		$('#1names').attr('name', 'form2');
-		$('#2names').attr('name', 'form2x');
-		$('#2names').hide();
-		$('#1names').show();
-	}
-
-	function show2Names() {
-		$('#oneentry').removeAttr('checked');
-		$('#manyentries').attr('checked','checked');
-		$('#2names').val($('#1names').val());
-		$('#1names').attr('name', 'form2x');
-		$('#2names').attr('name', 'form2');
-		$('#1names').hide();
-		$('#2names').show();
-	}
 
 </script>

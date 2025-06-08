@@ -157,6 +157,7 @@ if(empty($formIds)) { // manually creating connection from form settings
 			'form1Id'=>$form1Id,
 			'formTitle'=>$formObject->getVar('title'),
 			'formSingular'=>$formObject->getSingular(),
+			'formPlural'=>$formObject->getPlural(),
 			'oneFormNames'=>array('0'=>'Choose a form') + $oneFormNames,
 			'manyFormNames'=>array('0'=>'Choose a form') + $manyFormNames,
 			'isSaveLocked'=>sendSaveLockPrefToTemplate()

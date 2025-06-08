@@ -19,7 +19,7 @@ $(document).ready(function() {
 });
 
 $('select[name=form2]').live('change', function() {
-	showRelationshipCreationOptions($('input[type=hidden][name=form1]').val(), $('select[name=form2]').val());
+	createRelationshipConnections($('input[type=hidden][name=form1]').val(), [$('input[type=hidden][name=form1]').val(), $('select[name=form2]').val()]);
 });
 
 $("#relationship-create-connection-options select[name=forms-pi]").live('change', function() {
