@@ -233,25 +233,25 @@ function clickFormDetails(jQFormDetailsBox) {
 }
 
 function showAllByName(appid) {
-	$('.form-name').parent("[appid="+appid+"]").css('display', 'flex');
-	$('.form-name').parent("[appid="+appid+"]").hide(); // needed after possibly switching display setting
-	$('.form-name').parent("[appid="+appid+"]").show();
+	$('.form-name').closest("[appid="+appid+"]").css('display', 'flex');
+	$('.form-name').closest("[appid="+appid+"]").hide(); // needed after possibly switching display setting
+	$('.form-name').closest("[appid="+appid+"]").show();
 }
 
 function showAllClickAndDrag(appid) {
-	$('.form-name').parent("[appid="+appid+"]").css('opacity', 1);
+	$('.form-name').closest("[appid="+appid+"]").css('opacity', 1);
 }
 
 function filterByName(appid, filterText) {
-	$('.form-name:containsi("'+filterText+'")').parent("[appid="+appid+"]").css('display', 'flex');
-	$('.form-name:containsi("'+filterText+'")').parent("[appid="+appid+"]").hide(); // needed after possibly switching display setting
-	$('.form-name:containsi("'+filterText+'")').parent("[appid="+appid+"]").show();
-	$('.form-name:not(:containsi("'+filterText+'"))').parent("[appid="+appid+"]").hide();
+	$('.form-name-text:containsi("'+filterText+'")').closest("[appid="+appid+"]").css('display', 'flex');
+	$('.form-name-text:containsi("'+filterText+'")').closest("[appid="+appid+"]").hide(); // needed after possibly switching display setting
+	$('.form-name-text:containsi("'+filterText+'")').closest("[appid="+appid+"]").show();
+	$('.form-name-text:not(:containsi("'+filterText+'"))').closest("[appid="+appid+"]").hide();
 }
 
 function filterClickAndDrag(appid, filterText) {
-	$('.form-name:containsi("'+filterText+'")').parent("[appid="+appid+"]").css('opacity', 1);
-	$('.form-name:not(:containsi("'+filterText+'"))').parent("[appid="+appid+"]").css('opacity', 0);
+	$('.form-name-text:containsi("'+filterText+'")').closest("[appid="+appid+"]").css('opacity', 1);
+	$('.form-name-text:not(:containsi("'+filterText+'"))').closest("[appid="+appid+"]").css('opacity', 0);
 }
 
 function applyCSSAlpha() {
