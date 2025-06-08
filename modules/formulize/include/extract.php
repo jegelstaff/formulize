@@ -581,6 +581,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
+		// parsing the filter MUST come early in the process, because other things rely on it!
 		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
 		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
 
@@ -697,30 +698,45 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
 
 		// FIGURE OUT THE SORT CLAUSE
+		$sortFid = $fid;
 		$sortIsOnMain = true;
+		$ownerGroupsSortSelect = "";
+		$creatorEmailSortSelect = "";
 		if (!$orderByClause and $sortField) {
-
 			if ($sortField == "creation_uid" or $sortField == "mod_uid" or $sortField == "creation_datetime" or $sortField == "mod_datetime" or $sortField == "revision_id") {
-				$elementMetaData['id_form'] = $fid;
 			} elseif ($sortField == "uid") {
 				$sortField = "creation_uid";
-				$elementMetaData['id_form'] = $fid;
 			} elseif ($sortField == "proxyid") {
 				$sortField = "mod_uid";
-				$elementMetaData['id_form'] = $fid;
 			} elseif ($sortField == "creation_date") {
 				$sortField = "creation_datetime";
-				$elementMetaData['id_form'] = $fid;
 			} elseif ($sortField == "mod_date") {
 				$sortField = "mod_datetime";
-				$elementMetaData['id_form'] = $fid;
 			} elseif ($sortField == "entry_id") {
 				$sortField = "entry_id";
-				$elementMetaData['id_form'] = $fid;
+			} elseif ($sortField == "creator_email") {
+				$sortField = "usertable.email";
+				$creatorEmailSortSelect = ", usertable.email";
+			} elseif ($sortField == "owner_groups") {
+				global $xoopsDB, $ownerGroupSearchClause; // ownerGroupSearchClause set in parsing of filter, which much come first!
+				$groupsTableJoinType = $ownerGroupSearchClause ? "INNER" : "LEFT";
+				$ownerGroupsSortSelect = ", (SELECT GROUP_CONCAT(g.name ORDER BY g.name ASC SEPARATOR '*/-+,')
+				FROM " . $xoopsDB->prefix('formulize_entry_owner_groups') . " AS eog
+				$groupsTableJoinType JOIN " . $xoopsDB->prefix('groups') . " AS g
+				ON eog.groupid = g.groupid
+				INNER JOIN " . $xoopsDB->prefix('group_permission') . " AS p
+				ON eog.groupid = p.gperm_groupid AND eog.fid = p.gperm_itemid
+				WHERE eog.fid=$fid
+				AND eog.entry_id = main.entry_id
+				AND p.gperm_modid = " . getFormulizeModId() . "
+				AND p.gperm_name = 'view_form'
+				$ownerGroupSearchClause
+				GROUP BY eog.entry_id) AS owner_groups_subquery";
+				$sortField = "owner_groups_subquery";
 			} else {
 				$elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...
+				$sortFid = $elementMetaData['id_form'];
 			}
-			$sortFid = $elementMetaData['id_form'];
 			if ($sortFid == $fid) {
 				$sortFidAlias = "main";
 			} else {
@@ -741,7 +757,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				// note you cannot sort by multi select boxes!
 				$sortFieldFullValue = "(SELECT sourceSortForm.`" . $target_element_handle . "` FROM " . DBPRE . "formulize_" . $targetFormObject->getVar('form_handle') . " as sourceSortForm WHERE sourceSortForm.`entry_id` = " . $sortFidAlias . ".`" . $sortField . "`)";
 			} else {
-				$sortFieldFullValue = "$sortFidAlias.`$sortField`";
+				$sortFieldFullValue = ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email") ? $sortField : "$sortFidAlias.`$sortField`";
 			}
 			$orderByClause = " ORDER BY $sortFieldFullValue $sortOrder ";
 		} elseif (!$orderByClause) {
@@ -778,7 +794,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$useAsSortSubQuery = "";
 		if ($frid) {
 			$limitByEntryId = " AND (";
-			$entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id", $countMasterResults); // don't count the entries, select their id numbers
+			$entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id $ownerGroupsSortSelect", $countMasterResults); // don't count the entries, select their id numbers
 			if (!$sortIsOnMain) {
 				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 				$sortFormObject = $form_handler->get($sortFid);
@@ -845,7 +861,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 		$mainSelectFields = (isset($sqlFilterElementsIndex['main']) AND $sqlFilterElementsIndex['main'])  ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
-		$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime ";
+		$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime $ownerGroupsSortSelect";
 		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
 		$firstTimeGetAllMainFields = "$mainSelectFields , ";
 
@@ -873,7 +889,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$useAsSortSubQuery = " @rownum:=@rownum+1, usethissort, entry_id FROM ( SELECT $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
 			} else {
 				$orderByToUse = $orderByClause;
-				$useAsSortSubQuery = "  @rownum:=@rownum+1, "; // need to add a counter as the first field, used as the master sorting key
+				$useAsSortSubQuery = "  @rownum:=@rownum+1 $ownerGroupsSortSelect $creatorEmailSortSelect, "; // need to add a counter as the first field, used as the master sorting key
 			}
 			$oneSideSQLToUse = str_replace(" AS main $userJoinText", " AS main JOIN (SELECT @rownum := 0) as r $userJoinText", $oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key
 			$masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse ";
@@ -941,7 +957,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 	if (count((array) $linkformids) > 1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
 		$timestamp = str_replace(".", "", microtime(true));
-		if (!$sortIsOnMain) {
+		if (!$sortIsOnMain OR $ownerGroupsSortSelect OR $creatorEmailSortSelect) {
 			$createTableSQL = "CREATE TABLE " . DBPRE . "formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=InnoDB;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
 		} else {
 			$createTableSQL = "CREATE TABLE " . DBPRE . "formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=InnoDB;";
