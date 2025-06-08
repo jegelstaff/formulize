@@ -3898,7 +3898,7 @@ function getDefaultCols($fid, $frid="") {
 			}
 		}
 
-        $cachedDefaultCols[$fid][$frid] = $ele_handles;
+    $cachedDefaultCols[$fid][$frid] = $ele_handles;
 		return $ele_handles;
 
 	} else {
@@ -6997,7 +6997,8 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 								aria-expanded='true'
 								aria-controls='id-change-columns-toggle-panel-".$thisFid."'
 								data-accordion-header
-							>
+								type='button'
+					>
 								".$formObject->getVar('title')." <span id='arrow-up' aria-label='up arrow'>&and;</span><span id='arrow-down' aria-label='down arrow'>&or;</span>
 							</button>
 						</legend>
@@ -7045,9 +7046,9 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 				display: inline;
 			}
 
-        .elements-checkbox-list {
-            transition: all 1s ease 0.25s;
-        }
+			.elements-checkbox-list {
+					transition: all 1s ease 0.25s;
+			}
     </style>
 
     <script type='text/javascript'>
