@@ -37,24 +37,13 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 class formulizeFramework extends XoopsObject {
 	function __construct($frid=""){
-
-		// validate $id_form
 		global $xoopsDB;
-		$notAFramework = false;
-		if(!is_numeric($frid)) {
-			// set empty defaults
-			$notAFramework = true;
-		} else {
-			// check if framework_elements table exists first, since in 4.0 and higher, it should not.
-			// but we'll keep it around if it did exist (prior to an upgrade) so we can check framework handles first when necessary
-			$handles = array();
-			$element_ids = array();
+		$links = array();
+		$fids = array();
+		$frameName = "";
+		if(is_numeric($frid)) {
 			$frame_links_q = "SELECT * FROM " . $xoopsDB->prefix("formulize_framework_links") . " WHERE fl_frame_id='" . formulize_db_escape($frid). "'";
-			if(!$res = $xoopsDB->query($frame_links_q) OR $xoopsDB->getRowsNum($res) == 0) {
-				$notAFramework = true;
-			} else {
-				$links = array();
-				$fids = array();
+			if($res = $xoopsDB->query($frame_links_q) AND $xoopsDB->getRowsNum($res) > 0) {
 				while($row = $xoopsDB->fetchArray($res)) {
 					$links[] = new formulizeFrameworkLink($row['fl_id']);
 					// note that you cannot query the framework_forms table to learn what forms are in a framework, since we keep entries in that table after links have been deleted, since forms might rejoin a framework and we don't want to lose their information.  The links table is the only authoritative source of information about what forms make up a framework.
@@ -64,32 +53,28 @@ class formulizeFramework extends XoopsObject {
 				$fids = array_unique($fids);
 			}
 			$frame_name_q = q("SELECT * FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_id=$frid");
-			if(!isset($frame_name_q[0])) {
-				$notAFramework = true;
-			}
-
+			$frameName = isset($frame_name_q[0]) ? $frame_name_q[0]['frame_name'] : "";
 		}
-		if($notAFramework) { list($frid, $fids, $name, $handles, $element_ids, $links, $formHandles) = $this->initializeNull(); }
-
-        parent::__construct();
+		if(!$frameName) {
+			list($frid, $fids, $frameName, $links) = $this->initializeNull();
+		}
+    parent::__construct();
 		//initVar params: key, data_type, value, req, max, opt
 		$this->initVar("frid", XOBJ_DTYPE_INT, $frid, false);
 		$this->initVar("fids", XOBJ_DTYPE_ARRAY, serialize($fids));
-		$this->initVar("name", XOBJ_DTYPE_TXTBOX, $frame_name_q[0]['frame_name'], true, 255);
-		$this->initVar("element_ids", XOBJ_DTYPE_ARRAY, serialize($element_ids));
-		$this->initVar("handles", XOBJ_DTYPE_ARRAY, serialize($handles));
+		$this->initVar("name", XOBJ_DTYPE_TXTBOX, $frameName, true, 255);
 		$this->initVar("links", XOBJ_DTYPE_ARRAY, serialize($links));
-		$this->initVar("formHandles", XOBJ_DTYPE_ARRAY, serialize($formHandles));
+		// for legacy compatibility, just in case... these should be checked as being totally not necessary, and removed, because it's pretty clear they have no values so are useless, but if we're doing a getVar somewhere, can't break it.
+		$this->initVar("element_ids", XOBJ_DTYPE_ARRAY, serialize(array()));
+		$this->initVar("handles", XOBJ_DTYPE_ARRAY, serialize(array()));
+		$this->initVar("formHandles", XOBJ_DTYPE_ARRAY, serialize(array()));
 	}
 
 	function initializeNull() {
 		$ret[] = 0; // frid
 		$ret[] = array(); //fids
 		$ret[] = ""; // name
-		$ret[] = array(); // handles
-		$ret[] = array(); // element_ids
 		$ret[] = array(); // links
-		$ret[] = array(); // formHandles
 		return $ret;
 	}
 
