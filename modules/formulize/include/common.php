@@ -36,6 +36,7 @@
 if(!defined('FORMULIZE_COMMON_INCLUDED')) {
 	define('FORMULIZE_COMMON_INCLUDED', 1);
 }
+
 include_once XOOPS_ROOT_PATH . '/class/xoopsformloader.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
@@ -53,6 +54,14 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplicat
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
+
+// verify that we're on the required version of PHP
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname("formulize");
+if(PHP_VERSION_ID < $formulizeModule->modinfo['min_php_version_id']) {
+	error_log('Fatal Error: PHP '.$formulizeModule->modinfo['min_php_version'].' or higher is required for Formulize to work correctly. This web server is currently running PHP '.PHP_VERSION);
+	exit('Upgrade PHP to run Formulize. Advise the webmaster to check the error logs for more information.');
+}
 
 //Add the language constants
 global $xoopsConfig;
