@@ -78,6 +78,7 @@ class icms_module_Handler extends icms_core_ObjectHandler {
 					// cache module
 					$this->_cachedModule_lookup[$id] = $module->getVar("dirname");
 					$this->_cachedModule[$module->getVar('dirname')] = $module;
+					$module->loadInfo($module->getVar("dirname"));
 					return $module;
 				}
 			}
@@ -112,6 +113,7 @@ class icms_module_Handler extends icms_core_ObjectHandler {
 				// cache module
 				$this->_cachedModule[$dirname] = $module;
 				$this->_cachedModule_lookup[$module->getVar('mid')] = $module->getVar("dirname");
+				$module->loadInfo($module->getVar("dirname"));
 			}
 			return $module;
 		}
@@ -282,7 +284,7 @@ class icms_module_Handler extends icms_core_ObjectHandler {
 	 *
 	 * @param   object  $criteria   {@link icms_db_criteria_Element}
 	 * @param   boolean $id_as_key  Use the ID as key into the array
-	 * @return  array	Array of objects - installed module 
+	 * @return  array	Array of objects - installed module
 	 */
 	public function getObjects($criteria = NULL, $id_as_key = FALSE) {
 		$ret = array();
