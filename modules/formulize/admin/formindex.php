@@ -670,7 +670,7 @@ function patch40() {
                         if(!$lcbUpdateRes = $xoopsDB->queryF($sql)) {
                             print "Error: could not update linked checkbox storage syntax in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
                         }
-                    }                    
+                    }
                 }
 
 				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
@@ -1665,18 +1665,36 @@ function codeInNeedOfConversion() {
 		}
 	}
 	if(!$codeConvertedAlready) {
+		$checkForOnAfterSave = "SHOW COLUMNS FROM " . $xoopsDB->prefix('formulize_id') ." LIKE 'on_after_save'";
+		$formTableHasOnAfterSave = false;
+		if($res = $xoopsDB->queryF($checkForOnAfterSave) AND $xoopsDB->getRowsNum($res) == 1) {
+			$formTableHasOnAfterSave = true;
+		}
+		$checkForOnDelete = "SHOW COLUMNS FROM " . $xoopsDB->prefix('formulize_id') ." LIKE 'on_delete'";
+		$formTableHasOnDelete = false;
+		if($res = $xoopsDB->queryF($checkForOnDelete) AND $xoopsDB->getRowsNum($res) == 1) {
+			$formTableHasOnDelete = true;
+		}
+		$checkForCustomActions = "SHOW COLUMNS FROM " . $xoopsDB->prefix('formulize_screen_listofentries') ." LIKE 'customactions'";
+		$listScreenTableHasCustomActions = false;
+		if($res = $xoopsDB->queryF($checkForCustomActions) AND $xoopsDB->getRowsNum($res) == 1) {
+			$listScreenTableHasCustomActions = true;
+		}
 		$customCodePatchNeededSQL = array(
 			"SELECT ele_handle FROM ".$xoopsDB->prefix('formulize')." WHERE
 				((ele_type = 'derived')
 				OR (ele_type IN ('ib', 'areamodif') AND ele_value LIKE '%\$value%')
-				OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%'))",
-			"SELECT form_handle	FROM ".$xoopsDB->prefix('formulize_id')." WHERE
-				(on_before_save != '' OR on_after_save != '' OR on_delete != '' OR custom_edit_check != '')",
-			"SELECT s.`sid` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
+				OR (ele_type IN ('text', 'textarea') AND ele_value LIKE '%\$default%'))");
+		if($formTableHasOnAfterSave) {
+			$customCodePatchNeededSQL[] = "SELECT form_handle	FROM ".$xoopsDB->prefix('formulize_id')." WHERE
+				(on_before_save != '' OR on_after_save != '' OR ".($formTableHasOnDelete ? "on_delete != '' OR" : "")." custom_edit_check != '')";
+		}
+		if($listScreenTableHasCustomActions) {
+			$customCodePatchNeededSQL[] = "SELECT s.`sid` FROM ".$xoopsDB->prefix('formulize_screen_listofentries')." AS l
 				LEFT JOIN ".$xoopsDB->prefix('formulize_screen')." AS s
 				ON l.sid = s.sid
-				WHERE (l.customactions LIKE '%\"custom_code\";%' OR l.customactions LIKE '%\"custom_html\";%' OR l.customactions LIKE '%\"custom_code_once\";%')"
-		);
+				WHERE (l.customactions LIKE '%\"custom_code\";%' OR l.customactions LIKE '%\"custom_html\";%' OR l.customactions LIKE '%\"custom_code_once\";%')";
+		}
 		foreach($customCodePatchNeededSQL as $thisSQL) {
 			if($res = $xoopsDB->queryF($thisSQL)) {
 				if($xoopsDB->getRowsNum($res)) {
