@@ -107,14 +107,14 @@ $( document ).ready(function() {
 		sneakyPassBackToSubformOptionsTab = newSubformScreen;
 	}
 
-	function showRelationshipCreationOptions(form1, form2, pi=0) {
+	function showRelationshipCreationOptions(form1, form2, pi=0, si='') {
 		let rel = 0;
 		if($('input[name=relationship]:checked').length) {
 			rel = $('input[name=relationship]:checked').val();
 		} else {
 			rel = 2;
 		}
-		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi, function(data) {
+		$.post("relationship_create_connection_options.php?form1="+form1+"&form2="+form2+"&rel="+rel+"&pi="+pi+"&subformInterface="+si, function(data) {
 				if(data) {
 					<{if $content.creatingFromSubformOptions == ''}>
 						$('input[name=rel]').val(rel);

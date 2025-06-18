@@ -31,7 +31,8 @@ $("#relationship-create-connection-options select[name=forms-pi]").live('change'
 		var form1 = form1Id;
 		var form2 = form2Id;
 	}
-	showRelationshipCreationOptions(form1, form2, $(this).val());
+	si = typeof subformInterfaceFlag === 'undefined' ? '' : '1';
+	showRelationshipCreationOptions(form1, form2, $(this).val(), si);
 });
 
 function editRelationshipOptions(linkId) {

@@ -40,6 +40,7 @@ include_once XOOPS_ROOT_PATH.'/header.php';
 global $xoopsTpl;
 
 $calledFromSubformInterface = isset($calledFromSubformInterface) ? $calledFromSubformInterface : false;
+$fetchNotDisplay = $calledFromSubformInterface ? true : false; // multiple layers of being called for subforms, because a form might not have a PI yet, and we prompt might be prompting for it in the middle of the workflow. Yucky. Having determined this part, we can reassess the subform situation later.
 $form1Id = intval($_GET['form1']);
 $form2Id = intval($_GET['form2']);
 $rel = intval($_GET['rel']);
@@ -61,6 +62,9 @@ if($optionsMarkup AND $calledFromSubformInterface) {
 }
 
 if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
+
+	// reassess this now, because potentially we're on the second go around having come back from picking a PI
+	$calledFromSubformInterface = (!$calledFromSubformInterface AND (isset($_GET['subformInterface']) AND $_GET['subformInterface'])) ? $_GET['subformInterface'] : $calledFromSubformInterface;
 
 	// prepare the options for the new connection, based on form 1 PI and the elements in the forms already
 	// Know PI form 1, and the existing connections, Options could then be:
@@ -173,7 +177,7 @@ if($form1Object AND $form2Object AND $form1PI AND $form2PI) {
 		)
 	);
 	$xoopsTpl->assign('content', $content);
-	if($calledFromSubformInterface) {
+	if($fetchNotDisplay) {
 		$optionsMarkup = $xoopsTpl->fetch("db:admin/relationship_create_connection_options.html");
 	} else {
 		$xoopsTpl->display("db:admin/relationship_create_connection_options.html");
@@ -285,6 +289,7 @@ function promptForPIAndExit($formObject) {
 		$content['formTitle'] = trans($formObject->getVar('title'));
 		$content['defaultpi'] = 0;
 		$content['pioptions'] = $pioptions;
+		$content['subformInterface'] = (isset($_GET['subformInterface']) AND $_GET['subformInterface']) ? $_GET['subformInterface'] : false;
 		$xoopsTpl->assign('content', $content);
 		return $xoopsTpl->fetch("db:admin/primary_identifier_selection.html");
 
