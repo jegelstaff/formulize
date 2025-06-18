@@ -1,5 +1,10 @@
 <?php
 
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+$config_handler = xoops_gethandler('config');
+$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
+
 define("_MI_formulize_ADMENU0","Gestion de formulaires");
 define("_MI_formulize_ADMENU1","Menu");
 define("_MI_formulize_ALL_DONE_SINGLES","Est ce que le bouton 'Tout fini' doit apparaitre en bas du formulaire lorsqu'une entrée est éditée, ou créée pour les formulaires à une entrée par utilisateur?");
@@ -75,41 +80,35 @@ define("_MI_formulize_formulizeLogFileStorageDurationHours", "How long should Fo
 define("_MI_formulize_formulizeLogFileStorageDurationHoursDESC", "After this many hours, the log files will be deleted from the server.");
 
 $rewriteRuleInstructions = '';
-if(isset($GLOBALS['config'])) {
-	global $config;
-	foreach($config as $thisConfig) {
-		if(is_object($thisConfig) AND $thisConfig->getVar('conf_name') == 'formulizeRewriteRulesEnabled' AND $thisConfig->getVar('conf_value') == 0) {
-			$rewriteRuleInstructions = "<br><br>For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
-			<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
-			RewriteEngine On<br>
-			RewriteCond %{REQUEST_FILENAME} !-f<br>
-			RewriteCond %{REQUEST_FILENAME} !-d<br>
-			RewriteCond %{REQUEST_FILENAME} !-l<br>
-			RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
-			</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for alternate URLs.</i>";
-			break;
-		}
+foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
+	if($thisConfig == 'formulizeRewriteRulesEnabled' AND $thisConfigValue == 0) {
+		$rewriteRuleInstructions = "<br><br>For alternate URLs to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
+		RewriteEngine On<br>
+		RewriteCond %{REQUEST_FILENAME} !-f<br>
+		RewriteCond %{REQUEST_FILENAME} !-d<br>
+		RewriteCond %{REQUEST_FILENAME} !-l<br>
+		RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
+		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for alternate URLs.</i>";
+		break;
 	}
 }
 define("_MI_formulize_rewriteRulesEnabled", "Enable alternate URLs for screens".$rewriteRuleInstructions);
 define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.");
 
 $publicAPIInstructions = '';
-if(isset($GLOBALS['config'])) {
-	global $config;
-	foreach($config as $thisConfig) {
-		if(is_object($thisConfig) AND $thisConfig->getVar('conf_name') == 'formulizePublicAPIEnabled' AND $thisConfig->getVar('conf_value') == 0) {
-			$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
-			<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
-			RewriteEngine On<br>
-			RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
-			RewriteCond %{REQUEST_FILENAME} !-f<br>
-			RewriteCond %{REQUEST_FILENAME} !-d<br>
-			RewriteCond %{REQUEST_FILENAME} !-l<br>
-			RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L]<br>
-			</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
-			break;
-		}
+foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
+	if($thisConfig == 'formulizePublicAPIEnabled' AND $thisConfigValue == 0) {
+		$publicAPIInstructions = "<br><br>For the Public API to work, you will need to add code similar to this, to the .htaccess file at the root of your website:
+		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
+		RewriteEngine On<br>
+		RewriteCond %{REQUEST_URI} ^/formulize-public-api/ [NC]
+		RewriteCond %{REQUEST_FILENAME} !-f<br>
+		RewriteCond %{REQUEST_FILENAME} !-d<br>
+		RewriteCond %{REQUEST_FILENAME} !-l<br>
+		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L]<br>
+		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
+		break;
 	}
 }
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API".$publicAPIInstructions);
