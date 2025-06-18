@@ -8541,9 +8541,9 @@ function formulize_handleHtaccessRewriteRule() {
 					$_REQUEST['ve'] = $ve;
 				} else {
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
-					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
+					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/".($entryIdentifier ? "$entryIdentifier/" : '')."');";
 					// seed the current URL with the correct address
-					getCurrentURL($address);
+					getCurrentURL($address.($entryIdentifier ? "/$entryIdentifier" : ''));
 					// redetermine the sid, since there is in fact no valid identifier so maybe we want a list-ish screen instead?
 					$sid = formulize_getSidFromRewriteAddress($address);
 					$queryString = "sid=$sid";
