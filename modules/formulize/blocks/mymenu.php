@@ -164,11 +164,15 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			OR getCurrentURL() == $url
 			OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
 			OR (
-				getCurrentURL() == XOOPS_URL.'/modules/formulize/' AND (
+				getCurrentURL() == XOOPS_URL.'/modules/formulize/'
+				AND (
 					$menulink->getVar("screen") == 'sid='.$defaultSid
 					OR $menulink->getVar("screen") == 'fid='.$defaultFid
-				))
-			){
+			))
+			OR (
+				substr($menulink->getVar("screen"), 0, 4) == 'fid='
+				AND $getSid == determineScreenForUserFromFid(substr($menulink->getVar("screen"), 4))
+			)){
 				$isThisSubMenu = true;
 		}
 	}

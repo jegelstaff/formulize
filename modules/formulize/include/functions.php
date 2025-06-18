@@ -8986,3 +8986,35 @@ function sourceHandleForElement($element) {
 	}
   return $sourceHandle;
 }
+
+/**
+ * Given a form id, this function returns the default screen that applies for the given user.
+ * Takes users permission and form settings into account. Users may not have permission to see multiple entries.
+ * Forms may not be set to support multiple entries.
+ * @param int|object formID_or_formObject - The form id or object we're checking
+ * @return int Returns the screen id if one is found. Returns 0 if no screen found.
+ */
+function determineScreenForUserFromFid($formID_or_formObject) {
+	$screenId = 0;
+	if(is_a($formID_or_formObject, 'formulizeForm')) {
+		$formObject = $formID_or_formObject;
+	} elseif(is_numeric($formID_or_formObject)) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+  	$formObject = $form_handler->get($formID_or_formObject);
+	}
+	if($formObject) {
+		global $xoopsUser;
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		$gperm_handler = xoops_gethandler('groupperm');
+		$singleEntry = $formObject->getVar('single');
+		if (($singleEntry != 'group' AND $singleEntry != 'user' AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
+			OR $gperm_handler->checkRight("view_globalscope", $formObject->getVar('fid'), $groups, getFormulizeModId()) // users with global scope see the list
+			OR ($singleEntry != 'group' AND $gperm_handler->checkRight("view_groupscope", $formObject->getVar('fid'), $groups, getFormulizeModId())) // users with groupscope see the list, unless it's a one-entry-per-group form
+		) {
+			$screenId = intval($formObject->getVar('defaultlist'));
+		} else {
+			$screenId = intval($formObject->getVar('defaultform'));
+		}
+	}
+	return $screenId;
+}
