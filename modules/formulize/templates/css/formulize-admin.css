@@ -2165,3 +2165,9 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
   border-radius: 0.3em;
   border: 2px solid #6eac2c;
 }
+
+#big-form-button {
+	clear: both;
+  text-align: center;
+  transform: scale(150%);
+}

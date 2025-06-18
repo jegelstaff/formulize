@@ -41,13 +41,17 @@ foreach($appObjects as $thisAppObject) {
     $apps = readApplicationData($thisAppObject->getVar('appid'), $apps);
 }
 $apps = readApplicationData(0,$apps); // lastly, get forms that don't have an application
-
+$showBigFormButton = false;
+if((!is_array($apps) OR count($apps) == 1) AND (!is_array($apps[1]['forms']) OR count($apps[1]['forms']) == 0)) {
+	$showBigFormButton = true;
+}
 // refactoring possible to take advantage of simply gathering the applications and then interacting with the object in the template
 // but tricky to get it working with the current way things are passed through the accordion template using conventional names
 // also don't want to split how we handle applications vs forms with no app
 //$xoopsTpl->assign('applications', xoops_getmodulehandler('applications', 'formulize')->getAllApplications());
 //$xoopsTpl->assign('extra_forms', xoops_getmodulehandler('forms', 'formulize')->getFormsByApplication(0));
 
+$adminPage['showBigFormButton'] = $showBigFormButton;
 $adminPage['apps'] = $apps;
 $adminPage['template'] = "db:admin/home.html";
 $adminPage['pagetitle'] = "Home";
