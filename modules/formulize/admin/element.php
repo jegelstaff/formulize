@@ -120,7 +120,7 @@ if ($_GET['ele_id'] != "new") {
     } elseif ($ele_disabled == 1) {
         $display['ele_disabled']['all'] = " selected";
 				$display['ele_disabled']['none'] = "";
-    } elseif ($ele_disabled == 0) {
+    } else {
         $display['ele_disabled']['none'] = " selected";
 				$display['ele_disabled']['all'] = "";
     }
