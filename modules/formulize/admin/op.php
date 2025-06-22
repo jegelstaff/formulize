@@ -33,8 +33,8 @@
 
 include_once "formindex.php";
 
+$formulizeNeedsDBPatch = false;
 ob_start();
-
 if (isset($_GET['op'])) {
     switch($_GET['op']) {
         case "delete":
@@ -48,9 +48,8 @@ if (isset($_GET['op'])) {
             break;
     }
 } else {
-    patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
+    $formulizeNeedsDBPatch = patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
 }
-
 $xoopsTpl->assign('opResults', ob_get_clean());
 
 

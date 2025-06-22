@@ -37,13 +37,6 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 global $xoopsTpl, $xoopsDB, $xoopsUser;
 
-// make the primary relationship if it doesn't exist already
-if(primaryRelationshipExists() === false) {
-	if($error = createPrimaryRelationship()) {
-		print "<p>$error</p>";
-	}
-}
-
 // If saveLock is turned on, exit
 /*if(saveLock) {
 		exit();
@@ -76,7 +69,15 @@ if (!isset($xoopsTpl)) {
 
 // handle any operations requested as part of this page load
 // sets up a template variable with the results of the op, called opResults
+// sets up $formulizeNeedsDBPatch boolean
 include_once "op.php";
+
+// make the primary relationship if it doesn't exist already
+if(primaryRelationshipExists() === false AND !$formulizeNeedsDBPatch) {
+	if($error = createPrimaryRelationship()) {
+		print "<p>$error</p>";
+	}
+}
 
 // switch the theme for the screen if that's requested
 if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid'])) {

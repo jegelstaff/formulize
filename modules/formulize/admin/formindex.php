@@ -115,7 +115,7 @@ function patch40() {
 		$needToConvertDBCodeToCodeFolder = file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
 
     if (!$needsPatch AND primaryRelationshipExists() AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
-        return;
+        return false;
     }
 
     if (!isset($_POST['patch40'])) {
@@ -126,6 +126,7 @@ function patch40() {
         print "<form action=\"ui.php?op=patchDB$additional_themes$skipRefUpdates\" method=post>";
         print "<input type = submit name=patch40 value=\"Apply Database Patch for Formulize\">";
         print "</form>";
+				return true;
     } else {
         // PATCH LOGIC GOES HERE
         print "<h2>Patch Results:</h2>";
@@ -729,17 +730,26 @@ function patch40() {
 
 					// Same operation, on the form procedures
 					// query for the procedures...
-					$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, on_delete, custom_edit_check
+					$checkForOnDelete = "SHOW COLUMNS FROM " . $xoopsDB->prefix('formulize_id') ." LIKE 'on_delete'";
+					$formTableHasOnDelete = false;
+					if($res = $xoopsDB->queryF($checkForOnDelete) AND $xoopsDB->getRowsNum($res) == 1) {
+						$formTableHasOnDelete = true;
+					}
+					$formProceduresNeedingOpeningPHPTagsSQL = "SELECT id_form as fid, on_before_save, on_after_save, ".($formTableHasOnDelete ? "on_delete," : "")." custom_edit_check
 						FROM ".$xoopsDB->prefix('formulize_id')." WHERE
 						(on_before_save != '' AND on_before_save NOT LIKE '<?php%')
 						OR (on_after_save != '' AND on_after_save NOT LIKE '<?php%')
-						OR (on_delete != '' AND on_delete NOT LIKE '<?php%')
+						".($formTableHasOnDelete ? "OR (on_delete != '' AND on_delete NOT LIKE '<?php%')" : "")."
 						OR (custom_edit_check != '' AND custom_edit_check NOT LIKE '<?php%') ";
 					if($res = $xoopsDB->queryF($formProceduresNeedingOpeningPHPTagsSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// for each record that was returned from the DB, make a list of all the events and then check each event...
-							$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+							if($formTableHasOnDelete) {
+								$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+							} else {
+								$events = array('on_before_save', 'on_after_save', 'custom_edit_check');
+							}
 							foreach($events as $i=>$event) {
 								$record[$event] = trim($record[$event]);
 								// if the event is missing the opening php tag, then let's make a SQL snippet containing the updated code we want to write to the DB
@@ -854,13 +864,17 @@ function patch40() {
 						exit("Error detecting code snippets in elements for converting to files. SQL dump:<br>".$elementsWithCodeSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
 					}
 
-					$formProceduresSQL = "SELECT form_handle, on_before_save, on_after_save, on_delete, custom_edit_check
-						FROM ".$xoopsDB->prefix('formulize_id')." WHERE	on_before_save != '' OR on_after_save != ''	OR on_delete != '' OR custom_edit_check != ''";
+					$formProceduresSQL = "SELECT form_handle, on_before_save, on_after_save, ".($formTableHasOnDelete ? "on_delete," : "")." custom_edit_check
+						FROM ".$xoopsDB->prefix('formulize_id')." WHERE	on_before_save != '' OR on_after_save != ''	".($formTableHasOnDelete ? "OR on_delete != ''" : "")." OR custom_edit_check != ''";
 					if($res = $xoopsDB->queryF($formProceduresSQL)) {
 						// loop through the results...
 						while($record = $xoopsDB->fetchArray($res)) {
 							// for each record that was returned from the DB, make a list of all the events and then check each event...
-							$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+							if($formTableHasOnDelete) {
+								$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+							} else {
+								$events = array('on_before_save', 'on_after_save', 'custom_edit_check');
+							}
 							foreach($events as $i=>$event) {
 								$record[$event] = trim($record[$event]);
 								if($record[$event]) {
