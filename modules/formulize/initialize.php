@@ -78,7 +78,6 @@ if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
 
 if( !$fid AND !$sid) {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-	$includeMenuURLs = true;
 	list($fid,$sid,$defaultMenuLinkUrl) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 	if($defaultMenuLinkUrl) {
 		header('Location: '.$defaultMenuLinkUrl);

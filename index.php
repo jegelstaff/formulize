@@ -38,8 +38,6 @@ AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != "--") {
 // See if they actually have a Formulize start page declared. If not, and they're anon, nullify the startpage since we have no where to take them and this way they can login.
 if($icmsConfig['startpage'] == 'formulize') {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
-  $includeMenuURLs = true;
-	$followMenuURLs = false;
 	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
 	if(!$xoopsUser AND !$startFid AND !$startSid AND !$startURL) {
 		$icmsConfig['startpage'] = '--';
