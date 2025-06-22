@@ -124,12 +124,11 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	// Choose the database to be used
 	define('XOOPS_DB_TYPE', 'pdo.mysql');
 
-	    // Set the database charset if applicable
-    if (defined('XOOPS_DB_CHARSET')) die();
-    define('XOOPS_DB_CHARSET', '');
+	// Set the database charset
+  if (defined('XOOPS_DB_CHARSET')) die();
+  define('XOOPS_DB_CHARSET', 'utf8mb4');
 
-	$xoopsDBCharset = XOOPS_DB_CHARSET ? XOOPS_DB_CHARSET : 'utf8mb4';
-	define('XOOPS_DB_DSN', 'host='.SDATA_DB_HOST.';dbname='.SDATA_DB_NAME.';charset='.$xoopsDBCharset);
+	define('XOOPS_DB_DSN', 'host='.SDATA_DB_HOST.';dbname='.SDATA_DB_NAME.';charset='.XOOPS_DB_CHARSET);
 
 	// Table Prefix
 	// This prefix will be added to all new tables created to avoid name conflict in the database. If you are unsure, just use the default 'icms'.
