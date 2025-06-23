@@ -993,11 +993,6 @@ table.formulize-subform-table textarea {
     max-width: 200px;
 }
 
-table.formulize-subform-table input[type=text].formulize-time-element {
-    min-width: 100px;
-    max-width: 100px;
-}
-
 td[class^=formulize_subform] select {
 	margin-top: 0.6em;
 }
@@ -1401,55 +1396,21 @@ table.outer textarea[disabled],
   }
 }
 
-.form-row input.formulize-time-element
-{
-    max-width: 270px;
-}
-.form-row input.hasDatepicker,
-tr.entry-row td input.hasDatepicker,
-.form-row input.formulize-time-element,
-tr.entry-row td input.formulize-time-element
-{
-    width: calc(100% - 27px);
-}
 .form-row input.formulize_autocomplete {
     max-width: 270px;
 }
 
-/* datepicker is native in mobile so when super narrow we don't need this because calendar icon goes away*/
-@media (min-width: 350px) {
-    .form-row input.hasDatepicker {
-        max-width: 270px;
-    }
-}
-
 @media (min-width: 768px) {
-    .form-row input.hasDatepicker,
-    .form-row input.formulize-time-element {
-        width: 673px;
-        max-width: 673px;
-        min-width: 673px;
-    }
     .form-row input.formulize_autocomplete {
         width: 673px;
         max-width: 673px;
         min-width: 673px;
     }
-    .form-row .col2 input.hasDatepicker,
-    .form-row .col2 input.formulize-time-element,
-    .form-row .col2 input.formulize_autocomplete,
-    #formulize_modal input.hasDatepicker {
+    .form-row .col2 input.formulize_autocomplete {
         width: 673px;
         max-width: 673px;
         min-width: 673px;
     }
-
-}
-
-table.formulize-subform-table input.hasDatepicker,
-#formulize_modal table.formulize-subform-table input.hasDatepicker {
-    width: calc(100% - 27px);
-    min-width: 6.5em;
 }
 
 .form-container textarea, table.outer textarea,
