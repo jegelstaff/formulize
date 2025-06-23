@@ -256,7 +256,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 					5,
 					$value,
 					false,
-					true
+					'number'
 				);
 				${"input_$unit"}->setExtra("min='0'");
 				${"input_$unit"}->setExtra("class='formulize-duration-element-input'");

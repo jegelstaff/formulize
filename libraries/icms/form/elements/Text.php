@@ -46,10 +46,10 @@ class icms_form_elements_Text extends icms_form_Element {
 	public $autocomplete = false;
 
 	/**
-	 * Treat it as a number or text field when rendering.
-	 * @var 		boolean
+	 * The HTML 5 type of input element to use.
+	 * @var 		string
 	 */
-	public $numberOrText = false;
+	public $type = 'text';
 
 	/**
 	 * Constructor
@@ -60,16 +60,16 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @param	int		$maxlength	Maximum length of text
 	 * @param	string  $value      Initial text
 	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
-	 * @param	mixed	$number	Whether to treat it as a number-only box (essentially a boolean, but 1/0 might be passed in)
+	 * @param	mixed	$type	Either 'text', 'number', or 'time'.
 	 */
-	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $number = false) {
+	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text') {
 		$this->setCaption($caption);
 		$this->setName($name);
 		$this->_size = (int) $size;
 		$this->_maxlength = (int) $maxlength;
 		$this->setValue($value);
 		$this->autocomplete = !empty($autocomplete);
-		$this->numberOrText = ($number ? 'number' : 'text');
+		$this->type = ($type === true ? 'number' : $type); // legacy, used to be boolean for number
 	}
 
 	/**
@@ -91,12 +91,12 @@ class icms_form_elements_Text extends icms_form_Element {
 	}
 
 	/**
-	 * Get numbers or text
+	 * Get input type
 	 *
 	 * @return	int
 	 */
-	public function getNumberOrText() {
-		return $this->numberOrText;
+	public function getType() {
+		return $this->type;
 	}
 
 	/**
@@ -124,8 +124,8 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @return	string  HTML
 	 */
 	public function render() {
-		$numberOrText = $this->getNumberOrText();
-		return "<input type='$numberOrText' name='" . $this->getName()
+		$type = $this->getType();
+		return "<input type='$type' name='" . $this->getName()
 			. "' id='" . $this->getName()
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
