@@ -993,11 +993,6 @@ table.formulize-subform-table textarea {
     max-width: 200px;
 }
 
-table.formulize-subform-table input[type=text].formulize-time-element {
-    min-width: 100px;
-    max-width: 100px;
-}
-
 td[class^=formulize_subform] select {
 	margin-top: 0.6em;
 }
@@ -1209,17 +1204,20 @@ table.formulize-subform-table td {
 table.outer input[type="text"],
 table.outer input[type="number"],
 table.outer input[type="date"],
+table.outer input[type="time"],
 table.outer input[type="password"],
 table.outer textarea,
 .form-container textarea,
 .form-container input[type="text"],
 .form-container input[type="number"],
 .form-container input[type="date"],
+.form-container input[type="time"],
 .form-container input[type="password"],
 #formulize_modal textarea,
 #formulize_modal input[type="text"],
 #formulize_modal input[type="number"],
 #formulize_modal input[type="date"],
+#formulize_modal input[type="time"],
 #formulize_modal input[type="password"] {
   border-radius: 0;
   -webkit-appearance: none;
@@ -1243,17 +1241,20 @@ table.outer textarea,
     table.outer input[type="text"],
 		table.outer input[type="number"],
     table.outer input[type="date"],
+		table.outer input[type="time"],
     table.outer input[type="password"],
     table.outer textarea,
     .form-container textarea,
     .form-container input[type="text"],
 		.form-container input[type="number"],
     .form-container input[type="date"],
+		.form-container input[type="time"],
     .form-container input[type="password"],
     #formulize_modal textarea,
     #formulize_modal input[type="text"],
 		#formulize_modal input[type="number"],
     #formulize_modal input[type="date"],
+		#formulize_modal input[type="time"],
     #formulize_modal input[type="password"],
 		.form-help-text,
 		.ck-editor {
@@ -1272,17 +1273,20 @@ table.outer textarea,
     table.outer input[type="text"],
 		table.outer input[type="number"],
     table.outer input[type="date"],
+		table.outer input[type="time"],
     table.outer input[type="password"],
     table.outer textarea,
     .form-container textarea,
     .form-container input[type="text"],
 		.form-container input[type="number"],
     .form-container input[type="date"],
+		.form-container input[type="time"],
     .form-container input[type="password"],
     #formulize_modal textarea,
     #formulize_modal input[type="text"],
 		#formulize_modal input[type="number"],
     #formulize_modal input[type="date"],
+		#formulize_modal input[type="time"],
     #formulize_modal input[type="password"] {
     font-size: inherit;
   }
@@ -1291,17 +1295,20 @@ table.outer textarea,
 table.outer input[type="text"]::placeholder,
 table.outer input[type="number"]::placeholder,
 table.outer input[type="date"]::placeholder,
+table.outer input[type="time"]::placeholder,
 table.outer input[type="password"]::placeholder,
 table.outer textarea::placeholder,
 .form-container textarea::placeholder,
 .form-container input[type="text"]::placeholder,
 .form-container input[type="number"]::placeholder,
 .form-container input[type="date"]::placeholder,
+.form-container input[type="time"]::placeholder,
 .form-container input[type="password"]::placeholder,
 #formulize_modal textarea::placeholder,
 #formulize_modal input[type="text"]::placeholder,
 #formulize_modal input[type="number"]::placeholder,
 #formulize_modal input[type="date"]::placeholder,
+#formulize_modal input[type="time"]::placeholder,
 #formulize_modal input[type="password"]::placeholder {
   color: var(--light-border-color);
 }
@@ -1309,17 +1316,20 @@ table.outer textarea::placeholder,
 table.outer input[type="text"]:focus,
 table.outer input[type="number"]:focus,
 table.outer input[type="date"]:focus,
+table.outer input[type="time"]:focus,
 table.outer input[type="password"]:focus,
 table.outer textarea:focus,
 .form-container textarea:focus,
 .form-container input[type="text"]:focus,
 .form-container input[type="number"]:focus,
 .form-container input[type="date"]:focus,
+.form-container input[type="time"]:focus,
 .form-container input[type="password"]:focus,
 #formulize_modal textarea:focus,
 #formulize_modal input[type="text"]:focus,
 #formulize_modal input[type="number"]:focus,
 #formulize_modal input[type="date"]:focus,
+#formulize_modal input[type="time"]:focus,
 #formulize_modal input[type="password"]:focus {
   outline: 0;
   border-color:  var(--accent-color);
@@ -1329,32 +1339,38 @@ table.outer textarea:focus,
 table.outer input[type="text"][readonly],
 table.outer input[type="number"][readonly],
 table.outer input[type="date"][readonly],
+table.outer input[type="time"][readonly],
 table.outer input[type="password"][readonly],
 table.outer textarea[readonly],
 .form-container textarea[readonly],
 .form-container input[type="text"][readonly],
 .form-container input[type="number"][readonly],
 .form-container input[type="date"][readonly],
+.form-container input[type="time"][readonly],
 .form-container input[type="password"][readonly],
 #formulize_modal textarea[readonly],
 #formulize_modal input[type="text"][readonly],
 #formulize_modal input[type="number"][readonly],
 #formulize_modal input[type="date"][readonly],
+#formulize_modal input[type="time"][readonly],
 #formulize_modal input[type="password"][readonly],
 table.outer input[type="text"][disabled],
 table.outer input[type="number"][disabled],
 table.outer input[type="date"][disabled],
+table.outer input[type="time"][disabled],
 table.outer input[type="password"][disabled],
 table.outer textarea[disabled],
 .form-container textarea[disabled],
 .form-container input[type="text"][disabled],
 .form-container input[type="number"][disabled],
 .form-container input[type="date"][disabled],
+.form-container input[type="time"][disabled],
 .form-container input[type="password"][disabled],
 #formulize_modal textarea[disabled],
 #formulize_modal input[type="text"][disabled],
 #formulize_modal input[type="number"][disabled],
 #formulize_modal input[type="date"][disabled],
+#formulize_modal input[type="time"][disabled],
 #formulize_modal input[type="password"][disabled] {
   border-color: transparent;
 }
@@ -1363,17 +1379,20 @@ table.outer textarea[disabled],
 table.outer input[type="text"][disabled],
 table.outer input[type="number"][disabled],
 table.outer input[type="date"][disabled],
+table.outer input[type="time"][disabled],
 table.outer input[type="password"][disabled],
 table.outer textarea[disabled],
 .form-container textarea[disabled],
 .form-container input[type="text"][disabled],
 .form-container input[type="number"][disabled],
 .form-container input[type="date"][disabled],
+.form-container input[type="time"][disabled],
 .form-container input[type="password"][disabled],
 #formulize_modal textarea[disabled],
 #formulize_modal input[type="text"][disabled],
 #formulize_modal input[type="number"][disabled],
 #formulize_modal input[type="date"][disabled],
+#formulize_modal input[type="time"][disabled],
 #formulize_modal input[type="password"][disabled] {
   color: #818E9B;
 }
@@ -1382,17 +1401,20 @@ table.outer textarea[disabled],
     table.outer input[type="text"][disabled],
 		table.outer input[type="number"][disabled],
     table.outer input[type="date"][disabled],
+		table.outer input[type="time"][disabled],
     table.outer input[type="password"][disabled],
     table.outer textarea[disabled],
     .form-container textarea[disabled],
     .form-container input[type="text"][disabled],
 		.form-container input[type="number"][disabled],
     .form-container input[type="date"][disabled],
+		.form-container input[type="time"][disabled],
     .form-container input[type="password"][disabled],
     #formulize_modal textarea[disabled],
     #formulize_modal input[type="text"][disabled],
 		#formulize_modal input[type="number"][disabled],
     #formulize_modal input[type="date"][disabled],
+		#formulize_modal input[type="time"][disabled],
     #formulize_modal input[type="password"][disabled]{
     background: #fff;
     color: #000;
@@ -1401,55 +1423,21 @@ table.outer textarea[disabled],
   }
 }
 
-.form-row input.formulize-time-element
-{
-    max-width: 270px;
-}
-.form-row input.hasDatepicker,
-tr.entry-row td input.hasDatepicker,
-.form-row input.formulize-time-element,
-tr.entry-row td input.formulize-time-element
-{
-    width: calc(100% - 27px);
-}
 .form-row input.formulize_autocomplete {
     max-width: 270px;
 }
 
-/* datepicker is native in mobile so when super narrow we don't need this because calendar icon goes away*/
-@media (min-width: 350px) {
-    .form-row input.hasDatepicker {
-        max-width: 270px;
-    }
-}
-
 @media (min-width: 768px) {
-    .form-row input.hasDatepicker,
-    .form-row input.formulize-time-element {
-        width: 673px;
-        max-width: 673px;
-        min-width: 673px;
-    }
     .form-row input.formulize_autocomplete {
         width: 673px;
         max-width: 673px;
         min-width: 673px;
     }
-    .form-row .col2 input.hasDatepicker,
-    .form-row .col2 input.formulize-time-element,
-    .form-row .col2 input.formulize_autocomplete,
-    #formulize_modal input.hasDatepicker {
+    .form-row .col2 input.formulize_autocomplete {
         width: 673px;
         max-width: 673px;
         min-width: 673px;
     }
-
-}
-
-table.formulize-subform-table input.hasDatepicker,
-#formulize_modal table.formulize-subform-table input.hasDatepicker {
-    width: calc(100% - 27px);
-    min-width: 6.5em;
 }
 
 .form-container textarea, table.outer textarea,
@@ -1508,6 +1496,8 @@ div.formulize_autocomplete {
     #formulize_modal .col2 select,
     .col2 input[type="text"],
 		.col2 input[type="number"],
+		.col2 input[type="date"],
+		.col2 input[type="time"],
     .col2 textarea {
         min-width: 700px;
     }
@@ -1515,29 +1505,7 @@ div.formulize_autocomplete {
     .col2 input[type="range"] {
       min-width: 673px;
     }
-    /*.formulize_autocomplete input.formulize_autocomplete_multiple {
-        width: 81%;
-    }
-    .col2 .formulize_autocomplete input.formulize_autocomplete_multiple {
-        width: 630px;
-        min-width: 630px;
-    }*/
-    /*.col2 div.formulize_autocomplete {
-        max-width: 900px;
-    }*/
-}
 
-@media (max-width: 450px) {
-    /*.formulize_autocomplete input.formulize_autocomplete_multiple {
-        width: 215px;
-        min-width: 215px;
-    }*/
-    /*div.formulize_autocomplete {
-        max-width: 900px;
-    }*/
-    /*.formulize_autocomplete_search_label {
-        display: block;
-    }*/
 }
 
 .form-container--full-width-inputs .form-input {

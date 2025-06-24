@@ -173,7 +173,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 					$ele_value[1],	//	max width
 					$ele_value[2],	//	value
 					false,					// autocomplete in browser
-					$ele_value[3]		// numbers only
+					($ele_value[3] ? 'number' : 'text')		// numbers only
 				);
 				//if placeholder value is set
 				if($ele_value[11]) {

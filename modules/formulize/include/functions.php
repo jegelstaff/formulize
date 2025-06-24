@@ -8115,6 +8115,7 @@ function getEntryDefaults($target_fid,$target_entry) {
   $criteria->add(new Criteria('ele_type', 'text'), 'OR');
   $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
   $criteria->add(new Criteria('ele_type', 'date'), 'OR');
+	$criteria->add(new Criteria('ele_type', 'time'), 'OR');
   $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
   $criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
   $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
@@ -8140,6 +8141,9 @@ function getEntryDefaults($target_fid,$target_entry) {
             }
         }
         break;
+			case "time":
+				$defaultTextToWrite = interpretTimeElementValue($ele_value_for_default[0], $target_entry);
+				break;
       case "date":
         $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
         if (false !== $defaultTextToWrite) {
@@ -8386,26 +8390,26 @@ function repairEOGTable($fid) {
 function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
 	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
 	global $xoopsConfig, $xoopsUser;
-    $userObject = is_object($userObject) ? $userObject : $xoopsUser;
-    $timestamp = $timestamp ? $timestamp : time();
+	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
+	$timestamp = $timestamp ? $timestamp : time();
 	$serverTimeZone = $xoopsConfig['server_TZ'];
 	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
 	$tzDiff = $userTimeZone - $serverTimeZone;
-    $daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
-    $tzDiff = $tzDiff + $daylightSavingsAdjustment;
-    return $tzDiff * 3600;
+	$daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
+	$tzDiff = $tzDiff + $daylightSavingsAdjustment;
+	return $tzDiff * 3600;
 }
 
 // get user offset from UTC
 // returns seconds
 function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
-    global $xoopsConfig, $xoopsUser;
-    $userObject = is_object($userObject) ? $userObject : $xoopsUser;
-    $timestamp = $timestamp ? $timestamp : time();
+	global $xoopsConfig, $xoopsUser;
+	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
+	$timestamp = $timestamp ? $timestamp : time();
 	$serverTimeZone = $xoopsConfig['server_TZ'];
 	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-    $userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
-    return $userTimeZone * 3600;
+	$userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
+	return $userTimeZone * 3600;
 }
 
 // $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)

@@ -80,7 +80,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
         $changed = false;
         if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-            // no options yet, so nothing to save
+            $element->setVar('ele_value', $ele_value);
         }
         return $changed;
     }
@@ -108,35 +108,12 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of the entry where this particular element comes from
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen) {
+        $ele_value = is_array($ele_value) ? $ele_value[0] : $ele_value;
+				$ele_value = interpretTimeElementValue($ele_value, $entry_id);
         if($isDisabled) {
             $formElement = new xoopsFormLabel($caption, $this->formatDataForList($ele_value, $element->getVar('ele_handle'), $entry_id));
         } else {
-            global $output_timeelement_js;
-            $timeScript = "";
-            if(!$output_timeelement_js) {
-                $output_timeelement_js = $markupName;
-                $timeScript .= "<script type='text/javascript'>
-
-function initializeTimeElements() {
-    jQuery('.formulize-time-element').timeEntry({spinnerImage: '".XOOPS_URL."/modules/formulize/libraries/jquery/timeentry/spinnerDefault.png'}).change(function() {
-        formulizechanged = 1;
-    });
-}
-
-jQuery(document).ready(function(){
-    if(jQuery.timeEntry === undefined) {
-        setTimeout(initializeTimeElements, 1000); // hail mary, wait for a second if jQuery isn't finished loading??
-    } else {
-        initializeTimeElements();
-    }
-});
-
-</script>";
-
-            }
-            $timeElement = new xoopsFormText($caption, $markupName, 10, 10, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
-            $timeElement->setExtra("class='formulize-time-element'");
-            $formElement = new xoopsFormLabel($caption, $timeElement->render().$timeScript);
+            $formElement = new xoopsFormText($caption, $markupName, 10, 10, $ele_value, type: 'time'); // caption, markup name, size, maxlength, default value, according to the xoops form class
         }
         return $formElement;
     }
@@ -204,7 +181,7 @@ jQuery(document).ready(function(){
         } elseif($timeParts[0]=="12") {
             $value = "12:".$timeParts[1]."PM";
         } elseif($value) {
-            $value = $timeParts[0].":".$timeParts[1]."AM";
+            $value = trim($timeParts[0],"0").":".$timeParts[1]."AM";
         }
 
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
@@ -229,3 +206,36 @@ jQuery(document).ready(function(){
     }
 
 }
+
+/**
+ * Determine the value for a time element, either a specified time, or {NOW}, or an offset from {NOW}, or a {elementHandle} reference
+ * @param string value - the value being interpreted
+ * @param int|string entry_id - either 'new' for a new entry, or an existing entry ID number
+ * @return string The time in 24 hour format, ie: 13:25, or an empty string if there is no time
+ */
+function interpretTimeElementValue($value, $entry_id = 'new') {
+	$time = $value;
+	if(strstr($time, ":")) {
+		$timeParts = explode(":", $time);
+		$time = $timeParts[0].":".$timeParts[1]; // throw away seconds for now
+	}
+	if(preg_replace("/[^A-Z{}]/", "", $value) === "{NOW}") {
+		$number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $value));
+		$seedTime = mktime(date("H"), date("i") + intval($number)); // will be based on UTC
+		$offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
+		$time = date("H:i", $seedTime + $offset);
+  } elseif(substr($value, 0, 1) == '{' AND substr($value, -1) == '}') {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element_handle = substr($value, 1, -1);
+		if($elementObject = $element_handler->get($element_handle)) {
+			if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle])) {
+				$time = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$element_handle];
+			} elseif($entry_id AND $entry_id != 'new') {
+				$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+				$time = $dataHandler->getElementValueInEntry($entry_id, $element_handle);
+			}
+		}
+	}
+  return $time;
+}
+

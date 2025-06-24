@@ -2804,11 +2804,6 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
 			}
 		}
-		// if this is a time element, and we generated the universal time element handling js on this 'fake' rendering, then get rid of it since this element is not visible yet
-		global $output_timeelement_js;
-		if($output_timeelement_js == $renderedElementMarkupName) {
-				$output_timeelement_js = '';
-		}
 	}
 	return $placeholder;
 }
