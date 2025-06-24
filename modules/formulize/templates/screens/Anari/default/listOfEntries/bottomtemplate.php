@@ -165,6 +165,7 @@ function closeSearches() {
 	jQuery('td[id^="celladdress_1_"]').css('padding-top','0');
 	jQuery('div[id^="cellcontents_1_"]').toggle();
 	jQuery('#celladdress_1_margin .header-info-link').toggle();
+	jQuery('td[id^="celladdress_1_"]:not(#celladdress_1_margin)').css('opacity', 1);
 }
 
 jQuery(window).scroll(function () {

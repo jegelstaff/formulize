@@ -197,7 +197,7 @@ table:first-child div.applinks h1 {
 
 .site-layout__main {
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 1em);
   flex-grow: 1;
   padding-bottom: 100px;
 }
@@ -651,7 +651,7 @@ table:first-child div.applinks h1 {
 }
 @media (min-width: 768px) {
 	.main-content {
-		height: 91vh;
+		height: calc(100vh - 4.7em);
 	}
 }
 @media print {
@@ -675,11 +675,10 @@ table:first-child div.applinks h1 {
 }
 
 div.list-of-entries .card__body {
-    height: 77vh;
+    height: calc(100vh - 13.75em);
 }
 .scrollbox {
-    height: 92%;
-    width: 93vw;
+    height: calc(100vh - 19.5em);
 		margin-bottom: 2em;
 }
 @media(min-width: 768px) {
@@ -3306,13 +3305,16 @@ div.scrollbox table.outer {
 	#formulize-list-of-entries-footer {
 		display: flex;
 		justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
 	}
 }
 #formulize-list-of-entries-footer div {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+#formulize-list-of-entries-footer > div:first-of-type {
+	margin-top: 1.6em;
 }
 
 @media (max-width: 450px) {
