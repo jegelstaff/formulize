@@ -35,7 +35,8 @@
 // require_once XOOPS_ROOT_PATH.'/kernel/object.php'; // xoops object not used
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
-class formulizeDataHandler  {
+#[AllowDynamicProperties]
+class formulizeDataHandler {
 
 	var $fid; // the form this Data Handler object is attached to
 	var $metadataFields; //

@@ -47,7 +47,7 @@ class formulizePassCode extends XoopsObject {
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizePassCodeHandler {
 	var $db;
 	function __construct(&$db) {

@@ -655,7 +655,7 @@ EOF;
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizeFormsHandler {
 	var $db;
 	function __construct(&$db) {

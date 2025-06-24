@@ -61,7 +61,8 @@ global $xoopsDB;
 
     }
 
-  class formulizeApplicationMenuLinksHandler  {
+	#[AllowDynamicProperties]
+  class formulizeApplicationMenuLinksHandler {
 
         var $db;
         function __construct(&$db) {
@@ -228,6 +229,7 @@ class formulizeApplication extends XoopsObject {
 		}
 }
 
+#[AllowDynamicProperties]
 class formulizeApplicationsHandler {
   var $db;
 	function __construct(&$db) {

@@ -48,6 +48,7 @@ class formulizeGoogleFilePickerElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
 
     var $db;

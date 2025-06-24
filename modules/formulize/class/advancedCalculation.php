@@ -131,7 +131,7 @@ EOD;
   }
 }
 
-
+#[AllowDynamicProperties]
 class formulizeAdvancedCalculationHandler {
   var $db;
   	function __construct(&$db) {

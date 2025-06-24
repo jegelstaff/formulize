@@ -47,6 +47,7 @@ class formulizeAnonPasscodeElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeAnonPasscodeElementHandler extends formulizeElementsHandler {
 
     var $db;

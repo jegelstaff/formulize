@@ -61,6 +61,7 @@ class formulizeCheckboxElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 
     var $db;
@@ -395,8 +396,8 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
                         }
                         if(count((array) $linked_column_values)>0) {
                             $optionText = implode(" | ", $linked_column_values);
-                        }       
-                    } 
+                        }
+                    }
                     $ele_value[2][$resultArray['entry_id']] = in_array($resultArray['entry_id'],$sourceEntryIds) ? 1 : 0;
                     $ele_uitext[$resultArray['entry_id']] = $optionText;
                 }

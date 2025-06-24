@@ -67,7 +67,7 @@ class formulizeCalendarScreenDataset extends xoopsObject {
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 	var $db;
 	function __construct(&$db) {

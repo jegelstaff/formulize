@@ -44,6 +44,7 @@ class formulizeSliderElement extends formulizeElement {
     }
 }
 
+#[AllowDynamicProperties]
 class formulizeSliderElementHandler extends formulizeElementsHandler {
     var $db;
     var $clickable; // used in formatDataForList

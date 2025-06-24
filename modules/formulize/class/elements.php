@@ -266,6 +266,7 @@ class formulizeElement extends FormulizeObject {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeElementsHandler {
 
 	var $db;

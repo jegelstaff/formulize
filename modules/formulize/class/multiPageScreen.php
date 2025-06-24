@@ -133,6 +133,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	var $db;
 	function __construct(&$db) {

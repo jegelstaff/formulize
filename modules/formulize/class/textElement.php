@@ -78,6 +78,7 @@ class formulizeTextElement extends formulizeElement {
 		}
 }
 
+#[AllowDynamicProperties]
 class formulizeTextElementHandler extends formulizeElementsHandler {
 
     var $db;

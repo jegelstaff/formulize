@@ -52,6 +52,7 @@ class formulizeTemplateScreen extends formulizeScreen {
     }
 }
 
+#[AllowDynamicProperties]
 class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     var $db;
 

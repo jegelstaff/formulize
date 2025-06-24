@@ -49,6 +49,7 @@ class formulizeEmailElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeEmailElementHandler extends formulizeElementsHandler {
 
     var $db;
