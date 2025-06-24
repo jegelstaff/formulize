@@ -49,6 +49,7 @@ class formulizePhoneElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizePhoneElementHandler extends formulizeElementsHandler {
 
     var $db;

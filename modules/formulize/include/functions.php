@@ -5077,8 +5077,8 @@ function formulize_numberFormat($value, $elementIdOrHandle, $decimalOverride=0) 
 // internal function used by formulize_numberFormat to actually do the formatting
 // different element types have different parts of ele_value where the number values are stored, so that's the reason for abstracting this out one level
 function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSepExists=false, $decsep="", $sepExists=false, $sep="", $prefixExists=false, $prefix="", $suffixExists=false, $suffix="") {
-    $config_handler =& xoops_gethandler('config');
-    $formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
+    $config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
     if ($decimalOverride) {
         // use the override if it's present
         $decimals = $decimalOverride;

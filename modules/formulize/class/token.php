@@ -49,7 +49,7 @@ class formulizeToken extends XoopsObject {
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizeTokenHandler {
 	var $db;
 	function __construct(&$db) {
@@ -81,7 +81,7 @@ class formulizeTokenHandler {
             print "Error: could not retrieve key(s) with this SQL: $sql<br>".$xoopsDB->error();
             return false;
         }
-        while($row = $xoopsDB->fetchRow($res)) {   
+        while($row = $xoopsDB->fetchRow($res)) {
             if(!isset($cachedKeys[$row[1]])) {
                 $expiry = $row[2] ? 'Expires: '.$row[2] : "";
                 $cachedKeys[$row[1]] = $this->create($row[0], $row[1], $row[2], $row[3], $row[4]);
@@ -100,7 +100,7 @@ class formulizeTokenHandler {
         }
         return false;
 	}
-	
+
 	function insert($groups, $expiry=0, $tokenlength =32, $maxuses) {
         $candidateID = $this->_generateKey($tokenlength);
         $currentuses = 0;
@@ -117,7 +117,7 @@ class formulizeTokenHandler {
 	function delete($key) {
         global $xoopsDB;
         $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
-        if($key) {		
+        if($key) {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE tokenkey = '".formulize_db_escape($key)."' OR (expiry IS NOT NULL AND expiry < NOW())";
         } else {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_tokens")." WHERE expiry IS NOT NULL AND expiry < NOW()";
@@ -143,10 +143,10 @@ function incrementUses($token){
      $newuses = $uses +1;
      global $xoopsDB;
      $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
-    if($key && ($token->getVar('maxuses') == 0 OR $uses < $token->getVar('maxuses'))) {		
-        
+    if($key && ($token->getVar('maxuses') == 0 OR $uses < $token->getVar('maxuses'))) {
+
         $sql = "UPDATE ".$xoopsDB->prefix("formulize_tokens")." SET currentuses = ".$newuses. " WHERE tokenkey = '".formulize_db_escape($key)."'";
-       
+
         if(!$xoopsDB->queryF($sql)) {
 			print "Error: could not update token uses with this SQL: $sql<br>".$xoopsDB->error();
             return false;
@@ -157,10 +157,10 @@ function incrementUses($token){
             if(!$this->delete($key)){
                 return false;
             }
-        } 
+        }
         return true;
      }
-		
+
 }
 
 }

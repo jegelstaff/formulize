@@ -72,12 +72,13 @@ class formulizeTextElement extends formulizeElement {
 				if(file_exists($filePath)) {
 					$fileValue = strval(file_get_contents($filePath));
 				}
-				$value[2] = $fileValue ? $fileValue : $value[2];
+				$value[2] = $fileValue ? $fileValue : (is_array($value) AND isset($value[2]) ? $value[2] : null);
 			}
 			return $value;
 		}
 }
 
+#[AllowDynamicProperties]
 class formulizeTextElementHandler extends formulizeElementsHandler {
 
     var $db;

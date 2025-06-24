@@ -46,7 +46,7 @@ class formulizeAPIKey extends XoopsObject {
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizeAPIKeyHandler {
 	var $db;
 	function __construct(&$db) {
@@ -96,7 +96,7 @@ class formulizeAPIKeyHandler {
         }
         return false;
 	}
-	
+
 	function insert($uid, $expiry=0) {
         $candidateID = $this->_generateKey();
         $expiry = $expiry ? "'".date("Y-m-d H:i:s",time()+($expiry*3600))."'" : "NULL";
@@ -112,7 +112,7 @@ class formulizeAPIKeyHandler {
 	function delete($key="all") {
         global $xoopsDB;
         $key = preg_replace("/[^A-Za-z0-9]/", "", str_replace(" ","",$key)); // keys must be only alphanumeric characters
-        if($key!="all") {		
+        if($key!="all") {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_apikeys")." WHERE apikey = '".formulize_db_escape($key)."' OR (expiry IS NOT NULL AND expiry < NOW())";
         } else {
             $sql = "DELETE FROM ".$xoopsDB->prefix("formulize_apikeys")." WHERE expiry IS NOT NULL AND expiry < NOW()";

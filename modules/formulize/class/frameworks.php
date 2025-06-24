@@ -356,7 +356,7 @@ class formulizeFrameworkLink extends XoopsObject {
     }
 }
 
-
+#[AllowDynamicProperties]
 class formulizeFrameworksHandler {
 	var $db;
 	function __construct(&$db) {

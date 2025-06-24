@@ -46,6 +46,7 @@ class formulizeTimeElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeTimeElementHandler extends formulizeElementsHandler {
 
     var $db;

@@ -22,7 +22,7 @@
 
 function block_formulizeMENU_show() {
         global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
-		    $myts =& MyTextSanitizer::getInstance();
+		    $myts = MyTextSanitizer::getInstance();
 
 		if(!defined('_AM_NOFORMS_AVAIL')) {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
@@ -109,7 +109,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 	global $formulizeCanonicalURI, $xoopsUser;
 	$data = array();
-	if($application == 0) {
+	if(!is_object($application)) {
 		$aid = 0;
 		$name = _AM_CATGENERAL;
 		$forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned

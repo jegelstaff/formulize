@@ -150,7 +150,7 @@ class formulizeScreen extends FormulizeObject {
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizeScreenHandler {
 	var $db;
 	function __construct(&$db) {

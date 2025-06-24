@@ -47,6 +47,7 @@ class formulizeGoogleAddressElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
 
     var $db;

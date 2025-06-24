@@ -101,7 +101,7 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
 
 }
 
-
+#[AllowDynamicProperties]
 class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     var $db;
 

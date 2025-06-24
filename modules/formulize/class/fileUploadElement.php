@@ -48,6 +48,7 @@ class formulizeFileUploadElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 
     var $db;

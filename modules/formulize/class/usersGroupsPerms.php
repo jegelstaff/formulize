@@ -29,6 +29,7 @@
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/class/forms.php';
 
+#[AllowDynamicProperties]
 class formulizePermHandler {
 
     var $fid;                               // the form this Perm Handler object is attached to
@@ -165,25 +166,25 @@ class formulizePermHandler {
 	function getGroupScopeGroups($gids) {
 		return $this->_getGroupScopeGroupsOrIds($gids, 'group_names');
 	}
-	
+
 	// this method returns an array of group ids
 	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
 	function getGroupScopeGroupIds($gids) {
 		return $this->_getGroupScopeGroupsOrIds($gids, 'group_ids');
 	}
-	
+
 	// this method returns an array of group ids
 	// it finds the groups that have the specified gids as part of their defined scope (so backwards to the other methods like getGroupScopeGroupIds which return the specified groups that were selected as the scope for the ones passed in)
 	function getGroupsHavingSpecificScope($gids) {
 		return $this->_getGroupsHavingScopeInfo($gids);
 	}
-	
+
 	// this method returns an array of group ids
 	// it finds the groups with a defined scope, that DOES NOT include the specified gids (so the inverse of the getGroupsHavingSpecificScope method)
 	function getGroupsHavingDifferentSpecificScope($gids) {
 		return $this->_getGroupsHavingScopeInfo($gids, true); // true causes the difference to be returned, instead of the groups that do have the specified gids as their scope
 	}
-	
+
 	// this method sets view_groupids for a group
 	// gid is the group we're setting view groupids for
 	// gids is the group or groups that are being set...(int or an array)
@@ -206,7 +207,7 @@ class formulizePermHandler {
 		$insertSQL = "INSERT INTO ".$xoopsDB->prefix("formulize_groupscope_settings"). " (`groupid`, `fid`, `view_groupid`) VALUES ";
 		$start = true;
 		foreach($groupsToInsert as $k=>$thisInsertGroup) {
-			if(is_numeric($thisInsertGroup) AND $thisInsertGroup > 0) { 
+			if(is_numeric($thisInsertGroup) AND $thisInsertGroup > 0) {
                 if(!$start) { $insertSQL .= ", "; }
                 $insertSQL .= "($gid, ".$this->fid.", $thisInsertGroup)";
                 $start = false;
@@ -228,7 +229,7 @@ class formulizePermHandler {
 		$this->_getGroupScopeGroupInfo($gid, true); // true forces the cached values to be updated
 		return true;
 	}
-	
+
 	// this internal method gets the specified type of info about a group or groups
 	function _getGroupScopeGroupsOrIds($gids, $type) {
 		if(!is_array($gids)) {
@@ -247,7 +248,7 @@ class formulizePermHandler {
 			return false;
 		}
 	}
-	
+
 	// this internal method retrieves the groupscope info for a given group
 	function _getGroupScopeGroupInfo($gid, $updateCache=false) {
 		static $cachedGroupScopeInfo = array();
@@ -256,7 +257,7 @@ class formulizePermHandler {
 			global $xoopsDB;
 			$sql = "SELECT t1.view_groupid, t2.name FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." as t1, ".$xoopsDB->prefix("groups")." as t2 WHERE t1.groupid=".intval($gid)." AND t1.fid = ".$this->fid." AND t1.view_groupid=t2.groupid AND t1.view_groupid > 0";
 			if($res = $xoopsDB->query($sql)) {
-        if($xoopsDB->getRowsNum($res) != 0) {			
+        if($xoopsDB->getRowsNum($res) != 0) {
 					while($array = $xoopsDB->fetchArray($res)) {
 						$cachedGroupScopeInfo[$this->fid][$gid]['group_ids'][$array['view_groupid']] = $array['view_groupid'];
 						$cachedGroupScopeInfo[$this->fid][$gid]['group_names'][$array['view_groupid']] = $array['name'];
@@ -270,7 +271,7 @@ class formulizePermHandler {
 		}
 		return $cachedGroupScopeInfo[$this->fid][$gid];
 	}
-	
+
 	// this internal method returns the groups that have specified groups in their scope
 	function _getGroupsHavingScopeInfo($gids, $different=false) {
 		if(!is_array($gids)) {
@@ -285,7 +286,7 @@ class formulizePermHandler {
 		$res = $xoopsDB->query($sql);
 		$foundGids = array();
 		while($array = $xoopsDB->fetchArray($res)) {
-			$foundGids[] = $array['groupid'];			
+			$foundGids[] = $array['groupid'];
 		}
 		return $foundGids;
 	}

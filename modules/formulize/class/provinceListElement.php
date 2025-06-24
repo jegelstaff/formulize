@@ -47,6 +47,7 @@ class formulizeProvinceListElement extends formulizeElement {
     }
 }
 
+#[AllowDynamicProperties]
 class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 
     var $db;

@@ -48,6 +48,7 @@ class formulizeDummyElement extends formulizeElement {
 
 }
 
+#[AllowDynamicProperties]
 class formulizeDummyElementHandler extends formulizeElementsHandler {
 
     var $db;
