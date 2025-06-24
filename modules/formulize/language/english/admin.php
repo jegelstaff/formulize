@@ -352,8 +352,8 @@ define("_AM_ELE_FICH",'File');
 define("_AM_ELE_TAILLEFICH","Max size on the file");
 define("_AM_ELE_PDS","poids");
 define("_AM_ELE_DELIM_CHOICE",'Delimiter between each option');
-define("_MI_formulize_DELIMETER_SPACE","White space");
-define("_MI_formulize_DELIMETER_BR","Line break");
+if(!defined("_MI_formulize_DELIMETER_SPACE")) { define("_MI_formulize_DELIMETER_SPACE","White space"); }
+if(!defined("_MI_formulize_DELIMETER_BR")) { define("_MI_formulize_DELIMETER_BR","Line break"); }
 define("_MI_formulize_DELIMETER_CUSTOM","Custom HTML");
 
 //added to handle the formlink part of the selectbox element -- jwe 7/29/04

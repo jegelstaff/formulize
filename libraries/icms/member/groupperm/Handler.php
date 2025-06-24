@@ -27,7 +27,7 @@ defined('ICMS_ROOT_PATH') or die("ImpressCMS root path not defined");
  * @author		Kazumi Ono  <onokazu@xoops.org>
  */
 class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
-	static public $_cachedRights;
+	private $_cachedRights;
 
 	/**
 	 * Create a new {@link icms_member_groupperm_Object}

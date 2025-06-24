@@ -10,7 +10,7 @@
 				<{$links.title}>
 			</a>
 		</li>
-		<{if is_array($links.subs)}>
+		<{if isset($links.subs) AND is_array($links.subs)}>
 			<{foreach item=subs from=$links.subs}>
 			<li class="main-menu__item main-menu__subitem">
 				<a href="<{$subs.url}>" target="<{$subs.target}>" class="main-menu__item-link<{if $subs.active}> main-menu__item-link--active<{/if}>">

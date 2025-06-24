@@ -92,7 +92,7 @@ class icms_core_Textsanitizer {
 	 * @param   string  $text
 	 * @return  string
 	 **/
-	public function makeClickable(&$text) {
+	public function makeClickable($text) {
 		icms_core_Debug::setDeprecated('icms_core_DataFilter::makeClickable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::makeClickable($text);
 	}
@@ -518,7 +518,7 @@ class icms_core_Textsanitizer {
 	 *
 	 * @deprecated	icms_core_DataFilter::checkVar - type = text
 	 * @todo		Remove this in version 1.4
-	 * 
+	 *
 	 * @param str	$text
 	 */
 	function makeTareaData4PreviewInForm($text) {

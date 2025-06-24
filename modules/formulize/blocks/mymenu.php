@@ -109,7 +109,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 	global $formulizeCanonicalURI, $xoopsUser;
 	$data = array();
-	if($application == 0) {
+	if(!is_object($application)) {
 		$aid = 0;
 		$name = _AM_CATGENERAL;
 		$forms = $form_handler->getFormsByApplication(0,true); // true forces ids, not objects, to be returned

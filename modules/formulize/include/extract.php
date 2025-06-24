@@ -2201,8 +2201,8 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 		$debugMode = false;
 		$module_handler = xoops_gethandler('module');
 		$config_handler = xoops_gethandler('config');
-		$formulizeModule = &$module_handler->getByDirname("formulize");
-		$formulizeConfig = &$config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		$formulizeModule = $module_handler->getByDirname("formulize");
+		$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 		$debugMode = $modulePrefUseToken = $formulizeConfig['debugDerivedValues'];
 		$debugMode = $debugMode ? true : false; // will be a 1 or 0, we want to covert to boolean because of IF check up above
 	}
