@@ -22,23 +22,23 @@ if ( !defined("ICMS_C_ERRORHANDLER_INCLUDED") ) {
 	 * @package		kernel
 	 * @subpackage	core
 	 *
-	 * @author		Goghs (http://www.eqiao.com/)  
+	 * @author		Goghs (http://www.eqiao.com/)
 	 * @copyright	(c) 2000-2003 The Xoops Project - www.xoops.org
 	 * @deprecated	use icms_core_Debug or icms_core_Logger, instead
 	 * @todo		Remove in 1.4
 	 */
 	class ErrorHandler
 	{
-		
+
 		public function __construct() {
-			icms_core_Debug::setDeprecated('icms_core_Debug', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+			//icms_core_Debug::setDeprecated('icms_core_Debug', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		}
 		/**
 		 * Show an error message
-		 * 
+		 *
 		 * @param   string  $e_code Errorcode
 		 * @param   integer $pages  How many pages should the link take you back?
-         * 
+         *
          * @global  $icmsConfig
 		 **/
 		public static function show($e_code, $pages=1)

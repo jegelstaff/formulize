@@ -17,7 +17,7 @@ icms_loadLanguageFile('system', 'mimetype', TRUE);
 
 /**
  * Mimetype management for file handling
- * 
+ *
  * @package		System
  * @subpackage	Mimetypes
  */
@@ -26,7 +26,7 @@ class SystemMimetype extends icms_ipf_Object {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param object $handler
 	 */
 	function __construct(&$handler) {
@@ -95,17 +95,17 @@ class SystemMimetype extends icms_ipf_Object {
 
 /**
  * Handler for the mimetype object class
- * 
+ *
  * @package		System
  * @subpackage	Mimetypes
  */
 class SystemMimetypeHandler extends icms_ipf_Handler {
-	
+
 	public $objects = FALSE;
 
 	/**
 	 * Creates an instance of the mimetype handler
-	 * 
+	 *
 	 * @param object $db
 	 */
 	public function __construct($db) {
@@ -114,7 +114,7 @@ class SystemMimetypeHandler extends icms_ipf_Handler {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return	array
 	 */
 	public function UserCanUpload() {
@@ -151,18 +151,18 @@ class SystemMimetypeHandler extends icms_ipf_Handler {
 
 	/**
 	 * Returns a list of modules
-	 * @return	array 
+	 * @return	array
 	 * @deprecated	Use icms_module_Handler::getActive, instead
 	 * @todo		Remove in version 1.4
 	 */
 	public function getModuleList() {
-		icms_core_Debug::setDeprecated('icms_module_Handler::getActive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_module_Handler::getActive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_module_Handler::getActive();
 	}
 
 	/**
-	 * 
-	 * 
+	 *
+	 *
 	 * @param string $mimetype
 	 * @param string $module
 	 * @return	boolean

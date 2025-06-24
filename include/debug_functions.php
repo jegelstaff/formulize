@@ -21,7 +21,7 @@
  */
 function icms_debug($msg, $exit=false)
 {
-	icms_core_Debug::setDeprecated('icms_core_Debug::message');
+	//icms_core_Debug::setDeprecated('icms_core_Debug::message');
 	return icms_core_Debug::message($msg, $exit);
 }
 
@@ -33,7 +33,7 @@ function icms_debug($msg, $exit=false)
  */
 function icms_debug_vardump($var)
 {
-	icms_core_Debug::setDeprecated('icms_core_Debug::vardump');
+	//icms_core_Debug::setDeprecated('icms_core_Debug::vardump');
 	return icms_core_Debug::vardump($var);
 }
 
@@ -48,6 +48,6 @@ function icms_debug_vardump($var)
  * @deprecated	Use icms_core_Debug::setDeprecated instead
  */
 function icms_deprecated( $replacement='', $extra='' ) {
-	icms_core_Debug::setDeprecated('icms_core_Debug::setDeprecated');
+	//icms_core_Debug::setDeprecated('icms_core_Debug::setDeprecated');
 	return icms_core_Debug::setDeprecated($replacement, $extra);
 }

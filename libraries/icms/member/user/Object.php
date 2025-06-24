@@ -144,7 +144,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * @todo		Remove in version 1.4 - there are no occurrences in the core
 	 */
 	public function incrementPost() {
-		icms_core_Debug::setDeprecated('icms_member_Handler->updateUserByField', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_member_Handler->updateUserByField', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$member_handler = icms::handler('icms_member');
 		return $member_handler->updateUserByField($this, 'posts', $this->getVar('posts') + 1);
 	}
@@ -242,7 +242,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * @todo		Remove in version 1.4 - no occurrences in the core
 	 */
 	public function &groups() {
-		icms_core_Debug::setDeprecated('$this->getGroups', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getGroups', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$groups =& $this->getGroups();
 		return $groups;
 	}
@@ -321,7 +321,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 * all instances have been removed from the core
 	 */
 	public function uid() {
-		icms_core_Debug::setDeprecated('$this->getVar("uid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("uid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('uid');
 	}
 
@@ -333,7 +333,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 */
 	function name($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("name", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("name", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('name', $format);
 	}
 
@@ -345,7 +345,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 */
 	function uname($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("uname", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("uname", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('uname', $format);
 	}
 
@@ -357,7 +357,7 @@ class icms_member_user_Object extends icms_core_Object {
 	 */
 	function login_name($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("login_name", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("login_name", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('login_name', $format);
 	}
 
@@ -370,194 +370,194 @@ class icms_member_user_Object extends icms_core_Object {
 	 */
 	function email($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("email", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("email", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('email', $format);
 	}
 	/* no occurrences found in the core */
 	function url($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("url", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("url", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('url', $format);
 	}
 	/* no occurrences found in the core */
 	function user_avatar($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_avatar")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_avatar")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_avatar');
 	}
 	/* no occurrences found in the core */
 	function user_regdate()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_regdate")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_regdate")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_regdate');
 	}
 	/* no occurrences found in the core */
 	function user_icq($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_icq")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_icq")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_icq', $format);
 	}
 	/* no occurrences found in the core */
 	function user_from($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_from")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_from")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_from', $format);
 	}
 	/* no occurrences found in the core */
 	function user_sig($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_sig", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_sig", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_sig', $format);
 	}
 	/* all occurrences replaced in the core */
 	function user_viewemail()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_viewemail")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_viewemail")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_viewemail');
 	}
 	/* no occurrences found in the core */
 	function actkey()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("actkey")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("actkey")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('actkey');
 	}
 	/* no occurrences found in the core */
 	function user_aim($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_aim", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_aim", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_aim', $format);
 	}
 	/* no occurrences found in the core */
 	function user_yim($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_yim", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_yim", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_yim', $format);
 	}
 	/* no occurrences found in the core */
 	function user_msnm($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_msnm", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_msnm", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_msnm', $format);
 	}
 	/* no occurrences found in the core */
 	function pass()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("pass")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("pass")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('pass');
 	}
 	/* no occurrences found in the core */
 	function posts()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("posts")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("posts")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('posts');
 	}
 	/* no occurrences found in the core */
 	function attachsig()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("attachsig")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("attachsig")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar("attachsig");
 	}
 	/* no occurrences found in the core */
 	function level()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("level")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("level")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('level');
 	}
 	/* all occurrences replaced in the core */
 	function theme()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("theme")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("theme")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('theme');
 	}
 	/* no occurrences found in the core */
 	function timezone()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("timezone_offset")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("timezone_offset")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('timezone_offset');
 	}
 	/* no occurrences found in the core */
 	function umode()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("umode")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("umode")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('umode');
 	}
 	/* no occurrences found in the core */
 	function uorder()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("uorder")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("uorder")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('uorder');
 	}
 	// RMV-NOTIFY
 	/* all occurrences replaced in the core */
 	function notify_method()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("notify_method")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("notify_method")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('notify_method');
 	}
 	/* no occurrences found in the core */
 	function notify_mode()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("notify_mode")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("notify_mode")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('notify_mode');
 	}
 	/* no occurrences found in the core */
 	function user_occ($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_occ")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_occ")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_occ', $format);
 	}
 	/* no occurrences found in the core */
 	function bio($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("bio", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("bio", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('bio', $format);
 	}
 	/* no occurrences found in the core */
 	function user_intrest($format='S')
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_intrest", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_intrest", $format)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_intrest', $format);
 	}
 	/* no occurrences found in the core */
 	function last_login()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("last_login")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("last_login")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('last_login');
 	}
 	/* all occurrences replaced in the core */
 	function language()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("language")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("language")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('language');
 	}
 	/* no occurrences found in the core */
 	function openid()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("openid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("openid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('openid');
 	}
 	/* no occurrences found in the core */
 	function salt()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("salt")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("salt")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('salt');
 	}
 	/* no occurrences found in the core */
 	function pass_expired()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("pass_expired")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("pass_expired")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('pass_expired');
 	}
 	/* no occurrences found in the core */
 	function enc_type()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("enc_type")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("enc_type")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('enc_type');
 	}
 	/* all occurrences replaced in the core */
 	function user_viewoid()
 	{
-		icms_core_Debug::setDeprecated('$this->getVar("user_viewoid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->getVar("user_viewoid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('user_viewoid');
 	}
 

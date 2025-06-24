@@ -15,7 +15,5 @@
  * @since        2.0.9.3
  */
 
-icms_core_Debug::setDeprecated('/class/mimetypes.inc.php', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+//icms_core_Debug::setDeprecated('/class/mimetypes.inc.php', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 return icms_Utils::mimetypes();
-
-?>

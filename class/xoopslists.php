@@ -37,7 +37,7 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4 - all instances have been removed from the core
 	 */
 	static public function getDirListAsArray( $dirname ) {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getDirList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getDirList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Filesystem::getDirList($dirname);
 	}
 
@@ -51,7 +51,7 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4 - all instances have been removed from the core
 	 */
 	static public function getFileListAsArray($dirname, $prefix="") {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Filesystem::getFileList($dirname, $prefix);
 	}
 
@@ -66,7 +66,7 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4 - all occurrences have been removed in the core
 	 */
 	static public function getImgListAsArray($dirname, $prefix="") {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Filesystem::getFileList($dirname, $prefix, array('gif', 'jpg', 'png'));
 	}
 
@@ -80,7 +80,7 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4 - all occurrences have been removed from the core
 	 */
 	static public function getFontListAsArray($dirname, $prefix="") {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Filesystem::getFileList($dirname, $prefix, array('ttf'));
 	}
 
@@ -95,7 +95,7 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4 - all occurrences have been removed from the core
 	 */
 	static public function getPhpListAsArray($dirname, $prefix="") {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$filelist = icms_core_Filesystem::getFileList($dirname, $prefix, array('php'));
 		return str_replace('.php', '', $filelist);
 	}
@@ -111,17 +111,17 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4 - no occurrences in the core
 	 */
 	static public function getHtmlListAsArray($dirname, $prefix="") {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Filesystem::getFileList($dirname, $prefix, array('htm', 'html', 'xhtml'));
 	}
 
 	/**
 	 * @deprecated use icms_form_elements_select_Timezone::getTimeZoneList(), instead
-	 * 
+	 *
 	 * @todo	Remove in 1.4
 	 */
 	static public function getTimeZoneList() {
-		icms_core_Debug::setDeprecated('icms_form_elements_select_Timezone::getTimeZoneList()', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_form_elements_select_Timezone::getTimeZoneList()', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_form_elements_select_Timezone::getTimeZoneList();
 	}
 
@@ -165,7 +165,7 @@ class IcmsLists {
 	 * @todo		Remove in version 1.4
 	 */
 	static public function getActiveModulesList() {
-		icms_core_Debug::setDeprecated('icms_module_Handler::getActive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_module_Handler::getActive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_module_Handler::getActive();
 	}
 
@@ -180,7 +180,7 @@ class IcmsLists {
 	 * @return  array	 $avatars	list of avatars in the directory
 	 */
 	static public function getAvatarsList($avatar_dir="") {
-		icms_core_Debug::setDeprecated('icms_data_avatar_Handler::getListFromDir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_data_avatar_Handler::getListFromDir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_data_avatar_Handler::getListFromDir($avatar_dir);
 	}
 
@@ -193,7 +193,7 @@ class IcmsLists {
 	 * @return  mixed	 $avatars|false  list of avatar files in the directory or false if no avatars
 	 */
 	static public function getAllAvatarsList() {
-		icms_core_Debug::setDeprecated('icms_data_avatar_Handler::getAllFromDir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_data_avatar_Handler::getAllFromDir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_data_avatar_Handler::getAllFromDir();
 	}
 
@@ -208,7 +208,7 @@ class IcmsLists {
 	 * @return  array	 $subjects   list of subject files in the directory
 	 */
 	static public function getSubjectsList($sub_dir="") {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList(ICMS_ROOT_PATH . "/images/subject/" , array("gif", "jpg", "png"))', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getFileList(ICMS_ROOT_PATH . "/images/subject/" , array("gif", "jpg", "png"))', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$subjects = array();
 		if ($sub_dir != "") {
 			$subjects = icms_core_Filesystem::getFileList(ICMS_ROOT_PATH . "/images/subject/" . $sub_dir, $sub_dir . "/", array('gif', 'jpg', 'png'));
@@ -225,7 +225,7 @@ class IcmsLists {
 	 * @return  array	 $lang_list   list of language files in the directory
 	 */
 	static public function getLangList() {
-		icms_core_Debug::setDeprecated('icms_core_Filesystem::getDirList{ICMS_ROOT_PATH . "/language/")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Filesystem::getDirList{ICMS_ROOT_PATH . "/language/")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Filesystem::getDirList(ICMS_ROOT_PATH . "/language/");
 	}
 
@@ -238,7 +238,7 @@ class IcmsLists {
 	 * @return  array	 $editor_list   list of files in the directory
 	 */
 	static public function getEditorsList($type='') {
-		icms_core_Debug::setDeprecated('icms_plugins_EditorHandler::getListByType', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_plugins_EditorHandler::getListByType', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_plugins_EditorHandler::getListByType($type);
 	}
 
@@ -249,7 +249,7 @@ class IcmsLists {
 	 * @return array
 	 */
 	static public function getEnabledEditorsList() {
-		icms_core_Debug::setDeprecated('', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		global $icmsConfig;
 		return $icmsConfig['editor_enabled'];
 	}
@@ -262,8 +262,8 @@ class IcmsLists {
 	 * @return  array	 $country_list   list of countries
 	 */
 	static public function getCountryList() {
-		icms_core_Debug::setDeprecated('icms_form_elements_select_Country::getCountryList()', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
-		return icms_form_elements_select_Country::getCountryList();	
+		//icms_core_Debug::setDeprecated('icms_form_elements_select_Country::getCountryList()', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		return icms_form_elements_select_Country::getCountryList();
 	}
 
 	/**
@@ -338,7 +338,7 @@ class IcmsLists {
 	 * @return  array	 $ret   list of user ranks
 	 */
 	static public function getUserRankList() {
-		icms_core_Debug::setDeprecated('SystemUserrankHandler->getList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('SystemUserrankHandler->getList', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_getModuleHandler("userrank", "system")->getList(icms_buildCriteria(array("rank_special" => 1)));
 	}
 }

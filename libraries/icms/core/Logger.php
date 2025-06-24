@@ -67,7 +67,7 @@ class icms_core_Logger {
 	 * @todo		Remove in version 1.4 - no occurrences in the core
 	 */
 	public function activate($showErrors = false) {
-		icms_core_Debug::setDeprecated('$this->activated = ', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->activated = ', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$this->activated = $showErrors;
 	}
 
@@ -300,7 +300,7 @@ class icms_core_Logger {
 	 * @todo	Remove in version 1.4
 	 */
 	public function dumpAll() {
-		icms_core_Debug::setDeprecated('$this->dump("")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->dump("")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->dump( '' );
 	}
 
@@ -312,7 +312,7 @@ class icms_core_Logger {
 	 * @todo	Remove in version 1.4
 	 */
 	public function dumpBlocks() {
-		icms_core_Debug::setDeprecated('$this->dump("blocks")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->dump("blocks")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->dump('blocks');
 	}
 
@@ -324,7 +324,7 @@ class icms_core_Logger {
 	 * @todo	Remove in version 1.4
 	 */
 	public function dumpExtra() {
-		icms_core_Debug::setDeprecated('$this->dump("extra")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->dump("extra")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->dump('extra');
 	}
 
@@ -336,7 +336,7 @@ class icms_core_Logger {
 	 * @todo	Remove in version 1.4
 	 */
 	public function dumpQueries() {
-		icms_core_Debug::setDeprecated('$this->dump("queries")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->dump("queries")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->dump('queries');
 	}
 
@@ -350,7 +350,7 @@ class icms_core_Logger {
 	 * @todo		Remove in version 1.4 - no occurrences in the core
 	 */
 	public function renderErrors() {
-		icms_core_Debug::setDeprecated('$this->dump("errors")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->dump("errors")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->dump( 'errors' );
 	}
 

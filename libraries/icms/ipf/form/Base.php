@@ -406,7 +406,7 @@ class icms_ipf_form_Base extends icms_form_Theme {
 
 			case 'sourceeditor':
 				// leave as last element so that default is executed for sourceeditor as well
-				icms_core_Debug::setDeprecated('icms_ipf_form_elements_Source', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+				//icms_core_Debug::setDeprecated('icms_ipf_form_elements_Source', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 				$controlName = "source";
 
 			default:

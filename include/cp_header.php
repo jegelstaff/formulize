@@ -16,7 +16,7 @@ if(!defined('ICMS_IN_ADMIN')) { define('ICMS_IN_ADMIN', 1); }
  * $xoopsModule or icms::$module
  */
 if (defined('XOOPS_MAINFILE_INCLUDED')) {
-	icms_core_Debug::setDeprecated('', 'mainfile.php should not be loaded before including cp_header.php');
+	//icms_core_Debug::setDeprecated('', 'mainfile.php should not be loaded before including cp_header.php');
 	icms::loadService('module', array('icms_module_Handler', 'service'), array(TRUE));
 }
 /** Load the mainfile */

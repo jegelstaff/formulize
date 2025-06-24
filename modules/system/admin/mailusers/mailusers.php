@@ -9,5 +9,5 @@
  * @version		SVN: $Id: mailusers.php 20791 2011-02-11 04:01:58Z skenow $
  */
 
-icms_core_Debug::setDeprecated('system/admin/mailusers/main.php', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+//icms_core_Debug::setDeprecated('system/admin/mailusers/main.php', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 include_once ICMS_ROOT_PATH . "/modules/system/admin/mailusers/main.php";

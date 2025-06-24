@@ -311,7 +311,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @todo		Remove in version 1.4
 	 */
 	public function mid() {
-		icms_core_Debug::setDeprecated('getVar("mid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('getVar("mid")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('mid');
 	}
 	/**
@@ -320,7 +320,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @todo 		Remove in version 1.4
 	 */
 	public function dirname() {
-		icms_core_Debug::setDeprecated('getVar("dirname")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('getVar("dirname")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('dirname');
 	}
 	/**
@@ -329,7 +329,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @todo		Remove in version 1.4
 	 */
 	public function name() {
-		icms_core_Debug::setDeprecated('getVar("name")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('getVar("name")', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->getVar('name');
 	}
 	/**
@@ -339,7 +339,7 @@ class icms_module_Object extends icms_core_Object {
 	 * @param unknown_type $dirname
 	 */
 	public function &getByDirName($dirname) {
-		icms_core_Debug::setDeprecated('Module Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('Module Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$modhandler = icms::handler('icms_module');
 		$inst = & $modhandler->getByDirname($dirname);
 		return $inst;

@@ -54,7 +54,7 @@ class XoopsTpl extends icms_view_Tpl {
  * @todo		Remove in version 1.4 - there are no other occurrences in the core
  **/
 function xoops_template_touch($tpl_id, $clear_old = true) {
-	icms_core_Debug::setDeprecated('icms_view_Tpl::template_touch($tplid)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_view_Tpl::template_touch($tplid)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	icms_view_Tpl::template_touch($tplid);
 }
 
@@ -68,7 +68,6 @@ function xoops_template_touch($tpl_id, $clear_old = true) {
  **/
 function xoops_template_clear_module_cache($mid)
 {
-	icms_core_Debug::setDeprecated('icms_view_Tpl::template_clear_module_cache($mid)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_view_Tpl::template_clear_module_cache($mid)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	icms_view_Tpl::template_clear_module_cache($mid);
 }
-?>

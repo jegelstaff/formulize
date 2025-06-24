@@ -108,7 +108,7 @@ function xoops_footer() {
  * @todo 		Remove in version 1.4 -  - all occurrences have been removed from the core
  */
 function icms_error_msg($msg, $title='', $render = true){
-	icms_core_Debug::setDeprecated('icms_core_Message::error', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Message::error', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Message::error($msg, $title, $render);
 }
 
@@ -121,7 +121,7 @@ function icms_error_msg($msg, $title='', $render = true){
  * @todo		Remove in version 1.4 - all occurrences have been removed from the core
  */
 function xoops_error($msg, $title=''){
-	icms_core_Debug::setDeprecated('icms_coreMessage::error', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_coreMessage::error', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Message::error($msg, $title, true);
 }
 
@@ -135,7 +135,7 @@ function xoops_error($msg, $title=''){
  * @todo 		Remove in version 1.4 - all occurrences have been removed from the core
  */
 function icms_warning_msg($msg, $title='', $render = false){
-	icms_core_Debug::setDeprecated('icms_core_Message::warning', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Message::warning', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Message::warning($msg, $title, $render);
 }
 
@@ -148,7 +148,7 @@ function icms_warning_msg($msg, $title='', $render = false){
  * @param string $title
  */
 function xoops_warning($msg, $title=''){
-	icms_core_Debug::setDeprecated( 'icms_core_Message::warning' );
+	//icms_core_Debug::setDeprecated( 'icms_core_Message::warning' );
 	return icms_core_Message::warning($msg, $title, true); }
 
 /**
@@ -161,7 +161,7 @@ function xoops_warning($msg, $title=''){
  */
 function xoops_result($msg, $title='')
 {
-	icms_core_Debug::setDeprecated('icms_core_Message::result', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Message::result', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Message::result($msg, $title);
 }
 
@@ -181,7 +181,7 @@ function xoops_result($msg, $title='')
  */
 function xoops_confirm($hiddens, $action, $msg, $submit='', $addtoken = true)
 {
-	icms_core_Debug::setDeprecated('icms_core_Message::confirm', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Message::confirm', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Message::confirm($hiddens, $action, $msg, $submit, $addtoken);
 }
 
@@ -190,7 +190,7 @@ function xoops_confirm($hiddens, $action, $msg, $submit='', $addtoken = true)
  * @todo Remove this in 1.4 - all occurrences have been replaced in the core
  **/
 function xoops_refcheck($docheck=1) {
-	icms_core_Debug::setDeprecated('icms_core_Security->checkReferer', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Security->checkReferer', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms::$security->checkReferer($docheck);
 }
 
@@ -237,7 +237,7 @@ function userTimeToServerTime($timestamp, $userTZ=null)
  * or why not just remove and use icms_core_Password::createSalt($length); instead?
  */
 function xoops_makepass() {
-	icms_core_Debug::setDeprecated('icms_core_Password::createSalt(10) creates random pass of 10 characters', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Password::createSalt(10) creates random pass of 10 characters', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Password::createSalt(10);
 }
 
@@ -248,7 +248,7 @@ function xoops_makepass() {
  */
 function OpenWaitBox()
 {
-	icms_core_Debug::setDeprecated('','This is very old and will be removed in version 1.4');
+	//icms_core_Debug::setDeprecated('','This is very old and will be removed in version 1.4');
 	echo "<div id='waitDiv' style='position:absolute;left:40%;top:50%;visibility:hidden;text-align: center;'>
 	<table cellpadding='6' border='2' class='bg2'>
 		<tr>
@@ -294,7 +294,7 @@ function OpenWaitBox()
  */
 function CloseWaitBox()
 {
-	icms_core_Debug::setDeprecated('', 'This is very old and will be removed in version 1.4');
+	//icms_core_Debug::setDeprecated('', 'This is very old and will be removed in version 1.4');
 	echo "<script type='text/javascript'>
 	<!--//
 	ap_showWaitMessage('waitDiv', 0);
@@ -314,8 +314,7 @@ function CloseWaitBox()
  */
 function checkEmail($email, $antispam = 0, $blacklist = 0)
 {
-	icms_core_Debug::setDeprecated('icms_core_DataFilter->checkVar - type = email, $options1 = true/false ($antispam),
-		$options2 = true/false ($blacklist)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_DataFilter->checkVar - type = email, $options1 = true/false ($antispam),		$options2 = true/false ($blacklist)', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_DataFilter::checkVar($email, 'email', $antispam, $blacklist);
 }
 
@@ -342,7 +341,7 @@ function formatURL($url)
  * @todo Remove in version 1.4 - all occurrences have been removed from the core
  */
 function showbanner() {
-	icms_core_Debug::setDeprecated('xoops_getbanner',sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('xoops_getbanner',sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	echo xoops_getbanner();}
 
 /**
@@ -488,7 +487,7 @@ function xoops_getenv($key)
  * @todo Remove in version 1.4 - all occurrences have been removed from the core
  */
 function getTheme() {
-	icms_core_Debug::setDeprecated( 'get the theme from the global $icmsConfig' );
+	//icms_core_Debug::setDeprecated( 'get the theme from the global $icmsConfig' );
 	return $GLOBALS['icmsConfig']['theme_set'];}
 
 /**
@@ -497,7 +496,7 @@ function getTheme() {
  * @todo Remove in version 1.4 - all instances have been removed from the core
  */
 function getcss($theme = '') {
-	icms_core_Debug::setDeprecated( 'xoops_getcss' );
+	//icms_core_Debug::setDeprecated( 'xoops_getcss' );
 	return xoops_getcss($theme);}
 
 /**
@@ -535,7 +534,7 @@ function xoops_getcss($theme = '')
  * @deprecated	Use icms_messaging_Handler, instead
  */
 function &getMailer() {
-	icms_core_Debug::setDeprecated('icms_messaging_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_messaging_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return new icms_messaging_Handler();
 }
 
@@ -589,7 +588,7 @@ function &xoops_gethandler($name, $optional = false) {
  * @todo Remove in version 1.4 - all instances have been removed from the core
  */
 function xoops_getrank($rank_id =0, $posts = 0) {
-	icms_core_Debug::setDeprecated('SystemUserrankHandler->getRank', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('SystemUserrankHandler->getRank', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_getModuleHandler("userrank", "system")->getRank($rank_id, $posts);
 }
 
@@ -600,7 +599,7 @@ function xoops_getrank($rank_id =0, $posts = 0) {
  *
  */
 function xoops_substr($str, $start, $length, $trimmarker = '...') {
-	icms_core_Debug::setDeprecated('icms_core_DataFilter::icms_substr', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_DataFilter::icms_substr', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_DataFilter::icms_substr($str, $start, $length, $trimmarker);
 }
 
@@ -619,7 +618,7 @@ function xoops_substr($str, $start, $length, $trimmarker = '...') {
  */
 function icms_substr($str, $start, $length, $trimmarker = '...')
 {
-	icms_core_Debug::setDeprecated('icms_core_DataFilter::icms_substr', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_DataFilter::icms_substr', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_DataFilter::icms_substr($str, $start, $length, $trimmarker);
 }
 
@@ -798,7 +797,7 @@ function xoops_getLinkedUnameFromId($userid)
  */
 function xoops_trim($text)
 {
-	icms_core_Debug::setDeprecated('icms_core_DataFilter::icms_trim', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_DataFilter::icms_trim', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_DataFilter::icms_trim($text);
 }
 
@@ -814,7 +813,7 @@ function xoops_trim($text)
  */
 function icms_copyr($source, $dest)
 {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::copyRecursive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::copyRecursive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::copyRecursive($source, $dest);
 }
 
@@ -834,7 +833,7 @@ function icms_copyr($source, $dest)
  * @todo		Remove in version 1.4 - all occurrences have been removed from the core
  */
 function icms_mkdir($target, $mode = 0777, $base = ICMS_ROOT_PATH, $metachars = array() ) {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::mkdir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::mkdir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::mkdir($target, $mode, $base, $metachars);
 }
 
@@ -850,7 +849,7 @@ function icms_mkdir($target, $mode = 0777, $base = ICMS_ROOT_PATH, $metachars = 
  * @todo		Remove in version 1.4 - all occurrences have been removed from the core
  */
 function icms_chmod($target, $mode = 0777) {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::chmod', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::chmod', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::chmod($target, $mode);
 }
 
@@ -1271,7 +1270,7 @@ function icms_sanitizeAdsenses_callback($matches) {
  * @todo Remove this function in version 1.4
  */
 function icms_getLinkedUnameFromId($userid, $name = FALSE, $users = array (), $withContact = FALSE) {
-	icms_core_Debug::setDeprecated('icms_member_user_Handler::getUserLink', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_member_user_Handler::getUserLink', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_member_user_Handler::getUserLink($userid, $name, $users, $withContact);
 }
 
@@ -1540,7 +1539,7 @@ function icms_wordwrap($str, $width, $break = '/n', $cut = false)
  */
 function icms_utf8_strrev($str, $reverse = false)
 {
-	icms_core_Debug::setDeprecated('icms_core_DataFilter::utf8_strrev', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_DataFilter::utf8_strrev', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_DataFilter::utf8_strrev($str, $reverse);
 }
 
@@ -2041,7 +2040,7 @@ function &icms_getModuleHandler($name = null, $module_dir = null, $module_basena
  */
 function &xoops_getmodulehandler($name = null, $module_dir = null, $optional = false)
 {
-	icms_core_Debug::setDeprecated('icms_getModuleHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_getModuleHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_getModuleHandler($name, $module_dir, $module_dir, $optional);
 }
 
@@ -2151,7 +2150,7 @@ function icms_getCurrentUrls() {
  * @todo		Remove in version 1.4 - all instances have been removed from the core
  */
 function icms_deleteFile($dirname) {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::deleteFile', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::deleteFile', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::deleteFile($dirname);
 }
 
@@ -2397,7 +2396,7 @@ function one_wordwrap($string,$width=false){
  * @todo Move to static class Filesystem
  */
 function icms_clean_folders($dir, $remove_admin_cache=false) {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::cleanFolders', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::cleanFolders', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::cleanFolders($dir, $remove_admin_cache);
 }
 
@@ -2408,7 +2407,7 @@ function icms_clean_folders($dir, $remove_admin_cache=false) {
  * @todo		Remove in versison 1.4 - all instances have been removed from the core
  */
 function icms_cleaning_write_folders() {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::cleanFolders', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::cleanFolders', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::cleanFolders(array('templates_c' => ICMS_COMPILE_PATH . "/", 'cache' => ICMS_CACHE_PATH . "/"));
 }
 
@@ -2421,7 +2420,7 @@ function icms_cleaning_write_folders() {
  * @todo		Remove in version 1.4 - all instances have been removed from the core
  */
 function icms_unlinkRecursive($dir, $deleteRootToo=true){
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::deleteRecursive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::deleteRecursive', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::deleteRecursive($dir, $deleteRootToo);
 }
 
@@ -2511,7 +2510,7 @@ function icms_makeSmarty($items) {
  */
 function icms_stream_copy($src, $dest)
 {
-	icms_core_Debug::setDeprecated('icms_core_Filesystem::copyStream', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_core_Filesystem::copyStream', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::copyStream($src, $dest);
 }
 /**
@@ -2672,7 +2671,7 @@ function icms_close_collapsable($name) {
  * @todo		Remove in versions 1.4
  */
 function icms_MakePrinterFriendly($content, $title=false, $description=false, $pagetitle=false, $width=680) {
-	icms_core_Debug::setDeprecated('icms_view_Printerfriendly::generate', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	//icms_core_Debug::setDeprecated('icms_view_Printerfriendly::generate', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_view_Printerfriendly::generate($content, $title, $description, $pagetitle, $width);
 }
 /**

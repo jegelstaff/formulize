@@ -71,7 +71,7 @@ class icms_core_Textsanitizer {
 	 * @return   array
 	 */
 	public function getSmileys($all = false) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::getSmileys', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::getSmileys', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::getSmileys($all);
 	}
 
@@ -82,7 +82,7 @@ class icms_core_Textsanitizer {
 	 * @return   string
 	 */
 	public function smiley($message) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::smiley', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::smiley', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::smiley($message);
 	}
 
@@ -93,7 +93,7 @@ class icms_core_Textsanitizer {
 	 * @return  string
 	 **/
 	public function makeClickable($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::makeClickable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::makeClickable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::makeClickable($text);
 	}
 
@@ -106,7 +106,7 @@ class icms_core_Textsanitizer {
 	 * @return  string
 	 **/
 	public function xoopsCodeDecode(&$text, $allowimage = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::codeDecode', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::codeDecode', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::codeDecode($text, $allowimage);
 	}
 
@@ -146,7 +146,7 @@ class icms_core_Textsanitizer {
 	 * @return   string
 	 */
 	public function nl2Br($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::nl2Br', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::nl2Br', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::nl2Br($text);
 	}
 
@@ -159,7 +159,7 @@ class icms_core_Textsanitizer {
 	 * @return  string
 	 **/
 	public function addSlashes($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::addSlashes($text);
 	}
 
@@ -172,7 +172,7 @@ class icms_core_Textsanitizer {
 	 * @return   string
 	 **/
 	public function stripSlashesGPC($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::stripSlashesGPC($text);
 	}
 
@@ -183,7 +183,7 @@ class icms_core_Textsanitizer {
 	 * @return   string
 	 **/
 	public function htmlSpecialChars($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialchars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialchars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
 
@@ -194,12 +194,12 @@ class icms_core_Textsanitizer {
 	 * @return  string
 	 **/
 	static public function undoHtmlSpecialChars($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::undoHtmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::undoHtmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::undoHtmlSpecialChars($text);
 	}
 
 	public function icms_htmlEntities($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlEntities', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlEntities', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::htmlEntities($text);
 	}
 
@@ -308,7 +308,7 @@ class icms_core_Textsanitizer {
 	 *
 	 **/
 	public function censorString(&$text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::censorString', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::censorString', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::censorString($text);
 	}
 
@@ -316,7 +316,7 @@ class icms_core_Textsanitizer {
 	 * Sanitizing of [code] tag
 	 */
 	public function codePreConv($text, $xcode = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::codePreConv', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::codePreConv', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::codePreConv($text, $xcode);
 	}
 
@@ -329,7 +329,7 @@ class icms_core_Textsanitizer {
 	 * @return	string	$text	 the converted text
 	 */
 	public function codeConv($text, $xcode = 1, $image = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::codeConv', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::codeConv', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::codeConv($text, $xcode, $image);
 	}
 
@@ -341,7 +341,7 @@ class icms_core_Textsanitizer {
 	 * @return  string	$str	  The sanitized decoded string
 	 */
 	public function codeSanitizer($str, $image = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::codeSanitizer', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::codeSanitizer', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::codeSanitizer($str, $image);
 	}
 
@@ -357,7 +357,7 @@ class icms_core_Textsanitizer {
 	 * @param unknown_type $bbcode
 	 */
 	function sanitizeForDisplay($text, $allowhtml = 0, $smiley = 1, $bbcode = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::checkVar - type = text or html, $options1 = output', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::checkVar - type = text or html, $options1 = output', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		if ($allowhtml == 0)
 		{
 			$text = icms_core_DataFilter::htmlSpecialChars($text);
@@ -386,7 +386,7 @@ class icms_core_Textsanitizer {
 	 * @param $bbcode
 	 */
 	function sanitizeForPreview($text, $allowhtml = 0, $smiley = 1, $bbcode = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter->checkVar - type = text or html, options1 = input', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter->checkVar - type = text or html, options1 = input', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$text = $this->oopsStripSlashesGPC($text);
 		if ($allowhtml == 0)
 		{
@@ -413,7 +413,7 @@ class icms_core_Textsanitizer {
 	 * @param unknown_type $text
 	 */
 	function makeTboxData4Save($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::addSlashes($text);
 	}
 
@@ -425,7 +425,7 @@ class icms_core_Textsanitizer {
 	 * @param $smiley
 	 */
 	function makeTboxData4Show($text, $smiley=0) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
 
@@ -436,7 +436,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function makeTboxData4Edit($text) {
-		icms_core_Debug::setDeprecated('icms_core_Datafilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Datafilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
 
@@ -448,7 +448,7 @@ class icms_core_Textsanitizer {
 	 * @param $smiley
 	 */
 	function makeTboxData4Preview($text, $smiley=0) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars and icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars and icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$text = icms_core_DataFilter::stripSlashesGPC($text);
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
@@ -460,7 +460,7 @@ class icms_core_Textsanitizer {
 	 * @param unknown_type $text
 	 */
 	function makeTboxData4PreviewInForm($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars and icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars and icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$text = icms_core_DataFilter::stripSlashesGPC($text);
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
@@ -472,7 +472,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function makeTareaData4Save($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::addSlashes($text);
 	}
 
@@ -497,7 +497,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function makeTareaData4Edit($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
 	/**
@@ -522,7 +522,7 @@ class icms_core_Textsanitizer {
 	 * @param str	$text
 	 */
 	function makeTareaData4PreviewInForm($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::checkVar - type = text, options1 = input', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::checkVar - type = text, options1 = input', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		$text = icms_core_DataFilter::stripSlashesGPC($text);
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
@@ -533,7 +533,7 @@ class icms_core_Textsanitizer {
 	 * @param 		$text
 	 */
 	function makeTareaData4InsideQuotes($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::htmlSpecialChars($text);
 	}
 
@@ -546,7 +546,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function oopsStripSlashesGPC($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::stripSlashesGPC($text);
 	}
 
@@ -559,7 +559,7 @@ class icms_core_Textsanitizer {
 	 * @param unknown_type $text
 	 */
 	function oopsStripSlashesRT($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::stripSlashesGPC', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::stripSlashesGPC($text);
 	}
 
@@ -570,7 +570,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function oopsAddSlashes($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::addSlashes', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::addSlashes($text);
 	}
 
@@ -581,7 +581,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function oopsHtmlSpecialChars($text) {
-		icms_core_Debug::setDeprecated('icms_core_Datafilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_Datafilter::htmlSpecialChars', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_Datafilter::htmlSpecialChars($text);
 	}
 
@@ -592,7 +592,7 @@ class icms_core_Textsanitizer {
 	 * @param $text
 	 */
 	function oopsNl2Br($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::nl2br', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::nl2br', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::nl2br($text);
 	}
 	/**#@-*/
@@ -605,7 +605,7 @@ class icms_core_Textsanitizer {
 	 * @return	object  reference to the {@link icms_config_Item_Object}
 	 */
 	public function icmsCodeDecode_extended($text, $allowimage = 1) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::codeDecode_extended', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::codeDecode_extended', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::codeDecode_extended($text, $allowimage);
 	}
 
@@ -616,7 +616,7 @@ class icms_core_Textsanitizer {
 	 * @return	bool
 	 */
 	public function icmsloadExtension($name) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::loadExtension', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::loadExtension', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::loadExtension($name);
 	}
 
@@ -628,7 +628,7 @@ class icms_core_Textsanitizer {
 	 * @return	array	 the return of the called function
 	 */
 	public function icmsExecuteExtension($name, $text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::executeExtension', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::executeExtension', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
         return icms_core_DataFilter::executeExtension($name, $text);
 	}
 
@@ -639,7 +639,7 @@ class icms_core_Textsanitizer {
 	 * @return	string	$text	 the syntax highlighted text
 	 */
 	public function textsanitizer_syntaxhighlight(&$text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::textsanitizer_syntaxhighlight', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::textsanitizer_syntaxhighlight', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::textsanitizer_syntaxhighlight($text);
 	}
 
@@ -650,7 +650,7 @@ class icms_core_Textsanitizer {
 	 * @return	string	$buffer   the highlighted text
 	 */
 	public function textsanitizer_php_highlight($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::textsanitizer_php_highlight', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::textsanitizer_php_highlight', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::textsanitizer_php_highlight($text);
 	}
 
@@ -661,7 +661,7 @@ class icms_core_Textsanitizer {
 	 * @return	string	$code	 the highlighted text
 	 */
 	public function textsanitizer_geshi_highlight($text) {
-		icms_core_Debug::setDeprecated('icms_core_DataFilter::textsanitizer_geshi_highlight', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('icms_core_DataFilter::textsanitizer_geshi_highlight', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_core_DataFilter::textsanitizer_geshi_highlight($text);
 	}
 }

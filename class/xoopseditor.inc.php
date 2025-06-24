@@ -10,7 +10,7 @@
  * @package		xoopseditor
  */
 
-icms_core_Debug::setDeprecated('mainfile.php', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+//icms_core_Debug::setDeprecated('mainfile.php', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 
 if(!function_exists("xoopseditor_get_rootpath")){
 	function xoopseditor_get_rootpath($type = '')
@@ -39,4 +39,3 @@ if ( DIRECTORY_SEPARATOR != "/" ) $mainfile = str_replace( DIRECTORY_SEPARATOR, 
 
 include $mainfile;
 return defined("ICMS_ROOT_PATH");
-?>

@@ -9,7 +9,7 @@ if (!defined('ICMS_ROOT_PATH')) {
  * deprecated use kernel/object.php instead
  * @todo remove this file in 1.4
  **/
-icms_core_Debug::setDeprecated( '', 'class/xoopsobject.php will be removed in ImpressCMS 1.4 - use kernel/object.php');
+//icms_core_Debug::setDeprecated( '', 'class/xoopsobject.php will be removed in ImpressCMS 1.4 - use kernel/object.php');
 /**
  * Load the new object class
  **/

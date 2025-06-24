@@ -133,14 +133,14 @@ class icms_view_Tpl extends Smarty {
 	 */
 	function xoops_setTemplateDir($dirname) {
 		$this->template_dir = $dirname;
-		icms_core_Debug::setDeprecated('$this->template_dir = $dirname', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->template_dir = $dirname', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 	/**
 	 * @deprecated	Use $this->template_dir instead
 	 * @todo		Remove in version 1.4 - there are no other occurrences in the core
 	 */
 	function xoops_getTemplateDir() {
-		icms_core_Debug::setDeprecated('$this->template_dir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->template_dir', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->template_dir;
 	}
 	/**
@@ -150,7 +150,7 @@ class icms_view_Tpl extends Smarty {
 	 */
 	function xoops_setDebugging($flag=false) {
 		$this->debugging = is_bool($flag) ? $flag : false;
-		icms_core_Debug::setDeprecated('$this->debugging = $flag', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->debugging = $flag', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 	/**
 	 * @deprecated	Use $this->caching = $num, instead
@@ -159,7 +159,7 @@ class icms_view_Tpl extends Smarty {
 	 */
 	function xoops_setCaching( $num = 0) {
 		$this->caching = (int)$num;
-		icms_core_Debug::setDeprecated('$this->caching = $num', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->caching = $num', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 	/**
 	 * @deprecated	Use $this->compile_dir instead
@@ -168,7 +168,7 @@ class icms_view_Tpl extends Smarty {
 	 */
 	function xoops_setCompileDir($dirname) {
 		$this->compile_dir = $dirname;
-		icms_core_Debug::setDeprecated('$this->compile_dir = $dirname', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->compile_dir = $dirname', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 	/**
 	 * @deprecated	Use $this->cache_dir = $dirname, instead
@@ -177,14 +177,14 @@ class icms_view_Tpl extends Smarty {
 	 */
 	function xoops_setCacheDir($dirname) {
 		$this->cache_dir = $dirname;
-		icms_core_Debug::setDeprecated('$this->cache_dir = $dirname', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->cache_dir = $dirname', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 	/**
 	 * @deprecated	Use $this->compile_check, instead
 	 * @todo		Remove in version 1.4 - there are no other occurrences in the core
 	 */
 	function xoops_canUpdateFromFile() {
-		icms_core_Debug::setDeprecated('$this->compile_check', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->compile_check', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->compile_check;
 	}
 	/**
@@ -193,7 +193,7 @@ class icms_view_Tpl extends Smarty {
 	 * @param $data
 	 */
 	function xoops_fetchFromData( $data) {
-		icms_core_Debug::setDeprecated('$this->fetchFromData( $data )', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//icms_core_Debug::setDeprecated('$this->fetchFromData( $data )', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return $this->fetchFromData( $data );
 	}
 	/**
@@ -203,10 +203,10 @@ class icms_view_Tpl extends Smarty {
 	 */
 	function xoops_setCacheTime( $num = 0) {
 		if (( $num = (int)$num ) <= 0) {
-			icms_core_Debug::setDeprecated('$this->caching = 0', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+			//icms_core_Debug::setDeprecated('$this->caching = 0', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 			$this->caching = 0;
 		} else {
-			icms_core_Debug::setDeprecated('$this->cache_lifetime = $num', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+			//icms_core_Debug::setDeprecated('$this->cache_lifetime = $num', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 			$this->cache_lifetime = $num;
 		}
 	}
