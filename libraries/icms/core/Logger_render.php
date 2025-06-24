@@ -86,7 +86,7 @@ if (empty($mode) || $mode == 'errors') {
 	$ret .= "\n</table>\n";
 }
 
-if (empty($mode) || $mode == 'queries') {	
+if (empty($mode) || $mode == 'queries') {
 	$class = 'even';
 	$ret .= '<table id="xo-logger-queries" class="outer"><tr><th>' . _QUERIES . '</th></tr>';
 	$sqlmessages ='';
@@ -173,6 +173,21 @@ if (empty( $mode )) {
 		createCookie(name,"",-1);
 	}
 	function xoSetLoggerView( name) {
+EOT;
+
+// for Anari theme, do some trickery in CSS so the readout works cleanly
+global $xoopsConfig;
+if($xoopsConfig['theme_set'] == 'Anari') {
+	$ret .= "
+	if(name != 'none') {
+		$('body').css('overflow-y', 'scroll');
+	} else {
+		window.scrollTo(0, 0);
+		$('body').css('overflow-y', 'hidden');
+	}";
+}
+
+	$ret .= <<<EOT
 		var log = document.getElementById( "xo-logger-output" );
 		if (!log ) return;
 		var i, elt;
