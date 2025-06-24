@@ -25,6 +25,6 @@ class XoopsTree extends icms_view_Tree {
 
 	public function __construct($table_name, $id_name, $pid_name) {
 		parent::__construct($table_name, $id_name, $pid_name);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_Tree', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_Tree', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

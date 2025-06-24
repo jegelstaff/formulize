@@ -17,6 +17,6 @@ class IcmsFormHidden extends icms_form_elements_Hidden {
 
 	public function __construct($name, $value) {
 		parent::__construct($name, $value);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Hidden', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Hidden', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

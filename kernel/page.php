@@ -27,7 +27,7 @@ class IcmsPage extends icms_data_page_Object {
 
 	public function __construct( & $handler ){
 		parent::__construct( $handler );
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_data_page_Object', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_data_page_Object', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 
 	}
 
@@ -44,7 +44,7 @@ class IcmsPageHandler extends icms_data_page_Handler {
 
 	public function __construct( & $db ){
 		parent::__construct($db);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_data_page_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_data_page_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 
 }

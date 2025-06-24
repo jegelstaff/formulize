@@ -22,7 +22,7 @@ class IcmsFormCaptcha extends icms_form_elements_Captcha {
 			$numchar = null, $minfontsize = null, $maxfontsize = null, $backgroundtype = null,
 			$backgroundnum = null) {
 		parent::__construct($caption, $name, $skipmember, $numchar, $minfontsize, $maxfontsize, $backgroundtype, $backgroundnum);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Captcha', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Captcha', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

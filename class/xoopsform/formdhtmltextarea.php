@@ -30,7 +30,7 @@ class XoopsFormDhtmlTextArea extends icms_form_elements_Dhtmltextarea {
 	private $_deprecated;
 	public function __construct($caption, $name, $value, $rows=5, $cols=50, $hiddentext="xoopsHiddenText", $options = array()) {
 		parent::__construct($caption, $name, $value, $rows, $cols, $hiddentext, $options);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Dhtmltextarea', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Dhtmltextarea', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

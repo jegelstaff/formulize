@@ -17,6 +17,6 @@ class IcmsSecureForm extends icms_ipf_form_Secure {
 
 	public function __construct(&$target, $form_name, $form_caption, $form_action, $form_fields=null, $submit_button_caption = false, $cancel_js_action=false, $captcha=false) {
 		parent::__construct(&$target, $form_name, $form_caption, $form_action, $form_fields, $submit_button_caption, $cancel_js_action, $captcha);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_ipf_form_Secure', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_ipf_form_Secure', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

@@ -36,7 +36,7 @@ class XoopsFormCheckBox extends icms_form_elements_Checkbox {
 	private $_deprecated;
 	public function __construct($caption, $name, $value = null, $delimeter = "&nbsp;") {
 		parent::__construct($caption, $name, $value, $delimeter);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Checkbox', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Checkbox', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 ?>

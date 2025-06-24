@@ -32,7 +32,7 @@ defined('ICMS_ROOT_PATH') or die("Oooops!!");
  */
 class MastopFormSelectImage extends icms_form_elements_select_Image {
 	private $_deprecated;
-	
+
 	/**
 	 * Construtor
 	 *
@@ -43,6 +43,6 @@ class MastopFormSelectImage extends icms_form_elements_select_Image {
 	 */
 	function __construct($caption, $name, $value = null, $cat = null) {
 		parent::__construct($caption, $name, $value, $cat);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_select_Image', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_select_Image', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

@@ -38,7 +38,7 @@ class XoopsSimpleForm extends icms_form_Simple {
 	private $_deprecated;
 	public function __construct($title, $name, $action, $method = "post", $addtoken = false) {
 		parent::__construct($title, $name, $action, $method, $addtoken);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_Simple', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_Simple', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 ?>

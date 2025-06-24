@@ -37,7 +37,7 @@ class XoopsConfigCategory extends icms_config_category_Object
 	function XoopsConfigCategory()
 	{
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_config_category_Object', sprintf(_CORE_REMOVE_IN_VERISON, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_config_category_Object', sprintf(_CORE_REMOVE_IN_VERISON, '1.4'));
 
 	}
 }
@@ -62,7 +62,7 @@ class XoopsConfigCategoryHandler extends icms_config_category_Handler
 	private $_deprecated;
 	public function __construct(&$db) {
 		parent::__construct($db);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_config_category_Handler', sprintf(_CORE_REMOVE_IN_VERISON, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_config_category_Handler', sprintf(_CORE_REMOVE_IN_VERISON, '1.4'));
 	}
 
 }

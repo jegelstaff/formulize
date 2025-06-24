@@ -9,7 +9,7 @@ class XoopsBlock extends icms_view_block_Object {
 	private $_deprecated;
 	public function __construct(&$handler) {
 		parent::__construct($handler);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Block', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Block', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 /**
@@ -21,6 +21,6 @@ class XoopsBlockHandler extends icms_view_block_Handler {
 	private $_deprecated;
 	public function __construct(&$db) {
 		parent::__construct($db);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_BlockHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_BlockHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

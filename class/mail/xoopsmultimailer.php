@@ -32,7 +32,7 @@ class XoopsMultiMailer extends icms_messaging_EmailHandler {
 
 	public function __construct() {
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_messaging_EmailHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_messaging_EmailHandler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

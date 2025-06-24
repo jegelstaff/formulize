@@ -35,7 +35,7 @@ class XoopsFormLabel extends icms_form_elements_Label {
 	private $_deprecated;
 	public function __construct($caption = "", $value = "", $name = "") {
 		parent::__construct($caption, $value, $name);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Label', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Label', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

@@ -39,6 +39,6 @@ class XoopsFormTextDateSelect extends icms_form_elements_Date
 	{
 		//$value = !is_numeric($value) ? time() : (int) ($value); // ALTERED BY FREEFORM SOLUTIONS SO THAT THE LITERAL VALUE PASSED IN IS SENT TO THE PARENT CLASS
 		parent::__construct($caption, $name, $size, $value);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Date', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Date', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

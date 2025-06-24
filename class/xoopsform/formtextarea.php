@@ -39,6 +39,6 @@ class XoopsFormTextArea extends icms_form_elements_Textarea {
 	 */
 	function __construct($caption, $name, $value = "", $rows = 5, $cols = 50) {
 		parent::__construct($caption, $name, $value, $rows, $cols);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Textarea', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Textarea', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

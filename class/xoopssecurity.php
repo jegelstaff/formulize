@@ -32,7 +32,7 @@ class IcmsSecurity extends	icms_core_Security {
 	 **/
 	public function __construct() {
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Security', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Security', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 
 }
@@ -56,6 +56,6 @@ class XoopsSecurity extends icms_core_Security {
 	/* For Backwards Compatibility */
 	public function __construct() {
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Security', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_core_Security', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

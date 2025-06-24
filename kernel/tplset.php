@@ -39,7 +39,7 @@ class XoopsTplset extends icms_view_template_set_Object
 	function XoopsTplset()
 	{
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_template_set_Object', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_template_set_Object', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 
@@ -59,6 +59,6 @@ class XoopsTplsetHandler extends icms_view_template_set_Handler
 	private $_deprecated;
 	public function __construct(&$db) {
 		parent::__construct($db);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_template_set_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_template_set_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

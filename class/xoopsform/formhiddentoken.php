@@ -32,7 +32,7 @@ class XoopsFormHiddenToken extends icms_form_elements_Hiddentoken {
 	private $_deprecated;
 	public function __construct($name = _CORE_TOKEN, $timeout = 0) {
 		parent::__construct($name, $timeout);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Hiddentoken', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Hiddentoken', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

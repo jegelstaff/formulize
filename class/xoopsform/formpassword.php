@@ -35,7 +35,7 @@ class XoopsFormPassword extends icms_form_elements_Password {
 	private $_deprecated;
 	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $classname = '') {
 		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete, $classname);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Password', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Password', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 ?>

@@ -24,6 +24,6 @@ class XoopsMailer extends icms_messaging_Handler {
 
 	public function __construct() {
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_messaging_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_messaging_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

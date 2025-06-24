@@ -38,7 +38,7 @@ class XoopsFormRadioYN extends icms_form_elements_Radioyn
 	private $_deprecated;
 	public function __construct($caption, $name, $value = null, $yes = _YES, $no = _NO) {
 		parent::__construct($caption, $name, $value, $yes, $no);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Radioyn', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Radioyn', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

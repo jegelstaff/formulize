@@ -42,7 +42,7 @@ class XoopsFormSelectLang extends icms_form_elements_select_Lang {
 	private $_deprecated;
 	public function __construct($caption, $name, $value = null, $size = 1) {
 		parent::__construct($caption, $name, $value, $size);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_select_Lang', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_select_Lang', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

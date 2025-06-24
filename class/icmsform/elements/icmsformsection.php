@@ -20,6 +20,6 @@ class IcmsFormSection extends icms_form_Element {
 	private $_deprecated;
 
 	public function __construct($sectionname, $value = FALSE) {
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_ipf_form_elements_Section', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_ipf_form_elements_Section', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

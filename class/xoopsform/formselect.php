@@ -35,7 +35,7 @@ class XoopsFormSelect extends icms_form_elements_Select {
 
 	function __construct($caption, $name, $value = null, $size = 1, $multiple = false){
 		parent::__construct($caption, $name, $value, $size, $multiple);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Select', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Select', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
 

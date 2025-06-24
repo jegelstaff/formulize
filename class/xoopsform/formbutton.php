@@ -35,6 +35,6 @@ class XoopsFormButton extends icms_form_elements_Button {
 	private $_deprecated;
 	public function __construct($caption, $name, $value = "", $type = "button") {
 		parent::__construct($caption, $name, $value, $type);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Button', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Button', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }
