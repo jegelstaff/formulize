@@ -1496,6 +1496,8 @@ div.formulize_autocomplete {
     #formulize_modal .col2 select,
     .col2 input[type="text"],
 		.col2 input[type="number"],
+		.col2 input[type="date"],
+		.col2 input[type="time"],
     .col2 textarea {
         min-width: 700px;
     }
@@ -1503,29 +1505,7 @@ div.formulize_autocomplete {
     .col2 input[type="range"] {
       min-width: 673px;
     }
-    /*.formulize_autocomplete input.formulize_autocomplete_multiple {
-        width: 81%;
-    }
-    .col2 .formulize_autocomplete input.formulize_autocomplete_multiple {
-        width: 630px;
-        min-width: 630px;
-    }*/
-    /*.col2 div.formulize_autocomplete {
-        max-width: 900px;
-    }*/
-}
 
-@media (max-width: 450px) {
-    /*.formulize_autocomplete input.formulize_autocomplete_multiple {
-        width: 215px;
-        min-width: 215px;
-    }*/
-    /*div.formulize_autocomplete {
-        max-width: 900px;
-    }*/
-    /*.formulize_autocomplete_search_label {
-        display: block;
-    }*/
 }
 
 .form-container--full-width-inputs .form-input {
