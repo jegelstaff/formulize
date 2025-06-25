@@ -121,7 +121,7 @@ class icms_ipf_permission_Handler {
 
 		if (!isset($permissions[$gperm_name]) || ($id != null && !isset($permissions[$gperm_name][$id]))) {
 
-			$icmsModule =& $this->handler->getModuleInfo();
+			$icmsModule = $this->handler->getModuleInfo();
 
 			if (is_object($icmsModule)) {
 
@@ -132,7 +132,7 @@ class icms_ipf_permission_Handler {
 				$groups = is_object(icms::$user) ? icms::$user->getGroups() : array(ICMS_GROUP_ANONYMOUS);
 
 				//Get all allowed item ids in this module and for this user's groups
-				$userpermissions =& $gperm_handler->getItemIds($gperm_name, $groups, $icmsModule->getVar('mid'));
+				$userpermissions = $gperm_handler->getItemIds($gperm_name, $groups, $icmsModule->getVar('mid'));
 				$permissions[$gperm_name] = $userpermissions;
 			}
 		}

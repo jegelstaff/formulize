@@ -55,7 +55,7 @@ $thisRendering = microtime(true); // setup a flag that is common to this instanc
 if(!isset($prevRendering)) {
     $prevRendering = array();
 }
-$prevRendering[$thisRendering] = isset($GLOBALS['formulize_thisRendering']) ? $GLOBALS['formulize_thisRendering'] : "";
+$prevRendering["$thisRendering"] = isset($GLOBALS['formulize_thisRendering']) ? $GLOBALS['formulize_thisRendering'] : "";
 $GLOBALS['formulize_thisRendering'] = $thisRendering;
 
 $fid = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
@@ -108,7 +108,7 @@ if ( $res ) {
   }
 }
 
-$myts =& MyTextSanitizer::getInstance();
+$myts = MyTextSanitizer::getInstance();
 $title = $myts->displayTarea($desc_form);
 $currentURL = getCurrentURL();
 
@@ -335,7 +335,7 @@ if(is_object($xoopsTpl)) {
 	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
 }
 // go back to the previous rendering flag, in case this operation was nested inside something else
-$GLOBALS['formulize_thisRendering'] = $prevRendering[$thisRendering];
+$GLOBALS['formulize_thisRendering'] = $prevRendering["$thisRendering"];
 
 writeToFormulizeLog(array(
 	'formulize_event' => 'completed-page-rendering',

@@ -694,7 +694,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		// specify the join info for user table (depending whether there's a query on creator_email or not)
-		$userJoinType = $formFieldFilterMap['creator_email'] ? "INNER" : "LEFT";
+		$userJoinType = (isset($formFieldFilterMap['creator_email']) AND $formFieldFilterMap['creator_email']) ? "INNER" : "LEFT";
 		$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
 
 		// FIGURE OUT THE SORT CLAUSE
@@ -1952,14 +1952,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 		// loop through individual filters and assign them to the oneSideFilters arrays
 		foreach ($conditionsfilter as $form_id => $theseFilters) {
 			foreach ($theseFilters as $thisFilter) {
-				$oneSideFilters[$form_id]['and'] .= isset($oneSideFilters[$form_id]['and']) ? " and ( $thisFilter ) " : " ( $thisFilter ) ";
+				$oneSideFilters[$form_id]['and'] .= (isset($oneSideFilters[$form_id]) AND isset($oneSideFilters[$form_id]['and'])) ? " and ( $thisFilter ) " : " ( $thisFilter ) ";
 			}
 		}
 		foreach ($conditionsfilter_oom as $form_id => $theseFilters) {
 			foreach ($theseFilters as $thisFilter) {
 				$basicOneSideFilter .= $basicOneSideFilter ? " or ( $thisFilter ) " : " ( $thisFilter ) ";
 			}
-			if (isset($oneSideFilters[$form_id]['or'])) {
+			if (isset($oneSideFilters[$form_id]) AND isset($oneSideFilters[$form_id]['or'])) {
 				$oneSideFilters[$form_id]['or'] .= " AND ( $basicOneSideFilter ) ";
 			} else {
 				$oneSideFilters[$form_id]['or'] = " ( $basicOneSideFilter ) ";

@@ -5401,6 +5401,8 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
         return false;
     }
 
+		$frid = 0; // not being passed in right now, maybe it could/should be. But for now, we're not messing with a good thing (it works)
+
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$sourceFormObject = $form_handler->get($formWithSourceElements);
 		if(!$sourceFormObject) {
@@ -5675,7 +5677,7 @@ function formulize_addProcedureChoicesToPost($choices) {
                 $bracketPosEnd = strpos($temp_pair[0],"]",$bracketPos);
                 $_POST[substr($temp_pair[0],0,$bracketPos)][substr($temp_pair[0],$bracketPos+1,$bracketPosEnd-$bracketPos-1)] = $temp_pair[1];
             } else {
-                $_POST[ $temp_pair[0] ] = $temp_pair[1];
+                $_POST[$temp_pair[0]] = isset($temp_pair[1]) ? $temp_pair[1] : null;
             }
         }
     }
@@ -6085,7 +6087,9 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		}
 
 		$filterTerms[$filterId] = parseUserAndToday($filterTerms[$filterId], $filterElementIds[$filterId]); // pass element so we can check if it is a userlist and compare {USER} based on id instead of name
-		$filterTerms[$filterId] = str_replace('{ID}',$curlyBracketEntry,$filterTerms[$filterId]);
+		if(strstr($filterTerms[$filterId], '{ID}')) {
+			$filterTerms[$filterId] = str_replace('{ID}',intval($curlyBracketEntry),$filterTerms[$filterId]);
+		}
 
 		if(!isMetaDataField($filterElementIds[$filterId])) {
 				$targetElementObject = $element_handler->get($filterElementIds[$filterId]);
@@ -7195,41 +7199,43 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
 function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $filterValues = array();
-    foreach($subformConditions[1] as $i=>$thisOp) {
-        if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
-            if($conditionElementObject = $element_handler->get($subformConditions[0][$i])) {
-								$subformConditionElementHandle = convertElementIdsToElementHandles(array($subformConditions[0][$i]));
-								$subformConditionElementHandle = $subformConditionElementHandle[0];
-                // check first for URL matches
-								$conditionElementFid = $conditionElementObject->getVar('id_form');
-                if(substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}") {
-                    $curlyBracketTerm = substr($subformConditions[2][$i],1,-1);
-                    if(isset($_GET[$curlyBracketTerm]) AND ($_GET[$curlyBracketTerm] OR $_GET[$curlyBracketTerm] === 0)) {
-                        $filterValues[$conditionElementFid][$subformConditionElementHandle] = strip_tags(htmlspecialchars($_GET[$curlyBracketTerm], ENT_QUOTES));
-                        continue;
-                    }
-                }
-                // if $subformConditions[0][$i] (left side) is linked to form X
-                // and $subformConditions[2][$i] is a { } reference to an element in form X
-                // then we just want to use $curlyBracketEntryid as the value
-                $conditionElementEleValue = $conditionElementObject->getVar('ele_value');
-                if($conditionElementObject->isLinked AND (!isset($conditionElementEleValue['snapshot']) OR !$conditionElementEleValue['snapshot']) AND substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}" AND $curlyBracketEntryid) {
-                    $ele_value = $conditionElementObject->getVar('ele_value');
-                    $linkProperties = explode("#*=:*", $ele_value[2]);
-                    $sourceFid = $linkProperties[0];
-                    if($dynamicElement = $element_handler->get($curlyBracketTerm)) {
-                        if($dynamicElement->getVar('id_form') == $sourceFid) {
-                            $filterValues[$conditionElementFid][$subformConditionElementHandle] = $curlyBracketEntryid;
-                            continue;
-                        }
-                    }
-                }
-                if(!isset($filterValues[$conditionElementFid][$subformConditions[0][$i]])) {
-                    $filterValues[$conditionElementFid][$subformConditionElementHandle] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $curlyBracketEntryid);
-                }
-            }
-        }
-    }
+		if(is_array($subformConditions) AND isset($subformConditions[1])) {
+			foreach($subformConditions[1] as $i=>$thisOp) {
+					if($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
+							if($conditionElementObject = $element_handler->get($subformConditions[0][$i])) {
+									$subformConditionElementHandle = convertElementIdsToElementHandles(array($subformConditions[0][$i]));
+									$subformConditionElementHandle = $subformConditionElementHandle[0];
+									// check first for URL matches
+									$conditionElementFid = $conditionElementObject->getVar('id_form');
+									if(substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}") {
+											$curlyBracketTerm = substr($subformConditions[2][$i],1,-1);
+											if(isset($_GET[$curlyBracketTerm]) AND ($_GET[$curlyBracketTerm] OR $_GET[$curlyBracketTerm] === 0)) {
+													$filterValues[$conditionElementFid][$subformConditionElementHandle] = strip_tags(htmlspecialchars($_GET[$curlyBracketTerm], ENT_QUOTES));
+													continue;
+											}
+									}
+									// if $subformConditions[0][$i] (left side) is linked to form X
+									// and $subformConditions[2][$i] is a { } reference to an element in form X
+									// then we just want to use $curlyBracketEntryid as the value
+									$conditionElementEleValue = $conditionElementObject->getVar('ele_value');
+									if($conditionElementObject->isLinked AND (!isset($conditionElementEleValue['snapshot']) OR !$conditionElementEleValue['snapshot']) AND substr($subformConditions[2][$i],0,1) == "{" AND substr($subformConditions[2][$i],-1)=="}" AND $curlyBracketEntryid) {
+											$ele_value = $conditionElementObject->getVar('ele_value');
+											$linkProperties = explode("#*=:*", $ele_value[2]);
+											$sourceFid = $linkProperties[0];
+											if($dynamicElement = $element_handler->get($curlyBracketTerm)) {
+													if($dynamicElement->getVar('id_form') == $sourceFid) {
+															$filterValues[$conditionElementFid][$subformConditionElementHandle] = $curlyBracketEntryid;
+															continue;
+													}
+											}
+									}
+									if(!isset($filterValues[$conditionElementFid][$subformConditions[0][$i]])) {
+											$filterValues[$conditionElementFid][$subformConditionElementHandle] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $curlyBracketEntryid);
+									}
+							}
+					}
+			}
+		}
     return $filterValues;
 }
 
@@ -8217,7 +8223,7 @@ function determineViewEntryScreen($screen, $fid) {
     if($screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
         $screen_handler = xoops_getmodulehandler('screen', 'formulize');
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        if($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+        if(isset($_POST['overridescreen']) AND $_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
             return intval($_POST['overridescreen']);
         } elseif($screen AND $screen->getVar('viewentryscreen') AND $screen->getVar('viewentryscreen') != 'none') {
             return intval($screen->getVar('viewentryscreen'));
@@ -8231,7 +8237,7 @@ function determineViewEntryScreen($screen, $fid) {
     if($screen AND is_a($screen, 'formulizeTemplateScreen')) {
         if(isset($_POST['formulize_renderedEntryScreen']) AND is_numeric($_POST['formulize_renderedEntryScreen'])) {
             return intval($_POST['formulize_renderedEntryScreen']);
-        } elseif($_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
+        } elseif(isset($_POST['overridescreen']) AND $_POST['overridescreen'] AND is_numeric($_POST['overridescreen'])) {
             return intval($_POST['overridescreen']);
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');

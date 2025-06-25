@@ -263,13 +263,13 @@ function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrO
 	// or setup validation JS from the object we just rendered
 	} elseif(is_object($formObjectPreppedForRender)) {
 		if($js = $formObjectPreppedForRender->renderValidationJS()) {
-			$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$elementInGridMarkupName] = $js;
+			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = $js;
 		}
 	// or if there isn't an object just rendered, then do a disembodied render
 	} else {
 		list($js, $markupName) = validationJSFromDisembodiedElementRender($elementInGridObject, $entry_id, $prevEntry, $screen);
 		if($js) {
-			$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$elementInGridMarkupName] = $js;
+			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = $js;
 		}
 	}
 	// catalogue the containing grid as conditional, if this element has disabled conditions, so that the grid will re-render if the disabled conditions for this element change

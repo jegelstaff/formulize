@@ -141,7 +141,7 @@ class icms_ipf_Handler extends icms_core_ObjectHandler {
 	 *
 	 * @var array
 	 */
-	public $permissionsArray = false;
+	public $permissionsArray = array();
 
 	public $generalSQL = false;
 
@@ -443,7 +443,7 @@ class icms_ipf_Handler extends icms_core_ObjectHandler {
 		foreach ($arrayObjects as $key => $object) {
 			$ret[$key] = $object->toArray();
 		}
-		if (count($ret > 0)) {
+		if (count($ret) > 0) {
 			return $ret;
 		} else {
 			return false;

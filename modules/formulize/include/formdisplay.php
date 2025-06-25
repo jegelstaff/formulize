@@ -1633,7 +1633,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
-	} 
+	}
 
 	drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
 
@@ -1749,7 +1749,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 		$form->addElement($buttontray);
 	}
 	return $form;
-	
+
 }
 
 // this function draws in the hidden form that handles the All Done logic that sends user off the form
@@ -2745,18 +2745,18 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 	// Add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php, but not added to the main form themselves for whatever reason
 	// This is a very complex, but necessary part of the form setup, because of the multiple times that displayForm might be called, multiple parts of forms that are rendered, as inline subforms, as all kinds of things, and we need to capture all the validation JS from everywhere, and ensure it is executed at the right level, as part of the normal page submission
 	// Related, see the 'formuilze_elementsOnlyForm' check below, where we add things to the catalogue to retrieve later
-	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']])) {
+	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', 1);
 		// There is a catalogue of all the JS we've encountered. We keep track of this so that we only output each snippet of JS once.
 		// The catalogue is made of the hashes of the JS
     global $fullJsCatalogue;
-		foreach($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']] as $thisValidation) { // grab all the validation code we have stored and attach it to this element
+		foreach($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])] as $thisValidation) { // grab all the validation code we have stored and attach it to this element
 			if(trim($thisValidation) != "") {
 				$catalogueKey = md5(trim($thisValidation));
 				if(!isset($fullJsCatalogue[$catalogueKey])) {
 					// add this key to the catalogue (the hash of the js), but only if there is more than one snippet that we're working with.
 					// If there is only one snippet that we're working with, then this hidden validation element, and that element will have exactly the same hash, and that will interfere with the rendering of the validation JS when we're consulting the catalogue later. See the rendering of JS in the formulize form class.
-					if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']]) > 1) {
+					if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])]) > 1) {
 						$fullJsCatalogue[$catalogueKey] = true;
 					}
 					foreach(explode("\n", $thisValidation) as $thisValidationLine) {
@@ -2797,11 +2797,11 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 	$renderedElementMarkupName = "de_{$elementObject->getVar('id_form')}_{$entry_id}_{$elementObject->getVar('ele_id')}";
 	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
 		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName."<<||>>".$elementObject->getVar('ele_handle');
-		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName])) {
+		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName])) {
 			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
 			if($js) {
 				$containerId = isset($GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')]) ? $GLOBALS['elementsInGridsAndTheirContainers'][$elementObject->getVar('ele_id')] : $markupName;
-				$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
+				$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = "if(jQuery('[name^=".$markupName."]').length && window.document.getElementById('formulize-".$containerId."').style.display != 'none') {\n".$js."\n}\n";
 			}
 		}
 	}

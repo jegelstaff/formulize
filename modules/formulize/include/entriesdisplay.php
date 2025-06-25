@@ -84,7 +84,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// must wrap security check in only the conditions in which it is needed, so we don't interfere with saving data in a form (which independently checks the security token)
 	$formulize_LOESecurityPassed = (isset($GLOBALS['formulize_securityCheckPassed']) AND $GLOBALS['formulize_securityCheckPassed']) ? true : false;
-	if((($_POST['delconfirmed'] OR $_POST['cloneconfirmed'] OR $_POST['delviewid_formulize'] OR $_POST['saveid_formulize'] OR is_numeric($_POST['caid']))) AND !$formulize_LOESecurityPassed) {
+	if((
+		(isset($_POST['delconfirmed']) AND $_POST['delconfirmed'])
+		OR (isset($_POST['cloneconfirmed']) AND $_POST['cloneconfirmed'])
+		OR (isset($_POST['delviewid_formulize']) AND $_POST['delviewid_formulize'])
+		OR (isset($_POST['saveid_formulize']) AND $_POST['saveid_formulize'])
+		OR (isset($_POST['caid']) AND is_numeric($_POST['caid'])))
+		AND !$formulize_LOESecurityPassed) {
 		$module_handler =& xoops_gethandler('module');
 		$config_handler =& xoops_gethandler('config');
 		$formulizeModule =& $module_handler->getByDirname("formulize");
@@ -115,7 +121,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['title'] = $displaytitle;
 	$settings['currentURL'] = $currentURL;
 	// get export options
-	if($_POST['xport']) {
+	if(isset($_POST['xport']) AND $_POST['xport']) {
 		$settings['xport'] = $_POST['xport'];
 		if($_POST['xport'] == "custom") {
 			$settings['xport_cust'] = $_POST['xport_cust'];
@@ -134,7 +140,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 */
 
 	// check for deletion request (set by 'delete selected' button)
-	if ($_POST['delconfirmed'] AND $formulize_LOESecurityPassed) {
+	if (isset($_POST['delconfirmed']) AND $_POST['delconfirmed'] AND $formulize_LOESecurityPassed) {
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
 				$delete_entry_id = substr($k, 7);
@@ -156,7 +162,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 */
 
 	// check for cloning request and if present then clone entries
-	if($_POST['cloneconfirmed'] AND $formulize_LOESecurityPassed AND $add_own_entry) {
+	if(isset($_POST['cloneconfirmed']) AND $_POST['cloneconfirmed'] AND $formulize_LOESecurityPassed AND $add_own_entry) {
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
 				$thisentry = substr($k, 7);
@@ -170,7 +176,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 */
 
 	// handle deletion of view...reset currentView
-	if($_POST['delview'] AND $formulize_LOESecurityPassed) {
+	if(isset($_POST['delview']) AND $_POST['delview'] AND $formulize_LOESecurityPassed) {
 		if(substr($_POST['delviewid_formulize'], 1, 4) == "old_") {
 			$delviewid_formulize = substr($_POST['delviewid_formulize'], 5);
 		} else {
@@ -197,7 +203,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// recommendation to users should be to lock the controls for all published views.
 	// (this routine also invoked when a view has been deleted)
 	$resetview = false;
-	if($_POST['resetview']) {
+	if(isset($_POST['resetview']) AND $_POST['resetview']) {
 		$resetview = $_POST['currentview'];
 		foreach($_POST as $k=>$v) {
 			unset($_POST[$k]);
@@ -211,7 +217,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// handle saving of the view if that has been requested
 	// only do this if there's a saveid_formulize and they passed the security check, and any one of these:  they can update other reports, or this is a "new" view, or this is not a new view, and it belongs to them and they have update own reports permission
-	if($_POST['saveid_formulize'] AND $formulize_LOESecurityPassed AND ($update_other_reports OR ((is_numeric($_POST['saveid_formulize']) AND ($update_own_reports AND $xoopsUser->getVar('uid') == getSavedViewOwner($_POST['saveid_formulize']))) OR $_POST['saveid_formulize'] == "new"))) {
+	if(isset($_POST['saveid_formulize']) AND $_POST['saveid_formulize'] AND $formulize_LOESecurityPassed AND ($update_other_reports OR ((is_numeric($_POST['saveid_formulize']) AND ($update_own_reports AND $xoopsUser->getVar('uid') == getSavedViewOwner($_POST['saveid_formulize']))) OR $_POST['saveid_formulize'] == "new"))) {
 		// gather all values
 		//$_POST['currentview'] -- from save (they might have updated/changed the scope)
 		//possible situations:
@@ -408,7 +414,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// override with loadview if that is specified
 
 	$subsequentPageloadAfterInitialLoading = isset($_POST['currentview']) ? true : false;
-	if($loadview AND ((!$_POST['currentview'] AND $_POST['advscope'] == "") OR $_POST['userClickedReset'])) {
+	if($loadview AND ((
+		(!isset($_POST['currentview']) OR !$_POST['currentview'])
+		AND (!isset($_POST['advscope']) OR $_POST['advscope'] == ""))
+		OR $_POST['userClickedReset'])) {
 		if(is_numeric($loadview)) { // new view id
 			$loadview = "p" . $loadview;
 		} else { // new view name -- loading view by name -- note if two reports have the same name, then the first one created will be returned
@@ -533,7 +542,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				}
 			}
 
-			if($_POST['oldcols']) {
+			if(isset($_POST['oldcols']) AND $_POST['oldcols']) {
 				// might have been loaded, or might be passed from prev page, doesn't matter, this is what we're actually going to display
 				$actualColsToDisplay = explode(",", $_POST['oldcols']);
 			} elseif($couldLoadAdvanceView AND !in_array('cols', $features_loaded_from_saved_view) AND $_av_oldcols) {
@@ -645,13 +654,13 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
   // get columns for this form/framework or use columns sent from interface
 	// ele_handles for a form, handles for a framework, includes handles of all unified display forms
-	if($_POST['oldcols']) {
+	if(isset($_POST['oldcols']) AND $_POST['oldcols']) {
 		$showcols = explode(",", $_POST['oldcols']);
 	} else { // or use the defaults
 		$showcols = getDefaultCols($fid, $frid);
 	}
 
-	if($_POST['newcols']) { // if new columns were requested by the user
+	if(isset($_POST['newcols']) AND $_POST['newcols']) { // if new columns were requested by the user
 		$showcols = explode(",", $_POST['newcols']);
 	}
 
@@ -661,8 +670,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 10 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
 	 */
 	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, $_POST['curviewid'], $loadOnlyView, $screen, $_POST['lastloaded']); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
-	if($_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
+	if(isset($_POST['loadviewname']) AND $_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
 	if($settings['curviewid']) {
 		$settings['lastloaded'] = $settings['curviewid'];
@@ -804,29 +813,30 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// get the submitted global search text
-	$settings['global_search'] = $_POST['global_search'];
+	$settings['global_search'] = (isset($_POST['global_search']) ? $_POST['global_search'] : null);
 
 	// get all requested calculations...assign to settings array.
-	$settings['calc_cols'] = $_POST['calc_cols'];
-	$settings['calc_calcs'] = $_POST['calc_calcs'];
-	$settings['calc_blanks'] = $_POST['calc_blanks'];
-	$settings['calc_grouping'] = $_POST['calc_grouping'];
+	$settings['calc_cols'] = (isset($_POST['calc_cols']) ? $_POST['calc_cols'] : null);
+	$settings['calc_calcs'] = (isset($_POST['calc_calcs']) ? $_POST['calc_calcs'] : null);
+	$settings['calc_blanks'] = (isset($_POST['calc_blanks']) ? $_POST['calc_blanks'] : null);
+	$settings['calc_grouping'] = (isset($_POST['calc_grouping']) ? $_POST['calc_grouping'] : null);
 
 	// grab all the locked columns so we can persist them
-	if(strstr($_POST['formulize_lockedColumns'], ",")) {
-		$settings['lockedColumns'] = array_unique(explode(",",trim($_POST['formulize_lockedColumns'],",")));
-	} elseif(strlen($_POST['formulize_lockedColumns'])>0) {
-		$settings['lockedColumns'] = array(intval($_POST['formulize_lockedColumns']));
-	} else {
-		$settings['lockedColumns'] = array();
+	$settings['lockedColumns'] = array();
+	if(isset($_POST['formulize_lockedColumns'])) {
+		if(strstr($_POST['formulize_lockedColumns'], ",")) {
+			$settings['lockedColumns'] = array_unique(explode(",",trim($_POST['formulize_lockedColumns'],",")));
+		} elseif(strlen($_POST['formulize_lockedColumns'])>0) {
+			$settings['lockedColumns'] = array(intval($_POST['formulize_lockedColumns']));
+		}
 	}
 
 	// set the requested procedure, if any
-	$settings['advcalc_acid'] = strip_tags(htmlspecialchars($_POST['advcalc_acid']));
+	$settings['advcalc_acid'] = isset($_POST['advcalc_acid']) ? strip_tags(htmlspecialchars($_POST['advcalc_acid'])) : null;
 	formulize_addProcedureChoicesToPost($settings['advcalc_acid']);
 
 	// gather id of the cached data, if any. Used by the procedure system (advanced calculations).
-	$settings['formulize_cacheddata'] = strip_tags($_POST['formulize_cacheddata']);
+	$settings['formulize_cacheddata'] = isset($_POST['formulize_cacheddata']) ? strip_tags($_POST['formulize_cacheddata']) : null;
 
 	/**
 	 * STAGE 13 - PROCESS CUSTOM BUTTON CLICKS
@@ -862,7 +872,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// figure out which screen to show, and abort drawing a list of entries
-	if($_POST['ventry']) {
+	if(isset($_POST['ventry']) AND $_POST['ventry']) {
 
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
 
@@ -940,10 +950,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	//formulize_benchmark("before gathering dataset");
 
- 	list($data, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, strip_tags($_POST['sort']), strip_tags($_POST['order']), $frid, $fid, $scope, $screen, $currentURL, intval($_POST['forcequery']));
+ 	list($data, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, (isset($_POST['sort']) ? strip_tags($_POST['sort']) : null), (isset($_POST['order']) ? strip_tags($_POST['order']) : null), $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0));
 	//formulize_benchmark("after gathering dataset/before generating calcs");
 
 	// perform calculations on the data if any requested...
+	$cResults = null;
 	if($settings['calc_cols'] AND !$settings['hcalc']) {
 		//formulize_benchmark("before performing calcs");
 		$ccols = explode("/", $settings['calc_cols']);
@@ -1553,7 +1564,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=searches_are_fundamental id=searches_are_fundamental value=\"\"></input>\n";
 
 	// forcequery value, perpetuates from pageload to pageload
-	print "<input type=hidden name=forcequery id=forcequery value=\"" .intval($_POST['forcequery']) . "\"></input>\n";
+	print "<input type=hidden name=forcequery id=forcequery value=\"" .(isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0). "\"></input>\n";
 
 	// lockedColumns is the list of columns that the user has locked in place...however it is relative to the currently active columns...changing columns while columns are locked may have unexpected results!
 	print "<input type=hidden name=formulize_lockedColumns id=formulize_lockedColumns value=\"".implode(",",$lockedColumns)."\"></input>\n";
@@ -4225,7 +4236,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=changecols value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changecols.php?fid=$fid&frid=$frid&cols=$colhandles');\"></input>";
 				break;
 			case "calcButton":
-				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".urlencode($calc_cols)."&calc_calcs=".urlencode($calc_calcs)."&calc_blanks=".urlencode($calc_blanks)."&calc_grouping=".urlencode($calc_grouping)."&cols=".urlencode($colhandles)."&cols=".urlencode($colhandles)."');\"></input>";
+				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=calculations value='" . $buttonText . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/pickcalcs.php?fid=$fid&frid=$frid&calc_cols=".($calc_cols ? urlencode($calc_cols) : "")."&calc_calcs=".($calc_calcs ? urlencode($calc_calcs) : "")."&calc_blanks=".($calc_blanks ? urlencode($calc_blanks) : "")."&calc_grouping=".($calc_grouping ? urlencode($calc_grouping) : "") ."&cols=".($colhandles ? urlencode($colhandles) : "")."');\"></input>";
 				break;
 			case "proceduresButton":
 				// only if any procedures (advanced calculations) are defined for this form
@@ -4342,7 +4353,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	$regeneratePageNumbers = false;
 
 	// if something changed, then we need to redo the page numbers
-	if(!isset($_POST['lastentry']) AND ($filterToCompare != $_POST['formulize_previous_filter'] OR $flatscope != $_POST['formulize_previous_scope'])) {
+	if(!isset($_POST['lastentry']) AND ((isset($_POST['formulize_previous_filter']) AND $filterToCompare != $_POST['formulize_previous_filter']) OR (isset($_POST['formulize_previous_scope']) AND $flatscope != $_POST['formulize_previous_scope']))) {
 			$regeneratePageNumbers = true;
 		}
 	$formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
@@ -4441,7 +4452,7 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
     // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
     $pageNav = "";
 
-    if($_POST['hlist']) {
+    if(isset($_POST['hlist']) AND $_POST['hlist']) {
 		// return no navigation controls if the list is hidden.
 		return array("","","");
 	}
