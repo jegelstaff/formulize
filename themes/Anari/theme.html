@@ -76,7 +76,7 @@ if($xoopsUser) {
         }
       });
     </script>
-		<{else}>
+		<{elseif !isset($openMenuClass)}>
 		<{assign var=openMenuClass value=''}>
     <{/if}>
     <div class="site-layout__sidebar js-flyout-menu <{$openMenuClass}>">
