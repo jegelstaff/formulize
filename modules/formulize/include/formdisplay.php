@@ -3060,7 +3060,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 	$global_search = isset($settings['global_search']) ? $settings['global_search'] : null;
   $pubfilters = (isset($settings['pubfilters']) AND is_array($settings['pubfilters'])) ? $settings['pubfilters'] : array();
 	$searches = array();
-	if (!isset($settings['calhidden']) and !is_array($settings['calhidden']))
+	if (!isset($settings['calhidden']) OR !is_array($settings['calhidden']))
 		$settings['calhidden'] = array();
 	foreach($settings as $k=>$v) {
 		if(substr($k, 0, 7) == "search_" AND $v != "") {
@@ -3094,62 +3094,67 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 	// write hidden fields
 	if($form) { // write as form objects and return form
-		$form->addElement (new XoopsFormHidden ('sort', $sort));
-		$form->addElement (new XoopsFormHidden ('order', $order));
-		$form->addElement (new XoopsFormHidden ('currentview', $currentview));
-		$form->addElement (new XoopsFormHidden ('oldcols', $oldcols));
-		$form->addElement (new XoopsFormHidden ('global_search', $global_search));
-        $form->addElement (new XoopsFormHidden ('pubfilters', implode(",",$pubfilters)));
+		$newHiddenElements = array();
+		$newHiddenElements[] = new XoopsFormHidden ('sort', $sort);
+		$newHiddenElements[] = new XoopsFormHidden ('order', $order);
+		$newHiddenElements[] = new XoopsFormHidden ('currentview', $currentview);
+		$newHiddenElements[] = new XoopsFormHidden ('oldcols', $oldcols);
+		$newHiddenElements[] = new XoopsFormHidden ('global_search', $global_search);
+    $newHiddenElements[] = new XoopsFormHidden ('pubfilters', implode(",",$pubfilters));
 		foreach($searches as $key=>$search) {
 			$search_key = "search_" . $key;
 			$search = str_replace("'", "&#39;", $search);
-			$form->addElement (new XoopsFormHidden ($search_key, stripslashes($search)));
+			$newHiddenElements[] = new XoopsFormHidden ($search_key, stripslashes($search));
 		}
-		$form->addElement (new XoopsFormHidden ('calc_cols', $calc_cols));
-		$form->addElement (new XoopsFormHidden ('calc_calcs', $calc_calcs));
-		$form->addElement (new XoopsFormHidden ('calc_blanks', $calc_blanks));
-		$form->addElement (new XoopsFormHidden ('calc_grouping', $calc_grouping));
-		$form->addElement (new XoopsFormHidden ('hlist', $hlist));
-		$form->addElement (new XoopsFormHidden ('hcalc', $hcalc));
-		$form->addElement (new XoopsFormHidden ('lockcontrols', $lockcontrols));
-		$form->addElement (new XoopsFormHidden ('lastloaded', $lastloaded));
+		$newHiddenElements[] = new XoopsFormHidden ('calc_cols', $calc_cols);
+		$newHiddenElements[] = new XoopsFormHidden ('calc_calcs', $calc_calcs);
+		$newHiddenElements[] = new XoopsFormHidden ('calc_blanks', $calc_blanks);
+		$newHiddenElements[] = new XoopsFormHidden ('calc_grouping', $calc_grouping);
+		$newHiddenElements[] = new XoopsFormHidden ('hlist', $hlist);
+		$newHiddenElements[] = new XoopsFormHidden ('hcalc', $hcalc);
+		$newHiddenElements[] = new XoopsFormHidden ('lockcontrols', $lockcontrols);
+		$newHiddenElements[] = new XoopsFormHidden ('lastloaded', $lastloaded);
 		$asearch = str_replace("'", "&#39;", $asearch);
-		$form->addElement (new XoopsFormHidden ('asearch', stripslashes($asearch)));
-		$form->addElement (new XoopsFormHidden ('calview', $calview));
-		$form->addElement (new XoopsFormHidden ('calfrid', $calfrid));
-		$form->addElement (new XoopsFormHidden ('calfid', $calfid));
+		$newHiddenElements[] = new XoopsFormHidden ('asearch', stripslashes($asearch));
+		$newHiddenElements[] = new XoopsFormHidden ('calview', $calview);
+		$newHiddenElements[] = new XoopsFormHidden ('calfrid', $calfrid);
+		$newHiddenElements[] = new XoopsFormHidden ('calfid', $calfid);
 		foreach($settings['calhidden'] as $chname=>$chvalue) {
-			$form->addElement (new XoopsFormHidden ($chname, $chvalue));
+			$newHiddenElements[] = new XoopsFormHidden ($chname, $chvalue);
 		}
-		$form->addElement (new XoopsFormHidden ('formulize_LOEPageStart', $_POST['formulize_LOEPageStart']));
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_LOEPageStart', $_POST['formulize_LOEPageStart']);
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
 			$currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
 			$prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
-			$form->addElement( new XoopsFormHidden ('formulize_currentPage', $currentPageToSend));
-			$form->addElement( new XoopsFormHidden ('formulize_prevPage', $prevPageToSend));
-			$form->addElement( new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']));
-			$form->addElement( new XoopsFormHidden ('formulize_buttonText', $settings['formulize_buttonText']));
+			$newHiddenElements[] = new XoopsFormHidden ('formulize_currentPage', $currentPageToSend);
+			$newHiddenElements[] = new XoopsFormHidden ('formulize_prevPage', $prevPageToSend);
+			$newHiddenElements[] = new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']);
+			$newHiddenElements[] = new XoopsFormHidden ('formulize_buttonText', $settings['formulize_buttonText']);
 		}
 		if($_POST['overridescreen']) {
-			$form->addElement( new XoopsFormHidden ('overridescreen', intval($_POST['overridescreen'])));
+			$newHiddenElements[] = new XoopsFormHidden ('overridescreen', intval($_POST['overridescreen']));
 		}
 		if(strlen($_POST['formulize_lockedColumns'])>0) {
-			$form->addElement( new XoopsFormHidden ('formulize_lockedColumns', $_POST['formulize_lockedColumns']));
+			$newHiddenElements[] = new XoopsFormHidden ('formulize_lockedColumns', $_POST['formulize_lockedColumns']);
 		}
-        $form->addElement( new XoopsFormHidden ('formulize_originalVentry', $settings['formulize_originalVentry']));
-        foreach($allEntries as $fid=>$fidEntries) {
-            foreach($fidEntries as $entry_id) {
-                if($entry_id) {
-                    $form->addElement(new XoopsFormHidden ('form_'.$fid.'_rendered_entry[]', $entry_id));
-                }
-            }
-        }
-        if($screen) {
-            $form->addElement(new XoopsFormHidden ('formulize_renderedEntryScreen', $screen->getVar('sid')));
-            $form->addElement (new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank')));
-        }
-        $form->addElement (new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken()));
-				$form->addElement (new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage'])));
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_originalVentry', $settings['formulize_originalVentry']);
+		foreach($allEntries as $fid=>$fidEntries) {
+				foreach($fidEntries as $entry_id) {
+						if($entry_id) {
+								$newHiddenElements[] = new XoopsFormHidden ('form_'.$fid.'_rendered_entry[]', $entry_id);
+						}
+				}
+		}
+		if($screen) {
+				$newHiddenElements[] = new XoopsFormHidden ('formulize_renderedEntryScreen', $screen->getVar('sid'));
+				$newHiddenElements[] = new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank'));
+		}
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken());
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage']));
+		foreach($newHiddenElements as $nhe) {
+			$form->addElement($nhe);
+			unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
+		}
 		return $form;
 	} else { // write as HTML
 		print "<input type=hidden name=sort value='" . $sort . "'>";

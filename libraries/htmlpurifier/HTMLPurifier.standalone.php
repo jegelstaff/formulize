@@ -263,6 +263,7 @@ class HTMLPurifier
  * Defines common attribute collections that modules reference
  */
 
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrCollections
 {
 
@@ -398,6 +399,7 @@ class HTMLPurifier_AttrCollections
  * subclasses are also responsible for cleaning the code if possible.
  */
 
+#[AllowDynamicProperties]
 abstract class HTMLPurifier_AttrDef
 {
 
@@ -526,6 +528,7 @@ abstract class HTMLPurifier_AttrDef
  * more details.
  */
 
+#[AllowDynamicProperties]
 abstract class HTMLPurifier_AttrTransform
 {
 
@@ -572,6 +575,7 @@ abstract class HTMLPurifier_AttrTransform
 /**
  * Provides lookup array of attribute types to HTMLPurifier_AttrDef objects
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTypes
 {
     /**
@@ -10726,6 +10730,7 @@ class HTMLPurifier_AttrTransform_Length extends HTMLPurifier_AttrTransform
 /**
  * Pre-transform that changes deprecated name attribute to ID if necessary
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTransform_Name extends HTMLPurifier_AttrTransform
 {
 
@@ -10750,6 +10755,7 @@ class HTMLPurifier_AttrTransform_Name extends HTMLPurifier_AttrTransform
  * it is present with an equivalent id attribute, it is passed through;
  * otherwise validation is performed.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTransform_NameSync extends HTMLPurifier_AttrTransform
 {
 
@@ -10779,6 +10785,7 @@ class HTMLPurifier_AttrTransform_NameSync extends HTMLPurifier_AttrTransform
  * Adds rel="nofollow" to all outbound links.  This transform is
  * only attached if Attr.Nofollow is TRUE.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTransform_Nofollow extends HTMLPurifier_AttrTransform
 {
     private $parser;
@@ -11718,9 +11725,9 @@ class HTMLPurifier_DefinitionCache_Serializer extends
         if (!is_dir($directory)) {
             $base = $this->generateBaseDirectoryPath($config);
             if (!is_dir($base)) {
-                trigger_error('Base directory '.$base.' does not exist,
+                /*trigger_error('Base directory '.$base.' does not exist,
                     please create or change using %Cache.SerializerPath',
-                    E_USER_WARNING);
+                    E_USER_WARNING);*/
                 return false;
             } elseif (!$this->_testPermissions($base, $chmod)) {
                 return false;
