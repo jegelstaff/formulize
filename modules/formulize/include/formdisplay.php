@@ -277,6 +277,7 @@ class formulize_themeForm extends XoopsThemeForm {
                         'elementHelpText'=>'',
                         'renderedElement'=>$ele[0],
                         'labelClass'=>"formulize-label-".(isset($ele[2]) ? $ele[2] : 'no-handle'),
+												'inputClass'=>"",
                         'columns'=>$columns,
                         'column1Width'=>$column1Width,
                         'column2Width'=>$column2Width,
@@ -298,6 +299,8 @@ class formulize_themeForm extends XoopsThemeForm {
                         'elementCaption'=>'',
                         'elementHelpText'=>'',
                         'renderedElement'=>$ele,
+												'labelClass'=>"formulize-label-no-handle",
+												'inputClass'=>"",
                         'columns'=>$columns,
                         'column1Width'=>$column1Width,
                         'column2Width'=>$column2Width,
@@ -410,12 +413,15 @@ class formulize_themeForm extends XoopsThemeForm {
 			$show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 		}
 
-        if(isset($ele->formulize_element) AND isset($formulize_drawnElements[trim($ele->getName())])) {
+    if(isset($ele->formulize_element) AND isset($formulize_drawnElements[trim($ele->getName())])) {
 			return $formulize_drawnElements[trim($ele->getName())];
 		} elseif(isset($ele->formulize_element)) {
 			$templateVariables['labelClass'] = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
 			$templateVariables['inputClass'] = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
-        }
+    } else {
+			$templateVariables['labelClass'] = "";
+			$templateVariables['inputClass'] = "";
+		}
 
         $element_name = trim($ele->getName());
 
@@ -1411,7 +1417,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				}
 		}
 
-    if(count((array) $sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
+    if(isset($sub_fids) AND count((array) $sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
       // on the master.php page, draw in the subforms "raw", only if there has been no rendering of these subforms already in a regular subform element
 			if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
 				foreach($sub_fids as $subform_id) {
@@ -1464,7 +1470,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         $newHiddenElements[] = new XoopsFormHidden ('deletesubsflag', 0);
         $newHiddenElements[] = new XoopsFormHidden ('clonesubsflag', 0);
 			}
-			drawJavascript(($nosave ? $nosave : null), $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
+			drawJavascript((isset($nosave) ? $nosave : null), $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
       $newHiddenElements[] = new xoopsFormHidden('save_and_leave', 0);
 			// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 			$newHiddenElements[] = new XoopsFormHidden ('primaryfid', (isset($fids[0]) ? $fids[0] : 0));
@@ -2509,7 +2515,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 				$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
 				$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
-				$punames[] = (is_array($urowqforrealnames) AND $urowqforrealnames[0]) ? $urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
+				$punames[] = (is_array($urowqforrealnames) AND !empty($urowqforrealnames)) ? ($urowqforrealnames[0] ? $urowqforrealnames[0] : $urowqforrealnames[1]) : ""; // use the uname if there is no full name
 			}
 
 			// alphabetize the proxy list added 11/2/04
@@ -3136,7 +3142,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 			$newHiddenElements[] = new XoopsFormHidden ('formulize_currentPage', $currentPageToSend);
 			$newHiddenElements[] = new XoopsFormHidden ('formulize_prevPage', $prevPageToSend);
 			$newHiddenElements[] = new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']);
-			$newHiddenElements[] = new XoopsFormHidden ('formulize_buttonText', $settings['formulize_buttonText']);
+			$newHiddenElements[] = new XoopsFormHidden ('formulize_buttonText', (isset($settings['formulize_buttonText']) ? $settings['formulize_buttonText'] : ""));
 		}
 		if($_POST['overridescreen']) {
 			$newHiddenElements[] = new XoopsFormHidden ('overridescreen', intval($_POST['overridescreen']));
@@ -3198,7 +3204,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 			print "<input type=hidden name=formulize_currentPage value='".$currentPageToSend."'>";
 			print "<input type=hidden name=formulize_prevPage value='".$prevPageToSend."'>";
 			print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
-			print "<input type=hidden name=formulize_buttonText value='".$settings['formulize_buttonText']."'>";
+			print "<input type=hidden name=formulize_buttonText value='".(isset($settings['formulize_buttonText']) ? $settings['formulize_buttonText'] : "")."'>";
 		}
 		if($_POST['overridescreen']) {
 			print "<input type=hidden name=overridescreen value='".intval($_POST['overridescreen'])."'>";

@@ -46,7 +46,7 @@ function multipageSetHiddenFields(page, prevpage) {
   window.document.formulize_mainform.formulize_currentPage.value = page<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_prevPage.value = prevpage<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_doneDest.value = '<?php print $settings['formulize_doneDest']; ?>';
-  window.document.formulize_mainform.formulize_buttonText.value = '<?php print $settings['formulize_buttonText']; ?>';
+  window.document.formulize_mainform.formulize_buttonText.value = '<?php print isset($settings['formulize_buttonText']) ? $settings['formulize_buttonText'] : ""; ?>';
 }
 
 function pageJump(options, prevpage) {
