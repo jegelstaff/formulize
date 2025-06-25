@@ -229,7 +229,7 @@ class icms_member_user_Object extends icms_core_Object {
 	public function &getGroups() {
 		if (empty($this->_groups)) {
 			$member_handler = icms::handler('icms_member');
-			$this->_groups =& $member_handler->getGroupsByUser($this->getVar('uid'));
+			$this->_groups = $member_handler->getGroupsByUser($this->getVar('uid'));
 		}
 		return $this->_groups;
 	}

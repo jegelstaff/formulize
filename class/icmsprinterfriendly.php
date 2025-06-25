@@ -34,7 +34,7 @@ class IcmsPrinterFriendly extends icms_view_Printerfriendly {
 	 */
 	public function __construct($content, $title=false, $dsc=false) {
 		parent::__construct();
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_Printerfriendly', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_Printerfriendly', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 
 }

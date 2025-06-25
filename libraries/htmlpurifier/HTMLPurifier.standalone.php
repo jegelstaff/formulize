@@ -71,6 +71,7 @@
  * @todo We need an easier way to inject strategies using the configuration
  *       object.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier
 {
 
@@ -262,6 +263,7 @@ class HTMLPurifier
  * Defines common attribute collections that modules reference
  */
 
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrCollections
 {
 
@@ -397,6 +399,7 @@ class HTMLPurifier_AttrCollections
  * subclasses are also responsible for cleaning the code if possible.
  */
 
+#[AllowDynamicProperties]
 abstract class HTMLPurifier_AttrDef
 {
 
@@ -470,7 +473,7 @@ abstract class HTMLPurifier_AttrDef
     }
 
     /**
-     * Parses a possibly escaped CSS string and returns the "pure" 
+     * Parses a possibly escaped CSS string and returns the "pure"
      * version of it.
      */
     protected function expandCSSEscape($string) {
@@ -525,6 +528,7 @@ abstract class HTMLPurifier_AttrDef
  * more details.
  */
 
+#[AllowDynamicProperties]
 abstract class HTMLPurifier_AttrTransform
 {
 
@@ -571,6 +575,7 @@ abstract class HTMLPurifier_AttrTransform
 /**
  * Provides lookup array of attribute types to HTMLPurifier_AttrDef objects
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTypes
 {
     /**
@@ -6092,6 +6097,7 @@ class HTMLPurifier_Length
  * without a lot of lookaheads to see when a tag is closed. This is a
  * limitation of the token system and some workarounds would be nice.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_Lexer
 {
 
@@ -6585,6 +6591,7 @@ class HTMLPurifier_PropertyListIterator extends FilterIterator
         $this->filter = $filter;
     }
 
+		#[\ReturnTypeWillChange]
     public function accept() {
         $key = $this->getInnerIterator()->key();
         if( strncmp($key, $this->filter, $this->l) !== 0 ) {
@@ -6641,6 +6648,7 @@ class HTMLPurifier_StringHash extends ArrayObject
     /**
      * Retrieves a value, and logs the access.
      */
+		#[\ReturnTypeWillChange]
     public function offsetGet($index) {
         $this->accessed[$index] = true;
         return parent::offsetGet($index);
@@ -10724,6 +10732,7 @@ class HTMLPurifier_AttrTransform_Length extends HTMLPurifier_AttrTransform
 /**
  * Pre-transform that changes deprecated name attribute to ID if necessary
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTransform_Name extends HTMLPurifier_AttrTransform
 {
 
@@ -10748,6 +10757,7 @@ class HTMLPurifier_AttrTransform_Name extends HTMLPurifier_AttrTransform
  * it is present with an equivalent id attribute, it is passed through;
  * otherwise validation is performed.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTransform_NameSync extends HTMLPurifier_AttrTransform
 {
 
@@ -10777,6 +10787,7 @@ class HTMLPurifier_AttrTransform_NameSync extends HTMLPurifier_AttrTransform
  * Adds rel="nofollow" to all outbound links.  This transform is
  * only attached if Attr.Nofollow is TRUE.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_AttrTransform_Nofollow extends HTMLPurifier_AttrTransform
 {
     private $parser;
@@ -11716,9 +11727,9 @@ class HTMLPurifier_DefinitionCache_Serializer extends
         if (!is_dir($directory)) {
             $base = $this->generateBaseDirectoryPath($config);
             if (!is_dir($base)) {
-                trigger_error('Base directory '.$base.' does not exist,
+                /*trigger_error('Base directory '.$base.' does not exist,
                     please create or change using %Cache.SerializerPath',
-                    E_USER_WARNING);
+                    E_USER_WARNING);*/
                 return false;
             } elseif (!$this->_testPermissions($base, $chmod)) {
                 return false;
@@ -15392,8 +15403,8 @@ class HTMLPurifier_Strategy_MakeWellFormed extends HTMLPurifier_Strategy
                     }
 
                     if ($autoclose && $definition->info[$token->name]->wrap) {
-                        // Check if an element can be wrapped by another 
-                        // element to make it valid in a context (for 
+                        // Check if an element can be wrapped by another
+                        // element to make it valid in a context (for
                         // example, <ul><ul> needs a <li> in between)
                         $wrapname = $definition->info[$token->name]->wrap;
                         $wrapdef = $definition->info[$wrapname];

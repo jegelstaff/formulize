@@ -171,7 +171,7 @@ EOF;
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 
-		$form_ele =& $renderer->constructElement($renderedElementMarkupName, $ele_value, $entry, $isDisabled, $screen);
+		$form_ele = $renderer->constructElement($renderedElementMarkupName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
 		}
@@ -218,14 +218,14 @@ EOF;
 				// Subform rows could be refactored along the line of grid elements, to more rigorously handle the generation of elements and their validation js
 				          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
 										if($js = $form_ele->renderValidationJS()) {
-											$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = $js;
+											$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = $js;
 										}
 				          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
 				            $eltname    = $form_ele->getName();
 				            $eltcaption = $form_ele->getCaption();
 				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 				            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-										$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$renderedElementMarkupName] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+										$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
 				          }
 					if($isDisabled) {
 						return "rendered-disabled";
@@ -308,7 +308,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	}
 
 	$elementFilterSettings = $elementObject->getVar('ele_filtersettings');
-	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
+	if($allowed AND isset($elementFilterSettings[0]) AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		if(!$subformCreateEntry) {
 			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]));

@@ -531,7 +531,7 @@ function xoops_getcss($theme = '')
  *
  * @return		object  localized email object handler
  * @todo 		Remove in version 1.4
- * @deprecated	Use icms_messaging_Handler, instead
+ * @ deprecated	Use icms_messaging_Handler, instead
  */
 function &getMailer() {
 	//icms_core_Debug::setDeprecated('icms_messaging_Handler', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
@@ -883,8 +883,8 @@ function &icms_getModuleInfo($moduleName = false)
 		else
 		{
 			$hModule = icms::handler('icms_module');
-			if($moduleName != 'icms') {$icmsModules[$moduleName] = & $hModule->getByDirname($moduleName);}
-			else {$icmsModules[$moduleName] = & $hModule->getByDirname('system');}
+			if($moduleName != 'icms') {$icmsModules[$moduleName] = $hModule->getByDirname($moduleName);}
+			else {$icmsModules[$moduleName] = $hModule->getByDirname('system');}
 		}
 	}
 	return $icmsModules[$moduleName];

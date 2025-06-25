@@ -110,8 +110,8 @@ class formulizeScreen extends FormulizeObject {
             if (file_exists($pathname)) {
                 $templates[$theme][$this->getVar('sid')][$templateName] = file_get_contents($pathname);
             } else {
-                $templates[$theme][$this->getVar('sid')][$templateName] = htmlspecialchars_decode($this->getVar($templateName), ENT_QUOTES);
-                if (strlen($templates[$theme][$this->getVar('sid')][$templateName]) > 0) {
+                $templates[$theme][$this->getVar('sid')][$templateName] = $this->getVar($templateName) ? htmlspecialchars_decode($this->getVar($templateName), ENT_QUOTES) : $this->getVar($templateName);
+                if ($templates[$theme][$this->getVar('sid')][$templateName] AND strlen($templates[$theme][$this->getVar('sid')][$templateName]) > 0) {
                     // the template content is stored in the database, but not the cache file
                     // database may have been copied from another site, so write to cache file
                     // Or, user has switched themes, so we initialze the theme file based on the last loaded theme file that was written to DB

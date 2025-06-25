@@ -33,6 +33,7 @@
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
+#[AllowDynamicProperties]
 class FormulizeObject extends XoopsObject {
 
 	static function sanitize_handle_name($handle_name) {

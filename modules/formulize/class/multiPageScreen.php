@@ -89,15 +89,17 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	function getConditions() {
 	    $conditions = $this->getVar('conditions');
 	    $processedConditions = array();
-	    foreach($conditions as $pageid=>$thisCondition) {
-		$pagenumber = $pageid+1;
-		if(isset($thisCondition['details'])) {
-		    $processedConditions[$pagenumber] = array(0=>$thisCondition['details']['elements'], 1=>$thisCondition['details']['ops'], 2=>$thisCondition['details']['terms']);
-		} else {
-		    $processedConditions[$pagenumber] = $thisCondition;
-		}
-	    }
-	    ksort($processedConditions);
+			if(is_array($conditions)) {
+				foreach($conditions as $pageid=>$thisCondition) {
+					$pagenumber = $pageid+1;
+					if(isset($thisCondition['details'])) {
+							$processedConditions[$pagenumber] = array(0=>$thisCondition['details']['elements'], 1=>$thisCondition['details']['ops'], 2=>$thisCondition['details']['terms']);
+					} else {
+							$processedConditions[$pagenumber] = $thisCondition;
+					}
+				}
+				ksort($processedConditions);
+			}
 	    return $processedConditions;
 	}
 
@@ -277,7 +279,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
     // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
     $buttonText = $screen->getVar('buttontext');
-    $thankYouLinkText = is_array($buttonText) ? $buttonText['thankYouLinkText'] : $buttonText;
+    $thankYouLinkText = (is_array($buttonText) AND isset($buttonText['thankYouLinkText'])) ? $buttonText['thankYouLinkText'] : "";
     $buttonText = is_array($buttonText) ? $buttonText : array();
 
     updateMultipageTemplates($screen);
@@ -489,17 +491,24 @@ function multiPageScreen_addToOptionsListByFid($fid, $frid=0, $options=array()) 
 }
 
 function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) {
-            $thesecons = $conditions[$currentPage];
-            $elements = $thesecons[0];
-            $ops = $thesecons[1];
-            $terms = $thesecons[2];
-            $types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
-            $filter = "";
-            $oomfilter = "";
-    $blankORSearch = "";
 
-    // new entries cannot meet conditions yet because they are not saved
-    // UNLESS the condition is = {BLANK}
+	if($thesecons = (is_array($conditions) AND isset($conditions[$currentPage])) ? $conditions[$currentPage] : array()) {
+		$elements = $thesecons[0];
+		$ops = $thesecons[1];
+		$terms = $thesecons[2];
+		$types = $thesecons[3]; // indicates if the term is part of a must or may set, ie: boolean and or or
+	} else {
+		$elements = array();
+		$ops = array();
+		$terms = array();
+		$types = array();
+	}
+	$filter = "";
+	$oomfilter = "";
+	$blankORSearch = "";
+
+  // new entries cannot meet conditions yet because they are not saved
+  // UNLESS the condition is = {BLANK}
 	$allPassed = true;
 	$oomPassed = false;
     $oomNotExists = true;

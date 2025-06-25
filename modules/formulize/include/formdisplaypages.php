@@ -44,7 +44,7 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $button_text=array(), $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $thankYouLinkText="", $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
 
     formulize_benchmark("Start of displayFormPages.");
 
@@ -84,6 +84,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
     }
     // set prevPage, last page that the user was on, not necessarily the previous page numerically
     $prevPage = 1;
+		$prevScreen = null;
     if(isset($_POST['formulize_prevPage']) AND strstr($_POST['formulize_prevPage'],'-')) {
         $cpParts = explode('-',$_POST['formulize_prevPage']);
         $prevPage = $cpParts[0];
@@ -132,13 +133,13 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
     }
 
 	if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
-	if(!$done_dest AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
-	if(!$button_text AND $_POST['formulize_buttonText']) { $button_text = $_POST['formulize_buttonText']; }
+	if(!$done_dest AND isset($_POST['formulize_doneDest']) AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
+	if(!$thankYouLinkText AND isset($_POST['formulize_buttonText']) AND $_POST['formulize_buttonText']) { $thankYouLinkText = $_POST['formulize_buttonText']; }
 
-    $button_text = $button_text ? $button_text : _formulize_DMULTI_ALLDONE;
+    $thankYouLinkText = $thankYouLinkText ? $thankYouLinkText : _formulize_DMULTI_ALLDONE;
 
     $settings['formulize_doneDest'] = $done_dest;
-    $settings['formulize_buttonText'] = $button_text;
+    $settings['formulize_buttonText'] = $thankYouLinkText; // formulize_buttonText is some ancient name for the key in POST, and should be re-examined and refactored (or removed? does anything depend on this??)
 
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 
@@ -277,7 +278,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	if($currentPage != $thanksPage) {
 		if($pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 
-			if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND !$_POST['goto_sfid']) { // only show intro text on first page if there's actually a form there
+			if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND (!isset($_POST['goto_sfid']) OR !$_POST['goto_sfid'])) { // only show intro text on first page if there's actually a form there
 					print undoAllHTMLChars($introtext);
 			}
 

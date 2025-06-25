@@ -33,6 +33,6 @@ class xos_logos_PageBuilder extends icms_view_PageBuilder {
 	private $_deprecated;
 	public function xoInit($options = array()) {
 		parent::xoInit($options);
-		$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_PageBuilder', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_view_PageBuilder', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

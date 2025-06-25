@@ -256,25 +256,25 @@ function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrO
 	$GLOBALS['elementsInGridsAndTheirContainers'][$elementId] = $containerElementMarkupName;
 	$gridDisplayConditions = $gridElementObject->getVar('ele_filtersettings');
 	// setup validation javascript with conditional structure, if the containing grid has display conditions
-	if(is_array($gridDisplayConditions[0]) AND count($gridDisplayConditions[0]) > 0 ) {
+	if(isset($gridDisplayConditions[0]) AND is_array($gridDisplayConditions[0]) AND count($gridDisplayConditions[0]) > 0 ) {
 		catalogConditionalElement($elementInGridMarkupName, array_unique($gridDisplayConditions[0]));
 		makePlaceholderForConditionalElement($elementInGridObject, $entry_id, $prevEntry, $screen); // don't actually put the placeholder into the form being compiled, because the containing grid is all we need. Just need to do book keeping for JS.
 		removeFromConditionalCatalogue($elementInGridMarkupName); // only need to be in for generating the JS, otherwise, we don't want them here so that they don't add unnecessary complexity to the conditional event processing JS, since it's their container that matters for events.
 	// or setup validation JS from the object we just rendered
 	} elseif(is_object($formObjectPreppedForRender)) {
 		if($js = $formObjectPreppedForRender->renderValidationJS()) {
-			$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$elementInGridMarkupName] = $js;
+			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = $js;
 		}
 	// or if there isn't an object just rendered, then do a disembodied render
 	} else {
 		list($js, $markupName) = validationJSFromDisembodiedElementRender($elementInGridObject, $entry_id, $prevEntry, $screen);
 		if($js) {
-			$GLOBALS['formulize_renderedElementsValidationJS'][$GLOBALS['formulize_thisRendering']][$elementInGridMarkupName] = $js;
+			$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$elementInGridMarkupName] = $js;
 		}
 	}
 	// catalogue the containing grid as conditional, if this element has disabled conditions, so that the grid will re-render if the disabled conditions for this element change
 	$elementInGridDisabledConditions = $elementInGridObject->getVar('ele_disabledconditions');
-	if(is_array($elementInGridDisabledConditions[0]) AND count($elementInGridDisabledConditions[0]) > 0 ) {
+	if(isset($elementInGridDisabledConditions[0]) AND is_array($elementInGridDisabledConditions[0]) AND count($elementInGridDisabledConditions[0]) > 0 ) {
 		catalogConditionalElement($containerElementMarkupName, array_unique($elementInGridDisabledConditions[0]));
 	}
 }
