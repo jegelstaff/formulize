@@ -279,7 +279,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
     // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
     $buttonText = $screen->getVar('buttontext');
-    $thankYouLinkText = (is_array($buttonText) AND isset($buttonText['thankYouLinkText'])) ? $buttonText['thankYouLinkText'] : $buttonText;
+    $thankYouLinkText = (is_array($buttonText) AND isset($buttonText['thankYouLinkText'])) ? $buttonText['thankYouLinkText'] : "";
     $buttonText = is_array($buttonText) ? $buttonText : array();
 
     updateMultipageTemplates($screen);
