@@ -1391,18 +1391,24 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		global $formulize_subformHiddenFieldsDrawn;
 		if ($formulize_subformHiddenFieldsDrawn != true) {
 				$formulize_subformHiddenFieldsDrawn = true;
-				$form->addElement (new XoopsFormHidden ('target_sub', ''));
-				$form->addElement (new XoopsFormHidden ('target_sub_frid', ''));
-				$form->addElement (new XoopsFormHidden ('target_sub_fid', ''));
-				$form->addElement (new XoopsFormHidden ('target_sub_mainformentry', ''));
-				$form->addElement (new XoopsFormHidden ('target_sub_subformelement', ''));
-				$form->addElement (new XoopsFormHidden ('target_sub_parent_subformelement', '')); // used to pickup declared subform element when modals are rendered?
-				$form->addElement (new XoopsFormHidden ('target_sub_open_modal', ''));
-				$form->addElement (new XoopsFormHidden ('target_sub_instance', ''));
-				$form->addElement (new XoopsFormHidden ('numsubents', 1));
-				$form->addElement (new XoopsFormHidden ('del_subs', ''));
-				$form->addElement (new XoopsFormHidden ('goto_sub', ''));
-				$form->addElement (new XoopsFormHidden ('goto_sfid', ''));
+				$newHiddenElements = array(
+					(new XoopsFormHidden ('target_sub', '')),
+					(new XoopsFormHidden ('target_sub_frid', '')),
+					(new XoopsFormHidden ('target_sub_fid', '')),
+					(new XoopsFormHidden ('target_sub_mainformentry', '')),
+					(new XoopsFormHidden ('target_sub_subformelement', '')),
+					(new XoopsFormHidden ('target_sub_parent_subformelement', '')), // used to pickup declared subform element when modals are rendered?
+					(new XoopsFormHidden ('target_sub_open_modal', '')),
+					(new XoopsFormHidden ('target_sub_instance', '')),
+					(new XoopsFormHidden ('numsubents', 1)),
+					(new XoopsFormHidden ('del_subs', '')),
+					(new XoopsFormHidden ('goto_sub', '')),
+					(new XoopsFormHidden ('goto_sfid', ''))
+				);
+				foreach($newHiddenElements as $nhe) {
+					$form->addElement($nhe);
+					unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
+				}
 		}
 
     if(count((array) $sub_fids) > 0) { // if there are subforms, then draw them in...only once we have a bonafide entry in place already
@@ -1437,31 +1443,35 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $elements_allowed, $allDoneOverride, $printall, $screen);
     	}
 
+		$newHiddenElements = array();
 		if(!$formElementsOnly) {
 			// add flag to indicate that the form has been submitted
-			$form->addElement (new XoopsFormHidden ('form_submitted', "1"));
+			$newHiddenElements[] = new XoopsFormHidden ('form_submitted', "1");
 			if($go_back['form']) { // if this is set, then we're doing a subform, so put in a flag to prevent the parent from being drawn again on submission
-				$form->addElement (new XoopsFormHidden ('sub_fid', $fid));
-				$form->addElement (new XoopsFormHidden ('sub_submitted', $entries[$fid][0]));
-				$form->addElement (new XoopsFormHidden ('go_back_form', $go_back['form']));
-				$form->addElement (new XoopsFormHidden ('go_back_entry', $go_back['entry']));
-                $form->addElement (new XoopsFormHidden ('go_back_page', $go_back['page']));
-                $form->addElement (new XoopsFormHidden ('go_back_subformElementId', $go_back['subformElementId']));
-                $form->addElement (new XoopsFormHidden ('deletesubsflag', 0)); // necessary so validation javascript will function
-                $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
-                $form->addElement (new XoopsFormHidden ('modalscroll', 0));
+				$newHiddenElements[] = new XoopsFormHidden ('sub_fid', $fid);
+				$newHiddenElements[] = new XoopsFormHidden ('sub_submitted', $entries[$fid][0]);
+				$newHiddenElements[] = new XoopsFormHidden ('go_back_form', $go_back['form']);
+				$newHiddenElements[] = new XoopsFormHidden ('go_back_entry', $go_back['entry']);
+				$newHiddenElements[] = new XoopsFormHidden ('go_back_page', $go_back['page']);
+				$newHiddenElements[] = new XoopsFormHidden ('go_back_subformElementId', $go_back['subformElementId']);
+				$newHiddenElements[] = new XoopsFormHidden ('deletesubsflag', 0); // necessary so validation javascript will function
+				$newHiddenElements[] = new XoopsFormHidden ('clonesubsflag', 0);
+				$newHiddenElements[] = new XoopsFormHidden ('modalscroll', 0);
 			} else {
 				// drawing a main form...put in the scroll position flag
-                $form->addElement (new XoopsFormHidden ('modalscroll', 0));
-				$form->addElement (new XoopsFormHidden ('yposition', 0));
-                $form->addElement (new XoopsFormHidden ('deletesubsflag', 0));
-                $form->addElement (new XoopsFormHidden ('clonesubsflag', 0));
+        $newHiddenElements[] = new XoopsFormHidden ('modalscroll', 0);
+				$newHiddenElements[] = new XoopsFormHidden ('yposition', 0);
+        $newHiddenElements[] = new XoopsFormHidden ('deletesubsflag', 0);
+        $newHiddenElements[] = new XoopsFormHidden ('clonesubsflag', 0);
 			}
-
 			drawJavascript($nosave, $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
-            $form->addElement(new xoopsFormHidden('save_and_leave', 0));
-		// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
-		$form->addElement (new XoopsFormHidden ('primaryfid', $fids[0]));
+      $newHiddenElements[] = new xoopsFormHidden('save_and_leave', 0);
+			// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
+			$newHiddenElements[] = new XoopsFormHidden ('primaryfid', $fids[0]);
+		}
+		foreach($newHiddenElements as $nhe) {
+			$form->addElement($nhe);
+			unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
 		}
 
 		global $formulize_governingElements;
@@ -2497,7 +2507,7 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 				$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
 				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
 				$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
-				$punames[] = $urowqforrealnames[0] ? $urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
+				$punames[] = (is_array($urowqforrealnames) AND $urowqforrealnames[0]) ? $urowqforrealnames[0] : $urowqforrealnames[1]; // use the uname if there is no full name
 			}
 
 			// alphabetize the proxy list added 11/2/04

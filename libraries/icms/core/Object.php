@@ -278,140 +278,143 @@ class icms_core_Object {
 	 * @return mixed formatted value of the variable
 	 */
 	public function getVar($key, $format = 's') {
-		$ret = $this->vars[$key]['value'];
-		switch ($this->vars[$key]['data_type']) {
+		$ret = null;
+		if(isset($this->vars[$key])) {
+			$ret = $this->vars[$key]['value'];
+			switch ($this->vars[$key]['data_type']) {
 
-			case XOBJ_DTYPE_TXTBOX:
-				switch (strtolower($format)) {
-					case 's':
-					case 'show':
-					case 'e':
-					case 'edit':
-						return icms_core_DataFilter::htmlSpecialchars($ret);
-						break 1;
-
-					case 'p':
-					case 'preview':
-					case 'f':
-					case 'formpreview':
-						return icms_core_DataFilter::htmlSpecialchars(icms_core_DataFilter::stripSlashesGPC($ret));
-						break 1;
-
-					case 'n':
-					case 'none':
-					default:
-						break 1;
-				}
-				break;
-
-			case XOBJ_DTYPE_TXTAREA:
-				switch (strtolower($format)) {
-					case 's':
-					case 'show':
-						$ts = icms_core_Textsanitizer::getInstance();
-						$html = !empty($this->vars['dohtml']['value']) ? 1 : 0;
-						$xcode = (!isset($this->vars['doxcode']['value']) || $this->vars['doxcode']['value'] == 1) ? 1 : 0;
-						$smiley = (!isset($this->vars['dosmiley']['value']) || $this->vars['dosmiley']['value'] == 1) ? 1 : 0;
-						$image = (!isset($this->vars['doimage']['value']) || $this->vars['doimage']['value'] == 1) ? 1 : 0;
-						$br = (!isset($this->vars['dobr']['value']) || $this->vars['dobr']['value'] == 1) ? 1 : 0;
-						if ($html) {
-							return $ts->displayTarea($ret, $html, $smiley, $xcode, $image, $br);
-						} else {
-							return icms_core_DataFilter::checkVar($ret, 'text', 'output');
-						}
-						break 1;
-
-					case 'e':
-					case 'edit':
-						return htmlspecialchars($ret, ENT_QUOTES);
-						break 1;
-
-					case 'p':
-					case 'preview':
-						$ts =& icms_core_Textsanitizer::getInstance();
-						$html = !empty($this->vars['dohtml']['value']) ? 1 : 0;
-						$xcode = (!isset($this->vars['doxcode']['value']) || $this->vars['doxcode']['value'] == 1) ? 1 : 0;
-						$smiley = (!isset($this->vars['dosmiley']['value']) || $this->vars['dosmiley']['value'] == 1) ? 1 : 0;
-						$image = (!isset($this->vars['doimage']['value']) || $this->vars['doimage']['value'] == 1) ? 1 : 0;
-						$br = (!isset($this->vars['dobr']['value']) || $this->vars['dobr']['value'] == 1) ? 1 : 0;
-						if ($html) {
-							return $ts->previewTarea($ret, $html, $smiley, $xcode, $image, $br);
-						} else {
-							return icms_core_DataFilter::checkVar($ret, 'text', 'output');
-						}
-						break 1;
-
-					case 'f':
-					case 'formpreview':
-						return htmlspecialchars(icms_core_DataFilter::stripSlashesGPC($ret), ENT_QUOTES);
-						break 1;
-
-					case 'n':
-					case 'none':
-					default:
-						break 1;
-				}
-				break;
-
-			case XOBJ_DTYPE_ARRAY:
-				$ret = unserialize($ret);
-				break;
-
-			case XOBJ_DTYPE_SOURCE:
-				switch (strtolower($format)) {
-					case 's':
-					case 'show':
-						break 1;
-
-					case 'e':
-					case 'edit':
-						return htmlspecialchars($ret, ENT_QUOTES);
-						break 1;
-
-					case 'p':
-					case 'preview':
-						return icms_core_DataFilter::stripSlashesGPC($ret);
-						break 1;
-
-					case 'f':
-					case 'formpreview':
-						return htmlspecialchars(icms_core_DataFilter::stripSlashesGPC($ret), ENT_QUOTES);
-						break 1;
-
-					case 'n':
-					case 'none':
-					default:
-						break 1;
-				}
-				break;
-
-			default:
-				if ($this->vars[$key]['options'] != '' && $ret != '') {
+				case XOBJ_DTYPE_TXTBOX:
 					switch (strtolower($format)) {
 						case 's':
 						case 'show':
-							$selected = explode('|', $ret);
-							$options = explode('|', $this->vars[$key]['options']);
-							$i = 1;
-							$ret = array();
-							foreach ($options as $op) {
-								if (in_array($i, $selected)) {
-									$ret[] = $op;
-								}
-								$i++;
-							}
-							return implode(', ', $ret);
 						case 'e':
 						case 'edit':
-							$ret = explode('|', $ret);
+							return icms_core_DataFilter::htmlSpecialchars($ret);
 							break 1;
 
+						case 'p':
+						case 'preview':
+						case 'f':
+						case 'formpreview':
+							return icms_core_DataFilter::htmlSpecialchars(icms_core_DataFilter::stripSlashesGPC($ret));
+							break 1;
+
+						case 'n':
+						case 'none':
 						default:
 							break 1;
 					}
+					break;
 
-				}
-				break;
+				case XOBJ_DTYPE_TXTAREA:
+					switch (strtolower($format)) {
+						case 's':
+						case 'show':
+							$ts = icms_core_Textsanitizer::getInstance();
+							$html = !empty($this->vars['dohtml']['value']) ? 1 : 0;
+							$xcode = (!isset($this->vars['doxcode']['value']) || $this->vars['doxcode']['value'] == 1) ? 1 : 0;
+							$smiley = (!isset($this->vars['dosmiley']['value']) || $this->vars['dosmiley']['value'] == 1) ? 1 : 0;
+							$image = (!isset($this->vars['doimage']['value']) || $this->vars['doimage']['value'] == 1) ? 1 : 0;
+							$br = (!isset($this->vars['dobr']['value']) || $this->vars['dobr']['value'] == 1) ? 1 : 0;
+							if ($html) {
+								return $ts->displayTarea($ret, $html, $smiley, $xcode, $image, $br);
+							} else {
+								return icms_core_DataFilter::checkVar($ret, 'text', 'output');
+							}
+							break 1;
+
+						case 'e':
+						case 'edit':
+							return htmlspecialchars($ret, ENT_QUOTES);
+							break 1;
+
+						case 'p':
+						case 'preview':
+							$ts =& icms_core_Textsanitizer::getInstance();
+							$html = !empty($this->vars['dohtml']['value']) ? 1 : 0;
+							$xcode = (!isset($this->vars['doxcode']['value']) || $this->vars['doxcode']['value'] == 1) ? 1 : 0;
+							$smiley = (!isset($this->vars['dosmiley']['value']) || $this->vars['dosmiley']['value'] == 1) ? 1 : 0;
+							$image = (!isset($this->vars['doimage']['value']) || $this->vars['doimage']['value'] == 1) ? 1 : 0;
+							$br = (!isset($this->vars['dobr']['value']) || $this->vars['dobr']['value'] == 1) ? 1 : 0;
+							if ($html) {
+								return $ts->previewTarea($ret, $html, $smiley, $xcode, $image, $br);
+							} else {
+								return icms_core_DataFilter::checkVar($ret, 'text', 'output');
+							}
+							break 1;
+
+						case 'f':
+						case 'formpreview':
+							return htmlspecialchars(icms_core_DataFilter::stripSlashesGPC($ret), ENT_QUOTES);
+							break 1;
+
+						case 'n':
+						case 'none':
+						default:
+							break 1;
+					}
+					break;
+
+				case XOBJ_DTYPE_ARRAY:
+					$ret = unserialize($ret);
+					break;
+
+				case XOBJ_DTYPE_SOURCE:
+					switch (strtolower($format)) {
+						case 's':
+						case 'show':
+							break 1;
+
+						case 'e':
+						case 'edit':
+							return htmlspecialchars($ret, ENT_QUOTES);
+							break 1;
+
+						case 'p':
+						case 'preview':
+							return icms_core_DataFilter::stripSlashesGPC($ret);
+							break 1;
+
+						case 'f':
+						case 'formpreview':
+							return htmlspecialchars(icms_core_DataFilter::stripSlashesGPC($ret), ENT_QUOTES);
+							break 1;
+
+						case 'n':
+						case 'none':
+						default:
+							break 1;
+					}
+					break;
+
+				default:
+					if ($this->vars[$key]['options'] != '' && $ret != '') {
+						switch (strtolower($format)) {
+							case 's':
+							case 'show':
+								$selected = explode('|', $ret);
+								$options = explode('|', $this->vars[$key]['options']);
+								$i = 1;
+								$ret = array();
+								foreach ($options as $op) {
+									if (in_array($i, $selected)) {
+										$ret[] = $op;
+									}
+									$i++;
+								}
+								return implode(', ', $ret);
+							case 'e':
+							case 'edit':
+								$ret = explode('|', $ret);
+								break 1;
+
+							default:
+								break 1;
+						}
+
+					}
+					break;
+			}
 		}
 		return $ret;
 	}
