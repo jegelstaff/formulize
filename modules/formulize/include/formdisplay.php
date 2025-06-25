@@ -430,7 +430,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     if (is_object($ele) and isset($ele->formulize_element)) {
                         $application_handler = xoops_getmodulehandler('applications', 'formulize');
                         $apps = $application_handler->getApplicationsByForm($ele->formulize_element->getVar('id_form'));
-                        $app = is_array($apps) ? $apps[0] : $apps;
+                        $app = (is_array($apps) AND isset($apps[0])) ? $apps[0] : $apps;
                         $appId = is_object($app) ? $app->getVar('appid') : 0;
                         $templateVariables['editElementLink'] = "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
                             "/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
@@ -1384,7 +1384,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		}
 
 		if(is_array($settings) AND !$formElementsOnly) {
-				$form = writeHiddenSettings($settings, $form, $entries, $sub_entries, $screen);
+				$form = writeHiddenSettings($settings, $form, $entries, (isset($sub_entries) ? $sub_entries : null), $screen);
 		}
 
 		// draw in special params for this form, but only once per page
@@ -2923,7 +2923,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
 				case "select":
 				case "radio":
 					// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
-					if(is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) {
+					if(isset($ele_value[2]) AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
             // if we've got a linked select box, then do everything differently
 						$ele_value[2] .= "#*=:*".$value; // append the selected entry ids to the form and handle info in the element definition
 					} else {

@@ -71,6 +71,7 @@
  * @todo We need an easier way to inject strategies using the configuration
  *       object.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier
 {
 
@@ -470,7 +471,7 @@ abstract class HTMLPurifier_AttrDef
     }
 
     /**
-     * Parses a possibly escaped CSS string and returns the "pure" 
+     * Parses a possibly escaped CSS string and returns the "pure"
      * version of it.
      */
     protected function expandCSSEscape($string) {
@@ -6585,6 +6586,7 @@ class HTMLPurifier_PropertyListIterator extends FilterIterator
         $this->filter = $filter;
     }
 
+		#[\ReturnTypeWillChange]
     public function accept() {
         $key = $this->getInnerIterator()->key();
         if( strncmp($key, $this->filter, $this->l) !== 0 ) {
@@ -15392,8 +15394,8 @@ class HTMLPurifier_Strategy_MakeWellFormed extends HTMLPurifier_Strategy
                     }
 
                     if ($autoclose && $definition->info[$token->name]->wrap) {
-                        // Check if an element can be wrapped by another 
-                        // element to make it valid in a context (for 
+                        // Check if an element can be wrapped by another
+                        // element to make it valid in a context (for
                         // example, <ul><ul> needs a <li> in between)
                         $wrapname = $definition->info[$token->name]->wrap;
                         $wrapdef = $definition->info[$wrapname];
