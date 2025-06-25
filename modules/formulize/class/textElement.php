@@ -205,7 +205,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
 				$validationCode[] = "}\n";
 			}
-			if($ele_value[9]) {
+			if(isset($ele_value[9]) AND $ele_value[9]) {
 				$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
 				$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
 				$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...

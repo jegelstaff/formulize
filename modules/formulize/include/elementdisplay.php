@@ -171,7 +171,7 @@ EOF;
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
 
-		$form_ele =& $renderer->constructElement($renderedElementMarkupName, $ele_value, $entry, $isDisabled, $screen);
+		$form_ele = $renderer->constructElement($renderedElementMarkupName, $ele_value, $entry, $isDisabled, $screen);
 		if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") AND is_object($form_ele)) {
 			$form_ele->setDescription('');
 		}

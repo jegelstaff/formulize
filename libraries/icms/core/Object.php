@@ -308,7 +308,7 @@ class icms_core_Object {
 				switch (strtolower($format)) {
 					case 's':
 					case 'show':
-						$ts =& icms_core_Textsanitizer::getInstance();
+						$ts = icms_core_Textsanitizer::getInstance();
 						$html = !empty($this->vars['dohtml']['value']) ? 1 : 0;
 						$xcode = (!isset($this->vars['doxcode']['value']) || $this->vars['doxcode']['value'] == 1) ? 1 : 0;
 						$smiley = (!isset($this->vars['dosmiley']['value']) || $this->vars['dosmiley']['value'] == 1) ? 1 : 0;
