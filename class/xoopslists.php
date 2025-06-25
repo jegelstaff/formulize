@@ -132,7 +132,7 @@ class IcmsLists {
 	 * @return	array
 	 */
 	static public function getAdminThemesList(){
-	    icms_core_Debug::setDeprecated('icms_module_Handler::getAvailable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	  //icms_core_Debug::setDeprecated('icms_module_Handler::getAvailable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_view_theme_Factory::getAdminThemesList();
 	}
 
@@ -143,7 +143,7 @@ class IcmsLists {
 	 * @return	array
 	 */
 	static public function getThemesList(){
-	    icms_core_Debug::setDeprecated('icms_module_Handler::getAvailable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	  //icms_core_Debug::setDeprecated('icms_module_Handler::getAvailable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_view_theme_Factory::getThemesList();
 	}
 
@@ -153,7 +153,7 @@ class IcmsLists {
 	 * @deprecated	Use icms_module_Handler::getAvailable, instead
 	 */
 	static public function getModulesList() {
-	    icms_core_Debug::setDeprecated('icms_module_Handler::getAvailable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
+	  //icms_core_Debug::setDeprecated('icms_module_Handler::getAvailable', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 		return icms_module_Handler::getAvailable();
 	}
 
