@@ -21,6 +21,7 @@ defined('ICMS_ROOT_PATH') or die("ImpressCMS root path not defined");
  * @package     Form
  * @subpackage	Element
  */
+#[AllowDynamicProperties]
 abstract class icms_form_Element {
 
 	/**

@@ -53,7 +53,7 @@ class formulizeElementRenderer{
 			$isDisabled = true; // disabled all elements if we're on the printable view
 		}
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
-		$myts =& MyTextSanitizer::getInstance();
+		$myts = MyTextSanitizer::getInstance();
 
 		if(strstr($renderedElementMarkupName, "de_")) { // display element uses a slightly different element name so it can be distinguished on subsequent page load from regular elements...THIS IS NOT TRUE/NECESSARY ANYMORE SINCE FORMULIZE 3, WHERE ALL ELEMENTS ARE DISPLAY ELEMENTS
 			$true_ele_id = str_replace("de_".$this->_ele->getVar('id_form')."_".$entry_id."_", "", $renderedElementMarkupName);

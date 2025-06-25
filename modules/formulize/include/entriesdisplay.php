@@ -441,7 +441,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// no report/saved view to be loaded, and we're not on a subsequent page load that is sending back a declared currentview, or the user clicked the reset button
 	// therefore, an advanceview if any could be loaded after all the other setup has been done
 
-	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND (empty($_POST) OR !$subsequentPageloadAfterInitialLoading OR $_POST['userClickedReset'])) {
+	if($screen AND count((array) $screen->getVar('advanceview')) > 0 AND (empty($_POST) OR !$subsequentPageloadAfterInitialLoading OR (isset($_POST['userClickedReset']) AND $_POST['userClickedReset']))) {
 		$couldLoadAdvanceView = true;
 	}
 

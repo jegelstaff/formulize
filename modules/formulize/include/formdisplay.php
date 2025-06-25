@@ -1243,7 +1243,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
                     if (!isset($settings['ventry'])) {
                         $settings['ventry'] = 'new';
                     }
-                    $form->addElement (new XoopsFormHidden ('ventry', $settings['ventry']));
+										$ventryElement = new XoopsFormHidden ('ventry', $settings['ventry']);
+                    $form->addElement($ventryElement);
                 }
 
                 // include who the entry belongs to and the date
@@ -1335,7 +1336,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 
 			formulize_benchmark("Before Compile Elements.");
-			$form = compileElements($this_fid, $form, $prevEntry, $entries[$this_fid][0], $groups, $elements_allowed, $frid, $sub_entries, $sub_fids, $screen, $printViewPages, $printViewPageTitles);
+			$form = compileElements($this_fid, $form, $prevEntry, $entries[$this_fid][0], $groups, $elements_allowed, $frid, (isset($sub_entries) ? $sub_entries : null), (isset($sub_fids) ? $sub_fids : null), $screen, $printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
 		}	// end of for each fids
 
