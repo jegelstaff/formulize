@@ -147,7 +147,7 @@ class formulizeElementRenderer{
 				break;
 
 			case 'textarea':
-				$ele_value[0] = stripslashes($ele_value[0]);
+				$ele_value[0] = (isset($ele_value[0]) AND $ele_value[0]) ? stripslashes($ele_value[0]) : "";
 //        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
 				$ele_value[0] = interpretTextboxValue($this->_ele, $entry_id, $ele_value[0]);
 				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added
@@ -735,7 +735,7 @@ class formulizeElementRenderer{
 				if($this->_ele->getVar('ele_delim') != "") {
 					$delimSetting = $this->_ele->getVar('ele_delim');
 				}
-				$delimSetting =& $myts->undoHtmlSpecialChars($delimSetting);
+				$delimSetting = $myts->undoHtmlSpecialChars($delimSetting);
 				if($delimSetting == "br") { $delimSetting = "<br />"; }
 				$hiddenOutOfRangeValuesToWrite = array();
 				switch($delimSetting){

@@ -1447,7 +1447,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(!$formElementsOnly) {
 			// add flag to indicate that the form has been submitted
 			$newHiddenElements[] = new XoopsFormHidden ('form_submitted', "1");
-			if($go_back['form']) { // if this is set, then we're doing a subform, so put in a flag to prevent the parent from being drawn again on submission
+			if(isset($go_back['form']) AND $go_back['form']) { // if this is set, then we're doing a subform, so put in a flag to prevent the parent from being drawn again on submission
 				$newHiddenElements[] = new XoopsFormHidden ('sub_fid', $fid);
 				$newHiddenElements[] = new XoopsFormHidden ('sub_submitted', $entries[$fid][0]);
 				$newHiddenElements[] = new XoopsFormHidden ('go_back_form', $go_back['form']);
@@ -1464,10 +1464,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         $newHiddenElements[] = new XoopsFormHidden ('deletesubsflag', 0);
         $newHiddenElements[] = new XoopsFormHidden ('clonesubsflag', 0);
 			}
-			drawJavascript($nosave, $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
+			drawJavascript(($nosave ? $nosave : null), $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
       $newHiddenElements[] = new xoopsFormHidden('save_and_leave', 0);
 			// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
-			$newHiddenElements[] = new XoopsFormHidden ('primaryfid', $fids[0]);
+			$newHiddenElements[] = new XoopsFormHidden ('primaryfid', (isset($fids[0]) ? $fids[0] : 0));
 		}
 		foreach($newHiddenElements as $nhe) {
 			$form->addElement($nhe);
@@ -1483,7 +1483,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(!is_array($formulize_oneToOneElements)) {
 				$oneToOneElements = array();
 		}
-		if(!is_array($oneToOneMetaData)) {
+		if(!isset($oneToOneMetaData) OR !is_array($oneToOneMetaData)) {
 				$oneToOneMetaData = array();
 		}
 		if(count((array) $GLOBALS['formulize_renderedElementHasConditions'])>0) {
@@ -1539,10 +1539,12 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
         $idForForm = "";
         if(!$formElementsOnly) {
-            $subformElementIdToUse = isset($_POST['goto_subformElementId']) ? intval($_POST['goto_subformElementId']) : 0;
-            $form->addElement (new XoopsFormHidden ('goto_subformElementId', $subformElementIdToUse)); // switches to new one if we're drilling down
-            $form->addElement (new XoopsFormHidden ('prev_subformElementId', $subformElementIdToUse)); // always remains the current one
-            $idForForm = "id=\"formulizeform\""; // only use the master id when rendering a "normal" form, the master one on the page, not when rendering disembodied elements only forms!
+					$subformElementIdToUse = isset($_POST['goto_subformElementId']) ? intval($_POST['goto_subformElementId']) : 0;
+					$goto_subformElementId = new XoopsFormHidden ('goto_subformElementId', $subformElementIdToUse); // switches to new one if we're drilling down
+					$prev_subformElementId = new XoopsFormHidden ('prev_subformElementId', $subformElementIdToUse); // always remains the current one
+					$form->addElement($goto_subformElementId);
+					$form->addElement($prev_subformElementId);
+					$idForForm = "id=\"formulizeform\""; // only use the master id when rendering a "normal" form, the master one on the page, not when rendering disembodied elements only forms!
         }
 
 				writeToFormulizeLog(array(
@@ -1556,7 +1558,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
         // floating save button
-        if($printall != 2 AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
+        if($printall != 2 AND isset($formulizeConfig['floatSave']) AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
             print "<div id=floattest></div>";
             if( $done_text !="{NOBUTTON}" OR $save_text !="{NOBUTTON}") {
                 print "<div id=floatingsave>";
@@ -1592,7 +1594,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     // only when processing the main form, not any elements-only forms embedded as subs within the page
     if(!strstr($currentURL, "printview.php") AND !$formElementsOnly) {
         $newSubEntryInModal = false;
-        if(!in_array($_POST['target_sub'], $formulize_subFidsWithNewEntries) AND isset($_POST['target_sub']) AND $_POST['target_sub'] AND count((array) $subs_to_del)==0 AND count((array) $subs_to_clone)==0) {
+        if(isset($_POST['target_sub']) AND $_POST['target_sub'] AND !in_array($_POST['target_sub'], $formulize_subFidsWithNewEntries) AND count((array) $subs_to_del)==0 AND count((array) $subs_to_clone)==0) {
             list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($_POST['target_sub_frid'], $_POST['target_sub_fid'], $_POST['target_sub_mainformentry'], $_POST['target_sub']);
             $element_handler = xoops_getmodulehandler('elements','formulize');
             $subformElementObject = $element_handler->get($_POST['target_sub_subformelement']);
@@ -1771,7 +1773,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 		print "<input type=hidden name=lastentry value=$entry>";
 		print "</form>";
 	}
-	if($go_back['form']) { // parent form overrides specified back URL
+	if(isset($go_back['form']) AND $go_back['form']) { // parent form overrides specified back URL
 		print "<form name=go_parent action=\"$currentURL\" method=post>"; //onsubmit=\"javascript:verifyDone();\" method=post>";
 		print "<input type=hidden name=parent_form value=" . $go_back['form'] . ">";
 		print "<input type=hidden name=parent_entry value=" . $go_back['entry'] . ">";
@@ -2741,16 +2743,21 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 
 	formulize_benchmark("Done looping elements.");
 
+	$newHiddenElements = array();
   if($entry_id AND !is_a($form, 'formulize_elementsOnlyForm')) {
-        // two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
-        // the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
-		$form->addElement (new XoopsFormHidden ('entry'.$fid, $entry_id));
+		// two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
+		// the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
+		$newHiddenElements[] = new XoopsFormHidden ('entry'.$fid, $entry_id);
     if(is_numeric($entry_id)) {
-      $form->addElement (new XoopsFormHidden ('lastentry', $entry_id));
-        }
+      $newHiddenElements[] = new XoopsFormHidden ('lastentry', $entry_id);
+    }
 	}
-	if($_POST['parent_form']) { // if we just came back from a parent form, then set this flag so we'll know on the next pageload... legacy but has one key use?
-		$form->addElement (new XoopsFormHidden ('back_from_sub', 1));
+	if(isset($_POST['parent_form']) AND $_POST['parent_form']) { // if we just came back from a parent form, then set this flag so we'll know on the next pageload... legacy but has one key use?
+		$newHiddenElements[] = new XoopsFormHidden ('back_from_sub', 1);
+	}
+	foreach($newHiddenElements as $nhe) {
+		$form->addElement($nhe);
+		unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
 	}
 
 	// Add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php, but not added to the main form themselves for whatever reason
@@ -3114,7 +3121,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		$newHiddenElements[] = new XoopsFormHidden ('hcalc', $hcalc);
 		$newHiddenElements[] = new XoopsFormHidden ('lockcontrols', $lockcontrols);
 		$newHiddenElements[] = new XoopsFormHidden ('lastloaded', $lastloaded);
-		$asearch = str_replace("'", "&#39;", $asearch);
+		$asearch = $asearch ? str_replace("'", "&#39;", $asearch) : "";
 		$newHiddenElements[] = new XoopsFormHidden ('asearch', stripslashes($asearch));
 		$newHiddenElements[] = new XoopsFormHidden ('calview', $calview);
 		$newHiddenElements[] = new XoopsFormHidden ('calfrid', $calfrid);
@@ -3176,7 +3183,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		print "<input type=hidden name=hcalc value='" . $hcalc . "'>";
 		print "<input type=hidden name=lockcontrols value='" . $lockcontrols . "'>";
 		print "<input type=hidden name=lastloaded value='" . $lastloaded . "'>";
-		$asearch = str_replace("\"", "&quot;", $asearch);
+		$asearch = $asearch ? str_replace("\"", "&quot;", $asearch) : "";
 		print "<input type=hidden name=asearch value=\"" . stripslashes($asearch) . "\">";
 		print "<input type=hidden name=calview value='" . $calview . "'>";
 		print "<input type=hidden name=calfrid value='" . $calfrid . "'>";

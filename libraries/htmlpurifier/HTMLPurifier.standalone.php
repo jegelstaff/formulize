@@ -6097,6 +6097,7 @@ class HTMLPurifier_Length
  * without a lot of lookaheads to see when a tag is closed. This is a
  * limitation of the token system and some workarounds would be nice.
  */
+#[AllowDynamicProperties]
 class HTMLPurifier_Lexer
 {
 
@@ -6647,6 +6648,7 @@ class HTMLPurifier_StringHash extends ArrayObject
     /**
      * Retrieves a value, and logs the access.
      */
+		#[\ReturnTypeWillChange]
     public function offsetGet($index) {
         $this->accessed[$index] = true;
         return parent::offsetGet($index);
