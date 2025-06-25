@@ -5664,10 +5664,10 @@ function formulize_includeEval($code, $execute=false, $globals=array(), $filterN
 
 
 function formulize_addProcedureChoicesToPost($choices) {
-    if (!strstr($choices,"&amp;")) {
+    if ($choices AND !strstr($choices,"&amp;")) {
         $choices = strip_tags(htmlspecialchars($choices)); // just in case this wasn't done prior to passing in
     }
-    $acid_temp_parameters = explode( "&amp;", $choices );
+    $acid_temp_parameters = $choices ? explode( "&amp;", $choices ) : array();
     $acid_parameters = array();
     if ($acid_temp_parameters) {
         foreach ($acid_temp_parameters as $parameter ) {

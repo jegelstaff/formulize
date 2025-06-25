@@ -1952,7 +1952,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 		// loop through individual filters and assign them to the oneSideFilters arrays
 		foreach ($conditionsfilter as $form_id => $theseFilters) {
 			foreach ($theseFilters as $thisFilter) {
-				$oneSideFilters[$form_id]['and'] .= (isset($oneSideFilters[$form_id]) AND isset($oneSideFilters[$form_id]['and'])) ? " and ( $thisFilter ) " : " ( $thisFilter ) ";
+				if(!isset($oneSideFilters[$form_id])) {
+					$oneSideFilters[$form_id] = array('and'=>'');
+				}
+				$oneSideFilters[$form_id]['and'] .= $oneSideFilters[$form_id]['and'] ? " and ( $thisFilter ) " : " ( $thisFilter ) ";
 			}
 		}
 		foreach ($conditionsfilter_oom as $form_id => $theseFilters) {
@@ -1962,6 +1965,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 			if (isset($oneSideFilters[$form_id]) AND isset($oneSideFilters[$form_id]['or'])) {
 				$oneSideFilters[$form_id]['or'] .= " AND ( $basicOneSideFilter ) ";
 			} else {
+				if(!isset($oneSideFilters[$form_id])) {
+					$oneSideFilters[$form_id] = array('or'=>'');
+				}
 				$oneSideFilters[$form_id]['or'] = " ( $basicOneSideFilter ) ";
 			}
 		}

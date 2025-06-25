@@ -868,7 +868,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				isset($_GET['ve']) AND is_numeric($_GET['ve']) AND $_GET['ve'] > 0) {
 				$_POST['ventry'] = $_GET['ve'];
 		}
-		$settings['ventry'] = $_POST['ventry'];
+		$settings['ventry'] = isset($_POST['ventry']) ? $_POST['ventry'] : null;
 	}
 
 	// figure out which screen to show, and abort drawing a list of entries
@@ -3830,6 +3830,10 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/calendardisplay.php";
 	}
 
+	// make lockedColumns available if set
+	if(isset($settings['lockedColumns'])) {
+		$lockedColumns = $settings['lockedColumns'];
+	}
 	// setup the button variables
 	foreach($buttonCodeArray as $buttonName=>$buttonCode) {
 		${$buttonName} = $buttonCode;
