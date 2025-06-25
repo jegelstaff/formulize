@@ -91,10 +91,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		OR (isset($_POST['saveid_formulize']) AND $_POST['saveid_formulize'])
 		OR (isset($_POST['caid']) AND is_numeric($_POST['caid'])))
 		AND !$formulize_LOESecurityPassed) {
-		$module_handler =& xoops_gethandler('module');
-		$config_handler =& xoops_gethandler('config');
-		$formulizeModule =& $module_handler->getByDirname("formulize");
-		$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		$module_handler = xoops_gethandler('module');
+		$config_handler = xoops_gethandler('config');
+		$formulizeModule = $module_handler->getByDirname("formulize");
+		$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 		$modulePrefUseToken = $formulizeConfig['useToken'];
 		$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
 		if(isset($GLOBALS['xoopsSecurity']) AND $useToken) {
@@ -417,7 +417,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	if($loadview AND ((
 		(!isset($_POST['currentview']) OR !$_POST['currentview'])
 		AND (!isset($_POST['advscope']) OR $_POST['advscope'] == ""))
-		OR $_POST['userClickedReset'])) {
+		OR (isset($_POST['userClickedReset']) AND $_POST['userClickedReset']))) {
 		if(is_numeric($loadview)) { // new view id
 			$loadview = "p" . $loadview;
 		} else { // new view name -- loading view by name -- note if two reports have the same name, then the first one created will be returned
@@ -670,7 +670,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 10 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
 	 */
 	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
 	if(isset($_POST['loadviewname']) AND $_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
 	if($settings['curviewid']) {
@@ -1251,8 +1251,8 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	$to_return[1] = $firstPublishedView;
 	$to_return[2] = $lastStandardView;
 	$to_return[3] = $pickgroups;
-	$to_return[4] = $loadviewname;
-	$to_return[5] = $curviewid;
+	$to_return[4] = (isset($loadviewname) ? $loadviewname : null);
+	$to_return[5] = (isset($curviewid) ? $curviewid : null);
 	$to_return[6] = $publishedViewNames;
 	return $to_return;
 

@@ -106,7 +106,7 @@ if (! preg_match('?' . preg_quote(ICMS_ROOT_PATH, '?') . '(/common/)?', $_SERVER
         $easiestml_langnames = explode(',', $icmsConfigMultilang['ml_names']);
         $icmsConfig['language'] = $easiestml_langnames[$offset];
     }
-    
+
 	// charset for Content-Type
 
 	ob_start('easiestml');
@@ -136,7 +136,7 @@ function easiestml($s) {
 	// $s = preg_replace_callback( '/(\<input)(?=.*type\=[\'\"]?text[\'\"]?)([^>]*)(\>)/isU' , 'easiestml_escape_bracket' , $s) ;
 
 	// Fix for bug #1905485 in tracker
-	$s = preg_replace_callback('/(\<input\b(?![^\>]*\btype=([\'"]?)(submit|image))[^\>]*\>)/isU', 'easiestml_escape_bracket_input', $s);
+	$s = $s ? preg_replace_callback('/(\<input\b(?![^\>]*\btype=([\'"]?)(submit|image))[^\>]*\>)/isU', 'easiestml_escape_bracket_input', $s) : "";
 	$s = preg_replace_callback('/(\<input)([^>]*)(\>)/isU', 'easiestml_escape_bracket_textbox', $s);
 
 	// escape brackets inside of <textarea></textarea>

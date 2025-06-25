@@ -308,7 +308,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	}
 
 	$elementFilterSettings = $elementObject->getVar('ele_filtersettings');
-	if($allowed AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
+	if($allowed AND isset($elementFilterSettings[0]) AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		if(!$subformCreateEntry) {
 			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]));

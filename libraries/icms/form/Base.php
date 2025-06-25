@@ -87,7 +87,8 @@ abstract class icms_form_Base {
 		$this->_action = $action;
 		$this->_method = $method;
 		if ($addtoken != false) {
-			$this->addElement(new icms_form_elements_Hiddentoken());
+			$newToken = new icms_form_elements_Hiddentoken();
+			$this->addElement($newToken);
 		}
 	}
 

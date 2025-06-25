@@ -8773,7 +8773,7 @@ function stripEntryFromDoneDestination($done_dest) {
 	}
 	// if there was an alternate URL used to access the page, and a ve was specified, scale back to remove the ve from the done_dest
 	global $formulizeCanonicalURI;
-	if($done_dest AND $formulizeCanonicalURI AND $_GET['ve']) {
+	if($done_dest AND $formulizeCanonicalURI AND isset($_GET['ve']) AND $_GET['ve']) {
 		$trimmedDoneDest = trim($done_dest, '/'); // take off last slash if any
 		$trailingSlash = $trimmedDoneDest === $done_dest ? '' : '/'; // if there was a slash on the end, remember this for later
 		$doneDestParts = explode('/', $trimmedDoneDest); // split on slashes

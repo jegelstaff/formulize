@@ -807,7 +807,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     // important to do these setup things only once per page load
     // ALSO, may not be showing the parent... could be going down the rabbit hole to another sub!!
     static $cameBackFromSubformAlready = false;
-	if($_POST['parent_form'] AND !$cameBackFromSubformAlready) { // if we're coming back from a subform
+	if(isset($_POST['parent_form']) AND $_POST['parent_form'] AND !$cameBackFromSubformAlready) { // if we're coming back from a subform
         $cameBackFromSubformAlready = true;
         $parent_form = htmlspecialchars(strip_tags($_POST['parent_form']));
         $parent_form = strstr($parent_form, ',') ? explode(',',$parent_form) : array($parent_form);
@@ -850,7 +850,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     // note that camebackfromsubformalready is also set only once per page load
     global $formulize_displayingSubform;
     $formulize_displayingSubform = $formulize_displayingSubform ? $formulize_displayingSubform : false; // set to false unless there's an affirmative value already
-    if(!$formulize_displayingSubform AND ($_POST['goto_sfid'] OR $_POST['sub_fid'] OR ($cameBackFromSubformAlready AND is_numeric($cameBackFromSubformAlready)))) {
+    if(!$formulize_displayingSubform AND ((isset($_POST['goto_sfid']) AND $_POST['goto_sfid']) OR (isset($_POST['sub_fid']) AND $_POST['sub_fid']) OR ($cameBackFromSubformAlready AND is_numeric($cameBackFromSubformAlready)))) {
         $subformElementIdToUse = isset($_POST['goto_subformElementId']) ? intval($_POST['goto_subformElementId']) : 0;
         if($subformElementObject = $element_handler->get($subformElementIdToUse)) {
             if($subformDisplayScreen = get_display_screen_for_subform($subformElementObject)) {
@@ -885,7 +885,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
     // propagate the go_back values from page load to page load, so we can eventually return there when the user is ready
-	if($_POST['go_back_form'] AND !isset($GLOBALS['formulize_inlineSubformFrid'])) { // we just received a subform submission
+	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND !isset($GLOBALS['formulize_inlineSubformFrid'])) { // we just received a subform submission
 		$entry = intval($_POST['sub_submitted']);
 		$fid = intval($_POST['sub_fid']);
 		$go_back['form'] = htmlspecialchars(strip_tags($_POST['go_back_form']));
@@ -906,8 +906,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	}
 
-	if($_POST['deletesubsflag']) { // if deletion of sub entries requested
-    $updateMainformDerivedAfterSubEntryDeletion = false;
+	$updateMainformDerivedAfterSubEntryDeletion = false;
+	if(isset($_POST['deletesubsflag']) AND $_POST['deletesubsflag']) { // if deletion of sub entries requested
     $subs_to_del = array();
 		foreach($_POST as $k=>$v) {
 			if(strstr($k, "delbox") AND intval($v) > 0) {
@@ -931,7 +931,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         unset($_POST['deletesubsflag']); // only do this once per page load!!! Due to nested calls of displayForm with subforms, calling multiple times will lead to very nasty results, since deleteEntry calls checkForLinks and the mainform entries will be returned alongside the subform entries, but the excludefids will not include the mainform when this is called during a nested elementsonlyform call...so nasty
 	}
 
-    if($_POST['clonesubsflag']) { // if cloning of sub entries requested
+    if(isset($_POST['clonesubsflag']) AND $_POST['clonesubsflag']) { // if cloning of sub entries requested
         $subs_to_clone = array();
 		foreach($_POST as $k=>$v) {
 			if(strstr($k, "delbox") AND intval($v) > 0) {
@@ -1043,7 +1043,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 	$add_proxy_entries = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
 
-	if ($_POST['form_submitted'] AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
+	if (isset($_POST['form_submitted']) AND $_POST['form_submitted'] AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
 		$info_received_msg = "1"; // flag for display of info received message
 		if(!isset($GLOBALS['formulize_readElementsWasRun'])) {
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -1219,11 +1219,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 				//get the form title: (do only once)
 			$firstform = 0;
-			if(!$form) {
+			if(!isset($form) OR !$form) {
 
                 $firstform = 1;
                 if(isset($passedInTitle) OR $titleOverride == 'all') {
-                    $title = trans($passedInTitle);
+                    $title = isset($passedInTitle) ? trans($passedInTitle) : "";
                 } elseif($screen) {
                     $title = trans($screen->getVar('title'));
                 } else {
