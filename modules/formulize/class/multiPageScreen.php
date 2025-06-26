@@ -302,8 +302,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 			$screenCatalogue[$screen->getVar('sid')] = true;
 			list($pages, $pageTitles) = $this->gatherPagesAndTitlesFromScreen($screen);
 			foreach($pages as $pageNumber=>$items) {
-				if(!is_numeric($items[0]) AND $items[0] != "PHP") {
-					$pageScreenId = substr($items[0], 4);
+				$firstItem = $items[array_key_first($items)];
+				if(!is_numeric($firstItem) AND $firstItem != "PHP") {
+					$pageScreenId = substr($firstItem, 4);
 					if($pageScreenObject = $this->get($pageScreenId)) {
 						list($completePages, $completePageTitles) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles);
 					} else {
