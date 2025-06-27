@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "Formulize": {
+      "type": "http",
+      "url": "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp"
+    }
+  }
+}
