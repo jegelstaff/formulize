@@ -204,6 +204,7 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
             deleteLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
           }
 					list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
+					$ele_value[2] = array();
 					foreach($_POST['ele_value'] as $id=>$text) {
 						if($text !== "") {
 							$ele_value[2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
