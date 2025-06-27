@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulize MCP Server Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #005a87;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .loading {
+            color: #007cba;
+            font-style: italic;
+        }
+
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border-color: #f5c6cb;
+        }
+
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e8;
+            border-color: #c3e6cb;
+        }
+
+        .checkbox-group {
+            margin: 10px 0;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .form-input {
+            margin: 10px 0;
+        }
+
+        .form-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-input input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Formulize MCP Server Test Interface</h1>
+
+        <div class="test-section">
+            <h3>1. Test Connection</h3>
+            <p>Verify that the MCP server can connect to the database and basic functionality works.</p>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connection-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Debug Tables</h3>
+            <p>Check what Formulize tables are available in the database.</p>
+            <button onclick="debugTables()">Debug Tables</button>
+            <div id="tables-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. List Tools</h3>
+            <p>Get all available MCP tools from the server.</p>
+            <button onclick="listTools()">List Tools</button>
+            <div id="tools-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. List Forms</h3>
+            <p>Retrieve all forms from your Formulize installation.</p>
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="include-inactive" />
+                    Include inactive forms
+                </label>
+            </div>
+            <button onclick="listForms()">List Forms</button>
+            <div id="forms-response" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Get Form Details</h3>
+            <p>Get detailed information about a specific form (enter form ID from the list above).</p>
+            <div class="form-input">
+                <label for="form-id">Form ID:</label>
+                <input type="number" id="form-id" placeholder="Enter form ID" />
+            </div>
+            <button onclick="getFormDetails()">Get Form Details</button>
+            <div id="form-details-response" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Base URL for your MCP server - adjust this to match your setup
+        const MCP_SERVER_URL = 'formulize_mcp_http_direct.php/mcp';
+
+        async function sendMCPRequest(method, toolName = null, arguments = {}) {
+            const payload = {
+                method: method
+            };
+
+            if (method === 'tools/call') {
+                payload.params = {
+                    name: toolName,
+                    arguments: arguments
+                };
+            } else {
+                payload.params = {};
+            }
+
+            try {
+                const response = await fetch(MCP_SERVER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                throw new Error(`Network error: ${error.message}`);
+            }
+        }
+
+        function showResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = isError ? 'response error' : 'response success';
+            element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'response loading';
+            element.innerHTML = '<p>Loading...</p>';
+        }
+
+        async function testConnection() {
+            const responseId = 'connection-response';
+            showLoading(responseId);
+
+            try {
+                const response = await sendMCPRequest('tools/call', 'test_connection');
+                showResponse(responseId, response);
+            } catch (error) {
+                showResponse(responseId, { error: error.message }, true);
+            }
+        }
+
+        async function debugTables() {
+            const responseId = 'tables-response';
+            showLoading(responseId);
+
+            try {
+                const response = await sendMCPRequest('tools/call', 'debug_tables');
+                showResponse(responseId, response);
+            } catch (error) {
+                showResponse(responseId, { error: error.message }, true);
+            }
+        }
+
+        async function listTools() {
+            const responseId = 'tools-response';
+            showLoading(responseId);
+
+            try {
+                const response = await sendMCPRequest('tools/list');
+                showResponse(responseId, response);
+            } catch (error) {
+                showResponse(responseId, { error: error.message }, true);
+            }
+        }
+
+        async function listForms() {
+            const responseId = 'forms-response';
+            showLoading(responseId);
+
+            const includeInactive = document.getElementById('include-inactive').checked;
+
+            try {
+                const response = await sendMCPRequest('tools/call', 'list_forms', {
+                    include_inactive: includeInactive
+                });
+                showResponse(responseId, response);
+            } catch (error) {
+                showResponse(responseId, { error: error.message }, true);
+            }
+        }
+
+        async function getFormDetails() {
+            const responseId = 'form-details-response';
+            const formIdInput = document.getElementById('form-id');
+            const formId = parseInt(formIdInput.value);
+
+            if (!formId || formId < 1) {
+                showResponse(responseId, { error: 'Please enter a valid form ID' }, true);
+                return;
+            }
+
+            showLoading(responseId);
+
+            try {
+                const response = await sendMCPRequest('tools/call', 'get_form_details', {
+                    form_id: formId
+                });
+                showResponse(responseId, response);
+            } catch (error) {
+                showResponse(responseId, { error: error.message }, true);
+            }
+        }
+
+        // Auto-test connection on page load
+        window.addEventListener('load', function() {
+            console.log('Page loaded - you can now test the MCP server');
+            console.log('URL being used:', MCP_SERVER_URL);
+        });
+    </script>
+</body>
+</html>
