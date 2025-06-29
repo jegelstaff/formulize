@@ -165,7 +165,7 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		break;
 	}
 }
-define("_MI_formulize_MCPSERVERENABLED", "Enable the MCP Server for working with AI<br><br><a href='https://formulize.org/ai' target='_blank'>Read more about MCP setup on https://formulize.org</a>.".$mcpServerInstructions);
+define("_MI_formulize_MCPSERVERENABLED", "Enable the MCP Server for working with AI<br><br><a href='https://formulize.org/ai' target='_blank'>Read more about MCP setup at https://formulize.org/ai</a>.".$mcpServerInstructions);
 define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting AI assistants, like Claude, Gemini, Copilot, etc, to Formulize. With MCP, AI assistants can read information from Formulize and help you configure Formulize.");
 
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
