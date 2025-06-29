@@ -14,6 +14,21 @@ while(ob_get_level()) {
     ob_end_clean();
 }
 
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
+
+if (!isMCPServerEnabled()) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    http_response_code(503);
+    echo json_encode([
+        'error' => 'MCP Server is disabled in Formulize preferences',
+        'message' => 'Please enable the MCP Server in System Admin > Preferences',
+        'code' => 503,
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    exit;
+}
+
 class FormulizeMCPHTTPDirectProperAuth {
 
     private $config;
@@ -706,8 +721,6 @@ class FormulizeMCPHTTPDirectProperAuth {
      * Gather dataset using Formulize's built-in function with proper permission scoping
      */
     private function gatherDataset($args) {
-        // Include Formulize's common functions
-        include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
         global $xoopsUser;
 
