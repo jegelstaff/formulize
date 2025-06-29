@@ -1,0 +1,12 @@
+{
+  "name": "formulize-mcp-proxy",
+  "version": "1.0.0",
+  "description": "MCP proxy for Formulize instances",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
