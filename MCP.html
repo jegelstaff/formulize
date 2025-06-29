@@ -142,7 +142,7 @@
             <h3>🔒 Authentication Setup</h3>
             <div class="form-group">
                 <label for="apiKey">API Key (32-character hex) - Optional for testing:</label>
-                <input type="password" id="apiKey" placeholder="Enter your Formulize API key (leave blank to test without auth)" />
+                <input type="text" id="apiKey" placeholder="Enter your Formulize API key (leave blank to test without auth)" />
                 <small>Leave blank to test server without authentication</small>
             </div>
             <div class="form-group">
@@ -393,7 +393,11 @@
         });
 
         document.getElementById('apiKey').addEventListener('blur', function() {
-            this.type = 'password';
+						if (this.value.trim() !== '') {
+							this.type = 'password';
+						} else {
+            	this.type = 'text';
+						}
         });
     </script>
 </body>
