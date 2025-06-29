@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "formulize": {
+      "command": "node",
+      "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
+      "env": {
+        "FORMULIZE_BASE_URL": "https://julian.formulize.net/formulize_mcp_http_direct.php",
+        "FORMULIZE_DEBUG": "false",
+        "FORMULIZE_TIMEOUT": "30000",
+        "FORMULIZE_API_KEY": "f8868d12dcad73271d110bb1d749e0d3"
+      }
+    }
+  }
+}
