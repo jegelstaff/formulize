@@ -7,7 +7,7 @@
         "FORMULIZE_BASE_URL": "https://julian.formulize.net/MCP.php",
         "FORMULIZE_DEBUG": "false",
         "FORMULIZE_TIMEOUT": "30000",
-        "FORMULIZE_API_KEY": "f8868d12dcad73271d110bb1d749e0d3"
+        "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
       }
     }
   }
