@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Formulize MCP HTTP Direct Server
+ * Formulize MCP HTTP Direct Server with Proper Formulize API Key Authentication
  *
- * Direct HTTP endpoint for MCP - no bridge needed
+ * Uses Formulize's existing API key system from managekeys.php/apikey.php
  */
 
 require_once dirname(__FILE__) . '/mainfile.php';
@@ -14,11 +14,14 @@ while(ob_get_level()) {
     ob_end_clean();
 }
 
-class FormulizeMCPHTTPDirect {
+class FormulizeMCPHTTPDirectProperAuth {
 
     private $config;
     private $db;
     private $tools;
+    private $authenticatedUser = null;
+    private $authenticatedUid = 0;
+    private $userGroups = array();
 
     public function __construct($config = null) {
         $this->config = $config ?: $this->getDefaultConfig();
@@ -35,6 +38,140 @@ class FormulizeMCPHTTPDirect {
             throw new Exception('Formulize database connection not available');
         }
         $this->db = $xoopsDB;
+    }
+
+    /**
+     * Authenticate using Formulize's existing API key system
+     */
+    private function authenticateRequest() {
+        // Skip authentication for health checks and documentation
+        $path = $_SERVER['REQUEST_URI'];
+        if (strpos($path, '/health') !== false || strpos($path, '/capabilities') !== false || $_SERVER['REQUEST_METHOD'] === 'GET') {
+            return true;
+        }
+
+        // Check for Authorization header
+        $authHeader = '';
+		$allHeaders = getAllHeaders();
+		if (isset($allHeaders['Authorization'])) {
+			$authHeader = $allHeaders['Authorization'];
+		} elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+			$authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+		} elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+			$authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+		}
+
+        if (empty($authHeader)) {
+            $this->sendAuthError('Missing Authorization header');
+            return false;
+        }
+
+        // Extract API key from "Bearer {api_key}" format
+        if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
+            $this->sendAuthError('Invalid Authorization header format. Use: Bearer {api_key}');
+            return false;
+        }
+
+        $key = trim($matches[1]);
+
+        // Validate API key using Formulize's exact system
+        if (!$this->validateFormulizeApiKey($key)) {
+            $this->sendAuthError('Invalid or expired API key');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate API key using Formulize's existing system (based on your provided code)
+     */
+    private function validateFormulizeApiKey($key) {
+        global $xoopsUser, $icmsUser;
+
+        // Get the API key handler exactly as Formulize does
+        $apiKeyHandler = xoops_getmodulehandler('apikey', 'formulize');
+
+        // Clear out expired keys (exactly as in your code)
+        $apiKeyHandler->delete();
+
+        $this->authenticatedUid = 0;
+
+        if ($key AND $apikey = $apiKeyHandler->get($key)) {
+            $this->authenticatedUid = $apikey->getVar('uid');
+
+            $member_handler = xoops_gethandler('member');
+            if ($uidObject = $member_handler->getUser($this->authenticatedUid)) {
+                $this->userGroups = $uidObject->getGroups();
+                $this->authenticatedUser = $uidObject;
+
+                // Set global user context as Formulize does
+                $xoopsUser = $uidObject;
+                $icmsUser = $uidObject;
+
+                return true;
+            } else {
+                $this->authenticatedUid = 0;
+                $this->userGroups = array(XOOPS_GROUP_ANONYMOUS);
+                return false;
+            }
+        } elseif ($key) {
+            // Invalid key provided
+            return false;
+        }
+
+        // No key provided - this shouldn't happen since we check for auth header above
+        return false;
+    }
+
+    /**
+     * Send authentication error response
+     */
+    private function sendAuthError($message) {
+        $this->setNoCacheHeaders();
+        http_response_code(401);
+        echo json_encode([
+            'error' => [
+                'code' => 401,
+                'message' => $message,
+                'type' => 'authentication_error'
+            ],
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+        exit;
+    }
+
+    /**
+     * Handle HTTP request routing with authentication
+     */
+    public function handleHTTPRequest() {
+        $this->setNoCacheHeaders();
+
+        // Handle CORS preflight
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(204);
+            exit;
+        }
+
+        // Authenticate request
+        if (!$this->authenticateRequest()) {
+            return; // Authentication error already sent
+        }
+
+        $path = $_SERVER['REQUEST_URI'];
+        $pathParts = explode('?', $path);
+        $cleanPath = $pathParts[0];
+
+        // Route based on path
+        if (strpos($cleanPath, '/mcp') !== false) {
+            $this->handleMCPEndpoint();
+        } elseif (strpos($cleanPath, '/health') !== false) {
+            $this->handleHealthCheck();
+        } elseif (strpos($cleanPath, '/capabilities') !== false) {
+            $this->handleCapabilities();
+        } else {
+            $this->handleDocumentation();
+        }
     }
 
     /**
@@ -68,7 +205,7 @@ class FormulizeMCPHTTPDirect {
                 'description' => 'Test the MCP server connection and database access',
                 'inputSchema' => [
                     'type' => 'object',
-                    'properties' => (object)[]  // Empty object, not empty array
+                    'properties' => (object)[]
                 ]
             ],
             'list_forms' => [
@@ -118,42 +255,210 @@ class FormulizeMCPHTTPDirect {
                     'required' => ['form_id']
                 ]
             ],
+            'gatherDataset' => [
+                'name' => 'gatherDataset',
+                'description' => 'Gather a dataset from a form using Formulize\'s built-in gatherDataset function with proper permission scoping',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'fid' => [
+                            'type' => 'integer',
+                            'description' => 'The ID of the main form in the dataset'
+                        ],
+                        'elementHandles' => [
+                            'type' => 'array',
+                            'description' => 'Optional. Array of element handles to include. Use multidimensional array with form IDs as keys',
+                            'default' => []
+                        ],
+                        'filter' => [
+                            'type' => ['integer', 'string', 'array'],
+                            'description' => 'Optional. Entry ID, filter string, or array of filter strings using /**/ separators',
+                            'default' => ''
+                        ],
+                        'andOr' => [
+                            'type' => 'string',
+                            'description' => 'Boolean operator between multiple filters (AND or OR)',
+                            'default' => 'AND'
+                        ],
+                        'currentView' => [
+                            'type' => 'string',
+                            'description' => 'Scope type: "mine", "group", "all", or comma-separated group IDs',
+                            'default' => 'all'
+                        ],
+                        'limitStart' => [
+                            'type' => ['integer', 'null'],
+                            'description' => 'Starting record for LIMIT statement',
+                            'default' => null
+                        ],
+                        'limitSize' => [
+                            'type' => ['integer', 'null'],
+                            'description' => 'Number of records to return',
+                            'default' => null
+                        ],
+                        'sortField' => [
+                            'type' => 'string',
+                            'description' => 'Element handle to sort by',
+                            'default' => ''
+                        ],
+                        'sortOrder' => [
+                            'type' => 'string',
+                            'description' => 'Sort direction (ASC or DESC)',
+                            'default' => 'ASC'
+                        ],
+                        'frid' => [
+                            'type' => 'integer',
+                            'description' => 'Relationship ID to use (-1 for Primary Relationship, 0 for no relationship)',
+                            'default' => -1
+                        ]
+                    ],
+                    'required' => ['fid']
+                ]
+            ],
+            'search_entries' => [
+                'name' => 'search_entries',
+                'description' => 'Search for entries in a form based on criteria',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'form_id' => [
+                            'type' => 'integer',
+                            'description' => 'The ID of the form to search'
+                        ],
+                        'search_term' => [
+                            'type' => 'string',
+                            'description' => 'Text to search for in entries'
+                        ],
+                        'element_handle' => [
+                            'type' => 'string',
+                            'description' => 'Specific element handle to search within (optional)'
+                        ],
+                        'limit' => [
+                            'type' => 'integer',
+                            'description' => 'Maximum number of results',
+                            'default' => 20
+                        ]
+                    ],
+                    'required' => ['form_id', 'search_term']
+                ]
+            ],
             'debug_tables' => [
                 'name' => 'debug_tables',
                 'description' => 'Debug: List all Formulize-related database tables',
                 'inputSchema' => [
                     'type' => 'object',
-                    'properties' => (object)[]  // Empty object, not empty array
+                    'properties' => (object)[]
                 ]
             ]
         ];
     }
 
     /**
-     * Handle HTTP request routing
+     * Enhanced test connection with proper authenticated user info
      */
-    public function handleHTTPRequest() {
-        $this->setNoCacheHeaders();
+    private function testConnection() {
+        global $xoopsConfig;
 
-        // Handle CORS preflight
-        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-            http_response_code(204);
-            exit;
+        $testQuery = "SELECT 1 as test";
+        $result = $this->db->query($testQuery);
+
+        if (!$result) {
+            throw new Exception('Database query failed');
         }
 
-        $path = $_SERVER['REQUEST_URI'];
-        $pathParts = explode('?', $path);
-        $cleanPath = $pathParts[0];
+        $row = $this->db->fetchArray($result);
 
-        // Route based on path
-        if (strpos($cleanPath, '/mcp') !== false) {
-            $this->handleMCPEndpoint();
-        } elseif (strpos($cleanPath, '/health') !== false) {
-            $this->handleHealthCheck();
-        } elseif (strpos($cleanPath, '/capabilities') !== false) {
-            $this->handleCapabilities();
-        } else {
-            $this->handleDocumentation();
+        $connectionInfo = [
+            'status' => 'success',
+            'message' => 'MCP Server connection successful with Formulize authentication',
+            'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
+            'xoops_config' => [
+                'sitename' => $xoopsConfig['sitename'] ?? 'Unknown',
+                'version' => XOOPS_VERSION ?? 'Unknown'
+            ],
+            'server_info' => [
+                'php_version' => PHP_VERSION,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'execution_mode' => 'direct_http_with_formulize_auth'
+            ]
+        ];
+
+        // Add authenticated user info
+        if ($this->authenticatedUser) {
+            $connectionInfo['authenticated_user'] = [
+                'uid' => $this->authenticatedUid,
+                'username' => $this->authenticatedUser->getVar('uname'),
+                'name' => $this->authenticatedUser->getVar('name'),
+                'email' => $this->authenticatedUser->getVar('email'),
+                'groups' => $this->userGroups,
+                'login_name' => $this->authenticatedUser->getVar('login_name')
+            ];
+        }
+
+        return $connectionInfo;
+    }
+
+    /**
+     * Enhanced health check with Formulize auth info
+     */
+    private function handleHealthCheck() {
+        try {
+            // Test database connection
+            $testQuery = "SELECT 1 as test";
+            $result = $this->db->query($testQuery);
+
+            if (!$result) {
+                throw new Exception('Database query failed');
+            }
+
+            $row = $this->db->fetchArray($result);
+
+            // Check API key table
+            $apiKeyTableExists = false;
+            $apiKeyCount = 0;
+
+            $checkTableSql = "SHOW TABLES LIKE '" . XOOPS_DB_PREFIX . "_formulize_apikeys'";
+            $tableResult = $this->db->query($checkTableSql);
+
+            if ($this->db->fetchArray($tableResult)) {
+                $apiKeyTableExists = true;
+
+                // Count active keys
+                $countSql = "SELECT COUNT(*) as count FROM " . XOOPS_DB_PREFIX . "_formulize_apikeys WHERE expiry IS NULL OR expiry > NOW()";
+                $countResult = $this->db->query($countSql);
+                if ($countResult) {
+                    $countRow = $this->db->fetchArray($countResult);
+                    $apiKeyCount = $countRow['count'];
+                }
+            }
+
+            $health = [
+                'status' => 'healthy',
+                'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
+                'mcp_server' => 'direct_http_with_formulize_api_keys',
+                'tools_count' => count($this->tools),
+                'authentication' => [
+                    'system' => 'formulize_api_keys',
+                    'api_key_table_exists' => $apiKeyTableExists,
+                    'active_keys_count' => $apiKeyCount,
+                    'table_name' => XOOPS_DB_PREFIX . '_formulize_apikeys'
+                ],
+                'endpoints' => [
+                    'mcp' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/mcp',
+                    'capabilities' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/capabilities',
+                    'health' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/health'
+                ],
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+
+            echo json_encode($health, JSON_PRETTY_PRINT);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'unhealthy',
+                'error' => $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s')
+            ], JSON_PRETTY_PRINT);
         }
     }
 
@@ -198,7 +503,7 @@ class FormulizeMCPHTTPDirect {
         $capabilities = [
             'protocolVersion' => '2024-11-05',
             'capabilities' => [
-                'tools' => array_values($this->tools),  // ← Include the actual tools!
+                'tools' => array_values($this->tools),
                 'prompts' => [],
                 'resources' => []
             ],
@@ -213,47 +518,6 @@ class FormulizeMCPHTTPDirect {
         ];
 
         echo json_encode($capabilities, JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * Handle health check
-     */
-    private function handleHealthCheck() {
-        try {
-            // Test database connection
-            $testQuery = "SELECT 1 as test";
-            $result = $this->db->query($testQuery);
-
-            if (!$result) {
-                throw new Exception('Database query failed');
-            }
-
-            $row = $this->db->fetchArray($result);
-
-            $health = [
-                'status' => 'healthy',
-                'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
-                'mcp_server' => 'direct_http',
-                'tools_count' => count($this->tools),
-                'no_cache_enforced' => true,
-                'endpoints' => [
-                    'mcp' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/mcp',
-                    'capabilities' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/capabilities',
-                    'health' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/health'
-                ],
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-
-            echo json_encode($health, JSON_PRETTY_PRINT);
-
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'status' => 'unhealthy',
-                'error' => $e->getMessage(),
-                'timestamp' => date('Y-m-d H:i:s')
-            ], JSON_PRETTY_PRINT);
-        }
     }
 
     /**
@@ -427,6 +691,10 @@ class FormulizeMCPHTTPDirect {
                 return $this->getFormDetails($arguments);
             case 'get_form_elements':
                 return $this->getFormElements($arguments);
+            case 'gatherDataset':
+                return $this->gatherDataset($arguments);
+            case 'search_entries':
+                return $this->searchEntries($arguments);
             case 'debug_tables':
                 return $this->debugTables();
             default:
@@ -435,34 +703,78 @@ class FormulizeMCPHTTPDirect {
     }
 
     /**
-     * Test database connection and basic functionality
+     * Gather dataset using Formulize's built-in function with proper permission scoping
      */
-    private function testConnection() {
-        global $xoopsConfig;
+    private function gatherDataset($args) {
+        // Include Formulize's common functions
+        include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-        $testQuery = "SELECT 1 as test";
-        $result = $this->db->query($testQuery);
+        global $xoopsUser;
 
-        if (!$result) {
-            throw new Exception('Database query failed');
+        $fid = intval($args['fid']);
+        $elementHandles = $args['elementHandles'] ?? array();
+        $filter = $args['filter'] ?? '';
+        $andOr = $args['andOr'] ?? 'AND';
+        $currentView = $args['currentView'] ?? 'all';
+        $limitStart = $args['limitStart'] ?? null;
+        $limitSize = $args['limitSize'] ?? null;
+        $sortField = $args['sortField'] ?? '';
+        $sortOrder = $args['sortOrder'] ?? 'ASC';
+        $frid = intval($args['frid'] ?? -1);
+
+        try {
+            // Build scope based on authenticated user and their permissions
+            $scope = buildScope($currentView, $xoopsUser, $fid);
+
+            // The buildScope function returns an array with [scope, actualCurrentView]
+            $actualScope = $scope[0];
+            $actualCurrentView = $scope[1];
+
+            // Call Formulize's gatherDataset function with all parameters
+            $dataset = gatherDataset(
+                $fid,
+                $elementHandles,
+                $filter,
+                $andOr,
+                $actualScope,
+                $limitStart,
+                $limitSize,
+                $sortField,
+                $sortOrder,
+                $frid
+            );
+
+            return [
+                'fid' => $fid,
+                'dataset' => $dataset,
+                'total_count' => count($dataset),
+                'scope_used' => $actualScope,
+                'current_view_requested' => $currentView,
+                'current_view_actual' => $actualCurrentView,
+                'authenticated_user' => [
+                    'uid' => $this->authenticatedUid,
+                    'username' => $this->authenticatedUser ? $this->authenticatedUser->getVar('uname') : 'anonymous'
+                ],
+                'parameters' => [
+                    'elementHandles' => $elementHandles,
+                    'filter' => $filter,
+                    'andOr' => $andOr,
+                    'limitStart' => $limitStart,
+                    'limitSize' => $limitSize,
+                    'sortField' => $sortField,
+                    'sortOrder' => $sortOrder,
+                    'frid' => $frid
+                ],
+                'execution_mode' => 'gatherDataset_with_permissions'
+            ];
+
+        } catch (Exception $e) {
+            return [
+                'error' => 'gatherDataset execution failed: ' . $e->getMessage(),
+                'fid' => $fid,
+                'requested_scope' => $currentView
+            ];
         }
-
-        $row = $this->db->fetchArray($result);
-
-        return [
-            'status' => 'success',
-            'message' => 'MCP Server connection successful',
-            'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
-            'xoops_config' => [
-                'sitename' => $xoopsConfig['sitename'] ?? 'Unknown',
-                'version' => XOOPS_VERSION ?? 'Unknown'
-            ],
-            'server_info' => [
-                'php_version' => PHP_VERSION,
-                'timestamp' => date('Y-m-d H:i:s'),
-                'execution_mode' => 'direct_http'
-            ]
-        ];
     }
 
     /**
@@ -511,7 +823,7 @@ class FormulizeMCPHTTPDirect {
 
         $sql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize_id";
 
-        if (in_array('active', $columns) && !$includeInactive) {
+        if (in_array('active', $columns) AND !$includeInactive) {
             $sql .= " WHERE active = 1";
         }
 
@@ -585,6 +897,79 @@ class FormulizeMCPHTTPDirect {
         ];
     }
 
+    /**
+     * Search entries in a form
+     */
+    private function searchEntries($args) {
+        $formId = intval($args['form_id']);
+        $searchTerm = $args['search_term'];
+        $elementHandle = $args['element_handle'] ?? null;
+        $limit = intval($args['limit'] ?? 20);
+
+        // Get the form's data table name
+        $dataTable = XOOPS_DB_PREFIX . "_formulize_" . $formId;
+
+        // Check if data table exists
+        $tableCheckSql = "SHOW TABLES LIKE '$dataTable'";
+        $tableResult = $this->db->query($tableCheckSql);
+
+        if (!$this->db->fetchArray($tableResult)) {
+            return [
+                'error' => 'Form data table not found',
+                'expected_table' => $dataTable,
+                'form_id' => $formId
+            ];
+        }
+
+        // Build search query
+        $searchTerm = $this->db->escape($searchTerm);
+
+        if ($elementHandle) {
+            // Search in specific element
+            $elementHandle = $this->db->escape($elementHandle);
+            $sql = "SELECT * FROM $dataTable WHERE `$elementHandle` LIKE '%$searchTerm%' ORDER BY entry_id DESC LIMIT $limit";
+        } else {
+            // Search across all text columns
+            $columnsSql = "DESCRIBE $dataTable";
+            $columnsResult = $this->db->query($columnsSql);
+
+            $textColumns = [];
+            while ($row = $this->db->fetchArray($columnsResult)) {
+                $type = strtolower($row['Type']);
+                if (strpos($type, 'varchar') !== false OR strpos($type, 'text') !== false) {
+                    $textColumns[] = "`" . $row['Field'] . "` LIKE '%$searchTerm%'";
+                }
+            }
+
+            if (empty($textColumns)) {
+                return ['error' => 'No searchable text columns found'];
+            }
+
+            $whereClause = implode(' OR ', $textColumns);
+            $sql = "SELECT * FROM $dataTable WHERE ($whereClause) ORDER BY entry_id DESC LIMIT $limit";
+        }
+
+        $result = $this->db->query($sql);
+
+        if (!$result) {
+            return ['error' => 'Search query failed', 'sql' => $sql];
+        }
+
+        $entries = [];
+        while ($row = $this->db->fetchArray($result)) {
+            $entries[] = $row;
+        }
+
+        return [
+            'form_id' => $formId,
+            'search_term' => $searchTerm,
+            'element_handle' => $elementHandle,
+            'results' => $entries,
+            'result_count' => count($entries),
+            'limit' => $limit
+        ];
+    }
+
     private function getDefaultConfig() {
         return [
             'debug' => false,
@@ -604,9 +989,9 @@ class FormulizeMCPHTTPDirect {
     }
 }
 
-// Handle the HTTP request
+// Handle the HTTP request with proper Formulize authentication
 try {
-    $server = new FormulizeMCPHTTPDirect();
+    $server = new FormulizeMCPHTTPDirectProperAuth();
     $server->handleHTTPRequest();
 } catch (Exception $e) {
     header('Content-Type: application/json; charset=utf-8');
