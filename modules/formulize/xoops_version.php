@@ -977,6 +977,14 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 $modversion['config'][] = array(
+	'name' => 'formulizeMCPServerEnabled',
+	'title' => '_MI_formulize_MCPSERVERENABLED',
+	'description' => '_MI_formulize_MCPSERVERENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+$modversion['config'][] = array(
 	'name' => 'validateCode',
 	'title' => '_MI_formulize_VALIDATECODE',
 	'description' => '_MI_formulize_VALIDATECODE_DESC',

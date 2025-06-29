@@ -105,12 +105,14 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			return false;
 		}
 		/**
-		 * MAJOR HACK TO VERIFY IF FORMULIZE REWRITE URL SETTING IS CAPABLE OF BEING ENABLED
+		 * MAJOR HACK TO VERIFY IF FORMULIZE REWRITE URL SETTING, PUBLIC API, OR MCP SERVER IS CAPABLE OF BEING ENABLED
 		 */
 		if(($config->getVar('conf_name') == 'formulizeRewriteRulesEnabled'
-			OR $config->getVar('conf_name') == 'formulizePublicAPIEnabled')
+			OR $config->getVar('conf_name') == 'formulizePublicAPIEnabled'
+			OR $config->getVar('conf_name') == 'formulizeMCPServerEnabled')
 			AND $config->getVar('conf_value') == 1
 			AND function_exists('curl_version')) {
+
 			switch($config->getVar('conf_name')) {
 				case 'formulizeRewriteRulesEnabled':
 					$url = XOOPS_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
@@ -118,16 +120,51 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 				case 'formulizePublicAPIEnabled':
 					$url = XOOPS_URL.'/formulize-public-api/v1/status/formulize-check-if-public-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
+				case 'formulizeMCPServerEnabled':
+					$url = XOOPS_URL.'/modules/formulize/mcp/server.php?endpoint=health'; // Direct path to MCP server health check
+					break;
 			}
+
 			$curl = curl_init();
 			curl_setopt($curl, CURLOPT_URL, $url);
 			curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-    		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    		curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+			curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($curl, CURLINFO_HEADER_OUT, true);
+
+			// For MCP server, we need to test if Authorization header gets passed through
+			if($config->getVar('conf_name') == 'formulizeMCPServerEnabled') {
+				// Add a test Authorization header to verify it passes through
+				curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+					'Authorization: Bearer test-header-passthrough-check'
+				));
+				curl_setopt($curl, CURLOPT_TIMEOUT, 10); // MCP server might take a moment to respond
+			}
+
 			$response = curl_exec($curl);
-			$json = json_decode($response);
+			$httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 			curl_close($curl);
-			if($response != 1 AND (!is_object($json) OR $json->status != "healthy")) {
+
+			// Validate response based on the service type
+			$validResponse = false;
+			switch($config->getVar('conf_name')) {
+				case 'formulizeRewriteRulesEnabled':
+					$validResponse = ($response == 1);
+					break;
+				case 'formulizePublicAPIEnabled':
+					$json = json_decode($response);
+					$validResponse = (is_object($json) AND $json->status == "healthy");
+					break;
+				case 'formulizeMCPServerEnabled':
+					$json = json_decode($response);
+					// MCP server should return JSON with status, and HTTP 200
+					// Even if auth fails, it should respond with JSON structure indicating the server is working
+					$validResponse = ($httpCode == 200 AND is_object($json) AND
+						(isset($json->status) OR isset($json->error) OR isset($json->mcp_server)));
+					break;
+			}
+
+			// If validation failed, force the setting back to disabled
+			if(!$validResponse) {
 				$config->setVar('conf_value', 0);
 				$config->cleanVars();
 			}
