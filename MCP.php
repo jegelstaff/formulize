@@ -237,7 +237,7 @@ class FormulizeMCP {
     }
 
     /**
-     * Register available MCP tools
+     * Register available MCP tools with proper JSON Schema validation
      */
     private function registerTools() {
         $this->tools = [
@@ -309,16 +309,44 @@ class FormulizeMCP {
                         'elementHandles' => [
                             'type' => 'array',
                             'description' => 'Optional. Array of element handles to include. Use multidimensional array with form IDs as keys',
+                            'items' => [
+                                'type' => 'array',
+                                'description' => 'Form ID to element handles mapping. The keys are the form ids, the values are arrays of element handles to include from each form.',
+																'items' => [
+																		'type' => 'string',
+																		'description' => 'Element handle to include in the dataset'
+																]
+                            ],
                             'default' => []
                         ],
                         'filter' => [
-                            'type' => ['integer', 'string', 'array'],
-                            'description' => 'Optional. Entry ID, filter string, or array of filter strings using /**/ separators',
+                            'oneOf' => [
+                                [
+                                    'type' => 'integer',
+                                    'description' => 'Entry ID'
+                                ],
+                                [
+                                    'type' => 'string',
+                                    'description' => 'Filter string taking the format: elementHandle/**/searchTerm/**/operator. Multiple strings can be included, separated by ][ and the logical operator between them is determined by the andOr parameter.'
+                                ],
+                                [
+                                    'type' => 'array',
+                                    'description' => 'Array of filter strings and their local AND/OR boolean values',
+                                    'items' => [
+                                        'type' => 'array',
+                                        'description' => 'Array in which the first item is the local boolean to use with this filter string, and the second item is the filter string itself.',
+                                        'items' => [
+                                        	'type' => 'string'
+                                    	]
+                                    ]
+                                ]
+                            ],
                             'default' => ''
                         ],
                         'andOr' => [
                             'type' => 'string',
                             'description' => 'Boolean operator between multiple filters (AND or OR)',
+                            'enum' => ['AND', 'OR'],
                             'default' => 'AND'
                         ],
                         'currentView' => [
@@ -344,6 +372,7 @@ class FormulizeMCP {
                         'sortOrder' => [
                             'type' => 'string',
                             'description' => 'Sort direction (ASC or DESC)',
+                            'enum' => ['ASC', 'DESC'],
                             'default' => 'ASC'
                         ],
                         'frid' => [
