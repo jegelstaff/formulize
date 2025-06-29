@@ -17,23 +17,12 @@ while(ob_get_level()) {
 
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/common.php';
 
-if (!isMCPServerEnabled()) {
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-cache, no-store, must-revalidate');
-    http_response_code(503);
-    echo json_encode([
-        'error' => 'MCP Server is disabled in Formulize preferences',
-        'message' => 'Please enable the MCP Server in System Admin > Preferences',
-        'code' => 503,
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-    exit;
-}
-
-class FormulizeMCPOAuthEnhanced {
+class FormulizeMCP {
 
     private $config;
     private $db;
+		public $enabled = false;
+		public $canBeEnabled = false;
     private $tools;
     private $authenticatedUser = null;
     private $authenticatedUid = 0;
@@ -41,10 +30,20 @@ class FormulizeMCPOAuthEnhanced {
     private $baseUrl;
 
     public function __construct($config = null) {
-        $this->config = $config ?: $this->getDefaultConfig();
-        $this->initializeDatabase();
-        $this->registerTools();
-        $this->baseUrl = $this->getBaseUrl();
+			if (isMCPServerEnabled()) {
+				$this->enabled = true;
+				$this->canBeEnabled = true;
+			} else {
+				$this->enabled = false;
+				$authHeader = $this->getAuthorizationHeader();
+				if ($authHeader == 'Bearer test-header-passthrough-check') {
+					$this->canBeEnabled = true;
+				}
+			}
+			$this->config = $config ?: $this->getDefaultConfig();
+			$this->initializeDatabase();
+			$this->registerTools();
+			$this->baseUrl = $this->getBaseUrl();
     }
 
     /**
@@ -1240,8 +1239,31 @@ class FormulizeMCPOAuthEnhanced {
 
 // Handle the HTTP request with OAuth-enhanced Formulize authentication
 try {
-    $server = new FormulizeMCPOAuthEnhanced();
-    $server->handleHTTPRequest();
+    $server = new FormulizeMCP();
+		if($server->enabled) {
+    	$server->handleHTTPRequest();
+		} elseif($server->canBeEnabled) {
+			// if the MCP server passed the canBeEnabled check, but is not enabled, return a 200 OK response with a JSON payload indicating that the server is not enabled
+			header('Content-Type: application/json; charset=utf-8');
+			header('Cache-Control: no-cache, no-store, must-revalidate');
+			http_response_code(200);
+			echo json_encode([
+					'message' => 'MCP Server can be enabled',
+					'code' => 200,
+					'timestamp' => date('Y-m-d H:i:s')
+			]);
+		} else {
+			// If the MCP server is disabled, return a 503 Service Unavailable response
+			header('Content-Type: application/json; charset=utf-8');
+    	header('Cache-Control: no-cache, no-store, must-revalidate');
+			http_response_code(503);
+			echo json_encode([
+					'error' => 'MCP Server is disabled',
+					'message' => 'Please enable the MCP Server in the Formulize settings.',
+					'code' => 503,
+					'timestamp' => date('Y-m-d H:i:s')
+			]);
+		}
 } catch (Exception $e) {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-cache, no-store, must-revalidate');
