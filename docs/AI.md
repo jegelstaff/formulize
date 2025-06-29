@@ -28,6 +28,12 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 An mcp.json file needs to be created inside your project's .vscode folder, and the server started with the Play icon that VSCode gives you in the editor interface.
 
+This can also go in your users/<name>/.cursor/mcp.json in windows, if you user Cursor and not VS Code.
+
+NOTE however that VSCode is the old man out and uses "servers" and not "mcpServers" as the top level.
+
+Add additional servers with the right key, for more instances. Same args value, because it's the same local server every time, just with different config.
+
 ```json
 {
   "servers": {
