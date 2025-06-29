@@ -1,10 +1,9 @@
 <?php
 
 /**
- * Enhanced Formulize MCP HTTP Server with OAuth 2.1 Discovery Support
+ * Formulize MCP HTTP Direct Server with Proper Formulize API Key Authentication
  *
- * Implements proper authentication discovery flow for VSCode MCP extension
- * Based on MCP 2025-03-26 specification and OAuth 2.1 Resource Server patterns
+ * Uses Formulize's existing API key system from managekeys.php/apikey.php
  */
 
 require_once dirname(__FILE__) . '/mainfile.php';
@@ -68,16 +67,11 @@ class FormulizeMCP {
     }
 
     /**
-     * Enhanced authentication with OAuth 2.1 discovery support
+     * Authenticate using Formulize's existing API key system
      */
     private function authenticateRequest() {
         $path = $_SERVER['REQUEST_URI'];
         $method = $_SERVER['REQUEST_METHOD'];
-
-        // Allow unauthenticated access to discovery endpoints
-        if (strpos($path, '/.well-known/') !== false) {
-            return true;
-        }
 
         // Allow unauthenticated GET requests for documentation and health
         if ($method === 'GET' && (
@@ -98,21 +92,21 @@ class FormulizeMCP {
         $authHeader = $this->getAuthorizationHeader();
 
         if (empty($authHeader)) {
-            $this->sendOAuthChallenge('Missing Authorization header');
+            $this->sendAuthError('Missing Authorization header');
             return false;
         }
 
-        // Extract bearer token from "Bearer {token}" format
+        // Extract API key from "Bearer {api_key}" format
         if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
-            $this->sendOAuthChallenge('Invalid Authorization header format. Use: Bearer {token}');
+            $this->sendAuthError('Invalid Authorization header format. Use: Bearer {api_key}');
             return false;
         }
 
-        $token = trim($matches[1]);
+        $key = trim($matches[1]);
 
-        // Validate token using Formulize's API key system
-        if (!$this->validateBearerToken($token)) {
-            $this->sendOAuthChallenge('Invalid or expired bearer token');
+        // Validate API key using Formulize's exact system
+        if (!$this->validateFormulizeApiKey($key)) {
+            $this->sendAuthError('Invalid or expired API key');
             return false;
         }
 
@@ -135,9 +129,9 @@ class FormulizeMCP {
     }
 
     /**
-     * Validate bearer token using Formulize's API key system
+     * Validate key using Formulize's API key system
      */
-    private function validateBearerToken($token) {
+    private function validateFormulizeApiKey($key) {
         global $xoopsUser, $icmsUser;
 
         // Get the API key handler exactly as Formulize does
@@ -148,7 +142,7 @@ class FormulizeMCP {
 
         $this->authenticatedUid = 0;
 
-        if ($token AND $apikey = $apiKeyHandler->get($token)) {
+        if ($key AND $apikey = $apiKeyHandler->get($key)) {
             $this->authenticatedUid = $apikey->getVar('uid');
 
             $member_handler = xoops_gethandler('member');
@@ -171,147 +165,25 @@ class FormulizeMCP {
         return false;
     }
 
-    /**
-     * Send OAuth 2.1 authentication challenge with proper discovery
+	/**
+     * Send authentication error response
      */
-    private function sendOAuthChallenge($message, $error = null) {
+    private function sendAuthError($message) {
         $this->setNoCacheHeaders();
-
-        $resourceMetadataUrl = $this->baseUrl . '/.well-known/oauth-protected-resource';
-
-        $wwwAuthenticateHeader = 'Bearer realm="formulize-mcp-server"';
-        $wwwAuthenticateHeader .= ', resource_metadata="' . $resourceMetadataUrl . '"';
-
-        if ($error) {
-            $wwwAuthenticateHeader .= ', error="' . $error . '"';
-            $wwwAuthenticateHeader .= ', error_description="' . $message . '"';
-        }
-
-        header('WWW-Authenticate: ' . $wwwAuthenticateHeader);
         http_response_code(401);
-
         echo json_encode([
-            'error' => 'unauthorized',
-            'message' => $message,
-            'code' => 401,
-            'type' => 'authentication_required',
-            'timestamp' => date('Y-m-d H:i:s'),
-            'discovery' => [
-                'resource_metadata' => $resourceMetadataUrl,
-                'instructions' => 'Use the resource_metadata URL to discover authentication requirements'
-            ]
-        ], JSON_PRETTY_PRINT);
+            'error' => [
+                'code' => 401,
+                'message' => $message,
+                'type' => 'authentication_error'
+            ],
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
         exit;
     }
 
     /**
-     * Handle OAuth 2.0 Protected Resource Metadata (RFC 9728)
-     */
-    private function handleProtectedResourceMetadata() {
-        $this->setNoCacheHeaders();
-
-        $metadata = [
-            'resource' => $this->baseUrl . '/mcp',
-            'authorization_servers' => [
-                $this->baseUrl  // Self-hosted authorization for API key system
-            ],
-            'scopes_supported' => [
-                'mcp:read',
-                'mcp:write',
-                'mcp:admin'
-            ],
-            'bearer_methods_supported' => ['header'],
-            'token_formats_supported' => ['opaque'],
-            'token_endpoint' => $this->baseUrl . '/oauth/token',
-            'token_introspection_endpoint' => $this->baseUrl . '/oauth/introspect',
-            'description' => 'Formulize MCP Server - Use your Formulize API key as the bearer token',
-            'authentication_methods' => [
-                'api_key' => [
-                    'description' => 'Use your Formulize API key from the managekeys.php interface',
-                    'format' => 'Bearer {your-formulize-api-key}',
-                    'location' => 'Authorization header'
-                ]
-            ]
-        ];
-
-        echo json_encode($metadata, JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * Handle OAuth authorization server metadata for VSCode compatibility
-     */
-    private function handleAuthorizationServerMetadata() {
-        $this->setNoCacheHeaders();
-
-        $metadata = [
-            'issuer' => $this->baseUrl,
-            'authorization_endpoint' => $this->baseUrl . '/oauth/authorize',
-            'token_endpoint' => $this->baseUrl . '/oauth/token',
-            'response_types_supported' => ['code'],
-            'grant_types_supported' => ['authorization_code', 'client_credentials'],
-            'code_challenge_methods_supported' => ['S256'],
-            'scopes_supported' => ['mcp:read', 'mcp:write', 'mcp:admin'],
-            'token_endpoint_auth_methods_supported' => ['none', 'client_secret_post'],
-            'description' => 'Simplified OAuth endpoint for Formulize API key authentication',
-            'notes' => [
-                'This server uses Formulize API keys as bearer tokens',
-                'No actual OAuth flow needed - just use your API key directly',
-                'Get your API key from the Formulize admin interface'
-            ]
-        ];
-
-        echo json_encode($metadata, JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * Handle simplified token endpoint (for compatibility)
-     */
-    private function handleTokenEndpoint() {
-        $this->setNoCacheHeaders();
-        http_response_code(400);
-
-        echo json_encode([
-            'error' => 'unsupported_grant_type',
-            'error_description' => 'This server uses Formulize API keys directly as bearer tokens. No token exchange needed.',
-            'instructions' => [
-                'Get your API key from Formulize admin panel',
-                'Use it directly in Authorization header: Bearer {your-api-key}',
-                'No OAuth flow required'
-            ]
-        ], JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * Handle token introspection endpoint
-     */
-    private function handleTokenIntrospection() {
-        $this->setNoCacheHeaders();
-
-        $token = $_POST['token'] ?? '';
-        if (empty($token)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'invalid_request', 'error_description' => 'Missing token parameter']);
-            return;
-        }
-
-        $isValid = $this->validateBearerToken($token);
-
-        $response = [
-            'active' => $isValid
-        ];
-
-        if ($isValid && $this->authenticatedUser) {
-            $response['scope'] = 'mcp:read mcp:write mcp:admin';
-            $response['username'] = $this->authenticatedUser->getVar('uname');
-            $response['uid'] = $this->authenticatedUid;
-            $response['exp'] = time() + 3600; // 1 hour from now
-        }
-
-        echo json_encode($response, JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * Handle HTTP request routing with OAuth discovery
+     * Handle HTTP request routing with authentication
      */
     public function handleHTTPRequest() {
         $this->setNoCacheHeaders();
@@ -322,38 +194,16 @@ class FormulizeMCP {
             exit;
         }
 
+        // Authenticate request
+        if (!$this->authenticateRequest()) {
+            return; // Authentication error already sent
+        }
+
         $path = $_SERVER['REQUEST_URI'];
         $pathParts = explode('?', $path);
         $cleanPath = $pathParts[0];
 
-        // OAuth 2.0 discovery endpoints
-        if (strpos($cleanPath, '/.well-known/oauth-protected-resource') !== false) {
-            $this->handleProtectedResourceMetadata();
-            return;
-        }
-
-        if (strpos($cleanPath, '/.well-known/oauth-authorization-server') !== false) {
-            $this->handleAuthorizationServerMetadata();
-            return;
-        }
-
-        // OAuth endpoints
-        if (strpos($cleanPath, '/oauth/token') !== false) {
-            $this->handleTokenEndpoint();
-            return;
-        }
-
-        if (strpos($cleanPath, '/oauth/introspect') !== false) {
-            $this->handleTokenIntrospection();
-            return;
-        }
-
-        // Authenticate request (will send challenge if needed)
-        if (!$this->authenticateRequest()) {
-            return; // Authentication challenge already sent
-        }
-
-        // Route to existing endpoints
+        // Route based on path
         if (strpos($cleanPath, '/mcp') !== false) {
             $this->handleMCPEndpoint();
         } elseif (strpos($cleanPath, '/health') !== false) {
@@ -560,7 +410,7 @@ class FormulizeMCP {
 
         $connectionInfo = [
             'status' => 'success',
-            'message' => 'MCP Server connection successful with OAuth-enhanced Formulize authentication',
+            'message' => 'MCP Server connection successful with Formulize authentication',
             'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
             'xoops_config' => [
                 'sitename' => $xoopsConfig['sitename'] ?? 'Unknown',
@@ -569,8 +419,7 @@ class FormulizeMCP {
             'server_info' => [
                 'php_version' => PHP_VERSION,
                 'timestamp' => date('Y-m-d H:i:s'),
-                'execution_mode' => 'oauth_enhanced_http_with_formulize_auth',
-                'oauth_discovery' => 'enabled'
+                'execution_mode' => 'direct_http_with_formulize_auth'
             ]
         ];
 
@@ -590,7 +439,7 @@ class FormulizeMCP {
     }
 
     /**
-     * Enhanced health check with OAuth discovery info
+     * Enhanced health check with Formulize auth info
      */
     private function handleHealthCheck() {
         try {
@@ -626,20 +475,13 @@ class FormulizeMCP {
             $health = [
                 'status' => 'healthy',
                 'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
-                'mcp_server' => 'oauth_enhanced_http_with_formulize_api_keys',
+                'mcp_server' => 'direct_http_with_formulize_api_keys',
                 'tools_count' => count($this->tools),
                 'authentication' => [
-                    'system' => 'oauth_enhanced_formulize_api_keys',
-                    'oauth_discovery' => 'enabled',
+                    'system' => 'formulize_api_keys',
                     'api_key_table_exists' => $apiKeyTableExists,
                     'active_keys_count' => $apiKeyCount,
                     'table_name' => XOOPS_DB_PREFIX . '_formulize_apikeys'
-                ],
-                'oauth_endpoints' => [
-                    'protected_resource_metadata' => $this->baseUrl . '/.well-known/oauth-protected-resource',
-                    'authorization_server_metadata' => $this->baseUrl . '/.well-known/oauth-authorization-server',
-                    'token_endpoint' => $this->baseUrl . '/oauth/token',
-                    'introspection_endpoint' => $this->baseUrl . '/oauth/introspect'
                 ],
                 'endpoints' => [
                     'mcp' => $this->baseUrl . '/mcp',
@@ -707,16 +549,12 @@ class FormulizeMCP {
                 'resources' => []
             ],
             'serverInfo' => [
-                'name' => 'formulize-mcp-server-oauth-enhanced',
+                'name' => 'formulize-mcp-server',
                 'version' => '1.1.0'
             ],
             'authentication' => [
-                'type' => 'oauth2_enhanced',
-                'discovery_enabled' => true,
-                'endpoints' => [
-                    'protected_resource_metadata' => $this->baseUrl . '/.well-known/oauth-protected-resource',
-                    'authorization_server_metadata' => $this->baseUrl . '/.well-known/oauth-authorization-server'
-                ]
+                'type' => 'Formulize API Keys',
+                'discovery_enabled' => false,
             ],
             'endpoints' => [
                 'mcp' => $this->baseUrl . '/mcp',
@@ -743,7 +581,7 @@ class FormulizeMCP {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Formulize MCP OAuth-Enhanced HTTP Server</title>
+    <title>Formulize MCP HTTP Direct Server</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -751,48 +589,17 @@ class FormulizeMCP {
         .method { color: #007cba; font-weight: bold; }
         pre { background: #eee; padding: 10px; border-radius: 3px; overflow-x: auto; }
         .success { color: #2e7d32; }
-        .oauth { color: #ff6600; }
-        .highlight { background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <h1>Formulize MCP OAuth-Enhanced HTTP Server</h1>
-    <p class="success">✅ OAuth 2.1 Resource Server with authentication discovery</p>
-    <p class="oauth">🔐 Compatible with VSCode MCP extension authentication flow</p>
+    <h1>Formulize MCP HTTP Direct Server</h1>
+    <p class="success">✅ Direct HTTP MCP server - no bridge needed!</p>
 
-    <div class="highlight">
-        <h3>🎯 For VSCode Integration:</h3>
-        <p>Use this configuration in your VSCode MCP settings:</p>
-        <pre>{
-  "servers": {
-    "Formulize": {
-      "type": "http",
-      "url": "<?php echo $this->baseUrl; ?>/mcp"
-    }
-  }
-}</pre>
-        <p><strong>Authentication:</strong> When prompted, use your Formulize API key as the bearer token.</p>
-    </div>
-
-    <h2>OAuth 2.1 Discovery Endpoints:</h2>
-
-    <div class="endpoint">
-        <h3><span class="method oauth">GET</span> /.well-known/oauth-protected-resource</h3>
-        <p>Protected Resource Metadata (RFC 9728)</p>
-        <p><a href="<?php echo $this->baseUrl; ?>/.well-known/oauth-protected-resource">View metadata</a></p>
-    </div>
-
-    <div class="endpoint">
-        <h3><span class="method oauth">GET</span> /.well-known/oauth-authorization-server</h3>
-        <p>Authorization Server Metadata for VSCode compatibility</p>
-        <p><a href="<?php echo $this->baseUrl; ?>/.well-known/oauth-authorization-server">View metadata</a></p>
-    </div>
-
-    <h2>MCP Endpoints:</h2>
+    <h2>Endpoints:</h2>
 
     <div class="endpoint">
         <h3><span class="method">POST</span> /mcp</h3>
-        <p>Main MCP endpoint - requires authentication</p>
+        <p>Main MCP endpoint - send JSON-RPC requests here</p>
         <pre>curl -X POST <?php echo $this->baseUrl; ?>/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_FORMULIZE_API_KEY" \
@@ -815,8 +622,8 @@ class FormulizeMCP {
     <div class="highlight">
         <p><strong>How to get your API key:</strong></p>
         <ol>
-            <li>Log into your Formulize admin panel</li>
-            <li>Go to System Admin → Formulize → Manage API Keys</li>
+            <li>Login to your Formulize system</li>
+            <li>Go to Admin → Manage API Keys</li>
             <li>Create or copy your API key</li>
             <li>Use it as: <code>Authorization: Bearer YOUR_API_KEY</code></li>
         </ol>
@@ -829,15 +636,11 @@ class FormulizeMCP {
         <?php endforeach; ?>
     </ul>
 
-    <p><small>OAuth-Enhanced MCP Server v1.1.0 | VSCode Compatible | <?php echo date('Y-m-d H:i:s'); ?></small></p>
+    <p><small>Direct HTTP MCP Server | <?php echo date('Y-m-d H:i:s'); ?></small></p>
 </body>
 </html>
         <?php
     }
-
-    // [Include all the existing MCP request handling methods here - handleRequest, handleInitialize, etc.]
-    // [Include all the existing tool execution methods - testConnection, listForms, etc.]
-    // [These methods remain unchanged from the original implementation]
 
     /**
      * Handle MCP request (same as before)
@@ -877,7 +680,7 @@ class FormulizeMCP {
                     'tools' => []
                 ],
                 'serverInfo' => [
-                    'name' => 'formulize-mcp-server-oauth-enhanced',
+                    'name' => 'formulize-mcp-server',
                     'version' => '1.1.0'
                 ]
             ],
@@ -1013,7 +816,7 @@ class FormulizeMCP {
                     'sortOrder' => $sortOrder,
                     'frid' => $frid
                 ],
-                'execution_mode' => 'gatherDataset_with_permissions_oauth_enhanced'
+                'execution_mode' => 'gatherDataset_with_permissions'
             ];
 
         } catch (Exception $e) {
@@ -1091,7 +894,7 @@ class FormulizeMCP {
         return [
             'forms' => $forms,
             'total_count' => count($forms),
-            'execution_mode' => 'oauth_enhanced_http'
+            'execution_mode' => 'direct_http'
         ];
     }
 
@@ -1237,7 +1040,7 @@ class FormulizeMCP {
     }
 }
 
-// Handle the HTTP request with OAuth-enhanced Formulize authentication
+// Handle the HTTP request with proper Formulize authentication
 try {
     $server = new FormulizeMCP();
 		if($server->enabled) {
