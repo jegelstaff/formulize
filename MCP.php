@@ -1248,6 +1248,7 @@ try {
 			header('Cache-Control: no-cache, no-store, must-revalidate');
 			http_response_code(200);
 			echo json_encode([
+					'status' => 'canBeEnabled',
 					'message' => 'MCP Server can be enabled',
 					'code' => 200,
 					'timestamp' => date('Y-m-d H:i:s')
