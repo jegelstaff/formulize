@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Formulize Proxy MCP Server
- * 
+ * Formulize MCP Server
+ *
  * Local TypeScript MCP server that proxies requests to remote Formulize HTTP server
- * For Claude Desktop integration
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -18,12 +17,12 @@ import {
 
 interface FormulizeConfig {
   baseUrl: string;
-  apiKey?: string;
+  apiKey: string;
   timeout?: number;
   debug?: boolean;
 }
 
-class FormulizeProxyServer {
+class FormulizeServer {
   private server: Server;
   private config: FormulizeConfig;
 
@@ -31,7 +30,7 @@ class FormulizeProxyServer {
     this.config = this.loadConfig();
     this.server = new Server(
       {
-        name: 'formulize-proxy-mcp',
+        name: 'formulize-mcp',
         version: '1.0.0',
       },
       {
@@ -48,6 +47,10 @@ class FormulizeProxyServer {
     const baseUrl = process.env.FORMULIZE_BASE_URL;
     if (!baseUrl) {
       throw new Error('FORMULIZE_BASE_URL environment variable is required');
+    }
+    const apiKey = process.env.FORMULIZE_API_KEY;
+    if (!apiKey) {
+      throw new Error('FORMULIZE_API_KEY environment variable is required');
     }
 
     return {
@@ -67,7 +70,7 @@ class FormulizeProxyServer {
       try {
         // Get tools from remote Formulize server
         const response = await this.makeRequest('tools/list', {});
-        
+
         if (response.result && response.result.tools) {
           return {
             tools: response.result.tools,
@@ -79,7 +82,7 @@ class FormulizeProxyServer {
         if (this.config.debug) {
           console.error('[DEBUG] Error fetching tools:', error);
         }
-        
+
         // Return fallback tools if remote server is unavailable
         return {
           tools: [
@@ -152,7 +155,7 @@ class FormulizeProxyServer {
 
   private async makeRequest(method: string, params: any): Promise<any> {
     const url = `${this.config.baseUrl}/mcp`;
-    
+
     const requestBody = {
       jsonrpc: '2.0',
       method,
@@ -199,11 +202,11 @@ class FormulizeProxyServer {
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`Request timeout after ${this.config.timeout}ms`);
       }
-      
+
       throw error;
     }
   }
@@ -221,13 +224,13 @@ class FormulizeProxyServer {
             type: 'text',
             text: JSON.stringify({
               status: 'connected',
-              proxy_version: '1.0.0',
+              version: '1.0.0',
               remote_url: this.config.baseUrl,
               response_time_ms: responseTime,
               config: {
                 timeout: this.config.timeout,
                 debug: this.config.debug,
-                api_key_configured: !!this.config.apiKey,
+                api_key_configured: this.config.apiKey,
               },
               timestamp: new Date().toISOString(),
             }, null, 2),
@@ -241,13 +244,13 @@ class FormulizeProxyServer {
             type: 'text',
             text: JSON.stringify({
               status: 'disconnected',
-              proxy_version: '1.0.0',
+              version: '1.0.0',
               remote_url: this.config.baseUrl,
               error: error instanceof Error ? error.message : String(error),
               config: {
                 timeout: this.config.timeout,
                 debug: this.config.debug,
-                api_key_configured: !!this.config.apiKey,
+                api_key_configured: this.config.apiKey,
               },
               timestamp: new Date().toISOString(),
             }, null, 2),
@@ -259,9 +262,9 @@ class FormulizeProxyServer {
 
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
-    
+
     if (this.config.debug) {
-      console.error(`[DEBUG] Starting Formulize Proxy MCP Server`);
+      console.error(`[DEBUG] Starting Formulize MCP Server`);
       console.error(`[DEBUG] Remote URL: ${this.config.baseUrl}`);
       console.error(`[DEBUG] Timeout: ${this.config.timeout}ms`);
     }
@@ -282,7 +285,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Start the server
-const server = new FormulizeProxyServer();
+const server = new FormulizeServer();
 server.run().catch((error) => {
   console.error('Failed to start server:', error);
   process.exit(1);
