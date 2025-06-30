@@ -3,21 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulize MCP Debug Test Tool</title>
+    <title>Formulize MCP Debug Test Tool - Enhanced</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
             background-color: #f5f5f5;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            max-width: 800px;
+            padding: 20px;
+            margin-right: 450px; /* Space for fixed response panel */
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            margin-left: 20px;
+            margin-bottom: 20px;
+            height: fit-content;
+        }
+
+        .response-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 420px;
+            height: calc(100vh - 40px);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            border: 2px solid #007cba;
+        }
+
+        .response-header {
+            background: #007cba;
+            color: white;
+            padding: 15px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .response-controls {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+        }
+
+        .response-controls button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0;
         }
 
         .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            /* Remove container styling since we're using main-content now */
         }
 
         h1 {
@@ -27,7 +79,7 @@
         }
 
         .test-section {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -50,11 +102,57 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-family: monospace;
+            box-sizing: border-box;
         }
 
         textarea {
-            height: 120px;
+            height: 100px;
             resize: vertical;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 1200px) {
+            body {
+                flex-direction: column;
+            }
+
+            .main-content {
+                margin-right: 20px;
+                margin-bottom: 350px;
+            }
+
+            .response-panel {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                right: 20px;
+                top: auto;
+                width: auto;
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin: 10px;
+                margin-bottom: 320px;
+                padding: 15px;
+            }
+
+            .response-panel {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                height: 280px;
+            }
+
+            .capability-section {
+                grid-template-columns: 1fr;
+            }
+
+            .preset-buttons {
+                grid-template-columns: 1fr;
+            }
         }
 
         button {
@@ -80,6 +178,35 @@
 
         .preset-buttons {
             margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .capability-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .capability-group {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #2196f3;
+        }
+
+        .capability-group h4 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+
+        .capability-group button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px 12px;
+            font-size: 14px;
         }
 
         .response {
@@ -88,7 +215,7 @@
             background-color: #f8f8f8;
             border: 1px solid #ddd;
             border-radius: 3px;
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
         }
 
@@ -132,11 +259,33 @@
             border-radius: 3px;
             font-size: 12px;
         }
+
+        .stats-bar {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 3px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .endpoint-test {
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+
+        .endpoint-test h5 {
+            margin: 0 0 10px 0;
+            color: #555;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Formulize MCP Debug Test Tool</h1>
+    <div class="main-content">
+        <h1>Formulize MCP Debug Test Tool - Enhanced</h1>
 
         <div class="auth-section">
             <h3>🔒 Authentication Setup</h3>
@@ -152,12 +301,58 @@
         </div>
 
         <div class="test-section">
+            <h3>🔍 MCP Capability Tests</h3>
+            <p>Test all three MCP capability types to verify what the remote server provides:</p>
+            
+            <div class="capability-section">
+                <div class="capability-group">
+                    <h4>🔧 Tools</h4>
+                    <button onclick="sendCapabilityRequest('tools', 'list')">List Tools</button>
+                    <button onclick="sendPresetRequest('test_connection')">Test Connection</button>
+                    <button onclick="sendPresetRequest('list_forms')">List Forms</button>
+                </div>
+                
+                <div class="capability-group">
+                    <h4>📄 Resources</h4>
+                    <button onclick="sendCapabilityRequest('resources', 'list')">List Resources</button>
+                    <button onclick="testResourceRead()">Test Resource Read</button>
+                </div>
+                
+                <div class="capability-group">
+                    <h4>💬 Prompts</h4>
+                    <button onclick="sendCapabilityRequest('prompts', 'list')">List Prompts</button>
+                    <button onclick="testPromptGet()">Test Prompt Get</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌐 HTTP Endpoint Tests</h3>
+            <p>Test the HTTP endpoints that Claude Desktop uses during startup:</p>
+            
+            <div class="endpoint-test">
+                <h5>Health Check Endpoint</h5>
+                <button onclick="testEndpoint('/health', 'GET')">GET /health</button>
+            </div>
+            
+            <div class="endpoint-test">
+                <h5>Capabilities Endpoint</h5>
+                <button onclick="testEndpoint('/capabilities', 'GET')">GET /capabilities</button>
+            </div>
+            
+            <div class="endpoint-test">
+                <h5>MCP Endpoint</h5>
+                <button onclick="testEndpoint('/mcp', 'POST', JSON.stringify({jsonrpc:'2.0',method:'initialize',params:{},id:1}, null, 2))">POST /mcp (initialize)</button>
+            </div>
+        </div>
+
+        <div class="test-section">
             <h3>Quick Test Buttons</h3>
             <div class="preset-buttons">
-                <button onclick="sendPresetRequest('tools/list')">📋 List Tools</button>
-                <button onclick="sendPresetRequest('test_connection')">🔗 Test Connection</button>
-                <button onclick="sendPresetRequest('list_forms')">📝 List Forms</button>
+                <button onclick="runAllCapabilityTests()">🔄 Test All Capabilities</button>
                 <button onclick="sendPresetRequest('debug_tables')">🛠️ Debug Tables</button>
+                <button onclick="testCompleteWorkflow()">🎯 Complete Workflow Test</button>
+                <button onclick="simulateClaudeStartup()">🚀 Simulate Claude Startup</button>
             </div>
         </div>
 
@@ -166,9 +361,13 @@
 
             <div class="form-group">
                 <label for="method">Method:</label>
-                <select id="method">
+                <select id="method" onchange="updateRequestBodyForMethod()">
                     <option value="tools/list">tools/list</option>
                     <option value="tools/call">tools/call</option>
+                    <option value="resources/list">resources/list</option>
+                    <option value="resources/read">resources/read</option>
+                    <option value="prompts/list">prompts/list</option>
+                    <option value="prompts/get">prompts/get</option>
                     <option value="initialize">initialize</option>
                 </select>
             </div>
@@ -186,45 +385,229 @@
                 Check browser console (F12) for additional debugging information.
             </div>
 
+            <div id="stats" class="stats-bar" style="display: none;"></div>
             <div id="response" class="response" style="display: none;"></div>
         </div>
     </div>
 
-    <script>
-        function showResponse(data, isError = false) {
-            const element = document.getElementById('response');
-            element.style.display = 'block';
-            element.className = isError ? 'response error' : 'response success';
+    <!-- Fixed Response Panel -->
+    <div class="response-panel">
+        <div class="response-header">
+            <span>📊 Response Monitor</span>
+            <span id="connection-status">●</span>
+        </div>
+        <div class="response-controls">
+            <button onclick="clearResponse()">Clear</button>
+            <button onclick="copyResponse()">Copy</button>
+            <button onclick="toggleResponseSize()">Resize</button>
+            <button onclick="exportLogs()">Export</button>
+        </div>
+        <div id="fixed-stats" class="stats-bar" style="display: none;"></div>
+        <div id="fixed-response" class="response">
+            <div style="text-align: center; color: #666; padding: 20px;">
+                <p>🚀 Ready to test your MCP server!</p>
+                <p>Responses will appear here as you run tests.</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                <p><strong>Quick Start:</strong></p>
+                <p>1. Enter your API key above</p>
+                <p>2. Click "Simulate Claude Startup"</p>
+                <p>3. Check for resources and prompts</p>
+            </div>
+        </div>
+    </div>
 
-            if (typeof data === 'object') {
-                element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    <script>
+        let testStats = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            failedRequests: 0,
+            startTime: Date.now()
+        };
+
+        let responsePanelExpanded = true;
+        let testLogs = [];
+
+        function updateStats() {
+            const runtime = Math.round((Date.now() - testStats.startTime) / 1000);
+            const statsText = `📊 ${testStats.totalRequests} total, ${testStats.successfulRequests} success, ${testStats.failedRequests} failed | ${runtime}s`;
+            
+            // Update both stats bars
+            document.getElementById('stats').innerHTML = statsText;
+            document.getElementById('fixed-stats').innerHTML = statsText;
+            document.getElementById('stats').style.display = 'block';
+            document.getElementById('fixed-stats').style.display = 'block';
+
+            // Update connection status indicator
+            const statusEl = document.getElementById('connection-status');
+            if (testStats.failedRequests === 0 && testStats.successfulRequests > 0) {
+                statusEl.style.color = '#4caf50'; // Green
+                statusEl.title = 'Connected';
+            } else if (testStats.failedRequests > 0) {
+                statusEl.style.color = '#f44336'; // Red
+                statusEl.title = 'Connection issues detected';
             } else {
-                element.innerHTML = `<pre>${data}</pre>`;
+                statusEl.style.color = '#ff9800'; // Orange
+                statusEl.title = 'No tests run yet';
             }
         }
 
+        function showResponse(data, isError = false, title = '') {
+            const timestamp = new Date().toISOString();
+            const headerText = title ? `${title} - ${timestamp}` : timestamp;
+
+            let responseContent;
+            if (typeof data === 'object') {
+                responseContent = `<strong>${headerText}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } else {
+                responseContent = `<strong>${headerText}</strong><pre>${data}</pre>`;
+            }
+
+            // Update both response areas
+            const fixedElement = document.getElementById('fixed-response');
+            const mainElement = document.getElementById('response');
+            
+            fixedElement.className = isError ? 'response error' : 'response success';
+            mainElement.className = isError ? 'response error' : 'response success';
+            
+            fixedElement.innerHTML = responseContent;
+            mainElement.innerHTML = responseContent;
+            
+            fixedElement.style.display = 'block';
+            mainElement.style.display = 'block';
+
+            // Add to logs
+            testLogs.push({
+                timestamp,
+                title: title || 'Request',
+                data,
+                isError,
+                id: Date.now()
+            });
+
+            // Keep only last 50 logs
+            if (testLogs.length > 50) {
+                testLogs = testLogs.slice(-50);
+            }
+
+            // Update stats
+            testStats.totalRequests++;
+            if (isError) {
+                testStats.failedRequests++;
+            } else {
+                testStats.successfulRequests++;
+            }
+            updateStats();
+
+            // Auto-scroll to bottom of fixed response
+            fixedElement.scrollTop = fixedElement.scrollHeight;
+        }
+
         function showLoading(message = 'Sending request...') {
-            const element = document.getElementById('response');
-            element.style.display = 'block';
-            element.className = 'response loading';
-            element.innerHTML = `<p>${message}</p>`;
+            const loadingContent = `<div class="loading">${message}</div>`;
+            
+            document.getElementById('fixed-response').innerHTML = loadingContent;
+            document.getElementById('response').innerHTML = loadingContent;
+            document.getElementById('fixed-response').className = 'response loading';
+            document.getElementById('response').className = 'response loading';
         }
 
         function clearResponse() {
-            const element = document.getElementById('response');
-            element.style.display = 'none';
+            document.getElementById('fixed-response').innerHTML = `
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    <p>🧹 Response cleared</p>
+                    <p>Ready for next test...</p>
+                </div>
+            `;
+            document.getElementById('response').innerHTML = '';
+            document.getElementById('fixed-response').className = 'response';
+            document.getElementById('response').className = 'response';
+            document.getElementById('fixed-response').style.display = 'block';
+            document.getElementById('response').style.display = 'none';
+            
+            // Reset stats
+            testStats = {
+                totalRequests: 0,
+                successfulRequests: 0,
+                failedRequests: 0,
+                startTime: Date.now()
+            };
+            testLogs = [];
+            document.getElementById('stats').style.display = 'none';
+            document.getElementById('fixed-stats').style.display = 'none';
+            updateStats();
         }
 
-        async function sendRequest(requestBody) {
+        function copyResponse() {
+            const responseEl = document.getElementById('fixed-response');
+            const text = responseEl.innerText || responseEl.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Show brief feedback
+                const originalContent = responseEl.innerHTML;
+                responseEl.innerHTML = '<div style="text-align: center; color: #4caf50; padding: 20px;">📋 Copied to clipboard!</div>';
+                setTimeout(() => {
+                    responseEl.innerHTML = originalContent;
+                }, 1000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function toggleResponseSize() {
+            const panel = document.querySelector('.response-panel');
+            
+            if (responsePanelExpanded) {
+                panel.style.width = '300px';
+                panel.style.height = '400px';
+                responsePanelExpanded = false;
+            } else {
+                panel.style.width = '420px';
+                panel.style.height = 'calc(100vh - 40px)';
+                responsePanelExpanded = true;
+            }
+        }
+
+        function exportLogs() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                stats: testStats,
+                logs: testLogs,
+                sessionInfo: {
+                    userAgent: navigator.userAgent,
+                    serverUrl: document.getElementById('serverUrl').value,
+                    apiKeyProvided: !!document.getElementById('apiKey').value
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `formulize-mcp-test-logs-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Show feedback
+            const responseEl = document.getElementById('fixed-response');
+            const originalContent = responseEl.innerHTML;
+            responseEl.innerHTML = '<div style="text-align: center; color: #4caf50; padding: 20px;">📥 Logs exported successfully!</div>';
+            setTimeout(() => {
+                responseEl.innerHTML = originalContent;
+            }, 1500);
+        }
+
+        async function sendRequest(requestBody, title = '') {
             const apiKey = document.getElementById('apiKey').value;
             const serverUrl = document.getElementById('serverUrl').value;
 
             if (!serverUrl) {
-                showResponse('Error: Server URL is required', true);
-                return;
+                showResponse('Error: Server URL is required', true, title);
+                return null;
             }
 
-            showLoading('Sending request...');
+            showLoading(`Sending ${title || 'request'}...`);
 
             try {
                 console.log('Sending request:', requestBody);
@@ -277,14 +660,16 @@
                         statusText: response.statusText,
                         response: data,
                         timestamp: new Date().toISOString()
-                    }, true);
+                    }, true, title);
+                    return null;
                 } else {
                     showResponse({
                         status: 'Success',
                         httpStatus: response.status,
                         response: data,
                         timestamp: new Date().toISOString()
-                    });
+                    }, false, title);
+                    return data;
                 }
 
             } catch (error) {
@@ -297,32 +682,100 @@
                     apiKeyProvided: !!apiKey,
                     apiKeyLength: apiKey ? apiKey.length : 0,
                     serverUrl: serverUrl
-                }, true);
+                }, true, title);
+                return null;
             }
+        }
+
+        async function testEndpoint(endpoint, method = 'GET', body = null) {
+            const apiKey = document.getElementById('apiKey').value;
+            const serverUrl = document.getElementById('serverUrl').value;
+            
+            if (!serverUrl) {
+                showResponse('Error: Server URL is required', true);
+                return;
+            }
+
+            // Build full URL
+            const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
+            const fullUrl = baseUrl + endpoint;
+
+            showLoading(`Testing ${method} ${endpoint}...`);
+
+            try {
+                const headers = {
+                    'Cache-Control': 'no-cache'
+                };
+
+                if (apiKey && apiKey.trim()) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+
+                if (method === 'POST') {
+                    headers['Content-Type'] = 'application/json';
+                }
+
+                const response = await fetch(fullUrl, {
+                    method: method,
+                    headers: headers,
+                    body: body
+                });
+
+                const responseText = await response.text();
+                let data;
+
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    data = responseText;
+                }
+
+                showResponse({
+                    endpoint: endpoint,
+                    method: method,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    body: data
+                }, !response.ok, `${method} ${endpoint}`);
+
+            } catch (error) {
+                showResponse({
+                    endpoint: endpoint,
+                    method: method,
+                    error: error.message
+                }, true, `${method} ${endpoint}`);
+            }
+        }
+
+        function sendCapabilityRequest(type, action) {
+            let requestBody = {
+                "jsonrpc": "2.0",
+                "method": `${type}/${action}`,
+                "params": {},
+                "id": Date.now()
+            };
+
+            // Update the textarea with the request
+            document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
+            document.getElementById('method').value = `${type}/${action}`;
+
+            sendRequest(requestBody, `${type}/${action}`);
         }
 
         function sendPresetRequest(type) {
             let requestBody;
 
             switch (type) {
-                case 'tools/list':
-                    requestBody = {
-                        "jsonrpc": "2.0",
-                        "method": "tools/list",
-                        "params": {},
-                        "id": 1
-                    };
-                    break;
-
                 case 'test_connection':
                     requestBody = {
                         "jsonrpc": "2.0",
                         "method": "tools/call",
                         "params": {
                             "name": "test_connection",
-                            "arguments": {}
+                            "arguments": { "verbose": true }
                         },
-                        "id": 2
+                        "id": Date.now()
                     };
                     break;
 
@@ -334,7 +787,7 @@
                             "name": "list_forms",
                             "arguments": {}
                         },
-                        "id": 3
+                        "id": Date.now()
                     };
                     break;
 
@@ -346,7 +799,7 @@
                             "name": "debug_tables",
                             "arguments": {}
                         },
-                        "id": 4
+                        "id": Date.now()
                     };
                     break;
 
@@ -358,7 +811,203 @@
             // Update the textarea with the request
             document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
 
-            sendRequest(requestBody);
+            sendRequest(requestBody, type);
+        }
+
+        async function testResourceRead() {
+            // First get the list of resources
+            const resourcesList = await sendRequest({
+                "jsonrpc": "2.0",
+                "method": "resources/list",
+                "params": {},
+                "id": Date.now()
+            }, 'Get resources list for read test');
+
+            // If we got resources, try to read the first one
+            if (resourcesList && resourcesList.response && resourcesList.response.result && 
+                resourcesList.response.result.resources && resourcesList.response.result.resources.length > 0) {
+                
+                const firstResource = resourcesList.response.result.resources[0];
+                const readRequest = {
+                    "jsonrpc": "2.0",
+                    "method": "resources/read",
+                    "params": {
+                        "uri": firstResource.uri
+                    },
+                    "id": Date.now()
+                };
+
+                setTimeout(() => {
+                    sendRequest(readRequest, `Read resource: ${firstResource.name}`);
+                }, 1000);
+            }
+        }
+
+        async function testPromptGet() {
+            // First get the list of prompts
+            const promptsList = await sendRequest({
+                "jsonrpc": "2.0",
+                "method": "prompts/list",
+                "params": {},
+                "id": Date.now()
+            }, 'Get prompts list for get test');
+
+            // If we got prompts, try to get the first one
+            if (promptsList && promptsList.response && promptsList.response.result && 
+                promptsList.response.result.prompts && promptsList.response.result.prompts.length > 0) {
+                
+                const firstPrompt = promptsList.response.result.prompts[0];
+                const getRequest = {
+                    "jsonrpc": "2.0",
+                    "method": "prompts/get",
+                    "params": {
+                        "name": firstPrompt.name,
+                        "arguments": {}
+                    },
+                    "id": Date.now()
+                };
+
+                setTimeout(() => {
+                    sendRequest(getRequest, `Get prompt: ${firstPrompt.name}`);
+                }, 1000);
+            }
+        }
+
+        async function runAllCapabilityTests() {
+            clearResponse();
+            showLoading('Running comprehensive capability tests...');
+
+            const tests = [
+                { method: 'tools/list', title: 'List Tools' },
+                { method: 'resources/list', title: 'List Resources' },
+                { method: 'prompts/list', title: 'List Prompts' }
+            ];
+
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                showLoading(`Running test ${i + 1}/${tests.length}: ${test.title}...`);
+                
+                await sendRequest({
+                    "jsonrpc": "2.0",
+                    "method": test.method,
+                    "params": {},
+                    "id": Date.now()
+                }, test.title);
+
+                // Wait between tests
+                if (i < tests.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+        }
+
+        async function simulateClaudeStartup() {
+            clearResponse();
+            showLoading('Simulating Claude Desktop startup sequence...');
+
+            // This simulates the exact sequence Claude Desktop performs during startup
+            const startupSequence = [
+                { method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {} }, title: 'Initialize' },
+                { method: 'tools/list', params: {}, title: 'Discover Tools' },
+                { method: 'resources/list', params: {}, title: 'Discover Resources' },
+                { method: 'prompts/list', params: {}, title: 'Discover Prompts' }
+            ];
+
+            for (let i = 0; i < startupSequence.length; i++) {
+                const step = startupSequence[i];
+                showLoading(`Startup step ${i + 1}/${startupSequence.length}: ${step.title}...`);
+                
+                await sendRequest({
+                    "jsonrpc": "2.0",
+                    "method": step.method,
+                    "params": step.params,
+                    "id": Date.now()
+                }, `Startup: ${step.title}`);
+
+                // Small delay between startup steps
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+
+        async function testCompleteWorkflow() {
+            clearResponse();
+            showLoading('Testing complete MCP workflow...');
+
+            // Test health endpoint first
+            await testEndpoint('/health', 'GET');
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Test capabilities endpoint
+            await testEndpoint('/capabilities', 'GET');
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Run all capability tests
+            await runAllCapabilityTests();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Test a tool call
+            await sendRequest({
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {
+                    "name": "test_connection",
+                    "arguments": {}
+                },
+                "id": Date.now()
+            }, 'Test tool call');
+        }
+
+        function updateRequestBodyForMethod() {
+            const method = document.getElementById('method').value;
+            let requestBody;
+
+            switch (method) {
+                case 'tools/list':
+                    requestBody = { "jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 1 };
+                    break;
+                case 'tools/call':
+                    requestBody = { 
+                        "jsonrpc": "2.0", 
+                        "method": "tools/call", 
+                        "params": { "name": "test_connection", "arguments": {} }, 
+                        "id": 1 
+                    };
+                    break;
+                case 'resources/list':
+                    requestBody = { "jsonrpc": "2.0", "method": "resources/list", "params": {}, "id": 1 };
+                    break;
+                case 'resources/read':
+                    requestBody = { 
+                        "jsonrpc": "2.0", 
+                        "method": "resources/read", 
+                        "params": { "uri": "formulize://form/schema/1" }, 
+                        "id": 1 
+                    };
+                    break;
+                case 'prompts/list':
+                    requestBody = { "jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 1 };
+                    break;
+                case 'prompts/get':
+                    requestBody = { 
+                        "jsonrpc": "2.0", 
+                        "method": "prompts/get", 
+                        "params": { "name": "analyze_form", "arguments": { "form_id": 1 } }, 
+                        "id": 1 
+                    };
+                    break;
+                case 'initialize':
+                    requestBody = { 
+                        "jsonrpc": "2.0", 
+                        "method": "initialize", 
+                        "params": { "protocolVersion": "2024-11-05", "capabilities": {} }, 
+                        "id": 1 
+                    };
+                    break;
+                default:
+                    requestBody = { "jsonrpc": "2.0", "method": method, "params": {}, "id": 1 };
+            }
+
+            document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
         }
 
         function sendCustomRequest() {
@@ -371,7 +1020,7 @@
 
             try {
                 const requestBody = JSON.parse(requestBodyText);
-                sendRequest(requestBody);
+                sendRequest(requestBody, 'Custom Request');
             } catch (error) {
                 showResponse('Error: Invalid JSON in request body - ' + error.message, true);
             }
@@ -379,12 +1028,7 @@
 
         // Initialize with a default request
         window.onload = function() {
-            document.getElementById('requestBody').value = JSON.stringify({
-                "jsonrpc": "2.0",
-                "method": "tools/list",
-                "params": {},
-                "id": 1
-            }, null, 2);
+            updateRequestBodyForMethod();
         };
 
         // Show/hide API key
@@ -393,11 +1037,11 @@
         });
 
         document.getElementById('apiKey').addEventListener('blur', function() {
-						if (this.value.trim() !== '') {
-							this.type = 'password';
-						} else {
-            	this.type = 'text';
-						}
+            if (this.value.trim() !== '') {
+                this.type = 'password';
+            } else {
+                this.type = 'text';
+            }
         });
     </script>
 </body>
