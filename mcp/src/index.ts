@@ -21,7 +21,7 @@ import {
 
 interface FormulizeConfig {
   baseUrl: string;
-  apiKey: string;
+  apiKey: string | undefined;
   timeout?: number;
   debug?: boolean;
 }
