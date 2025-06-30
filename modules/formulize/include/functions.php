@@ -9028,3 +9028,23 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 	}
 	return $screenId;
 }
+
+/**
+ * Check if MCP Server is enabled in Formulize preferences
+ * @return bool True if MCP server is enabled, false otherwise
+ */
+function isMCPServerEnabled() {
+    global $xoopsModuleConfig;
+
+    // If we're in the Formulize module context
+    if (isset($xoopsModuleConfig['formulizeMCPServerEnabled'])) {
+        return (bool) $xoopsModuleConfig['formulizeMCPServerEnabled'];
+    }
+
+    // Fallback: get config directly
+    $config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
+    return isset($formulizeConfig['formulizeMCPServerEnabled']) &&
+           $formulizeConfig['formulizeMCPServerEnabled'] == 1;
+}
