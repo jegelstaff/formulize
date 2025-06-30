@@ -41,7 +41,7 @@ Add additional servers with the right key, for more instances. Same args value, 
       "command": "node",
       "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
       "env": {
-        "FORMULIZE_BASE_URL": "https://<your server url>/MCP.php",
+        "FORMULIZE_BASE_URL": "https://<your server domain>/MCP.php",
         "FORMULIZE_DEBUG": "false",
         "FORMULIZE_TIMEOUT": "30000",
         "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
@@ -51,7 +51,7 @@ Add additional servers with the right key, for more instances. Same args value, 
 }
 ```
 
-## The user's settings.json file:
+## The user's settings.json file, in the appdate/roaming/code/user folder, maybe. Can be enabled through the Prefs, Chat > MCP >  discovery: enabled.
 
 ```json
 "chat.mcp.discovery.enabled": true,

@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
       "env": {
-        "FORMULIZE_BASE_URL": "https://julian.formulize.net/MCP.php",
+        "FORMULIZE_BASE_URL": "https://<your server domain>/MCP.php",
         "FORMULIZE_DEBUG": "false",
         "FORMULIZE_TIMEOUT": "30000",
         "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
