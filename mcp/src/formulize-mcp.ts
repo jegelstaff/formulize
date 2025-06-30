@@ -100,7 +100,7 @@ class FormulizeServer {
         return {
           tools: [
             {
-              name: 'Test Connection',
+              name: 'test_connection',
               description: 'Test connection to Formulize server (works even if remote is down)',
               inputSchema: {
                 type: 'object',
@@ -108,7 +108,7 @@ class FormulizeServer {
               },
             },
             {
-              name: 'Proxy Status',
+              name: 'proxy_status',
               description: 'Get status of the proxy connection',
               inputSchema: {
                 type: 'object',
@@ -143,11 +143,11 @@ class FormulizeServer {
 
     try {
       // Handle special proxy tools locally
-      if (type === 'tools' && params.name === 'Proxy Status') {
+      if (type === 'tools' && params.name === 'proxy_status') {
         return await this.handleProxyStatus();
       }
 
-      if (type === 'tools' && params.name === 'Test Connection') {
+      if (type === 'tools' && params.name === 'test_connection') {
         return await this.handleTestConnection();
       }
 
@@ -313,7 +313,7 @@ class FormulizeServer {
       // Try to call the remote Test Connection tool
       const startTime = Date.now();
       const response = await this.makeRequest('tools/call', {
-        name: 'Test Connection',
+        name: 'test_connection',
         arguments: {},
       });
       const responseTime = Date.now() - startTime;
