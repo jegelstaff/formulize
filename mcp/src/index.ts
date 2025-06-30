@@ -12,6 +12,10 @@ import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 
@@ -22,6 +26,9 @@ interface FormulizeConfig {
   debug?: boolean;
 }
 
+type MCPType = 'tools' | 'resources' | 'prompts';
+type MCPAction = 'list' | 'call' | 'read' | 'get';
+
 class FormulizeServer {
   private server: Server;
   private config: FormulizeConfig;
@@ -31,11 +38,13 @@ class FormulizeServer {
     this.server = new Server(
       {
         name: 'formulize-mcp',
-        version: '1.0.0',
+        version: '1.1.0',
       },
       {
         capabilities: {
           tools: {},
+          resources: {},
+          prompts: {},
         },
       }
     );
@@ -61,41 +70,43 @@ class FormulizeServer {
     };
   }
 
-  private setupHandlers(): void {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+  /**
+   * Generic handler for listing MCP items (tools, resources, prompts)
+   */
+  private async handleListMCP(type: MCPType) {
+    if (this.config.debug) {
+      console.error(`[DEBUG] Fetching ${type} from remote server...`);
+    }
+
+    try {
+      const response = await this.makeRequest(`${type}/list`, {});
+
+      if (response.result && response.result[type]) {
+        return {
+          [type]: response.result[type],
+        };
+      } else {
+        throw new Error(`Invalid ${type} response from remote server`);
+      }
+    } catch (error) {
       if (this.config.debug) {
-        console.error('[DEBUG] Fetching tools from remote server...');
+        console.error(`[DEBUG] Error fetching ${type}:`, error);
       }
 
-      try {
-        // Get tools from remote Formulize server
-        const response = await this.makeRequest('tools/list', {});
-
-        if (response.result && response.result.tools) {
-          return {
-            tools: response.result.tools,
-          };
-        } else {
-          throw new Error('Invalid tools response from remote server');
-        }
-      } catch (error) {
-        if (this.config.debug) {
-          console.error('[DEBUG] Error fetching tools:', error);
-        }
-
-        // Return fallback tools if remote server is unavailable
+      // Return fallback for tools if remote server is unavailable
+      if (type === 'tools') {
         return {
           tools: [
             {
-              name: 'test_connection',
-              description: 'Test connection to Formulize server',
+              name: 'Test Connection',
+              description: 'Test connection to Formulize server (works even if remote is down)',
               inputSchema: {
                 type: 'object',
                 properties: {},
               },
             },
             {
-              name: 'proxy_status',
+              name: 'Proxy Status',
               description: 'Get status of the proxy connection',
               inputSchema: {
                 type: 'object',
@@ -105,51 +116,115 @@ class FormulizeServer {
           ],
         };
       }
+
+      // Return empty arrays for resources and prompts
+      return {
+        [type]: [],
+      };
+    }
+  }
+
+  /**
+   * Generic handler for using MCP items (calling tools, reading resources, getting prompts)
+   */
+  private async handleUseMCP(
+    type: MCPType,
+    action: MCPAction,
+    params: { name?: string; uri?: string; arguments?: any }
+  ) {
+    const identifier = params.name || params.uri || '';
+    const args = params.arguments;
+
+    if (this.config.debug) {
+      console.error(`[DEBUG] ${action} ${type}: ${identifier}${args ? ' with args:' : ''}`, args);
+    }
+
+    try {
+      // Handle special proxy tools locally
+      if (type === 'tools' && params.name === 'Proxy Status') {
+        return await this.handleProxyStatus();
+      }
+
+      if (type === 'tools' && params.name === 'Test Connection') {
+        return await this.handleTestConnection();
+      }
+
+      // Forward all other requests to remote server
+      const method = `${type}/${action}`;
+      const requestParams: any = {};
+
+      // Set the appropriate parameter based on the type
+      if (type === 'resources') {
+        requestParams.uri = identifier;
+      } else {
+        requestParams.name = identifier;
+        if (args !== undefined) {
+          requestParams.arguments = args;
+        }
+      }
+
+      const response = await this.makeRequest(method, requestParams);
+
+      if (response.result) {
+        return response.result;
+      } else if (response.error) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Remote server error: ${response.error.message}`
+        );
+      } else {
+        throw new Error('Invalid response from remote server');
+      }
+    } catch (error) {
+      if (this.config.debug) {
+        console.error(`[DEBUG] ${type} ${action} error:`, error);
+      }
+
+      if (error instanceof McpError) {
+        throw error;
+      }
+
+      throw new McpError(
+        ErrorCode.InternalError,
+        `${type} ${action} failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  private setupHandlers(): void {
+    // Tools handlers
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return this.handleListMCP('tools');
     });
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+      return this.handleUseMCP('tools', 'call', {
+        name: request.params.name,
+        arguments: request.params.arguments,
+      });
+    });
 
-      if (this.config.debug) {
-        console.error(`[DEBUG] Calling tool: ${name} with args:`, args);
-      }
+    // Resources handlers
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return this.handleListMCP('resources');
+    });
 
-      try {
-        // Handle special proxy tools locally
-        if (name === 'proxy_status') {
-          return await this.handleProxyStatus();
-        }
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      return this.handleUseMCP('resources', 'read', {
+        uri: request.params.uri,
+      });
+    });
 
-        // Forward all other tool calls to remote server
-        const response = await this.makeRequest('tools/call', {
-          name,
-          arguments: args || {},
-        });
+    // Prompts handlers
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      return this.handleListMCP('prompts');
+    });
 
-        if (response.result) {
-          return response.result;
-        } else if (response.error) {
-          throw new McpError(
-            ErrorCode.InternalError,
-            `Remote server error: ${response.error.message}`
-          );
-        } else {
-          throw new Error('Invalid response from remote server');
-        }
-      } catch (error) {
-        if (this.config.debug) {
-          console.error(`[DEBUG] Tool call error:`, error);
-        }
-
-        if (error instanceof McpError) {
-          throw error;
-        }
-
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`
-        );
-      }
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      return this.handleUseMCP('prompts', 'get', {
+        name: request.params.name,
+        arguments: request.params.arguments,
+      });
     });
   }
 
@@ -211,6 +286,93 @@ class FormulizeServer {
     }
   }
 
+  private async handleTestConnection(): Promise<any> {
+    const results: any = {
+      proxy_server: {
+        status: 'operational',
+        version: '1.1.0',
+        environment: {
+          node_version: process.version,
+          platform: process.platform,
+          api_key_configured: this.config.apiKey,
+          api_key_length: this.config.apiKey ? this.config.apiKey.length : 0,
+        },
+      },
+      remote_server: {
+        url: this.config.baseUrl,
+        status: 'unknown',
+        response_time_ms: null,
+        error: null,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      // Try to call the remote Test Connection tool
+      const startTime = Date.now();
+      const response = await this.makeRequest('tools/call', {
+        name: 'Test Connection',
+        arguments: {},
+      });
+      const responseTime = Date.now() - startTime;
+
+      results.remote_server.status = 'connected';
+      results.remote_server.response_time_ms = responseTime;
+
+      if (response.result && response.result.content && response.result.content[0]) {
+        // Parse the remote response
+        try {
+          const remoteData = JSON.parse(response.result.content[0].text);
+          results.remote_server.details = remoteData;
+        } catch (e) {
+          results.remote_server.raw_response = response.result.content[0].text;
+        }
+      }
+    } catch (error) {
+      results.remote_server.status = 'error';
+      results.remote_server.error = error instanceof Error ? error.message : String(error);
+
+      // Try a basic HTTP GET to check if server is reachable
+      let timeoutId: NodeJS.Timeout | undefined;
+      try {
+        const healthUrl = `${this.config.baseUrl}/health`;
+        const controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        const healthResponse = await fetch(healthUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.config.apiKey}`,
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (healthResponse.ok) {
+          results.remote_server.health_check = 'passed';
+          results.remote_server.http_status = healthResponse.status;
+        } else {
+          results.remote_server.health_check = 'failed';
+          results.remote_server.http_status = healthResponse.status;
+        }
+      } catch (healthError) {
+        if (timeoutId) clearTimeout(timeoutId);
+        results.remote_server.health_check = 'unreachable';
+        results.remote_server.health_error = healthError instanceof Error ? healthError.message : String(healthError);
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(results, null, 2),
+        },
+      ],
+    };
+  }
+
   private async handleProxyStatus(): Promise<any> {
     try {
       // Test connection to remote server
@@ -224,7 +386,7 @@ class FormulizeServer {
             type: 'text',
             text: JSON.stringify({
               status: 'connected',
-              version: '1.0.0',
+              version: '1.1.0',
               remote_url: this.config.baseUrl,
               response_time_ms: responseTime,
               config: {
@@ -244,7 +406,7 @@ class FormulizeServer {
             type: 'text',
             text: JSON.stringify({
               status: 'disconnected',
-              version: '1.0.0',
+              version: '1.1.0',
               remote_url: this.config.baseUrl,
               error: error instanceof Error ? error.message : String(error),
               config: {
@@ -264,9 +426,10 @@ class FormulizeServer {
     const transport = new StdioServerTransport();
 
     if (this.config.debug) {
-      console.error(`[DEBUG] Starting Formulize MCP Server`);
+      console.error(`[DEBUG] Starting Formulize MCP Server v1.1.0`);
       console.error(`[DEBUG] Remote URL: ${this.config.baseUrl}`);
       console.error(`[DEBUG] Timeout: ${this.config.timeout}ms`);
+      console.error(`[DEBUG] Capabilities: tools, resources, prompts`);
     }
 
     await this.server.connect(transport);
