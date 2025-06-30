@@ -6,7 +6,7 @@
  * Uses Formulize's existing API key system from managekeys.php/apikey.php
  */
 
-require_once dirname(__FILE__) . '/mainfile.php';
+require_once '../mainfile.php';
 
 // CRITICAL: Disable debug output
 icms::$logger->disableLogger();
