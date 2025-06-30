@@ -55,21 +55,25 @@ class FormulizeServer {
   }
 
   private loadConfig(): FormulizeConfig {
-    const baseUrl = process.env.FORMULIZE_BASE_URL;
-    if (!baseUrl) {
+    if (!process.env.FORMULIZE_BASE_URL) {
       throw new Error('FORMULIZE_BASE_URL environment variable is required');
     }
-    const apiKey = process.env.FORMULIZE_API_KEY;
-    if (!apiKey) {
+    if (!process.env.FORMULIZE_API_KEY) {
       throw new Error('FORMULIZE_API_KEY environment variable is required');
     }
 
-    return {
-      baseUrl: baseUrl.replace(/\/$/, ''), // Remove trailing slash
-      apiKey: process.env.FORMULIZE_API_KEY,
-      timeout: parseInt(process.env.FORMULIZE_TIMEOUT || '30000'),
-      debug: process.env.FORMULIZE_DEBUG === 'true',
-    };
+		const apiKey = process.env.FORMULIZE_API_KEY;
+		let baseUrl = process.env.FORMULIZE_BASE_URL;
+		if (baseUrl.endsWith('/')) {
+			baseUrl += 'index.php';
+		}
+
+		return {
+			baseUrl: baseUrl,
+			apiKey: process.env.FORMULIZE_API_KEY,
+			timeout: parseInt(process.env.FORMULIZE_TIMEOUT || '30000'),
+			debug: process.env.FORMULIZE_DEBUG === 'true',
+		};
   }
 
   /**
