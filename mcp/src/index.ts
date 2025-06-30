@@ -32,13 +32,15 @@ type MCPAction = 'list' | 'call' | 'read' | 'get';
 class FormulizeServer {
   private server: Server;
   private config: FormulizeConfig;
+  private readonly version = '1.1.0';
+  private readonly name = 'formulize-mcp';
 
   constructor() {
     this.config = this.loadConfig();
     this.server = new Server(
       {
-        name: 'formulize-mcp',
-        version: '1.1.0',
+        name: this.name,
+        version: this.version,
       },
       {
         capabilities: {
@@ -290,7 +292,7 @@ class FormulizeServer {
     const results: any = {
       proxy_server: {
         status: 'operational',
-        version: '1.1.0',
+        version: this.version,
         environment: {
           node_version: process.version,
           platform: process.platform,
@@ -386,7 +388,7 @@ class FormulizeServer {
             type: 'text',
             text: JSON.stringify({
               status: 'connected',
-              version: '1.1.0',
+              version: this.version,
               remote_url: this.config.baseUrl,
               response_time_ms: responseTime,
               config: {
@@ -406,7 +408,7 @@ class FormulizeServer {
             type: 'text',
             text: JSON.stringify({
               status: 'disconnected',
-              version: '1.1.0',
+              version: this.version,
               remote_url: this.config.baseUrl,
               error: error instanceof Error ? error.message : String(error),
               config: {
@@ -426,7 +428,7 @@ class FormulizeServer {
     const transport = new StdioServerTransport();
 
     if (this.config.debug) {
-      console.error(`[DEBUG] Starting Formulize MCP Server v1.1.0`);
+      console.error(`[DEBUG] Starting Formulize MCP Server v${this.version}`);
       console.error(`[DEBUG] Remote URL: ${this.config.baseUrl}`);
       console.error(`[DEBUG] Timeout: ${this.config.timeout}ms`);
       console.error(`[DEBUG] Capabilities: tools, resources, prompts`);
