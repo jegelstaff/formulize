@@ -121,7 +121,7 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					$url = XOOPS_URL.'/formulize-public-api/v1/status/formulize-check-if-public-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
 				case 'formulizeMCPServerEnabled':
-					$url = XOOPS_URL.'/modules/formulize/mcp/server.php?endpoint=health'; // Direct path to MCP server health check
+					$url = XOOPS_URL.'/mcp/?endpoint=health'; // Direct path to MCP server health check
 					break;
 			}
 
@@ -158,8 +158,7 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 					$json = json_decode($response);
 					// MCP server should return JSON with status, and HTTP 200
 					// Even if auth fails, it should respond with JSON structure indicating the server is working
-					$validResponse = ($httpCode == 200 AND is_object($json) AND
-						(isset($json->status) OR isset($json->error) OR isset($json->mcp_server)));
+					$validResponse = ($httpCode == 200 AND is_object($json) AND isset($json->status) AND $json->status == 'canBeEnabled');
 					break;
 			}
 
