@@ -1,6 +1,9 @@
 <?php
 // $Id: global.php 20900 2011-02-27 02:18:47Z skenow $
 //%%%%%%	File Name mainfile.php 	%%%%%
+
+define('FORMULIZE_MCP_VERSION', '1.1.0');
+
 define('_PLEASEWAIT','Please Wait');
 define('_FETCHING','Loading...');
 define('_TAKINGBACK','Taking you back to where you were....');
