@@ -4,6 +4,7 @@
  * Formulize MCP Server
  *
  * Local TypeScript MCP server that proxies requests to remote Formulize HTTP server
+ * Features intelligent caching for non-tool endpoints to improve performance
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -29,11 +30,30 @@ interface FormulizeConfig {
 type MCPType = 'tools' | 'resources' | 'prompts';
 type MCPAction = 'list' | 'call' | 'read' | 'get';
 
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  ttl: number; // Time to live in milliseconds
+}
+
+interface CacheStats {
+  hits: number;
+  misses: number;
+  evictions: number;
+  size: number;
+}
+
 class FormulizeServer {
   private server: Server;
   private config: FormulizeConfig;
-  private readonly version = '1.1.0';
+  private readonly version = '1.2.0';
   private readonly name = 'formulize-mcp';
+
+  // Caching system
+  private cache: Map<string, CacheEntry> = new Map();
+  private cacheStats: CacheStats = { hits: 0, misses: 0, evictions: 0, size: 0 };
+  private readonly defaultTTL = 5 * 60 * 1000; // 5 minutes
+  private readonly maxCacheSize = 1000; // Maximum number of cache entries
 
   constructor() {
     this.config = this.loadConfig();
@@ -52,6 +72,9 @@ class FormulizeServer {
     );
 
     this.setupHandlers();
+    
+    // Start cache cleanup interval (every 2 minutes)
+    setInterval(() => this.cleanupExpiredCache(), 2 * 60 * 1000);
   }
 
   private loadConfig(): FormulizeConfig {
@@ -77,23 +100,209 @@ class FormulizeServer {
   }
 
   /**
-   * Generic handler for listing MCP items (tools, resources, prompts)
+   * Generate cache key for a request
+   */
+  private getCacheKey(method: string, params: any): string {
+    // Sort params to ensure consistent keys
+    const sortedParams = JSON.stringify(params, Object.keys(params).sort());
+    return `${method}:${sortedParams}`;
+  }
+
+  /**
+   * Check if a request should be cached
+   */
+  private shouldCache(method: string): boolean {
+    // Don't cache in debug mode
+    if (this.config.debug) {
+      return false;
+    }
+
+    // Don't cache tool calls (they interact with live data)
+    if (method === 'tools/call') {
+      return false;
+    }
+
+    // Cache everything else (tools/list, resources/list, resources/read, prompts/list, prompts/get)
+    return true;
+  }
+
+  /**
+   * Get TTL for different request types
+   */
+  private getTTL(method: string): number {
+    switch (method) {
+      case 'tools/list':
+        return 10 * 60 * 1000; // 10 minutes - tools don't change often
+      case 'resources/list':
+        return 2 * 60 * 1000; // 2 minutes - resources might be created
+      case 'resources/read':
+        return 5 * 60 * 1000; // 5 minutes - resource content is fairly stable
+      case 'prompts/list':
+        return 10 * 60 * 1000; // 10 minutes - prompts don't change often
+      case 'prompts/get':
+        return 5 * 60 * 1000; // 5 minutes - prompt content is stable
+      default:
+        return this.defaultTTL;
+    }
+  }
+
+  /**
+   * Get data from cache if available and not expired
+   */
+  private getFromCache(cacheKey: string): any | null {
+    const entry = this.cache.get(cacheKey);
+    
+    if (!entry) {
+      this.cacheStats.misses++;
+      return null;
+    }
+
+    // Check if expired
+    if (Date.now() > entry.timestamp + entry.ttl) {
+      this.cache.delete(cacheKey);
+      this.cacheStats.evictions++;
+      this.cacheStats.misses++;
+      this.updateCacheSize();
+      return null;
+    }
+
+    this.cacheStats.hits++;
+    
+    if (this.config.debug) {
+      console.error(`[DEBUG] Cache HIT for key: ${cacheKey}`);
+    }
+    
+    return entry.data;
+  }
+
+  /**
+   * Store data in cache
+   */
+  private setCache(cacheKey: string, data: any, method: string): void {
+    // Enforce max cache size
+    if (this.cache.size >= this.maxCacheSize) {
+      // Remove oldest entry
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+        this.cacheStats.evictions++;
+      }
+    }
+
+    const ttl = this.getTTL(method);
+    const entry: CacheEntry = {
+      data,
+      timestamp: Date.now(),
+      ttl
+    };
+
+    this.cache.set(cacheKey, entry);
+    this.updateCacheSize();
+
+    if (this.config.debug) {
+      console.error(`[DEBUG] Cache SET for key: ${cacheKey} (TTL: ${ttl}ms)`);
+    }
+  }
+
+  /**
+   * Update cache size stat
+   */
+  private updateCacheSize(): void {
+    this.cacheStats.size = this.cache.size;
+  }
+
+  /**
+   * Clean up expired cache entries
+   */
+  private cleanupExpiredCache(): void {
+    const now = Date.now();
+    let cleaned = 0;
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.timestamp + entry.ttl) {
+        this.cache.delete(key);
+        cleaned++;
+      }
+    }
+
+    if (cleaned > 0) {
+      this.cacheStats.evictions += cleaned;
+      this.updateCacheSize();
+      
+      if (this.config.debug) {
+        console.error(`[DEBUG] Cleaned up ${cleaned} expired cache entries`);
+      }
+    }
+  }
+
+  /**
+   * Clear all cache entries
+   */
+  private clearCache(): void {
+    const size = this.cache.size;
+    this.cache.clear();
+    this.cacheStats.evictions += size;
+    this.updateCacheSize();
+    
+    if (this.config.debug) {
+      console.error(`[DEBUG] Cleared entire cache (${size} entries)`);
+    }
+  }
+
+  /**
+   * Get cache statistics
+   */
+  private getCacheStats(): any {
+    const totalRequests = this.cacheStats.hits + this.cacheStats.misses;
+    const hitRate = totalRequests > 0 ? (this.cacheStats.hits / totalRequests * 100).toFixed(2) : '0.00';
+
+    return {
+      ...this.cacheStats,
+      hit_rate_percent: hitRate,
+      total_requests: totalRequests,
+      cache_enabled: !this.config.debug,
+      max_size: this.maxCacheSize,
+      default_ttl_ms: this.defaultTTL,
+    };
+  }
+
+  /**
+   * Generic handler for listing MCP items (tools, resources, prompts) with caching
    */
   private async handleListMCP(type: MCPType) {
+    const method = `${type}/list`;
+    const cacheKey = this.getCacheKey(method, {});
+
+    // Try cache first
+    if (this.shouldCache(method)) {
+      const cachedData = this.getFromCache(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+    }
+
     if (this.config.debug) {
       console.error(`[DEBUG] Fetching ${type} from remote server...`);
     }
 
     try {
-      const response = await this.makeRequest(`${type}/list`, {});
+      const response = await this.makeRequest(method, {});
 
       if (response.result && response.result[type]) {
+        const result = {
+          [type]: response.result[type],
+        };
+
+        // Cache the result
+        if (this.shouldCache(method)) {
+          this.setCache(cacheKey, result, method);
+        }
+
         if (this.config.debug) {
           console.error(`[DEBUG] Successfully fetched ${response.result[type].length} ${type}`);
         }
-        return {
-          [type]: response.result[type],
-        };
+        
+        return result;
       } else {
         throw new Error(`Invalid ${type} response from remote server`);
       }
@@ -105,7 +314,7 @@ class FormulizeServer {
       // FOR TOOLS: Provide meaningful fallback tools that can diagnose the issue
       if (type === 'tools') {
         console.error(`[WARNING] Remote server unavailable, providing fallback tools`);
-        return {
+        const fallbackResult = {
           tools: [
             {
               name: 'test_connection',
@@ -135,8 +344,22 @@ class FormulizeServer {
               },
             },
             {
-              name: 'proxy_status',
-              description: 'Get status of the proxy connection',
+              name: 'cache_refresh',
+              description: 'Clear the local cache and force fresh data from remote server',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  clear_all: {
+                    type: 'boolean',
+                    description: 'Clear entire cache (default: true)',
+                    default: true
+                  }
+                },
+              },
+            },
+            {
+              name: 'cache_stats',
+              description: 'Show cache performance statistics and configuration',
               inputSchema: {
                 type: 'object',
                 properties: {},
@@ -144,9 +367,11 @@ class FormulizeServer {
             }
           ]
         };
+
+        // Don't cache fallback results
+        return fallbackResult;
       } else {
         // FOR RESOURCES AND PROMPTS: Throw the error instead of returning empty arrays
-        // This forces AI assistant to retry or show a proper error message
         throw new McpError(
             ErrorCode.InternalError,
             `Failed to fetch ${type} from remote server: ${error instanceof Error ? error.message : String(error)}`
@@ -156,7 +381,7 @@ class FormulizeServer {
   }
 
   /**
-   * Generic handler for using MCP items (calling tools, reading resources, getting prompts)
+   * Generic handler for using MCP items (calling tools, reading resources, getting prompts) with caching
    */
   private async handleUseMCP(
     type: MCPType,
@@ -165,23 +390,40 @@ class FormulizeServer {
   ) {
     const identifier = params.name || params.uri || '';
     const args = params.arguments;
+    const method = `${type}/${action}`;
 
     if (this.config.debug) {
       console.error(`[DEBUG] ${action} ${type}: ${identifier}${args ? ' with args:' : ''}`, args);
     }
 
-    try {
       // Handle special proxy tools locally
       if (type === 'tools' && params.name === 'proxy_status') {
         return await this.handleProxyStatus();
       }
 
       if (type === 'tools' && params.name === 'test_connection') {
-        return await this.handleTestConnection();
+      return await this.handleTestConnection(args);
+    }
+
+    if (type === 'tools' && params.name === 'cache_refresh') {
+      return await this.handleCacheRefresh(args);
+    }
+
+    if (type === 'tools' && params.name === 'cache_stats') {
+      return await this.handleCacheStats();
       }
 
-      // Forward all other requests to remote server
-      const method = `${type}/${action}`;
+    // Check cache for non-tool requests
+    const cacheKey = this.getCacheKey(method, params);
+    if (this.shouldCache(method)) {
+      const cachedData = this.getFromCache(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+    }
+
+    try {
+      // Forward request to remote server
       const requestParams: any = {};
 
       // Set the appropriate parameter based on the type
@@ -197,6 +439,11 @@ class FormulizeServer {
       const response = await this.makeRequest(method, requestParams);
 
       if (response.result) {
+        // Cache the result if appropriate
+        if (this.shouldCache(method)) {
+          this.setCache(cacheKey, response.result, method);
+        }
+
         return response.result;
       } else if (response.error) {
         throw new McpError(
@@ -266,7 +513,7 @@ class FormulizeServer {
     });
   }
 
-  private async makeRequest(method: string, params: any, retries: number = 3): Promise<any> {
+  private async makeRequest(method: string, params: any): Promise<any> {
     const url = `${this.config.baseUrl}/mcp`;
 
     const requestBody = {
@@ -286,9 +533,8 @@ class FormulizeServer {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     }
 
-    for (let attempt = 1; attempt <= retries + 1; attempt++) {
     if (this.config.debug) {
-        console.error(`[DEBUG] Making request to ${url} (attempt ${attempt}/${retries + 1}):`, requestBody);
+      console.error(`[DEBUG] Making request to ${url}:`, requestBody);
     }
 
     const controller = new AbortController();
@@ -318,22 +564,94 @@ class FormulizeServer {
     } catch (error) {
       clearTimeout(timeoutId);
 
-        if (attempt === retries + 1) {
-          // Last attempt failed
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`Request timeout after ${this.config.timeout}ms`);
       }
           throw error;
         }
+  }
 
-        // Wait before retry (exponential backoff)
-        const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-        if (this.config.debug) {
-          console.error(`[DEBUG] Attempt ${attempt} failed, retrying in ${waitTime}ms:`, error);
-        }
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      }
+  private async handleCacheRefresh(args: any = {}): Promise<any> {
+    const clearAll = args.clear_all !== false; // Default to true
+    const statsBeforeClear = { ...this.cacheStats };
+
+    if (clearAll) {
+      this.clearCache();
     }
+
+    const results = {
+      action: 'cache_refresh',
+      timestamp: new Date().toISOString(),
+      cache_cleared: clearAll,
+      stats_before_clear: statsBeforeClear,
+      stats_after_clear: this.getCacheStats(),
+      cache_enabled: !this.config.debug,
+      message: clearAll 
+        ? 'Cache completely cleared. Next requests will fetch fresh data from remote server.'
+        : 'Cache refresh requested but clear_all was false.',
+    };
+
+    if (this.config.debug) {
+      results.message += ' Note: Caching is disabled in debug mode.';
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(results, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async handleCacheStats(): Promise<any> {
+    const stats = this.getCacheStats();
+    
+    // Get cache entry details
+    const entryDetails: any[] = [];
+    for (const [key, entry] of this.cache.entries()) {
+      const ageMs = Date.now() - entry.timestamp;
+      const remainingMs = Math.max(0, entry.ttl - ageMs);
+      
+      entryDetails.push({
+        key: key.length > 50 ? key.substring(0, 50) + '...' : key,
+        age_ms: ageMs,
+        remaining_ttl_ms: remainingMs,
+        expired: remainingMs === 0,
+        size_estimate: JSON.stringify(entry.data).length
+      });
+    }
+
+    // Sort by age (newest first)
+    entryDetails.sort((a, b) => a.age_ms - b.age_ms);
+
+    const results = {
+      cache_statistics: stats,
+      cache_entries: entryDetails.slice(0, 10), // Show up to 10 most recent entries
+      total_entries_shown: Math.min(10, entryDetails.length),
+      total_entries: entryDetails.length,
+      memory_usage_estimate_kb: Math.round(
+        Array.from(this.cache.values())
+          .reduce((total, entry) => total + JSON.stringify(entry.data).length, 0) / 1024
+      ),
+      configuration: {
+        max_cache_size: this.maxCacheSize,
+        default_ttl_ms: this.defaultTTL,
+        debug_mode: this.config.debug,
+        cache_enabled: !this.config.debug,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(results, null, 2),
+        },
+      ],
+    };
   }
 
   private async handleTestConnection(args: any = {}): Promise<any> {
@@ -348,12 +666,13 @@ class FormulizeServer {
         environment: {
           node_version: process.version,
           platform: process.platform,
-          api_key_configured: this.config.apiKey,
+          api_key_configured: !!this.config.apiKey,
           api_key_length: this.config.apiKey ? this.config.apiKey.length : 0,
           base_url: this.config.baseUrl,
           timeout: this.config.timeout,
           debug_mode: this.config.debug,
         },
+        cache: this.getCacheStats(),
       },
       remote_server: {
         url: this.config.baseUrl,
@@ -543,12 +862,17 @@ class FormulizeServer {
 
     // Add specific recommendations based on patterns
     if (results.summary.capabilities_working === 1 && results.remote_server.capabilities.tools?.status === 'pass') {
-      results.recommendations.push('Only tools working - this suggests AI assistant cached empty resources/prompts during startup. Clear the cache of the AI assistant (restart?).');
+      results.recommendations.push('Only tools working - this suggests AI assistant cached empty resources/prompts during startup. Try using cache_refresh tool or restart AI assistant.');
       }
 
     if (results.remote_server.tests.health_check?.response_time_ms > 2000 ||
         results.remote_server.tests.capabilities_endpoint?.response_time_ms > 2000) {
       results.recommendations.push('Slow response times detected - consider increasing FORMULIZE_TIMEOUT or checking network');
+    }
+
+    // Add cache-specific recommendations
+    if (results.proxy_server.cache.hit_rate_percent < 50 && results.proxy_server.cache.total_requests > 10) {
+      results.recommendations.push('Low cache hit rate - this is normal for first use but may indicate frequently changing data');
     }
 
     return {
@@ -580,8 +904,9 @@ class FormulizeServer {
               config: {
                 timeout: this.config.timeout,
                 debug: this.config.debug,
-                api_key_configured: this.config.apiKey,
+                api_key_configured: !!this.config.apiKey,
               },
+              cache: this.getCacheStats(),
               timestamp: new Date().toISOString(),
             }, null, 2),
           },
@@ -600,8 +925,9 @@ class FormulizeServer {
               config: {
                 timeout: this.config.timeout,
                 debug: this.config.debug,
-                api_key_configured: this.config.apiKey,
+                api_key_configured: !!this.config.apiKey,
               },
+              cache: this.getCacheStats(),
               timestamp: new Date().toISOString(),
             }, null, 2),
           },
@@ -618,6 +944,10 @@ class FormulizeServer {
       console.error(`[DEBUG] Remote URL: ${this.config.baseUrl}`);
       console.error(`[DEBUG] Timeout: ${this.config.timeout}ms`);
       console.error(`[DEBUG] Capabilities: tools, resources, prompts`);
+      console.error(`[DEBUG] Caching: DISABLED (debug mode)`);
+    } else {
+      console.error(`[INFO] Starting Formulize MCP Server v${this.version} with caching enabled`);
+      console.error(`[INFO] Cache settings: max size=${this.maxCacheSize}, default TTL=${this.defaultTTL}ms`);
     }
 
     await this.server.connect(transport);
