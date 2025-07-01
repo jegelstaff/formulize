@@ -72,7 +72,7 @@ class FormulizeServer {
     );
 
     this.setupHandlers();
-    
+
     // Start cache cleanup interval (every 2 minutes)
     setInterval(() => this.cleanupExpiredCache(), 2 * 60 * 1000);
   }
@@ -151,7 +151,7 @@ class FormulizeServer {
    */
   private getFromCache(cacheKey: string): any | null {
     const entry = this.cache.get(cacheKey);
-    
+
     if (!entry) {
       this.cacheStats.misses++;
       return null;
@@ -167,11 +167,11 @@ class FormulizeServer {
     }
 
     this.cacheStats.hits++;
-    
+
     if (this.config.debug) {
       console.error(`[DEBUG] Cache HIT for key: ${cacheKey}`);
     }
-    
+
     return entry.data;
   }
 
@@ -228,7 +228,7 @@ class FormulizeServer {
     if (cleaned > 0) {
       this.cacheStats.evictions += cleaned;
       this.updateCacheSize();
-      
+
       if (this.config.debug) {
         console.error(`[DEBUG] Cleaned up ${cleaned} expired cache entries`);
       }
@@ -243,7 +243,7 @@ class FormulizeServer {
     this.cache.clear();
     this.cacheStats.evictions += size;
     this.updateCacheSize();
-    
+
     if (this.config.debug) {
       console.error(`[DEBUG] Cleared entire cache (${size} entries)`);
     }
@@ -267,117 +267,189 @@ class FormulizeServer {
   }
 
   /**
+   * Get local proxy tools that should always be available
+   */
+  private getLocalProxyTools(): any[] {
+    return [
+      {
+        name: 'test_connection',
+        description: 'Test proxy and remote Formulize server connectivity with configurable detail levels',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            verbose: {
+              type: 'boolean',
+              description: 'Include detailed response data in output',
+              default: false
+            },
+            quick: {
+              type: 'boolean',
+              description: 'Quick status check only (lightweight alternative to full diagnostics)',
+              default: false
+            },
+            skip_remote: {
+              type: 'boolean',
+              description: 'Only test proxy server, skip remote server tests',
+              default: false
+            }
+          } as Record<string, any>,
+        },
+      },
+      {
+        name: 'cache_refresh',
+        description: 'Clear the local cache and force fresh data from remote server',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            clear_all: {
+              type: 'boolean',
+              description: 'Clear entire cache (default: true)',
+              default: true
+            }
+          } as Record<string, any>,
+        },
+      },
+      {
+        name: 'cache_stats',
+        description: 'Show cache performance statistics and configuration',
+        inputSchema: {
+          type: 'object',
+          properties: {} as Record<string, any>,
+        },
+      }
+    ];
+  }
+
+  /**
    * Generic handler for listing MCP items (tools, resources, prompts) with caching
    */
   private async handleListMCP(type: MCPType) {
     const method = `${type}/list`;
     const cacheKey = this.getCacheKey(method, {});
 
-    // Try cache first
-    if (this.shouldCache(method)) {
-      const cachedData = this.getFromCache(cacheKey);
-      if (cachedData) {
-        return cachedData;
-      }
-    }
+    // For non-tools, handle normally
+    if (type !== 'tools') {
+			// Try cache first
+			if (this.shouldCache(method)) {
+				const cachedData = this.getFromCache(cacheKey);
+				if (cachedData) {
+					return cachedData;
+				}
+			}
 
-    if (this.config.debug) {
-      console.error(`[DEBUG] Fetching ${type} from remote server...`);
-    }
+			if (this.config.debug) {
+				console.error(`[DEBUG] Fetching ${type} from remote server...`);
+			}
 
-    try {
-      const response = await this.makeRequest(method, {});
+			try {
+				const response = await this.makeRequest(method, {});
 
-      if (response.result && response.result[type]) {
-        const result = {
-          [type]: response.result[type],
-        };
+				if (response.result && response.result[type]) {
+					const result = {
+						[type]: response.result[type],
+					};
 
-        // Cache the result
-        if (this.shouldCache(method)) {
-          this.setCache(cacheKey, result, method);
-        }
+					// Cache the result
+					if (this.shouldCache(method)) {
+						this.setCache(cacheKey, result, method);
+					}
 
-        if (this.config.debug) {
-          console.error(`[DEBUG] Successfully fetched ${response.result[type].length} ${type}`);
-        }
-        
-        return result;
-      } else {
-        throw new Error(`Invalid ${type} response from remote server`);
-      }
-    } catch (error) {
-      if (this.config.debug) {
-        console.error(`[DEBUG] Error fetching ${type}:`, error);
-      }
+					if (this.config.debug) {
+						console.error(`[DEBUG] Successfully fetched ${response.result[type].length} ${type}`);
+					}
 
-      // FOR TOOLS: Provide meaningful fallback tools that can diagnose the issue
-      if (type === 'tools') {
-        console.error(`[WARNING] Remote server unavailable, providing fallback tools`);
-        const fallbackResult = {
-          tools: [
-            {
-              name: 'test_connection',
-                description: 'Comprehensive test of proxy and remote Formulize server connectivity, including all MCP capabilities',
-                inputSchema: {
-                    type: 'object',
-                    properties: {
-                    verbose: {
-                        type: 'boolean',
-                        description: 'Include detailed response data in output',
-                        default: false
-                    },
-                    skip_remote: {
-                        type: 'boolean',
-                        description: 'Only test proxy server, skip remote server tests',
-                        default: false
-                    }
-                    },
-                },
-                },
-                {
-                name: 'proxy_status',
-                description: 'Quick status check of the proxy server configuration',
-              inputSchema: {
-                type: 'object',
-                properties: {},
-              },
-            },
-            {
-              name: 'cache_refresh',
-              description: 'Clear the local cache and force fresh data from remote server',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  clear_all: {
-                    type: 'boolean',
-                    description: 'Clear entire cache (default: true)',
-                    default: true
-                  }
-                },
-              },
-            },
-            {
-              name: 'cache_stats',
-              description: 'Show cache performance statistics and configuration',
-              inputSchema: {
-                type: 'object',
-                properties: {},
-              },
-            }
-          ]
-        };
-
-        // Don't cache fallback results
-        return fallbackResult;
-      } else {
+					return result;
+				} else {
+					throw new Error(`Invalid ${type} response from remote server`);
+				}
+			} catch (error) {
+				if (this.config.debug) {
+					console.error(`[DEBUG] Error fetching ${type}:`, error);
+				}
         // FOR RESOURCES AND PROMPTS: Throw the error instead of returning empty arrays
         throw new McpError(
-            ErrorCode.InternalError,
-            `Failed to fetch ${type} from remote server: ${error instanceof Error ? error.message : String(error)}`
+          ErrorCode.InternalError,
+          `Failed to fetch ${type} from remote server: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
+
+    // SPECIAL HANDLING FOR TOOLS: Always include local proxy tools
+    if (this.config.debug) {
+      console.error(`[DEBUG] Fetching tools from remote server...`);
+    }
+
+    let remoteTools: any[] = [];
+    let remoteError = null;
+
+    // Try to get remote tools first
+    try {
+      // Check cache first
+      if (this.shouldCache(method)) {
+        const cachedData = this.getFromCache(cacheKey);
+        if (cachedData && cachedData.tools) {
+          // Extract only remote tools from cache (exclude local proxy tools)
+          remoteTools = cachedData.tools.filter((tool: any) =>
+            !['cache_refresh', 'cache_stats', 'test_connection'].includes(tool.name)
+          );
+
+          if (this.config.debug) {
+            console.error(`[DEBUG] Found ${remoteTools.length} remote tools in cache`);
+          }
+        }
+      }
+
+      // If not in cache, fetch from remote server
+      if (remoteTools.length === 0) {
+        const response = await this.makeRequest(method, {});
+
+        if (response.result && response.result.tools) {
+          // Filter out remote test_connection tool since our local version is more comprehensive
+          remoteTools = response.result.tools.filter((tool: any) => tool.name !== 'test_connection');
+
+          if (this.config.debug) {
+            console.error(`[DEBUG] Successfully fetched ${response.result.tools.length} tools from remote server (${remoteTools.length} after filtering)`);
+          }
+        } else {
+          throw new Error(`Invalid tools response from remote server`);
+        }
+      }
+    } catch (error) {
+      remoteError = error;
+      if (this.config.debug) {
+        console.error(`[DEBUG] Error fetching tools from remote server:`, error);
+      }
+    }
+
+    // Always include local proxy tools
+    const localTools = this.getLocalProxyTools();
+
+    // Note: We always include our local test_connection tool because it provides
+    // proxy-specific diagnostics that the remote tool cannot provide
+
+    // If remote server failed, we already have test_connection in localTools,
+    // but we can add a note about the failure context
+    if (remoteError) {
+      console.error(`[WARNING] Remote server unavailable for tools, providing local tools with diagnostics`);
+		}
+
+    // Combine remote tools with local proxy tools
+    const allTools = [...remoteTools, ...localTools];
+
+    const result = {
+      tools: allTools
+    };
+
+    // Only cache if we successfully got remote tools (don't cache error states)
+    if (this.shouldCache(method) && !remoteError && remoteTools.length > 0) {
+      this.setCache(cacheKey, result, method);
+    }
+
+    if (this.config.debug) {
+      console.error(`[DEBUG] Returning ${allTools.length} total tools (${remoteTools.length} remote + ${localTools.length} local)`);
+    }
+
+    return result;
   }
 
   /**
@@ -397,10 +469,6 @@ class FormulizeServer {
     }
 
       // Handle special proxy tools locally
-      if (type === 'tools' && params.name === 'proxy_status') {
-        return await this.handleProxyStatus();
-      }
-
       if (type === 'tools' && params.name === 'test_connection') {
       return await this.handleTestConnection(args);
     }
@@ -563,16 +631,15 @@ class FormulizeServer {
       return data;
     } catch (error) {
       clearTimeout(timeoutId);
-
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`Request timeout after ${this.config.timeout}ms`);
       }
-          throw error;
-        }
+      throw error;
+    }
   }
 
   private async handleCacheRefresh(args: any = {}): Promise<any> {
-    const clearAll = args.clear_all !== false; // Default to true
+    const clearAll = args?.clear_all !== false; // Default to true
     const statsBeforeClear = { ...this.cacheStats };
 
     if (clearAll) {
@@ -586,7 +653,7 @@ class FormulizeServer {
       stats_before_clear: statsBeforeClear,
       stats_after_clear: this.getCacheStats(),
       cache_enabled: !this.config.debug,
-      message: clearAll 
+      message: clearAll
         ? 'Cache completely cleared. Next requests will fetch fresh data from remote server.'
         : 'Cache refresh requested but clear_all was false.',
     };
@@ -607,13 +674,13 @@ class FormulizeServer {
 
   private async handleCacheStats(): Promise<any> {
     const stats = this.getCacheStats();
-    
+
     // Get cache entry details
     const entryDetails: any[] = [];
     for (const [key, entry] of this.cache.entries()) {
       const ageMs = Date.now() - entry.timestamp;
       const remainingMs = Math.max(0, entry.ttl - ageMs);
-      
+
       entryDetails.push({
         key: key.length > 50 ? key.substring(0, 50) + '...' : key,
         age_ms: ageMs,
@@ -655,9 +722,65 @@ class FormulizeServer {
   }
 
   private async handleTestConnection(args: any = {}): Promise<any> {
-    const verbose = args.verbose || false;
-    const skipRemote = args.skip_remote || false;
+    const verbose = args?.verbose || false;
+    const quick = args?.quick || false;
+    const skipRemote = args?.skip_remote || false;
 
+    // If quick mode is requested, return lightweight status
+    if (quick) {
+      try {
+        // Test connection to remote server
+        const startTime = Date.now();
+        await this.makeRequest('initialize', {});
+        const responseTime = Date.now() - startTime;
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                mode: 'quick_status',
+                status: 'connected',
+                version: this.version,
+                remote_url: this.config.baseUrl,
+                response_time_ms: responseTime,
+                config: {
+                  timeout: this.config.timeout,
+                  debug: this.config.debug,
+                  api_key_configured: !!this.config.apiKey,
+                },
+                cache: this.getCacheStats(),
+                timestamp: new Date().toISOString(),
+              }, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                mode: 'quick_status',
+                status: 'disconnected',
+                version: this.version,
+                remote_url: this.config.baseUrl,
+                error: error instanceof Error ? error.message : String(error),
+                config: {
+                  timeout: this.config.timeout,
+                  debug: this.config.debug,
+                  api_key_configured: !!this.config.apiKey,
+                },
+                cache: this.getCacheStats(),
+                timestamp: new Date().toISOString(),
+              }, null, 2),
+            },
+          ],
+        };
+      }
+    }
+
+    // Full comprehensive diagnostics (existing implementation)
     const results: any = {
       timestamp: new Date().toISOString(),
       proxy_server: {
@@ -883,57 +1006,6 @@ class FormulizeServer {
         },
       ],
     };
-  }
-
-  private async handleProxyStatus(): Promise<any> {
-    try {
-      // Test connection to remote server
-      const startTime = Date.now();
-      await this.makeRequest('initialize', {});
-      const responseTime = Date.now() - startTime;
-
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              status: 'connected',
-              version: this.version,
-              remote_url: this.config.baseUrl,
-              response_time_ms: responseTime,
-              config: {
-                timeout: this.config.timeout,
-                debug: this.config.debug,
-                api_key_configured: !!this.config.apiKey,
-              },
-              cache: this.getCacheStats(),
-              timestamp: new Date().toISOString(),
-            }, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              status: 'disconnected',
-              version: this.version,
-              remote_url: this.config.baseUrl,
-              error: error instanceof Error ? error.message : String(error),
-              config: {
-                timeout: this.config.timeout,
-                debug: this.config.debug,
-                api_key_configured: !!this.config.apiKey,
-              },
-              cache: this.getCacheStats(),
-              timestamp: new Date().toISOString(),
-            }, null, 2),
-          },
-        ],
-      };
-    }
   }
 
   async run(): Promise<void> {
