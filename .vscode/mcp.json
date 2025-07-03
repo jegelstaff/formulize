@@ -1,13 +1,14 @@
 {
   "servers": {
     "Formulize": {
-      "command": "node",
-      "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
+     	"command": "npx",
+    	"args": [
+        "-y",
+        "formulize-mcp"
+      ],
       "env": {
-        "FORMULIZE_BASE_URL": "https://<your server domain>/MCP.php",
-        "FORMULIZE_DEBUG": "false",
-        "FORMULIZE_TIMEOUT": "30000",
-        "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
+        "FORMULIZE_BASE_URL": "https://<your.formulize.site.url>/mcp/",
+        "FORMULIZE_API_KEY": "<your api key from your formulize site>"
       }
     }
   }
