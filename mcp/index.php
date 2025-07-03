@@ -300,28 +300,77 @@ class FormulizeMCP {
                     'required' => ['form_id']
                 ]
             ],
-            'gatherDataset' => [
-                'name' => 'gatherDataset',
-                'description' => 'Gather a dataset from a form using Formulize\'s built-in gatherDataset function with proper permission scoping',
+			'create_entry' => [
+				'name' => 'create_entry',
+				'description' => 'Create a new entry in a Formulize form with the provided data',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the form to create an entry in'
+						],
+						'data' => [
+							'type' => 'object',
+							'description' => 'Key-value pairs where keys are element handles and values are the data to store',
+							'additionalProperties' => true
+						],
+						'relationship_id' => [
+							'type' => 'integer',
+							'description' => 'Relationship ID for derived value calculations (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
+						]
+					],
+					'required' => ['form_id', 'data']
+				]
+			],
+			'update_entry' => [
+				'name' => 'update_entry',
+				'description' => 'Update an existing entry in a Formulize form with the provided data',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the form containing the entry to update'
+						],
+						'entry_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the entry to update'
+						],
+						'data' => [
+							'type' => 'object',
+							'description' => 'Key-value pairs where keys are element handles and values are the data to store',
+							'additionalProperties' => true
+						],
+						'relationship_id' => [
+							'type' => 'integer',
+							'description' => 'Relationship ID for derived value calculations (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
+						]
+					],
+					'required' => ['form_id', 'entry_id', 'data']
+				]
+			],
+			'get_entries_from_form' => [
+				'name' => 'get_entries_from_form',
+				'description' => 'Get entries from a form, and from other forms that are connected by the specfied relationship (unless the Relationship ID is set to 0). Only returns entries that the user has permission to access.',
                 'inputSchema' => [
                     'type' => 'object',
                     'properties' => [
                         'fid' => [
                             'type' => 'integer',
-                            'description' => 'The ID of the main form in the dataset'
+							'description' => 'The ID of the main form to get entries from'
                         ],
                         'elementHandles' => [
                             'type' => 'array',
-                            'description' => 'Optional. Array of element handles to include. Use multidimensional array with form IDs as keys',
+							'description' => 'Optional. Array of elements to include. Elements can be from the main form, and from any related form that is part of the relationship. Use a multidimensional array with form IDs as keys. If not specified, all elements will be included.',
                             'items' => [
                                 'type' => 'array',
-                                'description' => 'Form ID to element handles mapping. The keys are the form ids, the values are arrays of element handles to include from each form.',
+								'description' => 'Form ID to element handles mapping. The keys are the form IDs, the values are arrays of element handles to include from each form.',
 																'items' => [
 																		'type' => 'string',
-																		'description' => 'Element handle to include in the dataset'
+									'description' => 'Element handle to include'
+								]
 																]
-                            ],
-                            'default' => []
                         ],
                         'filter' => [
                             'oneOf' => [
@@ -332,95 +381,41 @@ class FormulizeMCP {
                                 [
                                     'type' => 'string',
                                     'description' => 'Filter string taking the format: elementHandle/**/searchTerm/**/operator. Multiple strings can be included, separated by ][ and the logical operator between them is determined by the andOr parameter.'
-                                ],
-                                [
-                                    'type' => 'array',
-                                    'description' => 'Array of filter strings and their local AND/OR boolean values',
-                                    'items' => [
-                                        'type' => 'array',
-                                        'description' => 'Array in which the first item is the local boolean to use with this filter string, and the second item is the filter string itself.',
-                                        'items' => [
-                                        	'type' => 'string'
-                                    	]
                                     ]
                                 ]
-                            ],
-                            'default' => ''
                         ],
                         'andOr' => [
                             'type' => 'string',
-                            'description' => 'Boolean operator between multiple filters (AND or OR)',
-                            'enum' => ['AND', 'OR'],
-                            'default' => 'AND'
+							'description' => 'The boolean operator to use (AND or OR) between multiple filter strings, if there were multiple filter strings in the filter parameter, separated by ][. Defaults to AND if not specified.',
+							'enum' => ['AND', 'OR']
                         ],
                         'currentView' => [
                             'type' => 'string',
-                            'description' => 'Scope type: "mine", "group", "all", or comma-separated group IDs',
-                            'default' => 'all'
+							'description' => 'The scope of entries to include, either "all" for all entries, "group" for entries belonging to the user\'s group(s), or "mine" for the user\'s own entries. Can also be comma-separated group IDs for a custom scope. Defaults to "all".',
                         ],
                         'limitStart' => [
                             'type' => ['integer', 'null'],
-                            'description' => 'Starting record for LIMIT statement',
-                            'default' => null
+							'description' => 'Starting record for LIMIT statement'
                         ],
                         'limitSize' => [
                             'type' => ['integer', 'null'],
-                            'description' => 'Number of records to return',
-                            'default' => null
+							'description' => 'Number of records to return'
                         ],
                         'sortField' => [
                             'type' => 'string',
-                            'description' => 'Element handle to sort by',
-                            'default' => ''
+							'description' => 'Element handle to sort by'
                         ],
                         'sortOrder' => [
                             'type' => 'string',
-                            'description' => 'Sort direction (ASC or DESC)',
-                            'enum' => ['ASC', 'DESC'],
-                            'default' => 'ASC'
+							'description' => 'Sort direction (ASC or DESC). Defaults to ASC.',
+							'enum' => ['ASC', 'DESC']
                         ],
                         'frid' => [
                             'type' => 'integer',
-                            'description' => 'Relationship ID to use (-1 for Primary Relationship, 0 for no relationship)',
-                            'default' => -1
+							'description' => 'Relationship ID to use (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
                         ]
                     ],
                     'required' => ['fid']
-                ]
-            ],
-            'search_entries' => [
-                'name' => 'search_entries',
-                'description' => 'Search for entries in a form based on criteria',
-                'inputSchema' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'form_id' => [
-                            'type' => 'integer',
-                            'description' => 'The ID of the form to search'
-                        ],
-                        'search_term' => [
-                            'type' => 'string',
-                            'description' => 'Text to search for in entries'
-                        ],
-                        'element_handle' => [
-                            'type' => 'string',
-                            'description' => 'Specific element handle to search within (optional)'
-                        ],
-                        'limit' => [
-                            'type' => 'integer',
-                            'description' => 'Maximum number of results',
-                            'default' => 20
-                        ]
-                    ],
-                    'required' => ['form_id', 'search_term']
-                ]
-            ],
-            'debug_tables' => [
-                'name' => 'debug_tables',
-                'description' => 'Debug: List all Formulize-related database tables',
-                'inputSchema' => [
-                    'type' => 'object',
-                    'properties' => (object)[]
                 ]
             ]
         ];
