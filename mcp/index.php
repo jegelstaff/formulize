@@ -274,6 +274,10 @@ class FormulizeMCP
 			'list_forms' => [
 				'name' => 'list_forms',
 				'description' => 'List all forms in this Formulize instance',
+'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
 			],
 			'get_form_details' => [
 				'name' => 'get_form_details',
