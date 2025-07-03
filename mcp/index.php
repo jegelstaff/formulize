@@ -75,12 +75,29 @@ class FormulizeMCP
 	}
 
 	/**
+	 * Get default configuration settings
+	 */
+	private function getDefaultConfig()
+	{
+		return [
+			'debug' => false,
+			'max_results' => 100
+		];
+	}
+
+	/**
 	 * Authenticate using Formulize's existing API key system
 	 */
 	private function authenticateRequest()
 	{
 		$path = $_SERVER['REQUEST_URI'];
 		$method = $_SERVER['REQUEST_METHOD'];
+
+		// Handle CORS preflight
+		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+			http_response_code(204);
+			exit;
+		}
 
 		// Allow unauthenticated GET requests for documentation and health
 		if ($method === 'GET' && (
@@ -92,22 +109,17 @@ class FormulizeMCP
 			return true;
 		}
 
-		// Handle OPTIONS preflight
-		if ($method === 'OPTIONS') {
-			return true;
-		}
-
 		// Check for Authorization header
 		$authHeader = $this->getAuthorizationHeader();
 
 		if (empty($authHeader)) {
-			$this->sendAuthError('Missing Authorization header');
+			$this->sendAuthError('Missing Authorization header'); // method will exit, actually
 			return false;
 		}
 
 		// Extract API key from "Bearer {api_key}" format
 		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
-			$this->sendAuthError('Invalid Authorization header format. Use: Bearer {api_key}');
+			$this->sendAuthError('Invalid Authorization header format. Use: Bearer {api_key}'); // method will exit, actually
 			return false;
 		}
 
@@ -115,7 +127,7 @@ class FormulizeMCP
 
 		// Validate API key using Formulize's exact system
 		if (!$this->validateFormulizeApiKey($key)) {
-			$this->sendAuthError('Invalid or expired API key');
+			$this->sendAuthError('Invalid or expired API key'); // method will exit, actually
 			return false;
 		}
 
@@ -202,12 +214,6 @@ class FormulizeMCP
 	{
 		$this->setNoCacheHeaders();
 
-		// Handle CORS preflight
-		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-			http_response_code(204);
-			exit;
-		}
-
 		// Authenticate request
 		if (!$this->authenticateRequest()) {
 			return; // Authentication error already sent
@@ -268,20 +274,10 @@ class FormulizeMCP
 			'list_forms' => [
 				'name' => 'list_forms',
 				'description' => 'List all forms in this Formulize instance',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'include_inactive' => [
-							'type' => 'boolean',
-							'description' => 'Include inactive forms',
-							'default' => false
-						]
-					]
-				]
 			],
 			'get_form_details' => [
 				'name' => 'get_form_details',
-				'description' => 'Get detailed information about a specific form',
+				'description' => 'Get detailed information about a specific form. You can get a list of all the forms and their IDs with the list_forms tool.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -293,20 +289,15 @@ class FormulizeMCP
 					'required' => ['form_id']
 				]
 			],
-			'get_form_elements' => [
-				'name' => 'get_form_elements',
-				'description' => 'Get all elements for a specific form',
+			'get_element_details' => [
+				'name' => 'get_element_details',
+				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'The ID of the form'
-						],
-						'include_relationships' => [
-							'type' => 'boolean',
-							'description' => 'Include element relationships and references',
-							'default' => true
+						'form_identifier' => [
+							'type' => [ 'integer', 'string' ],
+							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
 						]
 					],
 					'required' => ['form_id']
@@ -320,11 +311,11 @@ class FormulizeMCP
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the form to create an entry in'
+							'description' => 'The ID of the form to create an entry in. You can look up the forms with the list_forms tool.'
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Key-value pairs where keys are element handles and values are the data to store',
+							'description' => 'Key-value pairs where keys are element handles and values are the data to store. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format. You can lookup the element handles in a form with the get_form_details tool.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -343,7 +334,7 @@ class FormulizeMCP
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the form containing the entry to update'
+							'description' => 'The ID of the form containing the entry to update. You can look up the forms with the list_forms tool.'
 						],
 						'entry_id' => [
 							'type' => 'integer',
@@ -351,7 +342,7 @@ class FormulizeMCP
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Key-value pairs where keys are element handles and values are the data to store',
+							'description' => 'Key-value pairs where keys are element handles and values are the data to store. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format. You can lookup the element handles in a form with the get_form_details tool.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -364,17 +355,17 @@ class FormulizeMCP
 			],
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
-				'description' => 'Get entries from a form, and from other forms that are connected by the specfied relationship (unless the Relationship ID is set to 0). Only returns entries that the user has permission to access.',
+				'description' => 'Get entries from a form, and from other forms that are connected by the specfied relationship (unless the Relationship ID is set to 0). Only returns entries that the user has permission to access. Some elements will store values in non-readable formats, that can be prepared for human readability using the prepare_database_values_for_human_readability tool.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
-						'fid' => [
+						'form_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the main form to get entries from'
+							'description' => 'The ID of the main form to get entries from. You can look up the forms with the list_forms tool.'
 						],
 						'elementHandles' => [
 							'type' => 'array',
-							'description' => 'Optional. Array of elements to include. Elements can be from the main form, and from any related form that is part of the relationship. Use a multidimensional array with form IDs as keys. If not specified, all elements will be included.',
+							'description' => 'Optional. Array of elements to include. Elements can be from the main form, and from any related form that is part of the relationship. Use a multidimensional array with form IDs as keys. If not specified, all elements will be included. You can lookup the element handles in a form with the get_form_details tool.',
 							'items' => [
 								'type' => 'array',
 								'description' => 'Form ID to element handles mapping. The keys are the form IDs, the values are arrays of element handles to include from each form.',
@@ -392,7 +383,7 @@ class FormulizeMCP
 								],
 								[
 									'type' => 'string',
-									'description' => 'Filter string taking the format: elementHandle/**/searchTerm/**/operator. Multiple strings can be included, separated by ][ and the logical operator between them is determined by the andOr parameter.'
+									'description' => 'Filter string taking the format: elementHandle/**/searchTerm/**/operator. Dates are stored in YYYY-mm-dd format. Times are stored in 24 hour format. Valid operators are =, >, <, >=, <=, !=, LIKE. The default operator is LIKE. (Multiple strings can be included, separated by ][ and the logical operator between them is determined by the andOr parameter.'
 								]
 							]
 						],
@@ -411,7 +402,7 @@ class FormulizeMCP
 						],
 						'limitSize' => [
 							'type' => ['integer', 'null'],
-							'description' => 'Number of records to return'
+							'description' => 'Number of records to return. Defaults to 100. Set to null for no limit.'
 						],
 						'sortField' => [
 							'type' => 'string',
@@ -422,12 +413,34 @@ class FormulizeMCP
 							'description' => 'Sort direction (ASC or DESC). Defaults to ASC.',
 							'enum' => ['ASC', 'DESC']
 						],
-						'frid' => [
+						'form_relationship_id' => [
 							'type' => 'integer',
 							'description' => 'Relationship ID to use (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
 						]
 					],
-					'required' => ['fid']
+					'required' => ['form_id']
+				]
+			],
+			'prepare_database_values_for_human_readability'	=> [
+				'name' => 'prepare_database_values_for_human_readability',
+				'description' => 'Some database values are stored in a format that is not human-readable. This tool will convert those values to a human-readable format. For example, the values of linked elements are stored as foreign keys, but this tool will convert them to the actual values from the source form.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'value' => [
+							'type' => ['integer', 'number', 'string'],
+							'description' => 'The value from the database to prepare for human readability. This would often come from the results of the get_entries_from_form tool, but can be used independently as well.'
+						],
+						'element_handle' => [
+							'type' => 'string',
+							'description' => 'The element handle of the element that the value belongs to. Configuration properties of the element will be used to convert the raw database value into a human readable value. You can lookup the element handles in a form with the get_form_details tool.'
+						],
+						'entry_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The ID of the entry that the value belongs to. This is used to determine the context of the value in rare cases.'
+						]
+					],
+					'required' => ['value', 'element_handle']
 				]
 			]
 		];
@@ -441,47 +454,40 @@ class FormulizeMCP
 		$this->resources = [];
 
 		// Dynamically add form schema resources
-		$forms = $this->getFormsList();
+		$formsList = $this->listForms(null);
+		$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
 		foreach ($forms as $form) {
 			$formId = $form['id_form'];
 			$formTitle = trans($form['desc_form']) ?? "Form $formId";
 
 			// Form schema resource
 			$this->resources["form_schema_$formId"] = [
-				'uri' => "formulize://form/schema/$formId",
+				'uri' => "formulize://form/schema/$formId.json",
 				'name' => "Schema: $formTitle",
 				'description' => "Complete schema and element definitions for form: $formTitle",
-				'mimeType' => 'application/json'
-			];
-
-			// Form data resource
-			$this->resources["form_data_$formId"] = [
-				'uri' => "formulize://form/data/$formId",
-				'name' => "Data: $formTitle",
-				'description' => "Export all data from form: $formTitle",
 				'mimeType' => 'application/json'
 			];
 		}
 
 		// System-level resources
 		$this->resources['system_info'] = [
-			'uri' => 'formulize://system/info',
+			'uri' => 'formulize://system/info.json',
 			'name' => 'System Information',
 			'description' => 'Formulize system configuration and status',
 			'mimeType' => 'application/json'
 		];
 
-		$this->resources['user_groups'] = [
-			'uri' => 'formulize://system/user_groups',
-			'name' => 'Users and Groups',
+		$this->resources['groups'] = [
+			'uri' => 'formulize://system/groups.json',
+			'name' => 'Groups',
 			'description' => 'List of all users and groups in the system',
 			'mimeType' => 'application/json'
 		];
 
-		$this->resources['form_relationships'] = [
-			'uri' => 'formulize://system/relationships',
-			'name' => 'Form Relationships',
-			'description' => 'All form relationships and framework definitions',
+		$this->resources['all_form_connections'] = [
+			'uri' => 'formulize://system/all_form_connections.json',
+			'name' => 'All Form Connections',
+			'description' => 'All the connections between forms',
 			'mimeType' => 'application/json'
 		];
 	}
@@ -571,25 +577,6 @@ class FormulizeMCP
 	}
 
 	/**
-	 * Get list of forms for resource registration
-	 */
-	private function getFormsList()
-	{
-		try {
-			$sql = "SELECT id_form, desc_form FROM " . $this->db->prefix('formulize_id') . " WHERE active = 1 ORDER BY desc_form";
-			$result = $this->db->query($sql);
-
-			$forms = [];
-			while ($row = $this->db->fetchArray($result)) {
-				$forms[] = $row;
-			}
-			return $forms;
-		} catch (Exception $e) {
-			return [];
-		}
-	}
-
-	/**
 	 * Enhanced test connection with proper authenticated user info
 	 */
 	private function testConnection()
@@ -609,17 +596,14 @@ class FormulizeMCP
 			'status' => 'success',
 			'message' => 'MCP Server connection successful with Formulize authentication',
 			'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
-			'xoops_config' => [
-				'sitename' => $xoopsConfig['sitename'] ?? 'Unknown',
-				'version' => XOOPS_VERSION ?? 'Unknown'
+			'capabilities' => ['tools', 'resources', 'prompts'],
+			'system_info' => $this->getSystemInfo(),
+			'endpoints' => [
+				'mcp' => $this->baseUrl . '/mcp',
+				'capabilities' => $this->baseUrl . '/capabilities',
+				'health' => $this->baseUrl . '/health'
 			],
-			'server_info' => [
-				'php_version' => PHP_VERSION,
-				'timestamp' => date('Y-m-d H:i:s'),
-				'execution_mode' => 'http_with_formulize_auth',
-				'mcp_version' => FORMULIZE_MCP_VERSION,
-				'capabilities' => ['tools', 'resources', 'prompts']
-			]
+			'authenticated_user' => false
 		];
 
 		// Add authenticated user info
@@ -646,24 +630,12 @@ class FormulizeMCP
 			// Test database connection
 			$testQuery = "SELECT 1 as test";
 			$result = $this->db->query($testQuery);
-
 			if (!$result) {
 				throw new Exception('Database query failed');
 			}
-
-			$row = $this->db->fetchArray($result);
-
-			// Check API key table
-			$apiKeyTableExists = false;
+			// Count active keys
 			$apiKeyCount = 0;
-
-			$checkTableSql = "SHOW TABLES LIKE '" . $this->db->prefix('formulize_apikeys') . "'";
-			$tableResult = $this->db->query($checkTableSql);
-
-			if ($this->db->fetchArray($tableResult)) {
-				$apiKeyTableExists = true;
-
-				// Count active keys
+			if($dbConnected = $this->db->fetchArray($result)) {
 				$countSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_apikeys') . " WHERE expiry IS NULL OR expiry > NOW()";
 				$countResult = $this->db->query($countSql);
 				if ($countResult) {
@@ -671,27 +643,24 @@ class FormulizeMCP
 					$apiKeyCount = $countRow['count'];
 				}
 			}
-
 			$health = [
 				'status' => 'healthy',
-				'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
+				'database_connected' => $dbConnected ? 'true' : 'false',
 				'mcp_server' => 'direct_http_with_formulize_api_keys',
-				'mcp_version' => FORMULIZE_MCP_VERSION,
+				'system_info' => $this->getSystemInfo(),
 				'tools_count' => count($this->tools),
 				'resources_count' => count($this->resources),
 				'prompts_count' => count($this->prompts),
 				'authentication' => [
 					'system' => 'formulize_api_keys',
-					'api_key_table_exists' => $apiKeyTableExists,
-					'active_keys_count' => $apiKeyCount,
-					'table_name' => $this->db->prefix('formulize_apikeys')
+					'active_keys_count' => $apiKeyCount
 				],
 				'endpoints' => [
 					'mcp' => $this->baseUrl . '/mcp',
 					'capabilities' => $this->baseUrl . '/capabilities',
 					'health' => $this->baseUrl . '/health'
 				],
-				'timestamp' => date('Y-m-d H:i:s')
+				'system_info' => $this->getSystemInfo()
 			];
 
 			echo json_encode($health, JSON_PRETTY_PRINT);
@@ -725,7 +694,7 @@ class FormulizeMCP
 		}
 
 		try {
-			$response = $this->handleRequest($input);
+			$response = $this->handleMCPRequest($input);
 			echo json_encode($response);
 		} catch (Exception $e) {
 			http_response_code(500);
@@ -745,27 +714,27 @@ class FormulizeMCP
 	 */
 	private function handleCapabilities()
 	{
+		$module_handler = xoops_gethandler('module');
+		$formulizeModule = $module_handler->getByDirname("formulize");
+		$metadata = $formulizeModule->getInfo();
+
 		$capabilities = [
-			'protocolVersion' => '2024-11-05',
 			'capabilities' => [
 				'tools' => array_values($this->tools),
 				'resources' => array_values($this->resources),
 				'prompts' => array_values($this->prompts)
 			],
-			'serverInfo' => [
-				'name' => 'formulize-mcp-server',
-				'version' => FORMULIZE_MCP_VERSION
-			],
+			'serverInfo' => $this->getSystemInfo(),
 			'authentication' => [
 				'type' => 'Formulize API Keys',
 				'discovery_enabled' => false,
 			],
 			'endpoints' => [
 				'mcp' => $this->baseUrl . '/mcp',
-				'health' => $this->baseUrl . '/health'
+				'health' => $this->baseUrl . '/health',
+				'capabilities' => $this->baseUrl . '/capabilities'
 			]
 		];
-
 		echo json_encode($capabilities, JSON_PRETTY_PRINT);
 	}
 
@@ -906,7 +875,7 @@ class FormulizeMCP
 	/**
 	 * Handle MCP request (same as before)
 	 */
-	public function handleRequest($input)
+	public function handleMCPRequest($input)
 	{
 		$request = json_decode($input, true);
 
@@ -952,10 +921,7 @@ class FormulizeMCP
 					'resources' => [],
 					'prompts' => []
 				],
-				'serverInfo' => [
-					'name' => 'formulize-mcp-server',
-					'version' => FORMULIZE_MCP_VERSION
-				]
+				'serverInfo' => $this->getSystemInfo()
 			],
 			'id' => $id
 		];
@@ -1080,19 +1046,17 @@ class FormulizeMCP
 		switch ($type) {
 			case 'form':
 				if ($subtype === 'schema') {
-					return $this->getFormSchema($resourceId);
-				} elseif ($subtype === 'data') {
-					return $this->getFormData($resourceId);
+					return $this->getFormSchema(trim($resourceId, '.json'));
 				}
 				break;
 
 			case 'system':
-				if ($subtype === 'info') {
+				if ($subtype === 'info.json') {
 					return $this->getSystemInfo();
-				} elseif ($subtype === 'user_groups') {
-					return $this->getUserGroups();
-				} elseif ($subtype === 'relationships') {
-					return $this->getFormRelationships();
+				} elseif ($subtype === 'groups.json') {
+					return $this->getGroups();
+				} elseif ($subtype === 'all_form_connections.json') {
+					return $this->getFormConnections();
 				}
 				break;
 		}
@@ -1133,39 +1097,8 @@ class FormulizeMCP
 			'elements' => $elements,
 			'element_count' => count($elements),
 			'data_table' => $this->db->prefix('formulize_' . $formData['form_handle']),
-			'entry_count' => $entryCount,
-		];
-	}
-
-	/**
-	 * Get form data
-	 */
-	private function getFormData($formId)
-	{
-		global $xoopsUser;
-
-		// Use gatherDataset with proper permissions
-		$scope = buildScope('all', $xoopsUser, $formId);
-
-		$dataset = gatherDataset(
-			$formId,
-			array(), // all elements
-			'', // no filter
-			'AND',
-			$scope[0],
-			null,
-			100, // limit to 100 entries for resource
-			'',
-			'DESC'
-		);
-
-		return [
-			'form_id' => $formId,
-			'entry_count' => count($dataset),
-			'entries' => $dataset,
-			'limited_to' => 100,
-			'scope' => $scope[0]
-		];
+			'entry_count' => $entryCount
+		] + $this->getFormConnections($formId);
 	}
 
 	/**
@@ -1185,6 +1118,12 @@ class FormulizeMCP
 		$userCountResult = $this->db->query($userCountSql);
 		$userCount = $this->db->fetchArray($userCountResult)['count'];
 
+		// Count groups
+		$groupCountSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('groups');
+		$groupCountResult = $this->db->query($groupCountSql);
+		$groupCount = $this->db->fetchArray($groupCountResult)['count'];
+
+		// Get module metadata
 		$module_handler = xoops_gethandler('module');
 		$formulizeModule = $module_handler->getByDirname("formulize");
 		$metadata = $formulizeModule->getInfo();
@@ -1198,17 +1137,20 @@ class FormulizeMCP
 		return [
 			'site_name' => $xoopsConfig['sitename'] ?? 'Unknown',
 			'formulize_version' => $metadata['version'] ?? 'Unknown',
+			'formulize_mcp_version' => FORMULIZE_MCP_VERSION,
 			'php_version' => PHP_VERSION,
 			'form_count' => $formCount,
 			'user_count' => $userCount,
-			'server_time' => $timeRow['server_time'] ?? 'Unknown'
+			'group_count' => $groupCount,
+			'server_time' => $timeRow['server_time'] ?? 'Unknown',
+			'utc_time' => date('Y-m-d H:i:s', time()),
 		];
 	}
 
 	/**
 	 * Get users and groups
 	 */
-	private function getUserGroups()
+	private function getGroups()
 	{
 		// Get groups
 		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " ORDER BY name";
@@ -1219,52 +1161,27 @@ class FormulizeMCP
 			$groups[] = $row;
 		}
 
-		// Get users (limited to 100)
-		$usersSql = "SELECT uid, uname, name, email FROM " . $this->db->prefix('users') . " WHERE uid > 0 ORDER BY uname LIMIT 100";
-		$usersResult = $this->db->query($usersSql);
-
-		$users = [];
-		while ($row = $this->db->fetchArray($usersResult)) {
-			$users[] = $row;
-		}
-
 		return [
 			'groups' => $groups,
 			'group_count' => count($groups),
-			'users' => $users,
-			'user_count' => count($users),
-			'users_limited_to' => 100
 		];
 	}
 
 	/**
-	 * Get form relationships
+	 * Get the connections between forms, based on the Primary Relationship
+	 * Optionally can be limited to the connections of a specific form
 	 */
-	private function getFormRelationships()
+	private function getFormConnections($formId = null)
 	{
-		// Get frameworks
-		$frameworksSql = "SELECT * FROM " . $this->db->prefix('formulize_frameworks') . " ORDER BY fr_name";
-		$frameworksResult = $this->db->query($frameworksSql);
-
-		$frameworks = [];
-		while ($row = $this->db->fetchArray($frameworksResult)) {
-			$frameworks[] = $row;
+		$connections = array();
+		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$primaryRelationshipSchema = $framework_handler->formatFrameworksAsRelationships(array($framework_handler->get(-1)), $formId);
+		foreach($primaryRelationshipSchema[0]['content']['links'] as $link) {
+			$connections[$link['linkId']] = "{$link['each']} {$link['form1']} {$link['has']} {$link['form2']}";
 		}
-
-		// Get framework links
-		$linksSql = "SELECT * FROM " . $this->db->prefix('formulize_framework_links');
-		$linksResult = $this->db->query($linksSql);
-
-		$links = [];
-		while ($row = $this->db->fetchArray($linksResult)) {
-			$links[] = $row;
-		}
-
 		return [
-			'frameworks' => $frameworks,
-			'framework_count' => count($frameworks),
-			'links' => $links,
-			'link_count' => count($links)
+			'connections' => $connections,
+			'connection_count' => count($connections)
 		];
 	}
 
@@ -1486,14 +1403,16 @@ class FormulizeMCP
 				return $this->listForms($arguments);
 			case 'get_form_details':
 				return $this->getFormDetails($arguments);
-			case 'get_form_elements':
-				return $this->getFormElements($arguments);
+			case 'get_element_details':
+				return $this->getElementDetails($arguments);
 			case 'create_entry':
     		return $this->writeFormEntry(intval($arguments['form_id']), 'new', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
 			case 'update_entry':
     		return $this->writeFormEntry(intval($arguments['form_id']), intval($arguments['entry_id']), $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
-			case 'gatherDataset':
+			case 'get_entries_from_form':
 				return $this->getEntriesFromForm($arguments);
+			case 'prepare_database_values_for_human_readability':
+				return $this->prepareDatabaseValuesForHumanReadability($arguments);
 			default:
 				throw new Exception('Tool not implemented: ' . $toolName);
 		}
@@ -1599,20 +1518,20 @@ class FormulizeMCP
 
 		global $xoopsUser;
 
-		$fid = intval($args['fid']);
+		$form_id = intval($args['form_id']);
 		$elementHandles = $args['elementHandles'] ?? array();
 		$filter = $args['filter'] ?? '';
 		$andOr = $args['andOr'] ?? 'AND';
 		$currentView = $args['currentView'] ?? 'all';
 		$limitStart = $args['limitStart'] ?? null;
-		$limitSize = $args['limitSize'] ?? null;
+		$limitSize = $args['limitSize'] ?? 100;
 		$sortField = $args['sortField'] ?? '';
 		$sortOrder = $args['sortOrder'] ?? 'ASC';
-		$frid = intval($args['frid'] ?? -1);
+		$form_relationship_id = intval($args['form_relationship_id'] ?? -1);
 
 		try {
 			// Build scope based on authenticated user and their permissions
-			$scope = buildScope($currentView, $xoopsUser, $fid);
+			$scope = buildScope($currentView, $xoopsUser, $form_id);
 
 			// The buildScope function returns an array with [scope, actualCurrentView]
 			$actualScope = $scope[0];
@@ -1620,7 +1539,7 @@ class FormulizeMCP
 
 			// Call Formulize's gatherDataset function with all parameters
 			$dataset = gatherDataset(
-				$fid,
+				$form_id,
 				$elementHandles,
 				$filter,
 				$andOr,
@@ -1629,11 +1548,11 @@ class FormulizeMCP
 				$limitSize,
 				$sortField,
 				$sortOrder,
-				$frid
+				$form_relationship_id
 			);
 
 			return [
-				'fid' => $fid,
+				'form_id' => $form_id,
 				'dataset' => $dataset,
 				'total_count' => count($dataset),
 				'scope_used' => $actualScope,
@@ -1651,16 +1570,28 @@ class FormulizeMCP
 					'limitSize' => $limitSize,
 					'sortField' => $sortField,
 					'sortOrder' => $sortOrder,
-					'frid' => $frid
+					'form_relationship_id' => $form_relationship_id
 				]
 			];
 		} catch (Exception $e) {
 			return [
 				'error' => 'gatherDataset execution failed: ' . $e->getMessage(),
-				'fid' => $fid,
+				'form_id' => $form_id,
 				'requested_scope' => $currentView
 			];
 		}
+	}
+
+	/**
+	 * Prepare raw database values for human consumption
+	 * This function is used to convert raw data from the database into a more readable format.
+	 */
+	private function prepareDatabaseValuesForHumanReadability($args) {
+		$value = intval($args['value']);
+		$field = $args['element_handle'] ?? "";
+		$entry_id = intval($args['entry_id'] ?? 0);
+		$preppedValue = prepvalues($value, $field, $entry_id);
+		return is_array($preppedValue) ? $preppedValue : [$preppedValue];
 	}
 
 	/**
@@ -1697,44 +1628,13 @@ class FormulizeMCP
 	private function getFormDetails($args)
 	{
 		$formId = $args['form_id'];
-
-		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
-		$result = $this->db->query($sql);
-
-		if (!$result) {
-			return ['error' => 'Query failed', 'sql' => $sql];
-		}
-
-		$formData = $this->db->fetchArray($result);
-
-		if (!$formData) {
-			return ['error' => 'Form not found', 'form_id' => $formId];
-		}
-
-		$sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
-		$result = $this->db->query($sql);
-
-		if (!$result) {
-			return ['error' => 'Query failed', 'sql' => $sql];
-		}
-
-		$elements = [];
-		while ($row = $this->db->fetchArray($result)) {
-			$elements[] = $row;
-		}
-
-		return [
-			'form_id' => $formId,
-			'form_data' => $formData,
-			'elements' => $elements,
-			'total_elements' => count($elements)
-		];
+		return $formId ? $this->getFormSchema($formId) : [];
 	}
 
 	/**
 	 * Get form elements
 	 */
-	private function getFormElements($args)
+	private function getElementDetails($args)
 	{
 		$formId = $args['form_id'];
 
@@ -1754,14 +1654,6 @@ class FormulizeMCP
 			'form_id' => $formId,
 			'elements' => $elements,
 			'total_count' => count($elements)
-		];
-	}
-
-	private function getDefaultConfig()
-	{
-		return [
-			'debug' => false,
-			'max_results' => 100
 		];
 	}
 
