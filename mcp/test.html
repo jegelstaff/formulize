@@ -110,6 +110,11 @@
             resize: vertical;
         }
 
+        .custom-textarea {
+            height: 200px;
+            font-size: 14px;
+        }
+
         /* Responsive design for smaller screens */
         @media (max-width: 1200px) {
             body {
@@ -281,6 +286,38 @@
             margin: 0 0 10px 0;
             color: #555;
         }
+
+        .template-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .template-buttons button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .json-validation {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .json-valid {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .json-invalid {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #f44336;
+        }
     </style>
 </head>
 <body>
@@ -299,6 +336,8 @@
                 <input type="text" id="serverUrl" value="index.php" />
             </div>
         </div>
+
+
 
         <div class="test-section">
             <h3>🔍 MCP Capability Tests</h3>
@@ -350,17 +389,16 @@
             <h3>Quick Test Buttons</h3>
             <div class="preset-buttons">
                 <button onclick="runAllCapabilityTests()">🔄 Test All Capabilities</button>
-                <button onclick="sendPresetRequest('debug_tables')">🛠️ Debug Tables</button>
                 <button onclick="testCompleteWorkflow()">🎯 Complete Workflow Test</button>
-                <button onclick="simulateClaudeStartup()">🚀 Simulate Claude Startup</button>
             </div>
         </div>
 
         <div class="test-section">
-            <h3>Custom MCP Request</h3>
-
+            <h3>🛠️ Custom JSON Request Builder</h3>
+            <p><strong>Build and send any MCP request with custom JSON payload.</strong> This uses the same authentication as other tests.</p>
+            
             <div class="form-group">
-                <label for="method">Method:</label>
+                <label for="method">Quick Method Selection:</label>
                 <select id="method" onchange="updateRequestBodyForMethod()">
                     <option value="tools/list">tools/list</option>
                     <option value="tools/call">tools/call</option>
@@ -373,22 +411,24 @@
             </div>
 
             <div class="form-group">
-                <label for="requestBody">Request Body (JSON):</label>
-                <textarea id="requestBody" placeholder='{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}'></textarea>
+                <label for="requestBody">JSON Request Body:</label>
+                <div class="template-buttons">
+                    <button onclick="loadTemplate('tools_list')" class="template-buttons">Tools List</button>
+                    <button onclick="loadTemplate('test_connection')" class="template-buttons">Test Connection</button>
+                    <button onclick="loadTemplate('list_forms')" class="template-buttons">List Forms</button>
+                    <button onclick="loadTemplate('gather_dataset')" class="template-buttons">Gather Dataset</button>
+                    <button onclick="loadTemplate('resources_list')" class="template-buttons">Resources List</button>
+                    <button onclick="loadTemplate('prompts_list')" class="template-buttons">Prompts List</button>
+                </div>
+                <textarea id="requestBody" class="custom-textarea" placeholder='{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}' oninput="validateJSON()"></textarea>
+                <div id="jsonValidation" class="json-validation" style="display: none;"></div>
             </div>
 
-            <button onclick="sendCustomRequest()">Send Custom Request</button>
-            <button onclick="clearResponse()">Clear Response</button>
+            <button onclick="sendCustomRequest()">🚀 Send Custom Request</button>
+            <button onclick="formatJSON()">🎨 Format JSON</button>
+            <button onclick="clearCustomRequest()">🧹 Clear</button>
 
-            <div class="debug-info">
-                <strong>Debug Info:</strong> This tool sends the exact same JSON-RPC requests that Claude Desktop would send via the TypeScript proxy.
-                Check browser console (F12) for additional debugging information.
-            </div>
 
-            <div id="stats" class="stats-bar" style="display: none;"></div>
-            <div id="response" class="response" style="display: none;"></div>
-        </div>
-    </div>
 
     <!-- Fixed Response Panel -->
     <div class="response-panel">
@@ -410,8 +450,8 @@
                 <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
                 <p><strong>Quick Start:</strong></p>
                 <p>1. Enter your API key above</p>
-                <p>2. Click "Simulate Claude Startup"</p>
-                <p>3. Check for resources and prompts</p>
+                <p>2. Try the custom JSON builder</p>
+                <p>3. Or click "Complete Workflow Test"</p>
             </div>
         </div>
     </div>
@@ -431,11 +471,18 @@
             const runtime = Math.round((Date.now() - testStats.startTime) / 1000);
             const statsText = `📊 ${testStats.totalRequests} total, ${testStats.successfulRequests} success, ${testStats.failedRequests} failed | ${runtime}s`;
             
-            // Update both stats bars
-            document.getElementById('stats').innerHTML = statsText;
-            document.getElementById('fixed-stats').innerHTML = statsText;
-            document.getElementById('stats').style.display = 'block';
-            document.getElementById('fixed-stats').style.display = 'block';
+            // Update both stats bars (with null checks)
+            const statsEl = document.getElementById('stats');
+            const fixedStatsEl = document.getElementById('fixed-stats');
+            
+            if (statsEl) {
+                statsEl.innerHTML = statsText;
+                statsEl.style.display = 'block';
+            }
+            if (fixedStatsEl) {
+                fixedStatsEl.innerHTML = statsText;
+                fixedStatsEl.style.display = 'block';
+            }
 
             // Update connection status indicator
             const statusEl = document.getElementById('connection-status');
@@ -451,7 +498,7 @@
             }
         }
 
-        function showResponse(data, isError = false, title = '') {
+        function showResponse(data, isError = false, title = '', accumulate = false) {
             const timestamp = new Date().toISOString();
             const headerText = title ? `${title} - ${timestamp}` : timestamp;
 
@@ -466,14 +513,38 @@
             const fixedElement = document.getElementById('fixed-response');
             const mainElement = document.getElementById('response');
             
+            if (accumulate) {
+                // Append to existing content with a separator
+                const separator = '<hr style="margin: 15px 0; border: none; border-top: 2px solid #ddd;">';
+                const currentContent = fixedElement.innerHTML;
+                
+                // If there's existing content and it's not just the loading/welcome message
+                if (currentContent && !currentContent.includes('Ready to test') && !currentContent.includes('loading')) {
+                    fixedElement.innerHTML = currentContent + separator + responseContent;
+                    if (mainElement) {
+                        mainElement.innerHTML = (mainElement.innerHTML || '') + separator + responseContent;
+                    }
+                } else {
+                    // First response in accumulative mode
+                    fixedElement.innerHTML = responseContent;
+                    if (mainElement) {
+                        mainElement.innerHTML = responseContent;
+                    }
+                }
+            } else {
+                // Replace content (normal mode)
+                fixedElement.innerHTML = responseContent;
+                if (mainElement) {
+                    mainElement.innerHTML = responseContent;
+                }
+            }
+            
             fixedElement.className = isError ? 'response error' : 'response success';
-            mainElement.className = isError ? 'response error' : 'response success';
-            
-            fixedElement.innerHTML = responseContent;
-            mainElement.innerHTML = responseContent;
-            
+            if (mainElement) {
+                mainElement.className = isError ? 'response error' : 'response success';
+                mainElement.style.display = 'block';
+            }
             fixedElement.style.display = 'block';
-            mainElement.style.display = 'block';
 
             // Add to logs
             testLogs.push({
@@ -506,9 +577,24 @@
             const loadingContent = `<div class="loading">${message}</div>`;
             
             document.getElementById('fixed-response').innerHTML = loadingContent;
-            document.getElementById('response').innerHTML = loadingContent;
+            const mainElement = document.getElementById('response');
+            if (mainElement) {
+                mainElement.innerHTML = loadingContent;
+                mainElement.className = 'response loading';
+            }
             document.getElementById('fixed-response').className = 'response loading';
-            document.getElementById('response').className = 'response loading';
+        }
+
+        function showMultiStageLoading(message = 'Running multi-stage test...') {
+            const loadingContent = `<div class="loading">🔄 ${message}<br><small>Results will accumulate below as each step completes...</small></div>`;
+            
+            document.getElementById('fixed-response').innerHTML = loadingContent;
+            const mainElement = document.getElementById('response');
+            if (mainElement) {
+                mainElement.innerHTML = loadingContent;
+                mainElement.className = 'response loading';
+            }
+            document.getElementById('fixed-response').className = 'response loading';
         }
 
         function clearResponse() {
@@ -518,11 +604,14 @@
                     <p>Ready for next test...</p>
                 </div>
             `;
-            document.getElementById('response').innerHTML = '';
+            const mainElement = document.getElementById('response');
+            if (mainElement) {
+                mainElement.innerHTML = '';
+                mainElement.className = 'response';
+                mainElement.style.display = 'none';
+            }
             document.getElementById('fixed-response').className = 'response';
-            document.getElementById('response').className = 'response';
             document.getElementById('fixed-response').style.display = 'block';
-            document.getElementById('response').style.display = 'none';
             
             // Reset stats
             testStats = {
@@ -532,8 +621,16 @@
                 startTime: Date.now()
             };
             testLogs = [];
-            document.getElementById('stats').style.display = 'none';
-            document.getElementById('fixed-stats').style.display = 'none';
+            
+            const statsEl = document.getElementById('stats');
+            const fixedStatsEl = document.getElementById('fixed-stats');
+            
+            if (statsEl) {
+                statsEl.style.display = 'none';
+            }
+            if (fixedStatsEl) {
+                fixedStatsEl.style.display = 'none';
+            }
             updateStats();
         }
 
@@ -598,20 +695,26 @@
             }, 1500);
         }
 
-        async function sendRequest(requestBody, title = '') {
+        async function sendRequest(requestBody, title = '', accumulate = false) {
             const apiKey = document.getElementById('apiKey').value;
             const serverUrl = document.getElementById('serverUrl').value;
 
             if (!serverUrl) {
-                showResponse('Error: Server URL is required', true, title);
+                showResponse('Error: Server URL is required', true, title, accumulate);
                 return null;
             }
 
+            // Build the MCP endpoint URL
+            const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
+            const mcpUrl = baseUrl + '/index.php/mcp';
+
+            if (!accumulate) {
             showLoading(`Sending ${title || 'request'}...`);
+            }
 
             try {
                 console.log('Sending request:', requestBody);
-                console.log('To URL:', serverUrl);
+                console.log('To MCP URL:', mcpUrl);
                 console.log('With API Key:', apiKey ? 'Present (' + apiKey.length + ' chars): ' + apiKey.substring(0, 8) + '...' : 'Missing');
 
                 const headers = {
@@ -629,7 +732,7 @@
 
                 console.log('Final headers:', headers);
 
-                const response = await fetch(serverUrl, {
+                const response = await fetch(mcpUrl, {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify(requestBody)
@@ -660,7 +763,7 @@
                         statusText: response.statusText,
                         response: data,
                         timestamp: new Date().toISOString()
-                    }, true, title);
+                    }, true, title, accumulate);
                     return null;
                 } else {
                     showResponse({
@@ -668,7 +771,7 @@
                         httpStatus: response.status,
                         response: data,
                         timestamp: new Date().toISOString()
-                    }, false, title);
+                    }, false, title, accumulate);
                     return data;
                 }
 
@@ -681,18 +784,18 @@
                     timestamp: new Date().toISOString(),
                     apiKeyProvided: !!apiKey,
                     apiKeyLength: apiKey ? apiKey.length : 0,
-                    serverUrl: serverUrl
-                }, true, title);
+                    serverUrl: mcpUrl
+                }, true, title, accumulate);
                 return null;
             }
         }
 
-        async function testEndpoint(endpoint, method = 'GET', body = null) {
+        async function testEndpoint(endpoint, method = 'GET', body = null, accumulate = false) {
             const apiKey = document.getElementById('apiKey').value;
             const serverUrl = document.getElementById('serverUrl').value;
             
             if (!serverUrl) {
-                showResponse('Error: Server URL is required', true);
+                showResponse('Error: Server URL is required', true, '', accumulate);
                 return;
             }
 
@@ -700,7 +803,9 @@
             const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
             const fullUrl = baseUrl + endpoint;
 
+            if (!accumulate) {
             showLoading(`Testing ${method} ${endpoint}...`);
+            }
 
             try {
                 const headers = {
@@ -737,15 +842,140 @@
                     statusText: response.statusText,
                     headers: Object.fromEntries(response.headers.entries()),
                     body: data
-                }, !response.ok, `${method} ${endpoint}`);
+                }, !response.ok, `${method} ${endpoint}`, accumulate);
 
             } catch (error) {
                 showResponse({
                     endpoint: endpoint,
                     method: method,
                     error: error.message
-                }, true, `${method} ${endpoint}`);
+                }, true, `${method} ${endpoint}`, accumulate);
             }
+        }
+
+        function validateJSON() {
+            const textarea = document.getElementById('requestBody');
+            const validation = document.getElementById('jsonValidation');
+            const text = textarea.value.trim();
+
+            if (!text) {
+                validation.style.display = 'none';
+                return;
+            }
+
+            try {
+                JSON.parse(text);
+                validation.className = 'json-validation json-valid';
+                validation.textContent = '✓ Valid JSON';
+                validation.style.display = 'block';
+            } catch (error) {
+                validation.className = 'json-validation json-invalid';
+                validation.textContent = '✗ Invalid JSON: ' + error.message;
+                validation.style.display = 'block';
+            }
+        }
+
+        function formatJSON() {
+            const textarea = document.getElementById('requestBody');
+            const text = textarea.value.trim();
+
+            if (!text) return;
+
+            try {
+                const parsed = JSON.parse(text);
+                textarea.value = JSON.stringify(parsed, null, 2);
+                validateJSON();
+            } catch (error) {
+                showResponse('Cannot format invalid JSON: ' + error.message, true, 'Format Error');
+            }
+        }
+
+        function clearCustomRequest() {
+            document.getElementById('requestBody').value = '';
+            document.getElementById('jsonValidation').style.display = 'none';
+        }
+
+        function loadTemplate(template) {
+            let requestBody;
+
+            switch (template) {
+                case 'tools_list':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "tools/list",
+                        "params": {},
+                        "id": Date.now()
+                    };
+                    break;
+
+                case 'test_connection':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "tools/call",
+                        "params": {
+                            "name": "test_connection",
+                            "arguments": {
+                                "verbose": true
+                            }
+                        },
+                        "id": Date.now()
+                    };
+                    break;
+
+                case 'list_forms':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "tools/call",
+                        "params": {
+                            "name": "list_forms",
+                            "arguments": {
+                                "include_inactive": false
+                            }
+                        },
+                        "id": Date.now()
+                    };
+                    break;
+
+                case 'gather_dataset':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "tools/call",
+                        "params": {
+                            "name": "gatherDataset",
+                            "arguments": {
+                                "fid": 1,
+                                "limitSize": 10,
+                                "currentView": "all"
+                            }
+                        },
+                        "id": Date.now()
+                    };
+                    break;
+
+                case 'resources_list':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "resources/list",
+                        "params": {},
+                        "id": Date.now()
+                    };
+                    break;
+
+                case 'prompts_list':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "prompts/list",
+                        "params": {},
+                        "id": Date.now()
+                    };
+                    break;
+
+                default:
+                    return;
+            }
+
+            document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
+            validateJSON();
         }
 
         function sendCapabilityRequest(type, action) {
@@ -759,6 +989,7 @@
             // Update the textarea with the request
             document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
             document.getElementById('method').value = `${type}/${action}`;
+            validateJSON();
 
             sendRequest(requestBody, `${type}/${action}`);
         }
@@ -791,18 +1022,6 @@
                     };
                     break;
 
-                case 'debug_tables':
-                    requestBody = {
-                        "jsonrpc": "2.0",
-                        "method": "tools/call",
-                        "params": {
-                            "name": "debug_tables",
-                            "arguments": {}
-                        },
-                        "id": Date.now()
-                    };
-                    break;
-
                 default:
                     showResponse('Unknown preset type', true);
                     return;
@@ -810,18 +1029,22 @@
 
             // Update the textarea with the request
             document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
+            validateJSON();
 
             sendRequest(requestBody, type);
         }
 
         async function testResourceRead() {
+            clearResponse();
+            showMultiStageLoading('Testing resource read workflow...');
+            
             // First get the list of resources
             const resourcesList = await sendRequest({
                 "jsonrpc": "2.0",
                 "method": "resources/list",
                 "params": {},
                 "id": Date.now()
-            }, 'Get resources list for read test');
+            }, 'Step 1: Get resources list', true);
 
             // If we got resources, try to read the first one
             if (resourcesList && resourcesList.response && resourcesList.response.result && 
@@ -838,19 +1061,26 @@
                 };
 
                 setTimeout(() => {
-                    sendRequest(readRequest, `Read resource: ${firstResource.name}`);
+                    sendRequest(readRequest, `Step 2: Read resource "${firstResource.name}"`, true);
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    showResponse('No resources found to read', true, 'Step 2: Resource read failed', true);
                 }, 1000);
             }
         }
 
         async function testPromptGet() {
+            clearResponse();
+            showMultiStageLoading('Testing prompt get workflow...');
+            
             // First get the list of prompts
             const promptsList = await sendRequest({
                 "jsonrpc": "2.0",
                 "method": "prompts/list",
                 "params": {},
                 "id": Date.now()
-            }, 'Get prompts list for get test');
+            }, 'Step 1: Get prompts list', true);
 
             // If we got prompts, try to get the first one
             if (promptsList && promptsList.response && promptsList.response.result && 
@@ -868,31 +1098,34 @@
                 };
 
                 setTimeout(() => {
-                    sendRequest(getRequest, `Get prompt: ${firstPrompt.name}`);
+                    sendRequest(getRequest, `Step 2: Get prompt "${firstPrompt.name}"`, true);
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    showResponse('No prompts found to get', true, 'Step 2: Prompt get failed', true);
                 }, 1000);
             }
         }
 
         async function runAllCapabilityTests() {
             clearResponse();
-            showLoading('Running comprehensive capability tests...');
+            showMultiStageLoading('Running comprehensive capability tests...');
 
             const tests = [
-                { method: 'tools/list', title: 'List Tools' },
-                { method: 'resources/list', title: 'List Resources' },
-                { method: 'prompts/list', title: 'List Prompts' }
+                { method: 'tools/list', title: 'Test 1: List Tools' },
+                { method: 'resources/list', title: 'Test 2: List Resources' },
+                { method: 'prompts/list', title: 'Test 3: List Prompts' }
             ];
 
             for (let i = 0; i < tests.length; i++) {
                 const test = tests[i];
-                showLoading(`Running test ${i + 1}/${tests.length}: ${test.title}...`);
                 
                 await sendRequest({
                     "jsonrpc": "2.0",
                     "method": test.method,
                     "params": {},
                     "id": Date.now()
-                }, test.title);
+                }, test.title, true);
 
                 // Wait between tests
                 if (i < tests.length - 1) {
@@ -901,51 +1134,55 @@
             }
         }
 
-        async function simulateClaudeStartup() {
-            clearResponse();
-            showLoading('Simulating Claude Desktop startup sequence...');
-
-            // This simulates the exact sequence Claude Desktop performs during startup
-            const startupSequence = [
-                { method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {} }, title: 'Initialize' },
-                { method: 'tools/list', params: {}, title: 'Discover Tools' },
-                { method: 'resources/list', params: {}, title: 'Discover Resources' },
-                { method: 'prompts/list', params: {}, title: 'Discover Prompts' }
-            ];
-
-            for (let i = 0; i < startupSequence.length; i++) {
-                const step = startupSequence[i];
-                showLoading(`Startup step ${i + 1}/${startupSequence.length}: ${step.title}...`);
-                
-                await sendRequest({
-                    "jsonrpc": "2.0",
-                    "method": step.method,
-                    "params": step.params,
-                    "id": Date.now()
-                }, `Startup: ${step.title}`);
-
-                // Small delay between startup steps
-                await new Promise(resolve => setTimeout(resolve, 200));
-            }
-        }
-
         async function testCompleteWorkflow() {
             clearResponse();
-            showLoading('Testing complete MCP workflow...');
+            showMultiStageLoading('Testing complete MCP workflow...');
+                
+            // Step 1: Initialize (like Claude Desktop does first)
+                await sendRequest({
+                    "jsonrpc": "2.0",
+                "method": "initialize",
+                "params": { "protocolVersion": "2024-11-05", "capabilities": {} },
+                    "id": Date.now()
+            }, 'Step 1: Initialize MCP Connection', true);
+            await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Test health endpoint first
-            await testEndpoint('/health', 'GET');
+            // Step 2: Test health endpoint
+            await testEndpointWithTitle('/health', 'GET', null, 'Step 2: Health Check');
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Test capabilities endpoint
-            await testEndpoint('/capabilities', 'GET');
+            // Step 3: Test capabilities endpoint  
+            await testEndpointWithTitle('/capabilities', 'GET', null, 'Step 3: Capabilities Check');
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Run all capability tests
-            await runAllCapabilityTests();
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Step 4: Test tools discovery
+            await sendRequest({
+                "jsonrpc": "2.0",
+                "method": "tools/list",
+                "params": {},
+                "id": Date.now()
+            }, 'Step 4: Discover Tools', true);
+            await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Test a tool call
+            // Step 5: Test resources discovery
+            await sendRequest({
+                "jsonrpc": "2.0",
+                "method": "resources/list",
+                "params": {},
+                "id": Date.now()
+            }, 'Step 5: Discover Resources', true);
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Step 6: Test prompts discovery
+            await sendRequest({
+                "jsonrpc": "2.0",
+                "method": "prompts/list",
+                "params": {},
+                "id": Date.now()
+            }, 'Step 6: Discover Prompts', true);
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Step 7: Test an actual tool call
             await sendRequest({
                 "jsonrpc": "2.0",
                 "method": "tools/call",
@@ -954,7 +1191,66 @@
                     "arguments": {}
                 },
                 "id": Date.now()
-            }, 'Test tool call');
+            }, 'Step 7: Test Tool Call', true);
+        }
+
+        async function testEndpointWithTitle(endpoint, method = 'GET', body = null, title) {
+            const apiKey = document.getElementById('apiKey').value;
+            const serverUrl = document.getElementById('serverUrl').value;
+            
+            if (!serverUrl) {
+                showResponse('Error: Server URL is required', true, title, true);
+                return;
+            }
+
+            // Build full URL
+            const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
+            const fullUrl = baseUrl + endpoint;
+
+            try {
+                const headers = {
+                    'Cache-Control': 'no-cache'
+                };
+
+                if (apiKey && apiKey.trim()) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+
+                if (method === 'POST') {
+                    headers['Content-Type'] = 'application/json';
+                }
+
+                const response = await fetch(fullUrl, {
+                    method: method,
+                    headers: headers,
+                    body: body
+                });
+
+                const responseText = await response.text();
+                let data;
+
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    data = responseText;
+                }
+
+                showResponse({
+                    endpoint: endpoint,
+                    method: method,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    body: data
+                }, !response.ok, title, true);
+
+            } catch (error) {
+                showResponse({
+                    endpoint: endpoint,
+                    method: method,
+                    error: error.message
+                }, true, title, true);
+            }
         }
 
         function updateRequestBodyForMethod() {
@@ -1008,21 +1304,22 @@
             }
 
             document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
+            validateJSON();
         }
 
         function sendCustomRequest() {
             const requestBodyText = document.getElementById('requestBody').value;
 
             if (!requestBodyText.trim()) {
-                showResponse('Error: Request body is required', true);
+                showResponse('Error: Request body is required', true, 'Custom Request');
                 return;
             }
 
             try {
                 const requestBody = JSON.parse(requestBodyText);
-                sendRequest(requestBody, 'Custom Request');
+                sendRequest(requestBody, 'Custom JSON Request');
             } catch (error) {
-                showResponse('Error: Invalid JSON in request body - ' + error.message, true);
+                showResponse('Error: Invalid JSON in request body - ' + error.message, true, 'Custom Request');
             }
         }
 
