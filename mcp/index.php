@@ -205,15 +205,15 @@ class FormulizeMCP {
 
         $path = $_SERVER['REQUEST_URI'];
         $pathParts = explode('?', $path);
-        $cleanPath = $pathParts[0];
+		$cleanPath = rtrim($pathParts[0], '/');
 
-        // Route based on path
-        if (strpos($cleanPath, '/mcp') !== false) {
-            $this->handleMCPEndpoint();
-        } elseif (strpos($cleanPath, '/health') !== false) {
+		// Route based on path - match end of line
+		if (preg_match('/\/health$/', $cleanPath)) {
             $this->handleHealthCheck();
-        } elseif (strpos($cleanPath, '/capabilities') !== false) {
+		} elseif (preg_match('/\/capabilities$/', $cleanPath)) {
             $this->handleCapabilities();
+		} elseif (preg_match('/\/mcp$/', $cleanPath)) {
+			$this->handleMCPEndpoint();
         } else {
             $this->handleDocumentation();
         }
