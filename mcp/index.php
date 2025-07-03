@@ -274,7 +274,7 @@ class FormulizeMCP
 			'list_forms' => [
 				'name' => 'list_forms',
 				'description' => 'List all forms in this Formulize instance',
-'inputSchema' => [
+				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
 				]
@@ -1136,17 +1136,23 @@ class FormulizeMCP
 		// PHP is set to UTC
 		$timeSQL = "SELECT NOW() as server_time";
 		$timeResult = $this->db->query($timeSQL);
-		$timeRow = $this->db->fetchArray($timeResult);
+		$timeData = $this->db->fetchArray($timeResult);
+
+		// check the version of mariadb or mysql
+		$versionSQL = "SELECT @@version as version";
+		$versionResult = $this->db->query($versionSQL);
+		$versionData = $this->db->fetchArray($versionResult);
 
 		return [
 			'site_name' => $xoopsConfig['sitename'] ?? 'Unknown',
 			'formulize_version' => $metadata['version'] ?? 'Unknown',
 			'formulize_mcp_version' => FORMULIZE_MCP_VERSION,
 			'php_version' => PHP_VERSION,
+			'db_version' => $versionData['version'] ?? 'Unknown',
 			'form_count' => $formCount,
 			'user_count' => $userCount,
 			'group_count' => $groupCount,
-			'server_time' => $timeRow['server_time'] ?? 'Unknown',
+			'server_time' => $timeData['server_time'] ?? 'Unknown',
 			'utc_time' => date('Y-m-d H:i:s', time()),
 		];
 	}
