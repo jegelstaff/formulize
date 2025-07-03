@@ -1668,33 +1668,7 @@ class FormulizeMCP
 	 */
 	private function listForms($args)
 	{
-		$includeInactive = $args['include_inactive'] ?? false;
-
-		$tableCheckSql = "SHOW TABLES LIKE '" . $this->db->prefix('formulize_id');
-		$tableResult = $this->db->query($tableCheckSql);
-
-		if (!$this->db->fetchArray($tableResult)) {
-			return [
-				'error' => 'formulize_id table not found',
-				'checked_table' => $this->db->prefix('formulize_id')
-			];
-		}
-
-		$columnsSql = "DESCRIBE " . $this->db->prefix('formulize_id');
-		$columnsResult = $this->db->query($columnsSql);
-		$columns = [];
-
-		while ($row = $this->db->fetchArray($columnsResult)) {
-			$columns[] = $row['Field'];
-		}
-
 		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
-
-		if (in_array('active', $columns) and !$includeInactive) {
-			$sql .= " WHERE active = 1";
-		}
-
-		$sql .= " ORDER BY " . (in_array('title', $columns) ? 'title' : 'id_form');
 
 		$result = $this->db->query($sql);
 
@@ -1703,14 +1677,17 @@ class FormulizeMCP
 		}
 
 		$forms = [];
+		$formTitles = [];
 		while ($row = $this->db->fetchArray($result)) {
 			$forms[] = $row;
+			$formTitles[] = trans($row['desc_form']);
 		}
+
+		array_multisort($formTitles, SORT_NATURAL, $forms);
 
 		return [
 			'forms' => $forms,
-			'total_count' => count($forms),
-			'execution_mode' => 'direct_http'
+			'total_count' => count($forms)
 		];
 	}
 
@@ -1728,15 +1705,29 @@ class FormulizeMCP
 			return ['error' => 'Query failed', 'sql' => $sql];
 		}
 
-		$row = $this->db->fetchArray($result);
+		$formData = $this->db->fetchArray($result);
 
-		if (!$row) {
+		if (!$formData) {
 			return ['error' => 'Form not found', 'form_id' => $formId];
 		}
 
+		$sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		$result = $this->db->query($sql);
+
+		if (!$result) {
+			return ['error' => 'Query failed', 'sql' => $sql];
+		}
+
+		$elements = [];
+		while ($row = $this->db->fetchArray($result)) {
+			$elements[] = $row;
+		}
+
 		return [
-			'form_data' => $row,
-			'form_id' => $formId
+			'form_id' => $formId,
+			'form_data' => $formData,
+			'elements' => $elements,
+			'total_elements' => count($elements)
 		];
 	}
 
@@ -1765,8 +1756,6 @@ class FormulizeMCP
 			'total_count' => count($elements)
 		];
 	}
-
-
 
 	private function getDefaultConfig()
 	{
