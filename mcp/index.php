@@ -431,7 +431,7 @@ class FormulizeMCP {
         $forms = $this->getFormsList();
         foreach ($forms as $form) {
             $formId = $form['id_form'];
-            $formTitle = trans($form['title']) ?? "Form $formId";
+			$formTitle = trans($form['desc_form']) ?? "Form $formId";
 
             // Form schema resource
             $this->resources["form_schema_$formId"] = [
@@ -640,14 +640,14 @@ class FormulizeMCP {
             $apiKeyTableExists = false;
             $apiKeyCount = 0;
 
-            $checkTableSql = "SHOW TABLES LIKE '" . XOOPS_DB_PREFIX . "_formulize_apikeys'";
+			$checkTableSql = "SHOW TABLES LIKE '" . $this->db->prefix('formulize_apikeys') . "'";
             $tableResult = $this->db->query($checkTableSql);
 
             if ($this->db->fetchArray($tableResult)) {
                 $apiKeyTableExists = true;
 
                 // Count active keys
-                $countSql = "SELECT COUNT(*) as count FROM " . XOOPS_DB_PREFIX . "_formulize_apikeys WHERE expiry IS NULL OR expiry > NOW()";
+				$countSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_apikeys') . " WHERE expiry IS NULL OR expiry > NOW()";
                 $countResult = $this->db->query($countSql);
                 if ($countResult) {
                     $countRow = $this->db->fetchArray($countResult);
@@ -667,7 +667,7 @@ class FormulizeMCP {
                     'system' => 'formulize_api_keys',
                     'api_key_table_exists' => $apiKeyTableExists,
                     'active_keys_count' => $apiKeyCount,
-                    'table_name' => XOOPS_DB_PREFIX . '_formulize_apikeys'
+					'table_name' => $this->db->prefix('formulize_apikeys')
                 ],
                 'endpoints' => [
                     'mcp' => $this->baseUrl . '/mcp',
@@ -1045,7 +1045,7 @@ class FormulizeMCP {
      */
     private function getFormSchema($formId) {
         // Get form details
-        $formSql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize_id WHERE id_form = " . intval($formId);
+		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
         $formResult = $this->db->query($formSql);
         $formData = $this->db->fetchArray($formResult);
 
@@ -1054,7 +1054,7 @@ class FormulizeMCP {
         }
 
         // Get form elements
-        $elementsSql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		$elementsSql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
         $elementsResult = $this->db->query($elementsSql);
 
         $elements = [];
@@ -1062,11 +1062,17 @@ class FormulizeMCP {
             $elements[] = $row;
         }
 
+		// count entries
+		$entryCountSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_' . $formData['form_handle']);
+		$entryCountResult = $this->db->query($entryCountSql);
+		$entryCount = $this->db->fetchArray($entryCountResult)['count'];
+
         return [
             'form' => $formData,
             'elements' => $elements,
             'element_count' => count($elements),
-            'data_table' => XOOPS_DB_PREFIX . "_formulize_" . $formId
+			'data_table' => $this->db->prefix('formulize_' . $formData['form_handle']),
+			'entry_count' => $entryCount,
         ];
     }
 
@@ -1107,23 +1113,32 @@ class FormulizeMCP {
         global $xoopsConfig;
 
         // Count forms
-        $formCountSql = "SELECT COUNT(*) as count FROM " . XOOPS_DB_PREFIX . "_formulize_id WHERE active = 1";
+		$formCountSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_id');
         $formCountResult = $this->db->query($formCountSql);
         $formCount = $this->db->fetchArray($formCountResult)['count'];
 
         // Count users
-        $userCountSql = "SELECT COUNT(*) as count FROM " . XOOPS_DB_PREFIX . "_users";
+		$userCountSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('users');
         $userCountResult = $this->db->query($userCountSql);
         $userCount = $this->db->fetchArray($userCountResult)['count'];
 
+		$module_handler = xoops_gethandler('module');
+		$formulizeModule = $module_handler->getByDirname("formulize");
+		$metadata = $formulizeModule->getInfo();
+
+		// server time zone is used by DB, so NOW() returns actual server time.
+		// PHP is set to UTC
+		$timeSQL = "SELECT NOW() as server_time";
+		$timeResult = $this->db->query($timeSQL);
+		$timeRow = $this->db->fetchArray($timeResult);
+
         return [
             'site_name' => $xoopsConfig['sitename'] ?? 'Unknown',
-            'xoops_version' => XOOPS_VERSION ?? 'Unknown',
+			'formulize_version' => $metadata['version'] ?? 'Unknown',
             'php_version' => PHP_VERSION,
             'form_count' => $formCount,
             'user_count' => $userCount,
-            'database_prefix' => XOOPS_DB_PREFIX,
-            'server_time' => date('Y-m-d H:i:s')
+			'server_time' => $timeRow['server_time'] ?? 'Unknown'
         ];
     }
 
@@ -1163,7 +1178,7 @@ class FormulizeMCP {
      */
     private function getFormRelationships() {
         // Get frameworks
-        $frameworksSql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize_frameworks ORDER BY fr_name";
+		$frameworksSql = "SELECT * FROM " . $this->db->prefix('formulize_frameworks') . " ORDER BY fr_name";
         $frameworksResult = $this->db->query($frameworksSql);
 
         $frameworks = [];
@@ -1172,7 +1187,7 @@ class FormulizeMCP {
         }
 
         // Get framework links
-        $linksSql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize_framework_links";
+		$linksSql = "SELECT * FROM " . $this->db->prefix('formulize_framework_links');
         $linksResult = $this->db->query($linksSql);
 
         $links = [];
@@ -1400,16 +1415,108 @@ class FormulizeMCP {
                 return $this->getFormDetails($arguments);
             case 'get_form_elements':
                 return $this->getFormElements($arguments);
+			case 'create_entry':
+    		return $this->writeFormEntry(intval($arguments['form_id']), 'new', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+			case 'update_entry':
+    		return $this->writeFormEntry(intval($arguments['form_id']), intval($arguments['entry_id']), $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
             case 'gatherDataset':
-                return $this->gatherDataset($arguments);
-            case 'search_entries':
-                return $this->searchEntries($arguments);
-            case 'debug_tables':
-                return $this->debugTables();
+				return $this->getEntriesFromForm($arguments);
             default:
                 throw new Exception('Tool not implemented: ' . $toolName);
         }
     }
+
+	/**
+	 * Write entry data to a form (used by both create and update tools)
+	 */
+	private function writeFormEntry($formId, $entryId, $data, $relationshipId = -1)
+	{
+
+		try {
+			// Step 1: Check permissions
+			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
+				throw new Exception('Permission denied: cannot update entry '. $entryId . ' in form ' . $formId);
+			}
+
+			// Validate form exists and is active
+			$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+			$formResult = $this->db->query($formSql);
+			$formData = $this->db->fetchArray($formResult);
+
+			if (!$formData) {
+				throw new Exception('Form not found: ' . $formId);
+			}
+
+			// Get form elements to validate handles
+			$elementsSql = "SELECT ele_handle FROM " . $this->db->prefix('formulize'). " WHERE id_form = " . intval($formId);
+			$elementsResult = $this->db->query($elementsSql);
+
+			$validHandles = [];
+			while ($row = $this->db->fetchArray($elementsResult)) {
+				$validHandles[] = $row['ele_handle'];
+			}
+
+			// Step 2: Prepare the data
+			$preparedData = [];
+			foreach ($data as $elementHandle => $value) {
+				// Validate element handle exists in this form
+				if (!in_array($elementHandle, $validHandles)) {
+					throw new Exception('Invalid element handle for this form: ' . $elementHandle);
+				}
+
+				// Prepare the value for database storage
+				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
+				if ($preparedValue === false) {
+					throw new Exception('Failed to prepare data: ' . $value . ' for element: ' . $elementHandle);
+				}
+
+				$preparedData[$elementHandle] = $preparedValue;
+			}
+
+			if (empty($preparedData)) {
+				throw new Exception('No valid data provided');
+			}
+
+			// Step 3: Write the entry
+			$resultEntryId = formulize_writeEntry($preparedData, $entryId);
+
+			if ($resultEntryId === null) {
+				throw new Exception('No data was written (values may be unchanged)');
+			}
+
+			// For new entries, the function returns the new entry ID
+			// For updates, it returns the existing entry ID
+			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId;
+
+			// Step 4: Update derived values
+			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+
+			// Return success response
+			$response = [
+				'success' => true,
+				'form_id' => $formId,
+				'entry_id' => $finalEntryId,
+				'action' => ($entryId === 'new') ? 'created' : 'updated',
+				'elements_written' => array_keys($preparedData),
+				'element_count' => count($preparedData)
+			];
+
+			if ($entryId === 'new') {
+				$response['new_entry_id'] = $resultEntryId;
+			}
+
+			return $response;
+		} catch (Exception $e) {
+			return [
+				'success' => false,
+				'message' => ($entryId === 'new' ? 'Failed to create entry: ' : 'Failed to update entry: ') . $e->getMessage(),
+				'code' => $e->getCode(),
+				'form_id' => $formId,
+				'entry_id' => $entryId === 'new' ? null : $entryId
+			];
+		}
+	}
+
 
     /**
      * Gather dataset using Formulize's built-in function with proper permission scoping
@@ -1471,10 +1578,8 @@ class FormulizeMCP {
                     'sortField' => $sortField,
                     'sortOrder' => $sortOrder,
                     'frid' => $frid
-                ],
-                'execution_mode' => 'gatherDataset_with_permissions'
+				]
             ];
-
         } catch (Exception $e) {
             return [
                 'error' => 'gatherDataset execution failed: ' . $e->getMessage(),
@@ -1485,42 +1590,22 @@ class FormulizeMCP {
     }
 
     /**
-     * Debug: List all Formulize-related tables
-     */
-    private function debugTables() {
-        $sql = "SHOW TABLES LIKE '" . XOOPS_DB_PREFIX . "_formulize%'";
-        $result = $this->db->query($sql);
-
-        $tables = [];
-        while ($row = $this->db->fetchArray($result)) {
-            $tableName = array_values($row)[0];
-            $tables[] = $tableName;
-        }
-
-        return [
-            'formulize_tables' => $tables,
-            'table_count' => count($tables),
-            'prefix' => XOOPS_DB_PREFIX
-        ];
-    }
-
-    /**
      * List all forms
      */
     private function listForms($args) {
         $includeInactive = $args['include_inactive'] ?? false;
 
-        $tableCheckSql = "SHOW TABLES LIKE '" . XOOPS_DB_PREFIX . "_formulize_id'";
+		$tableCheckSql = "SHOW TABLES LIKE '" . $this->db->prefix('formulize_id');
         $tableResult = $this->db->query($tableCheckSql);
 
         if (!$this->db->fetchArray($tableResult)) {
             return [
                 'error' => 'formulize_id table not found',
-                'checked_table' => XOOPS_DB_PREFIX . "_formulize_id"
+				'checked_table' => $this->db->prefix('formulize_id')
             ];
         }
 
-        $columnsSql = "DESCRIBE " . XOOPS_DB_PREFIX . "_formulize_id";
+		$columnsSql = "DESCRIBE " . $this->db->prefix('formulize_id');
         $columnsResult = $this->db->query($columnsSql);
         $columns = [];
 
@@ -1528,7 +1613,7 @@ class FormulizeMCP {
             $columns[] = $row['Field'];
         }
 
-        $sql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize_id";
+		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
 
         if (in_array('active', $columns) AND !$includeInactive) {
             $sql .= " WHERE active = 1";
@@ -1560,7 +1645,7 @@ class FormulizeMCP {
     private function getFormDetails($args) {
         $formId = $args['form_id'];
 
-        $sql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize_id WHERE id_form = " . intval($formId);
+		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
         $result = $this->db->query($sql);
 
         if (!$result) {
@@ -1585,7 +1670,7 @@ class FormulizeMCP {
     private function getFormElements($args) {
         $formId = $args['form_id'];
 
-        $sql = "SELECT * FROM " . XOOPS_DB_PREFIX . "_formulize WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+        $sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
         $result = $this->db->query($sql);
 
         if (!$result) {
@@ -1604,80 +1689,10 @@ class FormulizeMCP {
         ];
     }
 
-    /**
-     * Search entries in a form
-     */
-    private function searchEntries($args) {
-        $formId = intval($args['form_id']);
-        $searchTerm = $args['search_term'];
-        $elementHandle = $args['element_handle'] ?? null;
-        $limit = intval($args['limit'] ?? 20);
 
-        // Get the form's data table name
-        $dataTable = XOOPS_DB_PREFIX . "_formulize_" . $formId;
 
-        // Check if data table exists
-        $tableCheckSql = "SHOW TABLES LIKE '$dataTable'";
-        $tableResult = $this->db->query($tableCheckSql);
-
-        if (!$this->db->fetchArray($tableResult)) {
-            return [
-                'error' => 'Form data table not found',
-                'expected_table' => $dataTable,
-                'form_id' => $formId
-            ];
-        }
-
-        // Build search query
-        $searchTerm = $this->db->escape($searchTerm);
-
-        if ($elementHandle) {
-            // Search in specific element
-            $elementHandle = $this->db->escape($elementHandle);
-            $sql = "SELECT * FROM $dataTable WHERE `$elementHandle` LIKE '%$searchTerm%' ORDER BY entry_id DESC LIMIT $limit";
-        } else {
-            // Search across all text columns
-            $columnsSql = "DESCRIBE $dataTable";
-            $columnsResult = $this->db->query($columnsSql);
-
-            $textColumns = [];
-            while ($row = $this->db->fetchArray($columnsResult)) {
-                $type = strtolower($row['Type']);
-                if (strpos($type, 'varchar') !== false OR strpos($type, 'text') !== false) {
-                    $textColumns[] = "`" . $row['Field'] . "` LIKE '%$searchTerm%'";
-                }
-            }
-
-            if (empty($textColumns)) {
-                return ['error' => 'No searchable text columns found'];
-            }
-
-            $whereClause = implode(' OR ', $textColumns);
-            $sql = "SELECT * FROM $dataTable WHERE ($whereClause) ORDER BY entry_id DESC LIMIT $limit";
-        }
-
-        $result = $this->db->query($sql);
-
-        if (!$result) {
-            return ['error' => 'Search query failed', 'sql' => $sql];
-        }
-
-        $entries = [];
-        while ($row = $this->db->fetchArray($result)) {
-            $entries[] = $row;
-        }
-
-        return [
-            'form_id' => $formId,
-            'search_term' => $searchTerm,
-            'element_handle' => $elementHandle,
-            'results' => $entries,
-            'result_count' => count($entries),
-            'limit' => $limit
-        ];
-    }
-
-    private function getDefaultConfig() {
+	private function getDefaultConfig()
+	{
         return [
             'debug' => false,
             'max_results' => 100
