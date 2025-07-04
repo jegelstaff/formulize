@@ -202,7 +202,26 @@ trait tools {
 					],
 					'required' => ['value', 'element_handle']
 				]
-			]
+			],
+			'find_element_references' => [
+				'name' => 'find_element_references',
+				'description' => 'Find all references to a specific element throughout Formulize (screens, conditions, linked elements, calculations, etc.)',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'element_identifier' => [
+							'type' => ['integer', 'string'],
+							'description' => 'Element ID (number) or element handle (string) to search for'
+						],
+						'include_details' => [
+							'type' => 'boolean',
+							'description' => 'Include detailed context for each reference',
+							'default' => true
+						]
+					],
+					'required' => ['element_identifier']
+				]
+			],
 		];
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
@@ -315,9 +334,11 @@ trait tools {
 				return $this->getEntriesFromForm($arguments);
 			case 'prepare_database_values_for_human_readability':
 				return $this->prepareDatabaseValuesForHumanReadability($arguments);
+			case 'find_element_references':
+    		return $this->findElementReferences($arguments);
 			case 'read_system_activity_log':
 				if (isset($this->tools['read_system_activity_log'])) {
-					return readSystemActivityLog($arguments);
+					return $this->readSystemActivityLog($arguments);
 				} else {
 					return ['message' => 'Logging is disabled on this Formulize system.' ];
 				}
@@ -673,13 +694,14 @@ trait tools {
 	 */
 	private function readSystemActivityLog($args) {
 
+		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		if($formulizeConfig['formulizeLoggingOnOff'] AND $formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation']) {
 
 			$form_id = intval($args['form_id'] ?? 0);
 			$screen_id = intval($args['screen_id'] ?? 0);
 			$entry_id = intval($args['entry_id'] ?? 0);
-			$user_id = isset($args['user_id']) ? intval($user_id) : null;
+			$user_id = isset($args['user_id']) ? intval($args['user_id']) : null;
 
 			$filename = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
 			$lineCount = 1000;
@@ -756,3 +778,976 @@ trait tools {
 			// Return exactly the requested number of lines
 			return array_slice($lines, -$lineCount);
     }
+	}
+
+	/**
+	 * Find all references to a specific element throughout Formulize
+	 */
+	private function findElementReferences($args) {
+			$elementIdentifier = $args['element_identifier'] ?? null;
+			$includeDetails = $args['include_details'] ?? true;
+
+			if (!$elementIdentifier) {
+					throw new Exception('element_identifier is required');
+			}
+
+			// First, get the element info to have both ID and handle
+			$elementInfo = $this->getElementInfo($elementIdentifier);
+			if (!$elementInfo) {
+					return [
+							'error' => 'Element not found',
+							'searched_for' => $elementIdentifier
+					];
+			}
+
+			$elementId = $elementInfo['ele_id'];
+			$elementHandle = $elementInfo['ele_handle'];
+			$formId = $elementInfo['id_form'];
+
+			$references = [
+					'element_info' => [
+							'ele_id' => $elementId,
+							'ele_handle' => $elementHandle,
+							'ele_caption' => $elementInfo['ele_caption'],
+							'ele_type' => $elementInfo['ele_type'],
+							'form_id' => $formId,
+							'form_title' => $elementInfo['form_title']
+					],
+					'references' => []
+			];
+
+			// Search in screens
+			$references['references']['screens'] = $this->findElementInScreens($elementId, $elementHandle, $includeDetails);
+
+			// Search in other elements
+			$references['references']['elements'] = $this->findElementInElements($elementId, $elementHandle, $includeDetails);
+
+			// Search in saved views
+			$references['references']['saved_views'] = $this->findElementInSavedViews($elementId, $elementHandle, $includeDetails);
+
+			// Search in advanced calculations
+			$references['references']['calculations'] = $this->findElementInCalculations($elementId, $elementHandle, $includeDetails);
+
+			// Search in notification conditions
+			$references['references']['notifications'] = $this->findElementInNotifications($elementId, $elementHandle, $includeDetails);
+
+			// Search in other table
+			$references['references']['other_text'] = $this->findElementInOtherTable($elementId, $includeDetails);
+
+			// Search in framework links
+			$references['references']['framework_links'] = $this->findElementInFrameworkLinks($elementId, $elementHandle, $includeDetails);
+
+			// Search in group filters
+			$references['references']['group_filters'] = $this->findElementInGroupFilters($elementId, $elementHandle, $includeDetails);
+
+			// Search in form settings
+			$references['references']['form_settings'] = $this->findElementInFormSettings($elementId, $elementHandle, $formId, $includeDetails);
+
+			// Search in calendar screens
+			$references['references']['calendar_screens'] = $this->findElementInCalendarScreens($elementId, $elementHandle, $includeDetails);
+
+			// Search in digest data
+			$references['references']['digest_data'] = $this->findElementInDigestData($elementId, $elementHandle, $includeDetails);
+
+			// Search for on_before_save and on_after_save hooks
+			$references['references']['form_hooks'] = $this->findElementInFormHooks($elementId, $elementHandle, $includeDetails);
+
+			// Search in menu links and screen rewrite rules
+			$references['references']['menu_and_urls'] = $this->findElementInMenuAndUrls($elementId, $elementHandle, $includeDetails);
+
+			// Scan relevant PHP files for direct usage of the element ID or handle
+			$references['references']['custom_php'] = $this->findElementInCustomPhp($elementId, $elementHandle, $includeDetails);
+
+			// Count total references
+			$totalCount = 0;
+			foreach ($references['references'] as $category => $items) {
+					$totalCount += count($items);
+			}
+			$references['total_references'] = $totalCount;
+
+			return $references;
+	}
+
+	/**
+	 * Get element info from ID or handle
+	 */
+	private function getElementInfo($identifier) {
+			global $xoopsDB;
+
+			if (is_numeric($identifier)) {
+					$sql = "SELECT e.*, f.desc_form as form_title
+									FROM " . $xoopsDB->prefix("formulize") . " e
+									LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON e.id_form = f.id_form
+									WHERE e.ele_id = " . intval($identifier);
+			} else {
+					$sql = "SELECT e.*, f.desc_form as form_title
+									FROM " . $xoopsDB->prefix("formulize") . " e
+									LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON e.id_form = f.id_form
+									WHERE e.ele_handle = '" . $xoopsDB->escape($identifier) . "'";
+			}
+
+			$result = $xoopsDB->query($sql);
+			if ($result && $xoopsDB->getRowsNum($result) > 0) {
+					return $xoopsDB->fetchArray($result);
+			}
+			return null;
+	}
+
+	/**
+	 * Find element references in screens
+	 */
+	private function findElementInScreens($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			// Check form screens
+			$sql = "SELECT s.sid, s.title, s.type, sf.*
+							FROM " . $xoopsDB->prefix("formulize_screen") . " s
+							LEFT JOIN " . $xoopsDB->prefix("formulize_screen_form") . " sf ON s.sid = sf.sid
+							WHERE s.type = 'form'";
+
+			$result = $xoopsDB->query($sql);
+			while ($screen = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check formelements field
+					if ($screen['formelements']) {
+							$elements = unserialize($screen['formelements']);
+							if (is_array($elements) && in_array($elementId, $elements)) {
+									$found = true;
+									$details[] = "Element is included in this form screen";
+							}
+					}
+
+					// Check elementdefaults
+					if ($screen['elementdefaults']) {
+							$defaults = unserialize($screen['elementdefaults']);
+							if ($this->searchInArray($defaults, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Element referenced in default values";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'screen_id' => $screen['sid'],
+									'screen_title' => $screen['title'],
+									'screen_type' => 'form',
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			// Check multipage screens
+			$sql = "SELECT s.sid, s.title, s.type, sm.*
+							FROM " . $xoopsDB->prefix("formulize_screen") . " s
+							LEFT JOIN " . $xoopsDB->prefix("formulize_screen_multipage") . " sm ON s.sid = sm.sid
+							WHERE s.type = 'multiPage'";
+
+			$result = $xoopsDB->query($sql);
+			while ($screen = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check pages
+					if ($screen['pages']) {
+							$pages = unserialize($screen['pages']);
+							if (is_array($pages)) {
+									foreach ($pages as $pageNum => $pageElements) {
+											if (is_array($pageElements) && in_array($elementId, $pageElements)) {
+													$found = true;
+													$details[] = "Element is on page " . ($pageNum + 1);
+											}
+									}
+							}
+					}
+
+					// Check conditions
+					if ($screen['conditions']) {
+							$conditions = unserialize($screen['conditions']);
+							if ($this->searchInArray($conditions, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Element referenced in page conditions";
+							}
+					}
+
+					// Check element defaults
+					if ($screen['elementdefaults']) {
+							$defaults = unserialize($screen['elementdefaults']);
+							if ($this->searchInArray($defaults, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Element referenced in default values";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'screen_id' => $screen['sid'],
+									'screen_title' => $screen['title'],
+									'screen_type' => 'multiPage',
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			// Check list screens
+			$sql = "SELECT s.sid, s.title, s.type, sl.*
+							FROM " . $xoopsDB->prefix("formulize_screen") . " s
+							LEFT JOIN " . $xoopsDB->prefix("formulize_screen_listofentries") . " sl ON s.sid = sl.sid
+							WHERE s.type = 'listOfEntries'";
+
+			$result = $xoopsDB->query($sql);
+			while ($screen = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check various column settings
+					$fieldsToCheck = ['hiddencolumns', 'decolumns', 'defaultview', 'limitviews', 'fundamental_filters'];
+					foreach ($fieldsToCheck as $field) {
+							if ($screen[$field]) {
+									$data = @unserialize($screen[$field]);
+									if (!$data) {
+											// Try as string search
+											if (strpos($screen[$field], $elementHandle) !== false || strpos($screen[$field], (string)$elementId) !== false) {
+													$found = true;
+													$details[] = "Element referenced in $field";
+											}
+									} elseif ($this->searchInArray($data, $elementId, $elementHandle)) {
+											$found = true;
+											$details[] = "Element referenced in $field";
+									}
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'screen_id' => $screen['sid'],
+									'screen_title' => $screen['title'],
+									'screen_type' => 'listOfEntries',
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			// Check template screens
+			$sql = "SELECT s.sid, s.title, s.type, st.*
+							FROM " . $xoopsDB->prefix("formulize_screen") . " s
+							LEFT JOIN " . $xoopsDB->prefix("formulize_screen_template") . " st ON s.sid = st.sid
+							WHERE s.type = 'template'";
+
+			$result = $xoopsDB->query($sql);
+			while ($screen = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check template and custom code for element references
+					if ($screen['template'] && (strpos($screen['template'], $elementHandle) !== false || strpos($screen['template'], "displayElement($elementId") !== false)) {
+							$found = true;
+							$details[] = "Element referenced in template code";
+					}
+
+					if ($screen['custom_code'] && (strpos($screen['custom_code'], $elementHandle) !== false || strpos($screen['custom_code'], (string)$elementId) !== false)) {
+							$found = true;
+							$details[] = "Element referenced in custom code";
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'screen_id' => $screen['sid'],
+									'screen_title' => $screen['title'],
+									'screen_type' => 'template',
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in menu links and screen rewrite rules
+	 */
+	private function findElementInMenuAndUrls($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			// Check menu links
+			$sql = "SELECT ml.*, a.name as app_name
+							FROM " . $xoopsDB->prefix("formulize_menu_links") . " ml
+							LEFT JOIN " . $xoopsDB->prefix("formulize_applications") . " a ON ml.appid = a.appid";
+
+			$result = $xoopsDB->query($sql);
+			while ($menu = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check URL for element references
+					if ($menu['url'] && (strpos($menu['url'], $elementHandle) !== false || strpos($menu['url'], 'ele=' . $elementId) !== false)) {
+							$found = true;
+							$details[] = "Element referenced in menu URL";
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'type' => 'menu_link',
+									'menu_id' => $menu['menu_id'],
+									'app_name' => $menu['app_name'],
+									'link_text' => $menu['link_text'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			// Check screen rewrite rules
+			$sql = "SELECT sid, title, rewriteruleElement
+							FROM " . $xoopsDB->prefix("formulize_screen") . "
+							WHERE rewriteruleElement = " . intval($elementId) . " AND rewriteruleElement != 0";
+
+			$result = $xoopsDB->query($sql);
+			while ($screen = $xoopsDB->fetchArray($result)) {
+					$foundIn[] = [
+							'type' => 'screen_rewrite_rule',
+							'screen_id' => $screen['sid'],
+							'screen_title' => $screen['title'],
+							'details' => $includeDetails ? ["Element used for URL rewriting in this screen"] : null
+					];
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in other elements
+	 */
+	private function findElementInElements($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT e.*, f.desc_form as form_title
+							FROM " . $xoopsDB->prefix("formulize") . " e
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON e.id_form = f.id_form
+							WHERE e.ele_id != " . intval($elementId);
+
+			$result = $xoopsDB->query($sql);
+			while ($element = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check ele_value
+					if ($element['ele_value']) {
+							$eleValue = @unserialize($element['ele_value']);
+							if ($eleValue && $this->searchInArray($eleValue, $elementId, $elementHandle)) {
+									$found = true;
+
+									// Specific checks for element types
+									if ($element['ele_type'] == 'select' && isset($eleValue[2]) && is_string($eleValue[2])) {
+											// Linked selectbox
+											if (strpos($eleValue[2], '#*=:*' . $elementHandle) !== false) {
+													$details[] = "This selectbox is linked to the element";
+											}
+									}
+
+									if ($element['ele_type'] == 'text' && isset($eleValue[4]) && $eleValue[4] == $elementId) {
+											$details[] = "This textbox has an associated element reference";
+									}
+
+									if ($element['ele_type'] == 'derived') {
+											$details[] = "Referenced in derived value formula";
+									}
+							}
+					}
+
+					// Check filter settings
+					if ($element['ele_filtersettings']) {
+							$filters = @unserialize($element['ele_filtersettings']);
+							if ($filters && $this->searchInArray($filters, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Referenced in display filter conditions";
+							}
+					}
+
+					// Check disabled conditions
+					if ($element['ele_disabledconditions']) {
+							$conditions = @unserialize($element['ele_disabledconditions']);
+							if ($conditions && $this->searchInArray($conditions, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Referenced in disabled conditions";
+							}
+					}
+
+					// Check export options
+					if ($element['ele_exportoptions']) {
+							$exportOpts = @unserialize($element['ele_exportoptions']);
+							if ($exportOpts && $this->searchInArray($exportOpts, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Referenced in export options";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'element_id' => $element['ele_id'],
+									'element_handle' => $element['ele_handle'],
+									'element_caption' => $element['ele_caption'],
+									'element_type' => $element['ele_type'],
+									'form_id' => $element['id_form'],
+									'form_title' => $element['form_title'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in saved views
+	 */
+	private function findElementInSavedViews($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT sv.*, f.desc_form as form_title
+							FROM " . $xoopsDB->prefix("formulize_saved_views") . " sv
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON sv.sv_mainform = f.id_form";
+
+			$result = $xoopsDB->query($sql);
+			while ($view = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check various fields
+					$fieldsToCheck = [
+							'sv_oldcols' => 'column configuration',
+							'sv_asearch' => 'advanced search',
+							'sv_calc_cols' => 'calculation columns',
+							'sv_quicksearches' => 'quick searches',
+							'sv_currentview' => 'current view filter'
+					];
+
+					foreach ($fieldsToCheck as $field => $description) {
+							if ($view[$field]) {
+									$data = @unserialize($view[$field]);
+									if (!$data) {
+											// Try string search
+											if (strpos($view[$field], $elementHandle) !== false || strpos($view[$field], (string)$elementId) !== false) {
+													$found = true;
+													$details[] = "Referenced in $description";
+											}
+									} elseif ($this->searchInArray($data, $elementId, $elementHandle)) {
+											$found = true;
+											$details[] = "Referenced in $description";
+									}
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'view_id' => $view['sv_id'],
+									'view_name' => $view['sv_name'],
+									'form_id' => $view['sv_mainform'],
+									'form_title' => $view['form_title'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in advanced calculations
+	 */
+	private function findElementInCalculations($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT ac.*, f.desc_form as form_title
+							FROM " . $xoopsDB->prefix("formulize_advanced_calculations") . " ac
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON ac.fid = f.id_form";
+
+			$result = $xoopsDB->query($sql);
+			while ($calc = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check input, output, and steps
+					$fieldsToCheck = [
+							'input' => 'calculation input',
+							'output' => 'calculation output',
+							'steps' => 'calculation steps'
+					];
+
+					foreach ($fieldsToCheck as $field => $description) {
+							if ($calc[$field]) {
+									// These fields often contain element handles in calculations
+									if (strpos($calc[$field], $elementHandle) !== false) {
+											$found = true;
+											$details[] = "Referenced in $description";
+									}
+
+									// Also check serialized data
+									$data = @unserialize($calc[$field]);
+									if ($data && $this->searchInArray($data, $elementId, $elementHandle)) {
+											$found = true;
+											$details[] = "Referenced in $description (structured data)";
+									}
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'calculation_id' => $calc['acid'],
+									'calculation_name' => $calc['name'],
+									'form_id' => $calc['fid'],
+									'form_title' => $calc['form_title'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in notification conditions
+	 */
+	private function findElementInNotifications($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT nc.*, f.desc_form as form_title
+							FROM " . $xoopsDB->prefix("formulize_notification_conditions") . " nc
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON nc.not_cons_fid = f.id_form";
+
+			$result = $xoopsDB->query($sql);
+			while ($notif = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check specific element reference fields
+					if ($notif['not_cons_elementuids'] == $elementId) {
+							$found = true;
+							$details[] = "Element supplies user IDs for notification";
+					}
+
+					if ($notif['not_cons_elementemail'] == $elementId) {
+							$found = true;
+							$details[] = "Element supplies email addresses for notification";
+					}
+
+					// Check conditions
+					if ($notif['not_cons_con']) {
+							$conditions = @unserialize($notif['not_cons_con']);
+							if ($conditions && $this->searchInArray($conditions, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Referenced in notification conditions";
+							}
+					}
+
+					// Check template for element placeholders
+					if ($notif['not_cons_template'] && strpos($notif['not_cons_template'], '{' . $elementHandle . '}') !== false) {
+							$found = true;
+							$details[] = "Referenced in notification template";
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'notification_id' => $notif['not_cons_id'],
+									'event' => $notif['not_cons_event'],
+									'form_id' => $notif['not_cons_fid'],
+									'form_title' => $notif['form_title'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in formulize_other table
+	 */
+	private function findElementInOtherTable($elementId, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT COUNT(*) as count FROM " . $xoopsDB->prefix("formulize_other") . "
+							WHERE ele_id = " . intval($elementId);
+
+			$result = $xoopsDB->query($sql);
+			$data = $xoopsDB->fetchArray($result);
+
+			if ($data['count'] > 0) {
+					$foundIn[] = [
+							'table' => 'formulize_other',
+							'count' => $data['count'],
+							'details' => $includeDetails ? ["Element has {$data['count']} 'other' text entries"] : null
+					];
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Recursive search in arrays for element references
+	 */
+	private function searchInArray($array, $elementId, $elementHandle) {
+			if (!is_array($array)) {
+					return false;
+			}
+
+			foreach ($array as $key => $value) {
+					// Check if key matches
+					if ($key === $elementId || $key === $elementHandle || $key === (string)$elementId) {
+							return true;
+					}
+
+					// Check if value matches
+					if ($value === $elementId || $value === $elementHandle || $value === (string)$elementId) {
+							return true;
+					}
+
+					// If value is string, check for element handle in various formats
+					if (is_string($value)) {
+							// Check for element handle in various contexts
+							$patterns = [
+									'{' . $elementHandle . '}',     // Placeholder format
+									'[' . $elementHandle . ']',     // Alternative placeholder
+									'element_' . $elementId,        // Common prefix format
+									'#' . $elementId,               // ID reference format
+									'displayElement(' . $elementId, // Function call format
+									'"' . $elementHandle . '"',     // Quoted handle
+									"'" . $elementHandle . "'",     // Single quoted handle
+							];
+
+							foreach ($patterns as $pattern) {
+									if (strpos($value, $pattern) !== false) {
+											return true;
+									}
+							}
+					}
+
+					// Recurse if value is array
+					if (is_array($value) && $this->searchInArray($value, $elementId, $elementHandle)) {
+							return true;
+					}
+			}
+
+			return false;
+	}
+
+	/**
+	 * Find element references in framework links
+	 */
+	private function findElementInFrameworkLinks($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT fl.*, f.frame_name,
+							f1.desc_form as form1_title, f2.desc_form as form2_title
+							FROM " . $xoopsDB->prefix("formulize_framework_links") . " fl
+							LEFT JOIN " . $xoopsDB->prefix("formulize_frameworks") . " f ON fl.fl_frame_id = f.frame_id
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f1 ON fl.fl_form1_id = f1.id_form
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f2 ON fl.fl_form2_id = f2.id_form
+							WHERE fl.fl_key1 = " . intval($elementId) . " OR fl.fl_key2 = " . intval($elementId);
+
+			$result = $xoopsDB->query($sql);
+			while ($link = $xoopsDB->fetchArray($result)) {
+					$details = [];
+
+					if ($link['fl_key1'] == $elementId) {
+							$details[] = "Element is key1 linking form '{$link['form1_title']}' to '{$link['form2_title']}'";
+					}
+					if ($link['fl_key2'] == $elementId) {
+							$details[] = "Element is key2 linking form '{$link['form2_title']}' to '{$link['form1_title']}'";
+					}
+
+					$foundIn[] = [
+							'framework_id' => $link['fl_frame_id'],
+							'framework_name' => $link['frame_name'],
+							'link_id' => $link['fl_id'],
+							'form1' => $link['form1_title'],
+							'form2' => $link['form2_title'],
+							'details' => $includeDetails ? $details : null
+					];
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in group filters
+	 */
+	private function findElementInGroupFilters($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT gf.*, f.desc_form as form_title, g.name as group_name
+							FROM " . $xoopsDB->prefix("formulize_group_filters") . " gf
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON gf.fid = f.id_form
+							LEFT JOIN " . $xoopsDB->prefix("groups") . " g ON gf.groupid = g.groupid";
+
+			$result = $xoopsDB->query($sql);
+			while ($filter = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check filter text for element references
+					if ($filter['filter']) {
+							// Filters often use element handles in format: handle/**/value/**/operator
+							if (strpos($filter['filter'], $elementHandle) !== false) {
+									$found = true;
+									$details[] = "Element referenced in group filter condition";
+							}
+
+							// Also check for element ID references
+							$filterData = @unserialize($filter['filter']);
+							if ($filterData && $this->searchInArray($filterData, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Element referenced in filter structure";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'filter_id' => $filter['filterid'],
+									'form_id' => $filter['fid'],
+									'form_title' => $filter['form_title'],
+									'group_id' => $filter['groupid'],
+									'group_name' => $filter['group_name'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in form settings
+	 */
+	private function findElementInFormSettings($elementId, $elementHandle, $formId, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			// Check the form's own settings
+			$sql = "SELECT * FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = " . intval($formId);
+			$result = $xoopsDB->query($sql);
+
+			if ($form = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check headerlist
+					if ($form['headerlist']) {
+							$headerlist = @unserialize($form['headerlist']);
+							if (!$headerlist) {
+									// Sometimes headerlist is a comma-separated string
+									if (strpos($form['headerlist'], $elementHandle) !== false) {
+											$found = true;
+											$details[] = "Element in default list columns";
+									}
+							} elseif (is_array($headerlist) && in_array($elementHandle, $headerlist)) {
+									$found = true;
+									$details[] = "Element in default list columns";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'location' => 'form_settings',
+									'form_id' => $formId,
+									'form_title' => $form['desc_form'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in calendar screens
+	 */
+	private function findElementInCalendarScreens($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT s.sid, s.title, sc.*
+							FROM " . $xoopsDB->prefix("formulize_screen") . " s
+							LEFT JOIN " . $xoopsDB->prefix("formulize_screen_calendar") . " sc ON s.sid = sc.sid
+							WHERE s.type = 'calendar' AND sc.datasets IS NOT NULL";
+
+			$result = $xoopsDB->query($sql);
+			while ($calendar = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check datasets configuration
+					if ($calendar['datasets']) {
+							$datasets = @unserialize($calendar['datasets']);
+							if ($datasets && $this->searchInArray($datasets, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Element referenced in calendar dataset configuration";
+							}
+
+							// Calendar screens often reference date elements
+							if (!$datasets && strpos($calendar['datasets'], $elementHandle) !== false) {
+									$found = true;
+									$details[] = "Element possibly referenced in calendar configuration";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'screen_id' => $calendar['sid'],
+									'screen_title' => $calendar['title'],
+									'screen_type' => 'calendar',
+									'calendar_type' => $calendar['caltype'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in digest data
+	 */
+	private function findElementInDigestData($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			$sql = "SELECT dd.*, f.desc_form as form_title
+							FROM " . $xoopsDB->prefix("formulize_digest_data") . " dd
+							LEFT JOIN " . $xoopsDB->prefix("formulize_id") . " f ON dd.fid = f.id_form";
+
+			$result = $xoopsDB->query($sql);
+			while ($digest = $xoopsDB->fetchArray($result)) {
+					$found = false;
+					$details = [];
+
+					// Check mail template for element placeholders
+					if ($digest['mailTemplate'] && strpos($digest['mailTemplate'], '{' . $elementHandle . '}') !== false) {
+														$found = true;
+							$details[] = "Element referenced in digest email template";
+					}
+
+					// Check extra tags
+					if ($digest['extra_tags']) {
+							$tags = @unserialize($digest['extra_tags']);
+							if ($tags && $this->searchInArray($tags, $elementId, $elementHandle)) {
+									$found = true;
+									$details[] = "Element referenced in digest extra tags";
+							}
+					}
+
+					if ($found) {
+							$foundIn[] = [
+									'digest_id' => $digest['digest_id'],
+									'email' => $digest['email'],
+									'event' => $digest['event'],
+									'form_id' => $digest['fid'],
+									'form_title' => $digest['form_title'],
+									'details' => $includeDetails ? $details : null
+							];
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Find element references in form hooks (on_before_save, on_after_save)
+	 */
+	private function findElementInFormHooks($elementId, $elementHandle, $includeDetails) {
+			global $xoopsDB;
+			$foundIn = [];
+
+			// Check for custom form files that might contain hooks
+			$formHandler = xoops_getmodulehandler('forms', 'formulize');
+			$allForms = $formHandler->getAllForms();
+
+			foreach ($allForms as $form) {
+					$formId = $form->getVar('id_form');
+					$details = [];
+
+					// Check if there's a custom class file for this form
+					$customFormFile = XOOPS_ROOT_PATH . "/modules/formulize/class/form_" . $formId . "Form.php";
+					if (file_exists($customFormFile)) {
+							$content = file_get_contents($customFormFile);
+
+							// Search for element references in the code
+							if (strpos($content, $elementHandle) !== false || strpos($content, (string)$elementId) !== false) {
+									$details[] = "Element referenced in custom form class";
+
+									// Try to identify specific methods
+									if (strpos($content, 'on_before_save') !== false &&
+											(strpos($content, $elementHandle) !== false || strpos($content, (string)$elementId) !== false)) {
+											$details[] = "Possibly referenced in on_before_save hook";
+									}
+
+									if (strpos($content, 'on_after_save') !== false &&
+											(strpos($content, $elementHandle) !== false || strpos($content, (string)$elementId) !== false)) {
+											$details[] = "Possibly referenced in on_after_save hook";
+									}
+
+									if (strpos($content, 'customValidation') !== false &&
+											(strpos($content, $elementHandle) !== false || strpos($content, (string)$elementId) !== false)) {
+											$details[] = "Possibly referenced in custom validation";
+									}
+							}
+
+							if (!empty($details)) {
+									$foundIn[] = [
+											'form_id' => $formId,
+											'form_title' => $form->getVar('title'),
+											'file' => "form_{$formId}Form.php",
+											'details' => $includeDetails ? $details : null
+									];
+							}
+					}
+			}
+
+			return $foundIn;
+	}
+
+	/**
+	 * Scan relevant PHP files for direct usage of the element ID or handle
+	 */
+	private function findElementInCustomPhp($elementId, $elementHandle, $includeDetails) {
+
+    global $xoopsConfig;
+    $theme = $xoopsConfig['theme_set'];
+
+		$foundIn = [];
+		$searchPaths = [
+			__DIR__ . '/../modules/formulize/code/',
+			__DIR__ . '/../modules/formulize/templates/screens/'.$theme.'/',
+		];
+		$patterns = [
+			preg_quote((string)$elementId, '/'),
+			preg_quote($elementHandle, '/')
+		];
+		foreach ($searchPaths as $dir) {
+			if (!is_dir($dir)) continue;
+			$files = glob($dir . '*.php');
+			foreach ($files as $file) {
+				$contents = file_get_contents($file);
+				foreach ($patterns as $pattern) {
+					if (preg_match('/' . $pattern . '/', $contents)) {
+						$foundIn[] = [
+							'file' => basename($file),
+							'details' => $includeDetails ? "Direct reference to element ID or handle found in file" : null
+						];
+						break;
+					}
+				}
+			}
+		}
+		return $foundIn;
+	}
+}
