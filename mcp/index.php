@@ -230,6 +230,12 @@ class FormulizeMCP
 		$pathParts = explode('?', $path);
 		$cleanPath = rtrim($pathParts[0], '/');
 
+		writeToFormulizeLog([
+			'formulize_event' => 'mcp-request-being-handled',
+			'user_id' => $this->authenticatedUid,
+			'mcp_path' => $cleanPath
+		]);
+
 		// Route based on path - match end of line
 		if (preg_match('/\/health$/', $cleanPath)) {
 			$this->handleHealthCheck();
