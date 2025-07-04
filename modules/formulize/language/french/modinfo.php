@@ -136,3 +136,5 @@ define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC', "When form eleme
 
 define('_MI_formulize_VALIDATECODE', 'Check code blocks for syntax errors?');
 define('_MI_formulize_VALIDATECODE_DESC', 'When this is turned on, then Formulize will check most places where you can enter PHP code, to make sure the code has no syntax errors. This can be time consuming and if you are an experienced developer you may prefer to turn it off. This setting will have no effect if the shell_exec command is not available to PHP on your server.');
+
+include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/modinfo.php'; // Include the English version of the module info file to ensure all constants are defined
