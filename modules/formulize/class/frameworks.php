@@ -535,7 +535,9 @@ class formulizeFrameworksHandler {
 						'each'=>ucfirst(_AM_FRAME_EACH),
 						'form1'=>$form1Text,
 						'has'=>_AM_FRAME_HAS.' '.$connectionText,
-						'form2'=>$form2Text
+						'form2'=>$form2Text,
+						'form1Id'=>$link['form1'],
+						'form2Id'=>$link['form2'],
 					);
 				}
 			}
