@@ -182,7 +182,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         } elseif($timeParts[0]=="12") {
             $value = "12:".$timeParts[1]."PM";
         } elseif($value) {
-            $value = trim($timeParts[0],"0").":".$timeParts[1]."AM";
+            $value = ltrim($timeParts[0],"0").":".$timeParts[1]."AM";
         }
 
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
