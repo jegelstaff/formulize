@@ -87,7 +87,7 @@ function getFormFramework($formframe, $mainform=0) {
         $frid = "";
         $fid = $formframe;
         if (!is_numeric($formframe)) { // if it's a title, convert to the id
-            $formid = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE desc_form = '" . formulize_db_escape($formframe) . "'");
+            $formid = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_title = '" . formulize_db_escape($formframe) . "'");
             if(!$fid = intval($formid[0]['id_form'])) {
                 exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($formframe))."'");
             }
@@ -2481,7 +2481,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
         $name = 'formlink';
     }
 
-    $formlist = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " $limitToForm ORDER BY desc_form";
+    $formlist = "SELECT id_form, form_title FROM " . $xoopsDB->prefix("formulize_id") . " $limitToForm ORDER BY form_title";
 
     $resformlist = $xoopsDB->query($formlist);
     if ($resformlist) {

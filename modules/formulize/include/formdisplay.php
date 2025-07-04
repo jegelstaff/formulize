@@ -1910,8 +1910,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	if(!$customCaption) {
 		// get the title of this subform
 		// help text removed for F4.0 RC2, this is an experiment
-		$subtitle = q("SELECT desc_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $subform_id");
-        $subtitle = $subtitle[0]['desc_form'];
+		$subtitle = q("SELECT form_title FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $subform_id");
+        $subtitle = $subtitle[0]['form_title'];
 	} else {
         $subtitle = $customCaption;
 	}

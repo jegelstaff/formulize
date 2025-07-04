@@ -2,7 +2,7 @@
 
 // set empty defaults
 $id_form = "";
-$formq[0]['desc_form'] = "";
+$formq[0]['form_title'] = "";
 $formq[0]['singular'] = "";
 $formq[0]['plural'] = "";
 $formq[0]['tableform'] = "";

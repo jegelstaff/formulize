@@ -166,12 +166,12 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("id_form", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             )
         )
     ),
     "formulize_id" => array(
-        "fields" => array("desc_form"),
+        "fields" => array("form_title"),
         "joins" => array()
     ),
     "formulize_menu" => array(),
@@ -211,12 +211,12 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fl_form1_id", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             ),
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fl_form2_id", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             )
         )
     ),
@@ -236,7 +236,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("not_cons_fid", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             )
         )
     ),
@@ -246,7 +246,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fid", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             )
         )
     ),
@@ -292,7 +292,7 @@ $modversion['table_metadata'] = array(
                 array(
                     "join_table" => "formulize_id",
                     "join_field" => array("fid", "id_form"),
-                    "field" => "desc_form"
+                    "field" => "form_title"
                 )
             )
     ),
@@ -330,7 +330,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fid", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             ),
             array(
                 "join_table" => "groups",
@@ -345,7 +345,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fid", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             ),
             array(
                 "join_table" => "groups",
@@ -372,7 +372,7 @@ $modversion['table_metadata'] = array(
 			array(
 				"join_table" => "formulize_id",
 				"join_field" => array("gperm_itemid", "id_form"),
-				"field" => "desc_form"
+				"field" => "form_title"
 			)
 		)
 	),
@@ -382,7 +382,7 @@ $modversion['table_metadata'] = array(
             array(
                 "join_table" => "formulize_id",
                 "join_field" => array("fid", "id_form"),
-                "field" => "desc_form"
+                "field" => "form_title"
             ),
             array(
                 "join_table" => "groups",

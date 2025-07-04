@@ -122,7 +122,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("id_form", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("fid", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
-		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['desc_form'], true, 255);
+		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['form_title'], true, 255);
 		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
 		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
@@ -693,7 +693,7 @@ class formulizeFormsHandler {
 		$excludeTableFormsClause = $includeTableForms == false ? " tableform = '' " : "";
 		$excludeTableFormsClause = ($formLimitClause AND $excludeTableFormsClause) ? " AND $excludeTableFormsClause " : $excludeTableFormsClause;
 		$whereClause = ($formLimitClause OR $excludeTableFormsClause) ? " WHERE $formLimitClause $excludeTableFormsClause " : "";
-		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY desc_form";
+		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
 		$allFidsRes = $xoopsDB->query($allFidsQuery);
 		$foundFormObjects = array();
 		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
@@ -744,7 +744,7 @@ class formulizeFormsHandler {
 			}
 		} else {
 			// no application specified, so get forms that do not belong to an application
-			$sql = "SELECT id_form, desc_form FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.desc_form";
+			$sql = "SELECT id_form, form_title FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.form_title";
 			if($res = $this->db->query($sql)) {
 				$sortArray = array();
 				while($array = $this->db->fetchArray($res)) {
@@ -753,7 +753,7 @@ class formulizeFormsHandler {
 					} else {
 						$fids[] = $this->get($array['id_form']);
 					}
-					$sortArray[] = trans($array['desc_form']);
+					$sortArray[] = trans($array['form_title']);
 				}
 				array_multisort($sortArray, SORT_NATURAL, $fids);
 			}
@@ -791,7 +791,7 @@ class formulizeFormsHandler {
 				}
 
                 if($formObject->isNew() || empty($id_form)) {
-                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`desc_form`, `singular`, `plural`, `singleentry`, `tableform`, ".
+                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
                         "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
                         $this->db->quoteString($title).", ".
                         $this->db->quoteString($singular).", ".
@@ -802,7 +802,7 @@ class formulizeFormsHandler {
                         intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
                 } else {
                     $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
-                        " `desc_form` = ".$this->db->quoteString($title).
+                        " `form_title` = ".$this->db->quoteString($title).
 												", `singular` = ".$this->db->quoteString($singular).
 												", `plural` = ".$this->db->quoteString($plural).
                         ", `singleentry` = ".$this->db->quoteString($singleToWrite).
@@ -1561,7 +1561,7 @@ class formulizeFormsHandler {
 		foreach($getrow[0] as $field=>$value) {
 			if(is_null($value)) { continue; }
 			if($this->fieldShouldBeSkippedInCloning($field)) { continue; }
-			if($field == "desc_form") {
+			if($field == "form_title") {
 				$oldTitle = $value;
 				$value = $newtitle;
 			}
@@ -1744,7 +1744,7 @@ class formulizeFormsHandler {
             } else {
                 $newtitle = sprintf(_FORM_MODCLONED, $title);
             }
-            $titleCheckSQL = "SELECT desc_form FROM " . $this->db->prefix("formulize_id") . " WHERE desc_form = '".formulize_db_escape($newtitle)."'";
+            $titleCheckSQL = "SELECT form_title FROM " . $this->db->prefix("formulize_id") . " WHERE form_title = '".formulize_db_escape($newtitle)."'";
             $titleCheckResult = $this->db->query($titleCheckSQL);
             $foundTitle = $this->db->getRowsNum($titleCheckResult);
         }

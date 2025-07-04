@@ -97,19 +97,19 @@ if(isset($_GET['forceDerivedValueUpdate'])) {
 }
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
-$sql=sprintf("SELECT singleentry,desc_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
+$sql=sprintf("SELECT singleentry,form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
 $res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
 //global $nb_fichier;
 
 if ( $res ) {
   while ( $row = $xoopsDB->fetchArray ( $res ) ) {
     $singleentry = $row['singleentry'];
-    $desc_form = $row['desc_form'];
+    $form_title = $row['form_title'];
   }
 }
 
 $myts = MyTextSanitizer::getInstance();
-$title = $myts->displayTarea($desc_form);
+$title = $myts->displayTarea($form_title);
 $currentURL = getCurrentURL();
 
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);

@@ -48,7 +48,7 @@ class Formulize {
 		$newUser->setVar('level', $user_data->get('level')); //active, can login
 
         $newUserCreated = $member_handler->insertUser($newUser, true);
-        
+
 		if ($user_data->get('uid') == false AND $newUserCreated) {
 			// if there is no user id and the new user was inserted successfully; create a mapping record for internal id and email
 			return self::createResourceMapping(self::USER_RESOURCE, $user_data->get('email'), $newUser->getVar('uid'));
@@ -298,10 +298,10 @@ class Formulize {
 		if(!$limitUser) {
 			$sql =
 			'
-				SELECT fi.desc_form, fs.title, fs.sid
+				SELECT fi.form_title, fs.title, fs.sid
 				FROM ' . $form_table . ' AS fi, ' . $screen_table . ' AS fs
 				WHERE fi.id_form = fs.fid
-				ORDER BY fi.desc_form, fs.title
+				ORDER BY fi.form_title, fs.title
 			';
 		//If only screens available to the current user are desired
 		} else {
@@ -327,11 +327,11 @@ class Formulize {
 
 			$sql =
 			'
-				SELECT fi.desc_form, fs.title, fs.sid
+				SELECT fi.form_title, fs.title, fs.sid
 				FROM ' . $form_table . ' AS fi, ' . $screen_table . ' AS fs
 				WHERE fi.id_form = fs.fid
 					AND fi.id_form IN (' . $in_clause . ')
-				ORDER BY fi.desc_form, fs.title
+				ORDER BY fi.form_title, fs.title
 			';
 
 		}
@@ -339,7 +339,7 @@ class Formulize {
 		//Run the query and assemble/return the results
 		if ($result = self::$db->query($sql)) {
 			while($row = self::$db->fetchArray($result)) {
-				$options[$row['sid']] = $row['desc_form'] . ' - ' . $row['title'];
+				$options[$row['sid']] = $row['form_title'] . ' - ' . $row['title'];
 			}
 		}
 
@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
 		return self::$db->queryF('
 			UPDATE ' . $mapping_table . '
 			SET  ' . $external_id_newSQL .'
-			WHERE '.  $external_id_oldSQL 
+			WHERE '.  $external_id_oldSQL
 		);
 	}
 
@@ -604,7 +604,7 @@ class FormulizeUser {
 			$this->timezone_offset = $GLOBALS['xoopsConfig']['default_TZ'];
 		}
 	}
-    
+
 	/**
 	 * Get the value of a field in this FormulizeUser
 	 * @param   key     String      The name of the field to be retrieved
@@ -626,9 +626,9 @@ class FormulizeUser {
 	}
 
     function insertAndMapUser($groups) {
-        
+
         global $icmsConfigUser;
-        
+
         $login_name = $this->login_name;
         //parse the space out of the name
         $login_name = str_replace(' ', '', $login_name);
@@ -648,7 +648,7 @@ class FormulizeUser {
             $salt = $icmspass->createSalt();
             $enc_type = $icmsConfigUser['enc_type'];
             $pass1 = $icmspass->encryptPass($pass, $salt, $enc_type);
-                        
+
             $newuser = $member_handler->createUser();
             //attempt to create the user
             $newuser->setVar('login_name', $login_name, TRUE);
@@ -662,7 +662,7 @@ class FormulizeUser {
             $newuser->setVar('pass', $pass1, TRUE);
             $newuser->setVar('salt', $salt, TRUE);
             $newuser->setVar('enc_type', $enc_type, TRUE);
-            
+
             if ($member_handler->insertUser($newuser)) {
                 //assign the user basic registered users group at the very least, and maybe other groups if those were selected
                 $newid = (int) $newuser->getVar('uid');
@@ -698,5 +698,5 @@ class FormulizeUser {
         }
         return false;
     }
-    
+
 }

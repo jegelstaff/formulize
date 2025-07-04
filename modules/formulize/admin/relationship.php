@@ -60,12 +60,12 @@ if (0 != $sid = intval($_GET['sid'])) {
 }
 
 // retrieve the names and ids of all forms, and create the form options for the Add Form section
-$formsq = "SELECT id_form, desc_form FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY desc_form";
+$formsq = "SELECT id_form, form_title FROM " . $xoopsDB->prefix("formulize_id") . " ORDER BY form_title";
 $res = $xoopsDB->query($formsq);
 $i = 0;
 while($array = $xoopsDB->fetchArray($res)) {
     $common['formoptions'][$i]['value'] = $array['id_form'];
-    $common['formoptions'][$i]['name'] = $array['desc_form'];
+    $common['formoptions'][$i]['name'] = $array['form_title'];
     $i++;
 }
 

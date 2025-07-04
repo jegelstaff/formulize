@@ -6,9 +6,9 @@
  */
 
 // exporting the entire DB can take a lot of memory and time!!
-ini_set('memory_limit', '1024M'); 
+ini_set('memory_limit', '1024M');
 ini_set('max_execution_time', '600');
- 
+
 include_once '../include/synchronization.php';
 
 if(!class_exists('ZipArchive')) {
@@ -63,9 +63,9 @@ if (isset($_POST['export'])) {
 }
 // retrieve the post information from the import submit
 else if(isset($_POST['import']) OR isset($_GET['partial'])) {
-    
+
     if(!isset($_GET['partial'])) {
-    
+
     $uploadOK = true;                       // todo: should possibly be an associative array with true/false and message ??
     $filepath = $_FILES['fileToUpload']['tmp_name'];
 
@@ -99,7 +99,7 @@ else if(isset($_POST['import']) OR isset($_GET['partial'])) {
         $csvPath = $_GET['partial'];
         $dbResult = csvToDB($_GET['partial']);
     }
-        
+
     if ($dbResult["success"] == true AND $dbResult["partial"] == false) {
         deleteDir($csvPath); // clean up temp folder and CSV files
         header("Location: ui.php?page=sync-import"); // redirect to sync import review changes
@@ -114,7 +114,7 @@ else if(isset($_POST['import']) OR isset($_GET['partial'])) {
     } else {
         $sync[1]['content']['error'] = "import_err";
     }
-    
+
 }
 else {
     $filepath = "";
@@ -144,7 +144,7 @@ function endsWithZip($filename, $zip) {
 // has key value pairings of form id => form name
 function createCheckboxInfo() {
     global $xoopsDB;
-    $sql = "SELECT id_form, desc_form FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
+    $sql = "SELECT id_form, form_title FROM " . XOOPS_DB_PREFIX . "_formulize_id;";
     $result = icms::$xoopsDB->query($sql);
 
     $ids = array();
