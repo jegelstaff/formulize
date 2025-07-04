@@ -985,6 +985,14 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 $modversion['config'][] = array(
+	'name' => 'system_specific_instructions',
+	'title' => '_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS',
+	'description' => '_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC',
+	'formtype' => 'textsarea',
+	'valuetype' => 'text',
+	'default' => ''
+);
+$modversion['config'][] = array(
 	'name' => 'validateCode',
 	'title' => '_MI_formulize_VALIDATECODE',
 	'description' => '_MI_formulize_VALIDATECODE_DESC',
