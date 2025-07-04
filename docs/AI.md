@@ -154,6 +154,80 @@ npm install
 npm run build
 ```
 
+## Distribution notes for the formulize-proxy-mcp server
+
+Distribution Package
+You would provide users with:
+
+The dist/ folder - Contains the compiled JavaScript
+package.json - For dependency management
+Setup instructions - How to configure for their Formulize instance
+
+User Setup Process
+Each user would:
+
+Install Node.js (if not already installed)
+Copy your files to their local machine
+Run npm install to get the MCP SDK dependency
+Configure their claude_desktop_config.json with their Formulize URL:
+
+json{
+  "mcpServers": {
+    "formulize": {
+      "command": "node",
+      "args": ["C:\\path\\to\\formulize-proxy-mcp\\dist\\index.js"],
+      "env": {
+        "FORMULIZE_BASE_URL": "https://their-formulize-server.com/formulize_mcp_http_direct.php",
+        "FORMULIZE_DEBUG": "false",
+        "FORMULIZE_TIMEOUT": "30000"
+      }
+    }
+  }
+}
+What Makes This Distributable
+✅ Generic proxy - Works with any Formulize HTTP MCP server
+✅ Configuration-driven - No code changes needed per instance
+✅ Standard dependencies - Just Node.js and MCP SDK
+✅ Cross-platform - Works on Windows, Mac, Linux
+Distribution Options
+Option 1: Simple Package
+
+Zip file with dist/, package.json, and setup instructions
+Users run npm install locally
+
+Option 2: NPM Package
+
+Publish to NPM registry as formulize-mcp-proxy
+Users install with npm install -g formulize-mcp-proxy
+Even easier distribution
+
+Option 3: Executable Bundle
+
+Use tools like pkg to create standalone executables
+No Node.js installation required for end users
+
+Requirements for Each Formulize Instance
+Each Formulize server just needs:
+
+Your PHP HTTP MCP server (formulize_mcp_http_direct.php)
+Accessible via HTTPS (recommended)
+CORS headers properly configured (already done in your server)
+
+Example Distribution Package Structure
+formulize-mcp-proxy/
+├── dist/
+│   └── index.js
+├── package.json
+├── README.md
+└── setup-instructions.md
+This is a really elegant solution because:
+
+One TypeScript proxy serves all Formulize instances
+No server-side changes needed per installation
+Secure - each user connects to their own Formulize server
+Maintainable - you only maintain one codebase
+
+
 ## Claude Desktop Configuration
 
 Add this to your Claude Desktop config file:
