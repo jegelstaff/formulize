@@ -317,8 +317,6 @@ class formulizeApplicationsHandler {
 						$sortArray[] = trans($formArray['form_title']);
           }
 					array_multisort($sortArray, SORT_NATURAL, $foundForms);
-        } else {
-          print $xoopsDB->error();
         }
         $newApp->assignVar('forms', serialize($foundForms)); // need to serialize arrays when assigning to array properties in the xoops object class
         $cachedApps[$newAppId] = $newApp;
