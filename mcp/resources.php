@@ -22,15 +22,15 @@ trait resources {
 
 			// Form schema resource
 			$this->resources["form_schema_$formId"] = [
-				'uri' => "formulize://schemas/form_$formId:_".$sanitizedTitle.".json",
-				'name' => "Schema of form $formId: $formTitle",
+				'uri' => "formulize://schemas/$sanitizedTitle"."_(form_$formId).json",
+				'name' => "Schema of $formTitle (form $formId)",
 				'description' => "Complete schema, element definitions, and form connections, for form $formId: $formTitle",
 				'mimeType' => 'application/json'
 			];
 		}
 
 		// to add: group-form permissions! For a form, show all the permissions for each group.
-		// MCP provides a cheap interface, let the AI assistant handle the details. We don't have to build a full presentation layer.
+		// MCP provides a cheap interface, let the AI assistant handle the details. We don't have to build a full presentation layer here.
 
 		// System-level resources
 		$this->resources['system_info'] = [
@@ -117,22 +117,20 @@ trait resources {
 	 */
 	private function readResource($uri)
 	{
-		// Parse: formulize://schemas/form_1:_BP_Readings.json
+		// Parse: formulize://schemas/BP_Readings_(form_1).json
 		if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
     	throw new Exception('Invalid resource URI format');
 	}
 
 	$type = $matches[1];      // "schemas"
-	$filename = strtolower($matches[2]);  // "form_1:_BP_Readings"
+	$filename = strtolower($matches[2]);  // "BP_Readings_(form_1)"
 	$extension = $matches[3]; // "json"
 
 		switch ($type) {
 			case 'schemas':
-				if ($subtype === 'schema') {
-					$filenameParts = explode('_', $filename);
-					$formId = trim($filenameParts[1], ':');
-					return $this->getFormSchema($formId);
-				}
+				$filenameParts = explode('_', $filename);
+				$formId = $filenameParts[array_key_last($filenameParts)];
+				return $this->getFormSchema($formId);
 				break;
 
 			case 'system':
