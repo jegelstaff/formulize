@@ -27,6 +27,14 @@ trait tools {
 					'properties' => (object)[]
 				]
 			],
+			'list_connections' => [
+				'name' => 'list_connections',
+				'description' => 'List all connections between forms in this Formulize instance. This tool is used to get the connections between forms, which can be used to understand how forms are related to each other.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
 			'get_form_details' => [
 				'name' => 'get_form_details',
 				'description' => 'Get detailed information about a specific form. You can get a list of all the forms and their IDs with the list_forms tool.',
@@ -196,6 +204,36 @@ trait tools {
 				]
 			]
 		];
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if($formulizeConfig['formulizeLoggingOnOff']) {
+			$this->tools['read_system_activity_log'] = [
+				'name' => 'read_system_activity_log',
+				'description' => 'This Formulize system logs all activity. This tool will read up to the last 1000 lines from the activity log and return them as a array of JSON objects. There are several keys available in the objects, including microtime (a timestamp), user_id (the user who was active), request_id (which identifies log entries that were part of the same http request), session_id (which connects each request in a user\'s session), formulize_event (which is a short descriptor of the activity), as well as form_id, screen_id, and entry_id.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The ID of form that you want to find in the logs. Only log entries related to that form will be returned.'
+						],
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The ID of a screen that you want to find in the logs. Only log entries related to that screen will be returned.'
+						],
+						'entry_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The ID of a an entry that you want to find in the logs. Only log entries related to that entry will be returned. If an entry_id is specified, a form_id must be specified as well!'
+						],
+						'user_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The ID of a user that you want to find in the logs. Only log entries related to that user will be returned.'
+						]
+					]
+				]
+			];
+		}
+
 	}
 
 	/**
@@ -263,6 +301,8 @@ trait tools {
 				return $this->testConnection();
 			case 'list_forms':
 				return $this->listForms($arguments);
+		case 'list_connections':
+				return $this->listConnections($arguments);
 			case 'get_form_details':
 				return $this->getFormDetails($arguments);
 			case 'get_element_details':
@@ -275,6 +315,12 @@ trait tools {
 				return $this->getEntriesFromForm($arguments);
 			case 'prepare_database_values_for_human_readability':
 				return $this->prepareDatabaseValuesForHumanReadability($arguments);
+			case 'read_system_activity_log':
+				if (isset($this->tools['read_system_activity_log'])) {
+					return readSystemActivityLog($arguments);
+				} else {
+					return ['message' => 'Logging is disabled on this Formulize system.' ];
+				}
 			default:
 				throw new Exception('Tool not implemented: ' . $toolName);
 		}
@@ -473,6 +519,15 @@ trait tools {
 	}
 
 	/**
+	 * List all connections for a form. Tool level access for the connections list, since not all MCP clients can read resources. Duh.
+	 * @param int $formId The ID of the form to get connections for
+	 * @return array An associative array containing the connections for the form
+	 */
+	private function listConnections() {
+		return $this->getFormConnections();
+	}
+
+	/**
 	 * Get form details
 	 */
 	private function getFormDetails($args)
@@ -605,4 +660,99 @@ trait tools {
 		}
 	}
 
-}
+	/**
+	 * Read the last 1000 lines of the system activity log
+	 * This tool reads the system activity log and returns the last 1000 lines as an array of JSON objects.
+	 * Each object contains keys such as microtime, user_id, request_id, session_id, formulize_event, form_id, screen_id, and entry_id.
+	 * @param array $args An associative array containing optional parameters for filtering the log entries:
+	 * - 'form_id': Optional. The ID of the form to filter log entries by
+	 * - 'screen_id': Optional. The ID of the screen to filter log entries by
+	 * - 'entry_id': Optional. The ID of the entry to filter log entries by. If specified, a form_id must also be provided.
+	 * - 'user_id': Optional. The ID of the user to filter log entries by
+	 * @return array An array containing each log line as a JSON object with keys such as microtime, user_id, request_id, session_id, formulize_event, form_id, screen_id, and entry_id.
+	 */
+	private function readSystemActivityLog($args) {
+
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if($formulizeConfig['formulizeLoggingOnOff'] AND $formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation']) {
+
+			$form_id = intval($args['form_id'] ?? 0);
+			$screen_id = intval($args['screen_id'] ?? 0);
+			$entry_id = intval($args['entry_id'] ?? 0);
+			$user_id = isset($args['user_id']) ? intval($user_id) : null;
+
+			$filename = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
+			$lineCount = 1000;
+			$bufferSize = 8192;
+			$handle = fopen($filename, 'r');
+			if (!$handle) {
+				throw new Exception("Cannot open file: $filename");
+			}
+
+      // Get file size
+      fseek($handle, 0, SEEK_END);
+      $fileSize = ftell($handle);
+      if ($fileSize == 0) {
+        fclose($handle);
+      	return [];
+      }
+
+			$lines = [];
+			$buffer = '';
+			$pos = $fileSize;
+			$linesFound = 0;
+
+			// Read backwards in chunks
+			while ($pos > 0 && $linesFound < $lineCount) {
+					// Calculate chunk size (don't read past beginning of file)
+					$chunkSize = min($bufferSize, $pos);
+					$pos -= $chunkSize;
+
+					// Read chunk from current position
+					fseek($handle, $pos);
+					$chunk = fread($handle, $chunkSize);
+
+					// Prepend chunk to buffer
+					$buffer = $chunk . $buffer;
+
+					// Extract complete lines
+					$parts = explode("\n", $buffer);
+
+					// Keep the first part (incomplete line) in buffer for next iteration
+					$buffer = array_shift($parts);
+
+					// Process complete lines (in reverse order since we're reading backwards)
+					while (!empty($parts) && $linesFound < $lineCount) {
+							$line = array_pop($parts);
+							if (trim($line) !== '') {
+									if($form_id OR $screen_id OR $entry_id OR $user_id !== null) {
+										// Filter log entries based on provided parameters
+										$logEntry = json_decode($line, true);
+										if ($logEntry) {
+											if (($form_id && $logEntry['form_id'] != $form_id) ||
+												($screen_id && $logEntry['screen_id'] != $screen_id) ||
+												($entry_id && $logEntry['entry_id'] != $entry_id) ||
+												($user_id !== null && $logEntry['user_id'] != $user_id)) {
+												continue; // Skip this line if it doesn't match the filters
+											}
+										} else {
+											continue; // Skip invalid JSON lines
+										}
+									}
+									// Add to beginning of lines array to maintain original order
+									array_unshift($lines, $line);
+									$linesFound++;
+							}
+					}
+			}
+
+			// Handle any remaining content in buffer (happens when we reach file start)
+			if ($pos == 0 && trim($buffer) !== '' && $linesFound < $lineCount) {
+					array_unshift($lines, $buffer);
+			}
+
+			fclose($handle);
+
+			// Return exactly the requested number of lines
+			return array_slice($lines, -$lineCount);
+    }
