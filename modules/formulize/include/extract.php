@@ -1469,18 +1469,6 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids)
 	return $derivedFieldMetadata;
 }
 
-
-// this function returns the form id when given the form name
-function formulize_getFormIdFromName($nameHandle)
-{
-	static $cachedFormIds = array();
-	if (!isset($cachedFormIds[$nameHandle])) {
-		$formIdData = go("SELECT id_form FROM " . DBPRE . "formulize_id WHERE desc_form = '" . formulize_db_escape($nameHandle) . "'");
-		$cachedFormIds[$nameHandle] = $formIdData[0]['id_form'];
-	}
-	return $cachedFormIds[$nameHandle];
-}
-
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
 function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
