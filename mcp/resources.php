@@ -13,52 +13,79 @@ trait resources {
 	{
 		$this->resources = [];
 
-		// all these resources are only available to webmasters
-		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			return;
-		}
-
 		// Dynamically add form schema resources
 		$formsList = $this->listForms(null);
 		$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
 		foreach ($forms as $form) {
 			$formId = $form['id_form'];
-			$formTitle = trans($form['form_title']);
-			$sanitizedTitle = strtolower(formulizeObject::sanitize_handle_name($formTitle));
+			if(security_check($formId)) {
+				$formTitle = trans($form['form_title']);
+				$sanitizedTitle = strtolower(formulizeObject::sanitize_handle_name($formTitle));
+				$this->resources["schema_form_$formId"] = [
+					'uri' => "formulize://schemas/$sanitizedTitle"."_(form_$formId).json",
+					'name' => "Schema of $formTitle (form $formId)",
+					'description' => "Complete schema, element definitions, screens, and form connections, for form $formId: $formTitle",
+					'mimeType' => 'application/json'
+				];
+				$this->resources["group_permissions_for_form_$formId"] = [
+					'uri' => "formulize://permissions/group_perms_for_$sanitizedTitle"."_(form_$formId).json",
+					'name' => "Permissions for all groups on $formTitle (form $formId)",
+					'description' => "All the permissions for all groups on the $formTitle form (form $formId)",
+					'mimeType' => 'application/json'
+				];
+			}
+		}
 
-			// Form schema resource
-			$this->resources["form_schema_$formId"] = [
-				'uri' => "formulize://schemas/$sanitizedTitle"."_(form_$formId).json",
-				'name' => "Schema of $formTitle (form $formId)",
-				'description' => "Complete schema, element definitions, and form connections, for form $formId: $formTitle",
+		// only webmasters can access system info
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$this->resources['system_info'] = [
+				'uri' => 'formulize://system/info.json',
+				'name' => 'System Information',
+				'description' => 'Formulize system info and status',
 				'mimeType' => 'application/json'
 			];
 		}
 
-		// to add: group-form permissions! For a form, show all the permissions for each group.
-		// MCP provides a cheap interface, let the AI assistant handle the details. We don't have to build a full presentation layer here.
+		$this->resources['applications_list'] = [
+			'uri' => 'formulize://system/applications_list.json',
+			'name' => 'List of Applications',
+			'description' => "All the applications in the system. Applications are collections of forms that work together. A form can be part of one or more applications. Applications are purly for organizing forms, any form can still interact with any other form regardless of the application(s) they're in.",
+			'mimeType' => 'application/json'
+		];
 
-		// System-level resources
-		$this->resources['system_info'] = [
-			'uri' => 'formulize://system/info.json',
-			'name' => 'System Information',
-			'description' => 'Formulize system info and status',
+		$this->resources['screens_list'] = [
+			'uri' => 'formulize://system/screens_list.json',
+			'name' => 'List of Screens',
+			'description' => "All the screens in the system. Screens are ways of presenting a form and its entries to users. Lists screens show the entries in the form, and have extensive configuration options to of entries are a type of screen. Versions of the form which users can fill in, are a type of form. , Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 			'mimeType' => 'application/json'
 		];
 
 		$this->resources['groups_list'] = [
 			'uri' => 'formulize://system/groups_list.json',
-			'name' => 'Groups List',
-			'description' => 'List of groups in the system. Groups are collections of users. Each group can have its own permissions to access a form, such as viewing the form, updating entries by other people in the same group, seeing entries by anyone in any group, etc.',
+			'name' => 'List of Groups',
+			'description' => 'All the groups in the system. Groups are collections of users. Each group can have its own permissions to access a form, such as viewing the form, updating entries by other people in the same group, seeing entries by anyone in any group, etc.',
 			'mimeType' => 'application/json'
 		];
 
 		$this->resources['all_form_connections'] = [
 			'uri' => 'formulize://system/all_form_connections.json',
-			'name' => 'All Form Connections',
+			'name' => 'List of Connections for all Forms',
 			'description' => "All the connections between forms. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 			'mimeType' => 'application/json'
 		];
+
+		// resources for each groups permissions across all forms
+		foreach($this->groups_list() as $groupData) {
+			$groupId = $groupData['groupid'];
+			$groupName = trans($groupData['name']);
+			$sanitizedGroupName = formulizeObject::sanitize_handle_name($groupName);
+			$this->resources["form_permissions_for_group_$groupId"] = [
+					'uri' => "formulize://permissions/form_perms_for_$sanitizedGroupName"."_(group_$groupId).json",
+					'name' => "Permissions for $groupName (group $groupId) on all forms",
+					'description' => "All the permissions for $groupName (group $groupId) all the forms in the system that they have access to.",
+					'mimeType' => 'application/json'
+				];
+		}
 
 	}
 
@@ -107,11 +134,23 @@ trait resources {
 			$filename = strtolower($matches[2]);  // "BP_Readings_(form_1)"
 			$extension = $matches[3]; // "json"
 
+
+
 			switch ($type) {
 				case 'schemas':
+				case 'permissions':
 					$filenameParts = explode('_', $filename);
-					$formId = $filenameParts[array_key_last($filenameParts)];
-					$result = $this->getFormSchema($formId);
+					$firstFilenamePart = $filenameParts[array_key_first($filenameParts)];
+					$id = trim($filenameParts[array_key_last($filenameParts)], ")");
+					switch ($type) {
+						case 'schemas':
+							$methodName = 'form_schemas';
+							break;
+						case 'permisisons':
+							$methodName = $firstFilenamePart == 'form' ? 'group_permissions' : 'form_permissions'; // filename is either form_perm_for_group, or group_perm_for_form. method name is based on the last part, the item we're gathering based on.
+							break;
+					}
+					$result = $this->$methodName($id);
 					break;
 
 				case 'system':
@@ -156,7 +195,9 @@ trait resources {
 	private function form_schemas($formId)
 	{
 
-		$this->verifyUserIsWebmaster(__FUNCTION__);
+		if(security_check($formId) === false) {
+			$this->sendAuthError('Permission denied: user does not have permission to view this form.');
+		}
 		// Get form details
 		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
@@ -187,6 +228,79 @@ trait resources {
 			'data_table' => $this->db->prefix('formulize_' . $formData['form_handle']),
 			'entry_count' => $entryCount
 		] + $this->getFormConnections($formId);
+	}
+
+	/**
+	 * Get all the permissions across all forms, for a given group
+	 * @param int groupId - the id of the group
+	 * @return array returns an array with the permissions this group has across all forms
+	 */
+	private function group_permissions($groupId) {
+
+		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups()) AND !in_array($groupId, $this->userGroups)) {
+			$this->sendAuthError("Permission denied: user is not a member of group $groupId.");
+		}
+
+		$groupDataSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " WHERE groupid = ".intval($groupId);
+		$groupDataResult = $this->db->query($groupDataSql);
+		$groupData = $this->db->fetchArray($groupDataResult);
+
+		$permissions = [];
+		$forms = $this->list_forms();
+		$gperm_handler = xoops_gethandler('groupperm');
+		foreach($forms['forms'] as $formData) {
+			$permissions['form_id'] = $formData['id_form'];
+			$permissions['form_title'] = trans($formData['form_title']);
+			$permissions['permissions'] = $gperm_handler->getRights($formData['id_form'], $groupId, getFormulizeModId());
+		}
+
+		return [
+			'group_id' => $groupData['groupid'],
+			'group_name' => $groupData['name'],
+			'form_permissions' => $permissions
+		];
+
+	}
+
+	/**
+	 * Get all the permissions across all groups, for a given form
+	 * @param int formId - the id of the form
+	 * @return array returns an array with the permissions on this form across all groups
+	 */
+	private function form_permissions($formId) {
+
+		if(!security_check($formId)) {
+			$this->sendAuthError("Permission denied: user does not have access to form $formId.");
+		}
+
+		// limit non webmasters to their own groups
+		$groupLimitWhereClause = "";
+		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$groupLimitWhereClause = "WHERE groupid IN ".implode(", ", array_filter($this->userGroups, 'is_numeric'));
+		}
+
+		// Get groups
+		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " $groupLimitWhereClause ORDER BY name";
+		$groupsResult = $this->db->query($groupsSql);
+		$groupIds = $this->db->fetchColumn($groupsResult, 0); // groupid column 0
+		$groupNames = $this->db->fetchColumn($groupsResult, 1); // name column 1
+
+		$permissions = [];
+		$gperm_handler = xoops_gethandler('groupperm');
+		foreach($groupIds as $i=>$groupId) {
+			$permissions['group_id'] = $groupId;
+			$permissions['group_name'] = trans($groupNames[$i]);
+			$permissions['permissions'] = $gperm_handler->getRights($formId, $groupId, getFormulizeModId());
+		}
+
+		$formData = $this->form_schemas($formId);
+
+		return [
+			'form_id' => $formId,
+			'form_title' => trans($formData['form']['form_title']),
+			'form_permissions' => $permissions
+		];
+
 	}
 
 	/**
@@ -247,15 +361,20 @@ trait resources {
 	}
 
 	/**
-	 * Get users and groups
+	 * Get groups that the user is a member of, or all groups if the user is a webmaster
 	 * @return array Returns an array with 'groups' (list of groups) and 'group_count' (number of groups). Each group is an associative array with 'groupid', 'name', and 'description.
 	 */
 	private function groups_list()
 	{
 
-		$this->verifyUserIsWebmaster(__FUNCTION__);
+		// limit non webmasters to their own groups
+		$groupLimitWhereClause = "";
+		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$groupLimitWhereClause = "WHERE groupid IN ".implode(", ", array_filter($this->userGroups, 'is_numeric'));
+		}
+
 		// Get groups
-		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " ORDER BY name";
+		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " $groupLimitWhereClause ORDER BY name";
 		$groupsResult = $this->db->query($groupsSql);
 
 		$groups = [];
@@ -272,6 +391,7 @@ trait resources {
 	/**
 	 * Get the connections between forms, based on the Primary Relationship
 	 * Optionally can be limited to the connections of a specific form
+	 * Only includes connections if the user has permission for at least one of the forms
 	 * Each connection has a string describing the relationship, e.g. "Each Provice has many Cities", and the ids for the two forms involved.
 	 * @param int|null $formId The ID of the form to limit connections to, or null for all connections
 	 * @return array Returns an array with 'connections' (list of connections) and 'connection_count' (number of connections).
@@ -279,24 +399,46 @@ trait resources {
 	private function connection_list($formId = null)
 	{
 
-		$this->verifyUserIsWebmaster(__FUNCTION__);
-
 		$connections = array();
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$primaryRelationshipSchema = $framework_handler->formatFrameworksAsRelationships(array($framework_handler->get(-1)), $formId);
 		foreach($primaryRelationshipSchema[0]['content']['links'] as $link) {
-			$connections[] = [
-				'description' => "{$link['each']} {$link['form1']} {$link['has']} {$link['form2']}",
-				'form1_id' => $link['form1Id'],
-				'form2_id' => $link['form2Id'],
-				'form1_connected_element_id' => $link['key1'],
-				'form2_connected_element_id' => $link['key2'],
-			];
+			if(security_check($link['form1Id']) OR security_check($link['form1Id'])) {
+				$connections[] = [
+					'description' => "{$link['each']} {$link['form1']} {$link['has']} {$link['form2']}",
+					'form1_id' => $link['form1Id'],
+					'form2_id' => $link['form2Id'],
+					'form1_connected_element_id' => $link['key1'],
+					'form2_connected_element_id' => $link['key2'],
+				];
+			}
 		}
 		return [
 			'connections' => $connections,
 			'connection_count' => count($connections)
 		];
+	}
+
+	/**
+	 * Check if the user is a member of one or more groups
+	 * Webmasters always pass regardless of their memberships
+	 * @param array groups - an array of group ids to check
+	 * @param boolean matchAll - a flag to indicate whether the user must be in all the groups or only one
+	 * @return boolean returns true if the user is a member of a group (or all groups if matchAll is true), or false. Webmasters always return true.
+	 */
+	private function userBelongsToGroups($groups, $matchAll = false) {
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			return true;
+		} else {
+			foreach($groups as $groupId) {
+				if(in_array($groupId, $this->userGroups) AND $matchAll == false) {
+					return true;
+				} elseif(!in_array($groupId, $this->userGroups) AND $matchAll == true) {
+					return false;
+				}
+			}
+		}
+		return $matchAll; // we're still here, so either they matched none (when matchAll is false) or they matched them all (when matchAll is true)
 	}
 
 }
