@@ -1,0 +1,374 @@
+---
+layout: default
+permalink: ai/
+title: AI and Formulize
+---
+
+# We have a Formulize MCP Server
+
+The server can retrieve basic information about the configuration of a Formulize site where the server is installed.
+
+This has been proven to work inside VSCode, where two settings files need to be updated:
+
+Need enabling/installation instructions
+
+Need Node/setup local MCP instructions
+
+Need config instructions for .json files
+sub of this, we need VS Code notes because of extra settings.json in the chat
+
+## .htaccess
+
+```apacheconf
+# Necessary for HTTP Authorization header to be passed through to the MCP server
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```
+
+## mcp.json
+
+An mcp.json file needs to be created inside your project's .vscode folder, and the server started with the Play icon that VSCode gives you in the editor interface.
+
+This can also go in your users/<name>/.cursor/mcp.json in windows, if you user Cursor and not VS Code.
+
+NOTE however that VSCode is the old man out and uses "servers" and not "mcpServers" as the top level.
+
+Add additional servers with the right key, for more instances. Same args value, because it's the same local server every time, just with different config.
+
+```json
+{
+  "servers": {
+    "Formulize": {
+      "command": "node",
+      "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
+      "env": {
+        "FORMULIZE_BASE_URL": "https://<your server domain>/MCP.php",
+        "FORMULIZE_DEBUG": "false",
+        "FORMULIZE_TIMEOUT": "30000",
+        "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
+      }
+    }
+  }
+}
+```
+
+## The user's settings.json file, in the appdate/roaming/code/user folder, maybe. Can be enabled through the Prefs, Chat > MCP >  discovery: enabled.
+
+```json
+"chat.mcp.discovery.enabled": true,
+"chat.mcp.discovery.server": "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp",
+"chat.mcp.discovery.serverName": "Formulize",
+"chat.mcp.discovery.serverType": "http",
+"chat.mcp.discovery.serverUrl": "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp",
+"chat.mcp.discovery.serverVersion": "1.0.0",
+"chat.mcp.discovery.serverDescription": "Formulize MCP Server",
+"chat.mcp.discovery.serverCapabilities": {
+	"chat": true,
+	"code": true,
+	"file": true,
+	"image": true,
+	"video": true,
+	"audio": true,
+	"text": true,
+	"command": true,
+	"tool": true,
+	"search": true,
+	"history": true,
+	"settings": true,
+	"notification": true,
+	"user": true,
+	"group": true,
+	"admin": true,
+	"plugin": true,
+	"extension": true,
+}
+```
+
+## claude_desktop_config.json
+
+```json
+{
+  "mcpServers": {
+    "formulize": {
+      "command": "node",
+      "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
+      "env": {
+        "FORMULIZE_BASE_URL": "https://julian.formulize.net/MCP.php",
+        "FORMULIZE_DEBUG": "false",
+        "FORMULIZE_TIMEOUT": "30000",
+        "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
+      }
+    }
+  }
+}
+```
+
+# Formulize Proxy MCP Server Setup (Windows 11)
+
+This TypeScript MCP server acts as a local proxy to your remote Formulize HTTP server, enabling Claude Desktop integration.
+
+## Installation
+
+1. **Create project directory:**
+```cmd
+mkdir formulize-proxy-mcp
+cd formulize-proxy-mcp
+```
+
+2. **Create the directory structure:**
+```cmd
+mkdir src
+```
+
+3. **Create the files:**
+   - Save the TypeScript code as `src\index.ts`
+   - Save the package.json in the root directory
+   - Save the tsconfig.json in the root directory
+
+4. **Install the MCP SDK first:**
+```cmd
+npm install @modelcontextprotocol/sdk
+```
+
+5. **Install remaining dependencies:**
+```cmd
+npm install
+```
+
+6. **If you get import errors, try installing the latest MCP SDK:**
+```cmd
+npm install @modelcontextprotocol/sdk@latest
+```
+
+7. **Build the project:**
+```cmd
+npm run build
+```
+
+**If you still get SDK import errors, try this alternative installation:**
+```cmd
+rem Clean install
+rmdir /s node_modules
+del package-lock.json
+npm install @modelcontextprotocol/sdk@latest
+npm install
+npm run build
+```
+
+## Distribution notes for the formulize-proxy-mcp server
+
+Distribution Package
+You would provide users with:
+
+The dist/ folder - Contains the compiled JavaScript
+package.json - For dependency management
+Setup instructions - How to configure for their Formulize instance
+
+User Setup Process
+Each user would:
+
+Install Node.js (if not already installed)
+Copy your files to their local machine
+Run npm install to get the MCP SDK dependency
+Configure their claude_desktop_config.json with their Formulize URL:
+
+json{
+  "mcpServers": {
+    "formulize": {
+      "command": "node",
+      "args": ["C:\\path\\to\\formulize-proxy-mcp\\dist\\index.js"],
+      "env": {
+        "FORMULIZE_BASE_URL": "https://their-formulize-server.com/formulize_mcp_http_direct.php",
+        "FORMULIZE_DEBUG": "false",
+        "FORMULIZE_TIMEOUT": "30000"
+      }
+    }
+  }
+}
+What Makes This Distributable
+✅ Generic proxy - Works with any Formulize HTTP MCP server
+✅ Configuration-driven - No code changes needed per instance
+✅ Standard dependencies - Just Node.js and MCP SDK
+✅ Cross-platform - Works on Windows, Mac, Linux
+Distribution Options
+Option 1: Simple Package
+
+Zip file with dist/, package.json, and setup instructions
+Users run npm install locally
+
+Option 2: NPM Package
+
+Publish to NPM registry as formulize-mcp-proxy
+Users install with npm install -g formulize-mcp-proxy
+Even easier distribution
+
+Option 3: Executable Bundle
+
+Use tools like pkg to create standalone executables
+No Node.js installation required for end users
+
+Requirements for Each Formulize Instance
+Each Formulize server just needs:
+
+Your PHP HTTP MCP server (formulize_mcp_http_direct.php)
+Accessible via HTTPS (recommended)
+CORS headers properly configured (already done in your server)
+
+Example Distribution Package Structure
+formulize-mcp-proxy/
+├── dist/
+│   └── index.js
+├── package.json
+├── README.md
+└── setup-instructions.md
+This is a really elegant solution because:
+
+One TypeScript proxy serves all Formulize instances
+No server-side changes needed per installation
+Secure - each user connects to their own Formulize server
+Maintainable - you only maintain one codebase
+
+
+## Claude Desktop Configuration
+
+Add this to your Claude Desktop config file:
+
+**Windows 11:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+**Full path example:** `C:\Users\YourUsername\AppData\Roaming\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "formulize": {
+      "command": "node",
+      "args": ["C:\\full\\path\\to\\formulize-proxy-mcp\\dist\\index.js"],
+      "env": {
+        "FORMULIZE_BASE_URL": "https://julian.formulize.net/formulize_mcp_http_direct.php",
+        "FORMULIZE_DEBUG": "false",
+        "FORMULIZE_TIMEOUT": "30000"
+      }
+    }
+  }
+}
+```
+
+**Important Windows Notes:**
+- Use **double backslashes** (`\\`) in the path
+- Use **full absolute paths** (e.g., `C:\\Users\\YourName\\...`)
+- You can find your exact path by running `echo %APPDATA%` in Command Prompt
+
+## Environment Variables
+
+- **`FORMULIZE_BASE_URL`** (required): Base URL of your Formulize HTTP MCP server
+- **`FORMULIZE_API_KEY`** (optional): API key for authentication
+- **`FORMULIZE_TIMEOUT`** (optional): Request timeout in milliseconds (default: 30000)
+- **`FORMULIZE_DEBUG`** (optional): Enable debug logging (default: false)
+
+## Testing
+
+### Using Command Prompt:
+
+1. **Test the proxy locally:**
+```cmd
+rem Set environment variables
+set FORMULIZE_BASE_URL=https://julian.formulize.net/formulize_mcp_http_direct.php
+set FORMULIZE_DEBUG=true
+
+rem Test with stdio
+echo {"jsonrpc":"2.0","method":"tools/list","params":{},"id":1} | npm start
+```
+
+2. **Test specific tools:**
+```cmd
+rem Test connection
+echo {"jsonrpc":"2.0","method":"tools/call","params":{"name":"proxy_status","arguments":{}},"id":2} | npm start
+
+rem Test Formulize connection
+echo {"jsonrpc":"2.0","method":"tools/call","params":{"name":"test_connection","arguments":{}},"id":3} | npm start
+```
+
+### Using PowerShell:
+
+1. **Test the proxy locally:**
+```powershell
+# Set environment variables
+$env:FORMULIZE_BASE_URL = "https://julian.formulize.net/formulize_mcp_http_direct.php"
+$env:FORMULIZE_DEBUG = "true"
+
+# Test with stdio
+'{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}' | npm start
+```
+
+2. **Test specific tools:**
+```powershell
+# Test connection
+'{"jsonrpc":"2.0","method":"tools/call","params":{"name":"proxy_status","arguments":{}},"id":2}' | npm start
+
+# Test Formulize connection
+'{"jsonrpc":"2.0","method":"tools/call","params":{"name":"test_connection","arguments":{}},"id":3}' | npm start
+```
+
+## Architecture Benefits
+
+✅ **Local stdio interface** - Claude Desktop compatible
+✅ **Remote HTTP calls** - Uses your existing Formulize server
+✅ **Clean separation** - MCP protocol vs Formulize logic
+✅ **Configurable** - Environment-based configuration
+✅ **Error handling** - Graceful fallbacks and debugging
+✅ **Caching prevention** - Fresh data on every request
+
+## Troubleshooting
+
+1. **Check the logs:**
+   Enable debug mode: `"FORMULIZE_DEBUG": "true"`
+
+2. **Test remote server directly (using PowerShell):**
+   ```powershell
+   Invoke-RestMethod -Uri "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp" `
+     -Method Post `
+     -ContentType "application/json" `
+     -Body '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}'
+   ```
+
+   **Or using curl (if installed):**
+   ```cmd
+   curl -X POST https://julian.formulize.net/formulize_mcp_http_direct.php/mcp ^
+     -H "Content-Type: application/json" ^
+     -d "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"params\":{},\"id\":1}"
+   ```
+
+3. **Find your exact config path:**
+   ```cmd
+   echo %APPDATA%\Claude\claude_desktop_config.json
+   ```
+
+4. **Verify Claude Desktop config:**
+   - Check file path uses **double backslashes** (`\\`)
+   - Ensure environment variables are set correctly in the JSON
+   - Use **absolute paths** (e.g., `C:\\Users\\YourName\\...`)
+   - Restart Claude Desktop after config changes
+
+5. **Common Windows Issues:**
+   - **Path separators**: Use `\\` instead of `/` in Windows paths
+   - **Permissions**: Ensure the user can read the script files
+   - **Node.js**: Verify Node.js is installed and in PATH (`node --version`)
+
+## Development
+
+- **Development mode:** `npm run dev` (auto-recompile)
+- **Build:** `npm run build`
+- **Production:** `npm start`
+
+## Security Notes
+
+- The proxy server only forwards requests to your configured Formulize server
+- No local data storage or caching
+- Environment variables keep credentials secure
+- HTTPS recommended for remote connections
+
+## Windows-Specific Notes
+
+- **File paths**: Always use absolute paths with double backslashes
+- **Testing**: PowerShell is recommended over Command Prompt for JSON testing
+- **Environment variables**: Set in the Claude Desktop config, not system environment
+- **Node.js**: Download from [nodejs.org](https://nodejs.org) if not installed

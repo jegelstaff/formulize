@@ -154,6 +154,25 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API".$publicAPIInstructions);
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/");
 
+$mcpServerInstructions = '';
+$hideSystemSpecificInstructions = '';
+foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
+	if($thisConfig == 'formulizeMCPServerEnabled' AND $thisConfigValue == 0) {
+		$mcpServerInstructions = "<br><br>For the MCP Server to work, you will need to add this code to the .htaccess file at the root of your website. Make sure to put it after any other rewrite rules.
+		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
+		# Necessary for HTTP Authorization header to be passed through to the MCP server<br>
+		RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]<br>
+		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the MCP Server.</i>";
+		$hideSystemSpecificInstructions = "<script>jQuery(window).load(function() { jQuery(\"span:contains('System Specific Instructions for the AI Assistant')\").closest('tr').hide(); } );</script>";
+		break;
+	}
+}
+define("_MI_formulize_MCPSERVERENABLED", "Enable the MCP Server for working with AI<br><br><a href='https://formulize.org/ai' target='_blank'>Read more about MCP setup at https://formulize.org/ai</a>.".$mcpServerInstructions);
+define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting AI assistants, like Claude, Gemini, Copilot, etc, to Formulize. With MCP, AI assistants can read information from Formulize and help you configure Formulize.");
+
+define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "<style>ul#ssi-examples li { margin-bottom: 0.6em; font-weight: normal; list-style: disc;}</style>Examples:<br><br><ul id='ssi-examples'><li><b>HR System:</b> This system manages employee records, time tracking, and performance reviews. Managers have access to see all their employees' records.</li><li><b>Research Lab:</b> Scientists use this system to track experiments, log results, and manage equipment reservations. Reports are automatically generated based on the logged data.</li><li><b>Event Management:</b> This system handles event registrations, venue bookings, and attendee communications. Regular users see only their own events, admins see all events.</li><li><b>Project Management:</b> Teams use this system to track project milestones, resource allocation, and client communications. Notifications go out regularly about deadlines, new tasks, etc.</li><li><b>Student Management:</b> This Formulize system is used for managing student registrations and course enrollments. Forms are used to collect student information, course preferences, and payment details. The system is integrated with a payment gateway for processing fees.</li></ul><b>Note:</b> You can use Markdown formatting in this field to make it easier to read.");
+define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS", "System Specific Instructions for the AI Assistant<br><br>You can provide specific context to the AI assistant about what your Formulize system is used for and how it is configured. Basic concepts like forms, elements, screens, users, groups, etc, have already been explained to the AI assistant. This is your chance to provide more specific context about the purpose and workflows of your system, to help the AI assistant help you better.<br><br><a style='cursor: pointer;' 'href='' onclick='jQuery(\"#mcp-ssi-examples\").toggle(); return false;'>Show/Hide Examples</a><br><br><div id='mcp-ssi-examples' style='display:none;'>"._MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC."</div>".$hideSystemSpecificInstructions);
+
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
 define("_MI_formulize_REVISIONSFORALLFORMS_DESC", "Normally, you can turn on revision history for each form as you see fit. If you want to turn it on for all forms always, turn this preference on, and the option will be disabled in each form's settings.");
 
