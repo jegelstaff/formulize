@@ -199,13 +199,13 @@ class FormulizeMCP
 	/**
 	 * Send authentication error response
 	 */
-	private function sendAuthError($message)
+	private function sendAuthError($message, $code = 403)
 	{
 		$this->setNoCacheHeaders();
 		http_response_code(401);
 		echo json_encode([
 			'error' => [
-				'code' => 401,
+				'code' => $code,
 				'message' => $message,
 				'type' => 'authentication_error'
 			],
@@ -565,7 +565,7 @@ class FormulizeMCP
 	 */
 	private function verifyUserIsWebmaster($itemName) {
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			throw new Exception("Permission denied: Only webmasters can access $itemName.");
+			$this->sendAuthError("Permission denied: Only webmasters can access $itemName.", 403);
 		}
 	}
 
