@@ -253,15 +253,6 @@ class FormulizeMCP
 	 */
 	private function handleInitialize($params, $id)
 	{
-
-		$systemSepecificInstructions = '';
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		if($systemSepecificInstructions = $formulizeConfig['system_specific_instructions'] ?? '') {
-			$breaks = array("\r\n", "\n", "\r");
-			$systemSepecificInstructions = "**Details about this system:** The administrators of this particular Formulize system have provided this information about what it is used for: ". str_replace($breaks, '', trim($systemSepecificInstructions));
-		}
-
 		return [
 			'jsonrpc' => '2.0',
 			'result' => [
@@ -271,11 +262,25 @@ class FormulizeMCP
 					'resources' => [],
 					'prompts' => []
 				],
-				'serverInfo' => $this->getSystemInfo(),
-				'instructions' => "**About this server:** This is a Formulize MCP server. Formulize is an open source data management system based on forms. Each Formulize instance is an independent web application with its own URL. **Users and Permissions:** The users of the system are organized into groups. Each user can be a member of multiple groups. Each group has its own permissions for interacting with each form and the entries that have been made in it. All operations through this server automatically respect the authenticated user's permissions and group memberships. **Form structure and connections:** Forms have one or more elements, such as textboxes, checkboxes, dropdown lists, etc. Forms can be connected together to make complex workflows. **Screens:** Each form can have multiple screens based on it. A screen is a way of presenting the form, or the entries that have been made in the form. The two main kinds of screens are 'list screens' (showing lists of entries), and 'form screens' (showing the form's elements across one or more pages). If a form has connections to other forms, that form's screens will have configuration options related to the connected forms. **Applications:** Forms can be collected together into applications as an organizing principle, but any form in the system can be connected to and work with any other form, regardless of application. $systemSepecificInstructions **Next step hint:** Use the tool called list_forms to get a basic overview of this particular Formulize system."
+				'serverInfo' => $this->system_info(),
+				'instructions' => $this->getInitializeInstructions()
 			],
 			'id' => $id
 		];
+	}
+
+	/**
+	 * Gathers the initialize instructions
+	 */
+	private function getInitializeInstructions() {
+		$systemSepecificInstructions = '';
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if($systemSepecificInstructions = $formulizeConfig['system_specific_instructions'] ?? '') {
+			$breaks = array("\r\n", "\n", "\r");
+			$systemSepecificInstructions = "**Details about this system:** The administrators of this particular Formulize system have provided this information about what it is used for: ". str_replace($breaks, '', trim($systemSepecificInstructions));
+		}
+		return "**About this server:** This is a Formulize MCP server. Formulize is an open source data management system based on forms. Each Formulize instance is an independent web application with its own URL. **Users and Permissions:** The users of the system are organized into groups. Each user can be a member of multiple groups. Each group has its own permissions for interacting with each form and the entries that have been made in it. All operations through this server automatically respect the authenticated user's permissions and group memberships. **Form structure and connections:** Forms have one or more elements, such as textboxes, checkboxes, dropdown lists, etc. Forms can be connected together to make complex workflows. **Screens:** Each form can have multiple screens based on it. A screen is a way of presenting the form, or the entries that have been made in the form. The two main kinds of screens are 'list screens' (showing lists of entries), and 'form screens' (showing the form's elements across one or more pages). If a form has connections to other forms, that form's screens will have configuration options related to the connected forms. **Applications:** Forms can be collected together into applications as an organizing principle, but any form in the system can be connected to and work with any other form, regardless of application. $systemSepecificInstructions **Next step hint:** Use the tool called list_forms to get a basic overview of this particular Formulize system.";
 	}
 
 	/**
@@ -326,7 +331,7 @@ class FormulizeMCP
 				'status' => 'healthy',
 				'database_connected' => $dbConnected ? 'true' : 'false',
 				'mcp_server' => 'direct_http_with_formulize_api_keys',
-				'system_info' => $this->getSystemInfo(),
+				'system_info' => $this->system_info(),
 				'tools_count' => count($this->tools),
 				'resources_count' => count($this->resources),
 				'prompts_count' => count($this->prompts),
@@ -339,7 +344,7 @@ class FormulizeMCP
 					'capabilities' => $this->baseUrl . '/capabilities',
 					'health' => $this->baseUrl . '/health'
 				],
-				'system_info' => $this->getSystemInfo()
+				'system_info' => $this->system_info()
 			];
 
 			echo json_encode($health, JSON_PRETTY_PRINT);
@@ -403,7 +408,7 @@ class FormulizeMCP
 				'resources' => array_values($this->resources),
 				'prompts' => array_values($this->prompts)
 			],
-			'serverInfo' => $this->getSystemInfo(),
+			'serverInfo' => $this->system_info(),
 			'authentication' => [
 				'type' => 'Formulize API Keys',
 				'discovery_enabled' => false,
@@ -549,6 +554,19 @@ class FormulizeMCP
 
 		</html>
 <?php
+	}
+
+	/**
+	 * Check if the user is a webmaster and return an error response if they are not
+	 * Called by items that are only accessible to webmasters
+	 * @param string itemName - a string identifying the thing we're verifying them for, typically the name of the tool function or resource function, etc
+	 * @return void
+	 * @throws Exception if the user is not a webmaster
+	 */
+	private function verifyUserIsWebmaster($itemName) {
+		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			throw new Exception("Permission denied: Only webmasters can access $itemName.");
+		}
 	}
 
 	/**

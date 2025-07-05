@@ -11,57 +11,21 @@ trait tools {
 	private function registerTools()
 	{
 		$this->tools = [
+			'formulize' => [
+				'name' => 'formulize',
+				'description' => 'The first tool that should be used. This tool contains basic instructions and background about Formulize. This tool returns the instructions content that should be part of the initialize MCP call, but which is often ignored by MCP clients.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
+			],
 			'test_connection' => [
 				'name' => 'test_connection',
 				'description' => 'Test the MCP server connection and database access',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
-				]
-			],
-			'list_forms' => [
-				'name' => 'list_forms',
-				'description' => 'List all forms in this Formulize instance',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				]
-			],
-			'list_connections' => [
-				'name' => 'list_connections',
-				'description' => 'List all connections between forms in this Formulize instance. This tool is used to get the connections between forms, which can be used to understand how forms are related to each other.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				]
-			],
-			'get_form_details' => [
-				'name' => 'get_form_details',
-				'description' => 'Get detailed information about a specific form. You can get a list of all the forms and their IDs with the list_forms tool.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'The ID of the form to retrieve details for'
-						]
-					],
-					'required' => ['form_id']
-				]
-			],
-			'get_element_details' => [
-				'name' => 'get_element_details',
-				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_identifier' => [
-							'type' => [ 'integer', 'string' ],
-							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
-						]
-					],
-					'required' => ['form_id']
-				]
+				],
 			],
 			'create_entry' => [
 				'name' => 'create_entry',
@@ -84,7 +48,7 @@ trait tools {
 						]
 					],
 					'required' => ['form_id', 'data']
-				]
+				],
 			],
 			'update_entry' => [
 				'name' => 'update_entry',
@@ -204,34 +168,84 @@ trait tools {
 				]
 			]
 		];
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		if($formulizeConfig['formulizeLoggingOnOff']) {
-			$this->tools['read_system_activity_log'] = [
-				'name' => 'read_system_activity_log',
-				'description' => 'This Formulize system logs all activity. This tool will read up to the last 1000 lines from the activity log and return them as a array of JSON objects. There are several keys available in the objects, including microtime (a timestamp), user_id (the user who was active), request_id (which identifies log entries that were part of the same http request), session_id (which connects each request in a user\'s session), formulize_event (which is a short descriptor of the activity), as well as form_id, screen_id, and entry_id.',
+
+		// only webmasters can access certain tools
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$this->tools['list_forms'] = [
+				'name' => 'list_forms',
+				'description' => 'List all forms in this Formulize instance',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			];
+			$this->tools['list_connections'] = [
+				'name' => 'list_connections',
+				'description' => 'List all connections between forms in this Formulize instance. This tool is used to get the connections between forms, which can be used to understand how forms are related to each other.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			];
+			$this->tools['get_form_details'] = [
+				'name' => 'get_form_details',
+				'description' => 'Get detailed information about a specific form. You can get a list of all the forms and their IDs with the list_forms tool.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'Optional. The ID of form that you want to find in the logs. Only log entries related to that form will be returned.'
-						],
-						'screen_id' => [
-							'type' => 'integer',
-							'description' => 'Optional. The ID of a screen that you want to find in the logs. Only log entries related to that screen will be returned.'
-						],
-						'entry_id' => [
-							'type' => 'integer',
-							'description' => 'Optional. The ID of a an entry that you want to find in the logs. Only log entries related to that entry will be returned. If an entry_id is specified, a form_id must be specified as well!'
-						],
-						'user_id' => [
-							'type' => 'integer',
-							'description' => 'Optional. The ID of a user that you want to find in the logs. Only log entries related to that user will be returned.'
+							'description' => 'The ID of the form to retrieve details for'
 						]
-					]
+					],
+					'required' => ['form_id']
 				]
 			];
+			$this->tools['get_element_details'] = [
+				'name' => 'get_element_details',
+				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_identifier' => [
+							'type' => [ 'integer', 'string' ],
+							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
+						]
+					],
+					'required' => ['form_id']
+				]
+			];
+
+			// Logging tool only available if logging is enabled
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			if($formulizeConfig['formulizeLoggingOnOff']) {
+				$this->tools['read_system_activity_log'] = [
+					'name' => 'read_system_activity_log',
+					'description' => 'This Formulize system logs all activity. This tool will read up to the last 1000 lines from the activity log and return them as a array of JSON objects. There are several keys available in the objects, including microtime (a timestamp), user_id (the user who was active), request_id (which identifies log entries that were part of the same http request), session_id (which connects each request in a user\'s session), formulize_event (which is a short descriptor of the activity), as well as form_id, screen_id, and entry_id.',
+					'inputSchema' => [
+						'type' => 'object',
+						'properties' => [
+							'form_id' => [
+								'type' => 'integer',
+								'description' => 'Optional. The ID of form that you want to find in the logs. Only log entries related to that form will be returned.'
+							],
+							'screen_id' => [
+								'type' => 'integer',
+								'description' => 'Optional. The ID of a screen that you want to find in the logs. Only log entries related to that screen will be returned.'
+							],
+							'entry_id' => [
+								'type' => 'integer',
+								'description' => 'Optional. The ID of a an entry that you want to find in the logs. Only log entries related to that entry will be returned. If an entry_id is specified, a form_id must be specified as well!'
+							],
+							'user_id' => [
+								'type' => 'integer',
+								'description' => 'Optional. The ID of a user that you want to find in the logs. Only log entries related to that user will be returned.'
+							]
+						]
+					]
+				];
+			}
 		}
 
 	}
@@ -257,7 +271,7 @@ trait tools {
 	 * @param array $params The parameters from the MCP client, as parsed by the handleMCPRequest method
 	 * @param string $id The request ID from the MCP client
 	 * @return array The JSON-RPC response containing the result of the tool call
-	 * @throws Exception If the tool is not found or if there is an error executing the tool
+	 * @throws Exception If the tool is unknown, not implemented, or if there is an error executing the tool
 	 */
 	private function handleToolCall($params, $id)
 	{
@@ -269,7 +283,11 @@ trait tools {
 		}
 
 		try {
-			$result = $this->executeTool($toolName, $arguments);
+			if(method_exists($this, $toolName)) {
+				$result = $this->$toolName($arguments);
+			} else {
+				throw new Exception('Tool not implemented: ' . $toolName);
+			}
 			return [
 				'jsonrpc' => '2.0',
 				'result' => [
@@ -288,42 +306,12 @@ trait tools {
 	}
 
 	/**
-	 * Execute a specific tool
-	 * @param string $toolName The name of the tool to execute
-	 * @param array $arguments The arguments for the tool, from the arguments parameter of the MCP request
-	 * @return array The JSON-RPC response containing the result of the tool call
-	 * @throws Exception If the tool is not implemented
+	 * Basic introduction tool, returns the instructions that are passed with the initialize call, but which MCP clients tend to ignore.
+	 * As suggested here: https://github.com/orgs/modelcontextprotocol/discussions/473#discussioncomment-13611130
+	 * @return array The instructions from the initialize routine
 	 */
-	private function executeTool($toolName, $arguments)
-	{
-		switch ($toolName) {
-			case 'test_connection':
-				return $this->testConnection();
-			case 'list_forms':
-				return $this->listForms($arguments);
-		case 'list_connections':
-				return $this->listConnections($arguments);
-			case 'get_form_details':
-				return $this->getFormDetails($arguments);
-			case 'get_element_details':
-				return $this->getElementDetails($arguments);
-			case 'create_entry':
-    		return $this->writeFormEntry(intval($arguments['form_id']), 'new', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
-			case 'update_entry':
-    		return $this->writeFormEntry(intval($arguments['form_id']), intval($arguments['entry_id']), $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
-			case 'get_entries_from_form':
-				return $this->getEntriesFromForm($arguments);
-			case 'prepare_database_values_for_human_readability':
-				return $this->prepareDatabaseValuesForHumanReadability($arguments);
-			case 'read_system_activity_log':
-				if (isset($this->tools['read_system_activity_log'])) {
-					return $this->readSystemActivityLog($arguments);
-				} else {
-					return ['message' => 'Logging is disabled on this Formulize system.' ];
-				}
-			default:
-				throw new Exception('Tool not implemented: ' . $toolName);
-		}
+	private function formulize() {
+		return [ 'instructions' => $this->getInitializeInstructions() ];
 	}
 
 	/**
@@ -333,7 +321,7 @@ trait tools {
 	 * @return array An associative array containing connection information, capabilities, system info, and authenticated user details.
 	 * @throws Exception If the database query fails or if the database connection is not successful.
 	 */
-	private function testConnection()
+	private function test_connection()
 	{
 		global $xoopsConfig;
 
@@ -376,7 +364,7 @@ trait tools {
 
 	/**
 	 * Gather data using Formulize's built-in function with proper permission scoping
-	 * @param array $args An associative array containing the parameters for gathering data from a form.
+	 * @param array $arguments An associative array containing the parameters for gathering data from a form.
 	 * - 'form_id': The ID of the form to gather data from.
 	 * - 'elementHandles': Optional. An array of element handles to include in the dataset. If not specified, all elements will be included.
 	 * - 'filter': Optional. A filter string to apply to the dataset
@@ -389,21 +377,21 @@ trait tools {
 	 * - 'form_relationship_id': Optional. The ID of the relationship to use for gathering data. Defaults to -1 for the Primary Relationship which includes all connected forms.
 	 * @return array An associative array containing the gathered dataset, total count, scope used, current view requested, current view actual, authenticated user details, and parameters used.
 	 */
-	private function getEntriesFromForm($args)
+	private function get_entries_from_form($arguments)
 	{
 
 		global $xoopsUser;
 
-		$form_id = intval($args['form_id']);
-		$elementHandles = $args['elementHandles'] ?? array();
-		$filter = $args['filter'] ?? '';
-		$andOr = $args['andOr'] ?? 'AND';
-		$currentView = $args['currentView'] ?? 'all';
-		$limitStart = $args['limitStart'] ?? null;
-		$limitSize = $args['limitSize'] ?? 100;
-		$sortField = $args['sortField'] ?? '';
-		$sortOrder = $args['sortOrder'] ?? 'ASC';
-		$form_relationship_id = intval($args['form_relationship_id'] ?? -1);
+		$form_id = intval($arguments['form_id']);
+		$elementHandles = $arguments['elementHandles'] ?? array();
+		$filter = $arguments['filter'] ?? '';
+		$andOr = $arguments['andOr'] ?? 'AND';
+		$currentView = $arguments['currentView'] ?? 'all';
+		$limitStart = $arguments['limitStart'] ?? null;
+		$limitSize = $arguments['limitSize'] ?? 100;
+		$sortField = $arguments['sortField'] ?? '';
+		$sortOrder = $arguments['sortOrder'] ?? 'ASC';
+		$form_relationship_id = intval($arguments['form_relationship_id'] ?? -1);
 
 		try {
 			// Build scope based on authenticated user and their permissions
@@ -461,16 +449,16 @@ trait tools {
 	/**
 	 * Prepare raw database values for human consumption
 	 * This function is used to convert raw data from the database into a more readable format.
-	 * @param array $args An associative array containing the parameters for preparing the database values.
+	 * @param array $arguments An associative array containing the parameters for preparing the database values.
 	 * - 'value': The raw value from the database, typically an integer or string.
 	 * - 'element_handle': The handle of the element that the value belongs to, used to determine how to prepare the value.
 	 * - 'entry_id': Optional. The ID of the entry that the value belongs to, used for context in some cases.
 	 * @return array An array containing the prepared value(s) for human readability
 	 */
-	private function prepareDatabaseValuesForHumanReadability($args) {
-		$value = intval($args['value']);
-		$field = $args['element_handle'] ?? "";
-		$entry_id = intval($args['entry_id'] ?? 0);
+	private function prepare_database_values_for_human_readability($arguments) {
+		$value = intval($arguments['value']);
+		$field = $arguments['element_handle'] ?? "";
+		$entry_id = intval($arguments['entry_id'] ?? 0);
 		$preppedValue = prepvalues($value, $field, $entry_id);
 		return is_array($preppedValue) ? $preppedValue : [$preppedValue];
 	}
@@ -478,11 +466,14 @@ trait tools {
 	/**
 	 * List all forms
 	 * This function retrieves all forms from the Formulize database and returns them sorted by name.
-	 * @param array $args An associative array containing any parameters for the request (not used in this case).
+	 * @param array $arguments An associative array containing any parameters for the request (not used in this case).
 	 * @return array An array containing the list of forms.
 	 */
-	private function listForms($args)
+	private function list_forms($arguments)
 	{
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
+
 		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
 
 		$result = $this->db->query($sql);
@@ -523,25 +514,30 @@ trait tools {
 	 * @param int $formId The ID of the form to get connections for
 	 * @return array An associative array containing the connections for the form
 	 */
-	private function listConnections() {
-		return $this->getFormConnections();
+	private function list_connections() {
+		$this->verifyUserIsWebmaster(__FUNCTION__);
+		return $this->connection_list();
 	}
 
 	/**
 	 * Get form details
 	 */
-	private function getFormDetails($args)
+	private function get_form_details($arguments)
 	{
-		$formId = $args['form_id'];
-		return $formId ? $this->getFormSchema($formId) : [];
+		$this->verifyUserIsWebmaster(__FUNCTION__);
+		$formId = $arguments['form_id'];
+		return $formId ? $this->form_schemas($formId) : [];
 	}
 
 	/**
 	 * Get form elements
 	 */
-	private function getElementDetails($args)
+	private function get_element_details($arguments)
 	{
-		$formId = $args['form_id'];
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
+
+		$formId = $arguments['form_id'];
 
 		$sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$result = $this->db->query($sql);
@@ -562,9 +558,35 @@ trait tools {
 		];
 	}
 
+	/**
+	 * Create a new entry in a Formulize form
+	 * @param array $arguments An associative array containing the parameters for creating the entry.
+	 * - 'form_id': The ID of the form to create an entry in.
+	 * - 'data': An associative array of key-value pairs where keys are element handles and values are the data to store.
+	 * - 'relationship_id': Optional. The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship which includes all connected forms.
+	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
+	 */
+	private function create_entry($arguments) {
+		return $this->writeFormEntry(intval($arguments['form_id']), 'new', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+	}
+
+	/**
+	 * Update an entry in a Formulize form
+	 * @param array $arguments An associative array containing the parameters for creating the entry.
+	 * - 'form_id': The ID of the form to create an entry in.
+	 * - 'entry_id': The ID of the entry to update.
+	 * - 'data': An associative array of key-value pairs where keys are element handles and values are the data to store.
+	 * - 'relationship_id': Optional. The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship which includes all connected forms.
+	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
+	 */
+	private function update_entry($arguments) {
+		return $this->writeFormEntry(intval($arguments['form_id']), $arguments['entry_id'], $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+	}
 
 	/**
 	 * Write entry data to a form (used by both create and update tools)
+	 * The form id is not actually required in the underlying formulize_writeEntry function, because the element references are globally unique and the form can be derived from them.
+	 * However, this method still validates that the form exists and that the elements are part of the form, which is useful since the AI assistant might have hallucinated elements!
 	 * @param int $formId The ID of the form to write the entry to
 	 * @param int|string $entryId The ID of the entry to update, or 'new' to create a new entry
 	 * @param array $data The data to write, where keys are element handles and values are the data to store.
@@ -581,7 +603,7 @@ trait tools {
 				throw new Exception('Permission denied: cannot update entry '. $entryId . ' in form ' . $formId);
 			}
 
-			// Validate form exists and is active
+			// Validate form exists
 			$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 			$formResult = $this->db->query($formSql);
 			$formData = $this->db->fetchArray($formResult);
@@ -664,23 +686,25 @@ trait tools {
 	 * Read the last 1000 lines of the system activity log
 	 * This tool reads the system activity log and returns the last 1000 lines as an array of JSON objects.
 	 * Each object contains keys such as microtime, user_id, request_id, session_id, formulize_event, form_id, screen_id, and entry_id.
-	 * @param array $args An associative array containing optional parameters for filtering the log entries:
+	 * @param array $arguments An associative array containing optional parameters for filtering the log entries:
 	 * - 'form_id': Optional. The ID of the form to filter log entries by
 	 * - 'screen_id': Optional. The ID of the screen to filter log entries by
 	 * - 'entry_id': Optional. The ID of the entry to filter log entries by. If specified, a form_id must also be provided.
 	 * - 'user_id': Optional. The ID of the user to filter log entries by
 	 * @return array An array containing each log line as a JSON object with keys such as microtime, user_id, request_id, session_id, formulize_event, form_id, screen_id, and entry_id.
 	 */
-	private function readSystemActivityLog($args) {
+	private function read_system_activity_log($arguments) {
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
 
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		if($formulizeConfig['formulizeLoggingOnOff'] AND $formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation']) {
 
-			$form_id = intval($args['form_id'] ?? 0);
-			$screen_id = intval($args['screen_id'] ?? 0);
-			$entry_id = intval($args['entry_id'] ?? 0);
-			$user_id = isset($args['user_id']) ? intval($args['user_id']) : null;
+			$form_id = intval($arguments['form_id'] ?? 0);
+			$screen_id = intval($arguments['screen_id'] ?? 0);
+			$entry_id = intval($arguments['entry_id'] ?? 0);
+			$user_id = isset($arguments['user_id']) ? intval($arguments['user_id']) : null;
 
 			$filename = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
 			$lineCount = 1000;
@@ -690,13 +714,13 @@ trait tools {
 				throw new Exception("Cannot open file: $filename");
 			}
 
-      // Get file size
-      fseek($handle, 0, SEEK_END);
-      $fileSize = ftell($handle);
-      if ($fileSize == 0) {
-        fclose($handle);
-      	return [];
-      }
+			// Get file size
+			fseek($handle, 0, SEEK_END);
+			$fileSize = ftell($handle);
+			if ($fileSize == 0) {
+				fclose($handle);
+				return [];
+			}
 
 			$lines = [];
 			$buffer = '';
@@ -756,7 +780,10 @@ trait tools {
 
 			// Return exactly the requested number of lines
 			return array_slice($lines, -$lineCount);
-    }
+
+    } else {
+			return ['message' => 'Logging is disabled on this Formulize system.' ];
+		}
 	}
 
 }
