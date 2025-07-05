@@ -538,6 +538,8 @@ class formulizeFrameworksHandler {
 						'form2'=>$form2Text,
 						'form1Id'=>$link['form1'],
 						'form2Id'=>$link['form2'],
+						'key1'=>$link['key1'],
+						'key2'=>$link['key2'],
 					);
 				}
 			}

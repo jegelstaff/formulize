@@ -4,6 +4,7 @@ trait resources {
 
 	/**
 	 * Register available MCP resources
+	 * Presently, only webmasters can access resources.
 	 * Sets the resources property of the FormulizeMCP class
 	 * This method should be called in the constructor of the FormulizeMCP class
 	 * @return void
@@ -11,6 +12,11 @@ trait resources {
 	private function registerResources()
 	{
 		$this->resources = [];
+
+		// all these resources are only available to webmasters
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			return;
+		}
 
 		// Dynamically add form schema resources
 		$formsList = $this->listForms(null);
@@ -40,19 +46,20 @@ trait resources {
 			'mimeType' => 'application/json'
 		];
 
-		$this->resources['groups'] = [
-			'uri' => 'formulize://system/groups.json',
-			'name' => 'Groups',
-			'description' => 'List of groups in the system. Groups are collections of users, and they have permissions assigned.',
+		$this->resources['groups_list'] = [
+			'uri' => 'formulize://system/groups_list.json',
+			'name' => 'Groups List',
+			'description' => 'List of groups in the system. Groups are collections of users. Each group can have its own permissions to access a form, such as viewing the form, updating entries by other people in the same group, seeing entries by anyone in any group, etc.',
 			'mimeType' => 'application/json'
 		];
 
 		$this->resources['all_form_connections'] = [
 			'uri' => 'formulize://system/all_form_connections.json',
 			'name' => 'All Form Connections',
-			'description' => 'All the connections between forms',
+			'description' => "All the connections between forms. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 			'mimeType' => 'application/json'
 		];
+
 	}
 
 	/**
@@ -78,11 +85,12 @@ trait resources {
 	 * Handle resource read request
 	 * @param array $params Parameters from the JSON-RPC request
 	 * @param string $id The JSON-RPC request ID from the MCP client
-	 * @return array JSON-RPC response with resource contents or error
-	 * @throws Exception If the resource cannot be read or parameters are missing
+	 * @return array JSON-RPC response with resource contents or error if paramaters are missing
+	 * @throws Exception If the resource cannot be read, or the URI format is invalid, or resource type is unknown
 	 */
 	private function handleResourceRead($params, $id)
 	{
+
 		$uri = $params['uri'] ?? '';
 
 		if (!$uri) {
@@ -90,7 +98,37 @@ trait resources {
 		}
 
 		try {
-			$result = $this->readResource($uri);
+			// Parse: formulize://schemas/BP_Readings_(form_1).json
+			if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
+				throw new Exception('Invalid resource URI format');
+			}
+
+			$type = $matches[1];      // "schemas"
+			$filename = strtolower($matches[2]);  // "BP_Readings_(form_1)"
+			$extension = $matches[3]; // "json"
+
+			switch ($type) {
+				case 'schemas':
+					$filenameParts = explode('_', $filename);
+					$formId = $filenameParts[array_key_last($filenameParts)];
+					$result = $this->getFormSchema($formId);
+					break;
+
+				case 'system':
+					if ($filename === 'info') {
+						$result = $this->system_info();
+					} elseif ($filename === 'groups') {
+						$result = $this->groups_list();
+					} elseif ($filename === 'all_form_connections') {
+						$result = $this->connection_list();
+					}
+					break;
+
+				default:
+					throw new Exception('Unknown resource type: ' . $uri);
+					break;
+			}
+
 			return [
 				'jsonrpc' => '2.0',
 				'result' => [
@@ -110,51 +148,15 @@ trait resources {
 	}
 
 	/**
-	 * Read a resource by URI
-	 * @param string $uri The resource URI to read
-	 * @return array Resource contents as JSON
-	 * @throws Exception If the URI format is invalid or resource type is unknown
-	 */
-	private function readResource($uri)
-	{
-		// Parse: formulize://schemas/BP_Readings_(form_1).json
-		if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
-    	throw new Exception('Invalid resource URI format');
-	}
-
-	$type = $matches[1];      // "schemas"
-	$filename = strtolower($matches[2]);  // "BP_Readings_(form_1)"
-	$extension = $matches[3]; // "json"
-
-		switch ($type) {
-			case 'schemas':
-				$filenameParts = explode('_', $filename);
-				$formId = $filenameParts[array_key_last($filenameParts)];
-				return $this->getFormSchema($formId);
-				break;
-
-			case 'system':
-				if ($filename === 'info') {
-					return $this->getSystemInfo();
-				} elseif ($filename === 'groups') {
-					return $this->getGroups();
-				} elseif ($filename === 'all_form_connections') {
-					return $this->getFormConnections();
-				}
-				break;
-		}
-
-		throw new Exception('Unknown resource type: ' . $uri);
-	}
-
-	/**
 	 * Get form schema
 	 * @param int $formId The ID of the form to get schema for
 	 * @return array Form schema including elements and entry count
 	 * @throws Exception If the form does not exist or cannot be retrieved
 	 */
-	private function getFormSchema($formId)
+	private function form_schemas($formId)
 	{
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
 		// Get form details
 		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
@@ -192,8 +194,11 @@ trait resources {
 	 * @return array Returns an array with site name, Formulize version, PHP version, database version,
 	 * form count, user count, group count, server time, and UTC time.
 	 */
-	private function getSystemInfo()
+	private function system_info()
 	{
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
+
 		global $xoopsConfig;
 
 		// Count forms
@@ -245,8 +250,10 @@ trait resources {
 	 * Get users and groups
 	 * @return array Returns an array with 'groups' (list of groups) and 'group_count' (number of groups). Each group is an associative array with 'groupid', 'name', and 'description.
 	 */
-	private function getGroups()
+	private function groups_list()
 	{
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
 		// Get groups
 		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " ORDER BY name";
 		$groupsResult = $this->db->query($groupsSql);
@@ -269,16 +276,21 @@ trait resources {
 	 * @param int|null $formId The ID of the form to limit connections to, or null for all connections
 	 * @return array Returns an array with 'connections' (list of connections) and 'connection_count' (number of connections).
 	 */
-	private function getFormConnections($formId = null)
+	private function connection_list($formId = null)
 	{
+
+		$this->verifyUserIsWebmaster(__FUNCTION__);
+
 		$connections = array();
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$primaryRelationshipSchema = $framework_handler->formatFrameworksAsRelationships(array($framework_handler->get(-1)), $formId);
 		foreach($primaryRelationshipSchema[0]['content']['links'] as $link) {
 			$connections[] = [
 				'description' => "{$link['each']} {$link['form1']} {$link['has']} {$link['form2']}",
-				'form1Id' => $link['form1Id'],
-				'form2Id' => $link['form2Id']
+				'form1_id' => $link['form1Id'],
+				'form2_id' => $link['form2Id'],
+				'form1_connected_element_id' => $link['key1'],
+				'form2_connected_element_id' => $link['key2'],
 			];
 		}
 		return [
