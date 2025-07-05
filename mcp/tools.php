@@ -166,30 +166,26 @@ trait tools {
 					],
 					'required' => ['value', 'element_handle']
 				]
-			]
-		];
-
-		// only webmasters can access certain tools
-		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$this->tools['list_forms'] = [
+			],
+			'list_forms' => [
 				'name' => 'list_forms',
 				'description' => 'List all forms in this Formulize instance',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
 				]
-			];
-			$this->tools['list_connections'] = [
+			],
+			'list_connections' => [
 				'name' => 'list_connections',
-				'description' => 'List all connections between forms in this Formulize instance. This tool is used to get the connections between forms, which can be used to understand how forms are related to each other.',
+				'description' => "List all the connections between forms, which can explain how forms are related to one another. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
 				]
-			];
-			$this->tools['get_form_details'] = [
+			],
+			'get_form_details' => [
 				'name' => 'get_form_details',
-				'description' => 'Get detailed information about a specific form. You can get a list of all the forms and their IDs with the list_forms tool.',
+				'description' => 'Get detailed information about a specific form, including its elements, screens, and connections to other forms. You can get a list of all the forms and their IDs with the list_forms tool.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -200,8 +196,8 @@ trait tools {
 					],
 					'required' => ['form_id']
 				]
-			];
-			$this->tools['get_element_details'] = [
+			],
+			'get_element_details' => [
 				'name' => 'get_element_details',
 				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
 				'inputSchema' => [
@@ -214,8 +210,11 @@ trait tools {
 					],
 					'required' => ['form_id']
 				]
-			];
+			]
+		];
 
+		// only webmasters can access certain tools
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
@@ -472,8 +471,6 @@ trait tools {
 	private function list_forms($arguments)
 	{
 
-		$this->verifyUserIsWebmaster(__FUNCTION__);
-
 		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
 
 		$result = $this->db->query($sql);
@@ -485,20 +482,22 @@ trait tools {
 		$forms = [];
 		$formTitles = [];
 		while ($row = $this->db->fetchArray($result)) {
-			// add element identifiers to the $row, not all element data because that would be too much when listing all forms
-			$row['elements'] = [];
-			$sql = "SELECT ele_handle as element_handle, ele_id as element_id FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($row['id_form']) . " ORDER BY ele_order";
-			if($elementsResult = $this->db->query($sql)) {
-				while($elementRow = $this->db->fetchArray($elementsResult)) {
-					$row['elements'][] = $elementRow;
+			if(security_check($row['id_form'])) {
+				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
+				$row['elements'] = [];
+				$sql = "SELECT ele_handle as element_handle, ele_id as element_id FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($row['id_form']) . " ORDER BY ele_order";
+				if($elementsResult = $this->db->query($sql)) {
+					while($elementRow = $this->db->fetchArray($elementsResult)) {
+						$row['elements'][] = $elementRow;
+					}
 				}
+				$row['element_count'] = count($row['elements']);
+				$formTitle = trans($row['form_title']);
+				$row['form_title'] = $formTitle; // Use the translated title for display
+				$row = $row + $this->getFormConnections($row['id_form']); // Add the form's connections
+				$forms[] = $row;
+				$formTitles[] = $formTitle;
 			}
-			$row['element_count'] = count($row['elements']);
-			$formTitle = trans($row['form_title']);
-			$row['form_title'] = $formTitle; // Use the translated title for display
-			$row = $row + $this->getFormConnections($row['id_form']); // Add the form's connections
-			$forms[] = $row;
-			$formTitles[] = $formTitle;
 		}
 
 		array_multisort($formTitles, SORT_NATURAL, $forms);
