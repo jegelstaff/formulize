@@ -322,8 +322,6 @@
 				.json-tree {
             font-family: monospace;
             font-size: 13px;
-            line-height: 1.4;
-            white-space: pre-wrap;
             word-wrap: break-word;
         }
 
@@ -335,8 +333,8 @@
 
         .json-tree li {
             position: relative;
-            cursor: pointer;
             user-select: text;
+						list-style: none;
         }
 
         .json-tree .json-key {
@@ -363,13 +361,13 @@
         .json-tree .toggle {
             position: absolute;
             left: -15px;
-            cursor: pointer;
             user-select: none;
             color: #999;
         }
 
         .json-tree .toggle::before {
             content: '▶';
+						cursor: pointer;
             display: inline-block;
             transition: transform 0.1s ease;
         }
@@ -667,9 +665,17 @@
             if (typeof data === 'object') {
                 // Clean up double-encoded JSON in MCP responses
                 const cleanedData = cleanMCPResponse(data);
-                responseContent = `<strong>${headerText}</strong><pre>${JSON.stringify(cleanedData, null, 2)}</pre>`;
+
+                // Create interactive JSON tree
+                const treeHtml = createJsonTree(cleanedData);
+                responseContent = `
+                    <div class="response-details">
+                        <strong>${headerText}</strong>
+                        ${treeHtml}
+                    </div>
+                `;
             } else {
-                responseContent = `<strong>${headerText}</strong><pre>${data}</pre>`;
+                responseContent = `<div class="response-details"><strong>${headerText}</strong><pre>${data}</pre></div>`;
             }
 
             const fixedElement = document.getElementById('fixed-response');
