@@ -438,6 +438,35 @@
         let availablePrompts = [];
         let isLoadingTemplates = false;
 
+        /**
+         * Clean up double-encoded JSON in MCP responses
+         * Recursively processes the response object to find and parse stringified JSON
+         */
+        function cleanMCPResponse(obj) {
+            if (typeof obj === 'string') {
+                // First, try to parse the string directly as JSON
+                        try {
+                            const parsed = JSON.parse(obj);
+                    // If successful, recursively clean the result
+                        return cleanMCPResponse(parsed);
+                    } catch (e) {
+                    // If direct parsing fails, return the original string
+                        return obj;
+                    }
+            } else if (Array.isArray(obj)) {
+                // Clean each item in the array
+                return obj.map(item => cleanMCPResponse(item));
+            } else if (obj && typeof obj === 'object') {
+                // Clean each property in the object
+                const cleaned = {};
+                for (const [key, value] of Object.entries(obj)) {
+                    cleaned[key] = cleanMCPResponse(value);
+                }
+                return cleaned;
+            }
+            return obj;
+        }
+
         function updateStats() {
             const runtime = Math.round((Date.now() - testStats.startTime) / 1000);
             const statsText = `📊 ${testStats.totalRequests} total, ${testStats.successfulRequests} success, ${testStats.failedRequests} failed | ${runtime}s`;
@@ -474,7 +503,9 @@
 
             let responseContent;
             if (typeof data === 'object') {
-                responseContent = `<strong>${headerText}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                // Clean up double-encoded JSON in MCP responses
+                const cleanedData = cleanMCPResponse(data);
+                responseContent = `<strong>${headerText}</strong><pre>${JSON.stringify(cleanedData, null, 2)}</pre>`;
             } else {
                 responseContent = `<strong>${headerText}</strong><pre>${data}</pre>`;
             }
@@ -1126,10 +1157,32 @@
                     requestBody = { "jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 1 };
                     break;
                 case 'tools/call':
-										requestBody = {
+                    // Use first available tool, fallback to test_connection
+                    const firstTool = availableTools.length > 0 ? availableTools[0].name : "test_connection";
+                    const toolArgs = availableTools.length > 0 && availableTools[0].inputSchema && availableTools[0].inputSchema.properties ?
+                        Object.keys(availableTools[0].inputSchema.properties).reduce((acc, propName) => {
+                            const prop = availableTools[0].inputSchema.properties[propName];
+                            const isRequired = availableTools[0].inputSchema.required && availableTools[0].inputSchema.required.includes(propName);
+                            if (isRequired) {
+                                // Set some default values for required arguments
+                                if (propName === 'form_id') acc[propName] = 1;
+                                else if (propName === 'entry_id') acc[propName] = 1;
+                                else if (propName === 'screen_id') acc[propName] = 1;
+                                else if (propName === 'element_handle') acc[propName] = "example_handle";
+                                else if (propName === 'value') acc[propName] = "example_value";
+                                else if (propName === 'data') acc[propName] = {};
+                                else if (prop.type === 'integer') acc[propName] = 1;
+                                else if (prop.type === 'boolean') acc[propName] = false;
+                                else if (prop.type === 'array') acc[propName] = [];
+                                else if (prop.type === 'object') acc[propName] = {};
+                                else acc[propName] = "";
+                            }
+                            return acc;
+                        }, {}) : {};
+                    requestBody = {
                         "jsonrpc": "2.0",
                         "method": "tools/call",
-                        "params": { "name": "test_connection", "arguments": {} },
+                        "params": { "name": firstTool, "arguments": toolArgs },
                         "id": 1
                     };
                     break;
@@ -1137,10 +1190,12 @@
                     requestBody = { "jsonrpc": "2.0", "method": "resources/list", "params": {}, "id": 1 };
                     break;
                 case 'resources/read':
+                    // Use first available resource, fallback to system_info
+                    const firstResource = availableResources.length > 0 ? availableResources[0].uri : "formulize://system/system_info.json";
                     requestBody = {
                         "jsonrpc": "2.0",
                         "method": "resources/read",
-                        "params": { "uri": "formulize://system/system_info.json" },
+                        "params": { "uri": firstResource },
                         "id": 1
                     };
                     break;
@@ -1148,10 +1203,21 @@
                     requestBody = { "jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 1 };
                     break;
                 case 'prompts/get':
+                    // Use first available prompt, fallback to analyze_form
+                    const firstPrompt = availablePrompts.length > 0 ? availablePrompts[0].name : "analyze_form";
+                    const promptArgs = availablePrompts.length > 0 && availablePrompts[0].arguments ?
+                        availablePrompts[0].arguments.reduce((acc, arg) => {
+                            if (arg.required) {
+                                // Set some default values for required arguments
+                                if (arg.name === 'form_id') acc[arg.name] = 1;
+                                else acc[arg.name] = "";
+                            }
+                            return acc;
+                        }, {}) : { "form_id": 1 };
                     requestBody = {
                         "jsonrpc": "2.0",
                         "method": "prompts/get",
-                        "params": { "name": "analyze_form", "arguments": { "form_id": 1 } },
+                        "params": { "name": firstPrompt, "arguments": promptArgs },
                         "id": 1
                     };
                     break;
@@ -1216,6 +1282,7 @@
             } else {
                 this.type = 'text';
             }
+						refreshAvailableOptions(); // now that there's a key, we can get the lists of tools, prompts and resources
         });
     </script>
 </body>
