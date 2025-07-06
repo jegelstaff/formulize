@@ -86,6 +86,8 @@
             border-bottom: 1px solid #ddd;
             display: flex;
             gap: 10px;
+						font-size: 10pt;
+						justify-content: space-between;
         }
 
         .response-controls button {
@@ -327,7 +329,7 @@
 
         .json-tree ul {
             list-style-type: none;
-            padding-left: 20px;
+            padding-left: 5px;
             margin: 0;
         }
 
@@ -340,6 +342,12 @@
         .json-tree .json-key {
             color: #0077cc;
             font-weight: bold;
+            cursor: pointer;
+        }
+
+        .json-tree .json-key:hover {
+            background-color: lightblue;
+            border-radius: 2px;
         }
 
         .json-tree .json-string {
@@ -363,11 +371,11 @@
             left: -15px;
             user-select: none;
             color: #999;
+            cursor: pointer;
         }
 
         .json-tree .toggle::before {
             content: '▶';
-						cursor: pointer;
             display: inline-block;
             transition: transform 0.1s ease;
         }
@@ -480,10 +488,15 @@
             <span id="connection-status">●</span>
         </div>
         <div class="response-controls">
-            <button onclick="clearResponse()">Clear</button>
-            <button onclick="copyResponse()">Copy</button>
-            <button onclick="toggleResponseSize()">Resize</button>
-            <button onclick="exportLogs()">Export</button>
+            <div>
+							<button onclick="clearResponse()">Clear</button>
+							<button onclick="copyResponse()">Copy</button>
+							<button onclick="toggleResponseSize()">Resize</button>
+							<button onclick="exportLogs()">Export</button>
+						</div>
+						<div>
+							CTRL-click on a key to toggle all keys of that type
+						</div>
         </div>
         <div id="fixed-stats" class="stats-bar" style="display: none;"></div>
         <div id="fixed-response" class="response">
@@ -537,7 +550,7 @@
                 return value;
             }
 
-            function buildTree(obj, isRoot = true) {
+            function buildTree(obj, isRoot = true, keyName = '') {
                 if (obj === null || typeof obj !== 'object') {
                     return formatValue(obj);
                 }
@@ -552,7 +565,11 @@
                     const toggleClass = hasChildren ? 'toggle' : 'toggle hidden';
                     const keyDisplay = isArray ?
                         `<span class="json-number">${key}</span>` :
-                        `<span class="json-key">"${escapeHtml(key)}"</span>`;
+                        `<span class="json-key" data-toggle="true">"${escapeHtml(key)}"</span>`;
+
+                    // Check if this key is "result" or if we're inside a "result" subtree
+                    const shouldCollapse = (keyName && keyName !== 'text' && keyName.includes('text'));
+                    const collapseClass = shouldCollapse ? ' collapsed' : '';
 
                     if (!hasChildren) {
                         return `
@@ -563,11 +580,11 @@
                     }
 
                     return `
-                        <li>
+                        <li class="${collapseClass}">
                             <span class="${toggleClass}"></span>
                             ${keyDisplay}:
                             <ul>
-                                <li>${buildTree(value, false)}</li>
+                                <li>${buildTree(value, false, keyName ? `${keyName}.${key}` : key)}</li>
                             </ul>
                         </li>
                     `;
@@ -583,20 +600,88 @@
             return buildTree(data);
         }
 
-        /**
-         * Add event listeners to make JSON tree interactive
-         */
-        function initializeJsonTree(element) {
-            element.addEventListener('click', function(event) {
-                const toggle = event.target.closest('.toggle');
-                if (toggle) {
-                    toggle.classList.toggle('expanded');
-                    const listItem = toggle.closest('li');
-                    listItem.classList.toggle('collapsed');
-                    event.stopPropagation();
-                }
-            });
-        }
+				/**
+				 * Add event listeners to make JSON tree interactive
+				 * Now supports clicking on both the toggle arrow and the key text
+				 * Ctrl+click toggles all keys with the same name throughout the tree
+				 */
+				function initializeJsonTree(element) {
+						element.addEventListener('click', function(event) {
+								const toggle = event.target.closest('.toggle');
+								const jsonKey = event.target.closest('.json-key[data-toggle="true"]');
+
+								// Check if we clicked on either the toggle arrow or a clickable key
+								if (toggle || jsonKey) {
+										const listItem = (toggle || jsonKey).closest('li');
+										const toggleElement = listItem.querySelector('.toggle');
+
+										if (toggleElement) {
+												// First, always perform the normal toggle on the clicked item
+												toggleElement.classList.toggle('expanded');
+												listItem.classList.toggle('collapsed');
+
+												// Then handle Ctrl+click for all matching keys
+												if (event.ctrlKey || event.metaKey) { // metaKey for Mac Cmd key
+														// Get the key name from the clicked element
+														const keyName = jsonKey ? jsonKey.textContent.replace(/['"]/g, '') :
+																					toggle.nextElementSibling.textContent.replace(/['"]/g, '');
+
+														// Get the NEW state of the clicked item
+														const isExpanded = toggleElement.classList.contains('expanded');
+														const isCollapsed = listItem.classList.contains('collapsed');
+
+														// Find all OTHER keys with the same name within the same response container
+														const responseContainer = element.closest('.response') || element.closest('.response-details') || document;
+														const matchingKeys = responseContainer.querySelectorAll('.json-key');
+
+														matchingKeys.forEach(key => {
+																const cleanKeyName = key.textContent.replace(/['"]/g, '');
+																if (cleanKeyName === keyName) {
+																		const keyListItem = key.closest('li');
+																		const keyToggle = keyListItem.querySelector('.toggle');
+
+																		// Skip the item we just clicked (avoid double-toggling)
+																		if (keyToggle && keyToggle !== toggleElement) {
+																				// Sync both triangle state AND collapsed state to match clicked item
+																				if (isExpanded) {
+																						keyToggle.classList.add('expanded');
+																				} else {
+																						keyToggle.classList.remove('expanded');
+																				}
+
+																				if (isCollapsed) {
+																						keyListItem.classList.add('collapsed');
+																				} else {
+																						keyListItem.classList.remove('collapsed');
+																				}
+																		}
+																}
+														});
+												}
+										}
+
+										event.stopPropagation();
+								}
+						});
+				}
+
+				/**
+				 * Initialize triangle states to match the initial collapsed/expanded state of tree items
+				 */
+				function initializeTriangleStates(element) {
+						const listItems = element.querySelectorAll('.json-tree li');
+						listItems.forEach(item => {
+								const toggle = item.querySelector('.toggle');
+								if (toggle && !toggle.classList.contains('hidden')) {
+										// If the item is NOT collapsed, the triangle should be expanded (pointing down)
+										if (!item.classList.contains('collapsed')) {
+												toggle.classList.add('expanded');
+										} else {
+												toggle.classList.remove('expanded');
+										}
+								}
+						});
+				}
 
         /**
          * Clean up double-encoded JSON in MCP responses
@@ -704,8 +789,11 @@
             }
 
             // Initialize JSON tree interactions
-            const jsonTrees = fixedElement.querySelectorAll('.json-tree');
-            jsonTrees.forEach(initializeJsonTree);
+						const jsonTrees = fixedElement.querySelectorAll('.json-tree');
+						jsonTrees.forEach(tree => {
+								initializeTriangleStates(tree);
+								initializeJsonTree(tree);
+						});
 
             fixedElement.className = isError ? 'response error' : 'response success';
             if (mainElement) {
