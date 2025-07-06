@@ -317,6 +317,84 @@
         .refresh-button:hover {
             background-color: #218838;
         }
+
+				/* JSON tree view */
+				.json-tree {
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .json-tree ul {
+            list-style-type: none;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .json-tree li {
+            position: relative;
+            cursor: pointer;
+            user-select: text;
+        }
+
+        .json-tree .json-key {
+            color: #0077cc;
+            font-weight: bold;
+        }
+
+        .json-tree .json-string {
+            color: #008000;
+        }
+
+        .json-tree .json-number {
+            color: #aa5500;
+        }
+
+        .json-tree .json-boolean {
+            color: #aa00aa;
+        }
+
+        .json-tree .json-null {
+            color: #888888;
+        }
+
+        .json-tree .toggle {
+            position: absolute;
+            left: -15px;
+            cursor: pointer;
+            user-select: none;
+            color: #999;
+        }
+
+        .json-tree .toggle::before {
+            content: '▶';
+            display: inline-block;
+            transition: transform 0.1s ease;
+        }
+
+        .json-tree .toggle.expanded::before {
+            transform: rotate(90deg);
+        }
+
+        .json-tree .toggle.hidden {
+            visibility: hidden;
+        }
+
+        .json-tree li.collapsed > ul {
+            display: none;
+        }
+
+        /* Additional response styles */
+        .response-details {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 10px;
+            margin-top: 5px;
+        }
+
     </style>
 </head>
 <body>
@@ -439,6 +517,90 @@
         let isLoadingTemplates = false;
 
         /**
+         * Convert a JSON object or value to an interactive, collapsible HTML tree
+         * @param {*} data The data to convert to a tree view
+         * @returns {string} HTML string representing the interactive JSON tree
+         */
+        function createJsonTree(data) {
+            function escapeHtml(str) {
+                return str.toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function formatValue(value) {
+                if (value === null) return '<span class="json-null">null</span>';
+                if (typeof value === 'boolean') return `<span class="json-boolean">${value}</span>`;
+                if (typeof value === 'number') return `<span class="json-number">${value}</span>`;
+                if (typeof value === 'string') return `<span class="json-string">"${escapeHtml(value)}"</span>`;
+                return value;
+            }
+
+            function buildTree(obj, isRoot = true) {
+                if (obj === null || typeof obj !== 'object') {
+                    return formatValue(obj);
+                }
+
+                const isArray = Array.isArray(obj);
+                const items = isArray ? obj : Object.entries(obj);
+
+                const listItems = items.map((item, index) => {
+                    const [key, value] = isArray ? [index, item] : item;
+                    const hasChildren = value !== null && (typeof value === 'object' || Array.isArray(value));
+
+                    const toggleClass = hasChildren ? 'toggle' : 'toggle hidden';
+                    const keyDisplay = isArray ?
+                        `<span class="json-number">${key}</span>` :
+                        `<span class="json-key">"${escapeHtml(key)}"</span>`;
+
+                    if (!hasChildren) {
+                        return `
+                            <li>
+                                ${keyDisplay}: ${formatValue(value)}
+                            </li>
+                        `;
+                    }
+
+                    return `
+                        <li>
+                            <span class="${toggleClass}"></span>
+                            ${keyDisplay}:
+                            <ul>
+                                <li>${buildTree(value, false)}</li>
+                            </ul>
+                        </li>
+                    `;
+                }).join('');
+
+                return `
+                    <ul class="json-tree">
+                        ${listItems}
+                    </ul>
+                `;
+            }
+
+            return buildTree(data);
+        }
+
+        /**
+         * Add event listeners to make JSON tree interactive
+         */
+        function initializeJsonTree(element) {
+            element.addEventListener('click', function(event) {
+                const toggle = event.target.closest('.toggle');
+                if (toggle) {
+                    toggle.classList.toggle('expanded');
+                    const listItem = toggle.closest('li');
+                    listItem.classList.toggle('collapsed');
+                    event.stopPropagation();
+                }
+            });
+        }
+
+        /**
          * Clean up double-encoded JSON in MCP responses
          * Recursively processes the response object to find and parse stringified JSON
          */
@@ -534,6 +696,10 @@
                     mainElement.innerHTML = responseContent;
                 }
             }
+
+            // Initialize JSON tree interactions
+            const jsonTrees = fixedElement.querySelectorAll('.json-tree');
+            jsonTrees.forEach(initializeJsonTree);
 
             fixedElement.className = isError ? 'response error' : 'response success';
             if (mainElement) {
