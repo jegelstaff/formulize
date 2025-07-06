@@ -5,7 +5,6 @@ trait prompts {
 	/**
 	 * Register available MCP prompts
 	 * Sets the prompts property of the FormulizeMCP class
-	 * This method should be called in the constructor of the FormulizeMCP class
 	 * @return void
 	 */
 	private function registerPrompts()
@@ -110,7 +109,6 @@ trait prompts {
 	 * @param array $params Parameters from the JSON-RPC request
 	 * @param string $id The JSON-RPC request ID from the MCP client
 	 * @return array JSON-RPC response with prompt messages or error
-	 * @throws Exception If the prompt cannot be generated or prompt is unknown
 	 */
 	private function handlePromptGet($params, $id)
 	{
@@ -118,7 +116,7 @@ trait prompts {
 		$arguments = $params['arguments'] ?? [];
 
 		if (!isset($this->prompts[$promptName])) {
-			return $this->errorResponse('Unknown prompt: ' . $promptName, -32602, $id);
+			return $this->JSONerrorResponse('Unknown prompt: ' . $promptName, -32602, $id);
 		}
 
 		try {
@@ -131,7 +129,7 @@ trait prompts {
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->errorResponse('Prompt generation failed: ' . $e->getMessage(), -32603, $id);
+			return $this->JSONerrorResponse('Prompt generation failed: ' . $e->getMessage(), -32603, $id);
 		}
 	}
 

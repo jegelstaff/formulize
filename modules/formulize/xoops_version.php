@@ -36,10 +36,7 @@ $modversion = array(
 	'min_php_version_id' => "80100",
 	'description' => _MI_formulize_DESC,
 	'author' => "The Formulize Project - formulize.org",
-	'credits' => "",
-	'help' => "",
-	'license' => "GPL",
-	'official' => 0,
+	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
 );

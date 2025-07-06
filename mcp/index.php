@@ -37,6 +37,7 @@ class FormulizeMCP
 	private $authenticatedUid = 0;
 	private $userGroups = array();
 	private $baseUrl;
+	private $mcpRequest = array();
 
 	public function __construct($config = null)
 	{
@@ -50,11 +51,16 @@ class FormulizeMCP
 				$this->canBeEnabled = true;
 			}
 		}
+		$input = file_get_contents('php://input');
+		$request = !empty($input) ? json_decode($input, true) : '';
+		$this->mcpRequest = [
+			'id' => $request['id'] ?? null,
+			'method' => $request['method'] ?? '',
+			'params' => $request['params'] ?? [],
+			'localServerName' => strtolower(FormulizeObject::sanitize_handle_name($request['localServerDetails']['name'] ?? 'formulize'))
+		];
 		$this->config = $config ?: $this->getDefaultConfig();
 		$this->initializeDatabase();
-		$this->registerTools();
-		$this->registerResources();
-		$this->registerPrompts();
 		$this->baseUrl = $this->getBaseUrl();
 	}
 
@@ -67,6 +73,25 @@ class FormulizeMCP
 		$host = $_SERVER['HTTP_HOST'];
 		$script = $_SERVER['SCRIPT_NAME'];
 		return $scheme . '://' . $host . $script;
+	}
+
+	/**
+	 * Get details about the authenticated user
+	 */
+	private function getAuthenticatedUserDetails() {
+		$details = false;
+		if($this->authenticatedUser) {
+			$details = [
+				'uid' => $this->authenticatedUser->getVar('uid'),
+				'username' => $this->authenticatedUser->getVar('login_name'),
+				'full_name' => $this->authenticatedUser->getVar('uname'),
+				'timezone' => $this->authenticatedUser->getVar('timezone_offset'),
+				'local_time' => date('Y-m-d H:i:s', time() + formulize_getUserUTCOffsetSecs()),
+				'email' => $this->authenticatedUser->getVar('email'),
+				'groups' => $this->userGroups
+			];
+		}
+		return $details;
 	}
 
 	/**
@@ -107,25 +132,26 @@ class FormulizeMCP
 		}
 
 		// Allow unauthenticated GET requests for documentation and health
+		$allowUnauthenticatedRequests = false;
 		if ($method === 'GET' && (
-			strpos($path, '/health') !== false ||
-			strpos($path, '/capabilities') !== false ||
-			strpos($path, '/docs') !== false ||
-			!strpos($path, '/mcp')
-		)) {
-			return true;
+			substr($path, -7) === '/health' ||
+			substr($path, -13) === '/capabilities' ||
+			substr($path, -4) === '/docs' ||
+			substr($path, -4) !== '/mcp')
+		) {
+			$allowUnauthenticatedRequests = true;
 		}
 
 		// Check for Authorization header
 		$authHeader = $this->getAuthorizationHeader();
 
-		if (empty($authHeader)) {
+		if (empty($authHeader) AND !$allowUnauthenticatedRequests) {
 			$this->sendAuthError('Missing Authorization header'); // method will exit, actually
 			return false;
 		}
 
 		// Extract API key from "Bearer {api_key}" format
-		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
+		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches) AND !$allowUnauthenticatedRequests) {
 			$this->sendAuthError('Invalid Authorization header format. Use: Bearer {api_key}'); // method will exit, actually
 			return false;
 		}
@@ -133,7 +159,7 @@ class FormulizeMCP
 		$key = trim($matches[1]);
 
 		// Validate API key using Formulize's exact system
-		if (!$this->validateFormulizeApiKey($key)) {
+		if (!$this->validateFormulizeApiKey($key) AND !$allowUnauthenticatedRequests) {
 			$this->sendAuthError('Invalid or expired API key'); // method will exit, actually
 			return false;
 		}
@@ -199,13 +225,12 @@ class FormulizeMCP
 	/**
 	 * Send authentication error response
 	 */
-	private function sendAuthError($message, $code = 403)
+	private function sendAuthError($message, $code = 401)
 	{
 		$this->setNoCacheHeaders();
-		http_response_code(401);
+		http_response_code($code);
 		echo json_encode([
 			'error' => [
-				'code' => $code,
 				'message' => $message,
 				'type' => 'authentication_error'
 			],
@@ -226,6 +251,10 @@ class FormulizeMCP
 			return; // Authentication error already sent
 		}
 
+		$this->registerTools();
+		$this->registerResources();
+		$this->registerPrompts();
+
 		$path = $_SERVER['REQUEST_URI'];
 		$pathParts = explode('?', $path);
 		$cleanPath = rtrim($pathParts[0], '/');
@@ -236,16 +265,31 @@ class FormulizeMCP
 			'mcp_path' => $cleanPath
 		]);
 
-		// Route based on path - match end of line
-		if (preg_match('/\/health$/', $cleanPath)) {
-			$this->handleHealthCheck();
-		} elseif (preg_match('/\/capabilities$/', $cleanPath)) {
-			$this->handleCapabilities();
-		} elseif (preg_match('/\/mcp$/', $cleanPath)) {
-			$this->handleMCPEndpoint();
-		} else {
-			$this->handleDocumentation();
+		try {
+			// Route based on path - match end of line
+			if (preg_match('/\/health$/', $cleanPath)) {
+				$this->handleHealthCheck();
+			} elseif (preg_match('/\/capabilities$/', $cleanPath)) {
+				$this->handleCapabilities();
+			} elseif (preg_match('/\/mcp$/', $cleanPath)) {
+				$this->handleMCPEndpoint();
+			} else {
+				$this->handleDocumentation();
+			}
+		} catch (Exception $e) {
+			http_response_code(500);
+			echo json_encode([
+				'jsonrpc' => '2.0',
+				'error' => [
+					'code' => -32603,
+					'message' => 'Internal error: ' . $e->getMessage()
+				],
+				'id' => $this->mcpRequest['id']
+			]);
 		}
+
+
+
 	}
 
 	/**
@@ -280,7 +324,7 @@ class FormulizeMCP
 			$breaks = array("\r\n", "\n", "\r");
 			$systemSepecificInstructions = "**Details about this system:** The administrators of this particular Formulize system have provided this information about what it is used for: ". str_replace($breaks, '', trim($systemSepecificInstructions));
 		}
-		return "**About this server:** This is a Formulize MCP server. Formulize is an open source data management system based on forms. Each Formulize instance is an independent web application with its own URL. **Users and Permissions:** The users of the system are organized into groups. Each user can be a member of multiple groups. Each group has its own permissions for interacting with each form and the entries that have been made in it. All operations through this server automatically respect the authenticated user's permissions and group memberships. **Form structure and connections:** Forms have one or more elements, such as textboxes, checkboxes, dropdown lists, etc. Forms can be connected together to make complex workflows. **Screens:** Each form can have multiple screens based on it. A screen is a way of presenting the form, or the entries that have been made in the form. The two main kinds of screens are 'list screens' (showing lists of entries), and 'form screens' (showing the form's elements across one or more pages). If a form has connections to other forms, that form's screens will have configuration options related to the connected forms. **Applications:** Forms can be collected together into applications as an organizing principle, but any form in the system can be connected to and work with any other form, regardless of application. $systemSepecificInstructions **Next step hint:** Use the tool called list_forms to get a basic overview of this particular Formulize system.";
+		return "**About this server:** This is a Formulize MCP server. Formulize is an open source data management system based on forms. Each Formulize instance is an independent web application with its own URL. **Users and Permissions:** The users of the system are organized into groups. Each user can be a member of multiple groups. Each group has its own permissions for interacting with each form and the entries that have been made in it. **Authentication** You connect to this server as an authenticated user, because all requests automatically include a pre-defined API key. All operations on this server automatically respect the authenticated user's permissions and group memberships. **Form structure and connections:** Forms have one or more elements, such as textboxes, checkboxes, dropdown lists, etc. Forms can be connected together to make complex workflows. **Screens:** Each form can have multiple screens based on it. A screen is a way of presenting the form, or the entries that have been made in the form. The two main kinds of screens are 'list screens' (showing lists of entries), and 'form screens' (showing the form's elements across one or more pages). If a form has connections to other forms, that form's screens will have configuration options related to the connected forms. **Applications:** Forms can be collected together into applications as an organizing principle, but any form in the system can be connected to and work with any other form, regardless of application. $systemSepecificInstructions **Next step hint:** Use the tool called list_forms to get a basic overview of this particular Formulize system.";
 	}
 
 	/**
@@ -310,52 +354,43 @@ class FormulizeMCP
 	 */
 	private function handleHealthCheck()
 	{
-		try {
-			// Test database connection
-			$testQuery = "SELECT 1 as test";
-			$result = $this->db->query($testQuery);
-			if (!$result) {
-				throw new Exception('Database query failed');
-			}
-			// Count active keys
-			$apiKeyCount = 0;
-			if($dbConnected = $this->db->fetchArray($result)) {
-				$countSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_apikeys') . " WHERE expiry IS NULL OR expiry > NOW()";
-				$countResult = $this->db->query($countSql);
-				if ($countResult) {
-					$countRow = $this->db->fetchArray($countResult);
-					$apiKeyCount = $countRow['count'];
-				}
-			}
-			$health = [
-				'status' => 'healthy',
-				'database_connected' => $dbConnected ? 'true' : 'false',
-				'mcp_server' => 'direct_http_with_formulize_api_keys',
-				'system_info' => $this->system_info(),
-				'tools_count' => count($this->tools),
-				'resources_count' => count($this->resources),
-				'prompts_count' => count($this->prompts),
-				'authentication' => [
-					'system' => 'formulize_api_keys',
-					'active_keys_count' => $apiKeyCount
-				],
-				'endpoints' => [
-					'mcp' => $this->baseUrl . '/mcp',
-					'capabilities' => $this->baseUrl . '/capabilities',
-					'health' => $this->baseUrl . '/health'
-				],
-				'system_info' => $this->system_info()
-			];
-
-			echo json_encode($health, JSON_PRETTY_PRINT);
-		} catch (Exception $e) {
-			http_response_code(500);
-			echo json_encode([
-				'status' => 'unhealthy',
-				'error' => $e->getMessage(),
-				'timestamp' => date('Y-m-d H:i:s')
-			], JSON_PRETTY_PRINT);
+		// Test database connection
+		$testQuery = "SELECT 1 as test";
+		$result = $this->db->query($testQuery);
+		if (!$result) {
+			throw new Exception('Database query failed');
 		}
+		// Count active keys
+		$apiKeyCount = 0;
+		if($dbConnected = $this->db->fetchArray($result)) {
+			$countSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_apikeys') . " WHERE expiry IS NULL OR expiry > NOW()";
+			$countResult = $this->db->query($countSql);
+			if ($countResult) {
+				$countRow = $this->db->fetchArray($countResult);
+				$apiKeyCount = $countRow['count'];
+			}
+		}
+		$health = [
+			'status' => 'healthy',
+			'database_connected' => $dbConnected ? 'true' : 'false',
+			'mcp_server' => 'direct_http_with_formulize_api_keys',
+			'system_info' => $this->system_info(),
+			'tools_count' => count($this->tools),
+			'resources_count' => count($this->resources),
+			'prompts_count' => count($this->prompts),
+			'authentication' => [
+				'system' => 'formulize_api_keys',
+				'active_keys_count' => $apiKeyCount
+			],
+			'endpoints' => [
+				'mcp' => $this->baseUrl . '/mcp',
+				'capabilities' => $this->baseUrl . '/capabilities',
+				'health' => $this->baseUrl . '/health'
+			]
+		];
+
+		echo json_encode($health, JSON_PRETTY_PRINT);
+
 	}
 
 	/**
@@ -368,29 +403,8 @@ class FormulizeMCP
 			echo json_encode(['error' => 'Method not allowed. Use POST for MCP requests.']);
 			return;
 		}
-
-		$input = file_get_contents('php://input');
-
-		if (empty($input)) {
-			http_response_code(400);
-			echo json_encode(['error' => 'Empty request body']);
-			return;
-		}
-
-		try {
-			$response = $this->handleMCPRequest($input);
-			echo json_encode($response);
-		} catch (Exception $e) {
-			http_response_code(500);
-			echo json_encode([
-				'jsonrpc' => '2.0',
-				'error' => [
-					'code' => -32603,
-					'message' => 'Internal error: ' . $e->getMessage()
-				],
-				'id' => null
-			]);
-		}
+		$response = $this->handleMCPRequest();
+		echo json_encode($response);
 	}
 
 	/**
@@ -561,7 +575,6 @@ class FormulizeMCP
 	 * Called by items that are only accessible to webmasters
 	 * @param string itemName - a string identifying the thing we're verifying them for, typically the name of the tool function or resource function, etc
 	 * @return void
-	 * @throws Exception if the user is not a webmaster
 	 */
 	private function verifyUserIsWebmaster($itemName) {
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
@@ -572,17 +585,16 @@ class FormulizeMCP
 	/**
 	 * Handle MCP request (same as before)
 	 */
-	public function handleMCPRequest($input)
+	public function handleMCPRequest()
 	{
-		$request = json_decode($input, true);
 
-		if (!$request) {
-			return $this->errorResponse('Invalid JSON input');
+		$method = $this->mcpRequest['method'];
+		$params = $this->mcpRequest['params'];
+		$id = $this->mcpRequest['id'];
+
+		if (!$method) {
+			return $this->JSONerrorResponse('Invalid JSON input', -32600);
 		}
-
-		$method = $request['method'] ?? '';
-		$params = $request['params'] ?? [];
-		$id = $request['id'] ?? null;
 
 		switch ($method) {
 			case 'initialize':
@@ -600,11 +612,11 @@ class FormulizeMCP
 			case 'prompts/get':
 				return $this->handlePromptGet($params, $id);
 			default:
-				return $this->errorResponse('Unknown method: ' . $method, -32601, $id);
+				return $this->JSONerrorResponse('Unknown method: ' . $method, -32601, $id);
 		}
 	}
 
-	private function errorResponse($message, $code = -32603, $id = null)
+	private function JSONerrorResponse($message, $code = -32603, $id = null)
 	{
 		return [
 			'jsonrpc' => '2.0',
