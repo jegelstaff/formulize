@@ -512,7 +512,7 @@ trait tools {
 				$row['element_count'] = count($row['elements']);
 				$formTitle = trans($row['form_title']);
 				$row['form_title'] = $formTitle; // Use the translated title for display
-				$forms[] = $row + $this->all_form_connections($formId) + $this->screens_list($formId);
+				$forms[] = $row + $this->all_form_connections($formId) + $this->screens_list($formId, simple: true);
 				$formTitles[] = $formTitle;
 			}
 		}

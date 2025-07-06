@@ -509,8 +509,9 @@ trait resources {
 	/**
 	 * List the info about screens, or a single screen
 	 * Optionally filtered by a formId. Naturally limits to screens on forms the user has access to.
+	 * Optionally get a simple list of just the ids and titles
 	 */
-	private function screens_list($formId = null, $screenId = null) {
+	private function screens_list($formId = null, $screenId = null, $simple = false) {
 		$limitScreensSQL = "";
 		if($formId AND !security_check($formId)) {
 			$this->sendAuthError("Permission denied: user does not have access to form $formId.", 403);
@@ -533,9 +534,16 @@ trait resources {
 		$screens = [];
 		while($row = $this->db->fetchArray($res)) {
 			if(security_check($row['fid'])) {
-				$screenSQL = "SELECT * FROM ".$this->db->prefix('formulize_screen_'.strtolower($row['type']))." WHERE sid = ".$row['sid'];
-				$screenRes = $this->db->query($screenSQL);
-				$screens[] = $row + $this->db->fetchArray($screenRes);
+				if($simple) {
+					$screens[] = [
+						'screen_id' => $row['sid'],
+						'screen_title' => $row['title']
+					];
+				} else {
+					$screenSQL = "SELECT * FROM ".$this->db->prefix('formulize_screen_'.strtolower($row['type']))." WHERE sid = ".$row['sid'];
+					$screenRes = $this->db->query($screenSQL);
+					$screens[] = $row + $this->db->fetchArray($screenRes);
+				}
 			}
 		}
 		if($screenId AND empty($screens)) {
