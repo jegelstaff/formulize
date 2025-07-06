@@ -5843,6 +5843,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                                     AND $bareFilterTerm != 'USER_ID'
                                     AND $bareFilterTerm != 'USERID'
                                     AND $bareFilterTerm != 'BLANK'
+																		AND $bareFilterTerm != 'ID'
                                     AND !strstr($filterTerms[$filterId], '{TODAY')) {
                                     continue;
                             }
@@ -5852,6 +5853,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                                     AND $bareFilterTerm != 'USER_ID'
                                     AND $bareFilterTerm != 'USERID'
                                     AND $bareFilterTerm != 'BLANK'
+																		AND $bareFilterTerm != 'ID'
                             AND !strstr($filterTerms[$filterId], '{TODAY')) {
                                     if($filterTermElement = $element_handler->get($bareFilterTerm)) {
                                             $curlyBracketForm = $form_handler->get($filterTermElement->getVar('id_form'));
