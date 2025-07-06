@@ -2,7 +2,7 @@
 // $Id: global.php 20900 2011-02-27 02:18:47Z skenow $
 //%%%%%%	File Name mainfile.php 	%%%%%
 
-define('FORMULIZE_MCP_VERSION', '1.2.0');
+define('FORMULIZE_MCP_VERSION', '1.3.0');
 
 define('_PLEASEWAIT','Please Wait');
 define('_FETCHING','Loading...');

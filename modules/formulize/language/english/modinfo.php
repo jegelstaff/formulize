@@ -10,7 +10,7 @@ $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 define("_MI_formulize_NAME","Formulize");
 
 // A brief description of this module
-define("_MI_formulize_DESC","For provisioning forms and analyzing data");
+define("_MI_formulize_DESC","Easily collect and organize your data — no code required. With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports. Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows.");
 
 // admin/menu.php
 define("_MI_formulize_ADMENU0","Form management");

@@ -2,7 +2,7 @@
 // Module Info
 
 // The name of this module
-define("_MI_formulize_NAME","Formulare");
+define("_MI_formulize_NAME","Formulize");
 
 // A brief description of this module
 define("_MI_formulize_DESC","Formular für Beschaffung und Datenanalyse");
@@ -52,10 +52,10 @@ define("_MI_formulize_SINGLESDESC","Der 'alles erledigt' Button wird verwendet, 
 
 define("_MI_formulize_LOE_limit", "Was ist die maximale Anzahl von Einträgen, welche in einer Liste von Einträgen angezeigt werden sollen, ohne vom Benutzer bestätigt werden zu müssen?");
 define("_MI_formulize_LOE_limit_DESC", "Wenn ein Datensatz sehr lang ist, kann das Anzeige einer Liste mit Einträgen ziemlich lang dauern, durchaus einige Minuten. Nutzen Sie diese Vorgabe, um die maximale Anzahl von Einträgen zu definieren, welches Ihr System auf einmal anzuzeigen versuchen soll. Wenn ein Datensatz mehr Einträge als das Limit enthält, wird der Benutzer gefragt, ob die Datensatzeinträge geladen werden oder nicht.");
-       
+
 define("_MI_formulize_USETOKEN", "Verwenden Sie den Systemsicherheitsschlüssel, um eine Formulareinreichung zu bestätigen?");
 define("_MI_formulize_USETOKENDESC", "standardmäßig werden keine Daten gespeichert, wenn ein Formular eingereicht wird, bis Formulize mittels gültigem Schlüssel überprüfen kann, welcher mit dem Formular eingereicht wurde. Dies ist ein teilweise Abwehr gegenüber 'Crosssitescripting-Attacken', um sicher zu stellen, das nur Personen, welche Ihre Webseite besuchen, Formulare einreichen können.  Unter Umständen, bei Verwendung einer Firewall oder anderen Gegebenheiten, kann der Schlüssel nicht überprüft werden wie er soll. Wenn Ihnen dies passieren sollte, können Sie den Systemschlüssel für Formulize hier deaktivieren.");
-       
+
 
 // The name of this module
 define("_MI_formulizeMENU_NAME","Mein Menü");

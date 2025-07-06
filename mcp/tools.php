@@ -10,18 +10,19 @@ trait tools {
 	 */
 	private function registerTools()
 	{
+
 		$this->tools = [
-			'formulize' => [
-				'name' => 'formulize',
-				'description' => 'The first tool that should be used. This tool contains basic instructions and background about Formulize. This tool returns the instructions content that should be part of the initialize MCP call, but which is often ignored by MCP clients.',
+			'test_connection' => [
+				'name' => 'test_connection',
+				'description' => 'Test the MCP server connection and database access',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
 				],
 			],
-			'test_connection' => [
-				'name' => 'test_connection',
-				'description' => 'Test the MCP server connection and database access',
+			$this->mcpRequest['localServerName'] => [
+				'name' => $this->mcpRequest['localServerName'],
+				'description' => 'This tool contains basic instructions and background info. Use this tool first. This tool returns the instructions content that should be part of the initialize MCP call, but which is often ignored by MCP clients.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
@@ -167,6 +168,14 @@ trait tools {
 					'required' => ['value', 'element_handle']
 				]
 			],
+			'list_applications' => [
+				'name' => 'list_applications',
+				'description' => "List all the applications and the forms that are part of each one.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
 			'list_forms' => [
 				'name' => 'list_forms',
 				'description' => 'List all forms in this Formulize instance',
@@ -178,6 +187,14 @@ trait tools {
 			'list_connections' => [
 				'name' => 'list_connections',
 				'description' => "List all the connections between forms, which can explain how forms are related to one another. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_screens' => [
+				'name' => 'list_screens',
+				'description' => "List all the screens for all forms.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
@@ -197,24 +214,46 @@ trait tools {
 					'required' => ['form_id']
 				]
 			],
-			'get_element_details' => [
-				'name' => 'get_element_details',
-				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
+			'get_screen_details' => [
+				'name' => 'get_screen_details',
+				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
-						'form_identifier' => [
-							'type' => [ 'integer', 'string' ],
-							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the screen to retrieve details for'
 						]
 					],
-					'required' => ['form_id']
+					'required' => ['screen_id']
 				]
 			]
+
 		];
 
 		// only webmasters can access certain tools
 		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+
+			// check the version of mariadb or mysql
+			$dbVersionSQL = "SELECT @@version as version";
+			$dbVersionResult = $this->db->query($dbVersionSQL);
+			$dbVersionData = $this->db->fetchArray($dbVersionResult);
+
+			$this->tools['query_the_database_directly'] = [
+				'name' => 'query_the_database_directly',
+				'description' => "Query the database with a SELECT statement. The database is {$dbVersionData['version']} and queries are written in SQL. Use the get_form_details tool to lookup the form\'s database table name and the field names of all its elements, if you don\'t know them already.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'sql' => [
+							'type' => 'string',
+							'description' => 'The SQL statement to run on the database. Must be a SELECT statement.'
+						]
+					],
+					'required' => ['sql']
+				]
+			];
+
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
@@ -278,11 +317,13 @@ trait tools {
 		$arguments = $params['arguments'] ?? [];
 
 		if (!isset($this->tools[$toolName])) {
-			return $this->errorResponse('Unknown tool: ' . $toolName, -32602, $id);
+			return $this->JSONerrorResponse('Unknown tool: ' . $toolName, -32602, $id);
 		}
 
 		try {
-			if(method_exists($this, $toolName)) {
+			if($toolName == $this->mcpRequest['localServerName']) {
+				$result = [ 'instructions' => $this->getInitializeInstructions() ];
+			} elseif(method_exists($this, $toolName)) {
 				$result = $this->$toolName($arguments);
 			} else {
 				throw new Exception('Tool not implemented: ' . $toolName);
@@ -293,24 +334,15 @@ trait tools {
 					'content' => [
 						[
 							'type' => 'text',
-							'text' => json_encode($result, JSON_PRETTY_PRINT)
+							'text' => is_string($result) ? $result : json_encode($result, JSON_PRETTY_PRINT)
 						]
 					]
 				],
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->errorResponse('Tool execution failed: ' . $e->getMessage(), -32603, $id);
+			return $this->JSONerrorResponse('Tool execution failed: ' . $e->getMessage(), -32603, $id);
 		}
-	}
-
-	/**
-	 * Basic introduction tool, returns the instructions that are passed with the initialize call, but which MCP clients tend to ignore.
-	 * As suggested here: https://github.com/orgs/modelcontextprotocol/discussions/473#discussioncomment-13611130
-	 * @return array The instructions from the initialize routine
-	 */
-	private function formulize() {
-		return [ 'instructions' => $this->getInitializeInstructions() ];
 	}
 
 	/**
@@ -336,27 +368,15 @@ trait tools {
 		$connectionInfo = [
 			'message' => 'DB connection successful'.($this->authenticatedUser ? ' User authentication successful' : ''),
 			'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
-			'authenticated_user' => false,
+			'authenticated_user' => $this->getAuthenticatedUserDetails(),
 			'capabilities' => ['tools', 'resources', 'prompts'],
-			'system_info' => $this->getSystemInfo(),
+			'system_info' => $this->system_info(),
 			'endpoints' => [
 				'mcp' => $this->baseUrl . '/mcp',
 				'capabilities' => $this->baseUrl . '/capabilities',
 				'health' => $this->baseUrl . '/health'
 			],
 		];
-
-		// Add authenticated user info
-		if ($this->authenticatedUser) {
-			$connectionInfo['authenticated_user'] = [
-				'uid' => $this->authenticatedUid,
-				'username' => $this->authenticatedUser->getVar('uname'),
-				'name' => $this->authenticatedUser->getVar('name'),
-				'email' => $this->authenticatedUser->getVar('email'),
-				'groups' => $this->userGroups,
-				'login_name' => $this->authenticatedUser->getVar('login_name')
-			];
-		}
 
 		return $connectionInfo;
 	}
@@ -421,10 +441,7 @@ trait tools {
 				'scope_used' => $actualScope,
 				'current_view_requested' => $currentView,
 				'current_view_actual' => $actualCurrentView,
-				'authenticated_user' => [
-					'uid' => $this->authenticatedUid,
-					'username' => $this->authenticatedUser ? $this->authenticatedUser->getVar('uname') : 'anonymous'
-				],
+				'authenticated_user' => $this->getAuthenticatedUserDetails(),
 				'parameters' => [
 					'elementHandles' => $elementHandles,
 					'filter' => $filter,
@@ -468,7 +485,7 @@ trait tools {
 	 * @param array $arguments An associative array containing any parameters for the request (not used in this case).
 	 * @return array An array containing the list of forms.
 	 */
-	private function list_forms($arguments)
+	private function list_forms()
 	{
 
 		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
@@ -482,10 +499,11 @@ trait tools {
 		$forms = [];
 		$formTitles = [];
 		while ($row = $this->db->fetchArray($result)) {
-			if(security_check($row['id_form'])) {
+			$formId = $row['id_form'];
+			if(security_check($formId)) {
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
 				$row['elements'] = [];
-				$sql = "SELECT ele_handle as element_handle, ele_id as element_id FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($row['id_form']) . " ORDER BY ele_order";
+				$sql = "SELECT ele_handle as element_handle, ele_id as element_id FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
 						$row['elements'][] = $elementRow;
@@ -494,8 +512,7 @@ trait tools {
 				$row['element_count'] = count($row['elements']);
 				$formTitle = trans($row['form_title']);
 				$row['form_title'] = $formTitle; // Use the translated title for display
-				$row = $row + $this->getFormConnections($row['id_form']); // Add the form's connections
-				$forms[] = $row;
+				$forms[] = $row + $this->all_form_connections($formId) + $this->screens_list($formId);
 				$formTitles[] = $formTitle;
 			}
 		}
@@ -504,8 +521,15 @@ trait tools {
 
 		return [
 			'forms' => $forms,
-			'total_count' => count($forms)
+			'form_count' => count($forms)
 		];
+	}
+
+	/**
+	 * List all the applications - tool version of the resource
+	 */
+	private function list_applications() {
+		return $this->applications_list();
 	}
 
 	/**
@@ -514,8 +538,14 @@ trait tools {
 	 * @return array An associative array containing the connections for the form
 	 */
 	private function list_connections() {
-		$this->verifyUserIsWebmaster(__FUNCTION__);
-		return $this->connection_list();
+		return $this->all_form_connections();
+	}
+
+	/**
+	 * List the screens - tool version of the resource
+	 */
+	private function list_screens() {
+		return $this->screens_list();
 	}
 
 	/**
@@ -523,38 +553,17 @@ trait tools {
 	 */
 	private function get_form_details($arguments)
 	{
-		$this->verifyUserIsWebmaster(__FUNCTION__);
 		$formId = $arguments['form_id'];
 		return $formId ? $this->form_schemas($formId) : [];
 	}
 
 	/**
-	 * Get form elements
+	 * Get the details about a single screen
 	 */
-	private function get_element_details($arguments)
-	{
-
-		$this->verifyUserIsWebmaster(__FUNCTION__);
-
-		$formId = $arguments['form_id'];
-
-		$sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
-		$result = $this->db->query($sql);
-
-		if (!$result) {
-			return ['error' => 'Query failed', 'sql' => $sql];
-		}
-
-		$elements = [];
-		while ($row = $this->db->fetchArray($result)) {
-			$elements[] = $row;
-		}
-
-		return [
-			'form_id' => $formId,
-			'elements' => $elements,
-			'total_count' => count($elements)
-		];
+	private function get_screen_details($arguments) {
+		$screen_id = $arguments['screen_id'];
+		$screens_list = $this->screens_list(screenId: $screen_id);
+		return $screens_list['screens'][0];
 	}
 
 	/**
@@ -596,10 +605,11 @@ trait tools {
 	private function writeFormEntry($formId, $entryId, $data, $relationshipId = -1)
 	{
 
+		$resultEntryId = null;
 		try {
 			// Step 1: Check permissions
 			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
-				throw new Exception('Permission denied: cannot update entry '. $entryId . ' in form ' . $formId);
+				$this->sendAuthError('Permission denied: cannot update entry '. $entryId . ' in form ' . $formId, 403);
 			}
 
 			// Validate form exists
@@ -642,11 +652,8 @@ trait tools {
 			}
 
 			// Step 3: Write the entry
+			// a null result means nothing was written, likely because the submitted data was not different from what's in the database already
 			$resultEntryId = formulize_writeEntry($preparedData, $entryId);
-
-			if ($resultEntryId === null) {
-				throw new Exception('No data was written (values may be unchanged)');
-			}
 
 			// For new entries, the function returns the new entry ID
 			// For updates, it returns the existing entry ID
@@ -655,13 +662,12 @@ trait tools {
 			// Step 4: Update derived values
 			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
 
-			// Return success response
 			$response = [
 				'success' => true,
 				'form_id' => $formId,
 				'entry_id' => $finalEntryId,
-				'action' => ($entryId === 'new') ? 'created' : 'updated',
-				'elements_written' => array_keys($preparedData),
+				'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
+				'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
 				'element_count' => count($preparedData)
 			];
 
@@ -676,7 +682,7 @@ trait tools {
 				'message' => ($entryId === 'new' ? 'Failed to create entry: ' : 'Failed to update entry: ') . $e->getMessage(),
 				'code' => $e->getCode(),
 				'form_id' => $formId,
-				'entry_id' => $entryId === 'new' ? null : $entryId
+				'entry_id' => $entryId === 'new' ? $resultEntryId : $entryId
 			];
 		}
 	}
@@ -694,7 +700,7 @@ trait tools {
 	 */
 	private function read_system_activity_log($arguments) {
 
-		$this->verifyUserIsWebmaster(__FUNCTION__);
+		$this->verifyUserIsWebmaster(__FUNCTION__); // returns 403 to non webmasters
 
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
@@ -778,11 +784,144 @@ trait tools {
 			fclose($handle);
 
 			// Return exactly the requested number of lines
-			return array_slice($lines, -$lineCount);
+			// decode them from JSON, so we don't end up double or triple encoding later, since this has a few more hoops to go through!
+			return array_map('json_decode', array_slice($lines, -$lineCount));
 
     } else {
 			return ['message' => 'Logging is disabled on this Formulize system.' ];
 		}
+	}
+
+	/**
+	 * Query the database directly
+	 */
+	private function query_the_database_directly($arguments) {
+		$sql = trim($arguments['sql'] ?? '');
+		try {
+			// Sanitize the SQL
+			$safeSql = $this->sanitizeFormulizeSQL($sql, ['SELECT', 'SHOW', 'DESCRIBE']);
+			if(!$res = $this->db->query($safeSql)) {
+				throw new Exception('SQL query failed: ' . $this->db->error());
+			}
+
+			$results = [];
+			while($row = $this->db->fetchArray($res)) {
+				$results[] = $row;
+			}
+			return [
+				'sql' => $safeSql,
+				'query_results' => $results
+			];
+    } catch (Exception $e) {
+        throw new Exception('SQL execution failed: ' . $e->getMessage());
+    }
+	}
+
+	private function sanitizeFormulizeSQL($sql, $allowedOperations = ['SELECT', 'SHOW', 'DESCRIBE']) {
+		// Remove multiple statements
+		$sql = $this->sanitizeToFirstStatement($sql);
+
+		// Validate operation type
+		$sql = trim($sql);
+		$operation = strtoupper(strtok($sql, ' '));
+
+		if (!in_array($operation, $allowedOperations)) {
+			throw new Exception("Operation '$operation' not allowed");
+		}
+
+		// Blacklist approach: Block specific dangerous functions
+    $dangerousFunctions = [
+        // File operations
+        'LOAD_FILE', 'LOAD_DATA', 'INTO OUTFILE', 'INTO DUMPFILE',
+
+        // System functions
+        'SYSTEM', 'SHELL', 'EXEC', 'EXECUTE',
+
+        // User-defined functions (common dangerous ones)
+        'UDF_EXEC', 'LIB_MYSQLUDF_SYS_EXEC',
+
+        // Information gathering
+        'USER', 'CURRENT_USER', 'SESSION_USER', 'SYSTEM_USER',
+        'CONNECTION_ID', 'VERSION',
+
+        // Custom dangerous functions (add your own)
+        'DROP_ALL_TABLES', 'DELETE_ALL_DATA', // example dangerous UDFs
+    ];
+
+    // Check for dangerous function patterns
+    foreach ($dangerousFunctions as $func) {
+        if (preg_match('/\b' . preg_quote($func, '/') . '\s*\(/i', $sql)) {
+            throw new Exception("Dangerous function '$func' not allowed");
+        }
+    }
+
+    // Block dangerous SQL patterns
+    $dangerousPatterns = [
+        '/\bINTO\s+(OUTFILE|DUMPFILE)\b/i',
+        '/\bLOAD\s+DATA\b/i',
+        '/\b(CREATE|DROP|ALTER)\s+(FUNCTION|PROCEDURE|TRIGGER)\b/i',
+        '/\bCALL\s+/i',
+        '/\bEXECUTE\s+/i',
+    ];
+
+    foreach ($dangerousPatterns as $pattern) {
+        if (preg_match($pattern, $sql)) {
+            throw new Exception('SQL contains dangerous patterns');
+        }
+    }
+
+		// Additional Formulize-specific validations
+		if ($operation === 'SELECT') {
+			// Ensure it includes the XOOPS prefix for Formulize tables
+			if (preg_match('/\bformulize(_\w+)?\b/i', $sql) &&
+				!preg_match('/\b' . preg_quote(XOOPS_DB_PREFIX) . '_formulize/i', $sql)) {
+				throw new Exception('Formulize table queries must use proper prefix');
+			}
+		}
+
+		return $sql;
+	}
+
+	private function sanitizeToFirstStatement($sql) {
+			$sql = trim($sql);
+			if (empty($sql)) {
+					return '';
+			}
+
+			// Remove comments first
+			$sql = preg_replace('/--.*$/m', '', $sql); // Remove line comments
+			$sql = preg_replace('/\/\*.*?\*\//s', '', $sql); // Remove block comments
+
+			// Find the first semicolon not inside quotes
+			$inSingleQuote = false;
+			$inDoubleQuote = false;
+			$escaped = false;
+
+			for ($i = 0; $i < strlen($sql); $i++) {
+					$char = $sql[$i];
+
+					if ($escaped) {
+							$escaped = false;
+							continue;
+					}
+
+					if ($char === '\\') {
+							$escaped = true;
+							continue;
+					}
+
+					if ($char === "'" && !$inDoubleQuote) {
+							$inSingleQuote = !$inSingleQuote;
+					} elseif ($char === '"' && !$inSingleQuote) {
+							$inDoubleQuote = !$inDoubleQuote;
+					} elseif ($char === ';' && !$inSingleQuote && !$inDoubleQuote) {
+							// Found unquoted semicolon - truncate here
+							return trim(substr($sql, 0, $i));
+					}
+			}
+
+			// No semicolon found, return the whole string
+			return trim($sql);
 	}
 
 }
