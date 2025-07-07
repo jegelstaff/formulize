@@ -583,7 +583,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
 		// parsing the filter MUST come early in the process, because other things rely on it!
 		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
-		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid);
+		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope);
 
 		// ***********************
 		// NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
@@ -1471,7 +1471,7 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids)
 
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
-function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
+function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $scope)
 {
 	global $xoopsDB;
 	if ($filtertemp == "") {
@@ -1503,22 +1503,28 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid)
 		$filter = $filtertemp;
 	}
 
-	// add any anon passcodes to the fundamental filters
-	foreach ($_SESSION as $key => $value) {
-		if (strstr($key, 'formulize_passCode_')) {
-			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$sid = intval(str_replace('formulize_passCode_', '', $key));
-			$screenObject = $screen_handler->get($sid);
-			if ($fid == $screenObject->getVar('fid')) {
-				$formObject = $form_handler->get($screenObject->getVar('fid'));
-				$elementTypes = $formObject->getVar('elementTypes');
-				$passcodeElementId = array_search('anonPasscode', $elementTypes);
-				if (!isset($fundamental_filters[0]) or !in_array($passcodeElementId, $fundamental_filters[0])) {
-					$fundamental_filters[0][] = $passcodeElementId;
-					$fundamental_filters[1][] = '=';
-					$fundamental_filters[2][] = $value;
-					$fundamental_filters[3][] = 'all';
+	// When user is anon, add anon passcodes if any to the fundamental filters, if the passed in scope is uid=0 or [3], which would both mean "view all entries by the anon user".
+	global $xoopsUser;
+	if(!$xoopsUser AND (
+		(is_string($scope) AND $scope == "uid=0"))
+		OR (is_array($scope) AND count($scope) == 1 AND $scope[0] == XOOPS_GROUP_ANONYMOUS)
+		) {
+		foreach ($_SESSION as $key => $value) {
+			if (strstr($key, 'formulize_passCode_')) {
+				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$sid = intval(str_replace('formulize_passCode_', '', $key));
+				$screenObject = $screen_handler->get($sid);
+				if ($fid == $screenObject->getVar('fid')) {
+					$formObject = $form_handler->get($screenObject->getVar('fid'));
+					$elementTypes = $formObject->getVar('elementTypes');
+					$passcodeElementId = array_search('anonPasscode', $elementTypes);
+					if (!isset($fundamental_filters[0]) or !in_array($passcodeElementId, $fundamental_filters[0])) {
+						$fundamental_filters[0][] = $passcodeElementId;
+						$fundamental_filters[1][] = '=';
+						$fundamental_filters[2][] = $value;
+						$fundamental_filters[3][] = 'all';
+					}
 				}
 			}
 		}
