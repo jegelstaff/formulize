@@ -143,36 +143,35 @@ trait prompts {
 			[
 				'role' => 'user',
 				'content' => [
-			    'type' => 'text',
-    			'text' => sprintf(
+					'type' => 'text',
+					'text' => sprintf(
 						"Generate a %s report for this form: %s. %s You can use the get_form_details tool to lookup the schema for the form and its elements, and you can get data from the form using the get_entries_from_form tool. %s",
 						$reportType,
 						$form,
 						$elements ? "Focus on these elements in the form: $elements." : "",
-						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? "You can also lookup data directly using SQL with the query_the_database_directly tool. Some data might be foreign keys to other forms. You can turn those into readable, meaningful values with the prepare_database_values_for_human_readability." : ""
+						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? "You can also lookup data directly using SQL with the query_the_database_directly tool. Some data might be foreign keys to other forms. You can turn those into readable, meaningful values with the prepare_database_values_for_human_readability tool." : ""
 					)
-				],
-				[
-					'role' => 'assistant',
-					'content' => [
-						'type' => 'text',
-						'text' => sprintf(
-							"I'll generate a %s report for form %d. I'll start by looking up details about the form, and the data in the form.",
-							$reportType,
-							$form
-						)
-					]
+				]
+			],
+			[
+				'role' => 'assistant',
+				'content' => [
+					'type' => 'text',
+					'text' => sprintf(
+						"I'll generate a %s report for form %s. I'll start by looking up details about the form, and the data in the form.",
+						$reportType,
+						$form
+					)
 				]
 			]
 		];
 	}
 
 	/**
-	 * Generate report prompt
+	 * Generate report prompt for recent activity
 	 */
 	private function find_recent_activity_by_users($args)
 	{
-
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
 			$this->sendAuthError("Permission denied: user cannot access this prompt", 403);
 		}
@@ -180,8 +179,16 @@ trait prompts {
 		// Logging tool only available if logging is enabled
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		if($formulizeConfig['formulizeLoggingOnOff']) {
-			return ['message' => 'Logging is disabled on this Formulize system.' ];
+		if(!$formulizeConfig['formulizeLoggingOnOff']) {
+			return [
+				[
+					'role' => 'user',
+					'content' => [
+						'type' => 'text',
+						'text' => 'Logging is disabled on this Formulize system, so activity logs are not available.'
+					]
+				]
+			];
 		}
 
 		$users = $args['users'] ?? null;
@@ -194,10 +201,10 @@ trait prompts {
 					'type' => 'text',
 					'text' => sprintf(
 						"Look in the system's logs for recent activity. %s %s You can use the read_system_activity_log tool to get the most recent 1000 lines from the activity log. Each line in the log is a JSON object. Critical keys in each line are: formulize_event, a short string explaining what the log entry is about. user_id, the ID number of the user. form_id, the ID number of a form if one was involved in the activity. You can use the list_users tool to get a list of all users and their ID numbers. To get more information about a form, you can use the get_form_details tool.",
-						$users ? "Pay special attention to these users: $users." : "",
-						$forms ? "Pay special attention to thsese forms: $forms." : ""
+						$users ? "Pay special attention to these users: $users" : "",
+						$forms ? ($users ? "and to these forms: $forms." : "Pay special attention to these forms: $forms.") : "."
 					)
-				],
+				]
 			],
 			[
 				'role' => 'assistant',
@@ -205,12 +212,11 @@ trait prompts {
 					'type' => 'text',
 					'text' => sprintf(
 						"I'll lookup the recent activity logs. %s",
-						($users OR $forms) ? "I'll pay special attention to ".($users ? "the users: $users" : "the forms: $forms").($forms AND $users ? " and the forms: $forms" : "")."." : ""
+						($users OR $forms) ? "I'll pay special attention to ".($users ? "the users: $users" : "").(($users AND $forms) ? " and " : "").($forms ? "the forms: $forms" : "")."." : ""
 					)
 				]
 			]
 		];
-
 	}
 
 }
