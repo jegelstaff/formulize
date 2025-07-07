@@ -227,6 +227,9 @@ trait tools {
 					],
 					'required' => ['screen_id']
 				]
+			],
+			'list_users' => [
+
 			]
 
 		];
@@ -322,7 +325,10 @@ trait tools {
 
 		try {
 			if($toolName == $this->mcpRequest['localServerName']) {
-				$result = [ 'instructions' => $this->getInitializeInstructions() ];
+				$result = [
+					'instructions' => $this->getInitializeInstructions(),
+					'authenticated_user' => $this->getAuthenticatedUserDetails()
+				];
 			} elseif(method_exists($this, $toolName)) {
 				$result = $this->$toolName($arguments);
 			} else {
@@ -440,7 +446,6 @@ trait tools {
 				'scope_used' => $actualScope,
 				'current_view_requested' => $currentView,
 				'current_view_actual' => $actualCurrentView,
-				'authenticated_user' => $this->getAuthenticatedUserDetails(),
 				'parameters' => [
 					'elementHandles' => $elementHandles,
 					'filter' => $filter,
