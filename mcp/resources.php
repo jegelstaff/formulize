@@ -26,17 +26,25 @@ trait resources {
 			'mimeType' => 'application/json'
 		];
 
-		$this->resources['screens_list'] = [
-			'uri' => 'formulize://system/screens_list.json',
-			'name' => 'List of Screens',
-			'description' => "All the screens in the system. Screens are ways of presenting a form and its entries to users. Lists screens show the entries in the form, and have extensive configuration options to of entries are a type of screen. Versions of the form which users can fill in, are a type of form. , Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
-			'mimeType' => 'application/json'
-		];
-
 		$this->resources['groups_list'] = [
 			'uri' => 'formulize://system/groups_list.json',
 			'name' => 'List of Groups',
 			'description' => 'All the groups in the system. Groups are collections of users. Each group can have its own permissions to access a form, such as viewing the form, updating entries by other people in the same group, seeing entries by anyone in any group, etc.',
+			'mimeType' => 'application/json'
+		];
+
+		$this->resources['users_list'] = [
+			'uri' => 'formulize://system/users_list.json',
+			'name' => 'List of User',
+			'description' => 'All the users in the system. Users are collected into groups. Users can be members of multiple groups. Permissions are assigned to groups, and users inherit all the permissions from all the groups they are a member of. Permissions include things like viewing a form, creating entries in a form, updating entries created by other people in the same group, seeing entries by anyone in any group, etc.',
+			'mimeType' => 'application/json'
+		];
+
+
+		$this->resources['screens_list'] = [
+			'uri' => 'formulize://system/screens_list.json',
+			'name' => 'List of Screens',
+			'description' => "All the screens in the system. Screens are ways of presenting a form and its entries to users. Lists screens show the entries in the form, and have extensive configuration options to of entries are a type of screen. Versions of the form which users can fill in, are a type of form. , Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 			'mimeType' => 'application/json'
 		];
 
@@ -175,6 +183,36 @@ trait resources {
 		} catch (Exception $e) {
 			return $this->JSONerrorResponse('Resource read failed: ' . $e->getMessage(), -32603, $id);
 		}
+	}
+
+	/**
+	 * Get a list of the users in the system, all users for webmasters, users in groups the authenticated user can see data from otherwise
+	 */
+	private function users_list() {
+
+		$fields = "u.uid as user_id, u.uname as name, u.timezone_offset as timezone";
+		$limitByGroups = "";
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$fields .= ", u.email as email, u.login_name, u.last_login as last_login_timestamp";
+		} elseif($groupIds = $this->groupsAuthenticatedUserCanSeeDataFrom()) {
+			$limitByGroups = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l
+				ON l.uid = u.uid WHERE l.groupid IN (".implode(",", $groupIds).")";
+		} else {
+			$limitByGroups = "WHERE u.uid = ".$this->authenticatedUid;
+		}
+		$sql = "SELECT $fields FROM ".$this->db->prefix('users')." as u $limitByGroups ORDER BY uid";
+		$result = $this->db->query($sql);
+
+		$users = [];
+		while ($row = $this->db->fetchArray($result)) {
+			$users[] = $row;
+		}
+
+		return [
+			'users' => $users,
+			'user_count' => count($users),
+		];
+
 	}
 
 	/**

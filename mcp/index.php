@@ -583,6 +583,32 @@ class FormulizeMCP
 	}
 
 	/**
+	 * Get a list of groups for which the authenticated user has access to entries those users have made
+	 * This means the group is either one they have groupscope on in relation to a form they have access to
+	 * or they have globalscope on a particular form, in which case it's everyone who has view_form.
+	 * Then, after all that, have to check who can add_own_entry because the premise is that users would
+	 * know of this user's existence through the system, potentially. Users who can view a form, but can't make
+	 * entries would be lurking and the authenticated user would never know who they are.
+	 * @return array The groupids that the authenticated user can see entries from
+	 */
+	private function groupsAuthenticatedUserCanSeeDataFrom() {
+		$forms = $this->list_forms();
+		$gperm_handler = xoops_gethandler('groupperm');
+		$groupsTheUserCanSee = array();
+		$groupsThatCanMakeEntries = array();
+		foreach($forms['forms'] as $form) {
+			$groupsTheUserCanSee = array_merge($groupsTheUserCanSee, getGroupScopeGroups($form['id_form']));
+			if($gperm_handler->checkRight("view_globalscope", $form['id_form'], $this->userGroups, getFormulizeModId())) {
+				$groupsTheUserCanSee = array_merge($groupsTheUserCanSee, $gperm_handler->getGroupIds("view_form", $form['id_form'], getFormulizeModId()));
+			}
+			$groupsThatCanMakeEntries = array_merge($groupsThatCanMakeEntries, $gperm_handler->getGroupIds('add_own_entry', $form['id_form'], getFormulizeModId()));
+		}
+		$groupsTheUserCanSee = array_unique($groupsTheUserCanSee);
+		$groupsThatCanMakeEntries = array_unique($groupsThatCanMakeEntries);
+		return array_intersect($groupsTheUserCanSee, $groupsThatCanMakeEntries);
+	}
+
+	/**
 	 * Handle MCP request (same as before)
 	 */
 	public function handleMCPRequest()
