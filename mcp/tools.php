@@ -368,7 +368,6 @@ trait tools {
 		$connectionInfo = [
 			'message' => 'DB connection successful'.($this->authenticatedUser ? ' User authentication successful' : ''),
 			'database_test' => $row['test'] == 1 ? 'passed' : 'failed',
-			'authenticated_user' => $this->getAuthenticatedUserDetails(),
 			'capabilities' => ['tools', 'resources', 'prompts'],
 			'system_info' => $this->system_info(),
 			'endpoints' => [
@@ -503,10 +502,17 @@ trait tools {
 			if(security_check($formId)) {
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
 				$row['elements'] = [];
-				$sql = "SELECT ele_handle as element_handle, ele_id as element_id FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
-						$row['elements'][] = $elementRow;
+						if($elementRow['ele_display'] == 1
+							OR in_array(XOOPS_GROUP_ADMIN, $this->userGroups)
+							OR (
+								strstr($elementRow['ele_display'], ",")
+								AND array_intersect($this->userGroups, explode(",", $elementRow['ele_display']))
+							)) {
+								$row['elements'][] = $elementRow;
+						}
 					}
 				}
 				$row['element_count'] = count($row['elements']);
@@ -810,7 +816,8 @@ trait tools {
 			}
 			return [
 				'sql' => $safeSql,
-				'query_results' => $results
+				'query_results' => $results,
+				'number_of_records_returned' => count($results)
 			];
     } catch (Exception $e) {
         throw new Exception('SQL execution failed: ' . $e->getMessage());
