@@ -299,14 +299,17 @@ trait resources {
 		$permissions = [];
 		$gperm_handler = xoops_gethandler('groupperm');
 		foreach($groupIds as $i=>$groupId) {
-			$permissions['group_id'] = $groupId;
-			$permissions['group_name'] = trans($groupNames[$i]);
-			$permissions['permissions'] = $gperm_handler->getRights($formId, $groupId, getFormulizeModId());
+			$permissions[] = [
+				'group_id' => $groupId,
+				'group_name' => trans($groupNames[$i]),
+				'permissions' => $gperm_handler->getRights($formId, $groupId, getFormulizeModId())
+			];
 		}
 
 		$formData = $this->form_schemas($formId);
 
 		return [
+			'groupids' => $groupIds,
 			'form_id' => $formId,
 			'form_title' => trans($formData['form']['form_title']),
 			'form_permissions' => $permissions
@@ -376,7 +379,7 @@ trait resources {
 			'formulize_mcp_version' => FORMULIZE_MCP_VERSION,
 			'author' => $metadata['author'] ?? 'Unknown',
 			'license' => $metadata['license'] ?? 'Unknown',
-			'php_version' => in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? PHP_VERSION : 'Unavailable',
+			'php_version' => PHP_VERSION,
 			'db_version' => $dbVersionData['version'] ?? 'Unknown',
 			'form_count' => $formCount,
 			'user_count' => $userCount,
@@ -474,14 +477,17 @@ trait resources {
 		$prevApp = 0;
 		$applications = [];
 		$forms = [];
+		$id = '';
+		$name = '';
+		$desc = '';
 		while($row = $this->db->fetchArray($res)) {
-			$id = $row['appid'];
-			$name = trans($row['name']);
-			$desc = trans($row['desc']);
 			if($prevApp AND $prevApp != $row['appid']) {
 				$applications[] = $this->assignAppDataToApplicationsArray($id, $name, $desc, $forms);
 				$forms = [];
 			}
+			$id = $row['appid'];
+			$name = trans($row['name']);
+			$desc = trans($row['desc']);
 			if((empty($forms) OR !in_array($row['form_id'], array_column($forms, 'form_id'))) AND security_check($row['form_id'])) {
 				$forms[] = [
 					'form_id' => $row['form_id'],
