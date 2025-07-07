@@ -262,7 +262,7 @@ class FormulizeMCP
 		writeToFormulizeLog([
 			'formulize_event' => 'mcp-request-being-handled',
 			'user_id' => $this->authenticatedUid,
-			'mcp_path' => $cleanPath
+			'mcp_params' => json_encode($this->mcpRequest['params'])
 		]);
 
 		try {

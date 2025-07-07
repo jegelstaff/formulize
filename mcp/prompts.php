@@ -10,82 +10,54 @@ trait prompts {
 	private function registerPrompts()
 	{
 		$this->prompts = [
-			'analyze_form' => [
-				'name' => 'analyze_form',
-				'description' => 'Generate a comprehensive analysis of a form structure',
+			'generate_report_on_data_in_a_form' => [
+				'name' => 'generate_report_on_data_in_a_form',
+				'description' => 'Ask for a report about the data in a form. Give direction to the AI about the form, the level of detail, and what data to focus on.',
 				'arguments' => [
 					[
-						'name' => 'form_id',
-						'description' => 'The ID of the form to analyze',
-						'required' => true
-					]
-				]
-			],
-			'generate_report' => [
-				'name' => 'generate_report',
-				'description' => 'Generate a data report from a form with customizable filters',
-				'arguments' => [
-					[
-						'name' => 'form_id',
-						'description' => 'The ID of the form to report on',
+						'name' => 'form',
+						'description' => 'The ID or name of the form to report on. IDs are preferred',
 						'required' => true
 					],
 					[
 						'name' => 'report_type',
-						'description' => 'Type of report: summary, detailed, or statistical',
-						'required' => false
-					],
-					[
-						'name' => 'filters',
-						'description' => 'Optional filters to apply to the data',
-						'required' => false
-					]
-				]
-			],
-			'form_relationships' => [
-				'name' => 'form_relationships',
-				'description' => 'Analyze relationships between forms',
-				'arguments' => [
-					[
-						'name' => 'form_id',
-						'description' => 'The ID of the form to analyze relationships for (optional, analyzes all if not provided)',
-						'required' => false
-					]
-				]
-			],
-			'sql_query' => [
-				'name' => 'sql_query',
-				'description' => 'Generate SQL queries for extracting data from Formulize',
-				'arguments' => [
-					[
-						'name' => 'form_id',
-						'description' => 'The ID of the form to query',
-						'required' => true
-					],
-					[
-						'name' => 'query_type',
-						'description' => 'Type of query: select, join, aggregate',
+						'description' => '"Create a _______ report" ie: summary, detailed, statistical...',
 						'required' => false
 					],
 					[
 						'name' => 'elements',
-						'description' => 'Element handles to include in the query',
+						'description' => 'Which elements in the form should the report focus on? Provide a comma separated list. Element IDs or handles are best, but captions can work too if they\'re unique.',
 						'required' => false
-					]
-				]
-			],
-			'data_validation' => [
-				'name' => 'data_validation',
-				'description' => 'Check data quality and validation issues in a form',
-				'arguments' => [
-					[
-						'name' => 'form_id',
-						'description' => 'The ID of the form to validate',
-						'required' => true
 					]
 				]
 			]
 		];
+
+		// only webmasters can access certain prompts
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			// Logging tool only available if logging is enabled
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			if($formulizeConfig['formulizeLoggingOnOff']) {
+					$this->prompts['find_recent_activity_by_users'] = [
+						'name' => 'find_recent_activity_by_users',
+						'description' => 'Ask for a report on recent user activity, optionally focusing on certain user(s), and/or certain form(s).',
+						'arguments' => [
+							[
+								'name' => 'users',
+								'description' => 'The user IDs or names of users to focus on. Provide a comma separated list. User IDs are best, but names may work as well.',
+								'required' => false
+							],
+							[
+								'name' => 'forms',
+								'description' => 'The form IDs or names of forms to focus on. Provide a comma separated list. Form IDs are best, but names may work as well.',
+								'required' => false
+							]
+						]
+					];
+				}
+			}
+
 	}
 
 	/**
@@ -142,53 +114,55 @@ trait prompts {
 	 */
 	private function generatePrompt($promptName, $arguments)
 	{
-		switch ($promptName) {
-			case 'analyze_form':
-				return $this->generateAnalyzeFormPrompt($arguments);
-			case 'generate_report':
-				return $this->generateReportPrompt($arguments);
-			case 'form_relationships':
-				return $this->generateRelationshipsPrompt($arguments);
-			case 'sql_query':
-				return $this->generateSqlQueryPrompt($arguments);
-			case 'data_validation':
-				return $this->generateDataValidationPrompt($arguments);
-			default:
-				throw new Exception('Unknown prompt: ' . $promptName);
+		if(method_exists($this, $promptName)) {
+			return $this->$promptName($arguments);
 		}
+		throw new Exception('Unknown prompt: ' . $promptName);
 	}
 
 	/**
-	 * Generate analyze form prompt
+	 * Generate report prompt
 	 */
-	private function generateAnalyzeFormPrompt($args)
+	private function generate_report_on_data_in_a_form($args)
 	{
-		$formId = $args['form_id'] ?? null;
+		$form = $args['form'] ?? null;
+		$reportType = $args['report_type'] ?? 'summary';
+		$elements = $args['elements'] ?? '';
 
-		if (!$formId) {
-			throw new Exception('form_id is required');
+		if (!$form) {
+			throw new Exception('A form identifier is required');
 		}
 
-		// Get form details
-		$schema = $this->getFormSchema($formId);
+		if(is_numeric($form)) {
+			if(!security_check(intval($form))) {
+				$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
+			}
+		}
 
 		return [
 			[
 				'role' => 'user',
-				'content' => sprintf(
-					"Please analyze this Formulize form structure:\n\nForm: %s (ID: %d)\nElements: %d\n\nProvide insights about:\n1. Field types and their distribution\n2. Any potential data quality issues\n3. Suggestions for optimization\n4. Relationship opportunities with other forms",
-					$schema['form']['title'],
-					$formId,
-					$schema['element_count']
-				)
-			],
-			[
-				'role' => 'assistant',
-				'content' => "I'll analyze the form structure for you. Let me examine the form details and elements..."
-			],
-			[
-				'role' => 'user',
-				'content' => "Here's the form schema:\n" . json_encode($schema, JSON_PRETTY_PRINT)
+				'content' => [
+			    'type' => 'text',
+    			'text' => sprintf(
+						"Generate a %s report for this form: %s. %s You can use the get_form_details tool to lookup the schema for the form and its elements, and you can get data from the form using the get_entries_from_form tool. %s",
+						$reportType,
+						$form,
+						$elements ? "Focus on these elements in the form: $elements." : "",
+						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? "You can also lookup data directly using SQL with the query_the_database_directly tool. Some data might be foreign keys to other forms. You can turn those into readable, meaningful values with the prepare_database_values_for_human_readability." : ""
+					)
+				],
+				[
+					'role' => 'assistant',
+					'content' => [
+						'type' => 'text',
+						'text' => sprintf(
+							"I'll generate a %s report for form %d. I'll start by looking up details about the form, and the data in the form.",
+							$reportType,
+							$form
+						)
+					]
+				]
 			]
 		];
 	}
@@ -196,120 +170,47 @@ trait prompts {
 	/**
 	 * Generate report prompt
 	 */
-	private function generateReportPrompt($args)
+	private function find_recent_activity_by_users($args)
 	{
-		$formId = $args['form_id'] ?? null;
-		$reportType = $args['report_type'] ?? 'summary';
-		$filters = $args['filters'] ?? [];
 
-		if (!$formId) {
-			throw new Exception('form_id is required');
+		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$this->sendAuthError("Permission denied: user cannot access this prompt", 403);
 		}
 
-		return [
-			[
-				'role' => 'user',
-				'content' => sprintf(
-					"Generate a %s report for form ID %d. %s",
-					$reportType,
-					$formId,
-					!empty($filters) ? "Apply these filters: " . json_encode($filters) : "Include all data."
-				)
-			],
-			[
-				'role' => 'assistant',
-				'content' => sprintf(
-					"I'll generate a %s report for form %d. Let me gather the data and create the report based on your requirements.",
-					$reportType,
-					$formId
-				)
-			]
-		];
-	}
-
-	/**
-	 * Generate relationships prompt
-	 */
-	private function generateRelationshipsPrompt($args)
-	{
-		$formId = $args['form_id'] ?? null;
-
-		$content = $formId
-			? "Analyze the relationships for form ID $formId. Show all connected forms and the nature of their relationships."
-			: "Analyze all form relationships in this Formulize instance. Provide a comprehensive overview of how forms are connected.";
-
-		return [
-			[
-				'role' => 'user',
-				'content' => $content
-			],
-			[
-				'role' => 'assistant',
-				'content' => "I'll analyze the form relationships for you. Let me examine the framework definitions and links..."
-			]
-		];
-	}
-
-	/**
-	 * Generate SQL query prompt
-	 */
-	private function generateSqlQueryPrompt($args)
-	{
-		$formId = $args['form_id'] ?? null;
-		$queryType = $args['query_type'] ?? 'select';
-		$elements = $args['elements'] ?? [];
-
-		if (!$formId) {
-			throw new Exception('form_id is required');
+		// Logging tool only available if logging is enabled
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		if($formulizeConfig['formulizeLoggingOnOff']) {
+			return ['message' => 'Logging is disabled on this Formulize system.' ];
 		}
 
-		return [
-			[
-				'role' => 'user',
-				'content' => sprintf(
-					"Generate a %s SQL query for form ID %d. %s",
-					$queryType,
-					$formId,
-					!empty($elements) ? "Include these elements: " . implode(', ', $elements) : "Include all elements."
-				)
-			],
-			[
-				'role' => 'assistant',
-				'content' => sprintf(
-					"I'll generate a %s query for form %d. The table name is %s_formulize_%d.",
-					$queryType,
-					$formId,
-					XOOPS_DB_PREFIX,
-					$formId
-				)
-			]
-		];
-	}
-
-	/**
-	 * Generate data validation prompt
-	 */
-	private function generateDataValidationPrompt($args)
-	{
-		$formId = $args['form_id'] ?? null;
-
-		if (!$formId) {
-			throw new Exception('form_id is required');
-		}
+		$users = $args['users'] ?? null;
+		$forms = $args['forms'] ?? null;
 
 		return [
 			[
 				'role' => 'user',
-				'content' => sprintf(
-					"Check data quality and validation issues for form ID %d. Look for:\n- Required fields with missing data\n- Invalid data types\n- Duplicate entries\n- Referential integrity issues",
-					$formId
-				)
+				'content' => [
+					'type' => 'text',
+					'text' => sprintf(
+						"Look in the system's logs for recent activity. %s %s You can use the read_system_activity_log tool to get the most recent 1000 lines from the activity log. Each line in the log is a JSON object. Critical keys in each line are: formulize_event, a short string explaining what the log entry is about. user_id, the ID number of the user. form_id, the ID number of a form if one was involved in the activity. You can use the list_users tool to get a list of all users and their ID numbers. To get more information about a form, you can use the get_form_details tool.",
+						$users ? "Pay special attention to these users: $users." : "",
+						$forms ? "Pay special attention to thsese forms: $forms." : ""
+					)
+				],
 			],
 			[
 				'role' => 'assistant',
-				'content' => "I'll perform a comprehensive data validation check on form $formId. Let me analyze the data quality..."
+				'content' => [
+					'type' => 'text',
+					'text' => sprintf(
+						"I'll lookup the recent activity logs. %s",
+						($users OR $forms) ? "I'll pay special attention to ".($users ? "the users: $users" : "the forms: $forms").($forms AND $users ? " and the forms: $forms" : "")."." : ""
+					)
+				]
 			]
 		];
+
 	}
 
 }
