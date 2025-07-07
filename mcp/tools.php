@@ -229,7 +229,12 @@ trait tools {
 				]
 			],
 			'list_users' => [
-
+				'name' => 'list_users',
+				'description' => "List all the users in the system.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
 			]
 
 		];
@@ -544,8 +549,14 @@ trait tools {
 	}
 
 	/**
+	 * List all the users - tool version of the resource
+	 */
+	private function list_users() {
+		return $this->users_list();
+	}
+
+	/**
 	 * List all connections for a form. Tool level access for the connections list, since not all MCP clients can read resources. Duh.
-	 * @param int $formId The ID of the form to get connections for
 	 * @return array An associative array containing the connections for the form
 	 */
 	private function list_connections() {
