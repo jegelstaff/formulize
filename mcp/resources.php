@@ -35,7 +35,7 @@ trait resources {
 
 		$this->resources['users_list'] = [
 			'uri' => 'formulize://system/users_list.json',
-			'name' => 'List of User',
+			'name' => 'List of Users',
 			'description' => 'All the users in the system. Users are collected into groups. Users can be members of multiple groups. Permissions are assigned to groups, and users inherit all the permissions from all the groups they are a member of. Permissions include things like viewing a form, creating entries in a form, updating entries created by other people in the same group, seeing entries by anyone in any group, etc.',
 			'mimeType' => 'application/json'
 		];
