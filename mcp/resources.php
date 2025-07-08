@@ -40,6 +40,12 @@ trait resources {
 			'mimeType' => 'application/json'
 		];
 
+		$this->resources['forms_list'] = [
+			'uri' => 'formulize://system/forms_list.json',
+			'name' => 'List of Forms',
+			'description' => "All the forms in the system, and their elements, screens and connections to other forms. Forms are the main part of Formulize. Users enter data into forms, and can access data in forms that they or other users have entered. The interactions with forms and data is controlled by the permissions assigned to the groups, and users can be assigned to one or more groups.",
+			'mimeType' => 'application/json'
+		];
 
 		$this->resources['screens_list'] = [
 			'uri' => 'formulize://system/screens_list.json',
@@ -58,7 +64,7 @@ trait resources {
 		// Dynamically add form schema resources
 		$formsList = $this->list_forms();
 		$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
-		$groupPermsForFormResource = [];
+		$groupPermsForFormResources = [];
 		foreach ($forms as $form) {
 			$formId = $form['id_form'];
 			if(security_check($formId)) {
@@ -70,7 +76,7 @@ trait resources {
 					'description' => "Complete schema, element definitions, screens, and form connections, for form $formId: $formTitle",
 					'mimeType' => 'application/json'
 				];
-				$groupPermsForFormResource["group_permissions_for_form_$formId"] = [
+				$groupPermsForFormResources["group_permissions_for_form_$formId"] = [
 					'uri' => "formulize://permissions/group_perms_for_$sanitizedTitle"."_(form_$formId).json",
 					'name' => "Permissions for all groups on $formTitle (form $formId)",
 					'description' => "All the permissions for all groups on the $formTitle form (form $formId)",
@@ -78,7 +84,7 @@ trait resources {
 				];
 			}
 		}
-		$this->resources = $this->resources + $groupPermsForFormResource;
+		$this->resources = $this->resources + $groupPermsForFormResources;
 		// resources for each groups permissions across all forms
 		foreach($this->groups_list() as $groupData) {
 			foreach($groupData as $thisGroupData) {
@@ -183,6 +189,60 @@ trait resources {
 		} catch (Exception $e) {
 			return $this->JSONerrorResponse('Resource read failed: ' . $e->getMessage(), -32603, $id);
 		}
+	}
+
+	/**
+	 * List all forms
+	 * This function retrieves all forms from the Formulize database and returns them sorted by name.
+	 * Includes simple element list, screens list, connections to other forms. Complete data on all forms.
+	 * @param array $arguments An associative array containing any parameters for the request (not used in this case).
+	 * @return array An array containing the list of forms.
+	 */
+	private function forms_list() {
+
+		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
+
+		$result = $this->db->query($sql);
+
+		if (!$result) {
+			return ['error' => 'Query failed', 'sql' => $sql];
+		}
+
+		$forms = [];
+		$formTitles = [];
+		while ($row = $this->db->fetchArray($result)) {
+			$formId = $row['id_form'];
+			if(security_check($formId)) {
+				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
+				$row['elements'] = [];
+				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+				if($elementsResult = $this->db->query($sql)) {
+					while($elementRow = $this->db->fetchArray($elementsResult)) {
+						if($elementRow['ele_display'] == 1
+							OR in_array(XOOPS_GROUP_ADMIN, $this->userGroups)
+							OR (
+								strstr($elementRow['ele_display'], ",")
+								AND array_intersect($this->userGroups, explode(",", $elementRow['ele_display']))
+							)) {
+								$row['elements'][] = $elementRow;
+						}
+					}
+				}
+				$row['element_count'] = count($row['elements']);
+				$formTitle = trans($row['form_title']);
+				$row['form_title'] = $formTitle; // Use the translated title for display
+				$forms[] = $row + $this->all_form_connections($formId) + $this->screens_list($formId, simple: true);
+				$formTitles[] = $formTitle;
+			}
+		}
+
+		array_multisort($formTitles, SORT_NATURAL, $forms);
+
+		return [
+			'forms' => $forms,
+			'form_count' => count($forms)
+		];
+
 	}
 
 	/**
