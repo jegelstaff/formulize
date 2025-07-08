@@ -592,7 +592,7 @@ class FormulizeMCP
 	 * @return array The groupids that the authenticated user can see entries from
 	 */
 	private function groupsAuthenticatedUserCanSeeDataFrom() {
-		$forms = $this->list_forms();
+		$forms = $this->forms_list();
 		$gperm_handler = xoops_gethandler('groupperm');
 		$groupsTheUserCanSee = array();
 		$groupsThatCanMakeEntries = array();

@@ -54,15 +54,15 @@ trait resources {
 			'mimeType' => 'application/json'
 		];
 
-		$this->resources['all_form_connections'] = [
-			'uri' => 'formulize://system/all_form_connections.json',
-			'name' => 'List of Connections for all Forms',
-			'description' => "All the connections between forms. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
+		$this->resources['form_connections_list'] = [
+			'uri' => 'formulize://system/form_connections_list.json',
+			'name' => 'List of Connections between Forms',
+			'description' => "All the connections between forms. Connections are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 			'mimeType' => 'application/json'
 		];
 
 		// Dynamically add form schema resources
-		$formsList = $this->list_forms();
+		$formsList = $this->forms_list();
 		$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
 		$groupPermsForFormResources = [];
 		foreach ($forms as $form) {
@@ -330,7 +330,7 @@ trait resources {
 				$row['element_count'] = count($row['elements']);
 				$formTitle = trans($row['form_title']);
 				$row['form_title'] = $formTitle; // Use the translated title for display
-				$forms[] = $row + $this->all_form_connections($formId) + $this->screens_list($formId, simple: true);
+				$forms[] = $row + $this->form_connections_list($formId) + $this->screens_list($formId, simple: true);
 				$formTitles[] = $formTitle;
 			}
 		}
@@ -431,7 +431,7 @@ trait resources {
 			'element_count' => count($elements),
 		]
 		+ $this->screens_list($formId)
-		+ $this->all_form_connections($formId);
+		+ $this->form_connections_list($formId);
 
 	}
 
@@ -451,7 +451,7 @@ trait resources {
 		$groupData = $this->db->fetchArray($groupDataResult);
 
 		$permissions = [];
-		$forms = $this->list_forms();
+		$forms = $this->forms_list();
 		$gperm_handler = xoops_gethandler('groupperm');
 		foreach($forms['forms'] as $formData) {
 			$permissions[] = [
@@ -624,7 +624,7 @@ trait resources {
 	 * @param int|null $formId The ID of the form to limit connections to, or null for all connections
 	 * @return array Returns an array with 'connections' (list of connections) and 'connection_count' (number of connections).
 	 */
-	private function all_form_connections($formId = null)
+	private function form_connections_list($formId = null)
 	{
 
 		$connections = array();
@@ -654,7 +654,7 @@ trait resources {
 		$limitAppsSQL = "";
 		$formIds = [];
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$formsList = $this->list_forms();
+			$formsList = $this->forms_list();
 			$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
 			$formIds = array_column($forms, 'id_form');
 			$limitAppsSQL = 'AND afl.fid IN ('.implode(',', array_filter($formIds, 'is_numeric')).')';
@@ -724,7 +724,7 @@ trait resources {
 		if($formId) {
 			$formIds = [ $formId ];
 		} elseif(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$formsList = $this->list_forms();
+			$formsList = $this->forms_list();
 			$forms = isset($formsList['forms']) ? $formsList['forms'] : [];
 			$formIds = array_column($forms, 'id_form');
 		}
