@@ -654,7 +654,7 @@ private function validateSortParameters($sortField, $sortOrder) {
 	 * @return array An associative array containing the connections for the form
 	 */
 	private function list_form_connections() {
-		return $this->form_connections();
+		return $this->form_connections_list();
 	}
 
 	/**
