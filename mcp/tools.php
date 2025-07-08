@@ -44,8 +44,8 @@ trait tools {
 					'properties' => (object)[]
 				]
 			],
-			'list_connections' => [
-				'name' => 'list_connections',
+			'list_form_connections' => [
+				'name' => 'list_form_connections',
 				'description' => "List all the connections between forms, which can explain how forms are related to one another. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
 				'inputSchema' => [
 					'type' => 'object',
@@ -632,7 +632,7 @@ private function validateSortParameters($sortField, $sortOrder) {
 	 */
 	private function list_forms()
 	{
-		return $this->applications_list();
+		return $this->forms_list();
 	}
 
 	/**
@@ -653,8 +653,8 @@ private function validateSortParameters($sortField, $sortOrder) {
 	 * List all connections for a form. Tool level access for the connections list, since not all MCP clients can read resources. Duh.
 	 * @return array An associative array containing the connections for the form
 	 */
-	private function list_connections() {
-		return $this->all_form_connections();
+	private function list_form_connections() {
+		return $this->form_connections();
 	}
 
 	/**
