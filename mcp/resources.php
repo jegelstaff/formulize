@@ -78,7 +78,7 @@ trait resources {
 				];
 				$groupPermsForFormResources["group_permissions_for_form_$formId"] = [
 					'uri' => "formulize://permissions/group_perms_for_$sanitizedTitle"."_(form_$formId).json",
-					'name' => "Permissions for all groups on $formTitle (form $formId)",
+					'name' => "Perms for $formTitle (form $formId)",
 					'description' => "All the permissions for all groups on the $formTitle form (form $formId)",
 					'mimeType' => 'application/json'
 				];
@@ -93,7 +93,7 @@ trait resources {
 				$sanitizedGroupName = formulizeObject::sanitize_handle_name($groupName);
 				$this->resources["form_permissions_for_group_$groupId"] = [
 					'uri' => "formulize://permissions/form_perms_for_$sanitizedGroupName"."_(group_$groupId).json",
-					'name' => "Permissions for $groupName (group $groupId) on all forms",
+					'name' => "Perms for $groupName (group $groupId)",
 					'description' => "All the permissions for $groupName (group $groupId) all the forms in the system that they have access to.",
 					'mimeType' => 'application/json'
 				];
