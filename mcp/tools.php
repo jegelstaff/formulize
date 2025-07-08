@@ -28,6 +28,74 @@ trait tools {
 					'properties' => (object)[]
 				],
 			],
+			'list_forms' => [
+				'name' => 'list_forms',
+				'description' => 'List all forms in this Formulize instance',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_applications' => [
+				'name' => 'list_applications',
+				'description' => "List all the applications and the forms that are part of each one.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_connections' => [
+				'name' => 'list_connections',
+				'description' => "List all the connections between forms, which can explain how forms are related to one another. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_screens' => [
+				'name' => 'list_screens',
+				'description' => "List all the screens for all forms.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_users' => [
+				'name' => 'list_users',
+				'description' => "List all the users in the system.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'get_form_details' => [
+				'name' => 'get_form_details',
+				'description' => 'Get detailed information about a specific form, including its elements, screens, and connections to other forms. You can get a list of all the forms and their IDs with the list_forms tool.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the form to retrieve details for'
+						]
+					],
+					'required' => ['form_id']
+				]
+			],
+			'get_screen_details' => [
+				'name' => 'get_screen_details',
+				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'screen_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the screen to retrieve details for'
+						]
+					],
+					'required' => ['screen_id']
+				]
+			],
 			'create_entry' => [
 				'name' => 'create_entry',
 				'description' => 'Create a new entry in a Formulize form with the provided data',
@@ -80,25 +148,21 @@ trait tools {
 			],
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
-				'description' => 'Get entries from a form, and from other forms that are connected by the specfied relationship (unless the Relationship ID is set to 0). Only returns entries that the user has permission to access. Some elements will store values in non-readable formats, that can be prepared for human readability using the prepare_database_values_for_human_readability tool.',
+				'description' =>
+'Get entries from a form and connected forms. Only returns entries that the user has permission to access.
+
+Examples:
+- Get specific entry: {"form_id": 5, "filter": 526}
+- Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
+- Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}
+
+Some elements store foreign keys that can be made readable with prepare_database_values_for_human_readability tool.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the main form to get entries from. You can look up the forms with the list_forms tool.'
-						],
-						'elementHandles' => [
-							'type' => 'array',
-							'description' => 'Optional. Array of elements to include. Elements can be from the main form, and from any related form that is part of the relationship. Use a multidimensional array with form IDs as keys. If not specified, all elements will be included. You can lookup the element handles in a form with the get_form_details tool.',
-							'items' => [
-								'type' => 'array',
-								'description' => 'Form ID to element handles mapping. The keys are the form IDs, the values are arrays of element handles to include from each form.',
-								'items' => [
-									'type' => 'string',
-									'description' => 'Element handle to include'
-								]
-							]
+							'description' => 'The ID of the form to get entries from. You can look up the forms with the list_forms tool.'
 						],
 						'filter' => [
 							'oneOf' => [
@@ -107,41 +171,65 @@ trait tools {
 									'description' => 'Entry ID'
 								],
 								[
-									'type' => 'string',
-									'description' => 'Filter string taking the format: elementHandle/**/searchTerm/**/operator. Dates are stored in YYYY-mm-dd format. Times are stored in 24 hour format. Valid operators are =, >, <, >=, <=, !=, LIKE. The default operator is LIKE. (Multiple strings can be included, separated by ][ and the logical operator between them is determined by the andOr parameter.'
+									'type' => 'array',
+									'description' =>
+'Optional. Array of filter objects for complex queries.
+
+Examples:
+- [ { "element": "age", "operator": "=", "value": "18" } ]
+- [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]
+
+Valid operators are: =, >, <, >=, <=, !=, LIKE
+Dates are stored in YYYY-mm-dd format. Times are stored in 24 hour format.
+Multiple filters will be joined with the boolean specified in the andOr property (either AND or OR).',
+									'items' => [
+										'type' => 'object',
+										'properties' => [
+											'element' => [
+												'type' => 'string',
+												'description' => 'The element to filter on'
+											],
+											'operator' => [
+												'type' => 'string',
+												'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE'],
+												'description' => 'The comparison operator'
+											],
+											'value' => [
+												'type' => 'string',
+												'description' => 'The value to compare against'
+											]
+										],
+										'required' => ['element', 'operator', 'value']
+									]
 								]
 							]
 						],
-						'andOr' => [
+						'and_or' => [
 							'type' => 'string',
-							'description' => 'The boolean operator to use (AND or OR) between multiple filter strings, if there were multiple filter strings in the filter parameter, separated by ][. Defaults to AND if not specified.',
+							'description' => 'The boolean operator to use (AND or OR) between multiple filters. Defaults to AND if not specified.',
 							'enum' => ['AND', 'OR']
-						],
-						'currentView' => [
-							'type' => 'string',
-							'description' => 'The scope of entries to include, either "all" for all entries, "group" for entries belonging to the user\'s group(s), or "mine" for the user\'s own entries. Can also be comma-separated group IDs for a custom scope. Defaults to "all". Automatically downgraded if necessary to the level of the authenticated user\'s permissions on the form.',
-						],
-						'limitStart' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Starting record for LIMIT statement'
 						],
 						'limitSize' => [
 							'type' => ['integer', 'null'],
-							'description' => 'Number of records to return. Defaults to 100. Set to null for no limit.'
+							'description' => 'Optional. Number of records to return. Defaults to 100. Set to null for no limit.'
 						],
 						'sortField' => [
 							'type' => 'string',
-							'description' => 'Element handle to sort by'
+							'description' => 'Optional. Element handle to sort by'
 						],
 						'sortOrder' => [
 							'type' => 'string',
-							'description' => 'Sort direction (ASC or DESC). Defaults to ASC.',
+							'description' => 'Optional. Sort direction (ASC or DESC). Defaults to ASC if left out.',
 							'enum' => ['ASC', 'DESC']
 						],
-						'form_relationship_id' => [
-							'type' => 'integer',
-							'description' => 'Relationship ID to use (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
-						]
+						'elements' => [
+							'type' => 'array',
+							'description' => 'Optional. Array of elements to include. If not specified, all elements are included. You can lookup the element handles in a form with the get_form_details tool.',
+							'items' => [
+								'type' => 'string',
+								'description' => 'Element handle to include in the results'
+							]
+						],
 					],
 					'required' => ['form_id']
 				]
@@ -166,74 +254,6 @@ trait tools {
 						]
 					],
 					'required' => ['value', 'element_handle']
-				]
-			],
-			'list_applications' => [
-				'name' => 'list_applications',
-				'description' => "List all the applications and the forms that are part of each one.",
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				]
-			],
-			'list_forms' => [
-				'name' => 'list_forms',
-				'description' => 'List all forms in this Formulize instance',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				]
-			],
-			'list_connections' => [
-				'name' => 'list_connections',
-				'description' => "List all the connections between forms, which can explain how forms are related to one another. Connection are based pairs of elements, one in each form, that have matching values. Entries in the forms are connected when they have the same value in the paired elements, or when one element is 'linked' to the other, in which case the values in the linked element will be entry_ids in the other form (foreign keys).",
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				]
-			],
-			'list_screens' => [
-				'name' => 'list_screens',
-				'description' => "List all the screens for all forms.",
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				]
-			],
-			'get_form_details' => [
-				'name' => 'get_form_details',
-				'description' => 'Get detailed information about a specific form, including its elements, screens, and connections to other forms. You can get a list of all the forms and their IDs with the list_forms tool.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'The ID of the form to retrieve details for'
-						]
-					],
-					'required' => ['form_id']
-				]
-			],
-			'get_screen_details' => [
-				'name' => 'get_screen_details',
-				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'",
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'screen_id' => [
-							'type' => 'integer',
-							'description' => 'The ID of the screen to retrieve details for'
-						]
-					],
-					'required' => ['screen_id']
-				]
-			],
-			'list_users' => [
-				'name' => 'list_users',
-				'description' => "List all the users in the system.",
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
 				]
 			]
 
@@ -489,56 +509,11 @@ trait tools {
 	}
 
 	/**
-	 * List all forms
-	 * This function retrieves all forms from the Formulize database and returns them sorted by name.
-	 * @param array $arguments An associative array containing any parameters for the request (not used in this case).
-	 * @return array An array containing the list of forms.
+	 * List all forms - tool version of the resource
 	 */
 	private function list_forms()
 	{
-
-		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
-
-		$result = $this->db->query($sql);
-
-		if (!$result) {
-			return ['error' => 'Query failed', 'sql' => $sql];
-		}
-
-		$forms = [];
-		$formTitles = [];
-		while ($row = $this->db->fetchArray($result)) {
-			$formId = $row['id_form'];
-			if(security_check($formId)) {
-				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
-				$row['elements'] = [];
-				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
-				if($elementsResult = $this->db->query($sql)) {
-					while($elementRow = $this->db->fetchArray($elementsResult)) {
-						if($elementRow['ele_display'] == 1
-							OR in_array(XOOPS_GROUP_ADMIN, $this->userGroups)
-							OR (
-								strstr($elementRow['ele_display'], ",")
-								AND array_intersect($this->userGroups, explode(",", $elementRow['ele_display']))
-							)) {
-								$row['elements'][] = $elementRow;
-						}
-					}
-				}
-				$row['element_count'] = count($row['elements']);
-				$formTitle = trans($row['form_title']);
-				$row['form_title'] = $formTitle; // Use the translated title for display
-				$forms[] = $row + $this->all_form_connections($formId) + $this->screens_list($formId, simple: true);
-				$formTitles[] = $formTitle;
-			}
-		}
-
-		array_multisort($formTitles, SORT_NATURAL, $forms);
-
-		return [
-			'forms' => $forms,
-			'form_count' => count($forms)
-		];
+		return $this->applications_list();
 	}
 
 	/**
@@ -571,7 +546,7 @@ trait tools {
 	}
 
 	/**
-	 * Get form details
+	 * Get form details -- tool version of the individual resources about each form
 	 */
 	private function get_form_details($arguments)
 	{

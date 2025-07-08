@@ -10,13 +10,44 @@ trait prompts {
 	private function registerPrompts()
 	{
 		$this->prompts = [
-			'generate_report_on_data_in_a_form' => [
-				'name' => 'generate_report_on_data_in_a_form',
+			'look_up_data' => [
+				'name' => 'look_up_data',
+				'description' => 'Ask the AI to look up data in the system. The AI will try various approaches to retrieve the information based on what you enter here, and summarize it for you.',
+				'arguments' => [
+					[
+						'name' => 'form',
+						'description' => 'What form are you looking up data in? Put the ID or the name of the form. IDs are slightly preferred.',
+						'required' => true
+					],
+					[
+						'name' => 'searches',
+						'description' => 'Do you want to search for anything specific? ie: "daily_pulse > 100" or "Community = Norris Point" or "creation date is January this year or newer" Use element handles if you know them, or wording that very closely matches the element captions in the forms.',
+						'required' => false
+					],
+					[
+						'name' => 'limit',
+						'description' => 'How many entries do you want to retrieve? The default is up to 100, but if you put something different here the AI will be instructed to use that instead. Put 0 to try and get all entries, but if there are a lot that might take too long or be too much for the AI to read.',
+						'required' => false
+					],
+					[
+						'name' => 'sortDetails',
+						'description' => 'Do you want the data sorted a certain way? ie: "footwear_size" Use the element handle if you know it. You can also specify the sorting direction (ascending or descending). It should default to ascending order.',
+						'required' => false
+					],
+					[
+						'name' => 'elements',
+						'description' => 'If your form is big and you only want to see data from certain elements, provide a comma separated list of the them here. Element handles are preferred, but IDs should work.',
+						'required' => false
+					]
+				]
+			],
+			'generate_a_report_about_a_form' => [
+				'name' => 'generate_a_report_about_a_form',
 				'description' => 'Ask for a report about the data in a form. Give direction to the AI about the form, the level of detail, and what data to focus on.',
 				'arguments' => [
 					[
 						'name' => 'form',
-						'description' => 'The ID or name of the form to report on. IDs are preferred',
+						'description' => 'The ID or name of the form to report on. IDs are preferred.',
 						'required' => true
 					],
 					[
@@ -31,6 +62,7 @@ trait prompts {
 					]
 				]
 			]
+
 		];
 
 		// only webmasters can access certain prompts
@@ -39,8 +71,8 @@ trait prompts {
 			$config_handler = xoops_gethandler('config');
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 			if($formulizeConfig['formulizeLoggingOnOff']) {
-					$this->prompts['find_recent_activity_by_users'] = [
-						'name' => 'find_recent_activity_by_users',
+					$this->prompts['check_the_activity_logs'] = [
+						'name' => 'check_the_activity_logs',
 						'description' => 'Ask for a report on recent user activity, optionally focusing on certain user(s), and/or certain form(s).',
 						'arguments' => [
 							[
@@ -123,7 +155,7 @@ trait prompts {
 	/**
 	 * Generate report prompt
 	 */
-	private function generate_report_on_data_in_a_form($args)
+	private function generate_a_report_about_a_form($args)
 	{
 		$form = $args['form'] ?? null;
 		$reportType = $args['report_type'] ?? 'summary';
@@ -133,10 +165,8 @@ trait prompts {
 			throw new Exception('A form identifier is required');
 		}
 
-		if(is_numeric($form)) {
-			if(!security_check(intval($form))) {
-				$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
-			}
+		if(is_numeric($form) AND !security_check(intval($form))) {
+			$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
 		}
 
 		return [
@@ -158,9 +188,10 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"I'll generate a %s report for form %s. I'll start by looking up details about the form, and the data in the form.",
+						"I'll generate a %s report for form %s. I'll start by looking up details about the form with the get_form_details tool, and the data in the form, with the get_entries_from_form tool. %s",
 						$reportType,
-						$form
+						$form,
+						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? " I might also use the query_the_database_directly tool for more flexibility, if get_entries_from_form is not providing enough detail." : ""
 					)
 				]
 			]
@@ -170,7 +201,7 @@ trait prompts {
 	/**
 	 * Generate report prompt for recent activity
 	 */
-	private function find_recent_activity_by_users($args)
+	private function check_the_activity_logs($args)
 	{
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
 			$this->sendAuthError("Permission denied: user cannot access this prompt", 403);
@@ -211,8 +242,55 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"I'll lookup the recent activity logs. %s",
+						"I'll lookup the recent activity logs with the read_system_activity_log tool. %s",
 						($users OR $forms) ? "I'll pay special attention to ".($users ? "the users: $users" : "").(($users AND $forms) ? " and " : "").($forms ? "the forms: $forms" : "")."." : ""
+					)
+				]
+			]
+		];
+	}
+
+	/**
+	 * Look up data prompt
+	 * Get info from the user to craft into a prompt that will give the AI what it needs to effectively use the get_entries_from_form tool
+	 */
+	private function look_up_data($args)
+	{
+		$form = $args['form'] ?? null;
+		$searches = $args['searches'] ?? null;
+		$limit = $args['limit'] ?? null;
+		$sortDetails = $args['sortDetails'] ?? null;
+		$elements = $args['elements'] ?? null;
+
+		if (!$form) {
+			throw new Exception('A form identifier is required');
+		}
+
+		if(is_numeric($form) AND !security_check(intval($form))) {
+			$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
+		}
+
+		return [
+			[
+				'role' => 'user',
+				'content' => [
+					'type' => 'text',
+					'text' => sprintf(
+						"Use ".$this->mcpRequest['localServerName']." (MCP Server) to lookup entries in this form: %s. Use the get_form_details tool to see the schema of the form. Use the get_entries_from_form tool to read the data. %s %s %s %s Give a general summary of the information, and create a spreadsheet with the data itself.",
+						$form,
+						$searches ? "I want to filter the entries in this way: $searches." : "",
+						$limit ? "I want a LIMIT to restrict the number of entries returned: $limit." : "",
+						$sortDetails ? "I want the entries sorted a certain way: $sortDetails." : "",
+						$elements ? "I want only certain elements included in the query: $elements." : ""
+					)
+				]
+			],
+			[
+				'role' => 'assistant',
+				'content' => [
+					'type' => 'text',
+					'text' => sprintf(
+						"I will look up this data from the form now, and take these instructions into account when composing the parameters for the get_entries_from_form tool."
 					)
 				]
 			]
