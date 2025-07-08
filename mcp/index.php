@@ -642,16 +642,50 @@ class FormulizeMCP
 		}
 	}
 
-	private function JSONerrorResponse($message, $code = -32603, $id = null)
-	{
-		return [
-			'jsonrpc' => '2.0',
-			'error' => [
-				'code' => $code,
-				'message' => $message
-			],
-			'id' => $id
-		];
+	private function JSONerrorResponse($message, $code = -32603, $id = null, $context = []) {
+    $error = [
+        'code' => $code,
+        'message' => $message
+    ];
+
+    // Add helpful context for common errors
+    if (stripos($message, 'Permission denied') !== false) {
+        $error['troubleshooting'] = [
+            'issue' => 'Insufficient permissions',
+            'solutions' => [
+                'Check if user has required permission for this form/entry',
+                'Use list_forms to see accessible forms',
+                'Verify user is member of correct groups'
+            ]
+        ];
+    } elseif (stripos($message, 'Form not found') !== false) {
+        $error['troubleshooting'] = [
+            'issue' => 'Invalid form ID',
+            'solutions' => [
+                'Use list_forms tool to get valid form IDs',
+                'Verify the form exists and is accessible'
+            ]
+        ];
+    } elseif (stripos($message, 'Invalid element handle') !== false) {
+        $error['troubleshooting'] = [
+            'issue' => 'Element handle does not exist in form',
+            'solutions' => [
+                'Use get_form_details tool to get valid element handles',
+                'Check spelling of element handle',
+                'Verify element is part of the specified form'
+            ]
+        ];
+    }
+
+    if (!empty($context)) {
+        $error['context'] = $context;
+    }
+
+    return [
+        'jsonrpc' => '2.0',
+        'error' => $error,
+        'id' => $id
+    ];
 	}
 }
 
