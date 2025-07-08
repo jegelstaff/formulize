@@ -227,16 +227,19 @@ trait resources {
 		}
 
 		$firstPart = $filenameParts[0];
+		$secondLastPart = $filenameParts[count($filenameParts)-2];
 		$lastPart = end($filenameParts);
 
-		// Extract ID from last part (e.g., "form_1)" -> "1")
-		if (!preg_match('/\((\w+)_(\d+)\)$/', $lastPart, $idMatches)) {
+		// Extract ID from last part (e.g., "(form_1)" -> "1")
+		if (!$id = trim($lastPart, ")")) {
 			throw new Exception('Could not extract ID from filename: ' . $filename);
 		}
+		// Extract type from second part (e.g., "(form_1)" -> "form", or "(group_1)" -> "group")
+		if (!$idType = trim($secondLastPart, "(")) {
+			throw new Exception('Could not extract type from filename: ' . $filename);
+		}
 
-		$id = intval($idMatches[2]);
-		$idType = $idMatches[1]; // 'form' or 'group'
-
+		$id = intval($id);
 		switch ($type) {
 			case 'schemas':
 				if ($idType !== 'form') {
