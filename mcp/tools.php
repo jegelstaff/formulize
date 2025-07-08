@@ -601,12 +601,30 @@ Multiple filters will be joined with the boolean specified in the andOr property
 	 */
 	private function writeFormEntry($formId, $entryId, $data, $relationshipId = -1)
 	{
-
 		$resultEntryId = null;
 		try {
+			// Enhanced input validation
+			if (!is_array($data) || empty($data)) {
+				throw new Exception('Data must be a non-empty array');
+			}
+
+			// Validate relationship ID
+			if (!is_numeric($relationshipId)) {
+				throw new Exception('Relationship ID must be numeric');
+			}
+			$relationshipId = intval($relationshipId);
+
+			// Validate entry ID
+			if ($entryId !== 'new' && !is_numeric($entryId)) {
+				throw new Exception('Entry ID must be numeric'); // when creating entries, 'new' is hard coded in the calling function, so we don't ever have to report that 'new' is a valid value
+			}
+			if ($entryId !== 'new') {
+				$entryId = intval($entryId);
+			}
+
 			// Step 1: Check permissions
 			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
-				$this->sendAuthError('Permission denied: cannot update entry '. $entryId . ' in form ' . $formId, 403);
+				$this->sendAuthError('Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId, 403);
 			}
 
 			// Validate form exists
@@ -619,7 +637,7 @@ Multiple filters will be joined with the boolean specified in the andOr property
 			}
 
 			// Get form elements to validate handles
-			$elementsSql = "SELECT ele_handle FROM " . $this->db->prefix('formulize'). " WHERE id_form = " . intval($formId);
+			$elementsSql = "SELECT ele_handle FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
 			$elementsResult = $this->db->query($elementsSql);
 
 			$validHandles = [];
@@ -627,9 +645,14 @@ Multiple filters will be joined with the boolean specified in the andOr property
 				$validHandles[] = $row['ele_handle'];
 			}
 
-			// Step 2: Prepare the data
+			// Step 2: Prepare and validate the data
 			$preparedData = [];
 			foreach ($data as $elementHandle => $value) {
+				// Validate element handle type
+				if (!is_string($elementHandle)) {
+					throw new Exception('Element handle must be a string');
+				}
+
 				// Validate element handle exists in this form
 				if (!in_array($elementHandle, $validHandles)) {
 					throw new Exception('Invalid element handle for this form: ' . $elementHandle);
