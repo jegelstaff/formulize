@@ -12,52 +12,52 @@ trait prompts {
 		$this->prompts = [
 			'look_up_data' => [
 				'name' => 'look_up_data',
-				'description' => 'Ask the AI to look up data in the system. The AI will try various approaches to retrieve the information based on what you enter here, and summarize it for you.',
+				'description' => 'Ask the AI to look up data in the system.',
 				'arguments' => [
 					[
 						'name' => 'form',
-						'description' => 'What form are you looking up data in? Put the ID or the name of the form. IDs are slightly preferred.',
+						'description' => 'The ID of the form, or the name.',
 						'required' => true
 					],
 					[
 						'name' => 'searches',
-						'description' => 'Do you want to search for anything specific? ie: "daily_pulse > 100" or "Community = Norris Point" or "creation date is January this year or newer" Use element handles if you know them, or wording that very closely matches the element captions in the forms.',
+						'description' => 'Optional. "pulse > 100", "Community is Norris Point", etc',
 						'required' => false
 					],
 					[
 						'name' => 'limit',
-						'description' => 'How many entries do you want to retrieve? The default is up to 100, but if you put something different here the AI will be instructed to use that instead. Put 0 to try and get all entries, but if there are a lot that might take too long or be too much for the AI to read.',
+						'description' => 'Optional. 100 entries by default. Enter 0 for no limit.',
 						'required' => false
 					],
 					[
 						'name' => 'sortDetails',
-						'description' => 'Do you want the data sorted a certain way? ie: "footwear_size" Use the element handle if you know it. You can also specify the sorting direction (ascending or descending). It should default to ascending order.',
+						'description' => 'Optional. Specify how to sort results, and the direction.',
 						'required' => false
 					],
 					[
 						'name' => 'elements',
-						'description' => 'If your form is big and you only want to see data from certain elements, provide a comma separated list of the them here. Element handles are preferred, but IDs should work.',
+						'description' => 'Optional. Specify elements to include. Leave blank for all.',
 						'required' => false
 					]
 				]
 			],
 			'generate_a_report_about_a_form' => [
 				'name' => 'generate_a_report_about_a_form',
-				'description' => 'Ask for a report about the data in a form. Give direction to the AI about the form, the level of detail, and what data to focus on.',
+				'description' => 'Ask the AI to write a report about the data in a form.',
 				'arguments' => [
 					[
 						'name' => 'form',
-						'description' => 'The ID or name of the form to report on. IDs are preferred.',
+						'description' => 'The ID of the form, or the name.',
 						'required' => true
 					],
 					[
 						'name' => 'report_type',
-						'description' => '"Create a _______ report" ie: summary, detailed, statistical...',
-						'required' => false
+						'description' => '"Create a ____ report" ie: summary, detailed, statistical...',
+						'required' => true
 					],
 					[
-						'name' => 'elements',
-						'description' => 'Which elements in the form should the report focus on? Provide a comma separated list. Element IDs or handles are best, but captions can work too if they\'re unique.',
+						'name' => 'focus',
+						'description' => 'Optional. Enter any elements or other details to focus on.',
 						'required' => false
 					]
 				]
@@ -73,16 +73,16 @@ trait prompts {
 			if($formulizeConfig['formulizeLoggingOnOff']) {
 					$this->prompts['check_the_activity_logs'] = [
 						'name' => 'check_the_activity_logs',
-						'description' => 'Ask for a report on recent user activity, optionally focusing on certain user(s), and/or certain form(s).',
+						'description' => 'Ask the AI for a report on recent user activity',
 						'arguments' => [
 							[
 								'name' => 'users',
-								'description' => 'The user IDs or names of users to focus on. Provide a comma separated list. User IDs are best, but names may work as well.',
+								'description' => 'Any user IDs or names of users to focus on.',
 								'required' => false
 							],
 							[
 								'name' => 'forms',
-								'description' => 'The form IDs or names of forms to focus on. Provide a comma separated list. Form IDs are best, but names may work as well.',
+								'description' => 'Any form IDs or names of forms to focus on.',
 								'required' => false
 							]
 						]
@@ -159,7 +159,7 @@ trait prompts {
 	{
 		$form = $args['form'] ?? null;
 		$reportType = $args['report_type'] ?? 'summary';
-		$elements = $args['elements'] ?? '';
+		$focus = $args['focus'] ?? '';
 
 		if (!$form) {
 			throw new Exception('A form identifier is required');
@@ -178,7 +178,7 @@ trait prompts {
 						"Generate a %s report for this form: %s. %s You can use the get_form_details tool to lookup the schema for the form and its elements, and you can get data from the form using the get_entries_from_form tool. %s",
 						$reportType,
 						$form,
-						$elements ? "Focus on these elements in the form: $elements." : "",
+						$focus ? "The report should focus on: $focus." : "",
 						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? "You can also lookup data directly using SQL with the query_the_database_directly tool. Some data might be foreign keys to other forms. You can turn those into readable, meaningful values with the prepare_database_values_for_human_readability tool." : ""
 					)
 				]
@@ -190,7 +190,7 @@ trait prompts {
 					'text' => sprintf(
 						"I'll generate a %s report for form %s. I'll start by looking up details about the form with the get_form_details tool, and the data in the form, with the get_entries_from_form tool. %s",
 						$reportType,
-						$form,
+						$focus ? "$form, focusing on: $focus" : $form,
 						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? " I might also use the query_the_database_directly tool for more flexibility, if get_entries_from_form is not providing enough detail." : ""
 					)
 				]
@@ -258,7 +258,7 @@ trait prompts {
 	{
 		$form = $args['form'] ?? null;
 		$searches = $args['searches'] ?? null;
-		$limit = $args['limit'] ?? null;
+		$limit = is_numeric($args['limit'] ?? null) ? intval($args['limit']) : 0;
 		$sortDetails = $args['sortDetails'] ?? null;
 		$elements = $args['elements'] ?? null;
 
@@ -276,12 +276,12 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"Use ".$this->mcpRequest['localServerName']." (MCP Server) to lookup entries in this form: %s. Use the get_form_details tool to see the schema of the form. Use the get_entries_from_form tool to read the data. %s %s %s %s Give a general summary of the information, and create a spreadsheet with the data itself.",
+						"Use ".$this->mcpRequest['localServerName']." (MCP Server) to lookup entries in this form: %s. Use the get_form_details tool to see the schema of the form. Use the get_entries_from_form tool to read the data. %s %s %s %s After querying the data, provide two things: **1.** A summary of key findings **2.** The raw data in plain text format as comma-separated values (CSV), with column headers, that I can copy and paste directly into a spreadsheet. No HTML tables, no markdown formatting, just plain CSV text. Present the data in a code block so it's easy to select and copy.",
 						$form,
-						$searches ? "I want to filter the entries in this way: $searches." : "",
-						$limit ? "I want a LIMIT to restrict the number of entries returned: $limit." : "",
+						$searches ? "Filter the entries in this way: $searches." : "",
+						$limit ? "I don't want all the entries, I just want $limit." : "",
 						$sortDetails ? "I want the entries sorted a certain way: $sortDetails." : "",
-						$elements ? "I want only certain elements included in the query: $elements." : ""
+						$elements ? "Only include certain elements in the query: $elements." : ""
 					)
 				]
 			],
