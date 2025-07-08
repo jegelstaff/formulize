@@ -82,6 +82,20 @@ trait tools {
 					'required' => ['form_id']
 				]
 			],
+			'get_element_details' => [
+				'name' => 'get_element_details',
+				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'element_identifier' => [
+							'type' => [ 'integer', 'string' ],
+							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
+						]
+					],
+					'required' => ['form_id']
+				]
+			],
 			'get_screen_details' => [
 				'name' => 'get_screen_details',
 				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'",
@@ -108,7 +122,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format.',
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
 							'additionalProperties' => true,
 							'examples' => [
 								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
@@ -138,7 +152,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format.',
+							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -291,19 +305,19 @@ Examples:
 						'properties' => [
 							'form_id' => [
 								'type' => 'integer',
-								'description' => 'Optional. The ID of form that you want to find in the logs. Only log entries related to that form will be returned.'
+								'description' => 'Optional. A comma separated list of form IDs that you want to find in the logs. Only log entries related to these forms will be returned.'
 							],
 							'screen_id' => [
 								'type' => 'integer',
-								'description' => 'Optional. The ID of a screen that you want to find in the logs. Only log entries related to that screen will be returned.'
+								'description' => 'Optional. A comma separated list of screen IDs that you want to find in the logs. Only log entries related to these screens will be returned.'
 							],
 							'entry_id' => [
 								'type' => 'integer',
-								'description' => 'Optional. The ID of a an entry that you want to find in the logs. Only log entries related to that entry will be returned. If an entry_id is specified, a form_id must be specified as well!'
+								'description' => 'Optional. A comma separted list of entry IDs that you want to find in the logs. If this is specified, then form_id must be a single form ID because entry IDs are unique **within a form**. Only log entries related to these entries will be returned.'
 							],
 							'user_id' => [
 								'type' => 'integer',
-								'description' => 'Optional. The ID of a user that you want to find in the logs. Only log entries related to that user will be returned.'
+								'description' => 'Optional. A comma separated list of user IDs that you want to find in the logs. Only log entries related to these users will be returned.'
 							]
 						]
 					]
@@ -453,7 +467,7 @@ Examples:
 		$limitStart = $arguments['limitStart'] ?? 0;
 		$limitSize = $arguments['limitSize'] ?? 100;
 		$sortField = $arguments['sortField'] ?? 'entry_id';
-		$sortOrder = $arguments['sortOrder'] ?? 'ASC';
+		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
 		$elements = $arguments['elements'] ?? array();
 
 		try {
@@ -469,9 +483,18 @@ Examples:
 			$actualScope = $scope[0];
 
 			// validate stuff...
+			if (!empty($sortField)) {
+				$dataHandler = new formulizeDataHandler();
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
+					throw new Exception('Invalid element handle for sortField: '.$sortField);
+				}
+			}
 			list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
-			list($sortField, $sortOrder) = $this->validateSortParameters($sortField, $sortOrder);
 			$elements = $this->validateElementHandles($elements);
+
+			// cleanup $filter into old style filter string, if necessary
+			$filter = $this->validateFilter($filter);
 
 			// Call Formulize's gatherDataset function with all parameters
 			$dataset = gatherDataset(
@@ -492,7 +515,7 @@ Examples:
 				'dataset' => $dataset,
 				'total_count' => count($dataset),
 				'scope_used' => $actualScope,
-				'parameters' => [
+				'parameters_used' => [
 					'elements' => $elements,
 					'filter' => $filter,
 					'andOr' => $andOr,
@@ -522,31 +545,36 @@ Examples:
 	}
 
 /**
- * Validate and sanitize sort parameters
+ * Convert MCP filter array into old style filter string for compatibility with gatherDataset
  */
-private function validateSortParameters($sortField, $sortOrder) {
-    $validatedSortField = '';
-    $validatedSortOrder = 'ASC';
+private function validateFilter($filter) {
+	// Handle simple entry ID lookup
+	if (is_numeric($filter)) {
+		return intval($filter);
+	}
 
-		$dataHandler = new formulizeDataHandler();
+	// Handle empty/null filter
+	if (empty($filter)) {
+		return '';
+	}
 
-    if (!empty($sortField)) {
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
-        throw new Exception('Invalid element handle for sort field: ' . $sortField);
-      }
-      $validatedSortField = $sortField;
-    }
-
-    if (!empty($sortOrder)) {
-        $sortOrder = strtoupper($sortOrder);
-        if (!in_array($sortOrder, ['ASC', 'DESC'])) {
-            throw new Exception('Invalid sort order. Must be ASC or DESC');
-        }
-        $validatedSortOrder = $sortOrder;
-    }
-
-    return [$validatedSortField, $validatedSortOrder];
+	// If filter is a JSON string, decode it first
+	if (is_string($filter) && (substr($filter, 0, 1) === '[' || substr($filter, 0, 1) === '{')) {
+		$decoded = json_decode($filter, true);
+		if ($decoded !== null) {
+			$filter = $decoded;
+		} else {
+			throw new Exception("Invalid JSON in filter parameter: " . json_last_error_msg());
+		}
+	}
+	if(!is_array($filter)) {
+		throw new Exception("The 'filter' parameter must be an integer or an array.");
+	}
+	$filterStringParts = array();
+	foreach($filter as $thisFilter) {
+		$filterStringParts[] = $thisFilter['element'].'/**/'.$thisFilter['value'].'/**/'.$thisFilter['operator'];
+	}
+	return implode('][', $filterStringParts);
 }
 
 /**
@@ -674,6 +702,34 @@ private function validateSortParameters($sortField, $sortOrder) {
 	}
 
 	/**
+	 * Get form elements
+	 */
+	private function get_element_details($args)
+	{
+		$element_identifer = $args['element_identifier'];
+		$element_identifer = is_numeric($element_identifer) ? "ele_id = ".intval($element_identifer) : "ele_handle = '".formulize_db_escape($element_identifer)."'";
+
+		$sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE $element_identifer ";
+		$result = $this->db->query($sql);
+
+		if (!$result) {
+			throw new Exception('Query failed. '.$this->db->error());
+		}
+
+		$properties = $this->db->fetchArray($result);
+		$serializedFields = FormulizeObject::serializedDBFields();
+		if(isset($serializedFields['formulize'])) {
+			foreach($serializedFields['formulize'] as $field) {
+				$properties[$field] = unserialize($properties[$field]);
+			}
+		}
+
+		return [
+			'element_properties' => $properties
+		];
+	}
+
+	/**
 	 * Get the details about a single screen
 	 */
 	private function get_screen_details($arguments) {
@@ -779,11 +835,11 @@ private function validateSortParameters($sortField, $sortOrder) {
 
 				// Prepare the value for database storage
 				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
-				if ($preparedValue === false) {
-					throw new Exception('Failed to prepare data: ' . $value . ' for element: ' . $elementHandle);
+				if($preparedValue AND $preparedValue !== $value) {
+					$value = $preparedValue;
 				}
 
-				$preparedData[$elementHandle] = $preparedValue;
+				$preparedData[$elementHandle] = $value;
 			}
 
 			if (empty($preparedData)) {
@@ -805,6 +861,7 @@ private function validateSortParameters($sortField, $sortOrder) {
 				'success' => true,
 				'form_id' => $formId,
 				'entry_id' => $finalEntryId,
+				'prepped_data' => $preparedData,
 				'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
 				'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
 				'element_count' => count($preparedData)
@@ -845,10 +902,7 @@ private function validateSortParameters($sortField, $sortOrder) {
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		if($formulizeConfig['formulizeLoggingOnOff'] AND $formulizeLogFileLocation = $formulizeConfig['formulizeLogFileLocation']) {
 
-			$form_id = intval($arguments['form_id'] ?? 0);
-			$screen_id = intval($arguments['screen_id'] ?? 0);
-			$entry_id = intval($arguments['entry_id'] ?? 0);
-			$user_id = isset($arguments['user_id']) ? intval($arguments['user_id']) : null;
+			list($form_ids, $screen_ids, $entry_ids, $user_ids) = $this->validateSystemActivityLogParams($arguments);
 
 			$filename = $formulizeLogFileLocation.'/'.'formulize_log_active.log';
 			$lineCount = 1000;
@@ -894,14 +948,14 @@ private function validateSortParameters($sortField, $sortOrder) {
 					while (!empty($parts) && $linesFound < $lineCount) {
 							$line = array_pop($parts);
 							if (trim($line) !== '') {
-									if($form_id OR $screen_id OR $entry_id OR $user_id !== null) {
+									if($form_ids OR $screen_ids OR $entry_ids OR $user_ids) {
 										// Filter log entries based on provided parameters
 										$logEntry = json_decode($line, true);
 										if ($logEntry) {
-											if (($form_id && $logEntry['form_id'] != $form_id) ||
-												($screen_id && $logEntry['screen_id'] != $screen_id) ||
-												($entry_id && $logEntry['entry_id'] != $entry_id) ||
-												($user_id !== null && $logEntry['user_id'] != $user_id)) {
+											if (($form_ids && !in_array($form_ids, $logEntry['form_id'])) ||
+												($screen_ids && !in_array($screen_ids, $logEntry['screen_id'])) ||
+												($entry_ids && !in_array($entry_ids, $logEntry['entry_id'])) ||
+												($user_ids && !in_array($user_ids, $logEntry['user_id']))) {
 												continue; // Skip this line if it doesn't match the filters
 											}
 										} else {
@@ -929,6 +983,26 @@ private function validateSortParameters($sortField, $sortOrder) {
     } else {
 			return ['message' => 'Logging is disabled on this Formulize system.' ];
 		}
+	}
+
+	/**
+	 * Validate params for filtering the system activity logs
+	 */
+	private function validateSystemActivityLogParams($arguments) {
+		$params = [ 'form_ids', 'screen_ids', 'entry_ids', 'user_ids'];
+		foreach($params as $param) {
+			if(!isset($arguments[$param])) {
+				$$param = array();
+			} elseif(!is_numeric($arguments[$param]) AND !strstr($arguments[$param], ",")) {
+				throw new Exception("$param must be an integer or comma separated list");
+			} else {
+				$$param = array_filter(explode(",", str_replace(" ", "", $arguments[$param])), 'is_numeric');
+			}
+		}
+		if(count($entry_ids) > 0 AND count($form_ids) != 1) {
+			throw new Exception('A single form ID must be specified when specifying entry IDs');
+		}
+		return [ $form_ids, $screen_ids, $entry_ids, $user_ids ];
 	}
 
 	/**
