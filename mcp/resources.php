@@ -316,7 +316,7 @@ trait resources {
 			$formId = $row['id_form'];
 			if(security_check($formId)) {
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
-				$row['elements'] = [];
+				$row['elements'] = $this->metadataElements;
 				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
@@ -399,10 +399,10 @@ trait resources {
 		}
 
 		// Get form elements
-		$elementsSql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		$elementsSql = "SELECT ele_id, ele_handle, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$elementsResult = $this->db->query($elementsSql);
 
-		$elements = [];
+		$elements = $this->metadataElements;
 		while ($row = $this->db->fetchArray($elementsResult)) {
 			// if user can see the element or is a webmaster
 			if($row['ele_display'] == 1
@@ -737,6 +737,7 @@ trait resources {
 		if(!$res = $this->db->query($sql)) {
 			throw new Exception('Failed to lookup screen data. '.$this->db->error());
 		}
+		$serializedFields = FormulizeObject::serializedDBFields();
 		$screens = [];
 		while($row = $this->db->fetchArray($res)) {
 			if(security_check($row['fid'])) {
@@ -748,7 +749,13 @@ trait resources {
 				} else {
 					$screenSQL = "SELECT * FROM ".$this->db->prefix('formulize_screen_'.strtolower($row['type']))." WHERE sid = ".$row['sid'];
 					$screenRes = $this->db->query($screenSQL);
-					$screens[] = $row + $this->db->fetchArray($screenRes);
+					$screenTypeData = $this->db->fetchArray($screenRes);
+					if(isset($serializedFields['formulize_screen_'.strtolower($row['type'])])) {
+						foreach($serializedFields['formulize_screen_'.strtolower($row['type'])] as $field) {
+							$screenTypeData[$field] = unserialize($screenTypeData[$field]);
+						}
+					}
+					$screens[] = $row + $screenTypeData;
 				}
 			}
 		}
