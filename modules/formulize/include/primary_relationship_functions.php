@@ -326,7 +326,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
     $element->hasData = true;
     $element->isSystemElement = false;
 		$element->setVar('id_form', $fid);
-		$element->setVar('ele_caption', htmlspecialchars_decode($otherForm->getVar('title')).': '.htmlspecialchars_decode($otherElement->getVar('ele_caption')));
+		$element->setVar('ele_caption', htmlspecialchars_decode($otherForm->getSingular().' '.htmlspecialchars_decode($otherElement->getVar('ele_caption'))));
 		$element->setVar('ele_handle', $ele_handle);
 		$element->setVar('ele_order', 1);
 		$element->setVar('ele_display', 1);
