@@ -265,22 +265,29 @@ trait resources {
 	{
 		$filename = $parsedUri['filename'];
 
-		// Validate system resource name
-		$validSystemResources = [
-			'system_info',
-			'applications_list',
-			'groups_list',
-			'users_list',
-			'forms_list',
-			'screens_list',
-			'all_form_connections'
-		];
+		// Dynamically determine valid system resources from registered resources
+    $validSystemResources = $this->getSystemResourceNames();
 
 		if (!in_array($filename, $validSystemResources)) {
 			throw new Exception('Unknown system resource: ' . $filename . '. Valid resources: ' . implode(', ', $validSystemResources));
 		}
 
 		return $this->$filename();
+	}
+
+	/**
+	 * Extract system resource names from registered resources
+	 */
+	private function getSystemResourceNames() {
+			$systemResources = [];
+
+			foreach ($this->resources as $resourceKey => $resource) {
+					if (isset($resource['uri']) && preg_match('/^formulize:\/\/system\/([^\/\.]+)\.json$/', $resource['uri'], $matches)) {
+							$systemResources[] = $matches[1];
+					}
+			}
+
+			return array_unique($systemResources);
 	}
 
 	/**
