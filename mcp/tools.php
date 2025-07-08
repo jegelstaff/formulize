@@ -98,49 +98,52 @@ trait tools {
 			],
 			'create_entry' => [
 				'name' => 'create_entry',
-				'description' => 'Create a new entry in a Formulize form with the provided data',
+				'description' => 'Create a new entry in a Formulize form. Returns success status and new entry ID.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the form to create an entry in. You can look up the forms with the list_forms tool.'
+							'description' => 'Required. Form ID where the entry will be created.'
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Key-value pairs where keys are element handles and values are the data to store. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format. You can lookup the element handles in a form with the get_form_details tool.',
-							'additionalProperties' => true
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format.',
+							'additionalProperties' => true,
+							'examples' => [
+								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
+							]
 						],
 						'relationship_id' => [
 							'type' => 'integer',
-							'description' => 'Relationship ID for derived value calculations (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
+							'description' => 'Optional. Relationship context for derived value calculations. Use -1 for Primary Relationship (includes all connected forms), 0 for no relationship. Default: -1'
 						]
 					],
 					'required' => ['form_id', 'data']
-				],
+				]
 			],
 			'update_entry' => [
 				'name' => 'update_entry',
-				'description' => 'Update an existing entry in a Formulize form with the provided data',
+				'description' => 'Update an existing entry in a Formulize form.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the form containing the entry to update. You can look up the forms with the list_forms tool.'
+							'description' => 'Required. Form ID containing the entry to update.'
 						],
 						'entry_id' => [
 							'type' => 'integer',
-							'description' => 'The ID of the entry to update'
+							'description' => 'Required. ID of the entry to update. Must exist and be accessible to current user.'
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Key-value pairs where keys are element handles and values are the data to store. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format. You can lookup the element handles in a form with the get_form_details tool.',
+							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
 							'type' => 'integer',
-							'description' => 'Relationship ID for derived value calculations (-1 for Primary Relationship, 0 for no relationship). Defaults to -1 for the Primary Relationship which includes all connected forms.'
+							'description' => 'Optional. Relationship context for derived value calculations. Default: -1 (Primary Relationship)'
 						]
 					],
 					'required' => ['form_id', 'entry_id', 'data']
@@ -148,114 +151,108 @@ trait tools {
 			],
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
-				'description' =>
-'Get entries from a form and connected forms. Only returns entries that the user has permission to access.
+						'description' =>
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
-- Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}
-
-Some elements store foreign keys that can be made readable with prepare_database_values_for_human_readability tool.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'form_id' => [
-							'type' => 'integer',
-							'description' => 'The ID of the form to get entries from. You can look up the forms with the list_forms tool.'
-						],
-						'filter' => [
-							'oneOf' => [
-								[
+- Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}',
+						'inputSchema' => [
+							'type' => 'object',
+							'properties' => [
+								'form_id' => [
 									'type' => 'integer',
-									'description' => 'Entry ID'
+									'description' => 'Required. The ID of the form to query. Use list_forms tool to find form IDs.'
 								],
-								[
-									'type' => 'array',
-									'description' =>
-'Optional. Array of filter objects for complex queries.
-
+								'filter' => [
+									'oneOf' => [
+										[
+											'type' => 'integer',
+											'description' => 'Simple filter: Entry ID to retrieve a specific entry'
+										],
+										[
+											'type' => 'array',
+											'description' =>
+'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Multiple conditions are combined using and_or parameter.
 Examples:
 - [ { "element": "age", "operator": "=", "value": "18" } ]
-- [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]
-
-Valid operators are: =, >, <, >=, <=, !=, LIKE
-Dates are stored in YYYY-mm-dd format. Times are stored in 24 hour format.
-Multiple filters will be joined with the boolean specified in the andOr property (either AND or OR).',
-									'items' => [
-										'type' => 'object',
-										'properties' => [
-											'element' => [
-												'type' => 'string',
-												'description' => 'The element to filter on'
-											],
-											'operator' => [
-												'type' => 'string',
-												'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE'],
-												'description' => 'The comparison operator'
-											],
-											'value' => [
-												'type' => 'string',
-												'description' => 'The value to compare against'
+- [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]',
+											'items' => [
+												'type' => 'object',
+												'properties' => [
+													'element' => [
+														'type' => 'string',
+														'description' => 'Element handle to filter on (get from get_form_details)'
+													],
+													'operator' => [
+														'type' => 'string',
+														'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE'],
+														'description' => 'Comparison operator. Use LIKE for partial text matches.'
+													],
+													'value' => [
+														'type' => 'string',
+														'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format.'
+													]
+												],
+												'required' => ['element', 'operator', 'value']
 											]
-										],
-										'required' => ['element', 'operator', 'value']
+										]
 									]
+								],
+								'and_or' => [
+									'type' => 'string',
+									'enum' => ['AND', 'OR'],
+									'description' => 'Logical operator between multiple filter conditions. Default: AND'
+								],
+								'limitSize' => [
+									'type' => ['integer', 'null'],
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								],
+								'limitStart' => [
+									'type' => ['integer', 'null'],
+									'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+								],
+								'sortField' => [
+									'type' => 'string',
+									'description' => 'Element handle to sort by. Get valid handles from get_form_details tool.'
+								],
+								'sortOrder' => [
+									'type' => 'string',
+									'enum' => ['ASC', 'DESC'],
+									'description' => 'Sort direction. Default: ASC (ascending)'
+								],
+								'elements' => [
+									'type' => 'array',
+									'items' => ['type' => 'string'],
+									'description' => 'Optional. Specific element handles to include in results. If omitted, all elements are returned.'
 								]
-							]
-						],
-						'and_or' => [
-							'type' => 'string',
-							'description' => 'The boolean operator to use (AND or OR) between multiple filters. Defaults to AND if not specified.',
-							'enum' => ['AND', 'OR']
-						],
-						'limitSize' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Optional. Number of records to return. Defaults to 100. Set to null for no limit.'
-						],
-						'sortField' => [
-							'type' => 'string',
-							'description' => 'Optional. Element handle to sort by'
-						],
-						'sortOrder' => [
-							'type' => 'string',
-							'description' => 'Optional. Sort direction (ASC or DESC). Defaults to ASC if left out.',
-							'enum' => ['ASC', 'DESC']
-						],
-						'elements' => [
-							'type' => 'array',
-							'description' => 'Optional. Array of elements to include. If not specified, all elements are included. You can lookup the element handles in a form with the get_form_details tool.',
-							'items' => [
-								'type' => 'string',
-								'description' => 'Element handle to include in the results'
-							]
-						],
-					],
-					'required' => ['form_id']
-				]
-			],
-			'prepare_database_values_for_human_readability'	=> [
-				'name' => 'prepare_database_values_for_human_readability',
-				'description' => 'Some database values are stored in a format that is not human-readable. This tool will convert those values to a human-readable format. For example, the values of linked elements are stored as foreign keys, but this tool will convert them to the actual values from the source form.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'value' => [
-							'type' => ['integer', 'number', 'string'],
-							'description' => 'The value from the database to prepare for human readability. This would often come from the results of the get_entries_from_form tool, but can be used independently as well.'
-						],
-						'element_handle' => [
-							'type' => 'string',
-							'description' => 'The element handle of the element that the value belongs to. Configuration properties of the element will be used to convert the raw database value into a human readable value. You can lookup the element handles in a form with the get_form_details tool.'
-						],
-						'entry_id' => [
-							'type' => 'integer',
-							'description' => 'Optional. The ID of the entry that the value belongs to. This is used to determine the context of the value in rare cases.'
+							],
+							'required' => ['form_id']
 						]
 					],
-					'required' => ['value', 'element_handle']
-				]
-			]
+					'prepare_database_values_for_human_readability' => [
+						'name' => 'prepare_database_values_for_human_readability',
+						'description' => 'Convert database values to human-readable format. Essential for linked elements (foreign keys), checkboxes, and select lists where raw database values are IDs or codes rather than display text.',
+						'inputSchema' => [
+							'type' => 'object',
+							'properties' => [
+								'value' => [
+									'type' => ['integer', 'number', 'string'],
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+								'element_handle' => [
+									'type' => 'string',
+									'description' => 'Required. Element handle that defines how to interpret the value. Get from get_form_details tool.'
+								],
+								'entry_id' => [
+									'type' => 'integer',
+									'description' => 'Optional. Entry ID for context (rarely needed but helps with some complex element types)'
+								]
+							],
+							'required' => ['value', 'element_handle']
+						]
+					]
 
 		];
 
@@ -372,8 +369,27 @@ Multiple filters will be joined with the boolean specified in the andOr property
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse('Tool execution failed: ' . $e->getMessage(), -32603, $id);
+			return $this->JSONerrorResponse(
+				'Tool execution failed: ' . $e->getMessage(),
+				-32603,
+				$id,
+				[
+					'tool_name' => $toolName,
+					'provided_arguments' => array_keys($arguments),
+					'required_arguments' => $this->getRequiredArguments($toolName)
+				]
+			);
 		}
+	}
+
+	/**
+	 * Get required arguments for a tool (helper for error messages)
+	 */
+	private function getRequiredArguments($toolName) {
+			if (isset($this->tools[$toolName]['inputSchema']['required'])) {
+					return $this->tools[$toolName]['inputSchema']['required'];
+			}
+			return [];
 	}
 
 	/**
@@ -432,28 +448,35 @@ Multiple filters will be joined with the boolean specified in the andOr property
 		global $xoopsUser;
 
 		$form_id = intval($arguments['form_id']);
-		$elementHandles = $arguments['elementHandles'] ?? array();
 		$filter = $arguments['filter'] ?? '';
 		$andOr = $arguments['andOr'] ?? 'AND';
-		$currentView = $arguments['currentView'] ?? 'all';
-		$limitStart = $arguments['limitStart'] ?? null;
+		$limitStart = $arguments['limitStart'] ?? 0;
 		$limitSize = $arguments['limitSize'] ?? 100;
-		$sortField = $arguments['sortField'] ?? '';
+		$sortField = $arguments['sortField'] ?? 'entry_id';
 		$sortOrder = $arguments['sortOrder'] ?? 'ASC';
-		$form_relationship_id = intval($arguments['form_relationship_id'] ?? -1);
+		$elements = $arguments['elements'] ?? array();
 
 		try {
+
+			if(!$form_id OR $form_id < 0) {
+				throw new Exception('Form ID must be a positive integer');
+			}
+
 			// Build scope based on authenticated user and their permissions
-			$scope = buildScope($currentView, $xoopsUser, $form_id);
+			$scope = buildScope('all', $xoopsUser, $form_id);
 
 			// The buildScope function returns an array with [scope, actualCurrentView]
 			$actualScope = $scope[0];
-			$actualCurrentView = $scope[1];
+
+			// validate stuff...
+			list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
+			list($sortField, $sortOrder) = $this->validateSortParameters($sortField, $sortOrder);
+			$elements = $this->validateElementHandles($elements);
 
 			// Call Formulize's gatherDataset function with all parameters
 			$dataset = gatherDataset(
 				$form_id,
-				$elementHandles,
+				$elements,
 				$filter,
 				$andOr,
 				$actualScope,
@@ -461,7 +484,7 @@ Multiple filters will be joined with the boolean specified in the andOr property
 				$limitSize,
 				$sortField,
 				$sortOrder,
-				$form_relationship_id
+				-1 // always use primary relationship (all connections)
 			);
 
 			return [
@@ -469,27 +492,123 @@ Multiple filters will be joined with the boolean specified in the andOr property
 				'dataset' => $dataset,
 				'total_count' => count($dataset),
 				'scope_used' => $actualScope,
-				'current_view_requested' => $currentView,
-				'current_view_actual' => $actualCurrentView,
 				'parameters' => [
-					'elementHandles' => $elementHandles,
+					'elements' => $elements,
 					'filter' => $filter,
 					'andOr' => $andOr,
 					'limitStart' => $limitStart,
 					'limitSize' => $limitSize,
 					'sortField' => $sortField,
 					'sortOrder' => $sortOrder,
-					'form_relationship_id' => $form_relationship_id
+					'form_relationship_id' => -1
 				]
 			];
 		} catch (Exception $e) {
 			return [
 				'error' => 'gatherDataset execution failed: ' . $e->getMessage(),
 				'form_id' => $form_id,
-				'requested_scope' => $currentView
+				'parameters' => [
+					'elements' => $elements,
+					'filter' => $filter,
+					'andOr' => $andOr,
+					'limitStart' => $limitStart,
+					'limitSize' => $limitSize,
+					'sortField' => $sortField,
+					'sortOrder' => $sortOrder,
+					'form_relationship_id' => -1
+				]
 			];
 		}
 	}
+
+/**
+ * Validate and sanitize sort parameters
+ */
+private function validateSortParameters($sortField, $sortOrder) {
+    $validatedSortField = '';
+    $validatedSortOrder = 'ASC';
+
+		$dataHandler = new formulizeDataHandler();
+
+    if (!empty($sortField)) {
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
+        throw new Exception('Invalid element handle for sort field: ' . $sortField);
+      }
+      $validatedSortField = $sortField;
+    }
+
+    if (!empty($sortOrder)) {
+        $sortOrder = strtoupper($sortOrder);
+        if (!in_array($sortOrder, ['ASC', 'DESC'])) {
+            throw new Exception('Invalid sort order. Must be ASC or DESC');
+        }
+        $validatedSortOrder = $sortOrder;
+    }
+
+    return [$validatedSortField, $validatedSortOrder];
+}
+
+/**
+ * Validate element handles array
+ */
+	private function validateElementHandles($elementHandles)
+	{
+		if (!is_array($elementHandles)) {
+			return [];
+		}
+
+		$dataHandler = new formulizeDataHandler();
+
+		$validatedHandles = [];
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		foreach ($elementHandles as $handle) {
+			if (!is_string($handle)) {
+				throw new Exception('Element handle must be a string');
+			}
+			if(!$elementObject = $element_handler->get($handle) AND !in_array($handle, $dataHandler->metadataFields)) {
+				throw new Exception('Invalid element handle: ' . $handle);
+			}
+			$validatedHandles[$elementObject->getVar('fid')][] = $handle;
+		}
+
+		return $validatedHandles;
+	}
+
+
+	/**
+	 * Validate and sanitize limit parameters
+	 */
+	private function validateLimitParameters($limitStart, $limitSize)
+	{
+		$validatedLimitStart = null;
+		$validatedLimitSize = 100; // Default
+
+		if ($limitStart !== null) {
+			if (!is_numeric($limitStart) || $limitStart < 0) {
+				throw new Exception('limitStart must be a non-negative integer');
+			}
+			$validatedLimitStart = intval($limitStart);
+		}
+
+		if ($limitSize !== null) {
+			if (!is_numeric($limitSize)) {
+				throw new Exception('limitSize must be an integer or null');
+			}
+			$limitSizeInt = intval($limitSize);
+			if ($limitSizeInt < 0) {
+				throw new Exception('limitSize must be non-negative');
+			}
+			// Reasonable upper limit to prevent resource exhaustion
+			if ($limitSizeInt > 10000) {
+				throw new Exception('limitSize cannot exceed 10000 records');
+			}
+			$validatedLimitSize = $limitSizeInt;
+		}
+
+		return [$validatedLimitStart, $validatedLimitSize];
+	}
+
 
 	/**
 	 * Prepare raw database values for human consumption

@@ -130,7 +130,6 @@ trait resources {
 	 */
 	private function handleResourceRead($params, $id)
 	{
-
 		$uri = $params['uri'] ?? '';
 
 		if (!$uri) {
@@ -138,39 +137,19 @@ trait resources {
 		}
 
 		try {
-			// Parse: formulize://schemas/BP_Readings_(form_1).json
-			if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
-				throw new Exception('Invalid resource URI format');
-			}
+			// Enhanced URI parsing with better validation
+			$parsedUri = $this->parseResourceUri($uri);
 
-			$type = $matches[1];      // "schemas"
-			$filename = strtolower($matches[2]);  // "BP_Readings_(form_1)"
-			$extension = $matches[3]; // "json"
-
-			switch ($type) {
+			switch ($parsedUri['type']) {
 				case 'schemas':
 				case 'permissions':
-					$filenameParts = explode('_', $filename);
-					$firstFilenamePart = $filenameParts[array_key_first($filenameParts)];
-					$id = trim($filenameParts[array_key_last($filenameParts)], ")"); // remove ) from ...form_1)
-					switch ($type) {
-						case 'schemas':
-							$methodName = 'form_schemas';
-							break;
-						case 'permissions':
-							$methodName = $firstFilenamePart == 'form' ? 'group_permissions' : 'form_permissions'; // filename is either form_perm_for_group, or group_perm_for_form. method name is based on the last part, ie: the item we're basing the scope of data on.
-							break;
-					}
-					$result = $this->$methodName($id);
+					$result = $this->handleSchemaOrPermissionResource($parsedUri);
 					break;
-
 				case 'system':
-					$result = $this->$filename();
+					$result = $this->handleSystemResource($parsedUri);
 					break;
-
 				default:
-					throw new Exception('Unknown resource type: ' . $uri);
-					break;
+					throw new Exception('Unknown resource type: ' . $parsedUri['type']);
 			}
 
 			return [
@@ -187,8 +166,121 @@ trait resources {
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse('Resource read failed: ' . $e->getMessage(), -32603, $id);
+			return $this->JSONerrorResponse(
+				'Resource read failed: ' . $e->getMessage(),
+				-32603,
+				$id,
+				[
+					'requested_uri' => $uri,
+					'uri_format' => 'formulize://type/resource_name.extension',
+					'available_types' => ['system', 'schemas', 'permissions']
+				]
+			);
 		}
+	}
+
+	/**
+	 * Parse and validate resource URI
+	 */
+	private function parseResourceUri($uri)
+	{
+		// Parse: formulize://schemas/form_name_(form_1).json
+		if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
+			throw new Exception('Invalid resource URI format. Expected: formulize://type/name.extension');
+		}
+
+		$type = $matches[1];
+		$filename = $matches[2];
+		$extension = $matches[3];
+
+		// Validate extension
+		if ($extension !== 'json') {
+			throw new Exception('Unsupported file extension: ' . $extension . '. Only .json is supported.');
+		}
+
+		// Validate type
+		$validTypes = ['system', 'schemas', 'permissions'];
+		if (!in_array($type, $validTypes)) {
+			throw new Exception('Invalid resource type: ' . $type . '. Valid types: ' . implode(', ', $validTypes));
+		}
+
+		return [
+			'type' => $type,
+			'filename' => strtolower($filename),
+			'extension' => $extension,
+			'full_match' => $matches
+		];
+	}
+
+	/**
+	 * Handle schema or permission resources
+	 */
+	private function handleSchemaOrPermissionResource($parsedUri)
+	{
+		$filename = $parsedUri['filename'];
+		$type = $parsedUri['type'];
+
+		$filenameParts = explode('_', $filename);
+
+		if (empty($filenameParts)) {
+			throw new Exception('Invalid filename format for ' . $type . ' resource');
+		}
+
+		$firstPart = $filenameParts[0];
+		$lastPart = end($filenameParts);
+
+		// Extract ID from last part (e.g., "form_1)" -> "1")
+		if (!preg_match('/\((\w+)_(\d+)\)$/', $lastPart, $idMatches)) {
+			throw new Exception('Could not extract ID from filename: ' . $filename);
+		}
+
+		$id = intval($idMatches[2]);
+		$idType = $idMatches[1]; // 'form' or 'group'
+
+		switch ($type) {
+			case 'schemas':
+				if ($idType !== 'form') {
+					throw new Exception('Schema resources must reference a form ID');
+				}
+				return $this->form_schemas($id);
+
+			case 'permissions':
+				if ($firstPart === 'form' && $idType === 'group') {
+					return $this->group_permissions($id);
+				} elseif ($firstPart === 'group' && $idType === 'form') {
+					return $this->form_permissions($id);
+				} else {
+					throw new Exception('Invalid permission resource format. Expected form_perms_for_group or group_perms_for_form');
+				}
+
+			default:
+				throw new Exception('Unhandled resource type in schema/permission handler: ' . $type);
+		}
+	}
+
+	/**
+	 * Handle system resources
+	 */
+	private function handleSystemResource($parsedUri)
+	{
+		$filename = $parsedUri['filename'];
+
+		// Validate system resource name
+		$validSystemResources = [
+			'system_info',
+			'applications_list',
+			'groups_list',
+			'users_list',
+			'forms_list',
+			'screens_list',
+			'all_form_connections'
+		];
+
+		if (!in_array($filename, $validSystemResources)) {
+			throw new Exception('Unknown system resource: ' . $filename . '. Valid resources: ' . implode(', ', $validSystemResources));
+		}
+
+		return $this->$filename();
 	}
 
 	/**
