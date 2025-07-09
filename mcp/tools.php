@@ -93,7 +93,7 @@ trait tools {
 							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
 						]
 					],
-					'required' => ['form_id']
+					'required' => ['element_identifier']
 				]
 			],
 			'get_screen_details' => [
@@ -843,7 +843,7 @@ private function validateFilter($filter) {
 			}
 
 			if (empty($preparedData)) {
-				throw new Exception('No valid data provided');
+				throw new Exception('No valid data provided. Valid element handles: '.implode(", ",$validHandles));
 			}
 
 			// Step 3: Write the entry
@@ -1040,58 +1040,84 @@ private function validateFilter($filter) {
 		$operation = strtoupper(strtok($sql, ' '));
 
 		if (!in_array($operation, $allowedOperations)) {
-			throw new Exception("Operation '$operation' not allowed");
+			throw new Exception("Operation '$operation' not allowed. Allowed operations: " . implode(', ', $allowedOperations));
 		}
 
-		// Blacklist approach: Block specific dangerous functions
-    $dangerousFunctions = [
-        // File operations
-        'LOAD_FILE', 'LOAD_DATA', 'INTO OUTFILE', 'INTO DUMPFILE',
+		// Remove string literals before checking for dangerous patterns
+		$sqlWithoutStrings = $this->removeStringLiterals($sql);
 
-        // System functions
-        'SYSTEM', 'SHELL', 'EXEC', 'EXECUTE',
+		// Check for all dangerous patterns (both functions and SQL constructs)
+		$dangerousPatterns = [
+			// File operations
+			'/\bLOAD_FILE\s*\(/i' => 'Dangerous function LOAD_FILE not allowed',
+			'/\bINTO\s+(OUTFILE|DUMPFILE)\b/i' => 'File operations not allowed',
+			'/\bLOAD\s+DATA\b/i' => 'Data loading operations not allowed',
 
-        // User-defined functions (common dangerous ones)
-        'UDF_EXEC', 'LIB_MYSQLUDF_SYS_EXEC',
+			// System functions
+			'/\bSYSTEM\s*\(/i' => 'Dangerous function SYSTEM not allowed',
+			'/\bSHELL\s*\(/i' => 'Dangerous function SHELL not allowed',
+			'/\bEXEC\s*\(/i' => 'Dangerous function EXEC not allowed',
+			'/\bEXECUTE\s+/i' => 'Dynamic SQL execution not allowed',
 
-        // Information gathering
-        'USER', 'CURRENT_USER', 'SESSION_USER', 'SYSTEM_USER',
-        'CONNECTION_ID', 'VERSION',
+			// User-defined functions
+			'/\bUDF_EXEC\s*\(/i' => 'Dangerous UDF UDF_EXEC not allowed',
+			'/\bLIB_MYSQLUDF_SYS_EXEC\s*\(/i' => 'Dangerous UDF LIB_MYSQLUDF_SYS_EXEC not allowed',
 
-        // Custom dangerous functions (add your own)
-        'DROP_ALL_TABLES', 'DELETE_ALL_DATA', // example dangerous UDFs
-    ];
+			// Information gathering functions
+			'/\bUSER\s*\(/i' => 'Information gathering function USER not allowed',
+			'/\bCURRENT_USER\s*\(/i' => 'Information gathering function CURRENT_USER not allowed',
+			'/\bSESSION_USER\s*\(/i' => 'Information gathering function SESSION_USER not allowed',
+			'/\bSYSTEM_USER\s*\(/i' => 'Information gathering function SYSTEM_USER not allowed',
+			'/\bCONNECTION_ID\s*\(/i' => 'Information gathering function CONNECTION_ID not allowed',
+			'/\bVERSION\s*\(/i' => 'Information gathering function VERSION not allowed',
 
-    // Check for dangerous function patterns
-    foreach ($dangerousFunctions as $func) {
-        if (preg_match('/\b' . preg_quote($func, '/') . '\s*\(/i', $sql)) {
-            throw new Exception("Dangerous function '$func' not allowed");
-        }
-    }
+			// Custom dangerous functions
+			'/\bDROP_ALL_TABLES\s*\(/i' => 'Dangerous UDF DROP_ALL_TABLES not allowed',
+			'/\bDELETE_ALL_DATA\s*\(/i' => 'Dangerous UDF DELETE_ALL_DATA not allowed',
 
-    // Block dangerous SQL patterns
-    $dangerousPatterns = [
-        '/\bINTO\s+(OUTFILE|DUMPFILE)\b/i',
-        '/\bLOAD\s+DATA\b/i',
-        '/\b(CREATE|DROP|ALTER)\s+(FUNCTION|PROCEDURE|TRIGGER)\b/i',
-        '/\bCALL\s+/i',
-        '/\bEXECUTE\s+/i',
-    ];
+			// DDL operations
+			'/\b(CREATE|DROP|ALTER)\s+(FUNCTION|PROCEDURE|TRIGGER)\b/i' => 'DDL operations not allowed',
 
-    foreach ($dangerousPatterns as $pattern) {
-        if (preg_match($pattern, $sql)) {
-            throw new Exception('SQL contains dangerous patterns');
-        }
-    }
+			// Stored procedures
+			'/\bCALL\s+/i' => 'Stored procedure calls not allowed',
+
+			// Data modification (defense in depth - also caught by operation validation)
+			'/\b(INSERT|UPDATE|DELETE)\b/i' => 'Data modification operations not allowed',
+		];
+
+		foreach ($dangerousPatterns as $pattern => $errorMsg) {
+			if (preg_match($pattern, $sqlWithoutStrings)) {
+				throw new Exception($errorMsg);
+			}
+		}
 
 		// Additional Formulize-specific validations
 		if ($operation === 'SELECT') {
 			// Ensure it includes the XOOPS prefix for Formulize tables
-			if (preg_match('/\bformulize(_\w+)?\b/i', $sql) &&
-				!preg_match('/\b' . preg_quote(XOOPS_DB_PREFIX) . '_formulize/i', $sql)) {
+			if (
+				preg_match('/\bformulize(_\w+)?\b/i', $sql) &&
+				!preg_match('/\b' . preg_quote(XOOPS_DB_PREFIX) . '_formulize/i', $sql)
+			) {
 				throw new Exception('Formulize table queries must use proper prefix');
 			}
 		}
+
+		return $sql;
+	}
+
+	/**
+	 * Remove string literals from SQL to avoid false positives in pattern matching
+	 * Replaces quoted strings with placeholders
+	 */
+	private function removeStringLiterals($sql) {
+		// Remove single-quoted strings
+		$sql = preg_replace("/'[^']*'/", "'STRING'", $sql);
+
+		// Remove double-quoted strings
+		$sql = preg_replace('/"[^"]*"/', '"STRING"', $sql);
+
+		// Remove backtick-quoted identifiers
+		$sql = preg_replace('/`[^`]*`/', '`IDENTIFIER`', $sql);
 
 		return $sql;
 	}
