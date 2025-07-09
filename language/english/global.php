@@ -17,6 +17,8 @@ define('_DISABLEHTML','Disable html');
 define('_PREVIEW','Preview');
 
 define('_GO','Go!');
+define('_SAVE_YOUR_CHANGES','Save your changes');
+define('_UNSAVED_WARNING','You have unsaved changes!');
 define('_NESTED','Nested');
 define('_NOCOMMENTS','No Comments');
 define('_FLAT','Flat');
