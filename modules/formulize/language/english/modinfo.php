@@ -186,12 +186,12 @@ define("_MI_formulizeMENU_DESC","Displays an individually configurable menu in a
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Form Menu");
 
-define("_MI_formulize_EXPORTINTROCHAR","Prefix strings in .csv files with a character to smooth importing and appearance in Excel and Google?");
+define("_MI_formulize_EXPORTINTROCHAR","Prefix strings in .csv files with a TAB (for Excel) or an apostrophe (for Google Sheets)? Prefixing helps smooth the importing and appearance in Excel or Google Sheets.");
 define("_MI_formulize_EXPORTINTROCHARDESC","Excel and Google Sheets try to be helpful and automatically interpret certain values when opening .csv files. This can damage your data. To force non-numeric values to be read as-is, Formulize can prefix them with certain characters that will trigger them to be read as plain strings by Excel and Google. However, this can cause havoc in other programs if you need plain .csv data. The default behaviour suits opening downloaded files in Excel, and using the IMPORTDATA function in Google Sheets to gather data via a makecsv.php reference.");
-define("_MI_formulize_EIC_BASIC", "Prefix strings with a TAB character (for Excel), unless makecsv.php is generating the file, then use an apostrophe (for Google Sheets)");
-define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix strings with an apostrophe (for Google Sheets)");
-define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix strings with a TAB (for Excel)");
-define("_MI_formulize_EIC_PLAIN", "Never prefix strings (for programs that need clean, raw data)");
+define("_MI_formulize_EIC_BASIC", "Normally, use TAB (Excel). With makecsv.php, use apostrophe (for Google Sheets)");
+define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix with an apostrophe (for Google Sheets)");
+define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix with a TAB (for Excel)");
+define("_MI_formulize_EIC_PLAIN", "Never prefix (for programs that need clean, raw data)");
 
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable View Buttons"._MI_formulize_PREFHEADEND.'Enable Printable View buttons (then you can turn them on and off per screen)');
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable View buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable View buttons will not show up on any screens.');
