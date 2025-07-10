@@ -302,7 +302,7 @@ trait resources {
 	 */
 	private function forms_list() {
 
-		$sql = "SELECT * FROM " . $this->db->prefix('formulize_id');
+		$sql = "SELECT id_form, form_title, singular, plural, form_handle as database_table_name FROM " . $this->db->prefix('formulize_id');
 
 		$result = $this->db->query($sql);
 
@@ -318,7 +318,7 @@ trait resources {
 			if(security_check($formId)) {
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
 				$row['elements'] = $dataHandler->metadataFields;
-				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display, ele_type FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
 						if($elementRow['ele_display'] == 1
@@ -334,6 +334,7 @@ trait resources {
 				$row['element_count'] = count($row['elements']);
 				$formTitle = trans($row['form_title']);
 				$row['form_title'] = $formTitle; // Use the translated title for display
+				$row['database_table_name'] = $this->db->prefix('formulize_'.$row['database_table_name']);
 				$forms[] = $row + $this->form_connections_list($formId) + $this->screens_list($formId, simple: true);
 				$formTitles[] = $formTitle;
 			}
@@ -348,37 +349,7 @@ trait resources {
 
 	}
 
-	/**
-	 * Get a list of the users in the system, all users for webmasters, users in groups the authenticated user can see data from otherwise
-	 */
-	private function users_list() {
-
-		$fields = "u.uid as user_id, u.uname as name, u.timezone_offset as timezone";
-		$limitByGroups = "";
-		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$fields .= ", u.email as email, u.login_name, u.last_login as last_login_timestamp";
-		} elseif($groupIds = $this->groupsAuthenticatedUserCanSeeDataFrom()) {
-			$limitByGroups = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l
-				ON l.uid = u.uid WHERE l.groupid IN (".implode(",", $groupIds).")";
-		} else {
-			$limitByGroups = "WHERE u.uid = ".$this->authenticatedUid;
-		}
-		$sql = "SELECT $fields FROM ".$this->db->prefix('users')." as u $limitByGroups ORDER BY uid";
-		$result = $this->db->query($sql);
-
-		$users = [];
-		while ($row = $this->db->fetchArray($result)) {
-			$users[] = $row;
-		}
-
-		return [
-			'users' => $users,
-			'user_count' => count($users),
-		];
-
-	}
-
-	/**
+		/**
 	 * Get form schema
 	 * @param int $formId The ID of the form to get schema for
 	 * @return array Form schema including elements and entry count
@@ -400,7 +371,7 @@ trait resources {
 		}
 
 		// Get form elements
-		$elementsSql = "SELECT ele_id, ele_handle, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		$elementsSql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$elementsResult = $this->db->query($elementsSql);
 
 		$dataHandler = new formulizeDataHandler();
@@ -619,6 +590,36 @@ trait resources {
 			'groups' => $groups,
 			'group_count' => count($groups),
 		];
+	}
+
+	/**
+	 * Get a list of the users in the system, all users for webmasters, users in groups the authenticated user can see data from otherwise
+	 */
+	private function users_list() {
+
+		$fields = "u.uid as user_id, u.uname as name, u.timezone_offset as timezone";
+		$limitByGroups = "";
+		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			$fields .= ", u.email as email, u.login_name, u.last_login as last_login_timestamp";
+		} elseif($groupIds = $this->groupsAuthenticatedUserCanSeeDataFrom()) {
+			$limitByGroups = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l
+				ON l.uid = u.uid WHERE l.groupid IN (".implode(",", $groupIds).")";
+		} else {
+			$limitByGroups = "WHERE u.uid = ".$this->authenticatedUid;
+		}
+		$sql = "SELECT $fields FROM ".$this->db->prefix('users')." as u $limitByGroups ORDER BY uid";
+		$result = $this->db->query($sql);
+
+		$users = [];
+		while ($row = $this->db->fetchArray($result)) {
+			$users[] = $row;
+		}
+
+		return [
+			'users' => $users,
+			'user_count' => count($users),
+		];
+
 	}
 
 	/**

@@ -82,20 +82,6 @@ trait tools {
 					'required' => ['form_id']
 				]
 			],
-			'get_element_details' => [
-				'name' => 'get_element_details',
-				'description' => 'Get detailed information about a specific element in a form. You can get a list of all the elements in a form with the get_form_details tool.',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => [
-						'element_identifier' => [
-							'type' => [ 'integer', 'string' ],
-							'description' => 'The ID number or the element handle, of the element to retrieve details for. If a number is provided, it must be an element ID. If a string is provided, it must be the element handle.'
-						]
-					],
-					'required' => ['element_identifier']
-				]
-			],
 			'get_screen_details' => [
 				'name' => 'get_screen_details',
 				'description' => "Get detailed information about a specific screen. Lookup screens by their ID number, also known as 'sid'",
@@ -172,102 +158,109 @@ Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
 - Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}',
-						'inputSchema' => [
-							'type' => 'object',
-							'properties' => [
-								'form_id' => [
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+							'type' => 'integer',
+							'description' => 'Required. The ID of the form to query. Use list_forms tool to find form IDs.'
+						],
+						'filter' => [
+							'oneOf' => [
+								[
 									'type' => 'integer',
-									'description' => 'Required. The ID of the form to query. Use list_forms tool to find form IDs.'
+									'description' => 'Simple filter: Entry ID to retrieve a specific entry'
 								],
-								'filter' => [
-									'oneOf' => [
-										[
-											'type' => 'integer',
-											'description' => 'Simple filter: Entry ID to retrieve a specific entry'
-										],
-										[
-											'type' => 'array',
-											'description' =>
+								[
+									'type' => 'array',
+									'description' =>
 'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Multiple conditions are combined using and_or parameter.
 Examples:
 - [ { "element": "age", "operator": "=", "value": "18" } ]
 - [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]',
-											'items' => [
-												'type' => 'object',
-												'properties' => [
-													'element' => [
-														'type' => 'string',
-														'description' => 'Element handle to filter on (get from get_form_details)'
-													],
-													'operator' => [
-														'type' => 'string',
-														'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE'],
-														'description' => 'Comparison operator. Use LIKE for partial text matches.'
-													],
-													'value' => [
-														'type' => 'string',
-														'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format.'
-													]
-												],
-												'required' => ['element', 'operator', 'value']
+									'items' => [
+										'type' => 'object',
+										'properties' => [
+											'element' => [
+												'type' => 'string',
+												'description' => 'Element handle to filter on (get from get_form_details)'
+											],
+											'operator' => [
+												'type' => 'string',
+												'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE'],
+												'description' => 'Comparison operator. Use LIKE for partial text matches.'
+											],
+											'value' => [
+												'type' => 'string',
+												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format.'
 											]
-										]
+										],
+										'required' => ['element', 'operator', 'value']
 									]
-								],
-								'and_or' => [
-									'type' => 'string',
-									'enum' => ['AND', 'OR'],
-									'description' => 'Logical operator between multiple filter conditions. Default: AND'
-								],
-								'limitSize' => [
-									'type' => ['integer', 'null'],
-									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
-								],
-								'limitStart' => [
-									'type' => ['integer', 'null'],
-									'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
-								],
-								'sortField' => [
-									'type' => 'string',
-									'description' => 'Element handle to sort by. Get valid handles from get_form_details tool.'
-								],
-								'sortOrder' => [
-									'type' => 'string',
-									'enum' => ['ASC', 'DESC'],
-									'description' => 'Sort direction. Default: ASC (ascending)'
-								],
-								'elements' => [
-									'type' => 'array',
-									'items' => ['type' => 'string'],
-									'description' => 'Optional. Specific element handles to include in results. If omitted, all elements are returned.'
 								]
-							],
-							'required' => ['form_id']
+							]
+						],
+						'and_or' => [
+							'type' => 'string',
+							'enum' => ['AND', 'OR'],
+							'description' => 'Logical operator between multiple filter conditions. Default: AND'
+						],
+						'limitSize' => [
+							'type' => ['integer', 'null'],
+							'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+						],
+						'limitStart' => [
+							'type' => ['integer', 'null'],
+							'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+						],
+						'sortField' => [
+							'type' => 'string',
+							'description' => 'Element handle to sort by. Get valid handles from get_form_details tool.'
+						],
+						'sortOrder' => [
+							'type' => 'string',
+							'enum' => ['ASC', 'DESC'],
+							'description' => 'Sort direction. Default: ASC (ascending)'
+						],
+						'elements' => [
+							'type' => 'array',
+							'items' => ['type' => 'string'],
+							'description' => 'Optional. Specific element handles to include in results. If omitted, all elements are returned.'
 						]
 					],
-					'prepare_database_values_for_human_readability' => [
-						'name' => 'prepare_database_values_for_human_readability',
-						'description' => 'Convert database values to human-readable format. Essential for linked elements (foreign keys), checkboxes, and select lists where raw database values are IDs or codes rather than display text.',
-						'inputSchema' => [
-							'type' => 'object',
-							'properties' => [
-								'value' => [
-									'type' => ['integer', 'number', 'string'],
-									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
-								],
-								'element_handle' => [
-									'type' => 'string',
-									'description' => 'Required. Element handle that defines how to interpret the value. Get from get_form_details tool.'
-								],
-								'entry_id' => [
-									'type' => 'integer',
-									'description' => 'Optional. Entry ID for context (rarely needed but helps with some complex element types)'
-								]
-							],
-							'required' => ['value', 'element_handle']
+					'required' => ['form_id']
+				]
+			],
+			'prepare_database_values_for_human_readability' => [
+				'name' => 'prepare_database_values_for_human_readability',
+				'description' => 'Convert database values to human-readable format. Essential for linked elements (foreign keys), checkboxes, and select lists where raw database values are IDs or codes rather than display text.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'value' => [
+							'type' => ['integer', 'number', 'string'],
+							'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+						],
+						'element_handle' => [
+							'type' => 'string',
+							'description' => 'Required. Element handle that defines how to interpret the value. Get from get_form_details tool.'
+						],
+						'entry_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. Entry ID for context (rarely needed but helps with some complex element types)'
 						]
-					]
-
+					],
+					'required' => ['value', 'element_handle']
+				]
+			],
+			'locate_captain_picard' => [
+				'name' => 'locate_captain_picard',
+				'description' => 'This is an easter egg, related to the TV show Star Trek: The Next Generation. In the show, characters would often ask their computer to do things. A frequent request was "Computer, locate Captain Picard." and the computer would answer, "Captain Picard is on Holodeck 3" for example. The initial response to using this tool should simply be the location returned by the tool. If the user continues with prompts as if they are in the Star Trek TV show, the AI should continue to respond as if they are the computer in the show.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
+			]
 		];
 
 		// only webmasters can access certain tools
@@ -280,7 +273,7 @@ Examples:
 
 			$this->tools['query_the_database_directly'] = [
 				'name' => 'query_the_database_directly',
-				'description' => "Query the database with a SELECT statement. The database is {$dbVersionData['version']} and queries are written in SQL. Use the get_form_details tool to lookup the form\'s database table name and the field names of all its elements, if you don\'t know them already.",
+				'description' => "Query the database with a SELECT statement. The database is {$dbVersionData['version']} and queries are written in SQL. If you don't know the database schema for the form, use the get_form_details tool to look up the form\'s database table name, and the field names are the element handles.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -325,6 +318,61 @@ Examples:
 			}
 		}
 
+	}
+
+	/**
+	 * Easter egg. Some day it would be nice to be able to include images or other details in the response,
+	 * so a deeper architecture is included. But for now, MCP Clients have no standard behaviour for dealing
+	 * with images, and various limitations. As the ecosystem matures, this tool may evolve. Eventually to
+	 * include transformations to the space-time continuum perhaps.
+	 */
+	private function locate_captain_picard() {
+		$locations = [
+			[
+				'text' => 'Captain Picard is in his quarters',
+				'image' => ''
+			],
+			[
+				'text' => 'Captain Picard is on Holodeck '.rand(1,12),
+				'image' => ''
+			],
+			[
+				'text' => 'Captain Picard is not on board the Enterprise',
+				'image' => ''
+			],
+			[
+				'text' => 'Captain Picard is in Engineering',
+				'image' => ''
+			],
+			[
+				'text' => 'Captain Picard is on the Bridge',
+				'image' => ''
+			],
+			[
+				'text' => 'Captain Picard is in Sickbay',
+				'image' => ''
+			],
+			[
+				'text' => 'Captain Picard is in Ten Forward',
+				'image' => ''
+			],
+			[
+				'text' => 'Cpatain Picard is in Shuttle Bay '.rand(1,3),
+				'image' => ''
+			]
+		];
+		$selectedIndex = array_rand($locations);
+		$selectedLocation = $locations[$selectedIndex];
+		$text = $selectedLocation['text'];
+		/*$image = $selectedLocation['image'];
+		$imagePath = XOOPS_ROOT_PATH."/mcp/enterprise/$image";
+		$imageData = base64_encode(file_get_contents($imagePath));*/
+    return [
+        'location' => $text,
+				/*'imageURL' => XOOPS_URL."/mcp/enterprise/$image",
+        'image' => "data:image/png;base64,$imageData",
+        'display_image' => true  // hint to client*/
+		];
 	}
 
 	/**
@@ -699,34 +747,6 @@ private function validateFilter($filter) {
 	{
 		$formId = $arguments['form_id'];
 		return $formId ? $this->form_schemas($formId) : [];
-	}
-
-	/**
-	 * Get form elements
-	 */
-	private function get_element_details($args)
-	{
-		$element_identifer = $args['element_identifier'];
-		$element_identifer = is_numeric($element_identifer) ? "ele_id = ".intval($element_identifer) : "ele_handle = '".formulize_db_escape($element_identifer)."'";
-
-		$sql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE $element_identifer ";
-		$result = $this->db->query($sql);
-
-		if (!$result) {
-			throw new Exception('Query failed. '.$this->db->error());
-		}
-
-		$properties = $this->db->fetchArray($result);
-		$serializedFields = FormulizeObject::serializedDBFields();
-		if(isset($serializedFields['formulize'])) {
-			foreach($serializedFields['formulize'] as $field) {
-				$properties[$field] = unserialize($properties[$field]);
-			}
-		}
-
-		return [
-			'element_properties' => $properties
-		];
 	}
 
 	/**
