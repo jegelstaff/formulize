@@ -98,7 +98,9 @@ if(isset($_GET['forceDerivedValueUpdate'])) {
 
 // query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
 $sql=sprintf("SELECT singleentry,form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
-$res = $xoopsDB->query ( $sql ) or die('SQL Error !<br />'.$sql.'<br />'.$xoopsDB->error());
+if(!$res = $xoopsDB->query ( $sql )) {
+	redirect_header(XOOPS_URL . "/modules/formulize/admin/ui.php?op=patchDB", 5, "Your database needs to be updated. Please update it on the following page.", true);
+}
 //global $nb_fichier;
 
 if ( $res ) {
