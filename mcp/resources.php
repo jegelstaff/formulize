@@ -312,12 +312,11 @@ trait resources {
 
 		$forms = [];
 		$formTitles = [];
-		$dataHandler = new formulizeDataHandler();
 		while ($row = $this->db->fetchArray($result)) {
 			$formId = $row['id_form'];
 			if(security_check($formId)) {
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
-				$row['elements'] = $dataHandler->metadataFields;
+				$row['elements'] = $this->metadataFields();
 				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display, ele_type FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
@@ -374,8 +373,8 @@ trait resources {
 		$elementsSql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$elementsResult = $this->db->query($elementsSql);
 
-		$dataHandler = new formulizeDataHandler();
-		$elements = $dataHandler->metadataFields;
+		$serializedFields = FormulizeObject::serializedDBFields();
+		$elements = $this->metadataFields();
 		while ($row = $this->db->fetchArray($elementsResult)) {
 			// if user can see the element or is a webmaster
 			if($row['ele_display'] == 1
@@ -384,6 +383,11 @@ trait resources {
 					strstr($row['ele_display'], ",")
 					AND array_intersect($this->userGroups, explode(",", $row['ele_display']))
 				)) {
+				if(isset($serializedFields['formulize'])) {
+					foreach($serializedFields['formulize'] as $field) {
+						$row[$field] = unserialize($row[$field]);
+					}
+				}
 				$additionalFields = [
 					'element_id' => $row['ele_id'],
 					'database_field_name' => $row['ele_handle']
