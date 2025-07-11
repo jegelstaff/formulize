@@ -20,15 +20,42 @@ if (isset($_POST)) {
 	if (is_array($post_vars)) extract($post_vars);
 }
 $icmsAdminTpl = new icms_view_Tpl();
-$op = (isset($_GET['op'])) 
+$op = (isset($_GET['op']))
 	? trim(filter_input(INPUT_GET, 'op'))
-	: ((isset($_POST['op'])) 
+	: ((isset($_POST['op']))
 		? trim(filter_input(INPUT_POST, 'op'))
 		: 'list');
 
 if (isset($_GET['confcat_id'])) {
 	$confcat_id = (int) $_GET['confcat_id'];
 }
+
+$goButtonJS = "
+<script>
+	$(window).load(function() {
+		const urlParams = new URLSearchParams(window.location.search);
+		const scrollx = parseInt(urlParams.get('scrollx')) || 0;
+		if(scrollx) {
+			$(window).scrollTop(scrollx);
+		}
+		$('#formulize-prefs-hide-on-load').css('opacity', 1);
+		$('input, select').change(function() {
+			$('#savewarning').show();
+		});
+		$('input[type=text], textarea').keydown(function() {
+			$('#savewarning').show();
+		});
+		$('input[class=formButton]').click(function() {
+			redirect = $('#redirect').attr('value');
+			$('#redirect').attr('value', redirect+'&scrollx='+$(window).scrollTop());
+			$('body').css('opacity', '0.5');
+		});
+	});
+</script>
+<span id='savewarning' style='display: none;'>"._UNSAVED_WARNING."</span>";
+$redirectLocation = getCurrentURL();
+$scrollxPos = strpos($redirectLocation, '&scrollx=');
+$redirectLocation = $scrollxPos ? substr_replace($redirectLocation, "", $scrollxPos) : $redirectLocation;
 
 switch ($op) {
 	default:
@@ -95,7 +122,7 @@ switch ($op) {
 						$ele = new icms_form_elements_Textarea($title, $config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					}
 					break;
-						
+
 				case 'textarea' :
 					if ($config[$i]->getVar('conf_valuetype') == 'array') {
 						// this is exceptional.. only when value type is array, need a smarter way for this
@@ -106,7 +133,7 @@ switch ($op) {
 						$ele = new icms_form_elements_Dhtmltextarea($title, $config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					}
 					break;
-						
+
 				case 'autotasksystem':
 					$handler = icms_getModuleHandler('autotasks', 'system');
 					$options = &$handler->getSystemHandlersList(TRUE);
@@ -116,7 +143,7 @@ switch ($op) {
 					}
 					unset($handler, $options, $option);
 					break;
-						
+
 				case 'select' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'),  $config[$i]->getConfValueForOutput());
 					$options = $config_handler->getConfigOptions(new icms_db_criteria_Item('conf_id', $config[$i]->getVar('conf_id')));
@@ -127,7 +154,7 @@ switch ($op) {
 						$ele->addOption($optval, $optkey);
 					}
 					break;
-						
+
 				case 'select_multi' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput(), 5, TRUE);
 					$options = $config_handler->getConfigOptions(new icms_db_criteria_Item('conf_id', $config[$i]->getVar('conf_id')));
@@ -142,11 +169,11 @@ switch ($op) {
 						$ele->addOption($optval, $optkey);
 					}
 					break;
-						
+
 				case 'yesno' :
 					$ele = new icms_form_elements_Radioyn($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput(), _YES, _NO);
 					break;
-						
+
 				case 'theme' :
 				case 'theme_multi' :
 				case 'theme_admin' :
@@ -194,7 +221,7 @@ switch ($op) {
 						$ele->addOptionArray($dirlist);
 					}
 					break;
-						
+
 				case 'select_plugin' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput(), 8, TRUE);
 					$dirlist = icms_core_Filesystem::getDirList(ICMS_PLUGINS_PATH . '/textsanitizer/');
@@ -203,7 +230,7 @@ switch ($op) {
 						$ele->addOptionArray($dirlist);
 					}
 					break;
-						
+
 				case 'tplset' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					$tplset_handler = icms::handler('icms_view_template_set');
@@ -215,15 +242,15 @@ switch ($op) {
 					// old theme value is used to determine whether to update cache or not. kind of dirty way
 					$form->addElement(new icms_form_elements_Hidden('_old_theme', $config[$i]->getConfValueForOutput()));
 					break;
-						
+
 				case 'timezone' :
 					$ele = new icms_form_elements_select_Timezone($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					break;
-						
+
 				case 'language' :
 					$ele = new icms_form_elements_select_Lang($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					break;
-						
+
 				case 'startpage' :
 					$member_handler = icms::handler('icms_member');
 					$grps = $member_handler->getGroupList();
@@ -263,23 +290,23 @@ switch ($op) {
 						unset($f);
 					}
 					break;
-						
+
 				case 'group' :
 					$ele = new icms_form_elements_select_Group($title, $config[$i]->getVar('conf_name'), TRUE, $config[$i]->getConfValueForOutput(), 1, FALSE);
 					break;
-						
+
 				case 'group_multi' :
 					$ele = new icms_form_elements_select_Group($title, $config[$i]->getVar('conf_name'), TRUE, $config[$i]->getConfValueForOutput(), 5, TRUE);
 					break;
-						
+
 				case 'user' :
 					$ele = new icms_form_elements_select_User($title, $config[$i]->getVar('conf_name'), FALSE, $config[$i]->getConfValueForOutput(), 1, FALSE);
 					break;
-						
+
 				case 'user_multi' :
 					$ele = new icms_form_elements_select_User($title, $config[$i]->getVar('conf_name'), FALSE, $config[$i]->getConfValueForOutput(), 5, TRUE);
 					break;
-						
+
 				case 'module_cache' :
 					$module_handler = icms::handler('icms_module');
 					$modules = $module_handler->getObjects(new icms_db_criteria_Item('hasmain', 1), TRUE);
@@ -298,35 +325,35 @@ switch ($op) {
 						$ele = new icms_form_elements_Label($title, _MD_AM_NOMODULE);
 					}
 					break;
-						
+
 				case 'site_cache' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					$ele->addOptionArray(array('0' => _NOCACHE, '30' => sprintf(_SECONDS, 30), '60' => _MINUTE, '300' => sprintf(_MINUTES, 5), '1800' => sprintf(_MINUTES, 30), '3600' => _HOUR, '18000' => sprintf(_HOURS, 5), '86400' => _DAY, '259200' => sprintf(_DAYS, 3), '604800' => _WEEK));
 					break;
-						
+
 				case 'password' :
 					$ele = new icms_form_elements_Password($title, $config[$i]->getVar('conf_name'), 50, 255, icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()), FALSE, ($icmsConfigUser['pass_level']?'password_adv':''));
 					break;
-						
+
 				case 'color' :
 					$ele = new icms_form_elements_Colorpicker($title, $config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					break;
-						
+
 				case 'hidden' :
 					$ele = new icms_form_elements_Hidden($config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					break;
-						
+
 				case 'select_pages' :
 					$content_handler = & icms_getModuleHandler('content', 'content');
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					$ele->addOptionArray($content_handler->getContentList());
 					break;
-						
+
 				# Added by Fábio Egas in XTXM version
 				case 'select_image' :
 					$ele = new icms_form_elements_select_Image($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					break;
-						
+
 				case 'select_paginati' :
 					if (file_exists(ICMS_LIBRARIES_PATH . '/paginationstyles/paginationstyles.php')) {
 						include ICMS_LIBRARIES_PATH . '/paginationstyles/paginationstyles.php';
@@ -339,7 +366,7 @@ switch ($op) {
 						$ele->addOptionArray($arr);
 					}
 					break;
-						
+
 				case 'select_geshi' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					$dirlist = str_replace('.php', '', icms_core_Filesystem::getFileList(ICMS_LIBRARIES_PATH . '/geshi/geshi/', '', array('php')));
@@ -348,7 +375,7 @@ switch ($op) {
 						$ele->addOptionArray($dirlist);
 					}
 					break;
-						
+
 				case 'textbox' :
 				default :
 					$ele = new icms_form_elements_Text($title, $config[$i]->getVar('conf_name'), 50, 255, icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
@@ -360,10 +387,13 @@ switch ($op) {
 			unset($ele, $hidden);
 		}
 		$form->addElement(new icms_form_elements_Hidden('op', 'save'));
-		$form->addElement(new icms_form_elements_Button('', 'button', _GO, 'submit'));
+		$form->addElement(new icms_form_elements_Button($goButtonJS, 'button', _SAVE_YOUR_CHANGES, 'submit'));
 		icms_cp_header();
+		print "<div id='formulize-prefs-hide-on-load' style='opacity: 0;'>";
 		echo '<div class="CPbigTitle" style="background-image: url(' . ICMS_MODULES_URL . '/system/admin/preferences/images/preferences_big.png)"><a href="admin.php?fct=preferences">' . _MD_AM_PREFMAIN . '</a>&nbsp;<span style="font-weight:bold;">&raquo;&raquo;</span>&nbsp;' . constant($confcat->getVar('confcat_name')) . '<br /><br /></div><br />';
+		$form->addElement(new icms_form_elements_Hidden('redirect', $redirectLocation ));
 		$form->display();
+		print "<div>";
 		icms_cp_footer();
 		break;
 
@@ -379,9 +409,11 @@ switch ($op) {
 		if ($count < 1) {
 			redirect_header('admin.php?fct=preferences', 1);
 		}
-		$form = new icms_form_Theme(_MD_AM_MODCONFIG, 'pref_form', 'admin.php?fct=preferences', 'post', TRUE);
 		$module_handler = icms::handler('icms_module');
 		$module = & $module_handler->get($mod);
+		$modname = $module->getVar('name');
+		$action = 'admin.php?fct=preferences'; // $modname == 'Formulize' ? '' :
+		$form = new icms_form_Theme(_MD_AM_MODCONFIG, 'pref_form', $action, 'post', TRUE);
 		icms_loadLanguageFile($module->getVar('dirname'), 'modinfo');
 		// if has comments feature, need comment lang file
 		if ($module->getVar('hascomments') == 1) {
@@ -390,11 +422,6 @@ switch ($op) {
 		// if has notification feature, need notification lang file
 		if ($module->getVar('hasnotification') == 1) {
 			icms_loadLanguageFile('core', 'notification');
-		}
-
-		$modname = $module->getVar('name');
-		if ($module->getInfo('adminindex')) {
-			$form->addElement(new icms_form_elements_Hidden('redirect', ICMS_MODULES_URL . '/' . $module->getVar('dirname') . '/' . $module->getInfo('adminindex')));
 		}
 		for ($i = 0; $i < $count; $i++) {
 			$title =(! defined($config[$i]->getVar('conf_desc')) || constant($config[$i]->getVar('conf_desc')) == '') ? constant($config[$i]->getVar('conf_title')) : constant($config[$i]->getVar('conf_title')) . '<img class="helptip" src="'. ICMS_IMAGES_SET_URL . '/actions/acp_help.png" alt="View help text" title="View help text" /><span class="helptext">' . constant($config[$i]->getVar('conf_desc')) . '</span>';
@@ -407,7 +434,7 @@ switch ($op) {
 						$ele = new icms_form_elements_Textarea($title, $config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()), 5, 50);
 					}
 					break;
-						
+
 				case 'textarea' :
 					if ($config[$i]->getVar('conf_valuetype') == 'array') {
 						// this is exceptional.. only when value type is array need a smarter way for this
@@ -416,7 +443,7 @@ switch ($op) {
 						$ele = new icms_form_elements_Dhtmltextarea($title, $config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()), 5, 50);
 					}
 					break;
-						
+
 				case 'select' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 
@@ -428,7 +455,7 @@ switch ($op) {
 						$ele->addOption($optval, $optkey);
 					}
 					break;
-						
+
 				case 'select_multi' :
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput(), 5, TRUE);
 					$options = & $config_handler->getConfigOptions(new icms_db_criteria_Item('conf_id', $config[$i]->getVar('conf_id')));
@@ -439,45 +466,45 @@ switch ($op) {
 						$ele->addOption($optval, $optkey);
 					}
 					break;
-						
+
 				case 'yesno' :
 					$ele = new icms_form_elements_Radioyn($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput(), _YES, _NO);
 					break;
-						
+
 				case 'group' :
 					$ele = new icms_form_elements_select_Group($title, $config[$i]->getVar('conf_name'), TRUE, $config[$i]->getConfValueForOutput(), 1, FALSE);
 					break;
-						
+
 				case 'group_multi' :
 					$ele = new icms_form_elements_select_Group($title, $config[$i]->getVar('conf_name'), TRUE, $config[$i]->getConfValueForOutput(), 5, TRUE);
 					break;
-						
+
 				case 'user' :
 					$ele = new icms_form_elements_select_User($title, $config[$i]->getVar('conf_name'), FALSE, $config[$i]->getConfValueForOutput(), 1, FALSE);
 					break;
-						
+
 				case 'user_multi' :
 					$ele = new icms_form_elements_select_User($title, $config[$i]->getVar('conf_name'), FALSE, $config[$i]->getConfValueForOutput(), 5, TRUE);
 					break;
-						
+
 				case 'password' :
 					$ele = new icms_form_elements_Password($title, $config[$i]->getVar('conf_name'), 50, 255, icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					break;
-						
+
 				case 'color' :
 					$ele = new icms_form_elements_Colorpicker($title, $config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					break;
-						
+
 				case 'hidden' :
 					$ele = new icms_form_elements_Hidden($config[$i]->getVar('conf_name'), icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
 					break;
-						
+
 				case 'select_pages' :
 					$content_handler = & icms_getModuleHandler('content', 'content');
 					$ele = new icms_form_elements_Select($title, $config[$i]->getVar('conf_name'), $config[$i]->getConfValueForOutput());
 					$ele->addOptionArray($content_handler->getContentList());
 					break;
-						
+
 				case 'textbox' :
 				default :
 					$ele = new icms_form_elements_Text($title, $config[$i]->getVar('conf_name'), 50, 255, icms_core_DataFilter::htmlSpecialChars($config[$i]->getConfValueForOutput()));
@@ -489,8 +516,9 @@ switch ($op) {
 			unset($ele, $hidden);
 		}
 		$form->addElement(new icms_form_elements_Hidden('op', 'save'));
-		$form->addElement(new icms_form_elements_Button('', 'button', _GO, 'submit'));
+		$form->addElement(new icms_form_elements_Button($goButtonJS, 'button', _SAVE_YOUR_CHANGES, 'submit'));
 		icms_cp_header();
+		print "<div id='formulize-prefs-hide-on-load' style='opacity: 0;'>";
 		if ($module->getInfo('hasAdmin') == TRUE) {
 			$modlink = '<a href="' . ICMS_MODULES_URL . '/' . $module->getVar('dirname') . '/' . $module->getInfo('adminindex') . '">' . $modname . '</a>';
 		} else {
@@ -504,7 +532,9 @@ switch ($op) {
 		if (isset($iconbig) && $iconbig == TRUE) {
 			echo '<div class="CPbigTitle" style="background-image: url(' . ICMS_MODULES_URL . '/' . $module->getVar('dirname') . '/' . $iconbig . ')">' . $modlink . ' &raquo; ' . _PREFERENCES . '</div>';
 		}
+		$form->addElement(new icms_form_elements_Hidden('redirect', $redirectLocation ));
 		$form->display();
+		print "<div>";
 		icms_cp_footer();
 		break;
 
@@ -530,7 +560,7 @@ switch ($op) {
 				icms::$preload->triggerEvent('savingSystemAdminPreferencesItem', array((int) $config->getVar('conf_catid'), $config->getVar('conf_name'), $config->getVar('conf_value')));
 
 				if (is_array($new_value) || $new_value != $config->getVar('conf_value')) {
-					
+
 					// if 2FA changed -- added by Julian Egelstaff Mar 4 2021
 					if(!$tfa_updated && $config->getVar('conf_catid') == ICMS_CONF_AUTH && $config->getVar('conf_name') == 'auth_2fa') {
 						// if turned on, make profile fields visible
@@ -562,7 +592,7 @@ switch ($op) {
 						}
 						$tfa_updated = TRUE;
 					}
-					
+
 					// if language has been changed
 					if (!$lang_updated && $config->getVar('conf_catid') == ICMS_CONF && $config->getVar('conf_name') == 'language') {
 						$icmsConfig['language'] = ${$config->getVar('conf_name')};
