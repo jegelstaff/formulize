@@ -583,6 +583,23 @@ class FormulizeMCP
 	}
 
 	/**
+	 * Return an array of metadata fields, all keyed with 'element_handle' so that we can start the elements lists that way when appropriate
+	 * @return array The array of metadata fields found in the database (creator_email and owner_groups are removed)
+	 */
+	private function metadataFields() {
+		$dataHandler = new formulizeDataHandler();
+		$metadataFields = array();
+		foreach($dataHandler->metadataFields as $metadataField) {
+			if($metadataField != 'creator_email' AND $metadataField != 'owner_groups') {
+				$metadataFields[] = array(
+					'element_handle' => $metadataField
+				);
+			}
+		}
+		return $metadataFields;
+	}
+
+	/**
 	 * Get a list of groups for which the authenticated user has access to entries those users have made
 	 * This means the group is either one they have groupscope on in relation to a form they have access to
 	 * or they have globalscope on a particular form, in which case it's everyone who has view_form.
