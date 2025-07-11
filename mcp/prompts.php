@@ -175,7 +175,7 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"Generate a %s report for this form: %s. %s You can use the get_form_details tool to lookup the schema for the form and its elements, and you can get data from the form using the get_entries_from_form tool. %s",
+						"Generate a %s report for this form: %s. %s If you don't know the ID number for this form in the system, you can use the list_forms tool to see all the forms. You can use the get_form_details tool to lookup the schema for the form and its elements, and you can get data from the form using the get_entries_from_form tool. %s",
 						$reportType,
 						$form,
 						$focus ? "The report should focus on: $focus." : "",
@@ -188,7 +188,7 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"I'll generate a %s report for form %s. I'll start by looking up details about the form with the get_form_details tool, and the data in the form, with the get_entries_from_form tool. %s",
+						"I'll generate a %s report for form %s. With the proper ID number for the form, I will start by looking up details about the form with the get_form_details tool, and the data in the form, with the get_entries_from_form tool. %s If I don't know the proper ID number for the form, I will look up the forms with the list_forms tool.",
 						$reportType,
 						$focus ? "$form, focusing on: $focus" : $form,
 						in_array(XOOPS_GROUP_ADMIN, $this->userGroups) ? " I might also use the query_the_database_directly tool for more flexibility, if get_entries_from_form is not providing enough detail." : ""
@@ -231,7 +231,7 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"Look in the system's logs for recent activity. %s %s You can use the read_system_activity_log tool to get the most recent 1000 lines from the activity log. Each line in the log is a JSON object. Critical keys in each line are: formulize_event, a short string explaining what the log entry is about. user_id, the ID number of the user. form_id, the ID number of a form if one was involved in the activity. You can use the list_users tool to get a list of all users and their ID numbers. To get more information about a form, you can use the get_form_details tool.",
+						"Look in the system's logs for recent activity. %s %s You can use the read_system_activity_log tool to get the most recent 1000 lines from the activity log. Each line in the log is a JSON object. Critical keys in each line are: formulize_event, a short string explaining what the log entry is about. user_id, the ID number of the user. form_id, the ID number of a form if one was involved in the activity. You can use the list_users tool to get a list of all users and their ID numbers. You can use the list_forms tool to get a list of all the forms and their ID numbers. To get more information about a form, you can use the get_form_details tool.",
 						$users ? "Pay special attention to these users: $users" : "",
 						$forms ? ($users ? "and to these forms: $forms." : "Pay special attention to these forms: $forms.") : "."
 					)
@@ -242,8 +242,8 @@ trait prompts {
 				'content' => [
 					'type' => 'text',
 					'text' => sprintf(
-						"I'll lookup the recent activity logs with the read_system_activity_log tool. %s",
-						($users OR $forms) ? "I'll pay special attention to ".($users ? "the users: $users" : "").(($users AND $forms) ? " and " : "").($forms ? "the forms: $forms" : "")."." : ""
+						"I'll lookup the recent activity logs with the read_system_activity_log tool. If I need to figure out the user ids and form ids, I will use the list_users and list_forms tools. %s",
+						($users OR $forms) ? "In the activity logs, I'll pay special attention to ".($users ? "the users: $users" : "").(($users AND $forms) ? " and " : "").($forms ? "the forms: $forms" : "")."." : ""
 					)
 				]
 			]
