@@ -200,7 +200,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			$eltcaption = $caption;
 			$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
 			$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-			if($element->getVar('ele_req')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
+			if($element->getVar('ele_required')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
 				$validationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
 				$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
 				$validationCode[] = "}\n";

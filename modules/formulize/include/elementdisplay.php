@@ -220,7 +220,7 @@ EOF;
 										if($js = $form_ele->renderValidationJS()) {
 											$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = $js;
 										}
-				          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
+				          } elseif($element->getVar('ele_required') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
 				            $eltname    = $form_ele->getName();
 				            $eltcaption = $form_ele->getCaption();
 				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
