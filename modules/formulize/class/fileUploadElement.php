@@ -169,7 +169,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     </script>";
 
                     $introToUploadBox .= $fileDeleteCode;
-                } elseif($element->getVar('ele_req')) { // just set the flag that tells the required element logic that the file is present
+                } elseif($element->getVar('ele_required')) { // just set the flag that tells the required element logic that the file is present
                     $introToUploadBox .= "<script type='text/javascript'>
                     var formulizeFile".$markupName."Exists = true;
                     </script>";
@@ -205,7 +205,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 	$validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
         $cueName = str_replace("de_","decue_",$markupName);
         $validationCode = array();
-        if($element->getVar('ele_req')) { // need to include this only if the admin wants to force a value for this element, and there's no file selected already
+        if($element->getVar('ele_required')) { // need to include this only if the admin wants to force a value for this element, and there's no file selected already
             $validationCode[] = "if(formulizechanged && myform.fileupload_{$markupName}.value == '' && (typeof formulizeFile".$markupName."Exists == 'undefined' || formulizeFile".$markupName."Exists == false)) {\n";
             $validationCode[] = "  window.alert('{$validationmsg}');\n myform.fileupload_{$markupName}.focus();\n return false;\n ";
             $validationCode[] = "} else if(formulizechanged && myform.fileupload_{$markupName}.value == '' && typeof formulizeFile".$markupName."Exists != 'undefined' && formulizeFile".$markupName."Exists == true) {\n";

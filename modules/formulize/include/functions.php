@@ -743,7 +743,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 
 					// gather required fields for this form
 					} else {
-						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_required=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
 						if ($result = $xoopsDB->query($reqfq)) {
 								while ($row = $xoopsDB->fetchArray($result)) {
 										if ($needids) {

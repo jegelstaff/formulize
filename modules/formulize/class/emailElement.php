@@ -118,10 +118,10 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
         $validationmsg = "Your value for $caption should not match the default value.";
 	      $validationmsg = str_replace("'", "\'", stripslashes( $validationmsg ) );
-        $ele_req = $element->getVar('ele_req');
+        $ele_required = $element->getVar('ele_required');
         $validationCode = array();
 
-        if($ele_req){
+        if($ele_required){
           // Todo - add error message to language files
           $validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter an email address.'); \n myform.{$markupName}.focus();\n return false;\n }";
         }

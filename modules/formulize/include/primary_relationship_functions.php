@@ -366,7 +366,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 				$element->setVar('ele_desc', htmlspecialchars_decode($otherElement->getVar('ele_desc')));
 				$element->setVar('ele_caption', htmlspecialchars_decode($otherElement->getVar('ele_caption')));
 				$element->setVar('ele_colhead', htmlspecialchars_decode($otherElement->getVar('ele_colhead')));
-				$element->setVar('ele_req', $otherElement->getVar('ele_req'));
+				$element->setVar('ele_required', $otherElement->getVar('ele_required'));
 				$element->setVar('ele_uitext', $otherElement->getVar('ele_uitext'));
 				$element->setVar('ele_uitextshow', $otherElement->getVar('ele_uitextshow'));
 				$element->setVar('ele_delim', $otherElement->getVar('ele_delim'));

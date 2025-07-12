@@ -377,7 +377,7 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 	// element is allowed, so prep some stuff for rendering...
 	if(is_array($deReturnValue)) {
 		$form_ele = $deReturnValue[0];
-		if($elementObject->getVar('ele_req') AND is_object($form_ele)) {
+		if($elementObject->getVar('ele_required') AND is_object($form_ele)) {
 				$form_ele->setRequired();
 		}
 		$isDisabled = $deReturnValue[1];

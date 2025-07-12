@@ -907,7 +907,7 @@ class formulizeFormsHandler {
 			$element->setVar('ele_caption', str_replace("_", " ", $row[0]));
 			$element->setVar('ele_desc', "");
 			$element->setVar('ele_colhead', "");
-			$element->setVar('ele_req', 0);
+			$element->setVar('ele_required', 0);
 			$element->setVar('ele_order', $element_order);
 			$element_order = $element_order + 5;
 			$element->setVar('ele_forcehidden', 0);

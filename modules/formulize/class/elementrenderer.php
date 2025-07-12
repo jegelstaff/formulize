@@ -163,7 +163,7 @@ class formulizeElementRenderer{
 							$OnFailure = ""
 						);
 
-                        if($this->_ele->getVar('ele_req')) {
+                        if($this->_ele->getVar('ele_required')) {
                             $eltname = $renderedElementMarkupName;
                             $eltcaption = $ele_caption;
                             $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
@@ -686,7 +686,7 @@ class formulizeElementRenderer{
 				} // end of if we have a link on our hands. -- jwe 7/29/04
 
 				// set required validation code
-				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
+				if($this->_ele->getVar('ele_required') AND !$isDisabled) {
 					$eltname = $renderedElementMarkupName;
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
@@ -832,7 +832,7 @@ class formulizeElementRenderer{
 				);
 				$form_ele->setDescription($helpText);
 
-				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
+				if($this->_ele->getVar('ele_required') AND !$isDisabled) {
 					$eltname = $renderedElementMarkupName;
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
@@ -865,7 +865,7 @@ class formulizeElementRenderer{
                     $form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$renderedElementMarkupName\" ");
                 } // end of check to see if the default setting is for real
 				// added validation code - sept 5 2007 - jwe
-				if($this->_ele->getVar('ele_req') AND !$isDisabled) {
+				if($this->_ele->getVar('ele_required') AND !$isDisabled) {
 					$eltname = $renderedElementMarkupName;
 					$eltcaption = $ele_caption;
 					$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
@@ -916,7 +916,7 @@ class formulizeElementRenderer{
 					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $renderedElementMarkupName, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
 					if(is_object($form_ele)) {
-						if(!$isDisabled AND ($this->_ele->getVar('ele_req') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+						if(!$isDisabled AND ($this->_ele->getVar('ele_required') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
 							$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
 						}
 						$form_ele->setDescription($helpText);

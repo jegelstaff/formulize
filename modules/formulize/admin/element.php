@@ -91,11 +91,11 @@ if ($_GET['ele_id'] != "new") {
     $names['ele_colhead'] = $colhead;
     $names['ele_handle'] = $elementObject->getVar('ele_handle');
     $names['ele_desc'] = $elementObject->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
-    $ele_req = $elementObject->getVar('ele_req');
-    $ele_req = removeNotApplicableRequireds($ele_type, $ele_req); // function returns false when the element cannot be required.
-    $common['ele_req_on'] = $ele_req === false ? false : true;
-    $names['ele_req_no_on'] = $ele_req ? "" : " checked";
-    $names['ele_req_yes_on'] = $ele_req ? " checked" : "";
+    $ele_required = $elementObject->getVar('ele_required');
+    $ele_required = removeNotApplicableRequireds($ele_type, $ele_required); // function returns false when the element cannot be required.
+    $common['ele_req_on'] = $ele_required === false ? false : true;
+    $names['ele_req_no_on'] = $ele_required ? "" : " checked";
+    $names['ele_req_yes_on'] = $ele_required ? " checked" : "";
     $ele_display = $elementObject->getVar('ele_display');
     if (strstr($ele_display,",")) {
         foreach(explode(",",trim($ele_display,",")) as $displayGroup) {
@@ -191,8 +191,8 @@ if ($_GET['ele_id'] != "new") {
             break;
     }
 
- 		$ele_req = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
-    $common['ele_req_on'] = $ele_req === false ? false : true;
+ 		$ele_required = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+    $common['ele_req_on'] = $ele_required === false ? false : true;
 
     $names['ele_req_no_on'] = " checked";
     $display['ele_display']['all'] = " selected";
