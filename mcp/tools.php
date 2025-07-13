@@ -12,14 +12,6 @@ trait tools {
 	{
 
 		$this->tools = [
-			'test_connection' => [
-				'name' => 'test_connection',
-				'description' => 'Test the MCP server connection and database access',
-				'inputSchema' => [
-					'type' => 'object',
-					'properties' => (object)[]
-				],
-			],
 			$this->mcpRequest['localServerName'] => [
 				'name' => $this->mcpRequest['localServerName'],
 				'description' => 'This tool contains basic instructions and background info. Use this tool first. This tool returns the instructions content that should be part of the initialize MCP call, but which is often ignored by MCP clients.',
@@ -252,6 +244,14 @@ Examples:
 					],
 					'required' => ['value', 'element_handle']
 				]
+			],
+			'test_connection' => [
+				'name' => 'test_connection',
+				'description' => 'Test the MCP server connection and database access',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
 			],
 			'locate_captain_picard' => [
 				'name' => 'locate_captain_picard',
@@ -521,7 +521,7 @@ Examples:
 		try {
 
 			if(!$form_id OR $form_id < 0) {
-				throw new Exception('Form ID must be a positive integer');
+				throw new Exception('Form not found. Form ID must be a positive integer');
 			}
 
 			// Build scope based on authenticated user and their permissions
@@ -811,7 +811,7 @@ private function validateFilter($filter) {
 
 			// Validate entry ID
 			if ($entryId !== 'new' && !is_numeric($entryId)) {
-				throw new Exception('Entry ID must be numeric'); // when creating entries, 'new' is hard coded in the calling function, so we don't ever have to report that 'new' is a valid value
+				throw new Exception('Invalid entry ID. Entry ID must be numeric'); // when creating entries, 'new' is hard coded in the calling function, so we don't ever have to report that 'new' is a valid value
 			}
 			if ($entryId !== 'new') {
 				$entryId = intval($entryId);
@@ -1020,7 +1020,7 @@ private function validateFilter($filter) {
 			}
 		}
 		if(count($entry_ids) > 0 AND count($form_ids) != 1) {
-			throw new Exception('A single form ID must be specified when specifying entry IDs');
+			throw new Exception('Form not found. A single form ID must be specified when specifying entry IDs');
 		}
 		return [ $form_ids, $screen_ids, $entry_ids, $user_ids ];
 	}
