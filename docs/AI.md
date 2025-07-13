@@ -4,371 +4,120 @@ permalink: ai/
 title: AI and Formulize
 ---
 
-# We have a Formulize MCP Server
-
-The server can retrieve basic information about the configuration of a Formulize site where the server is installed.
-
-This has been proven to work inside VSCode, where two settings files need to be updated:
-
-Need enabling/installation instructions
-
-Need Node/setup local MCP instructions
-
-Need config instructions for .json files
-sub of this, we need VS Code notes because of extra settings.json in the chat
-
-## .htaccess
-
-```apacheconf
-# Necessary for HTTP Authorization header to be passed through to the MCP server
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-```
-
-## mcp.json
-
-An mcp.json file needs to be created inside your project's .vscode folder, and the server started with the Play icon that VSCode gives you in the editor interface.
-
-This can also go in your users/<name>/.cursor/mcp.json in windows, if you user Cursor and not VS Code.
-
-NOTE however that VSCode is the old man out and uses "servers" and not "mcpServers" as the top level.
-
-Add additional servers with the right key, for more instances. Same args value, because it's the same local server every time, just with different config.
-
-```json
-{
-  "servers": {
-    "Formulize": {
-      "command": "node",
-      "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
-      "env": {
-        "FORMULIZE_BASE_URL": "https://<your server domain>/MCP.php",
-        "FORMULIZE_DEBUG": "false",
-        "FORMULIZE_TIMEOUT": "30000",
-        "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
-      }
-    }
-  }
-}
-```
-
-## The user's settings.json file, in the appdate/roaming/code/user folder, maybe. Can be enabled through the Prefs, Chat > MCP >  discovery: enabled.
-
-```json
-"chat.mcp.discovery.enabled": true,
-"chat.mcp.discovery.server": "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp",
-"chat.mcp.discovery.serverName": "Formulize",
-"chat.mcp.discovery.serverType": "http",
-"chat.mcp.discovery.serverUrl": "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp",
-"chat.mcp.discovery.serverVersion": "1.0.0",
-"chat.mcp.discovery.serverDescription": "Formulize MCP Server",
-"chat.mcp.discovery.serverCapabilities": {
-	"chat": true,
-	"code": true,
-	"file": true,
-	"image": true,
-	"video": true,
-	"audio": true,
-	"text": true,
-	"command": true,
-	"tool": true,
-	"search": true,
-	"history": true,
-	"settings": true,
-	"notification": true,
-	"user": true,
-	"group": true,
-	"admin": true,
-	"plugin": true,
-	"extension": true,
-}
-```
-
-## claude_desktop_config.json
-
-```json
-{
-  "mcpServers": {
-    "formulize": {
-      "command": "node",
-      "args": ["C:\\formulize-proxy-mcp\\dist\\index.js"],
-      "env": {
-        "FORMULIZE_BASE_URL": "https://julian.formulize.net/MCP.php",
-        "FORMULIZE_DEBUG": "false",
-        "FORMULIZE_TIMEOUT": "30000",
-        "FORMULIZE_API_KEY": "YOUR KEY GOES HERE"
-      }
-    }
-  }
-}
-```
-
-# Formulize Proxy MCP Server Setup (Windows 11)
-
-This TypeScript MCP server acts as a local proxy to your remote Formulize HTTP server, enabling Claude Desktop integration.
-
-## Installation
-
-1. **Create project directory:**
-```cmd
-mkdir formulize-proxy-mcp
-cd formulize-proxy-mcp
-```
-
-2. **Create the directory structure:**
-```cmd
-mkdir src
-```
-
-3. **Create the files:**
-   - Save the TypeScript code as `src\index.ts`
-   - Save the package.json in the root directory
-   - Save the tsconfig.json in the root directory
-
-4. **Install the MCP SDK first:**
-```cmd
-npm install @modelcontextprotocol/sdk
-```
-
-5. **Install remaining dependencies:**
-```cmd
-npm install
-```
-
-6. **If you get import errors, try installing the latest MCP SDK:**
-```cmd
-npm install @modelcontextprotocol/sdk@latest
-```
-
-7. **Build the project:**
-```cmd
-npm run build
-```
-
-**If you still get SDK import errors, try this alternative installation:**
-```cmd
-rem Clean install
-rmdir /s node_modules
-del package-lock.json
-npm install @modelcontextprotocol/sdk@latest
-npm install
-npm run build
-```
-
-## Distribution notes for the formulize-proxy-mcp server
-
-Distribution Package
-You would provide users with:
-
-The dist/ folder - Contains the compiled JavaScript
-package.json - For dependency management
-Setup instructions - How to configure for their Formulize instance
-
-User Setup Process
-Each user would:
-
-Install Node.js (if not already installed)
-Copy your files to their local machine
-Run npm install to get the MCP SDK dependency
-Configure their claude_desktop_config.json with their Formulize URL:
-
-json{
-  "mcpServers": {
-    "formulize": {
-      "command": "node",
-      "args": ["C:\\path\\to\\formulize-proxy-mcp\\dist\\index.js"],
-      "env": {
-        "FORMULIZE_BASE_URL": "https://their-formulize-server.com/formulize_mcp_http_direct.php",
-        "FORMULIZE_DEBUG": "false",
-        "FORMULIZE_TIMEOUT": "30000"
-      }
-    }
-  }
-}
-What Makes This Distributable
-✅ Generic proxy - Works with any Formulize HTTP MCP server
-✅ Configuration-driven - No code changes needed per instance
-✅ Standard dependencies - Just Node.js and MCP SDK
-✅ Cross-platform - Works on Windows, Mac, Linux
-Distribution Options
-Option 1: Simple Package
-
-Zip file with dist/, package.json, and setup instructions
-Users run npm install locally
-
-Option 2: NPM Package
-
-Publish to NPM registry as formulize-mcp-proxy
-Users install with npm install -g formulize-mcp-proxy
-Even easier distribution
-
-Option 3: Executable Bundle
-
-Use tools like pkg to create standalone executables
-No Node.js installation required for end users
-
-Requirements for Each Formulize Instance
-Each Formulize server just needs:
-
-Your PHP HTTP MCP server (formulize_mcp_http_direct.php)
-Accessible via HTTPS (recommended)
-CORS headers properly configured (already done in your server)
-
-Example Distribution Package Structure
-formulize-mcp-proxy/
-├── dist/
-│   └── index.js
-├── package.json
-├── README.md
-└── setup-instructions.md
-This is a really elegant solution because:
-
-One TypeScript proxy serves all Formulize instances
-No server-side changes needed per installation
-Secure - each user connects to their own Formulize server
-Maintainable - you only maintain one codebase
-
-
-## Claude Desktop Configuration
-
-Add this to your Claude Desktop config file:
-
-**Windows 11:** `%APPDATA%\Claude\claude_desktop_config.json`
-
-**Full path example:** `C:\Users\YourUsername\AppData\Roaming\Claude\claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "formulize": {
-      "command": "node",
-      "args": ["C:\\full\\path\\to\\formulize-proxy-mcp\\dist\\index.js"],
-      "env": {
-        "FORMULIZE_BASE_URL": "https://julian.formulize.net/formulize_mcp_http_direct.php",
-        "FORMULIZE_DEBUG": "false",
-        "FORMULIZE_TIMEOUT": "30000"
-      }
-    }
-  }
-}
-```
-
-**Important Windows Notes:**
-- Use **double backslashes** (`\\`) in the path
-- Use **full absolute paths** (e.g., `C:\\Users\\YourName\\...`)
-- You can find your exact path by running `echo %APPDATA%` in Command Prompt
-
-## Environment Variables
-
-- **`FORMULIZE_BASE_URL`** (required): Base URL of your Formulize HTTP MCP server
-- **`FORMULIZE_API_KEY`** (optional): API key for authentication
-- **`FORMULIZE_TIMEOUT`** (optional): Request timeout in milliseconds (default: 30000)
-- **`FORMULIZE_DEBUG`** (optional): Enable debug logging (default: false)
-
-## Testing
-
-### Using Command Prompt:
-
-1. **Test the proxy locally:**
-```cmd
-rem Set environment variables
-set FORMULIZE_BASE_URL=https://julian.formulize.net/formulize_mcp_http_direct.php
-set FORMULIZE_DEBUG=true
-
-rem Test with stdio
-echo {"jsonrpc":"2.0","method":"tools/list","params":{},"id":1} | npm start
-```
-
-2. **Test specific tools:**
-```cmd
-rem Test connection
-echo {"jsonrpc":"2.0","method":"tools/call","params":{"name":"proxy_status","arguments":{}},"id":2} | npm start
-
-rem Test Formulize connection
-echo {"jsonrpc":"2.0","method":"tools/call","params":{"name":"test_connection","arguments":{}},"id":3} | npm start
-```
-
-### Using PowerShell:
-
-1. **Test the proxy locally:**
-```powershell
-# Set environment variables
-$env:FORMULIZE_BASE_URL = "https://julian.formulize.net/formulize_mcp_http_direct.php"
-$env:FORMULIZE_DEBUG = "true"
-
-# Test with stdio
-'{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}' | npm start
-```
-
-2. **Test specific tools:**
-```powershell
-# Test connection
-'{"jsonrpc":"2.0","method":"tools/call","params":{"name":"proxy_status","arguments":{}},"id":2}' | npm start
-
-# Test Formulize connection
-'{"jsonrpc":"2.0","method":"tools/call","params":{"name":"test_connection","arguments":{}},"id":3}' | npm start
-```
-
-## Architecture Benefits
-
-✅ **Local stdio interface** - Claude Desktop compatible
-✅ **Remote HTTP calls** - Uses your existing Formulize server
-✅ **Clean separation** - MCP protocol vs Formulize logic
-✅ **Configurable** - Environment-based configuration
-✅ **Error handling** - Graceful fallbacks and debugging
-✅ **Caching prevention** - Fresh data on every request
-
-## Troubleshooting
-
-1. **Check the logs:**
-   Enable debug mode: `"FORMULIZE_DEBUG": "true"`
-
-2. **Test remote server directly (using PowerShell):**
-   ```powershell
-   Invoke-RestMethod -Uri "https://julian.formulize.net/formulize_mcp_http_direct.php/mcp" `
-     -Method Post `
-     -ContentType "application/json" `
-     -Body '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}'
-   ```
-
-   **Or using curl (if installed):**
-   ```cmd
-   curl -X POST https://julian.formulize.net/formulize_mcp_http_direct.php/mcp ^
-     -H "Content-Type: application/json" ^
-     -d "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"params\":{},\"id\":1}"
-   ```
-
-3. **Find your exact config path:**
-   ```cmd
-   echo %APPDATA%\Claude\claude_desktop_config.json
-   ```
-
-4. **Verify Claude Desktop config:**
-   - Check file path uses **double backslashes** (`\\`)
-   - Ensure environment variables are set correctly in the JSON
-   - Use **absolute paths** (e.g., `C:\\Users\\YourName\\...`)
-   - Restart Claude Desktop after config changes
-
-5. **Common Windows Issues:**
-   - **Path separators**: Use `\\` instead of `/` in Windows paths
-   - **Permissions**: Ensure the user can read the script files
-   - **Node.js**: Verify Node.js is installed and in PATH (`node --version`)
-
-## Development
-
-- **Development mode:** `npm run dev` (auto-recompile)
-- **Build:** `npm run build`
-- **Production:** `npm start`
-
-## Security Notes
-
-- The proxy server only forwards requests to your configured Formulize server
-- No local data storage or caching
-- Environment variables keep credentials secure
-- HTTPS recommended for remote connections
-
-## Windows-Specific Notes
-
-- **File paths**: Always use absolute paths with double backslashes
-- **Testing**: PowerShell is recommended over Command Prompt for JSON testing
-- **Environment variables**: Set in the Claude Desktop config, not system environment
-- **Node.js**: Download from [nodejs.org](https://nodejs.org) if not installed
+# AI and Formulize
+
+## Overview
+
+You can use AI assistants, like Claude, Copilot, etc, to help you work with Formulize. They can understand the way it's configured, and they can help you create data, update data, analyze data, maintain, validate and correct data...
+
+With AI, instead of having to do all the clicking and organizing yourself, you can just tell the AI what you want, and it will help you create it or find it or update it, and so on. Think of it like having a super fast and overeager intern, who knows everything about your Formulize system.
+
+### Formulize is ideal for AI
+
+Formulize is the perfect system to use with AI, because Formulize is 100% configuration-based. The configuration of the forms in Formulize, their permissions, their connections to other forms, etc, all of that together completely explains what your system does _and how it does it_. With most other software, the only way to understand how it works is by reading the source code, which the AI does not have access to.
+
+So, when the AI connects to Formulize, it truly gets the big picture. And when you add a new form to Formulize, or you change the permissions on another form, or add a connection, or do anything at all, the AI will instantly be able to see and understand how you've modified your application, and it will probably understand _why_ you've modified it that way as well.
+
+### But can you trust it?
+
+As with any overeager intern, AI might do the wrong thing sometimes. However, because the _Formulize <—> AI_ connection includes the entire configuration of your Formulize system, the AI does not have to guess about anything.
+
+The so-called _hallucinations_ that AI sometimes has, are usually when it's missing some information and it's just trying to come up with something that would fit with everything else it knows. With Formulize, the AI has the _complete picture_ of how your system works, so it will generally do the right thing.
+
+Also, when the AI asks Formulize for something, Formulize validates what the AI is asking for, and if something is wrong, Formulize helps the AI self-correct from any mistakes. For example, if the AI is asking about a form that doesn't exist, Formulize will suggest to the AI that it check the list of existing forms first.
+
+---
+
+## Setup
+
+You need to [follow a few steps](../ai/setup) to get Formulize working with AI. Setup is a one time thing, once you've completed the setup you don't have to do it again.
+
+- [Setup Instructions](../ai/setup)
+
+---
+
+## Working with Formulize and AI
+
+### The Basics
+
+Presently, AI Assistants can discover all the configuration information about your Formulize system, they can read the data that has been entered into forms, and they can create and update entries in forms. Soon, they will have the ability to create forms and update aspects of the configuration.
+
+To work with Formulize and AI, you just need to send a prompt the AI assistant, and your prompt can be anything at all. Some examples:
+
+> What are the forms in the Formulize system?
+
+> What can you tell me about the Inventory form in the Formulize system?
+
+> Please record this blood pressure reading in Formulize: 120/80
+
+> What are the ten entries in the Activity Log form that have the highest attendance?
+
+> The data in the Provinces form is incomplete and incorrect. Can you validate the population numbers and update them as required, and add any missing provinces? Thanks.
+
+> I'm uploading information about a new client. Please read it and extract the information necessary to fill in the Client Profile form, and make a new entry in the form for this client. Thanks.
+
+> Please check the activity logs for recent interactions with the Expenses form.
+
+Even though the AI isn't a person, it's often better to communicate with it the same way you would with a person, because AI has been trained on human language, so a more fluid conversation like you would have with a person, often yields better results.
+
+The more information you can give the AI, the better it does. So if you can reference forms by their ID numbers or actual names, that's good. If you can be precise about entries you're interested in, by date, or by the value of certain elements, that's good. The more information the AI has about what you want it to do, the better it does.
+
+The AI is also usually eager to please, so if you don't want it to do something, you should be specific, such as:
+
+> I'm uploading information about a new client. Please read it and extract the information necessary to fill in the Client Profile form. Tell me what information you've found, but DO NOT make an entry in the form. I want to see the information first before you create any new entries.
+
+Every action the AI assistant performs, happens under the auspices of the user associated with the API key that you issued. So whenever the AI does anything, it will be recorded in Formulize as if that user were logged in and performing the action. Entries the AI creates will belong to that user and their group(s). Data that the AI retrieves, will be limited to the scope of data that the user has access to.
+
+If the AI is using an API key for a webmaster user, there will be some additional capabilities:
+
+- The AI can check the system activity logs (if logging is turned on in your Formulize system)
+- The AI can execute direct SQL statements against the database. These are limited to SELECT statements, but can be very complex. AI is good at writing complicated SQL for generating statistical analysis, and other advanced ways of working with your data
+
+### Tools, Resources, and Prompts
+
+The AI has access to several items which it can use to interact with your Formulize system:
+
+- **Tools**: Functions the AI assistant can call to perform actions (read data, create entries, etc.\
+You generally don't even need to know what these are, because the AI assistant will use them as it sees fit. However, it can be useful to suggest certain tools to the AI if you are doing something particularly complicated.
+
+- **Resources**: Read-only information sources about your system configuration\
+Not all AI assistants have the capability to use the resources. Some will give you access to them, either for your own reference, or for including with prompts you write.
+
+- **Prompts**: Pre-defined templates for common tasks\
+Prompts are activated by you, the user. Not all AI assistants support prompts, and how you access them varies from assistant to assistant.
+
+[Complete Formulize MCP Reference](../ai/mcp-reference/) - Descriptions of all {{ site.data.mcp_items.total_count }} tools, resources, and prompts available in Formulize.
+
+#### More about prompts
+
+The prompts are pre-defined templates, with placeholders for critical information that you can provide. For example, there's a pre-defined prompt called _generate_a_report_about_a_form_ and when you activate the prompt, you can provide three specific pieces of information:
+
+- The form you want a report about
+- The type of report, ie: summary, statistical, detailed...
+- Any elements in the form that you want the AI to focus on
+
+The information you provide is slotted into the pre-defined prompt template, to provide the AI assistant with instructions that will generate the report you've asked for.
+
+Pre-defined prompts may make reference to particular tools that the AI assistant should use, and to particular procedures it should follow when carrying out the task. This makes the pre-defined prompts a useful way to perform certain actions in a standardized way, without you having to point out all the nuances to the AI every time.
+
+---
+
+## Advanced Configuration
+
+You can connect your AI assistant to multiple Formulize instances. You can also connect with the credentials of different users.
+
+- [Read more about advanced configurations](../ai/advanced-setup).
+
+---
+
+## Testing that it's working
+
+### Connection testing
+
+AI assistants connect to Formulize through a _local MCP server_ which passes requests to your Formulize system, and listens for the responses. There is a built in _test_connection_ tool in the local MCP server. You can ask your AI assistant to test the connection to Formulize and it should run the _test_connection_ tool and give you the results. This can reveal if there's a network issue, or if AI is not enabled in your Formulize system, or if your API key is wrong, and so on.
+
+### Testing the tools, resources and prompts
+
+You can also test the behaviour and performance of the tools, resources and prompts themselves, through the ```mcp/test.html``` page of your Formulize system, ie: ```https://yoursite.com/mcp/test.html```
+
+The test page lets you provide an API key, and try out all the different requests that an AI assistant can send to Formulize. It also lets you inspect the results that Formulize would send to the AI, so you can see exactly what the AI would be seeing.

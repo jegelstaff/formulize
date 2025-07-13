@@ -1,13 +1,21 @@
 <div class="panel-content content">
 
     <h2>Manage Keys</h2>
-
+		<blockquote>
     <p>You can connect Formulize to AI Assistants, and you can pipe data to Google Sheets. To do this, you need to create API keys for the users that are using this functionality.</p>
-		<p><a href='https://formulize.org/ai' target='_blank'>Read more about Formulize and AI at https://formulize.org/ai</a>.</p>
+		<p><b>WARNING!</b> These keys must be kept secure! They provide access to Formulize exactly the same as if that user logged in normally. Do not commit them to version control systems. Do not put them in Spreadsheets or other documents that are accessible to anyone other than the user for whom the key was issued!</p>
+		</blockquote>
+		<h3>Formulize and AI</h3>
+		<blockquote>
+		<p>Make sure AI is enabled in the <a href='../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>'>Formulize Preferences</a>. You can <a href='https://formulize.org/ai' target='_blank'>read more about Formulize and AI at https://formulize.org/ai</a>.</p>
+		</blockquote>
+		<h3>Google Sheets</h3>
+		<blockquote>
 		<p>Google Sheets can pull in read-only data from Formulize using the IMPORTDATA function:</p>
     <p></p>=IMPORTDATA("<{$xoops_url}>/makecsv.php?key=abc123")</p>
     <p>Replace abc123 with a key you generate below, and data will be gathered based on the group memberships and permissions of the user associated with the key.</p>
-    <br>
+    </blockquote>
+		<br>
     <hr>
     <br>
     <form id='managekeys' name='managekeys' method='post'>
@@ -52,10 +60,6 @@
         <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;<{$key.expiry}></td></tr>
     <{/foreach}>
     </table>
-
-
-    <p><b>WARNING!</b> These keys must be kept secure! They provide access to Formulize exactly the same as if that user logged in normally. Do not commit them to version control systems. Do not put them in Spreadsheets or other documents that are accessible to anyone other than the user for whom the key was issued!</p>
-
 </div>
 
 <script>

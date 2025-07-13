@@ -101,10 +101,26 @@ h2 {
 	margin-bottom: 0.25em;
 }
 
+h3 {
+	font-size: 13pt;
+	margin-top: 0.8em;
+	margin-bottom: 0.2em;
+}
+
+h4 {
+	font-size: 11.5pt;
+	font-weight: bold;
+	margin-bottom: 0.15em;
+}
+
 #home {
 	.breadcrumbs {
 		display: none;
 	}
+}
+
+code, pre {
+	font-size: 9pt;
 }
 
 @media print, screen and (max-width: 1024px) {
