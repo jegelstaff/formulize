@@ -90,7 +90,7 @@ trait tools {
 			],
 			'create_entry' => [
 				'name' => 'create_entry',
-				'description' => 'Create a new entry in a Formulize form. Returns success status and new entry ID.',
+				'description' => 'Create a new entry in a Formulize form. Returns success status and new entry ID. Formulize may automatically add default values for required elements, if they have default values defined. Do not be concerned about required elements unless this tool returns an error saying that required elements are missing.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -100,7 +100,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
 							'additionalProperties' => true,
 							'examples' => [
 								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
@@ -844,14 +844,6 @@ private function validateFilter($filter) {
 				}
 			}
 
-			// Fill in default values that might be missing, and validate that all required elements have values
-			if(!is_numeric($entryId) AND $entryId == "new") {
-				$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
-			}
-			if($missingRequiredHandles = array_diff($requiredHandles, array_keys($preparedData))) {
-				throw new Exception('Required element(s) missing from from the data. Missing required element(s): '.implode(", ",$missingRequiredHandles).'. If necessary, ask the user for more information about what the values should be.');
-			}
-
 			// Step 2: Prepare and validate the data
 			$preparedData = [];
 			foreach ($data as $elementHandle => $value) {
@@ -876,6 +868,25 @@ private function validateFilter($filter) {
 
 			if (empty($preparedData)) {
 				throw new Exception('No valid data provided. Valid element handles: '.implode(", ",$validHandles));
+			}
+
+			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
+			if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
+				$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
+				$missingRequiredHandles = [];
+				foreach($requiredHandles as $requiredHandle) {
+					if(!isset($preparedData[$requiredHandle])
+						OR $preparedData[$requiredHandle] === null
+						OR $preparedData[$requiredHandle] === 0
+						OR $preparedData[$requiredHandle] === "0"
+						OR $preparedData[$requiredHandle] === "") {
+							$missingRequiredHandles[] = $requiredHandle;
+						}
+				}
+				if($missingRequiredHandles) {
+					$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
+					throw new Exception("Required $elementText missing from from the data. Missing required $elementText: ".implode(", ",$missingRequiredHandles).'. If necessary, ask the user for more information about what the values should be.');
+				}
 			}
 
 			// Step 3: Write the entry

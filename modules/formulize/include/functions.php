@@ -8803,7 +8803,10 @@ function stripEntryFromDoneDestination($done_dest) {
  * @return string The string with characters converted to special chars
  */
 function convertStringToUseSpecialCharsToMatchDB($string) {
-	return str_replace('&amp;', '&', htmlspecialchars($string));
+	if(is_string($string) AND !is_numeric($string)) {
+		$string = str_replace('&amp;', '&', htmlspecialchars($string));
+	}
+	return $string;
 }
 
 /**
@@ -9067,4 +9070,17 @@ function addDefaultValuesToDataToWrite($values, $fid) {
 			$values[$defaultValueElementHandle] = $defaultValueToWrite;
 		}
 	}
+	return $values;
+}
+
+/**
+ * Takes a value and makes sure it's the correct type in PHP, either string, int or float
+ * @param mixed value - the value we're working with
+ * @return mixed returns the value, with the correct type based on its contents. If value is not a string, int or float, returns whatever we got passed in
+ */
+function correctStringIntFloatTypes($value) {
+	if(is_numeric($value)) {
+		$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
+	}
+	return $value;
 }
