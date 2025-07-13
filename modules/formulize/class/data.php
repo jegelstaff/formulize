@@ -945,21 +945,7 @@ class formulizeDataHandler {
 
     // if it is a "new" entry, set default values
 		if(!is_numeric($entry_id) AND $entry_id == "new") {
-			$defaultValueMap = getEntryDefaults($this->fid, $entry_id);
-			foreach($defaultValueMap as $defaultValueElementId=>$defaultValueToWrite) {
-				if($defaultValueElementId) {
-					// setup things to be able to lookup the handle of the element in the map
-					$element_valuesKey = $handleElementMap[$defaultValueElementId];
-					if(!$mapIDs) {
-						$handles = convertElementIdsToElementHandles(array($defaultValueElementId));
-						$element_valuesKey = $handleElementMap[$handles[0]];
-					}
-					// if the element is not a value that we received, then let's use the default value
-					if(!isset($element_values[$element_valuesKey])) {
-						$element_values[$element_valuesKey] = $defaultValueToWrite;
-					}
-				}
-			}
+			$element_values = addDefaultValuesToDataToWrite($element_values, $this->fid);
 		}
 
 		// call a hook which can modify the values before saving. If it returns false, then return null up the chain.

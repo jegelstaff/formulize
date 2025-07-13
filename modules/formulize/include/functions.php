@@ -8087,7 +8087,7 @@ function export_prepColumns($columns,$include_metadata=0) {
 // used for setting values that are supposed to exist by default in newly created subform entries
 function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
-  $defaultValueMap = getEntryDefaults($target_fid, $target_entry);
+  $defaultValueMap = getEntryDefaults($target_fid, $target_entry, keyByIds: true);
   $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
 
   $i = 0;
@@ -8104,15 +8104,16 @@ function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array())
  * Gets the default values for elements in an entry, usually a new entry, but some element types can have defaults that depend on data already saved in other elements in an entry
  * Such as when a multipage form has elements on page 2 that have default values determined by answers on page 1
  * @param int $target_fid - The form id for which we're getting default values
- * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry.
+ * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry. Defaults to 'new'.
+ * @param boolean $keyByIds - a flag to indicate if the resulting array should be keyed by element id. Default is false and array will be keyed by element handles.
  * @return array Returns an array of element id/default value pairs
  */
-function getEntryDefaults($target_fid,$target_entry) {
+function getEntryDefaults($target_fid,$target_entry = 'new', $keyByIds = false) {
 
   static $cachedDefaults = array();
 
-  if(isset($cachedDefaults[$target_fid][$target_entry])) {
-    return $cachedDefaults[$target_fid][$target_entry];
+  if(isset($cachedDefaults[$target_fid][$keyByIds][$target_entry])) {
+    return $cachedDefaults[$target_fid][$keyByIds][$target_entry];
   }
 
   $defaultValueMap = array();
@@ -8214,9 +8215,10 @@ function getEntryDefaults($target_fid,$target_entry) {
 				}
     }
     if($defaultTextToWrite === "" OR $defaultTextToWrite === false OR $defaultTextToWrite === null) { continue; }
-    $defaultValueMap[$thisDefaultEle->getVar('ele_id')] = $defaultTextToWrite;
+		$key = $keyByIds ? $thisDefaultEle->getVar('ele_id') : $thisDefaultEle->getVar('ele_handle');
+    $defaultValueMap[$key] = $defaultTextToWrite;
   }
-  $cachedDefaults[$target_fid][$target_entry] = $defaultValueMap;
+  $cachedDefaults[$target_fid][$keyByIds][$target_entry] = $defaultValueMap;
   return $defaultValueMap;
 }
 
@@ -9049,4 +9051,20 @@ function isMCPServerEnabled() {
 
     return isset($formulizeConfig['formulizeMCPServerEnabled']) &&
            $formulizeConfig['formulizeMCPServerEnabled'] == 1;
+}
+
+/**
+ * Take an array of element handle -> value pairs, and add default values for any elements in the form that don't already have a value
+ * @param array values - The values array that we're appending to
+ * @param int fid - The ID of the form we're getting default values for
+ * @return array Returns the passed array with default values added, if any
+ */
+function addDefaultValuesToDataToWrite($values, $fid) {
+	$defaultValueMap = getEntryDefaults($fid);
+	foreach($defaultValueMap as $defaultValueElementHandle=>$defaultValueToWrite) {
+		// if the element is not a value that we received, then let's use the default value
+		if(!isset($values[$defaultValueElementHandle])) {
+			$values[$defaultValueElementHandle] = $defaultValueToWrite;
+		}
+	}
 }

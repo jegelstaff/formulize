@@ -317,7 +317,7 @@ trait resources {
 			if(security_check($formId)) {
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
 				$row['elements'] = $this->metadataFields();
-				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_display, ele_type FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_required, ele_type, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
 						if($elementRow['ele_display'] == 1
