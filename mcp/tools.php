@@ -832,12 +832,24 @@ private function validateFilter($filter) {
 			}
 
 			// Get form elements to validate handles
-			$elementsSql = "SELECT ele_handle FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
+			$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
 			$elementsResult = $this->db->query($elementsSql);
 
 			$validHandles = [];
+			$requiredHandles = [];
 			while ($row = $this->db->fetchArray($elementsResult)) {
 				$validHandles[] = $row['ele_handle'];
+				if($row['ele_required']) {
+					$requiredHandles[] = $row['ele_handle'];
+				}
+			}
+
+			// Fill in default values that might be missing, and validate that all required elements have values
+			if(!is_numeric($entryId) AND $entryId == "new") {
+				$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
+			}
+			if($missingRequiredHandles = array_diff($requiredHandles, array_keys($preparedData))) {
+				throw new Exception('Required element(s) missing from from the data. Missing required element(s): '.implode(", ",$missingRequiredHandles).'. If necessary, ask the user for more information about what the values should be.');
 			}
 
 			// Step 2: Prepare and validate the data
