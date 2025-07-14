@@ -131,7 +131,7 @@ class FormulizeMCP
 			exit;
 		}
 
-		// Allow unauthenticated GET requests for documentation and health
+		// Only authenticate requests for mcp
 		$allowUnauthenticatedRequests = false;
 		if ($method === 'GET' && (
 			substr($path, -7) === '/health' ||
