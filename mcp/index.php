@@ -19,12 +19,51 @@ include_once XOOPS_ROOT_PATH . '/mcp/tools.php';
 include_once XOOPS_ROOT_PATH . '/mcp/resources.php';
 include_once XOOPS_ROOT_PATH . '/mcp/prompts.php';
 
+class FormulizeMCPException extends Exception
+{
+		private string $timestamp;
+		private string $type;
+		private array $context;
+
+    public function __construct(string $message, string $type, array $context = [], int $code = 0, ?Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+        $this->type = $type;
+				$this->timestamp = date('Y-m-d H:i:s');
+				$this->context = $context;
+    }
+
+    public function getTimestamp(): string
+    {
+        return $this->timestamp;
+    }
+
+		public function getType(): string
+		{
+			return $this->type;
+		}
+
+		public function getContext(): array
+		{
+			return $this->context;
+		}
+}
+
 class FormulizeMCP
 {
-
 	use tools;
 	use resources;
 	use prompts;
+
+	public $exceptionTypeToHTTPStatusCode = [
+		'preflight_success' => 204,
+		'authentication_error' => 401,
+		'method_not_allowed' => 405,
+		'database_error' => 500,
+		'missing_method' => 500,
+		'method_not_found' => 404,
+		'server_disabled' => 503,
+	];
 
 	private $config;
 	private $db;
@@ -41,17 +80,22 @@ class FormulizeMCP
 
 	public function __construct($config = null)
 	{
+		// Front load
+		$this->db = $this->getFormulizeDatabase();
+		$authHeader = $this->getAuthorizationHeader();
+
+		if ($authHeader == 'Bearer test-header-passthrough-check') {
+			$this->canBeEnabled = true;
+		}
+
 		if (isMCPServerEnabled()) {
 			$this->enabled = true;
 			$this->canBeEnabled = true;
-		} else {
-			$this->enabled = false;
-			$authHeader = $this->getAuthorizationHeader();
-			if ($authHeader == 'Bearer test-header-passthrough-check') {
-				$this->canBeEnabled = true;
-			}
 		}
+
+		// Get the raw http request contents
 		$input = file_get_contents('php://input');
+		// @todo should we throw if the input is empty?
 		$request = !empty($input) ? json_decode($input, true) : '';
 		$this->mcpRequest = [
 			'id' => $request['id'] ?? null,
@@ -60,12 +104,56 @@ class FormulizeMCP
 			'localServerName' => strtolower(FormulizeObject::sanitize_handle_name($request['localServerDetails']['name'] ?? 'formulize'))
 		];
 		$this->config = $config ?: $this->getDefaultConfig();
-		$this->initializeDatabase();
 		$this->baseUrl = $this->getBaseUrl();
 	}
 
 	/**
+	 * Send an HTTP response with headers and body
+	 *
+	 * @param array $body The response body, either JSON or HTML
+	 * @param int $httpResponseCode The HTTP response code to send (default 200)
+	 * @param array $headers Additional headers to set (default empty array)
+	 * @param bool $isJSON Whether the body is JSON (default true)
+	 * @return void
+	 */
+	public function sendResponse(array $body, int $httpResponseCode = 200, array $headers = [], bool $isJSON = true) {
+		// Iterate throug the headers and set them
+		foreach ($headers as $header) {
+			header($header);
+		}
+		// Prevent ALL caching at every level
+		header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+		header('Pragma: no-cache');
+		header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+		header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+		header('ETag: "' . uniqid() . '"');
+		header('Vary: *');
+
+		// CORS headers
+		header('Access-Control-Allow-Origin: *');
+		header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+		header('Access-Control-Allow-Headers: Content-Type, Authorization');
+		header('Access-Control-Max-Age: 0');
+
+		// Set the HTTP response code
+		http_response_code($httpResponseCode);
+
+		// Set the content type to JSON
+		if ($isJSON) {
+			header('Content-Type: application/json; charset=utf-8');
+			// Encode the body as JSON
+			echo json_encode($body, JSON_PRETTY_PRINT);
+		} else {
+			// If not JSON assume HTML
+			header('Content-Type: text/html; charset=utf-8');
+			echo $body;
+		}
+	}
+
+	/**
 	 * Get the base URL for this server
+	 *
+	 * @return string The base URL for the server
 	 */
 	private function getBaseUrl()
 	{
@@ -77,6 +165,8 @@ class FormulizeMCP
 
 	/**
 	 * Get details about the authenticated user
+	 *
+	 * @return array|false An array with user details or false if not authenticated
 	 */
 	private function getAuthenticatedUserDetails() {
 		$details = false;
@@ -95,19 +185,23 @@ class FormulizeMCP
 	}
 
 	/**
-	 * Initialize database connection using Formulize's existing connection
+	 * Get the initialized Formulize database
+	 *
+	 * @return XoopsDatabase The initialized Formulize database connection
 	 */
-	private function initializeDatabase()
+	public function getFormulizeDatabase()
 	{
 		global $xoopsDB;
 		if (!$xoopsDB) {
 			throw new Exception('Formulize database connection not available');
 		}
-		$this->db = $xoopsDB;
+		return $xoopsDB;
 	}
 
 	/**
 	 * Get default configuration settings
+	 *
+	 * @return array Default configuration settings
 	 */
 	private function getDefaultConfig()
 	{
@@ -119,16 +213,17 @@ class FormulizeMCP
 
 	/**
 	 * Authenticate using Formulize's existing API key system
+	 *
+	 * @return bool True if authentication is successful, throws FormulizeMCPException on failure
 	 */
-	private function authenticateRequest()
+	private function authenticateRequest(string $path, string $method)
 	{
-		$path = $_SERVER['REQUEST_URI'];
-		$method = $_SERVER['REQUEST_METHOD'];
-
 		// Handle CORS preflight
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-			http_response_code(204);
-			exit;
+			throw new FormulizeMCPException(
+				'Preflight request successful',
+				'preflight_success',
+			);
 		}
 
 		// Only authenticate requests for mcp
@@ -146,22 +241,45 @@ class FormulizeMCP
 		$authHeader = $this->getAuthorizationHeader();
 
 		if (empty($authHeader) AND !$allowUnauthenticatedRequests) {
-			$this->sendAuthError('Missing Authorization header'); // method will exit, actually
-			return false;
+			throw new FormulizeMCPException(
+				'Missing Authorization header',
+				'authentication_error',
+			);
 		}
 
 		// Extract API key from "Bearer {api_key}" format
 		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches) AND !$allowUnauthenticatedRequests) {
-			$this->sendAuthError('Invalid Authorization header format. Use: Bearer {api_key}'); // method will exit, actually
-			return false;
+			throw new FormulizeMCPException(
+				'Invalid Authorization header format. Use: Bearer {api_key}',
+				'authentication_error',
+			);
 		}
 
+		// Isolate the key
 		$key = trim($matches[1]);
 
-		// Validate API key using Formulize's exact system
-		if (!$this->validateFormulizeApiKey($key) AND !$allowUnauthenticatedRequests) {
-			$this->sendAuthError('Invalid or expired API key'); // method will exit, actually
-			return false;
+		if (!$allowUnauthenticatedRequests) {
+			$uid = $this->getUidFromAPIKey($key);
+			if ($uid === false) {
+				throw new FormulizeMCPException(
+					'Invalid or expired API key',
+					'authentication_error',
+				);
+			}
+			$member_handler = xoops_gethandler('member');
+			if ($uidObject = $member_handler->getUser($uid)) {
+				$this->userGroups = $uidObject->getGroups();
+				$this->authenticatedUser = $uidObject;
+
+				// Set global user context as Formulize does
+				$xoopsUser = $uidObject;
+				$icmsUser = $uidObject;
+			} else {
+				$this->authenticatedUser = null;
+				$this->authenticatedUid = 0;
+				$this->userGroups = array(XOOPS_GROUP_ANONYMOUS);
+				return false;
+			}
 		}
 
 		return true;
@@ -169,6 +287,8 @@ class FormulizeMCP
 
 	/**
 	 * Get Authorization header across different server configurations
+	 *
+	 * @return string The Authorization header value or an empty string if not set
 	 */
 	private function getAuthorizationHeader()
 	{
@@ -184,9 +304,12 @@ class FormulizeMCP
 	}
 
 	/**
-	 * Validate key using Formulize's API key system
+	 * Get the User ID from the API key
+	 *
+	 * @param string $key The API key to validate
+	 * @return string|false The user ID if the key is valid, false otherwise
 	 */
-	private function validateFormulizeApiKey($key)
+	private function getUidFromAPIKey($key)
 	{
 		global $xoopsUser, $icmsUser;
 
@@ -198,66 +321,35 @@ class FormulizeMCP
 
 		$this->authenticatedUid = 0;
 
-		if ($key and $apikey = $apiKeyHandler->get($key)) {
-			$this->authenticatedUid = $apikey->getVar('uid');
-
-			$member_handler = xoops_gethandler('member');
-			if ($uidObject = $member_handler->getUser($this->authenticatedUid)) {
-				$this->userGroups = $uidObject->getGroups();
-				$this->authenticatedUser = $uidObject;
-
-				// Set global user context as Formulize does
-				$xoopsUser = $uidObject;
-				$icmsUser = $uidObject;
-
-				return true;
-			} else {
-				$this->authenticatedUser = null;
-				$this->authenticatedUid = 0;
-				$this->userGroups = array(XOOPS_GROUP_ANONYMOUS);
-				return false;
-			}
+		if ($key && $apikey = $apiKeyHandler->get($key)) {
+			return $apikey->getVar('uid');
 		}
-
 		return false;
 	}
 
 	/**
-	 * Send authentication error response
-	 */
-	private function sendAuthError($message, $code = 401)
-	{
-		$this->setNoCacheHeaders();
-		http_response_code($code);
-		echo json_encode([
-			'error' => [
-				'message' => $message,
-				'type' => 'authentication_error'
-			],
-			'timestamp' => date('Y-m-d H:i:s')
-		]);
-		exit;
-	}
-
-	/**
 	 * Handle HTTP request routing with authentication
+	 *
+	 * @return void
 	 */
 	public function handleHTTPRequest()
 	{
-		$this->setNoCacheHeaders();
+	  $path = $_SERVER['REQUEST_URI'];
+		$method = $_SERVER['REQUEST_METHOD'];
 
 		// Authenticate request
-		if (!$this->authenticateRequest()) {
+		if (!$this->authenticateRequest($path, $method)) {
 			return; // Authentication error already sent
 		}
 
+		// @todo could this be part of the constructor?
 		$this->registerTools();
 		$this->registerResources();
 		$this->registerPrompts();
 
-		$path = $_SERVER['REQUEST_URI'];
 		$pathParts = explode('?', $path);
 		$cleanPath = rtrim($pathParts[0], '/');
+		$content = [];
 
 		writeToFormulizeLog([
 			'formulize_event' => 'mcp-request-being-handled',
@@ -268,32 +360,28 @@ class FormulizeMCP
 		try {
 			// Route based on path - match end of line
 			if (preg_match('/\/health$/', $cleanPath)) {
-				$this->handleHealthCheck();
+				$content = $this->handleHealthCheck();
 			} elseif (preg_match('/\/capabilities$/', $cleanPath)) {
-				$this->handleCapabilities();
+				$content = $this->handleCapabilities();
 			} elseif (preg_match('/\/mcp$/', $cleanPath)) {
-				$this->handleMCPEndpoint();
+				$content = $this->handleMCPEndpoint($this->mcpRequest, $method);
 			} else {
-				$this->handleDocumentation();
+				$content = $this->handleDocumentation();
 			}
-		} catch (Exception $e) {
-			http_response_code(500);
-			echo json_encode([
+			$this->sendResponse($content);
+		} catch (FormulizeMCPException $e) {
+			$this->sendResponse([
 				'jsonrpc' => '2.0',
-				'error' => [
-					'code' => -32603,
-					'message' => 'Internal error: ' . $e->getMessage()
-				],
+				'error' => $e->getContext(),
 				'id' => $this->mcpRequest['id']
-			]);
+			], $exceptionTypeToHTTPStatusCode[$e->getType()] ?? 500);
 		}
-
-
-
 	}
 
 	/**
 	 * Handle initialization request
+	 *
+	 * @return array The response for the initialization request
 	 */
 	private function handleInitialize($params, $id)
 	{
@@ -315,6 +403,8 @@ class FormulizeMCP
 
 	/**
 	 * Gathers the initialize instructions
+	 *
+	 * @return string The instructions for initializing the MCP server
 	 */
 	private function getInitializeInstructions() {
 		$systemSepecificInstructions = '';
@@ -328,29 +418,10 @@ class FormulizeMCP
 	}
 
 	/**
-	 * Set comprehensive no-cache headers
-	 */
-	private function setNoCacheHeaders()
-	{
-		// Prevent ALL caching at every level
-		header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
-		header('Pragma: no-cache');
-		header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
-		header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-		header('ETag: "' . uniqid() . '"');
-		header('Vary: *');
-
-		// CORS headers
-		header('Access-Control-Allow-Origin: *');
-		header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-		header('Access-Control-Allow-Headers: Content-Type, Authorization');
-		header('Access-Control-Max-Age: 0');
-
-		header('Content-Type: application/json; charset=utf-8');
-	}
-
-	/**
 	 * Enhanced health check with Formulize auth info
+	 *
+	 * @return array Health check details including database connection, API keys, and system info
+	 * @throws FormulizeMCPException if the database query fails
 	 */
 	private function handleHealthCheck()
 	{
@@ -358,7 +429,7 @@ class FormulizeMCP
 		$testQuery = "SELECT 1 as test";
 		$result = $this->db->query($testQuery);
 		if (!$result) {
-			throw new Exception('Database query failed');
+			throw new FormulizeMCPException('Database query failed', 'database_error');
 		}
 		// Count active keys
 		$apiKeyCount = 0;
@@ -370,6 +441,7 @@ class FormulizeMCP
 				$apiKeyCount = $countRow['count'];
 			}
 		}
+
 		$health = [
 			'status' => 'healthy',
 			'database_connected' => $dbConnected ? 'true' : 'false',
@@ -389,22 +461,58 @@ class FormulizeMCP
 			]
 		];
 
-		echo json_encode($health, JSON_PRETTY_PRINT);
-
+		return $health;
 	}
 
 	/**
 	 * Handle MCP endpoint (/mcp)
+	 *
+	 * @return array The response from the MCP request
+	 * @throws FormulizeMCPException if the request method is not POST
 	 */
-	private function handleMCPEndpoint()
+	private function handleMCPEndpoint(array $mcpRequest, string $requestMethod)
 	{
-		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-			http_response_code(405);
-			echo json_encode(['error' => 'Method not allowed. Use POST for MCP requests.']);
-			return;
+		$params = $mcpRequest['params'] ?? [];
+		$id = $mcpRequest['id'] ?? null;
+		$method = $mcpRequest['method'] ?? null;
+
+		if ($requestMethod !== 'POST') {
+			throw new FormulizeMCPException(
+				'Method not allowed. Use POST for MCP requests.',
+				'method_not_allowed'
+			);
 		}
-		$response = $this->handleMCPRequest();
-		echo json_encode($response);
+
+		if (!$method) {
+			throw new FormulizeMCPException(
+				'Invalid JSON input',
+				'missing_method',
+				$this->JSONerrorResponse('Invalid JSON input', -32600)
+			);
+		}
+
+		switch ($method) {
+			case 'initialize':
+				return $this->handleInitialize($params, $id);
+			case 'tools/list':
+				return $this->handleToolsList($id);
+			case 'tools/call':
+				return $this->handleToolCall($params, $id);
+			case 'resources/list':
+				return $this->handleResourcesList($id);
+			case 'resources/read':
+				return $this->handleResourceRead($params, $id);
+			case 'prompts/list':
+				return $this->handlePromptsList($id);
+			case 'prompts/get':
+				return $this->handlePromptGet($params, $id);
+			default:
+				throw new FormulizeMCPException(
+					'Unknown method: ' . $method,
+					'method_not_found',
+					$this->JSONerrorResponse('Unknown method: ' . $method, -32601, $id)
+				);
+		}
 	}
 
 	/**
@@ -414,7 +522,6 @@ class FormulizeMCP
 	{
 		$module_handler = xoops_gethandler('module');
 		$formulizeModule = $module_handler->getByDirname("formulize");
-		$metadata = $formulizeModule->getInfo();
 
 		$capabilities = [
 			'capabilities' => [
@@ -433,141 +540,148 @@ class FormulizeMCP
 				'capabilities' => $this->baseUrl . '/capabilities'
 			]
 		];
-		echo json_encode($capabilities, JSON_PRETTY_PRINT);
+		return $capabilities;
 	}
 
 	/**
 	 * Handle documentation page
+	 *
+	 * @return string HTML content for the documentation page
+	 * @throws FormulizeMCPException if the request method is not GET
 	 */
 	private function handleDocumentation()
 	{
 		if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-			http_response_code(405);
-			echo json_encode(['error' => 'Method not allowed']);
-			return;
+			throw new FormulizeMCPException(
+				'Method not allowed. Use GET for documentation.',
+				'method_not_allowed',
+			);
 		}
 
-		header('Content-Type: text/html; charset=utf-8');
-
-?>
+		$html = '
 		<!DOCTYPE html>
 		<html>
+			<head>
+				<title>Formulize MCP HTTP Server v' . FORMULIZE_MCP_VERSION . '</title>
+				<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+				<style>
+					body {
+						font-family: Arial, sans-serif;
+						max-width: 800px;
+						margin: 0 auto;
+						padding: 20px;
+					}
 
-		<head>
-			<title>Formulize MCP HTTP Server v<?php echo FORMULIZE_MCP_VERSION; ?></title>
-			<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-			<style>
-				body {
-					font-family: Arial, sans-serif;
-					max-width: 800px;
-					margin: 0 auto;
-					padding: 20px;
-				}
+					.endpoint {
+						background: #f5f5f5;
+						padding: 15px;
+						margin: 10px 0;
+						border-radius: 5px;
+					}
 
-				.endpoint {
-					background: #f5f5f5;
-					padding: 15px;
-					margin: 10px 0;
-					border-radius: 5px;
-				}
+					.method {
+						color: #007cba;
+						font-weight: bold;
+					}
 
-				.method {
-					color: #007cba;
-					font-weight: bold;
-				}
+					pre {
+						background: #eee;
+						padding: 10px;
+						border-radius: 3px;
+						overflow-x: auto;
+					}
 
-				pre {
-					background: #eee;
-					padding: 10px;
-					border-radius: 3px;
-					overflow-x: auto;
-				}
+					.success {
+						color: #2e7d32;
+					}
 
-				.success {
-					color: #2e7d32;
-				}
+					.feature {
+						background: #e3f2fd;
+						padding: 10px;
+						margin: 5px 0;
+						border-radius: 3px;
+					}
+				</style>
+			</head>
 
-				.feature {
-					background: #e3f2fd;
-					padding: 10px;
-					margin: 5px 0;
-					border-radius: 3px;
-				}
-			</style>
-		</head>
+			<body>
+				<h1>Formulize MCP HTTP Server v' . FORMULIZE_MCP_VERSION . '</h1>
+				<p class="success">✅ Featuring Tools, Resources, and Prompts!</p>
 
-		<body>
-			<h1>Formulize MCP HTTP Server v<?php echo FORMULIZE_MCP_VERSION; ?></h1>
-			<p class="success">✅ Featuring Tools, Resources, and Prompts!</p>
+				<h2>Endpoints:</h2>
 
-			<h2>Endpoints:</h2>
+				<div class="endpoint">
+					<h3><span class="method">POST</span> /mcp</h3>
+					<p>Main MCP endpoint - send JSON-RPC requests like this:</p>
+					<pre>curl -X POST ' . $this->baseUrl . '/mcp \
+				-H "Content-Type: application/json" \
+				-H "Authorization: Bearer YOUR_FORMULIZE_API_KEY" \
+				-d \'{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}\'</pre>
+				</div>
 
-			<div class="endpoint">
-				<h3><span class="method">POST</span> /mcp</h3>
-				<p>Main MCP endpoint - send JSON-RPC requests like this:</p>
-				<pre>curl -X POST <?php echo $this->baseUrl; ?>/mcp \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_FORMULIZE_API_KEY" \
-  -d '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}'</pre>
-			</div>
+				<div class="endpoint">
+					<h3><span class="method">GET</span> /capabilities</h3>
+					<p>MCP server capabilities and authentication info</p>
+					<p><a href="' . $this->baseUrl . '/capabilities">View capabilities</a></p>
+				</div>
 
-			<div class="endpoint">
-				<h3><span class="method">GET</span> /capabilities</h3>
-				<p>MCP server capabilities and authentication info</p>
-				<p><a href="<?php echo $this->baseUrl; ?>/capabilities">View capabilities</a></p>
-			</div>
+				<div class="endpoint">
+					<h3><span class="method">GET</span> /health</h3>
+					<p>Health check endpoint</p>
+					<p><a href="' . $this->baseUrl . '/health">Check health</a></p>
+				</div>
 
-			<div class="endpoint">
-				<h3><span class="method">GET</span> /health</h3>
-				<p>Health check endpoint</p>
-				<p><a href="<?php echo $this->baseUrl; ?>/health">Check health</a></p>
-			</div>
+				<h2>Authentication:</h2>
+				<div class="highlight">
+					<p><strong>How to get your API key:</strong></p>
+					<ol>
+						<li>Login to your Formulize system</li>
+						<li>Go to Admin → Manage API Keys</li>
+						<li>Create or copy your API key</li>
+						<li>Use it as: <code>Authorization: Bearer YOUR_API_KEY</code></li>
+					</ol>
+				</div>
 
-			<h2>Authentication:</h2>
-			<div class="highlight">
-				<p><strong>How to get your API key:</strong></p>
-				<ol>
-					<li>Login to your Formulize system</li>
-					<li>Go to Admin → Manage API Keys</li>
-					<li>Create or copy your API key</li>
-					<li>Use it as: <code>Authorization: Bearer YOUR_API_KEY</code></li>
-				</ol>
-			</div>
+				<h2>Available Capabilities:</h2>
 
-			<h2>Available Capabilities:</h2>
+				<div class="feature">
+					<h3>🔧 Tools (' . count($this->tools) . ' available)</h3>
+					<ul>';
 
-			<div class="feature">
-				<h3>🔧 Tools (<?php echo count($this->tools); ?> available)</h3>
-				<ul>
-					<?php foreach ($this->tools as $tool): ?>
-						<li><strong><?php echo htmlspecialchars($tool['name']); ?></strong> - <?php echo htmlspecialchars($tool['description']); ?></li>
-					<?php endforeach; ?>
-				</ul>
-			</div>
+			foreach ($this->tools as $tool) {
+				$html .= '<li><strong>' . htmlspecialchars($tool['name']) . '</strong> - ' . htmlspecialchars($tool['description']) . '</li>';
+			}
 
-			<div class="feature">
-				<h3>📄 Resources (<?php echo count($this->resources); ?> available)</h3>
-				<ul>
-					<?php foreach ($this->resources as $resource): ?>
-						<li><strong><?php echo htmlspecialchars($resource['name']); ?></strong> - <?php echo htmlspecialchars($resource['description']); ?></li>
-					<?php endforeach; ?>
-				</ul>
-			</div>
+			$html .= '		</ul>
+				</div>
 
-			<div class="feature">
-				<h3>💬 Prompts (<?php echo count($this->prompts); ?> available)</h3>
-				<ul>
-					<?php foreach ($this->prompts as $prompt): ?>
-						<li><strong><?php echo htmlspecialchars($prompt['name']); ?></strong> - <?php echo htmlspecialchars($prompt['description']); ?></li>
-					<?php endforeach; ?>
-				</ul>
-			</div>
+				<div class="feature">
+					<h3>📄 Resources (' . count($this->resources) . ' available)</h3>
+					<ul>';
 
-			<p><small>Formulize MCP HTTP Server v<?php echo FORMULIZE_MCP_VERSION; ?> | <?php echo date('Y-m-d H:i:s'); ?></small></p>
-		</body>
+			foreach ($this->resources as $resource) {
+				$html .= '<li><strong>' . htmlspecialchars($resource['name']) . '</strong> - ' . htmlspecialchars($resource['description']) . '</li>';
+			}
 
-		</html>
-<?php
+			$html .= '		</ul>
+				</div>
+
+				<div class="feature">
+					<h3>💬 Prompts (' . count($this->prompts) . ' available)</h3>
+					<ul>';
+
+			foreach ($this->prompts as $prompt) {
+				$html .= '<li><strong>' . htmlspecialchars($prompt['name']) . '</strong> - ' . htmlspecialchars($prompt['description']) . '</li>';
+			}
+
+			$html .= '		</ul>
+				</div>
+
+				<p><small>Formulize MCP HTTP Server v' . FORMULIZE_MCP_VERSION . ' | ' . date('Y-m-d H:i:s') . '</small></p>
+			</body>
+
+		</html>';
+		return $html;
 	}
 
 	/**
@@ -577,13 +691,31 @@ class FormulizeMCP
 	 * @return void
 	 */
 	private function verifyUserIsWebmaster($itemName) {
+		// @todo this really shouldn't be a method and we should use the boolean based check isUserAWebmaster() instead
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$this->sendAuthError("Permission denied: Only webmasters can access $itemName.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can access $itemName.",
+				'authentication_error',
+			);
 		}
 	}
 
 	/**
+	 * Check if the user is a webmaster
+	 *
+	 * @return bool True if the user is a webmaster, false otherwise
+	 */
+	private function isUserAWebmaster() {
+		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+			return false;
+		}
+		return true;
+	}
+
+
+	/**
 	 * Return an array of metadata fields, all keyed with 'element_handle' so that we can start the elements lists that way when appropriate
+	 *
 	 * @return array The array of metadata fields found in the database (creator_email and owner_groups are removed)
 	 */
 	private function metadataFields() {
@@ -606,6 +738,7 @@ class FormulizeMCP
 	 * Then, after all that, have to check who can add_own_entry because the premise is that users would
 	 * know of this user's existence through the system, potentially. Users who can view a form, but can't make
 	 * entries would be lurking and the authenticated user would never know who they are.
+	 *
 	 * @return array The groupids that the authenticated user can see entries from
 	 */
 	private function groupsAuthenticatedUserCanSeeDataFrom() {
@@ -623,40 +756,6 @@ class FormulizeMCP
 		$groupsTheUserCanSee = array_unique($groupsTheUserCanSee);
 		$groupsThatCanMakeEntries = array_unique($groupsThatCanMakeEntries);
 		return array_intersect($groupsTheUserCanSee, $groupsThatCanMakeEntries);
-	}
-
-	/**
-	 * Handle MCP request (same as before)
-	 */
-	public function handleMCPRequest()
-	{
-
-		$method = $this->mcpRequest['method'];
-		$params = $this->mcpRequest['params'];
-		$id = $this->mcpRequest['id'];
-
-		if (!$method) {
-			return $this->JSONerrorResponse('Invalid JSON input', -32600);
-		}
-
-		switch ($method) {
-			case 'initialize':
-				return $this->handleInitialize($params, $id);
-			case 'tools/list':
-				return $this->handleToolsList($id);
-			case 'tools/call':
-				return $this->handleToolCall($params, $id);
-			case 'resources/list':
-				return $this->handleResourcesList($id);
-			case 'resources/read':
-				return $this->handleResourceRead($params, $id);
-			case 'prompts/list':
-				return $this->handlePromptsList($id);
-			case 'prompts/get':
-				return $this->handlePromptGet($params, $id);
-			default:
-				return $this->JSONerrorResponse('Unknown method: ' . $method, -32601, $id);
-		}
 	}
 
 	private function JSONerrorResponse($message, $code = -32603, $id = null, $context = []) {
@@ -713,33 +812,27 @@ try {
 		$server->handleHTTPRequest();
 	} elseif ($server->canBeEnabled) {
 		// if the MCP server passed the canBeEnabled check, but is not enabled, return a 200 OK response with a JSON payload indicating that the server is not enabled
-		header('Content-Type: application/json; charset=utf-8');
-		header('Cache-Control: no-cache, no-store, must-revalidate');
-		http_response_code(200);
-		echo json_encode([
+		$content = [
 			'status' => 'canBeEnabled',
 			'message' => 'MCP Server can be enabled',
 			'code' => 200,
 			'timestamp' => date('Y-m-d H:i:s')
-		]);
+		];
+		$server->sendResponse($content);
 	} else {
 		// If the MCP server is disabled, return a 503 Service Unavailable response
-		header('Content-Type: application/json; charset=utf-8');
-		header('Cache-Control: no-cache, no-store, must-revalidate');
-		http_response_code(503);
-		echo json_encode([
-			'error' => 'MCP Server is disabled',
-			'message' => 'Please enable the MCP Server in the Formulize settings.',
-			'code' => 503,
-			'timestamp' => date('Y-m-d H:i:s')
+		throw new FormulizeMCPException('MCP Server is disabled', 'server_disabled', [
+			'status' => 'disabled',
+			'message' => 'MCP Server is currently disabled. Please enable it to use the MCP features.',
 		]);
 	}
-} catch (Exception $e) {
-	header('Content-Type: application/json; charset=utf-8');
-	header('Cache-Control: no-cache, no-store, must-revalidate');
-	http_response_code(500);
-	echo json_encode([
-		'error' => 'Server initialization failed: ' . $e->getMessage(),
-		'timestamp' => date('Y-m-d H:i:s')
-	]);
+} catch (FormulizeMCPException $e) {
+	$server->sendResponse([
+		'jsonrpc' => '2.0',
+		'error' => [
+			'message' => $e->getMessage(),
+			'type' => $e->getType(),
+			'timestamp' => $e->getTimestamp()
+		]
+	], $exceptionTypeToHTTPStatusCode[$e->getType()] ?? 500);
 }

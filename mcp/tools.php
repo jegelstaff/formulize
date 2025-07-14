@@ -377,6 +377,7 @@ Examples:
 
 	/**
 	 * Handle tools list request
+	 *
 	 * @param string $id The request ID from the MCP client
 	 * @return array The JSON-RPC response containing the list of tools
 	 */
@@ -393,6 +394,7 @@ Examples:
 
 	/**
 	 * Handle tool call request
+	 *
 	 * @param array $params The parameters from the MCP client, as parsed by the handleMCPRequest method
 	 * @param string $id The request ID from the MCP client
 	 * @return array The JSON-RPC response containing the result of the tool call
