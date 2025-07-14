@@ -179,7 +179,7 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		<li><b>Share the API key <i>securely</i></b> &mdash; Use a secure communication channel to distribute the API keys, or meet in person. The API keys give access to Formulize in exactly the same way as logging in with someone's username and password, so <b>do not send them via e-mail</b> or other insecure means!</li>
 		<li><b>Connect an AI assistant</b> &mdash; Use these files to connect an MCP-compatible AI assistant to Formulize:
 			<ul class='mcp-bullets'>
-				<li><b>DXT Extension</b> &mdash; <a href='".XOOPS_URL."/mcp/formulize-mcp.dxt'>formulize-mcp.dxt</a> &mdash; download this file and install it in an AI assistant that supports DXT extensions, such as <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>.</li>
+				<li><b>DXT Extension</b> &mdash; <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.1/formulize-mcp.dxt' download='formulize-mcp.dxt'>formulize-mcp.dxt</a> &mdash; download this file and install it in an AI assistant that supports DXT extensions, such as <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>.</li>
 				<li style='list-style: none;'><b>or</b></li>
 				<li><b>Manual configuration</b> &mdash; <a href='".XOOPS_URL."/mcp/example_config.php' download='$mcpExampleConfigFilename'>$mcpExampleConfigFilename</a> &mdash; download this file and save it/modify it, in the location where your AI assistant looks for MCP configuration details.</li>
 			</ul>
