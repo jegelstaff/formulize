@@ -44,6 +44,10 @@
 
 	$(".relationship-options-savebuttonpopup, input[name=delete-link-button]").click(function() {
 		if($(this).attr('name') == 'delete-link-button') {
+			confirmation = confirm('Are you sure you want to delete this connection?');
+			if(!confirmation) {
+				return;
+			}
 			$('div#dialog-relationship-options-content input[name=delete-link-id]').val($('div#dialog-relationship-options-content input[name=lid]').val());
 		}
 		var pagedata = window.document.getElementsByName("relationship-options-popupform");

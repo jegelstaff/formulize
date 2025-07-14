@@ -1593,6 +1593,12 @@ input[name=delete-link-button] {
 	margin-right: 1em;
 }
 
+input[name=delete-link-button] {
+	bottom: 0.2em;
+  position: absolute;
+  right: 0.2em;
+}
+
 #savebutton input, #popupsavebutton input,
 #relationship-options-popupsavebutton input,
 input[name=delete-link-button] {
