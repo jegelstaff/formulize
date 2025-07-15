@@ -501,22 +501,6 @@ class FormulizeMCP
 	}
 
 	/**
-	 * Check if the user is a webmaster and return an error response if they are not
-	 * Called by items that are only accessible to webmasters
-	 * @param string itemName - a string identifying the thing we're verifying them for, typically the name of the tool function or resource function, etc
-	 * @return void
-	 */
-	private function verifyUserIsWebmaster($itemName) {
-		// @todo this really shouldn't be a method and we should use the boolean based check isUserAWebmaster() instead
-		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			throw new FormulizeMCPException(
-				"Permission denied: Only webmasters can access $itemName.",
-				'authentication_error',
-			);
-		}
-	}
-
-	/**
 	 * Check if the user is a webmaster
 	 *
 	 * @return bool True if the user is a webmaster, false otherwise

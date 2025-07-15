@@ -948,7 +948,12 @@ private function validateFilter($filter) {
 	 */
 	private function read_system_activity_log($arguments) {
 
-		$this->verifyUserIsWebmaster(__FUNCTION__); // returns 403 to non webmasters
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can access activity logs.",
+				'authentication_error',
+			);
+		}
 
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
