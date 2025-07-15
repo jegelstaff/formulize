@@ -364,7 +364,10 @@ trait resources {
 	{
 
 		if(security_check($formId) === false) {
-			$this->sendAuthError('Permission denied: user does not have permission to view this form.', 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . intval($formId),
+				'permission_denied',
+			);
 		}
 		// Get form details
 		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
@@ -429,7 +432,10 @@ trait resources {
 	private function group_permissions($groupId) {
 
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups) AND !in_array($groupId, $this->userGroups)) {
-			$this->sendAuthError("Permission denied: user is not a member of group $groupId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user is not a member of group $groupId.",
+				'permission_denied',
+			);
 		}
 
 		$groupDataSql = "SELECT groupid, `name`, `description` FROM " . $this->db->prefix('groups') . " WHERE groupid = ".intval($groupId);
@@ -463,7 +469,10 @@ trait resources {
 	private function form_permissions($formId) {
 
 		if(!security_check($formId)) {
-			$this->sendAuthError("Permission denied: user does not have access to form $formId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to form $formId.",
+				'permission_denied',
+			);
 		}
 
 		// limit non webmasters to their own groups
@@ -731,9 +740,11 @@ trait resources {
 	 * Optionally get a simple list of just the ids and titles
 	 */
 	private function screens_list($formId = null, $screenId = null, $simple = false) {
-		$limitScreensSQL = "";
 		if($formId AND !security_check($formId)) {
-			$this->sendAuthError("Permission denied: user does not have access to form $formId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to form $formId.",
+				'permission_denied',
+			);
 		}
 		// take passed in form id, otherwise, allow all if the user is an admin
 		$formIds = [];
@@ -773,7 +784,10 @@ trait resources {
 			}
 		}
 		if($screenId AND empty($screens)) {
-			$this->sendAuthError("Permission denied: user does not have access to the screen $screenId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to the screen $screenId.",
+				'permission_denied',
+			);
 		}
 		return [
 			'screens' => $screens,

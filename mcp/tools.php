@@ -827,7 +827,10 @@ private function validateFilter($filter) {
 
 			// Step 1: Check permissions
 			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
-				$this->sendAuthError('Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId, 403);
+				throw new FormulizeMCPException(
+					'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
+					'permission_denied',
+				);
 			}
 
 			// Validate form exists

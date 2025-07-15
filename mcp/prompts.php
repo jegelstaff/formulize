@@ -161,7 +161,8 @@ trait prompts {
 	}
 
 	/**
-	 * Generate report prompt
+	 * Generates a prompt for the AI to create a report about a form
+	 * @return array
 	 */
 	private function generate_a_report_about_a_form($args)
 	{
@@ -174,7 +175,10 @@ trait prompts {
 		}
 
 		if(is_numeric($form) AND !security_check(intval($form))) {
-			$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . intval($form),
+				'permission_denied',
+			);
 		}
 
 		return [
@@ -212,7 +216,10 @@ trait prompts {
 	private function check_the_activity_logs($args)
 	{
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$this->sendAuthError("Permission denied: user cannot access this prompt", 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to activity logs',
+				'permission_denied'
+			);
 		}
 
 		// Logging tool only available if logging is enabled
@@ -275,7 +282,10 @@ trait prompts {
 		}
 
 		if(is_numeric($form) AND !security_check(intval($form))) {
-			$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . intval($form),
+				'permission_denied',
+			);
 		}
 
 		return [
