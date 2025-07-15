@@ -300,21 +300,21 @@ class FormulizeMCP
 	  $path = $_SERVER['REQUEST_URI'];
 		$method = $_SERVER['REQUEST_METHOD'];
 
-		// Authenticate request
-		if (!$this->authenticateRequest($path, $method)) {
-			return; // Authentication error already sent
-		}
-
-		$pathParts = explode('?', $path);
-		$cleanPath = rtrim($pathParts[0], '/');
-
-		writeToFormulizeLog([
-			'formulize_event' => 'mcp-request-being-handled',
-			'user_id' => $this->authenticatedUid,
-			'mcp_params' => json_encode($this->mcpRequest['params'])
-		]);
-
 		try {
+			// Authenticate request
+			if (!$this->authenticateRequest($path, $method)) {
+				return; // Authentication error already sent
+			}
+
+			$pathParts = explode('?', $path);
+			$cleanPath = rtrim($pathParts[0], '/');
+
+			writeToFormulizeLog([
+				'formulize_event' => 'mcp-request-being-handled',
+				'user_id' => $this->authenticatedUid,
+				'mcp_params' => json_encode($this->mcpRequest['params'])
+			]);
+
 			// Route based on path - match end of line
 			if (preg_match('/\/health$/', $cleanPath)) {
 				$this->sendResponse($this->handleHealthCheck());
