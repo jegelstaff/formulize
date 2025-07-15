@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Formulize MCP HTTP Direct Server with Proper Formulize API Key Authentication
  *
@@ -344,7 +343,7 @@ class FormulizeMCP
 	 *
 	 * @return array The response for the initialization request
 	 */
-	private function handleInitialize($params, $id)
+	private function handleInitialize($id)
 	{
 		return [
 			'jsonrpc' => '2.0',
@@ -454,7 +453,7 @@ class FormulizeMCP
 
 		switch ($method) {
 			case 'initialize':
-				return $this->handleInitialize($params, $id);
+				return $this->handleInitialize($id);
 			case 'tools/list':
 				return $this->handleToolsList($id);
 			case 'tools/call':
@@ -481,9 +480,6 @@ class FormulizeMCP
 	 */
 	private function handleCapabilities()
 	{
-		$module_handler = xoops_gethandler('module');
-		$formulizeModule = $module_handler->getByDirname("formulize");
-
 		$capabilities = [
 			'capabilities' => [
 				'tools' => array_values($this->tools),
@@ -576,47 +572,5 @@ class FormulizeMCP
 		$groupsTheUserCanSee = array_unique($groupsTheUserCanSee);
 		$groupsThatCanMakeEntries = array_unique($groupsThatCanMakeEntries);
 		return array_intersect($groupsTheUserCanSee, $groupsThatCanMakeEntries);
-	}
-
-	private function JSONerrorResponse($message, $code = -32603, $context = []) {
-    $error = [
-        'code' => $code,
-        'message' => $message
-    ];
-
-    // Add helpful context for common errors
-    if (stripos($message, 'Permission denied') !== false) {
-        $error['troubleshooting'] = [
-            'issue' => 'Insufficient permissions',
-            'solutions' => [
-                'Check if user has required permission for this form/entry',
-                'Use list_forms to see accessible forms',
-                'Verify user is member of correct groups'
-            ]
-        ];
-    } elseif (stripos($message, 'Form not found') !== false) {
-        $error['troubleshooting'] = [
-            'issue' => 'Invalid form ID',
-            'solutions' => [
-                'Use list_forms tool to get valid form IDs',
-                'Verify the form exists and is accessible'
-            ]
-        ];
-    } elseif (stripos($message, 'Invalid element handle') !== false) {
-        $error['troubleshooting'] = [
-            'issue' => 'Element handle does not exist in form',
-            'solutions' => [
-                'Use get_form_details tool to get valid element handles',
-                'Check spelling of element handle',
-                'Verify element is part of the specified form'
-            ]
-        ];
-    }
-
-    if (!empty($context)) {
-        $error['context'] = $context;
-    }
-
-    return $error;
 	}
 }
