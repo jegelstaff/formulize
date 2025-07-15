@@ -1,5 +1,7 @@
 <?php
 
+use Google\Service\Classroom\Form;
+
 trait tools {
 
 	/**
@@ -406,7 +408,11 @@ Examples:
 		$arguments = $params['arguments'] ?? [];
 
 		if (!isset($this->tools[$toolName])) {
-			return $this->JSONerrorResponse('Unknown tool: ' . $toolName, -32602, $id);
+			throw new FormulizeMCPException(
+				'Unknown tool: ' . $toolName,
+				'unknown_tool',
+				$this->JSONerrorResponse('Unknown tool: ' . $toolName, -32602, $id)
+			);
 		}
 
 		try {
@@ -433,15 +439,19 @@ Examples:
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse(
+			throw new FormulizeMCPException(
 				'Tool execution failed: ' . $e->getMessage(),
-				-32603,
-				$id,
-				[
-					'tool_name' => $toolName,
-					'provided_arguments' => array_keys($arguments),
-					'required_arguments' => $this->getRequiredArguments($toolName)
-				]
+				'tool_execution_error',
+				$this->JSONerrorResponse(
+					'Tool execution failed: ' . $e->getMessage(),
+					-32603,
+					$id,
+					[
+						'tool_name' => $toolName,
+						'provided_arguments' => array_keys($arguments),
+						'required_arguments' => $this->getRequiredArguments($toolName)
+					]
+				)
 			);
 		}
 	}

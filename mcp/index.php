@@ -63,6 +63,11 @@ class FormulizeMCP
 		'missing_method' => 500,
 		'method_not_found' => 404,
 		'server_disabled' => 503,
+		'unknown_prompt' => 404,
+		'prompt_generation_error' => 500,
+		'missing_uri' => 400,
+		'resource_read_error' => 500,
+		'unknown_tool' => 404,
 	];
 
 	private $config;

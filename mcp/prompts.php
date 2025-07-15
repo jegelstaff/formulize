@@ -120,7 +120,11 @@ trait prompts {
 		$arguments = $params['arguments'] ?? [];
 
 		if (!isset($this->prompts[$promptName])) {
-			return $this->JSONerrorResponse('Unknown prompt: ' . $promptName, -32602, $id);
+			throw new FormulizeMCPException(
+				'Unknown prompt: ' . $promptName,
+				'unknown_prompt',
+				$this->JSONerrorResponse('Unknown prompt: ' . $promptName, -32602, $id)
+			);
 		}
 
 		try {
@@ -133,7 +137,11 @@ trait prompts {
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse('Prompt generation failed: ' . $e->getMessage(), -32603, $id);
+			throw new FormulizeMCPException(
+				'Prompt generation failed: ' . $e->getMessage(),
+				'prompt_generation_error',
+				$this->JSONerrorResponse('Prompt generation failed: ' . $e->getMessage(), -32603, $id)
+			);
 		}
 	}
 

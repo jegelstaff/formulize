@@ -1,5 +1,7 @@
 <?php
 
+use Google\Service\Classroom\Form;
+
 trait resources {
 
 	/**
@@ -133,7 +135,11 @@ trait resources {
 		$uri = $params['uri'] ?? '';
 
 		if (!$uri) {
-			return $this->JSONerrorResponse('Missing required parameter: uri', -32602, $id);
+			throw new FormulizeMCPException(
+				'Missing required parameter: uri',
+				'missing_uri',
+				$this->JSONerrorResponse('Missing required parameter: uri', -32602, $id)
+			);
 		}
 
 		try {
@@ -166,15 +172,19 @@ trait resources {
 				'id' => $id
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse(
+			throw new FormulizeMCPException(
 				'Resource read failed: ' . $e->getMessage(),
-				-32603,
-				$id,
-				[
-					'requested_uri' => $uri,
-					'uri_format' => 'formulize://type/resource_name.extension',
-					'available_types' => ['system', 'schemas', 'permissions']
-				]
+				'resource_read_error',
+				$this->JSONerrorResponse(
+					'Resource read failed: ' . $e->getMessage(),
+					-32603,
+					$id,
+					[
+						'requested_uri' => $uri,
+						'uri_format' => 'formulize://type/resource_name.extension',
+						'available_types' => ['system', 'schemas', 'permissions']
+					]
+				)
 			);
 		}
 	}
