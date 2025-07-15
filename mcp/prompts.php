@@ -123,7 +123,7 @@ trait prompts {
 			throw new FormulizeMCPException(
 				'Unknown prompt: ' . $promptName,
 				'unknown_prompt',
-				$this->JSONerrorResponse('Unknown prompt: ' . $promptName, -32602, $id)
+				-32602,
 			);
 		}
 
@@ -140,7 +140,7 @@ trait prompts {
 			throw new FormulizeMCPException(
 				'Prompt generation failed: ' . $e->getMessage(),
 				'prompt_generation_error',
-				$this->JSONerrorResponse('Prompt generation failed: ' . $e->getMessage(), -32603, $id)
+				-32603
 			);
 		}
 	}

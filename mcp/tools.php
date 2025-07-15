@@ -411,7 +411,7 @@ Examples:
 			throw new FormulizeMCPException(
 				'Unknown tool: ' . $toolName,
 				'unknown_tool',
-				$this->JSONerrorResponse('Unknown tool: ' . $toolName, -32602, $id)
+				-32602
 			);
 		}
 
@@ -442,16 +442,12 @@ Examples:
 			throw new FormulizeMCPException(
 				'Tool execution failed: ' . $e->getMessage(),
 				'tool_execution_error',
-				$this->JSONerrorResponse(
-					'Tool execution failed: ' . $e->getMessage(),
-					-32603,
-					$id,
-					[
-						'tool_name' => $toolName,
-						'provided_arguments' => array_keys($arguments),
-						'required_arguments' => $this->getRequiredArguments($toolName)
-					]
-				)
+				-32603,
+				[
+					'tool_name' => $toolName,
+					'provided_arguments' => array_keys($arguments),
+					'required_arguments' => $this->getRequiredArguments($toolName)
+				]
 			);
 		}
 	}

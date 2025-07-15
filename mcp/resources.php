@@ -138,7 +138,7 @@ trait resources {
 			throw new FormulizeMCPException(
 				'Missing required parameter: uri',
 				'missing_uri',
-				$this->JSONerrorResponse('Missing required parameter: uri', -32602, $id)
+				-32602
 			);
 		}
 
@@ -175,16 +175,12 @@ trait resources {
 			throw new FormulizeMCPException(
 				'Resource read failed: ' . $e->getMessage(),
 				'resource_read_error',
-				$this->JSONerrorResponse(
-					'Resource read failed: ' . $e->getMessage(),
-					-32603,
-					$id,
-					[
-						'requested_uri' => $uri,
-						'uri_format' => 'formulize://type/resource_name.extension',
-						'available_types' => ['system', 'schemas', 'permissions']
-					]
-				)
+				-32603,
+				[
+					'requested_uri' => $uri,
+					'uri_format' => 'formulize://type/resource_name.extension',
+					'available_types' => ['system', 'schemas', 'permissions']
+				]
 			);
 		}
 	}
