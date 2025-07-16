@@ -98,6 +98,7 @@ div.hero {
 }
 
 h2 {
+	margin-top: 1.3em;
 	margin-bottom: 0.25em;
 }
 
@@ -105,6 +106,10 @@ h2 {
 	.breadcrumbs {
 		display: none;
 	}
+}
+
+code, pre {
+	font-size: 9pt;
 }
 
 @media print, screen and (max-width: 1024px) {
