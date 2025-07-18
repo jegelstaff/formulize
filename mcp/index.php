@@ -29,5 +29,5 @@ try {
 			'type' => $e->getType(),
 			'timestamp' => $e->getTimestamp()
 		]
-	], $exceptionTypeToHTTPStatusCode[$e->getType()] ?? 500);
+	], $e->toHTTPStatusCode());
 }

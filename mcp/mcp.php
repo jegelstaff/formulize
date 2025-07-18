@@ -42,6 +42,7 @@ class FormulizeMCP
 		$path = $_SERVER['REQUEST_URI'];
 		$method = $_SERVER['REQUEST_METHOD'];
 		$this->authenticateRequest($path, $method);
+
 		// Front load
 		$this->db = $this->getFormulizeDatabase();
 		$authHeader = $this->getAuthorizationHeader();
@@ -305,11 +306,6 @@ class FormulizeMCP
 		$method = $_SERVER['REQUEST_METHOD'];
 
 		try {
-			// Authenticate request
-			// if (!$this->authenticateRequest($path, $method)) {
-			// 	return; // Authentication error already sent
-			// }
-
 			$result = [];
 			$pathParts = explode('?', $path);
 			$cleanPath = rtrim($pathParts[0], '/');
