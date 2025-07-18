@@ -97,7 +97,12 @@ div.hero {
 	}
 }
 
+body section img {
+	border: 1px solid black;
+}
+
 h2 {
+	margin-top: 0.9em;
 	margin-bottom: 0.25em;
 }
 
@@ -105,6 +110,10 @@ h2 {
 	.breadcrumbs {
 		display: none;
 	}
+}
+
+code, pre {
+	font-size: 9pt;
 }
 
 @media print, screen and (max-width: 1024px) {

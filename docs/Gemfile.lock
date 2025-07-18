@@ -95,6 +95,8 @@ GEM
     jekyll-github-metadata (2.16.1)
       jekyll (>= 3.4, < 5.0)
       octokit (>= 4, < 7, != 4.4.0)
+    jekyll-redirect-from (0.16.0)
+      jekyll (>= 3.3, < 5.0)
     jekyll-sass-converter (3.1.0)
       sass-embedded (~> 1.75)
     jekyll-seo-tag (2.8.0)
@@ -208,6 +210,7 @@ DEPENDENCIES
   breadcrumbs
   html-proofer (~> 3.0)
   jekyll-github-metadata
+  jekyll-redirect-from
   jekyll-theme-minimal!
   rubocop-github (~> 0.16)
   w3c_validators (~> 1.3)

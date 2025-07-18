@@ -9,6 +9,7 @@ repository: jegelstaff/formulize
 plugins:
   - breadcrumbs
   - jekyll-github-metadata
+  - jekyll-redirect-from
 breadcrumbs:
   root:
     hide: false  # show breadcrumbs on root/home page

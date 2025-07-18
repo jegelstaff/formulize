@@ -6,7 +6,7 @@ title: Debugging
 
 # Debugging with XDebug
 
-If you have setup a [local development environment using Docker](../development_environment/), then you can use XDebug with PHP to do live debugging in your local environment.
+If you have setup a [local development environment using Docker](../deploying_locally/), then you can use XDebug with PHP to do live debugging in your local environment.
 
 (You can also setup XDebug to do remote debugging on a server elsewhere, and all sorts of other fun things, but this page just focuses on the local Docker environment.)
 
@@ -22,7 +22,7 @@ The Docker environment includes XDebug by default. Your IDE should more or less 
 
 	![VS Code Extensions](../../images/vscode-extensions.PNG)
 
-4. Open the folder for your [local development environment](../development_environment/).
+4. Open the folder for your [local development environment](../deploying_locally/).
 
 5. Copy or rename the file: /docker/maraidb/conf.d/lower_case_table_names.cnf.windows to: /docker/maraidb/conf.d/lower_case_table_names.cnf (ie: remove the .windows part on the end).
 
