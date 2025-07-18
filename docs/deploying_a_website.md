@@ -10,32 +10,27 @@ redirect_from:
 
 # Deploying Formulize to a Website
 
-__If you're trying to update an existing Formulize system__, check out the [Updating Formulize page](../updating_formulize).
+__If you're trying to update an existing Formulize system__, check out the [Updating Formulize page](../deploying_a_website/updating_formulize).
 
-The basic process for installing Formulize is pretty straight forward:
+## Quick Start
 
-1. Get the Formulize files onto your web server
+1. __Get the Formulize files onto your web server.__ We recommend using ```git```. See below. You could also [download the latest release from GitHub](https://github.com/jegelstaff/formulize/zipball/{{ site.github.latest_release.tag_name }}), and transfer the files to your web server however you see fit.
 
-2. Put them in the folder where you want Formulize to exist, ie:
-- if you want Formulize to exist at ```https://www.mysite.com``` then put the files in the root of that website
-- if you want Formulize to be in a subfolder like ```https://www.mysite.com/formulize``` then put the files in the ```/formulize``` folder inside the root of the website.
+2. __Put the files in the folder where you want Formulize to exist__, ie:
+- if you want Formulize to exist at ```https://www.mysite.com``` then put the files in the web root.
+- if you want Formulize to be in a subfolder like ```https://www.mysite.com/formulize``` then put the files in the ```/formulize``` folder, inside the web root.
 
-3. Make sure [the folders that need to be writable](../writable_folders) are writable by the web server user.
+3. __Make sure [the folders that need to be writable](../deploying_a_website/writable_folders) are writable by the web server user.__
 
-4. Open a web browser and go to the location where you put Formulize. The installer will appear. [Follow the steps for using the installer](../installing_formulize)
+4. __Open a web browser and go to the location where you put Formulize.__ The installer will appear. [Follow the steps for using the installer](../deploying_a_website/installing_formulize)
 
-## Getting the files onto the web server
+## Getting the files onto your server with git
 
-The old fashioned way would be FTP, or who knows what. Anything will work, you just need to have the files on the server.
-
-_However_, we recommend that you use ```git``` to clone the GitHub repository so that it's easy to update Formulize with future changes.
-
-If you use ```git```, it's also easy to track the changes you make to your website. If you customize the templates for any screens, or add any custom code, or make any changes to Formulize code itself, it's easy to manage all that through ```git```.
-
-### Getting the files on your server with git
+We recommend cloning the GitHub repository so that it's easy to track any changes, and easy to update Formulize in the future.
 
 ```bash
 # ssh to your server
+# then go to the folder where you want to install Formulize
 cd /path/where/you/want/formulize
 
 # make sure the folder is empty
@@ -51,19 +46,19 @@ git checkout -b my-formulize-branch
 
 Regardless of how you get the files on your server, the next steps are the same:
 
-- Make sure [the folders that need to be writable](../writable_folders) are writable by the web server user.
+- Make sure [the folders that need to be writable](../deploying_a_website/writable_folders) are writable by the web server user.
 
-- Open a web browser and go to the location where you put Formulize. The installer will appear. [Follow the steps for using the installer](../installing_formulize)
+- Open a web browser and go to the location where you put Formulize. The installer will appear. [Follow the steps for using the installer](../deploying_a_website/installing_formulize)
 
-### If you're using git, commit changes regularly to your branch
+## If you're using git, commit changes regularly to your branch
 
 As you use Formulize, some configuration changes are stored in files on the server. These files will show up in ```git``` as changes.
 
 Periodically, you should review the changes, and commit them to your branch. It's generally a good idea to automate this to run nightly, using ```cron``` and a bash script. That way, you have a regular history of changes.
 
-For details of how to update your Formulize site using ```git```, check out the [Updating Formulize](../updating_formulize) page.
+For details of how to update your Formulize site using ```git```, check out the [Updating Formulize](../deploying_a_website/updating_formulize) page.
 
-### If you're not using git, consider deleting some folders and files
+## If you're not using git, consider deleting some folders and files
 
 Some of the folders and files are not necessary for the actual operation of Formulize on a live website.
 

@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: updating_formulize/
+permalink: deploying_a_website/updating_formulize/
 title: Updating Formulize
 ---
 
@@ -8,37 +8,42 @@ title: Updating Formulize
 
 1. Backup your files and database.
 
-2. Deploy the new files to your website. If you're using ```git```, you can do this:
-```bash
-# stash local changes in your site
-git stash
+2. Deploy the new files to your website. If you cloned the GitHub repository when installing Formulize, then you can do this:
+	```bash
+	# stash any local changes in your site that aren't committed yet
+	git stash
 
-# switch to a release from GitHub
-git checkout v8.02
+	# fetch the release you want to update to, ie: 8.02
+	git fetch origin v8.02
 
-# update your site with the latest changes
+	# update the code in your site with that release
+	git rebase v8.02
 
+	# restore your local changes
+	git stash pop
+	```
 
 3. Make sure [the folders that need to be writable](../writable_folders) are writable by the web server
 
-4. Login to your website and go to the admin side, click on the Modules menu heading. Do not click on any of the menu entries under Modules, click on the heading itself.
+4. Login to your website and go to the admin side, click on the _Modules_ menu heading. Do not click on any of the menu entries under Modules, __click on the heading itself__.
 
-5. In the list of installed modules, click the circular arrows on the row where Formulize is listed:
+	![Click on the Modules heading](../../images/modules-heading.png)
 
-	![Click the circular arrows to update Formulize](../../images/formulize-update.PNG)
+5. In the list of installed modules, click the __circular arrows__ on the row where Formulize is listed:
 
-6. On the next page that appears, click the Update button to update Formulize configuration settings.
+	![Click the circular arrows to update Formulize](../../images/update-arrows.png)
 
-7. Go to the main admin page for Formulize. This is accessible from the Modules menu, by selecting 'Forms'
+6. On the next page that appears, click the __Update__ button at the bottom of the page.
 
-	![Go to the Formulize main admin page](../../images/menu-forms.PNG)
+	![Click the Update button](../../images/update-button.png)
 
-8. If a database update is required, there will be a large message about this in the upper right of the screen. If no update is required, then no message will appear. Click the "Apply Database Patch for Formulize" button to update the database.
+7. Go to the main admin page for Formulize. This is accessible from the Modules menu.
+
+	![Go to the Formulize main admin page](../../images/formulize-link.png)
+
+8. _If a database update is required_, there will be a large message about this on the screen. _If no update is required, then no message will appear_.
+
+	If there's a message, click the __Apply Database Patch for Formulize__ button to update the database.
 	![Update the database](../../images/formulize-database-update.PNG)
 
-	### updating with git
-
-	stash
-	pull --rebase
-	stash pop
 

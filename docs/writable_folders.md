@@ -1,6 +1,6 @@
 ---
 layout: default
-permalink: writable_folders/
+permalink: deploying_a_website/writable_folders/
 title: Folders in Formulize that need to be writable
 ---
 
@@ -20,15 +20,17 @@ There are certain folders in Formulize which must be writable by the web server.
 - /modules/formulize/templates/screens (and all subs)
 - /modules/formulize/upload
 
-# File Permissions and Git
+## Make mainfile.php writable if you're installing for the first time
 
-One _gotcha_ with using ```git``` is that the user doing the git operations, and the web server user, should generally be in the same group.
+If you're going through [the installer to setup Formulize](../installing_formulize) for the first time, make sure that ```mainfile.php``` in the root of the website is writable by the web server.
 
-What you must avoid, is having the files created by git, be unwritable by the web server. Generally, if the git user and the web server user are in the same group, this isn't a problem.
+## File Permissions and Git
 
-But on some servers, it is definitely a problem so you will need to make sure the file ownership and permissions work in such a way that the web server can write to the files and folders above.
+One _gotcha_ with using ```git``` is that on some servers the the user doing the git operations, and the web server user, have incompatible permissions and/or group memberships. This can screw up the file permissions/ownerships, and cause problems.
 
-There are different ways to solve this problem. In general, the most reliable is for the git user and the web server user to be in the same group, and for the files to be writable by the group.
+There are different ways to solve this problem. In general, the most reliable is for the git user and the web server user to be in the same group, and for the files to be writable by the group. Then the web server can do what it needs to do with the files when it needs to create and edit them.
+
+But if git operations result in the files that need to be writable, not being writable by the web server, then you need to fix that before Formulize will work correctly.
 
 ## umask 022
 
