@@ -94,27 +94,23 @@ trait prompts {
 
 	/**
 	 * Handle prompts list request
-	 * @param string $id The JSON-RPC request ID from the MCP client
 	 * @return array JSON-RPC response with list of prompts
 	 */
-	private function handlePromptsList($id)
+	private function handlePromptsList()
 	{
 		return [
-			'jsonrpc' => '2.0',
 			'result' => [
 				'prompts' => array_values($this->prompts)
-			],
-			'id' => $id
+			]
 		];
 	}
 
 	/**
 	 * Handle prompt get request
 	 * @param array $params Parameters from the JSON-RPC request
-	 * @param string $id The JSON-RPC request ID from the MCP client
 	 * @return array JSON-RPC response with prompt messages or error
 	 */
-	private function handlePromptGet($params, $id)
+	private function handlePromptGet($params)
 	{
 		$promptName = $params['name'] ?? '';
 		$arguments = $params['arguments'] ?? [];
@@ -130,11 +126,9 @@ trait prompts {
 		try {
 			$messages = $this->generatePrompt($promptName, $arguments);
 			return [
-				'jsonrpc' => '2.0',
 				'result' => [
 					'messages' => $messages
-				],
-				'id' => $id
+				]
 			];
 		} catch (Exception $e) {
 			throw new FormulizeMCPException(

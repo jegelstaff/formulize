@@ -19,7 +19,11 @@ class FormulizeMCPException extends Exception
 		'prompt_generation_error' => 500,
 		'missing_uri' => 400,
 		'resource_read_error' => 500,
+		'unknown_element' => 404,
 		'unknown_tool' => 404,
+		'invalid_data' => 400,
+		'file_error' => 500,
+		'unknown_resource_type' => 404
 	];
 
 	/**
@@ -100,7 +104,7 @@ class FormulizeMCPException extends Exception
 					]
 				];
 				break;
-			case 'unknown_tool':
+			case 'unknown_element':
 				$error['troubleshooting'] = [
 					'issue' => 'Element handle does not exist in form',
 					'solutions' => [

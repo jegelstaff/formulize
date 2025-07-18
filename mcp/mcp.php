@@ -38,6 +38,10 @@ class FormulizeMCP
 
 	public function __construct($config = null)
 	{
+		// Authenticate the request
+		$path = $_SERVER['REQUEST_URI'];
+		$method = $_SERVER['REQUEST_METHOD'];
+		$this->authenticateRequest($path, $method);
 		// Front load
 		$this->db = $this->getFormulizeDatabase();
 		$authHeader = $this->getAuthorizationHeader();
@@ -181,6 +185,7 @@ class FormulizeMCP
 	 */
 	private function authenticateRequest(string $path, string $method)
 	{
+		global $xoopsUser, $icmsUser;
 		// Handle CORS preflight
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 			throw new FormulizeMCPException(
@@ -221,7 +226,7 @@ class FormulizeMCP
 		// Isolate the key
 		$key = trim($matches[1]);
 
-		if (!$allowUnauthenticatedRequests) {
+		if (!$allowUnauthenticatedRequests || ($key && $key !== 'test-header-passthrough-check')) {
 			$uid = $this->getUidFromAPIKey($key);
 			if ($uid === false) {
 				throw new FormulizeMCPException(
@@ -233,6 +238,7 @@ class FormulizeMCP
 			if ($uidObject = $member_handler->getUser($uid)) {
 				$this->userGroups = $uidObject->getGroups();
 				$this->authenticatedUser = $uidObject;
+				$this->authenticatedUid = $uid;
 
 				// Set global user context as Formulize does
 				$xoopsUser = $uidObject;
@@ -274,8 +280,6 @@ class FormulizeMCP
 	 */
 	private function getUidFromAPIKey($key)
 	{
-		global $xoopsUser, $icmsUser;
-
 		// Get the API key handler exactly as Formulize does
 		$apiKeyHandler = xoops_getmodulehandler('apikey', 'formulize');
 
@@ -302,10 +306,11 @@ class FormulizeMCP
 
 		try {
 			// Authenticate request
-			if (!$this->authenticateRequest($path, $method)) {
-				return; // Authentication error already sent
-			}
+			// if (!$this->authenticateRequest($path, $method)) {
+			// 	return; // Authentication error already sent
+			// }
 
+			$result = [];
 			$pathParts = explode('?', $path);
 			$cleanPath = rtrim($pathParts[0], '/');
 
@@ -317,11 +322,11 @@ class FormulizeMCP
 
 			// Route based on path - match end of line
 			if (preg_match('/\/health$/', $cleanPath)) {
-				$this->sendResponse($this->handleHealthCheck());
+				$result = $this->handleHealthCheck();
 			} elseif (preg_match('/\/capabilities$/', $cleanPath)) {
-				$this->sendResponse($this->handleCapabilities());
+				$result = $this->handleCapabilities();
 			} elseif (preg_match('/\/mcp$/', $cleanPath)) {
-				$this->sendResponse($this->handleMCPEndpoint($this->mcpRequest, $method));
+				$result = $this->handleMCPEndpoint($this->mcpRequest, $method);
 			} else {
 				throw new FormulizeMCPException(
 					'Invalid endpoint: ' . $cleanPath,
@@ -329,6 +334,14 @@ class FormulizeMCP
 					-32601,
 				);
 			}
+
+			$response = [
+				'jsonrpc' => '2.0',
+				'result' => $result,
+				'id' => $this->mcpRequest['id']
+			];
+			$this->sendResponse($response);
+
 		} catch (FormulizeMCPException $e) {
 			$this->sendResponse([
 				'jsonrpc' => '2.0',
@@ -343,10 +356,9 @@ class FormulizeMCP
 	 *
 	 * @return array The response for the initialization request
 	 */
-	private function handleInitialize($id)
+	private function handleInitialize()
 	{
 		return [
-			'jsonrpc' => '2.0',
 			'result' => [
 				'protocolVersion' => '2024-11-05',
 				'capabilities' => [
@@ -356,8 +368,7 @@ class FormulizeMCP
 				],
 				'serverInfo' => $this->system_info(),
 				'instructions' => $this->getInitializeInstructions()
-			],
-			'id' => $id
+			]
 		];
 	}
 
@@ -453,19 +464,19 @@ class FormulizeMCP
 
 		switch ($method) {
 			case 'initialize':
-				return $this->handleInitialize($id);
+				return $this->handleInitialize();
 			case 'tools/list':
-				return $this->handleToolsList($id);
+				return $this->handleToolsList();
 			case 'tools/call':
-				return $this->handleToolCall($params, $id);
+				return $this->handleToolCall($params);
 			case 'resources/list':
-				return $this->handleResourcesList($id);
+				return $this->handleResourcesList();
 			case 'resources/read':
-				return $this->handleResourceRead($params, $id);
+				return $this->handleResourceRead($params);
 			case 'prompts/list':
-				return $this->handlePromptsList($id);
+				return $this->handlePromptsList();
 			case 'prompts/get':
-				return $this->handlePromptGet($params, $id);
+				return $this->handlePromptGet($params);
 			default:
 				throw new FormulizeMCPException(
 					'Unknown method: ' . $method,

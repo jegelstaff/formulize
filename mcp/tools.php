@@ -1,5 +1,7 @@
 <?php
 
+use Google\Service\Classroom\Form;
+
 trait tools {
 
 	/**
@@ -378,17 +380,14 @@ Examples:
 	/**
 	 * Handle tools list request
 	 *
-	 * @param string $id The request ID from the MCP client
 	 * @return array The JSON-RPC response containing the list of tools
 	 */
-	private function handleToolsList($id)
+	private function handleToolsList()
 	{
 		return [
-			'jsonrpc' => '2.0',
 			'result' => [
 				'tools' => array_values($this->tools)
-			],
-			'id' => $id
+			]
 		];
 	}
 
@@ -396,11 +395,10 @@ Examples:
 	 * Handle tool call request
 	 *
 	 * @param array $params The parameters from the MCP client, as parsed by the handleMCPRequest method
-	 * @param string $id The request ID from the MCP client
 	 * @return array The JSON-RPC response containing the result of the tool call
 	 * @throws Exception If the tool is unknown, not implemented, or if there is an error executing the tool
 	 */
-	private function handleToolCall($params, $id)
+	private function handleToolCall($params)
 	{
 		$toolName = $params['name'] ?? '';
 		$arguments = $params['arguments'] ?? [];
@@ -422,10 +420,12 @@ Examples:
 			} elseif(method_exists($this, $toolName)) {
 				$result = $this->$toolName($arguments);
 			} else {
-				throw new Exception('Tool not implemented: ' . $toolName);
+				throw new FormulizeMCPException(
+					'Tool not implemented: ' . $toolName,
+					'unknown_tool',
+				);
 			}
 			return [
-				'jsonrpc' => '2.0',
 				'result' => [
 					'content' => [
 						[
@@ -433,8 +433,7 @@ Examples:
 							'text' => is_string($result) ? $result : json_encode($result, JSON_PRETTY_PRINT)
 						]
 					]
-				],
-				'id' => $id
+				]
 			];
 		} catch (Exception $e) {
 			throw new FormulizeMCPException(
@@ -475,7 +474,10 @@ Examples:
 		$result = $this->db->query($testQuery);
 
 		if (!$result) {
-			throw new Exception('Database query failed');
+			throw new FormulizeMCPException(
+				'Database query failed: ' . $this->db->error(),
+				'database_error',
+			);
 		}
 
 		$row = $this->db->fetchArray($result);
@@ -527,7 +529,7 @@ Examples:
 		try {
 
 			if(!$form_id OR $form_id < 0) {
-				throw new Exception('Form not found. Form ID must be a positive integer');
+				throw new FormulizeMCPException('Form not found. Form ID must be a positive integer', 'form_not_found');
 			}
 
 			// Build scope based on authenticated user and their permissions
@@ -541,7 +543,7 @@ Examples:
 				$dataHandler = new formulizeDataHandler();
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
-					throw new Exception('Invalid element handle for sortField: '.$sortField);
+					throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
 				}
 			}
 			list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
@@ -618,11 +620,11 @@ private function validateFilter($filter) {
 		if ($decoded !== null) {
 			$filter = $decoded;
 		} else {
-			throw new Exception("Invalid JSON in filter parameter: " . json_last_error_msg());
+			throw new FormulizeMCPException("Invalid JSON in filter parameter: " . json_last_error_msg(), 'invalid_data');
 		}
 	}
 	if(!is_array($filter)) {
-		throw new Exception("The 'filter' parameter must be an integer or an array.");
+		throw new FormulizeMCPException("The 'filter' parameter must be an integer or an array.", 'invalid_data');
 	}
 	$filterStringParts = array();
 	foreach($filter as $thisFilter) {
@@ -646,10 +648,10 @@ private function validateFilter($filter) {
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		foreach ($elementHandles as $handle) {
 			if (!is_string($handle)) {
-				throw new Exception('Element handle must be a string');
+				throw new FormulizeMCPException('Element handle must be a string', 'invalid_data');
 			}
 			if(!$elementObject = $element_handler->get($handle) AND !in_array($handle, $dataHandler->metadataFields)) {
-				throw new Exception('Invalid element handle: ' . $handle);
+				throw new FormulizeMCPException('Invalid element handle: ' . $handle, 'invalid_data');
 			}
 			$validatedHandles[$elementObject->getVar('fid')][] = $handle;
 		}
@@ -668,22 +670,22 @@ private function validateFilter($filter) {
 
 		if ($limitStart !== null) {
 			if (!is_numeric($limitStart) || $limitStart < 0) {
-				throw new Exception('limitStart must be a non-negative integer');
+				throw new FormulizeMCPException('limitStart must be a non-negative integer', 'invalid_data');
 			}
 			$validatedLimitStart = intval($limitStart);
 		}
 
 		if ($limitSize !== null) {
 			if (!is_numeric($limitSize)) {
-				throw new Exception('limitSize must be an integer or null');
+				throw new FormulizeMCPException('limitSize must be an integer or null', 'invalid_data');
 			}
 			$limitSizeInt = intval($limitSize);
 			if ($limitSizeInt < 0) {
-				throw new Exception('limitSize must be non-negative');
+				throw new FormulizeMCPException('limitSize must be non-negative', 'invalid_data');
 			}
 			// Reasonable upper limit to prevent resource exhaustion
 			if ($limitSizeInt > 10000) {
-				throw new Exception('limitSize cannot exceed 10000 records');
+				throw new FormulizeMCPException('limitSize cannot exceed 10000 records', 'invalid_data');
 			}
 			$validatedLimitSize = $limitSizeInt;
 		}
@@ -806,18 +808,21 @@ private function validateFilter($filter) {
 		try {
 			// Enhanced input validation
 			if (!is_array($data) || empty($data)) {
-				throw new Exception('Data must be a non-empty array');
+				throw new FormulizeMCPException(
+					'Data must be a non-empty array',
+					'invalid_data'
+				);
 			}
 
 			// Validate relationship ID
 			if (!is_numeric($relationshipId)) {
-				throw new Exception('Relationship ID must be numeric');
+				throw new FormulizeMCPException('Relationship ID must be numeric', 'invalid_data');
 			}
 			$relationshipId = intval($relationshipId);
 
 			// Validate entry ID
 			if ($entryId !== 'new' && !is_numeric($entryId)) {
-				throw new Exception('Invalid entry ID. Entry ID must be numeric'); // when creating entries, 'new' is hard coded in the calling function, so we don't ever have to report that 'new' is a valid value
+				throw new FormulizeMCPException('Invalid entry ID. Entry ID must be numeric', 'invalid_data');
 			}
 			if ($entryId !== 'new') {
 				$entryId = intval($entryId);
@@ -837,7 +842,7 @@ private function validateFilter($filter) {
 			$formData = $this->db->fetchArray($formResult);
 
 			if (!$formData) {
-				throw new Exception('Form not found: ' . $formId);
+				throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
 			}
 
 			// Get form elements to validate handles
@@ -858,12 +863,12 @@ private function validateFilter($filter) {
 			foreach ($data as $elementHandle => $value) {
 				// Validate element handle type
 				if (!is_string($elementHandle)) {
-					throw new Exception('Element handle must be a string');
+					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data');
 				}
 
 				// Validate element handle exists in this form
 				if (!in_array($elementHandle, $validHandles)) {
-					throw new Exception('Invalid element handle for this form: ' . $elementHandle);
+					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element');
 				}
 
 				// Prepare the value for database storage
@@ -876,7 +881,8 @@ private function validateFilter($filter) {
 			}
 
 			if (empty($preparedData)) {
-				throw new Exception('No valid data provided. Valid element handles: '.implode(", ",$validHandles));
+
+				throw new FormulizeMCPException('No valid data provided. Valid element handles: '.implode(", ",$validHandles), 'invalid_data');
 			}
 
 			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
@@ -894,7 +900,7 @@ private function validateFilter($filter) {
 				}
 				if($missingRequiredHandles) {
 					$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
-					throw new Exception("Required $elementText missing from from the data. Missing required $elementText: ".implode(", ",$missingRequiredHandles).'. If necessary, ask the user for more information about what the values should be.');
+					throw new FormulizeMCPException("Required $elementText missing from from the data. Missing required $elementText: ".implode(", ",$missingRequiredHandles).'. If necessary, ask the user for more information about what the values should be.', 'invalid_data');
 				}
 			}
 
@@ -966,7 +972,10 @@ private function validateFilter($filter) {
 			$bufferSize = 8192;
 			$handle = fopen($filename, 'r');
 			if (!$handle) {
-				throw new Exception("Cannot open file: $filename");
+				throw new FormulizeMCPException(
+					"Cannot open log file: $filename",
+					'file_error',
+				);
 			}
 
 			// Get file size
@@ -1051,13 +1060,13 @@ private function validateFilter($filter) {
 			if(!isset($arguments[$param])) {
 				$$param = array();
 			} elseif(!is_numeric($arguments[$param]) AND !strstr($arguments[$param], ",")) {
-				throw new Exception("$param must be an integer or comma separated list");
+				throw new FormulizeMCPException("$param must be an integer or comma separated list", 'invalid_data');
 			} else {
 				$$param = array_filter(explode(",", str_replace(" ", "", $arguments[$param])), 'is_numeric');
 			}
 		}
 		if(count($entry_ids) > 0 AND count($form_ids) != 1) {
-			throw new Exception('Form not found. A single form ID must be specified when specifying entry IDs');
+			throw new FormulizeMCPException('Form not found. A single form ID must be specified when specifying entry IDs', 'form_not_found');
 		}
 		return [ $form_ids, $screen_ids, $entry_ids, $user_ids ];
 	}
@@ -1071,7 +1080,7 @@ private function validateFilter($filter) {
 			// Sanitize the SQL
 			$safeSql = $this->sanitizeFormulizeSQL($sql, ['SELECT', 'SHOW', 'DESCRIBE']);
 			if(!$res = $this->db->query($safeSql)) {
-				throw new Exception('SQL query failed: ' . $this->db->error());
+				throw new FormulizeMCPException('SQL query failed: ' . $this->db->error(), 'database_error');
 			}
 
 			$results = [];
@@ -1084,7 +1093,7 @@ private function validateFilter($filter) {
 				'number_of_records_returned' => count($results)
 			];
     } catch (Exception $e) {
-        throw new Exception('SQL execution failed: ' . $e->getMessage());
+        throw new FormulizeMCPException('SQL execution failed: ' . $e->getMessage(), 'database_error');
     }
 	}
 
@@ -1097,7 +1106,7 @@ private function validateFilter($filter) {
 		$operation = strtoupper(strtok($sql, ' '));
 
 		if (!in_array($operation, $allowedOperations)) {
-			throw new Exception("Operation '$operation' not allowed. Allowed operations: " . implode(', ', $allowedOperations));
+			throw new FormulizeMCPException("Operation '$operation' not allowed. Allowed operations: " . implode(', ', $allowedOperations), 'invalid_data');
 		}
 
 		// Remove string literals before checking for dangerous patterns
@@ -1144,7 +1153,7 @@ private function validateFilter($filter) {
 
 		foreach ($dangerousPatterns as $pattern => $errorMsg) {
 			if (preg_match($pattern, $sqlWithoutStrings)) {
-				throw new Exception($errorMsg);
+				throw new FormulizeMCPException($errorMsg, 'database_error');
 			}
 		}
 
@@ -1155,7 +1164,7 @@ private function validateFilter($filter) {
 				preg_match('/\bformulize(_\w+)?\b/i', $sql) &&
 				!preg_match('/\b' . preg_quote(XOOPS_DB_PREFIX) . '_formulize/i', $sql)
 			) {
-				throw new Exception('Formulize table queries must use proper prefix');
+				throw new FormulizeMCPException('Formulize table queries must use proper prefix', 'invalid_data');
 			}
 		}
 
