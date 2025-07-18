@@ -112,4 +112,3 @@ class mainfile_manager {
 	}
 }
 
-?>

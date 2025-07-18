@@ -115,4 +115,3 @@ $content = ob_get_contents();
 ob_end_clean();
 $error = '';
 include 'install_tpl.php';
-?>

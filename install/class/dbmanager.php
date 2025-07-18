@@ -52,7 +52,7 @@ class db_manager {
 	}
 
 	function isConnectable() {
-		return $this->connected; 
+		return $this->connected;
 	}
 
 	function queryFromFile($sql_file_path) {
@@ -205,4 +205,3 @@ class db_manager {
 	}
 }
 
-?>

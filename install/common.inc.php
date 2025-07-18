@@ -263,5 +263,3 @@ if (!@is_array( $_SESSION['settings'] )) {
 	$_SESSION['settings'] = array();
 }
 
-?>
-

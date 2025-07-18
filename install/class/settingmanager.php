@@ -269,4 +269,3 @@ class setting_manager {
 		return xoops_makepass(5);
 	}
 }
-?>

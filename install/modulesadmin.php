@@ -27,7 +27,7 @@ function xoops_module_install($dirname) {
 	if ($module_handler->getCount(new icms_db_criteria_Item('dirname', $dirname)) == 0) {
 		$module =& $module_handler->create();
 		$module->loadInfoAsVar($dirname);
-		$module->registerClassPath();		
+		$module->registerClassPath();
 		$module->setVar('weight', 1);
 		$error = false;
 		$errs = array();
@@ -575,8 +575,8 @@ function icms_module_update($dirname) {
 						if (!$result) {
 							$msgs[] = sprintf('&nbsp;&nbsp;'._MD_AM_UPDATE_FAIL,$fblock['name']);
 						} else {
-							$msgs[] = sprintf('&nbsp;&nbsp;'._MD_AM_BLOCK_UPDATED, 
-								'<strong>' . $fblock['name'] . '</strong>', 
+							$msgs[] = sprintf('&nbsp;&nbsp;'._MD_AM_BLOCK_UPDATED,
+								'<strong>' . $fblock['name'] . '</strong>',
 								'<strong>' . icms_conv_nr2local($fblock['bid']) . '</strong>');
 							if ($template != '') {
 								$tplfile =& $tplfile_handler->find('default', 'block', $fblock['bid']);
@@ -895,5 +895,3 @@ function icms_module_update($dirname) {
 	}
 	return $ret;
 }
-
-?>

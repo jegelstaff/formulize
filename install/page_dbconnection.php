@@ -113,4 +113,3 @@ ob_start();
 	$content = ob_get_contents();
 	ob_end_clean();
 	include 'install_tpl.php';
-	?>

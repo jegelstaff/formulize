@@ -32,4 +32,3 @@ $content = "";
 include "./language/$wizard->language/welcome.php";
 
 include 'install_tpl.php';
-?>

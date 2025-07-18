@@ -59,4 +59,3 @@ $content .= '<div style="text-align: center; margin-top: 5px;"><a href="http://a
 $content .= '</fieldset>';
 
 include 'install_tpl.php';
-?>
