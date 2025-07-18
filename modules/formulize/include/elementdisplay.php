@@ -220,7 +220,7 @@ EOF;
 										if($js = $form_ele->renderValidationJS()) {
 											$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = $js;
 										}
-				          } elseif($element->getVar('ele_req') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
+				          } elseif($element->getVar('ele_required') AND ($element->getVar('ele_type') == "text" OR $element->getVar('ele_type') == "textarea") AND !$isDisabled) {
 				            $eltname    = $form_ele->getName();
 				            $eltcaption = $form_ele->getCaption();
 				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
@@ -530,8 +530,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
                 // get defaults for certain element types, function needs expanding
-                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'),$entry);
-                $compValue = isset($defaultValueMap[$elementObject->getVar('ele_id')]) ? $defaultValueMap[$elementObject->getVar('ele_id')] : "";
+                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'));
+                $compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
 			} else {
 				$compValue = "";
 			}

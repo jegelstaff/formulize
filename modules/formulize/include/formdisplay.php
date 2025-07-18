@@ -2737,7 +2737,7 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 
 			// Option 3c: regular element
 		} else {
-			$req = !$isDisabled ? intval($elementObject->getVar('ele_req')) : 0;
+			$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
 			$form->addElement($form_ele, $req);
 			unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005 -- because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 		}
@@ -2909,7 +2909,7 @@ function loadValue($prevEntry, $element, $ele_value, $owner_groups, $entry_id) {
 
                     // If the value is blank, and the element is required, or the element has the use-defaults-when-blank option on
                     // then do not load in saved value over top of ele_value, just return the default instead
-						if(($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_req')) AND $value === "") {
+						if(($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required')) AND $value === "") {
 								return $ele_value;
 						}
                 }

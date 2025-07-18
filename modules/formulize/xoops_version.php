@@ -36,10 +36,7 @@ $modversion = array(
 	'min_php_version_id' => "80100",
 	'description' => _MI_formulize_DESC,
 	'author' => "The Formulize Project - formulize.org",
-	'credits' => "",
-	'help' => "",
-	'license' => "GPL",
-	'official' => 0,
+	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
 );
@@ -975,6 +972,22 @@ $modversion['config'][] = array(
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeMCPServerEnabled',
+	'title' => '_MI_formulize_MCPSERVERENABLED',
+	'description' => '_MI_formulize_MCPSERVERENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
+$modversion['config'][] = array(
+	'name' => 'system_specific_instructions',
+	'title' => '_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS',
+	'description' => '_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC',
+	'formtype' => 'textsarea',
+	'valuetype' => 'text',
+	'default' => ''
 );
 $modversion['config'][] = array(
 	'name' => 'validateCode',

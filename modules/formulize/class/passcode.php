@@ -205,7 +205,7 @@ class formulizePassCodeHandler {
         $element->setVar('ele_type', 'anonPasscode');
         $element->setVar('ele_display', ','.XOOPS_GROUP_USERS.',');
         $element->setVar('ele_disabled', 1);
-        $element->setVar('ele_req', 0);
+        $element->setVar('ele_required', 0);
         $element->setVar('ele_encrypt', 0);
         $element->setVar('ele_handle', 'anon_passcode_'.$fid);
         $element->setVar('ele_caption', 'Anonymous User Passcode');

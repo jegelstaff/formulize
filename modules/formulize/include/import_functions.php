@@ -280,8 +280,8 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
                     }
 
                     // need to respect required setting
-                    if (isset($element['ele_req'])) {
-                        if ($element['ele_req']) {
+                    if (isset($element['ele_required'])) {
+                        if ($element['ele_required']) {
                             $errors[] = "<li>line " . $rowCount .
                                 ", column " . $importSet[3][$link] .
                                 ",<br> <b>This column requires a value</b> (cell was blank)</li>";

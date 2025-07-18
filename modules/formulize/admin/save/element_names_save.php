@@ -74,7 +74,7 @@ if($_POST['formulize_admin_key'] == "new") {
   $element->setVar('ele_type', $ele_type);
   $element->setVar('ele_display', 1);
   $element->setVar('ele_disabled', 0);
-  $element->setVar('ele_req', 0);
+  $element->setVar('ele_required', 0);
   $element->setVar('ele_encrypt', 0);
   $original_handle = "";
 } else {

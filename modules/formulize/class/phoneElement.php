@@ -118,11 +118,11 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
-        $ele_req = $element->getVar('ele_req');
+        $ele_required = $element->getVar('ele_required');
         $ele_value = $element->getVar('ele_value');
         $validationCode = array();
 
-        if($ele_req){
+        if($ele_required){
           $validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter a phone number.'); \n myform.{$markupName}.focus();\n return false;\n }";
         }
 

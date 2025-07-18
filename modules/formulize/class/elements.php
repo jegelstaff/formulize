@@ -66,7 +66,7 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_order", XOBJ_DTYPE_INT);
     $this->initVar("ele_sort", XOBJ_DTYPE_INT);
-		$this->initVar("ele_req", XOBJ_DTYPE_INT);
+		$this->initVar("ele_required", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_uitext", XOBJ_DTYPE_ARRAY); // used for having an alternative text to display on screen, versus the actual value recorded in the database, for radio buttons, checkboxes and selectboxes
     $this->initVar("ele_uitextshow", XOBJ_DTYPE_INT);
@@ -367,7 +367,7 @@ class formulizeElementsHandler {
 				}
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_req, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_required, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions
 				) VALUES (
 				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s
 				)",
@@ -380,7 +380,7 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_handle),
 				$ele_order,
                 $ele_sort,
-				$ele_req,
+				$ele_required,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
                 $ele_uitextshow,
@@ -406,7 +406,7 @@ class formulizeElementsHandler {
 				ele_handle = %s,
 				ele_order = %u,
                 ele_sort = %u,
-				ele_req = %u,
+				ele_required = %u,
 				ele_value = %s,
 				ele_uitext = %s,
                 ele_uitextshow = %u,
@@ -429,7 +429,7 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_handle),
 				$ele_order,
                 $ele_sort,
-				$ele_req,
+				$ele_required,
 				$this->db->quoteString($ele_value),
 				$this->db->quoteString($ele_uitext),
                 $ele_uitextshow,

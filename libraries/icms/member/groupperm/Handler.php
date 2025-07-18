@@ -371,5 +371,35 @@ class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
 		}
 		return $ret;
 	}
+
+	/**
+	 * Get all permissions (rights) assigned to a particular item for a particular group
+	 *
+	 * @param	int     $gperm_itemid     ID of an item
+	 * @param	int/array $gperm_groupid    A group ID or an array of group IDs
+	 * @param	int     $gperm_modid      ID of a module
+	 *
+	 * @return  array   array of group IDs
+	 */
+	public function getRights($gperm_itemid, $gperm_groupid, $gperm_modid = 1) {
+		$ret = array();
+		$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('gperm_itemid', (int) $gperm_itemid));
+		$criteria->add(new icms_db_criteria_Item('gperm_modid', (int) $gperm_modid));
+		if (is_array($gperm_groupid)) {
+			$criteria2 = new icms_db_criteria_Compo();
+			foreach ( $gperm_groupid as $gid) {
+				$criteria2->add(new icms_db_criteria_Item('gperm_groupid', $gid), 'OR');
+			}
+			$criteria->add($criteria2);
+		} else {
+			$criteria->add(new icms_db_criteria_Item('gperm_groupid', (int) $gperm_groupid));
+		}
+		$perms = $this->getObjects($criteria, true);
+		foreach ( array_keys($perms) as $i) {
+			$ret[] = $perms[$i]->getVar('gperm_name');
+		}
+		return $ret;
+	}
+
 }
 

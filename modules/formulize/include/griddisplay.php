@@ -386,7 +386,7 @@ function elementsInGrid($startID, $fid, $gridCount = 0, $requiredOnly = false) {
 			$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=\"$fid\" AND ele_id =\"$startID\"");
 		}
 		$starting_order = $order_query[0]['ele_order'];
-		$required = $requiredOnly ? "ele_req = 1 AND" : "";
+		$required = $requiredOnly ? "ele_required = 1 AND" : "";
 		$limitCondition = $gridCount ? " AND ele_order < ".intval($starting_order) + intval($gridCount) : "";
 		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' $limitCondition AND id_form='$fid' AND ele_type != 'subform' ORDER BY ele_order", 'ele_id', true);
 		$cachedGridElements[$fid][$startID][$gridCount][$requiredOnly] = $element_ids_result;

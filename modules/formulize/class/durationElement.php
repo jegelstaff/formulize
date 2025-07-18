@@ -291,7 +291,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		}
 
 		// Basic required validation if element is required
-		if ($element->getVar('ele_req')) {
+		if ($element->getVar('ele_required')) {
 			$validationCode[] = "var hasValue = false;\n";
 			foreach ($this->timeUnits as $unit => $multiplier) {
 				if ($ele_value['show_' . $unit]) {

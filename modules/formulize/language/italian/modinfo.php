@@ -3,13 +3,13 @@
 * --------------------------------------------------------------------
 *      Italian Translation by Luigi Massetti alias Gigiox
 *                     gigiox66 at libero dot it
-*    http://www.xoopsit.net the XOOPS Official Italian Support Site            
-* -------------------------------------------------------------------- 
+*    http://www.xoopsit.net the XOOPS Official Italian Support Site
+* --------------------------------------------------------------------
 */
 // Module Info
 
 // The name of this module
-define("_MI_formulize_NAME","Form");
+define("_MI_formulize_NAME","Formulize");
 
 // A brief description of this module
 define("_MI_formulize_DESC","Per inviare form");
@@ -27,7 +27,7 @@ define("_MI_formulize_DELIMETER","Delimitazioni per le caselle di controllo e pe
 define("_MI_formulize_DELIMETER_SPACE","Spazio bianco");
 define("_MI_formulize_DELIMETER_BR","Interruzione di linea");
 define("_MI_formulize_SEND_METHOD","Metodo di invio");
-define("_MI_formulize_SEND_METHOD_DESC","Nota: Il form inviato da utenti anonimi non può essere spedito utilizzando un messaggio privato.");
+define("_MI_formulize_SEND_METHOD_DESC","Nota: Il form inviato da utenti anonimi non puï¿½ essere spedito utilizzando un messaggio privato.");
 define("_MI_formulize_SEND_METHOD_MAIL","Email");
 define("_MI_formulize_SEND_METHOD_PM","Messaggio privato");
 define("_MI_formulize_SEND_GROUP","Invia ad un gruppo");

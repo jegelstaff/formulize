@@ -1,6 +1,9 @@
 <?php
 // $Id: global.php 20900 2011-02-27 02:18:47Z skenow $
 //%%%%%%	File Name mainfile.php 	%%%%%
+
+define('FORMULIZE_MCP_VERSION', '1.4.0');
+
 define('_PLEASEWAIT','Please Wait');
 define('_FETCHING','Loading...');
 define('_TAKINGBACK','Taking you back to where you were....');
@@ -14,6 +17,8 @@ define('_DISABLEHTML','Disable html');
 define('_PREVIEW','Preview');
 
 define('_GO','Go!');
+define('_SAVE_YOUR_CHANGES','Save your changes');
+define('_UNSAVED_WARNING','You have unsaved changes!');
 define('_NESTED','Nested');
 define('_NOCOMMENTS','No Comments');
 define('_FLAT','Flat');
