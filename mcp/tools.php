@@ -863,12 +863,12 @@ private function validateFilter($filter) {
 			foreach ($data as $elementHandle => $value) {
 				// Validate element handle type
 				if (!is_string($elementHandle)) {
-					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data');
+					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
 				}
 
 				// Validate element handle exists in this form
 				if (!in_array($elementHandle, $validHandles)) {
-					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element');
+					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_handles" => $validHandles ]);
 				}
 
 				// Prepare the value for database storage
@@ -881,8 +881,7 @@ private function validateFilter($filter) {
 			}
 
 			if (empty($preparedData)) {
-
-				throw new FormulizeMCPException('No valid data provided. Valid element handles: '.implode(", ",$validHandles), 'invalid_data');
+				throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_handles" => $validHandles ]);
 			}
 
 			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
@@ -900,7 +899,7 @@ private function validateFilter($filter) {
 				}
 				if($missingRequiredHandles) {
 					$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
-					throw new FormulizeMCPException("Required $elementText missing from from the data. Missing required $elementText: ".implode(", ",$missingRequiredHandles).'. If necessary, ask the user for more information about what the values should be.', 'invalid_data');
+					throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
 				}
 			}
 
