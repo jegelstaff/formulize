@@ -868,7 +868,7 @@ private function validateFilter($filter) {
 
 				// Validate element handle exists in this form
 				if (!in_array($elementHandle, $validHandles)) {
-					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_handles" => $validHandles ]);
+					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
 				}
 
 				// Prepare the value for database storage
@@ -881,7 +881,7 @@ private function validateFilter($filter) {
 			}
 
 			if (empty($preparedData)) {
-				throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_handles" => $validHandles ]);
+				throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
 			}
 
 			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
