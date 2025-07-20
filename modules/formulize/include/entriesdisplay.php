@@ -677,8 +677,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		$settings['lastloaded'] = $settings['curviewid'];
 	} else {
 		$settings['lastloaded'] = $_POST['lastloaded'];
-		$screen = enforceSearchesAsFundamentalFilters($_POST['lastloaded'], $screen);
 	}
+	$screen = enforceSearchesAsFundamentalFilters($settings['lastloaded'], $screen);
 
 	/**
 	 * STAGE 11 - TIDY UP SEARCHES BASED ON THE ACTUAL SEARCHES / COLUMNS WE'RE SHOWING, NOW THAT WE KNOW ALL THE DETAILS OF WHAT WE'RE SHOWING THE USER
@@ -1054,11 +1054,14 @@ function killQuickSearches() {
  * @return object The screen with the searches added to it as fundamental filters
  */
 function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
-	if($screen) {
+	static $savedViewsEnforcedAlready = array();
+	if($screen AND !isset($savedViewsEnforcedAlready[$savedViewIndentifier])) {
+		$savedViewsEnforcedAlready[$savedViewIndentifier] = true;
 		$savedViewId = substr($savedViewIndentifier, 1);
 		if(is_numeric($savedViewId)) {
 			$savedViewSettings = loadReport($savedViewId, $screen->getVar('fid'), $screen->getVar('frid'));
-			if($savedViewSettings[LR_SEARCHES_ARE_FUNDAMENTAL]) {
+			$features_loaded_from_saved_view = explode(',',$savedViewSettings[LR_USE_FEATURES]);
+			if(in_array('searches', $features_loaded_from_saved_view) AND $savedViewSettings[LR_SEARCHES_ARE_FUNDAMENTAL]) {
 				$mockFundamentalFilters = array();
 				$searches = explode("&*=%4#", $savedViewSettings[LR_SEARCHES]);
 				$cols = explode(",", $savedViewSettings[LR_COLS]);
@@ -3720,6 +3723,7 @@ function loadReport($id, $fid, $frid) {
 		define('LR_CURRENTVIEW', 0);
 		define('LR_COLS', 1);
 		define('LR_SEARCHES', 11);
+		define('LR_USE_FEATURES', 15);
 		define('LR_SEARCHES_ARE_FUNDAMENTAL', 16);
 	}
 
