@@ -94,46 +94,44 @@ trait prompts {
 
 	/**
 	 * Handle prompts list request
-	 * @param string $id The JSON-RPC request ID from the MCP client
 	 * @return array JSON-RPC response with list of prompts
 	 */
-	private function handlePromptsList($id)
+	private function handlePromptsList()
 	{
 		return [
-			'jsonrpc' => '2.0',
-			'result' => [
-				'prompts' => array_values($this->prompts)
-			],
-			'id' => $id
+			'prompts' => array_values($this->prompts)
 		];
 	}
 
 	/**
 	 * Handle prompt get request
 	 * @param array $params Parameters from the JSON-RPC request
-	 * @param string $id The JSON-RPC request ID from the MCP client
 	 * @return array JSON-RPC response with prompt messages or error
 	 */
-	private function handlePromptGet($params, $id)
+	private function handlePromptGet($params)
 	{
 		$promptName = $params['name'] ?? '';
 		$arguments = $params['arguments'] ?? [];
 
 		if (!isset($this->prompts[$promptName])) {
-			return $this->JSONerrorResponse('Unknown prompt: ' . $promptName, -32602, $id);
+			throw new FormulizeMCPException(
+				'Unknown prompt: ' . $promptName,
+				'unknown_prompt',
+				-32602,
+			);
 		}
 
 		try {
 			$messages = $this->generatePrompt($promptName, $arguments);
 			return [
-				'jsonrpc' => '2.0',
-				'result' => [
-					'messages' => $messages
-				],
-				'id' => $id
+				'messages' => $messages
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse('Prompt generation failed: ' . $e->getMessage(), -32603, $id);
+			throw new FormulizeMCPException(
+				'Prompt generation failed: ' . $e->getMessage(),
+				'prompt_generation_error',
+				-32603
+			);
 		}
 	}
 
@@ -153,7 +151,8 @@ trait prompts {
 	}
 
 	/**
-	 * Generate report prompt
+	 * Generates a prompt for the AI to create a report about a form
+	 * @return array
 	 */
 	private function generate_a_report_about_a_form($args)
 	{
@@ -166,7 +165,10 @@ trait prompts {
 		}
 
 		if(is_numeric($form) AND !security_check(intval($form))) {
-			$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . intval($form),
+				'permission_denied',
+			);
 		}
 
 		return [
@@ -204,7 +206,10 @@ trait prompts {
 	private function check_the_activity_logs($args)
 	{
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$this->sendAuthError("Permission denied: user cannot access this prompt", 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to activity logs',
+				'permission_denied'
+			);
 		}
 
 		// Logging tool only available if logging is enabled
@@ -267,7 +272,10 @@ trait prompts {
 		}
 
 		if(is_numeric($form) AND !security_check(intval($form))) {
-			$this->sendAuthError("Permission denied: user does not have access to form ".intval($form), 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . intval($form),
+				'permission_denied',
+			);
 		}
 
 		return [

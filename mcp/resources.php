@@ -1,5 +1,7 @@
 <?php
 
+use Google\Service\Classroom\Form;
+
 trait resources {
 
 	/**
@@ -104,36 +106,35 @@ trait resources {
 
 	/**
 	 * Handle resources list request
-	 * @param string $id The JSON-RPC request ID from the MCP client
+	 *
 	 * @return array JSON-RPC response with list of resources
 	 */
-	private function handleResourcesList($id)
+	private function handleResourcesList()
 	{
 		// Re-register resources to ensure fresh data
 		$this->registerResources();
 
 		return [
-			'jsonrpc' => '2.0',
-			'result' => [
-				'resources' => array_values($this->resources)
-			],
-			'id' => $id
+			'resources' => array_values($this->resources)
 		];
 	}
 
 	/**
 	 * Handle resource read request
 	 * @param array $params Parameters from the JSON-RPC request
-	 * @param string $id The JSON-RPC request ID from the MCP client
 	 * @return array JSON-RPC response with resource contents or error if paramaters are missing
 	 * @throws Exception If the resource cannot be read, or the URI format is invalid, or resource type is unknown
 	 */
-	private function handleResourceRead($params, $id)
+	private function handleResourceRead($params)
 	{
 		$uri = $params['uri'] ?? '';
 
 		if (!$uri) {
-			return $this->JSONerrorResponse('Missing required parameter: uri', -32602, $id);
+			throw new FormulizeMCPException(
+				'Missing required parameter: uri',
+				'missing_uri',
+				-32602
+			);
 		}
 
 		try {
@@ -149,27 +150,26 @@ trait resources {
 					$result = $this->handleSystemResource($parsedUri);
 					break;
 				default:
-					throw new Exception('Unknown resource type: ' . $parsedUri['type']);
+					throw new FormulizeMCPException(
+						'Unknown resource type: ' . $parsedUri['type'],
+						'unknown_resource_type'
+					);
 			}
 
 			return [
-				'jsonrpc' => '2.0',
-				'result' => [
-					'contents' => [
-						[
-							'uri' => $uri,
-							'mimeType' => 'application/json',
-							'text' => json_encode($result, JSON_PRETTY_PRINT)
-						]
+				'contents' => [
+					[
+						'uri' => $uri,
+						'mimeType' => 'application/json',
+						'text' => json_encode($result, JSON_PRETTY_PRINT)
 					]
-				],
-				'id' => $id
+				]
 			];
 		} catch (Exception $e) {
-			return $this->JSONerrorResponse(
+			throw new FormulizeMCPException(
 				'Resource read failed: ' . $e->getMessage(),
+				'resource_read_error',
 				-32603,
-				$id,
 				[
 					'requested_uri' => $uri,
 					'uri_format' => 'formulize://type/resource_name.extension',
@@ -186,7 +186,10 @@ trait resources {
 	{
 		// Parse: formulize://schemas/form_name_(form_1).json
 		if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
-			throw new Exception('Invalid resource URI format. Expected: formulize://type/name.extension');
+			throw new FormulizeMCPException(
+				'Invalid resource URI format. Expected: formulize://type/name.extension',
+				'invalid_data',
+			);
 		}
 
 		$type = $matches[1];
@@ -195,13 +198,19 @@ trait resources {
 
 		// Validate extension
 		if ($extension !== 'json') {
-			throw new Exception('Unsupported file extension: ' . $extension . '. Only .json is supported.');
+			throw new FormulizeMCPException(
+				'Unsupported file extension: ' . $extension . '. Only .json is supported.',
+				'invalid_data'
+			);
 		}
 
 		// Validate type
 		$validTypes = ['system', 'schemas', 'permissions'];
 		if (!in_array($type, $validTypes)) {
-			throw new Exception('Invalid resource type: ' . $type . '. Valid types: ' . implode(', ', $validTypes));
+			throw new FormulizeMCPException(
+				'Invalid resource type: ' . $type . '. Valid types: ' . implode(', ', $validTypes),
+				'invalid_data'
+			);
 		}
 
 		return [
@@ -223,7 +232,10 @@ trait resources {
 		$filenameParts = explode('_', $filename);
 
 		if (empty($filenameParts)) {
-			throw new Exception('Invalid filename format for ' . $type . ' resource');
+			throw new FormulizeMCPException(
+				'Invalid filename format for ' . $type . ' resource',
+				'invalid_data'
+			);
 		}
 
 		$firstPart = $filenameParts[0];
@@ -232,18 +244,27 @@ trait resources {
 
 		// Extract ID from last part (e.g., "(form_1)" -> "1")
 		if (!$id = trim($lastPart, ")")) {
-			throw new Exception('Could not extract ID from filename: ' . $filename);
+			throw new FormulizeMCPException(
+				'Could not extract ID from filename: ' . $filename,
+				'invalid_data'
+			);
 		}
 		// Extract type from second part (e.g., "(form_1)" -> "form", or "(group_1)" -> "group")
 		if (!$idType = trim($secondLastPart, "(")) {
-			throw new Exception('Could not extract type from filename: ' . $filename);
+			throw new FormulizeMCPException(
+				'Could not extract type from filename: ' . $filename,
+				'invalid_data'
+			);
 		}
 
 		$id = intval($id);
 		switch ($type) {
 			case 'schemas':
 				if ($idType !== 'form') {
-					throw new Exception('Schema resources must reference a form ID');
+					throw new FormulizeMCPException(
+						'Schema resources must reference a form ID',
+						'invalid_data'
+					);
 				}
 				return $this->form_schemas($id);
 
@@ -253,11 +274,17 @@ trait resources {
 				} elseif ($firstPart === 'group' && $idType === 'form') {
 					return $this->form_permissions($id);
 				} else {
-					throw new Exception('Invalid permission resource format. Expected form_perms_for_group or group_perms_for_form');
+					throw new FormulizeMCPException(
+						'Invalid permission resource format. Expected form_perms_for_group or group_perms_for_form',
+						'invalid_data'
+					);
 				}
 
 			default:
-				throw new Exception('Unhandled resource type in schema/permission handler: ' . $type);
+				throw new FormulizeMCPException(
+					'Unhandled resource type in schema/permission handler: ' . $type,
+					'invalid_data'
+				);
 		}
 	}
 
@@ -272,7 +299,10 @@ trait resources {
     $validSystemResources = $this->getSystemResourceNames();
 
 		if (!in_array($filename, $validSystemResources)) {
-			throw new Exception('Unknown system resource: ' . $filename . '. Valid resources: ' . implode(', ', $validSystemResources));
+			throw new FormulizeMCPException(
+				'Unknown system resource: ' . $filename . '. Valid resources: ' . implode(', ', $validSystemResources),
+				'invalid_data'
+			);
 		}
 
 		return $this->$filename();
@@ -358,7 +388,10 @@ trait resources {
 	{
 
 		if(security_check($formId) === false) {
-			$this->sendAuthError('Permission denied: user does not have permission to view this form.', 403);
+			throw new FormulizeMCPException(
+				'Permission denied: user does not have access to form ' . intval($formId),
+				'permission_denied',
+			);
 		}
 		// Get form details
 		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
@@ -366,7 +399,10 @@ trait resources {
 		$formData = $this->db->fetchArray($formResult);
 
 		if (!$formData) {
-			throw new Exception('Form not found');
+			throw new FormulizeMCPException(
+				'Form not found: ' . intval($formId),
+				'form_not_found',
+			);
 		}
 
 		// Get form elements
@@ -423,7 +459,10 @@ trait resources {
 	private function group_permissions($groupId) {
 
 		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups) AND !in_array($groupId, $this->userGroups)) {
-			$this->sendAuthError("Permission denied: user is not a member of group $groupId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user is not a member of group $groupId.",
+				'permission_denied',
+			);
 		}
 
 		$groupDataSql = "SELECT groupid, `name`, `description` FROM " . $this->db->prefix('groups') . " WHERE groupid = ".intval($groupId);
@@ -457,7 +496,10 @@ trait resources {
 	private function form_permissions($formId) {
 
 		if(!security_check($formId)) {
-			$this->sendAuthError("Permission denied: user does not have access to form $formId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to form $formId.",
+				'permission_denied',
+			);
 		}
 
 		// limit non webmasters to their own groups
@@ -679,7 +721,10 @@ trait resources {
 			WHERE afl.appid > 0
 			$limitAppsSQL ORDER BY a.name, f.form_title";
 		if(!$res = $this->db->query($sql)) {
-			throw new Exception('Failed to lookup application data. '.$this->db->error());
+			throw new FormulizeMCPException(
+				'Failed to lookup application data. '.$this->db->error(),
+				'database_error'
+			);
 		}
 		$prevApp = 0;
 		$applications = [];
@@ -725,9 +770,11 @@ trait resources {
 	 * Optionally get a simple list of just the ids and titles
 	 */
 	private function screens_list($formId = null, $screenId = null, $simple = false) {
-		$limitScreensSQL = "";
 		if($formId AND !security_check($formId)) {
-			$this->sendAuthError("Permission denied: user does not have access to form $formId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to form $formId.",
+				'permission_denied',
+			);
 		}
 		// take passed in form id, otherwise, allow all if the user is an admin
 		$formIds = [];
@@ -742,7 +789,10 @@ trait resources {
 		$limitScreensBySid = $screenId ? 'AND sid = '.intval($screenId) : '';
 		$sql = "SELECT * FROM ".$this->db->prefix('formulize_screen')." WHERE 1 $limitScreensBySid $limitScreensByFids ORDER BY fid,title";
 		if(!$res = $this->db->query($sql)) {
-			throw new Exception('Failed to lookup screen data. '.$this->db->error());
+			throw new FormulizeMCPException(
+				'Failed to lookup screen data. '.$this->db->error(),
+				'database_error'
+			);
 		}
 		$serializedFields = FormulizeObject::serializedDBFields();
 		$screens = [];
@@ -767,7 +817,10 @@ trait resources {
 			}
 		}
 		if($screenId AND empty($screens)) {
-			$this->sendAuthError("Permission denied: user does not have access to the screen $screenId.", 403);
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to the screen $screenId.",
+				'permission_denied',
+			);
 		}
 		return [
 			'screens' => $screens,
