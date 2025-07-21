@@ -99,9 +99,7 @@ trait prompts {
 	private function handlePromptsList()
 	{
 		return [
-			'result' => [
-				'prompts' => array_values($this->prompts)
-			]
+			'prompts' => array_values($this->prompts)
 		];
 	}
 
@@ -126,9 +124,7 @@ trait prompts {
 		try {
 			$messages = $this->generatePrompt($promptName, $arguments);
 			return [
-				'result' => [
-					'messages' => $messages
-				]
+				'messages' => $messages
 			];
 		} catch (Exception $e) {
 			throw new FormulizeMCPException(

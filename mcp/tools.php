@@ -385,9 +385,7 @@ Examples:
 	private function handleToolsList()
 	{
 		return [
-			'result' => [
-				'tools' => array_values($this->tools)
-			]
+			'tools' => array_values($this->tools)
 		];
 	}
 
@@ -426,12 +424,10 @@ Examples:
 				);
 			}
 			return [
-				'result' => [
-					'content' => [
-						[
-							'type' => 'text',
-							'text' => is_string($result) ? $result : json_encode($result, JSON_PRETTY_PRINT)
-						]
+				'content' => [
+					[
+						'type' => 'text',
+						'text' => is_string($result) ? $result : json_encode($result, JSON_PRETTY_PRINT)
 					]
 				]
 			];

@@ -355,16 +355,14 @@ class FormulizeMCP
 	private function handleInitialize()
 	{
 		return [
-			'result' => [
-				'protocolVersion' => '2024-11-05',
-				'capabilities' => [
-					'tools' => [],
-					'resources' => [],
-					'prompts' => []
-				],
-				'serverInfo' => $this->system_info(),
-				'instructions' => $this->getInitializeInstructions()
-			]
+			'protocolVersion' => '2024-11-05',
+			'capabilities' => [
+				'tools' => [],
+				'resources' => [],
+				'prompts' => []
+			],
+			'serverInfo' => $this->system_info(),
+			'instructions' => $this->getInitializeInstructions()
 		];
 	}
 

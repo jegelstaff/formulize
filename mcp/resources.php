@@ -115,9 +115,7 @@ trait resources {
 		$this->registerResources();
 
 		return [
-			'result' => [
-				'resources' => array_values($this->resources)
-			]
+			'resources' => array_values($this->resources)
 		];
 	}
 
@@ -159,13 +157,11 @@ trait resources {
 			}
 
 			return [
-				'result' => [
-					'contents' => [
-						[
-							'uri' => $uri,
-							'mimeType' => 'application/json',
-							'text' => json_encode($result, JSON_PRETTY_PRINT)
-						]
+				'contents' => [
+					[
+						'uri' => $uri,
+						'mimeType' => 'application/json',
+						'text' => json_encode($result, JSON_PRETTY_PRINT)
 					]
 				]
 			];
