@@ -1,7 +1,5 @@
 <?php
 
-use Google\Service\Classroom\Form;
-
 trait resources {
 
 	/**

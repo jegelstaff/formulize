@@ -1,7 +1,5 @@
 <?php
 
-use Google\Service\Classroom\Form;
-
 trait tools {
 
 	/**
@@ -1070,6 +1068,14 @@ private function validateFilter($filter) {
 	 * Query the database directly
 	 */
 	private function query_the_database_directly($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can access activity logs.",
+				'authentication_error',
+			);
+		}
+
 		$sql = trim($arguments['sql'] ?? '');
 		try {
 			// Sanitize the SQL

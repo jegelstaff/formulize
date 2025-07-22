@@ -9050,15 +9050,14 @@ function isMCPServerEnabled() {
 
     // If we're in the Formulize module context
     if (isset($xoopsModuleConfig['formulizeMCPServerEnabled'])) {
-        return (bool) $xoopsModuleConfig['formulizeMCPServerEnabled'];
+        return $xoopsModuleConfig['formulizeMCPServerEnabled'] == 1 ? true : false;
     }
 
     // Fallback: get config directly
     $config_handler = xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 
-    return isset($formulizeConfig['formulizeMCPServerEnabled']) &&
-           $formulizeConfig['formulizeMCPServerEnabled'] == 1;
+    return isset($formulizeConfig['formulizeMCPServerEnabled']) && $formulizeConfig['formulizeMCPServerEnabled'] == 1;
 }
 
 /**

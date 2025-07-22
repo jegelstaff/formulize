@@ -2,7 +2,7 @@
 /**
  * Formulize MCP HTTP Direct Server with Proper Formulize API Key Authentication
  *
- * Uses Formulize's existing API key system from managekeys.php/apikey.php
+ * Uses Formulize's existing API key system
  */
 
 // CRITICAL: Disable debug output
