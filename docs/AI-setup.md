@@ -15,7 +15,7 @@ title: AI Setup Instructions
 	Regardless, any AI assistant capable of using _local MCP connections_ should be compatible with Formulize. Please <a href='mailto:info@formulize.org'>let us know about your experience</a>.
 
 2. Create an API key in Formulize for the user(s) who are going to work with AI. You create API keys on the __Manage API Keys__ page, accessible from the main Formulize admin page:\
-![Click Manage API Keys on the Formulize admin page](../../images/Manage-API-keys.PNG)
+![Click Manage API Keys on the Formulize admin page](../../images/Manage-API-keys.png)
 
 3. Enable the AI Features in Formulize. You do this through the __Formulize Preferences__ page, , accessible from the main Formulize admin page:\
 ![Click Manage API Keys on the Formulize admin page](../../images/Formulize-preferences.png)\
