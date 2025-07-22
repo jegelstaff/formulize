@@ -2765,9 +2765,10 @@ function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = nu
 			return "";
 		}
 		$ele_value = $elementObject->getVar('ele_value');
+		$form_id = $elementObject->getVar('id_form'); // possibly referenced by eval'd code below, besides being used in a few places here
 		// try to figure out the current value, if one wasn't passed in
 		if($currentValue === null AND $entry_id AND is_numeric($entry_id)) {
-			$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+			$dataHandler = new formulizeDataHandler($form_id);
 			$currentValue = $dataHandler->getElementValueInEntry($entry_id, $elementObject);
 		}
 		if(($currentValue === null OR $currentValue == '')
@@ -2788,16 +2789,20 @@ function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = nu
 		}
 
     global $xoopsUser;
-		$form_id = $elementObject->getVar('id_form'); // possibly referenced by eval'd code
+
+		$elementRenderer = new formulizeElementRenderer($elementObject);
+		$renderedElementMarkupName = "de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id');
+		$textboxValue = $elementRenderer->formulize_replaceCurlyBracketVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName);
 
     if (strstr($textboxValue, "\$default")) { // php default value
 				$textboxValue = removeOpeningPHPTag($textboxValue);
 			  $default = '';
         eval(stripslashes($textboxValue));
         $textboxValue = $default;
+				$textboxValue = $elementRenderer->formulize_replaceCurlyBracketVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName); // in case PHP code generated some { } references
     }
 
-    $foundTerms = array();
+	  $foundTerms = array();
     $position = 0;
     $foundBracket = true;
     while ($foundBracket) {

@@ -129,20 +129,22 @@ class formulizeElementRenderer{
 
 			case 'ib':
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
+				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = getValue($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
 					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
+					$value = ""; // will be set in eval
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
+						$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName); // in case PHP code generated some { } references
 					}
 				}
-				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 
@@ -191,20 +193,22 @@ class formulizeElementRenderer{
 
 
 			case 'areamodif':
+				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
 					$creation_datetime = getValue($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
 					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
+					$value = ""; // will be set in eval
 					$evalResult = eval($ele_value[0]);
 					if($evalResult === false) {
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
+						$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName); // just in case PHP might have added { } refs
 					}
 				}
-				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				$form_ele = new XoopsFormLabel(
 					$ele_caption,
 					$ele_value[0],
