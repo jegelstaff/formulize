@@ -32,7 +32,7 @@ RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 ```
 
-4. Configure your AI assistant. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.1/formulize-mcp.dxt' download='formulize-mcp.dxt'>download the Formulize DXT extention</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
+4. Configure your AI assistant. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.2/formulize-mcp.dxt' download='formulize-mcp.dxt'>download the Formulize DXT extention</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
 
 	Other AI assistants might be compatible with DXT extensions as well, now or in the future.
 
