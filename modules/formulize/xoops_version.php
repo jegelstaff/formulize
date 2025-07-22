@@ -31,7 +31,7 @@
 
 $modversion = array(
 	'name' => _MI_formulize_NAME,
-	'version' => "8.02",
+	'version' => "8.1-beta",
 	'min_php_version' => "8.1",
 	'min_php_version_id' => "80100",
 	'description' => _MI_formulize_DESC,
