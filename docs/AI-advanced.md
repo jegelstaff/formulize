@@ -16,7 +16,7 @@ __However__, you need to be careful when using this kind of configuration, to be
 
 But not necessarily all the time, and __proactive guidance goes a long way with AI__.
 
-A ```.json``` file for this kind of configuration would have multiple servers specified, with different names and URLs and API keys:
+The ```.json``` file for this kind of configuration would have multiple servers specified, with different names and URLs and API keys:
 
 ```json
 {
@@ -58,7 +58,7 @@ The information available in each one will differ based on the different permiss
 
 __Proactive guidance goes a long way with AI__.
 
-A ```.json``` file for this kind of configuration would have multiple connections to the same Formulize system, just using different API keys. You also need to name the different connections appropriately:
+The ```.json``` file for this kind of configuration would have multiple connections to the same Formulize system, just using different API keys. You also need to name the different connections appropriately:
 
 ```json
 {

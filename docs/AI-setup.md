@@ -6,7 +6,13 @@ title: AI Setup Instructions
 
 # AI Setup Instructions
 
-1. Formulize works with AI assistants that are capable of __local__ MCP connections. You need to have one installed locally on your computer. We recommend <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, which is free to download and use.
+1. Formulize works with AI assistants that are capable of __local__ MCP connections. You need to have one installed locally on your computer.
+
+	We have had good results with <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, and Claude helped create the Formulize MCP server. We can recommend it as a top tier AI assistant.
+
+	However, to get the best results from Claude, a paid subscription seems to be necessary. The cost may be good value for money, if Claude can save you a lot of time, which seems likely given what AI and Formulize is capable of.
+
+	Regardless, any AI assistant capable of using _local MCP connections_ should be compatible with Formulize. Please <a href='mailto:info@formulize.org'>let us know about your experience</a>.
 
 2. Create an API key in Formulize for the user(s) who are going to work with AI. You create API keys on the __Manage API Keys__ page, accessible from the main Formulize admin page:\
 ![Click Manage API Keys on the Formulize admin page](../../images/Manage-API-keys.PNG)
@@ -26,58 +32,61 @@ RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 ```
 
-4. Configure your AI assistant. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://formulize.org/ai/formulize-mcp.dxt' download='formulize-mcp.dxt'>download the Formulize DXT extention</a>, and install it in Claude. Other AI assistants might be compatible with DXT extensions as well, now or in the future.
+4. Configure your AI assistant. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.1/formulize-mcp.dxt' download='formulize-mcp.dxt'>download the Formulize DXT extention</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
+
+	Other AI assistants might be compatible with DXT extensions as well, now or in the future.
 
 5. If your AI assistant is does not support DXT extensions, you need to update the configuration of your AI assistant manually. Exactly how to do this varies from assistant to assistant:
 
-> - For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
+	- For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
 
-```json
-{
-  "servers": {
-    "My Formulize MCP Server": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "formulize-mcp"
-      ],
-      "env": {
-        "FORMULIZE_URL": "https://<your.formulize.site.url>",
-        "FORMULIZE_API_KEY": "<your api key from your formulize site>",
-        "FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
-      }
-    }
-  }
-}
-```
-> - Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
+	```json
+	{
+		"servers": {
+			"My Formulize MCP Server": {
+				"command": "npx",
+				"args": [
+					"-y",
+					"formulize-mcp"
+				],
+				"env": {
+					"FORMULIZE_URL": "https://<your.formulize.site.url>",
+					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
+					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+				}
+			}
+		}
+	}
+	```
 
-> - For Claude Desktop, modify the file ```claude_desktop_config.json```. Where is it?\
-Windows: ```%APPDATA%\Claude\claude_desktop_config.json```\
-macOS: ```~/Library/Application Support/Claude/claude_desktop_config.json```\
-\
-The file should look like this:
+	- Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
 
-```json
-{
-  "mcpServers": {
-    "My Formulize MCP Server": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "formulize-mcp"
-      ],
-      "env": {
-        "FORMULIZE_URL": "https://<your.formulize.site.url>",
-        "FORMULIZE_API_KEY": "<your api key from your formulize site>",
-        "FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
-      }
-    }
-  }
-}
-```
+	- For Claude Desktop, if you're not using the DXT file, modify the file ```claude_desktop_config.json```. Where is it?\
+	Windows: ```%APPDATA%\Claude\claude_desktop_config.json```\
+	macOS: ```~/Library/Application Support/Claude/claude_desktop_config.json```\
+	\
+	The file should look like this:
 
-The configuration for other AI assistants should be similar. You need to use ```npx``` with ```formulize-mcp```, and set the environment variables.
+	```json
+	{
+		"mcpServers": {
+			"My Formulize MCP Server": {
+				"command": "npx",
+				"args": [
+					"-y",
+					"formulize-mcp"
+				],
+				"env": {
+					"FORMULIZE_URL": "https://<your.formulize.site.url>",
+					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
+					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+				}
+			}
+		}
+	}
+	```
+
+	- The configuration for other AI assistants should be similar. You need to use ```npx``` with ```formulize-mcp```, and set the environment variables.
 
 ## Options
 

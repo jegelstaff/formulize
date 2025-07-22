@@ -6,7 +6,13 @@ title: AI and Formulize
 
 # AI and Formulize
 
-## Overview
+- [Overview](#overview)
+- [Setup](#setup)
+- [Working with Formulize and AI](#working)
+- [Advanced Configuration](#advanced)
+- [Testing that it's working](#testing)
+
+## <a name='overview'></a>Overview
 
 You can use AI assistants, like Claude, Copilot, etc, to help you work with Formulize. They can understand the way it's configured, and they can help you create data, update data, analyze data, maintain, validate and correct data...
 
@@ -28,7 +34,7 @@ Also, when the AI asks Formulize for something, Formulize validates what the AI 
 
 ---
 
-## Setup
+## <a name='setup'></a>Setup
 
 You need to [follow a few steps](../ai/setup) to get Formulize working with AI. Setup is a one time thing, once you've completed the setup you don't have to do it again.
 
@@ -36,7 +42,7 @@ You need to [follow a few steps](../ai/setup) to get Formulize working with AI. 
 
 ---
 
-## Working with Formulize and AI
+## <a name='working'></a>Working with Formulize and AI
 
 ### The Basics
 
@@ -102,7 +108,7 @@ Pre-defined prompts may make reference to particular tools that the AI assistant
 
 ---
 
-## Advanced Configuration
+## <a name='advanced'></a>Advanced Configuration
 
 You can connect your AI assistant to multiple Formulize instances. You can also connect with the credentials of different users.
 
@@ -110,7 +116,7 @@ You can connect your AI assistant to multiple Formulize instances. You can also 
 
 ---
 
-## Testing that it's working
+## <a name='testing'></a>Testing that it's working
 
 ### Connection testing
 
