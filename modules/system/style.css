@@ -141,7 +141,7 @@ input { background-color: #fff; border: #CCC 1px solid; font-size: .8em; font-fa
 input:focus { background-color: #FFFFBB; border: #000 1px solid;}
 input:hover { border: #000 1px solid;}
 
-textarea { background-color: #fff; border: #CCC 1px solid; width: 570px; font-size: .8em; font-family: verdana, arial, helvetica, sans-serif; }
+textarea { background-color: #fff; border: #CCC 1px solid; width: auto; font-size: .8em; font-family: verdana, arial, helvetica, sans-serif; }
 textarea:focus { background-color: #FFFFBB; border: #000 1px solid; }
 textarea:hover { border: #000 1px solid;}
 
@@ -469,3 +469,16 @@ filter:alpha(opacity=70);
 -khtml-opacity: 0.75;
 opacity: 0.75;
 }
+
+form#pref_form table > tbody > tr:last-child {
+	position: fixed;
+	right: 3em;
+	bottom: 3em;
+}
+form#pref_form table > tbody > tr:last-child td.head {
+	width: auto;
+}
+form#pref_form table > tbody > tr:last-child input[type=submit] {
+	font-size: 11pt;
+}
+

@@ -10,7 +10,7 @@ $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 define("_MI_formulize_NAME","Formulize");
 
 // A brief description of this module
-define("_MI_formulize_DESC","For provisioning forms and analyzing data");
+define("_MI_formulize_DESC","Easily collect and organize your data — no code required. With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports. Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows.");
 
 // admin/menu.php
 define("_MI_formulize_ADMENU0","Form management");
@@ -154,6 +154,44 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API".$publicAPIInstructions);
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/");
 
+$mcpServerInstructions = '';
+$mcpDocumentationLink = "Read more about Formulize and AI at <a href='https://formulize.org/ai' target='_blank'>https://formulize.org/ai</a>.";
+$hideSystemSpecificInstructions = '';
+foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
+	if($thisConfig == 'formulizeMCPServerEnabled' AND $thisConfigValue == 0) {
+		$mcpServerInstructions = "<br><br>To work with AI, your server needs to pass through an authorization header to PHP. On some servers, you will need to add this code to the .htaccess file at the root of your website. Make sure to put it after any other rewrite rules.
+		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
+		# Necessary for HTTP Authorization header to be passed through to the MCP server<br>
+		RewriteEngine On<br>
+		RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]<br>
+		</blockquote><i>If you enabled this option, but these instructions are still here, then your web server is not yet properly configured for MCP. Check your .htaccess file and try again.</i><br><br>";
+		$hideSystemSpecificInstructions = "<script>jQuery(window).load(function() { jQuery(\"span:contains('System Specific Instructions for the AI Assistant')\").closest('tr').hide(); } );</script>";
+		break;
+	} else {
+		$mcpExampleConfigFilename = FormulizeObject::sanitize_handle_name(str_replace('.', '_', $_SERVER['HTTP_HOST']))."_mcp_example_config.json";
+		$mcpServerInstructions = "<br><br><style>
+			#xo-canvas-content ul.mcp-bullets > li { margin-bottom: 0.6em; font-weight: normal; list-style: disc;}
+			#xo-canvas-content ol.mcp-steps > li { margin-bottom: 0.6em; font-weight: normal; list-style: number; }
+		</style>
+		Next steps:
+		<ol class='mcp-steps'>
+		<li><b>Create an API Key</b> &mdash; Go to <a href='".XOOPS_URL."/modules/formulize/admin/ui.php?page=managekeys' target='_blank'>the <i>Manage API Keys</i> page</a>, and create an API key for the user(s) that will be using AI with Formulize.</li>
+		<li><b>Share the API key <i>securely</i></b> &mdash; Use a secure communication channel to distribute the API keys, or meet in person. The API keys give access to Formulize in exactly the same way as logging in with someone's username and password, so <b>do not send them via e-mail</b> or other insecure means!</li>
+		<li><b>Connect an AI assistant</b> &mdash; Use these files to connect an MCP-compatible AI assistant to Formulize:
+			<ul class='mcp-bullets'>
+				<li><b>DXT Extension</b> &mdash; <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.2/formulize-mcp.dxt' download='formulize-mcp.dxt'>formulize-mcp.dxt</a> &mdash; download this file and install it in an AI assistant that supports DXT extensions, such as <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>.</li>
+				<li style='list-style: none;'><b>or</b></li>
+				<li><b>Manual configuration</b> &mdash; <a href='".XOOPS_URL."/mcp/example_config.php' download='$mcpExampleConfigFilename'>$mcpExampleConfigFilename</a> &mdash; download this file and save it/modify it, in the location where your AI assistant looks for MCP configuration details.</li>
+			</ul>
+		</ol>";
+	}
+}
+define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP".$mcpServerInstructions.$mcpDocumentationLink);
+define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting AI assistants, like Claude, Copilot, etc, to Formulize. With MCP, AI assistants can read information from Formulize and help you configure Formulize.");
+
+define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "Examples:<ul class='mcp-bullets'><li><b>HR System:</b> This system manages employee records, time tracking, and performance reviews. Managers have access to see all their employees' records.</li><li><b>Research Lab:</b> Scientists use this system to track experiments, log results, and manage equipment reservations. Reports are automatically generated based on the logged data.</li><li><b>Event Management:</b> This system handles event registrations, venue bookings, and attendee communications. Regular users see only their own events, admins see all events.</li><li><b>Project Management:</b> Teams use this system to track project milestones, resource allocation, and client communications. Notifications go out regularly about deadlines, new tasks, etc.</li><li><b>Student Management:</b> This Formulize system is used for managing student registrations and course enrollments. Forms are used to collect student information, course preferences, and payment details. The system is integrated with a payment gateway for processing fees.</li></ul><b>Note:</b> You can use Markdown formatting in this field to make it easier to read.");
+define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS", "System Specific Instructions for the AI Assistant<br><br>You can provide specific context to the AI assistant about what your Formulize system is used for and how it is configured. Basic concepts like forms, elements, screens, users, groups, etc, have already been explained to the AI assistant. This is your chance to provide more specific context about the purpose and workflows of your system, to help the AI assistant help you better.<br><br><a style='cursor: pointer;' 'href='' onclick='jQuery(\"#mcp-ssi-examples\").toggle(); return false;'>Show/Hide Examples</a><br><br><div id='mcp-ssi-examples' style='display:none;'>"._MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC."</div>".$hideSystemSpecificInstructions);
+
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
 define("_MI_formulize_REVISIONSFORALLFORMS_DESC", "Normally, you can turn on revision history for each form as you see fit. If you want to turn it on for all forms always, turn this preference on, and the option will be disabled in each form's settings.");
 
@@ -167,12 +205,12 @@ define("_MI_formulizeMENU_DESC","Displays an individually configurable menu in a
 // Names of blocks for this module (Not all module has blocks)
 define("_MI_formulizeMENU_BNAME","Form Menu");
 
-define("_MI_formulize_EXPORTINTROCHAR","Prefix strings in .csv files with a character to smooth importing and appearance in Excel and Google?");
+define("_MI_formulize_EXPORTINTROCHAR","Prefix strings in .csv files with a TAB (for Excel) or an apostrophe (for Google Sheets)? Prefixing helps smooth the importing and appearance in Excel or Google Sheets.");
 define("_MI_formulize_EXPORTINTROCHARDESC","Excel and Google Sheets try to be helpful and automatically interpret certain values when opening .csv files. This can damage your data. To force non-numeric values to be read as-is, Formulize can prefix them with certain characters that will trigger them to be read as plain strings by Excel and Google. However, this can cause havoc in other programs if you need plain .csv data. The default behaviour suits opening downloaded files in Excel, and using the IMPORTDATA function in Google Sheets to gather data via a makecsv.php reference.");
-define("_MI_formulize_EIC_BASIC", "Prefix strings with a TAB character (for Excel), unless makecsv.php is generating the file, then use an apostrophe (for Google Sheets)");
-define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix strings with an apostrophe (for Google Sheets)");
-define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix strings with a TAB (for Excel)");
-define("_MI_formulize_EIC_PLAIN", "Never prefix strings (for programs that need clean, raw data)");
+define("_MI_formulize_EIC_BASIC", "Normally, use TAB (Excel). With makecsv.php, use apostrophe (for Google Sheets)");
+define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix with an apostrophe (for Google Sheets)");
+define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix with a TAB (for Excel)");
+define("_MI_formulize_EIC_PLAIN", "Never prefix (for programs that need clean, raw data)");
 
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable View Buttons"._MI_formulize_PREFHEADEND.'Enable Printable View buttons (then you can turn them on and off per screen)');
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable View buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable View buttons will not show up on any screens.');

@@ -478,6 +478,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 {
 	global $xoopsDB;
 
+	$andor = trim(strtolower($andor)) == "and" ? "AND" : "OR";
+
 	$limitStart = intval($limitStart);
 	$limitSize = intval($limitSize);
 

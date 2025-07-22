@@ -83,8 +83,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_id';
-    $checkThisField = 'form_title';
+    $checkThisTable = 'formulize';
+    $checkThisField = 'ele_required';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -493,7 +493,7 @@ function patch40() {
 				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
 				$sql['form_title'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `desc_form` `form_title` varchar(255) NOT NULL default ''";
-
+				$sql['ele_required'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " CHANGE `ele_req` `ele_required` tinyint(1) NOT NULL default 0";
 
 				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
 
@@ -629,6 +629,8 @@ function patch40() {
 										print "Principal Identifier already added. result: OK<br>";
 								} elseif($key === "form_title") {
 										print "Form title already renamed. result: OK<br>";
+                } elseif($key === "ele_required") {
+										print "Element required already renamed. result: OK<br>";
                 }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

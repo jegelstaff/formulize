@@ -127,7 +127,7 @@ if ($_GET['fid'] != "new") {
         $elements[$i]['content']['converttext'] = $converttext;
         $elements[$i]['content']['linktype'] = $linktype;
         $elements[$i]['content']['ele_type'] = $cleanType;
-        $elements[$i]['content']['ele_req'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_req'));
+        $elements[$i]['content']['ele_required'] = removeNotApplicableRequireds($thisElement->getVar('ele_type'), $thisElement->getVar('ele_required'));
         $ele_display = $thisElement->getVar('ele_display');
         $multiGroupDisplay = false;
         if (substr($ele_display, 0, 1) == ",") {

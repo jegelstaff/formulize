@@ -461,6 +461,7 @@ EOF;
             $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
             if($res = $xoopsDB->query($sql)) {
                 foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
+										$value = correctStringIntFloatTypes($value);
                     $existingValues[$handle] = $value;
                     if(!isset($element_values[$handle])) { // if this element is not set for writing, then set the current value so we have it available in the function
                         $element_values[$handle] = $value;
@@ -907,7 +908,7 @@ class formulizeFormsHandler {
 			$element->setVar('ele_caption', str_replace("_", " ", $row[0]));
 			$element->setVar('ele_desc', "");
 			$element->setVar('ele_colhead', "");
-			$element->setVar('ele_req', 0);
+			$element->setVar('ele_required', 0);
 			$element->setVar('ele_order', $element_order);
 			$element_order = $element_order + 5;
 			$element->setVar('ele_forcehidden', 0);

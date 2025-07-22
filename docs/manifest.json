@@ -1,0 +1,104 @@
+---
+layout: null
+---
+{
+  "dxt_version": "0.1",
+  "name": "formulize-mcp",
+  "display_name": "Formulize",
+  "version": "1.3.2",
+  "description": "A local MCP server for connecting to Formulize, the open source data management platform.",
+  "long_description": "Formulize lets people organize their data and customize the workflows around their data. Many Formulize users are not developers, they are power users who understand how their systems should work, and they can use Formulize to configure their database applications, instead of programming them. With this MCP server, people can connect AI assistants to their Formulize system, have conversations about their data, and get their AI assistant to help in configuring Formulize. Through MCP, people will be able to simply outline their use cases and business processes, and then the AI assistant can use tools in Formulize to create the applications they have imagined. People can also have AI assistants validate, summarize, and help manage their data, and even add data to the database based on the context and prompts provided by users.",
+  "author": {
+    "name": "Julian Egelstaff and Claude (Sonnet 4 and Opus 4)",
+    "email": "julian@formulize.org",
+    "url": "https://github.com/jegelstaff"
+  },
+  "homepage": "https://formulize.org/",
+  "documentation": "https://formulize.org/ai",
+  "support": "https://github.com/jegelstaff/formulize-mcp/issues",
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/formulize-mcp.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/formulize-mcp.js"
+      ],
+      "env": {
+        "FORMULIZE_URL": "${user_config.FORMULIZE_URL}",
+        "FORMULIZE_API_KEY": "${user_config.FORMULIZE_API_KEY}",
+        "FORMULIZE_SERVER_NAME": "${user_config.FORMULIZE_SERVER_NAME}",
+        "FORMULIZE_DEBUG": "${user_config.FORMULIZE_DEBUG}",
+        "FORMULIZE_TIMEOUT": "${user_config.FORMULIZE_TIMEOUT}"
+      }
+    }
+  },
+  "tools": [{% for tool in site.data.mcp_items.tools %}
+		{
+			"name": {{ tool.name | jsonify }},
+			"description": {{ tool.description | jsonify }}
+		}{% unless forloop.last %},{% endunless %}{% endfor %}
+  ],
+  "prompts": [{% for prompt in site.data.mcp_items.prompts %}
+		{
+			"name": {{ prompt.name | jsonify }},
+			"description": {{ prompt.description | jsonify }},
+			"arguments": [{% for arg in prompt.arguments %}"{{ arg.name }}"{% unless forloop.last %},{% endunless %}{% endfor %}],
+			"text": "Dynamically generated prompt text based on the arguments"
+		}{% unless forloop.last %},{% endunless %}{% endfor %}
+  ],
+  "tools_generated": true,
+  "prompts_generated": true,
+  "user_config": {
+    "FORMULIZE_URL": {
+      "type": "string",
+      "title": "URL for the Formulize system",
+      "description": "This is the URL for the Formulize system, ie: https://yoursite.com or https://yoursite.com/formulize/",
+      "required": true,
+      "sensitive": false
+    },
+    "FORMULIZE_API_KEY": {
+      "type": "string",
+      "title": "Your API key for your Formulize system",
+      "description": "All data in Formulize is permission controlled. To identify yourself to the remote Formulize MCP server, you need to use an API key from your Formulize system. This can be generated on the Admin side, on the Manage API Keys page.",
+      "required": true,
+      "sensitive": true
+    },
+		"FORMULIZE_SERVER_NAME": {
+      "type": "string",
+      "title": "The name of your Formulize system",
+      "description": "Recommended, but not required. The name of your system, ie: ACME Widgets Inventory",
+      "required": false,
+      "sensitive": false
+    },
+    "FORMULIZE_DEBUG": {
+      "type": "boolean",
+      "title": "Turn on debug mode",
+      "description": "With debug mode on, there are a lot of messages that get output from the server, so you can see better what's going on. Also, caching is turned off in the server when debug mode is on.",
+      "required": false,
+      "sensitive": false,
+      "default": false
+    },
+    "FORMULIZE_TIMEOUT": {
+      "type": "number",
+      "title": "The timeout limit, in milliseconds",
+      "description": "The amount of time the server will wait for a response from your Formulize system.",
+      "required": false,
+      "sensitive": false,
+      "default": 30000,
+      "min": 0
+    }
+  },
+  "keywords": [
+    "database",
+    "Formulize",
+    "nocode",
+    "lowcode"
+  ],
+  "license": "GPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jegelstaff/formulize-mcp.git"
+  }
+}

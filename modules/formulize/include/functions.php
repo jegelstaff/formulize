@@ -743,7 +743,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 
 					// gather required fields for this form
 					} else {
-						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_req=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_required=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
 						if ($result = $xoopsDB->query($reqfq)) {
 								while ($row = $xoopsDB->fetchArray($result)) {
 										if ($needids) {
@@ -8092,7 +8092,7 @@ function export_prepColumns($columns,$include_metadata=0) {
 // used for setting values that are supposed to exist by default in newly created subform entries
 function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
-  $defaultValueMap = getEntryDefaults($target_fid, $target_entry);
+  $defaultValueMap = getEntryDefaults($target_fid, $target_entry, keyByIds: true);
   $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
 
   $i = 0;
@@ -8109,15 +8109,16 @@ function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array())
  * Gets the default values for elements in an entry, usually a new entry, but some element types can have defaults that depend on data already saved in other elements in an entry
  * Such as when a multipage form has elements on page 2 that have default values determined by answers on page 1
  * @param int $target_fid - The form id for which we're getting default values
- * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry.
+ * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry. Defaults to 'new'.
+ * @param boolean $keyByIds - a flag to indicate if the resulting array should be keyed by element id. Default is false and array will be keyed by element handles.
  * @return array Returns an array of element id/default value pairs
  */
-function getEntryDefaults($target_fid,$target_entry) {
+function getEntryDefaults($target_fid,$target_entry = 'new', $keyByIds = false) {
 
   static $cachedDefaults = array();
 
-  if(isset($cachedDefaults[$target_fid][$target_entry])) {
-    return $cachedDefaults[$target_fid][$target_entry];
+  if(isset($cachedDefaults[$target_fid][$keyByIds][$target_entry])) {
+    return $cachedDefaults[$target_fid][$keyByIds][$target_entry];
   }
 
   $defaultValueMap = array();
@@ -8219,9 +8220,10 @@ function getEntryDefaults($target_fid,$target_entry) {
 				}
     }
     if($defaultTextToWrite === "" OR $defaultTextToWrite === false OR $defaultTextToWrite === null) { continue; }
-    $defaultValueMap[$thisDefaultEle->getVar('ele_id')] = $defaultTextToWrite;
+		$key = $keyByIds ? $thisDefaultEle->getVar('ele_id') : $thisDefaultEle->getVar('ele_handle');
+    $defaultValueMap[$key] = $defaultTextToWrite;
   }
-  $cachedDefaults[$target_fid][$target_entry] = $defaultValueMap;
+  $cachedDefaults[$target_fid][$keyByIds][$target_entry] = $defaultValueMap;
   return $defaultValueMap;
 }
 
@@ -8806,7 +8808,10 @@ function stripEntryFromDoneDestination($done_dest) {
  * @return string The string with characters converted to special chars
  */
 function convertStringToUseSpecialCharsToMatchDB($string) {
-	return str_replace('&amp;', '&', htmlspecialchars($string));
+	if(is_string($string) AND !is_numeric($string)) {
+		$string = str_replace('&amp;', '&', htmlspecialchars($string));
+	}
+	return $string;
 }
 
 /**
@@ -9034,4 +9039,52 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 		}
 	}
 	return $screenId;
+}
+
+/**
+ * Check if MCP Server is enabled in Formulize preferences
+ * @return bool True if MCP server is enabled, false otherwise
+ */
+function isMCPServerEnabled() {
+    global $xoopsModuleConfig;
+
+    // If we're in the Formulize module context
+    if (isset($xoopsModuleConfig['formulizeMCPServerEnabled'])) {
+        return $xoopsModuleConfig['formulizeMCPServerEnabled'] == 1 ? true : false;
+    }
+
+    // Fallback: get config directly
+    $config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
+    return isset($formulizeConfig['formulizeMCPServerEnabled']) && $formulizeConfig['formulizeMCPServerEnabled'] == 1;
+}
+
+/**
+ * Take an array of element handle -> value pairs, and add default values for any elements in the form that don't already have a value
+ * @param array values - The values array that we're appending to
+ * @param int fid - The ID of the form we're getting default values for
+ * @return array Returns the passed array with default values added, if any
+ */
+function addDefaultValuesToDataToWrite($values, $fid) {
+	$defaultValueMap = getEntryDefaults($fid);
+	foreach($defaultValueMap as $defaultValueElementHandle=>$defaultValueToWrite) {
+		// if the element is not a value that we received, then let's use the default value
+		if(!isset($values[$defaultValueElementHandle])) {
+			$values[$defaultValueElementHandle] = $defaultValueToWrite;
+		}
+	}
+	return $values;
+}
+
+/**
+ * Takes a value and makes sure it's the correct type in PHP, either string, int or float
+ * @param mixed value - the value we're working with
+ * @return mixed returns the value, with the correct type based on its contents. If value is not a string, int or float, returns whatever we got passed in
+ */
+function correctStringIntFloatTypes($value) {
+	if(is_numeric($value)) {
+		$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
+	}
+	return $value;
 }

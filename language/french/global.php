@@ -12,7 +12,9 @@ define("_DISABLESMILEY","D&eacute;sactiver les &eacute;motic&ocirc;nes");
 define("_DISABLEHTML","D&eacute;sactiver le code html");
 define("_PREVIEW","Pr&eacute;visualiser");
 
-define("_GO","Go!");
+define('_GO','Go!');
+define("_SAVE_YOUR_CHANGES","Sauver modifications");
+define('_UNSAVED_WARNING','Vous avez des changements non sauvegardés!');
 define("_NESTED","Embo&icirc;t&eacute;");
 define("_NOCOMMENTS","Pas de commentaires");
 define("_FLAT","A plat");

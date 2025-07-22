@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulize MCP Debug Test Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        * {
+            color: inherit;
+        }
+
+        .main-content * {
+            color: #333;
+        }
+
+        .response-panel * {
+            color: #333;
+        }
+
+        /* Override for dark blue backgrounds - make text white */
+        button, button * {
+            color: white !important;
+        }
+
+        .response-header, .response-header * {
+            color: white !important;
+        }
+
+        .response-controls button, .response-controls button * {
+            color: white !important;
+        }
+
+        .main-content {
+            flex: 1;
+            max-width: 46%;
+            padding: 20px;
+            margin-right: 520px; /* Space for fixed response panel */
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            margin-left: 20px;
+            margin-bottom: 20px;
+            height: fit-content;
+        }
+
+        .response-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 46%;
+            height: calc(100vh - 40px);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            border: 2px solid #007cba;
+        }
+
+        .response-header {
+            background: #007cba;
+            color: white;
+            padding: 15px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .response-controls {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+						font-size: 10pt;
+						justify-content: space-between;
+        }
+
+        .response-controls button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="password"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .custom-textarea {
+            height: 200px;
+            font-size: 14px;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 1200px) {
+            body {
+                flex-direction: column;
+            }
+
+            .main-content {
+                margin-right: 20px;
+                margin-bottom: 350px;
+            }
+
+            .response-panel {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                right: 20px;
+                top: auto;
+                width: auto;
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin: 10px;
+                margin-bottom: 320px;
+                padding: 15px;
+            }
+
+            .response-panel {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                height: 280px;
+            }
+        }
+
+        button {
+            background-color: #007cba;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #005a87;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .response {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .response pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .loading {
+            color: #007cba;
+            font-style: italic;
+        }
+
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border-color: #f5c6cb;
+        }
+
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e8;
+            border-color: #c3e6cb;
+        }
+
+        .auth-section {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            color: #333;
+        }
+
+        .auth-section h3 {
+            color: #333;
+        }
+
+        .stats-bar {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 3px;
+            margin-bottom: 15px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .endpoint-test {
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+
+        .endpoint-test h5 {
+            margin: 0 0 10px 0;
+            color: #555;
+        }
+
+        .json-validation {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .json-valid {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .json-invalid {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #f44336;
+        }
+
+        .template-selector {
+            margin-bottom: 10px;
+        }
+
+        .template-selector select {
+            margin-bottom: 10px;
+        }
+
+        .loading-indicator {
+            color: #007cba;
+            font-style: italic;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .template-info {
+            background: #f0f8ff;
+            border: 1px solid #b3d9ff;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .refresh-button {
+            background-color: #28a745;
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+
+        .refresh-button:hover {
+            background-color: #218838;
+        }
+
+				/* JSON tree view */
+				.json-tree {
+            font-family: monospace;
+            font-size: 13px;
+            word-wrap: break-word;
+        }
+
+        .json-tree ul {
+            list-style-type: none;
+            padding-left: 5px;
+            margin: 0;
+        }
+
+        .json-tree li {
+            position: relative;
+            user-select: text;
+						list-style: none;
+        }
+
+        .json-tree .json-key {
+            color: #0077cc;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .json-tree .json-key:hover {
+            background-color: lightblue;
+            border-radius: 2px;
+        }
+
+        .json-tree .json-string {
+            color: #008000;
+        }
+
+        .json-tree .json-number {
+            color: #aa5500;
+        }
+
+        .json-tree .json-boolean {
+            color: #aa00aa;
+        }
+
+        .json-tree .json-null {
+            color: #888888;
+        }
+
+        .json-tree .toggle {
+            position: absolute;
+            left: -15px;
+            user-select: none;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .json-tree .toggle::before {
+            content: '▶';
+            display: inline-block;
+            transition: transform 0.1s ease;
+        }
+
+        .json-tree .toggle.expanded::before {
+            transform: rotate(90deg);
+        }
+
+        .json-tree .toggle.hidden {
+            visibility: hidden;
+        }
+
+        .json-tree li.collapsed > ul {
+            display: none;
+        }
+
+        /* Additional response styles */
+        .response-details {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 10px;
+            margin-top: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <h1>Formulize MCP Debug Test Tool</h1>
+
+        <div class="auth-section">
+            <h3>🔒 Authentication Setup</h3>
+            <div class="form-group">
+                <label for="apiKey">API Key (32-character hex):</label>
+                <input type="text" id="apiKey" placeholder="Enter your Formulize API key (leave blank to test without auth)" />
+                <small>Leave blank to test server without authentication</small>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🛠️ JSON Request Builder</h3>
+            <p><strong>Build and send any MCP request with JSON payload.</strong></p>
+
+            <div class="form-group">
+                <label for="method">Method Selection:</label>
+                <select id="method" onchange="updateRequestBodyForMethod()">
+                    <option value="tools/list">tools/list</option>
+                    <option value="tools/call">tools/call</option>
+                    <option value="resources/list">resources/list</option>
+                    <option value="resources/read">resources/read</option>
+                    <option value="prompts/list">prompts/list</option>
+                    <option value="prompts/get">prompts/get</option>
+                    <option value="initialize">initialize</option>
+                </select>
+            </div>
+
+            <div class="form-group template-selector">
+                <label for="templateSelector">
+                    Template Selection:
+                    <!-- Not strictly necessary anymore, but may be useful later, so we'll keep the code around
+										<button class="refresh-button" onclick="refreshAvailableOptions()" title="Refresh available templates">
+                        🔄 Refresh
+                    </button> -->
+                    <span id="templateLoadingIndicator" class="loading-indicator" style="display: none;">Loading...</span>
+                </label>
+                <select id="templateSelector" onchange="loadSelectedTemplate()">
+                    <option value="">-- Select a template --</option>
+                </select>
+                <div id="templateInfo" class="template-info" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="requestBody">JSON Request Body:</label>
+                <textarea id="requestBody" class="custom-textarea" placeholder='{"jsonrpc":"2.0","method":"tools/list","params":{},"id":1}' oninput="validateJSON()"></textarea>
+                <div id="jsonValidation" class="json-validation" style="display: none;"></div>
+            </div>
+
+            <button onclick="sendCustomRequest()">🚀 Send Request</button>
+            <button onclick="formatJSON()">🎨 Format JSON</button>
+            <button onclick="clearCustomRequest()">🧹 Clear</button>
+        </div>
+
+				<div class="test-section">
+            <h3>🌐 HTTP Endpoint Tests</h3>
+            <p>Test the HTTP endpoints that Claude Desktop uses during startup:</p>
+
+            <div class="endpoint-test">
+                <h5>Health Check Endpoint</h5>
+                <button onclick="testEndpoint('/health', 'GET')">GET /health</button>
+            </div>
+
+            <div class="endpoint-test">
+                <h5>Capabilities Endpoint</h5>
+                <button onclick="testEndpoint('/capabilities', 'GET')">GET /capabilities</button>
+            </div>
+
+            <div class="endpoint-test">
+                <h5>MCP Endpoint</h5>
+                <button onclick="testEndpoint('/mcp', 'POST', JSON.stringify({jsonrpc:'2.0',method:'initialize',params:{},id:1}, null, 2))">POST /mcp (initialize)</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Fixed Response Panel -->
+    <div class="response-panel">
+        <div class="response-header">
+            <span>📊 Response Monitor</span>
+            <span id="connection-status">●</span>
+        </div>
+        <div class="response-controls">
+            <div>
+							<button onclick="clearResponse()">Clear</button>
+							<button onclick="copyResponse()">Copy</button>
+							<button onclick="toggleResponseSize()">Resize</button>
+							<button onclick="exportLogs()">Export</button>
+						</div>
+						<div>
+							CTRL-click on a key to toggle all keys of that type
+						</div>
+        </div>
+        <div id="fixed-stats" class="stats-bar" style="display: none;"></div>
+        <div id="fixed-response" class="response">
+            <div style="text-align: center; color: #666; padding: 20px;">
+                <p>🚀 Ready to test your MCP server!</p>
+                <p>Responses will appear here as you run tests.</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+                <p><strong>Quick Start:</strong></p>
+                <p>1. Enter your API key above</p>
+                <p>2. Try the custom JSON builder</p>
+                <p>3. Or test the HTTP endpoints</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testStats = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            failedRequests: 0,
+            startTime: Date.now()
+        };
+
+        let responsePanelExpanded = true;
+        let testLogs = [];
+        let availableTools = [];
+        let availableResources = [];
+        let availablePrompts = [];
+        let isLoadingTemplates = false;
+
+        /**
+         * Convert a JSON object or value to an interactive, collapsible HTML tree
+         * @param {*} data The data to convert to a tree view
+         * @returns {string} HTML string representing the interactive JSON tree
+         */
+        function createJsonTree(data) {
+            function escapeHtml(str) {
+                return str.toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function formatValue(value) {
+                if (value === null) return '<span class="json-null">null</span>';
+                if (typeof value === 'boolean') return `<span class="json-boolean">${value}</span>`;
+                if (typeof value === 'number') return `<span class="json-number">${value}</span>`;
+                if (typeof value === 'string') return `<span class="json-string">"${escapeHtml(value)}"</span>`;
+                return value;
+            }
+
+            function buildTree(obj, isRoot = true, keyName = '') {
+                if (obj === null || typeof obj !== 'object') {
+                    return formatValue(obj);
+                }
+
+                const isArray = Array.isArray(obj);
+                const items = isArray ? obj : Object.entries(obj);
+
+                const listItems = items.map((item, index) => {
+                    const [key, value] = isArray ? [index, item] : item;
+                    const hasChildren = value !== null && (typeof value === 'object' || Array.isArray(value));
+
+                    const toggleClass = hasChildren ? 'toggle' : 'toggle hidden';
+                    const keyDisplay = isArray ?
+                        `<span class="json-number">${key}</span>` :
+                        `<span class="json-key" data-toggle="true">"${escapeHtml(key)}"</span>`;
+
+                    // Check if this key is "result" or if we're inside a "result" subtree
+                    const shouldCollapse = (keyName && keyName !== 'text' && keyName.includes('text'));
+                    const collapseClass = shouldCollapse ? ' collapsed' : '';
+
+                    if (!hasChildren) {
+                        return `
+                            <li>
+                                ${keyDisplay}: ${formatValue(value)}
+                            </li>
+                        `;
+                    }
+
+                    return `
+                        <li class="${collapseClass}">
+                            <span class="${toggleClass}"></span>
+                            ${keyDisplay}:
+                            <ul>
+                                <li>${buildTree(value, false, keyName ? `${keyName}.${key}` : key)}</li>
+                            </ul>
+                        </li>
+                    `;
+                }).join('');
+
+                return `
+                    <ul class="json-tree">
+                        ${listItems}
+                    </ul>
+                `;
+            }
+
+            return buildTree(data);
+        }
+
+				/**
+				 * Add event listeners to make JSON tree interactive
+				 * Now supports clicking on both the toggle arrow and the key text
+				 * Ctrl+click toggles all keys with the same name throughout the tree
+				 */
+				function initializeJsonTree(element) {
+						element.addEventListener('click', function(event) {
+								const toggle = event.target.closest('.toggle');
+								const jsonKey = event.target.closest('.json-key[data-toggle="true"]');
+
+								// Check if we clicked on either the toggle arrow or a clickable key
+								if (toggle || jsonKey) {
+										const listItem = (toggle || jsonKey).closest('li');
+										const toggleElement = listItem.querySelector('.toggle');
+
+										if (toggleElement) {
+												// First, always perform the normal toggle on the clicked item
+												toggleElement.classList.toggle('expanded');
+												listItem.classList.toggle('collapsed');
+
+												// Then handle Ctrl+click for all matching keys
+												if (event.ctrlKey || event.metaKey) { // metaKey for Mac Cmd key
+														// Get the key name from the clicked element
+														const keyName = jsonKey ? jsonKey.textContent.replace(/['"]/g, '') :
+																					toggle.nextElementSibling.textContent.replace(/['"]/g, '');
+
+														// Get the NEW state of the clicked item
+														const isExpanded = toggleElement.classList.contains('expanded');
+														const isCollapsed = listItem.classList.contains('collapsed');
+
+														// Find all OTHER keys with the same name within the same response container
+														const responseContainer = element.closest('.response') || element.closest('.response-details') || document;
+														const matchingKeys = responseContainer.querySelectorAll('.json-key');
+
+														matchingKeys.forEach(key => {
+																const cleanKeyName = key.textContent.replace(/['"]/g, '');
+																if (cleanKeyName === keyName) {
+																		const keyListItem = key.closest('li');
+																		const keyToggle = keyListItem.querySelector('.toggle');
+
+																		// Skip the item we just clicked (avoid double-toggling)
+																		if (keyToggle && keyToggle !== toggleElement) {
+																				// Sync both triangle state AND collapsed state to match clicked item
+																				if (isExpanded) {
+																						keyToggle.classList.add('expanded');
+																				} else {
+																						keyToggle.classList.remove('expanded');
+																				}
+
+																				if (isCollapsed) {
+																						keyListItem.classList.add('collapsed');
+																				} else {
+																						keyListItem.classList.remove('collapsed');
+																				}
+																		}
+																}
+														});
+												}
+										}
+
+										event.stopPropagation();
+								}
+						});
+				}
+
+				/**
+				 * Initialize triangle states to match the initial collapsed/expanded state of tree items
+				 */
+				function initializeTriangleStates(element) {
+						const listItems = element.querySelectorAll('.json-tree li');
+						listItems.forEach(item => {
+								const toggle = item.querySelector('.toggle');
+								if (toggle && !toggle.classList.contains('hidden')) {
+										// If the item is NOT collapsed, the triangle should be expanded (pointing down)
+										if (!item.classList.contains('collapsed')) {
+												toggle.classList.add('expanded');
+										} else {
+												toggle.classList.remove('expanded');
+										}
+								}
+						});
+				}
+
+        /**
+         * Clean up double-encoded JSON in MCP responses
+         * Recursively processes the response object to find and parse stringified JSON
+         */
+        function cleanMCPResponse(obj) {
+            if (typeof obj === 'string') {
+                // First, try to parse the string directly as JSON
+                        try {
+                            const parsed = JSON.parse(obj);
+                    // If successful, recursively clean the result
+                        return cleanMCPResponse(parsed);
+                    } catch (e) {
+                    // If direct parsing fails, return the original string
+                        return obj;
+                    }
+            } else if (Array.isArray(obj)) {
+                // Clean each item in the array
+                return obj.map(item => cleanMCPResponse(item));
+            } else if (obj && typeof obj === 'object') {
+                // Clean each property in the object
+                const cleaned = {};
+                for (const [key, value] of Object.entries(obj)) {
+                    cleaned[key] = cleanMCPResponse(value);
+                }
+                return cleaned;
+            }
+            return obj;
+        }
+
+        function updateStats() {
+            const runtime = Math.round((Date.now() - testStats.startTime) / 1000);
+            const statsText = `📊 ${testStats.totalRequests} total, ${testStats.successfulRequests} success, ${testStats.failedRequests} failed | ${runtime}s`;
+
+            const statsEl = document.getElementById('stats');
+            const fixedStatsEl = document.getElementById('fixed-stats');
+
+            if (statsEl) {
+                statsEl.innerHTML = statsText;
+                statsEl.style.display = 'block';
+            }
+            if (fixedStatsEl) {
+                fixedStatsEl.innerHTML = statsText;
+                fixedStatsEl.style.display = 'block';
+            }
+
+            // Update connection status indicator
+            const statusEl = document.getElementById('connection-status');
+            if (testStats.failedRequests === 0 && testStats.successfulRequests > 0) {
+                statusEl.style.color = '#4caf50'; // Green
+                statusEl.title = 'Connected';
+            } else if (testStats.failedRequests > 0) {
+                statusEl.style.color = '#f44336'; // Red
+                statusEl.title = 'Connection issues detected';
+            } else {
+                statusEl.style.color = '#ff9800'; // Orange
+                statusEl.title = 'No tests run yet';
+            }
+        }
+
+        function showResponse(data, isError = false, title = '', accumulate = false) {
+            const timestamp = new Date().toISOString();
+            const headerText = title ? `${title} - ${timestamp}` : timestamp;
+
+            let responseContent;
+            if (typeof data === 'object') {
+                // Clean up double-encoded JSON in MCP responses
+                const cleanedData = cleanMCPResponse(data);
+
+                // Create interactive JSON tree
+                const treeHtml = createJsonTree(cleanedData);
+                responseContent = `
+                    <div class="response-details">
+                        <strong>${headerText}</strong>
+                        ${treeHtml}
+                    </div>
+                `;
+            } else {
+                responseContent = `<div class="response-details"><strong>${headerText}</strong><pre>${data}</pre></div>`;
+            }
+
+            const fixedElement = document.getElementById('fixed-response');
+            const mainElement = document.getElementById('response');
+
+            if (accumulate) {
+                const separator = '<hr style="margin: 15px 0; border: none; border-top: 2px solid #ddd;">';
+                const currentContent = fixedElement.innerHTML;
+
+                if (currentContent && !currentContent.includes('Ready to test') && !currentContent.includes('loading')) {
+                    fixedElement.innerHTML = currentContent + separator + responseContent;
+                    if (mainElement) {
+                        mainElement.innerHTML = (mainElement.innerHTML || '') + separator + responseContent;
+                    }
+                } else {
+                    fixedElement.innerHTML = responseContent;
+                    if (mainElement) {
+                        mainElement.innerHTML = responseContent;
+                    }
+                }
+            } else {
+                fixedElement.innerHTML = responseContent;
+                if (mainElement) {
+                    mainElement.innerHTML = responseContent;
+                }
+            }
+
+            // Initialize JSON tree interactions
+						const jsonTrees = fixedElement.querySelectorAll('.json-tree');
+						jsonTrees.forEach(tree => {
+								initializeTriangleStates(tree);
+								initializeJsonTree(tree);
+						});
+
+            fixedElement.className = isError ? 'response error' : 'response success';
+            if (mainElement) {
+                mainElement.className = isError ? 'response error' : 'response success';
+                mainElement.style.display = 'block';
+            }
+            fixedElement.style.display = 'block';
+
+            testLogs.push({
+                timestamp,
+                title: title || 'Request',
+                data,
+                isError,
+                id: Date.now()
+            });
+
+            if (testLogs.length > 50) {
+                testLogs = testLogs.slice(-50);
+            }
+
+            testStats.totalRequests++;
+            if (isError) {
+                testStats.failedRequests++;
+            } else {
+                testStats.successfulRequests++;
+            }
+            updateStats();
+
+            fixedElement.scrollTop = fixedElement.scrollHeight;
+        }
+
+        function showLoading(message = 'Sending request...') {
+            const loadingContent = `<div class="loading">${message}</div>`;
+
+            document.getElementById('fixed-response').innerHTML = loadingContent;
+            const mainElement = document.getElementById('response');
+            if (mainElement) {
+                mainElement.innerHTML = loadingContent;
+                mainElement.className = 'response loading';
+            }
+            document.getElementById('fixed-response').className = 'response loading';
+        }
+
+        function clearResponse() {
+            document.getElementById('fixed-response').innerHTML = `
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    <p>🧹 Response cleared</p>
+                    <p>Ready for next test...</p>
+                </div>
+            `;
+            const mainElement = document.getElementById('response');
+            if (mainElement) {
+                mainElement.innerHTML = '';
+                mainElement.className = 'response';
+                mainElement.style.display = 'none';
+            }
+            document.getElementById('fixed-response').className = 'response';
+            document.getElementById('fixed-response').style.display = 'block';
+
+            testStats = {
+                totalRequests: 0,
+                successfulRequests: 0,
+                failedRequests: 0,
+                startTime: Date.now()
+            };
+            testLogs = [];
+
+            const statsEl = document.getElementById('stats');
+            const fixedStatsEl = document.getElementById('fixed-stats');
+
+            if (statsEl) {
+                statsEl.style.display = 'none';
+            }
+            if (fixedStatsEl) {
+                fixedStatsEl.style.display = 'none';
+            }
+            updateStats();
+        }
+
+        function copyResponse() {
+            const responseEl = document.getElementById('fixed-response');
+            const text = responseEl.innerText || responseEl.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalContent = responseEl.innerHTML;
+                responseEl.innerHTML = '<div style="text-align: center; color: #4caf50; padding: 20px;">📋 Copied to clipboard!</div>';
+                setTimeout(() => {
+                    responseEl.innerHTML = originalContent;
+                }, 1000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+        function toggleResponseSize() {
+            const panel = document.querySelector('.response-panel');
+
+            if (responsePanelExpanded) {
+                panel.style.width = '300px';
+                panel.style.height = '400px';
+                responsePanelExpanded = false;
+            } else {
+                panel.style.width = '480px';
+                panel.style.height = 'calc(100vh - 40px)';
+                responsePanelExpanded = true;
+            }
+        }
+
+        function exportLogs() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                stats: testStats,
+                logs: testLogs,
+                sessionInfo: {
+                    userAgent: navigator.userAgent,
+                    serverUrl: 'index.php', // Fixed server URL
+                    apiKeyProvided: !!document.getElementById('apiKey').value
+                },
+                availableCapabilities: {
+                    tools: availableTools.length,
+                    resources: availableResources.length,
+                    prompts: availablePrompts.length
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `formulize-mcp-test-logs-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const responseEl = document.getElementById('fixed-response');
+            const originalContent = responseEl.innerHTML;
+            responseEl.innerHTML = '<div style="text-align: center; color: #4caf50; padding: 20px;">📥 Logs exported successfully!</div>';
+            setTimeout(() => {
+                responseEl.innerHTML = originalContent;
+            }, 1500);
+        }
+
+        async function sendRequest(requestBody, title = '', accumulate = false) {
+            const apiKey = document.getElementById('apiKey').value;
+            const serverUrl = 'index.php'; // Fixed server URL
+
+            const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
+            const mcpUrl = baseUrl + '/index.php/mcp';
+
+            if (!accumulate) {
+            showLoading(`Sending ${title || 'request'}...`);
+            }
+
+            try {
+                console.log('Sending request:', requestBody);
+                console.log('To MCP URL:', mcpUrl);
+                console.log('With API Key:', apiKey ? 'Present (' + apiKey.length + ' chars): ' + apiKey.substring(0, 8) + '...' : 'Missing');
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                };
+
+                if (apiKey && apiKey.trim()) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                    console.log('Authorization header added:', `Bearer ${apiKey.substring(0, 8)}...`);
+                } else {
+                    console.log('No API key provided - sending without Authorization header');
+                }
+
+                console.log('Final headers:', headers);
+
+                const response = await fetch(mcpUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+
+                const responseText = await response.text();
+                console.log('Raw response text:', responseText);
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    data = {
+                        error: 'Invalid JSON response',
+                        raw_response: responseText,
+                        parse_error: parseError.message
+                    };
+                }
+
+                if (!response.ok) {
+                    showResponse({
+                        status: 'HTTP Error',
+                        httpStatus: response.status,
+                        statusText: response.statusText,
+                        response: data,
+                        timestamp: new Date().toISOString()
+                    }, true, title, accumulate);
+                    return null;
+                } else {
+                    showResponse({
+                        status: 'Success',
+                        httpStatus: response.status,
+                        response: data,
+                        timestamp: new Date().toISOString()
+                    }, false, title, accumulate);
+                    return data;
+                }
+
+            } catch (error) {
+                console.error('Request failed:', error);
+
+                showResponse({
+                    status: 'Network Error',
+                    error: error.message,
+                    timestamp: new Date().toISOString(),
+                    apiKeyProvided: !!apiKey,
+                    apiKeyLength: apiKey ? apiKey.length : 0,
+                    serverUrl: mcpUrl
+                }, true, title, accumulate);
+                return null;
+            }
+        }
+
+        async function testEndpoint(endpoint, method = 'GET', body = null, accumulate = false) {
+            const apiKey = document.getElementById('apiKey').value;
+            const serverUrl = 'index.php'; // Fixed server URL
+
+            const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
+            const fullUrl = baseUrl + endpoint;
+
+            if (!accumulate) {
+            showLoading(`Testing ${method} ${endpoint}...`);
+            }
+
+            try {
+                const headers = {
+                    'Cache-Control': 'no-cache'
+                };
+
+                if (apiKey && apiKey.trim()) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+
+                if (method === 'POST') {
+                    headers['Content-Type'] = 'application/json';
+                }
+
+                const response = await fetch(fullUrl, {
+                    method: method,
+                    headers: headers,
+                    body: body
+                });
+
+                const responseText = await response.text();
+                let data;
+
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    data = responseText;
+                }
+
+                showResponse({
+                    endpoint: endpoint,
+                    method: method,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    body: data
+                }, !response.ok, `${method} ${endpoint}`, accumulate);
+
+            } catch (error) {
+                showResponse({
+                    endpoint: endpoint,
+                    method: method,
+                    error: error.message
+                }, true, `${method} ${endpoint}`, accumulate);
+            }
+        }
+
+        function validateJSON() {
+            const textarea = document.getElementById('requestBody');
+            const validation = document.getElementById('jsonValidation');
+            const text = textarea.value.trim();
+
+            if (!text) {
+                validation.style.display = 'none';
+                return;
+            }
+
+            try {
+                JSON.parse(text);
+                validation.className = 'json-validation json-valid';
+                validation.textContent = '✓ Valid JSON';
+                validation.style.display = 'block';
+            } catch (error) {
+                validation.className = 'json-validation json-invalid';
+                validation.textContent = '✗ Invalid JSON: ' + error.message;
+                validation.style.display = 'block';
+            }
+        }
+
+        function formatJSON() {
+            const textarea = document.getElementById('requestBody');
+            const text = textarea.value.trim();
+
+            if (!text) return;
+
+            try {
+                const parsed = JSON.parse(text);
+                textarea.value = JSON.stringify(parsed, null, 2);
+                validateJSON();
+            } catch (error) {
+                showResponse('Cannot format invalid JSON: ' + error.message, true, 'Format Error');
+            }
+        }
+
+        function clearCustomRequest() {
+            document.getElementById('requestBody').value = '';
+            document.getElementById('jsonValidation').style.display = 'none';
+            document.getElementById('templateInfo').style.display = 'none';
+        }
+
+        async function fetchAvailableOptions() {
+            if (isLoadingTemplates) return;
+
+            isLoadingTemplates = true;
+            const indicator = document.getElementById('templateLoadingIndicator');
+            indicator.style.display = 'inline';
+
+            try {
+                // Fetch tools
+                console.log('Fetching tools...');
+                const toolsResponse = await sendRequest({
+                        "jsonrpc": "2.0",
+                        "method": "tools/list",
+                        "params": {},
+                        "id": Date.now()
+                }, 'Fetching tools list', true);
+
+                console.log('Raw tools response:', toolsResponse);
+
+                // Fix: Look for tools in the correct response path
+                if (toolsResponse && toolsResponse.response && toolsResponse.response.result && toolsResponse.response.result.tools) {
+                    availableTools = toolsResponse.response.result.tools;
+                    console.log(`Loaded ${availableTools.length} tools:`, availableTools.map(t => t.name));
+                } else if (toolsResponse && toolsResponse.result && toolsResponse.result.tools) {
+                    // Alternative path if response structure is different
+                    availableTools = toolsResponse.result.tools;
+                    console.log(`Loaded ${availableTools.length} tools (alt path):`, availableTools.map(t => t.name));
+                } else {
+                    console.log('No tools found in response. Full response structure:', JSON.stringify(toolsResponse, null, 2));
+                    availableTools = [];
+                            }
+
+            // Fetch resources
+                console.log('Fetching resources...');
+                const resourcesResponse = await sendRequest({
+                        "jsonrpc": "2.0",
+                        "method": "resources/list",
+                        "params": {},
+                        "id": Date.now()
+                }, 'Fetching resources list', true);
+
+                console.log('Raw resources response:', resourcesResponse);
+
+                // Fix: Look for resources in the correct response path
+                if (resourcesResponse && resourcesResponse.response && resourcesResponse.response.result && resourcesResponse.response.result.resources) {
+                    availableResources = resourcesResponse.response.result.resources;
+                    console.log(`Loaded ${availableResources.length} resources:`, availableResources.map(r => r.name));
+                } else if (resourcesResponse && resourcesResponse.result && resourcesResponse.result.resources) {
+                    // Alternative path if response structure is different
+                    availableResources = resourcesResponse.result.resources;
+                    console.log(`Loaded ${availableResources.length} resources (alt path):`, availableResources.map(r => r.name));
+                } else {
+                    console.log('No resources found in response. Full response structure:', JSON.stringify(resourcesResponse, null, 2));
+                    availableResources = [];
+            }
+
+            // Fetch prompts
+                console.log('Fetching prompts...');
+                const promptsResponse = await sendRequest({
+                        "jsonrpc": "2.0",
+                        "method": "prompts/list",
+                        "params": {},
+                        "id": Date.now()
+                }, 'Fetching prompts list', true);
+
+                console.log('Raw prompts response:', promptsResponse);
+
+                // Fix: Look for prompts in the correct response path
+                if (promptsResponse && promptsResponse.response && promptsResponse.response.result && promptsResponse.response.result.prompts) {
+                    availablePrompts = promptsResponse.response.result.prompts;
+                    console.log(`Loaded ${availablePrompts.length} prompts:`, availablePrompts.map(p => p.name));
+                } else if (promptsResponse && promptsResponse.result && promptsResponse.result.prompts) {
+                    // Alternative path if response structure is different
+                    availablePrompts = promptsResponse.result.prompts;
+                    console.log(`Loaded ${availablePrompts.length} prompts (alt path):`, availablePrompts.map(p => p.name));
+                } else {
+                    console.log('No prompts found in response. Full response structure:', JSON.stringify(promptsResponse, null, 2));
+                    availablePrompts = [];
+                }
+
+                // Force update template selector after loading data
+                console.log(`Final counts - Tools: ${availableTools.length}, Resources: ${availableResources.length}, Prompts: ${availablePrompts.length}`);
+                console.log('Updating template selector after fetch...');
+                updateTemplateSelector();
+
+            } catch (error) {
+                console.error('Error fetching capabilities:', error);
+                availableTools = [];
+                availableResources = [];
+                availablePrompts = [];
+            } finally {
+                isLoadingTemplates = false;
+                indicator.style.display = 'none';
+            }
+            }
+
+        function refreshAvailableOptions() {
+            // Clear existing data
+            availableTools = [];
+            availableResources = [];
+            availablePrompts = [];
+	          // Fetch fresh data
+            fetchAvailableOptions();
+            updateTemplateSelector();
+
+        }
+
+        function updateTemplateSelector() {
+            const method = document.getElementById('method').value;
+            const selector = document.getElementById('templateSelector');
+            const infoDiv = document.getElementById('templateInfo');
+
+            console.log(`Updating template selector for method: ${method}`);
+            console.log(`Available data - Tools: ${availableTools.length}, Resources: ${availableResources.length}, Prompts: ${availablePrompts.length}`);
+
+						// Clear existing options
+						selector.innerHTML = '';
+            infoDiv.style.display = 'none';
+
+            let itemsAdded = 0;
+
+            if (method === 'tools/call' && availableTools.length > 0) {
+                console.log('Adding tools to selector:', availableTools);
+                availableTools.forEach(tool => {
+                    const option = document.createElement('option');
+                    option.value = tool.name;
+                    option.textContent = `${tool.name} - ${tool.description.substring(0, 80)}${tool.description.length > 80 ? '...' : ''}`;
+                    option.setAttribute('data-description', tool.description);
+                    option.setAttribute('data-type', 'tool');
+                    selector.appendChild(option);
+                    itemsAdded++;
+                });
+                console.log(`Added ${itemsAdded} tools to selector`);
+            } else if (method === 'resources/read' && availableResources.length > 0) {
+                console.log('Adding resources to selector:', availableResources);
+                availableResources.forEach(resource => {
+                    const option = document.createElement('option');
+                    option.value = resource.uri;
+                    option.textContent = `${resource.name} - ${resource.description.substring(0, 60)}${resource.description.length > 60 ? '...' : ''}`;
+                    option.setAttribute('data-description', resource.description);
+                    option.setAttribute('data-name', resource.name);
+                    option.setAttribute('data-type', 'resource');
+                    selector.appendChild(option);
+                    itemsAdded++;
+                });
+                console.log(`Added ${itemsAdded} resources to selector`);
+            } else if (method === 'prompts/get' && availablePrompts.length > 0) {
+                console.log('Adding prompts to selector:', availablePrompts);
+                availablePrompts.forEach(prompt => {
+                    const option = document.createElement('option');
+                    option.value = prompt.name;
+                    option.textContent = `${prompt.name} - ${prompt.description.substring(0, 70)}${prompt.description.length > 70 ? '...' : ''}`;
+                    option.setAttribute('data-description', prompt.description);
+                    option.setAttribute('data-type', 'prompt');
+                    // Store arguments info if available
+                    if (prompt.arguments && prompt.arguments.length > 0) {
+                        option.setAttribute('data-arguments', JSON.stringify(prompt.arguments));
+                    }
+                    selector.appendChild(option);
+                    itemsAdded++;
+                });
+                console.log(`Added ${itemsAdded} prompts to selector`);
+            } else {
+            	selector.innerHTML = '<option value="">-- Select a method to see templates --</option>';
+						}
+
+            // Update template info
+            if (itemsAdded === 0) {
+                let message = '';
+                if (method === 'tools/call') {
+                    message = availableTools.length === 0 ?
+                        'No tools loaded. Click "🔄 Refresh" to fetch available tools.' :
+                        'Tools are available but none match current method.';
+                } else if (method === 'resources/read') {
+                    message = availableResources.length === 0 ?
+                        'No resources loaded. Click "🔄 Refresh" to fetch available resources.' :
+                        'Resources are available but none match current method.';
+                } else if (method === 'prompts/get') {
+                    message = availablePrompts.length === 0 ?
+                        'No prompts loaded. Click "🔄 Refresh" to fetch available prompts.' :
+                        'Prompts are available but none match current method.';
+                } else {
+                    message = 'Templates not applicable for this method.';
+                }
+
+                if (message) {
+                    infoDiv.innerHTML = `<strong>📝 Template Info:</strong> ${message}`;
+                    infoDiv.style.display = 'block';
+                }
+            } else {
+                infoDiv.innerHTML = `<strong>📝 Available Templates:</strong> ${itemsAdded} ${method.split('/')[0]} loaded. Select one to auto-populate the request body.`;
+                infoDiv.style.display = 'block';
+            }
+
+            console.log(`Template selector updated. Items added: ${itemsAdded}`);
+        }
+
+        function loadSelectedTemplate() {
+            const method = document.getElementById('method').value;
+            const selector = document.getElementById('templateSelector');
+            const selectedValue = selector.value;
+            const selectedOption = selector.options[selector.selectedIndex];
+            const infoDiv = document.getElementById('templateInfo');
+
+            if (!selectedValue) {
+                infoDiv.innerHTML = `<strong>📝 Template Info:</strong> No template selected.`;
+                return;
+            }
+
+            let requestBody;
+
+            if (method === 'tools/call') {
+                const tool = availableTools.find(t => t.name === selectedValue);
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "tools/call",
+                        "params": {
+                        "name": selectedValue,
+                            "arguments": {}
+                        },
+                        "id": Date.now()
+                    };
+
+                // Show tool info
+                if (tool) {
+                    let infoText = `<strong>🔧 Tool:</strong> ${tool.name}<br>`;
+                    infoText += `<strong>Description:</strong> ${tool.description}<br>`;
+                    if (tool.inputSchema && tool.inputSchema.properties) {
+                        const props = Object.keys(tool.inputSchema.properties);
+                        if (props.length > 0) {
+                            infoText += `<strong>Parameters:</strong> ${props.join(', ')}`;
+                        }
+                    }
+                    infoDiv.innerHTML = infoText;
+                    infoDiv.style.display = 'block';
+                }
+            } else if (method === 'resources/read') {
+                requestBody = {
+                    "jsonrpc": "2.0",
+                    "method": "resources/read",
+                    "params": {
+                        "uri": selectedValue
+                    },
+                    "id": Date.now()
+                };
+
+                // Show resource info
+                const resourceName = selectedOption.getAttribute('data-name');
+                const description = selectedOption.getAttribute('data-description');
+                if (resourceName && description) {
+                    infoDiv.innerHTML = `<strong>📄 Resource:</strong> ${resourceName}<br><strong>Description:</strong> ${description}<br><strong>URI:</strong> ${selectedValue}`;
+                    infoDiv.style.display = 'block';
+                }
+            } else if (method === 'prompts/get') {
+                const prompt = availablePrompts.find(p => p.name === selectedValue);
+                requestBody = {
+                    "jsonrpc": "2.0",
+                    "method": "prompts/get",
+                    "params": {
+                        "name": selectedValue,
+                        "arguments": {}
+                    },
+                    "id": Date.now()
+                };
+
+                // Show prompt info
+                if (prompt) {
+                    let infoText = `<strong>💬 Prompt:</strong> ${prompt.name}<br>`;
+                    infoText += `<strong>Description:</strong> ${prompt.description}<br>`;
+                    if (prompt.arguments && prompt.arguments.length > 0) {
+                        const argNames = prompt.arguments.map(arg => `${arg.name}${arg.required ? '*' : ''}`);
+                        infoText += `<strong>Arguments:</strong> ${argNames.join(', ')} (* = required)`;
+                    }
+                    infoDiv.innerHTML = infoText;
+                    infoDiv.style.display = 'block';
+                }
+        }
+
+            if (requestBody) {
+                document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
+                validateJSON();
+            }
+        }
+
+        function updateRequestBodyForMethod() {
+            const method = document.getElementById('method').value;
+            let requestBody;
+
+            switch (method) {
+                case 'tools/list':
+                    requestBody = { "jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 1 };
+                    break;
+                case 'tools/call':
+                    // Use first available tool, fallback to test_connection
+                    const firstTool = availableTools.length > 0 ? availableTools[0].name : "test_connection";
+                    const toolArgs = availableTools.length > 0 && availableTools[0].inputSchema && availableTools[0].inputSchema.properties ?
+                        Object.keys(availableTools[0].inputSchema.properties).reduce((acc, propName) => {
+                            const prop = availableTools[0].inputSchema.properties[propName];
+                            const isRequired = availableTools[0].inputSchema.required && availableTools[0].inputSchema.required.includes(propName);
+                            if (isRequired) {
+                                // Set some default values for required arguments
+                                if (propName === 'form_id') acc[propName] = 1;
+                                else if (propName === 'entry_id') acc[propName] = 1;
+                                else if (propName === 'screen_id') acc[propName] = 1;
+                                else if (propName === 'element_handle') acc[propName] = "example_handle";
+                                else if (propName === 'value') acc[propName] = "example_value";
+                                else if (propName === 'data') acc[propName] = {};
+                                else if (prop.type === 'integer') acc[propName] = 1;
+                                else if (prop.type === 'boolean') acc[propName] = false;
+                                else if (prop.type === 'array') acc[propName] = [];
+                                else if (prop.type === 'object') acc[propName] = {};
+                                else acc[propName] = "";
+                            }
+                            return acc;
+                        }, {}) : {};
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "tools/call",
+                        "params": { "name": firstTool, "arguments": toolArgs },
+                        "id": 1
+                    };
+                    break;
+                case 'resources/list':
+                    requestBody = { "jsonrpc": "2.0", "method": "resources/list", "params": {}, "id": 1 };
+                    break;
+                case 'resources/read':
+                    // Use first available resource, fallback to system_info
+                    const firstResource = availableResources.length > 0 ? availableResources[0].uri : "formulize://system/system_info.json";
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "resources/read",
+                        "params": { "uri": firstResource },
+                        "id": 1
+                    };
+                    break;
+                case 'prompts/list':
+                    requestBody = { "jsonrpc": "2.0", "method": "prompts/list", "params": {}, "id": 1 };
+                    break;
+                case 'prompts/get':
+                    // Use first available prompt, fallback to analyze_form
+                    const firstPrompt = availablePrompts.length > 0 ? availablePrompts[0].name : "analyze_form";
+                    const promptArgs = availablePrompts.length > 0 && availablePrompts[0].arguments ?
+                        availablePrompts[0].arguments.reduce((acc, arg) => {
+                            if (arg.required) {
+                                // Set some default values for required arguments
+                                if (arg.name === 'form_id') acc[arg.name] = 1;
+                                else acc[arg.name] = "";
+                            }
+                            return acc;
+                        }, {}) : { "form_id": 1 };
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "prompts/get",
+                        "params": { "name": firstPrompt, "arguments": promptArgs },
+                        "id": 1
+                    };
+                    break;
+                case 'initialize':
+                    requestBody = {
+                        "jsonrpc": "2.0",
+                        "method": "initialize",
+                        "params": { "protocolVersion": "2024-11-05", "capabilities": {} },
+                        "id": 1
+                    };
+                    break;
+                default:
+                    requestBody = { "jsonrpc": "2.0", "method": method, "params": {}, "id": 1 };
+            }
+
+						document.getElementById('requestBody').value = JSON.stringify(requestBody, null, 2);
+						validateJSON();
+						refreshAvailableOptions();
+						updateTemplateSelector();
+
+						// Clear template selection when method changes
+						document.getElementById('templateSelector').value = '';
+						document.getElementById('templateInfo').style.display = 'none';
+        }
+
+        function sendCustomRequest() {
+            const requestBodyText = document.getElementById('requestBody').value;
+
+            if (!requestBodyText.trim()) {
+                showResponse('Error: Request body is required', true, 'Custom Request');
+                return;
+            }
+
+            try {
+                const requestBody = JSON.parse(requestBodyText);
+                sendRequest(requestBody, 'Custom JSON Request');
+            } catch (error) {
+                showResponse('Error: Invalid JSON in request body - ' + error.message, true, 'Custom Request');
+            }
+        }
+
+        // Initialize with a default request and try to fetch available options
+        window.onload = function() {
+            console.log('Page loaded, initializing...');
+            updateRequestBodyForMethod();
+
+            // Try to fetch available options after a short delay to allow the page to load
+            setTimeout(() => {
+                console.log('Starting initial fetch of capabilities...');
+                fetchAvailableOptions();
+            }, 500);
+        };
+
+        // Show/hide API key
+        document.getElementById('apiKey').addEventListener('focus', function() {
+            this.type = 'text';
+        });
+
+        document.getElementById('apiKey').addEventListener('blur', function() {
+            if (this.value.trim() !== '') {
+                this.type = 'password';
+            } else {
+                this.type = 'text';
+            }
+						refreshAvailableOptions(); // now that there's a key, we can get the lists of tools, prompts and resources
+        });
+    </script>
+</body>
+</html>

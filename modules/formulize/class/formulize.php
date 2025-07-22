@@ -41,4 +41,62 @@ class FormulizeObject extends XoopsObject {
 		return preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "_", $handle_name));
 	}
 
+	/**
+	 * Keep a list of the field names that are serialized arrays in the DB
+	 * Eventually this is redundant because we will convert them to JSON, or a more normalized structure
+	 * @return array The list of fields names that are serialized arrays
+	 */
+	static function serializedDBFields() {
+		return [
+			'formulize' => [
+				'ele_value',
+				'ele_uitext',
+				'ele_filtersettings',
+				'ele_disabledconditions',
+				'ele_exportoptions',
+			],
+			'formulize_notification_conditions' => [
+				'not_cons_con'
+			],
+			'formulize_screen_form' => [
+				'formelements',
+				'elementdefaults',
+			],
+			'formulize_screen_multipage' => [
+				'buttontext',
+				'pages',
+				'pagetitles',
+				'conditions',
+				'elementdefaults'
+			],
+			'formulize_screen_listofentries' => [
+				'limitviews',
+				'defaultview',
+				'advanceview',
+				'hiddencolumns',
+				'decolumns',
+				'customactions',
+				'fundamental_filters'
+			],
+			'formulize_screen_calendar' => [
+				'datasets'
+			],
+			'formulize_group_filters' => [
+				'filter'
+			],
+			'formulize_advanced_calculations' => [
+				'steps',
+  			'steptitles',
+  			'fltr_grps',
+  			'fltr_grptitles'
+			],
+			'formulize_digest_data' => [
+				'extra_tags'
+			],
+			'formulize_screen_calendar' => [
+				'datasets'
+			]
+		];
+	}
+
 }

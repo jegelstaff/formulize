@@ -78,7 +78,7 @@ foreach($elements as $element) {
   $ele_id = $element->getVar('ele_id');
 
   // reset elements to deault
-  $element->setVar('ele_req',0);
+  $element->setVar('ele_required',0);
   $element->setVar('ele_private',0);
   $newOrderNumber = array_search($oldOrderNumber,$newOrder);
   $element->setVar('ele_order',$newOrderNumber);
