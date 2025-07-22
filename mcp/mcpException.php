@@ -18,10 +18,12 @@ class FormulizeMCPException extends Exception
 		'unknown_prompt' => 404,
 		'prompt_generation_error' => 500,
 		'missing_uri' => 400,
+		'invalid_uri' => 400,
 		'resource_read_error' => 500,
 		'unknown_element' => 404,
 		'unknown_tool' => 404,
-		'invalid_data' => 400,
+		'invalid_arguments' => 400, // bad request
+		'invalid_data' => 200, // good request, internal problems, ie: wrong handle, etc
 		'file_error' => 500,
 		'unknown_resource_type' => 404
 	];
@@ -116,9 +118,10 @@ class FormulizeMCPException extends Exception
 				break;
 		}
 
-		if (!empty($context)) {
-			$error['context'] = $context;
+		if (empty($context)) {
+			$context = $this->getContext();
 		}
+		$error['context'] = $context;
 
 		return $error;
 	}

@@ -430,15 +430,22 @@ Examples:
 				]
 			];
 		} catch (Exception $e) {
+			$context = [];
+			$type = 'tool_execution_error';
+			if(is_a($e, 'FormulizeMCPException')) {
+				$context = $e->getContext();
+				$type = $e->getType();
+			}
+			$context = array_merge($context, [
+				'tool_name' => $toolName,
+				'provided_arguments' => array_keys($arguments),
+				'required_arguments' => $this->getRequiredArguments($toolName)
+			]);
 			throw new FormulizeMCPException(
 				'Tool execution failed: ' . $e->getMessage(),
-				'tool_execution_error',
+				$type,
 				-32603,
-				[
-					'tool_name' => $toolName,
-					'provided_arguments' => array_keys($arguments),
-					'required_arguments' => $this->getRequiredArguments($toolName)
-				]
+				$context
 			);
 		}
 	}
@@ -577,20 +584,7 @@ Examples:
 				]
 			];
 		} catch (Exception $e) {
-			return [
-				'error' => 'gatherDataset execution failed: ' . $e->getMessage(),
-				'form_id' => $form_id,
-				'parameters' => [
-					'elements' => $elements,
-					'filter' => $filter,
-					'andOr' => $andOr,
-					'limitStart' => $limitStart,
-					'limitSize' => $limitSize,
-					'sortField' => $sortField,
-					'sortOrder' => $sortOrder,
-					'form_relationship_id' => -1
-				]
-			];
+			throw $e;
 		}
 	}
 
@@ -628,7 +622,9 @@ private function validateFilter($filter) {
 }
 
 /**
- * Validate element handles array
+ * Validate element handles array, and gives back an array ready for use in gatherDataset
+ * @param array elementHandles - an array of candidate element handles
+ * @return array a multidimensional array, outer keys are form ids, each one has as a value an array of the valid element handles that are part of that form
  */
 	private function validateElementHandles($elementHandles)
 	{
@@ -924,13 +920,7 @@ private function validateFilter($filter) {
 
 			return $response;
 		} catch (Exception $e) {
-			return [
-				'success' => false,
-				'message' => ($entryId === 'new' ? 'Failed to create entry: ' : 'Failed to update entry: ') . $e->getMessage(),
-				'code' => $e->getCode(),
-				'form_id' => $formId,
-				'entry_id' => $entryId === 'new' ? $resultEntryId : $entryId
-			];
+			throw $e;
 		}
 	}
 

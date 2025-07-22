@@ -161,7 +161,7 @@ class FormulizeMCP
 	{
 		global $xoopsDB;
 		if (!$xoopsDB) {
-			throw new Exception('Formulize database connection not available');
+			throw new FormulizeMCPException('Formulize database connection not available', 'database_connection_error');
 		}
 		return $xoopsDB;
 	}

@@ -164,15 +164,22 @@ trait resources {
 				]
 			];
 		} catch (Exception $e) {
-			throw new FormulizeMCPException(
-				'Resource read failed: ' . $e->getMessage(),
-				'resource_read_error',
-				-32603,
-				[
+			$context = [];
+			$type = 'resource_read_error';
+			if(is_a($e, 'FormulizeMCPException')) {
+				$context = $e->getContext();
+				$type = $e->getType();
+			}
+			$context = array_merge($context, [
 					'requested_uri' => $uri,
 					'uri_format' => 'formulize://type/resource_name.extension',
 					'available_types' => ['system', 'schemas', 'permissions']
-				]
+				]);
+			throw new FormulizeMCPException(
+				'Resource read failed: ' . $e->getMessage(),
+				$type,
+				-32603,
+				$context
 			);
 		}
 	}
@@ -186,7 +193,7 @@ trait resources {
 		if (!preg_match('/^formulize:\/\/([^\/]+)\/([^\/\.]+)\.([^\/]+)$/', $uri, $matches)) {
 			throw new FormulizeMCPException(
 				'Invalid resource URI format. Expected: formulize://type/name.extension',
-				'invalid_data',
+				'invalid_uri',
 			);
 		}
 
@@ -198,7 +205,7 @@ trait resources {
 		if ($extension !== 'json') {
 			throw new FormulizeMCPException(
 				'Unsupported file extension: ' . $extension . '. Only .json is supported.',
-				'invalid_data'
+				'invalid_uri'
 			);
 		}
 
@@ -207,7 +214,7 @@ trait resources {
 		if (!in_array($type, $validTypes)) {
 			throw new FormulizeMCPException(
 				'Invalid resource type: ' . $type . '. Valid types: ' . implode(', ', $validTypes),
-				'invalid_data'
+				'invalid_uri'
 			);
 		}
 
@@ -232,7 +239,7 @@ trait resources {
 		if (empty($filenameParts)) {
 			throw new FormulizeMCPException(
 				'Invalid filename format for ' . $type . ' resource',
-				'invalid_data'
+				'invalid_uri'
 			);
 		}
 
@@ -244,14 +251,14 @@ trait resources {
 		if (!$id = trim($lastPart, ")")) {
 			throw new FormulizeMCPException(
 				'Could not extract ID from filename: ' . $filename,
-				'invalid_data'
+				'invalid_uri'
 			);
 		}
 		// Extract type from second part (e.g., "(form_1)" -> "form", or "(group_1)" -> "group")
 		if (!$idType = trim($secondLastPart, "(")) {
 			throw new FormulizeMCPException(
 				'Could not extract type from filename: ' . $filename,
-				'invalid_data'
+				'invalid_uri'
 			);
 		}
 
@@ -261,7 +268,7 @@ trait resources {
 				if ($idType !== 'form') {
 					throw new FormulizeMCPException(
 						'Schema resources must reference a form ID',
-						'invalid_data'
+						'invalid_uri'
 					);
 				}
 				return $this->form_schemas($id);
@@ -274,14 +281,14 @@ trait resources {
 				} else {
 					throw new FormulizeMCPException(
 						'Invalid permission resource format. Expected form_perms_for_group or group_perms_for_form',
-						'invalid_data'
+						'invalid_uri'
 					);
 				}
 
 			default:
 				throw new FormulizeMCPException(
 					'Unhandled resource type in schema/permission handler: ' . $type,
-					'invalid_data'
+					'invalid_uri'
 				);
 		}
 	}
@@ -299,7 +306,7 @@ trait resources {
 		if (!in_array($filename, $validSystemResources)) {
 			throw new FormulizeMCPException(
 				'Unknown system resource: ' . $filename . '. Valid resources: ' . implode(', ', $validSystemResources),
-				'invalid_data'
+				'invalid_uri'
 			);
 		}
 

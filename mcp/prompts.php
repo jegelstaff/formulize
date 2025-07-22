@@ -127,10 +127,20 @@ trait prompts {
 				'messages' => $messages
 			];
 		} catch (Exception $e) {
+			$context = [];
+			$type = 'prompt_generation_error';
+			if(is_a($e, 'FormulizeMCPException')) {
+				$context = $e->getContext();
+				$type = $e->getType();
+			}
+			$context = array_merge($context, [
+				'prompt_name' => $promptName,
+			]);
 			throw new FormulizeMCPException(
 				'Prompt generation failed: ' . $e->getMessage(),
-				'prompt_generation_error',
-				-32603
+				$type,
+				-32603,
+				$context
 			);
 		}
 	}
@@ -147,7 +157,7 @@ trait prompts {
 		if(method_exists($this, $promptName)) {
 			return $this->$promptName($arguments);
 		}
-		throw new Exception('Unknown prompt: ' . $promptName);
+		throw new FormulizeMCPException('Unknown prompt: ' . $promptName, 'unknown_prompt');
 	}
 
 	/**
@@ -161,7 +171,7 @@ trait prompts {
 		$focus = $args['focus'] ?? '';
 
 		if (!$form) {
-			throw new Exception('A form identifier is required');
+			throw new FormulizeMCPException('A form identifier is required', 'invalid_data');
 		}
 
 		if(is_numeric($form) AND !security_check(intval($form))) {
@@ -268,7 +278,7 @@ trait prompts {
 		$elements = $args['elements'] ?? null;
 
 		if (!$form) {
-			throw new Exception('A form identifier is required');
+			throw new FormulizeMCPException('A form identifier is required', 'invalid_data');
 		}
 
 		if(is_numeric($form) AND !security_check(intval($form))) {
