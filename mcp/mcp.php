@@ -84,8 +84,8 @@ class FormulizeMCP
 	 * @param bool $isJSON Whether the body is JSON (default true)
 	 * @return void
 	 */
-	public function sendResponse(array|string $body, int $httpResponseCode = 200, array $headers = [], bool $isJSON = true) {
-		// Iterate throug the headers and set them
+	public static function sendResponse(array|string $body, int $httpResponseCode = 200, array $headers = [], bool $isJSON = true) {
+		// Iterate through the headers and set them
 		foreach ($headers as $header) {
 			header($header);
 		}
@@ -331,15 +331,14 @@ class FormulizeMCP
 				);
 			}
 
-			$response = [
+			self::sendResponse([
 				'jsonrpc' => '2.0',
 				'result' => $result,
 				'id' => $this->mcpRequest['id']
-			];
-			$this->sendResponse($response);
+			]);
 
 		} catch (FormulizeMCPException $e) {
-			$this->sendResponse([
+			self::sendResponse([
 				'jsonrpc' => '2.0',
 				'error' => $e->toErrorResponse(),
 				'id' => $this->mcpRequest['id']

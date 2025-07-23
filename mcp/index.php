@@ -16,16 +16,19 @@ try {
 			'code' => 200,
 			'timestamp' => date('Y-m-d H:i:s')
 		];
-		$server->sendResponse($content);
+		FormulizeMCP::sendResponse($content);
 	} else {
 		// If the MCP server is disabled, return a 503 Service Unavailable response
 		throw new FormulizeMCPException('MCP Server is disabled', 'server_disabled');
 	}
 } catch (FormulizeMCPException $e) {
-	$server->sendResponse([
+	if(!$server) {
+
+	}
+	FormulizeMCP::sendResponse([
 		'jsonrpc' => '2.0',
 		'error' => [
-			'message' => $e->getMessage(),
+			'message' => $e->toErrorResponse(),
 			'type' => $e->getType(),
 			'timestamp' => $e->getTimestamp()
 		]
