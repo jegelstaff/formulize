@@ -35,7 +35,7 @@ div.downloads {
 		}
 
 		.downloads-icon-link-text {
-			max-width: 60px;
+			max-width: 100%;
 			text-align: center;
 
 			strong {
@@ -99,6 +99,15 @@ div.hero {
 
 body section img {
 	border: 1px solid black;
+}
+
+#image404 {
+	border: 0;
+}
+
+.social-image {
+	border: 0;
+	vertical-align: middle;
 }
 
 h2 {
