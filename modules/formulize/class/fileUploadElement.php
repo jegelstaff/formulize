@@ -445,8 +445,13 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 		 * @return string Returns the HTML img tag referring to the image
 		 */
 		function createImageTag($url, $displayName='', $class='formulize-uploaded-image-thumbnail') {
-			$url = $this->getThumbnailUrl($url, $displayName);
-			return "<img class='".htmlspecialchars(strip_tags($class), ENT_QUOTES)."' title='".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."' src='$url' />";
+			$result = $this->getThumbnailUrl($url, $displayName);
+			if(is_array($result) AND $result['success']) {
+				$url = $result['result'];
+				return "<img class='".htmlspecialchars(strip_tags($class), ENT_QUOTES)."' title='".htmlspecialchars(strip_tags($displayName),ENT_QUOTES)."' src='$url' />";
+			} else {
+				return $result['result']; // return the error message
+			}
 		}
 
 		/**
@@ -456,68 +461,83 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 		 * @return string The URL of the thumbnail version of the image. Or the URL passed in if the URL is not for an image.
 		 */
 		function getThumbnailUrl($url) {
-			list($entry_id, $element_id, $fid) = $this->extractEntryIdAndElementIdFromUrl($url);
-			$data_handler = new formulizeDataHandler($fid);
-      $fileInfo = $data_handler->getElementValueInEntry($entry_id, $element_id);
-      $fileInfo = unserialize($fileInfo);
-			if(fileNameHasImageExtension($fileInfo['name'])) {
-				$dotPos = strrpos($fileInfo['name'], '.');
-				$fileExtension = strtolower(substr($fileInfo['name'], $dotPos+1));
-				$thumbFileName = substr_replace($fileInfo['name'], ".thumb.$fileExtension", $dotPos);
-				$path = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
-				$thumbPath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$thumbFileName;
-				if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
-					$thumbUrl = $url . "&size=thumb";
-				} else {
-					$thumbUrl = str_replace($fileInfo['name'], $thumbFileName, $url);
-				}
-				if(!file_exists($thumbPath)) {
-					$image = null;
-					switch($fileExtension) {
-						case 'gif':
-							$image = imagecreatefromgif($path);
-							break;
-						case 'png':
-							$image = imagecreatefrompng($path);
-							break;
-						case 'webp':
-							$image = imagecreatefromwebp($path);
-							break;
-						case 'jpg':
-						case 'jpeg':
-							$image = imagecreatefromjpeg($path);
-							break;
+
+			try {
+				list($entry_id, $element_id, $fid) = $this->extractEntryIdAndElementIdFromUrl($url);
+				$data_handler = new formulizeDataHandler($fid);
+				$fileInfo = $data_handler->getElementValueInEntry($entry_id, $element_id);
+				$fileInfo = unserialize($fileInfo);
+				if(fileNameHasImageExtension($fileInfo['name'])) {
+					$dotPos = strrpos($fileInfo['name'], '.');
+					$fileExtension = strtolower(substr($fileInfo['name'], $dotPos+1));
+					$thumbFileName = substr_replace($fileInfo['name'], ".thumb.$fileExtension", $dotPos);
+					$path = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
+					$thumbPath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$thumbFileName;
+					if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
+						$thumbUrl = $url . "&size=thumb";
+					} else {
+						$thumbUrl = str_replace($fileInfo['name'], $thumbFileName, $url);
 					}
-					$exif = exif_read_data($path);
-					if ($image) {
-						if($exif AND isset($exif['Orientation']))	{
-							$orientation = $exif['Orientation'];
-							if ($orientation == 6 OR $orientation == 5) { $image = imagerotate($image, 270, 0); }
-							if ($orientation == 3 OR $orientation == 4) { $image = imagerotate($image, 180, 0); }
-							if ($orientation == 8 OR $orientation == 7) { $image = imagerotate($image, 90, 0); }
-							if ($orientation == 5 OR $orientation == 4 OR $orientation == 7) { imageflip($image, IMG_FLIP_HORIZONTAL); }
+					if(!file_exists($thumbPath)) {
+						$imageInfo = getimagesize($path);
+						if ($imageInfo === false) {
+							return ["success" => false, "result" => _formulize_COULD_NOT_GENERATE_THUMBNAIL . ' (' . _formulize_IMAGE_NOT_FOUND . ')'];
+						} else {
+							$width = $imageInfo[0];
+							$height = $imageInfo[1];
 						}
-						$image = imagescale($image, 200);
+						if(($width * $height * 4 * 1.8) > ini_get('memory_limit')) {
+							return ["success" => false, "result" => _formulize_COULD_NOT_GENERATE_THUMBNAIL . ' (' . _formulize_IMAGE_TOO_LARGE . ')'];
+						}
+						$image = null;
 						switch($fileExtension) {
 							case 'gif':
-								imagegif($image, $thumbPath);
+								$image = imagecreatefromgif($path);
 								break;
 							case 'png':
-								imagepng($image, $thumbPath);
+								$image = imagecreatefrompng($path);
 								break;
 							case 'webp':
-								imagewebp($image, $thumbPath);
+								$image = imagecreatefromwebp($path);
 								break;
 							case 'jpg':
 							case 'jpeg':
-								imagejpeg($image, $thumbPath);
+								$image = imagecreatefromjpeg($path);
 								break;
 						}
+						$exif = exif_read_data($path);
+						if ($image) {
+							if($exif AND isset($exif['Orientation']))	{
+								$orientation = $exif['Orientation'];
+								if ($orientation == 6 OR $orientation == 5) { $image = imagerotate($image, 270, 0); }
+								if ($orientation == 3 OR $orientation == 4) { $image = imagerotate($image, 180, 0); }
+								if ($orientation == 8 OR $orientation == 7) { $image = imagerotate($image, 90, 0); }
+								if ($orientation == 5 OR $orientation == 4 OR $orientation == 7) { imageflip($image, IMG_FLIP_HORIZONTAL); }
+							}
+							$image = imagescale($image, 200);
+							switch($fileExtension) {
+								case 'gif':
+									imagegif($image, $thumbPath);
+									break;
+								case 'png':
+									imagepng($image, $thumbPath);
+									break;
+								case 'webp':
+									imagewebp($image, $thumbPath);
+									break;
+								case 'jpg':
+								case 'jpeg':
+									imagejpeg($image, $thumbPath);
+									break;
+							}
+						}
 					}
+					$url = $thumbUrl;
 				}
-				$url = $thumbUrl;
+			} catch (Exception $e) {
+				return ["success" => false, "result" => _formulize_COULD_NOT_GENERATE_THUMBNAIL . ' (' . $e->getMessage() . ')'];
 			}
-			return $url;
+			return ["success" => true, "result" => $url];
 		}
 
 		/**

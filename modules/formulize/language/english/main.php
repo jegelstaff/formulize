@@ -786,3 +786,6 @@ define("_formulize_FROM", "From:");
 define("_formulize_TO", "To:");
 
 define("_formulize_NEGATIVEFILTER", "Not: ");
+define("_formulize_COULD_NOT_GENERATE_THUMBNAIL", "Could not generate thumbnail for image");
+define("_formulize_IMAGE_NOT_FOUND", "Image not found");
+define("_formulize_IMAGE_TOO_LARGE", "Generation would likely exceed the PHP memory limit of ".ini_get('memory_limit'));
