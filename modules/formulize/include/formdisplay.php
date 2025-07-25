@@ -329,6 +329,8 @@ class formulize_themeForm extends XoopsThemeForm {
                         $templateVariables['spacerNeeded'] = true;
                 }
 
+								$templateVariables['editElementLink'] = $this->createEditElementLink($thisElementObject);
+
                 $template = $this->getTemplate('elementcontainero');
                 $containerOpen = $this->processTemplate($template, $templateVariables);
 
@@ -373,6 +375,25 @@ class formulize_themeForm extends XoopsThemeForm {
 
 		}
 		return array($ret, $hidden);
+	}
+
+	/**
+	 * Generate the HTML link to edit the element, based on a given element identifier
+	 * @param int|string|object elementIdentifier - the element identifier, which can be an element id, a handle, or an element object
+	 * @return string - the HTML link to edit the element, or an empty string if identifier is invalid
+	 */
+	function createEditElementLink($elementIdentifier) {
+		$link = '';
+		if($elementObject = _getElementObject($elementIdentifier)) {
+			$application_handler = xoops_getmodulehandler('applications', 'formulize');
+			$apps = $application_handler->getApplicationsByForm($elementObject->getVar('id_form'));
+			$app = (is_array($apps) AND isset($apps[0])) ? $apps[0] : $apps;
+      $appId = is_object($app) ? $app->getVar('appid') : 0;
+			$link = "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
+					"/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
+			$elementObject->getVar("ele_id") . "' target='_blank'>edit element</a>";
+		}
+		return $link;
 	}
 
 	// draw the HTML for the element, a table row normally
@@ -434,13 +455,7 @@ class formulize_themeForm extends XoopsThemeForm {
                     break;
                 default:
                     if (is_object($ele) and isset($ele->formulize_element)) {
-                        $application_handler = xoops_getmodulehandler('applications', 'formulize');
-                        $apps = $application_handler->getApplicationsByForm($ele->formulize_element->getVar('id_form'));
-                        $app = (is_array($apps) AND isset($apps[0])) ? $apps[0] : $apps;
-                        $appId = is_object($app) ? $app->getVar('appid') : 0;
-                        $templateVariables['editElementLink'] = "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
-                            "/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
-                    $ele->formulize_element->getVar("ele_id") . "' target='_blank'>edit element</a>";
+											$templateVariables['editElementLink'] = $this->createEditElementLink($ele->formulize_element);
                     }
                     break;
             }
