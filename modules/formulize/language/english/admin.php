@@ -882,3 +882,5 @@ define("_AM_FORMULIZE_EXPORTOPTIONS_DOESNOTEHAVEVALUE", "Value to show if an opt
 
 define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
 define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");
+
+define("_AM_FORMULIZE_ADMINISTRATION", "Administration");

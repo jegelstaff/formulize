@@ -220,6 +220,20 @@ define('_IMPRESSCMS_DONATE','Donate!');
 define("_IMPRESSCMS_Support","Support the project !");
 define('_IMPRESSCMS_SOURCEFORGE','SourceForge Project');
 define('_IMPRESSCMS_ADMIN','Administration of');
+
+define('_formulize_CPH_GOTO_FRONT', 'Go to the front page');
+define('_formulize_CPH_LATEST_VERSION', 'New Version Available: %s');
+define('_formulize_CPH_UPDATE_INSTRUCTIONS', 'How to update');
+define('_formulize_CPH_FORMULIZE_PROJECT', 'The Formulize Website');
+define('_formulize_CPH_FORMULIZE_NET', 'Formulize Professional Services');
+define('_formulize_CPH_AI', 'AI and Formulize');
+define('_formulize_CPH_CONNECT', 'Connect with the community');
+define('_formulize_CPH_GITHUB', 'Formulize on GitHub');
+define('_formulize_CPH_DATA_HANDLER', 'Data Handler methods');
+define('_formulize_CPH_FUNCTIONS', 'Formulize functions');
+define('_formulize_CPH_DOCUMENTATION', 'Functions and Methods');
+define('_formulize_CPH_LINKS', 'Formulize Info');
+
 /** The default separator used in icms_view_Tree::getNicePathFromId */
 define('_BRDCRMB_SEP','&nbsp;:&nbsp;');
 //Content Manager

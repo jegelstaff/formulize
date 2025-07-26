@@ -1293,7 +1293,13 @@ ul.admin-application-form-list li {
 /* header */
 /* logo */
 #formulize-logo {
-  margin-bottom: 20px; }
+  margin-bottom: 20px;
+	font-size: 27pt;
+	font-weight: bold;
+	color: #888888;
+}
+#formulize-logo img {
+	margin-bottom: -0.15em; }
 
 .deleteicon {
   float: right;
@@ -2176,4 +2182,12 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	clear: both;
   text-align: center;
   transform: scale(150%);
+}
+
+#admin-breadcrumbs {
+	margin-bottom: 1em;
+}
+
+#navOptionsCP {
+	display: none;
 }
