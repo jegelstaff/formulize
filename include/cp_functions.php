@@ -495,45 +495,141 @@ function xoopsfwrite() {
  * @return array (content of admin panel dropdown menus)
  */
 function impresscms_get_adminmenu() {
-	$admin_menu = array ( );
+	$admin_menu = [
+		[
+			'id' => 'home',
+			'absolute' => 1,
+			'text' => _formulize_CPH_GOTO_FRONT,
+			'link' => XOOPS_URL,
+			'menu' => [
+				[
+					'link' => XOOPS_URL,
+					'title' => _formulize_CPH_GOTO_FRONT,
+					'absolute' => 1,
+					'small' => ICMS_URL .'/modules/system/images/item.png'
+				],
+				[
+					'link' => ICMS_URL . '/user.php?op=logout',
+					'title' => _LOGOUT,
+					'absolute' => 1,
+					'small' => ICMS_URL . '/modules/system/images/logout.png',
+				]
+			]
+		]
+	];
 	$modules_menu = array ( );
 	$systemadm = false;
 
 	#########################################################################
-	# Control Panel Home menu
+	# Formulize links
 	#########################################################################
+	$menu = array();
 
-	$menu[0] = array(
-		'link' => ICMS_URL . '/admin.php',
-		'title' => _CPHOME,
+	$latest_version = get_latest_formulize_version_number();
+	if (!empty($latest_version)) {
+		// retrieve the xoops_version info
+    $module_handler = xoops_gethandler('module');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $metadata = $formulizeModule->getInfo();
+		if($metadata && isset($metadata['version']) && $metadata['version'] != $latest_version AND !strstr($metadata['version'], '-beta')) {
+			$menu[] = array(
+				'link' => 'https://github.com/jegelstaff/formulize/releases/latest',
+				'title' => sprintf(_formulize_CPH_LATEST_VERSION, $latest_version),
+				'absolute' => 1,
+				'small' => ICMS_URL .'/modules/system/images/item.png'
+			);
+			$menu[] = array(
+				'link' => 'https://formulize.org/deploying_a_website/updating_formulize',
+				'title' => _formulize_CPH_UPDATE_INSTRUCTIONS,
+				'absolute' => 1,
+				'small' => ICMS_URL .'/modules/system/images/item.png'
+			);
+		}
+	}
+
+	$menu[] = array(
+		'link' => 'https://formulize.org',
+		'title' => _formulize_CPH_FORMULIZE_PROJECT,
 		'absolute' => 1,
-		'small' => ICMS_URL . '/modules/system/images/mini_cp.png',
+		'small' => ICMS_URL .'/modules/system/images/item.png'
 	);
 
 	$menu[] = array(
-		'link' => ICMS_URL,
-		'title' => _YOURHOME,
+		'link' => 'https://formulize.net',
+		'title' => _formulize_CPH_FORMULIZE_NET,
 		'absolute' => 1,
-		'small' => ICMS_URL . '/modules/system/images/home.png',
+		'small' => ICMS_URL .'/modules/system/images/item.png'
 	);
 
 	$menu[] = array(
-		'link' => ICMS_URL . '/user.php?op=logout',
-		'title' => _LOGOUT,
+		'link' => 'https://formulize.org/ai',
+		'title' => _formulize_CPH_AI,
 		'absolute' => 1,
-		'small' => ICMS_URL . '/modules/system/images/logout.png',
+		'small' => ICMS_URL .'/modules/system/images/item.png'
 	);
 
-	$admin_menu[0] = array(
-		'id' => 'cphome',
-		'text' => _CPHOME,
+	$menu[] = array(
+		'link' => 'https://formulize.org/connect',
+		'title' => _formulize_CPH_CONNECT,
+		'absolute' => 1,
+		'small' => ICMS_URL .'/modules/system/images/item.png'
+	);
+
+	$menu[] = array(
+		'link' => 'https://github.com/jegelstaff/formulize',
+		'title' => _formulize_CPH_GITHUB,
+		'absolute' => 1,
+		'small' => ICMS_URL .'/modules/system/images/item.png'
+	);
+
+	$admin_menu[] = array(
+		'id' => 'news',
+		'absolute' => 1,
+		'text' => _formulize_CPH_LINKS,
 		'link' => '#',
 		'menu' => $menu,
 	);
 
 	#########################################################################
-	# end
+	# Formulize Docs
 	#########################################################################
+
+	// array of file type prefixes, and their readable names for the admin menu
+	$targetFileTypes = [
+		'data' => [
+			'label' => _formulize_CPH_DATA_HANDLER,
+			'docPath'	=> 'classes/data_handler'
+		],
+		'function' => [
+			'label' => _formulize_CPH_FUNCTIONS,
+			'docPath'	=> 'functions'
+		]
+	];
+
+	$docSubs = array();
+	$availableDocs = organizeAvailableDocs(array_keys($targetFileTypes));
+	foreach($targetFileTypes as $type => $details) {
+		if (!isset($availableDocs[$type]) || !is_array($availableDocs[$type])) {
+			continue; // skip if no files of this type are available
+		}
+		$menu = array();
+		$files = $availableDocs[$type];
+		foreach($files as $file) {
+			$menu[] = array(
+				'link' => 'https://formulize.org/developers/API/'.$details['docPath']. '/' . $file,
+				'title' => $file,
+				'absolute' => 1,
+				'small' => ICMS_URL .'/modules/system/images/item.png'
+			);
+		}
+		$admin_menu[] = array(
+			'id' => 'docs_' . $type,
+			'absolute' => 1,
+			'text' => $details['label'],
+			'link' => '#',
+			'menu' => $menu,
+		);
+	}
 
 	#########################################################################
 	# System Preferences menu
@@ -555,9 +651,6 @@ function impresscms_get_adminmenu() {
 		'link' => ICMS_URL . '/modules/system/admin.php',
 		'menu' => $menu,
 	);
-	#########################################################################
-	# end
-	#########################################################################
 
 	#########################################################################
 	# Modules menu
@@ -612,87 +705,6 @@ function impresscms_get_adminmenu() {
 		'text' => _MODULES,
 		'link' => ICMS_URL . '/modules/system/admin.php?fct=modulesadmin',
 		'menu' => $modules_menu,
-	);
-
-	#########################################################################
-	# end
-	#########################################################################
-
-	#########################################################################
-	# ImpressCMS News Feed menu
-	#########################################################################
-	$menu = array();
-	$menu[] = array(
-		'link' => 'http://www.impresscms.org',
-		'title' => _IMPRESSCMS_HOME,
-		'absolute' => 1,
-		//small' => ICMS_URL . '/images/impresscms.png',
-	);
-
-
-	if ( _LANGCODE != 'en' ){
-		$menu[] = array(
-			'link' => _IMPRESSCMS_LOCAL_SUPPORT,
-			'title' => _IMPRESSCMS_LOCAL_SUPPORT_TITLE,
-			'absolute' => 1,
-			//'small' => ICMS_URL . '/images/impresscms.png',
-		);
-	}
-
-	$menu[] = array(
-		'link' => 'http://community.impresscms.org',
-		'title' => _IMPRESSCMS_COMMUNITY,
-		'absolute' => 1,
-		//'small' = ICMS_URL . '/images/impresscms.png',
-	);
-
-	$menu[] = array(
-		'link' => 'http://addons.impresscms.org',
-		'title' => _IMPRESSCMS_ADDONS,
-		'absolute' => 1,
-		//'small' => ICMS_URL . '/images/impresscms.png',
-	);
-
-	$menu[] = array(
-		'link' => 'http://wiki.impresscms.org',
-		'title' => _IMPRESSCMS_WIKI,
-		'absolute' => 1,
-		//'small' = ICMS_URL . '/images/impresscms.png',
-	);
-
-	$menu[] = array(
-		'link' => 'http://blog.impresscms.org',
-		'title' => _IMPRESSCMS_BLOG,
-		'absolute' => 1,
-		//'small'] = ICMS_URL . '/images/impresscms.png',
-	);
-
-	$menu[] = array(
-		'link' => 'http://sourceforge.net/projects/impresscms/',
-		'title' => _IMPRESSCMS_SOURCEFORGE,
-		'absolute' => 1,
-		//'small' = ICMS_URL . '/images/impresscms.png',
-	);
-
-	$menu[] = array(
-		'link' => 'http://www.impresscms.org/donations/',
-		'title' => _IMPRESSCMS_DONATE,
-		'absolute' => 1,
-		//'small' = ICMS_URL . '/images/impresscms.png',
-	);
-
-	$menu[] = array(
-	'link' => ICMS_URL . '/admin.php?rssnews=1',
-	'title' => _IMPRESSCMS_NEWS,
-	'absolute' => 1,
-	//'small' => ICMS_URL . '/images/impresscms.png',
-	);
-
-	$admin_menu[] = array(
-		'id' => 'news',
-		'text' => _ABOUT,
-		'link' => '#',
-		'menu' => $menu,
 	);
 
 	#########################################################################
@@ -754,4 +766,105 @@ function xoops_module_write_admin_menu($content) {
 function xoops_write_index_file($path = '') {
 	//icms_core_Debug::setDeprecated('icms_core_Filesystem::writeIndexFile', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	return icms_core_Filesystem::writeIndexFile($path);
+}
+
+/**
+ * Organizes available documentation files in the /docs directory
+ * Focuses only on the files that start with a specific prefix
+ * Returns an associative array with file types as keys and arrays of function/methods as values
+ * @param array $targetFileTypes array of the prefixes we care about in file names (corresponds to the different categories of API docs, as found in /docs folder)
+ * @return array Associative array of documentation files organized by type
+ * @throws Exception If the docs directory does not exist, or the passed in target types are invalid or missing
+ */
+function organizeAvailableDocs($targetFileTypes) {
+
+		if(empty($targetFileTypes) || !is_array($targetFileTypes)) {
+			throw new InvalidArgumentException("Invalid target file types provided.");
+		}
+
+    $result = [];
+
+		$directoryPath = XOOPS_ROOT_PATH .'/docs';
+
+    // Check if directory exists
+    if (!is_dir($directoryPath)) {
+        throw new Exception("Directory does not exist: $directoryPath");
+    }
+
+    // Get all files in the directory
+    $files = scandir($directoryPath);
+
+    // Filter out . and .. and process each file
+    foreach ($files as $file) {
+        // Skip current and parent directory references
+        if ($file === '.' || $file === '..') {
+            continue;
+        }
+        // Skip directories, only process files
+        $fullPath = $directoryPath . DIRECTORY_SEPARATOR . $file;
+        if (!is_file($fullPath)) {
+            continue;
+        }
+
+				// Extract prefix (everything before the first hyphen)
+				// if there's a prefix and it matches one of the target file types...
+        $hyphenPos = strpos($file, '-');
+        if ($hyphenPos !== false AND $prefix = substr($file, 0, $hyphenPos) AND in_array($prefix, $targetFileTypes)) {
+
+            // Initialize array for this prefix if it doesn't exist
+            if (!isset($result[$prefix])) {
+                $result[$prefix] = [];
+            }
+
+            // Add filename to the appropriate prefix array
+            $result[$prefix][] = str_replace(array($prefix.'-', '.md'), '', $file);
+        }
+    }
+
+    return $result;
+}
+
+/**
+ * Get the latest formulize version number from GitHub
+ * Cache in session to avoid repeated http requests
+ * @return string The latest version number, or an empty string if not found
+ */
+function get_latest_formulize_version_number() {
+
+	if(isset($_SESSION['formulize_latest_version_number']) && !empty($_SESSION['formulize_latest_version_number'])) {
+		return $_SESSION['formulize_latest_version_number'];
+	}
+
+	// Fetch the latest release data from GitHub API
+	$url = 'https://api.github.com/repos/jegelstaff/formulize/releases/latest';
+
+	// Initialize cURL
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_USERAGENT, 'PHP Script'); // GitHub API requires a User-Agent
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+	// Execute the request
+	$response = curl_exec($ch);
+	$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+	$_SESSION['formulize_latest_version_number'] = '';
+
+	// Check for cURL errors
+	if (!curl_error($ch) AND $httpCode === 200) {
+
+		curl_close($ch);
+
+		// Decode the JSON response
+		$data = json_decode($response, true);
+
+		// Check if JSON decoding was successful
+		if (json_last_error() === JSON_ERROR_NONE AND isset($data['name'])) {
+			$_SESSION['formulize_latest_version_number'] = trim($data['name'], 'v'); // Remove 'v' prefix if present
+		}
+	}
+
+	return $_SESSION['formulize_latest_version_number'];
 }

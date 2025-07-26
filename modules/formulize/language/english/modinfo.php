@@ -13,7 +13,7 @@ define("_MI_formulize_NAME","Formulize");
 define("_MI_formulize_DESC","Easily collect and organize your data — no code required. With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports. Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows.");
 
 // admin/menu.php
-define("_MI_formulize_ADMENU0","Form management");
+define("_MI_formulize_ADMIN_HOME","Administration");
 define("_MI_formulize_ADMENU1","Menu");
 
 // notifications
@@ -214,3 +214,11 @@ define("_MI_formulize_EIC_PLAIN", "Never prefix (for programs that need clean, r
 
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable View Buttons"._MI_formulize_PREFHEADEND.'Enable Printable View buttons (then you can turn them on and off per screen)');
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable View buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable View buttons will not show up on any screens.');
+
+define('_MI_formulize_EMAIL_USERS', 'Email Users');
+define('_MI_formulize_MANAGE_API_KEYS', 'Manage API keys');
+define('_MI_formulize_IMPORT_EXPORT', 'Import/Export Forms and Apps');
+define('_MI_formulize_COPY_GROUP_PERMS', 'Copy Group Permissions');
+define('_MI_formulize_SYNCHRONIZE', 'Synchronize With Another System');
+define('_MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS', 'Manage Account Creation Tokens');
+define('_MI_formulize_MANAGE_FORM_ACCESS', 'Manage Access to Forms');
