@@ -74,21 +74,21 @@ $(document).ready(function() {
 <{if $adminPage.template == 'db:admin/home.html'}>
 <div style="float: right;">
 	<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
-		<p style="text-align: right;"><a  href="ui.php?page=managepermissions">Copy Group Permissions</a></p>
-	<p style="text-align: right;"><a  href="ui.php?page=synchronize">Synchronize With Another System</a></p>
-	<p style="text-align: right;"><a  href="ui.php?page=config-sync">Configuration Synchronization</a></p>
-		<p style="text-align: right;"><a href="ui.php?page=managekeys">Manage API keys</a></p>
-		<!--<p style="text-align: right;"><a href="ui.php?page=manageaccess">Manage Access to Forms</a></p>-->
-		<p style="text-align: right;"><a href="ui.php?page=managetokens">Manage Account Creation Tokens</a></p>
-		<p style="text-align: right;"><a href="ui.php?page=mailusers">Email Users</a></p>
-		<br>
+	<p style="text-align: right;"><a href="ui.php?page=mailusers"><{$smarty.const._MI_formulize_EMAIL_USERS}></a></p>
+	<p style="text-align: right;"><a href="ui.php?page=managekeys"><{$smarty.const._MI_formulize_MANAGE_API_KEYS}></a></p>
+	<p style="text-align: right;"><a href="ui.php?page=config-sync"><{$smarty.const._MI_formulize_IMPORT_EXPORT}></a></p>
+	<p style="text-align: right;"><a href="ui.php?page=synchronize"><{$smarty.const._MI_formulize_SYNCHRONIZE}></a></p>
+	<p style="text-align: right;"><a href="ui.php?page=managepermissions"><{$smarty.const._MI_formulize_COPY_GROUP_PERMS}></a></p>
+	<p style="text-align: right;"><a href="ui.php?page=managetokens"><{$smarty.const._MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS}></a></p>
+	<!--<p style="text-align: right;"><a href="ui.php?page=manageaccess"><{$smarty.const._MI_formulize_MANAGE_FORM_ACCESS}></a></p>-->
+	<br>
 </div>
 <{/if}>
 
 <{if $opResults}>
 <div id="formulize-patch-panel"><{$opResults}><p><a href='<{$xoops_url}>/modules/formulize/admin/'><{$smarty.const._CLOSE}></a></p></div>
 <{/if}>
-<div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /></div>
+<div id="formulize-logo"><img src="<{$xoops_url}><{$adminPage.logo}>" align="<{$adminPage.pagetitle}>" title="<{$adminPage.pagetitle}>" /> <{$smarty.const._AM_FORMULIZE_ADMINISTRATION}></div>
 
 <form name="scrollposition" method="post" action="">
   <input type="hidden" name="scrollx" value="">

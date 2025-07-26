@@ -7,7 +7,7 @@
 			<img src="<{$xoops_url}><{$adm_left_logo}>" alt="<{if $adm_left_logo_alt != ''}><{$adm_left_logo_alt}><{else}>ImpressCMS<{/if}>"/>
 		    <{if  $adm_left_logo_url != ''}>
 			    </a>
-			<{/if}>   
+			<{/if}>
 		<{/if}>
 	</span>
 	<span class="<{$smarty.const._GLOBAL_RIGHT}>">
@@ -18,7 +18,7 @@
 			<img src="<{$xoops_url}><{$adm_right_logo}>" alt="<{if $adm_right_logo_alt != ''}><{$adm_right_logo_alt}><{else}>ImpressCMS<{/if}>"/>
 		    <{if  $adm_right_logo_url != ''}>
 			    </a>
-			<{/if}>   
+			<{/if}>
 		<{/if}>
 	</span>
 	<div class="clear"></div>
@@ -57,12 +57,28 @@
 	    	        <ul>
 		              <{foreach item=subitem from=$sub.subs}>
 		                <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
-		              <{/foreach}>  
+		              <{/foreach}>
 		            </ul>
 		          <{/if}>
 		          </li>
-                <{elseif $item.id == 'news' && $show_impresscms_menu}>
-    		      <li><a rel="external" href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$xoops_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a></li>
+                <{elseif}>
+    		      		<li><a <{if $sub.link != '#' AND $item.id != 'home'}>rel="external" target="_blank"<{/if}> href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a>
+								  <{if $sub.hassubs}>
+										<ul>
+											<{foreach item=subitem from=$sub.subs}>
+												<li><a href="<{$subitem.link}>"><{$subitem.title}></a>
+													<{if $subitem.hassubs}>
+														<ul>
+															<{foreach item=subsubitem from=$subitem.subs}>
+																<li><a rel="external" target="_blank" href="<{$subsubitem.link}>"><{$subsubitem.title}></a></li>
+															<{/foreach}>
+														</ul>
+													<{/if}>
+												</li>
+											<{/foreach}>
+										</ul>
+									<{/if}>
+								</li>
                 <{/if}>
 		      <{/foreach}>
 		    </ul>
@@ -84,7 +100,7 @@
 	  <a href="<{$op.link}>" title="<{$op.title}>">
         <{if $op.title == $lang_prefs && $moddir!='system'}>
           <img src="<{$xoops_url}>/modules/system/images/prefs.png" alt="<{$lang_preferences}>" />
-        <{else}>  
+        <{else}>
           <img src="<{if $op.icon==''}><{$xoops_url}>/images/icon_options.png<{else}><{$modpath}>/<{$op.icon}><{/if}>" alt="<{$op.title}>" />
         <{/if}>
       </a>

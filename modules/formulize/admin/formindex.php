@@ -495,7 +495,14 @@ function patch40() {
 				$sql['form_title'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `desc_form` `form_title` varchar(255) NOT NULL default ''";
 				$sql['ele_required'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " CHANGE `ele_req` `ele_required` tinyint(1) NOT NULL default 0";
 
-				unlink(XOOPS_ROOT_PATH.'/cache/adminmenu_english.php');
+				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
+				$adminMenuLangs = array_unique($adminMenuLangs);
+				foreach($adminMenuLangs as $lang) {
+					$adminMenuFile = XOOPS_ROOT_PATH.'/cache/adminmenu_'.$lang.'.php';
+					if (file_exists($adminMenuFile)) {
+						unlink($adminMenuFile);
+					}
+				}
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
