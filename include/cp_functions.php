@@ -529,21 +529,22 @@ function impresscms_get_adminmenu() {
 	if (!empty($latest_version)) {
 		// retrieve the xoops_version info
     $module_handler = xoops_gethandler('module');
-    $formulizeModule = $module_handler->getByDirname("formulize");
-    $metadata = $formulizeModule->getInfo();
-		if($metadata && isset($metadata['version']) && $metadata['version'] != $latest_version AND !strstr($metadata['version'], '-beta')) {
-			$menu[] = array(
-				'link' => 'https://github.com/jegelstaff/formulize/releases/latest',
-				'title' => sprintf(_formulize_CPH_LATEST_VERSION, $latest_version),
-				'absolute' => 1,
-				'small' => ICMS_URL .'/modules/system/images/item.png'
-			);
-			$menu[] = array(
-				'link' => 'https://formulize.org/deploying_a_website/updating_formulize',
-				'title' => _formulize_CPH_UPDATE_INSTRUCTIONS,
-				'absolute' => 1,
-				'small' => ICMS_URL .'/modules/system/images/item.png'
-			);
+    if ($formulizeModule = $module_handler->getByDirname("formulize")) {
+			$metadata = $formulizeModule->getInfo();
+			if($metadata && isset($metadata['version']) && $metadata['version'] != $latest_version AND !strstr($metadata['version'], '-beta')) {
+				$menu[] = array(
+					'link' => 'https://github.com/jegelstaff/formulize/releases/latest',
+					'title' => sprintf(_formulize_CPH_LATEST_VERSION, $latest_version),
+					'absolute' => 1,
+					'small' => ICMS_URL .'/modules/system/images/item.png'
+				);
+				$menu[] = array(
+					'link' => 'https://formulize.org/deploying_a_website/updating_formulize',
+					'title' => _formulize_CPH_UPDATE_INSTRUCTIONS,
+					'absolute' => 1,
+					'small' => ICMS_URL .'/modules/system/images/item.png'
+				);
+			}
 		}
 	}
 
