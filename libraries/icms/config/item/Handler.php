@@ -113,15 +113,16 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			AND $config->getVar('conf_value') == 1
 			AND function_exists('curl_version')) {
 
+			$correctXOOP_URL = (XOOPS_URL == 'http://localhost:8080' AND file_exists('/.dockerenv')) ? 'http://localhost' : XOOPS_URL; // when inside Docker, discard the mapped port, so that these requests will be answered by this server inside Docker. The 8080 is the mapping from host to container, which will not work when requests are being routed from the container itself.
 			switch($config->getVar('conf_name')) {
 				case 'formulizeRewriteRulesEnabled':
-					$url = XOOPS_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
+					$url = $correctXOOP_URL.'/formulize-check-if-alternate-urls-are-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
 				case 'formulizePublicAPIEnabled':
-					$url = XOOPS_URL.'/formulize-public-api/v1/status/formulize-check-if-public-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
+					$url = $correctXOOP_URL.'/formulize-public-api/v1/status/formulize-check-if-public-api-is-properly-enabled-please'; // will resolve based on DNS available to server, so Docker gets confused by localhost!
 					break;
 				case 'formulizeMCPServerEnabled':
-					$url = XOOPS_URL.'/mcp/?endpoint=health'; // Direct path to MCP server health check
+					$url = $correctXOOP_URL.'/mcp/?endpoint=health'; // Direct path to MCP server health check
 					break;
 			}
 
