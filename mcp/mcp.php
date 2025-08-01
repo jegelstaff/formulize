@@ -97,12 +97,6 @@ class FormulizeMCP
 
 		$this->logDebug();
 
-		$isOAuthRequest = $this->isOAuthRequest();
-		if ($isOAuthRequest) {
-			$this->handleOAuthRequest();
-			exit(); // OAuth handlers should exit
-		}
-
 		// Authenticate the request
 		$path = $_SERVER['REQUEST_URI'];
 		$method = $_SERVER['REQUEST_METHOD'];
@@ -138,87 +132,6 @@ class FormulizeMCP
 		$this->registerTools();
 		$this->registerResources();
 		$this->registerPrompts();
-	}
-
-	/**
-	 * Check if this is an OAuth request
-	 */
-	private function isOAuthRequest()
-	{
-			// Debug: Log request detection
-			error_log("isOAuthRequest() called");
-			error_log("GET params: " . json_encode($_GET));
-			error_log("POST params: " . json_encode($_POST));
-			error_log("REQUEST_METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? 'undefined'));
-
-			// Check for OAuth action parameter
-			if (isset($_GET['action']) && in_array($_GET['action'], ['authorize', 'consent', 'token', 'register', 'resource', 'status'])) {
-					error_log("OAuth request detected via action parameter: " . $_GET['action']);
-					return true;
-			}
-
-			// Check if this looks like an OAuth authorization request
-			if (isset($_GET['response_type']) && $_GET['response_type'] === 'code') {
-					error_log("OAuth request detected via response_type=code");
-					return true;
-			}
-
-			// Check if this is a token exchange request
-			if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['grant_type']) && $_POST['grant_type'] === 'authorization_code') {
-					error_log("OAuth request detected via POST grant_type");
-					return true;
-			}
-
-			error_log("NOT detected as OAuth request");
-			return false;
-	}
-
-	/**
-	 * Handle OAuth requests
-	 */
-	private function handleOAuthRequest()
-	{
-			require_once XOOPS_ROOT_PATH . '/mcp/oauth.php';
-
-			$action = $_GET['action'] ?? '';
-
-			// If no explicit action, infer from parameters
-			if (empty($action)) {
-					if (isset($_GET['response_type']) && $_GET['response_type'] === 'code') {
-							$action = 'authorize';
-					} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['grant_type'])) {
-							$action = 'token';
-					}
-			}
-
-			switch ($action) {
-					case 'authorize':
-							handleAuthorizationRequest();
-							break;
-					case 'consent':
-							handleConsentSubmission();
-							break;
-					case 'token':
-							handleTokenExchange();
-							break;
-					case 'register':
-							handleDynamicClientRegistration();
-							break;
-					case 'resource':
-							handleProtectedResource();
-							break;
-					case 'status':
-							handleStatusCheck();
-							break;
-					default:
-							// Default to authorization if we have OAuth params but no clear action
-							if (isset($_GET['client_id']) || isset($_GET['response_type'])) {
-							handleAuthorizationRequest();
-							} else {
-									http_response_code(400);
-									echo json_encode(['error' => 'invalid_request', 'error_description' => 'Unknown OAuth action: ' . $action]);
-							}
-			}
 	}
 
 	/**
@@ -578,13 +491,22 @@ class FormulizeMCP
 			'resources_count' => count($this->resources),
 			'prompts_count' => count($this->prompts),
 			'authentication' => [
-				'system' => 'formulize_api_keys',
+				'system' => 'formulize_api_keys_with_oauth',
 				'active_keys_count' => $apiKeyCount
 			],
 			'endpoints' => [
 				'mcp' => $this->baseUrl . '/mcp',
 				'capabilities' => $this->baseUrl . '/capabilities',
 				'health' => $this->baseUrl . '/health'
+			],
+			'oauth_endpoints' => [
+				'authorize' => XOOPS_URL . '/oauth/authorize',
+				'token' => XOOPS_URL . '/oauth/token',
+				'register' => XOOPS_URL . '/oauth/register',
+				'resource' => XOOPS_URL . '/oauth/resource',
+				'status' => XOOPS_URL . '/oauth/status',
+				'protected_resource_metadata' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+				'authorization_server_metadata' => XOOPS_URL . '/.well-known/oauth-authorization-server'
 			]
 		];
 
@@ -679,8 +601,15 @@ class FormulizeMCP
 		$capabilities = [
 			'serverInfo' => $this->system_info(),
 			'authentication' => [
-				'type' => 'Formulize API Keys',
-				'discovery_enabled' => false,
+				'type' => 'OAuth 2.1 with Formulize API Keys',
+				'discovery_enabled' => true,
+				'oauth_endpoints' => [
+					'authorize' => XOOPS_URL . '/oauth/authorize',
+					'token' => XOOPS_URL . '/oauth/token',
+					'register' => XOOPS_URL . '/oauth/register',
+					'protected_resource_metadata' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+					'authorization_server_metadata' => XOOPS_URL . '/.well-known/oauth-authorization-server'
+				]
 			],
 			'capabilities' => [
 				'tools' => $toolsObj,

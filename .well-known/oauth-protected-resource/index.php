@@ -10,6 +10,9 @@ header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Max-Age: 3600');
 
+// Set JSON content type
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -21,30 +24,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     header('Allow: GET, OPTIONS');
     exit;
 }
-
-// Get the base URL dynamically
-function getBaseUrl() {
+// Get the server's base URL
+function getServerBaseUrl() {
     $scheme = $_SERVER['REQUEST_SCHEME'] ?? (($_SERVER['HTTPS'] ?? 'off') === 'on' ? 'https' : 'http');
     $host = $_SERVER['HTTP_HOST'];
-
-    // For OAuth metadata, always return the domain root
     return $scheme . '://' . $host;
 }
 
-$baseUrl = getBaseUrl();
-$authServerUrl = $baseUrl; // Same server acts as authorization server
+$baseUrl = getServerBaseUrl();
 
+// RFC 9728 Protected Resource Metadata
 $metadata = [
     'resource' => $baseUrl . '/mcp',
-    'authorization_servers' => [$authServerUrl],
-    'bearer_methods_supported' => ['header'],
+    'authorization_servers' => [
+        $baseUrl . '/oauth'
+    ],
+    'scopes_supported' => [
+        'read',
+        'write',
+        'read_data',
+        'write_data',
+        'claudeai'
+    ],
+    'bearer_methods_supported' => [
+        'header'
+    ],
     'resource_documentation' => $baseUrl . '/.well-known/docs'
 ];
 
-// Set headers
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: public, max-age=3600'); // Cache for 1 hour
-
-// Output the metadata
 echo json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-?>

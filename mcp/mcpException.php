@@ -104,12 +104,16 @@ class FormulizeMCPException extends Exception
 							'issue' => 'Authentication required',
 							'solutions' => [
 									'Include Bearer token in Authorization header',
-									'Use OAuth 2.0 authorization code flow with PKCE',
+									'Use OAuth 2.1 authorization code flow with PKCE',
 									'Visit the authorization URL to get an access token',
 									'Ensure API key is valid and not expired'
 							],
 							'oauth_discovery' => [
 								'resource_metadata_url' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+								'authorization_server_metadata_url' => XOOPS_URL . '/.well-known/oauth-authorization-server',
+								'authorization_endpoint' => XOOPS_URL . '/oauth/authorize',
+								'token_endpoint' => XOOPS_URL . '/oauth/token',
+								'registration_endpoint' => XOOPS_URL . '/oauth/register',
 								'authorization_flow' => 'OAuth 2.1 with PKCE and Resource Indicators (RFC 8707)'
 							]
 					];

@@ -213,23 +213,10 @@ function validateAndNormalizeResource($resource) {
  * Check if a resource is valid for this MCP server
  */
 function isValidResourceForServer($resource) {
-    $baseUrl = getServerBaseUrl();
-    $canonicalMcpUrl = $baseUrl . '/mcp'; // Canonical form without trailing slash (matches normalization)
-    $canonicalMcpUrlWithSlash = $baseUrl . '/mcp/'; // Also accept with trailing slash
-
+    $canonicalMcpUrl = XOOPS_URL . '/mcp'; // Canonical form without trailing slash (matches normalization)
+    $canonicalMcpUrlWithSlash = XOOPS_URL . '/mcp/'; // Also accept with trailing slash
     // Accept the canonical MCP URL (with or without trailing slash) or the base URL
     return ($resource === $baseUrl || $resource === $canonicalMcpUrl || $resource === $canonicalMcpUrlWithSlash);
-}
-
-/**
- * Get the server's base URL
- */
-function getServerBaseUrl() {
-    $scheme = $_SERVER['REQUEST_SCHEME'] ?? (($_SERVER['HTTPS'] ?? 'off') === 'on' ? 'https' : 'http');
-    $host = $_SERVER['HTTP_HOST'];
-
-    // For OAuth, always return the domain root
-    return $scheme . '://' . $host;
 }
 
 function handleAuthorizationRequest() {
@@ -248,11 +235,11 @@ function handleAuthorizationRequest() {
         $resource = urldecode($resource);
     }
 
-    /*// Validate response type
+    // Validate response type
     if ($response_type !== 'code') {
         redirectWithError($redirect_uri, 'unsupported_response_type', 'Only authorization code flow is supported', $state);
         return;
-    }*/
+    }
 
     // Validate redirect URI
     if (!isValidRedirectUri($redirect_uri)) {
@@ -267,12 +254,6 @@ function handleAuthorizationRequest() {
     // Validate and normalize resource parameter (RFC 8707)
     $normalized_resource = validateAndNormalizeResource($resource);
 
-    // Debug logging
-    error_log("OAuth Debug - Resource validation:");
-    error_log("- Original resource: '$resource'");
-    error_log("- Normalized resource: '$normalized_resource'");
-    error_log("- Base URL: '" . getServerBaseUrl() . "'");
-
     if ($resource && $normalized_resource === false) {
         error_log("OAuth Error: Resource normalization failed");
         redirectWithError($redirect_uri, 'invalid_request', 'Invalid resource parameter format', $state);
@@ -280,10 +261,6 @@ function handleAuthorizationRequest() {
     }
 
     if ($normalized_resource && !isValidResourceForServer($normalized_resource)) {
-        error_log("OAuth Error: Resource not valid for server");
-        error_log("- Expected base: '" . getServerBaseUrl() . "'");
-        error_log("- Expected MCP: '" . getServerBaseUrl() . "/mcp'");
-        error_log("- Expected MCP/: '" . getServerBaseUrl() . "/mcp/'");
         redirectWithError($redirect_uri, 'invalid_target', 'Resource not valid for this authorization server', $state);
         return;
     }
@@ -403,7 +380,7 @@ function showConsentScreen($client_id, $scope, $state, $resource = null) {
                                 'read_data' => 'Read your data',
                                 'write_data' => 'Write and modify your data',
                                 'admin' => 'Administrative access',
-																'claudeai' => 'Access to Claude AI integration',
+								'claudeai' => 'Access to Claude AI integration',
                             ];
                             $description = $scope_descriptions[$s] ?? ucfirst(str_replace('_', ' ', $s));
                             echo "<li><strong>" . htmlspecialchars($s) . "</strong> - " . htmlspecialchars($description) . "</li>";
@@ -424,7 +401,7 @@ function showConsentScreen($client_id, $scope, $state, $resource = null) {
                 </ul>
             </div>
 
-            <form method="POST" action="?action=consent">
+            <form method="POST" action="<?php echo XOOPS_URL ?>/oauth/consent">
                 <input type="hidden" name="state" value="<?php echo htmlspecialchars($state); ?>">
                 <div class="buttons">
                     <button type="submit" name="decision" value="approve" class="approve">
@@ -654,13 +631,6 @@ function handleTokenExchange() {
 }
 
 function handleDynamicClientRegistration() {
-    // Debug: Log what we're actually receiving
-    error_log("Dynamic Client Registration Debug:");
-    error_log("REQUEST_METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? 'undefined'));
-    error_log("GET params: " . json_encode($_GET));
-    error_log("POST params: " . json_encode($_POST));
-    error_log("Raw input: " . file_get_contents('php://input'));
-
     // Handle preflight (already handled globally, but be safe)
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(200);
@@ -673,22 +643,8 @@ function handleDynamicClientRegistration() {
         header('Allow: POST, OPTIONS');
         echo json_encode([
             'error' => 'invalid_request',
-            'error_description' => 'Method not allowed. Use POST for client registration.',
-            'debug' => [
-                'received_method' => $_SERVER['REQUEST_METHOD'] ?? 'undefined',
-                'get_params' => $_GET,
-                'post_params' => $_POST
-            ]
+            'error_description' => 'Method not allowed. Use POST for client registration.'
         ]);
-        return;
-    }
-
-    // Check Content-Type for JSON (RFC 7591 requirement)
-    // Relaxed for testing - allow any Content-Type or missing Content-Type
-    $content_type = $_SERVER['CONTENT_TYPE'] ?? '';
-    if (!empty($content_type) && stripos($content_type, 'application/json') === false && !isset($_GET['test'])) {
-        http_response_code(400);
-        echo json_encode(['error' => 'invalid_request', 'error_description' => 'Content-Type must be application/json']);
         return;
     }
 
@@ -742,9 +698,6 @@ function handleDynamicClientRegistration() {
         'software_version' => '1.0'
     ];
 
-    // Optional: Store client registration for future reference
-    // (In a production system, you'd want to persist this)
-
     // Return registration response
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(201); // Created
@@ -756,8 +709,7 @@ function handleProtectedResource() {
 
     if (!preg_match('/Bearer\s+(.*)$/i', $auth_header, $matches)) {
         http_response_code(401);
-        $baseUrl = getServerBaseUrl();
-        header('WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . $baseUrl . '/.well-known/oauth-protected-resource"');
+        header('WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . XOOPS_URL . '/.well-known/oauth-protected-resource"');
         echo json_encode(['error' => 'invalid_token', 'error_description' => 'Missing or invalid authorization header']);
         return;
     }
@@ -769,8 +721,7 @@ function handleProtectedResource() {
 
     if (!isset($access_tokens[$token])) {
         http_response_code(401);
-        $baseUrl = getServerBaseUrl();
-        header('WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . $baseUrl . '/.well-known/oauth-protected-resource"');
+        header('WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . XOOPS_URL . '/.well-known/oauth-protected-resource"');
         echo json_encode(['error' => 'invalid_token', 'error_description' => 'Token not found']);
         return;
     }
@@ -781,17 +732,15 @@ function handleProtectedResource() {
         unset($access_tokens[$token]);
         saveAccessTokens($access_tokens);
         http_response_code(401);
-        $baseUrl = getServerBaseUrl();
-        header('WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . $baseUrl . '/.well-known/oauth-protected-resource"');
+        header('WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . XOOPS_URL . '/.well-known/oauth-protected-resource"');
         echo json_encode(['error' => 'invalid_token', 'error_description' => 'Token expired']);
         return;
     }
 
     // Validate resource binding (RFC 8707)
     if (isset($token_data['resource'])) {
-        $base_url = getServerBaseUrl();
-        $canonical_resource = $base_url . '/mcp';
-        $canonical_resource_with_slash = $base_url . '/mcp/';
+        $canonical_resource = XOOPS_URL . '/mcp';
+        $canonical_resource_with_slash = XOOPS_URL . '/mcp/';
 
         // Only accept the canonical resource URLs (with or without trailing slash) or base URL
         if ($token_data['resource'] !== $canonical_resource &&
@@ -850,9 +799,9 @@ function handleStatusCheck() {
             'pkce_challenges' => count($pkce_challenges)
         ],
         'server_info' => [
-            'base_url' => getServerBaseUrl(),
-            'resource_metadata_url' => getServerBaseUrl() . '/.well-known/oauth-protected-resource',
-            'authorization_server_metadata_url' => getServerBaseUrl() . '/.well-known/oauth-authorization-server'
+            'base_url' => XOOPS_URL,
+            'resource_metadata_url' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+            'authorization_server_metadata_url' => XOOPS_URL . '/.well-known/oauth-authorization-server'
         ],
         'oauth_compliance' => [
             'oauth_2_1' => true,
@@ -860,6 +809,13 @@ function handleStatusCheck() {
             'resource_indicators_rfc8707' => true,
             'protected_resource_metadata_rfc9728' => true,
             'authorization_server_metadata_rfc8414' => true
+        ],
+        'endpoints' => [
+            'authorize' => XOOPS_URL . '/oauth/authorize',
+            'token' => XOOPS_URL . '/oauth/token',
+            'register' => XOOPS_URL . '/oauth/register',
+            'resource' => XOOPS_URL . '/oauth/resource',
+            'status' => XOOPS_URL . '/oauth/status'
         ],
         'session_info' => [
             'session_id' => session_id(),
@@ -894,54 +850,34 @@ function redirectWithError($redirect_uri, $error, $description, $state = '') {
 /*
 OAUTH 2.1 COMPLIANCE WITH RFC 8707 RESOURCE INDICATORS
 
-This implementation now supports:
+This updated implementation provides clean OAuth endpoints:
 
-1. OAuth 2.1 with PKCE (required for all clients)
-2. RFC 8707 Resource Indicators for token audience binding
-3. RFC 9728 Protected Resource Metadata
-4. RFC 8414 Authorization Server Metadata
-5. Dynamic Client Registration (RFC 7591)
+ENDPOINTS:
+- /oauth/authorize - Authorization endpoint
+- /oauth/token - Token exchange endpoint
+- /oauth/register - Dynamic client registration
+- /oauth/resource - Protected resource test
+- /oauth/status - Debug/status endpoint
+- /oauth/consent - Consent form submission
 
-KEY SECURITY FEATURES:
-- Resource binding prevents token misuse across services
-- PKCE prevents authorization code interception
-- Proper token audience validation
-- Canonical URI normalization
-- Comprehensive input validation
+WELL-KNOWN ENDPOINTS:
+- /.well-known/oauth-protected-resource - Resource metadata (RFC 9728)
+- /.well-known/oauth-authorization-server - Authorization server metadata (RFC 8414)
 
-RESOURCE PARAMETER FLOW:
-1. Client includes 'resource' parameter in authorization request
-2. Server validates and normalizes the resource URI
-3. Resource binding is stored with authorization code
-4. Client must include same 'resource' in token request
-5. Access token is bound to the specific resource
-6. Server validates token audience on each request
-
-MCP CLIENT OAUTH FLOW WITH RESOURCE INDICATORS:
+MCP CLIENT OAUTH FLOW WITH CLEAN URLS:
 
 1. Authorization Request:
-   GET /mcp?action=authorize
-   &client_id=my_mcp_client
-   &redirect_uri=http://localhost:8080/callback
-   &response_type=code
-   &scope=read_data
-   &state=xyz123
-   &code_challenge=CODE_CHALLENGE
-   &code_challenge_method=S256
-   &resource=https://example.com/mcp
+   GET /oauth/authorize?client_id=my_mcp_client&redirect_uri=http://localhost:8080/callback&response_type=code&scope=read_data&state=xyz123&code_challenge=CODE_CHALLENGE&code_challenge_method=S256&resource=https://example.com/mcp
 
 2. Token Exchange:
-   POST /mcp?action=token
-   grant_type=authorization_code
-   &code=AUTH_CODE
-   &client_id=my_mcp_client
-   &redirect_uri=http://localhost:8080/callback
-   &code_verifier=CODE_VERIFIER
-   &resource=https://example.com/mcp
+   POST /oauth/token
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=authorization_code&code=AUTH_CODE&client_id=my_mcp_client&redirect_uri=http://localhost:8080/callback&code_verifier=CODE_VERIFIER&resource=https://example.com/mcp
 
 3. Protected Resource Access:
-   GET /mcp?action=resource
+   GET /oauth/resource
    Authorization: Bearer ACCESS_TOKEN
 
-The access token will only work for the specific resource it was bound to.
+This solves the URL parameter conflict by providing dedicated endpoints without query parameters.
 */
