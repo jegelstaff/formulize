@@ -70,6 +70,19 @@ class FormulizeMCPException extends Exception
 	}
 
 	/**
+	 * Get the HTTP headers for the exception
+	 */
+	public function getAdditionalHTTPHeaders(): array
+	{
+			$headers = [];
+			if ($this->type === 'authentication_error') {
+					$resourceMetadataUrl = XOOPS_URL . '/.well-known/oauth-protected-resource';
+					$headers[] = 'WWW-Authenticate: Bearer realm="Formulize MCP Server", resource_metadata="' . $resourceMetadataUrl . '"';
+			}
+			return $headers;
+	}
+
+	/**
 	 * Convert the exception to an array suitable for JSON response
 	 *
 	 * @param array $context Additional context for the error
@@ -87,6 +100,20 @@ class FormulizeMCPException extends Exception
 		// Add helpful context for common errors
 		switch ($this->type) {
 			case 'authentication_error':
+				$error['troubleshooting'] = [
+							'issue' => 'Authentication required',
+							'solutions' => [
+									'Include Bearer token in Authorization header',
+									'Use OAuth 2.0 authorization code flow with PKCE',
+									'Visit the authorization URL to get an access token',
+									'Ensure API key is valid and not expired'
+							],
+							'oauth_discovery' => [
+								'resource_metadata_url' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+								'authorization_flow' => 'OAuth 2.1 with PKCE and Resource Indicators (RFC 8707)'
+							]
+					];
+					break;
 			case 'permission_denied':
 				$error['troubleshooting'] = [
 						'issue' => 'Insufficient permissions',
