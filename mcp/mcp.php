@@ -68,7 +68,7 @@ class FormulizeMCP
     writeToFormulizeLog([
         'formulize_event' => 'mcp-debug-capture',
         'user_id' => 0,
-        'mcp_params' => json_encode($debugData)
+        'mcp_params' => $debugData
     ]);
 
     // Also save to a debug file
@@ -148,6 +148,12 @@ class FormulizeMCP
 		foreach ($headers as $header) {
 			header($header);
 		}
+
+		writeToFormulizeLog([
+			'formulize_event' => 'mcp-sending-response',
+			'mcp_params' => ['responsecode' => $httpResponseCode, 'body' => $body]
+		]);
+
 		// Prevent ALL caching at every level
 		header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
 		header('Pragma: no-cache');
