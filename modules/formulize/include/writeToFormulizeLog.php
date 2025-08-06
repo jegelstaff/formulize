@@ -72,11 +72,18 @@ function writeToFormulizeLog($data) {
 		$logFilesCleanedUp = true;
 	}
 
+	$url_parts = parse_url(XOOPS_URL);
+	$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
+	$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
+	// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
+	$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+
 	// UNIQUE_ID is only available if the server has mod_unique_id turned on
 	// UNIQUE_ID can make it possible to cross reference with Apache logs to find the request
 	// All log lines have standard format, but values are dependent on the event that wrote to the log
 	$data = array(
 		'microtime' => microtime(true),
+		'url' => $url,
 		'request_id' => (isset($_SERVER['UNIQUE_ID']) ? $_SERVER['UNIQUE_ID'] : $phpUniqueId),
 		'session_id' => session_id(),
 		'formulize_event' => (isset($data['formulize_event']) ? $data['formulize_event'] : ''),
