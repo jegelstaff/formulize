@@ -463,7 +463,7 @@ class FormulizeConfigSync
 			case 'create':
 				// Ensure the form does not exist
 				$existingForm = $this->formHandler->getByHandle($change['data']['form_handle']);
-				if ($existingForm) {
+				if ($existingForm AND is_object($existingForm) AND $existingForm->getVar('form_handle') == $change['data']['form_handle']) {
 					throw new \Exception("Form handle {$change['data']['form_handle']} already exists");
 				}
 				// Insert form record
@@ -474,12 +474,12 @@ class FormulizeConfigSync
 				// create the default form screen for this form
 				$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 				$defaultFormScreen = $multiPageScreenHandler->create();
-				$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject->getVar('title') . ' Form', $formId, $formObject->getVar('title'));
+				$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
 				$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen);
 				// create the default list screen for this form
 				$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 				$screen = $listScreenHandler->create();
-				$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject->getVar('title') . ' List', $formId);
+				$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
 				$defaultListScreenId = $listScreenHandler->insert($screen);
 				// Assign default screens to the form
 				$formObject->setVar('defaultform', $defaultFormScreenId);
@@ -490,7 +490,7 @@ class FormulizeConfigSync
 			case 'update':
 				// Ensure the fom exists
 				$existingForm = $this->formHandler->getByHandle($change['data']['form_handle']);
-				if (!$existingForm) {
+				if (!$existingForm OR !is_object($existingForm) OR $existingForm->getVar('form_handle') != $change['data']['form_handle']) {
 					throw new \Exception("Form handle {$change['data']['form_handle']} does not exist");
 				}
 				$this->updateRecord($table, $change['data'], $primaryKey);
@@ -521,7 +521,7 @@ class FormulizeConfigSync
 				}
 				$formHandle = $change['metadata']['form_handle'];
 				$form = $this->formHandler->getByHandle($formHandle);
-				if (!$form) {
+				if (!$form OR !is_object($form) OR $form->getVar('form_handle') != $formHandle) {
 					throw new \Exception("Form handle $formHandle not found");
 				} else {
 					$formId = $form->getVar('id_form');
