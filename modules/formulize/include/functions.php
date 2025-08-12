@@ -1922,128 +1922,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
             break;
         }
 
-        $checkForNewValues = !is_array($ele) ? array($ele) : $ele;
-        $newWrittenValues = array();
-        foreach($checkForNewValues as $candidateNewValue) {
-            if (!$ele_value['snapshot'] AND is_string($candidateNewValue) AND substr($candidateNewValue, 0, 9) == "newvalue:") {
-            // need to add a new entry to the underlying source form if this is a link
-            // need to add an option to the option list for the element list, if this is not a link.
-            // check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
-                $newValue = substr($candidateNewValue, 9);
-                if ($element->isLinked) {
-                    $boxproperties = explode("#*=:*", $ele_value[2]);
-                    $sourceHandle = $boxproperties[1];
-                    $needToWriteEntry = false;
-                    $dataArrayToWrite[$sourceHandle] = $newValue;
-                    if($newValue !== '') {
-                        $needToWriteEntry = true;
-                    }
-                    $sourceFormObject = _getElementObject($sourceHandle);
-                    // get other seed values passed from the form if we're making a new entry
-                    if($otherMappings = $ele_value['linkedSourceMappings']) {
-                        foreach($otherMappings as $thisMapping) {
-                            $otherElementToWrite = _getElementObject($thisMapping['sourceForm']);
-                            $valueToPrep = '';
-                            if(is_numeric($thisMapping['thisForm'])) {
-                                if(!$mappingThisFormElement = _getElementObject($thisMapping['thisForm'])) {
-                                    print 'Error: could not determine the element for mapping a new value. '.strip_tags(htmlspecialchars($thisMapping['thisForm'],ENT_QUOTES)).' is not a valid element reference. Please update the mapping settings in element '.$ele_id;
-                                }
-                                if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')])) {
-                                    $newValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')];
-                                } else {
-                            $valueToPrep = isset($_POST['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]) ? $_POST['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']] : $_GET['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]; // GET is used in asynch conditional element evaluation...note this means mapped fields ALSO MUST HAVE A DISPLAY CONDITION!
-                                    if($valueToPrep OR $valueToPrep === 0) {
-                            $newValue = prepDataForWrite($otherElementToWrite, $valueToPrep, $entry_id);
-                                    } else {
-                                        $thisElementDataHandler = new formulizeDataHandler($element->getVar('id_form'));
-                                        $newValue = $thisElementDataHandler->getElementValueInEntry($entry_id, $thisMapping['thisForm']); // lookup the value if we couldn't get it out of POST
-                                    }
-                                }
-                            } else {
-                                $newValue = $thisMapping['thisForm']; // literal mapping value instead of an element reference
-                            }
-														$otherElementEleValue = $otherElementToWrite->getVar('ele_value');
-                            if($otherElementToWrite->isLinked AND !$otherElementEleValue['snapshot'] AND !$valueToPrep AND $valueToPrep !== 0) {
-                                // if the field we're mapping to is linked, and we didn't find a value to prep in POST or GET, then we need to convert the literal value to the correct foreign key
-                                // UNLESS the two fields are both linked and pointing to the same source, then we can use the value we've got right now, which will be the foreign key
-                                // OR if the element is two links from the same source at the other, then we need 'newvalue' to be not the value we have deduced at this point, but the value in the DB in that intermediate form, so we write a foreign key to the correct source to the other element
-                                $thisFormMappingElementLinkProperties = false;
-                                $linkProperties = false;
-                                $linkToLinkProperties = false;
-                                $thisFormMappingElement = _getElementObject($thisMapping['thisForm']);
-                                if($thisFormMappingElement->isLinked) {
-                                    $thisFormMappingElementEleValue = $thisFormMappingElement->getVar('ele_value');
-                                    $thisFormMappingElementLinkProperties = explode("#*=:*", $thisFormMappingElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
-                                    // and now go figure out if there's a second level link and we'll use that foreign key instead if the other element links directly there
-                                    if($linkToLinkElement = _getElementObject($thisFormMappingElementLinkProperties[1])) {
-                                        if($linkToLinkElement->isLinked) {
-                                            $linkToLinkEleValue = $linkToLinkElement->getVar('ele_value');
-                                            $linkToLinkProperties = explode("#*=:*", $linkToLinkEleValue[2]);
-                                        }
-                                    }
-                                }
-                                $linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
-                                // check what we're supposed to do...use the value we have, lookup the linktolink value, or lookup the value in the source of the other form, based on the value we have
-                                if($element->isLinked AND $linkProperties[0] == $thisFormMappingElementLinkProperties[0]) {
-                                    // two fields are pointing to the same source, so use the value we have...redundant but captured here for readability
-                                    $newValue = $newValue;
-                                } elseif($element->isLinked AND $linkToLinkElement AND $linkToLinkElement->isLinked AND $linkProperties[0] == $linkToLinkProperties[0]) {
-                                    // the starting field is linked to an element, that is linked to the same source as the other element, so lookup the value of newvalue in that second form....and we should somehow make this all recursive, right???
-                                    $linkToLinkDataHandler = new formulizeDataHandler($linkToLinkProperties[0]);
-                                    $newValue = $linkToLinkDataHandler->findFirstEntryWithValue($linkToLinkProperties[1], $newValue);
-                                } else {
-                                    $linkDataHandler = new formulizeDataHandler($linkProperties[0]);
-                                    $newValue = $linkDataHandler->findFirstEntryWithValue($linkProperties[1], $newValue);
-                                }
-                            }
-                            $dataArrayToWrite[$otherElementToWrite->getVar('ele_handle')] = $newValue;
-                            if($newValue !== '') {
-                                $needToWriteEntry = true;
-                            }
-                        }
-                    }
-                    if($needToWriteEntry) {
-                        // check if the new value plus all mappings, is actually new, and if so, write it. If we find something that matches, don't write it, use that entry id instead.
-                        $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
-                        if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
-													if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
-														formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
-													}
-                        }
-                        $newWrittenValues[] = $newEntryId;
-                    }
-                } else {
-                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                    if(!is_array($ele_value[2]) OR !isset($ele_value[2][$newValue])) {
-                        $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
-                        $element->setVar('ele_value', $ele_value);
-                        $element_handler->insert($element);
-                    }
-                    $allValues = array_keys($ele_value[2]);
-                    $selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
-                    $selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
-                    $newWrittenValues[] = $selectedKey;
-                }
-                // remove the candidate value from the original $ele so we don't have a duplicate when trying to sort it out later
-                if(is_array($ele)) {
-                    unset($ele[array_search($candidateNewValue,$ele)]);
-                } else {
-                    $ele = '';
-                }
-            }
-        }
-        // need to update $ele with any newly written values, so they can be processed properly below
-        foreach($newWrittenValues as $thisNewValue) {
-            if(is_array($ele)) {
-                $ele[] = $thisNewValue;
-            } else {
-                if(count((array) $newWrittenValues)>1) {
-                    print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$element->getVar('ele_caption')."'.";
-                }
-                $ele = $thisNewValue;
-            }
-        }
-
+        $ele = handleCreatingNewOptions($element, $ele, $entry_id);
 
         // section to handle linked select boxes differently from others
         // first, snapshots just take the literal value passed, and that is that
@@ -2192,6 +2071,148 @@ function getLinkedOptionsSourceForm($elementIdOrObject) {
     } else {
         return false;
     }
+}
+
+/**
+ * Handle submitted values and create new options/source values in selectboxes, whether linked or not, if the selectbox supports creation of new values
+ *
+ */
+function handleCreatingNewOptions($elementIdentifier, $values, $entry_id) {
+
+	if(!$elementObject = _getElementObject($elementIdentifier)) {
+		return $values;
+	}
+	$ele_value = $elementObject->getVar('ele_value');
+	$allow_new_values = isset($ele_value[16]) ? $ele_value[16] : 0;
+	if(!$allow_new_values) {
+		// no new values allowed, so just return the values as is
+		return $values;
+	}
+
+	$checkForNewValues = !is_array($values) ? array($values) : $values;
+	$newWrittenValues = array();
+	foreach($checkForNewValues as $candidateNewValue) {
+			if (!$ele_value['snapshot'] AND is_string($candidateNewValue) AND substr($candidateNewValue, 0, 9) == "newvalue:") {
+			// need to add a new entry to the underlying source form if this is a link
+			// need to add an option to the option list for the element list, if this is not a link.
+			// check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
+					$newValue = substr($candidateNewValue, 9);
+					if ($elementObject->isLinked) {
+							$boxproperties = explode("#*=:*", $ele_value[2]);
+							$sourceHandle = $boxproperties[1];
+							$needToWriteEntry = false;
+							$dataArrayToWrite[$sourceHandle] = $newValue;
+							if($newValue !== '') {
+									$needToWriteEntry = true;
+							}
+							$sourceFormObject = _getElementObject($sourceHandle);
+							// get other seed values passed from the form if we're making a new entry
+							if($otherMappings = $ele_value['linkedSourceMappings']) {
+									foreach($otherMappings as $thisMapping) {
+											$otherElementToWrite = _getElementObject($thisMapping['sourceForm']);
+											$valueToPrep = '';
+											if(is_numeric($thisMapping['thisForm'])) {
+													if(!$mappingThisFormElement = _getElementObject($thisMapping['thisForm'])) {
+															print 'Error: could not determine the element for mapping a new value. '.strip_tags(htmlspecialchars($thisMapping['thisForm'],ENT_QUOTES)).' is not a valid element reference. Please update the mapping settings in element '.$ele_id;
+													}
+													if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')])) {
+															$newValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')];
+													} else {
+											$valueToPrep = isset($_POST['de_'.$elementObject->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]) ? $_POST['de_'.$elementObject->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']] : $_GET['de_'.$elementObject->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]; // GET is used in asynch conditional element evaluation...note this means mapped fields ALSO MUST HAVE A DISPLAY CONDITION!
+															if($valueToPrep OR $valueToPrep === 0) {
+											$newValue = prepDataForWrite($otherElementToWrite, $valueToPrep, $entry_id);
+															} else {
+																	$thisElementDataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+																	$newValue = $thisElementDataHandler->getElementValueInEntry($entry_id, $thisMapping['thisForm']); // lookup the value if we couldn't get it out of POST
+															}
+													}
+											} else {
+													$newValue = $thisMapping['thisForm']; // literal mapping value instead of an element reference
+											}
+											$otherElementEleValue = $otherElementToWrite->getVar('ele_value');
+											if($otherElementToWrite->isLinked AND !$otherElementEleValue['snapshot'] AND !$valueToPrep AND $valueToPrep !== 0) {
+													// if the field we're mapping to is linked, and we didn't find a value to prep in POST or GET, then we need to convert the literal value to the correct foreign key
+													// UNLESS the two fields are both linked and pointing to the same source, then we can use the value we've got right now, which will be the foreign key
+													// OR if the element is two links from the same source at the other, then we need 'newvalue' to be not the value we have deduced at this point, but the value in the DB in that intermediate form, so we write a foreign key to the correct source to the other element
+													$thisFormMappingElementLinkProperties = false;
+													$linkProperties = false;
+													$linkToLinkProperties = false;
+													$thisFormMappingElement = _getElementObject($thisMapping['thisForm']);
+													if($thisFormMappingElement->isLinked) {
+															$thisFormMappingElementEleValue = $thisFormMappingElement->getVar('ele_value');
+															$thisFormMappingElementLinkProperties = explode("#*=:*", $thisFormMappingElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
+															// and now go figure out if there's a second level link and we'll use that foreign key instead if the other element links directly there
+															if($linkToLinkElement = _getElementObject($thisFormMappingElementLinkProperties[1])) {
+																	if($linkToLinkElement->isLinked) {
+																			$linkToLinkEleValue = $linkToLinkElement->getVar('ele_value');
+																			$linkToLinkProperties = explode("#*=:*", $linkToLinkEleValue[2]);
+																	}
+															}
+													}
+													$linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
+													// check what we're supposed to do...use the value we have, lookup the linktolink value, or lookup the value in the source of the other form, based on the value we have
+													if($elementObject->isLinked AND $linkProperties[0] == $thisFormMappingElementLinkProperties[0]) {
+															// two fields are pointing to the same source, so use the value we have...redundant but captured here for readability
+															$newValue = $newValue;
+													} elseif($elementObject->isLinked AND $linkToLinkElement AND $linkToLinkElement->isLinked AND $linkProperties[0] == $linkToLinkProperties[0]) {
+															// the starting field is linked to an element, that is linked to the same source as the other element, so lookup the value of newvalue in that second form....and we should somehow make this all recursive, right???
+															$linkToLinkDataHandler = new formulizeDataHandler($linkToLinkProperties[0]);
+															$newValue = $linkToLinkDataHandler->findFirstEntryWithValue($linkToLinkProperties[1], $newValue);
+													} else {
+															$linkDataHandler = new formulizeDataHandler($linkProperties[0]);
+															$newValue = $linkDataHandler->findFirstEntryWithValue($linkProperties[1], $newValue);
+													}
+											}
+											$dataArrayToWrite[$otherElementToWrite->getVar('ele_handle')] = $newValue;
+											if($newValue !== '') {
+													$needToWriteEntry = true;
+											}
+									}
+							}
+							if($needToWriteEntry) {
+									// check if the new value plus all mappings, is actually new, and if so, write it. If we find something that matches, don't write it, use that entry id instead.
+									$dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
+									if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
+										if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
+											formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
+										}
+									}
+									$newWrittenValues[] = $newEntryId;
+							}
+					} else {
+							$element_handler = xoops_getmodulehandler('elements', 'formulize');
+							if(!is_array($ele_value[2]) OR !isset($ele_value[2][$newValue])) {
+									$ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
+									$elementObject->setVar('ele_value', $ele_value);
+									$element_handler->insert($elementObject);
+							}
+							$allValues = array_keys($ele_value[2]);
+							$selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
+							$selectedKey = $elementObject->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
+							$newWrittenValues[] = $selectedKey;
+					}
+					// remove the candidate value from the original $ele so we don't have a duplicate when trying to sort it out later
+					if(is_array($values)) {
+							unset($values[array_search($candidateNewValue,$values)]);
+					} else {
+							$values = '';
+					}
+			}
+	}
+
+	// need to update $ele with any newly written values, so they can be processed properly below
+	foreach($newWrittenValues as $thisNewValue) {
+			if(is_array($values)) {
+					$values[] = $thisNewValue;
+			} else {
+					if(count((array) $newWrittenValues)>1) {
+							print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$element->getVar('ele_caption')."'.";
+					}
+					$values = $thisNewValue;
+			}
+	}
+
+	return $values;
 }
 
 
