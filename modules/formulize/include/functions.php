@@ -2075,7 +2075,11 @@ function getLinkedOptionsSourceForm($elementIdOrObject) {
 
 /**
  * Handle submitted values and create new options/source values in selectboxes, whether linked or not, if the selectbox supports creation of new values
- *
+ * @param string $elementIdentifier - the element identifier, either the id or the handle of the element, or the element object itself
+ * @param mixed $values - the values submitted from the form, either a single value or an array of values
+ * @param int $entry_id - the entry id, if known, used to write the new value to the source form if this is a linked selectbox
+ * @return mixed - the values, possibly modified to include new values that were created
+ * @note This function is used to handle the creation of new options in selectboxes, whether linked or not.
  */
 function handleCreatingNewOptions($elementIdentifier, $values, $entry_id) {
 
@@ -2206,7 +2210,7 @@ function handleCreatingNewOptions($elementIdentifier, $values, $entry_id) {
 					$values[] = $thisNewValue;
 			} else {
 					if(count((array) $newWrittenValues)>1) {
-							print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$element->getVar('ele_caption')."'.";
+							print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$elementObject->getVar('ele_caption')."'.";
 					}
 					$values = $thisNewValue;
 			}
