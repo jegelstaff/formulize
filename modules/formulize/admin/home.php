@@ -42,7 +42,7 @@ foreach($appObjects as $thisAppObject) {
 }
 $apps = readApplicationData(0,$apps); // lastly, get forms that don't have an application
 $showBigFormButton = false;
-if((!is_array($apps) OR count($apps) == 1) AND (!is_array($apps[1]['forms']) OR count($apps[1]['forms']) == 0)) {
+if((!is_array($apps) OR count($apps) == 1) AND (!is_array($apps[1]['content']['forms']) OR count($apps[1]['content']['forms']) == 0)) {
 	$showBigFormButton = true;
 }
 // refactoring possible to take advantage of simply gathering the applications and then interacting with the object in the template
