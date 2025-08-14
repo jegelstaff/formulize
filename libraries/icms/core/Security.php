@@ -64,17 +64,11 @@ class icms_core_Security {
 	 * @return string token value
 	 */
 	public function createToken($timeout = 0, $name = _CORE_TOKEN) {
+		global $xoopsUser;
 		$this->garbageCollection($name);
-		if ($timeout == 0) {
-			$timeout = $GLOBALS['icmsConfig']['session_expire'] * 60; //session_expire is in minutes, we need seconds
-		}
 		$token_id = hash('sha256',(uniqid(rand(), true)));
 		// save token data on the server
-		if (!isset($_SESSION[$name . '_SESSION'])) {
-			$_SESSION[$name . '_SESSION'] = array();
-		}
-		$token_data = array('id' => $token_id, 'expire' => time() + (int) ($timeout));
-		array_push($_SESSION[$name . '_SESSION'], $token_data);
+		touch(XOOPS_ROOT_PATH . '/temp/' . $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_' . $token_id);
 		return hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
 	}
 
@@ -89,26 +83,32 @@ class icms_core_Security {
 	 **/
 	public function validateToken($token = false, $clearIfValid = true, $name = _CORE_TOKEN) {
 		$token = ($token !== false) ? $token : ( isset($_REQUEST[$name . '_REQUEST']) ? $_REQUEST[$name . '_REQUEST'] : '' );
-		if (empty($token) || empty($_SESSION[$name . '_SESSION'])) {
+		if (empty($token)) {
 			icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENNOVALID);
 			return false;
 		}
+		global $xoopsUser;
 		$validFound = false;
-		$token_data =& $_SESSION[$name . '_SESSION'];
-		foreach (array_keys($token_data) as $i) {
-			if ($token === hash('sha256',($token_data[$i]['id'].$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX))) {
-				if ($this->filterToken($token_data[$i])) {
-					if ($clearIfValid AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
-						// token should be valid once, so clear it once validated -- but ignore ajax requests, reset tokens only on full page loads
-						unset($token_data[$i]);
-					}
-					icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENISVALID);
-					$validFound = true;
-				} else {
-					$str = _CORE_TOKENEXPIRED;
-					$this->setErrors($str);
-					icms::$logger->addExtra(_CORE_TOKENVALID, $str);
+		$tokenDir = XOOPS_ROOT_PATH . '/temp';
+		$targetTime = time() - (int) ($GLOBALS['icmsConfig']['session_expire'] * 60); // session_expire is in minutes, we need seconds
+		$userTokenFilesOfType = glob($tokenDir . '/' . $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_*');
+		foreach($userTokenFilesOfType as $tokenFileName) {
+			if (filemtime($tokenDir.'/'.$tokenFileName) < $targetTime) {
+				unlink($tokenDir.'/'.$tokenFileName);
+				$str = _CORE_TOKENEXPIRED;
+				$this->setErrors($str);
+				icms::$logger->addExtra(_CORE_TOKENVALID, $str);
+				continue; // skip expired tokens
+			}
+			$token_id = substr($tokenFileName, strrpos($tokenFileName, '_') + 1); // last part of the file name is the token_id
+			// check if the token is valid
+			if ($token === hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX))) {
+				if ($clearIfValid AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
+					// token should be valid once, so clear it once validated -- but ignore ajax requests, reset tokens only on full page loads
+					unlink($tokenDir.'/'.$tokenFileName);
 				}
+				icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENISVALID);
+				$validFound = true;
 			}
 		}
 		if (!$validFound) {
@@ -124,18 +124,11 @@ class icms_core_Security {
 	 * @param string $name session name
 	 **/
 	public function clearTokens($name = _CORE_TOKEN) {
-		$_SESSION[$name . '_SESSION'] = array();
-	}
+		global $xoopsUser; // INSTEAD OF XOOPSUSER WE HAVE TO USE SESSION ID?? BECAUSE OF ANON SESSIONS AND DUAL LOGINS IN DIFF BROWSERS, ETC??
+		$tokenDir = XOOPS_ROOT_PATH . '/temp';
+		$userTokenFilesOfType = glob($tokenDir . '/' . $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_*');
 
-	/**
-	 * Check whether a token value is expired or not
-	 *
-	 * @param string $token
-	 *
-	 * @return bool
-	 **/
-	public function filterToken($token) {
-		return (!empty($token['expire']) && $token['expire'] >= time());
+
 	}
 
 	/**
@@ -146,8 +139,20 @@ class icms_core_Security {
 	 * @return void
 	 **/
 	public function garbageCollection($name = _CORE_TOKEN) {
-		if (isset($_SESSION[$name . '_SESSION']) && count($_SESSION[$name . '_SESSION']) > 0 AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
-			$_SESSION[$name . '_SESSION'] = array_filter($_SESSION[$name . '_SESSION'], array($this, 'filterToken'));
+		if(empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
+			global $xoopsUser;
+			$tokenDir = XOOPS_ROOT_PATH . '/temp';
+			$tokenName = $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_';
+			$targetTime = time() - (int) ($GLOBALS['icmsConfig']['session_expire'] * 60); // session_expire is in minutes, we need seconds
+			$files = scandir($tokenDir, SCANDIR_SORT_ASCENDING);
+			foreach($files as $fileName) {
+				if(substr($fileName, 0, strlen($tokenName)) != $tokenName) {
+					continue;
+				}
+				if (filemtime($tokenDir.'/'.$fileName) < $targetTime) {
+					unlink($tokenDir.'/'.$fileName);
+				}
+			}
 		}
 	}
 	/**
