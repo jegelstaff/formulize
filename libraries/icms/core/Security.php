@@ -21,6 +21,7 @@
 class icms_core_Security {
 
 	public $errors = array();
+	private $tokenDir = XOOPS_ROOT_PATH . '/tokens'; // directory where token files are stored
 
 	/**
 	 * Initialize the icms::$security service
@@ -65,17 +66,13 @@ class icms_core_Security {
 	 */
 	public function createToken($timeout = 0, $name = _CORE_TOKEN) {
 		$this->garbageCollection($name);
-		if ($timeout == 0) {
-			$timeout = $GLOBALS['icmsConfig']['session_expire'] * 60; //session_expire is in minutes, we need seconds
-		}
+		$timeout = ($timeout == 0) ? (int) ($GLOBALS['icmsConfig']['session_expire'] * 60) : (int) $timeout; // session_expire is in minutes, we need seconds
+		$timeout = time() + $timeout;
 		$token_id = hash('sha256',(uniqid(rand(), true)));
 		// save token data on the server
-		if (!isset($_SESSION[$name . '_SESSION'])) {
-			$_SESSION[$name . '_SESSION'] = array();
-		}
-		$token_data = array('id' => $token_id, 'expire' => time() + (int) ($timeout));
-		array_push($_SESSION[$name . '_SESSION'], $token_data);
-		return hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
+		touch($this->tokenDir . '/' . $name . '_' . session_id() . '_' . $token_id . '_' . $timeout);
+		$token = hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
+		return $token;
 	}
 
 	/**
@@ -89,26 +86,34 @@ class icms_core_Security {
 	 **/
 	public function validateToken($token = false, $clearIfValid = true, $name = _CORE_TOKEN) {
 		$token = ($token !== false) ? $token : ( isset($_REQUEST[$name . '_REQUEST']) ? $_REQUEST[$name . '_REQUEST'] : '' );
-		if (empty($token) || empty($_SESSION[$name . '_SESSION'])) {
+		if (empty($token)) {
 			icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENNOVALID);
 			return false;
 		}
 		$validFound = false;
-		$token_data =& $_SESSION[$name . '_SESSION'];
-		foreach (array_keys($token_data) as $i) {
-			if ($token === hash('sha256',($token_data[$i]['id'].$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX))) {
-				if ($this->filterToken($token_data[$i])) {
-					if ($clearIfValid AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
-						// token should be valid once, so clear it once validated -- but ignore ajax requests, reset tokens only on full page loads
-						unset($token_data[$i]);
-					}
-					icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENISVALID);
-					$validFound = true;
-				} else {
-					$str = _CORE_TOKENEXPIRED;
-					$this->setErrors($str);
-					icms::$logger->addExtra(_CORE_TOKENVALID, $str);
+		$sessionTokenFilesOfType = glob($this->tokenDir . '/' . $name . '_' . session_id() . '_*');
+		foreach($sessionTokenFilesOfType as $tokenPathAndFileName) {
+			if($this->tokenExpired($tokenPathAndFileName)) {
+				unlink($tokenPathAndFileName);
+				$str = _CORE_TOKENEXPIRED;
+				$this->setErrors($str);
+				icms::$logger->addExtra(_CORE_TOKENVALID, $str);
+				continue; // skip expired tokens
+			}
+			// check if the token is valid
+			// isolate the second last part of the file name, which is the token id
+			$fileName = basename($tokenPathAndFileName);
+			$fileNameParts = explode('_', $fileName);
+			$token_id = $fileNameParts[count($fileNameParts) - 2];
+			// check if the token matches the expected value
+			if ($token === hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX))) {
+				if ($clearIfValid AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
+					// token should be valid once, so clear it once validated -- but ignore ajax requests, reset tokens only on full page loads
+					unlink($tokenPathAndFileName);
 				}
+				icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENISVALID);
+				$validFound = true;
+				break; // stop searching for a valid token
 			}
 		}
 		if (!$validFound) {
@@ -124,18 +129,10 @@ class icms_core_Security {
 	 * @param string $name session name
 	 **/
 	public function clearTokens($name = _CORE_TOKEN) {
-		$_SESSION[$name . '_SESSION'] = array();
-	}
-
-	/**
-	 * Check whether a token value is expired or not
-	 *
-	 * @param string $token
-	 *
-	 * @return bool
-	 **/
-	public function filterToken($token) {
-		return (!empty($token['expire']) && $token['expire'] >= time());
+		$sessionTokenFilesOfType = glob($this->tokenDir . '/' . $name . '_' . session_id() . '_*');
+		foreach($sessionTokenFilesOfType as $tokenPathAndFileName) {
+			unlink($tokenPathAndFileName);
+		}
 	}
 
 	/**
@@ -146,9 +143,29 @@ class icms_core_Security {
 	 * @return void
 	 **/
 	public function garbageCollection($name = _CORE_TOKEN) {
-		if (isset($_SESSION[$name . '_SESSION']) && count($_SESSION[$name . '_SESSION']) > 0 AND (empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest')) {
-			$_SESSION[$name . '_SESSION'] = array_filter($_SESSION[$name . '_SESSION'], array($this, 'filterToken'));
+		if(empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
+			$tokenFilesOfType = glob($this->tokenDir . '/' . $name . '_*');
+			foreach($tokenFilesOfType as $tokenPathAndFileName) {
+				if($this->tokenExpired($tokenPathAndFileName)) {
+					unlink($tokenPathAndFileName);
+				}
+			}
 		}
+	}
+	/**
+	 * Check if a token file has expired
+	 * @param string $tokenPathAndFileName path and file name of the token file to check
+	 * @return bool true if the token file has expired, false otherwise. Last part of the file name is the timeout.
+	 */
+	private function tokenExpired($tokenPathAndFileName) {
+		$expired = true;
+		$fileName = basename($tokenPathAndFileName);
+		// isolate the part of the filename after the last underscore
+		$timeout = substr($fileName, strrpos($fileName, '_') + 1);
+		if (is_numeric($timeout) AND $timeout > time()) {
+			$expired = false;
+		}
+		return $expired;
 	}
 	/**
 	 * Check the user agent's HTTP REFERER against ICMS_URL
