@@ -64,11 +64,10 @@ class icms_core_Security {
 	 * @return string token value
 	 */
 	public function createToken($timeout = 0, $name = _CORE_TOKEN) {
-		global $xoopsUser;
 		$this->garbageCollection($name);
 		$token_id = hash('sha256',(uniqid(rand(), true)));
 		// save token data on the server
-		touch(XOOPS_ROOT_PATH . '/temp/' . $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_' . $token_id);
+		touch(XOOPS_ROOT_PATH . '/temp/' . $name . '_' . session_id() . '_' . $token_id);
 		return hash('sha256',($token_id.$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX));
 	}
 
@@ -87,12 +86,11 @@ class icms_core_Security {
 			icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENNOVALID);
 			return false;
 		}
-		global $xoopsUser;
 		$validFound = false;
 		$tokenDir = XOOPS_ROOT_PATH . '/temp';
 		$targetTime = time() - (int) ($GLOBALS['icmsConfig']['session_expire'] * 60); // session_expire is in minutes, we need seconds
-		$userTokenFilesOfType = glob($tokenDir . '/' . $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_*');
-		foreach($userTokenFilesOfType as $tokenFileName) {
+		$sessionTokenFilesOfType = glob($tokenDir . '/' . $name . '_' . session_id() . '_*');
+		foreach($sessionTokenFilesOfType as $tokenFileName) {
 			if (filemtime($tokenDir.'/'.$tokenFileName) < $targetTime) {
 				unlink($tokenDir.'/'.$tokenFileName);
 				$str = _CORE_TOKENEXPIRED;
@@ -109,6 +107,7 @@ class icms_core_Security {
 				}
 				icms::$logger->addExtra(_CORE_TOKENVALID, _CORE_TOKENISVALID);
 				$validFound = true;
+				break; // stop searching for a valid token
 			}
 		}
 		if (!$validFound) {
@@ -124,11 +123,11 @@ class icms_core_Security {
 	 * @param string $name session name
 	 **/
 	public function clearTokens($name = _CORE_TOKEN) {
-		global $xoopsUser; // INSTEAD OF XOOPSUSER WE HAVE TO USE SESSION ID?? BECAUSE OF ANON SESSIONS AND DUAL LOGINS IN DIFF BROWSERS, ETC??
 		$tokenDir = XOOPS_ROOT_PATH . '/temp';
-		$userTokenFilesOfType = glob($tokenDir . '/' . $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_*');
-
-
+		$sessionTokenFilesOfType = glob($tokenDir . '/' . $name . '_' . session_id() . '_*');
+		foreach($sessionTokenFilesOfType as $tokenFileName) {
+			unlink($tokenDir.'/'.$tokenFileName);
+		}
 	}
 
 	/**
@@ -140,17 +139,12 @@ class icms_core_Security {
 	 **/
 	public function garbageCollection($name = _CORE_TOKEN) {
 		if(empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
-			global $xoopsUser;
 			$tokenDir = XOOPS_ROOT_PATH . '/temp';
-			$tokenName = $name . '_' . ($xoopsUser ? $xoopsUser->getVar('uid') : 0) . '_';
 			$targetTime = time() - (int) ($GLOBALS['icmsConfig']['session_expire'] * 60); // session_expire is in minutes, we need seconds
-			$files = scandir($tokenDir, SCANDIR_SORT_ASCENDING);
-			foreach($files as $fileName) {
-				if(substr($fileName, 0, strlen($tokenName)) != $tokenName) {
-					continue;
-				}
-				if (filemtime($tokenDir.'/'.$fileName) < $targetTime) {
-					unlink($tokenDir.'/'.$fileName);
+			$tokenFilesOfType = glob($tokenDir . '/' . $name . '_*');
+			foreach($tokenFilesOfType as $tokenFileName) {
+				if (filemtime($tokenDir.'/'.$tokenFileName) < $targetTime) {
+					unlink($tokenDir.'/'.$tokenFileName);
 				}
 			}
 		}
