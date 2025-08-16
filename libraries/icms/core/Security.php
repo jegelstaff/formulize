@@ -144,7 +144,6 @@ class icms_core_Security {
 	 **/
 	public function garbageCollection($name = _CORE_TOKEN) {
 		if(empty($_SERVER['HTTP_X_REQUESTED_WITH']) OR strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest') {
-			$targetTime = time() - (int) ($GLOBALS['icmsConfig']['session_expire'] * 60); // session_expire is in minutes, we need seconds
 			$tokenFilesOfType = glob($this->tokenDir . '/' . $name . '_*');
 			foreach($tokenFilesOfType as $tokenPathAndFileName) {
 				if($this->tokenExpired($tokenPathAndFileName)) {
