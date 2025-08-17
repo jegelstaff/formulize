@@ -1,0 +1,37 @@
+# .htaccess for .well-known OAuth endpoints
+# Handle OAuth discovery endpoints with proper routing
+
+RewriteEngine On
+
+# Handle oauth-protected-resource requests (with or without trailing path)
+RewriteRule ^oauth-protected-resource(/.*)?$ oauth-protected-resource/index.php [L,QSA]
+
+# Handle oauth-authorization-server requests (with or without trailing path)
+RewriteRule ^oauth-authorization-server(/.*)?$ oauth-authorization-server/index.php [L,QSA]
+
+# Handle jwks requests (with or without trailing path)
+RewriteRule ^jwks(/.*)?$ jwks/index.php [L,QSA]
+
+# Handle docs requests (with or without trailing path)
+RewriteRule ^docs(/.*)?$ docs/index.php [L,QSA]
+
+
+# Set proper content type for OAuth metadata
+<IfModule mod_headers.c>
+    Header always set Content-Type "application/json; charset=utf-8"
+    Header always set Cache-Control "no-cache, no-store, must-revalidate"
+    Header always set Access-Control-Allow-Origin "*"
+		Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+		Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Handle preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ - [R=200,L]
