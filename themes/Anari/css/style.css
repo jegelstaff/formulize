@@ -3097,10 +3097,6 @@ a.de-edit-icon:hover{
     transform: scale(1.35);
 }
 
-.timeEntry-control {
-    transform: scale(1.35);
-}
-
 .list-of-entries-title-and-currentview {
     display: flex;
     flex-direction: column;
