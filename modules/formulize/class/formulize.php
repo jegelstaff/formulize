@@ -32,7 +32,6 @@
 ###############################################################################
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
-
 #[AllowDynamicProperties]
 class FormulizeObject extends XoopsObject {
 
@@ -100,7 +99,6 @@ class FormulizeObject extends XoopsObject {
 	}
 
 }
-
 #[AllowDynamicProperties]
 class formulizeHandler {
 
@@ -168,6 +166,175 @@ class formulizeHandler {
 			'areamodif',
 			'ib'
 		);
+	}
+
+	/**
+	 * Builds or updates a form, including creating or renaming the data table, creating default screens, and setting up permissions
+	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
+	 * @param array $groupIdsThatCanEdit An array of group ids that should be given edit permissions on this form (only used when creating a new form)
+	 * @throws Exception if there are any problems creating or updating the form
+	 * @return object The form object that was created or updated
+	 */
+	public static function buildForm($formObjectProperties = array(), $groupIdsThatCanEditForm = array()) {
+
+		$fid = 0;
+		if(isset($formObjectProperties['fid'])) {
+			$fid = intval($formObjectProperties['fid']);
+		}
+		$formObject = new FormulizeObject($fid); // get the form object that we care about, or start a new one from scratch if fid is 0, null, etc.
+		$formIsNew = $formObject->getVar('fid') ? true : false;
+		$originalFormNames = array(
+    	'singular' => $formObject->getSingular(),
+    	'plural' => $formObject->getPlural(),
+			'form_handle' => $formObject->getVar('form_handle')
+  	);
+		foreach($formObjectProperties as $property=>$value) {
+  		$formObject->setVar($property, $value);
+		}
+		global $xoopsDB;
+		$form_handler = xoops_getModuleHandler('forms', 'formulize');
+		if(!$form_handler->insert($formObject)) {
+  		throw new Exception("Could not save the form properly: ".$xoopsDB->error());
+		}
+
+		// existing form, so we may need to rename data table and screens and code files if the handle or singular/plural names changed
+		if(!$formIsNew) {
+			$singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
+			if( $formObject->getVar( "form_handle" ) != $originalFormNames['form_handle']
+				AND !$renameResult = $form_handler->renameDataTable($originalFormNames['form_handle'], $formObject->getVar( "form_handle" ), $formObject)) {
+					throw new Exception("Could not rename the data table in the database.");
+			}
+			// update code files with this form handle
+			$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+			foreach($events as $event) {
+				$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$originalFormNames['form_handle'].'.php';
+				$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
+				if(file_exists($oldFileName)) {
+					rename($oldFileName, $newFileName);
+				}
+			}
+
+		// new form, so create the data table and default screens, and set up permissions
+		} else {
+			if(!$tableCreateRes = $form_handler->createDataTable($formObject->getVar('fid'))) {
+   			throw new Exception("Could not create the data table for new form");
+  		}
+			// create the default screens for this form
+			$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			$defaultFormScreen = $multiPageScreenHandler->create();
+			$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
+
+			if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
+				throw new Exception("Could not create default form screen");
+			}
+			$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+			$screen = $listScreenHandler->create();
+			$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
+			if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+				throw new Exception("Could not create default list screen");
+			}
+			$formObject->setVar('defaultform', $defaultFormScreenId);
+			$formObject->setVar('defaultlist', $defaultListScreenId);
+			if(!$form_handler->insert($formObject)) {
+				throw new Exception("Could not update form object with default screen ids: ".$xoopsDB->error());
+			}
+		  // add edit permissions for the selected groups, and view_form for Webmasters
+  		$gperm_handler = xoops_gethandler('groupperm');
+  		foreach($groupIdsThatCanEditForm as $thisGroupId) {
+				$gperm_handler->addRight('edit_form', $formObject->getVar('fid'), intval($thisGroupId), getFormulizeModId());
+			}
+			$gperm_handler->addRight('view_form', $formObject->getVar('fid'), XOOPS_GROUP_ADMIN, getFormulizeModId());
+		}
+
+		// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
+		if($formObject->getVar('store_revisions') AND !$form_handler->revisionsTableExists($formObject)) {
+			if(!$form_handler->createDataTable($fid, revisionsTable: true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
+				throw new Exception("Could not create the revision history table for the form");
+			}
+		}
+		return $formObject;
+	}
+
+	/**
+	 * Assigns a form to one or more applications, optionally creating a new application, and optionally creating menu links for the form in the applications
+	 * @param object $formObject The form object to assign to applications
+	 * @param array $applicationIds An array of existing application ids to assign this form to
+	 * @param array $newApplicationProperties An associative array of properties for a new application to create and assign this form to.  If empty, no new application will be created.
+	 * @param bool $createMenuLinksForApplications If true, menu links will be created for this form in the selected applications (and/or the new application if one is being created)
+	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form, and will be able to see the menu link for this form in the applications.  Only used if $createMenuLinksForApplications is true.
+	 * @throws Exception if there are any problems assigning the form to applications
+	 * @return mixed True if successful, or the new application id if a new application was created
+	 */
+	public static function assignFormToApplications($formObject, $applicationIds = array(), $newApplicationProperties = array(), $createMenuLinksForApplications = false, $groupIdsThatCanEditForm = array()) {
+
+		if(!is_a($formObject, 'formulizeForm') OR !$formObject->getVar('fid')) {
+			throw new Exception("Cannot assign a non-form to applications.");
+		}
+
+		global $xoopsDB;
+		$application_handler = xoops_getmodulehandler('applications','formulize');
+		$fid = $formObject->getVar('fid');
+		$newAppObject = null;
+		if(!empty($newApplicationProperties)) {
+			$newApplicationProperties['forms'] = serialize(array($fid));
+			$newAppObject = $application_handler->create();
+  		foreach($newApplicationProperties as $property=>$value) {
+    		$newAppObject->setVar($property, $value);
+			}
+  	  if(!$application_handler->insert($newAppObject)) {
+    		throw new Exception("Could not save the new application properly: ".$xoopsDB->error());
+  		}
+  		$applicationIds[] = $newAppObject->getVar('appid');
+		}
+
+		// get all the applcations that we're supposed to assign this form object to
+	  $selectedAppObjects = $application_handler->get($applicationIds);
+		// get the applications this form is currently assigned to
+		$assignedAppsForThisForm = $application_handler->getApplicationsByForm($fid);
+
+		$selectedAppIds = array();
+		// assign this form as required to the selected applications
+		foreach($selectedAppObjects as $thisAppObject) {
+			$selectedAppIds[] = $thisAppObject->getVar('appid');
+			$thisAppForms = $thisAppObject->getVar('forms');
+			if(!in_array($fid, $thisAppForms)) {
+				$thisAppForms[] = $fid;
+				$thisAppObject->setVar('forms', serialize($thisAppForms));
+				if(!$application_handler->insert($thisAppObject)) {
+					throw new Exception("Could not add the form to one of the applications properly: ".$xoopsDB->error());
+				}
+			}
+		}
+
+		// now remove the form from any applications it used to be assigned to, which were not selected
+		foreach($assignedAppsForThisForm as $assignedApp) {
+			if(!in_array($assignedApp->getVar('appid'), $selectedAppIds)){
+				// the form is no longer assigned to this app, so remove it from the apps form list
+				$assignedAppForms = $assignedApp->getVar('forms');
+				$key = array_search($fid, $assignedAppForms);
+				unset($assignedAppForms[$key]);
+				sort($assignedAppForms); // resets all the keys so there's no gaps
+				$assignedApp->setVar('forms',serialize($assignedAppForms));
+				if(!$application_handler->insert($assignedApp)) {
+					throw new Exception("Could not update one of the applications this form used to be assigned to, so that it's not assigned anymore.");
+				}
+			}
+		}
+
+		if($createMenuLinksForApplications AND !empty($groupIdsThatCanEditForm)) {
+			$menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
+			$menuitems = "null::" . formulize_db_escape($menuLinkText) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$groupIdsThatCanEditForm)."::null";
+			if(!empty($selectedAppIds)) {
+				foreach($selectedAppIds as $appid) {
+					$application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems);
+				}
+			} else {
+				$application_handler->insertMenuLink(0, $menuitems);
+			}
+		}
+
+		return is_object($newAppObject) ? $newAppObject->getVar('appid') : true;
+
 	}
 
 }
