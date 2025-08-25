@@ -78,3 +78,19 @@ if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/language/".$xoopsConfig['l
 formulize_handleHtaccessRewriteRule();
 
 $GLOBALS['formulize_subformInstance'] = 100;
+
+function formulize_exception_handler($exception) {
+	global $xoopsUser;
+	error_log($exception->getMessage());
+	writeToFormulizeLog(array(
+		'PHP_error_number' => $exception->getCode(),
+		'PHP_error_string' => $exception->getMessage(),
+		'PHP_error_file' => $exception->getFile(),
+		'PHP_error_errline' => $exception->getLine()
+	));
+	echo "<h1>There was an error when preparing this page:</h1><blockquote>".$exception->getMessage()."</blockquote><p>We apologize for the inconvenience. This error has been logged. Please advise a webmaster of what actions preceded this event.</p>";
+	include XOOPS_ROOT_PATH.'/footer.php';
+	exit;
+}
+
+set_exception_handler('formulize_exception_handler');

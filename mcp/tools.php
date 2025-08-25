@@ -261,7 +261,7 @@ Examples:
 					'properties' => (object)[]
 				],
 			]
-		];
+		] + $this->buildFormCreationTools();
 
 		// only webmasters can access certain tools
 		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
@@ -1225,6 +1225,240 @@ private function validateFilter($filter) {
 
 			// No semicolon found, return the whole string
 			return trim($sql);
+	}
+
+	/**
+	 * Build form creation tools with dynamic element type discovery
+	 * @return array Array of form creation tools
+	 */
+	private function buildFormCreationTools()
+	{
+		return [
+			'create_form' => $this->buildCreateFormTool(),
+			'create_form_element' => $this->buildCreateFormElementTool()
+		];
+	}
+
+	/**
+	 * Build the create_form tool schema
+	 * @return array Tool schema for creating forms
+	 */
+	private function buildCreateFormTool()
+	{
+		return [
+			'name' => 'create_form',
+			'description' => 'Create a new form in Formulize. This creates the basic form structure only. After creating a form, use the create_form_element tool to add elements (fields) to the form. Elements are the individual input fields like textboxes, dropdowns, checkboxes, etc. that users will fill out.',
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'form_title' => [
+						'type' => 'string',
+						'description' => 'Required. The display title of the form'
+					],
+					'form_handle' => [
+						'type' => 'string',
+						'description' => 'Optional. Internal database handle for the form. If not provided, will be auto-generated from the title. Must be unique and contain only letters, numbers, and underscores.'
+					],
+					'singular' => [
+						'type' => 'string',
+						'description' => 'Optional. Singular name for entries in this form (e.g., \'Activity\', \'Contact\'). If not provided, will be derived from form title.'
+					],
+					'plural' => [
+						'type' => 'string',
+						'description' => 'Optional. Plural name for entries in this form (e.g., \'Activities\', \'Contacts\'). If not provided, will be derived from singular or form title.'
+					],
+					'menutext' => [
+						'type' => 'string',
+						'description' => 'Optional. Text to display in navigation menus. If not provided, will use form title.'
+					],
+					'single_entry' => [
+						'type' => 'string',
+						'enum' => ['off', 'user', 'group'],
+						'description' => 'Optional. Entry limitation: \'off\' = unlimited entries per user (default), \'user\' = one entry per user, \'group\' = one entry per group'
+					],
+					'application_id' => [
+						'type' => 'integer',
+						'description' => 'Optional. ID of the application to assign this form to. Applications are collections of related forms.'
+					]
+				],
+				'required' => ['form_title']
+			]
+		];
+	}
+
+	/**
+	 * Build the create_form_element tool schema with dynamic element discovery
+	 * @return array Tool schema for creating form elements
+	 */
+	private function buildCreateFormElementTool()
+	{
+		// Discover available element types and their descriptions
+		[$elementTypes, $elementDescriptions] = $this->discoverElementTypes();
+
+		// Build comprehensive description with examples from all element types
+		$description = "Create a new element (input field) in a Formulize form. Elements have different properties depending on their type.\n\n";
+		$description .= "Available element types and examples:\n\n";
+		$description .= implode("\n\n", $elementDescriptions);
+
+		return [
+			'name' => 'create_form_element',
+			'description' => $description,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'form_id' => [
+						'type' => 'integer',
+						'description' => 'Required. ID of the form to add this element to'
+					],
+					'element_type' => [
+						'type' => 'string',
+						'enum' => $elementTypes,
+						'description' => 'Required. Type of form element to create'
+					],
+					'caption' => [
+						'type' => 'string',
+						'description' => 'Required. Display label for this element'
+					],
+					'handle' => [
+						'type' => 'string',
+						'description' => 'Optional. Internal database handle for this element. If not provided, will be auto-generated from caption. Must be unique within the form and contain only letters, numbers, and underscores.'
+					],
+					'description' => [
+						'type' => 'string',
+						'description' => 'Optional. Descriptive help text to display with this element'
+					],
+					'required' => [
+						'type' => 'boolean',
+						'description' => 'Optional. Whether this element is required. Default is false.'
+					],
+					'column_header' => [
+						'type' => 'string',
+						'description' => 'Optional. Shorter text to use in column headers when displaying data in lists'
+					],
+					'properties' => [
+						'type' => 'object',
+						'description' => 'Element-specific properties. The contents depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
+						'additionalProperties' => true
+					]
+				],
+				'required' => ['form_id', 'element_type', 'caption']
+			]
+		];
+	}
+
+	/**
+	 * Discover available element types and their MCP descriptions
+	 * @return array [elementTypes array, elementDescriptions array]
+	 */
+	private function discoverElementTypes()
+	{
+		$elementTypes = [];
+		$elementDescriptions = [];
+
+		// Scan for element class files
+		$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
+		$elementFiles = glob($elementClassPath . '/*Element.php');
+
+		foreach ($elementFiles as $file) {
+			$className = $this->getElementClassName($file);
+			
+			// Skip if class doesn't exist or doesn't have MCP description
+			if (!class_exists($className)) {
+				continue;
+			}
+
+			// Check if class has MCP description property
+			if (property_exists($className, 'mcpElementPropertiesDescription')) {
+				$elementType = $this->extractElementTypeFromClassName($className);
+				$elementTypes[] = $elementType;
+				$elementDescriptions[] = $className::$mcpElementPropertiesDescription;
+			}
+		}
+
+		// Fallback to core element types if no classes found with MCP descriptions
+		if (empty($elementTypes)) {
+			$elementTypes = $this->getFallbackElementTypes();
+			$elementDescriptions = $this->getFallbackElementDescriptions();
+		}
+
+		return [$elementTypes, $elementDescriptions];
+	}
+
+	/**
+	 * Extract class name from element file path
+	 * @param string $filePath Path to element class file
+	 * @return string Class name
+	 */
+	private function getElementClassName($filePath)
+	{
+		$filename = basename($filePath, '.php');
+		// Convert filename like 'textElement' to 'formulizeTextElement'
+		return 'formulize' . ucfirst($filename);
+	}
+
+	/**
+	 * Extract element type from class name
+	 * @param string $className Full class name like 'formulizeTextElement'
+	 * @return string Element type like 'text'
+	 */
+	private function extractElementTypeFromClassName($className)
+	{
+		// Remove 'formulize' prefix and 'Element' suffix, then lowercase
+		$type = str_replace(['formulize', 'Element'], '', $className);
+		return strtolower($type);
+	}
+
+	/**
+	 * Get fallback element types when no MCP-enabled classes are found
+	 * @return array Basic element types
+	 */
+	private function getFallbackElementTypes()
+	{
+		return [
+			'text', 'textarea', 'select', 'radio', 'checkbox', 
+			'date', 'time', 'yn', 'email', 'phone'
+		];
+	}
+
+	/**
+	 * Get fallback element descriptions when no MCP-enabled classes are found
+	 * @return array Basic element descriptions
+	 */
+	private function getFallbackElementDescriptions()
+	{
+		return [
+			'Example for text element:\n{\n  "form_id": 5,\n  "element_type": "text",\n  "caption": "Activity Name",\n  "handle": "activity_name",\n  "required": true,\n  "properties": {\n    "width": 30,\n    "max_length": 255,\n    "default_value": ""\n  }\n}',
+			'Example for select element:\n{\n  "form_id": 5,\n  "element_type": "select",\n  "caption": "Priority Level",\n  "handle": "priority",\n  "required": true,\n  "properties": {\n    "options": ["Low", "Medium", "High", "Critical"],\n    "default_selection": "Medium"\n  }\n}',
+			'Example for checkbox element:\n{\n  "form_id": 5,\n  "element_type": "checkbox",\n  "caption": "Categories",\n  "handle": "categories",\n  "required": false,\n  "properties": {\n    "options": ["Work", "Personal", "Health", "Education"],\n    "default_selections": ["Work"]\n  }\n}'
+		];
+	}
+
+	/**
+	 * Create a new form in Formulize
+	 * @param array $arguments Form creation parameters
+	 * @return array Result of form creation
+	 */
+	private function create_form($arguments)
+	{
+		// Implementation will be added separately
+		throw new FormulizeMCPException(
+			'create_form tool implementation pending',
+			'not_implemented'
+		);
+	}
+
+	/**
+	 * Create a new element in a Formulize form
+	 * @param array $arguments Element creation parameters
+	 * @return array Result of element creation
+	 */
+	private function create_form_element($arguments)
+	{
+		// Implementation will be added separately
+		throw new FormulizeMCPException(
+			'create_form_element tool implementation pending',
+			'not_implemented'
+		);
 	}
 
 }

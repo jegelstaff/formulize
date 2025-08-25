@@ -247,6 +247,12 @@ class formulizeForm extends FormulizeObject {
         if ("form_handle" == $key) {
             $value = self::sanitize_handle_name($value);
         }
+				if("id_form" == $key) {
+					parent::setVar("fid", $value, $not_gpc);
+				}
+				if("fid" == $key) {
+					parent::setVar("id_form", $value, $not_gpc);
+				}
         parent::setVar($key, $value, $not_gpc);
         if ("on_before_save" == $key) {
             $this->cache_on_before_save_code();
@@ -836,6 +842,7 @@ class formulizeFormsHandler {
 					$id_form = $this->db->getInsertId();
 				}
 				$formObject->assignVar('id_form', $id_form);
+				$formObject->assignVar('fid', $id_form);
 
 				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
 					$formObject->setVar('form_handle', $id_form);
