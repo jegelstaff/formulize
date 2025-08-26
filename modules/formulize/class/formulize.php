@@ -169,13 +169,13 @@ class formulizeHandler {
 	}
 
 	/**
-	 * Builds or updates a form, including creating or renaming the data table, creating default screens, and setting up permissions
+	 * Builds or updates a form, including creating or renaming the data table, creating default screens, and setting up permissions, renaming resources...
 	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
 	 * @param array $groupIdsThatCanEdit An array of group ids that should be given edit permissions on this form (only used when creating a new form)
 	 * @throws Exception if there are any problems creating or updating the form
 	 * @return object The form object that was created or updated
 	 */
-	public static function buildForm($formObjectProperties = array(), $groupIdsThatCanEditForm = array()) {
+	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array()) {
 
 		$fid = 0;
 		if(isset($formObjectProperties['fid'])) {
@@ -191,68 +191,23 @@ class formulizeHandler {
 		foreach($formObjectProperties as $property=>$value) {
   		$formObject->setVar($property, $value);
 		}
-		global $xoopsDB;
 		$form_handler = xoops_getModuleHandler('forms', 'formulize');
-		if(!$form_handler->insert($formObject)) {
+		if($formIsNew == false) {
+			$singularPluralChanged = $form_handler->renameFormResources($formObject, $originalFormNames);
+		}
+		global $xoopsDB;
+		if(!$form_handler->insert($formObject)) { // object passed by reference, so it will update the fid var on object if it was a new form
   		throw new Exception("Could not save the form properly: ".$xoopsDB->error());
 		}
-
-		// existing form, so we may need to rename data table and screens and code files if the handle or singular/plural names changed
-		if(!$formIsNew) {
-			$singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
-			if( $formObject->getVar( "form_handle" ) != $originalFormNames['form_handle']
-				AND !$renameResult = $form_handler->renameDataTable($originalFormNames['form_handle'], $formObject->getVar( "form_handle" ), $formObject)) {
-					throw new Exception("Could not rename the data table in the database.");
-			}
-			// update code files with this form handle
-			$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
-			foreach($events as $event) {
-				$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$originalFormNames['form_handle'].'.php';
-				$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
-				if(file_exists($oldFileName)) {
-					rename($oldFileName, $newFileName);
-				}
-			}
-
-		// new form, so create the data table and default screens, and set up permissions
-		} else {
-			if(!$tableCreateRes = $form_handler->createDataTable($formObject->getVar('fid'))) {
-   			throw new Exception("Could not create the data table for new form");
-  		}
-			// create the default screens for this form
-			$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-			$defaultFormScreen = $multiPageScreenHandler->create();
-			$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
-
-			if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
-				throw new Exception("Could not create default form screen");
-			}
-			$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-			$screen = $listScreenHandler->create();
-			$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
-			if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
-				throw new Exception("Could not create default list screen");
-			}
-			$formObject->setVar('defaultform', $defaultFormScreenId);
-			$formObject->setVar('defaultlist', $defaultListScreenId);
-			if(!$form_handler->insert($formObject)) {
-				throw new Exception("Could not update form object with default screen ids: ".$xoopsDB->error());
-			}
-		  // add edit permissions for the selected groups, and view_form for Webmasters
-  		$gperm_handler = xoops_gethandler('groupperm');
-  		foreach($groupIdsThatCanEditForm as $thisGroupId) {
+		if($formIsNew) {
+			// add edit permissions for the selected groups, and view_form for Webmasters
+			$gperm_handler = xoops_gethandler('groupperm');
+			foreach($groupIdsThatCanEditForm as $thisGroupId) {
 				$gperm_handler->addRight('edit_form', $formObject->getVar('fid'), intval($thisGroupId), getFormulizeModId());
 			}
 			$gperm_handler->addRight('view_form', $formObject->getVar('fid'), XOOPS_GROUP_ADMIN, getFormulizeModId());
 		}
-
-		// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
-		if($formObject->getVar('store_revisions') AND !$form_handler->revisionsTableExists($formObject)) {
-			if(!$form_handler->createDataTable($fid, revisionsTable: true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
-				throw new Exception("Could not create the revision history table for the form");
-			}
-		}
-		return $formObject;
+		return true;
 	}
 
 	/**

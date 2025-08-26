@@ -800,39 +800,61 @@ class formulizeFormsHandler {
 						break;
 				}
 
-                if($formObject->isNew() || empty($id_form)) {
-                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
-                        $this->db->quoteString($title).", ".
-                        $this->db->quoteString($singular).", ".
-                        $this->db->quoteString($plural).", ".
-												$this->db->quoteString($singleToWrite).", ".
-                        $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
-                        ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
-                } else {
-                    $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
-                        " `form_title` = ".$this->db->quoteString($title).
-												", `singular` = ".$this->db->quoteString($singular).
-												", `plural` = ".$this->db->quoteString($plural).
-                        ", `singleentry` = ".$this->db->quoteString($singleToWrite).
-                        ", `headerlist` = ".$this->db->quoteString($headerlist).
-                        ", `defaultform` = ".intval($defaultform).
-                        ", `defaultlist` = ".intval($defaultlist).
-                        ", `menutext` = ".$this->db->quoteString($menutext).
-                        ", `form_handle` = ".$this->db->quoteString($form_handle).
-                        ", `store_revisions` = ".intval($store_revisions).
-                        ", `note` = ".$this->db->quoteString($note).
-                        ", `send_digests` = ".intval($send_digests).
-												", `pi` = ".intval($pi).
-                        " WHERE id_form = ".intval($id_form);
-                }
+				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
+					$formObject->setVar('form_handle', $id_form);
+				}
 
-                if (false != $force) {
-                    $result = $this->db->queryF($sql);
-                } else{
-                    $result = $this->db->query($sql);
-                }
+				if($formObject->isNew() || empty($id_form)) {
+
+					// create the default screens for this form
+					$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+					$defaultFormScreen = $multiPageScreenHandler->create();
+					$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
+
+					if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
+						throw new Exception("Could not create default form screen");
+					}
+					$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+					$screen = $listScreenHandler->create();
+					$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
+					if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+						throw new Exception("Could not create default list screen");
+					}
+					$formObject->setVar('defaultform', $defaultFormScreenId);
+					$formObject->setVar('defaultlist', $defaultListScreenId);
+
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
+							"`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
+							$this->db->quoteString($title).", ".
+							$this->db->quoteString($singular).", ".
+							$this->db->quoteString($plural).", ".
+							$this->db->quoteString($singleToWrite).", ".
+							$this->db->quoteString($tableform).", ".intval($defaultFormScreenId).", ".intval($defaultListScreenId).
+							", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
+							intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
+				} else {
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
+							" `form_title` = ".$this->db->quoteString($title).
+							", `singular` = ".$this->db->quoteString($singular).
+							", `plural` = ".$this->db->quoteString($plural).
+							", `singleentry` = ".$this->db->quoteString($singleToWrite).
+							", `headerlist` = ".$this->db->quoteString($headerlist).
+							", `defaultform` = ".intval($defaultform).
+							", `defaultlist` = ".intval($defaultlist).
+							", `menutext` = ".$this->db->quoteString($menutext).
+							", `form_handle` = ".$this->db->quoteString($form_handle).
+							", `store_revisions` = ".intval($store_revisions).
+							", `note` = ".$this->db->quoteString($note).
+							", `send_digests` = ".intval($send_digests).
+							", `pi` = ".intval($pi).
+							" WHERE id_form = ".intval($id_form);
+				}
+
+				if (false != $force) {
+						$result = $this->db->queryF($sql);
+				} else{
+						$result = $this->db->query($sql);
+				}
 
 				if( !$result ){
 					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$this->db->error();
@@ -840,13 +862,18 @@ class formulizeFormsHandler {
 				}
 				if( empty($id_form) ){
 					$id_form = $this->db->getInsertId();
+					if(!$tableCreateRes = $this->createDataTable($id_form)) {
+						throw new Exception("Could not create the data table for new form");
+					}
 				}
 				$formObject->assignVar('id_form', $id_form);
 				$formObject->assignVar('fid', $id_form);
 
-				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
-					$formObject->setVar('form_handle', $id_form);
-					$this->insert($formObject, $force);
+				// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
+				if($formObject->getVar('store_revisions') AND !$this->revisionsTableExists($formObject)) {
+					if(!$this->createDataTable($id_form, revisionsTable: true)) { // 0 is the id of a form we're cloning
+						throw new Exception("Could not create the revision history table for the form");
+					}
 				}
 
 				$procedures = array(
@@ -872,10 +899,10 @@ class formulizeFormsHandler {
 	/**
 	 * Check if a form's Singular or Plural values have changed, and rename any screens and menu links involved if their titles match exactly the changed name
 	 * @param object formObject - The object representation of the form we're working with. Will include the new names as the singular and plural.
-	 * @param array originalFormNames - An array with two keys, singular and plural, which contain the old names that potentially need replacing
+	 * @param array originalFormNames - An array with three keys, singular, plural, form_handle, which contain the old names that potentially need replacing
 	 * @return boolean Returns true if queries succeeded, or false if one or more failed.
 	 */
-	function renameScreensAndMenuLinks($formObject, $originalFormNames) {
+	function renameFormResources($formObject, $originalFormNames) {
 		global $xoopsDB;
 		$result = null;
 		$namesNeedingReplacement = array();
@@ -903,6 +930,20 @@ class formulizeFormsHandler {
 			if(!$res = $xoopsDB->query($sql)) {
 				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
 				$result = false;
+			}
+		}
+		if( $formObject->getVar( "form_handle" ) != $originalFormNames['form_handle'] ) {
+			if(!$renameResult = $this->renameDataTable($originalFormNames['form_handle'], $formObject->getVar( "form_handle" ), $formObject)) {
+				throw new Exception("Could not rename the data table in the database.");
+			}
+			// update code files with this form handle
+			$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+			foreach($events as $event) {
+				$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$originalFormNames['form_handle'].'.php';
+				$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
+				if(file_exists($oldFileName)) {
+					rename($oldFileName, $newFileName);
+				}
 			}
 		}
 		return $result;
