@@ -47,7 +47,8 @@ if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->get($fid);
   $originalFormNames = array(
     'singular' => $formObject->getSingular(),
-    'plural' => $formObject->getPlural()
+    'plural' => $formObject->getPlural(),
+		'form_handle' => $formObject->getVar('form_handle')
   );
 }
 
@@ -108,37 +109,8 @@ $fid = $formObject->getVar('id_form');
 $formObject->setVar('fid', $fid);
 
 if($_POST['formulize_admin_key'] != 'new') {
-  $singularPluralChanged = $form_handler->renameScreensAndMenuLinks($formObject, $originalFormNames);
-}
-
-if($_POST['formulize_admin_key'] == "new") {
-
-  if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
-    print "Error: could not create data table for new form";
-  }
-  global $xoopsDB;
-
-  // create the default screens for this form
-  $multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-  $defaultFormScreen = $multiPageScreenHandler->create();
-  $multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
-
-  if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
-    print "Error: could not create default form screen";
-  }
-  $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-    $screen = $listScreenHandler->create();
-    $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
-
-  if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
-    print "Error: could not create default list screen";
-  }
-
-  $formObject->setVar('defaultform', $defaultFormScreenId);
-  $formObject->setVar('defaultlist', $defaultListScreenId);
-  if(!$form_handler->insert($formObject)) {
-    print "Error: could not update form object with default screen ids: ".$xoopsDB->error();
-  }
+  $singularPluralChanged = $form_handler->renameFormResources($formObject, $originalFormNames);
+} else {
   // add edit permissions for the selected groups, and view_form for Webmasters
   $gperm_handler = xoops_gethandler('groupperm');
   $selectedAdminGroupIdsForMenu = array();
@@ -147,21 +119,6 @@ if($_POST['formulize_admin_key'] == "new") {
     $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
   }
 	$gperm_handler->addRight('view_form', $fid, XOOPS_GROUP_ADMIN, getFormulizeModId());
-
-} else if( $old_form_handle && $formObject->getVar( "form_handle" ) != $old_form_handle ) {
-  //print "rename from $old_form_handle to " . $formObject->getVar( "form_handle" );
-  if(!$renameResult = $form_handler->renameDataTable($old_form_handle, $formObject->getVar( "form_handle" ), $formObject)) {
-   exit("Error: could not rename the data table in the database.");
-  }
-	// update code files with this form handle
-	$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
-	foreach($events as $event) {
-		$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$old_form_handle.'.php';
-		$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
-		if(file_exists($oldFileName)) {
-			rename($oldFileName, $newFileName);
-		}
-	}
 }
 
 $selectedAppIds = array();
@@ -212,13 +169,6 @@ foreach($assignedAppsForThisForm as $assignedApp) {
 if(isset($_POST['forms-tableform'])) {
   if(!$form_handler->createTableFormElements($_POST['forms-tableform'], $fid)) {
     print "Error: could not create all the placeholder elements for the tableform";
-  }
-}
-
-// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
-if(isset($_POST['forms-store_revisions']) AND $_POST['forms-store_revisions'] AND !$form_handler->revisionsTableExists($formObject)) {
-  if(!$form_handler->createDataTable($fid, revisionsTable: true)) { // 0 is the id of a form we're cloning, array() is the map of old elements to new elements when cloning so n/a here, true is the flag for making a revisions table
-    print "Error: could not create the revision history table for the form";
   }
 }
 
