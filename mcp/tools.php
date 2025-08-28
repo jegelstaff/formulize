@@ -292,13 +292,13 @@ Examples:
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
-						'name' => [
+						'title' => [
 							'type' => 'string',
 							'description' => 'Required. The name of the form as it will appear in Formulize to users.'
 						],
 						'notes' => [
 							'type' => 'string',
-							'description' => 'Optional. Internal notes about the form, not visible to end users.'
+							'description' => 'Optional. Internal notes about the form for use by webmasters, not visible to end users.'
 						],
 						'limit_entries' => [
 							'type' => 'string',
@@ -307,7 +307,7 @@ Examples:
 						],
 						'application_id_or_name' => [
 							'type' => ['string', 'integer'],
-							'description' => 'Optional. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
+							'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
 						]
 					],
 					'required' => ['name']
@@ -526,15 +526,24 @@ Examples:
 		return $connectionInfo;
 	}
 
+	/**
+	 * Create a new form with basic configuration
+	 * @param array $arguments An associative array containing the parameters for creating a new form.
+	 * - 'name': The name of the form (required).
+	 * - 'notes': Optional internal notes about the form.
+	 * - 'limit_entries': Optional. Limits how many entries are permitted in the form: 'off' = unlimited entries per user (default), 'user' = one entry per user, 'group' = one entry per group.
+	 * - 'application_id_or_name': Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.
+	 * @return array An associative array containing details about the newly created form, including its ID, name, handle, limit entries setting, default screen IDs, associated application IDs, success status, and message.
+	 * @throws formulizeMCPException If there is an error creating the form or if required parameters are missing or invalid.
+	 */
 	private function create_form($arguments) {
-		global $xoopsUser;
 
-		$name = trim($arguments['name'] ?? '');
+		$title = trim($arguments['title'] ?? '');
 		$notes = trim($arguments['notes'] ?? '');
 		$limit_entries = $arguments['limit_entries'] ?? 'off';
 		$application_id_or_name = $arguments['application_id_or_name'] ?? '';
 
-		if(empty($name)) {
+		if(empty($title)) {
 			throw new FormulizeMCPException('Form name is required', 'invalid_data');
 		}
 
@@ -548,7 +557,7 @@ Examples:
 			$applicationIds = [0]; // default to no application
 			if(is_numeric($application_id_or_name)) {
 				$applicationIds = array(intval($application_id_or_name));
-			} else {
+			} elseif(is_string($application_id_or_name) AND !empty($application_id_or_name)) {
 				$application_handler = xoops_getmodulehandler('applications','formulize');
 				$newAppObject = $application_handler->create();
 				$newAppObject->setVar('name', $application_id_or_name);
@@ -560,14 +569,15 @@ Examples:
 				}
 			}
 
-			// prepare form data
+			// prepare form data, keys consistent with the formulizeForm object
 			$formData = [
-				'title' => $name,
+				'title' => $title,
 				'single' => $limit_entries,
 				'note' => $notes
 			];
 
-			list($fid, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($formData, array(XOOPS_GROUP_ADMIN), $applicationIds);
+			$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
+			list($fid, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
 
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'database_error');
@@ -575,9 +585,10 @@ Examples:
 
 		$form_handler = xoops_getModuleHandler('forms', 'formulize');
 		$formObject = $form_handler->get($fid);
+		// could/should reuse get_form_details ??
 		return [
 			'form_id' => $fid,
-			'form_name' => $formObject->getVar('title'),
+			'title' => $formObject->getVar('title'),
 			'singular' => $formObject->getSingular(),
 			'plural' => $formObject->getPlural(),
 			'form_handle' => $formObject->getVar('form_handle'),
