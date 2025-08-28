@@ -256,7 +256,7 @@ class formulizeScreenHandler {
 	 * Returns an array of screen objects for a given form
 	 * @param mixed $formObjectOrIdentifier Either a formulizeForm object or a form identifier (id or handle)
 	 * @throws Exception if the form identifier is invalid or if there are problems retrieving the screens
-	 * @return array An array of formulizeScreen objects
+	 * @return array An array of formulizeScreen objects, keyed by screen id
 	 */
 	function getScreensForForm($formObjectOrIdentifier) {
 		if (!is_a($formObjectOrIdentifier, 'formulizeForm')) {
@@ -284,7 +284,7 @@ class formulizeScreenHandler {
 		return $screens;
 	}
 
-	function get($sid_or_screen_handle, $fid=0) {
+	function get($sid_or_screen_handle) {
 		if (is_numeric($sid_or_screen_handle)) {
 			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.intval($sid_or_screen_handle);
 		} else {
