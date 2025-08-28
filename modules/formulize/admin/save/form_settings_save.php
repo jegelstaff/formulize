@@ -38,13 +38,14 @@ if(!isset($processedValues)) {
 $form_handler = xoops_getmodulehandler('forms','formulize');
 $application_handler = xoops_getmodulehandler('applications','formulize');
 $newAppObject = false;
-$selectedAppObjects = array();
 if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->create();
+	$fid = 0;
 } else {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
 }
+$processedValues['forms']['fid'] = $fid;
 
 // Check if the form is locked down
 if($formObject->getVar('lockedform')) {
@@ -52,7 +53,7 @@ if($formObject->getVar('lockedform')) {
 }
 
 // check if the user has permission to edit the form
-if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid) AND $_POST['formulize_admin_key'] != "new") {
+if($_POST['formulize_admin_key'] != "new" AND !$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
@@ -73,6 +74,7 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
     ? "*=+*:".implode("*=+*:",$_POST['headerlist']) : "";
 
 // form_handle cannot have any period, strip all of the periods out
+$formulize_altered_form_handle = false;
 $form_handle_from_ui = $processedValues['forms']['form_handle'];
 $corrected_form_handle = formulizeForm::sanitize_handle_name($form_handle_from_ui);
 if (strlen($corrected_form_handle)) {
@@ -89,12 +91,9 @@ if($corrected_form_handle != $form_handle_from_ui) {
   $processedValues['forms']['form_handle'] = $corrected_form_handle;
 }
 
-// form_handle can not be blank, default to form id if blank
-if( $processedValues['forms']['form_handle'] == "" ) {
-  $processedValues['forms']['form_handle'] = $fid;
-}
-
-formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN), (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0));
+$applicationIds = (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0);
+$groupsCanEdit = (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN);
+list($fid, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds);
 
 // if we're making a new table form, then synch the "elements" for the form with the target table
 if(isset($_POST['forms-tableform'])) {
@@ -103,10 +102,10 @@ if(isset($_POST['forms-tableform'])) {
   }
 }
 
-// if the form name was changed, then force a reload of the page...reload will be the application id
-if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $selectedAppIds))) {
-  if(!in_array($_POST['application_url_id'], $selectedAppIds)) {
-    $appidToUse = intval($selectedAppIds[0]);
+// if the form name was changed, etc, then force a reload of the page...
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
+  if(!in_array($_POST['application_url_id'], $applicationIds)) {
+    $appidToUse = count($applicationIds) > 0 ? intval($applicationIds[0]) : 0;
   } else {
     $appidToUse = intval($_POST['application_url_id']);
   }

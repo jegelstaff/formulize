@@ -805,10 +805,10 @@ class formulizeFormsHandler {
 				}
 
 				if( $form_handle == "" ){
-					$candidateFormHandle = $id_form;
+					$candidateFormHandle = FormulizeObject::sanitize_handle_name($title);
 					$uniqueNumber = 0;
 					while($this->isFormHandleUnique($candidateFormHandle) == false) {
-						$candidateFormHandle = $id_form."_$uniqueNumber";
+						$candidateFormHandle = FormulizeObject::sanitize_handle_name($title)."_$uniqueNumber";
 						$uniqueNumber++;
 					}
 					$formObject->setVar('form_handle', $candidateFormHandle);
