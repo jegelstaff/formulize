@@ -804,8 +804,14 @@ class formulizeFormsHandler {
 						break;
 				}
 
-				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
-					$formObject->setVar('form_handle', $id_form);
+				if( $form_handle == "" ){
+					$candidateFormHandle = $id_form;
+					$uniqueNumber = 0;
+					while($this->isFormHandleUnique($candidateFormHandle) == false) {
+						$candidateFormHandle = $id_form."_$uniqueNumber";
+						$uniqueNumber++;
+					}
+					$formObject->setVar('form_handle', $candidateFormHandle);
 				}
 
 				if($formObject->isNew() || empty($id_form)) {
