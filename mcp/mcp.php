@@ -36,8 +36,67 @@ class FormulizeMCP
 	public $baseUrl;
 	private $mcpRequest = array();
 
+	private function logDebug() {
+		    $debugData = [
+        'timestamp' => date('Y-m-d H:i:s'),
+        'method' => $_SERVER['REQUEST_METHOD'],
+        'uri' => $_SERVER['REQUEST_URI'],
+        'query_string' => $_SERVER['QUERY_STRING'] ?? '',
+        'headers' => [],
+        'get_params' => $_GET,
+        'post_params' => $_POST,
+        'raw_input' => file_get_contents('php://input'),
+        'server_vars' => [
+            'HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? '',
+            'HTTP_USER_AGENT' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? '',
+            'CONTENT_TYPE' => $_SERVER['CONTENT_TYPE'] ?? '',
+            'CONTENT_LENGTH' => $_SERVER['CONTENT_LENGTH'] ?? '',
+        ]
+    ];
+
+    // Capture all HTTP headers
+    foreach ($_SERVER as $key => $value) {
+        if (strpos($key, 'HTTP_') === 0) {
+            $headerName = str_replace('HTTP_', '', $key);
+            $headerName = str_replace('_', '-', $headerName);
+            $debugData['headers'][$headerName] = $value;
+        }
+    }
+
+    // Log to Formulize
+    writeToFormulizeLog([
+        'formulize_event' => 'mcp-debug-capture',
+        'user_id' => 0,
+        'mcp_params' => $debugData
+    ]);
+
+    // Also save to a debug file
+    $debugFile = XOOPS_ROOT_PATH . '/mcp/debug_requests.log';
+    $logEntry = date('Y-m-d H:i:s') . " - " . json_encode($debugData) . "\n";
+    file_put_contents($debugFile, $logEntry, FILE_APPEND | LOCK_EX);
+
+	}
+
 	public function __construct($config = null)
 	{
+		// Set CORS headers for all requests
+		header('Access-Control-Allow-Origin: *');
+		header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+		header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin');
+		header('Access-Control-Max-Age: 86400'); // 24 hours
+		header('Access-Control-Allow-Credentials: false');
+
+		// Handle CORS preflight
+		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+			throw new FormulizeMCPException(
+				'Preflight request successful',
+				'preflight_success',
+			);
+		}
+
+		$this->logDebug();
+
 		// Authenticate the request
 		$path = $_SERVER['REQUEST_URI'];
 		$method = $_SERVER['REQUEST_METHOD'];
@@ -89,6 +148,12 @@ class FormulizeMCP
 		foreach ($headers as $header) {
 			header($header);
 		}
+
+		writeToFormulizeLog([
+			'formulize_event' => 'mcp-sending-response',
+			'mcp_params' => ['responsecode' => $httpResponseCode, 'body' => $body]
+		]);
+
 		// Prevent ALL caching at every level
 		header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
 		header('Pragma: no-cache');
@@ -96,12 +161,6 @@ class FormulizeMCP
 		header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
 		header('ETag: "' . uniqid() . '"');
 		header('Vary: *');
-
-		// CORS headers
-		header('Access-Control-Allow-Origin: *');
-		header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-		header('Access-Control-Allow-Headers: Content-Type, Authorization');
-		header('Access-Control-Max-Age: 0');
 
 		// Set the HTTP response code
 		http_response_code($httpResponseCode);
@@ -187,21 +246,15 @@ class FormulizeMCP
 	private function authenticateRequest(string $path, string $method)
 	{
 		global $xoopsUser, $icmsUser;
-		// Handle CORS preflight
-		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-			throw new FormulizeMCPException(
-				'Preflight request successful',
-				'preflight_success',
-			);
-		}
 
 		// Only authenticate requests for mcp
 		$allowUnauthenticatedRequests = false;
+		$trimmedPath = rtrim($path, '/');
 		if ($method === 'GET' && (
-			substr($path, -7) === '/health' ||
-			substr($path, -13) === '/capabilities' ||
-			substr($path, -4) === '/docs' ||
-			substr($path, -4) !== '/mcp')
+			substr($trimmedPath, -7) === '/health' ||
+			substr($trimmedPath, -13) === '/capabilities' ||
+			substr($trimmedPath, -4) === '/docs' ||
+			substr($trimmedPath, -4) !== '/mcp')
 		) {
 			$allowUnauthenticatedRequests = true;
 		}
@@ -353,12 +406,41 @@ class FormulizeMCP
 	 */
 	private function handleInitialize()
 	{
+
+		// Build associative arrays for capabilities - PHP will convert to JSON objects
+    $toolsObj = [];
+    if (!empty($this->tools)) {
+        foreach ($this->tools as $tool) {
+            if (isset($tool['name'])) {
+                $toolsObj[$tool['name']] = $tool;
+            }
+        }
+    }
+
+    $resourcesObj = [];
+    if (!empty($this->resources)) {
+        foreach ($this->resources as $resource) {
+            if (isset($resource['uri'])) {
+                $resourcesObj[$resource['uri']] = $resource;
+            }
+        }
+    }
+
+    $promptsObj = [];
+    if (!empty($this->prompts)) {
+        foreach ($this->prompts as $prompt) {
+            if (isset($prompt['name'])) {
+                $promptsObj[$prompt['name']] = $prompt;
+            }
+        }
+    }
+
 		return [
 			'protocolVersion' => '2024-11-05',
 			'capabilities' => [
-				'tools' => [],
-				'resources' => [],
-				'prompts' => []
+				'tools' => $toolsObj,      // Associative array -> JSON object
+				'resources' => $resourcesObj, // Associative array -> JSON object
+				'prompts' => $promptsObj   // Associative array -> JSON object
 			],
 			'serverInfo' => $this->system_info(),
 			'instructions' => $this->getInitializeInstructions()
@@ -415,13 +497,22 @@ class FormulizeMCP
 			'resources_count' => count($this->resources),
 			'prompts_count' => count($this->prompts),
 			'authentication' => [
-				'system' => 'formulize_api_keys',
+				'system' => 'formulize_api_keys_with_oauth',
 				'active_keys_count' => $apiKeyCount
 			],
 			'endpoints' => [
 				'mcp' => $this->baseUrl . '/mcp',
 				'capabilities' => $this->baseUrl . '/capabilities',
 				'health' => $this->baseUrl . '/health'
+			],
+			'oauth_endpoints' => [
+				'authorize' => XOOPS_URL . '/oauth/authorize',
+				'token' => XOOPS_URL . '/oauth/token',
+				'register' => XOOPS_URL . '/oauth/register',
+				'resource' => XOOPS_URL . '/oauth/resource',
+				'status' => XOOPS_URL . '/oauth/status',
+				'protected_resource_metadata' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+				'authorization_server_metadata' => XOOPS_URL . '/.well-known/oauth-authorization-server'
 			]
 		];
 
@@ -484,16 +575,52 @@ class FormulizeMCP
 	 */
 	private function handleCapabilities()
 	{
+
+		// Build associative arrays for capabilities
+    $toolsObj = [];
+    if (!empty($this->tools)) {
+        foreach ($this->tools as $tool) {
+            if (isset($tool['name'])) {
+                $toolsObj[$tool['name']] = $tool;
+            }
+        }
+    }
+
+    $resourcesObj = [];
+    if (!empty($this->resources)) {
+        foreach ($this->resources as $resource) {
+            if (isset($resource['uri'])) {
+                $resourcesObj[$resource['uri']] = $resource;
+            }
+        }
+    }
+
+    $promptsObj = [];
+    if (!empty($this->prompts)) {
+        foreach ($this->prompts as $prompt) {
+            if (isset($prompt['name'])) {
+                $promptsObj[$prompt['name']] = $prompt;
+            }
+        }
+    }
+
 		$capabilities = [
-			'capabilities' => [
-				'tools' => array_values($this->tools),
-				'resources' => array_values($this->resources),
-				'prompts' => array_values($this->prompts)
-			],
 			'serverInfo' => $this->system_info(),
 			'authentication' => [
-				'type' => 'Formulize API Keys',
-				'discovery_enabled' => false,
+				'type' => 'OAuth 2.1 with Formulize API Keys',
+				'discovery_enabled' => true,
+				'oauth_endpoints' => [
+					'authorize' => XOOPS_URL . '/oauth/authorize',
+					'token' => XOOPS_URL . '/oauth/token',
+					'register' => XOOPS_URL . '/oauth/register',
+					'protected_resource_metadata' => XOOPS_URL . '/.well-known/oauth-protected-resource',
+					'authorization_server_metadata' => XOOPS_URL . '/.well-known/oauth-authorization-server'
+				]
+			],
+			'capabilities' => [
+				'tools' => $toolsObj,
+				'resources' => $resourcesObj,
+				'prompts' => $promptsObj
 			],
 			'endpoints' => [
 				'mcp' => $this->baseUrl . '/mcp',

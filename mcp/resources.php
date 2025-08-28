@@ -598,9 +598,10 @@ trait resources {
 		}
 
 		return [
+			'name' => $this->mcpRequest['localServerName'],
+			'version' => FORMULIZE_MCP_VERSION,
 			'site_name' => $xoopsConfig['sitename'] ?? 'Unknown',
 			'formulize_version' => $metadata['version'] ?? 'Unknown',
-			'formulize_mcp_version' => FORMULIZE_MCP_VERSION,
 			'author' => $metadata['author'] ?? 'Unknown',
 			'license' => $metadata['license'] ?? 'Unknown',
 			'php_version' => PHP_VERSION,
