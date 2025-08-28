@@ -202,7 +202,7 @@ class formulizeApplication extends XoopsObject {
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
     $this->initVar("name", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
     $this->initVar("description", XOBJ_DTYPE_TXTAREA);
-    $this->initVar("forms", XOBJ_DTYPE_ARRAY);
+    $this->initVar("forms", XOBJ_DTYPE_ARRAY, serialize(array()), false);
     $this->initVar("links", XOBJ_DTYPE_ARRAY);
     $this->initVar("all_links", XOBJ_DTYPE_ARRAY);
     $this->initVar("custom_code", XOBJ_DTYPE_TXTBOX, NULL, false); //added jan 2015
