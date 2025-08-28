@@ -171,10 +171,10 @@ class formulizeHandler {
 	/**
 	 * Builds or updates a form, including creating or renaming the data table, creating default screens, and setting up permissions, renaming resources...
 	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
-	 * @param array $groupIdsThatCanEdit An array of group ids that should be given edit permissions on this form (only used when creating a new form)
+	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form (only used when creating a new form)
 	 * @param array $applicationIds An array of existing application ids to assign this form to (only used when creating a new form)
 	 * @throws Exception if there are any problems creating or updating the form
-	 * @return object The form id of the created or updated form
+	 * @return array An array with two elements: the form id of the created or updated form, and a boolean indicating whether the singular or plural names were changed (which may require a reload of the settings page if we're in the standard admin UI)
 	 */
 	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array(), $applicationIds = array(0)) {
 
@@ -188,32 +188,37 @@ class formulizeHandler {
 			$fid = intval($formObjectProperties['fid']);
 		}
 		// get the form object that we care about, or start a new one from scratch if fid is 0, null, etc.
-		$formObject = new FormulizeObject($fid);
-		$formIsNew = $formObject->getVar('fid') ? true : false;
+		$formIsNew = true;
+		if($fid AND $formObject = $form_handler->get($fid)) {
+			$formIsNew = false;
+		} else {
+			$formObject = $form_handler->create();
+		}
 		$originalFormNames = array(
-    	'singular' => $formObject->getSingular(),
-    	'plural' => $formObject->getPlural(),
+			'singular' => $formObject->getSingular(),
+			'plural' => $formObject->getPlural(),
 			'form_handle' => $formObject->getVar('form_handle')
-  	);
+		);
 		// set all the properties that were passed in
 		foreach($formObjectProperties as $property=>$value) {
   		$formObject->setVar($property, $value);
 		}
-		// rename any related resources for this form, if necessary
+		// rename any related resources for an existing form, if necessary
+		$singularPluralChanged = false;
 		if($formIsNew == false) {
 			$singularPluralChanged = $form_handler->renameFormResources($formObject, $originalFormNames);
 		}
 		// write the form object to the DB, and related resource management operations all inside the insert method
 		// object passed by reference, so it will update the fid var on object if it was a new form
-		if(!$form_handler->insert($formObject)) {
+		if(!$fid = $form_handler->insert($formObject)) {
   		throw new Exception("Could not save the form properly: ".$xoopsDB->error());
 		}
 		if($formIsNew) {
 			// add edit permissions for the selected groups, and view_form for Webmasters
 			foreach($groupIdsThatCanEditForm as $thisGroupId) {
-				$gperm_handler->addRight('edit_form', $formObject->getVar('fid'), intval($thisGroupId), getFormulizeModId());
+				$gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
 			}
-			$gperm_handler->addRight('view_form', $formObject->getVar('fid'), XOOPS_GROUP_ADMIN, getFormulizeModId());
+			$gperm_handler->addRight('view_form', $fid, XOOPS_GROUP_ADMIN, getFormulizeModId());
 			// add menu links for the new form in the selected applications, for the groups that have admin rights (usually just webmasters, so basic interface works when you are buiding systems)
 			if(!empty($applicationIds) AND !empty($groupIdsThatCanEditForm)) {
 				$menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
@@ -227,7 +232,7 @@ class formulizeHandler {
 		if(self::assignFormToApplications($formObject, $applicationIds) == false) {
 			throw new Exception("Could not assign the form to applications properly.");
 		}
-		return $fid;
+		return array($fid, $singularPluralChanged);
 	}
 
 	/**
@@ -254,11 +259,9 @@ class formulizeHandler {
 			// get the applications this form is currently assigned to
 			$assignedAppsForThisForm = $application_handler->getApplicationsByForm($fid);
 
-			$selectedAppIds = array();
 			$addedToApps = array();
 			// assign this form as required to the selected applications
 			foreach($selectedAppObjects as $thisAppObject) {
-				$selectedAppIds[] = $thisAppObject->getVar('appid');
 				$thisAppForms = $thisAppObject->getVar('forms');
 				if(!in_array($fid, $thisAppForms)) {
 					$addedToApps[] = $thisAppObject->getVar('appid');
@@ -273,7 +276,7 @@ class formulizeHandler {
 			// now remove the form from any applications it used to be assigned to, which were not selected
 			$removedFromApps = array();
 			foreach($assignedAppsForThisForm as $assignedApp) {
-				if(!in_array($assignedApp->getVar('appid'), $selectedAppIds)){
+				if(!in_array($assignedApp->getVar('appid'), $applicationIds)){
 					// the form is no longer assigned to this app, so remove it from the apps form list
 					$assignedAppForms = $assignedApp->getVar('forms');
 					$key = array_search($fid, $assignedAppForms);
