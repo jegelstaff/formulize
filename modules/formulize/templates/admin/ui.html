@@ -277,7 +277,8 @@ $(document).ready(function() {
         } else if(data.substr(0,13)=="/* evalnow */") {
           eval(data);
         } else {
-          alert(data);
+					let strippedHTML = data.replace(/<\/?[^>]+(>|$)/g, ""); // strip HTML tags
+          alert(strippedHTML);
         }
       }
       if(saveCounter >= saveTarget) { // if we've received a response for all the forms...

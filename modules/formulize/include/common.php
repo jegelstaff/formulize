@@ -88,7 +88,7 @@ function formulize_exception_handler($exception) {
 		'PHP_error_file' => $exception->getFile(),
 		'PHP_error_errline' => $exception->getLine()
 	));
-	echo "<h1>There was an error when preparing this page:</h1><blockquote>".$exception->getMessage()."</blockquote><p>We apologize for the inconvenience. This error has been logged. Please advise a webmaster of what actions preceded this event.</p>";
+	echo "<h1>There was an error when preparing this page:</h1>\n<blockquote>\nFile: ".$exception->getFile()."<br>\nLine: ".$exception->getLine()."<br>\nMessage: ".$exception->getMessage()."\n</blockquote>\n<p>We apologize for the inconvenience. This error has been logged. Please advise a webmaster of what actions preceded this event.</p>";
 	include XOOPS_ROOT_PATH.'/footer.php';
 	exit;
 }
