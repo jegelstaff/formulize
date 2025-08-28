@@ -816,32 +816,19 @@ class formulizeFormsHandler {
 
 				if($formObject->isNew() || empty($id_form)) {
 
-					// create the default screens for this form
-					$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-					$defaultFormScreen = $multiPageScreenHandler->create();
-					$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
-
-					if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
-						throw new Exception("Could not create default form screen");
-					}
-					$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-					$screen = $listScreenHandler->create();
-					$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
-					if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
-						throw new Exception("Could not create default list screen");
-					}
-					$formObject->setVar('defaultform', $defaultFormScreenId);
-					$formObject->setVar('defaultlist', $defaultListScreenId);
-
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-							"`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
+							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
 							$this->db->quoteString($title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
 							$this->db->quoteString($singleToWrite).", ".
-							$this->db->quoteString($tableform).", ".intval($defaultFormScreenId).", ".intval($defaultListScreenId).
-							", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-							intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
+							$this->db->quoteString($tableform).", ".
+							$this->db->quoteString($menutext).", ".
+							$this->db->quoteString($form_handle).", ".
+							intval($store_revisions).", ".
+							$this->db->quoteString($note).", ".
+							intval($send_digests).", ".
+							intval($pi).")";
 				} else {
 					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
 							" `form_title` = ".$this->db->quoteString($title).
@@ -875,7 +862,35 @@ class formulizeFormsHandler {
 					if(!$tableCreateRes = $this->createDataTable($id_form)) {
 						throw new Exception("Could not create the data table for new form");
 					}
+					// create the default screens for this form
+					$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+					$defaultFormScreen = $multiPageScreenHandler->create();
+					$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
+					if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
+						throw new Exception("Could not create default form screen");
+					}
+					$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+					$screen = $listScreenHandler->create();
+					$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
+					if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+						throw new Exception("Could not create default list screen");
+					}
+					$defaultScreensSQL = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
+							" `defaultform` = ".intval($defaultFormScreenId).
+							", `defaultlist` = ".intval($defaultListScreenId).
+							" WHERE id_form = ".intval($id_form);
+					if (false != $force) {
+							$result = $this->db->queryF($defaultScreensSQL);
+					} else{
+							$result = $this->db->query($defaultScreensSQL);
+					}
+					if( !$result ){
+						throw new Exception("Could not set default screens for form. SQL: $defaultScreensSQL<br>".$this->db->error());
+					}
+					$formObject->setVar('defaultform', $defaultFormScreenId);
+					$formObject->setVar('defaultlist', $defaultListScreenId);
 				}
+
 				$formObject->assignVar('id_form', $id_form);
 				$formObject->assignVar('fid', $id_form);
 
