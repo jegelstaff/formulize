@@ -94,7 +94,7 @@ if( $processedValues['forms']['form_handle'] == "" ) {
   $processedValues['forms']['form_handle'] = $fid;
 }
 
-formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $_POST['groups_can_edit'], (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0));
+formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN), (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0));
 
 // if we're making a new table form, then synch the "elements" for the form with the target table
 if(isset($_POST['forms-tableform'])) {
