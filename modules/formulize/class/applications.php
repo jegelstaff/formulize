@@ -255,7 +255,7 @@ class formulizeApplicationsHandler {
       $queryIds = array();
       foreach($idsArray as $key=>$thisId) {
         // validate the id
-          if ($thisId == 0 OR !is_numeric($thisId)) {
+        if ($thisId == 0 OR !is_numeric($thisId)) {
           $cachedApps[$thisId] = false;
           $foundApps[$key] = false;
         } else {
