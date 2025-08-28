@@ -385,12 +385,12 @@ class formulizeApplicationsHandler {
     if( empty($appid) ){
       $appid = $this->db->getInsertId();
     }
-    $appObject->assignVar('appid', $appid);
+    $appObject->assignVar('appid', intval($appid));
 
     // now assign the forms
 
     $foundForms = array();
-		$checkSQL = "SELECT fid FROM ".$this->db->prefix("formulize_application_form_link"). " WHERE appid=".$appid;
+		$checkSQL = "SELECT fid FROM ".$this->db->prefix("formulize_application_form_link"). " WHERE appid=".intval($appid);
 		$checkRes = $this->db->query($checkSQL);
 		while($checkArray = $this->db->fetchArray($checkRes)) {
 			$foundForms[] = $checkArray['fid'];
@@ -406,7 +406,7 @@ class formulizeApplicationsHandler {
       $insertSQL = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`fid`, `appid`) VALUES ";
       foreach($formsForInsert as $thisFid) {
         if(!$insertStart) { $insertSQL .= ", "; }
-  			$insertSQL .= "(".$thisFid.", ".$appid.")";
+  			$insertSQL .= "(".intval($thisFid).", ".intval($appid).")";
   			$insertStart = false;
   			$runInsert = true;
       }
@@ -416,7 +416,7 @@ class formulizeApplicationsHandler {
       $removalStart = true;
       foreach($formsForRemoval as $thisFid) {
         if(!$removalStart) { $removalSQL .= " OR "; }
-        $removalSQL .= " (`appid`=$appid AND `fid`=$thisFid) ";
+        $removalSQL .= " (`appid`=".intval($appid)." AND `fid`=".intval($thisFid).") ";
         $removalStart = false;
         $runRemoval = true;
       }
@@ -487,7 +487,7 @@ class formulizeApplicationsHandler {
         global $xoopsDB;
 
         $rank = 1;
-        $rankquery = "SELECT MAX(`rank`) FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid.";";
+        $rankquery = "SELECT MAX(`rank`) FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".intval($appid).";";
         if($result = $xoopsDB->query($rankquery)) {
 	    //if empty query, then rank = 1, else, rank is the next larger number
             $max = $xoopsDB->fetchArray($result);
@@ -497,7 +497,7 @@ class formulizeApplicationsHandler {
         //0=menuid, 1=menuText, 2=screen, 3=url, 4=groupids, 5=default_screen  6=note
         $linkValues = explode("::",$menuitem);
 //	error_log("link values ".print_r($linkValues));
-        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". $appid.",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
+        $insertsql = "INSERT INTO `".$xoopsDB->prefix("formulize_menu_links")."` VALUES (null,". intval($appid).",'". formulize_db_escape($linkValues[2])."',".$rank.",'".formulize_db_escape($linkValues[3])."','".formulize_db_escape($linkValues[1])."','". formulize_db_escape($linkValues[6])."');";
 				if($force) {
 					$result = $xoopsDB->queryF($insertsql);
 				} else {
@@ -539,7 +539,7 @@ class formulizeApplicationsHandler {
     // modified Oct 2013 W.R.
     function deleteMenuLink($appid,$menuitem ){
         global $xoopsDB;
-        $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".$appid." AND menu_id=" .$menuitem .";";
+        $deletemenuitems = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_links")."` WHERE appid=".intval($appid)." AND menu_id=" .$menuitem .";";
         $deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .$menuitem .";";
         if(!$result = $xoopsDB->query($deletemenuitems)) {
             echo("Delete menu link $menuitem failed.");
@@ -567,7 +567,7 @@ class formulizeApplicationsHandler {
         $linkValues = explode("::",$menuitems);
 	//error_log("link values ".print_r($linkValues));
         $updatesql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links").
-	"` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."',note='".formulize_db_escape($linkValues[6])."' where menu_id=".intval($linkValues[0])." AND appid=".$appid.";";
+	"` SET screen= '".formulize_db_escape($linkValues[2])."', url= '".formulize_db_escape($linkValues[3])."', link_text='".formulize_db_escape($linkValues[1])."',note='".formulize_db_escape($linkValues[6])."' where menu_id=".intval($linkValues[0])." AND appid=".intval($appid).";";
         if(!$result = $xoopsDB->query($updatesql)) {
             exit("Error updating Menu Item. SQL dump:\n" . $updatesql . "\n".$xoopsDB->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }else{
@@ -594,6 +594,35 @@ class formulizeApplicationsHandler {
            		  }
         	 }
 		}
+	}
+
+	/**
+	 * Move all menu links associated with a form from one application to another
+	 * @param int fromAppId The application id to move the links from
+	 * @param int toAppId The application id to move the links to
+	 * @param int fid The form id of the form whose links should be moved
+	 * @return bool True on success
+	 * @throws Exception if the SQL query fails
+	 */
+	function moveMenuLinksBetweenApplications($fromAppId, $toAppId, $fid) {
+		global $xoopsDB;
+		$fromAppId = intval($fromAppId);
+		$toAppId = intval($toAppId);
+		if($fromAppId > 0 AND $toAppId > 0 AND $fid > 0) {
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			$screensOfForm = $screen_handler->getScreensForForm($fid);
+			$screenIds = array_keys($screensOfForm);
+			$screenIdsSQL = "";
+			foreach($screenIds as $thisScreenId) {
+				if($screenIdsSQL != "") { $screenIdsSQL .= " OR "; }
+				$screenIdsSQL .= " screen = 'sid=".intval($thisScreenId)."' ";
+			}
+			$sql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET appid = ".$toAppId." WHERE appid = ".$fromAppId." AND (screen = 'fid=".intval($fid)."' $screenIdsSQL);";
+			if(!$result = $xoopsDB->query($sql)) {
+				throw new Exception("Error moving menu links between applications. SQL dump:\n" . $sql . "\n".$xoopsDB->error());
+			}
+		}
+		return true;
 	}
 
 	// added Oct 2013 W.R.

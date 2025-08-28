@@ -41,15 +41,9 @@ $newAppObject = false;
 $selectedAppObjects = array();
 if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->create();
-  $originalFormNames = array();
 } else {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
-  $originalFormNames = array(
-    'singular' => $formObject->getSingular(),
-    'plural' => $formObject->getPlural(),
-		'form_handle' => $formObject->getVar('form_handle')
-  );
 }
 
 // Check if the form is locked down
@@ -64,11 +58,14 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid) AND $_POST['for
 
 if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
   $newAppObject = $application_handler->create();
-}
-
-// get all the existing applcations that this form object was assigned to
-if(isset($_POST['apps']) AND count((array) $_POST['apps']) > 0) {
-  $selectedAppObjects = $application_handler->get($_POST['apps']);
+	foreach($processedValues['applications'] as $property=>$value) {
+    $newAppObject->setVar($property, $value);
+  }
+	if(!$application_handler->insert($newAppObject)) {
+    print "Error: could not save the new application properly: ".$xoopsDB->error();
+  } else {
+  	$_POST['apps'][] = $newAppObject->getVar('appid');
+	}
 }
 
 // interpret form object values that were submitted and need special handling
@@ -96,74 +93,8 @@ if($corrected_form_handle != $form_handle_from_ui) {
 if( $processedValues['forms']['form_handle'] == "" ) {
   $processedValues['forms']['form_handle'] = $fid;
 }
-$old_form_handle = $formObject->getVar( "form_handle" );
 
-foreach($processedValues['forms'] as $property=>$value) {
-  $formObject->setVar($property, $value);
-}
-if(!$form_handler->insert($formObject)) {
-  print "Error: could not save the form properly: ".$xoopsDB->error();
-}
-
-$fid = $formObject->getVar('id_form');
-$formObject->setVar('fid', $fid);
-
-if($_POST['formulize_admin_key'] != 'new') {
-  $singularPluralChanged = $form_handler->renameFormResources($formObject, $originalFormNames);
-} else {
-  // add edit permissions for the selected groups, and view_form for Webmasters
-  $gperm_handler = xoops_gethandler('groupperm');
-  $selectedAdminGroupIdsForMenu = array();
-  foreach($_POST['groups_can_edit'] as $thisGroupId) {
-    $selectedAdminGroupIdsForMenu[] = intval($thisGroupId);
-    $gperm_handler->addRight('edit_form', $fid, intval($thisGroupId), getFormulizeModId());
-  }
-	$gperm_handler->addRight('view_form', $fid, XOOPS_GROUP_ADMIN, getFormulizeModId());
-}
-
-$selectedAppIds = array();
-if($newAppObject) {
-  // assign the form id to this new application
-  $processedValues['applications']['forms'] = serialize(array($fid));
-  foreach($processedValues['applications'] as $property=>$value) {
-    $newAppObject->setVar($property, $value);
-  }
-  if(!$application_handler->insert($newAppObject)) {
-    print "Error: could not save the new application properly: ".$xoopsDB->error();
-  }
-  $selectedAppIds[] = $newAppObject->getVar('appid');
-}
-
-// get the applications this form is assigned to
-$assignedAppsForThisForm = $application_handler->getApplicationsByForm($fid);
-
-// assign this form as required to the selected applications
-foreach($selectedAppObjects as $thisAppObject) {
-  $selectedAppIds[] = $thisAppObject->getVar('appid');
-  $thisAppForms = $thisAppObject->getVar('forms');
-  if(!in_array($fid, $thisAppForms)) {
-    $thisAppForms[] = $fid;
-    $thisAppObject->setVar('forms', serialize($thisAppForms));
-    if(!$application_handler->insert($thisAppObject)) {
-      print "Error: could not add the form to one of the applications properly: ".$xoopsDB->error();
-    }
-  }
-}
-
-// now remove the form from any applications it used to be assigned to, which were not selected
-foreach($assignedAppsForThisForm as $assignedApp) {
-  if(!in_array($assignedApp->getVar('appid'), $selectedAppIds)){
-    // the form is no longer assigned to this app, so remove it from the apps form list
-    $assignedAppForms = $assignedApp->getVar('forms');
-    $key = array_search($fid, $assignedAppForms);
-    unset($assignedAppForms[$key]);
-    sort($assignedAppForms); // resets all the keys so there's no gaps
-    $assignedApp->setVar('forms',serialize($assignedAppForms));
-    if(!$application_handler->insert($assignedApp)) {
-      print "Error: could not update one of the applications this form used to be assigned to, so that it's not assigned anymore.";
-    }
-  }
-}
+formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $_POST['groups_can_edit'], (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0));
 
 // if we're making a new table form, then synch the "elements" for the form with the target table
 if(isset($_POST['forms-tableform'])) {
@@ -186,21 +117,4 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $for
   print " reloadWithScrollPosition('".XOOPS_URL ."/modules/formulize/admin/ui.php?page=form&aid=$appidToUse&fid=$fid');";
 }
 
-// need to do some other stuff here later to setup defaults for...
-// screens?
-// menu items?
-// permissions?
 
-// Auto menu link creation
-// The link is shown to to Webmaster and registered users only (1,2 in $menuitems)
-if($_POST['formulize_admin_key'] == "new") {
-  $menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
-  $menuitems = "null::" . formulize_db_escape($menuLinkText) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
-  if(!empty($selectedAppIds)) {
-    foreach($selectedAppIds as $appid) {
-      $application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems);
-    }
-  } else {
-    $application_handler->insertMenuLink(0, $menuitems);
-  }
-}
