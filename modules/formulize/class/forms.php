@@ -687,8 +687,12 @@ class formulizeFormsHandler {
 		static $cachedForms = array();
 		if(!$refreshCache AND isset($cachedForms[$form_id_or_handle][$includeAllElements])) { return $cachedForms[$form_id_or_handle][$includeAllElements]; }
 		if($form_id_or_handle) {
-			$cachedForms[$form_id_or_handle][$includeAllElements] = new formulizeForm($form_id_or_handle,$includeAllElements);
-			return $cachedForms[$form_id_or_handle][$includeAllElements];
+			$candidateFormObject = new formulizeForm($form_id_or_handle,$includeAllElements);
+			// invalid form id or handle will return a form object with no id set, so validate that what we got back is the right object
+			if((is_numeric($form_id_or_handle) AND $candidateFormObject->getVar('fid') == $form_id_or_handle) OR (!is_numeric($form_id_or_handle) AND $candidateFormObject->getVar('form_handle') == $form_id_or_handle)) {
+				$cachedForms[$form_id_or_handle][$includeAllElements] = $candidateFormObject;
+				return $cachedForms[$form_id_or_handle][$includeAllElements];
+			}
 		}
 		return false;
 	}

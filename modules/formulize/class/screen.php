@@ -252,11 +252,43 @@ class formulizeScreenHandler {
         return $screens;
     }
 
-	function get($sid_or_screen_handle) {
+	/**
+	 * Returns an array of screen objects for a given form
+	 * @param mixed $formObjectOrIdentifier Either a formulizeForm object or a form identifier (id or handle)
+	 * @throws Exception if the form identifier is invalid or if there are problems retrieving the screens
+	 * @return array An array of formulizeScreen objects
+	 */
+	function getScreensForForm($formObjectOrIdentifier) {
+		if (!is_a($formObjectOrIdentifier, 'formulizeForm')) {
+			$form_handler = xoops_getModuleHandler('forms', 'formulize');
+			$formObjectOrIdentifier = $form_handler->get($formObjectOrIdentifier);
+		}
+		if(is_a($formObjectOrIdentifier, 'formulizeForm')) {
+			$fid = $formObjectOrIdentifier->getVar('fid');
+		} else {
+			throw new Exception("Invalid form identifier when trying to get screens for a form.");
+		}
+		$screens = array();
+		if(is_numeric($fid) AND $fid > 0) {
+			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE fid='.intval($fid);
+			if (!$result = $this->db->query($sql)) {
+					throw new Exception("Could not retrieve screens for form $fid from the database.");
+			}
+			while($array = $this->db->fetchArray($result)) {
+				$screen = new formulizeScreen();
+				$screen->assignVars($array);
+				$screens[$screen->getVar('sid')] = $screen;
+				unset($screen);
+			}
+		}
+		return $screens;
+	}
+
+	function get($sid_or_screen_handle, $fid=0) {
 		if (is_numeric($sid_or_screen_handle)) {
 			$sql = 'SELECT * FROM '.$this->db->prefix('formulize_screen').' WHERE sid='.intval($sid_or_screen_handle);
 		} else {
-				$sql = "SELECT * FROM ".$this->db->prefix('formulize_screen')." WHERE screen_handle='".formulize_db_escape($sid_or_screen_handle)."'";
+			$sql = "SELECT * FROM ".$this->db->prefix('formulize_screen')." WHERE screen_handle='".formulize_db_escape($sid_or_screen_handle)."'";
 		}
 		if (!$result = $this->db->query($sql)) {
 				return false;
