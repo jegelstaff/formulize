@@ -850,7 +850,9 @@ private function validateFilter($filter) {
 
 			// Step 2: Prepare and validate the data
 			$preparedData = [];
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			foreach ($data as $elementHandle => $value) {
+
 				// Validate element handle type
 				if (!is_string($elementHandle)) {
 					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
@@ -861,10 +863,15 @@ private function validateFilter($filter) {
 					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
 				}
 
+				$elementObject = $element_handler->get($elementHandle);
+				$ele_value = $elementObject->getVar('ele_value');
+
 				// Prepare the value for database storage
 				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
 				if($preparedValue AND $preparedValue !== $value) {
 					$value = $preparedValue;
+				} elseif(!$preparedValue AND isset($ele_value[16]) AND $ele_value[16]) {
+					$value = handleCreatingNewOptions($elementHandle, "newvalue:$value", $entryId);
 				}
 
 				$preparedData[$elementHandle] = $value;
