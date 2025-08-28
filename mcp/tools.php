@@ -261,7 +261,7 @@ Examples:
 					'properties' => (object)[]
 				],
 			]
-		] + $this->buildFormCreationTools();
+		];
 
 		// only webmasters can access certain tools
 		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
@@ -283,6 +283,34 @@ Examples:
 						]
 					],
 					'required' => ['sql']
+				]
+			];
+
+			$this->tools['create_form'] = [
+				'name' => 'create_form',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, use the create_form_element tool to add elements (fields) to the form. Elements are the individual input fields like textboxes, dropdowns, checkboxes, etc. that users will fill out.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'name' => [
+							'type' => 'string',
+							'description' => 'Required. The name of the form as it will appear in Formulize to users.'
+						],
+						'notes' => [
+							'type' => 'string',
+							'description' => 'Optional. Internal notes about the form, not visible to end users.'
+						],
+						'limit_entries' => [
+							'type' => 'string',
+							'enum' => ['off', 'user', 'group'],
+							'description' => 'Optional. Limits how many entries are permitted in the form: \'off\' = unlimited entries per user (default), \'user\' = one entry per user, \'group\' = one entry per group'
+						],
+						'application_id_or_name' => [
+							'type' => ['string', 'integer'],
+							'description' => 'Optional. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
+						]
+					],
+					'required' => ['name']
 				]
 			];
 
@@ -496,6 +524,71 @@ Examples:
 		];
 
 		return $connectionInfo;
+	}
+
+	private function create_form($arguments) {
+		global $xoopsUser;
+
+		$name = trim($arguments['name'] ?? '');
+		$notes = trim($arguments['notes'] ?? '');
+		$limit_entries = $arguments['limit_entries'] ?? 'off';
+		$application_id_or_name = $arguments['application_id_or_name'] ?? '';
+
+		if(empty($name)) {
+			throw new FormulizeMCPException('Form name is required', 'invalid_data');
+		}
+
+		if(!in_array($limit_entries, ['off', 'user', 'group'])) {
+			$limit_entries = 'off';
+		}
+
+		try {
+
+			// prepare application data
+			$applicationIds = [0]; // default to no application
+			if(is_numeric($application_id_or_name)) {
+				$applicationIds = array(intval($application_id_or_name));
+			} else {
+				$application_handler = xoops_getmodulehandler('applications','formulize');
+				$newAppObject = $application_handler->create();
+				$newAppObject->setVar('name', $application_id_or_name);
+				if(!$application_handler->insert($newAppObject)) {
+						global $xoopsDB;
+    				throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+  			} else {
+  				$applicationIds = array($newAppObject->getVar('appid'));
+				}
+			}
+
+			// prepare form data
+			$formData = [
+				'title' => $name,
+				'single' => $limit_entries,
+				'note' => $notes
+			];
+
+			list($fid, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($formData, array(XOOPS_GROUP_ADMIN), $applicationIds);
+
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'database_error');
+		}
+
+		$form_handler = xoops_getModuleHandler('forms', 'formulize');
+		$formObject = $form_handler->get($fid);
+		return [
+			'form_id' => $fid,
+			'form_name' => $formObject->getVar('title'),
+			'singular' => $formObject->getSingular(),
+			'plural' => $formObject->getPlural(),
+			'form_handle' => $formObject->getVar('form_handle'),
+			'limit_entries' => $formObject->getVar('single'),
+			'default_form_screen_id' => $formObject->getVar('defaultform'),
+			'default_list_screen_id' => $formObject->getVar('defaultlist'),
+			'application_ids' => $applicationIds,
+			'success' => true,
+			'message' => 'Form and related resources created successfully'
+		];
+
 	}
 
 	/**
@@ -1234,55 +1327,7 @@ private function validateFilter($filter) {
 	private function buildFormCreationTools()
 	{
 		return [
-			'create_form' => $this->buildCreateFormTool(),
 			'create_form_element' => $this->buildCreateFormElementTool()
-		];
-	}
-
-	/**
-	 * Build the create_form tool schema
-	 * @return array Tool schema for creating forms
-	 */
-	private function buildCreateFormTool()
-	{
-		return [
-			'name' => 'create_form',
-			'description' => 'Create a new form in Formulize. This creates the basic form structure only. After creating a form, use the create_form_element tool to add elements (fields) to the form. Elements are the individual input fields like textboxes, dropdowns, checkboxes, etc. that users will fill out.',
-			'inputSchema' => [
-				'type' => 'object',
-				'properties' => [
-					'form_title' => [
-						'type' => 'string',
-						'description' => 'Required. The display title of the form'
-					],
-					'form_handle' => [
-						'type' => 'string',
-						'description' => 'Optional. Internal database handle for the form. If not provided, will be auto-generated from the title. Must be unique and contain only letters, numbers, and underscores.'
-					],
-					'singular' => [
-						'type' => 'string',
-						'description' => 'Optional. Singular name for entries in this form (e.g., \'Activity\', \'Contact\'). If not provided, will be derived from form title.'
-					],
-					'plural' => [
-						'type' => 'string',
-						'description' => 'Optional. Plural name for entries in this form (e.g., \'Activities\', \'Contacts\'). If not provided, will be derived from singular or form title.'
-					],
-					'menutext' => [
-						'type' => 'string',
-						'description' => 'Optional. Text to display in navigation menus. If not provided, will use form title.'
-					],
-					'single_entry' => [
-						'type' => 'string',
-						'enum' => ['off', 'user', 'group'],
-						'description' => 'Optional. Entry limitation: \'off\' = unlimited entries per user (default), \'user\' = one entry per user, \'group\' = one entry per group'
-					],
-					'application_id' => [
-						'type' => 'integer',
-						'description' => 'Optional. ID of the application to assign this form to. Applications are collections of related forms.'
-					]
-				],
-				'required' => ['form_title']
-			]
 		];
 	}
 
@@ -1361,7 +1406,7 @@ private function validateFilter($filter) {
 
 		foreach ($elementFiles as $file) {
 			$className = $this->getElementClassName($file);
-			
+
 			// Skip if class doesn't exist or doesn't have MCP description
 			if (!class_exists($className)) {
 				continue;
@@ -1415,7 +1460,7 @@ private function validateFilter($filter) {
 	private function getFallbackElementTypes()
 	{
 		return [
-			'text', 'textarea', 'select', 'radio', 'checkbox', 
+			'text', 'textarea', 'select', 'radio', 'checkbox',
 			'date', 'time', 'yn', 'email', 'phone'
 		];
 	}
@@ -1433,19 +1478,6 @@ private function validateFilter($filter) {
 		];
 	}
 
-	/**
-	 * Create a new form in Formulize
-	 * @param array $arguments Form creation parameters
-	 * @return array Result of form creation
-	 */
-	private function create_form($arguments)
-	{
-		// Implementation will be added separately
-		throw new FormulizeMCPException(
-			'create_form tool implementation pending',
-			'not_implemented'
-		);
-	}
 
 	/**
 	 * Create a new element in a Formulize form
