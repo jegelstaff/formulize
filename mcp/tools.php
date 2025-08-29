@@ -695,7 +695,7 @@ Examples:
 				]
 			];
 		} catch (Exception $e) {
-			throw $e;
+			new FormulizeMCPException($e->getMessage(), 'database_error');
 		}
 	}
 
@@ -1037,7 +1037,7 @@ private function validateFilter($filter) {
 
 			return $response;
 		} catch (Exception $e) {
-			throw $e;
+			new FormulizeMCPException($e->getMessage(), 'database_error');
 		}
 	}
 
