@@ -859,6 +859,8 @@ class formulizeFormsHandler {
 				}
 				if( empty($id_form) ){
 					$id_form = $this->db->getInsertId();
+					$formObject->assignVar('id_form', $id_form);
+					$formObject->assignVar('fid', $id_form);
 					if(!$tableCreateRes = $this->createDataTable($id_form)) {
 						throw new Exception("Could not create the data table for new form");
 					}
@@ -890,9 +892,6 @@ class formulizeFormsHandler {
 					$formObject->setVar('defaultform', $defaultFormScreenId);
 					$formObject->setVar('defaultlist', $defaultListScreenId);
 				}
-
-				$formObject->assignVar('id_form', $id_form);
-				$formObject->assignVar('fid', $id_form);
 
 				// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
 				if($formObject->getVar('store_revisions') AND !$this->revisionsTableExists($formObject)) {
