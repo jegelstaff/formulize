@@ -614,8 +614,7 @@ class formulizeApplicationsHandler {
 			$screenIds = array_keys($screensOfForm);
 			$screenIdsSQL = "";
 			foreach($screenIds as $thisScreenId) {
-				if($screenIdsSQL != "") { $screenIdsSQL .= " OR "; }
-				$screenIdsSQL .= " screen = 'sid=".intval($thisScreenId)."' ";
+				$screenIdsSQL .= " OR screen = 'sid=".intval($thisScreenId)."' ";
 			}
 			$sql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET appid = ".$toAppId." WHERE appid = ".$fromAppId." AND (screen = 'fid=".intval($fid)."' $screenIdsSQL);";
 			if(!$result = $xoopsDB->query($sql)) {
