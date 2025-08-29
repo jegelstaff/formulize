@@ -822,6 +822,20 @@ class formulizeFormsHandler {
 
 				if($formObject->isNew() || empty($id_form)) {
 
+					// some basic safetynets for new forms
+					if($form_handle == "") {
+						$formObject->setVar('form_handle', $title);
+						$form_handle = $formObject->getVar('form_handle');
+					}
+					if($singular == "") {
+						$formObject->setVar('singular', $formObject->getSingular());
+						$singular = $formObject->getVar('singular');
+					}
+					if($plural == "") {
+						$formObject->setVar('plural', $formObject->getPlural());
+						$plural = $formObject->getVar('plural');
+					}
+
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
 							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
 							$this->db->quoteString($title).", ".
