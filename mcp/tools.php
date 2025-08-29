@@ -310,7 +310,7 @@ Examples:
 							'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
 						]
 					],
-					'required' => ['name']
+					'required' => ['title']
 				]
 			];
 
