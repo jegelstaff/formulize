@@ -73,27 +73,14 @@ if(($_POST['new_app_yes_no'] == "yes" AND $_POST['applications-name'])) {
 $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_array($_POST['headerlist']))
     ? "*=+*:".implode("*=+*:",$_POST['headerlist']) : "";
 
-// form_handle cannot have any period, strip all of the periods out
-$formulize_altered_form_handle = false;
-$form_handle_from_ui = $processedValues['forms']['form_handle'];
-$corrected_form_handle = formulizeForm::sanitize_handle_name($form_handle_from_ui);
-if (strlen($corrected_form_handle)) {
-    $uniqueCheckCounter = 0;
-    $thisFormId = $fid ? $fid : "";
-    while (!$uniqueCheck = $form_handler->isFormHandleUnique($corrected_form_handle, $thisFormId)) {
-        $corrected_form_handle = str_replace('_'.$uniqueCheckCounter,'',$corrected_form_handle);
-        $uniqueCheckCounter++;
-        $corrected_form_handle = $corrected_form_handle . "_".$uniqueCheckCounter;
-    }
-}
-if($corrected_form_handle != $form_handle_from_ui) {
-  $formulize_altered_form_handle = true;
-  $processedValues['forms']['form_handle'] = $corrected_form_handle;
-}
-
 $applicationIds = (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0);
 $groupsCanEdit = (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN);
-list($fid, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds);
+$formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds);
+
+// check if form handle changed
+$formulize_altered_form_handle = $processedValues['forms']['form_handle'] != $formObject->getVar('form_handle') ? true : false;
+// check if singular or plural changed
+$singularPluralChanged = ($processedValues['forms']['plural'] != $formObject->getVar('plural') OR $processedValues['forms']['singular'] != $formObject->getVar('singular')) ? true : false;
 
 // if we're making a new table form, then synch the "elements" for the form with the target table
 if(isset($_POST['forms-tableform'])) {

@@ -174,7 +174,7 @@ class formulizeHandler {
 	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form (only used when creating a new form)
 	 * @param array $applicationIds An array of existing application ids to assign this form to (only used when creating a new form)
 	 * @throws Exception if there are any problems creating or updating the form
-	 * @return array An array with two elements: the form id of the created or updated form, and a boolean indicating whether the singular or plural names were changed (which may require a reload of the settings page if we're in the standard admin UI)
+	 * @return object returns the form object
 	 */
 	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array(), $applicationIds = array(0)) {
 
@@ -232,7 +232,7 @@ class formulizeHandler {
 		if(self::assignFormToApplications($formObject, $applicationIds) == false) {
 			throw new Exception("Could not assign the form to applications properly.");
 		}
-		return array($fid, $singularPluralChanged);
+		return $formObject;
 	}
 
 	/**
