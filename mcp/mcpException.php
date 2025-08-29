@@ -79,7 +79,7 @@ class FormulizeMCPException extends Exception
 	{
 		$error = [
 			'code' => $this->code,
-			'message' => $this->message,
+			'message' => strip_tags($this->message),
 			'timestamp' => $this->getTimestamp(),
 			'type' => $this->getType(),
 		];
