@@ -198,12 +198,28 @@ Examples:
 							'description' => 'Logical operator between multiple filter conditions. Default: AND'
 						],
 						'limitSize' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								],
+				        [
+									'type' => 'null',
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								]
+							]
 						],
 						'limitStart' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+								],
+				        [
+									'type' => 'null',
+									'description' => 'Starting offset for pagination. If null then this is treated the same as using zero, ie: first record in the dataset.'
+								]
+							]
 						],
 						'sortField' => [
 							'type' => 'string',
@@ -230,8 +246,20 @@ Examples:
 					'type' => 'object',
 					'properties' => [
 						'value' => [
-							'type' => ['integer', 'number', 'string'],
-							'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+				        [
+									'type' => 'number',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+				        [
+									'type' => 'string',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								]
+							]
 						],
 						'element_handle' => [
 							'type' => 'string',
@@ -306,8 +334,16 @@ Examples:
 							'description' => 'Optional. Limits how many entries are permitted in the form: \'off\' = unlimited entries per user (default), \'user\' = one entry per user, \'group\' = one entry per group'
 						],
 						'application_id_or_name' => [
-							'type' => ['string', 'integer'],
-							'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
+							'oneOf' => [
+      				  [
+									'type' => 'string',
+									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
+								],
+				        [
+									'type' => 'integer',
+									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications.'
+								]
+    					]
 						]
 					],
 					'required' => ['title']
