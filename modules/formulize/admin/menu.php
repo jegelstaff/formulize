@@ -35,36 +35,22 @@
 
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_ADMIN_HOME,
-	'link'	=> 'admin/ui.php',
-	'icon'  => 'images/admin/users_big.png',
-	'small' => 'images/admin/users_small.png');
+	'link'	=> 'admin/ui.php');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_EMAIL_USERS,
-	'link'	=> 'admin/ui.php?page=mailusers',
-	'icon'  => 'images/admin/users_big.png',
-	'small' => 'images/admin/users_small.png');
+	'link'	=> 'admin/ui.php?page=mailusers');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MANAGE_API_KEYS,
-	'link'	=> 'admin/ui.php?page=managekeys',
-	'icon'  => 'images/admin/categories_big.png',
-	'small' => 'images/admin/categories_small.png');
+	'link'	=> 'admin/ui.php?page=managekeys');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_IMPORT_EXPORT,
-	'link'	=> 'admin/ui.php?page=config-sync',
-	'icon'  => 'images/admin/fields_big.png',
-	'small' => 'images/admin/fields_small.png');
+	'link'	=> 'admin/ui.php?page=config-sync');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_SYNCHRONIZE,
-	'link'	=> 'admin/ui.php?page=synchronize',
-	'icon'  => 'images/admin/regstep_big.png',
-	'small' => 'images/admin/regstep_small.png');
+	'link'	=> 'admin/ui.php?page=synchronize');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_COPY_GROUP_PERMS,
-	'link'	=> 'admin/ui.php?page=managepermissions',
-	'icon'  => 'images/admin/visibility_big.png',
-	'small' => 'images/admin/visibility_small.png');
+	'link'	=> 'admin/ui.php?page=managepermissions');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS,
-	'link'	=> 'admin/ui.php?page=managetokens',
-	'icon'  => 'images/admin/permissions_big.png',
-	'small' => 'images/admin/permissions_small.png');
+	'link'	=> 'admin/ui.php?page=managetokens');
