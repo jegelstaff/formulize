@@ -529,7 +529,7 @@ Examples:
 	/**
 	 * Create a new form with basic configuration
 	 * @param array $arguments An associative array containing the parameters for creating a new form.
-	 * - 'name': The name of the form (required).
+	 * - 'title': The name of the form (required).
 	 * - 'notes': Optional internal notes about the form.
 	 * - 'limit_entries': Optional. Limits how many entries are permitted in the form: 'off' = unlimited entries per user (default), 'user' = one entry per user, 'group' = one entry per group.
 	 * - 'application_id_or_name': Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.
@@ -551,7 +551,7 @@ Examples:
 		$application_id_or_name = $arguments['application_id_or_name'] ?? '';
 
 		if(empty($title)) {
-			throw new FormulizeMCPException('Form name is required', 'invalid_data');
+			throw new FormulizeMCPException('title is required', 'invalid_data');
 		}
 
 		if(!in_array($limit_entries, ['off', 'user', 'group'])) {
@@ -584,17 +584,15 @@ Examples:
 			];
 
 			$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
-			list($fid, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
+			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
 
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'database_error');
 		}
 
-		$form_handler = xoops_getModuleHandler('forms', 'formulize');
-		$formObject = $form_handler->get($fid);
 		// could/should reuse get_form_details ??
 		return [
-			'form_id' => $fid,
+			'form_id' => $formObject->getVar('fid'),
 			'title' => $formObject->getVar('title'),
 			'singular' => $formObject->getSingular(),
 			'plural' => $formObject->getPlural(),

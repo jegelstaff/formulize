@@ -470,7 +470,7 @@ class FormulizeConfigSync
 				$applicationIds = array(0); // forms with no application
 				$groupsThatCanEditForm = array(XOOPS_GROUP_ADMIN); // only webmasters can edit forms initially
 				$change['data']['fid'] = 0; // ensure it's treated as a new form
-				list($formId, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($change['data'], $groupsThatCanEditForm, $applicationIds);
+				$formObject = formulizeHandler::upsertFormSchemaAndResources($change['data'], $groupsThatCanEditForm, $applicationIds);
 				break;
 
 			case 'update':
