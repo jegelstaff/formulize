@@ -249,6 +249,7 @@ class formulizeApplicationsHandler {
     } else {
       $idsArray[0] = $ids;
     }
+		$sql = "";
     $foundApps = array();
     if($ids !== 'all') {
       // retrieve all the ids
@@ -256,8 +257,7 @@ class formulizeApplicationsHandler {
       foreach($idsArray as $key=>$thisId) {
         // validate the id
         if ($thisId == 0 OR !is_numeric($thisId)) {
-          $cachedApps[$thisId] = false;
-          $foundApps[$key] = false;
+					continue;
         } else {
           if(isset($cachedApps[$thisId])) { // retrive the id from the cache if possible
             if($fid > 0 AND in_array($fid, $cachedApps[$thisId]->getVar('forms'))) {
@@ -271,7 +271,7 @@ class formulizeApplicationsHandler {
       }
       if($fid > 0) {
         $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' as t1, '.$xoopsDB->prefix("formulize_application_form_link").' as t2 WHERE t1.appid IN ('.implode(",",$queryIds).') AND t1.appid = t2.appid AND t2.fid = '.$fid.' ORDER BY t1.name';
-      } else {
+      } elseif(!empty($queryIds)) {
         $sql = 'SELECT * FROM '.$xoopsDB->prefix("formulize_applications").' WHERE appid IN ('.implode(",",$queryIds).') ORDER BY name';
       }
     } else {
@@ -298,7 +298,7 @@ class formulizeApplicationsHandler {
     $links_handler = xoops_getmodulehandler('ApplicationMenuLinks', 'formulize'); // JAKEADDED
 
     // query the DB for the ids we're supposed to
-    if ($result = $this->db->query($sql)) {
+    if ($sql AND $result = $this->db->query($sql)) {
       while($resultArray = $this->db->fetchArray($result)) {
         $newApp = new formulizeApplication();
         $newApp->assignVars($resultArray);
@@ -331,12 +331,6 @@ class formulizeApplicationsHandler {
     if($ids === 'all') {
       $cachedApps['all'] = $foundApps;
       return $foundApps;
-    } else {
-      foreach($idsArray as $key=>$thisId) {
-        if(!isset($foundApps[array_search($thisId,$idsArray)])) { // if we don't already have a value for this id, then mark it as false, but don't cache it because we don't know why the query failed...another query for the same id might succeed
-          $foundApps[array_search($thisId,$idsArray)] = false;
-        }
-      }
     }
     if(is_array($ids)) {
       return $foundApps;
