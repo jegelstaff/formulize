@@ -245,13 +245,29 @@ class formulizeForm extends FormulizeObject {
 
     public function setVar($key, $value, $not_gpc = false) {
         if ("form_handle" == $key) {
-            $value = self::sanitize_handle_name($value);
+					if($value == "") {
+						$value = $this->getVar('title');
+					}
+          $value = self::sanitize_handle_name($value);
+					$startingFormHandle = $value;
+					$uniqueCheckCounter = 1;
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					while (!$uniqueCheck = $form_handler->isFormHandleUnique($value, $this->getVar('fid'))) {
+        		$value = $startingFormHandle . "_".$uniqueCheckCounter;
+						$uniqueCheckCounter++;
+					}
         }
 				if("id_form" == $key) {
 					parent::setVar("fid", $value, $not_gpc);
 				}
 				if("fid" == $key) {
 					parent::setVar("id_form", $value, $not_gpc);
+				}
+				if("singular" == $key AND $value == "") {
+					$value = $this->getSingular();
+				}
+				if("plural" == $key AND $value == "") {
+					$value = $this->getPlural();
 				}
         parent::setVar($key, $value, $not_gpc);
         if ("on_before_save" == $key) {
@@ -802,16 +818,6 @@ class formulizeFormsHandler {
 					case('group'):
 						$singleToWrite = "group";
 						break;
-				}
-
-				if( $form_handle == "" ){
-					$candidateFormHandle = FormulizeObject::sanitize_handle_name($title);
-					$uniqueNumber = 0;
-					while($this->isFormHandleUnique($candidateFormHandle) == false) {
-						$candidateFormHandle = FormulizeObject::sanitize_handle_name($title)."_$uniqueNumber";
-						$uniqueNumber++;
-					}
-					$formObject->setVar('form_handle', $candidateFormHandle);
 				}
 
 				if($formObject->isNew() || empty($id_form)) {
