@@ -193,6 +193,7 @@ class formulizeHandler {
 			$formIsNew = false;
 		} else {
 			$formObject = $form_handler->create();
+			$formObjectProperties['title'] = $formObjectProperties['title'] ? $formObjectProperties['title'] : 'New Form';
 		}
 		$originalFormNames = array(
 			'singular' => $formObject->getSingular(),
