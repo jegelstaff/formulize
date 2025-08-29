@@ -100,7 +100,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true,
 							'examples' => [
 								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
@@ -130,7 +130,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -184,7 +184,7 @@ Examples:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format.'
+												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format. For duration elements, use minutes as an integer.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
