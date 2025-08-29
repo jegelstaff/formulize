@@ -538,6 +538,13 @@ Examples:
 	 */
 	private function create_form($arguments) {
 
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create forms.",
+				'authentication_error',
+			);
+		}
+
 		$title = trim($arguments['title'] ?? '');
 		$notes = trim($arguments['notes'] ?? '');
 		$limit_entries = $arguments['limit_entries'] ?? 'off';
