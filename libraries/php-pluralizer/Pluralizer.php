@@ -101,6 +101,7 @@ class Pluralizer
         'man'           => 'men',
         'tooth'         => 'teeth',
         'person'        => 'people',
+				'people'        => 'people',
         'valve'         => 'valves',
         'memorandum'    => 'memoranda',
         'criterion'     => 'criteria',

@@ -325,7 +325,8 @@
     ['groove', 'grooves'],
     ['pickaxe', 'pickaxes'],
     ['passerby', 'passersby'],
-    ['canvas', 'canvases']
+    ['canvas', 'canvases'],
+		['person', 'people']
   ].forEach(function (rule) {
     return pluralize.addIrregularRule(rule[0], rule[1]);
   });
