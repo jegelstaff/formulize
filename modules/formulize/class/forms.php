@@ -248,7 +248,7 @@ class formulizeForm extends FormulizeObject {
 					if($value == "") {
 						$value = $this->getVar('title');
 					}
-          $value = self::sanitize_handle_name($value);
+          $value = strtolower(self::sanitize_handle_name($value));
 					$startingFormHandle = $value;
 					$uniqueCheckCounter = 1;
 					$form_handler = xoops_getmodulehandler('forms', 'formulize');
