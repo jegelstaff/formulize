@@ -36,12 +36,12 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeTextElement extends formulizeElement {
 
     function __construct() {
-        $this->name = "Textbox";
+        $this->name = "Multi-line textbox";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
         $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         $this->canHaveMultipleValues = false;
         $this->hasMultipleOptions = false;
         parent::__construct();
@@ -51,14 +51,14 @@ class formulizeTextElement extends formulizeElement {
 		public function setVar($key, $value, $not_gpc = false) {
 			if($key == 'ele_value') {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				if(strstr((string)$valueToWrite[2], "\$default")) {
-					$filename = 'text_'.$this->getVar('ele_handle').'.php';
-					formulize_writeCodeToFile($filename, $valueToWrite[2]);
-					$valueToWrite[2] = '';
+				if(strstr((string)$valueToWrite[0], "\$default")) {
+					$filename = 'textarea_'.$this->getVar('ele_handle').'.php';
+					formulize_writeCodeToFile($filename, $valueToWrite[0]);
+					$valueToWrite[0] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
 				}
 			}
-			parent::setVar($key, $value, $not_gpc);
+      parent::setVar($key, $value, $not_gpc);
 		}
 
 		// read code from a file
@@ -66,13 +66,13 @@ class formulizeTextElement extends formulizeElement {
 			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value' AND is_array($value)) {
-				$filename ='text_'.$this->getVar('ele_handle').'.php';
+				$filename = 'textarea_'.$this->getVar('ele_handle').'.php';
 				$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
 				$fileValue = "";
 				if(file_exists($filePath)) {
 					$fileValue = strval(file_get_contents($filePath));
 				}
-				$value[2] = $fileValue ? $fileValue : (is_array($value) AND isset($value[2]) ? $value[2] : null);
+				$value[0] = $fileValue ? $fileValue : $value[0];
 			}
 			return $value;
 		}
@@ -138,7 +138,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		/**
 		 * Returns the default value for this element, for a new entry in the specified form.
 		 * Determines database ready values, not necessarily human readable values
-		 * @param $element The element object
+		 * @param object $element The element object
 		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
 		 * @return mixed The default value
 		 */
