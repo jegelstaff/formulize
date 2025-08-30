@@ -530,7 +530,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
                 // get defaults for certain element types, function needs expanding
-                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'));
+                $defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
                 $compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
 			} else {
 				$compValue = "";

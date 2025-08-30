@@ -101,7 +101,7 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
 		// and take another pass at defaults
     foreach($sub_entry_written as $thisSubEntry) {
         // need to parse/write the defaults one more time, because some defaults may be dependent on other defaults -- dates mostly/only? -- problem is that when defaults are set in the normal writing of new entries, they don't take into account the default values of other elements. Should they? Kind of super awkward when there might be on before save happening after the default value is determined. Doing a second pass is really the only way??
-        writeEntryDefaults($target_sub,$thisSubEntry,array_keys($valuesToWrite));
+        secondPassWritingSubformEntryDefaults($target_sub,$thisSubEntry,array_keys($valuesToWrite));
         if($frid) {
             formulize_updateDerivedValues($entry,$mainFormFid,$frid);
         } else {

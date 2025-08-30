@@ -1366,3 +1366,19 @@ class formulizeDataHandler {
 
 }
 
+/**
+ * Take an array of element handle -> value pairs, and add default values for any elements in the form that don't already have a value
+ * @param array values - The values array that we're appending to
+ * @param int fid - The ID of the form we're getting default values for
+ * @return array Returns the passed array with default values added, if any
+ */
+function addDefaultValuesToDataToWrite($values, $fid) {
+	$defaultValueMap = getEntryDefaultsInDBFormat($fid);
+	foreach($defaultValueMap as $defaultValueElementHandle=>$defaultValueToWrite) {
+		// if the element is not a value that we received, then let's use the default value
+		if(!isset($values[$defaultValueElementHandle])) {
+			$values[$defaultValueElementHandle] = $defaultValueToWrite;
+		}
+	}
+	return $values;
+}

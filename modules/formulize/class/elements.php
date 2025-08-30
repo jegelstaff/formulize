@@ -189,7 +189,6 @@ class formulizeElement extends FormulizeObject {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
 			if($ele_type == 'derived'
 				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
-				OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
 				) {
 				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 				formulize_writeCodeToFile($filename, $valueToWrite[0]);
@@ -204,12 +203,10 @@ class formulizeElement extends FormulizeObject {
 			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value') {
-				$format = 'f';
 				$ele_type = $this->getVar('ele_type');
 				if(($ele_type == 'derived'
 					OR $ele_type == 'ib'
-					OR $ele_type == 'areamodif'
-					OR $ele_type == 'textarea')
+					OR $ele_type == 'areamodif')
 					AND is_array($value)) {
 						$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 						$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
@@ -222,31 +219,6 @@ class formulizeElement extends FormulizeObject {
 			}
 			return $value;
 		}
-
-    // returns an array of the default values (since there could be more than one in some element types)
-    // entry_id is the entry for which we're getting the default value, if any
-    public function getDefaultValues($entry_id='new') {
-        $default = array();
-        $ele_value = $this->getVar('ele_value');
-        $ele_type = $this->getVar('ele_type');
-        switch($ele_type) {
-            case 'select':
-                if($this->isLinked === false) { // linked element support needs to be added!!
-                    foreach($ele_value[2] as $option=>$selected) {
-                        if($selected) {
-                            $default[] = $option;
-                        }
-                    }
-                }
-                break;
-            case 'text':
-            case 'textarea':
-               	$default[] = interpretTextboxValue($this, $entry_id);
-                break;
-            default: // other element types need to be implemented! And a new method needs to be added to custom classes???
-        }
-        return $default;
-    }
 
     // returns true if the option is one of the values the user can choose from in this element
     // returns false if the element does not have options
