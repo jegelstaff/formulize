@@ -90,11 +90,10 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     }
 
 		/**
-		 * Returns the default value for this element, for a new entry in the specified form, or for a specific entry if one is specified.
-		 * Some elements might have defaults that depend on the values of other elements in the entry.
-		 * This method may replace the use of loadValue in the future
+		 * Returns the default value for this element, for a new entry in the specified form.
+		 * Determines database ready values, not necessarily human readable values
 		 * @param $element The element object
-		 * @param $entry_id The entry id that should be used as the context for the default value. Defaults to 'new'.
+		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
 		 * @return mixed The default value
 		 */
 		function getDefaultValue($element, $entry_id = 'new') {

@@ -2753,13 +2753,13 @@ function removeOpeningPHPTag($string) {
 }
 
 /**
- * Interpret the value for a textbox or textarea, return the actual string we should display
+ * Interpret the value for a textbox or textarea, return the actual string we should display or should save in the DB
  * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
- * @param int|string $entry_id The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
+ * @param int|string $entry_id Optional. Defaults to 'new'. The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
  * @param mixed $currentValue Optional. The current value of the element in the entry. More efficient to pass this in if known. If set to the string USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used instead of the current value. This is necessary when determining defaults for newly created subform entries, since they have an entry id in the database already.
- * @return mixed The default value that should be used for this element
+ * @return mixed The default value that should be used for this element, or the actual value in the database if this is a specific entry, unless there is no value saved in which case the default from the element settings would be interpretted.
  */
-function interpretTextboxValue($elementIdentifier, $entry_id, $currentValue = null) {
+function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentValue = null) {
 
 		if(!$elementObject = _getElementObject($elementIdentifier)) {
 			return "";
@@ -6301,8 +6301,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			} elseif ($curlyBracketEntry == "new") {
 				$elementObject = $element_handler->get($bareFilterTerm);
 				if (is_object($elementObject)) {
-					$default = $elementObject->getDefaultValues($curlyBracketEntry); // initially, only works for text, textarea, and non-linked selectboxes! Sliders return integer. All other elements will return an empty array, until/unless they have their own method in their class that corrects this!
-					$default = is_array($default) ? $default[0] : $default;
+					$defaults = getEntryDefaultsInDBFormat($elementObject);
+					$default = $defaults[$elementObject->getVar('ele_handle')];
 					if(is_numeric($default)) {
 							$conditionsFilterComparisonValue = $default;
 					} elseif($default) {
@@ -8104,9 +8104,12 @@ function export_prepColumns($columns,$include_metadata=0) {
 
 // this function figures out certain default values for elements in a given entry in a form, and writes them to that entry
 // used for setting values that are supposed to exist by default in newly created subform entries
-function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
+// will potentially get back values for elements that already have a value in the database, if the default value based on the given entry would result in a different default than the one that is saved already
+// the intention is for this function to be called after an entry has been written already, so that any dependent defaults would take the "first pass" defaults and other saved values into consideration
+// this double default operation is only performed when saving new subform entries
+function secondPassWritingSubformEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
-  $defaultValueMap = getEntryDefaults($target_fid, $target_entry, keyByIds: true);
+  $defaultValueMap = getEntryDefaultsInDBFormat($target_fid, $target_entry, keyByIds: true);
   $defaultElementHandles = convertElementIdsToElementHandles(array_keys($defaultValueMap));
 
   $i = 0;
@@ -8120,55 +8123,62 @@ function writeEntryDefaults($target_fid,$target_entry,$excludeHandles = array())
 }
 
 /**
- * Gets the default values for elements in an entry, usually a new entry, but some element types can have defaults that depend on data already saved in other elements in an entry
- * Such as when a multipage form has elements on page 2 that have default values determined by answers on page 1
- * @param int $target_fid - The form id for which we're getting default values
- * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry. Defaults to 'new'.
+ * Gets the default values for all elements in an entry, or just one element, usually for a new entry, but there is a double pass case for subform entries
+ * Returns database level values, ie: what the default value would equate to in the database.
+ * If a target_entry was specified, and the default value of the element, when considering the other values in that entry already (if the element type is capable of doing so), would be the same as what is already in the database, then no default value is returned for that element
+ * @param int $targetObjectOrFormId - And element object to get the default value for, or a form object or form id to get all the default values for.
+ * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry. Defaults to 'new'. Only case where this is not 'new' is the second pass at default values when generating new subform entries?? See comment in new subform entry writing code... there is surly a better way to handle that? Properly conditional elements would update in real time before saving in response to the value typed in other elements on screen?
  * @param boolean $keyByIds - a flag to indicate if the resulting array should be keyed by element id. Default is false and array will be keyed by element handles.
- * @return array Returns an array of element id/default value pairs
+ * @return array Returns an array of element id/default value pairs. The values are database-ready values, not human readable values (ie: foreign keys, not text, if applicable. In many cases database values for elements are human readable)
  */
-function getEntryDefaults($target_fid,$target_entry = 'new', $keyByIds = false) {
+function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new', $keyByIds = false) {
+
+	$elementsForDefaults = array();
+	if(is_a($targetObjectOrFormId, 'formulizeElement')) {
+		$elementsForDefaults[] = $targetObjectOrFormId;
+		$target_fid = $targetObjectOrFormId->getVar('fid');
+	} elseif(is_a($targetObjectOrFormId, 'formulizeForm')) {
+		$target_fid = $targetObjectOrFormId->getVar('fid');
+	} elseif(is_numeric($targetObjectOrFormId)) {
+		$target_fid = intval($targetObjectOrFormId);
+	} else {
+		throw new Exception("Invalid target object or form id used for getting entry defaults.");
+	}
 
   static $cachedDefaults = array();
-
-  if(isset($cachedDefaults[$target_fid][$keyByIds][$target_entry])) {
-    return $cachedDefaults[$target_fid][$keyByIds][$target_entry];
-  }
-
   $defaultValueMap = array();
-
+	$targetFidDataHandler = new formulizeDataHandler($target_fid);
   $element_handler = xoops_getmodulehandler('elements', 'formulize');
 
-  $criteria = new CriteriaCompo();
-  $criteria->add(new Criteria('ele_type', 'text'), 'OR');
-  $criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
-  $criteria->add(new Criteria('ele_type', 'date'), 'OR');
-	$criteria->add(new Criteria('ele_type', 'time'), 'OR');
-  $criteria->add(new Criteria('ele_type', 'radio'), 'OR');
-  $criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
-  $criteria->add(new Criteria('ele_type', 'yn'), 'OR');
-  $criteria->add(new Criteria('ele_type', 'select'), 'OR');
-	$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
-  $elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid)); // get all the text or textarea elements in the form
+	if(empty($elementsForDefaults)) {
+		$criteria = new CriteriaCompo();
+		$criteria->add(new Criteria('ele_type', 'text'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'date'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'time'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'yn'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'select'), 'OR');
+		$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
+		$elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid)); // get all the text or textarea elements in the form
+	}
 
   foreach($elementsForDefaults as $thisDefaultEle) {
+
+		$key = $keyByIds ? $thisDefaultEle->getVar('ele_id') : $thisDefaultEle->getVar('ele_handle');
+
+		// used cached value if we have one
+		if(isset($cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry])) {
+    	$defaultValueMap[$key] = $cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry];
+			continue;
+		}
+
+		// figure out the default value for this element
     $defaultTextToWrite = "";
     $ele_value_for_default = $thisDefaultEle->getVar('ele_value');
 		$ele_type = $thisDefaultEle->getVar('ele_type');
     switch($ele_type) {
-      case "text":
-      case "textarea":
-        $defaultTextToWrite = interpretTextboxValue($thisDefaultEle, $target_entry);
-        // do not flag a default as a default if it is already in the database!
-        // text boxes might have dynamic defaults dependent on other values in their entry
-        // but if they don't and we'd just be overwriting the same value, skip it
-        if($target_entry AND $target_entry !== 'new') {
-            $dataHandler = new formulizeDataHandler($thisDefaultEle->getVar('id_form'));
-            if($defaultTextToWrite === $dataHandler->getElementValueInEntry($target_entry, $thisDefaultEle)) {
-                $defaultTextToWrite = null;
-            }
-        }
-        break;
 			case "time":
 				$defaultTextToWrite = interpretTimeElementValue($ele_value_for_default[0], $target_entry);
 				break;
@@ -8229,15 +8239,26 @@ function getEntryDefaults($target_fid,$target_entry = 'new', $keyByIds = false) 
 				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
 					if(method_exists($elementTypeHandler, 'getDefaultValue')) {
-						$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle);
+						$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
 					}
 				}
     }
-    if($defaultTextToWrite === "" OR $defaultTextToWrite === false OR $defaultTextToWrite === null) { continue; }
-		$key = $keyByIds ? $thisDefaultEle->getVar('ele_id') : $thisDefaultEle->getVar('ele_handle');
+		// if there's no value, move on
+    if($defaultTextToWrite === ""
+			OR $defaultTextToWrite === false
+			OR $defaultTextToWrite === null) {
+				continue;
+		}
+		// if the value matches what's in the DB already, move on
+		if($target_entry AND $target_entry !== 'new') {
+				if($defaultTextToWrite === $targetFidDataHandler->getElementValueInEntry($target_entry, $thisDefaultEle)) {
+						continue;
+				}
+    }
+		// otherwise, catalogue the default value
+		$cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry] = $defaultTextToWrite;
     $defaultValueMap[$key] = $defaultTextToWrite;
   }
-  $cachedDefaults[$target_fid][$keyByIds][$target_entry] = $defaultValueMap;
   return $defaultValueMap;
 }
 
@@ -9072,23 +9093,6 @@ function isMCPServerEnabled() {
     $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 
     return isset($formulizeConfig['formulizeMCPServerEnabled']) && $formulizeConfig['formulizeMCPServerEnabled'] == 1;
-}
-
-/**
- * Take an array of element handle -> value pairs, and add default values for any elements in the form that don't already have a value
- * @param array values - The values array that we're appending to
- * @param int fid - The ID of the form we're getting default values for
- * @return array Returns the passed array with default values added, if any
- */
-function addDefaultValuesToDataToWrite($values, $fid) {
-	$defaultValueMap = getEntryDefaults($fid);
-	foreach($defaultValueMap as $defaultValueElementHandle=>$defaultValueToWrite) {
-		// if the element is not a value that we received, then let's use the default value
-		if(!isset($values[$defaultValueElementHandle])) {
-			$values[$defaultValueElementHandle] = $defaultValueToWrite;
-		}
-	}
-	return $values;
 }
 
 /**
