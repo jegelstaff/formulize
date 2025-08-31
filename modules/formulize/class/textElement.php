@@ -36,7 +36,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeTextElement extends formulizeElement {
 
     function __construct() {
-        $this->name = "Textbox";
+        $this->name = "Text box";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
@@ -148,12 +148,16 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-    // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
-    function loadValue($value, $ele_value, $element) {
-			$ele_value[2] = $value;
-			$ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
+		// $entry_id is the ID number of the entry that this data is being loaded for. Can be "new" for a new entry.
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    function loadValue($element, $entry_id, $value) {
+			$ele_value = $element->getVar('ele_value');
+			if($value OR $value === 0) {
+				$ele_value[2] = str_replace("'", "&#039;", $value);
+			} elseif($element->getVar('ele_use_default_when_blank') == false) {
+				$ele_value[2] = "";
+			}
 			return $ele_value;
     }
 
