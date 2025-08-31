@@ -56,7 +56,7 @@ class formulizeTextareaElement extends formulizeElement {
 		public function setVar($key, $value, $not_gpc = false) {
 			if($key == 'ele_value') {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				if(strstr((string)$valueToWrite[0], "\$default")) {
+				if(strstr((string)$valueToWrite[ELE_VALUE_TEXTAREA_DEFAULTVALUE], "\$default")) {
 					$filename = 'textarea_'.$this->getVar('ele_handle').'.php';
 					formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_TEXTAREA_DEFAULTVALUE]);
 					$valueToWrite[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = '';
@@ -77,7 +77,7 @@ class formulizeTextareaElement extends formulizeElement {
 				if(file_exists($filePath)) {
 					$fileValue = strval(file_get_contents($filePath));
 				}
-				$value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = $fileValue ? $fileValue : $value[ELE_VALUE_TEXTAREA_DEFAULTVALUE];
+				$value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = $fileValue ? $fileValue : ((is_array($value) AND isset($value[ELE_VALUE_TEXTAREA_DEFAULTVALUE])) ? $value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] : null);
 			}
 			return $value;
 		}
@@ -118,7 +118,7 @@ class formulizeTextareaElementHandler extends formulizeElementsHandler {
 				$ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID] = 0;
 				$ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] = 0;
 				$dataToSendToTemplate['ele_value'] = $ele_value;
-		    $formlink = createFieldList($ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID], true);
+		    $formlink = createFieldList(0, true);
 				$dataToSendToTemplate['formlink'] = $formlink->render();
 			}
       return $dataToSendToTemplate;
