@@ -33,7 +33,14 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeTextElement extends formulizeElement {
+// constants for the keys in ele_value
+define('ELE_VALUE_TEXTAREA_DEFAULTVALUE', 0);
+define('ELE_VALUE_TEXTAREA_ROWS', 1);
+define('ELE_VALUE_TEXTAREA_COLS', 2);
+define('ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID', 3);
+define('ELE_VALUE_TEXTAREA_RICHTEXT', 'use_rich_text');
+
+class formulizeTextareaElement extends formulizeElement {
 
     function __construct() {
         $this->name = "Multi-line textbox";
@@ -53,8 +60,8 @@ class formulizeTextElement extends formulizeElement {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
 				if(strstr((string)$valueToWrite[0], "\$default")) {
 					$filename = 'textarea_'.$this->getVar('ele_handle').'.php';
-					formulize_writeCodeToFile($filename, $valueToWrite[0]);
-					$valueToWrite[0] = '';
+					formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_TEXTAREA_DEFAULTVALUE]);
+					$valueToWrite[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
 				}
 			}
@@ -72,14 +79,14 @@ class formulizeTextElement extends formulizeElement {
 				if(file_exists($filePath)) {
 					$fileValue = strval(file_get_contents($filePath));
 				}
-				$value[0] = $fileValue ? $fileValue : $value[0];
+				$value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = $fileValue ? $fileValue : $value[ELE_VALUE_TEXTAREA_DEFAULTVALUE];
 			}
 			return $value;
 		}
 }
 
 #[AllowDynamicProperties]
-class formulizeTextElementHandler extends formulizeElementsHandler {
+class formulizeTextareaElementHandler extends formulizeElementsHandler {
 
     var $db;
     var $clickable; // used in formatDataForList
@@ -91,7 +98,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     }
 
     function create() {
-        return new formulizeTextElement();
+        return new formulizeTextareaElement();
     }
 
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -101,22 +108,20 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			$dataToSendToTemplate = array();
 			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
 				$ele_value = $element->getVar('ele_value');
-				$formlink = createFieldList($ele_value[4], true);
+				$formlink = createFieldList($ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID], true);
 				$dataToSendToTemplate['formlink'] = $formlink->render();
 				$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
 			} else { // new element
 				$config_handler = xoops_gethandler('config');
         $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-				$ele_value[0] = $formulizeConfig['t_width'];
-				$ele_value[1] = $formulizeConfig['t_max'];
-				$ele_value[3] = 0;
-				$ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-				$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-				$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-				$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-				$ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
-				$ele_value[12] = 1; // Default trim option to enabled
+				$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = "";
+				$ele_value[ELE_VALUE_TEXTAREA_ROWS] = $formulizeConfig['ta_rows'];
+				$ele_value[ELE_VALUE_TEXTAREA_COLS] = $formulizeConfig['ta_cols'];
+				$ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID] = 0;
+				$ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] = 0;
 				$dataToSendToTemplate['ele_value'] = $ele_value;
+		    $formlink = createFieldList($ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID], true);
+				$dataToSendToTemplate['formlink'] = $formlink->render();
 			}
       return $dataToSendToTemplate;
     }
@@ -129,8 +134,10 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
 			$changed = false;
 			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-				$ele_value[4] = $_POST['formlink'];
-				$element->setVar('ele_value', $ele_value);
+				if($_POST['formlink'] != "none") {
+					$ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID] = $_POST['formlink'];
+					$element->setVar('ele_value', $ele_value);
+				}
 			}
 			return $changed;
     }
@@ -148,12 +155,16 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-    // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
-    function loadValue($value, $ele_value, $element) {
-			$ele_value[2] = $value;
-			$ele_value[2] = str_replace("'", "&#039;", $ele_value[2]);
+		// $entry_id is the ID number of the entry that this data is being loaded for. Can be "new" for a new entry.
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    function loadValue($element, $entry_id, $value) {
+			$ele_value = $element->getVar('ele_value');
+			if($value OR $value === 0) {
+				$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = str_replace("'", "&#039;", $value);
+			} elseif($element->getVar('ele_use_default_when_blank') == false) {
+				$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = "";
+			}
 			return $ele_value;
     }
 
