@@ -160,11 +160,7 @@ class formulizeTextareaElementHandler extends formulizeElementsHandler {
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
     function loadValue($element, $entry_id, $value) {
 			$ele_value = $element->getVar('ele_value');
-			if($value OR $value === 0) {
-				$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = str_replace("'", "&#039;", $value);
-			} elseif($element->getVar('ele_use_default_when_blank') == false) {
-				$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = "";
-			}
+			$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = str_replace("'", "&#039;", $value);
 			return $ele_value;
     }
 
