@@ -166,7 +166,7 @@ EOF;
 		$ele_type = $element->getVar('ele_type');
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($form_id);
-			$ele_value = loadValue($prevEntry, $element, $data_handler->getEntryOwnerGroups($entry), $entry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+			$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
