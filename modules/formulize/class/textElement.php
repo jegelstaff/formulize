@@ -298,6 +298,11 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
         $this->clickable = true;
         $this->striphtml = true;
         $this->length = $textWidth;
+				if(isset($ele_value[4])
+					AND $ele_value[4]
+					AND $associatedElementMatchingText = getAssociatedElementMatchingText($value, $ele_value[4], $textWidth)) {
+						return $associatedElementMatchingText;
+				}
         return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 

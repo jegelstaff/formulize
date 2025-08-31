@@ -261,10 +261,19 @@ class formulizeTextareaElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true;
-        $this->striphtml = true;
-        $this->length = $textWidth;
-        return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+			$this->clickable = true;
+			$this->striphtml = true;
+			$this->length = $textWidth;
+			$elementObject = $this->get($handle);
+			$ele_value = $elementObject->getVar('ele_value');
+			if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
+				return printSmart(strip_tags(trans($value)), 100); // handle this separately from non-rich text areas
+			} elseif(isset($ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID])
+				AND $ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID]
+				AND $associatedElementMatchingText = getAssociatedElementMatchingText($value, $ele_value[ELE_VALUE_TEXTAREA_ASSOCIATED_ELEMENT_ID], $textWidth)) {
+					return $associatedElementMatchingText;
+			}
+			return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 
 }

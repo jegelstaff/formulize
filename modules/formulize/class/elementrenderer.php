@@ -898,8 +898,7 @@ class formulizeElementRenderer{
 			if(substr($renderedElementMarkupName, 0, 9) != "desubform"
 				AND !$isDisabled
 				AND !$wasDisabled
-				AND ($ele_type == "textarea"
-					OR $ele_type == "select"
+				AND ($ele_type == "select"
 					OR $ele_type=="radio"
 					OR $ele_type=="date"
 					OR $ele_type=="colorpick"
@@ -1176,7 +1175,7 @@ if($multiple ){
 
 
 	function formulize_disableElement($element, $type) {
-		if($type == "textarea" OR $type == "date" OR $type == "colorpick") {
+		if($type == "date" OR $type == "colorpick") {
 			switch($type) {
 				case 'date':
 					if($timeval = $element->getValue()) {
