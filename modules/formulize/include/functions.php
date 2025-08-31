@@ -1872,13 +1872,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
     $ele_id = $element->getVar('ele_id');
     switch ($ele_type) {
 
-        case 'textarea':
-        $value = $ele;
-        $value = $myts->htmlSpecialChars($value);
-        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
-        break;
-
-
         case 'areamodif':
         $value = $myts->stripSlashesGPC($ele);
         break;
@@ -2278,15 +2271,11 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 					}
 					break;
 
-				case "textarea":
-					$value = convertStringToUseSpecialCharsToMatchDB($value);
-					break;
-
-        default:
-        if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-            $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-            $value = $customTypeHandler->prepareLiteralTextForDB($value, $elementObject);
-        }
+      	default:
+					if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+							$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+							$value = $customTypeHandler->prepareLiteralTextForDB($value, $elementObject);
+					}
     }
 
     if ($value == "{USER}") {

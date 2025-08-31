@@ -26,8 +26,6 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// THIS FILE SHOWS ALL THE METHODS THAT CAN BE PART OF CUSTOM ELEMENT TYPES IN FORMULIZE
-// TO SEE THIS ELEMENT IN ACTION, RENAME THE FILE TO dummyElement.php
 // There is a corresponding admin template for this element type in the templates/admin folder
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
@@ -175,34 +173,28 @@ class formulizeTextareaElementHandler extends formulizeElementsHandler {
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-			$ele_value[2] = stripslashes($ele_value[2]);
-			$ele_value[2] = interpretTextboxValue($element, $entry_id, $ele_value[2]);
-			//if placeholder value is set
-			if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
-        $rawEleValue = $element->getVar('ele_value');
-				$placeholder = $rawEleValue[2];
-				$ele_value[2] = "";
-			}
+			$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = (isset($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) ? stripslashes($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]) : "";
+			$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE]);
 			if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
-				$form_ele = new XoopsFormText(
-					$caption,
-					$markupName,
-					$ele_value[0],	//	box width
-					$ele_value[1],	//	max width
-					$ele_value[2],	//	value
-					false,					// autocomplete in browser
-					($ele_value[3] ? 'number' : 'text')		// numbers only
-				);
-				//if placeholder value is set
-				if($ele_value[11]) {
-					$form_ele->setExtra("placeholder='".$placeholder."'");
-				}
-				//if numbers-only option is set
-				if ($ele_value[3]) {
-					$form_ele->setExtra("class='numbers-only-textbox'");
+				if(isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) {
+					include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
+					$form_ele = new XoopsFormEditor(
+						$caption,
+						'CKEditor',
+						array("name"=>$markupName, "value"=>$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE])
+					);
+					$GLOBALS['formulize_CKEditors'][] = $markupName.'_tarea';
+				} else {
+					$form_ele = new XoopsFormTextArea(
+						$caption,
+						$markupName,
+						$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE],
+						$ele_value[ELE_VALUE_TEXTAREA_ROWS],
+						$ele_value[ELE_VALUE_TEXTAREA_COLS]
+					);
 				}
 			} else {
-				$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[2], $element->getVar('ele_handle')), $markupName);
+				$form_ele = new XoopsFormLabel ($caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], ENT_QUOTES)), $markupName);	// nmc 2007.03.24 - added
 			}
 			return $form_ele;
     }
@@ -212,37 +204,14 @@ class formulizeTextareaElementHandler extends formulizeElementsHandler {
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 			$validationCode = array();
-			$ele_value = $element->getVar('ele_value');
-			$eltname = $markupName;
-			$eltcaption = $caption;
-			$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-			$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-			if($element->getVar('ele_required')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
-				$validationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
-				$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
-				$validationCode[] = "}\n";
-			}
-			if(isset($ele_value[9]) AND $ele_value[9]) {
-				$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
-				$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
-				$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
-				$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
-				$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
-				$validationCode[] = "hideSavingGraphic();\n";
-				$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
-				$validationCode[] = "myform.{$eltname}.focus();\n return false;\n";
-				$validationCode[] = "}\n";
-				$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
-				$validationCode[] = "\nvar formulize_xhr_params = []\n";
-				$validationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
-				$validationCode[] = "formulize_xhr_params[1] = ".$element->getVar('ele_id').";\n";
-				$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
-				$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
-				$validationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
-				$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
-				//$validationCode[] = "showSavingGraphic();\n";
-				$validationCode[] = "return false;\n";
-				$validationCode[] = "}\n";
+			if (!strstr(getCurrentURL(),"printview.php") AND isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] AND $element->getVar('ele_required')) {
+				$eltname = $markupName;
+				$eltmsg = empty($caption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
+				$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+				$validationCode[] = "var getText = CKEditors['".$eltname."_tarea'].getData();\n";
+				$validationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
+				$validationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
+				$validationCode[] = "window.alert(\"{$eltmsg}\");\n CKEditors['".$eltname."_tarea'].focus();\n return false;\n";
 				$validationCode[] = "}\n";
 			}
 		  return $validationCode;
@@ -254,19 +223,10 @@ class formulizeTextareaElementHandler extends formulizeElementsHandler {
     // $element is the element object
 		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     function prepareDataForSaving($value, $element, $entry_id=null) {
-			$ele_value = $element->getVar('ele_value');
-			// Trim the value if the option is set
-			if (isset($ele_value[12]) && $ele_value[12]) {
-				$value = trim($value);
-			}
-			// if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
-			if ($ele_value[3] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
-					$value = preg_replace ('/[^0-9.-]+/', '', $value);
-			}
-			global $myts;
-			$value = $myts->htmlSpecialChars($value);
-			$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
-      return $value;
+				global $myts;
+        $value = $myts->htmlSpecialChars($value);
+        $value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
+				return $value;
     }
 
     // this method will handle any final actions that have to happen after data has been saved

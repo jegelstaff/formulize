@@ -148,50 +148,6 @@ class formulizeElementRenderer{
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 
-			case 'textarea':
-				$ele_value[0] = (isset($ele_value[0]) AND $ele_value[0]) ? stripslashes($ele_value[0]) : "";
-//        $ele_value[0] = $myts->displayTarea($ele_value[0]); // commented by jwe 12/14/04 so that info displayed for viewing in a form box does not contain HTML formatting
-				$ele_value[0] = interpretTextboxValue($this->_ele, $entry_id, $ele_value[0]);
-				if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) { 				// nmc 2007.03.24 - added
-					if(isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
-						include_once XOOPS_ROOT_PATH."/class/xoopsform/formeditor.php";
-						$form_ele = new XoopsFormEditor(
-							$ele_caption,
-							'CKEditor',
-							$editor_configs = array("name"=>$renderedElementMarkupName, "value"=>$ele_value[0]),
-							$noHtml=false,
-							$OnFailure = ""
-						);
-
-                        if($this->_ele->getVar('ele_required')) {
-                            $eltname = $renderedElementMarkupName;
-                            $eltcaption = $ele_caption;
-                            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-                            $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-                            $form_ele->customValidationCode[] = "var getText = CKEditors['".$eltname."_tarea'].getData();\n";
-                            $form_ele->customValidationCode[] = "var StripTag = getText.replace(/(<([^>]+)>)/ig,''); \n";
-                            $form_ele->customValidationCode[] = "if(StripTag=='' || StripTag=='&nbsp;') {\n";
-                            $form_ele->customValidationCode[] = "window.alert(\"{$eltmsg}\");\n CKEditors['".$eltname."_tarea'].focus();\n return false;\n";
-                            $form_ele->customValidationCode[] = "}\n";
-                        }
-
-						$GLOBALS['formulize_CKEditors'][] = $renderedElementMarkupName.'_tarea';
-
-					} else {
-					$form_ele = new XoopsFormTextArea(
-						$ele_caption,
-						$renderedElementMarkupName,
-						$ele_value[0],	//	default value
-						$ele_value[1],	//	rows
-						$ele_value[2]	  //	cols
-					);
-					}
-				} else {															// nmc 2007.03.24 - added
-					$form_ele = new XoopsFormLabel ($ele_caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[0], ENT_QUOTES)), $renderedElementMarkupName);	// nmc 2007.03.24 - added
-				}
-			break;
-
-
 			case 'areamodif':
 				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
