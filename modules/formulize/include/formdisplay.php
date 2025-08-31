@@ -2895,6 +2895,7 @@ function loadValue($element, $entry_id, $prevEntry) {
 		return $ele_value;
 	}
 
+	// get the value of this element for this entry as stored in the DB, if any
 	$value = "";
 	$handle = $element->getVar('ele_handle');
 	$key = array_search($handle, $prevEntry['handles'], true); // strict search to avoid problems comparing numbers to numbers plus text, ie: "1669" and "1669_copy"
@@ -3037,7 +3038,7 @@ function loadValue($element, $entry_id, $prevEntry) {
 		default:
 			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 				$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-				return $customTypeHandler->loadValue($element, $value);
+				$ele_value = $customTypeHandler->loadValue($element, $value);
 			}
 	}
 	return $ele_value;
