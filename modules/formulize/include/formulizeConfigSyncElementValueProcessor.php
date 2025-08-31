@@ -93,6 +93,7 @@ class FormulizeConfigSyncElementValueProcessor
 	 */
 	private function initializeElementMapping()
 	{
+		// REVIEW QUESTION FOR ARVIN... THIS SEEMS LIKE SOMETHING WE COULD/SHOULD ADD INTO THE ELEMENT CLASS FILES THEMSELVES, NOW THAT WE HAVE CLASS FILES FOR ALL ELEMENT TYPES??
 		$this->elementMapping = [
 			'text' => $this->textElementMapping,
 			'textarea' => $this->textareaMapping,

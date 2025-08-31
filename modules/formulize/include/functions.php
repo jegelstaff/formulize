@@ -2600,36 +2600,7 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted, $fid
         $ele_type = $cachedTypes[$handle];
     }
     formulize_benchmark("got element info");
-    // dealing with a textbox where an associated element has been set
-    if ((intval($ele_value[4]) > 0 AND $ele_type=='text') OR (intval($ele_value[3]) > 0 AND $ele_type=='textarea')) {
-        $formulize_mgr = xoops_getmodulehandler('elements', 'formulize');
-        if ($ele_type == 'text') {
-            $target_element = $formulize_mgr->get($ele_value[4]);
-        } else {
-            $target_element = $formulize_mgr->get($ele_value[3]);
-        }
-        $target_fid = $target_element->getVar('id_form');
-        // if user has no perm in target fid, then do not make link!
-        if (!$target_allowed = security_check($target_fid)) {
-            return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
-        }
-        $matchtexts = explode(";", $matchtext); // have to breakup the textbox's text since it may contain multiple matches.  Note no space after semicolon spliter, but we trim the results in the foreach loop below.
-        $printText = "";
-        $start = 1;
-        foreach ($matchtexts as $thistext) {
-            $thistext = trim($thistext);
-            if (!$start) {
-                $printText .= ", ";
-            }
-            if ($id_req = findMatchingIdReq($target_element, $target_fid, $thistext)) {
-                $printText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
-            } else {
-                $printText .= $myts->htmlSpecialChars($thistext);
-            }
-            $start = 0;
-        }
-        return $printText;
-    } elseif ($ele_type=='select' AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*") AND $ele_value[7] == 1) {
+    if($ele_type=='select' AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*") AND $ele_value[7] == 1) {
         // dealing with a linked selectbox
         $boxproperties = explode("#*=:*", $ele_value[2]);
         // NOTE:
@@ -2688,8 +2659,6 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted, $fid
         }
     } elseif ($ele_type == 'derived') {
         return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
-    } elseif($ele_type == "textarea" AND isset($ele_value['use_rich_text']) AND $ele_value['use_rich_text']) {
-        return printSmart(strip_tags($matchtext), 100); // don't mess with rich text!
     } elseif($ele_type == 'radio') {
         return trans($matchtext);
     } else { // regular element
@@ -5556,11 +5525,6 @@ function getAESPassword() {
 
 function convertTypeToText($type, $ele_value) {
     switch ($type) {
-        case "text":
-            return "Textbox";
-
-        case "textarea":
-            return "Multi-line text box";
 
         case "areamodif":
             return "Text for display (left and right cells)";
@@ -5682,7 +5646,6 @@ function formulize_addProcedureChoicesToPost($choices) {
 // returns false if the element cannot be required, otherwise returns the current required setting of the element
 function removeNotApplicableRequireds($type, $req=0) {
     switch ($type) {
-        case "textarea":
         case "select":
         case "radio":
         case "checkbox":
@@ -8141,6 +8104,10 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 
 	if(empty($elementsForDefaults)) {
 		$criteria = new CriteriaCompo();
+		/**
+		 * THIS NEEDS TO BE REFACTORED TO USE ALL ELEMENT TYPES FROM CLASSES THAT HAVE THE hasData PROPERTY!!
+		 * OR ElementTypesWithData, which is an array in the element class or something??
+		 */
 		$criteria->add(new Criteria('ele_type', 'text'), 'OR');
 		$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
 		$criteria->add(new Criteria('ele_type', 'date'), 'OR');
@@ -8150,7 +8117,7 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$criteria->add(new Criteria('ele_type', 'yn'), 'OR');
 		$criteria->add(new Criteria('ele_type', 'select'), 'OR');
 		$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
-		$elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid)); // get all the text or textarea elements in the form
+		$elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid));
 	}
 
   foreach($elementsForDefaults as $thisDefaultEle) {
@@ -9094,4 +9061,39 @@ function correctStringIntFloatTypes($value) {
 		$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
 	}
 	return $value;
+}
+
+/**
+ * A very legacy operation, matching text a value for an element in an existing entry, and returning an HTML link if a match is found.
+ * @param string $text The text to match against the associated element
+ * @param int $associatedElementId The element id of the associated element to match against
+ * @param int $textWidth Optional. The maximum width of the text to display in the link. Defaults to 100.
+ * @return string|bool Returns the HTML link if a match is found, or false if no match is found
+ */
+function getAssociatedElementMatchingText($text, $associatedElementId, $textWidth = 100) {
+	global $myts;
+	$associatedText = "";
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$target_element = $element_handler->get($associatedElementId);
+	$target_fid = $target_element->getVar('fid');
+	$foundAssociatedMatch = false;
+	// if user has no perm in target fid, then do not make link!
+	if ($target_allowed = security_check($target_fid)) {
+		$textLines = explode(";", $text); // have to breakup the textbox's text since it may contain multiple matches.  Note no space after semicolon spliter, but we trim the results in the foreach loop below.
+		$start = 1;
+		foreach ($textLines as $thistext) {
+			$thistext = trim($thistext);
+			if (!$start) {
+				$associatedText .= ", ";
+			}
+			if ($id_req = findMatchingIdReq($target_element, $target_fid, $thistext)) {
+				$foundAssociatedMatch = true;
+				$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
+			} else {
+				$associatedText .= $myts->htmlSpecialChars($thistext);
+			}
+			$start = 0;
+		}
+	}
+	return $foundAssociatedMatch ? $associatedText : false;
 }
