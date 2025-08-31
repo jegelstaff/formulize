@@ -26,8 +26,6 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// THIS FILE SHOWS ALL THE METHODS THAT CAN BE PART OF CUSTOM ELEMENT TYPES IN FORMULIZE
-// TO SEE THIS ELEMENT IN ACTION, RENAME THE FILE TO dummyElement.php
 // There is a corresponding admin template for this element type in the templates/admin folder
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
@@ -87,7 +85,7 @@ class formulizeTextElement extends formulizeElement {
 				if(file_exists($filePath)) {
 					$fileValue = strval(file_get_contents($filePath));
 				}
-				$value[ELE_VALUE_TEXT_DEFAULTVALUE] = $fileValue ? $fileValue : (is_array($value) AND isset($value[ELE_VALUE_TEXT_DEFAULTVALUE]) ? $value[ELE_VALUE_TEXT_DEFAULTVALUE] : null);
+				$value[ELE_VALUE_TEXT_DEFAULTVALUE] = $fileValue ? $fileValue : ((is_array($value) AND isset($value[ELE_VALUE_TEXT_DEFAULTVALUE])) ? $value[ELE_VALUE_TEXT_DEFAULTVALUE] : null);
 			}
 			return $value;
 		}
@@ -132,6 +130,8 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
 				$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1; // Default trim option to enabled
 				$dataToSendToTemplate['ele_value'] = $ele_value;
+				$formlink = createFieldList(0, true);
+				$dataToSendToTemplate['formlink'] = $formlink->render();
 			}
       return $dataToSendToTemplate;
     }
@@ -144,8 +144,10 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
 			$changed = false;
 			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-				$ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID] = $_POST['formlink'];
-				$element->setVar('ele_value', $ele_value);
+				if($_POST['formlink'] != "none") {
+					$ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID] = $_POST['formlink'];
+					$element->setVar('ele_value', $ele_value);
+				}
 			}
 			return $changed;
     }
@@ -153,7 +155,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		/**
 		 * Returns the default value for this element, for a new entry in the specified form.
 		 * Determines database ready values, not necessarily human readable values
-		 * @param $element The element object
+		 * @param object $element The element object
 		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
 		 * @return mixed The default value
 		 */
@@ -164,9 +166,8 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
     // $element is the element object
-		// $entry_id is the ID number of the entry that this data is being loaded for. Can be "new" for a new entry.
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    function loadValue($element, $entry_id, $value) {
+    function loadValue($element, $value) {
 			$ele_value = $element->getVar('ele_value');
 			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = str_replace("'", "&#039;", $value);
 			return $ele_value;
@@ -312,6 +313,8 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			$this->clickable = true;
 			$this->striphtml = true;
 			$this->length = $textWidth;
+			$elementObject = $this->get($handle);
+			$ele_value = $elementObject->getVar('ele_value');
 			if(isset($ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID])
 				AND $ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID]
 				AND $associatedElementMatchingText = getAssociatedElementMatchingText($value, $ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID], $textWidth)) {
