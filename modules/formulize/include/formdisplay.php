@@ -2862,7 +2862,7 @@ function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $pr
 	// get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 	if($prevEntry) {
 		$dataHandler = new formulizeDataHandler($fid);
-		$ele_value = loadValue($prevEntry, $elementObject, $dataHandler->getEntryOwnerGroups($entry_id), $entry_id);
+		$ele_value = loadValue($elementObject, $entry_id, $prevEntry);
 	}
 	// get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains validation javascript that we need to add to the form
 	$jsValidationRenderer = new formulizeElementRenderer($elementObject);
@@ -2874,12 +2874,27 @@ function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $pr
 	return false;
 }
 
-// $owner_groups is used when dealing with a usernames or fullnames selectbox
-// $element is the element object representing the element we're loading the previously saved value for
-function loadValue($prevEntry, $element, $owner_groups, $entry_id) {
+/**
+ * Setup the ele_value property of an element object based on the saved value for this element in this entry, if any
+ * By setting the ele_value property to be what it would be, if the saved value was the default value for the element, then when the element is rendered using that ele_value property, it will show the saved value instead of the normal default value
+ * @param object $element The formulize element object we're concerned about
+ * @param int $entry_id The entry id in which the element is being rendered.
+ * @param array $prevEntry The values from the database for the elements in this entry. A multidimensional array, with one key for an array of the handles and one for the values. Ugh.
+ * @return array Returns the ele_value property that should be used for this element, based on the saved value for this element in this entry, if any.
+ */
+function loadValue($element, $entry_id, $prevEntry) {
 
+	// validate that we have a valid element object
+	if(!is_a($element, 'formulizeElement')) {
+		return array();
+	}
 	$ele_value = $element->getVar('ele_value');
-	$type = $element->getVar('ele_type');
+	// validate that we have prevEntry data, and we have an entry ID that we're working with
+	// if not, just return the ele_value as is
+	if(!is_array($prevEntry) OR !is_numeric($entry_id) OR $entry_id == 0) {
+		return $ele_value;
+	}
+
 	$value = "";
 	$handle = $element->getVar('ele_handle');
 	$key = array_search($handle, $prevEntry['handles'], true); // strict search to avoid problems comparing numbers to numbers plus text, ie: "1669" and "1669_copy"
@@ -2892,7 +2907,8 @@ function loadValue($prevEntry, $element, $owner_groups, $entry_id) {
 		return $ele_value;
 	}
 
-	// based on element type, swap in saved value from DB over top of default value for this element
+	// based on element type, swap in the value for this element in this entry...
+	$type = $element->getVar('ele_type');
 	switch ($type)
 	{
 		case "derived":
@@ -2934,7 +2950,9 @@ function loadValue($prevEntry, $element, $owner_groups, $entry_id) {
 				if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
 					$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
 					if(count((array) $ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
-					$ele_value[2]['{OWNERGROUPS}'] = $owner_groups;
+					// get the entry owner groups...
+					$dataHandler = new formulizeDataHandler($element->getVar('fid'));
+					$ele_value[2]['{OWNERGROUPS}'] = $dataHandler->getEntryOwnerGroups($entry_id);
 					break;
 				}
 
