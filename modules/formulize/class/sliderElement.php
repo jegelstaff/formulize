@@ -102,10 +102,9 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 		}
 
     // Reads current state of element, updates ele_value to a renderable state
-    // $element is the element object
-		// $entry_id is the ID number of the entry that this data is being loaded for. Can be "new" for a new entry.
+		// $element is the element object
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    function loadValue($element, $entry_id, $value) {
+    function loadValue($element, $value) {
 				$ele_value = $element->getVar('ele_value');
         $ele_value[3] = $value;
         return $ele_value;
