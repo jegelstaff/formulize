@@ -79,10 +79,10 @@ class formulizeAnonPasscodeElementHandler extends formulizeElementsHandler {
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-    // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
-    function loadValue($value, $ele_value, $element) {
+		// $entry_id is the ID number of the entry that this data is being loaded for. Can be "new" for a new entry.
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    function loadValue($element, $entry_id, $value) {
         return $value;
     }
 
