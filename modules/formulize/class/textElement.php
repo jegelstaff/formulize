@@ -33,6 +33,21 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
+// constants for the keys in ele_value
+define('ELE_VALUE_TEXT_WIDTH', 0);
+define('ELE_VALUE_TEXT_MAXCHARS', 1);
+define('ELE_VALUE_TEXT_DEFAULTVALUE', 2);
+define('ELE_VALUE_TEXT_NUMBERSONLY', 3);
+define('ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID', 4);
+define('ELE_VALUE_TEXT_DECIMALS', 5);
+define('ELE_VALUE_TEXT_PREFIX', 6);
+define('ELE_VALUE_TEXT_DECIMALS_SEPARATOR', 7);
+define('ELE_VALUE_TEXT_THOUSANDS_SEPARATOR', 8);
+define('ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED', 9);
+define('ELE_VALUE_TEXT_SUFFIX', 10);
+define('ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER', 11);
+define('ELE_VALUE_TEXT_TRIM_VALUE', 12);
+
 class formulizeTextElement extends formulizeElement {
 
     function __construct() {
@@ -51,10 +66,10 @@ class formulizeTextElement extends formulizeElement {
 		public function setVar($key, $value, $not_gpc = false) {
 			if($key == 'ele_value') {
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				if(strstr((string)$valueToWrite[2], "\$default")) {
+				if(strstr((string)$valueToWrite[ELE_VALUE_TEXT_DEFAULTVALUE], "\$default")) {
 					$filename = 'text_'.$this->getVar('ele_handle').'.php';
-					formulize_writeCodeToFile($filename, $valueToWrite[2]);
-					$valueToWrite[2] = '';
+					formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_TEXT_DEFAULTVALUE]);
+					$valueToWrite[ELE_VALUE_TEXT_DEFAULTVALUE] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
 				}
 			}
@@ -72,7 +87,7 @@ class formulizeTextElement extends formulizeElement {
 				if(file_exists($filePath)) {
 					$fileValue = strval(file_get_contents($filePath));
 				}
-				$value[2] = $fileValue ? $fileValue : (is_array($value) AND isset($value[2]) ? $value[2] : null);
+				$value[ELE_VALUE_TEXT_DEFAULTVALUE] = $fileValue ? $fileValue : (is_array($value) AND isset($value[ELE_VALUE_TEXT_DEFAULTVALUE]) ? $value[ELE_VALUE_TEXT_DEFAULTVALUE] : null);
 			}
 			return $value;
 		}
@@ -101,21 +116,21 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			$dataToSendToTemplate = array();
 			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
 				$ele_value = $element->getVar('ele_value');
-				$formlink = createFieldList($ele_value[4], true);
+				$formlink = createFieldList($ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID], true);
 				$dataToSendToTemplate['formlink'] = $formlink->render();
 				$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
 			} else { // new element
 				$config_handler = xoops_gethandler('config');
         $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-				$ele_value[0] = $formulizeConfig['t_width'];
-				$ele_value[1] = $formulizeConfig['t_max'];
-				$ele_value[3] = 0;
-				$ele_value[5] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-				$ele_value[6] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-				$ele_value[7] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-				$ele_value[8] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-				$ele_value[10] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
-				$ele_value[12] = 1; // Default trim option to enabled
+				$ele_value[ELE_VALUE_TEXT_WIDTH] = $formulizeConfig['t_width'];
+				$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $formulizeConfig['t_max'];
+				$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 0;
+				$ele_value[ELE_VALUE_TEXT_DECIMALS] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+				$ele_value[ELE_VALUE_TEXT_PREFIX] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+				$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+				$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+				$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+				$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1; // Default trim option to enabled
 				$dataToSendToTemplate['ele_value'] = $ele_value;
 			}
       return $dataToSendToTemplate;
@@ -129,7 +144,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     function adminSave($element, $ele_value) {
 			$changed = false;
 			if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-				$ele_value[4] = $_POST['formlink'];
+				$ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID] = $_POST['formlink'];
 				$element->setVar('ele_value', $ele_value);
 			}
 			return $changed;
@@ -153,7 +168,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
     function loadValue($element, $entry_id, $value) {
 			$ele_value = $element->getVar('ele_value');
-			$ele_value[2] = str_replace("'", "&#039;", $value);
+			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = str_replace("'", "&#039;", $value);
 			return $ele_value;
     }
 
@@ -169,34 +184,34 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // $screen is the screen object that is in effect, if any (may be null)
     function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-			$ele_value[2] = stripslashes($ele_value[2]);
-			$ele_value[2] = interpretTextboxValue($element, $entry_id, $ele_value[2]);
+			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = stripslashes($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
+			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
 			//if placeholder value is set
-			if($ele_value[11] AND ($entry_id == 'new' OR $ele_value[2] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
+			if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER] AND ($entry_id == 'new' OR $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
         $rawEleValue = $element->getVar('ele_value');
-				$placeholder = $rawEleValue[2];
-				$ele_value[2] = "";
+				$placeholder = $rawEleValue[ELE_VALUE_TEXT_DEFAULTVALUE];
+				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = "";
 			}
 			if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
 				$form_ele = new XoopsFormText(
 					$caption,
 					$markupName,
-					$ele_value[0],	//	box width
-					$ele_value[1],	//	max width
-					$ele_value[2],	//	value
+					$ele_value[ELE_VALUE_TEXT_WIDTH],	//	box width
+					$ele_value[ELE_VALUE_TEXT_MAXCHARS],	//	max width
+					$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
 					false,					// autocomplete in browser
-					($ele_value[3] ? 'number' : 'text')		// numbers only
+					($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] ? 'number' : 'text')		// numbers only
 				);
 				//if placeholder value is set
-				if($ele_value[11]) {
+				if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER]) {
 					$form_ele->setExtra("placeholder='".$placeholder."'");
 				}
 				//if numbers-only option is set
-				if ($ele_value[3]) {
+				if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY]) {
 					$form_ele->setExtra("class='numbers-only-textbox'");
 				}
 			} else {
-				$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[2], $element->getVar('ele_handle')), $markupName);
+				$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle')), $markupName);
 			}
 			return $form_ele;
     }
@@ -216,7 +231,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
 				$validationCode[] = "}\n";
 			}
-			if(isset($ele_value[9]) AND $ele_value[9]) {
+			if(isset($ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) AND $ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) {
 				$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
 				$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
 				$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
@@ -250,11 +265,10 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     function prepareDataForSaving($value, $element, $entry_id=null) {
 			$ele_value = $element->getVar('ele_value');
 			// Trim the value if the option is set
-			if (isset($ele_value[12]) && $ele_value[12]) {
+			if (isset($ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) && $ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) {
 				$value = trim($value);
 			}
-			// if $ele_value[3] is 1 (default is 0) then treat this as a numerical field
-			if ($ele_value[3] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
+			if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
 					$value = preg_replace ('/[^0-9.-]+/', '', $value);
 			}
 			global $myts;
@@ -295,15 +309,15 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true;
-        $this->striphtml = true;
-        $this->length = $textWidth;
-				if(isset($ele_value[4])
-					AND $ele_value[4]
-					AND $associatedElementMatchingText = getAssociatedElementMatchingText($value, $ele_value[4], $textWidth)) {
-						return $associatedElementMatchingText;
-				}
-        return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+			$this->clickable = true;
+			$this->striphtml = true;
+			$this->length = $textWidth;
+			if(isset($ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID])
+				AND $ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID]
+				AND $associatedElementMatchingText = getAssociatedElementMatchingText($value, $ele_value[ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID], $textWidth)) {
+					return $associatedElementMatchingText;
+			}
+			return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 
 }
