@@ -88,10 +88,6 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-if($ele_type == "textarea" AND $_POST['formlink'] != "none") {
-  $processedValues['elements']['ele_value'][3] = $_POST['formlink'];
-}
-
 if($_POST['element_delimit']) {
   if($_POST['element_delimit'] == "custom") {
     $processedValues['elements']['ele_delim'] = $_POST['element_delim_custom'];

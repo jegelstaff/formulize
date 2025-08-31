@@ -165,10 +165,6 @@ if ($_GET['ele_id'] != "new") {
     $ele_use_default_when_blank = 0;
     global $xoopsModuleConfig;
     switch($ele_type) {
-        case("textarea"):
-            $ele_value[1] = $xoopsModuleConfig['ta_rows'];
-            $ele_value[2] = $xoopsModuleConfig['ta_cols'];
-            break;
         case "derived":
             $ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
             $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
@@ -259,10 +255,7 @@ $options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
-if ($ele_type=='textarea') {
-    $formlink = createFieldList($ele_value[3], true);
-    $options['formlink'] = $formlink->render();
-} else if ($ele_type=='derived') {
+if ($ele_type=='derived') {
 
 		$form_id = $fid;
 		$selectedFramework = 0;
@@ -605,7 +598,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $customTypeNeedsUI = $customTypeObject->needsDataType;
     }
 
-    if (($ele_type == "textarea" OR $ele_type == "select" OR $ele_type == "radio" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
+    if (($ele_type == "select" OR $ele_type == "radio" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
         if ($element) {
             $defaultTypeInformation = $element->getDataTypeInformation();
             $defaultType = $defaultTypeInformation['dataType'];
