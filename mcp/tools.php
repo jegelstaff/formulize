@@ -811,13 +811,13 @@ private function validateFilter($filter) {
 			$formId = intval($formId);
 
 			// Validate relationship ID
-			if (!is_numeric($relationshipId)) {
-				throw new FormulizeMCPException('Relationship ID must be numeric', 'invalid_data');
+			if (!is_numeric($relationshipId) || $relationshipId == 0 || $relationshipId < -1) {
+				throw new FormulizeMCPException('Relationship ID must be a positive integer or -1 for the Primary Relationship that includes all connections.', 'invalid_data');
 			}
 			$relationshipId = intval($relationshipId);
 
 			// Validate entry ID
-			if ($entryId !== 'new' && !is_numeric($entryId)) {
+			if ($entryId !== 'new' && (!is_numeric($entryId) || $entryId <= 0)) {
 				throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
 			}
 			if ($entryId !== 'new') {
