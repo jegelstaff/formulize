@@ -15,6 +15,7 @@ There are certain folders in Formulize which must be writable by the web server.
 - /modules/formulize/cache
 - /modules/formulize/code
 - /modules/formulize/export
+- /modules/formulize/language/english/mail_template (and 'mail_template' in other language folders, if applicable)
 - /modules/formulize/queue
 - /modules/formulize/temp
 - /modules/formulize/templates/screens (and all subs)
