@@ -25,6 +25,7 @@ class FormulizeMCPException extends Exception
 		'invalid_arguments' => 400, // bad request
 		'invalid_data' => 200, // good request, internal problems, ie: wrong handle, etc
 		'file_error' => 500,
+		'internal_formulize_error' => 200,
 		'unknown_resource_type' => 404
 	];
 
