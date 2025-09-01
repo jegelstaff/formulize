@@ -804,6 +804,12 @@ private function validateFilter($filter) {
 				);
 			}
 
+			// Validate form ID
+			if (!is_numeric($formId) || $formId <= 0) {
+				throw new FormulizeMCPException('Form ID must be a positive integer', 'invalid_data');
+			}
+			$formId = intval($formId);
+
 			// Validate relationship ID
 			if (!is_numeric($relationshipId)) {
 				throw new FormulizeMCPException('Relationship ID must be numeric', 'invalid_data');
