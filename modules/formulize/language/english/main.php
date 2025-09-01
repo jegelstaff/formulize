@@ -789,3 +789,10 @@ define("_formulize_NEGATIVEFILTER", "Not: ");
 define("_formulize_COULD_NOT_GENERATE_THUMBNAIL", "Could not generate thumbnail for image");
 define("_formulize_IMAGE_NOT_FOUND", "Image not found");
 define("_formulize_IMAGE_TOO_LARGE", "Generation would likely exceed the PHP memory limit of ".ini_get('memory_limit'));
+
+define("_formulize_ERRORTITLE", "There was an error when preparing this page");
+define("_formulize_ERRORLOGGED", "We apologize for the inconvenience. This error has been logged.");
+define("_formulize_ERRORMSGONSCREEN", "<blockquote>\n\"%s\"<br>\nOn line <b>%u</b> in %s\n</blockquote>\n");
+define("_formulize_ERRORREPORT", "**Error:\n\"%s\"\nOn line %u in %s\n\n**Stacktrace:\n%s\n\n**User reported details:\n");
+define("_formulize_ERRORSENT1", "Thank you for the report");
+define("_formulize_ERRORSENT2", "A webmaster will review the details shortly.");
