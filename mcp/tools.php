@@ -818,7 +818,7 @@ private function validateFilter($filter) {
 
 			// Validate entry ID
 			if ($entryId !== 'new' && !is_numeric($entryId)) {
-				throw new FormulizeMCPException('Invalid entry ID. Entry ID must be numeric', 'invalid_data');
+				throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
 			}
 			if ($entryId !== 'new') {
 				$entryId = intval($entryId);
