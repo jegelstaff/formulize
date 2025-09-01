@@ -1,5 +1,7 @@
 <?php
 
+define('FORMULIZE_MCP_REQUEST', 1);
+
 require_once '../mainfile.php';
 include_once XOOPS_ROOT_PATH . '/mcp/mcp.php';
 
