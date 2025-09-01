@@ -1,5 +1,7 @@
 <?php
 
+define('FORMULIZE_MCP_REQUEST', 1);
+
 require_once '../mainfile.php';
 include_once XOOPS_ROOT_PATH . '/mcp/mcp.php';
 
@@ -22,15 +24,8 @@ try {
 		throw new FormulizeMCPException('MCP Server is disabled', 'server_disabled');
 	}
 } catch (FormulizeMCPException $e) {
-	if(!$server) {
-
-	}
 	FormulizeMCP::sendResponse([
 		'jsonrpc' => '2.0',
-		'error' => [
-			'message' => $e->toErrorResponse(),
-			'type' => $e->getType(),
-			'timestamp' => $e->getTimestamp()
-		]
+		'error' => $e->toErrorResponse()
 	], $e->toHTTPStatusCode());
 }

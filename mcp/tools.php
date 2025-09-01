@@ -100,7 +100,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true,
 							'examples' => [
 								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
@@ -130,7 +130,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -184,7 +184,7 @@ Examples:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format.'
+												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format. For duration elements, use minutes as an integer.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
@@ -198,12 +198,28 @@ Examples:
 							'description' => 'Logical operator between multiple filter conditions. Default: AND'
 						],
 						'limitSize' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								],
+				        [
+									'type' => 'null',
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								]
+							]
 						],
 						'limitStart' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+								],
+				        [
+									'type' => 'null',
+									'description' => 'Starting offset for pagination. If null then this is treated the same as using zero, ie: first record in the dataset.'
+								]
+							]
 						],
 						'sortField' => [
 							'type' => 'string',
@@ -230,8 +246,20 @@ Examples:
 					'type' => 'object',
 					'properties' => [
 						'value' => [
-							'type' => ['integer', 'number', 'string'],
-							'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+				        [
+									'type' => 'number',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+				        [
+									'type' => 'string',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								]
+							]
 						],
 						'element_handle' => [
 							'type' => 'string',
@@ -283,6 +311,42 @@ Examples:
 						]
 					],
 					'required' => ['sql']
+				]
+			];
+
+			$this->tools['create_form'] = [
+				'name' => 'create_form',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, use the create_form_element tool to add elements (fields) to the form. Elements are the individual input fields like textboxes, dropdowns, checkboxes, etc. that users will fill out.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'title' => [
+							'type' => 'string',
+							'description' => 'Required. The name of the form as it will appear in Formulize to users.'
+						],
+						'notes' => [
+							'type' => 'string',
+							'description' => 'Optional. Internal notes about the form for use by webmasters, not visible to end users.'
+						],
+						'limit_entries' => [
+							'type' => 'string',
+							'enum' => ['off', 'user', 'group'],
+							'description' => 'Optional. Limits how many entries are permitted in the form: \'off\' = unlimited entries per user (default), \'user\' = one entry per user, \'group\' = one entry per group'
+						],
+						'application_id_or_name' => [
+							'oneOf' => [
+      				  [
+									'type' => 'string',
+									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
+								],
+				        [
+									'type' => 'integer',
+									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications.'
+								]
+    					]
+						]
+					],
+					'required' => ['title']
 				]
 			];
 
@@ -499,6 +563,87 @@ Examples:
 	}
 
 	/**
+	 * Create a new form with basic configuration
+	 * @param array $arguments An associative array containing the parameters for creating a new form.
+	 * - 'title': The name of the form (required).
+	 * - 'notes': Optional internal notes about the form.
+	 * - 'limit_entries': Optional. Limits how many entries are permitted in the form: 'off' = unlimited entries per user (default), 'user' = one entry per user, 'group' = one entry per group.
+	 * - 'application_id_or_name': Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.
+	 * @return array An associative array containing details about the newly created form, including its ID, name, handle, limit entries setting, default screen IDs, associated application IDs, success status, and message.
+	 * @throws formulizeMCPException If there is an error creating the form or if required parameters are missing or invalid.
+	 */
+	private function create_form($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create forms.",
+				'authentication_error',
+			);
+		}
+
+		$title = trim($arguments['title'] ?? '');
+		$notes = trim($arguments['notes'] ?? '');
+		$limit_entries = $arguments['limit_entries'] ?? 'off';
+		$application_id_or_name = $arguments['application_id_or_name'] ?? '';
+
+		if(empty($title)) {
+			throw new FormulizeMCPException('title is required', 'invalid_data');
+		}
+
+		if(!in_array($limit_entries, ['off', 'user', 'group'])) {
+			$limit_entries = 'off';
+		}
+
+		try {
+
+			// prepare application data
+			$applicationIds = [0]; // default to no application
+			if(is_numeric($application_id_or_name)) {
+				$applicationIds = array(intval($application_id_or_name));
+			} elseif(is_string($application_id_or_name) AND !empty($application_id_or_name)) {
+				$application_handler = xoops_getmodulehandler('applications','formulize');
+				$newAppObject = $application_handler->create();
+				$newAppObject->setVar('name', $application_id_or_name);
+				if(!$application_handler->insert($newAppObject)) {
+						global $xoopsDB;
+    				throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+  			} else {
+  				$applicationIds = array($newAppObject->getVar('appid'));
+				}
+			}
+
+			// prepare form data, keys consistent with the formulizeForm object
+			$formData = [
+				'title' => $title,
+				'single' => $limit_entries,
+				'note' => $notes
+			];
+
+			$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
+			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
+
+		} catch (Exception $e) {
+			throw new FormulizeMCPException($e->getMessage(), 'database_error');
+		}
+
+		// could/should reuse get_form_details ??
+		return [
+			'form_id' => $formObject->getVar('fid'),
+			'title' => $formObject->getVar('title'),
+			'singular' => $formObject->getSingular(),
+			'plural' => $formObject->getPlural(),
+			'form_handle' => $formObject->getVar('form_handle'),
+			'limit_entries' => $formObject->getVar('single'),
+			'default_form_screen_id' => $formObject->getVar('defaultform'),
+			'default_list_screen_id' => $formObject->getVar('defaultlist'),
+			'application_ids' => $applicationIds,
+			'success' => true,
+			'message' => 'Form and related resources created successfully'
+		];
+
+	}
+
+	/**
 	 * Gather data using Formulize's built-in function with proper permission scoping
 	 * @param array $arguments An associative array containing the parameters for gathering data from a form.
 	 * - 'form_id': The ID of the form to gather data from.
@@ -584,7 +729,7 @@ Examples:
 				]
 			];
 		} catch (Exception $e) {
-			throw $e;
+			new FormulizeMCPException($e->getMessage(), 'database_error');
 		}
 	}
 
@@ -926,7 +1071,7 @@ private function validateFilter($filter) {
 
 			return $response;
 		} catch (Exception $e) {
-			throw $e;
+			new FormulizeMCPException($e->getMessage(), 'database_error');
 		}
 	}
 
@@ -1225,6 +1370,179 @@ private function validateFilter($filter) {
 
 			// No semicolon found, return the whole string
 			return trim($sql);
+	}
+
+	/**
+	 * Build form creation tools with dynamic element type discovery
+	 * @return array Array of form creation tools
+	 */
+	private function buildFormCreationTools()
+	{
+		return [
+			'create_form_element' => $this->buildCreateFormElementTool()
+		];
+	}
+
+	/**
+	 * Build the create_form_element tool schema with dynamic element discovery
+	 * @return array Tool schema for creating form elements
+	 */
+	private function buildCreateFormElementTool()
+	{
+		// Discover available element types and their descriptions
+		[$elementTypes, $elementDescriptions] = $this->discoverElementTypes();
+
+		// Build comprehensive description with examples from all element types
+		$description = "Create a new element (input field) in a Formulize form. Elements have different properties depending on their type.\n\n";
+		$description .= "Available element types and examples:\n\n";
+		$description .= implode("\n\n", $elementDescriptions);
+
+		return [
+			'name' => 'create_form_element',
+			'description' => $description,
+			'inputSchema' => [
+				'type' => 'object',
+				'properties' => [
+					'form_id' => [
+						'type' => 'integer',
+						'description' => 'Required. ID of the form to add this element to'
+					],
+					'element_type' => [
+						'type' => 'string',
+						'enum' => $elementTypes,
+						'description' => 'Required. Type of form element to create'
+					],
+					'caption' => [
+						'type' => 'string',
+						'description' => 'Required. Display label for this element'
+					],
+					'handle' => [
+						'type' => 'string',
+						'description' => 'Optional. Internal database handle for this element. If not provided, will be auto-generated from caption. Must be unique within the form and contain only letters, numbers, and underscores.'
+					],
+					'description' => [
+						'type' => 'string',
+						'description' => 'Optional. Descriptive help text to display with this element'
+					],
+					'required' => [
+						'type' => 'boolean',
+						'description' => 'Optional. Whether this element is required. Default is false.'
+					],
+					'column_header' => [
+						'type' => 'string',
+						'description' => 'Optional. Shorter text to use in column headers when displaying data in lists'
+					],
+					'properties' => [
+						'type' => 'object',
+						'description' => 'Element-specific properties. The contents depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
+						'additionalProperties' => true
+					]
+				],
+				'required' => ['form_id', 'element_type', 'caption']
+			]
+		];
+	}
+
+	/**
+	 * Discover available element types and their MCP descriptions
+	 * @return array [elementTypes array, elementDescriptions array]
+	 */
+	private function discoverElementTypes()
+	{
+		$elementTypes = [];
+		$elementDescriptions = [];
+
+		// Scan for element class files
+		$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
+		$elementFiles = glob($elementClassPath . '/*Element.php');
+
+		foreach ($elementFiles as $file) {
+			$className = $this->getElementClassName($file);
+
+			// Skip if class doesn't exist or doesn't have MCP description
+			if (!class_exists($className)) {
+				continue;
+			}
+
+			// Check if class has MCP description property
+			if (property_exists($className, 'mcpElementPropertiesDescription')) {
+				$elementType = $this->extractElementTypeFromClassName($className);
+				$elementTypes[] = $elementType;
+				$elementDescriptions[] = $className::$mcpElementPropertiesDescription;
+			}
+		}
+
+		// Fallback to core element types if no classes found with MCP descriptions
+		if (empty($elementTypes)) {
+			$elementTypes = $this->getFallbackElementTypes();
+			$elementDescriptions = $this->getFallbackElementDescriptions();
+		}
+
+		return [$elementTypes, $elementDescriptions];
+	}
+
+	/**
+	 * Extract class name from element file path
+	 * @param string $filePath Path to element class file
+	 * @return string Class name
+	 */
+	private function getElementClassName($filePath)
+	{
+		$filename = basename($filePath, '.php');
+		// Convert filename like 'textElement' to 'formulizeTextElement'
+		return 'formulize' . ucfirst($filename);
+	}
+
+	/**
+	 * Extract element type from class name
+	 * @param string $className Full class name like 'formulizeTextElement'
+	 * @return string Element type like 'text'
+	 */
+	private function extractElementTypeFromClassName($className)
+	{
+		// Remove 'formulize' prefix and 'Element' suffix, then lowercase
+		$type = str_replace(['formulize', 'Element'], '', $className);
+		return strtolower($type);
+	}
+
+	/**
+	 * Get fallback element types when no MCP-enabled classes are found
+	 * @return array Basic element types
+	 */
+	private function getFallbackElementTypes()
+	{
+		return [
+			'text', 'textarea', 'select', 'radio', 'checkbox',
+			'date', 'time', 'yn', 'email', 'phone'
+		];
+	}
+
+	/**
+	 * Get fallback element descriptions when no MCP-enabled classes are found
+	 * @return array Basic element descriptions
+	 */
+	private function getFallbackElementDescriptions()
+	{
+		return [
+			'Example for text element:\n{\n  "form_id": 5,\n  "element_type": "text",\n  "caption": "Activity Name",\n  "handle": "activity_name",\n  "required": true,\n  "properties": {\n    "width": 30,\n    "max_length": 255,\n    "default_value": ""\n  }\n}',
+			'Example for select element:\n{\n  "form_id": 5,\n  "element_type": "select",\n  "caption": "Priority Level",\n  "handle": "priority",\n  "required": true,\n  "properties": {\n    "options": ["Low", "Medium", "High", "Critical"],\n    "default_selection": "Medium"\n  }\n}',
+			'Example for checkbox element:\n{\n  "form_id": 5,\n  "element_type": "checkbox",\n  "caption": "Categories",\n  "handle": "categories",\n  "required": false,\n  "properties": {\n    "options": ["Work", "Personal", "Health", "Education"],\n    "default_selections": ["Work"]\n  }\n}'
+		];
+	}
+
+
+	/**
+	 * Create a new element in a Formulize form
+	 * @param array $arguments Element creation parameters
+	 * @return array Result of element creation
+	 */
+	private function create_form_element($arguments)
+	{
+		// Implementation will be added separately
+		throw new FormulizeMCPException(
+			'create_form_element tool implementation pending',
+			'not_implemented'
+		);
 	}
 
 }

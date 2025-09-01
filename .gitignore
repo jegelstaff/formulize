@@ -18,3 +18,5 @@ install.lock
 tests/e2e/test-results
 tests/e2e/test-report
 tests/e2e/node_modules
+mail_template/error_report_*
+mail_template/tempmailbody.tpl
