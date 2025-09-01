@@ -92,13 +92,16 @@ function formulize_exception_handler($exception) {
 	if(defined('FORMULIZE_MCP_REQUEST') && FORMULIZE_MCP_REQUEST==1) {
 		FormulizeMCP::sendResponse([
 			'jsonrpc' => '2.0',
+			'result' => [
+				'success' => false
+			],
 			'error' => [
 				'code' => $exception->getCode(),
 				'message' => $exception->getMessage(),
 				'timestamp' => date('Y-m-d H:i:s'),
 				'type' => 'internal_formulize_error'
 			]
-		], 500);
+		], 200);
 		exit;
 	}
 	global $xoopsConfig, $xoopsUser;
