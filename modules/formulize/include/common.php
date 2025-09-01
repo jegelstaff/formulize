@@ -80,7 +80,7 @@ formulize_handleHtaccessRewriteRule();
 $GLOBALS['formulize_subformInstance'] = 100;
 
 function formulize_exception_handler($exception) {
-	global $xoopsUser;
+	// log everything
 	error_log($exception->getMessage());
 	writeToFormulizeLog(array(
 		'PHP_error_number' => $exception->getCode(),
@@ -88,9 +88,84 @@ function formulize_exception_handler($exception) {
 		'PHP_error_file' => $exception->getFile(),
 		'PHP_error_errline' => $exception->getLine()
 	));
-	echo "<h1>There was an error when preparing this page:</h1>\n<blockquote>\nFile: ".$exception->getFile()."<br>\nLine: ".$exception->getLine()."<br>\nMessage: ".$exception->getMessage()."\n</blockquote>\n<p>We apologize for the inconvenience. This error has been logged. Please advise a webmaster of what actions preceded this event.</p>";
+	// if this is an MCP request, return a JSON-RPC error response through the MCP server
+	if(defined('FORMULIZE_MCP_REQUEST') && FORMULIZE_MCP_REQUEST==1) {
+		FormulizeMCP::sendResponse([
+			'jsonrpc' => '2.0',
+			'error' => [
+				'code' => $exception->getCode(),
+				'message' => $exception->getMessage(),
+				'timestamp' => date('Y-m-d H:i:s'),
+				'type' => 'internal_formulize_error'
+			]
+		], 500);
+		exit;
+	}
+	global $xoopsConfig, $xoopsUser;
+	$stackTrace = "";
+	$errorMessage = "";
+	// stacktrace included for webmasters
+	if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+		$stackTrace = "<ul id='formulize-stacktrace'><li>".str_replace("\n", "</li><li>", str_replace(XOOPS_ROOT_PATH, "", $exception->getTraceAsString()))."</li></ul>";
+		$errorMessage = sprintf(_formulize_ERRORMSGONSCREEN, $exception->getMessage(), $exception->getLine(), str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()));
+		$notifyWebmaster = '';
+		$token = '';
+	} else {
+		$token = $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_error_token');
+		$mailTemplateFolder = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template";
+		$reportFileName = "error_report_$token.tpl";
+		formulize_scandirAndClean($mailTemplateFolder, "error_report_");
+		$errorReportContents = sprintf(_formulize_ERRORREPORT, $exception->getMessage(), $exception->getLine(), str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()), str_replace(XOOPS_ROOT_PATH, "", $exception->getTraceAsString()));
+		file_put_contents($mailTemplateFolder."/".$reportFileName, $errorReportContents);
+		$notifyWebmaster = "
+			<script>
+				function notifyWebmaster() {
+					jQuery('#notifyWebmasterLink').hide(200);
+					jQuery('#notifyWebmasterForm').show(200);
+				}
+				function submitNotifyForm() {
+					jQuery('#notifyWebmasterForm form').attr('action', '".XOOPS_URL."/notify-webmaster.php');
+					jQuery('#notifyWebmasterForm form').submit();
+				}
+			</script>
+			<p id='notifyWebmasterLink'><a href='' onclick='notifyWebmaster();return false;'>Notify the webmaster</a><p>
+			<div id='notifyWebmasterForm'>
+			<form method='post' action=''>
+			<p>Please describe what led up to this error:<br>
+			<textarea name='details' rows=5 cols=50></textarea></p>
+			<p>Include as many details as possible about what you were trying to do in the system,<br>the forms you were using, the data you were adding or updating, etc.</p>
+			<p><input type='button' onclick='submitNotifyForm();' value='Notify'></p>
+			<input type='hidden' name='errorToken' value='$token'>
+			</form>
+			</div>
+		";
+	}
+	ob_get_clean();
+	print "<style>
+		#notifyWebmasterForm {
+			display: none;
+		}
+		h1,blockquote,p {
+			margin-bottom: 1em;
+		}
+		blockquote {
+			padding-left: 1.5em;
+			line-height: 1.5em;
+		}
+		#formulize-stacktrace li {
+			list-style: disc;
+			list-style-position: outside;
+		}
+		#formulize-stacktrace {
+			padding-left: 2em;
+		}
+	</style>";
+	print "<h1>"._formulize_ERRORTITLE."</h1>
+	$errorMessage
+	<p>"._formulize_ERRORLOGGED."</p>
+	$notifyWebmaster
+	$stackTrace";
 	include XOOPS_ROOT_PATH.'/footer.php';
-	exit;
 }
 
 set_exception_handler('formulize_exception_handler');

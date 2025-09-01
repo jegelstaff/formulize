@@ -943,14 +943,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	/**
-	 * STAGE 15 - GATHER THE STUFF WE'RE GOING TO SHOW, EITHER A DATASET OR CALCULATIONS, SINCE THE USER HASN'T JUMPED INTO A FORM -- NOTE THAT formulize_gatherDataSet STARTS OUTPUTING MARKUP! UGH.
+	 * STAGE 15 - GATHER THE STUFF WE'RE GOING TO SHOW, EITHER A DATASET OR CALCULATIONS, SINCE THE USER HASN'T JUMPED INTO A FORM - NOTE: formulize_gatherDataSet returns some HTML for including lower down
 	 */
 
 	// user is still here, so go get the data and start building the page...
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
 	//formulize_benchmark("before gathering dataset");
 
- 	list($data, $regeneratePageNumbers) = formulize_gatherDataSet($settings, $searches, (isset($_POST['sort']) ? strip_tags($_POST['sort']) : null), (isset($_POST['order']) ? strip_tags($_POST['order']) : null), $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0));
+	$sort = isset($_POST['sort']) ? strip_tags($_POST['sort']) : null;
+	$order = isset($_POST['order']) ? strip_tags($_POST['order']) : null;
+ 	list($data, $regeneratePageNumbers, $filterToCompare, $flatScope) = formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0));
 	//formulize_benchmark("after gathering dataset/before generating calcs");
 
 	// perform calculations on the data if any requested...
@@ -973,7 +975,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	list($formulize_LOEPageNav, $formulize_LOEEntryCount, $entriesPerPageSelector) = formulize_LOEbuildPageNav($screen, $regeneratePageNumbers);
 	//formulize_benchmark("after nav/before interface");
 
+	// buffer everything, and only start outputting content after all operations are done
 	ob_start();
+
 	// drawInterface... renders the top template, sets up searches, many template variables including all the action buttons...
 	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector);
 
@@ -983,17 +987,61 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	formulize_benchmark("after entries");
 
 	// render the bottomtemplate
-    $visibleSearches = 0;
-    foreach($searches as $thisSearch) {
-        if(substr($thisSearch,0,1) != "!" OR substr($thisSearch, -1) != "!") {
-            $visibleSearches = 1;
-            break;
-        }
-    }
-    $formulize_buttonCodeArray['toggleSearchesOnFirst'] = $visibleSearches;
+	$visibleSearches = 0;
+	foreach($searches as $thisSearch) {
+			if(substr($thisSearch,0,1) != "!" OR substr($thisSearch, -1) != "!") {
+					$visibleSearches = 1;
+					break;
+			}
+	}
+	$formulize_buttonCodeArray['toggleSearchesOnFirst'] = $visibleSearches;
 	formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
 
+	// catch buffer contents, now that we've actually prepared the entire page
 	$listOfEntriesBufferContents = ob_get_clean();
+
+	// start outputting content to the stream...
+	$drawResetForm = true;
+	$useWorking = true;
+	if($screen) {
+		$drawResetForm = $screen->getVar('usereset') == "" ? false : true;
+		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
+	}
+
+	if($drawResetForm) {
+		$currentviewResetForm = $settings['currentview'];
+		print "<form name=resetviewform id=resetviewform action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
+		if($screen) { $currentviewResetForm = getDefaultViewForActiveUser($screen->getVar('defaultview')); } // override the default set by $settings...must do this here and not above, since this should only apply to the resetview form
+		print "<input type=hidden name=currentview value='$currentviewResetForm'>\n";
+		print "<input type=hidden name=userClickedReset value=1>\n";
+		print "</form>\n";
+	}
+
+	if($useWorking) {
+		// working message
+		global $xoopsConfig;
+		print "<div id=workingmessage style=\"display: none;\">\n";
+		if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
+			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">\n";
+		} else {
+			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">\n";
+		}
+		print "</div>\n";
+	}
+
+	print "<div id=listofentries>\n";
+
+	print "<form name=controls id=controls autocomplete='off' action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
+	if(isset($GLOBALS['xoopsSecurity'])) {
+		print $GLOBALS['xoopsSecurity']->getTokenHTML();
+	}
+
+	$formulize_cachedDataId = null;
+	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
+	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filterToCompare) . "\">\n"; // save the filter to check for a change on next page load
+	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($flatScope) . "\">\n"; // save the scope to check for a change on next page load
+	print "<input type=hidden name=formulize_previous_sort id=formulize_previous_sort value=\"$sort\">\n";
+	print "<input type=hidden name=formulize_previous_order id=formulize_previous_order value=\"$order\">\n";
 
 	print $listOfEntriesBufferContents;
 
@@ -4338,11 +4386,11 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	if (!is_array($searches))
 		$searches = array();
 
-	// setup "flatscope" so we can compare arrays of groups that make up the scope, from page load to pageload
+	// setup "flatScope" so we can compare arrays of groups that make up the scope, from page load to pageload
 	if(is_array($scope)) {
-		$flatscope = serialize($scope);
+		$flatScope = serialize($scope);
 	} else {
-		$flatscope = $scope;
+		$flatScope = $scope;
 	}
 
 	$showcols = explode(",", $settings['oldcols']);
@@ -4362,7 +4410,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	$regeneratePageNumbers = false;
 
 	// if something changed, then we need to redo the page numbers
-	if(!isset($_POST['lastentry']) AND ((isset($_POST['formulize_previous_filter']) AND $filterToCompare != $_POST['formulize_previous_filter']) OR (isset($_POST['formulize_previous_scope']) AND $flatscope != $_POST['formulize_previous_scope']))) {
+	if(!isset($_POST['lastentry']) AND ((isset($_POST['formulize_previous_filter']) AND $filterToCompare != $_POST['formulize_previous_filter']) OR (isset($_POST['formulize_previous_scope']) AND $flatScope != $_POST['formulize_previous_scope']))) {
 			$regeneratePageNumbers = true;
 		}
 	$formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
@@ -4415,43 +4463,10 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 		$useWorking = !$screen->getVar('useworkingmsg') ? false : true;
 	}
 
-	if($drawResetForm) {
-		$currentviewResetForm = $settings['currentview'];
-		print "<form name=resetviewform id=resetviewform action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
-		if($screen) { $currentviewResetForm = getDefaultViewForActiveUser($screen->getVar('defaultview')); } // override the default set by $settings...must do this here and not above, since this should only apply to the resetview form
-		print "<input type=hidden name=currentview value='$currentviewResetForm'>\n";
-		print "<input type=hidden name=userClickedReset value=1>\n";
-		print "</form>\n";
-	}
-
-	if($useWorking) {
-		// working message
-		global $xoopsConfig;
-		print "<div id=workingmessage style=\"display: none;\">\n";
-		if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/images/working-".$xoopsConfig['language'].".gif") ) {
-			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-" . $xoopsConfig['language'] . ".gif\">\n";
-		} else {
-			print "<img src=\"" . XOOPS_URL . "/modules/formulize/images/working-english.gif\">\n";
-		}
-		print "</div>\n";
-	}
-
-	print "<div id=listofentries>\n";
-
-	print "<form name=controls id=controls autocomplete='off' action=$currentURL method=post onsubmit=\"javascript:showLoading();\">\n";
-	if(isset($GLOBALS['xoopsSecurity'])) {
-		print $GLOBALS['xoopsSecurity']->getTokenHTML();
-	}
-
-	$formulize_cachedDataId = null;
-	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
-	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filterToCompare) . "\">\n"; // save the filter to check for a change on next page load
-	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($flatscope) . "\">\n"; // save the scope to check for a change on next page load
-	print "<input type=hidden name=formulize_previous_sort id=formulize_previous_sort value=\"$sort\">\n";
-	print "<input type=hidden name=formulize_previous_order id=formulize_previous_order value=\"$order\">\n";
-
 	$to_return[0] = $data;
 	$to_return[1] = $regeneratePageNumbers;
+	$to_return[2] = $filterToCompare;
+	$to_return[3] = $flatScope;
 	return $to_return;
 }
 
