@@ -290,7 +290,7 @@ class formulizeElementsHandler {
 				$element = new formulizeElement();
 			}
 			$element->assignVars($array);
-            $element = $this->_setElementProperties($element);
+      $element = $this->_setElementProperties($element);
 			$cachedElements[$id] = $element;
 			return $element;
 		}
