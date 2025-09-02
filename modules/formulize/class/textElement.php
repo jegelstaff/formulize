@@ -181,7 +181,8 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
 	// $element is the element object
 	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-	function loadValue($element, $value) {
+	// $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
 		$ele_value[$this->defaultValueKey] = str_replace("'", "&#039;", $value);
 		return $ele_value;
@@ -277,7 +278,8 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// $value is what the user submitted
 	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
-	function prepareDataForSaving($value, $element, $entry_id=null) {
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 		$ele_value = $element->getVar('ele_value');
 		if(is_a($element, 'formulizeTextElement')) {
 			// Trim the value if the option is set
