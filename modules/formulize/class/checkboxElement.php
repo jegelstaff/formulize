@@ -231,6 +231,50 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 			return $changed;
     }
 
+		/**
+		 * Returns the default value for this element, for a new entry in the specified form.
+		 * Determines database ready values, not necessarily human readable values
+		 * @param object $element The element object
+		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
+		 * @return mixed The default value
+		 */
+		function getDefaultValue($element, $entry_id = 'new') {
+			$default = "";
+			$ele_value = $element->getVar('ele_value');
+			if($element->isLinked AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot']))  { // checkboxes can't snapshot, but this was copied from selectboxes, so it's futureproofed anyway!
+				// default will be a foreign key or keys
+				if(is_array($ele_value[13]) AND $ele_value[13][0] != "") {
+					$default = $ele_value[1] ? $ele_value[13] : $ele_value[13][0]; // if not multiple selection, then use first (and only?) specified default value
+				} else {
+					$default = $ele_value[13] ? $ele_value[13] : null;
+				}
+				$default = (is_array($default) AND count($default) > 0) ? ','.implode(',',$default).',' : $default;
+			} elseif($element->isLinked) {
+				// SNAPSHOT LOGIC, NOT IN EFFECT FOR CHECKBOXES PRESENTLY
+				// default is the literal value from the source, optionally with separator if multi
+				$linkMeta = explode('#*=:*', $ele_value[2]);
+				$linkFormId = $linkMeta[0];
+				$linkElementId = $linkMeta[1];
+				$dataHandler = new formulizeDataHandler($linkFormId);
+				$ele_value[13] = is_array($ele_value[13]) ? $ele_value[13] : array($ele_value[13]);
+				$default = "";
+				foreach($ele_value[13] as $thisDefaultValue) {
+					$default .= strlen($default) > 0 ? '*=+*:' : '';
+					$thisDefaultValue = $dataHandler->getElementValueInEntry($thisDefaultValue,$linkElementId);
+					$default .= $thisDefaultValue;
+				}
+			} else {
+				// default is the literal text from the options list, optionally with separator if multi
+				foreach($ele_value[2] as $thisOption=>$isDefault) {
+					if($isDefault) {
+						$default .= strlen($default) > 0 ? '*=+*:' : '';
+						$default .= $thisOption;
+					}
+				}
+			}
+			return $default;
+		}
+
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
 		// $element is the element object
@@ -633,8 +677,18 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        // this needs to be refactored to take into account what is happening in the function of the same name in the modules/formulize/include/functions.php file!
-        return $value;
+			// NEED TO TEST SEARCHING ON CHECKBOXES, ESPECIALLY LINKED CHECKBOXES!!
+			// ALSO FILTER CONDITIONS ON CHECKBOXES, SAME THING
+			$ele_value = $element->getVar('ele_value');
+			if($element->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1)) { // checkboxes can't be snapshotted, yet
+				list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($element);
+				// get the entry id of the value in the linked source of the elementObject selectbox
+				$dataHandler = new formulizeDataHandler($sourceFidOfElement);
+				$value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value); // only supporting search for first matching value right now!!
+			} elseif($value != "{BLANK}" AND !$partialMatch) {
+				$value = "*=+*:".$value;
+			}
+			return $value;
     }
 
     // this method will format a dataset value for display on screen when a list of entries is prepared

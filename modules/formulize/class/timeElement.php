@@ -86,6 +86,18 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         return $changed;
     }
 
+		/**
+		 * Returns the default value for this element, for a new entry in the specified form.
+		 * Determines database ready values, not necessarily human readable values
+		 * @param object $element The element object
+		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
+		 * @return mixed The default value
+		 */
+		function getDefaultValue($element, $entry_id = 'new') {
+			$ele_value = $element->getVar('ele_value');
+			return interpretTimeElementValue($ele_value[0], $entry_id);
+		}
+
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
     // $element is the element object
@@ -127,9 +139,9 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-    // You can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
