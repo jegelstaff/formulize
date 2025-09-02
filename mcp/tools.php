@@ -594,37 +594,31 @@ Examples:
 			$limit_entries = 'off';
 		}
 
-		try {
-
-			// prepare application data
-			$applicationIds = [0]; // default to no application
-			if(is_numeric($application_id_or_name)) {
-				$applicationIds = array(intval($application_id_or_name));
-			} elseif(is_string($application_id_or_name) AND !empty($application_id_or_name)) {
-				$application_handler = xoops_getmodulehandler('applications','formulize');
-				$newAppObject = $application_handler->create();
-				$newAppObject->setVar('name', $application_id_or_name);
-				if(!$application_handler->insert($newAppObject)) {
-						global $xoopsDB;
-    				throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
-  			} else {
-  				$applicationIds = array($newAppObject->getVar('appid'));
-				}
+		// prepare application data
+		$applicationIds = [0]; // default to no application
+		if(is_numeric($application_id_or_name)) {
+			$applicationIds = array(intval($application_id_or_name));
+		} elseif(is_string($application_id_or_name) AND !empty($application_id_or_name)) {
+			$application_handler = xoops_getmodulehandler('applications','formulize');
+			$newAppObject = $application_handler->create();
+			$newAppObject->setVar('name', $application_id_or_name);
+			if(!$application_handler->insert($newAppObject)) {
+					global $xoopsDB;
+					throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+			} else {
+				$applicationIds = array($newAppObject->getVar('appid'));
 			}
-
-			// prepare form data, keys consistent with the formulizeForm object
-			$formData = [
-				'title' => $title,
-				'single' => $limit_entries,
-				'note' => $notes
-			];
-
-			$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
-			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
-
-		} catch (Exception $e) {
-			throw new FormulizeMCPException($e->getMessage(), 'database_error');
 		}
+
+		// prepare form data, keys consistent with the formulizeForm object
+		$formData = [
+			'title' => $title,
+			'single' => $limit_entries,
+			'note' => $notes
+		];
+
+		$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
+		$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
 
 		// could/should reuse get_form_details ??
 		return [
@@ -672,65 +666,61 @@ Examples:
 		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
 		$elements = $arguments['elements'] ?? array();
 
-		try {
-
-			if(!$form_id OR $form_id < 0) {
-				throw new FormulizeMCPException('Form not found. Form ID must be a positive integer', 'form_not_found');
-			}
-
-			// Build scope based on authenticated user and their permissions
-			$scope = buildScope('all', $xoopsUser, $form_id);
-
-			// The buildScope function returns an array with [scope, actualCurrentView]
-			$actualScope = $scope[0];
-
-			// validate stuff...
-			if (!empty($sortField)) {
-				$dataHandler = new formulizeDataHandler();
-				$element_handler = xoops_getmodulehandler('elements', 'formulize');
-				if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
-					throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
-				}
-			}
-			list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
-			$elements = $this->validateElementHandles($elements);
-
-			// cleanup $filter into old style filter string, if necessary
-			$filter = $this->validateFilter($filter);
-
-			// Call Formulize's gatherDataset function with all parameters
-			$dataset = gatherDataset(
-				$form_id,
-				$elements,
-				$filter,
-				$andOr,
-				$actualScope,
-				$limitStart,
-				$limitSize,
-				$sortField,
-				$sortOrder,
-				-1 // always use primary relationship (all connections)
-			);
-
-			return [
-				'form_id' => $form_id,
-				'dataset' => $dataset,
-				'total_count' => count($dataset),
-				'scope_used' => $actualScope,
-				'parameters_used' => [
-					'elements' => $elements,
-					'filter' => $filter,
-					'andOr' => $andOr,
-					'limitStart' => $limitStart,
-					'limitSize' => $limitSize,
-					'sortField' => $sortField,
-					'sortOrder' => $sortOrder,
-					'form_relationship_id' => -1
-				]
-			];
-		} catch (Exception $e) {
-			new FormulizeMCPException($e->getMessage(), 'database_error');
+		if(!$form_id OR $form_id < 0) {
+			throw new FormulizeMCPException('Form not found. Form ID must be a positive integer', 'form_not_found');
 		}
+
+		// Build scope based on authenticated user and their permissions
+		$scope = buildScope('all', $xoopsUser, $form_id);
+
+		// The buildScope function returns an array with [scope, actualCurrentView]
+		$actualScope = $scope[0];
+
+		// validate stuff...
+		if (!empty($sortField)) {
+			$dataHandler = new formulizeDataHandler();
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
+				throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
+			}
+		}
+		list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
+		$elements = $this->validateElementHandles($elements);
+
+		// cleanup $filter into old style filter string, if necessary
+		$filter = $this->validateFilter($filter);
+
+		// Call Formulize's gatherDataset function with all parameters
+		$dataset = gatherDataset(
+			$form_id,
+			$elements,
+			$filter,
+			$andOr,
+			$actualScope,
+			$limitStart,
+			$limitSize,
+			$sortField,
+			$sortOrder,
+			-1 // always use primary relationship (all connections)
+		);
+
+		return [
+			'form_id' => $form_id,
+			'dataset' => $dataset,
+			'total_count' => count($dataset),
+			'scope_used' => $actualScope,
+			'parameters_used' => [
+				'elements' => $elements,
+				'filter' => $filter,
+				'andOr' => $andOr,
+				'limitStart' => $limitStart,
+				'limitSize' => $limitSize,
+				'sortField' => $sortField,
+				'sortOrder' => $sortOrder,
+				'form_relationship_id' => -1
+			]
+		];
+
 	}
 
 /**
@@ -969,110 +959,107 @@ private function validateFilter($filter) {
 				$entryId = intval($entryId);
 			}
 
-			// Step 1: Check permissions
-			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
-				throw new FormulizeMCPException(
-					'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
-					'permission_denied',
-				);
-			}
-
-			// Validate form exists
-			$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
-			$formResult = $this->db->query($formSql);
-			$formData = $this->db->fetchArray($formResult);
-
-			if (!$formData) {
-				throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
-			}
-
-			// Get form elements to validate handles
-			$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
-			$elementsResult = $this->db->query($elementsSql);
-
-			$validHandles = [];
-			$requiredHandles = [];
-			while ($row = $this->db->fetchArray($elementsResult)) {
-				$validHandles[] = $row['ele_handle'];
-				if($row['ele_required']) {
-					$requiredHandles[] = $row['ele_handle'];
-				}
-			}
-
-			// Step 2: Prepare and validate the data
-			$preparedData = [];
-			foreach ($data as $elementHandle => $value) {
-				// Validate element handle type
-				if (!is_string($elementHandle)) {
-					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
-				}
-
-				// Validate element handle exists in this form
-				if (!in_array($elementHandle, $validHandles)) {
-					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
-				}
-
-				// Prepare the value for database storage
-				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
-				if($preparedValue AND $preparedValue !== $value) {
-					$value = $preparedValue;
-				}
-
-				$preparedData[$elementHandle] = $value;
-			}
-
-			if (empty($preparedData)) {
-				throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
-			}
-
-			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
-			if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
-				$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
-				$missingRequiredHandles = [];
-				foreach($requiredHandles as $requiredHandle) {
-					if(!isset($preparedData[$requiredHandle])
-						OR $preparedData[$requiredHandle] === null
-						OR $preparedData[$requiredHandle] === 0
-						OR $preparedData[$requiredHandle] === "0"
-						OR $preparedData[$requiredHandle] === "") {
-							$missingRequiredHandles[] = $requiredHandle;
-						}
-				}
-				if($missingRequiredHandles) {
-					$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
-					throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
-				}
-			}
-
-			// Step 3: Write the entry
-			// a null result means nothing was written, likely because the submitted data was not different from what's in the database already
-			$resultEntryId = formulize_writeEntry($preparedData, $entryId);
-
-			// For new entries, the function returns the new entry ID
-			// For updates, it returns the existing entry ID
-			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId;
-
-			// Step 4: Update derived values
-			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
-
-			$response = [
-				'success' => true,
-				'form_id' => $formId,
-				'entry_id' => $finalEntryId,
-				'prepped_data' => $preparedData,
-				'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
-				'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
-				'element_count' => count($preparedData)
-			];
-
-			if ($entryId === 'new') {
-				$response['new_entry_id'] = $resultEntryId;
-			}
-
-			return $response;
-		} catch (Exception $e) {
-			new FormulizeMCPException($e->getMessage(), 'database_error');
+		// Step 1: Check permissions
+		if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
+			throw new FormulizeMCPException(
+				'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
+				'permission_denied',
+			);
 		}
+
+		// Validate form exists
+		$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formResult = $this->db->query($formSql);
+		$formData = $this->db->fetchArray($formResult);
+
+		if (!$formData) {
+			throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
+		}
+
+		// Get form elements to validate handles
+		$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
+		$elementsResult = $this->db->query($elementsSql);
+
+		$validHandles = [];
+		$requiredHandles = [];
+		while ($row = $this->db->fetchArray($elementsResult)) {
+			$validHandles[] = $row['ele_handle'];
+			if($row['ele_required']) {
+				$requiredHandles[] = $row['ele_handle'];
+			}
+		}
+
+		// Step 2: Prepare and validate the data
+		$preparedData = [];
+		foreach ($data as $elementHandle => $value) {
+			// Validate element handle type
+			if (!is_string($elementHandle)) {
+				throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
+			}
+
+			// Validate element handle exists in this form
+			if (!in_array($elementHandle, $validHandles)) {
+				throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
+			}
+
+			// Prepare the value for database storage
+			$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
+			if($preparedValue AND $preparedValue !== $value) {
+				$value = $preparedValue;
+			}
+
+			$preparedData[$elementHandle] = $value;
+		}
+
+		if (empty($preparedData)) {
+			throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
+		}
+
+		// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
+		if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
+			$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
+			$missingRequiredHandles = [];
+			foreach($requiredHandles as $requiredHandle) {
+				if(!isset($preparedData[$requiredHandle])
+					OR $preparedData[$requiredHandle] === null
+					OR $preparedData[$requiredHandle] === 0
+					OR $preparedData[$requiredHandle] === "0"
+					OR $preparedData[$requiredHandle] === "") {
+						$missingRequiredHandles[] = $requiredHandle;
+					}
+			}
+			if($missingRequiredHandles) {
+				$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
+				throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
+			}
+		}
+
+		// Step 3: Write the entry
+		// a null result means nothing was written, likely because the submitted data was not different from what's in the database already
+		$resultEntryId = formulize_writeEntry($preparedData, $entryId);
+
+		// For new entries, the function returns the new entry ID
+		// For updates, it returns the existing entry ID
+		$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId;
+
+		// Step 4: Update derived values
+		formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+
+		$response = [
+			'success' => true,
+			'form_id' => $formId,
+			'entry_id' => $finalEntryId,
+			'prepped_data' => $preparedData,
+			'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
+			'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
+			'element_count' => count($preparedData)
+		];
+
+		if ($entryId === 'new') {
+			$response['new_entry_id'] = $resultEntryId;
+		}
+
+		return $response;
 	}
 
 	/**
@@ -1218,25 +1205,23 @@ private function validateFilter($filter) {
 		}
 
 		$sql = trim($arguments['sql'] ?? '');
-		try {
-			// Sanitize the SQL
-			$safeSql = $this->sanitizeFormulizeSQL($sql, ['SELECT', 'SHOW', 'DESCRIBE']);
-			if(!$res = $this->db->query($safeSql)) {
-				throw new FormulizeMCPException('SQL query failed: ' . $this->db->error(), 'database_error');
-			}
 
-			$results = [];
-			while($row = $this->db->fetchArray($res)) {
-				$results[] = $row;
-			}
-			return [
-				'sql' => $safeSql,
-				'query_results' => $results,
-				'number_of_records_returned' => count($results)
-			];
-    } catch (Exception $e) {
-        throw new FormulizeMCPException('SQL execution failed: ' . $e->getMessage(), 'database_error');
-    }
+		// Sanitize the SQL
+		$safeSql = $this->sanitizeFormulizeSQL($sql, ['SELECT', 'SHOW', 'DESCRIBE']);
+		if(!$res = $this->db->query($safeSql)) {
+			throw new FormulizeMCPException('SQL query failed: ' . $this->db->error(), 'database_error');
+		}
+
+		$results = [];
+		while($row = $this->db->fetchArray($res)) {
+			$results[] = $row;
+		}
+		return [
+			'sql' => $safeSql,
+			'query_results' => $results,
+			'number_of_records_returned' => count($results)
+		];
+
 	}
 
 	private function sanitizeFormulizeSQL($sql, $allowedOperations = ['SELECT', 'SHOW', 'DESCRIBE']) {
