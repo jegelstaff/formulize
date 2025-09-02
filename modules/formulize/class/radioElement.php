@@ -71,16 +71,12 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
-			$ele_value = $element->getVar('ele_value');
-			$formlink = createFieldList($ele_value[$this->defaultValueKey], true);
-			$dataToSendToTemplate['formlink'] = $formlink->render();
-			$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
-		} else { // new element
-			$config_handler = xoops_gethandler('config');
-			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
-			$formlink = createFieldList(0, true);
-			$dataToSendToTemplate['formlink'] = $formlink->render();
+			$ele_value = formulize_mergeUIText($element->getVar('ele_value'), $element->getVar('ele_uitext'));
+    	$newEleValueForRadios = array();
+    	foreach($ele_value as $k=>$v) {
+        $newEleValueForRadios[str_replace('&', '&amp;', $k)] = $v;
+    	}
+    	$dataToSendToTemplate['useroptions'] = $newEleValueForRadios;
 		}
 		return $dataToSendToTemplate;
 	}
@@ -93,9 +89,21 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	function adminSave($element, $ele_value) {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			if($_POST['formlink'] != "none") {
-				$ele_value[$this->associatedElementKey] = $_POST['formlink'];
-				$element->setVar('ele_value', $ele_value);
+			$checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
+			$newValues = array();
+  		list($ele_value, $ele_uitext) = formulize_extractUIText($ele_value);
+			foreach($ele_value as $id=>$text) {
+				if($text !== "") {
+					$newValues[$text] = intval($id) === $checked ? 1 : 0;
+				}
+			}
+  		$element->setVar('ele_value', $newValues);
+			$element->setVar('ele_uitext', $ele_uitext);
+			if(!empty($newValues) AND isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
+  			$data_handler = new formulizeDataHandler($element->getVar('fid'));
+				if(!$changeResult = $data_handler->changeUserSubmittedValues($element->getVar('ele_id'), $newValues)) {
+					print "Error updating user submitted values for the options in element '".$element->getVar('ele_caption')."'";
+				}
 			}
 		}
 		return $changed;
@@ -109,16 +117,59 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	 * @return mixed The default value
 	 */
 	function getDefaultValue($element, $entry_id = 'new') {
-		return interpretTextboxValue($element, $entry_id);
+    return array_search(1, $element->getVar('ele_value'));
 	}
 
 	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
 	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
 	// $element is the element object
 	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-	function loadValue($element, $value) {
+	// $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
-		$ele_value[$this->defaultValueKey] = str_replace("'", "&#039;", $value);
+		if (is_array($ele_value)) {
+			$temparraykeys = array_keys($ele_value);
+			$temparray = array_fill_keys($temparraykeys, 0); // actually remove the defaults!
+		} else {
+			$temparraykeys = array();
+			$temparray = $ele_value;
+		}
+		// need to turn the prevEntry got from the DB into something the same as what is in the form specification so defaults show up right
+		// we're comparing the output of these two lines against what is stored in the form specification, which does not have HTML escaped characters, and has extra slashes.  Assumption is that lack of HTML filtering is okay since only admins and trusted users have access to form creation.  Not good, but acceptable for now.
+		global $myts;
+		if(!$myts){
+			$myts =& MyTextSanitizer::getInstance();
+		}
+		$value = $myts->undoHtmlSpecialChars($value);
+		$numberOfSelectedValues = 1;
+		$assignedSelectedValues = array();
+
+		foreach($temparraykeys as $k) {
+			// if there's a straight match (not a multiple selection)
+			if((string)$k === (string)$value) {
+				$temparray[$k] = 1;
+				$assignedSelectedValues[$k] = true;
+
+			// check for a match within an English translated value and assign that, otherwise set to zero
+			// assumption is that development was done first in English and then translated
+			// this safety net will not work if a system is developed first and gets saved data prior to translation in language other than English!!
+			} elseif(trim(trans((string)$k, "en")) == trim(trans($value,"en"))) {
+				$temparray[$k] = 1;
+				$assignedSelectedValues[$k] = true;
+				break;
+			}
+		}
+
+		if((!empty($value) OR $value === 0 OR $value === "0") AND count((array) $assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
+			if(!isset($assignedSelectedValues[$value]) AND (!empty($value) OR $value === 0 OR $value === "0")) {
+				$temparray[_formulize_OUTOFRANGE_DATA.$value] = 1;
+			}
+		}
+		if ($entry_id != "new" AND ($value === "" OR is_null($value)) AND array_search(1, (array) $ele_value)) { // for radio buttons, if we're looking at an entry, and we've got no value to load, but there is a default value for the radio buttons, then use that default value (it's normally impossible to unset the default value of a radio button, so we want to ensure it is used when rendering the element in these conditions)
+			$ele_value = $ele_value;
+		} else {
+			$ele_value = $temparray;
+		}
 		return $ele_value;
 	}
 
@@ -134,36 +185,107 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = stripslashes($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
-		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
-		//if placeholder value is set
-		if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER] AND ($entry_id == 'new' OR $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
-			$rawEleValue = $element->getVar('ele_value');
-			$placeholder = $rawEleValue[ELE_VALUE_TEXT_DEFAULTVALUE];
-			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = "";
+		$selected = "";
+		$options = array();
+		$opt_count = 1;
+		global $myts;
+    foreach($ele_value as $iKey=>$iValue) {
+		  $options[$opt_count] = $myts->displayTarea($iKey, 1); // 1 means allow HTML through
+			if( $iValue > 0 ){
+				$selected = $opt_count;
+			}
+			$opt_count++;
 		}
-		if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
-			$form_ele = new XoopsFormText(
+		$delimSetting = "";
+		if($element->getVar('ele_delim') != "") {
+			$delimSetting = $element->getVar('ele_delim');
+		}
+		$delimSetting = $myts->undoHtmlSpecialChars($delimSetting);
+		if($delimSetting == "br") { $delimSetting = "<br />"; }
+		$hiddenOutOfRangeValuesToWrite = array();
+		switch($delimSetting){
+			case 'space':
+				$form_ele1 = new XoopsFormRadio(
+					'',
+					$markupName,
+					$selected
+				);
+				$counter = 0;
+        foreach($options as $oKey=>$oValue) {
+					$oValue = formulize_swapUIText($oValue, $element->getVar('ele_uitext'));
+					$other = optOther($oValue, $markupName, $entry_id, $counter, false, $isDisabled);
+					if( $other != false ){
+						$form_ele1->addOption($oKey, _formulize_OPT_OTHER.$other);
+						if($oKey == $selected) {
+							$disabledOutputText = _formulize_OPT_OTHER.$other;
+						}
+					}else{
+						$form_ele1->addOption($oKey, $oValue);
+						if($oKey == $selected) {
+							$disabledOutputText = $oValue;
+						}
+						if(strstr($oValue, _formulize_OUTOFRANGE_DATA)) {
+							$hiddenOutOfRangeValuesToWrite[$oKey] = str_replace(_formulize_OUTOFRANGE_DATA, "", $oValue); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
+						}
+					}
+					$counter++;
+				}
+				$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+        $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
+				break;
+			default:
+				$form_ele1 = new XoopsFormElementTray('', $delimSetting);
+				$counter = 0;
+				foreach($options as $oKey=>$oValue) {
+					$oValue = formulize_swapUIText($oValue, $element->getVar('ele_uitext'));
+					$t = new XoopsFormRadio(
+						'',
+						$markupName,
+						$selected
+					);
+					$other = optOther($oValue, $markupName, $entry_id, $counter, false, $isDisabled);
+					if( $other != false ){
+						$t->addOption($oKey, _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
+						if($oKey == $selected) {
+							$disabledOutputText = _formulize_OPT_OTHER.$other;
+						}
+						$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = _formulize_OPT_OTHER;
+					}else{
+						$t->addOption($oKey, $oValue);
+						if($oKey == $selected) {
+							$disabledOutputText = $oValue;
+						}
+						if(strstr($oValue, _formulize_OUTOFRANGE_DATA)) {
+							$hiddenOutOfRangeValuesToWrite[$oKey] = str_replace(_formulize_OUTOFRANGE_DATA, "", $oValue); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
+						}
+						$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
+					}
+					$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
+					$form_ele1->addElement($t);
+					unset($t);
+					$counter++;
+				}
+				break;
+			}
+			$renderedHoorvs = "";
+			if(count((array) $hiddenOutOfRangeValuesToWrite) > 0) {
+				foreach($hiddenOutOfRangeValuesToWrite as $hoorKey=>$hoorValue) {
+					$thisHoorv = new xoopsFormHidden('formulize_hoorv_'.$element->getVar('ele_id').'_'.$hoorKey, $hoorValue);
+					$renderedHoorvs .= $thisHoorv->render() . "\n";
+					unset($thisHoorv);
+				}
+			}
+			if($isDisabled) {
+				$renderedElement = $disabledOutputText; // just text for disabled elements
+			} else {
+				$renderedElement = $form_ele1->render();
+			}
+			$form_ele = new XoopsFormLabel(
 				$caption,
-				$markupName,
-				$ele_value[ELE_VALUE_TEXT_WIDTH],	//	box width
-				$ele_value[ELE_VALUE_TEXT_MAXCHARS],	//	max width
-				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
-				false,					// autocomplete in browser
-				($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] ? 'number' : 'text')		// numbers only
+				trans($renderedElement),
+				$markupName
 			);
-			//if placeholder value is set
-			if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER]) {
-				$form_ele->setExtra("placeholder='".$placeholder."'");
-			}
-			//if numbers-only option is set
-			if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY]) {
-				$form_ele->setExtra("class='numbers-only-textbox'");
-			}
-		} else {
-			$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle')), $markupName);
-		}
-		return $form_ele;
+			return $form_ele;
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -171,39 +293,19 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 		$validationCode = array();
-		$ele_value = $element->getVar('ele_value');
 		$eltname = $markupName;
 		$eltcaption = $caption;
 		$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-		$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-		if($element->getVar('ele_required')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
-			$validationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
-			$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
-			$validationCode[] = "}\n";
-		}
-		if(isset($ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) AND $ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) {
-			$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
-			$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
-			$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
-			$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
-			$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
-			$validationCode[] = "hideSavingGraphic();\n";
-			$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
-			$validationCode[] = "myform.{$eltname}.focus();\n return false;\n";
-			$validationCode[] = "}\n";
-			$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
-			$validationCode[] = "\nvar formulize_xhr_params = []\n";
-			$validationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
-			$validationCode[] = "formulize_xhr_params[1] = ".$element->getVar('ele_id').";\n";
-			$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
-			$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
-			$validationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
-			$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
-			//$validationCode[] = "showSavingGraphic();\n";
-			$validationCode[] = "return false;\n";
-			$validationCode[] = "}\n";
-			$validationCode[] = "}\n";
-		}
+		$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
+		$validationCode[] = "selection = false;\n";
+		$validationCode[] = "if(myform.{$eltname}.length) {\n";
+		$validationCode[] = "for(var i=0;i<myform.{$eltname}.length;i++){\n";
+		$validationCode[] = "if(myform.{$eltname}[i].checked){\n";
+		$validationCode[] = "selection = true;\n";
+		$validationCode[] = "}\n";
+		$validationCode[] = "}\n";
+		$validationCode[] = "}\n";
+		$validationCode[] = "if(selection == false) { window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
 		return $validationCode;
 	}
 
@@ -212,20 +314,34 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// $value is what the user submitted
 	// $element is the element object
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
-	function prepareDataForSaving($value, $element, $entry_id=null) {
-		$ele_value = $element->getVar('ele_value');
-		if(is_a($element, 'formulizeTextElement')) {
-			// Trim the value if the option is set
-			if (isset($ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) && $ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) {
-				$value = trim($value);
-			}
-			if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
-					$value = preg_replace ('/[^0-9.-]+/', '', $value);
-			}
-		}
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+		$opt_count = 1;
+		$ele_id = $element->getVar('ele_id');
+		$valueFound = false;
 		global $myts;
-		$value = $myts->htmlSpecialChars($value);
-		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
+		foreach($element->getVar('ele_value') as $ele_value_key=>$ele_value_value) {
+			if ($opt_count == $value ) {
+				$otherValue = checkOther($ele_value_key, $ele_id, $entry_id, $subformBlankCounter);
+				if($otherValue !== false) {
+					if($subformBlankCounter !== null) {
+						$GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
+					} else {
+						$GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
+					}
+				}
+				$ele_value_key = $myts->htmlSpecialChars($ele_value_key);
+				$value = $ele_value_key;
+				$valueFound = true;
+				break;
+			}
+			$opt_count++;
+		}
+		// if a value was received that was out of range
+		if ($valueFound == false AND $value >= $opt_count) {
+			// get the out of range value from the hidden values that were passed back
+			$value = $myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$value]);
+		}
 		return $value;
 	}
 
@@ -244,6 +360,17 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// $handle is the element handle for the field that we're retrieving this for
 	// $entry_id is the entry id of the entry in the form that we're retrieving this for
 	function prepareDataForDataset($value, $handle, $entry_id) {
+		$elementObject = $this->get($handle);
+		$ele_value = $elementObject->getVar('ele_value');
+		if(preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
+			// go function and DBPRE are set in the extract.php file - legacy stuff
+			$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle='" . formulize_db_escape($handle) . "' AND " . DBPRE . "formulize_other.id_req='" . intval($entry_id) . "' LIMIT 0,1");
+			// removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
+			$value_other = $newValueq[0]['other_text'];
+			$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
+		} elseif ($ele_value['ele_uitextshow']) {
+			$value = formulize_swapUIText($value, unserialize($ele_value['ele_uitext']));
+		}
 		return $value;
 	}
 
@@ -254,59 +381,17 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		return convertStringToUseSpecialCharsToMatchDB($value); // function required as long as $myts->htmlSpecialChars is used in prepareDataForSavingMethod
+		return $value;
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = true;
-		$this->striphtml = true;
+		$this->clickable = false;
+		$this->striphtml = false;
 		$this->length = $textWidth;
-		$elementObject = $this->get($handle);
-		$ele_value = $elementObject->getVar('ele_value');
-		if(isset($ele_value[$this->associatedElementKey])
-			AND $ele_value[$this->associatedElementKey]
-			AND $associatedElementMatchingText = $this->getAssociatedElementMatchingText($value, $ele_value[$this->associatedElementKey], $textWidth)) {
-				return $associatedElementMatchingText;
-		}
 		return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
-	}
-
-	/**
-	 * A very legacy operation, matching text a value for an element in an existing entry, and returning an HTML link if a match is found.
-	 * @param string $text The text to match against the associated element
-	 * @param int $associatedElementId The element id of the associated element to match against
-	 * @param int $textWidth Optional. The maximum width of the text to display in the link. Defaults to 100.
-	 * @return string|bool Returns the HTML link if a match is found, or false if no match is found
-	 */
-	private function getAssociatedElementMatchingText($text, $associatedElementId, $textWidth = 100) {
-		global $myts;
-		$associatedText = "";
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$target_element = $element_handler->get($associatedElementId);
-		$target_fid = $target_element->getVar('fid');
-		$foundAssociatedMatch = false;
-		// if user has no perm in target fid, then do not make link!
-		if ($target_allowed = security_check($target_fid)) {
-			$textLines = explode(";", $text); // have to breakup the textbox's text since it may contain multiple matches.  Note no space after semicolon spliter, but we trim the results in the foreach loop below.
-			$start = 1;
-			foreach ($textLines as $thistext) {
-				$thistext = trim($thistext);
-				if (!$start) {
-					$associatedText .= ", ";
-				}
-				if ($id_req = findMatchingIdReq($target_element, $target_fid, $thistext)) {
-					$foundAssociatedMatch = true;
-					$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
-				} else {
-					$associatedText .= $myts->htmlSpecialChars($thistext);
-				}
-				$start = 0;
-			}
-		}
-		return $foundAssociatedMatch ? $associatedText : false;
 	}
 
 }
