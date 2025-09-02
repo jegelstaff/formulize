@@ -117,22 +117,6 @@ function prepvalues($value, $field, $entry_id)
 	$elementArray = formulize_getElementMetaData($field, true);
 	$type = $elementArray['ele_type'];
 
-	// handle yes/no cases
-	if ($type == "yn") { // if we've found one
-		if ($value == "1") {
-			$value = _formulize_TEMP_QYES;
-		} elseif ($value == "2") {
-			$value = _formulize_TEMP_QNO;
-		} else {
-			$value = "";
-		}
-		$value = array($value); // bottom level items in a getData array are supposed to be arrays. Display function will figure it out if there's only one value, and return that one alone.
-		if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-			$cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
-		}
-		return $value;
-	}
-
 	// decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
 	if ($elementArray['ele_encrypt']) {
 		$decryptSQL = "SELECT AES_DECRYPT('" . formulize_db_escape($value) . "', '" . getAESPassword() . "')";
@@ -269,17 +253,6 @@ function prepvalues($value, $field, $entry_id)
 		$value = substr_replace($value, "", 0, 5);
 	}
 
-	// Convert 'Other' options into the actual text the user typed
-	if (($type == "radio") and preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle='" . formulize_db_escape($field) . "' AND " . DBPRE . "formulize_other.id_req='" . intval($entry_id) . "' LIMIT 0,1");
-		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
-		// removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
-		$value_other = $newValueq[0]['other_text'];
-		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
-	} elseif ($elementArray['ele_uitextshow']) {
-		$value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
-	}
-
 
 
 	$valueToReturn = "";
@@ -291,8 +264,11 @@ function prepvalues($value, $field, $entry_id)
 		} else {
 			$valueToReturn = $preppedValue;
 		}
-	}
 
+	// if not custom class, do this with the value. Custom classes need to do this step by themselves in the prepareDataForDataset method
+	} elseif (isset($elementArray['ele_uitextshow']) AND $elementArray['ele_uitextshow']) {
+		$value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
+	}
 
 	if (!$valueToReturn) {
 		$valueToReturn = explode("*=+*:", $value);

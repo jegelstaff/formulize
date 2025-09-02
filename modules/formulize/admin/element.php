@@ -174,13 +174,6 @@ if ($_GET['ele_id'] != "new") {
     $ele_use_default_when_blank = 0;
     global $xoopsModuleConfig;
     switch($ele_type) {
-        case "derived":
-            $ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-            $ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-            $ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-            $ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-						$ele_value[0] = "<?php\n";
-            break;
         case "subform":
             $ele_value[2] = 0;
             $ele_value[3] = 1;
@@ -265,33 +258,7 @@ $options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
-if ($ele_type=='derived') {
-
-		$form_id = $fid;
-		$selectedFramework = 0;
-		include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
-		$options['variabletemplatehelp'] = $listTemplateHelp;
-
-    //new relationship dropdown
-    $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-    $allRelationships = $framework_handler->getFrameworksByForm($fid, true);
-    $relationships = array();
-    $relationshipIndex = array();
-    $relationships[""] = "this form only, no relationship.";
-    foreach ($allRelationships as $thisRelationship) {
-        $frid = $thisRelationship->getVar('frid');
-        if (!isset($relationships[$frid])) {
-            $relationships[$frid] = $thisRelationship->getVar('name');
-        }
-    }
-    $listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
-    $listOfRelationships->addOptionArray($relationships);
-    $options['listofrelationshipoptions'] = $listOfRelationships->render();
-    //end of new relationship
-} elseif ($ele_type == "yn") {
-    $options['ele_value_yes'] = $ele_value['_YES'];
-    $options['ele_value_no'] = $ele_value['_NO'];
-} elseif ($ele_type == "subform") {
+if ($ele_type == "subform") {
 
     if(!isset($ele_value['show_delete_button'])) {
         $ele_value['show_delete_button'] = 1;
@@ -370,14 +337,6 @@ if ($ele_type=='derived') {
         $grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
     }
     $options['grid_start_options'] = $grid_start_options;
-
-} elseif ($ele_type=="radio") {
-    $ele_value = formulize_mergeUIText($ele_value, $ele_uitext);
-    $newEleValueForRadios = array();
-    foreach($ele_value as $k=>$v) {
-        $newEleValueForRadios[str_replace('&', '&amp;', $k)] = $v;
-    }
-    $options['useroptions'] = $newEleValueForRadios;
 
 } elseif ($ele_type=="select") {
     if ($ele_id == "new") {
@@ -595,7 +554,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $customTypeNeedsUI = $customTypeObject->needsDataType;
     }
 
-    if (($ele_type == "select" OR $ele_type == "radio" OR $ele_type == "derived" OR $customTypeNeedsUI) AND !$ele_encrypt) {
+    if (($ele_type == "select" OR $customTypeNeedsUI) AND !$ele_encrypt) {
         if ($element) {
             $defaultTypeInformation = $element->getDataTypeInformation();
             $defaultType = $defaultTypeInformation['dataType'];
