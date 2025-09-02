@@ -104,7 +104,8 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // Reads current state of element, updates ele_value to a renderable state
 		// $element is the element object
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    function loadValue($element, $value) {
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
 				$ele_value = $element->getVar('ele_value');
         $ele_value[3] = $value;
         return $ele_value;
@@ -164,11 +165,13 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
     }
 
-    // Reads what the user submitted and packages it up for the database
-    // Can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
-    function prepareDataForSaving($value, $element) {
+    // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         return formulize_db_escape($value);
     }
 
