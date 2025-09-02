@@ -5542,29 +5542,11 @@ function convertTypeToText($type, $ele_value) {
                 return "List box";
             }
 
-        case "checkbox":
-            return "Check boxes";
-
-        case "radio":
-            return "Radio buttons";
-
-        case "yn":
-            return "Yes/No radio buttons";
-
-        case "date":
-            return "Date box";
-
         case "subform":
             return "Subform (another form with a relationship to this one)";
 
         case "grid":
             return "Table of existing elements";
-
-        case "derived":
-            return "Value derived from other elements";
-
-        case "colorpick":
-            return "Color picker";
 
         default:
             // must be a custom element type

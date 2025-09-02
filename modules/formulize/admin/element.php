@@ -148,6 +148,15 @@ if ($_GET['ele_id'] != "new") {
         $advanced['ele_index_show'] = true;
         $advanced['original_handle'] = $elementObject->getVar('ele_handle');
     }
+		if($elementObject->hasMultipleOptions AND !$elementObject->isLinked) {
+			$advanced['hasMultipleOptions'] = true;
+			$exportOptions = $elementObject->getVar('ele_exportoptions');
+			$advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count((array) $exportOptions) > 0) ? 1 : 0;
+			$advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
+			$advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
+		} else {
+			$advanced['exportoptions_onoff'] = 0;
+		}
     $ele_uitext = $elementObject->getVar('ele_uitext');
     $ele_uitextshow = $elementObject->getVar('ele_uitextshow');
 } else {
@@ -205,6 +214,7 @@ if ($_GET['ele_id'] != "new") {
         $advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
         $advanced['ele_index_show'] = true;
     }
+		$advanced['exportoptions_onoff'] = 0;
     $ele_id = "new";
 }
 
@@ -502,9 +512,6 @@ if ($ele_type=='derived') {
 } elseif ($ele_type=="ib") {
     $options['ib_style_options']['head'] = "head";
     $options['ib_style_options']['form-heading'] = "form-heading";
-} elseif ($ele_type == "colorpick") {
-	// Set default colour for to white
-	$ele_value = $ele_id == "new" ? array("#FFFFFF") : $ele_value;
 }
 
 
@@ -513,16 +520,6 @@ if(!isset($ele_value['snapshot'])) {
 }
 
 $options['ele_value'] = $ele_value;
-
-if($elementObject->hasMultipleOptions AND !$elementObject->isLinked) {
-    $advanced['hasMultipleOptions'] = true;
-    $exportOptions = $elementObject->getVar('ele_exportoptions');
-    $advanced['exportoptions_onoff'] = (is_array($exportOptions) AND count((array) $exportOptions) > 0) ? 1 : 0;
-    $advanced['exportoptions_hasvalue'] = $exportOptions['indicators']['hasValue'];
-    $advanced['exportoptions_doesnothavevalue'] = $exportOptions['indicators']['doesNotHaveValue'];
-} else {
-    $advanced['exportoptions_onoff'] = 0;
-}
 
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();
