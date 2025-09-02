@@ -1876,38 +1876,6 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         $value = $myts->stripSlashesGPC($ele);
         break;
 
-
-        case 'radio':
-        $value = '';
-        $opt_count = 1;
-        foreach($ele_value as $ele_value_key=>$ele_value_value) {
-            if ($opt_count == $ele ) {
-                $otherValue = checkOther($ele_value_key, $ele_id, $entry_id, $subformBlankCounter);
-                if($otherValue !== false) {
-                    if($subformBlankCounter !== null) {
-                        $GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
-                    } else {
-                        $GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
-                    }
-                }
-                $ele_value_key = $myts->htmlSpecialChars($ele_value_key);
-                $value = $ele_value_key;
-            }
-            $opt_count++;
-        }
-        // if a value was received that was out of range
-        if ($ele >= $opt_count) {
-            // get the out of range value from the hidden values that were passed back
-            $value = $myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$ele]);
-        }
-        break;
-
-
-        case 'yn':
-        $value = $ele;
-        break;
-
-
         case 'select':
         // handle the new possible default value -- sept 7 2007
         if ($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
@@ -2139,27 +2107,9 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
         } // end of if that checks for a linked select box.
         break;
 
-
-        case 'date':
-            $timestamp = strtotime($ele);
-            if ($ele != _DATE_DEFAULT AND $ele != "" AND $timestamp !== false) { // $timestamp !== false should catch everything by itself? under some circumstance not yet figured out, the other checks could be useful?
-                $ele = date("Y-m-d", $timestamp);
-            } else {
-                $ele = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
-            }
-            $value = ''.$ele;
-            break;
-
-
         case 'sep':
         $value = $myts->stripSlashesGPC($ele);
         break;
-
-
-        case 'colorpick':
-        $value = $ele;
-        break;
-
 
         default:
         if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
@@ -2244,19 +2194,8 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 
     switch ($ele_type) {
 
-        case "yn":
-					// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-					if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
-						$value = 1;
-					} elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
-						$value = 2;
-					} elseif(!is_numeric($value)) {
-						$value = "";
-					}
-					break;
-
         case "select":
-        case "checkbox":
+					// incomplete?? what about multiselect linked elements??
 					if($elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1)) {
 						list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
 						// get the entry id of the value in the linked source of the elementObject selectbox
@@ -2264,8 +2203,8 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 						$value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value);
 					} else {
 						// otherwise, if the element is not linked, or the element and the comparison value are both linked to the same source, use the $value as is
-						// unless it's a multi selection element (checkboxes or listbox)
-						if(($ele_type == "checkbox" OR $ele_value[1]) AND $value != "{BLANK}") {
+						// unless it's a multi selection element
+						if($ele_value[1] AND $value != "{BLANK}") {
 							$value = "*=+*:".$value;
 						}
 					}
@@ -8114,32 +8053,9 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 
 		// figure out the default value for this element
     $defaultTextToWrite = "";
-    $ele_value_for_default = $thisDefaultEle->getVar('ele_value');
 		$ele_type = $thisDefaultEle->getVar('ele_type');
     switch($ele_type) {
-			case "time":
-				$defaultTextToWrite = interpretTimeElementValue($ele_value_for_default[0], $target_entry);
-				break;
-      case "date":
-        $defaultTextToWrite = getDateElementDefault($ele_value_for_default[0], $target_entry);
-        if (false !== $defaultTextToWrite) {
-          $defaultTextToWrite = is_numeric($defaultTextToWrite) ? date("Y-m-d", $defaultTextToWrite) : $defaultTextToWrite;
-        }
-        break;
-      case "radio":
-        $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
-        $defaultTextToWrite = array_search(1, $thisDefaultEleValue);
-        break;
-      case "yn":
-        $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
-        if($thisDefaultEleValue["_YES"] == 1) {
-            $defaultTextToWrite = 1;
-        } elseif($thisDefaultEleValue["_NO"] == 1) {
-            $defaultTextToWrite = 2;
-        }
-        break;
       case "select":
-      case "checkbox":
         $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
         if($thisDefaultEle->isLinked AND !$thisDefaultEleValue['snapshot'])  {
             // default will be a foreign key or keys

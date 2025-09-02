@@ -2912,22 +2912,7 @@ function loadValue($element, $entry_id, $prevEntry) {
 	$type = $element->getVar('ele_type');
 	switch ($type)
 	{
-		case "derived":
-			if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')])) {
-				$ele_value[5] = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')];
-			} else {
-				$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
-			}
-			break;
-
-
-						case "colorpick":
-								$ele_value[0] = $value;
-								break;
-
-
 		case "select":
-		case "radio":
 			// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
 			if(isset($ele_value[2]) AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
 				// if we've got a linked select box, then do everything differently
@@ -3013,27 +2998,6 @@ function loadValue($element, $entry_id, $prevEntry) {
 					$ele_value[2] = $temparray;
 				}
 			} // end of IF we have a linked select box
-			break;
-		case "yn":
-			if($value == 1)
-			{
-				$ele_value = array("_YES"=>1, "_NO"=>0);
-			}
-			elseif($value == 2)
-			{
-				$ele_value = array("_YES"=>0, "_NO"=>1);
-			}
-			else
-			{
-				$ele_value = array("_YES"=>0, "_NO"=>0);
-			}
-			break;
-		case "date":
-			if(!$value AND substr($ele_value[0],0,1) == '{' AND substr($ele_value[0],-1) == '}') {
-				$value = $ele_value[0];
-			}
-			$ele_value[0] = $value;
-
 			break;
 		default:
 			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {

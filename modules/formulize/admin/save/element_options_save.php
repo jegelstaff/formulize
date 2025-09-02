@@ -95,27 +95,7 @@ if($_POST['element_delimit']) {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
 }
-if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != _DATE_DEFAULT AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-	if(preg_replace("/[^A-Z{}]/","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
-	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
-	} elseif(substr($processedValues['elements']['ele_value'][0], 0, 1) !='{' OR substr($processedValues['elements']['ele_value'][0], -1) !='}') {
-	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
-	}
-} elseif($ele_type == "date") {
-	$processedValues['elements']['ele_value'][0] = "";
-}
-if($ele_type == "yn") {
-  if($_POST['elements_ele_value'] == "_YES") {
-    $processedValues['elements']['ele_value']['_YES'] = 1;
-    $processedValues['elements']['ele_value']['_NO'] = 0;
-  } elseif($_POST['elements_ele_value'] == "_NO") {
-    $processedValues['elements']['ele_value']['_YES'] = 0;
-    $processedValues['elements']['ele_value']['_NO'] = 1;
-  } else {
-    $processedValues['elements']['ele_value']['_YES'] = 0;
-    $processedValues['elements']['ele_value']['_NO'] = 0;
-  }
-}
+
 if($ele_type == "subform") {
 
     if(!isset($processedValues['elements']['ele_value']['show_delete_button'])) {
@@ -155,16 +135,6 @@ if($ele_type == "subform") {
   $processedValues['elements']['ele_value'][1] = implode(",",(array)$_POST['elements_ele_value_1']);
   $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
   list($processedValues['elements']['ele_value'][7], $_POST['reload_option_page']) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
-}
-
-if($ele_type == "radio") {
-  $checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
-  list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
-  foreach($_POST['ele_value'] as $id=>$text) {
-		if($text !== "") {
-			$processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
-		}
-  }
 }
 
 if($ele_type == "select") {
@@ -291,9 +261,6 @@ if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   $data_handler = new formulizeDataHandler($fid);
 	$newValues = array();
   switch($ele_type) {
-    case "radio":
-      $newValues = $processedValues['elements']['ele_value'];
-      break;
     case "select":
       $newValues = $processedValues['elements']['ele_value'][2];
       break;
