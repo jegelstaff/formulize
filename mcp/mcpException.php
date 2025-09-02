@@ -10,22 +10,22 @@ class FormulizeMCPException extends Exception
 		'authentication_error' => 401,
 		'permission_denied' => 403,
 		'method_not_allowed' => 405,
-		'database_error' => 500,
-		'missing_method' => 500,
+		'database_error' => 422,
+		'missing_method' => 422,
 		'method_not_found' => 404,
 		'form_not_found' => 404,
 		'server_disabled' => 503,
 		'unknown_prompt' => 404,
-		'prompt_generation_error' => 500,
+		'prompt_generation_error' => 422,
 		'missing_uri' => 400,
 		'invalid_uri' => 400,
-		'resource_read_error' => 500,
+		'resource_read_error' => 422,
 		'unknown_element' => 404,
 		'unknown_tool' => 404,
 		'invalid_arguments' => 400, // bad request
 		'invalid_data' => 200, // good request, internal problems, ie: wrong handle, etc
-		'file_error' => 500,
-		'internal_formulize_error' => 200,
+		'file_error' => 422,
+		'internal_formulize_error' => 422,
 		'unknown_resource_type' => 404
 	];
 
@@ -127,7 +127,7 @@ class FormulizeMCPException extends Exception
 		return $error;
 	}
 
-	public function toHTTPStatusCode($default = 500): int
+	public function toHTTPStatusCode($default = 422): int
 	{
 		return $this->exceptionTypeToHTTPStatusCode[$this->type] ?? $default;
 	}
