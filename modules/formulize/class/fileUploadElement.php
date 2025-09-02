@@ -102,7 +102,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
 		// $element is the element object
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    function loadValue($element, $value) {
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
 				$ele_value = $element->getVar('ele_value');
         $value = unserialize($value); // what we've got in the database is a serialized array, first key is filename, second key is flag for whether the filename is for real (might be an error message)
         $ele_value[3] = (isset($value['name']) AND $value['name']) ? $value['name'] : null; // add additional keys to ele_value where we'll put the value that is coming from the database for user's to see, plus other flags and so on
@@ -224,10 +225,12 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-    // You can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
-    function prepareDataForSaving($value, $element) {
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 
         // mimetype map - thanks to https://stackoverflow.com/questions/7519393/php-mime-types-list-of-mime-types-publically-available
         // file defines $mime_types_map, array of key=>value pairs that is extensions and mime types

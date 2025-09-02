@@ -90,7 +90,8 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
     // $element is the element object
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    function loadValue($element, $value) {
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
 				$ele_value = $element->getVar('ele_value');
         if($value) {
             $ele_value = $value;
@@ -129,7 +130,9 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-    function prepareDataForSaving($value, $element) {
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         // have to convert this to a 24 hour time for saving
         //$value = $this->convert12To24HourTime($value); // RIGHT NOW THE TIME WIDGET FORCES 24 HOURS ON EVERYONE. THIS IS DONE IN THE JS FILE. SO NO NEED TO CONVERT VALUES.
         if($value == "") { $value = "{WRITEASNULL}"; }
