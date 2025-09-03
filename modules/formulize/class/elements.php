@@ -187,9 +187,7 @@ class formulizeElement extends FormulizeObject {
 		$ele_type = $this->getVar('ele_type');
 		if($key == 'ele_value') {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			if($ele_type == 'derived'
-				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
-				) {
+			if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
 				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 				formulize_writeCodeToFile($filename, $valueToWrite[0]);
 				$valueToWrite[0] = '';
@@ -204,8 +202,7 @@ class formulizeElement extends FormulizeObject {
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value') {
 				$ele_type = $this->getVar('ele_type');
-				if(($ele_type == 'derived'
-					OR $ele_type == 'ib'
+				if(($ele_type == 'ib'
 					OR $ele_type == 'areamodif')
 					AND is_array($value)) {
 						$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
@@ -222,17 +219,8 @@ class formulizeElement extends FormulizeObject {
 
     // returns true if the option is one of the values the user can choose from in this element
     // returns false if the element does not have options
+		// must be overridden in the child class
     function optionIsValid($option) {
-        $ele_value = $this->getVar('ele_value');
-        $uitext = $this->getVar('ele_uitext');
-        switch($this->getVar('ele_type')) {
-            case "radio":
-                return (isset($ele_value[$option]) OR in_array($option, $uitext)) ? true : false;
-                break;
-            case "select":
-                return (isset($ele_value[2][$option]) OR in_array($option, $uitext)) ? true : false;
-                break;
-        }
         return false;
     }
 
@@ -298,29 +286,10 @@ class formulizeElementsHandler {
 	}
 
     function _setElementProperties($element) {
-        $element->isLinked = false;
+        $element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
         $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
         $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
 				$element->setVar('fid', $element->getVar('id_form'));
-        $ele_type = $element->getVar('ele_type');
-        $ele_value = $element->getVar('ele_value');
-        if($ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
-            $element->hasData = true;
-        }
-        if($ele_type=="select") {
-            $element->hasMultipleOptions = true;
-            if($ele_value[1] == 1) {
-                $element->canHaveMultipleValues = true;
-            }
-        }
-        if($ele_type=="select" OR $ele_type=="checkbox") { // isLinked SHOULD BE BROKEN OUT INTO A METHOD OR SOMETHING ON ELEMENT OBJECTS, SO IT DOESN'T HAVE TO BE HERE IN A METHOD IN THE PARENT CLASS! ELEMENT CLASSES SHOULD BE ABLE TO ANSWER THIS ON THEIR OWN.
-            if(!is_array($ele_value[2])) {
-                $element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
-            }
-        }
-        if($ele_type == "radio") {
-            $element->hasMultipleOptions = true;
-        }
         return $element;
     }
 

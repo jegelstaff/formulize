@@ -34,6 +34,7 @@ class formulizeCheckboxlinkedElement extends formulizeCheckboxElement {
     function __construct() {
 			parent::__construct();
       $this->name = "Linked Checkboxes";
+			$this->isLinked = true; // set to true if this element can have linked values
     }
 
 }

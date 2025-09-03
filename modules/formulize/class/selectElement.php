@@ -31,53 +31,59 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeDerivedElement extends formulizeElement {
+// constants for the keys in ele_value
+define('ELE_VALUE_TEXT_WIDTH', 0);
+define('ELE_VALUE_TEXT_MAXCHARS', 1);
+define('ELE_VALUE_TEXT_DEFAULTVALUE', 2);
+define('ELE_VALUE_TEXT_NUMBERSONLY', 3);
+define('ELE_VALUE_TEXT_ASSOCIATED_ELEMENT_ID', 4);
+define('ELE_VALUE_TEXT_DECIMALS', 5);
+define('ELE_VALUE_TEXT_PREFIX', 6);
+define('ELE_VALUE_TEXT_DECIMALS_SEPARATOR', 7);
+define('ELE_VALUE_TEXT_THOUSANDS_SEPARATOR', 8);
+define('ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED', 9);
+define('ELE_VALUE_TEXT_SUFFIX', 10);
+define('ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER', 11);
+define('ELE_VALUE_TEXT_TRIM_VALUE', 12);
+
+class formulizeSelectElement extends formulizeElement {
 
 	var $defaultValueKey;
 
+/*
+        if($ele_type=="select") {
+            $element->hasMultipleOptions = true;
+            if($ele_value[1] == 1) {
+                $element->canHaveMultipleValues = true;
+            }
+        }
+*/
+
 	function __construct() {
-		$this->name = "Value derived from other elements";
+		$this->name = "Dropdown List";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
 		$this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
-		$this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
+		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		$this->canHaveMultipleValues = false;
-		$this->hasMultipleOptions = false;
+		$this->hasMultipleOptions = true;
+		$this->isLinked = false; // set to true if this element can have linked values
 		parent::__construct();
 	}
 
-	// THIS AND OTHER ELEMENTS THAT DO THIS (TEXT BOXES TEXT AREAS?) SHOULD SET A PROPERTY AND THEN THE PARENT CAN HANDLE EVERYTHING??
-	function setVar($key, $value, $not_gpc = false) {
-		if($key == 'ele_value') {
-			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
-			formulize_writeCodeToFile($filename, $valueToWrite[0]);
-			$valueToWrite[0] = '';
-			$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
-		}
-		parent::setVar($key, $value, $not_gpc);
+	// returns true if the option is one of the values the user can choose from in this element
+	// returns false if the element does not have options
+	// does not support linked values!!
+	function optionIsValid($option) {
+		$ele_value = $this->getVar('ele_value');
+		$uitext = $this->getVar('ele_uitext');
+		return (isset($ele_value[2][$option]) OR in_array($option, $uitext)) ? true : false;
 	}
-
-	function getVar($key, $format = 's') {
-		$format = $key == "ele_value" ? "f" : $format;
-		$value = parent::getVar($key, $format);
-		if($key == 'ele_value') {
-			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
-			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
-			$fileValue = "";
-			if(file_exists($filePath)) {
-				$fileValue = strval(file_get_contents($filePath));
-			}
-			$value[0] = $fileValue ? $fileValue : $value[0];
-		}
-		return $value;
-	}
-
 }
 
 #[AllowDynamicProperties]
-class formulizeDerivedElementHandler extends formulizeElementsHandler {
+class formulizeSelectElementHandler extends formulizeElementsHandler {
 
 	var $db;
 	var $clickable; // used in formatDataForList
@@ -89,7 +95,21 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	}
 
 	function create() {
-		return new formulizeDerivedElement();
+		return new formulizeSelectElement();
+	}
+
+	protected function getDefaultEleValue($formulizeConfig) {
+		$ele_value = array();
+		$ele_value[ELE_VALUE_TEXT_WIDTH] = $formulizeConfig['t_width'];
+		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $formulizeConfig['t_max'];
+		$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 0;
+		$ele_value[ELE_VALUE_TEXT_DECIMALS] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+		$ele_value[ELE_VALUE_TEXT_PREFIX] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+		$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+		$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+		$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+		$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
+		return $ele_value;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -98,33 +118,16 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
-			// variable help
-			$form_id = $element->getVar('fid'); // used in generateTemplateElementHandleHelp.php
-			$selectedFramework = 0;
-			include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
-			$dataToSendToTemplate['variabletemplatehelp'] = $listTemplateHelp;
-			// list of relationships for using as context when updating derived values
-			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-			$allRelationships = $framework_handler->getFrameworksByForm($form_id, true);
-			$relationships = array();
-			$relationships[""] = "this form only, no relationship.";
-			foreach ($allRelationships as $thisRelationship) {
-				$frid = $thisRelationship->getVar('frid');
-				if (!isset($relationships[$frid])) {
-					$relationships[$frid] = $thisRelationship->getVar('name');
-				}
-			}
-			$listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
-			$listOfRelationships->addOptionArray($relationships);
-			$dataToSendToTemplate['listofrelationshipoptions'] = $listOfRelationships->render();
-		} else {
-			$config_handler = $config_handler = xoops_gethandler('config');
-			$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-			$dataToSendToTemplate[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-			$dataToSendToTemplate[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-			$dataToSendToTemplate[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-			$dataToSendToTemplate[0] = "<?php\n";
+			$ele_value = $element->getVar('ele_value');
+			$formlink = createFieldList($ele_value[$this->defaultValueKey], true);
+			$dataToSendToTemplate['formlink'] = $formlink->render();
+			$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
+		} else { // new element
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$dataToSendToTemplate['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
+			$formlink = createFieldList(0, true);
+			$dataToSendToTemplate['formlink'] = $formlink->render();
 		}
 		return $dataToSendToTemplate;
 	}
@@ -137,7 +140,10 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function adminSave($element, $ele_value) {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			$element->setVar('ele_value', $ele_value);
+			if($_POST['formlink'] != "none") {
+				$ele_value[$this->associatedElementKey] = $_POST['formlink'];
+				$element->setVar('ele_value', $ele_value);
+			}
 		}
 		return $changed;
 	}
@@ -150,7 +156,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	 * @return mixed The default value
 	 */
 	function getDefaultValue($element, $entry_id = 'new') {
-		return null;
+		return interpretTextboxValue($element, $entry_id);
 	}
 
 	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -159,11 +165,8 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
-		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')])) {
-			$ele_value[5] = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')];
-		} else {
-			$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
-		}
+		$ele_value = $element->getVar('ele_value');
+		$ele_value[$this->defaultValueKey] = str_replace("'", "&#039;", $value);
 		return $ele_value;
 	}
 
@@ -179,10 +182,34 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-		if($entry_id != "new") {
-			$form_ele = new xoopsFormLabel($caption, $ele_value[5], $markupName);
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = stripslashes($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = interpretTextboxValue($element, $entry_id, $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]);
+		//if placeholder value is set
+		if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER] AND ($entry_id == 'new' OR $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] === "")) { // always go straight to source for placeholder for new entries, or entries where there is no value
+			$rawEleValue = $element->getVar('ele_value');
+			$placeholder = $rawEleValue[ELE_VALUE_TEXT_DEFAULTVALUE];
+			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = "";
+		}
+		if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
+			$form_ele = new XoopsFormText(
+				$caption,
+				$markupName,
+				$ele_value[ELE_VALUE_TEXT_WIDTH],	//	box width
+				$ele_value[ELE_VALUE_TEXT_MAXCHARS],	//	max width
+				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
+				false,					// autocomplete in browser
+				($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] ? 'number' : 'text')		// numbers only
+			);
+			//if placeholder value is set
+			if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER]) {
+				$form_ele->setExtra("placeholder='".$placeholder."'");
+			}
+			//if numbers-only option is set
+			if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY]) {
+				$form_ele->setExtra("class='numbers-only-textbox'");
+			}
 		} else {
-			$form_ele = new xoopsFormLabel($caption, _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE, $markupName);
+			$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle')), $markupName);
 		}
 		return $form_ele;
 	}
@@ -191,15 +218,64 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// 'myform' is a name enforced by convention that refers to the form where this element resides
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
-		return array();
+		$validationCode = array();
+		$ele_value = $element->getVar('ele_value');
+		$eltname = $markupName;
+		$eltcaption = $caption;
+		$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
+		$eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
+		if($element->getVar('ele_required')) { // need to manually handle required setting, since only one validation routine can run for an element, so we need to include required checking in this unique checking routine, if the user selected required too
+			$validationCode[] = "\nif ( myform.{$eltname}.value == '' ) {\n";
+			$validationCode[] = "window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n";
+			$validationCode[] = "}\n";
+		}
+		if(isset($ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) AND $ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) {
+			$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
+			$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
+			$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
+			$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
+			$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
+			$validationCode[] = "hideSavingGraphic();\n";
+			$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
+			$validationCode[] = "myform.{$eltname}.focus();\n return false;\n";
+			$validationCode[] = "}\n";
+			$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
+			$validationCode[] = "\nvar formulize_xhr_params = []\n";
+			$validationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
+			$validationCode[] = "formulize_xhr_params[1] = ".$element->getVar('ele_id').";\n";
+			$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
+			$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
+			$validationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
+			$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
+			//$validationCode[] = "showSavingGraphic();\n";
+			$validationCode[] = "return false;\n";
+			$validationCode[] = "}\n";
+			$validationCode[] = "}\n";
+		}
+		return $validationCode;
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
 	// You can return {WRITEASNULL} to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+		$ele_value = $element->getVar('ele_value');
+		if(is_a($element, 'formulizeTextElement')) {
+			// Trim the value if the option is set
+			if (isset($ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) && $ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) {
+				$value = trim($value);
+			}
+			if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
+					$value = preg_replace ('/[^0-9.-]+/', '', $value);
+			}
+		}
+		global $myts;
+		$value = $myts->htmlSpecialChars($value);
+		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
+		return $value;
 	}
 
 	// this method will handle any final actions that have to happen after data has been saved
@@ -227,17 +303,59 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		return $value;
+		return convertStringToUseSpecialCharsToMatchDB($value); // function required as long as $myts->htmlSpecialChars is used in prepareDataForSavingMethod
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = false;
-		$this->striphtml = false;
+		$this->clickable = true;
+		$this->striphtml = true;
 		$this->length = $textWidth;
+		$elementObject = $this->get($handle);
+		$ele_value = $elementObject->getVar('ele_value');
+		if(isset($ele_value[$this->associatedElementKey])
+			AND $ele_value[$this->associatedElementKey]
+			AND $associatedElementMatchingText = $this->getAssociatedElementMatchingText($value, $ele_value[$this->associatedElementKey], $textWidth)) {
+				return $associatedElementMatchingText;
+		}
 		return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+	}
+
+	/**
+	 * A very legacy operation, matching text a value for an element in an existing entry, and returning an HTML link if a match is found.
+	 * @param string $text The text to match against the associated element
+	 * @param int $associatedElementId The element id of the associated element to match against
+	 * @param int $textWidth Optional. The maximum width of the text to display in the link. Defaults to 100.
+	 * @return string|bool Returns the HTML link if a match is found, or false if no match is found
+	 */
+	private function getAssociatedElementMatchingText($text, $associatedElementId, $textWidth = 100) {
+		global $myts;
+		$associatedText = "";
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$target_element = $element_handler->get($associatedElementId);
+		$target_fid = $target_element->getVar('fid');
+		$foundAssociatedMatch = false;
+		// if user has no perm in target fid, then do not make link!
+		if ($target_allowed = security_check($target_fid)) {
+			$textLines = explode(";", $text); // have to breakup the textbox's text since it may contain multiple matches.  Note no space after semicolon spliter, but we trim the results in the foreach loop below.
+			$start = 1;
+			foreach ($textLines as $thistext) {
+				$thistext = trim($thistext);
+				if (!$start) {
+					$associatedText .= ", ";
+				}
+				if ($id_req = findMatchingIdReq($target_element, $target_fid, $thistext)) {
+					$foundAssociatedMatch = true;
+					$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
+				} else {
+					$associatedText .= $myts->htmlSpecialChars($thistext);
+				}
+				$start = 0;
+			}
+		}
+		return $foundAssociatedMatch ? $associatedText : false;
 	}
 
 }
