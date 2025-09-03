@@ -116,8 +116,9 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 
         if ($selectedLinkElementId AND $selectedElementObject) {
                 $dataToSendToTemplate['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedElementObject->getVar('id_form'), "form-2");
-        } elseif ($selectedLinkFormId) { // if usernames or fullnames is in effect, we'll have the profile form fid instead
-            $dataToSendToTemplate['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedLinkFormId, "form-2");
+				// old profile form option is not in effect, but something like this could make a comeback with the new user/group system forms to manage users and groups
+        /*} elseif ($selectedLinkFormId) { // if usernames or fullnames is in effect, we'll have the profile form fid instead
+            $dataToSendToTemplate['formlinkfilter'] = formulize_createFilterUI($ele_value[5], "formlinkfilter", $selectedLinkFormId, "form-2");*/
         }
         if (!$dataToSendToTemplate['formlinkfilter']) {
             $dataToSendToTemplate['formlinkfilter'] = "<p>The options are not linked.</p>";
