@@ -47,6 +47,14 @@ class formulizeRadioElement extends formulizeElement {
 		parent::__construct();
 	}
 
+	// returns true if the option is one of the values the user can choose from in this element
+  // returns false if the element does not have options
+	function optionIsValid($option) {
+		$ele_value = $this->getVar('ele_value');
+		$uitext = $this->getVar('ele_uitext');
+		return (isset($ele_value[$option]) OR in_array($option, $uitext)) ? true : false;
+	}
+
 }
 
 #[AllowDynamicProperties]
