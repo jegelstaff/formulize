@@ -2910,101 +2910,11 @@ function loadValue($element, $entry_id, $prevEntry) {
 
 	// based on element type, swap in the value for this element in this entry...
 	$type = $element->getVar('ele_type');
-	switch ($type)
-	{
-		case "select":
-			// NOTE:  unique delimiter used to identify LINKED select boxes, so they can be handled differently.
-			if(isset($ele_value[2]) AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
-				// if we've got a linked select box, then do everything differently
-				$ele_value[2] .= "#*=:*".$value; // append the selected entry ids to the form and handle info in the element definition
-			} else {
-
-				// put the array into another array (clearing all default values)
-				// then we modify our place holder array and then reassign
-				if ($type != "select") {
-					$temparray = $ele_value;
-				} else {
-					$temparray = $ele_value[2];
-				}
-				if (is_array($temparray)) {
-					$temparraykeys = array_keys($temparray);
-					$temparray = array_fill_keys($temparraykeys, 0); // actually remove the defaults!
-				} else {
-					$temparraykeys = array();
-				}
-
-				if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
-					$ele_value[2]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
-					if(count((array) $ele_value[2]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[2]['{SELECTEDNAMES}']); }
-					// get the entry owner groups...
-					$dataHandler = new formulizeDataHandler($element->getVar('fid'));
-					$ele_value[2]['{OWNERGROUPS}'] = $dataHandler->getEntryOwnerGroups($entry_id);
-					break;
-				}
-
-				// need to turn the prevEntry got from the DB into something the same as what is in the form specification so defaults show up right
-				// important: this is safe because $value itself is not being sent to the browser!
-				// we're comparing the output of these two lines against what is stored in the form specification, which does not have HTML escaped characters, and has extra slashes.  Assumption is that lack of HTML filtering is okay since only admins and trusted users have access to form creation.  Not good, but acceptable for now.
-
-				global $myts;
-				if(!$myts){
-					$myts =& MyTextSanitizer::getInstance();
-				}
-				$value = $myts->undoHtmlSpecialChars($value);
-				$selvalarray = explode("*=+*:", $value);
-				$numberOfSelectedValues = strstr($value, "*=+*:") ? count((array) $selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
-				$assignedSelectedValues = array();
-
-				foreach($temparraykeys as $k) {
-
-					// if there's a straight match (not a multiple selection)
-					if((string)$k === (string)$value) {
-						$temparray[$k] = 1;
-						$assignedSelectedValues[$k] = true;
-
-					// or if there's a match within a multiple selection array) -- TRUE is like ===, matches type and value
-					} elseif( is_array($selvalarray) AND in_array((string)$k, $selvalarray, TRUE) ) {
-						$temparray[$k] = 1;
-						$assignedSelectedValues[$k] = true;
-
-					// check for a match within an English translated value and assign that, otherwise set to zero
-					// assumption is that development was done first in English and then translated
-					// this safety net will not work if a system is developed first and gets saved data prior to translation in language other than English!!
-					} else {
-						foreach($selvalarray as $selvalue) {
-							if(trim(trans((string)$k, "en")) == trim(trans($selvalue,"en"))) {
-								$temparray[$k] = 1;
-								$assignedSelectedValues[$k] = true;
-								continue 2; // move on to next iteration of outer loop
-							}
-						}
-						if($temparray[$k] != 1) {
-							$temparray[$k] = 0;
-						}
-					}
-				}
-				if((!empty($value) OR $value === 0 OR $value === "0") AND count((array) $assignedSelectedValues) < $numberOfSelectedValues) { // if we have not assigned the selected value from the db to one of the options for this element, then lets add it to the array of options, and flag it as out of range.  This is to preserve out of range values in the db that are there from earlier times when the options were different, and also to preserve values that were imported without validation on purpose
-					foreach($selvalarray as $selvalue) {
-						if(!isset($assignedSelectedValues[$selvalue]) AND (!empty($selvalue) OR $selvalue === 0 OR $selvalue === "0")) {
-							$temparray[_formulize_OUTOFRANGE_DATA.$selvalue] = 1;
-						}
-					}
-				}
-				if ($type == "radio" AND $entry_id != "new" AND ($value === "" OR is_null($value)) AND array_search(1, (array) $ele_value)) { // for radio buttons, if we're looking at an entry, and we've got no value to load, but there is a default value for the radio buttons, then use that default value (it's normally impossible to unset the default value of a radio button, so we want to ensure it is used when rendering the element in these conditions)
-					$ele_value = $ele_value;
-				} elseif ($type != "select") {
-					$ele_value = $temparray;
-				} else {
-					$ele_value[2] = $temparray;
-				}
-			} // end of IF we have a linked select box
-			break;
-		default:
-			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
-				$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-				$ele_value = $customTypeHandler->loadValue($element, $value);
-			}
+	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+		$ele_value = $customTypeHandler->loadValue($element, $value);
 	}
+
 	return $ele_value;
 }
 
