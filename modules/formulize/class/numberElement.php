@@ -31,44 +31,70 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeDateElement extends formulizeElement {
+class formulizeNumberElement extends formulizeTextElement {
 
 	var $defaultValueKey;
 
 	function __construct() {
-		$this->name = "Date Selector";
+		$this->name = "Number Box";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-		$this->overrideDataType = "date"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+		$this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
+		$this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		$this->canHaveMultipleValues = false;
 		$this->hasMultipleOptions = false;
 		parent::__construct();
+		$this->defaultValueKey = ELE_VALUE_TEXT_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}
 
+	// write code to a file
+	public function setVar($key, $value, $not_gpc = false) {
+		parent::setVar($key, $value, $not_gpc);
+	}
+
+	// read code from a file
+	public function getVar($key, $format = 's') {
+		$format = $key == "ele_value" ? "f" : $format;
+		$value = parent::getVar($key, $format);
+		return $value;
+	}
 }
 
 #[AllowDynamicProperties]
-class formulizeDateElementHandler extends formulizeElementsHandler {
-
-	var $db;
-	var $clickable; // used in formatDataForList
-	var $striphtml; // used in formatDataForList
-	var $length; // used in formatDataForList
-
-	function __construct($db) {
-		$this->db =& $db;
-	}
+class formulizeNumberElementHandler extends formulizeTextElementHandler {
 
 	function create() {
-		return new formulizeDateElement();
+		return new formulizeNumberElement();
+	}
+
+	protected function getDefaultEleValue($formulizeConfig) {
+		$ele_value = array();
+		$ele_value[ELE_VALUE_TEXT_WIDTH] = $formulizeConfig['t_width'];
+		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $formulizeConfig['t_width']; // width is max for number boxes
+		$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 1;
+		$ele_value[ELE_VALUE_TEXT_DECIMALS] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+		$ele_value[ELE_VALUE_TEXT_PREFIX] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+		$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+		$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+		$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+		$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
+		return $ele_value;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
 	// when dealing with new elements, $element might be FALSE
 	function adminPrepare($element) {
+		$dataToSendToTemplate = array();
+		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
+			$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
+		} else { // new element
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$dataToSendToTemplate['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
+		}
+		return $dataToSendToTemplate;
 	}
 
 	// this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -79,15 +105,10 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	function adminSave($element, $ele_value) {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			if($ele_value[0] != _DATE_DEFAULT AND $ele_value[0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-				if(preg_replace("/[^A-Z{}]/","", $ele_value[0]) === "{TODAY}") {
-					$ele_value[0] = $ele_value[0];
-				} elseif(substr($ele_value[0], 0, 1) !='{' OR substr($ele_value[0], -1) !='}') {
-					$ele_value[0] = date("Y-m-d", strtotime($ele_value[0]));
-				}
-			} else {
-				$ele_value[0] = "";
-			}
+			// enforce certain values for number boxes
+			$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $ele_value[ELE_VALUE_TEXT_WIDTH];
+			$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 1;
+			$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
 			$element->setVar('ele_value', $ele_value);
 		}
 		return $changed;
@@ -102,11 +123,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	 */
 	function getDefaultValue($element, $entry_id = 'new') {
 		$ele_value = $element->getVar('ele_value');
-		$default = getDateElementDefault($ele_value[0], $entry_id);
-		if (false !== $default) {
-			$default = is_numeric($default) ? date("Y-m-d", $default) : $default;
-		}
-		return $default;
+		return $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE];
 	}
 
 	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -116,10 +133,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
-		if(!$value AND substr($ele_value[0],0,1) == '{' AND substr($ele_value[0],-1) == '}') {
-			$value = $ele_value[0];
-		}
-		$ele_value[0] = $value;
+		$ele_value[$this->defaultValueKey] = $ele_value[ELE_VALUE_TEXT_DECIMALS] > 0 ? floatval($value) : intval($value);
 		return $ele_value;
 	}
 
@@ -135,28 +149,19 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-		// if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-		if(!$ele_value[0] OR $ele_value[0] == _DATE_DEFAULT) {
-			$form_ele = new XoopsFormTextDateSelect($caption, $markupName, 15, "");
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+		if (!strstr(getCurrentURL(),"printview.php") AND !$isDisabled) {
+			$form_ele = new XoopsFormText(
+				$caption,
+				$markupName,
+				$ele_value[ELE_VALUE_TEXT_WIDTH],	//	box width
+				$ele_value[ELE_VALUE_TEXT_MAXCHARS],	//	max width
+				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
+				false,					// autocomplete in browser
+				'number'		// numbers only
+			);
+			$form_ele->setExtra("class='numbers-only-textbox'");
 		} else {
-			$form_ele = new XoopsFormTextDateSelect($caption, $markupName, 15, getDateElementDefault($ele_value[0], $entry_id));
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
-		} // end of check to see if the default setting is for real
-		if (!$isDisabled) {
-			$limit_past = (isset($ele_value["date_past_days"]) and $ele_value["date_past_days"] != "");
-			$limit_future = (isset($ele_value["date_future_days"]) and $ele_value["date_future_days"] != "");
-			if ($limit_past or $limit_future) {
-				if($limit_past AND $pastSeedDate = getDateElementDefault($ele_value["date_past_days"], $entry_id)) {
-					$form_ele->setExtra(" min='".date('Y-m-d', $pastSeedDate)."' ");
-				}
-				if($limit_future AND $futureSeedDate = getDateElementDefault($ele_value["date_future_days"], $entry_id)) {
-					$form_ele->setExtra(" max='".date('Y-m-d', $futureSeedDate)."' ");
-				}
-				$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$markupName');\" onclick=\"javascript:check_date_limits('$markupName');\" onblur=\"javascript:check_date_limits('$markupName');\" jquerytag=\"$markupName\" ");
-			} else {
-				$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
-			}
+			$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle')), $markupName);
 		}
 		return $form_ele;
 	}
@@ -165,30 +170,17 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// 'myform' is a name enforced by convention that refers to the form where this element resides
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
-		$validationCode = array();
-		// added validation code - sept 5 2007 - jwe
-		$eltname = $markupName;
-		$eltcaption = $caption;
-		$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-		$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-		// parseInt() is used to determine if the element value contains a number
-		// Date.parse() would be better, except that it will fail for dd-mm-YYYY format, ie: 22-11-2013
-		$validationCode[] = "\nif (isNaN(parseInt(myform.{$eltname}.value))) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}.focus();\n return false;\n }\n";
-		return $validationCode;
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
 	// You can return {WRITEASNULL} to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-		$timestamp = strtotime($value);
-		if ($value != _DATE_DEFAULT AND $value != "" AND $timestamp !== false) { // $timestamp !== false should catch everything by itself? under some circumstance not yet figured out, the other checks could be useful?
-			$value = date("Y-m-d", $timestamp);
-		} else {
-			$value = "{WRITEASNULL}"; // forget about this date element and go on to the next element in the form
-		}
+		$value = preg_replace ('/[^0-9.-]+/', '', trim($value));
+		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
 		return $value;
 	}
 
@@ -226,7 +218,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false;
 		$this->striphtml = false;
-		$this->length = 100;
+		$this->length = $textWidth;
 		return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 

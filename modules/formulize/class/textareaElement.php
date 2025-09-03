@@ -44,7 +44,7 @@ class formulizeTextareaElement extends formulizeTextElement {
 	function __construct() {
 		parent::__construct();
 		// set different properties last when extending other elements
-		$this->name = "Multi-line textbox";
+		$this->name = "Multi-line Textbox";
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		$this->defaultValueKey = ELE_VALUE_TEXTAREA_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}

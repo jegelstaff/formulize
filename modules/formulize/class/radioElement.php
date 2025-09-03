@@ -36,14 +36,14 @@ class formulizeRadioElement extends formulizeElement {
 	var $defaultValueKey;
 
 	function __construct() {
-		$this->name = "Radio buttons";
+		$this->name = "Radio Buttons";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
 		$this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		$this->canHaveMultipleValues = false;
-		$this->hasMultipleOptions = false;
+		$this->hasMultipleOptions = true;
 		parent::__construct();
 	}
 
