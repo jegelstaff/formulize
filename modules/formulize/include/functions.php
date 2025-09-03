@@ -4273,17 +4273,20 @@ function synchSubformBlankDefaults() {
 }
 
 
-// internal function that retrieves an element object if necessary
+/**
+ * internal function that retrieves an element object if necessary
+ * @param mixed $element The element to retrieve - can be an element ID, handle, or object itself
+ * @return formulizeElement|false The element object or false if not found
+ */
 function _getElementObject($element) {
     if (is_object($element)) {
-        // the silly historical name of the element class
         if (get_class($element) != "formulizeElement" AND is_subclass_of($element, 'formulizeElement') == false) {
             return false;
         } else {
             return $element;
         }
     } else {
-        $element_handler =& xoops_getmodulehandler('elements', 'formulize');
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
         $element = $element_handler->get($element);
         if (!is_object($element)) {
             return false;
@@ -8054,49 +8057,12 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		// figure out the default value for this element
     $defaultTextToWrite = "";
 		$ele_type = $thisDefaultEle->getVar('ele_type');
-    switch($ele_type) {
-      case "select":
-        $thisDefaultEleValue = $thisDefaultEle->getVar('ele_value');
-        if($thisDefaultEle->isLinked AND !$thisDefaultEleValue['snapshot'])  {
-            // default will be a foreign key or keys
-            if(is_array($thisDefaultEleValue[13]) AND $thisDefaultEleValue[13][0] != "") {
-                $defaultTextToWrite = $thisDefaultEleValue[1] ? $thisDefaultEleValue[13] : $thisDefaultEleValue[13][0]; // if not multiple selection, then use first (and only?) specified default value
-            } else {
-                $defaultTextToWrite = $thisDefaultEleValue[13] ? $thisDefaultEleValue[13] : null;
-            }
-            $defaultTextToWrite = (is_array($defaultTextToWrite) AND count($defaultTextToWrite) > 0) ? ','.implode(',',$defaultTextToWrite).',' : $defaultTextToWrite;
-        } elseif($thisDefaultEle->isLinked) {
-            // default is the literal value from the source, optionally with separator if multi
-            $linkMeta = explode('#*=:*', $thisDefaultEleValue[2]);
-            $linkFormId = $linkMeta[0];
-            $linkElementId = $linkMeta[1];
-            $dataHandler = new formulizeDataHandler($linkFormId);
-            $thisDefaultEleValue[13] = is_array($thisDefaultEleValue[13]) ? $thisDefaultEleValue[13] : array($thisDefaultEleValue[13]);
-            $defaultTextToWrite = "";
-            foreach($thisDefaultEleValue[13] as $thisDefaultValue) {
-                $defaultTextToWrite .= strlen($defaultTextToWrite) > 0 ? '*=+*:' : '';
-                $thisDefaultValue = $dataHandler->getElementValueInEntry($thisDefaultValue,$linkElementId);
-                $defaultTextToWrite .= $thisDefaultValue;
-            }
-        } else {
-            // default is the literal text from the options list, optionally with separator if multi
-            $defaultTextToWrite = "";
-            foreach($thisDefaultEleValue[2] as $thisOption=>$isDefault) {
-                if($isDefault) {
-                    $defaultTextToWrite .= strlen($defaultTextToWrite) > 0 ? '*=+*:' : '';
-                    $defaultTextToWrite .= $thisOption;
-                }
-            }
-        }
-				break;
-			default:
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					if(method_exists($elementTypeHandler, 'getDefaultValue')) {
-						$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
-					}
-				}
-    }
+		if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+			$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+			if(method_exists($elementTypeHandler, 'getDefaultValue')) {
+				$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
+			}
+		}
 		// if there's no value, move on
     if($defaultTextToWrite === ""
 			OR $defaultTextToWrite === false
