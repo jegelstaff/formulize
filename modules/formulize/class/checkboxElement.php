@@ -44,10 +44,12 @@ class formulizeCheckboxElement extends formulizeElement {
         $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         $this->canHaveMultipleValues = true;
         $this->hasMultipleOptions = true;
+				$this->isLinked = false; // set to true if this element can have linked values
         parent::__construct();
     }
 
     // returns true if the option is one of the values the user can choose from in this element
+		// does not support linked values!!
     function optionIsValid($option) {
         $ele_value = $this->getVar('ele_value');
         $option = is_array($option) ? $option : array($option);
