@@ -37,7 +37,7 @@ class formulizeYnElement extends formulizeRadioElement {
 
 	function __construct() {
 		parent::__construct();
-		$this->name = "Yes/No radio buttons";
+		$this->name = "Yes/No Radio Buttons";
 		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = "tinyint"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 	}
