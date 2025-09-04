@@ -137,25 +137,6 @@ if($ele_type == "subform") {
   list($processedValues['elements']['ele_value'][7], $_POST['reload_option_page']) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
 }
 
-// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
-// SHOULD BE MOVED INSIDE CUSTOM ELEMENT CLASS FILES?
-if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
-  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-  $data_handler = new formulizeDataHandler($fid);
-	$newValues = array();
-  switch($ele_type) {
-    case "select":
-      $newValues = $processedValues['elements']['ele_value'][2];
-      break;
-  }
-	if(!empty($newValues)) {
-  	if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
-    	print "Error updating user submitted values for the options in element $ele_id";
-  	}
-	}
-}
-
-
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";
 // call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
