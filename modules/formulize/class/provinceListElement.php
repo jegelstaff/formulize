@@ -197,8 +197,8 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle="", $entry_id="") {
-		$provinceList = formulizeProvinceListElementHandler::getProvinceList();
-        return $provinceList[$value];
+			$provinceList = formulizeProvinceListElementHandler::getProvinceList();
+			return $provinceList[$value];
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -208,26 +208,30 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     // otherwise, if we need to do a conversion on literal text, then the values returned from this method should always correspond to a complete value in the database, that could be searched for with = in a SQL statement
-    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		$provinceList = $this->getProvinceList();
-		if($partialMatch) {
-	    	$foundKeys = array();
-		    foreach($provinceList as $key=>$thisProvince) {
-			if(strstr(strtolower($thisProvince), strtolower($value))) {
-			    $foundKeys[] = $key;
+    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+			$provinceList = $this->getProvinceList();
+			if($partialMatch) {
+				$foundKeys = array();
+				foreach($provinceList as $key=>$thisProvince) {
+					if(strstr(strtolower($thisProvince), strtolower($value))) {
+							$foundKeys[] = $key;
+					}
+				}
+				return empty($foundKeys) ? false : $foundKeys;
+			} else {
+				return array_search($value, $provinceList);
 			}
-		    }
-	    	return empty($foundKeys) ? false : $foundKeys;
-		} else {
-		    return array_search($value, $provinceList);
-		}
     }
 
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        return parent::formatDataForList($value);
+			$this->clickable = false;
+      $this->striphtml = false;
+      $this->length = 0;
+      return parent::formatDataForList($value);
     }
 
     static function getProvinceList(){
