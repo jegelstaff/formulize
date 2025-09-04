@@ -367,7 +367,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				if (!$start) {
 					$associatedText .= ", ";
 				}
-				if ($id_req = findMatchingIdReq($target_element, $target_fid, $thistext)) {
+				if ($id_req = findMatchingIdReq($target_element, $target_fid, convertStringToUseSpecialCharsToMatchDB($thistext))) {
 					$foundAssociatedMatch = true;
 					$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
 				} else {
