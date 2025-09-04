@@ -1852,273 +1852,21 @@ function trans($string, $lang = null) {
 function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=null) {
 
     if(!$element = _getElementObject($element)) {
-		return false;
+			return false;
     }
 
     $cacheKey = serialize(func_get_args());
     static $cachedPreppedValues = array();
     if(isset($cachedPreppedValues[$cacheKey])) {
-        return $cachedPreppedValues[$cacheKey];
-    }
-
-
-    global $myts;
-    if (!$myts) {
-        $myts =& MyTextSanitizer::getInstance();
+      return $cachedPreppedValues[$cacheKey];
     }
 
     $ele_type = $element->getVar('ele_type');
-    $ele_value = $element->getVar('ele_value');
-    $ele_id = $element->getVar('ele_id');
-    switch ($ele_type) {
-
-        case 'areamodif':
-        $value = $myts->stripSlashesGPC($ele);
-        break;
-
-        case 'select':
-        // handle the new possible default value -- sept 7 2007
-        if ($ele_value[0] == 1 AND $ele == "none") { // none is the flag for the "Choose an option" default value
-            $value = "{WRITEASNULL}"; // this flag is used to terminate processing of this value
-            break;
-        }
-
-        $checkForNewValues = !is_array($ele) ? array($ele) : $ele;
-        $newWrittenValues = array();
-        foreach($checkForNewValues as $candidateNewValue) {
-            if (!$ele_value['snapshot'] AND is_string($candidateNewValue) AND substr($candidateNewValue, 0, 9) == "newvalue:") {
-            // need to add a new entry to the underlying source form if this is a link
-            // need to add an option to the option list for the element list, if this is not a link.
-            // check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
-                $newValue = substr($candidateNewValue, 9);
-                if ($element->isLinked) {
-                    $boxproperties = explode("#*=:*", $ele_value[2]);
-                    $sourceHandle = $boxproperties[1];
-                    $needToWriteEntry = false;
-                    $dataArrayToWrite[$sourceHandle] = $newValue;
-                    if($newValue !== '') {
-                        $needToWriteEntry = true;
-                    }
-                    $sourceFormObject = _getElementObject($sourceHandle);
-                    // get other seed values passed from the form if we're making a new entry
-                    if($otherMappings = $ele_value['linkedSourceMappings']) {
-                        foreach($otherMappings as $thisMapping) {
-                            $otherElementToWrite = _getElementObject($thisMapping['sourceForm']);
-                            $valueToPrep = '';
-                            if(is_numeric($thisMapping['thisForm'])) {
-                                if(!$mappingThisFormElement = _getElementObject($thisMapping['thisForm'])) {
-                                    print 'Error: could not determine the element for mapping a new value. '.strip_tags(htmlspecialchars($thisMapping['thisForm'],ENT_QUOTES)).' is not a valid element reference. Please update the mapping settings in element '.$ele_id;
-                                }
-                                if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')])) {
-                                    $newValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')];
-                                } else {
-                            $valueToPrep = isset($_POST['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]) ? $_POST['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']] : $_GET['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]; // GET is used in asynch conditional element evaluation...note this means mapped fields ALSO MUST HAVE A DISPLAY CONDITION!
-                                    if($valueToPrep OR $valueToPrep === 0) {
-                            $newValue = prepDataForWrite($otherElementToWrite, $valueToPrep, $entry_id);
-                                    } else {
-                                        $thisElementDataHandler = new formulizeDataHandler($element->getVar('id_form'));
-                                        $newValue = $thisElementDataHandler->getElementValueInEntry($entry_id, $thisMapping['thisForm']); // lookup the value if we couldn't get it out of POST
-                                    }
-                                }
-                            } else {
-                                $newValue = $thisMapping['thisForm']; // literal mapping value instead of an element reference
-                            }
-														$otherElementEleValue = $otherElementToWrite->getVar('ele_value');
-                            if($otherElementToWrite->isLinked AND !$otherElementEleValue['snapshot'] AND !$valueToPrep AND $valueToPrep !== 0) {
-                                // if the field we're mapping to is linked, and we didn't find a value to prep in POST or GET, then we need to convert the literal value to the correct foreign key
-                                // UNLESS the two fields are both linked and pointing to the same source, then we can use the value we've got right now, which will be the foreign key
-                                // OR if the element is two links from the same source at the other, then we need 'newvalue' to be not the value we have deduced at this point, but the value in the DB in that intermediate form, so we write a foreign key to the correct source to the other element
-                                $thisFormMappingElementLinkProperties = false;
-                                $linkProperties = false;
-                                $linkToLinkProperties = false;
-                                $thisFormMappingElement = _getElementObject($thisMapping['thisForm']);
-                                if($thisFormMappingElement->isLinked) {
-                                    $thisFormMappingElementEleValue = $thisFormMappingElement->getVar('ele_value');
-                                    $thisFormMappingElementLinkProperties = explode("#*=:*", $thisFormMappingElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
-                                    // and now go figure out if there's a second level link and we'll use that foreign key instead if the other element links directly there
-                                    if($linkToLinkElement = _getElementObject($thisFormMappingElementLinkProperties[1])) {
-                                        if($linkToLinkElement->isLinked) {
-                                            $linkToLinkEleValue = $linkToLinkElement->getVar('ele_value');
-                                            $linkToLinkProperties = explode("#*=:*", $linkToLinkEleValue[2]);
-                                        }
-                                    }
-                                }
-                                $linkProperties = explode("#*=:*", $otherElementEleValue[2]); // returns array, first key is form id we're linked to, second key is element we're linked to
-                                // check what we're supposed to do...use the value we have, lookup the linktolink value, or lookup the value in the source of the other form, based on the value we have
-                                if($element->isLinked AND $linkProperties[0] == $thisFormMappingElementLinkProperties[0]) {
-                                    // two fields are pointing to the same source, so use the value we have...redundant but captured here for readability
-                                    $newValue = $newValue;
-                                } elseif($element->isLinked AND $linkToLinkElement AND $linkToLinkElement->isLinked AND $linkProperties[0] == $linkToLinkProperties[0]) {
-                                    // the starting field is linked to an element, that is linked to the same source as the other element, so lookup the value of newvalue in that second form....and we should somehow make this all recursive, right???
-                                    $linkToLinkDataHandler = new formulizeDataHandler($linkToLinkProperties[0]);
-                                    $newValue = $linkToLinkDataHandler->findFirstEntryWithValue($linkToLinkProperties[1], $newValue);
-                                } else {
-                                    $linkDataHandler = new formulizeDataHandler($linkProperties[0]);
-                                    $newValue = $linkDataHandler->findFirstEntryWithValue($linkProperties[1], $newValue);
-                                }
-                            }
-                            $dataArrayToWrite[$otherElementToWrite->getVar('ele_handle')] = $newValue;
-                            if($newValue !== '') {
-                                $needToWriteEntry = true;
-                            }
-                        }
-                    }
-                    if($needToWriteEntry) {
-                        // check if the new value plus all mappings, is actually new, and if so, write it. If we find something that matches, don't write it, use that entry id instead.
-                        $dataHandler = new formulizeDataHandler($boxproperties[0]); // 0 key is the source fid
-                        if(!$newEntryId = $dataHandler->findFirstEntryWithAllValues($dataArrayToWrite)) { // check if this value has been written already, if so, use that ID
-													if($newEntryId = formulize_writeEntry($dataArrayToWrite)) {
-														formulize_updateDerivedValues($newEntryId, $sourceFormObject->getVar('id_form'));
-													}
-                        }
-                        $newWrittenValues[] = $newEntryId;
-                    }
-                } else {
-                    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                    if(!is_array($ele_value[2]) OR !isset($ele_value[2][$newValue])) {
-                        $ele_value[2][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
-                        $element->setVar('ele_value', $ele_value);
-                        $element_handler->insert($element);
-                    }
-                    $allValues = array_keys($ele_value[2]);
-                    $selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
-                    $selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
-                    $newWrittenValues[] = $selectedKey;
-                }
-                // remove the candidate value from the original $ele so we don't have a duplicate when trying to sort it out later
-                if(is_array($ele)) {
-                    unset($ele[array_search($candidateNewValue,$ele)]);
-                } else {
-                    $ele = '';
-                }
-            }
-        }
-        // need to update $ele with any newly written values, so they can be processed properly below
-        foreach($newWrittenValues as $thisNewValue) {
-            if(is_array($ele)) {
-                $ele[] = $thisNewValue;
-            } else {
-                if(count((array) $newWrittenValues)>1) {
-                    print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$element->getVar('ele_caption')."'.";
-                }
-                $ele = $thisNewValue;
-            }
-        }
-
-
-        // section to handle linked select boxes differently from others
-        // first, snapshots just take the literal value passed, and that is that
-        if($ele_value['snapshot']) {
-            $valuesToWrite = is_array($ele) ? $ele : array($ele);
-            foreach($valuesToWrite as $i=>$thisValueToWrite) {
-                if(substr($thisValueToWrite, 0, 9)=='newvalue:') {
-                    $valuesToWrite[$i] = substr($thisValueToWrite, 9);
-                }
-            }
-            $value = implode("*=+*:",$valuesToWrite);
-            $value = strstr($value, "*=+*:") ? "*=+*:".$value : $value; // stick the multiple value indicator on the beginning if there are multiple values. Otherwise, take the value as is.
-        // if we've got a formlink, then handle it here
-        } elseif (!$ele_value['snapshot'] AND is_string($ele_value[2]) and strstr($ele_value[2], "#*=:*")) {
-            if (is_array($ele)) {
-                $startWhatWasSelected = true;
-                foreach ($ele as $whatwasselected) {
-                    if (!is_numeric($whatwasselected)) {
-                        continue;
-                    }
-                    if ($startWhatWasSelected) {
-                        $value = ",";
-                        $startWhatWasSelected = false;
-                    }
-                    $value .= $whatwasselected.",";
-                }
-            } elseif (is_numeric($ele)) {
-                $value =$ele;
-            } else {
-                $value = "";
-            }
-            break;
-        } else {
-            $value = '';
-            // The following code block is a replacement for the previous method for reading a select box which didn't work reliably -- jwe 7/26/04
-            if(!is_array($ele_value[2])) {
-                $ele_value[2] = array();
-                error_log('Formulize error: attempted to save data to selectbox that has no options (element id '.$ele_id.'). In prepDataForWrite function (modules/formulize/include/functions.php)');
-            }
-            $temparraykeys = array_keys($ele_value[2]);
-            // ADDED June 18 2005 to handle pulling in usernames for the user's group(s) -- updated for real live use September 6 2006
-            if ($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") {
-                if (is_array($ele)) {
-                    $value = "";
-                    foreach ($ele as $auid) {
-                        $value .= "*=+*:" . $auid;
-                    }
-                } else {
-                    $value = $ele;
-                }
-                break;
-            }
-
-            // THIS REALLY OLD CODE IS HARD TO READ. HERE'S A GLOSS
-            // ele_value[2] is all the options that make up this element.  The values passed back from the form will be numbers indicating which value was selected.  First value is 0 for a multi-selection box, and 1 for a single selection box.
-            // Subsequent values are one number higher and so on all the way to the end.  Five values in a multiple selection box, the numbers are 0, 1, 2, 3, 4.
-            // masterentlistjwe and entrycounterjwe will be the same!!  There's these array_keys calls here, which result basically in a list of numbers being created, keysPassedBack, and that list is going to start at 0 and go up to whatever the last value is.  It always starts at zero, even if the list is a single selection list.  entrycounterjwe will also always start at zero.
-            // After that, we basically just loop through all the possible places, 0 through n, that the user might have selected, and we check if they did.
-            // The check lines are if ($whattheuserselected == $masterentlistjwe) and $ele == ($masterentlistjwe+1). note the +1 to make this work for single selection boxes where the numbers start at 1 instead of 0.
-            // This is all further complicated by the fact that we're grabbing values from $entriesPassedBack, which is just the list of options in the form, so that we can populate the ultimate $value that is going to be written to the database.
-            $entriesPassedBack = array_keys($ele_value[2]);
-            $keysPassedBack = array_keys($entriesPassedBack);
-            $entrycounterjwe = 0;
-            $numberOfSelectionsFound = 0;
-            foreach ($keysPassedBack as $masterentlistjwe) {
-                if (is_array($ele)) {
-                    if (in_array($masterentlistjwe, $ele)) {
-                        $entriesPassedBack[$entrycounterjwe] = $myts->htmlSpecialChars($entriesPassedBack[$entrycounterjwe]);
-                        $value = $value . "*=+*:" . $entriesPassedBack[$entrycounterjwe];
-                        $numberOfSelectionsFound++;
-                    }
-                    $entrycounterjwe++;
-                } else {
-                    // plus 1 because single entry select boxes start their option lists at 1.
-                    if ($ele == ($masterentlistjwe+1)) {
-                        $entriesPassedBack[$entrycounterjwe] = $myts->htmlSpecialChars($entriesPassedBack[$entrycounterjwe]);
-                        $value = $entriesPassedBack[$entrycounterjwe];
-                    }
-                    $entrycounterjwe++;
-                }
-            }
-            // handle out of range values that are in the DB, added March 2 2008 by jwe
-            if (is_array($ele)) {
-                // if a value was received that was out of range. in this case we are assuming that if there are more values passed back than selections found in the valid options for the element, then there are out-of-range values we want to preserve
-                while ($numberOfSelectionsFound < count((array) $ele) AND $entrycounterjwe < 1000) {
-                    // keep looking for more values. get them out of the hiddenOutOfRange info
-                    if (in_array($entrycounterjwe, $ele)) {
-                        $value = $value.'*=+*:'.$myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$entrycounterjwe]);
-                        $numberOfSelectionsFound++;
-                    }
-                    $entrycounterjwe++;
-                }
-            } else {
-                // if a value was received that was out of range. added by jwe March 2 2008 (note that unlike with radio buttons, we need to check only for greater than, due to the +1 (starting at 1) that happens with single option selectboxes
-                if ($ele > $entrycounterjwe) {
-                    // get the out of range value from the hidden values that were passed back
-                    $value = $myts->htmlSpecialChars($_POST['formulize_hoorv_'.$ele_id.'_'.$ele]);
-                }
-            }
-        } // end of if that checks for a linked select box.
-        break;
-
-        case 'sep':
-        $value = $myts->stripSlashesGPC($ele);
-        break;
-
-        default:
-        if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-            $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-            $value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id, $subformBlankCounter);
-        }
-    }
+		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+		$value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id, $subformBlankCounter);
 
     $cachedPreppedValues[$cacheKey] = $value;
+
     return $value;
 }
 
@@ -2140,13 +1888,20 @@ function getLinkedOptionsSourceForm($elementIdOrObject) {
 
 /**
  * This function takes a literal text value (usually typed in by a user) and converts it to a value that is valid for the database, either for storing later or for using in a query to compare with DB values.
+ * Serves two purposes at once, could/should be split up.
+ * 1. takes curly bracket references and figures them out
+ * 2. takes text supplied by user and compares it to valid options for elements and returns the actual DB value to use in a search, if different
+ * There is usually no overlap in these use cases, but there are exotic situations where a user might supply a { } reference?
+ * It's possible there is no overlap at all, but extensive testing would be required to rule it out.
+ * If partialMatch is true, code that called this MUST be prepared for the possibility of an array being returned!!
  * @param int|string|object elementObjectOrIdentifier This is either an element ID number, element handle, or element object of the element for which the text value is being prepared
  * @param string value The text value that is being prepared
  * @param int curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
  * @param int userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
- * @return string The prepared value compatible with data in the databse, or the value passed in if the elementObjectOrIdentifier is not valid.
+ * @param bool partialMatch Optional. If true, then the value will be checked in the method call for multiple matches and an array could be returned.
+ * @return string|array|bool The prepared value compatible with data in the databse, or the false if the elementObjectOrIdentifier is not valid, or the search term is deemed invalid by the method call (matches nothing in the DB). Can be an array of values if partialMatch is true.
  */
-function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null) {
+function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null, $partialMatch = false) {
 
 		if(!$elementObject = _getElementObject($elementObjectOrIdentifier)) {
 			return false;
@@ -2160,17 +1915,19 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 
     global $xoopsUser;
     if ($userComparisonId === "") {
-        $userComparisonId = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+      $userComparisonId = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     }
     $ele_type = $elementObject->getVar('ele_type');
-    $ele_value = $elementObject->getVar('ele_value');
 
-    $value = parseUserAndToday($value, $elementObject);
+		$value = parseUserAndToday($value, $elementObject);
 
-    // convert { } terms to their actual values
-    $elementHandler = xoops_getmodulehandler('elements', 'formulize');
-
-    if(substr($value,0,1) == "{" AND substr($value,-1)=="}" AND $curlyBracketEntryId) {
+		// convert { } terms to their actual values
+		// THIS IS AN INDEPENDENT OPERATION AND COULD/SHOULD BE MOVED TO ANOTHER FUNCTION?
+		// BUT PARSEUSERANDTODAY DOES RUN FIRST, SO A DEPENDANCY? UGH.
+		// curlyBracketEntryId having a value, plus the $value having { }, will cause the method call below to be skipped
+		// since this block returns something in all cases once it is begun
+    if($curlyBracketEntryId AND substr($value,0,1) == "{" AND substr($value,-1)=="}") {
+			$elementHandler = xoops_getmodulehandler('elements', 'formulize');
 			$sourceHandle = substr($value, 1, -1); // remove brackets, gives us the handle
 			if($sourceElementObject = $elementHandler->get($sourceHandle)) {
 				if($curlyBracketEntryId != 'new') {
@@ -2192,38 +1949,37 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 			}
     }
 
-    switch ($ele_type) {
+		// handle generic checks for matches with linked elements, or in UI text for non linked elements
+		$ele_value = $elementObject->getVar('ele_value');
+		if($value != "{BLANK}" AND $elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1)) {
+			list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
+			// get the entry id of the value in the linked source of the elementObject selectbox
+			// does not handle links to links!
+			$dataHandler = new formulizeDataHandler($sourceFidOfElement);
+			$operator = $partialMatch ? 'LIKE' : '=';
+			$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, $value, operator: $operator);
+		} elseif($value != "{BLANK}") {
+			$value = checkUITextForValue($value, $elementObject, $partialMatch);
+		}
 
-        case "select":
-					// incomplete?? what about multiselect linked elements??
-					if($elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1)) {
-						list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
-						// get the entry id of the value in the linked source of the elementObject selectbox
-						$dataHandler = new formulizeDataHandler($sourceFidOfElement);
-						$value = $dataHandler->findFirstEntryWithValue($sourceHandleOfElement, $value);
-					} else {
-						// otherwise, if the element is not linked, or the element and the comparison value are both linked to the same source, use the $value as is
-						// unless it's a multi selection element
-						if($ele_value[1] AND $value != "{BLANK}") {
-							$value = "*=+*:".$value;
-						}
-					}
-					break;
+		// if the generic checks above returned an array, we'll stick with that
+		// otherwise, we go through the method for the element since it may be something more exotic
+		if(!is_array($value)) {
+			$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+			// value can be an array if partial match is on!!
+			$value = $customTypeHandler->prepareLiteralTextForDB($value, $elementObject, $partialMatch);
+		}
 
-      	default:
-					if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-							$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-							$value = $customTypeHandler->prepareLiteralTextForDB($value, $elementObject);
-					}
-    }
-
-    if ($value == "{USER}") {
-        if ($curlyBracketEntryId != "new") {
-            // use the defined value for USER if this is an existing entry, and one was passed in (if none was passed in, this is set to match the current user at the top of this function.
-            $value = $userComparisonId;
-        } else {
-            $value = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-        }
+		// redunandant additional check? might happen in some cases if custom type handler returns {USER} ??
+		// but most likely it would resolve internally to the $xoopsUser
+		// Also, parseUserAndToday would likely have resolved the user reference already!
+    if (is_string($value) AND $value == "{USER}") {
+			if ($curlyBracketEntryId != "new") {
+				// use the defined value for USER if this is an existing entry, and one was passed in (if none was passed in, this is set to match the current user at the top of this function.
+				$value = $userComparisonId;
+			} else {
+				$value = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+			}
     }
     $cachedLiteralTexts[$cacheKey] = $value;
     return $value;
@@ -2500,137 +2256,36 @@ function findMatchingIdReq($element, $fid, $value) {
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
 // $handle is the data handle for the element
-function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted, $fid) {
+function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 
-    if(!$textWidth) {
-        $textWidth = 35;
-    }
-
-    // if the value has HTML formatting, leave it alone
-    if(strlen($matchtext) > strlen(strip_tags($matchtext))) {
-        return $matchtext;
-    }
-
-    formulize_benchmark("start of formatlinks");
-    global $xoopsDB, $myts;
-    static $cachedValues = array();
-    static $cachedTypes = array();
-    $matchtext = $myts->undoHtmlSpecialChars($matchtext);
-    if (isMetaDataField($handle)) {
-        return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
-    }
-    if (!isset($cachedValues[$handle])) {
-        $elementMetaData = formulize_getElementMetaData($handle, true);
-        $ele_value = unserialize($elementMetaData['ele_value']);
-        $ele_type = $elementMetaData['ele_type'];
-        if (!$ele_value) {
-            return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
-        }
-        if (!isset($ele_value[4])) {
-            $ele_value[4] = 0;
-        }
-        if (!isset($ele_value[3])) {
-            $ele_value[3] = 0;
-        }
-        $cachedValues[$handle] = $ele_value;
-        $cachedTypes[$handle] = $ele_type;
-    } else {
-        $ele_value = $cachedValues[$handle];
-        $ele_type = $cachedTypes[$handle];
-    }
-    formulize_benchmark("got element info");
-    if($ele_type=='select' AND is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*") AND $ele_value[7] == 1) {
-        // dealing with a linked selectbox
-        $boxproperties = explode("#*=:*", $ele_value[2]);
-        // NOTE:
-        // boxproperties[0] is form_id
-        // [1] is handle of linked field
-        $target_fid = $boxproperties[0];
-        // if user has no perm in target fid, then do not make link!
-        if (!$target_allowed = security_check($target_fid)) {
-            return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
-        }
-        static $cachedQueryResults = array();
-				static $multiValueCounter = array();
-				if(!isset($multiValueCounter[$entryBeingFormatted])) {
-					$multiValueCounter[$entryBeingFormatted] = 0;
-				} else {
-					$multiValueCounter[$entryBeingFormatted]++;
-				}
-        if (isset($cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle])) {
-            $id_req = $cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle];
-        } else {
-            // get the targetEntry by checking in the entry we're processing, for the actual value recorded in the DB for the entry id we're pointing to
-            if($ele_value['snapshot']) {
-							// lookup the first item that matches the saved text, in the source form... only get the first value when there are multiple, as per the logic below for non-snapshotted elements, but we should probably smartly get them all and build links properly in multiselect cases
-							$id_req = findMatchingIdReq($boxproperties[1], $boxproperties[0], $matchtext);
-							$cachedQueryResults[$boxproperties[0]][$boxproperties[1]][$entryBeingFormatted][$handle] = $id_req;
-            } else {
-							$elementHandle = $handle;
-							if (is_array($elementHandle)) {
-									$elementHandle = $elementHandle[0];
-							}
-							$element_handler = xoops_getmodulehandler('elements', 'formulize');
-							$currentElementObject = $element_handler->get($elementHandle);
-							$currentFormId = $currentElementObject->getVar('id_form');
-							$data_handler = new formulizeDataHandler($currentFormId);
-							$id_req_list = explode(",", trim($data_handler->getElementValueInEntry($entryBeingFormatted, $elementHandle), ","));
-							$id_req_list = array_values(array_filter($id_req_list, fn($item) => ($item !== 0 AND $item !== "0")));
-							$id_req = $id_req_list[$multiValueCounter[$entryBeingFormatted]];
-            }
-
-        }
-				$clickableText = printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
-				return prepareLinkToEntry($clickableText, $id_req, $target_fid, $fid);
-    } elseif ($ele_type =='select' AND (isset($ele_value[2]['{USERNAMES}']) OR isset($ele_value[2]['{FULLNAMES}'])) AND $ele_value[7] == 1) {
-        $nametype = isset($ele_value[2]['{USERNAMES}']) ? "uname" : "name";
-        static $cachedUidResults = array();
-        if (isset($cachedUidResults[$matchtext])) {
-            $uids = $cachedUidResults[$matchtext];
-        } else {
-            $uids = q("SELECT uid FROM " . $xoopsDB->prefix("users") . " WHERE $nametype = '" . formulize_db_escape($matchtext) . "' ");
-            $cachedUidResults[$matchtext] = $uids;
-        }
-        if (count((array) $uids) == 1) {
-            return "<a href='" . XOOPS_URL . "/userinfo.php?uid=" . $uids[0]['uid'] . "' target=_blank>" . printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth) . "</a>";
-        } else {
-            return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
-        }
-    } elseif ($ele_type == 'derived') {
-        return formulize_text_to_hyperlink($matchtext, $textWidth); // allow HTML codes in derived values
-    } elseif($ele_type == 'radio') {
-        return trans($matchtext);
-    } else { // regular element
-        formulize_benchmark("done formatting, about to print");
-        return _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted);
-    }
-}
-
-function prepareLinkToEntry($clickableText, $id_req, $target_fid, $fid) {
-	// if this goes to the same form as the one we're displaying, use viewEntryLink to make the link so the user keeps their place -- it's equivalent to drilling into an entry in the list
-	if($id_req AND $fid == $target_fid) {
-		return viewEntryLink($clickableText,$id_req);
-	} elseif ($id_req) { // otherwise, make a link to a new window/tab
-		return "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . $clickableText . "</a>";
-	} else { // no id_req (entry) found
-		return $clickableText;
+	if(!$textWidth) {
+		$textWidth = 35;
 	}
+
+	// if the value has HTML formatting, leave it alone
+	if(strlen($matchtext) > strlen(strip_tags($matchtext))) {
+		return $matchtext;
+	}
+
+	formulize_benchmark("start of formatlinks");
+	global $myts;
+	$matchtext = $myts->undoHtmlSpecialChars($matchtext);
+	if (isMetaDataField($handle)) {
+		return printSmart(trans($myts->htmlSpecialChars($matchtext)), $textWidth);
+	}
+	$elementMetaData = formulize_getElementMetaData($handle, true);
+	$ele_type = $elementMetaData['ele_type'];
+	// DOES EVERYTHING THAT SHOWS UP IN LISTS HAVE A CLASS FILE??
+	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+    $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+		$matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted, $textWidth);
+		return $matchtext;
+  } else {
+    return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
+  }
 }
 
-// this function simply handles the operations for formatLinks when a plain element has been identified (not a linked selectbox, associated textbox, etc, etc)
-function _formatLinksRegularElement($matchtext, $textWidth, $ele_type, $handle, $entryBeingFormatted) {
-    if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-        $elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-        $matchtext = $elementTypeHandler->formatDataForList($matchtext, $handle, $entryBeingFormatted, $textWidth);
-        return $matchtext;
-    } else {
-        global $myts;
-        return formulize_text_to_hyperlink($myts->htmlSpecialChars($matchtext), $textWidth);
-    }
-}
-
-
-function formulize_text_to_hyperlink($text, $textWidth) {
+function formulize_text_to_hyperlink($text, $textWidth=0) {
     global $myts;
     $text = $myts->makeClickable(printSmart(trans($text), $textWidth));
     return str_replace("<a ", "<a target='_blank' ", $text);
@@ -6382,22 +6037,22 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     static $cachedElementIds = array();
     static $cached_object_type = array();
     if (!isset($cachedFormIds[$handle])) {
-        if ($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email" OR $handle == "owner_groups") {
-            $cachedFormIds[$handle] = $fid;
-            $cachedElementIds[$handle] = $handle;
-            $cached_object_type[$handle] = "email";
-            if ($handle == "mod_datetime" OR $handle == "creation_datetime") {
-              $cached_object_type[$handle] = "date";
-            } elseif($handle == "owner_groups") {
-							$cached_object_type[$handle] = "text";
-						}
-        } else {
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
-            $elementObject = $element_handler->get($handle);
-            $cachedFormIds[$handle] = $elementObject->getVar('id_form');
-            $cachedElementIds[$handle] = $elementObject->getVar('ele_id');
-            $cached_object_type[$handle] = $elementObject->getVar('ele_type');
-        }
+			if ($handle == "mod_datetime" OR $handle == "creation_datetime" OR $handle == "creator_email" OR $handle == "owner_groups") {
+				$cachedFormIds[$handle] = $fid;
+				$cachedElementIds[$handle] = $handle;
+				$cached_object_type[$handle] = "email";
+				if ($handle == "mod_datetime" OR $handle == "creation_datetime") {
+					$cached_object_type[$handle] = "date";
+				} elseif($handle == "owner_groups") {
+					$cached_object_type[$handle] = "text";
+				}
+			} else {
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$elementObject = $element_handler->get($handle);
+				$cachedFormIds[$handle] = $elementObject->getVar('id_form');
+				$cachedElementIds[$handle] = $elementObject->getVar('ele_id');
+				$cached_object_type[$handle] = $elementObject->getVar('ele_type');
+			}
     }
     $fid = $cachedFormIds[$handle];
     $element_type = $cached_object_type[$handle];
@@ -8057,11 +7712,9 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		// figure out the default value for this element
     $defaultTextToWrite = "";
 		$ele_type = $thisDefaultEle->getVar('ele_type');
-		if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-			$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-			if(method_exists($elementTypeHandler, 'getDefaultValue')) {
-				$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
-			}
+		$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+		if(method_exists($elementTypeHandler, 'getDefaultValue')) {
+			$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
 		}
 		// if there's no value, move on
     if($defaultTextToWrite === ""
@@ -8456,10 +8109,8 @@ function formulize_getEntryIdFromRewriteruleElement($screenObjectOrIdentifier, $
 		if($rewriteruleElementObject = $element_handler->get($rewriteruleElement)) {
 			$ele_type = $rewriteruleElementObject->getVar('ele_type');
 			// re-get the element handler based on the specific type, because it will have the proper prepareLiteralTextForDB logic in it (generic handler has nothing specific)
-			if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-					$element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-					$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-			}
+			$element_handler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+			$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
 			$searchValue = $element_handler->prepareLiteralTextForDB(urldecode($entryIdentifier), $rewriteruleElementObject);
 			$dataHandler = new formulizeDataHandler($screenObject->getVar('fid'));
 			$entryId = $dataHandler->findFirstEntryWithValue($rewriteruleElementObject, $searchValue);
@@ -8688,20 +8339,20 @@ function formulizeRevisionsForAllFormsIsOn() {
  * @return array|boolean Returns an array of the necessary AND/OR value to use in a search of the multiple values, and the operator to use. Keys are 'andOr' and 'operator'. Returns false if the target element does not have multiple values, or the operator is not suitable for searching multiple values, or if the elementIdentifier is invalid.
  */
 function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $operator) {
-    $returnValue = false;
-    if(!$element = _getElementObject($elementIdentifier) OR !$operator) {
-        return $returnValue;
-    }
-    $allowableOperators = array('=', '!=', '<=>', 'LIKE', 'NOT LIKE');
-    if($element->canHaveMultipleValues
-      AND !$element->isLinked
-      AND in_array($operator, $allowableOperators)) {
-          $returnValue = array(
-          'andOr' => (($operator == "!=" OR $operator == "NOT LIKE") ? "AND" : "OR"),
-          'operator' => ($operator == "!=" ? "NOT LIKE" : "LIKE")
-      );
-    }
-    return $returnValue;
+	$returnValue = false;
+	if(!$element = _getElementObject($elementIdentifier) OR !$operator) {
+		return $returnValue;
+	}
+	$allowableOperators = array('=', '!=', '<=>', 'LIKE', 'NOT LIKE');
+	if($element->canHaveMultipleValues
+		AND !$element->isLinked
+		AND in_array($operator, $allowableOperators)) {
+			$returnValue = array(
+			'andOr' => (($operator == "!=" OR $operator == "NOT LIKE") ? "AND" : "OR"),
+			'operator' => ($operator == "!=" ? "NOT LIKE" : "LIKE")
+		);
+	}
+	return $returnValue;
 }
 
 /**
@@ -8926,3 +8577,43 @@ function correctStringIntFloatTypes($value) {
 	}
 	return $value;
 }
+
+/**
+	 * Look in the uitext for an element and see if a value matches, return the DB value that corresponds to the passed in value
+	 * @param string $value The value to check
+	 * @param object $element The element to check against
+	 * @param bool $partialMatch Whether to allow partial matches
+	 * @return string|array|bool The matching database term for the value passed in to use, or an array of matching terms, or the original value if there was no uitext, or boolean false if there was no match at all and the term is invalid
+	 */
+	function checkUITextForValue($value, $element, $partialMatch=false) {
+		$foundValue = $value;
+		if($element->getVar('ele_uitextshow')
+			AND $thisElementUITexts = $element->getVar('ele_uitext')
+			AND is_array($thisElementUITexts)
+			AND count($thisElementUITexts) > 0
+			AND $thisElementUITexts[array_key_first($thisElementUITexts)]) {
+				$foundValue = array();
+				foreach ($thisElementUITexts as $thisDBValue => $thisUIText) {
+					switch ($partialMatch) {
+						case false:
+							if ($thisUIText == $value) {
+								$foundValue[] = $thisDBValue;
+								break 2; // Break out of the foreach
+							}
+							continue; // continue foreach
+						case true:
+						default:
+							if ($value and stristr($thisUIText, $value) !== false) {
+								$foundValue[] = $thisDBValue;
+							}
+					}
+				}
+				$foundValue = count($foundValue) == 1 ? $foundValue[0] : $foundValue;
+		}
+		// will either be empty or have more than one value
+		if(is_array($foundValue)) {
+			return !empty($foundValue) ? $foundValue : false;
+		} else {
+			return $foundValue;
+		}
+	}

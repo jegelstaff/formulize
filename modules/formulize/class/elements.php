@@ -540,6 +540,7 @@ class formulizeElementsHandler {
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
+		$value = trans($value);
 		if(!$this->length AND $this->length !== 0 AND $this->length !== '0') {
 			$this->length = 35;
 		}
@@ -547,10 +548,10 @@ class formulizeElementsHandler {
 			$value = $myts->htmlSpecialChars($value, ENT_QUOTES);
 		}
 		if($this->length > 0) {
-			$value = printSmart(trans($value),$this->length);
+			$value = printSmart($value,$this->length);
 		}
 		if($this->clickable) {
-			$value = $myts->makeClickable($value);
+			$value = formulize_text_to_hyperlink($value);
 		}
 		return $value;
 	}
@@ -608,6 +609,8 @@ class formulizeElementsHandler {
         return false;
     }
 
+	// overridden in child classes
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		return $value;
 	}

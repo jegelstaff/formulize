@@ -368,18 +368,7 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// $handle is the element handle for the field that we're retrieving this for
 	// $entry_id is the entry id of the entry in the form that we're retrieving this for
 	function prepareDataForDataset($value, $handle, $entry_id) {
-		$elementObject = $this->get($handle);
-		$ele_value = $elementObject->getVar('ele_value');
-		if(preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-			// go function and DBPRE are set in the extract.php file - legacy stuff
-			$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle='" . formulize_db_escape($handle) . "' AND " . DBPRE . "formulize_other.id_req='" . intval($entry_id) . "' LIMIT 0,1");
-			// removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
-			$value_other = $newValueq[0]['other_text'];
-			$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
-		} elseif ($ele_value['ele_uitextshow']) {
-			$value = formulize_swapUIText($value, unserialize($ele_value['ele_uitext']));
-		}
-		return $value;
+		return applyReadableValueTransformations($value, $handle, $entry_id);
 	}
 
 	// this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -388,6 +377,7 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
 	// if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		return $value;
 	}
@@ -399,7 +389,7 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 		$this->clickable = false;
 		$this->striphtml = false;
 		$this->length = $textWidth;
-		return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 }

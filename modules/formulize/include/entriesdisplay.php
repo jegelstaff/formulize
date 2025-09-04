@@ -2632,7 +2632,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 		if(strstr($thisResult["$fidAlias$handle"], "*=+*:")) {
 		  $rawIndivValues = explode("*=+*:", $thisResult["$fidAlias$handle"]);
 		  array_shift($rawIndivValues); // current convention is to have the separator at the beginning of the string, so the exploded array will have a blank value at the beginning
-		} elseif($linkedMetaData = formulize_isLinkedSelectBox($cols[$i])) {
+		} elseif($linkedMetaData = formulize_isLinkedElement($cols[$i])) {
             $rawIndivValues = prepValues($thisResult["$fidAlias$handle"], $handle, $thisResult['entry_id']);
 		} else {
 		  $rawIndivValues = array(0=>$thisResult["$fidAlias$handle"]);
@@ -2863,7 +2863,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 		if(isset($ele_value[2])) {
 			if(is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
 				$isLinkedSelectBox = true;
-				$linkedMetaData = formulize_isLinkedSelectBox($thisElement->getVar('ele_id'));
+				$linkedMetaData = formulize_isLinkedElement($thisElement->getVar('ele_id'));
 			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {
 				$isNamesList = isset($ele_value[2]["{FULLNAMES}"]) ? 'name' : 'uname';
 			}
