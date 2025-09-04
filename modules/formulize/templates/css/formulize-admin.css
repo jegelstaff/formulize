@@ -1339,6 +1339,11 @@ div.accordion-box p {
 	margin-bottom: 0.5em;
 }
 
+div.form-name-text,
+div.form-id-number {
+	cursor: pointer
+}
+
 div.dockable-box.ui-draggable,
 div.create-connection-box.ui-draggable {
 	cursor: move;
