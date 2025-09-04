@@ -141,7 +141,8 @@ class formulizeAnonPasscodeElementHandler extends formulizeElementsHandler {
     // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
-    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
 
@@ -149,7 +150,7 @@ class formulizeAnonPasscodeElementHandler extends formulizeElementsHandler {
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true; // make urls clickable
+        $this->clickable = false; // make urls clickable
         $this->striphtml = true; // remove html tags as a security precaution
         $this->length = 255; // truncate to a maximum of 100 characters, and append ... on the end
 

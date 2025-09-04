@@ -172,6 +172,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		return $value;
 	}
 
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		$pattern = '/(\d+)d|(\d+)h|(\d+)m/';
 		preg_match_all($pattern, $value, $matches);

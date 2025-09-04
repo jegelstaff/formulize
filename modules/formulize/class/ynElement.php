@@ -167,6 +167,7 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
 	// if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
 		if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
@@ -185,8 +186,8 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false;
 		$this->striphtml = false;
-		$this->length = $textWidth;
-		return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		$this->length = 0;
+		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 }

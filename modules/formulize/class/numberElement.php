@@ -208,6 +208,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 	// $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
 	// if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		return $value;
 	}
@@ -219,7 +220,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		$this->clickable = false;
 		$this->striphtml = false;
 		$this->length = $textWidth;
-		return parent::formatDataForList(trans($value)); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 }
