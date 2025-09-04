@@ -67,7 +67,8 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
-    function adminPrepare($element) {
+    // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	function adminPrepare($element) {
         $ele_value = array();
         if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
             $ele_value = $element->getVar('ele_value');
@@ -81,7 +82,8 @@ class formulizeGoogleFilePickerElementHandler extends formulizeElementsHandler {
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved. Use setVar to set the value of a property. You must do this for the ele_value property if you are changing it!
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     // $ele_value will be only the values parsed out of the Options tab on the element's admin page, which follow the naming convention elements-ele_value -- other values that should be in ele_value will need to be parsed here from $_POST or elsewhere
-    function adminSave($element, $ele_value) {
+    // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
         $changed = false;
         $element->setVar('ele_value', array(
             'apikey'=>$ele_value['apikey'],
