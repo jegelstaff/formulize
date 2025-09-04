@@ -164,26 +164,22 @@ class formulizeElementRenderer{
 			break;
 
 			default:
-				if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-					$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-					$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $renderedElementMarkupName, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
-					// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
-					if(is_object($form_ele)) {
-						if(!$isDisabled AND ($this->_ele->getVar('ele_required') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
-							$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
-						}
-						$form_ele->setDescription($helpText);
-						$wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
-						$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
-						$baseCustomElementObject = $elementTypeHandler->create();
-						if($baseCustomElementObject->hasData) {
-							$customElementHasData = true;
-						}
+				$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
+				$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $renderedElementMarkupName, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
+				// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
+				if(is_object($form_ele)) {
+					if(!$isDisabled AND ($this->_ele->getVar('ele_required') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
 					}
-				} else {
-					return false;
+					$form_ele->setDescription($helpText);
+					$wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
+					$isDisabled = false; // the render method must handle providing a disabled output, so as far as the rest of the logic here goes, the element is not disabled but should be rendered as is
+					$baseCustomElementObject = $elementTypeHandler->create();
+					if($baseCustomElementObject->hasData) {
+						$customElementHasData = true;
+					}
 				}
-			break;
+				break;
 		} // end element-type case
 
 		// if element is object, with data, not disabled, let's get it ready for rendering
