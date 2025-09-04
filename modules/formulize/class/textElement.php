@@ -283,7 +283,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 		$ele_value = $element->getVar('ele_value');
-		if(is_a($element, 'formulizeTextElement')) {
+		if(get_class($element) === 'formulizeTextElement') {
 			// Trim the value if the option is set
 			if (isset($ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) && $ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) {
 				$value = trim($value);
