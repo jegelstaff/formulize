@@ -34,57 +34,59 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeTimeElement extends formulizeElement {
 
-    function __construct() {
-        $this->name = "Time Selector";
-        $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-        $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-        $this->overrideDataType = "time"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
-        $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        parent::__construct();
-    }
+	function __construct() {
+		$this->name = "Time Selector";
+		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
+		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
+		$this->overrideDataType = "time"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
+		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+		parent::__construct();
+	}
 
 }
 
 #[AllowDynamicProperties]
 class formulizeTimeElementHandler extends formulizeElementsHandler {
 
-    var $db;
-    var $clickable; // used in formatDataForList
-    var $striphtml; // used in formatDataForList
-    var $length; // used in formatDataForList
+	var $db;
+	var $clickable; // used in formatDataForList
+	var $striphtml; // used in formatDataForList
+	var $length; // used in formatDataForList
 
-    function __construct($db) {
-        $this->db =& $db;
-    }
+	function __construct($db) {
+			$this->db =& $db;
+	}
 
-    function create() {
-        return new formulizeTimeElement();
-    }
+	function create() {
+			return new formulizeTimeElement();
+	}
 
-    // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
-    // it receives the element object and returns an array of data that will go to the admin UI template
-    // when dealing with new elements, $element might be FALSE
-    function adminPrepare($element) {
-        $dataToSendToTemplate = array();
-        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-            // no options for the time element yet, many would be possible, there's lot of config for the jquery plugin
-        }
-        return $dataToSendToTemplate;
-    }
+	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
+	// it receives the element object and returns an array of data that will go to the admin UI template
+	// when dealing with new elements, $element might be FALSE
+	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	function adminPrepare($element) {
+		$dataToSendToTemplate = array();
+		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
+			// no options for the time element yet, many would be possible, there's lot of config for the jquery plugin
+		}
+		return $dataToSendToTemplate;
+  }
 
-    // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
-    // this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
-    // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
-    // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
-    // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-    function adminSave($element, $ele_value) {
-        $changed = false;
-        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-            $element->setVar('ele_value', $ele_value);
-        }
-        return $changed;
-    }
+	// this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
+	// this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
+	// the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
+	// You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
+	// You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
+	// advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
+		$changed = false;
+		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
+			$element->setVar('ele_value', $ele_value);
+		}
+		return $changed;
+  }
 
 		/**
 		 * Returns the default value for this element, for a new entry in the specified form.
