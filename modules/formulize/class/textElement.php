@@ -133,19 +133,20 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
 	// when dealing with new elements, $element might be FALSE
+	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
 			$ele_value = $element->getVar('ele_value');
-			$formlink = createFieldList($ele_value[$this->defaultValueKey], true);
-			$dataToSendToTemplate['formlink'] = $formlink->render();
-			$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
+			$formlink = createFieldList($ele_value[$this->associatedElementKey], true);
+			$dataToSendToTemplate['advanced-tab-values']['formlink'] = $formlink->render();
+			$dataToSendToTemplate['options-tab-values']['ele_value'] = $element->getVar('ele_value');
 		} else { // new element
 			$config_handler = xoops_gethandler('config');
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
+			$dataToSendToTemplate['options-tab-values']['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
 			$formlink = createFieldList(0, true);
-			$dataToSendToTemplate['formlink'] = $formlink->render();
+			$dataToSendToTemplate['advanced-tab-values']['formlink'] = $formlink->render();
 		}
 		return $dataToSendToTemplate;
 	}
@@ -155,13 +156,14 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
 	// You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
 	// You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-	function adminSave($element, $ele_value) {
+	// advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			if($_POST['formlink'] != "none") {
+			if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
 				$ele_value[$this->associatedElementKey] = $_POST['formlink'];
-				$element->setVar('ele_value', $ele_value);
 			}
+			$element->setVar('ele_value', $ele_value);
 		}
 		return $changed;
 	}
