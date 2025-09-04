@@ -139,7 +139,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-	{
+
 		if (!is_array($value)) {
 			return NULL;
 		}
