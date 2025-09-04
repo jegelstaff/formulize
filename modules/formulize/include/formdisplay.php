@@ -2906,7 +2906,7 @@ function loadValue($element, $entry_id, $prevEntry) {
 	$type = $element->getVar('ele_type');
 	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-		$ele_value = $customTypeHandler->loadValue($element, $value);
+		$ele_value = $customTypeHandler->loadValue($element, $value, $entry_id);
 	}
 
 	return $ele_value;
