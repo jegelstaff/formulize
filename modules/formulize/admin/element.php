@@ -213,6 +213,7 @@ if ($_GET['ele_id'] != "new") {
 
 $advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
+$advanced['advancedTypeTemplate'] = file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html") ? "db:admin/element_type_".$ele_type."_advanced.html" : "";
 
 $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
@@ -352,9 +353,14 @@ $options['ele_value'] = $ele_value;
 
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();
+$advancedCustomValues = array();
 if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
     $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
     $customValues = $customTypeHandler->adminPrepare($elementObject);
+		if (is_array($customValues) AND count($customValues) == 2 AND isset($customValues['options-tab-values']) AND isset($customValues['advanced-tab-values'])) {
+			$advancedCustomValues = $customValues['advanced-tab-values'];
+			$customValues = $customValues['options-tab-values'];
+		}
 }
 
 $display['groups'] = $groups;
@@ -391,7 +397,7 @@ if ($ele_id == "new") {
 if ($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
     $adminPage['tabs'][++$tabindex]['name'] = "Advanced";
     $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_advanced.html";
-    $adminPage['tabs'][$tabindex]['content'] = $advanced + $common;
+    $adminPage['tabs'][$tabindex]['content'] = $advanced + $common + $advancedCustomValues;
 }
 
 $adminPage['pagetitle'] = "Element: ".$elementName;

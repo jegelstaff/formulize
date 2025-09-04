@@ -251,6 +251,15 @@ if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
     $element->setVar('ele_exportoptions', array());
 }
 
+// call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+  $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+  $changed = $customTypeHandler->adminSave($element, $element->getVar('ele_value'), advancedTab: true);
+  if($changed) {
+    $reloadneeded = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
+  }
+}
+
 if(!$element_handler->insert($element)) {
 	print "Error: could not save Advanced settings for the element.";
     return;
