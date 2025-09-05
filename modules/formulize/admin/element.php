@@ -454,7 +454,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $dataTypeTray = new XoopsFormElementTray(_AM_FORM_DATATYPE_CONTROLS, '<br>');
         $dataTypeTray->setDescription(_AM_FORM_DATATYPE_CONTROLS_DESC);
         $textType = new XoopsFormRadio('', 'element_datatype', $defaultType);
-        $textDataTypeLabel = (!$element AND ($ele_type == 'text')) ? _AM_FORM_DATATYPE_TEXT_NEWTEXT : _AM_FORM_DATATYPE_TEXT;
+        $textDataTypeLabel = (!$element AND ($ele_type == 'text' OR $ele_type == 'number')) ? _AM_FORM_DATATYPE_TEXT_NEWTEXT : _AM_FORM_DATATYPE_TEXT;
         $textType->addOption('text', $textDataTypeLabel);
         $intType = new XoopsFormRadio('', 'element_datatype', $defaultType);
         $intType->addOption('int', _AM_FORM_DATATYPE_INT);

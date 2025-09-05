@@ -30,12 +30,14 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/textElement.php"; // we extend the text element class
 
 class formulizeNumberElement extends formulizeTextElement {
 
 	var $defaultValueKey;
 
 	function __construct() {
+		parent::__construct();
 		$this->name = "Number Box";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
 		$this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
@@ -44,7 +46,6 @@ class formulizeNumberElement extends formulizeTextElement {
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		$this->canHaveMultipleValues = false;
 		$this->hasMultipleOptions = false;
-		parent::__construct();
 		$this->defaultValueKey = ELE_VALUE_TEXT_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}
 
@@ -184,45 +185,6 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		$value = preg_replace ('/[^0-9.-]+/', '', trim($value));
 		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
 		return $value;
-	}
-
-	// this method will handle any final actions that have to happen after data has been saved
-	// this is typically required for modifications to new entries, after the entry ID has been assigned, because before now, the entry ID will have been "new"
-	// value is the value that was just saved
-	// element_id is the id of the element that just had data saved
-	// entry_id is the entry id that was just saved
-	// ALSO, $GLOBALS['formulize_afterSavingLogicRequired']['elementId'] = type , must be declared in the prepareDataForSaving step if further action is required now -- see fileUploadElement.php for an example
-	function afterSavingLogic($value, $element_id, $entry_id) {
-	}
-
-	// this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
-	// in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
-	// $value is the raw value that has been found in the database
-	// $handle is the element handle for the field that we're retrieving this for
-	// $entry_id is the entry id of the entry in the form that we're retrieving this for
-	function prepareDataForDataset($value, $handle, $entry_id) {
-		return $value;
-	}
-
-	// this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
-	// it is only necessary to do special logic here if the values stored in the database do not match what users would be typing, ie: you're using coded numbers in the database, but displaying text on screen to users
-	// this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
-	// $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
-	// if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
-	// if literal text that users type can be used as is to interact with the database, simply return the $value
-	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
-	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		return $value;
-	}
-
-	// this method will format a dataset value for display on screen when a list of entries is prepared
-	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
-	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = false;
-		$this->striphtml = false;
-		$this->length = $textWidth;
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 }
