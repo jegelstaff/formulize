@@ -140,7 +140,10 @@ function formulize_exception_handler($exception) {
 			</div>
 		";
 	}
-	ob_get_clean();
+	while(ob_get_level()) {
+    ob_end_clean();
+	}
+	include XOOPS_ROOT_PATH.'/header.php';
 	print "<style>
 		#notifyWebmasterForm {
 			display: none;
@@ -166,6 +169,7 @@ function formulize_exception_handler($exception) {
 	$notifyWebmaster
 	$stackTrace";
 	include XOOPS_ROOT_PATH.'/footer.php';
+	exit();
 }
 
 set_exception_handler('formulize_exception_handler');
