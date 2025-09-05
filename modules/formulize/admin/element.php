@@ -200,7 +200,7 @@ if ($_GET['ele_id'] != "new") {
     if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
         $advanced['ele_encrypt_no_on'] = " checked";
         $advanced['ele_encrypt_show'] = true;
-        $ele_index = "";//has_index($elementObject,$fid);
+        $ele_index = "";
         $advanced['original_ele_index'] = strlen($ele_index) > 0;
         $advanced['original_index_name'] = $ele_index;
         $advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
@@ -365,6 +365,13 @@ if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.p
 
 $display['groups'] = $groups;
 
+// cannot be in the adminPrepare because new elements do not have fid available in an object. :(
+if($ele_type == 'derived') {
+	$form_id = $fid; // needs to be declared for generateTemplateElementHandleHelp.php
+	$selectedFramework = 0; // needs to be declared for generateTemplateElementHandleHelp.php
+	include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+	$common['variabletemplatehelp'] = $listTemplateHelp;
+}
 
 $tabindex = 1;
 $adminPage['tabs'][$tabindex]['name'] = _AM_ELE_NAMEANDSETTINGS;
