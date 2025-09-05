@@ -277,7 +277,8 @@ $(document).ready(function() {
         } else if(data.substr(0,13)=="/* evalnow */") {
           eval(data);
         } else {
-					let strippedHTML = data.replace(/<\/?[^>]+(>|$)/g, ""); // strip HTML tags
+					let strippedStyles = data.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ""); // remove style tags and content
+					let strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, ""); // strip HTML tags
           alert(strippedHTML);
         }
       }
