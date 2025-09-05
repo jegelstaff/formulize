@@ -28,8 +28,6 @@
 ###############################################################################
 
 
-if(!function_exists("getRequestedDataType")) {
-// this function returns the datatype requested for this element
 function getRequestedDataType() {
 	switch($_POST['element_datatype']) {
 		case 'decimal':
@@ -63,18 +61,17 @@ function getRequestedDataType() {
 		case 'text':
 			$dataType = 'text';
 			break;
-        case 'date':
-            $dataType = 'date';
-            break;
-        case 'datetime':
-            $dataType = 'datetime';
-            break;
+		case 'date':
+				$dataType = 'date';
+				break;
+		case 'datetime':
+				$dataType = 'datetime';
+				break;
 
 		default:
 			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
 	}
 	return $dataType;
-}
 }
 
 // this file handles saving of submissions from the element advanced page of the new admin UI
@@ -153,30 +150,6 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 		$dataType = 'blob';
 	} else {
 		switch($ele_type) {
-			case 'date':
-				$dataType = 'date';
-				break;
-			case 'colorpick':
-				$dataType = 'text';
-				break;
-			case 'yn':
-				$dataType = 'int'; // they are stored as 1 and 2
-				break;
-			case 'text':
-				if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
-					if($datadecimals = intval($ele_value[5])) {
-						if($datadecimals > 20) { // mysql only allows a certain number of digits in a decimal datatype, so we're making some arbitrary size limitations
-							$datadecimals = 20;
-						}
-						$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
-						$dataType = "decimal($datadigits,$datadecimals)";
-					} else {
-						$dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
-					}
-				} else {
-					$dataType = getRequestedDataType();
-				}
-				break;
 			case 'select':
 				if ($ele_value[1] == 0 AND $element->isLinked) {
                     if($ele_value['snapshot']) {
@@ -198,6 +171,8 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 				// if not, then get requested type
 				if(property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
 					$dataType = $element->overrideDataType;
+				} elseif(method_exists($element, 'getDefaultDataType')) {
+					$dataType = $element->getDefaultDataType();
 				} else {
 					$dataType = getRequestedDataType();
 				}
@@ -249,6 +224,15 @@ if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
     ));
 } else {
     $element->setVar('ele_exportoptions', array());
+}
+
+// call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html")) {
+  $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+  $changed = $customTypeHandler->adminSave($element, $element->getVar('ele_value'), advancedTab: true);
+  if($changed) {
+    $reloadneeded = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
+  }
 }
 
 if(!$element_handler->insert($element)) {

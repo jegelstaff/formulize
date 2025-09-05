@@ -166,7 +166,7 @@ EOF;
 		$ele_type = $element->getVar('ele_type');
 		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($form_id);
-			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $entry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+			$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
@@ -530,7 +530,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
                 // get defaults for certain element types, function needs expanding
-                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'));
+                $defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
                 $compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
 			} else {
 				$compValue = "";
