@@ -30,6 +30,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/radioElement.php";
 
 class formulizeYnElement extends formulizeRadioElement {
 
@@ -115,15 +116,15 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	function loadValue($element, $value, $entry_id) {
 		if($value == 1)
 		{
-			$ele_value = array("_YES"=>1, "_NO"=>0);
+			$ele_value = array('_YES'=>1, '_NO'=>0);
 		}
 		elseif($value == 2)
 		{
-			$ele_value = array("_YES"=>0, "_NO"=>1);
+			$ele_value = array('_YES'=>0, '_NO'=>1);
 		}
 		else
 		{
-			$ele_value = array("_YES"=>0, "_NO"=>0);
+			$ele_value = array('_YES'=>0, '_NO'=>0);
 		}
 		return $ele_value;
 	}

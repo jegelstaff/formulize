@@ -99,11 +99,6 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
-			// variable help
-			$form_id = $element->getVar('fid'); // used in generateTemplateElementHandleHelp.php
-			$selectedFramework = 0;
-			include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
-			$dataToSendToTemplate['variabletemplatehelp'] = $listTemplateHelp;
 			// list of relationships for using as context when updating derived values
 			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 			$allRelationships = $framework_handler->getFrameworksByForm($form_id, true);
@@ -121,11 +116,11 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 		} else {
 			$config_handler = $config_handler = xoops_gethandler('config');
 			$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-			$dataToSendToTemplate[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-			$dataToSendToTemplate[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-			$dataToSendToTemplate[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-			$dataToSendToTemplate[0] = "<?php\n";
+			$dataToSendToTemplate['ele_value'][1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+			$dataToSendToTemplate['ele_value'][2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+			$dataToSendToTemplate['ele_value'][3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+			$dataToSendToTemplate['ele_value'][4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+			$dataToSendToTemplate['ele_value'][0] = "<?php\n";
 		}
 		return $dataToSendToTemplate;
 	}

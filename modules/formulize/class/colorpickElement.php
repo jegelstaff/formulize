@@ -147,7 +147,7 @@ class formulizeColorpickElementHandler extends formulizeElementsHandler {
 	// $element is the element object
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-		$value = "#".preg_replace("/[^#a-fA-F0-9]/", "", $value);
+		$value = preg_replace("/[^#a-fA-F0-9]/", "", $value);
 		return $value;
 	}
 
@@ -186,11 +186,31 @@ class formulizeColorpickElementHandler extends formulizeElementsHandler {
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false;
 		$this->striphtml = false;
-		$this->length = 100;
-		// TEST THAT THIS RENDERS (AND SAVES ETC PROPERLY)
-		return parent::formatDataForList("<div style='height: 1em; min-width=1em; background-color: #".preg_replace("/[^#a-fA-F0-9]/", "", $value).";'>$value</div>"); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		$this->length = 1000;
+		$textColorStyle = needsWhiteText($value) ? "color: white;" : "color: black;";
+		return "<div style='$textColorStyle max-width: 7em; padding: 0.5em; border: 1px solid black; text-align: center; background-color: ".preg_replace("/[^#a-fA-F0-9]/", "", $value).";'>$value</div>";
 	}
 
+}
+
+function needsWhiteText($hexColor) {
+    // Remove # if present
+    $hex = ltrim($hexColor, '#');
+
+    // Convert to RGB
+    $r = hexdec(substr($hex, 0, 2));
+    $g = hexdec(substr($hex, 2, 2));
+    $b = hexdec(substr($hex, 4, 2));
+
+    // Calculate relative luminance using WCAG formula
+    $r = $r <= 10 ? $r / 3294 : pow(($r / 255 + 0.055) / 1.055, 2.4);
+    $g = $g <= 10 ? $g / 3294 : pow(($g / 255 + 0.055) / 1.055, 2.4);
+    $b = $b <= 10 ? $b / 3294 : pow(($b / 255 + 0.055) / 1.055, 2.4);
+
+    $luminance = 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+
+    // Return true if luminance is low (dark background needs white text)
+    return $luminance < 0.5;
 }
 
 

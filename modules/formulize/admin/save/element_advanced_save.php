@@ -28,8 +28,6 @@
 ###############################################################################
 
 
-if(!function_exists("getRequestedDataType")) {
-// this function returns the datatype requested for this element
 function getRequestedDataType() {
 	switch($_POST['element_datatype']) {
 		case 'decimal':
@@ -63,18 +61,17 @@ function getRequestedDataType() {
 		case 'text':
 			$dataType = 'text';
 			break;
-        case 'date':
-            $dataType = 'date';
-            break;
-        case 'datetime':
-            $dataType = 'datetime';
-            break;
+		case 'date':
+				$dataType = 'date';
+				break;
+		case 'datetime':
+				$dataType = 'datetime';
+				break;
 
 		default:
 			print "ERROR: unrecognized datatype has been specified: ".strip_tags(htmlspecialchars($_POST['element_datatype']));
 	}
 	return $dataType;
-}
 }
 
 // this file handles saving of submissions from the element advanced page of the new admin UI
@@ -153,15 +150,6 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 		$dataType = 'blob';
 	} else {
 		switch($ele_type) {
-			case 'date':
-				$dataType = 'date';
-				break;
-			case 'colorpick':
-				$dataType = 'text';
-				break;
-			case 'yn':
-				$dataType = 'int'; // they are stored as 1 and 2
-				break;
 			case 'text':
 				if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
 					if($datadecimals = intval($ele_value[5])) {
@@ -252,7 +240,7 @@ if(isset($_POST['exportoptions_onoff']) AND $_POST['exportoptions_onoff']) {
 }
 
 // call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
-if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html")) {
   $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
   $changed = $customTypeHandler->adminSave($element, $element->getVar('ele_value'), advancedTab: true);
   if($changed) {

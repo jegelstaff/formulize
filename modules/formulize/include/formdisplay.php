@@ -2904,7 +2904,7 @@ function loadValue($element, $entry_id, $prevEntry) {
 	}
 	// If the value is blank, and the element is required or the element has the use-defaults-when-blank option on
 	// then do not load in saved value over top of ele_value, just return the default instead
-	if($value === "" AND ($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
+	if($value === "" OR $value === null AND ($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
 		return $ele_value;
 	}
 

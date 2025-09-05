@@ -101,20 +101,20 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 			$checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
 			$newValues = array();
-  		list($ele_value, $ele_uitext) = formulize_extractUIText($ele_value);
+  		list($ele_value, $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
 			foreach($ele_value as $id=>$text) {
 				if($text !== "") {
 					$newValues[$text] = intval($id) === $checked ? 1 : 0;
 				}
 			}
-  		$element->setVar('ele_value', $newValues);
-			$element->setVar('ele_uitext', $ele_uitext);
 			if(!empty($newValues) AND isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
   			$data_handler = new formulizeDataHandler($element->getVar('fid'));
-				if(!$changeResult = $data_handler->changeUserSubmittedValues($element->getVar('ele_id'), $newValues)) {
+				if(!$changeResult = $data_handler->changeUserSubmittedValues($element, $newValues)) {
 					print "Error updating user submitted values for the options in element '".$element->getVar('ele_caption')."'";
 				}
 			}
+  		$element->setVar('ele_value', $newValues);
+			$element->setVar('ele_uitext', $ele_uitext);
 		}
 		return $changed;
 	}
@@ -200,6 +200,14 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 		$opt_count = 1;
 		global $myts;
     foreach($ele_value as $iKey=>$iValue) {
+			// yn are translated at runtime since webmaster and user might be in different languages
+			if($element->getVar('ele_type')	== 'yn') {
+				if($iKey == "_YES") {
+					$iKey = _YES;
+				} elseif($iKey == "_NO") {
+					$iKey = _NO;
+				}
+			}
 		  $options[$opt_count] = $myts->displayTarea($iKey, 1); // 1 means allow HTML through
 			if( $iValue > 0 ){
 				$selected = $opt_count;
@@ -381,7 +389,7 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		return $value;
+		return convertStringToUseSpecialCharsToMatchDB($value);
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
