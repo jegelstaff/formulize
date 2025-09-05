@@ -28,6 +28,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/checkboxElement.php";
 
 class formulizeCheckboxlinkedElement extends formulizeCheckboxElement {
 
