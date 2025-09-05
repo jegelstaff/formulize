@@ -150,21 +150,6 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 		$dataType = 'blob';
 	} else {
 		switch($ele_type) {
-			case 'text':
-				if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
-					if($datadecimals = intval($ele_value[5])) {
-						if($datadecimals > 20) { // mysql only allows a certain number of digits in a decimal datatype, so we're making some arbitrary size limitations
-							$datadecimals = 20;
-						}
-						$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
-						$dataType = "decimal($datadigits,$datadecimals)";
-					} else {
-						$dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
-					}
-				} else {
-					$dataType = getRequestedDataType();
-				}
-				break;
 			case 'select':
 				if ($ele_value[1] == 0 AND $element->isLinked) {
                     if($ele_value['snapshot']) {
@@ -186,6 +171,8 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 				// if not, then get requested type
 				if(property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
 					$dataType = $element->overrideDataType;
+				} elseif(method_exists($element, 'getDefaultDataType')) {
+					$dataType = $element->getDefaultDataType();
 				} else {
 					$dataType = getRequestedDataType();
 				}

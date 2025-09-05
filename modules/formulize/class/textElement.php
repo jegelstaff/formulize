@@ -63,6 +63,25 @@ class formulizeTextElement extends formulizeElement {
 		$this->defaultValueKey = ELE_VALUE_TEXT_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}
 
+	public function getDefaultDataType() {
+		$ele_value = $this->getVar('ele_value');
+		// if numbers only is set, and Formulize was asked to figure out the datatype, then we have to decide between int and decimal
+		if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
+			if($datadecimals = intval($ele_value[5])) {
+				if($datadecimals > 20) { // mysql only allows a certain number of digits in a decimal datatype, so we're making some arbitrary size limitations
+					$datadecimals = 20;
+				}
+				$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+				$dataType = "decimal($datadigits,$datadecimals)";
+			} else {
+				$dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
+			}
+		} else {
+			$dataType = getRequestedDataType();
+		}
+		return $dataType;
+	}
+
 	// write code to a file
 	public function setVar($key, $value, $not_gpc = false) {
 		if($key == 'ele_value') {

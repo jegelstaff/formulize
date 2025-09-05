@@ -298,7 +298,7 @@ define("_AM_ELE_NO_PLACEHOLDER","Add it to the text box when the form loads, it 
 define("_AM_ELE_PLACEHOLDER_OPTION","Show it as an example in the text box, but don't save it if the form is submitted");
 
 // number options for textboxes
-define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
+define("_AM_ELE_NUMBER_OPTS","How should numbers be formatted?");
 define("_AM_ELE_NUMBER_OPTS_DESC","You can set these options to control how decimals are handled, and how numbers are formatted on screen.");
 define("_AM_ELE_NUMBER_OPTS_DEC","Number of decimal places:");
 define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
