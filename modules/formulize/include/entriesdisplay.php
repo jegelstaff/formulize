@@ -2981,7 +2981,7 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
   $element = $element_handler->get($id);
   // check for fullnames/usernames and handle those
   $ele_type = $element->getVar('ele_type');
-  if($ele_type == "select") {
+  if(anySelectElementType($ele_type)) {
 	$ele_value = $element->getVar('ele_value');
 	if(is_array($ele_value[2]) AND (key($ele_value[2]) === "{USERNAMES}" OR key($ele_value[2]) === "{FULLNAMES}")) {
 	  if(!isset($GLOBALS['formulize_fullNameUserNameCalculationReplacementList'][$col][$calc][$groupingValue])) {

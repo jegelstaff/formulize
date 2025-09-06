@@ -407,14 +407,14 @@ class SyncCompareCatalog {
                             /*print_r($usRecord[$i]['groups']);
                             print "<br>";*/
                         }
-                    } elseif(isset($data['ele_type']) AND $data['ele_type'] == 'select' AND isset($usRecord[3]) AND is_string($usRecord[3]) AND preg_replace("/[^,0-9]/", "", $usRecord[3]) === $usRecord[3]) {
+                    } elseif(isset($data['ele_type']) AND anySelectElementType($data['ele_type']) AND isset($usRecord[3]) AND is_string($usRecord[3]) AND preg_replace("/[^,0-9]/", "", $usRecord[3]) === $usRecord[3]) {
                         /*print "selectbox $groupFieldName switch: ";
                         print $usRecord[3];
                         print "<br>";*/
                         $usRecord[3] = $this->stripGroupsFromCommaList($usRecord[3]);
                         /*print $usRecord[3];
                         print "<br>";*/
-                    } elseif(isset($data['ele_type']) AND $data['ele_type'] == 'checkbox' AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
+                    } elseif(isset($data['ele_type']) AND ($data['ele_type'] == 'checkbox' OR $data['ele_type'] == 'checkboxlinked') AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
                         /*print "checkbox $groupFieldName switch: ";
                         print $usRecord['formlink_scope'];
                         print "<br>";*/

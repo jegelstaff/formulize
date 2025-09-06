@@ -191,8 +191,7 @@ class formulizeElementRenderer{
 			if(substr($renderedElementMarkupName, 0, 9) != "desubform"
 				AND !$isDisabled
 				AND !$wasDisabled
-				AND ($ele_type == "select"
-					OR $customElementHasData)) {
+				AND $customElementHasData) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($renderedElementMarkupName,"de_")."\" name=\"decue_".trim($renderedElementMarkupName,"de_")."\" value=1>\n";
 			}
 

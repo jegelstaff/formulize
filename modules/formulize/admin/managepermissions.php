@@ -31,32 +31,32 @@ $allOrFormulizeOnly = $_POST['formulize-or-all'] == 'formulize-perms' ? 'formuli
 // AND SAVED VIEWS PUBGROUPS FIELD
 
 if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
-    
+
     foreach($targetGroupIds as $targetGroupId) {
-        
+
         $allOrFormulizeFilter = $allOrFormulizeOnly == 'formulize' ? ' AND gperm_modid = '.getFormulizeModId() : '';
-        
-        // copy permission table data from source to targets        
+
+        // copy permission table data from source to targets
         $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission"). " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`)
         SELECT $targetGroupId, gperm_itemid, gperm_modid, gperm_name FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_groupid = $sourceGroupId $allOrFormulizeFilter";
         if(!$res = $xoopsDB->query($sql)) {
             print "<p>Error: could not replicate permissions for Group Number $targetGroupId, which was supposed to be copied from Group Number $sourceGroupId</p>";
         }
-        
+
         // copy per group visibility filters from source to targets
         $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`)
         SELECT fid, $targetGroupId, filter FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE groupid = $sourceGroupId";
         if(!$res = $xoopsDB->query($sql)) {
             print "<p>Error: could not set the group filters for Group Number $targetGroupId, which were supposed to be copied from Group Number $sourceGroupId</p>";
         }
-        
+
     }
-    
+
     // get all the forms, since we have to check for various settings in each form that might reference groups
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $forms = $form_handler->getAllForms(true); // true causes all elements, even ones that show for no groups, to be included in the element list properties of the form objects
-    
+
     foreach($forms as $thisForm) {
         // assign any per group groupscope settings, but we have to determine the corresponding groups first if possible!
         $formulize_permHandler = new formulizePermHandler($thisForm->getVar('id_form'));
@@ -78,7 +78,7 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
                         $commonEndPart = commonEndPart($thisGroupId,$sourceGroupId);
                         $candidateGroupName = $commonFrontPart.$uncommonFrontPart.$commonMiddlePart.$uncommonEndPart.$commonEndPart;
                         $candidateGroupId = array_search($candidateGroupName, $groupList);
-                    }                    
+                    }
                     $scopeGroups[] = $candidateGroupId ? $candidateGroupId : $thisGroupId;
                 }
                 if(!$formulize_permHandler->setGroupScopeGroups($targetGroupId, $scopeGroups)) {
@@ -92,11 +92,11 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
             $ele_display = $element->getVar('ele_display');
             $ele_disabled = $element->getVar('ele_disabled');
             $ele_type = $element->getVar('ele_type');
-            if($ele_type == "select") {
-                $ele_value = $element->getVar('ele_value');
-                $filterGroups = explode(",", $ele_value[3]); // ele_value[3] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
+            if(anySelectElementType($ele_type)) {
+							$ele_value = $element->getVar('ele_value');
+							$filterGroups = explode(",", $ele_value[3]); // ele_value[3] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
             }
-            if($ele_type == "checkbox") {
+            if($ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
                 $ele_value = $element->getVar('ele_value');
                 $filterGroups = explode(",", $ele_value['formlink_scope']); // ele_value['formlink_scope'] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
             }
@@ -112,7 +112,7 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
                     $ele_disabled .= "$targetGroupId,";
                 }
                 // check ele_value[3] data, which is the group filter for the sources for linked select boxes
-                if($ele_type == "select" OR $ele_type == "checkbox") {
+                if(anySelectElementType($ele_type) OR $ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
                     if(in_array($sourceGroupId, $filterGroups)) {
                         $writeElement = true;
                         $filterGroups[] = $targetGroupId;
@@ -120,11 +120,11 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
                 }
             }
             if($writeElement) {
-                if($ele_type == "select") {
+                if($ele_type == anySelectElementType($ele_type)) {
                     $ele_value[3] = implode(",", $filterGroups);
                     $element->setVar('ele_value', $ele_value);
                 }
-                if($ele_type == "checkbox") {
+                if($ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
                     $ele_value['formlink_scope'] = implode(",", $filterGroups);
                     $element->setVar('ele_value', $ele_value);
                 }
@@ -146,14 +146,14 @@ $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['text'] = "Copy Group Permissions";
 
 function commonFrontPart($groupId1, $groupId2) {
-    return findMatchingPart($groupId1, $groupId2, 0);    
+    return findMatchingPart($groupId1, $groupId2, 0);
 }
 
 function commonMiddlePart($groupId1, $groupId2, $groupId3) {
     global $groupList;
-    
+
     // Glenwood Counsellors vs Hotelworx Counsellors start of middle is 8 (where the space is)
-    $lengthCommonFront = strlen(commonFrontPart($groupId2, $groupId1)); 
+    $lengthCommonFront = strlen(commonFrontPart($groupId2, $groupId1));
     $lengthUncommonPart = strlen(uncommonPart($groupId2, $groupId1));
     $startOfMiddle = $lengthCommonFront+$lengthUncommonPart;
 
@@ -196,4 +196,3 @@ function findMatchingPart($groupId1, $groupId2, $limit) {
     }
     return (isset($cachedParts[$limit][$groupId1][$groupId2])) ? $cachedParts[$limit][$groupId1][$groupId2] : $cachedParts[$middle][$limit][$groupId2][$groupId1];
 }
- 

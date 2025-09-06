@@ -249,6 +249,7 @@ $common['fid'] = $fid;
 $common['formhandle']=$formHandle;
 $common['aid'] = $aid;
 $common['type'] = $ele_type;
+$common['typeIsSelect'] = anySelectElementType($ele_type);
 $common['uid'] = $xoopsUser->getVar('uid');
 
 $options = array();
@@ -408,11 +409,7 @@ if ($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
 }
 
 $adminPage['pagetitle'] = "Element: ".$elementName;
-if ($ele_id == "new" AND $ele_type == "select") {
-    $adminPage['pagesubtitle'] = _AM_ELE_DROPDORLIST;
-} else {
-    $adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type, $ele_value).")";
-}
+$adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type, $ele_value).")";
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";
@@ -437,7 +434,7 @@ function createDataTypeUI($ele_type, $element,$id_form,$ele_encrypt) {
         $customTypeNeedsUI = $customTypeObject->needsDataType;
     }
 
-    if (($ele_type == "select" OR $customTypeNeedsUI) AND !$ele_encrypt) {
+    if ($customTypeNeedsUI AND !$ele_encrypt) {
         if ($element) {
             $defaultTypeInformation = $element->getDataTypeInformation();
             $defaultType = $defaultTypeInformation['dataType'];

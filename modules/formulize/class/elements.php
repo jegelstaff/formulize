@@ -618,8 +618,25 @@ class formulizeElementsHandler {
 
 function optionIsValidForElement($option, $elementHandleOrId) {
     if(!$element = _getElementObject($elementHandleOrId)) {
-		return false;
+			return false;
     }
     return $element->optionIsValid($option);
 }
 
+/**
+ * Take a type string and return true if it is any type of element based on the Select type
+ * @param string $type
+ * @return bool
+ */
+function anySelectElementType($type) {
+	$baseTypes = array("select","autocomplete","listbox");
+	$subTypes = array("","linked","users");
+	foreach($baseTypes as $base) {
+		foreach($subTypes as $sub) {
+			if ($type == $base.$sub) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
