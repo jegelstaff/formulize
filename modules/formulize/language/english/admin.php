@@ -330,7 +330,7 @@ define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
 define("_AM_ELE_RICHTEXT_DESC","This option provides a full editor interface in the textbox, with font sizes and bold, etc, instead of just a simple box. You can control which editor is used on <a href='../../system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>the General Settings page</a>");
 define("_AM_ELE_OPT","Options");
-define("_AM_ELE_OPT_DESC","Setting a single option of '{FULLNAMES}' or '{USERNAMES}' will produce a list of users based on the group limits set below.<br /><br />Tick the check boxes for selecting default values");
+define("_AM_ELE_OPT_DESC","Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC_CHECKBOXES","Tick the check boxes for selecting default values<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_OPT_DESC_RANKORDERLISTS","Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_OPT_DESC1","<br />Only the first check is used if multiple selection is not allowed");
@@ -364,15 +364,15 @@ define("_AM_ELE_FORMLINK_TEXTBOX", "Associate values with another form element")
 define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
 define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
 define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
-define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.</p>");
+define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>This option causes the active user's group memberships to further limit the options.  In that case, groups you select will be ignored if the active user is not also a member of the group.</p>");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Use all groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_INTRO", "Should the active user limit the scope?");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_INTRO", "Limit the scope to groups the active user is a member of?");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "No. Use all selected groups.");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Yes. Only use groups that the current user is a member of");
 define("_AM_ELE_FORMLINK_ANYALL_INTRO", "Include data as long as it belongs to:");
-define("_AM_ELE_FORMLINK_ANYALL_ANY", "Any one of the groups in scope");
-define("_AM_ELE_FORMLINK_ANYALL_ALL", "All of the groups in scope");
-define("_AM_ELE_FORMLINK_ANYALL_DESC", "If the active user is limiting the scope, then the <b>All</b> option may not necessarily mean all the groups selected, depending on the group memberships of the active user.");
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Any one of the selected groups");
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "All of the selected groups");
+define("_AM_ELE_FORMLINK_ANYALL_ADDON", " <i>that the active user is a member of</i>");
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");

@@ -1,0 +1,243 @@
+<div class="panel-content content">
+
+	<{include file="db:admin/element_linkedoptionlist.html"}>
+
+		<div class="form-item" id='linkedsourcemapping' style='display: none;'>
+        <fieldset>
+            <legend>When creating a new entry in the linked source form, map other values to the source form too:</legend>
+            <input type='button' name='new-mapping' value='Add 1' /><br /><br />
+            <div id='mappingcontainer'>
+              <{if $content.linkedSourceMappings|is_array AND $content.linkedSourceMappings|@count > 0}>
+                <{foreach from=$content.linkedSourceMappings key=index item=value name=mappings}>
+                  <div class="elementmappings" name="<{$index}>">
+                  <{if is_numeric($value.thisForm)}>
+                  <select id="mappingthisform-<{$index}>" name="mappingthisform[<{$index}>]" size="1">
+                    <{html_options options=$content.mappingthisformoptions selected=$value.thisForm}>
+                  </select>
+                  <{elseif $value.thisForm}>
+                  <select id="mappingthisform-<{$index}>" name="turnedoff" size="1" style='display: none;'>
+                    <{html_options options=$content.mappingthisformoptions}>
+                  </select>
+                  <input name="mappingthisform[<{$index}>]" value="<{$value.thisForm}>">
+                  <{/if}>
+                    >>
+                  <select id="mappingsourceform-<{$index}>" name="mappingsourceform[<{$index}>]" size="1">
+                    <{html_options options=$content.mappingsourceformoptions selected=$value.sourceForm}>
+                  </select>
+                  <{if $smarty.foreach.mappings.index > 0}>
+                  <img class="removeMapping" style="cursor: pointer;" onclick="removeMapping(<{$index}>)" src="../images/editdelete.gif"></img>
+                  <{/if}>
+                  </div>
+                <{/foreach}>
+              <{else}>
+                  <div class="elementmappings" name="0">
+                  <select id="mappingthisform-0" name="mappingthisform[0]" size="1">
+                    <{html_options options=$content.mappingthisformoptions}>
+                  </select>
+                    >>
+                  <select id="mappingsourceform-0" name="mappingsourceform[0]" size="1">
+                    <{html_options options=$content.mappingsourceformoptions}>
+                  </select>
+                  </div>
+              <{/if}>
+            </div>
+        </fieldset>
+    </div>
+
+	<{include file="db:admin/element_linkedsortoptions.html"}>
+
+	<div class="form-item">
+		<fieldset>
+			<legend>Which option(s) should be selected by default?</legend>
+			<select name=elements-ele_value[13][] size=10 multiple class="form-multiple-select">
+				<{foreach from=$content.optionDefaultSelection key="default_entry_id" item="default_value"}>
+					<option value=<{$default_entry_id}><{if in_array($default_entry_id, $content.optionDefaultSelectionDefaults)}> selected<{/if}>><{$default_value}></option>
+				<{/foreach}>
+			</select>
+		</fieldset>
+	</div>
+
+	<div id="linked-filter" class="form-item">
+		<{include file="db:admin/element_linkedfilter.html"}>
+	</div>
+
+	<div id="linked-or-usernames-options" class="form-item">
+		<{include file="db:admin/element_linkedandusernames_scopefilter.html"}>
+	</div>
+
+	<div id="linked-options" class="form-item">
+
+		  <div class="form-item">
+		    <fieldset>
+			    <legend>Show as links in lists of entries?</legend>
+	          <div class="form-radios">
+		          <label for="elements-ele_value[7]-1"><input type="radio" id="elements-ele_value[7]-1" name="elements-ele_value[7]" value="1" <{if $content.ele_value[7] eq 1}>checked<{/if}>/> Yes, make these values clickable in lists of entries so people can go to the source form easily</label>
+	          </div>
+	          <div class="form-radios">
+              <label for="elements-ele_value[7]-0"><input type="radio" id="elements-ele_value[7]-0" name="elements-ele_value[7]" value="0" <{if $content.ele_value[7] eq 0}>checked<{/if}>/> No, just show the selected value as text</label>
+	          </div>
+			    <div class="description">
+			    </div>
+		    </fieldset>
+	    </div>
+
+	<div class="form-item">
+	  <fieldset>
+		  <legend>Restrictions on options</legend>
+	        <div class="form-radios">
+            <label for="elements-ele_value[9]-0"><input type="radio" id="elements-ele_value[9]-0" name="elements-ele_value[9]" value="0" <{if $content.ele_value[9] eq 0}>checked<{/if}>/> No restrictions</label>
+	        </div>
+	        <div class="form-radios">
+						<label for="elements-ele_value[9]-2"><input type="radio" id="elements-ele_value[9]-2" name="elements-ele_value[9]" value="2" <{if $content.ele_value[9] eq 2}>checked<{/if}>/> Once someone has selected the option, <b>they cannot select it again</b> in any other entry.</label>
+	        </div>
+	        <div class="form-radios">
+            <label for="elements-ele_value[9]-3"><input type="radio" id="elements-ele_value[9]-3" name="elements-ele_value[9]" value="3" <{if $content.ele_value[9] eq 3}>checked<{/if}>/> Once someone has selected the option, <b>no one in their group can select it again</b> in any other entry.</label>
+	        </div>
+	        <div class="form-radios">
+						<label for="elements-ele_value[9]-1"><input type="radio" id="elements-ele_value[9]-1" name="elements-ele_value[9]" value="1" <{if $content.ele_value[9] eq 1}>checked<{/if}>/> Once someone has selected the option, <b>no one else can select it again</b> in any other entry.</label>
+	        </div>
+					<br>
+	  </fieldset>
+	</div>
+
+		<{include file="db:admin/alternate_fields_for_linked_elements.html"}>
+
+	</div>
+</div>
+
+<script type="text/javascript">
+
+  $("[name='new-mapping']").click(function (){
+    number = $(".elementmappings:last").attr('name');
+    number = parseInt(number) + 1;
+    $('#mappingcontainer').append('<div class="elementmappings" name="'+number+'"><select id="mappingthisform-'+number+'" name="mappingthisform['+number+']" size="1"></select> >> <select id="mappingsourceform-'+number+'" name="mappingsourceform['+number+']" size="1"></select> <img class="removeMapping" style="cursor: pointer;" onclick="removeMapping('+number+')" src="../images/editdelete.gif"></img></div>');
+    var thisformoptions = $('#mappingthisform-0 > option').clone();
+    $('#mappingthisform-'+number).append(thisformoptions);
+    $('#mappingthisform-'+number+' option:selected').removeAttr('selected');
+    $('#mappingthisform-'+number).append('<option value="mapaliteralvalue">Map a literal value</option>');
+    var sourceformoptions = $('#mappingsourceform-0 > option').clone();
+    $('#mappingsourceform-'+number).append(sourceformoptions);
+    $('#mappingsourceform-'+number+' option:selected').removeAttr('selected');
+    $("[name='new-mapping']").blur();
+    setDisplay('savewarning','block');
+  });
+
+    $("[name^=mappingthisform]").live('change', function() {
+        if ($(this).val() == 'mapaliteralvalue') {
+            $(this).attr('name', 'turnedoff');
+            $(this).parent().prepend('<input name="mappingthisform['+$(this).parent().attr('name')+']">');
+            $(this).hide();
+        }
+    });
+
+    function removeMapping(number) {
+        $('.elementmappings').remove('[name="'+number+'"]');
+        setDisplay('savewarning','block');
+    }
+
+ $("#elements-ele_value_0").focus(function() {
+	  $("#list").attr('checked',1);
+ });
+
+ $("[name=elements_multiple]").click(function() {
+	$("#list").attr('checked',1);
+ });
+
+ $("#elements_multiple_notallowed").click( function(){
+ 	alert("WARNING: You may lose data when changing the multiple selection of your select box!");
+ });
+
+ $("#formlink").change(function() {
+		$("#yes").attr('checked',1);
+		$("[name=reload_option_page]").val(1);
+		$("#filterdiv").empty();
+		$("#filterdiv").append('<p><input type="button" class="formButton" name="refreshfilter" onclick="refreshfilterjq()" value="Save changes to update filter options"></p>');
+ });
+
+ function refreshfilterjq() {
+	 $("[name=reload_option_page]").val(1);
+	 $(".savebutton").click();
+
+ }
+
+ $("[name=addoption]").click(function () {
+		$("#no").attr('checked',1);
+ })
+
+ $("[name=ele_value[0]]").keydown(function () {
+	$("#no").attr('checked',1);
+	$("#formlink").val('none');
+	$("#filterdiv").empty();
+	$("#filterdiv").append('<p>The options are not linked.</p>');
+
+ });
+
+    $("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
+		$("#selfreference-<{$content.ele_value.selfreference}>").attr('checked',1);
+
+    <{if $content.ele_id != 'new'}>
+    var snapshotWarning = true;
+    $('input[name*="snapshot"]').change(function() {
+        if (snapshotWarning) {
+            alert('*** WARNING: If you change the "snapshot" setting of an element that users have saved data in already, then all the existing data will be lost. Change the setting back BEFORE SAVING if you need to preserve the data. ***');
+            snapshotWarning = false;
+        }
+    })
+    <{/if}>
+
+		$('input[name="linked_yesno"]').change(function() {
+			if($('input[name="linked_yesno"]:checked').val() == 1) {
+				$('div#fixedListOptions').hide(200);
+				$('div#linkedSourceOptions').show(200);
+				$('div#linked-options').show(200);
+				$('div#linked-filter').show(200);
+				enableForAutocomplete();
+				$('div#linked-or-usernames-options').show(200);
+			} else {
+				$('div#fixedListOptions').show(200);
+				$('div#linkedSourceOptions').hide(200);
+				$('div#linked-options').hide(200);
+				$('div#linked-filter').hide(200);
+				checkForNames();
+			}
+			showHideLinkedSourceMapping();
+    });
+
+
+    function showHideLinkedSourceMapping() {
+        if ($('input[name="linked_yesno"]:checked').val() == 1 && $('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[snapshot\\]"]:checked').val() != 1 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
+            if($('#linkedsourcemapping').css('display') == 'none') {
+                $('#linkedsourcemapping').show(200);
+            }
+            return false;
+        } else {
+            if($('#linkedsourcemapping').css('display') == 'none') {
+							return false;
+            }
+            $('#linkedsourcemapping').hide(200);
+        }
+    }
+
+    $(document).ready(function() {
+        showHideLinkedSourceMapping();
+
+        $('[name="elements_listordd"]').change(function() {
+            showHideLinkedSourceMapping();
+        });
+
+        $('[name="elements-ele_value\\[16\\]"]').change(function() {
+            showHideLinkedSourceMapping();
+        });
+
+        $('#formlink').change(function() {
+            showHideLinkedSourceMapping();
+	});
+
+        $('[name="elements-ele_value\\[snapshot\\]"]').change(function() {
+            showHideLinkedSourceMapping();
+        })
+
+
+	});
+
+</script>
