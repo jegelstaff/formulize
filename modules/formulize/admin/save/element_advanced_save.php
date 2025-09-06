@@ -83,8 +83,10 @@ if(!isset($processedValues)) {
 
 // invoke the necessary objects
 $element_handler = xoops_getmodulehandler('elements','formulize');
-if(!$ele_id = intval($_GET['ele_id'])) { // on new element saves, new ele_id can be passed through the URL of this ajax save
-	if(!$ele_id = intval($_POST['formulize_admin_key'])) {
+$isNewElement = true;
+if(!$ele_id = intval($_GET['ele_id'])) { // on new element saves, new ele_id can be passed through the URL of this ajax save -- set in the saving of the names/settings tab, and then passed to all the subsequent saving operations for other tabs
+	$isNewElement = false;
+	if(!$ele_id = intval($_POST['formulize_admin_key'])) { // otherwise, formulize_admin_key should contain the element id for existing elements
 		print "Error: could not determine element id when saving advanced settings";
 		return;
 	}
@@ -114,15 +116,15 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 
 $ele_value = $element->getVar('ele_value');
 $ele_encrypt = $_POST['elements-ele_encrypt'];
-$databaseElement = ($ele_type == "areamodif" OR $ele_type == "ib" OR $ele_type == "sep" OR $ele_type == "subform" OR $ele_type == "grid" OR (property_exists($element,'hasData') AND $element->hasData == false) ) ? false : true;
+$databaseElement = (property_exists($element,'hasData') AND $element->hasData == true) ? true : false;
 $reloadneeded = false;
-if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$_GET['ele_id']) { // the setting has changed on this pageload, and it's a database element, and it's not new
+if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$isNewElement) { // the setting has changed on this pageload, and it's a database element, and it's not new
   $reloadneeded = true; // display of data type goes on/off when encryption is off/on
   // if the encryption setting changed, then we need to encrypt/decrypt all the existing data
   include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
   $data_handler = new formulizeDataHandler($fid);
   if(!$data_handler->toggleEncryption($_POST['original_handle'], $element->getVar('ele_encrypt'))) {
-	print "Warning:  unable to toggle the encryption of the '".$_POST['original_handle']."' field on/off!";
+		print "Warning:  unable to toggle the encryption of the '".$_POST['original_handle']."' field on/off!";
   }
 }
 
@@ -134,7 +136,7 @@ if($_POST['original_handle']) {
     $dataTypeInfo = false;
 }
 
-if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFieldMissing($ele_id, $_POST['original_handle']))) { // ele_id is only in the URL when we're on the first save for a new element
+if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFieldMissing($ele_id, $_POST['original_handle']))) {
 
 	global $xoopsDB;
 	  // figure out what the data type should be.
@@ -149,39 +151,18 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 	if($ele_encrypt) {
 		$dataType = 'blob';
 	} else {
-		switch($ele_type) {
-			case 'select':
-				if ($ele_value[1] == 0 AND $element->isLinked) {
-                    if($ele_value['snapshot']) {
-                        $dataType = 'text';
-                    } else {
-					$dataType = 'bigint';
-                    }
-				} else {
-					if (property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
-						$dataType = $element->overrideDataType;
-					} else {
-						$dataType = getRequestedDataType();
-					}
-				}
-
-				break;
-			default:
-				// check for custom type and if there's a database type override specified
-				// if not, then get requested type
-				if(property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
-					$dataType = $element->overrideDataType;
-				} elseif(method_exists($element, 'getDefaultDataType')) {
-					$dataType = $element->getDefaultDataType();
-				} else {
-					$dataType = getRequestedDataType();
-				}
+		if(method_exists($element, 'getDefaultDataType')) {
+			$dataType = $element->getDefaultDataType();
+		} elseif(property_exists($element, 'overrideDataType') AND $element->overrideDataType != "") {
+			$dataType = $element->overrideDataType;
+		} else {
+			$dataType = getRequestedDataType();
 		}
 	}
 
-		if(!$insertResult = $form_handler->insertElementField($element, $dataType)) {
-			exit("Error: could not add the new element to the data table in the database.");
-		}
+	if(!$insertResult = $form_handler->insertElementField($element, $dataType)) {
+		exit("Error: could not add the new element to the data table in the database.");
+	}
 
 } elseif(
     ($_POST['original_handle'] != $element->getVar('ele_handle') OR

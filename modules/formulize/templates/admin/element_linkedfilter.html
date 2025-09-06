@@ -9,7 +9,7 @@
 			<{$smarty.const._AM_ELE_FORMLINK_SCOPEFILTER_DESC}>
 		</div>
 
-		<{if $content.type == 'select'}>
+		<{if $content.type == 'selectlinked' OR $content.type == 'listboxlinked' OR $content.type == 'autocompletelinked'}>
 		<div class="form-select" id="optionsLimitByElementFilterDiv">
 			<p>Limit based on the values selected in this other element: <{$content.optionsLimitByElement}></p><br />
 			<{if isset($content.optionsLimitByElementFilter) AND $content.optionsLimitByElementFilter}>

@@ -17,16 +17,18 @@
 					<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
 				</div>
 			</div>
-			<div class="form-radios">
-			<{if $content.subformInterfaceAdminUrl}>
-				<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
-			<{elseif $content.type == "select"}>
-				<p><label for="makeSubformInterface"><input type="checkbox" id="makeSubformInterface" name="makeSubformInterface" clearAfterSave=1 value=1> Create a Subform interface for the <i><{$content.formTitle}></i> form inside the other form?</label></p>
-				<div class="description">
-					<p>If you check this option, a Subform interface will be created <b>in the source form</b> (not this form). A Subform interface allows users to interact with the linked entries from this form, inside the other form. You can control when and how the Subform interface shows up for users, just like any other element. If a Subform interface for <b><{$content.formTitle}></b> already exists in the other form, then this option will have no effect.</p>
+			<{if $content.type == "selectlinked" OR $content.type == "listboxlinked" OR $content.type == "autocompletelinked"}>
+				<div class="form-radios">
+				<{if $content.subformInterfaceAdminUrl}>
+					<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
+				<{else}>
+					<p><label for="makeSubformInterface"><input type="checkbox" id="makeSubformInterface" name="makeSubformInterface" clearAfterSave=1 value=1> Create a Subform interface for the <i><{$content.formTitle}></i> form inside the other form?</label></p>
+					<div class="description">
+						<p>If you check this option, a Subform interface will be created <b>in the source form</b> (not this form). A Subform interface allows users to interact with the linked entries from this form, inside the other form. You can control when and how the Subform interface shows up for users, just like any other element. If a Subform interface for <b><{$content.formTitle}></b> already exists in the other form, then this option will have no effect.</p>
+					</div>
+				<{/if}>
 				</div>
 			<{/if}>
-			</div>
 		</div>
 	</fieldset>
 </div>
