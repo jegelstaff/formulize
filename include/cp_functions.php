@@ -40,6 +40,8 @@ function icms_cp_header(){
 	icms::$logger->stopTime('Module init');
 	icms::$logger->startTime('ImpressCMS CP Output Init');
 
+	$GLOBALS['control_panel_header_called']	= true; // picked up in logger renderer as necessary to ensure UI plays nice with theme
+
 	if (!headers_sent()) {
 		header('Content-Type:text/html; charset='._CHARSET);
 		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
