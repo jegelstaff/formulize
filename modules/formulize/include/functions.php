@@ -2152,7 +2152,7 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 // note that ele_value has different contents for textboxes and selectboxes
 function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false, $dataElementsOnly = false) {
 
-    global $xoopsDB;
+		global $xoopsDB;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
     $totalcaptionlist = array();
@@ -2216,7 +2216,7 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
 				if($dataElementsOnly AND !$elementObject->hasData) {
 					continue;
 				}
-        $formlink->addOption($totalvaluelist[$i], htmlspecialchars(strip_tags($totalcaptionlist[$i]), ENT_QUOTES));
+				$formlink->addOption($totalvaluelist[$i], htmlspecialchars(strip_tags($totalcaptionlist[$i]), ENT_QUOTES));
 			}
     }
 
@@ -2516,12 +2516,12 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
 	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	  $otherElement = $element_handler->get($targetForm['keyother']);
 	  $otherEleValue = $otherElement->getVar('ele_value');
-  	  $otherListType = ($otherElement->getVar('ele_type')=="select"
+  	  $otherListType = (anySelectElementType($otherElement->getVar('ele_type'))
 			    AND is_array($otherEleValue[2])
 			    AND (key($otherEleValue[2]) == "{USERNAMES}" OR key($otherEleValue[2]) == "{FULLNAMES}")) ? key($otherEleValue[2]) : false;
 	  $selfElement = $element_handler->get($targetForm['keyself']);
 	  $selfEleValue = $selfElement->getVar('ele_value');
-  	  $selfListType = ($selfElement->getVar('ele_type')=="select"
+  	  $selfListType = (anySelectElementType($selfElement->getVar('ele_type'))
 			    AND is_array($selfEleValue[2])
 			    AND (key($selfEleValue[2]) == "{USERNAMES}" OR key($selfEleValue[2]) == "{FULLNAMES}")) ? key($selfEleValue[2]) : false;
 	  if(is_numeric($foundValue) AND $otherListType AND !$selfListType) { // convert found id to the right kind of name
@@ -2624,7 +2624,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
         if($entries_to_return !== false) {
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
-        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox') {
+        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox' OR $selfElement->getVar('ele_type') == 'checkboxlinked') {
             if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
                 $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
                 if($entries_to_return !== false) {
@@ -3639,8 +3639,10 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
             }
         } elseif ($append=="append") {
             $prevValue = q("SELECT `".$element->getVar('ele_handle')."` FROM ".$xoopsDB->prefix("formulize_".$elementFormObject->getVar('form_handle'))." WHERE entry_id=".intval($entry));
-            switch ($element->getVar('ele_type')) {
+						$switchEleType = anySelectElementType($element->getVar('ele_type')) ? "select" : $element->getVar('ele_type');
+            switch ($switchEleType) {
                 case "checkbox":
+								case "checkboxlinked":
                     $valueToWrite = $prevValue[0][$element->getVar('ele_handle')] . "*=+*:" . $value;
                     break;
 
@@ -3664,7 +3666,8 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
                     break;
 
                 default:
-                    exit("Error: unknown type of element used in a call to displayButton");
+                    error_log("Error: unknown type of element used in a call to displayButton");
+										return false;
             }
         } else {
             // append == "replace" or all other settings for append
@@ -4256,11 +4259,13 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
         $ele_value = $elementObject->getVar('ele_value');
         $ele_uitext = $elementObject->getVar('ele_uitext');
-        switch ($elementObject->getVar('ele_type')) {
+				$switchEleType = anySelectElementType($elementObject->getVar('ele_type')) ? "select" : $elementObject->getVar('ele_type');
+        switch ($switchEleType) {
             case "select":
                 $options = $ele_value[2];
                 break;
             case "checkbox":
+						case "checkboxlinked":
                 $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
                 $ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
                 $options = $ele_value[2];
@@ -4330,7 +4335,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
                 $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
-								if($elementObject->getVar('ele_type')=='select') {
+								if(anySelectElementType($elementObject->getVar('ele_type'))) {
                 	$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
 								} else {
 									$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall'], $ele_value['formlink_useonlyusersentries']);
@@ -5137,16 +5142,6 @@ function convertTypeToText($type, $ele_value) {
         case "ib":
             return "Text for display (spanning both cells)";
 
-        case "select":
-            if ($ele_value[8] == 1) {
-                return "Autocomplete box";
-            }
-            if ($ele_value[0] == 1) {
-                return "Dropdown box";
-            } else {
-                return "List box";
-            }
-
         case "subform":
             return "Subform (another form with a relationship to this one)";
 
@@ -5232,24 +5227,14 @@ function formulize_addProcedureChoicesToPost($choices) {
 // used in the admin UI
 // returns false if the element cannot be required, otherwise returns the current required setting of the element
 function removeNotApplicableRequireds($type, $req=0) {
-    switch ($type) {
-        case "select":
-        case "radio":
-        case "checkbox":
-        case "date":
-        case "yn":
-				case "colorpick":
-            return $req;
-    }
-
-    if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
-        $customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-        $customTypeElement = $customTypeHandler->create();
-        if ($customTypeElement->adminCanMakeRequired) {
-            return $req;
-        }
-    }
-    return false;
+	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+		$customTypeElement = $customTypeHandler->create();
+		if ($customTypeElement->adminCanMakeRequired) {
+				return $req;
+		}
+	}
+	return false;
 }
 
 /**
@@ -7075,12 +7060,12 @@ function formulize_parseSearchesIntoFilter($searches) {
 			if (substr($one_search, 0, 4) == "qsf_") {
 				$qsfparts = explode("_", $one_search);
 				$allowsMulti = false;
-				if ($ele_type == "select") {
+				if (anySelectElementType($ele_type)) {
 					$ele_value = $elementObject->getVar('ele_value');
 					if ($ele_value[1]) {
 						$allowsMulti = true;
 					}
-				} elseif ($ele_type == "checkbox") {
+				} elseif ($ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
 					$allowsMulti = true;
 				}
 				if ($allowsMulti) {
@@ -7687,24 +7672,16 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
   static $cachedDefaults = array();
   $defaultValueMap = array();
 	$targetFidDataHandler = new formulizeDataHandler($target_fid);
-  $element_handler = xoops_getmodulehandler('elements', 'formulize');
 
 	if(empty($elementsForDefaults)) {
-		$criteria = new CriteriaCompo();
-		/**
-		 * THIS NEEDS TO BE REFACTORED TO USE ALL ELEMENT TYPES FROM CLASSES THAT HAVE THE hasData PROPERTY!!
-		 * OR ElementTypesWithData, which is an array in the element class or something??
-		 */
-		$criteria->add(new Criteria('ele_type', 'text'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'textarea'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'date'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'time'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'radio'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'checkbox'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'yn'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'select'), 'OR');
-		$criteria->add(new Criteria('ele_type', 'slider'), 'OR');
-		$elementsForDefaults = $element_handler->getObjects($criteria,intval($target_fid));
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($target_fid);
+		foreach($formObject->getVar('elementsWithData') as $thisElementId) {
+			if($elementObject = $element_handler->get($thisElementId)) {
+				$elementsForDefaults[] = $elementObject;
+			}
+		}
 	}
 
   foreach($elementsForDefaults as $thisDefaultEle) {
