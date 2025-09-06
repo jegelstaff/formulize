@@ -293,6 +293,7 @@ $(document).ready(function() {
 					$('input[clearAfterSave=1]').removeAttr('checked');
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
+				// ele_id is set in the eval operation passed back from the initial element save operation (names/settings tab), and then passed to the rest of the save operations. Elegant or hacky?!
         sendFormData(formdata[saveCounter], ele_id);
       }
     });

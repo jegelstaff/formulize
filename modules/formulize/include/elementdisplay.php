@@ -529,9 +529,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($entry == "new") {
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
-                // get defaults for certain element types, function needs expanding
-                $defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
-                $compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
+				$defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
+				$compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
 			} else {
 				$compValue = "";
 			}
