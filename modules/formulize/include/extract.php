@@ -1093,7 +1093,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 			or ($target_ele_value and $main_ele_value and $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])
 		) {
 		    $metaData = formulize_getElementMetaData($joinHandles[$linktargetids[$linkOrdinal]], isHandle: true);
-			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox') {
+			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxlinked') {
 				// multiple values allowed
 				$newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
 			} else {
@@ -1105,7 +1105,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 			or ($main_ele_value and $target_ele_value and $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])
 		) {
 		    $metaData = formulize_getElementMetaData($joinHandles[$linkselfids[$linkOrdinal]], isHandle: true);
-			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox') {
+			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxlinked') {
 				// multiple values allowed
 				$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
 			} else {
@@ -2015,12 +2015,12 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap)
 			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
 		}
 		$formFieldFilterMap[$array['id_form']][$element_id]['isyn'] = $array['ele_type'] == "yn" ? true : false;
-		if (($array['ele_type'] == "radio" or $array['ele_type'] == "checkbox") and strstr($array['ele_value'], "{OTHER|")) {
+		if (($array['ele_type'] == "radio" OR $array['ele_type'] == "checkbox" OR $array['ele_type'] == "checkboxlinked") and strstr($array['ele_value'], "{OTHER|")) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = true;
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = false;
 		}
-		if ($array['ele_type'] == "select" and (strstr($array['ele_value'], "{FULLNAMES}") or strstr($array['ele_value'], "{USERNAMES}"))) {
+		if (anySelectElementType($array['ele_type']) and (strstr($array['ele_value'], "{FULLNAMES}") or strstr($array['ele_value'], "{USERNAMES}"))) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['isnamelist'] = strstr($array['ele_value'], "{FULLNAMES}") ? "{FULLNAMES}" : "{USERNAMES}";
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['isnamelist'] = false;
@@ -2080,9 +2080,9 @@ function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle =
 	static $cachedElements = array();
 	if (!isset($cachedElements[$elementOrHandle])) {
 		$evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
-		if ($evqRow['ele_type'] == 'checkbox') {
+		if ($evqRow['ele_type'] == 'checkbox' OR $evqRow['ele_type'] == 'checkboxlinked') {
 			$cachedElements[$elementOrHandle] = true;
-		} elseif ($evqRow['ele_type'] == 'select') {
+		} elseif (anySelectElementType($evqRow['ele_type'])) {
 			$ele_value = unserialize($evqRow['ele_value']);
 			$cachedElements[$elementOrHandle] = ($ele_value[1] == 1) ? true : false;
 		} else {
