@@ -47,6 +47,7 @@ define('ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS', 10); // array of element(s) in s
 define('ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS', 11); // array of element(s) in source form to use as the value in exported spreadsheets
 define('ELE_VALUE_SELECT_LINK_SORT', 12); // element ID of the element in the source form used to sort the options
 define('ELE_VALUE_SELECT_LINK_DEFAULTVALUE', 13); // array of the entries in the source form that have the values which should be selected by default
+// DEPRECATED AND ON DB UPDATE, LINKED SELECTS NEED TO HAVE THIS SETTING APPLIED TO THE ele_use_default_when_blank SETTING, IFF THE VALUE OF THIS SETTING IS 1
 define('ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK', 14); // 0/1 indicating if the default values should be used when the value is blank (vs default which is only use defaults on new entries)
 define('ELE_VALUE_SELECT_LINK_SORTORDER', 15); // 1/2 indicating if the sort order for linked options is ASC or DESC
 define('ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW', 16); // 0/1 indicating if the autocomplete allows new values to be entered (vs default which is only allowing selection of existing values)
@@ -60,15 +61,6 @@ class formulizeSelectElement extends formulizeElement {
 
 	var $defaultValueKey;
 
-/*
-        if($ele_type=="select") {
-            $element->hasMultipleOptions = true;
-            if($ele_value[1] == 1) {
-                $element->canHaveMultipleValues = true;
-            }
-        }
-*/
-
 	function __construct() {
 		$this->name = "Dropdown List";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -80,6 +72,25 @@ class formulizeSelectElement extends formulizeElement {
 		$this->hasMultipleOptions = true;
 		$this->isLinked = false; // set to true if this element can have linked values
 		parent::__construct();
+	}
+
+	public function getDefaultDataType() {
+		$ele_value = $this->getVar('ele_value');
+		$selectTypeName = strtolower(str_ireplace(['formulize', 'element', 'linked', 'users'], "", static::class));
+		if ($ele_value[ELE_VALUE_SELECT_MULTIPLE] == 0 AND $this->isLinked) {
+			if($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
+				$dataType = 'text';
+			} else {
+				$dataType = 'bigint';
+			}
+		} elseif ($ele_value[ELE_VALUE_SELECT_MULTIPLE] == 1) {
+			$dataType = 'text';
+		} elseif( $this->overrideDataType != "") {
+			$dataType = $this->overrideDataType;
+		} else {
+			$dataType = getRequestedDataType();
+		}
+		return $dataType;
 	}
 
 	// returns true if the option is one of the values the user can choose from in this element
@@ -187,27 +198,27 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 				// list of elements to display when showing this element in a list
 				$ele_value[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS] = isset($ele_value[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS]) ? $ele_value[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS] : 'none';
 				list($listValue, $selectedListValue) = createFieldList($ele_value[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS], false, $linkedSourceFid,
-					"elements-ele_value[".ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+					"elements-ele_value[".ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS."]", _AM_ELE_LINKSELECTEDABOVE, true, true);
 				$listValue->setValue($ele_value[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS]); // mark the current selections in the form element
 				$options['listValue'] = $listValue->render();
 
 				// list of elements to display when showing this element as an html form element (in form or list screens)
 				$ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS] = isset($ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS]) ? $ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS] : 'none';
 				list($displayElements, $selectedListValue) = createFieldList($ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS], false, $linkedSourceFid,
-					"elements-ele_value[".ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS."]", _AM_ELE_LINKSELECTEDABOVE, true);
+					"elements-ele_value[".ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS."]", _AM_ELE_LINKSELECTEDABOVE, true, true);
 				$displayElements->setValue($ele_value[ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS]); // mark the current selections in the form element
 				$options['displayElements'] = $displayElements->render();
 
 				// list of elements to export to spreadsheet
 				$ele_value[ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS] = isset($ele_value[ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS]) ? $ele_value[ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS] : 'none';
 				list($exportValue, $selectedExportValue) = createFieldList($ele_value[ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS], false, $linkedSourceFid,
-					"elements-ele_value[".ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS."]", _AM_ELE_VALUEINLIST, true);
+					"elements-ele_value[".ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS."]", _AM_ELE_VALUEINLIST, true, true);
 				$exportValue->setValue($ele_value[ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS]); // mark the current selections in the form element
 				$options['exportValue'] = $exportValue->render();
 
 				// sort order
 				list($optionSortOrder, $selectedOptionsSortOrder) = createFieldList($ele_value[ELE_VALUE_SELECT_LINK_SORT], false, $linkedSourceFid,
-					"elements-ele_value[".ELE_VALUE_SELECT_LINK_SORT."]", _AM_ELE_LINKFIELD_ITSELF);
+					"elements-ele_value[".ELE_VALUE_SELECT_LINK_SORT."]", _AM_ELE_LINKFIELD_ITSELF, dataElementsOnly: true);
 				$options['optionSortOrder'] = $optionSortOrder->render();
 
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -268,7 +279,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 		}
 
 		if ($selectedLinkElementId) {
-			$selectedElementObject = $element_handler->get($selectedLinkElementId);
+			$selectedElementObject = $this->get($selectedLinkElementId);
 			if ($selectedElementObject) {
 					$options['formlinkfilter'] = formulize_createFilterUI($ele_value[ELE_VALUE_SELECT_LINK_FILTERS], "formlinkfilter", $selectedElementObject->getVar('fid'), "form-2");
 			}
@@ -291,28 +302,40 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
 		$changed = false;
 
-		// dropdown list 1 row, multiple selections now allowed, not autocomplete
-		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
-		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
-		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // multiple selections not allowed for drop down lists
+		$selectTypeName = strtolower(str_ireplace(['formulize', 'element', 'linked', 'users'], "", static::class));
+		switch($selectTypeName) {
+			case 'listbox':
+				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
+				$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] > 1 ? intval($ele_value[ELE_VALUE_SELECT_NUMROWS]) : 1;
+				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $_POST['elements_multiple'];
+				break;
+			case 'autocomplete':
+				$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // rows is 1
+				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 1; // is autocomplete
+				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $_POST['elements_multiple_auto'];
+				break;
+			case 'select':
+			default:
+				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
+				$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
+				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // multiple selections not allowed for drop down lists
+				break;
+		}
 
-		/*
-		// autocomplete
-		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // rows is 1
-		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 1; // is autocomplete
-		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $_POST['elements_multiple_auto'];
-
-		// list box
-		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
-		$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] > 1 ? intval($ele_value[ELE_VALUE_SELECT_NUMROWS]) : 1;
-		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $_POST['elements_multiple'];
-		*/
+		// for username lists, enforce the ancient convention of using {USERNAMES} as the only option
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
+		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
+		if($userNameList) {
+			unset($ele_value[ELE_VALUE_SELECT_OPTIONS]);
+			$ele_value[ELE_VALUE_SELECT_OPTIONS] = array('{USERNAMES}' => 0);
+		}
 
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$fid = (is_object($element) AND is_a($element, 'formulizeElement')) ? $element->getVar('fid') : 0;
 			$formObject = $fid ? $form_handler->get($fid) : false;
+			$currentEleValue = $element->getVar('ele_value');
 
 			if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
 				// select box is not currently linked and user is requesting to link (as long as it's not the first save of the element)
@@ -329,7 +352,6 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 				// Get existing linked settings, if any
 				$currentLinkedFormId = 0;
 				$currentLinkedElementId = 0;
-				$currentEleValue = $element->getVar('ele_value');
 				if($element->isLinked) {
 					$currentEleValue2Parts = explode('#*=:*', $currentEleValue[ELE_VALUE_SELECT_OPTIONS]);
 					$currentLinkedFormId = $currentEleValue2Parts[0];
@@ -385,10 +407,13 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 					print "Could not convert select boxes from multiple options to single option or vice-versa.";
 				}
 			}
-			$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS] = implode(",", $_POST['element_formlink_scope']);
+			$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS] = isset($_POST['element_formlink_scope']) ? implode(",", $_POST['element_formlink_scope']) : '';
 
 			list($ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $formLinkFilterChanged) = parseSubmittedConditions('formlinkfilter', 'optionsconditionsdelete');
 			list($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $optionsLimitChanged) = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete');
+			if($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT] != $currentEleValue[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) {
+				$optionsLimitChanged = true;
+			}
 			$_POST['reload_option_page'] = ($formLinkFilterChanged OR $optionsLimitChanged OR $_POST['reload_option_page']) ? true : false;
 
 			// new entries not allowed when autocomplete is a username list? could be made to work if designated profile forms are used to manage users
@@ -562,8 +587,8 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			$boxproperties = explode("#*=:*", $ele_value[ELE_VALUE_SELECT_OPTIONS]);
 			$sourceFid = $boxproperties[0];
 			$sourceHandle = $boxproperties[1];
-			$sourceEntryIds = $ele_value['snapshot'] == 0 ? explode(",", trim($boxproperties[2],",")) : array(); // if we snapshot values, then there are no entry ids
-      $snapshotValues = $ele_value['snapshot'] == 1 ? explode("*=+*:", trim($boxproperties[2], "*=+*:")) : array(); // if we snapshot values, then put them into an array
+			$sourceEntryIds = ($ele_value['snapshot'] == 0 AND strlen(trim($boxproperties[2],",")) > 0) ? explode(",", trim($boxproperties[2],",")) : array(); // if we snapshot values, then there are no entry ids
+      $snapshotValues = ($ele_value['snapshot'] == 1 AND strlen(trim($boxproperties[2], "*=+*:")) > 0) ? explode("*=+*:", trim($boxproperties[2], "*=+*:")) : array(); // if we snapshot values, then put them into an array
 			$sourceFormObject = $form_handler->get($sourceFid);
 
 			// grab the user's groups and the module id
@@ -699,7 +724,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			if(!$isDisabled) {
 				// set the default selections, based on the entry_ids that have been selected as the defaults, if applicable
 				$hasNoValues = count((array) $sourceEntryIds) == 0 ? true : false;
-				$useDefaultsWhenEntryHasNoValue = $ele_value[ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK];
+				$useDefaultsWhenEntryHasNoValue = $element->getVar('ele_use_default_when_blank');
 				if(($entry_id == "new" OR ($useDefaultsWhenEntryHasNoValue AND $hasNoValues)) AND ((is_array($ele_value[ELE_VALUE_SELECT_LINK_DEFAULTVALUE]) AND count((array) $ele_value[ELE_VALUE_SELECT_LINK_DEFAULTVALUE]) > 0) OR $ele_value[ELE_VALUE_SELECT_LINK_DEFAULTVALUE])) {
 					$defaultSelected = $ele_value[ELE_VALUE_SELECT_LINK_DEFAULTVALUE];
 				} else {
@@ -1342,11 +1367,10 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 
 				// not a linked element...
 				} else {
-					$element_handler = xoops_getmodulehandler('elements', 'formulize');
 					if(!is_array($ele_value[ELE_VALUE_SELECT_OPTIONS]) OR !isset($ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue])) {
 						$ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
 						$element->setVar('ele_value', $ele_value);
-						$element_handler->insert($element);
+						$this->insert($element);
 					}
 					$allValues = array_keys($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 					$selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
@@ -1515,7 +1539,34 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		return $value;
+
+		// if this is a user list, we may need to convert from string to uid
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
+		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
+		if($userNameList) {
+			// if $value is not numeric, search the users table for a match on uname, taking $partialMatch into account
+			if(!is_numeric($value) AND $value !== '') {
+				global $xoopsDB;
+				$sql = "SELECT uid FROM ".$xoopsDB->prefix("users")." WHERE ";
+				if($partialMatch) {
+					$sql .= "uname LIKE '%".formulize_db_escape($value)."%'";
+				} else {
+					$sql .= "uname='".formulize_db_escape($value)."'";
+				}
+				$result = $xoopsDB->query($sql);
+				$uids = array();
+				while($row = $xoopsDB->fetchArray($result)) {
+					$uids[] = $row['uid'];
+				}
+				if($partialMatch) {
+					return $uids;
+				} else {
+					return isset($uids[0]) ? $uids[0] : 0;
+				}
+			}
+		}
+
+		return $element->isLinked == false ? convertStringToUseSpecialCharsToMatchDB($value) : $value;
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
@@ -1589,7 +1640,10 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			} else {
 				return printSmart(trans($myts->htmlSpecialChars($value)), $textWidth);
 			}
+		} elseif($element->getVar('ele_uitextshow')) {
+			$value = formulize_swapUIText($value, $element->getVar('ele_uitext'));
 		}
+
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 

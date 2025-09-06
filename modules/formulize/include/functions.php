@@ -2150,8 +2150,11 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 // THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
 // new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
 // note that ele_value has different contents for textboxes and selectboxes
-function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false) {
+function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false, $dataElementsOnly = false) {
+
     global $xoopsDB;
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
     $totalcaptionlist = array();
     $totalvaluelist = array();
     $captionlistindex = 0;
@@ -2209,7 +2212,12 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
     $formlink = new XoopsFormSelect($am_ele_formlink, $name, '', $multi_select ? 8 : 1, $multi_select);
     $formlink->addOption("none", $am_formlink_none);
     for ($i=0;$i<$captionlistindex;$i++) {
+			if($elementObject = $element_handler->get($totalvaluelist[$i])) {
+				if($dataElementsOnly AND !$elementObject->hasData) {
+					continue;
+				}
         $formlink->addOption($totalvaluelist[$i], htmlspecialchars(strip_tags($totalcaptionlist[$i]), ENT_QUOTES));
+			}
     }
 
     if (isset($defaultlinkselection)) {
@@ -8593,18 +8601,21 @@ function correctStringIntFloatTypes($value) {
 			AND count($thisElementUITexts) > 0
 			AND $thisElementUITexts[array_key_first($thisElementUITexts)]) {
 				$foundValue = array();
+				$comparisonValue = undoAllHTMLChars($value);
 				foreach ($thisElementUITexts as $thisDBValue => $thisUIText) {
+					$thisUIText = undoAllHTMLChars($thisUIText);
+					$cleanDBValue = $element->isLinked == false ? convertStringToUseSpecialCharsToMatchDB($thisDBValue) : $thisDBValue;
 					switch ($partialMatch) {
 						case false:
-							if ($thisUIText == $value) {
-								$foundValue[] = $thisDBValue;
+							if ($thisUIText == $comparisonValue) {
+								$foundValue[] = $cleanDBValue;
 								break 2; // Break out of the foreach
 							}
 							continue; // continue foreach
 						case true:
 						default:
-							if ($value and stristr($thisUIText, $value) !== false) {
-								$foundValue[] = $thisDBValue;
+							if ($comparisonValue and stristr($thisUIText, $comparisonValue) !== false) {
+								$foundValue[] = $cleanDBValue;
 							}
 					}
 				}
