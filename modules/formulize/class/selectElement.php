@@ -151,16 +151,13 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			$options['listordd'] = $ele_value[ELE_VALUE_SELECT_NUMROWS] == 1 ? 0 : 1;
 			$options['listordd'] = $ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1 ? 2 : $options['listordd'];
 			$options['multiple'] = $ele_value[ELE_VALUE_SELECT_MULTIPLE];
-			$options['multiple_auto'] = $ele_value[ELE_VALUE_SELECT_MULTIPLE];
-			if (!is_array($ele_value[ELE_VALUE_SELECT_OPTIONS])) {
-					$options['islinked'] = 1;
-			} else {
-					$options['islinked'] = 0;
-					if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
-							$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_mergeUIText($ele_value[ELE_VALUE_SELECT_OPTIONS], $ele_uitext);
-					}
-					$options['useroptions'] = $ele_value[ELE_VALUE_SELECT_OPTIONS];
-					$options['usernameslist'] = (key($options['useroptions']) == '{USERNAMES}' OR key($options['useroptions']) == '{FULLNAMES}') ? true : false;
+			$options['isLinked'] = $element->isLinked;
+			if($element->isLinked == false) {
+				if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
+					$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_mergeUIText($ele_value[ELE_VALUE_SELECT_OPTIONS], $ele_uitext);
+				}
+				$options['useroptions'] = $ele_value[ELE_VALUE_SELECT_OPTIONS];
+				$options['usernameslist'] = (key($options['useroptions']) == '{USERNAMES}' OR key($options['useroptions']) == '{FULLNAMES}') ? true : false;
 			}
 			$options['formlink_scope'] = explode(",",$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS]);
 
@@ -168,9 +165,9 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 		} else {
 			$options['listordd'] = 0; // 0 is listbox, 1 is dropdown, 2 is autocomplete
 			$options['multiple'] = 0;
-			$options['multiple_auto'] = 0;
 			$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
 			$options['islinked'] = 0;
+			$options['usernameslist'] = substr($_GET['type'], -5) == 'users' ? true : false;
 			$options['formlink_scope'] = array(0=>'all');
 			$ele_value = array();
 			$ele_uitext = array();
@@ -302,17 +299,28 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
 		$changed = false;
 
-		$selectTypeName = strtolower(str_ireplace(['formulize', 'element', 'linked', 'users'], "", static::class));
+		$postedMultipleValue = isset($_POST['elements_multiple']) ? intval($_POST['elements_multiple']) : 0;
+
+		// for username lists, enforce the ancient convention of using {USERNAMES} as the only option
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'elementhandler'], "", static::class));
+		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
+		if($userNameList) {
+			unset($ele_value[ELE_VALUE_SELECT_OPTIONS]);
+			$ele_value[ELE_VALUE_SELECT_OPTIONS] = array('{USERNAMES}' => 0);
+		}
+
+		$selectTypeName = strtolower(str_ireplace(['formulize', 'elementhandler', 'linked', 'users'], "", static::class));
 		switch($selectTypeName) {
 			case 'listbox':
 				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0;
-				$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] > 1 ? intval($ele_value[ELE_VALUE_SELECT_NUMROWS]) : 1;
-				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $_POST['elements_multiple'];
+				$ele_value[ELE_VALUE_SELECT_NUMROWS] = ($userNameList OR $element->isLinked) ? 10 : (count((array)$_POST['ele_value']) < 10 ? count($_POST['ele_value']) : 10);
+				$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] < 1 ? 1 : $ele_value[ELE_VALUE_SELECT_NUMROWS]; // min of 1
+				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $postedMultipleValue;
 				break;
 			case 'autocomplete':
 				$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // rows is 1
 				$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 1; // is autocomplete
-				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $_POST['elements_multiple_auto'];
+				$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $postedMultipleValue;
 				break;
 			case 'select':
 			default:
@@ -322,14 +330,6 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 				break;
 		}
 
-		// for username lists, enforce the ancient convention of using {USERNAMES} as the only option
-		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
-		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
-		if($userNameList) {
-			unset($ele_value[ELE_VALUE_SELECT_OPTIONS]);
-			$ele_value[ELE_VALUE_SELECT_OPTIONS] = array('{USERNAMES}' => 0);
-		}
-
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -337,13 +337,13 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			$formObject = $fid ? $form_handler->get($fid) : false;
 			$currentEleValue = $element->getVar('ele_value');
 
+			global $xoopsDB;
+
 			if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
 				// select box is not currently linked and user is requesting to link (as long as it's not the first save of the element)
 				if ($_POST['formulize_admin_key'] != 'new' AND !$element->isLinked) {
 					$form_handler->updateField($element, $element->getVar("ele_handle"), "bigint(20)");
 				}
-
-				global $xoopsDB;
 				$sql_link = "SELECT id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
 				$res_link = $xoopsDB->query($sql_link);
 				$array_link = $xoopsDB->fetchArray($res_link);
@@ -394,14 +394,13 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			}
 
 			// if there is a change to the multiple selection status, need to adjust the database!!
-			if ((
-					($ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 0 AND isset($ele_value[ELE_VALUE_SELECT_MULTIPLE]) AND $ele_value[ELE_VALUE_SELECT_MULTIPLE] != $_POST['elements_multiple'])
-					OR ($ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1 AND isset($ele_value[ELE_VALUE_SELECT_MULTIPLE]) AND $ele_value[ELE_VALUE_SELECT_MULTIPLE] != $_POST['elements_multiple_auto'])
-					) AND !$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
-				if ($ele_value[1] == 0) {
-					$result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $element->getVar('ele_id'));
+			if (isset($currentEleValue[ELE_VALUE_SELECT_MULTIPLE])
+					AND $currentEleValue[ELE_VALUE_SELECT_MULTIPLE] != $postedMultipleValue
+					AND !$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
+				if ($currentEleValue[ELE_VALUE_SELECT_MULTIPLE] == 0) {
+					$result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $element->getVar('ele_handle'));
 				} else {
-					$result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $element->getVar('ele_id'));
+					$result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $element->getVar('ele_handle'));
 				}
 				if (!$result) {
 					print "Could not convert select boxes from multiple options to single option or vice-versa.";
@@ -806,6 +805,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			}
 			// if we're rendering an autocomplete box...
 			if(!$isDisabled AND $ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1) {
+				$default_value_user = array();
 				foreach($default_value as $dv) {
 					$default_value_user[$dv] = count((array) $snapshotValues) > 0 ? $dv : $cachedSourceValuesQ[intval($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT])][$sourceValuesQ][$dv]; // take the literal or the reference, depending if we snapshot or not
 				}
@@ -1396,7 +1396,11 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 					print "ERROR: more than one new value created in a selectbox, when the selectbox does not allow multiple values. Check the settings of element '".$element->getVar('ele_caption')."'.";
 				}
 				$value = $thisNewValue;
+				$originalValue = $thisNewValue; // update original for handling out of range stuff later
 			}
+		}
+		if(!empty($newWrittenValues) AND !is_array($value) AND count((array) $newWrittenValues)>1) {
+			$originalValue = $value; // update original for handling out of range stuff later
 		}
 
 		// section to handle linked select boxes differently from others
@@ -1541,7 +1545,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 
 		// if this is a user list, we may need to convert from string to uid
-		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'elementhandler'], "", static::class));
 		$userNameList = strstr($elementTypeName, 'users') ? true : false; // is this a user list?
 		if($userNameList) {
 			// if $value is not numeric, search the users table for a match on uname, taking $partialMatch into account
@@ -1566,7 +1570,8 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			}
 		}
 
-		return $element->isLinked == false ? convertStringToUseSpecialCharsToMatchDB($value) : $value;
+		$ele_value = $element->getVar('ele_value');
+		return ($element->isLinked == false AND $ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == false)  ? convertStringToUseSpecialCharsToMatchDB($value) : $value;
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared

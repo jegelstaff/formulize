@@ -969,6 +969,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	//   print "<br>";
 	//}
 	//}
+
 	formulize_benchmark("Before query");
 
 	if (count((array) $linkformids) > 1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
@@ -2015,7 +2016,7 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap)
 			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
 		}
 		$formFieldFilterMap[$array['id_form']][$element_id]['isyn'] = $array['ele_type'] == "yn" ? true : false;
-		if (($array['ele_type'] == "radio" OR $array['ele_type'] == "checkbox" OR $array['ele_type'] == "checkboxlinked") and strstr($array['ele_value'], "{OTHER|")) {
+		if (($array['ele_type'] == "radio" OR $array['ele_type'] == "checkbox" OR anySelectElementType($array['ele_type'])) AND strstr($array['ele_value'], "{OTHER|")) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = true;
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = false;
