@@ -8580,19 +8580,26 @@ function correctStringIntFloatTypes($value) {
 				$foundValue = array();
 				$comparisonValue = undoAllHTMLChars($value);
 				foreach ($thisElementUITexts as $thisDBValue => $thisUIText) {
+					if(undoAllHTMLChars($thisDBValue) === $comparisonValue) { // exact match on DB value trumps everything
+						$foundValue[] = $thisDBValue;
+						if($partialMatch === false) {
+							break; // we're done, found a match
+						} else {
+							continue; // keep looking for more matches
+						}
+					}
 					$thisUIText = undoAllHTMLChars($thisUIText);
-					$cleanDBValue = $element->isLinked == false ? convertStringToUseSpecialCharsToMatchDB($thisDBValue) : $thisDBValue;
 					switch ($partialMatch) {
 						case false:
 							if ($thisUIText == $comparisonValue) {
-								$foundValue[] = $cleanDBValue;
+								$foundValue[] = $thisDBValue;
 								break 2; // Break out of the foreach
 							}
 							continue; // continue foreach
 						case true:
 						default:
 							if ($comparisonValue and stristr($thisUIText, $comparisonValue) !== false) {
-								$foundValue[] = $cleanDBValue;
+								$foundValue[] = $thisDBValue;
 							}
 					}
 				}

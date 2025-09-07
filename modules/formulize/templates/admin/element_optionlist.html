@@ -28,6 +28,16 @@
   <{if $content.typeIsSelect}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
+
+<{if $content.type != "select" AND $content.type != "selectlinked" OR $content.type != "selectusers"}>
+	<{include file="db:admin/element_multiple_onoff.html"}>
+<{/if}>
+
+<{if $content.type == "autocomplete" OR $content.type == "autocompletelinked"}>
+	<br>
+	<{include file="db:admin/element_autocomplete_allownew.html"}>
+<{/if}>
+
 <hr style='margin-top: 1em; border: 0px; border-top: 1px dashed black; height: 1px;'>
 <div>
     <p>If you are using the pipe character to store alternative values in the database:<br />
