@@ -2266,7 +2266,7 @@ function findMatchingIdReq($element, $fid, $value) {
 // $handle is the data handle for the element
 function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 
-	if(!$textWidth) {
+	if(!$textWidth AND $textWidth !== 0 AND $textWidth !== "0") {
 		$textWidth = 35;
 	}
 
