@@ -179,6 +179,7 @@ switch($op) {
     $entryId = intval($_GET['param3']);
     $fid = intval($_GET['param4']);
     $deInstanceCounter = intval($_GET['param5']);
+		$textWidth = isset($_GET['param6']) ? intval($_GET['param6']) : 0;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -187,7 +188,7 @@ switch($op) {
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
-    print getHTMLForList($preppedValue,$handle,$entryId,1,0,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
+    print getHTMLForList($preppedValue,$handle,$entryId,1,$textWidth,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
     break;
 
   case 'get_element_row_html':
