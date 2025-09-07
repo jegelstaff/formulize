@@ -752,6 +752,12 @@ $modversion['templates'][] = array(
 $modversion['templates'][] = array(
 	'file' => 'admin/relationship_connection_options.html',
 	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_autocomplete_allownew.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_multiple_onoff.html',
+	'description' => '');
 
 
 //	Module Configs

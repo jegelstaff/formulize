@@ -3,6 +3,18 @@
 		<legend>What is the source of the options the user can choose from?</legend>
 		<div id="linkedSourceOptions">
 			<{$content.linkedoptions}>
+
+			<{if $content.type != "select" AND $content.type != "selectlinked" OR $content.type != "selectusers"}>
+				<br>
+				<br>
+				<{include file="db:admin/element_multiple_onoff.html"}>
+			<{/if}>
+
+			<{if $content.type == "autocomplete" OR $content.type == "autocompletelinked"}>
+				<br>
+				<{include file="db:admin/element_autocomplete_allownew.html"}>
+			<{/if}>
+
 			<div class="form-radios" id="snapshot-values" style="padding-top: 1em;">
 				<label for="snapshot-0"><input type="radio" id="snapshot-0" name="elements-ele_value[snapshot]" value=0 checked> When people select a value, save a reference to the source</label><br>
 				<label for="snapshot-1"><input type="radio" id="snapshot-1" name="elements-ele_value[snapshot]" value=1> When people select a value, save a snapshot of the value</label>
