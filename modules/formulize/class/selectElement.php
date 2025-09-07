@@ -151,7 +151,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			$options['listordd'] = $ele_value[ELE_VALUE_SELECT_NUMROWS] == 1 ? 0 : 1;
 			$options['listordd'] = $ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1 ? 2 : $options['listordd'];
 			$options['multiple'] = $ele_value[ELE_VALUE_SELECT_MULTIPLE];
-			$options['isLinked'] = $element->isLinked;
+			$options['islinked'] = $element->isLinked;
 			if($element->isLinked == false) {
 				if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
 					$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_mergeUIText($ele_value[ELE_VALUE_SELECT_OPTIONS], $ele_uitext);
