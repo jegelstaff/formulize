@@ -1576,7 +1576,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=formulize_scrollx id=formulize_scrollx value=\"\"></input>\n";
 	print "<input type=hidden name=formulize_scrolly id=formulize_scrolly value=\"\"></input>\n";
 
-	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns']); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns'], $screen); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$buttonCodeArray['quickSearches'] = $quickSearches;
 
@@ -3243,7 +3243,7 @@ $output
 
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns) {
+function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen) {
 
 	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js'></script>";
 
@@ -3333,6 +3333,7 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 					formulize_xhr_params[2] = entryId;
 					formulize_xhr_params[3] = fid;
 					formulize_xhr_params[5] = deInstanceCounter;
+					formulize_xhr_params[6] = <?php print $screen ? $screen->getVar('textwidth') : 0; ?>;
 					formulize_xhr_send('get_element_value',formulize_xhr_params);
 				}
 			});
