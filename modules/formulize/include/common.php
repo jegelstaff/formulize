@@ -104,12 +104,14 @@ function formulize_exception_handler($exception) {
 	global $xoopsConfig, $xoopsUser;
 	$stackTrace = "";
 	$errorMessage = "";
+	$assistance = "";
 	// stacktrace included for webmasters
 	if($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 		$stackTrace = "<ul id='formulize-stacktrace'><li>".str_replace("\n", "</li><li>", str_replace(XOOPS_ROOT_PATH, "", $exception->getTraceAsString()))."</li></ul>";
 		$errorMessage = sprintf(_formulize_ERRORMSGONSCREEN, $exception->getMessage(), $exception->getLine(), str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()));
 		$notifyWebmaster = '';
 		$token = '';
+		$assistance = "<p>You can contact <a href='mailto:help@formulize.net?subject=Formulize error: $errorMessage'>help@formulize.net</a> for assistance.</p>";
 	} else {
 		$token = $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_error_token');
 		$mailTemplateFolder = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template";
@@ -167,7 +169,8 @@ function formulize_exception_handler($exception) {
 	$errorMessage
 	<p>"._formulize_ERRORLOGGED."</p>
 	$notifyWebmaster
-	$stackTrace";
+	$stackTrace
+	$assistance";
 	include XOOPS_ROOT_PATH.'/footer.php';
 	exit();
 }
