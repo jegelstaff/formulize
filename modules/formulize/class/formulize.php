@@ -181,25 +181,37 @@ class formulizeHandler {
 		$form_handler = xoops_getModuleHandler('forms', 'formulize');
 		$application_handler = xoops_getmodulehandler('applications','formulize');
 		$gperm_handler = xoops_gethandler('groupperm');
-		global $xoopsDB;
+		global $xoopsDB, $xoopsUser;
 		$fid = 0;
 		// if fid is set in the properties array, use that to load the form object
 		if(isset($formObjectProperties['fid'])) {
 			$fid = intval($formObjectProperties['fid']);
 		}
 		// get the form object that we care about, or start a new one from scratch if fid is 0, null, etc.
+		$originalFormNames = array();
 		$formIsNew = true;
 		if($fid AND $formObject = $form_handler->get($fid)) {
+
+			$mid = getFormulizeModId();
+			$gperm_handler = xoops_gethandler('groupperm');
+			if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $fid, $xoopsUser->getGroups(), $mid) == false) {
+				throw new Exception("Permission denied: You don't have permission to edit this form.");
+			}
 			$formIsNew = false;
+			$originalFormNames = array(
+				'singular' => $formObject->getSingular(),
+				'plural' => $formObject->getPlural(),
+				'form_handle' => $formObject->getVar('form_handle')
+			);
 		} else {
+			if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+				throw new Exception("Permission denied: You must be an administrator to create a new form.");
+			}
+			$formObject = false;
 			$formObject = $form_handler->create();
 			$formObjectProperties['title'] = $formObjectProperties['title'] ? $formObjectProperties['title'] : 'New Form';
 		}
-		$originalFormNames = array(
-			'singular' => $formObject->getSingular(),
-			'plural' => $formObject->getPlural(),
-			'form_handle' => $formObject->getVar('form_handle')
-		);
+
 		// set all the properties that were passed in
 		foreach($formObjectProperties as $property=>$value) {
   		$formObject->setVar($property, $value);
@@ -300,4 +312,208 @@ class formulizeHandler {
 		return true;
 	}
 
-}
+	/**
+	 * Builds or updates a form element, including creating or renaming the data table field, adding the element to screens, renaming files...
+	 * @param array $elementObjectProperties An associative array of properties to set on the element object.  If 'ele_id' is included and is non-zero, it will update that element.  If 'ele_id' is not included or is zero, it will create a new element.
+	 * @param array $screenIdsAndPagesForAdding Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be added to. For new elements, if this is empty then they will be added to all multipage screens, on their form, that include all elements.
+	 * @param array $screenIdsAndPagesForRemoving Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be removed from. For new elements, this is ignored.
+	 * @param string $dataType The data type to use for the database field for this element. If null, default determination of datatypes is used.
+	 * @throws Exception if there are any problems creating or updating the element
+	 * @return object returns the element object
+	 */
+	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null) {
+
+		$element_handler = xoops_getmodulehandler('elements','formulize');
+		$element_id = 0;
+		// if ele_id is set in the properties array, use that to load the element object
+		if(isset($elementObjectProperties['ele_id'])) {
+			$element_id = intval($elementObjectProperties['ele_id']);
+		}
+
+		list($elementTypes, $mpcElementDescriptions) = formulizeHandler::discoverElementTypes();
+		$originalElementNames = array();
+		$elementIsNew = true;
+		// get the element object that we care about, or start a new one from scratch if ele_id is 0, null, etc.
+		if($element_id AND $elementObject = $element_handler->get($element_id)) {
+			$elementIsNew = false;
+			$form_id = $elementObject->getVar('fid');
+			$originalElementNames = array(
+				'ele_handle' => $elementObject->getVar('ele_handle')
+			);
+		} elseif(isset($elementObjectProperties['fid']) AND $elementObjectProperties['fid'] > 0 AND isset($elementObjectProperties['ele_type']) AND in_array($elementObjectProperties['ele_type'], $elementTypes)) {
+			$elementObject = $element_handler->create();
+			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
+			$form_id = intval($elementObjectProperties['fid']);
+		} else {
+			if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
+				throw new Exception('Invalid element type: '.$elementObjectProperties['ele_type'].'. Valid types: '.implode(', ', $elementTypes));
+			}
+			throw new Exception('Must provide a valid ele_id to update an existing element, or a valid fid and ele_type to create a new element');
+		}
+
+		global $xoopsUser, $xoopsDB;
+		$mid = getFormulizeModId();
+		$gperm_handler = xoops_gethandler('groupperm');
+		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $form_id, $xoopsUser->getGroups(), $mid) == false) {
+			throw new Exception("Permission denied: You don't have permission to edit this form.");
+		}
+
+		$elementTypeHandler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element', 'formulize');
+		$elementObjectProperties  = $elementTypeHandler->setupAndValidateElementProperties($elementObjectProperties);
+
+		// set all the properties that were passed in and validated
+		foreach($elementObjectProperties as $property=>$value) {
+			$elementObject->setVar($property, $value);
+		}
+		if($elementTypeHandler->insert($elementObject) == false) {
+			// most likely a DB error?
+			throw new Exception('Could not create/update element. '.$xoopsDB->error());
+		}
+
+		if($elementIsNew) {
+			// If no screens specified for adding, add the element to screens on its form where all elements are included already
+			if(empty($screenIdsAndPagesForAdding)) {
+				addElementToMultiPageScreens($elementObject->getVar('fid'), $elementObject);
+			}
+			// override passed in $dataType from the element class, if appropriate
+			if(method_exists($elementObject, 'getDefaultDataType')) {
+				$dataType = $elementObject->getDefaultDataType();
+			} elseif(property_exists($elementObject, 'overrideDataType') AND $elementObject->overrideDataType != "") {
+				$dataType = $elementObject->overrideDataType;
+			} elseif($dataType === null) {
+				$dataType = 'text'; // default if nothing else is specified
+			}
+			if($form_handler->insertElementField($elementObject, $dataType) == false) {
+				throw new Exception("Could not create or update the database field for this element: ".$elementObject->getVar('ele_handle')." DB error: ".$xoopsDB->error());
+			}
+		}
+
+		if(!$elementIsNew) {
+
+			// rename element resources if necessary
+			if($originalElementNames['ele_handle'] != $elementObject->getVar('ele_handle')) {
+				$element_handler->renameElementResources($elementObject, $originalElementNames['ele_handle']);
+			}
+
+			// rename the field in the data table if necessary
+			// also manage the datatype in the database if necessary
+	    $currentDataTypeInfo = $element->getDataTypeInformation();
+	 	  $currentDataType = $currentDataTypeInfo['dataType'];
+			$ele_value = $elementObject->getVar('ele_value');
+
+			if($element->hasData AND
+				($originalElementNames['ele_handle'] != $elementObject->getVar('ele_handle')
+    			OR $dataType != $currentDataType
+			  	OR (isset($ele_value['snapshot']) AND $ele_value['snapshot'] AND $currentDataTypeInfo != 'text'))
+				) {
+					// figure out if the datatype needs changing...
+					if($elementObject->getVar('ele_encrypt')) {
+						$dataType = false;
+					} elseif(isset($ele_value['snapshot']) AND $ele_value['snapshot'] AND $currentDataType != 'text') {
+						$dataType = 'text';
+					} elseif($dataType === $currentDataType) {
+						$dataType = false; // does not need changing in the data table
+					}
+					// need to update the name of the field in the data table, and possibly update the type too
+					if(!$updateResult = $form_handler->updateField($element, $originalElementNames['ele_handle'], $dataType)) {
+						throw new Exception("Could not update the data table field to match the new settings");
+					}
+			}
+
+			// handle the add/remove of element from screens/pages
+			$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			foreach($screenIdsAndPagesForAdding as $screenId=>$pageOrdinals) {
+				$screenObject = $screen_handler->get($screenId);
+				$pages = $screenObject->getVar('pages');
+				foreach($pageOrdinals as $pageOrdinal) {
+					$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
+				}
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$insertResult = $screen_handler->insert($screenObject, force: true);
+				if($insertResult == false) {
+					throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				}
+			}
+			foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinal) {
+				$screenObject = $screen_handler->get($screenId);
+				$pages = $screenObject->getVar('pages');
+				foreach($pageOrdinals as $pageOrdinal) {
+					$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
+					if($key !== false) {
+						unset($pages[$pageOrdinal][$key]);
+					}
+				}
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$insertResult = $screen_handler->insert($screenObject, force: true);
+				if($insertResult == false) {
+					throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				}
+			}
+
+		}
+
+		return $elementObject;
+	}
+
+	/**
+	 * Discover available element types and their MCP descriptions
+	 * Caches results statically
+	 * @param bool $mcpTypeNames If true, will return the element type names as they should be used in the MCP (with _ instead of no space, before users or linked modifiers)
+	 * @return array [elementTypes array, elementDescriptions array]
+	 */
+	public static function discoverElementTypes($mcpTypeNames = false) {
+		static $elementTypes = [];
+		static $elementDescriptions = [];
+		if(empty($elementTypes) OR empty($elementDescriptions)) {
+			// Scan for element class files
+			$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
+			$elementFiles = glob($elementClassPath . '/*Element.php');
+			if($elementFiles === false) {
+				throw new FormulizeMCPException('No element class files found in ' . $elementClassPath, 'internal_formulize_error');
+			}
+			foreach ($elementFiles as $file) {
+				include_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.basename($file);
+				$elementType = str_replace('Element.php', '', basename($file));
+				if(method_exists('formulize'.ucfirst($elementType).'Element', 'getMCPElementPropertiesDescription')) {
+					$elementTypes[] = $mcpTypeNames ? str_replace('linked', '_linked', str_replace('users', '_users', $elementType)) : $elementType;
+					$className = "formulize".ucfirst($elementType)."Element";
+					$elementDescriptions = $elementDescriptions + $className::mcpElementPropertiesDescriptionAndExamples();
+				}
+			}
+		}
+		return [$elementTypes, $elementDescriptions];
+	}
+
+
+	/**
+	 * Ensures that an element handle is unique within a form, modifying it if necessary
+	 * One of elementIdentifer, or formIdentifier must be provided
+	 * @param string $element_handle_name The desired element handle name (not the existing handle name, if we're dealing with an existing element)
+	 * @param int $elementIdentifer The element id or handle or full object of the element being updated (0 if creating a new element)
+	 * @param int $formIdentifier The form id or handle of the form this element belongs to
+	 * @return string A unique element handle name
+	 */
+	static function enforceUniqueElementHandles($element_handle_name, $elementIdentifer=null, $formIdentifier=null) {
+    $element_handle_name = formulizeElement::sanitize_handle_name($element_handle_name);
+    if (strlen($element_handle_name)) {
+			$firstUniqueCheck = true;
+			$element_handler = xoops_getmodulehandler('elements','formulize');
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($elementIdentifer AND $elementObject = $element_handler->get($elementIdentifer)) {
+				$formId = $elementObject->getVar('fid');
+			} elseif($formIdentifier AND $formObject = $form_handler->get($formIdentifier)) {
+				$formId = $formObject->getVar('fid');
+			} else {
+				throw new Exception("Must provide either elementIdentifer or formIdentifier to enforce unique element handles");
+			}
+			while (!$uniqueCheck = $form_handler->isElementHandleUnique($element_handle_name, $elementIdentifer)) {
+				if ($firstUniqueCheck) {
+						$element_handle_name = $element_handle_name . "_".$formId;
+						$firstUniqueCheck = false;
+				} else {
+						$element_handle_name = $element_handle_name . "_copy";
+				}
+			}
+		}
+		return $element_handle_name;
+	}

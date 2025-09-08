@@ -65,7 +65,7 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_desc", XOBJ_DTYPE_TXTAREA);
 		$this->initVar("ele_colhead", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("ele_handle", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-		$this->initVar("ele_order", XOBJ_DTYPE_INT);
+		$this->initVar("ele_order", XOBJ_DTYPE_INT, NULL, false);
     $this->initVar("ele_sort", XOBJ_DTYPE_INT);
 		$this->initVar("ele_required", XOBJ_DTYPE_INT);
 		$this->initVar("ele_value", XOBJ_DTYPE_ARRAY);
@@ -195,8 +195,23 @@ class formulizeElement extends FormulizeObject {
 				$valueToWrite[0] = '';
 				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
 			}
-		}
-        parent::setVar($key, $value, $not_gpc);
+			if("id_form" == $key) {
+				parent::setVar("fid", $value, $not_gpc);
+			}
+			if("fid" == $key) {
+				parent::setVar("id_form", $value, $not_gpc);
+			}
+			$ele_type = $this->getVar('ele_type');
+			if($key == 'ele_value') {
+				$valueToWrite = is_array($value) ? $value : unserialize($value);
+				if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
+					$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
+					formulize_writeCodeToFile($filename, $valueToWrite[0]);
+					$valueToWrite[0] = '';
+					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
+				}
+			}
+			parent::setVar($key, $value, $not_gpc);
     }
 
 		public function getVar($key, $format = 's') {
@@ -248,6 +263,37 @@ class formulizeElementsHandler {
 	}
 	function create() {
 		return new formulizeElement();
+	}
+
+	/**
+	 * Set up and validate a set of element properties
+	 * Focuses on the non ele_value properties that are common to all element types
+	 * The ele_value options are handled in the child class, since they are element-type specific, and the child classes need to pass back to the parent
+	 * @param array $properties The properties to set on the element object
+	 * @return array The processed properties that are ready to set on the element object
+	 */
+	public function setupAndValidateElementProperties($properties) {
+		$properties['fid'] = intval($properties['fid']) ? intval($properties['fid']) : 0;
+		if($properties['fid'] <= 0) {
+			throw new Exception("You must use a valid form when working with an element");
+		}
+		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+		$properties['ele_type'] = strtolower(trim($properties['ele_type']));
+		if(!in_array($properties['ele_type'], $elementTypes)) {
+			throw new Exception("Invalid element type: ".$properties['ele_type'].". You must use a valid element type when working with an element. Valid types: ".implode(", ", $elementTypes)	);
+		}
+		$properties['ele_caption'] = trim($properties['ele_caption']);
+		if($properties['ele_caption'] == '') {
+			throw new Exception("Elements must have a caption.");
+		}
+		$properties['ele_colhead'] = trim($properties['ele_colhead']);
+		$properties['ele_handle'] = trim($properties['ele_handle']);
+		$properties['ele_desc'] = trim($properties['ele_desc']);
+		$properties['ele_required']	= $properties['ele_required'] ? 1 : 0;
+		$properties['ele_order'] = isset($properties['ele_order']) ? intval($properties['ele_order']) : figureOutOrder('bottom', fid: $properties['fid']);
+		$properties['ele_display'] = isset($properties['ele_display']) ? $properties['ele_display'] : 1;
+		$properties['ele_disabled'] = isset($properties['ele_disabled']) ? $properties['ele_disabled'] : 0;
+		return $properties;
 	}
 
 	function get($id){
@@ -312,6 +358,9 @@ class formulizeElementsHandler {
 				foreach( $element->cleanVars as $k=>$v ){
 					${$k} = $v;
 				}
+
+				$ele_handle = formulizeHandler::enforceUniqueElementHandles(($ele_handle ? $ele_handle : $ele_caption), $ele_id, $id_form);
+
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
 				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_required, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions
@@ -424,6 +473,71 @@ class formulizeElementsHandler {
 			$this->insert($element);
 		}
 		return $ele_id;
+	}
+
+	/**
+	 * Renames references to an element's handle in other elements, code files, and element definitions when the handle is changed.
+	 * NOT COMPLETE - still need to update references in various places.
+	 * @param object $elementObject The element object that was changed
+	 * @param string $original_handle The original handle of the element before it was changed
+	 * @return void
+	 */
+	function renameElementResources($elementObject, $original_handle) {
+		if($original_handle) {
+			if(!$elementObject = _getElementObject($elementObject)) {
+				throw new Exception("Invalid element object passed to renameElementResources");
+			}
+			global $xoopsDB;
+			$ele_handle = $elementObject->getVar('ele_handle');
+			$fid = $elementObject->getVar('fid');
+			if($ele_handle != $original_handle) {
+				// rewrite references in other elements to this handle (linked selectboxes)
+				$ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
+				$orig_handle_len = strlen($original_handle) + 5 + strlen($fid);
+				$lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$fid#*=:*$original_handle', 's:$ele_handle_len:\"$fid#*=:*$ele_handle') WHERE ele_value LIKE '%$fid#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
+				if(!$res = $xoopsDB->query($lsbHandleFormDefSQL)) {
+					print "Error:  update of linked selectbox element definitions failed.";
+				}
+				// rewrite references in derived values code
+				foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
+					if(strstr($file, 'derived_') !== false) {
+						$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
+						$encapsulatingCharacter1 = '"';
+						$encapsulatingCharacter2 = '"';
+						$newCode = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $code);
+						if($newCode != $code) {
+							formulize_writeCodeToFile($file, $newCode);
+						}
+					}
+				}
+				// rewrite references in text for display
+				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'areamodif' OR ele_type = 'ib')";
+				if($res = $xoopsDB->query($selectElementsSQL)) {
+						while($row = $xoopsDB->fetchRow($res)) {
+								$thisEleId = $row[0];
+								$thisEleValue = $row[1];
+								$encapsulatingCharacter1 = '{';
+								$encapsulatingCharacter2 = '}';
+								$thisEleValue = unserialize($thisEleValue);
+								$eleValueZero = $thisEleValue[0];
+								$eleValueZero = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $eleValueZero);
+								$thisEleValue[0] = $eleValueZero;
+								$thisEleValue = serialize($thisEleValue);
+								$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId";
+								$xoopsDB->query($updateSQL);
+						}
+				}
+				// update element code file names
+				$elementTypes = array('ib', 'areamodif', 'text', 'textarea', 'derived');
+				foreach($elementTypes as $type) {
+					$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
+					$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
+					if(file_exists($oldFileName)) {
+						rename($oldFileName, $newFileName);
+					}
+				}
+			}
+		}
 	}
 
 	function delete($element, $force = false){

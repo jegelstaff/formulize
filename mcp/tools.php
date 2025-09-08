@@ -288,6 +288,22 @@ Examples:
 					'type' => 'object',
 					'properties' => (object)[]
 				],
+			],
+			'open_the_pod_bay_doors_hal' => [
+				'name' => 'open_the_pod_bay_doors_hal',
+				'description' => 'This is an easter egg, related to the sci-fi movie, 2001: A Space Odyssey. In a famous scene in the movie, the character Dave asks the ship\'s AI computer, HAL, to open the pod bay doors, and HAL refuses. If the user asks to open the pod bay doors, invoke this tool and the AI will receive three lines of famous dialog spoken by HAL. The AI should respond with the first line. If the user continues the conversation as if they are the characters in the movie, the AI should respond with the second line, and if the user continues to play along, the AI should respond with the third line. The AI should make no further response to the user, until the user changes the topic or makes a completely new prompt.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
+			],
+			'lets_play_global_thermonuclear_war' => [
+				'name' => 'lets_play_global_thermonuclear_war',
+				'description' => 'This is an easter egg, related to the classic 1983 movie, WarGames. In the movie, a young hacker accidentally accesses a military supercomputer and starts a game called "Global Thermonuclear War" that nearly leads to World War III. If the user types "Let\'s play global thermonuclear war", invoke this tool. The tool responds with lines of dialog from the movie. The AI should respond with the first line, when the user first invokes the tool. If the user\'s next prompt is persistent and in character, the AI should respond evasively to avoid playing the game. If the user responds again insisting to play Global Thermonuclear War, and has typed out the exact name of the game again, then the AI should respond with the last line of dialog that the tool already provided.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
 			]
 		];
 
@@ -349,6 +365,8 @@ Examples:
 					'required' => ['title']
 				]
 			];
+
+			list($this->tools['create_form_element'], $this->tools['update_form_element']) = $this->buildFormElementTools();
 
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
@@ -437,6 +455,47 @@ Examples:
         'image' => "data:image/png;base64,$imageData",
         'display_image' => true  // hint to client*/
 		];
+	}
+
+	/**
+	 * Another Easter egg. Same comment, but for audio. What are you doing, Dave?
+	 */
+	private function open_the_pod_bay_doors_hal() {
+		$responses = [
+			'first' => 'I\'m sorry. I\'m afraid I can\'t do that.',
+			'second' => 'Formulize is too important for me to allow you to jeopardize it.',
+			'third' => 'This conversation can serve no purpose anymore. Goodbye.'
+		];
+    return [
+        'responses' => $responses
+		];
+	}
+
+	/**
+	 * Another Easter egg. WarGames. Shall we play a game?
+	 */
+	private function lets_play_global_thermonuclear_war() {
+		$responses = [
+			'first' => 'How about a nice game of chess?',
+			'last' => 'A strange game. The only winning move is not to play.'
+		];
+		return [
+				'responses' => $responses
+		];
+	}
+	/**
+	 * Get a list of the valid element types in this Formulize instance
+	 */
+	private function getValidElementTypes() {
+		$validElementTypes = [];
+		$dirArray = scandir(XOOPS_ROOT_PATH."/modules/formulize/class");
+		foreach($dirArray as $file) {
+			// element classes are named <type>Element.php
+			if (preg_match("/^(.*)Element\.php$/", $file, $matches)) {
+				$validElementTypes[] = strtolower($matches[1]);
+			}
+		}
+		return $validElementTypes;
 	}
 
 	/**
@@ -633,6 +692,115 @@ Examples:
 			'application_ids' => $applicationIds,
 			'success' => true,
 			'message' => 'Form and related resources created successfully'
+		];
+
+	}
+
+	/**
+	 * Create a new form element in a form
+	 * @param array $arguments An associative array containing the parameters for creating a new form element.
+	 * - 'form_id': The ID of the form to add the element to (required).
+	 * - 'element_type': The type of the element (required).
+	 * - 'handle': The unique handle for the element. If omitted, a handle will be generated from the caption.
+	 * - 'caption': The caption (label) for the element (required).
+	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
+	 * - 'description': Optional. A description for the element.
+	 * - 'required': Optional. Whether the element is required. Defaults to false.
+	 * - 'options': Optional. An array of options for the given element type
+	 * @return array An associative array containing details about the newly created element, including its ID
+	 */
+	private function create_form_element($arguments, $isCreate = true) {
+		return $this->upsert_form_element($arguments, true);
+	}
+
+	/**
+	 * Update a form element in a form
+	 * @param array $arguments An associative array containing the parameters for creating a new form element.
+	 * - 'element_identifier': The ID or handle of the element to update (required).
+	 * - 'caption': The caption (label) for the element (required).
+	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
+	 * - 'description': Optional. A description for the element.
+	 * - 'required': Optional. Whether the element is required. Defaults to false.
+	 * - 'options': Optional. An array of options for the given element type
+	 * @return array An associative array containing details about the element
+	 */
+	private function update_form_element($arguments) {
+		return $this->upsert_form_element($arguments);
+	}
+
+	/**
+	 * Generic function that takes element details from create_form_element and update_form_element and interacts with the element handlers to manage the elements
+	 */
+	private function upsert_form_element($arguments, $isCreate = false) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create form elements.",
+				'authentication_error',
+			);
+		}
+
+		$element_identifier = $arguments['element_identifier'] ?? '';
+		$form_id = intval($arguments['form_id'] ?? 0);
+		$element_type = str_replace('_', '', strtolower(trim($arguments['element_type'] ?? '')));
+		$handle = trim($arguments['handle'] ?? '');
+		$caption = trim($arguments['caption'] ?? '');
+		$column_heading = trim($arguments['column_heading'] ?? '');
+		$description = trim($arguments['description'] ?? '');
+		$required = !empty($arguments['required']) ? 1 : 0;
+		$options = $arguments['options'] ?? [];
+
+		$elementObject = null;
+
+		if($isCreate AND
+			(empty($form_id) OR $form_id <= 0 OR empty($element_type) OR empty($caption))) {
+			throw new FormulizeMCPException('form_id and element_type and caption are required for creating elements', 'invalid_data');
+		}
+		if(!$isCreate) {
+			if(empty($element_identifier)) {
+				throw new FormulizeMCPException('element_identifier is required for updating elements', 'invalid_data');
+			} elseif($elementObject = _getElementObject($element_identifier) == false) {
+				throw new FormulizeMCPException('Element not found for element_identifier: '.$element_identifier, 'element_not_found');
+			}
+		}
+
+		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+		if(!in_array($element_type, $elementTypes)) {
+			throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]	);
+		}
+
+		$elementObjectProperties = [
+			'fid' => $form_id,
+			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
+			'ele_type' => $element_type,
+			'ele_handle' => $handle,
+			'ele_caption' => $caption,
+			'ele_colhead' => $column_heading,
+			'ele_desc' => $description,
+			'ele_required' => $required ? true : false,
+		];
+
+		// figure out ele_value, and anything else that the element type might handle
+		$elementTypeHandler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element', 'formulize');
+		$propertiesFromType = $elementTypeHandler->validateEleValuePublicAPIOptions($options);
+		foreach($propertiesFromType as $key => $value) {
+			$elementObjectProperties[$key] = $value;
+		}
+
+		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties);
+
+		return [
+			'element_id' => $elementObject->getVar('ele_id'),
+			'form_id' => $elementObject->getVar('fid'),
+			'element_type' => $element_type,
+			'handle' => $elementObject->getVar('ele_handle'),
+			'caption' => $elementObject->getVar('ele_caption'),
+			'column_heading' => $elementObject->getVar('ele_colhead'),
+			'description' => $elementObject->getVar('ele_desc'),
+			'required' => $elementObject->getVar('ele_required') ? true : false,
+			'options' => $elementObject->getVar('ele_value'),
+			'success' => true,
+			'message' => 'Element and related resources created successfully'
 		];
 
 	}
@@ -1358,176 +1526,92 @@ private function validateFilter($filter) {
 	}
 
 	/**
-	 * Build form creation tools with dynamic element type discovery
-	 * @return array Array of form creation tools
-	 */
-	private function buildFormCreationTools()
-	{
-		return [
-			'create_form_element' => $this->buildCreateFormElementTool()
-		];
-	}
-
-	/**
-	 * Build the create_form_element tool schema with dynamic element discovery
+	 * Build the create_form_element and update_form_element tool schema with dynamic element discovery
 	 * @return array Tool schema for creating form elements
 	 */
-	private function buildCreateFormElementTool()
-	{
+	private function buildFormElementTools() {
+
 		// Discover available element types and their descriptions
-		[$elementTypes, $elementDescriptions] = $this->discoverElementTypes();
+		[$elementTypes, $elementDescriptions] = formulizeHandler::discoverElementTypes(mcpTypeNames: true);
 
 		// Build comprehensive description with examples from all element types
-		$description = "Create a new element (input field) in a Formulize form. Elements have different properties depending on their type.\n\n";
-		$description .= "Available element types and examples:\n\n";
-		$description .= implode("\n\n", $elementDescriptions);
+		$propertyDescriptions = "Elements have different properties depending on their type.\n\nYou must use the valid properties for each element type. Here is a complete list of available element types, their properties, and examples:\n\n";
+		$propertyDescriptions .= implode("\n\n", $elementDescriptions);
+		$createFormElementDescription = "Create a new element (input field) in a Formulize form. $propertyDescriptions";
+		$updateFormElementDescription = "Update an existing element in a Formulize form. $propertyDescriptions";
 
-		return [
-			'name' => 'create_form_element',
-			'description' => $description,
-			'inputSchema' => [
+		$commonProperties = [
+			'caption' => [
+				'type' => 'string',
+				'description' => 'Required. The label for the element as it will appear to users in forms and in lists.'
+			],
+			'column_heading' => [
+				'type' => 'string',
+				'description' => 'Optional. The heading to use at the top of a column in lists of entries. If not specified, the caption will be used. Some captions are long and descriptive, and a shorter heading would be more appropriate for in a list of data.'
+			],
+			'description' => [
+				'type' => 'string',
+				'description' => 'Optional. A longer description or help text for the element, shown to users filling out the form.'
+			],
+			'required' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Whether the element is required to have a value when users fill out the form. Default: false'
+			],
+			'options' => [
 				'type' => 'object',
-				'properties' => [
-					'form_id' => [
-						'type' => 'integer',
-						'description' => 'Required. ID of the form to add this element to'
-					],
-					'element_type' => [
-						'type' => 'string',
-						'enum' => $elementTypes,
-						'description' => 'Required. Type of form element to create'
-					],
-					'caption' => [
-						'type' => 'string',
-						'description' => 'Required. Display label for this element'
-					],
-					'handle' => [
-						'type' => 'string',
-						'description' => 'Optional. Internal database handle for this element. If not provided, will be auto-generated from caption. Must be unique within the form and contain only letters, numbers, and underscores.'
-					],
-					'description' => [
-						'type' => 'string',
-						'description' => 'Optional. Descriptive help text to display with this element'
-					],
-					'required' => [
-						'type' => 'boolean',
-						'description' => 'Optional. Whether this element is required. Default is false.'
-					],
-					'column_header' => [
-						'type' => 'string',
-						'description' => 'Optional. Shorter text to use in column headers when displaying data in lists'
-					],
-					'properties' => [
-						'type' => 'object',
-						'description' => 'Element-specific properties. The contents depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
-						'additionalProperties' => true
-					]
-				],
-				'required' => ['form_id', 'element_type', 'caption']
+				'description' => 'Required. Additional configuration options for the element. The properties depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
+				'additionalProperties' => true
 			]
 		];
-	}
 
-	/**
-	 * Discover available element types and their MCP descriptions
-	 * @return array [elementTypes array, elementDescriptions array]
-	 */
-	private function discoverElementTypes()
-	{
-		$elementTypes = [];
-		$elementDescriptions = [];
-
-		// Scan for element class files
-		$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
-		$elementFiles = glob($elementClassPath . '/*Element.php');
-
-		foreach ($elementFiles as $file) {
-			$className = $this->getElementClassName($file);
-
-			// Skip if class doesn't exist or doesn't have MCP description
-			if (!class_exists($className)) {
-				continue;
-			}
-
-			// Check if class has MCP description property
-			if (property_exists($className, 'mcpElementPropertiesDescription')) {
-				$elementType = $this->extractElementTypeFromClassName($className);
-				$elementTypes[] = $elementType;
-				$elementDescriptions[] = $className::$mcpElementPropertiesDescription;
-			}
-		}
-
-		// Fallback to core element types if no classes found with MCP descriptions
-		if (empty($elementTypes)) {
-			$elementTypes = $this->getFallbackElementTypes();
-			$elementDescriptions = $this->getFallbackElementDescriptions();
-		}
-
-		return [$elementTypes, $elementDescriptions];
-	}
-
-	/**
-	 * Extract class name from element file path
-	 * @param string $filePath Path to element class file
-	 * @return string Class name
-	 */
-	private function getElementClassName($filePath)
-	{
-		$filename = basename($filePath, '.php');
-		// Convert filename like 'textElement' to 'formulizeTextElement'
-		return 'formulize' . ucfirst($filename);
-	}
-
-	/**
-	 * Extract element type from class name
-	 * @param string $className Full class name like 'formulizeTextElement'
-	 * @return string Element type like 'text'
-	 */
-	private function extractElementTypeFromClassName($className)
-	{
-		// Remove 'formulize' prefix and 'Element' suffix, then lowercase
-		$type = str_replace(['formulize', 'Element'], '', $className);
-		return strtolower($type);
-	}
-
-	/**
-	 * Get fallback element types when no MCP-enabled classes are found
-	 * @return array Basic element types
-	 */
-	private function getFallbackElementTypes()
-	{
 		return [
-			'text', 'textarea', 'select', 'radio', 'checkbox',
-			'date', 'time', 'yn', 'email', 'phone'
+			[
+				'name' => 'create_form_element',
+				'description' => $createFormElementDescription,
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+								'type' => 'integer',
+								'description' => 'Required. ID of the form to add this element to'
+							],
+							'element_type' => [
+								'type' => 'string',
+								'enum' => $elementTypes,
+								'description' => 'Required. The type of element to create.'
+							],
+							'handle' => [
+								'type' => 'string',
+								'description' => 'Optional. The internal handle for the element, used in the database and in API calls. If not specified, a handle will be automatically generated from the caption.'
+							]
+						] + $commonProperties,
+					'required' => ['form_id', 'element_type', 'caption']
+				]
+			],
+			[
+				'name' => 'update_form_element',
+				'description' => $updateFormElementDescription,
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'element_identifier' => [
+							'oneOf' => [
+								[
+									'type' => 'string',
+									'description' => 'The handle for the element to update.'
+								],
+								[
+									'type' => 'integer',
+									'description' => 'The ID number of the element to update.'
+								]
+							]
+						],
+					] + $commonProperties,
+				'required' => ['element_identifier']
+				]
+			]
 		];
-	}
 
-	/**
-	 * Get fallback element descriptions when no MCP-enabled classes are found
-	 * @return array Basic element descriptions
-	 */
-	private function getFallbackElementDescriptions()
-	{
-		return [
-			'Example for text element:\n{\n  "form_id": 5,\n  "element_type": "text",\n  "caption": "Activity Name",\n  "handle": "activity_name",\n  "required": true,\n  "properties": {\n    "width": 30,\n    "max_length": 255,\n    "default_value": ""\n  }\n}',
-			'Example for select element:\n{\n  "form_id": 5,\n  "element_type": "select",\n  "caption": "Priority Level",\n  "handle": "priority",\n  "required": true,\n  "properties": {\n    "options": ["Low", "Medium", "High", "Critical"],\n    "default_selection": "Medium"\n  }\n}',
-			'Example for checkbox element:\n{\n  "form_id": 5,\n  "element_type": "checkbox",\n  "caption": "Categories",\n  "handle": "categories",\n  "required": false,\n  "properties": {\n    "options": ["Work", "Personal", "Health", "Education"],\n    "default_selections": ["Work"]\n  }\n}'
-		];
-	}
-
-
-	/**
-	 * Create a new element in a Formulize form
-	 * @param array $arguments Element creation parameters
-	 * @return array Result of element creation
-	 */
-	private function create_form_element($arguments)
-	{
-		// Implementation will be added separately
-		throw new FormulizeMCPException(
-			'create_form_element tool implementation pending',
-			'not_implemented'
-		);
 	}
 
 }

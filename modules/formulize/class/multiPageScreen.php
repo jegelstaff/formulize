@@ -234,6 +234,132 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		 return $sid;
 	}
 
+	/**
+	 * Add an element to the specified multi-paged screens and their pages, and/or remove it from screens/pages where it is not specified
+	 * Tuned for handling the UI input from the element display settings page
+	 * @param mixed $elementIdentifier - either an element object or an element identifier
+	 * @param array $multiPageScreens - an array of multi-paged screen and page pairs in the format screenid-pageindex (e.g. 3-0 for screen id 3, page index 0)
+	 * @param array $legacyFormScreens - an array of legacy form screen ids
+	 * @return boolean returns true on success, false on failure
+	 */
+
+	public function addElementToScreenPagesFromUI($elementIdentifier, $multiPageScreens = array(), $legacyFormScreens = array()) {
+
+		if(!$elementObject = _getElementObject($elementIdentifier)) {
+			return false;
+		}
+
+		$ele_id = $elementObject->getVar('ele_id');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$all_multi_screens = $form_handler->getMultiScreens($elementObject->getVar('fid'));
+
+		// Go through each possible multi-paged screen's pages, and make changes accordingly
+		foreach ($all_multi_screens as $i => $screen_array) {
+  		$screen_id = $screen_array['sid'];
+  		$screen = $this->get($screen_id);
+  		$existing_pages = $screen->getVar('pages');
+
+  		if (empty($multiPageScreens)) {
+    		// Check if this element exists in each page, if it exists, then unset them
+    		foreach ($existing_pages as $page_index => $page_elements) {
+      		// Since PHP does not know how to differentiate between false and 0 that well, have a double checking for element existence
+      		$element_exists = in_array($ele_id, $page_elements);
+      		$element_index = array_search($ele_id, $page_elements);
+      		if ($element_exists) {
+        		unset($existing_pages[$page_index][$element_index]);
+      		}
+		    }
+  		} else {
+     		foreach ($existing_pages as $page_index => $page_elements) {
+      		if (empty($page_elements)) {
+        		// Necessary to loop through each treeview checkbox value, since every value is concatenated with its page index
+        		$element_exists_in_treeview = false;
+        		foreach ($multiPageScreens as $k => $raw_pair) {
+          		$screen_page = explode("-", $raw_pair);
+		    	    if ($screen_id == $screen_page[0] && $page_index == $screen_page[1]) {
+    		        $element_exists_in_treeview = true;
+          		}
+        		}
+		        if ($element_exists_in_treeview) {
+    		      if (!in_array($ele_id, $page_elements)) {
+        		    // If this element does not exist yet under the page's element array, then add it
+            		array_push($existing_pages[$page_index], $ele_id);
+          		}
+        		}
+      		} else {
+						foreach ($page_elements as $ele_index => $page_element) {
+							// Necessary to loop through each treeview checkbox value, since every value is concatenated with its page index
+							$element_exists_in_treeview = false;
+							foreach ($multiPageScreens as $k => $raw_pair) {
+								$screen_page = explode("-", $raw_pair);
+								if ($screen_id == $screen_page[0] && $page_index == $screen_page[1]) {
+									$element_exists_in_treeview = true;
+								}
+							}
+							if ($element_exists_in_treeview) {
+								if (!in_array($ele_id, $existing_pages[$page_index])) {
+									// If this element does not exist yet under the page's element array, then add it
+									array_push($existing_pages[$page_index], $ele_id);
+								}
+							} else {
+								if (in_array($ele_id, $existing_pages[$page_index])) {
+									// If this element exists under the page's element array, then remove it
+									unset($existing_pages[$page_index][$ele_index]);
+								}
+							}
+						}
+					}
+    		}
+  		}
+ 			$screen->setVar('pages',serialize($existing_pages));
+  		if(!$this->insert($screen)) {
+      	throw new Exception("Error: could not save the screen properly: ".$this->db->error());
+  		}
+		}
+
+		// Handle legacy form screens too...
+
+		// go through each possible screen, and save whether the element in the UI accordingly by appending to existing screen's elements
+		// If the screen is not highlighted in the UI, then we must unset it manually by going through each screen's saved array
+		$formScreenHandler = xoops_getmodulehandler('formScreen', 'formulize');
+		$all_screens = $formScreenHandler->getScreensForElement($elementObject->getVar('fid'));
+
+		// Due to security, not possible to retrieve formelements from using getmodulehandler, hence used abstract method.
+		// For saving, use getmodulehandler directly
+		foreach ($all_screens as $key => $screen) {
+			$screen_elements = $formScreenHandler->getSelectedElementsForScreen($screen['sid']);
+			$screen_stream = $formScreenHandler->get($screen['sid']);
+			if (in_array($screen['sid'], $legacyFormScreens)) {
+				// avoid adding duplicate element within the list if the screen already has it
+				if (!in_array($ele_id, $screen_elements)) {
+					array_push($screen_elements, strval($ele_id));
+				}
+				$save_element = serialize($screen_elements);
+				$screen_stream->setVar('formelements', $save_element);
+			} else {
+				if (in_array($ele_id, $screen_elements)) {
+					// If the element exists in the screen's element, array, then unset it
+					if(($index = array_search($ele_id, $screen_elements)) !== false) {
+							unset($screen_elements[$index]);
+					}
+					// if resulting array is empty, then send an empty quotation as data to setVar
+					if (empty($screen_elements)){
+						$screen_stream->setVar('formelements', "");
+					} else {
+						$save_element = serialize($screen_elements);
+						$screen_stream->setVar('formelements', $save_element);
+					}
+				}
+			}
+			if(!$formScreenHandler->insert($screen_stream)) {
+				throw new Exception("Error: could not save the screen properly: ".$this->db->error());
+			}
+		}
+
+		return true;
+	}
+
+
 	// 	THIS METHOD MIGHT BE MOVED UP A LEVEL TO THE PARENT CLASS
 	function get($sid) {
 		$sid = intval($sid);

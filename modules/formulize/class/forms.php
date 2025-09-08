@@ -1045,6 +1045,14 @@ class formulizeFormsHandler {
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
 		global $xoopsDB;
+		// validate element id, convert to element id if it was a handle or object
+		if($element_id) {
+			$elementObject = _getElementObject($element_id);
+			if(!$elementObject) {
+				throw new Exception("Could not load element object to verify uniqueness of handle");
+			}
+			$element_id = $elementObject->getVar('ele_id');
+		}
 		$element_id_condition = $element_id ? " AND ele_id != " . intval($element_id) : "";
 		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' $element_id_condition";
 		if(!$res = $xoopsDB->query($sql)) {
