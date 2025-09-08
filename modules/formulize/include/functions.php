@@ -9088,3 +9088,28 @@ function correctStringIntFloatTypes($value) {
 	}
 	return $value;
 }
+
+function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
+	global $xoopsDB;
+	if($orderChoice === "bottom") {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+	  $res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+	} elseif($orderChoice === "top") {
+		$orderChoice = 0;
+	} else {
+		// convert the orderpref from the element ID to the order
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['ele_order'];
+	}
+	$orderValue = $orderChoice + 1;
+	if($oldOrder AND $oldOrder != $orderValue) {
+		// and we need to reorder all the elements equal to and higher than the current element
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	}
+	return $orderValue;
+}
