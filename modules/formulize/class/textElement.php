@@ -63,6 +63,22 @@ class formulizeTextElement extends formulizeElement {
 		$this->defaultValueKey = ELE_VALUE_TEXT_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples() {
+		return [
+'Element: Text Box (text).
+Properties:
+- none
+Examples:
+- A text box requires no properties.'
+];
+	}
+
 	public function getDefaultDataType() {
 		$ele_value = $this->getVar('ele_value');
 		// if numbers only is set, and Formulize was asked to figure out the datatype, then we have to decide between int and decimal
@@ -135,16 +151,34 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		return new formulizeTextElement();
 	}
 
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options) {
+		// textElement has no stated public options
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$ele_value = $this->getDefaultEleValue($formulizeConfig);
+		return ['ele_value' => $ele_value ];
+	}
+
 	protected function getDefaultEleValue($formulizeConfig) {
 		$ele_value = array();
-		$ele_value[ELE_VALUE_TEXT_WIDTH] = $formulizeConfig['t_width'];
-		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $formulizeConfig['t_max'];
+		$ele_value[ELE_VALUE_TEXT_WIDTH] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
+		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255;
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = '';
 		$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 0;
 		$ele_value[ELE_VALUE_TEXT_DECIMALS] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
 		$ele_value[ELE_VALUE_TEXT_PREFIX] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
 		$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
 		$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+		$ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED] = 0;
 		$ele_value[ELE_VALUE_TEXT_SUFFIX] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER] = 0;
 		$ele_value[ELE_VALUE_TEXT_TRIM_VALUE] = 1;
 		return $ele_value;
 	}

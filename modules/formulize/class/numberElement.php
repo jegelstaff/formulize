@@ -49,6 +49,33 @@ class formulizeNumberElement extends formulizeTextElement {
 		$this->defaultValueKey = ELE_VALUE_TEXT_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples() {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		return [
+'Element: Number Box (number).
+Properties:
+- size (int, width of the box in characters, default is '.$formulizeConfig['t_width'].')
+- defaultvalue (int or float, default value for new entries)
+- decimals (int, number of decimal places to allow, default is '.$formulizeConfig['number_decimals'].'),
+- prefix (string, text to show before the number, default is \''.$formulizeConfig['number_prefix'].'\'),
+- decimals_separator (string, character to use as the decimal separator, default is \''.$formulizeConfig['number_decimalsep'].'\')
+- thousands_separator (string, character to use as the thousands separator, default is \''.$formulizeConfig['number_sep'].'\')
+- suffix (string, text to show after the number, default is \''.$formulizeConfig['number_suffix'].'\')
+Examples:
+- A basic number box requires no properties, system defaults will be used
+- A number box for recording values between 0 and 99: { size: 2 }
+- A three digit number box with a default value of 100: { size: 3, defaultvalue: 100 }
+- A number box for recording prices up to $999,999.99: { size: 9, defaultvalue: 0, decimals: 2, prefix: \'$\', thousands_separator: \',\', decimals_separator: \'.\' }'
+		];
+	}
+
 	// write code to a file
 	public function setVar($key, $value, $not_gpc = false) {
 		parent::setVar($key, $value, $not_gpc);
@@ -69,10 +96,59 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		return new formulizeNumberElement();
 	}
 
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options) {
+		foreach($options as $key => $value) {
+			switch($key) {
+				case 'size':
+				case 'decimals':
+					$options[$key] = intval($value);
+					if($options[$key] < 0) {
+						$options[$key] = 0;
+					}
+					break;
+				case 'defaultvalue':
+					$options[$key] = is_numeric($value) ? $value + 0 : 0; // force to int or float
+					break;
+				case 'prefix':
+				case 'decimals_separator':
+				case 'thousands_separator':
+				case 'suffix':
+					$options[$key] = trim($value);
+					break;
+				default:
+					unset($options[$key]); // remove anything we don't recognize
+			}
+		}
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$ele_value = array(
+			ELE_VALUE_TEXT_WIDTH => isset($options['size']) ? $options['size'] : $formulizeConfig['t_width'],
+			ELE_VALUE_TEXT_MAXCHARS => isset($options['size']) ? $options['size'] : $formulizeConfig['t_width'],
+			ELE_VALUE_TEXT_DEFAULTVALUE => isset($options['defaultvalue']) ? $options['defaultvalue'] : 0,
+			ELE_VALUE_TEXT_NUMBERSONLY => 1,
+			ELE_VALUE_TEXT_DECIMALS => isset($options['decimals']) ? $options['decimals'] : $formulizeConfig['number_decimals'],
+			ELE_VALUE_TEXT_PREFIX => isset($options['prefix']) ? $options['prefix'] : $formulizeConfig['number_prefix'],
+			ELE_VALUE_TEXT_DECIMALS_SEPARATOR => isset($options['decimals_separator']) ? $options['decimals_separator'] : $formulizeConfig['number_decimalsep'],
+			ELE_VALUE_TEXT_THOUSANDS_SEPARATOR => isset($options['thousands_separator']) ? $options['thousands_separator'] : $formulizeConfig['number_sep'],
+			ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED => 0,
+			ELE_VALUE_TEXT_SUFFIX => isset($options['suffix']) ? $options['suffix'] : $formulizeConfig['number_suffix'],
+			ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER => 0,
+			ELE_VALUE_TEXT_TRIM_VALUE => 1
+		);
+		return ['ele_value' => $ele_value ];
+	}
+
 	protected function getDefaultEleValue($formulizeConfig) {
-		$ele_value = array();
-		$ele_value[ELE_VALUE_TEXT_WIDTH] = $formulizeConfig['t_width'];
-		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $formulizeConfig['t_width']; // width is max for number boxes
+		$config_handler = xoops_gethandler('config');
+		$ele_value[ELE_VALUE_TEXT_WIDTH] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
+		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
 		$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 1;
 		$ele_value[ELE_VALUE_TEXT_DECIMALS] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
 		$ele_value[ELE_VALUE_TEXT_PREFIX] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
