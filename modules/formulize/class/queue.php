@@ -179,9 +179,10 @@ try {
 	/**
 	 * Process a queue or all the queues. If command line execution is available, entire queue processed that way without time limit. If not, then attempt as many queue items as possible in the time available for the current request.
 	 * @param object queue Optional. A queue object that represents the queue we're processing. If omitted, all queues are processed, items handled in the order they were created.
+	 * @param bool synchronous Optional. A flag to indicate whether we should process the queue synchronously (as part of this request) or hand it off to the command line for processing. Default is false, meaning we will hand it off to the command line if possible.
 	 * @return mixed An array of the queue filenames that were processed, if done as part of this request. True if the queue was handed off to the command line
 	 */
-	function process($queue_or_queue_handle=null) {
+	function process($queue_or_queue_handle=null, $synchronous = false) {
 		if(is_object($queue_or_queue_handle) AND is_a($queue_or_queue_handle, 'formulizeQueue')) {
 			$queueHandle = $queue_or_queue_handle->getVar('queue_handle');
 		} elseif($queue_or_queue_handle) {
@@ -190,7 +191,7 @@ try {
 			$queueHandle = 'all';
 		}
 		$queueIncludeFile = XOOPS_ROOT_PATH.'/modules/formulize/include/queue.php';
-		if(isEnabled('exec')) {
+		if(!$synchronous AND isEnabled('exec')) {
 			exec('php -f '.$queueIncludeFile.' '.escapeshellarg($queueHandle).' > /dev/null 2>&1 & echo $!');
 			return true;
 		} else {
