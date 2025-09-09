@@ -88,7 +88,7 @@ Properties:
 Examples:
 - A dropdown list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
 - A dropdown list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
-- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'AL|Alabama', 'AK|Alaska', 'AZ|Arizona', 'AR|Arkansas', 'CA|California', 'CO|Colorado', 'CT|Connecticut', 'DE|Delaware', 'FL|Florida', 'GA|Georgia', 'HI|Hawaii', 'ID|Idaho', 'IL|Illinois', 'IN|Indiana', 'IA|Iowa', 'KS|Kansas', 'KY|Kentucky', 'LA|Louisiana', 'ME|Maine', 'MD|Maryland', 'MA|Massachusetts', 'MI|Michigan', 'MN|Minnesota', 'MS|Mississippi', 'MO|Missouri', 'MT|Montana', 'NE|Nebraska', 'NV|Nevada', 'NH|New Hampshire', 'NJ|New Jersey', 'NM|New Mexico', 'NY|New York', 'NC|North Carolina', 'ND|North Dakota', 'OH|Ohio', 'OK|Oklahoma', 'OR|Oregon', 'PA|Pennsylvania', 'RI|Rhode Island', 'SC|South Carolina', 'SD|South Dakota', 'TN|Tennessee', 'TX|Texas', 'UT|Utah', 'VT|Vermont', 'VA|Virginia', 'WA|Washington', 'WV|West Virginia', 'WI|Wisconsin', 'WY|Wyoming' ] }";
+- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'CA|California', 'DE|Delaware', 'HI|Hawaii', 'ME|Maine', 'NY|New York', 'VT|Vermont' ] }";
 	}
 
 	/**
@@ -176,7 +176,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 		}
 		list($ele_value, $ele_uitext) = formulize_extractUIText($options);
 		return [
-			'ele_value' => $ele_value,
+			'ele_value' => is_array($ele_value) ? $ele_value : [],
 			'ele_uitext' => $ele_uitext
 		];
 	}
@@ -200,7 +200,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 			$options['listordd'] = $ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1 ? 2 : $options['listordd'];
 			$options['multiple'] = $ele_value[ELE_VALUE_SELECT_MULTIPLE];
 			$options['islinked'] = $element->isLinked;
-			if($element->isLinked == false) {
+			if($element->isLinked == false AND is_array($ele_value[ELE_VALUE_SELECT_OPTIONS])) {
 				if (is_array($ele_uitext) AND count((array) $ele_uitext) > 0) {
 					$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_mergeUIText($ele_value[ELE_VALUE_SELECT_OPTIONS], $ele_uitext);
 				}
