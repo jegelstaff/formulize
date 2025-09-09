@@ -78,7 +78,16 @@ Examples:
 - A text box requires no properties.";
 	}
 
-	public function getDefaultDataType() {
+	/**
+	 * An optional method an element class can implement, if there are special considerations for the datatype that should be used for this element type
+	 * Called by formulizeHandler::upsertElementSchemaAndResources when an element is created or updated
+	 * Also called from element_advanced_save.php when the admin UI is being used to change the datatype for an element
+	 * The if function_exists checks for a function defined in the element_adanced_save.php file, which will indicate if we should follow what the user put into the UI
+	 * Otherwise, we should go with a passed in default which will be from the upsertElementSchemaAndResources method
+	 * @param string $defaultType The default type to use if the element does not have special considerations
+	 * @return string The data type to use for this element
+	 */
+	public function getDefaultDataType($defaultType = 'text') {
 		$ele_value = $this->getVar('ele_value');
 		// if numbers only is set, and Formulize was asked to figure out the datatype, then we have to decide between int and decimal
 		if($ele_value[3] == 1 AND $_POST['element_datatype'] == 'text') { // numbers only...and Formulize was asked to figure out the right datatype.....
@@ -91,8 +100,10 @@ Examples:
 			} else {
 				$dataType = 'int(10)'; // value in () is just the visible number of digits to use in a mysql console display
 			}
+		} elseif( $this->overrideDataType != "") {
+			$dataType = $this->overrideDataType;
 		} else {
-			$dataType = getRequestedDataType();
+			$dataType = function_exists('getRequestedDataType') ? getRequestedDataType() : $defaultType;
 		}
 		return $dataType;
 	}

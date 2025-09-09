@@ -91,7 +91,16 @@ Examples:
 - A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'AL|Alabama', 'AK|Alaska', 'AZ|Arizona', 'AR|Arkansas', 'CA|California', 'CO|Colorado', 'CT|Connecticut', 'DE|Delaware', 'FL|Florida', 'GA|Georgia', 'HI|Hawaii', 'ID|Idaho', 'IL|Illinois', 'IN|Indiana', 'IA|Iowa', 'KS|Kansas', 'KY|Kentucky', 'LA|Louisiana', 'ME|Maine', 'MD|Maryland', 'MA|Massachusetts', 'MI|Michigan', 'MN|Minnesota', 'MS|Mississippi', 'MO|Missouri', 'MT|Montana', 'NE|Nebraska', 'NV|Nevada', 'NH|New Hampshire', 'NJ|New Jersey', 'NM|New Mexico', 'NY|New York', 'NC|North Carolina', 'ND|North Dakota', 'OH|Ohio', 'OK|Oklahoma', 'OR|Oregon', 'PA|Pennsylvania', 'RI|Rhode Island', 'SC|South Carolina', 'SD|South Dakota', 'TN|Tennessee', 'TX|Texas', 'UT|Utah', 'VT|Vermont', 'VA|Virginia', 'WA|Washington', 'WV|West Virginia', 'WI|Wisconsin', 'WY|Wyoming' ] }";
 	}
 
-	public function getDefaultDataType() {
+	/**
+	 * An optional method an element class can implement, if there are special considerations for the datatype that should be used for this element type
+	 * Called by formulizeHandler::upsertElementSchemaAndResources when an element is created or updated
+	 * Also called from element_advanced_save.php when the admin UI is being used to change the datatype for an element
+	 * The if function_exists checks for a function defined in the element_adanced_save.php file, which will indicate if we should follow what the user put into the UI
+	 * Otherwise, we should go with a passed in default which will be from the upsertElementSchemaAndResources method
+	 * @param string $defaultType The default type to use if the element does not have special considerations
+	 * @return string The data type to use for this element
+	 */
+	public function getDefaultDataType($defaultType = 'text') {
 		$ele_value = $this->getVar('ele_value');
 		$selectTypeName = strtolower(str_ireplace(['formulize', 'element', 'linked', 'users'], "", static::class));
 		if ($ele_value[ELE_VALUE_SELECT_MULTIPLE] == 0 AND $this->isLinked) {
@@ -105,7 +114,7 @@ Examples:
 		} elseif( $this->overrideDataType != "") {
 			$dataType = $this->overrideDataType;
 		} else {
-			$dataType = getRequestedDataType();
+			$dataType = function_exists('getRequestedDataType') ? getRequestedDataType() : $defaultType;
 		}
 		return $dataType;
 	}
@@ -134,6 +143,22 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 
 	function create() {
 		return new formulizeSelectElement();
+	}
+
+	/**
+	 * Takes an array of properties for an element Object and fills it out, validates, so it is complete
+	 * If an element should set any default values for properties more specific to it, do that here
+	 * Must return through the parent method so that the rest of the more basic properties are set correctly
+	 * In most cases, ele_value property will already have been sorted out because it came from a public source and went through validateEleValuePublicAPIOptions already
+	 * @param array $properties The properties for an element object
+	 * @return array The properties to apply to the element object
+	 */
+	public function setupAndValidateElementProperties($properties) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
+		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimiter'];
+		return parent::setupAndValidateElementProperties($properties);
 	}
 
 	/**
@@ -1671,7 +1696,6 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 		} elseif($element->getVar('ele_uitextshow')) {
 			$value = formulize_swapUIText($value, $element->getVar('ele_uitext'));
 		}
-
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
