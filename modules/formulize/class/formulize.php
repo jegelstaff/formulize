@@ -324,8 +324,13 @@ class formulizeHandler {
 	 */
 	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null, $pi = false) {
 
+		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+		if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
+			throw new Exception('Invalid element type: '.$elementObjectProperties['ele_type']. ' valid_element_types: '.implode(', ', $elementTypes));
+		}
+
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$element_handler = xoops_getmodulehandler('elements','formulize');
+		$element_handler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element','formulize');
 		$element_id = 0;
 		// if ele_id is set in the properties array, use that to load the element object
 		if(isset($elementObjectProperties['ele_id'])) {
@@ -385,7 +390,7 @@ class formulizeHandler {
 			}
 			// override passed in $dataType from the element class, if appropriate
 			if(method_exists($elementObject, 'getDefaultDataType')) {
-				$dataType = $elementObject->getDefaultDataType();
+				$dataType = $elementObject->getDefaultDataType($dataType);
 			} elseif(property_exists($elementObject, 'overrideDataType') AND $elementObject->overrideDataType != "") {
 				$dataType = $elementObject->overrideDataType;
 			} elseif($dataType === null) {

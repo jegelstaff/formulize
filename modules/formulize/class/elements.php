@@ -280,8 +280,8 @@ class formulizeElementsHandler {
 			throw new Exception("Invalid element type: ".$properties['ele_type'].". You must use a valid element type when working with an element. Valid types: ".implode(", ", $elementTypes)	);
 		}
 		$properties['ele_caption'] = trim($properties['ele_caption']);
-		if($properties['ele_caption'] == '') {
-			throw new Exception("Elements must have a caption.");
+		if($properties['ele_caption'] == "") {
+			throw new Exception("You must use a caption when working with an element");
 		}
 		$properties['ele_colhead'] = trim($properties['ele_colhead']);
 		$properties['ele_handle'] = trim($properties['ele_handle']);
@@ -358,7 +358,16 @@ class formulizeElementsHandler {
 					${$k} = $v;
 				}
 
-				$ele_handle = formulizeHandler::enforceUniqueElementHandles(($ele_handle ? $ele_handle : $ele_caption), $ele_id, $id_form);
+				if(!$ele_handle) {
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					if(!$formObject = $form_handler->get($id_form)) {
+						throw new Exception("Could not retrieve form object for id $id_form, when trying to make default ele_handle for element.");
+					}
+					$form_handle = $formObject->getVar('form_handle');
+					$ele_handle = $form_handle.'_'.formulizeElement::sanitize_handle_name($ele_caption);
+				}
+				$ele_handle = formulizeHandler::enforceUniqueElementHandles($ele_handle, $ele_id, $id_form);
+				$element->setVar('ele_handle', $ele_handle); // must set it back on the object so it can be accessed later!
 
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
