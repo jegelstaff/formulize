@@ -58,22 +58,21 @@ class formulizeNumberElement extends formulizeTextElement {
 	public static function mcpElementPropertiesDescriptionAndExamples() {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		return [
-'Element: Number Box (number).
+		return
+"Element: Number Box (number).
 Properties:
-- size (int, width of the box in characters, default is '.$formulizeConfig['t_width'].')
+- size (int, width of the box in characters, default is ".$formulizeConfig['t_width'].")
 - defaultvalue (int or float, default value for new entries)
-- decimals (int, number of decimal places to allow, default is '.$formulizeConfig['number_decimals'].'),
-- prefix (string, text to show before the number, default is \''.$formulizeConfig['number_prefix'].'\'),
-- decimals_separator (string, character to use as the decimal separator, default is \''.$formulizeConfig['number_decimalsep'].'\')
-- thousands_separator (string, character to use as the thousands separator, default is \''.$formulizeConfig['number_sep'].'\')
-- suffix (string, text to show after the number, default is \''.$formulizeConfig['number_suffix'].'\')
+- decimals (int, number of decimal places to allow, default is ".$formulizeConfig['number_decimals']."),
+- prefix (string, text to show before the number, default is '".$formulizeConfig['number_prefix']."'),
+- decimals_separator (string, character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
+- thousands_separator (string, character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
+- suffix (string, text to show after the number, default is '".$formulizeConfig['number_suffix']."')
 Examples:
 - A basic number box requires no properties, system defaults will be used
 - A number box for recording values between 0 and 99: { size: 2 }
 - A three digit number box with a default value of 100: { size: 3, defaultvalue: 100 }
-- A number box for recording prices up to $999,999.99: { size: 9, defaultvalue: 0, decimals: 2, prefix: \'$\', thousands_separator: \',\', decimals_separator: \'.\' }'
-		];
+- A number box for recording prices up to $999,999.99: { size: 9, defaultvalue: 0, decimals: 2, prefix: '$', thousands_separator: ',', decimals_separator: '.' }";
 	}
 
 	// write code to a file

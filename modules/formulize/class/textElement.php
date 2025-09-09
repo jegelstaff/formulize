@@ -70,13 +70,12 @@ class formulizeTextElement extends formulizeElement {
 	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples() {
-		return [
-'Element: Text Box (text).
+		return
+"Element: Text Box (text).
 Properties:
 - none
 Examples:
-- A text box requires no properties.'
-];
+- A text box requires no properties.";
 	}
 
 	public function getDefaultDataType() {

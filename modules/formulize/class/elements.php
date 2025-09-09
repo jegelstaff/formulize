@@ -390,7 +390,6 @@ class formulizeElementsHandler {
             // changed - end - August 19 2005 - jpc
  		}
 
-
         if( false != $force ){
             $result = $this->db->queryF($sql);
         }else{
