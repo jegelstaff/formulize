@@ -194,7 +194,10 @@ class formulizeElement extends FormulizeObject {
 			if($key == 'ele_value') {
 				$ele_type = $this->getVar('ele_type');
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
+				if($ele_type == 'derived'
+				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
+				OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
+				) {
 					$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 					formulize_writeCodeToFile($filename, $valueToWrite[0]);
 					$valueToWrite[0] = '';
