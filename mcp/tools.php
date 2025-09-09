@@ -100,7 +100,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true,
 							'examples' => [
 								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
@@ -130,7 +130,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
+							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -144,7 +144,7 @@ trait tools {
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
@@ -184,7 +184,7 @@ Examples:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format. For duration elements, use minutes as an integer.'
+												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
@@ -747,8 +747,9 @@ Examples:
 		$caption = trim($arguments['caption'] ?? '');
 		$column_heading = trim($arguments['column_heading'] ?? '');
 		$description = trim($arguments['description'] ?? '');
-		$required = !empty($arguments['required']) ? 1 : 0;
+		$required = ($arguments['required'] ?? false) ? 1 : 0;
 		$options = $arguments['options'] ?? [];
+		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
 
 		$elementObject = null;
 
@@ -769,6 +770,8 @@ Examples:
 			throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]	);
 		}
 
+		// put the passed in values into an array for passing to the upsert function
+		// corresponds to the fields in the formulizeElement object
 		$elementObjectProperties = [
 			'fid' => $form_id,
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
@@ -777,17 +780,30 @@ Examples:
 			'ele_caption' => $caption,
 			'ele_colhead' => $column_heading,
 			'ele_desc' => $description,
-			'ele_required' => $required ? true : false,
+			'ele_required' => $required ? true : false
 		];
 
-		// figure out ele_value, and anything else that the element type might handle
-		$elementTypeHandler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element', 'formulize');
-		$propertiesFromType = $elementTypeHandler->validateEleValuePublicAPIOptions($options);
-		foreach($propertiesFromType as $key => $value) {
+		// prepare element-specific properties by calling the element type handler's
+		// validation function, if it exists this allows each element type to validate
+		// and prepare its own options the function returns an array of key/value pairs
+		// that are merged into the $elementObjectProperties array
+		// this allows each element type to handle its own options and validation
+		$propertiesPreparedByTheElement = [];
+		$elementTypeHandler = xoops_getmodulehandler($element_type.'Element', 'formulize');
+		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIOptions')) {
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIOptions($options);
+		}
+
+		// merge the element-specific properties into the main properties array
+		// this will overwrite any keys that are the same, which would be rare, but
+		// important if a special element needs to control some more general aspect
+		// of the element for example, a special element might want to force ele_required
+		// to true so the element-specific properties should take precedence
+		foreach($propertiesPreparedByTheElement as $key => $value) {
 			$elementObjectProperties[$key] = $value;
 		}
 
-		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties);
+		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, pi: $pi);
 
 		return [
 			'element_id' => $elementObject->getVar('ele_id'),
@@ -1556,6 +1572,10 @@ private function validateFilter($filter) {
 			'required' => [
 				'type' => 'boolean',
 				'description' => 'Optional. Whether the element is required to have a value when users fill out the form. Default: false'
+			],
+			'principal_identifier' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Whether the element is the Principal Identifier for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
 			],
 			'options' => [
 				'type' => 'object',

@@ -318,11 +318,13 @@ class formulizeHandler {
 	 * @param array $screenIdsAndPagesForAdding Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be added to. For new elements, if this is empty then they will be added to all multipage screens, on their form, that include all elements.
 	 * @param array $screenIdsAndPagesForRemoving Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be removed from. For new elements, this is ignored.
 	 * @param string $dataType The data type to use for the database field for this element. If null, default determination of datatypes is used.
+	 * @param bool $pi If true, this element will be set as the Principal Identifier for the form it belongs to. Only one element per form can be the Principal Identifier, so if another element is already the PI it will be replaced.
 	 * @throws Exception if there are any problems creating or updating the element
 	 * @return object returns the element object
 	 */
-	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null) {
+	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null, $pi = false) {
 
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler('elements','formulize');
 		$element_id = 0;
 		// if ele_id is set in the properties array, use that to load the element object
@@ -358,16 +360,22 @@ class formulizeHandler {
 			throw new Exception("Permission denied: You don't have permission to edit this form.");
 		}
 
-		$elementTypeHandler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element', 'formulize');
-		$elementObjectProperties  = $elementTypeHandler->setupAndValidateElementProperties($elementObjectProperties);
+		$elementObjectProperties = $element_handler->setupAndValidateElementProperties($elementObjectProperties);
 
 		// set all the properties that were passed in and validated
 		foreach($elementObjectProperties as $property=>$value) {
 			$elementObject->setVar($property, $value);
 		}
-		if($elementTypeHandler->insert($elementObject) == false) {
+		if($element_handler->insert($elementObject) == false) {
 			// most likely a DB error?
 			throw new Exception('Could not create/update element. '.$xoopsDB->error());
+		}
+
+		// set PI if that was requested for this element
+		if($pi) {
+			$formObject = $form_handler->get($elementObject->getVar('fid'));
+			$formObject->setVar('pi', $elementObject->getVar('ele_id'));
+			$form_handler->insert($formObject);
 		}
 
 		if($elementIsNew) {
@@ -397,11 +405,11 @@ class formulizeHandler {
 
 			// rename the field in the data table if necessary
 			// also manage the datatype in the database if necessary
-	    $currentDataTypeInfo = $element->getDataTypeInformation();
+	    $currentDataTypeInfo = $elementObject->getDataTypeInformation();
 	 	  $currentDataType = $currentDataTypeInfo['dataType'];
 			$ele_value = $elementObject->getVar('ele_value');
 
-			if($element->hasData AND
+			if($elementObject->hasData AND
 				($originalElementNames['ele_handle'] != $elementObject->getVar('ele_handle')
     			OR $dataType != $currentDataType
 			  	OR (isset($ele_value['snapshot']) AND $ele_value['snapshot'] AND $currentDataTypeInfo != 'text'))
@@ -415,7 +423,7 @@ class formulizeHandler {
 						$dataType = false; // does not need changing in the data table
 					}
 					// need to update the name of the field in the data table, and possibly update the type too
-					if(!$updateResult = $form_handler->updateField($element, $originalElementNames['ele_handle'], $dataType)) {
+					if(!$updateResult = $form_handler->updateField($elementObject, $originalElementNames['ele_handle'], $dataType)) {
 						throw new Exception("Could not update the data table field to match the new settings");
 					}
 			}
@@ -474,16 +482,15 @@ class formulizeHandler {
 			foreach ($elementFiles as $file) {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.basename($file);
 				$elementType = str_replace('Element.php', '', basename($file));
-				if(method_exists('formulize'.ucfirst($elementType).'Element', 'getMCPElementPropertiesDescription')) {
+				if(method_exists('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
 					$elementTypes[] = $mcpTypeNames ? str_replace('linked', '_linked', str_replace('users', '_users', $elementType)) : $elementType;
 					$className = "formulize".ucfirst($elementType)."Element";
-					$elementDescriptions = $elementDescriptions + $className::mcpElementPropertiesDescriptionAndExamples();
+					$elementDescriptions[] = $className::mcpElementPropertiesDescriptionAndExamples();
 				}
 			}
 		}
 		return [$elementTypes, $elementDescriptions];
 	}
-
 
 	/**
 	 * Ensures that an element handle is unique within a form, modifying it if necessary
@@ -494,8 +501,8 @@ class formulizeHandler {
 	 * @return string A unique element handle name
 	 */
 	static function enforceUniqueElementHandles($element_handle_name, $elementIdentifer=null, $formIdentifier=null) {
-    $element_handle_name = formulizeElement::sanitize_handle_name($element_handle_name);
-    if (strlen($element_handle_name)) {
+		$element_handle_name = formulizeElement::sanitize_handle_name($element_handle_name);
+		if (strlen($element_handle_name)) {
 			$firstUniqueCheck = true;
 			$element_handler = xoops_getmodulehandler('elements','formulize');
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -517,3 +524,4 @@ class formulizeHandler {
 		}
 		return $element_handle_name;
 	}
+}

@@ -182,27 +182,17 @@ class formulizeElement extends FormulizeObject {
     }
 
     public function setVar($key, $value, $not_gpc = false) {
-        if ("ele_handle" == $key) {
-            $value = self::sanitize_handle_name($value);
-        }
-		
-		if($key == 'ele_value') {
-			$ele_type = $this->getVar('ele_type');
-			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
-				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
-				formulize_writeCodeToFile($filename, $valueToWrite[0]);
-				$valueToWrite[0] = '';
-				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
-			}
+      if ("ele_handle" == $key) {
+        $value = self::sanitize_handle_name($value);
+      }
 			if("id_form" == $key) {
 				parent::setVar("fid", $value, $not_gpc);
 			}
 			if("fid" == $key) {
 				parent::setVar("id_form", $value, $not_gpc);
 			}
-			$ele_type = $this->getVar('ele_type');
 			if($key == 'ele_value') {
+				$ele_type = $this->getVar('ele_type');
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
 				if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
 					$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
@@ -212,7 +202,7 @@ class formulizeElement extends FormulizeObject {
 				}
 			}
 			parent::setVar($key, $value, $not_gpc);
-    }
+		}
 
 		public function getVar($key, $format = 's') {
 			$format = $key == "ele_value" ? "f" : $format;
@@ -273,6 +263,10 @@ class formulizeElementsHandler {
 	 * @return array The processed properties that are ready to set on the element object
 	 */
 	public function setupAndValidateElementProperties($properties) {
+
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
 		$properties['fid'] = intval($properties['fid']) ? intval($properties['fid']) : 0;
 		if($properties['fid'] <= 0) {
 			throw new Exception("You must use a valid form when working with an element");
@@ -290,6 +284,8 @@ class formulizeElementsHandler {
 		$properties['ele_handle'] = trim($properties['ele_handle']);
 		$properties['ele_desc'] = trim($properties['ele_desc']);
 		$properties['ele_required']	= $properties['ele_required'] ? 1 : 0;
+		$properties['ele_delim'] = isset($properties['ele_delim']) ? trim($properties['ele_delim']) : $formulizeConfig['delimiter'];
+		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
 		$properties['ele_order'] = isset($properties['ele_order']) ? intval($properties['ele_order']) : figureOutOrder('bottom', fid: $properties['fid']);
 		$properties['ele_display'] = isset($properties['ele_display']) ? $properties['ele_display'] : 1;
 		$properties['ele_disabled'] = isset($properties['ele_disabled']) ? $properties['ele_disabled'] : 0;
