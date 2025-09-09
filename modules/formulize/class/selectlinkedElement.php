@@ -47,6 +47,21 @@ class formulizeSelectlinkedElement extends formulizeSelectElement {
 		$this->isLinked = true; // set to true if this element can have linked values
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples() {
+		return
+"Element: Linked Dropdown List (select_linked).
+Properties:
+- source_element (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked Dropdown List will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.),
+Examples:
+- A dropdown list with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { source_element: 7 }
+- A dropdown list with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { source_element: 'provinces_name' }";
+	}
 }
 
 #[AllowDynamicProperties]
@@ -54,6 +69,57 @@ class formulizeSelectlinkedElementHandler extends formulizeSelectElementHandler 
 
 	function create() {
 		return new formulizeSelectlinkedElement();
+	}
+
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options) {
+		$elementObject = false;
+		foreach($options as $key => $value) {
+			if($key == 'source_element' OR !$candidateElementObject = _getElementObject($value)) {
+				unset($options[$key]);
+			} else {
+				$elementObject = $candidateElementObject;
+			}
+		}
+		if(!$elementObject) {
+			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
+		}
+
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$ele_value = array(
+			ELE_VALUE_SELECT_NUMROWS => 1,
+			ELE_VALUE_SELECT_MULTIPLE => 0,
+			ELE_VALUE_SELECT_OPTIONS => $elementObject->getVar('fid')."#*=:*".$elementObject->getVar('ele_handle'),
+			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
+			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
+			ELE_VALUE_SELECT_LINK_FILTERS => array(),
+			ELE_VALUE_SELECT_LINK_ALLGROUPS => 0,
+			ELE_VALUE_SELECT_LINK_USEONLYUSERSENTRIES => 0,
+			ELE_VALUE_SELECT_LINK_CLICKABLEINLIST => 0,
+			ELE_VALUE_SELECT_AUTOCOMPLETE => 0,
+			ELE_VALUE_SELECT_RESTRICTSELECTION => 0,
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_SORT => 0,
+			ELE_VALUE_SELECT_LINK_DEFAULTVALUE => array(),
+			ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK => 0,
+			ELE_VALUE_SELECT_LINK_SORTORDER => 1,
+			ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW => 0,
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_SNAPSHOT => 0,
+			ELE_VALUE_SELECT_LINK_ALLOWSELFREF => 0,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT => 0,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => array(),
+			ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(),
+		);
+		return ['ele_value' => $ele_value ];
 	}
 
 }
