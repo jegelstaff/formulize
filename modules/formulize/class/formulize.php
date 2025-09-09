@@ -38,7 +38,7 @@ class FormulizeObject extends XoopsObject {
 
 	static function sanitize_handle_name($handle_name) {
 		// strip non-alphanumeric characters from handles
-		return preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "_", $handle_name));
+		return strtolower(preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "_", $handle_name)));
 	}
 
 	/**

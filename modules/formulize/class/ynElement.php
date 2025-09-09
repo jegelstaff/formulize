@@ -43,13 +43,45 @@ class formulizeYnElement extends formulizeRadioElement {
 		$this->overrideDataType = "tinyint"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 	}
 
-}
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples() {
+		return
+"Element: Yes/No Radio Buttons (yn).
+Properties:
+- defaultvalue (int, a 1 for 'Yes' and a 0 for 'No', if omitted or empty, no default is set)
+Examples:
+- A Yes/No radio button that has no default value: { }
+- A Yes/No radio button that defaults to No: { defaultvalue: 0 }
+- A Yes/No radio button that defaults to Yes: { defaultvalue: 1 }";
+	}
 
+}
 #[AllowDynamicProperties]
 class formulizeYnElementHandler extends formulizeRadioElementHandler {
 
 	function create() {
 		return new formulizeYnElement();
+	}
+
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options) {
+		return [
+			'ele_value' => [
+				'_YES' => (isset($options['defaultvalue']) AND $options['defaultvalue'] === 1) ? 1 : 0,
+				'_NO' => (isset($options['defaultvalue']) AND $options['defaultvalue'] === 0) ? 1 : 0
+			]
+		];
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class

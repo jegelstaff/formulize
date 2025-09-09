@@ -81,15 +81,14 @@ class formulizeSelectElement extends formulizeElement {
 	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples() {
-		return [
-'Element: Dropdown List (select).
+		return
+"Element: Dropdown List (select).
 Properties:
 - options (array, list of options for the dropdown, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
 Examples:
-- A dropdown list of toppings for pizza: { options: [ \'pepperoni\', \'mushrooms\', \'onions\', \'extra cheese\', \'green peppers\', \'bacon\' ] }
-- A dropdown list of movies: { options: [ \'2001: A Space Odyssey\', \'WarGames\', \'WALL-E\', \'The Matrix\', \'Inception\', \'Children of Men\' ] }
-- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ \'AL|Alabama\', \'AK|Alaska\', \'AZ|Arizona\', \'AR|Arkansas\', \'CA|California\', \'CO|Colorado\', \'CT|Connecticut\', \'DE|Delaware\', \'FL|Florida\', \'GA|Georgia\', \'HI|Hawaii\', \'ID|Idaho\', \'IL|Illinois\', \'IN|Indiana\', \'IA|Iowa\', \'KS|Kansas\', \'KY|Kentucky\', \'LA|Louisiana\', \'ME|Maine\', \'MD|Maryland\', \'MA|Massachusetts\', \'MI|Michigan\', \'MN|Minnesota\', \'MS|Mississippi\', \'MO|Missouri\', \'MT|Montana\', \'NE|Nebraska\', \'NV|Nevada\', \'NH|New Hampshire\', \'NJ|New Jersey\', \'NM|New Mexico\', \'NY|New York\', \'NC|North Carolina\', \'ND|North Dakota\', \'OH|Ohio\', \'OK|Oklahoma\', \'OR|Oregon\', \'PA|Pennsylvania\', \'RI|Rhode Island\', \'SC|South Carolina\', \'SD|South Dakota\', \'TN|Tennessee\', \'TX|Texas\', \'UT|Utah\', \'VT|Vermont\', \'VA|Virginia\', \'WA|Washington\', \'WV|West Virginia\', \'WI|Wisconsin\', \'WY|Wyoming\' ] }'
-		];
+- A dropdown list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
+- A dropdown list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
+- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'AL|Alabama', 'AK|Alaska', 'AZ|Arizona', 'AR|Arkansas', 'CA|California', 'CO|Colorado', 'CT|Connecticut', 'DE|Delaware', 'FL|Florida', 'GA|Georgia', 'HI|Hawaii', 'ID|Idaho', 'IL|Illinois', 'IN|Indiana', 'IA|Iowa', 'KS|Kansas', 'KY|Kentucky', 'LA|Louisiana', 'ME|Maine', 'MD|Maryland', 'MA|Massachusetts', 'MI|Michigan', 'MN|Minnesota', 'MS|Mississippi', 'MO|Missouri', 'MT|Montana', 'NE|Nebraska', 'NV|Nevada', 'NH|New Hampshire', 'NJ|New Jersey', 'NM|New Mexico', 'NY|New York', 'NC|North Carolina', 'ND|North Dakota', 'OH|Ohio', 'OK|Oklahoma', 'OR|Oregon', 'PA|Pennsylvania', 'RI|Rhode Island', 'SC|South Carolina', 'SD|South Dakota', 'TN|Tennessee', 'TX|Texas', 'UT|Utah', 'VT|Vermont', 'VA|Virginia', 'WA|Washington', 'WV|West Virginia', 'WI|Wisconsin', 'WY|Wyoming' ] }";
 	}
 
 	public function getDefaultDataType() {
@@ -135,22 +134,6 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 
 	function create() {
 		return new formulizeSelectElement();
-	}
-
-	/**
-	 * Takes an array of properties for an element Object and fills it out, validates, so it is complete
-	 * If an element should set any default values for properties more specific to it, do that here
-	 * Must return through the parent method so that the rest of the more basic properties are set correctly
-	 * In most cases, ele_value property will already have been sorted out because it came from a public source and went through validateEleValuePublicAPIOptions already
-	 * @param array $properties The properties for an element object
-	 * @return array The properties to apply to the element object
-	 */
-	public function setupAndValidateElementProperties($properties) {
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
-		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimiter'];
-		return parent::setupAndValidateElementProperties($properties);
 	}
 
 	/**
