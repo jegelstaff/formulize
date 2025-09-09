@@ -94,7 +94,7 @@ function formulize_exception_handler($exception) {
 			'jsonrpc' => '2.0',
 			'error' => [
 				'code' => $exception->getCode() ? $exception->getCode() : -32603,
-				'message' => $exception->getMessage() ." in " . str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()) . " on line " . $exception->getLine(),
+				'message' => $exception->getMessage() ." in " . str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()) . " on line " . $exception->getLine(). ". ".$exception->getTraceAsString(),
 				'timestamp' => date('Y-m-d H:i:s'),
 				'type' => 'internal_formulize_error'
 			]

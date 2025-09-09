@@ -747,40 +747,58 @@ Examples:
 		$caption = trim($arguments['caption'] ?? '');
 		$column_heading = trim($arguments['column_heading'] ?? '');
 		$description = trim($arguments['description'] ?? '');
-		$required = ($arguments['required'] ?? false) ? 1 : 0;
+		$required = isset($arguments['required']) ? ($arguments['required'] ? 1 : 0) : null;
 		$options = $arguments['options'] ?? [];
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
+		$data_type = $arguments['data_type'] ?? false;
 
 		$elementObject = null;
 
-		if($isCreate AND
-			(empty($form_id) OR $form_id <= 0 OR empty($element_type) OR empty($caption))) {
-			throw new FormulizeMCPException('form_id and element_type and caption are required for creating elements', 'invalid_data');
+		if($isCreate) {
+			if(empty($form_id) OR $form_id <= 0 OR empty($element_type) OR empty($caption)) {
+				throw new FormulizeMCPException('form_id and element_type and caption are required for creating elements', 'invalid_data');
+			}
+			list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+			if(!in_array($element_type, $elementTypes)) {
+				throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]	);
+			}
 		}
 		if(!$isCreate) {
 			if(empty($element_identifier)) {
 				throw new FormulizeMCPException('element_identifier is required for updating elements', 'invalid_data');
-			} elseif($elementObject = _getElementObject($element_identifier) == false) {
+			} elseif(!$elementObject = _getElementObject($element_identifier)) {
 				throw new FormulizeMCPException('Element not found for element_identifier: '.$element_identifier, 'element_not_found');
 			}
+			$element_type = $elementObject->getVar('ele_type');
 		}
 
-		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
-		if(!in_array($element_type, $elementTypes)) {
-			throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]	);
+		// validate that $data_type conforms to the element type's valid data types as specified in the tool schema
+		$validDataTypes = ['text', 'date', 'datetime', 'time'];
+		for($i=1; $i<=11; $i++) { $validDataTypes[] = "int($i)"; }
+		for($i=1; $i<=65; $i++) { $validDataTypes[] = "char($i)"; }
+		for($i=1; $i<=255; $i++) { $validDataTypes[] = "varchar($i)"; }
+		for($i=2; $i<=65; $i++) {
+			for($x=1; $x<=64; $x++) {
+				if($x < $i) {
+					$validDataTypes[] = "decimal($i,$x)";
+				}
+			}
+		}
+		if($data_type AND !in_array($data_type, $validDataTypes)) {
+			throw new FormulizeMCPException('Invalid data_type: '.$data_type, 'invalid_data', context: ['valid_data_types' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'] ]);
 		}
 
 		// put the passed in values into an array for passing to the upsert function
 		// corresponds to the fields in the formulizeElement object
 		$elementObjectProperties = [
-			'fid' => $form_id,
+			'fid' => $form_id ? $form_id : $elementObject->getVar('fid'),
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
 			'ele_type' => $element_type,
-			'ele_handle' => $handle,
-			'ele_caption' => $caption,
-			'ele_colhead' => $column_heading,
-			'ele_desc' => $description,
-			'ele_required' => $required ? true : false
+			'ele_handle' => $handle ? $handle : $elementObject->getVar('ele_handle'),
+			'ele_caption' => $caption ? $caption : $elementObject->getVar('ele_caption'),
+			'ele_colhead' => $column_heading ? $column_heading : $elementObject->getVar('ele_colhead'),
+			'ele_desc' => $description ? $description : $elementObject->getVar('ele_desc'),
+			'ele_required' => $required !== null ? $required : $elementObject->getVar('ele_required')
 		];
 
 		// prepare element-specific properties by calling the element type handler's
@@ -803,7 +821,7 @@ Examples:
 			$elementObjectProperties[$key] = $value;
 		}
 
-		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, pi: $pi);
+		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi);
 
 		return [
 			'element_id' => $elementObject->getVar('ele_id'),
@@ -1576,6 +1594,11 @@ private function validateFilter($filter) {
 			'principal_identifier' => [
 				'type' => 'boolean',
 				'description' => 'Optional. Whether the element is the Principal Identifier for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
+			],
+			'data_type' => [
+				'type' => 'string',
+				'enum' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'],
+				'description' => 'Optional. The data type to be used for the field in the database where this data will be stored. The system will default to text in most cases, but will set smart defaults if the type is specifically a number box or linked element storing foreign keys, etc. Generally this does not need to be specified, but can be used if the user has specifically stated that a certain data type must be used for a given element. For int(x), the x is the number of digits to display in MySQL when showing the number. For decimal(x,y), the x is the total number of digits, and y is the number of digits after the decimal point. For char(x) and varchar(x), the x is the maximum number of characters to store.'
 			],
 			'options' => [
 				'type' => 'object',
