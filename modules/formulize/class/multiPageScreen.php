@@ -267,9 +267,8 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 		$formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
 		$mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
-		list($pages, $pageTitles) = $this->traverseScreenPages($screen);
-		$pages['titles'] = $pageTitles;
-		$conditions = $screen->getConditions();
+		list($pages, $pageTitles, $pageConditions) = $this->traverseScreenPages($screen);
+		$pages['titles'] = $pageTitles; // silly convention that this named key in pages has the title. Handled in the start of displayFormPages function
 		$doneDest = $screen->getVar('donedest');
 		if(substr($doneDest, 0, 1)=='/') {
 		  $doneDest = XOOPS_URL.$doneDest;
@@ -284,7 +283,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
     updateMultipageTemplates($screen);
 
-		displayFormPages($formframe, $entry, $mainform, $pages, $conditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
+		displayFormPages($formframe, $entry, $mainform, $pages, $pageConditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
     $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
@@ -294,31 +293,47 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	 * @param object screen - a multipage screen object
 	 * @param array completePages - an array of the pages compiled from all the screens we've traversed
 	 * @param array completePageTitles - an array of the all the page titles compiled from the screens we've traversed
-	 * @return array An array with two items, one is completePages, one is completePageTitles
+	 * @param array completePageConditions - an array of all the page conditions compiled from the screens we've traversed
+	 * @param array conditionsAppliedToAllPages - an array of conditions that should be applied to all pages in this screen. Happens when a page references another screen, and that page has conditions. Then that page's conditions are added to any conditions in the referenced screen.
+	 * @return array An array with three items, one is completePages, one is completePageTitles, one is completePageConditions
 	 */
-	function traverseScreenPages($screen, $completePages=array(), $completePageTitles=array()) {
+	function traverseScreenPages($screen, $completePages=array(), $completePageTitles=array(), $completePageConditions=array(), $conditionsAppliedToAllPages=array()) {
 		static $screenCatalogue = array();
 		if(!isset($screenCatalogue[$screen->getVar('sid')])) { // avoid an infinite loop, don't redo a screen, until we're finished with that screen
 			$screenCatalogue[$screen->getVar('sid')] = true;
 			list($pages, $pageTitles) = $this->gatherPagesAndTitlesFromScreen($screen);
+			$pageConditions = $screen->getConditions();
+			if(!empty($conditionsAppliedToAllPages)) { // add these conditions to each page in this screen
+				foreach($pages as $pageNumber=>$items) {
+					if(isset($pageConditions[$pageNumber]) AND isset($pageConditions[$pageNumber][0])) { // this page already has conditions, so merge them
+						$pageConditions[$pageNumber][0] = array_merge($pageConditions[$pageNumber][0], $conditionsAppliedToAllPages[0]);
+						$pageConditions[$pageNumber][1] = array_merge($pageConditions[$pageNumber][1], $conditionsAppliedToAllPages[1]);
+						$pageConditions[$pageNumber][2] = array_merge($pageConditions[$pageNumber][2], $conditionsAppliedToAllPages[2]);
+						$pageConditions[$pageNumber][3] = array_merge($pageConditions[$pageNumber][3], $conditionsAppliedToAllPages[3]);
+					} else { // just add the conditions to this page
+						$pageConditions[$pageNumber] = $conditionsAppliedToAllPages;
+					}
+				}
+			}
 			foreach($pages as $pageNumber=>$items) {
 				$firstItem = $items[array_key_first($items)];
 				if(!is_numeric($firstItem) AND $firstItem != "PHP") {
 					$pageScreenId = substr($firstItem, 4);
 					if($pageScreenObject = $this->get($pageScreenId)) {
-						list($completePages, $completePageTitles) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles);
+						list($completePages, $completePageTitles, $completePageConditions) = $this->traverseScreenPages($pageScreenObject, $completePages, $completePageTitles, $completePageConditions, $pageConditions[$pageNumber]);
 					} else {
 						error_log("Formulize Error: invalid screen reference on page ".$pageTitles[$pageNumber]." ($pageNumber) of screen ".$screen->getVar('title'));
 					}
 				} else {
-					$completePageNumber = count($completePages) + 1;
+					$completePageNumber = count($completePages) + 1; // arrays are keyed from 1 in this case, so the new page will be count plus 1
 					$completePages[$completePageNumber] = $items;
 					$completePageTitles[$completePageNumber] = $pageTitles[$pageNumber];
+					$completePageConditions[$completePageNumber] = $pageConditions[$pageNumber];
 				}
 			}
 			unset($screenCatalogue[$screen->getVar('sid')]); // we can revisit this screen now safely, since we're done traversing it.
 		}
-		return array($completePages, $completePageTitles);
+		return array($completePages, $completePageTitles, $completePageConditions);
 	}
 
 	/**
