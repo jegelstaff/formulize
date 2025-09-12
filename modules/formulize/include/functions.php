@@ -3666,8 +3666,7 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
                     break;
 
                 default:
-                    error_log("Error: unknown type of element used in a call to displayButton");
-										return false;
+                    exit("Error: unknown type of element used in a call to displayButton");
             }
         } else {
             // append == "replace" or all other settings for append
