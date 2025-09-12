@@ -200,6 +200,11 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
 							$currentLinkedElementId = $currentLinkedElementId[0];
 					}
 					updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId);
+					if(isset($_POST['makeSubformInterface']) AND $_POST['makeSubformInterface']) {
+						if(makeSubformInterface($array_link['id_form'], $element->getVar('fid'), $element->getVar('ele_id'))) {
+							$_POST['reload_option_page'] = true;
+						}
+					}
 				} else {
           // a user requests to unlink the element and it is currently linked...
           $form_handler = xoops_getmodulehandler('forms', 'formulize');

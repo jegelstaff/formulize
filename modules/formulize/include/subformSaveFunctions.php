@@ -39,6 +39,11 @@ function formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $tar
         }
     } else {
         $value_to_write = $entry;
+				if($elementToWriteObject = _getElementObject($element_to_write)) {
+					if($elementToWriteObject->canHaveMultipleValues) {
+						$value_to_write = ",$value_to_write,";
+					}
+				}
     }
 
 
