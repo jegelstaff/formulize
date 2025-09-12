@@ -297,7 +297,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	 * @param array conditionsAppliedToAllPages - an array of conditions that should be applied to all pages in this screen. Happens when a page references another screen, and that page has conditions. Then that page's conditions are added to any conditions in the referenced screen.
 	 * @return array An array with three items, one is completePages, one is completePageTitles, one is completePageConditions
 	 */
-	function traverseScreenPages($screen, $completePages=array(), $completePageTitles=array(), $completePageConditions=array(), $conditionsAppliedToAllPages=array()) {
+	function traverseScreenPages(formulizeMultiPageScreen $screen, array $completePages=array(), array $completePageTitles=array(), array $completePageConditions=array(), array $conditionsAppliedToAllPages=array()): array {
 		static $screenCatalogue = array();
 		if(!isset($screenCatalogue[$screen->getVar('sid')])) { // avoid an infinite loop, don't redo a screen, until we're finished with that screen
 			$screenCatalogue[$screen->getVar('sid')] = true;
