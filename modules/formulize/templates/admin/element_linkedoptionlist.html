@@ -4,7 +4,7 @@
 		<div id="linkedSourceOptions">
 			<{$content.linkedoptions}>
 
-			<{if $content.type != "select" AND $content.type != "selectlinked" OR $content.type != "selectusers"}>
+			<{if $content.type == "listbox" OR $content.type == "listboxlinked" OR $content.type == "listboxusers" OR $content.type == "autocomplete" OR $content.type == "autocompletelinked" OR $content.type == "autocompleteusers"}>
 				<br>
 				<br>
 				<{include file="db:admin/element_multiple_onoff.html"}>
@@ -29,7 +29,7 @@
 					<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
 				</div>
 			</div>
-			<{if $content.type == "selectlinked" OR $content.type == "listboxlinked" OR $content.type == "autocompletelinked"}>
+			<{if $content.type == "selectlinked" OR $content.type == "listboxlinked" OR $content.type == "autocompletelinked" OR $content.type == "checkboxlinked"}>
 				<div class="form-radios">
 				<{if $content.subformInterfaceAdminUrl}>
 					<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
