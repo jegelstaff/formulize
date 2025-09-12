@@ -6014,7 +6014,10 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
         $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
 
-		$thiscondition = "($dbSource ".$filterOp." ".$conditionsFilterComparisonValue.")";
+		// if we snuck a field reference into the comparison value, then make sure it is fully qualified
+		$conditionsFilterComparisonValue = str_replace([" $filterElementHandle ", " `$filterElementHandle` "], " $dbSource ", $conditionsFilterComparisonValue);
+		$thiscondition = "($dbSource $filterOp $conditionsFilterComparisonValue)";
+
 		// possibly we need to flip the order around the LIKE operator,
 		// if the dbSource field is a single value field, and the filter comparison value is a reference to an element that is a multi value field
 		// this is a concession to the fact that it's conceptually difficult to know which side of the operator has which kind of values when specifying a comparison in the UI. Trying to help the user when things are messy.
@@ -6041,7 +6044,6 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     $condition .= $thiscondition;
     return array($condition, $thiscondition);
 }
-
 
 // this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
 // $filterOps may be modified by this function
