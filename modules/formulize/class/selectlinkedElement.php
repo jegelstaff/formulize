@@ -57,10 +57,12 @@ class formulizeSelectlinkedElement extends formulizeSelectElement {
 		return
 "Element: Linked Dropdown List (select_linked).
 Properties:
-- source_element (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked Dropdown List will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.),
+- source_element (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked Dropdown List will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)
+- make_subform_element_in_linked_form (boolean, optional, default false. If true, the linked form will get a special subform interface element, so that when users are editing entries in the linked form, they can interact with the connected entries in this form too. Not all linked forms should have subform elements, but sometimes it makes sense for users to edit related data all in one place. Other times, forms might be linked solely to ensure their data is included together in a report or list but the data entry workflow is separate.)
 Examples:
 - A dropdown list with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { source_element: 7 }
-- A dropdown list with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { source_element: 'provinces_name' }";
+- A dropdown list with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { source_element: 'provinces_name' }
+- A dropdown list of province names (from the element with that handle), and a subform element will be created in the provinces form so the entries in this form are accessible there too: { source_element: 'provinces_name', make_subform_element_in_linked_form: true }";
 	}
 }
 
@@ -76,23 +78,12 @@ class formulizeSelectlinkedElementHandler extends formulizeSelectElementHandler 
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * Options are the contents of the ele_value property on the object
 	 * @param array $options The options to validate
-	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too. Can include a special key for upsertParams if there are special values we need to send to the upsert method, rather than just properties to assign to the element object.
 	 */
 	public function validateEleValuePublicAPIOptions($options) {
-		$elementObject = false;
-		foreach($options as $key => $value) {
-			if($key == 'source_element' OR !$candidateElementObject = _getElementObject($value)) {
-				unset($options[$key]);
-			} else {
-				$elementObject = $candidateElementObject;
-			}
-		}
-		if(!$elementObject) {
+		if(!$elementObject = _getElementObject($options['source_element'])) {
 			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
 		}
-
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value = array(
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,
@@ -119,7 +110,12 @@ class formulizeSelectlinkedElementHandler extends formulizeSelectElementHandler 
 			ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => array(),
 			ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(),
 		);
-		return ['ele_value' => $ele_value ];
+		return [
+			'ele_value' => $ele_value,
+			'upsertParams' => [
+				'makeSubformInterface' => ((isset($options['make_subform_element_in_linked_form']) AND $options['make_subform_element_in_linked_form']) ? true : false)
+			]
+		];
 	}
 
 }

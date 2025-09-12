@@ -261,7 +261,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// $handle is the element handle for the field that we're retrieving this for
 	// $entry_id is the entry id of the entry in the form that we're retrieving this for
 	function prepareDataForDataset($value, $handle, $entry_id) {
-		return $value;
+		return $value ? date(_SHORTDATESTRING, strtotime($value)) : "";
 	}
 
 	// this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
