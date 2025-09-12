@@ -144,11 +144,12 @@ trait tools {
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values.If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
+- Get all the entries with a non-blank value in the "email" field: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
 - Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}',
 				'inputSchema' => [
 					'type' => 'object',
@@ -742,7 +743,7 @@ Examples:
 
 		$element_identifier = $arguments['element_identifier'] ?? '';
 		$form_id = intval($arguments['form_id'] ?? 0);
-		$element_type = str_replace('_', '', strtolower(trim($arguments['element_type'] ?? '')));
+		$element_type = strtolower(trim($arguments['element_type'] ?? ''));
 		$handle = trim($arguments['handle'] ?? '');
 		$caption = trim($arguments['caption'] ?? '');
 		$column_heading = trim($arguments['column_heading'] ?? '');
@@ -752,6 +753,7 @@ Examples:
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
 		$data_type = $arguments['data_type'] ?? false;
 
+		$makeSubformInterface = false;
 		$elementObject = null;
 
 		if($isCreate) {
@@ -760,7 +762,7 @@ Examples:
 			}
 			list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
 			if(!in_array($element_type, $elementTypes)) {
-				throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]	);
+				throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]);
 			}
 		}
 		if(!$isCreate) {
@@ -791,14 +793,14 @@ Examples:
 		// put the passed in values into an array for passing to the upsert function
 		// corresponds to the fields in the formulizeElement object
 		$elementObjectProperties = [
-			'fid' => $form_id ? $form_id : $elementObject->getVar('fid'),
+			'fid' => $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0),
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
 			'ele_type' => $element_type,
-			'ele_handle' => $handle ? $handle : $elementObject->getVar('ele_handle'),
-			'ele_caption' => $caption ? $caption : $elementObject->getVar('ele_caption'),
-			'ele_colhead' => $column_heading ? $column_heading : $elementObject->getVar('ele_colhead'),
-			'ele_desc' => $description ? $description : $elementObject->getVar('ele_desc'),
-			'ele_required' => $required !== null ? $required : $elementObject->getVar('ele_required')
+			'ele_handle' => $handle ? $handle : ($elementObject ? $elementObject->getVar('ele_handle') : ''),
+			'ele_caption' => $caption ? $caption : ($elementObject ? $elementObject->getVar('ele_caption') : ''),
+			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
+			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
+			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0)
 		];
 
 		// prepare element-specific properties by calling the element type handler's
@@ -810,6 +812,12 @@ Examples:
 		$elementTypeHandler = xoops_getmodulehandler($element_type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIOptions')) {
 			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIOptions($options);
+			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
+				// special case - the element type needs to pass special parameters to the upsert function
+				// for example, if it should create a subform interface in the source form
+				$makeSubformInterface = $propertiesPreparedByTheElement['upsertParams']['makeSubformInterface'] ?? false;
+				unset($propertiesPreparedByTheElement['upsertParams']); // remove so it won't affect the object properties!
+			}
 		}
 
 		// merge the element-specific properties into the main properties array
@@ -821,7 +829,7 @@ Examples:
 			$elementObjectProperties[$key] = $value;
 		}
 
-		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi);
+		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi, makeSubformInterface: $makeSubformInterface);
 
 		return [
 			'element_id' => $elementObject->getVar('ele_id'),
@@ -890,7 +898,10 @@ Examples:
 		$elements = $this->validateElementHandles($elements);
 
 		// cleanup $filter into old style filter string, if necessary
-		$filter = $this->validateFilter($filter);
+		// supports {BLANK} value for searching for blank values
+		// if filter is an array, then force AND between multiple filters since the array is a series of nested searches with their own booleans between
+		$filter = $this->validateFilter($filter, $andOr);
+		$andOr = is_array($filter) ? 'AND' : $andOr;
 
 		// Call Formulize's gatherDataset function with all parameters
 		$dataset = gatherDataset(
@@ -927,8 +938,11 @@ Examples:
 
 /**
  * Convert MCP filter array into old style filter string for compatibility with gatherDataset
+ * @param mixed $filter - an array of filters to use, each one is an array with three keys: element, value, operator
+ * @param string $andOr - the boolean operator to use between multiple filters, if there are multiple filters. Defaults to 'AND'.
+ * @return mixed - a string or array suitable for passing to gatherDataset
  */
-private function validateFilter($filter) {
+private function validateFilter($filter, $andOr = 'AND') {
 	// Handle simple entry ID lookup
 	if (is_numeric($filter)) {
 		return intval($filter);
@@ -952,10 +966,49 @@ private function validateFilter($filter) {
 		throw new FormulizeMCPException("The 'filter' parameter must be an integer or an array.", 'invalid_data');
 	}
 	$filterStringParts = array();
+	$blankSearches = array();
 	foreach($filter as $thisFilter) {
-		$filterStringParts[] = $thisFilter['element'].'/**/'.$thisFilter['value'].'/**/'.$thisFilter['operator'];
+		// similar to formulize_parseSearchesIntoFilter but that is tuned to dealing with searches entered through UI which aren't in array format already
+		// this will not quite work perfectly if there are multiple blank searches on different elements
+		// search for email = {BLANK} AND phone = {BLANK} would actually need a third level of nesting in final output, since the structure for just the blank portion should be:
+		// ((email = '' OR email IS NULL) AND (phone = '' OR phone IS NULL))
+		// A very smartly recursive handling when parsing the $blankSearches array could probably handle this, and we just put each field into a sub level of the array when creating it, but for now, we will just note the limitation
+		if($thisFilter['value'] == '{BLANK}') {
+			if($thisFilter['operator'] == "!=" OR $thisFilter['operator'] == "NOT LIKE") {
+				$blankOp1 = "!=";
+				$blankOp2 = " IS NOT NULL ";
+				$blankBoolean = "AND";
+			} else {
+				$blankOp1 = "=";
+				$blankOp2 = " IS NULL ";
+				$blankBoolean = "OR";
+			}
+			$blankSearches[$blankBoolean][] = $thisFilter['element']."/**//**/$blankOp1][".$thisFilter['element']."/**//**/$blankOp2";
+		} else {
+			$filterStringParts[] = $thisFilter['element'].'/**/'.$thisFilter['value'].'/**/'.$thisFilter['operator'];
+		}
 	}
-	return implode('][', $filterStringParts);
+	if(!empty($blankSearches)) {
+		$returnFilter = array([
+				$andOr,
+				implode('][', $filterStringParts)
+		]);
+		if(isset($blankSearches['AND'])) {
+			$returnFilter[] = [
+				'AND',
+				implode('][', $blankSearches['AND'])
+			];
+		}
+		if(isset($blankSearches['OR'])) {
+			$returnFilter[] = [
+				'OR',
+				implode('][', $blankSearches['OR'])
+			];
+		}
+		return $returnFilter;
+	} else {
+		return implode('][', $filterStringParts);
+	}
 }
 
 /**
@@ -1566,7 +1619,7 @@ private function validateFilter($filter) {
 	private function buildFormElementTools() {
 
 		// Discover available element types and their descriptions
-		[$elementTypes, $elementDescriptions] = formulizeHandler::discoverElementTypes(mcpTypeNames: true);
+		[$elementTypes, $elementDescriptions] = formulizeHandler::discoverElementTypes();
 
 		// Build comprehensive description with examples from all element types
 		$propertyDescriptions = "Elements have different properties depending on their type.\n\nYou must use the valid properties for each element type. Here is a complete list of available element types, their properties, and examples:\n\n";
@@ -1625,7 +1678,7 @@ private function validateFilter($filter) {
 							],
 							'handle' => [
 								'type' => 'string',
-								'description' => 'Optional. The internal handle for the element, used in the database and in API calls. If not specified, a handle will be automatically generated from the caption.'
+								'description' => 'Optional. This does not need to be specified, as the system will determine it automatically from the caption. This is the internal handle for the element, used in the database and in API calls. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system.'
 							]
 						] + $commonProperties,
 					'required' => ['form_id', 'element_type', 'caption']

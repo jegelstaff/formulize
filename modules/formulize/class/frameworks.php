@@ -683,19 +683,25 @@ class formulizeFrameworksHandler {
  * @param int fid The form id where the linked element exists
  * @param int elementId The element id of the linked element
  * @param int sourceFid The form id of the source element from which options are gathered for the linked element
- * @param int sourceElementId The element id of the source element from which options are gathered for the linked element
+ * @param int sourceElementIdentifier The element id or handle or object, of the source element from which options are gathered for the linked element
  * @param int currentSourceFid The form id of the source element that the linked element is pointing to prior to this update
- * @param int currentSourceElementId The element id of the source element that the linked element is point to prior to this update
+ * @param int currentSourceElementIdentifier The element id or handle or object, of the source element that the linked element is point to prior to this update
  * @return boolean Returns true or false indicating if the update operation succeeded
  */
-function updateLinkedElementConnectionsInRelationships($fid, $elementId, $sourceFid, $sourceElementId, $currentSourceFid, $currentSourceElementId) {
+function updateLinkedElementConnectionsInRelationships($fid, $elementId, $sourceFid, $sourceElementIdentifier, $currentSourceFid, $currentSourceElementIdentifier) {
 	global $xoopsDB;
 	$fid = intval($fid);
 	$elementId = intval($elementId);
 	$sourceFid = intval($sourceFid);
-	$sourceElementId = intval($sourceElementId);
+	$sourceElementId = 0;
+	if($sourceElementIdentifier AND $sourceElementObject = _getElementObject($sourceElementIdentifier)) {
+		$sourceElementId = $sourceElementObject->getVar('ele_id');
+	}
 	$currentSourceFid = intval($currentSourceFid);
-	$currentSourceElementId = intval($currentSourceElementId);
+	$currentSourceElementId = 0;
+	if($currentSourceElementIdentifier AND $currentSourceElementObject = _getElementObject($currentSourceElementIdentifier)) {
+		$currentSourceElementId = $currentSourceElementObject->getVar('ele_id');
+	}
 	// updating existing link...
 	if($currentSourceFid AND $currentSourceElementId) {
 		// if there's been a change to the source of this link...

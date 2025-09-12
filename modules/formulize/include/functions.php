@@ -8690,3 +8690,14 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 	}
 	return $orderValue;
 }
+
+/**
+ * Check if a method exists in a class, and that it is not inherited from a parent class
+ * @param string $class The class name
+ * @param string $method The method name
+ * @return bool Returns true if the method exists in the class and is not inherited, false otherwise
+ */
+function methodExistsInClass($class, $method) {
+	$reflection = new ReflectionClass($class);
+	return $reflection->hasMethod($method) && $reflection->getMethod($method)->getDeclaringClass()->getName() === $class;
+}

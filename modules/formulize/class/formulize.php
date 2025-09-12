@@ -319,10 +319,16 @@ class formulizeHandler {
 	 * @param array $screenIdsAndPagesForRemoving Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be removed from. For new elements, this is ignored.
 	 * @param string $dataType The data type to use for the database field for this element. If null, default determination of datatypes is used.
 	 * @param bool $pi If true, this element will be set as the Principal Identifier for the form it belongs to. Only one element per form can be the Principal Identifier, so if another element is already the PI it will be replaced.
+	 * @param bool $makeSubformInterface If true, and this is a linked element, a subform interface will be created on the main form, that the linked entries in this element's form can be easily created/edited
 	 * @throws Exception if there are any problems creating or updating the element
 	 * @return object returns the element object
 	 */
-	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null, $pi = false) {
+	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null, $pi = false, $makeSubformInterface = false) {
+
+		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+		if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
+			throw new Exception('Invalid element type: '.$elementObjectProperties['ele_type']. ' Valid types: '.implode(', ', $elementTypes));
+		}
 
 		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
 		if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
@@ -337,24 +343,26 @@ class formulizeHandler {
 			$element_id = intval($elementObjectProperties['ele_id']);
 		}
 
-		list($elementTypes, $mpcElementDescriptions) = formulizeHandler::discoverElementTypes();
-		$originalElementNames = array();
+		$originalElementNames = array(
+			'ele_handle' => '',
+			'source_form_id' => '',
+			'source_element_handle' => ''
+		);
 		$elementIsNew = true;
 		// get the element object that we care about, or start a new one from scratch if ele_id is 0, null, etc.
 		if($element_id AND $elementObject = $element_handler->get($element_id)) {
 			$elementIsNew = false;
 			$form_id = $elementObject->getVar('fid');
 			$originalElementNames = array(
-				'ele_handle' => $elementObject->getVar('ele_handle')
+				'ele_handle' => $elementObject->getVar('ele_handle'),
+				'source_form_id' => getSourceFormIdForLinkedElement($elementObject),
+				'source_element_handle' => getSourceElementHandleForLinkedElement($elementObject)
 			);
-		} elseif(isset($elementObjectProperties['fid']) AND $elementObjectProperties['fid'] > 0 AND isset($elementObjectProperties['ele_type']) AND in_array($elementObjectProperties['ele_type'], $elementTypes)) {
+		} elseif(isset($elementObjectProperties['fid']) AND $elementObjectProperties['fid'] > 0 AND isset($elementObjectProperties['ele_type'])) {
 			$elementObject = $element_handler->create();
 			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
 			$form_id = intval($elementObjectProperties['fid']);
 		} else {
-			if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
-				throw new Exception('Invalid element type: '.$elementObjectProperties['ele_type'].'. Valid types: '.implode(', ', $elementTypes));
-			}
 			throw new Exception('Must provide a valid ele_id to update an existing element, or a valid fid and ele_type to create a new element');
 		}
 
@@ -376,9 +384,9 @@ class formulizeHandler {
 			throw new Exception('Could not create/update element. '.$xoopsDB->error());
 		}
 
-		// set PI if that was requested for this element
-		if($pi) {
-			$formObject = $form_handler->get($elementObject->getVar('fid'));
+		// set PI if that was requested for this element, or if this is the first element with data on the form
+		$formObject = $form_handler->get($elementObject->getVar('fid'));
+		if($pi OR ($formObject->getVar('pi') == 0 AND $elementObject->hasData AND count($formObject->getVar('elementsWithData')) == 1)) {
 			$formObject->setVar('pi', $elementObject->getVar('ele_id'));
 			$form_handler->insert($formObject);
 		}
@@ -433,36 +441,44 @@ class formulizeHandler {
 					}
 			}
 
-			// handle the add/remove of element from screens/pages
-			$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-			foreach($screenIdsAndPagesForAdding as $screenId=>$pageOrdinals) {
-				$screenObject = $screen_handler->get($screenId);
-				$pages = $screenObject->getVar('pages');
-				foreach($pageOrdinals as $pageOrdinal) {
-					$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
-				}
-				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-				$insertResult = $screen_handler->insert($screenObject, force: true);
-				if($insertResult == false) {
-					throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
-				}
-			}
-			foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinal) {
-				$screenObject = $screen_handler->get($screenId);
-				$pages = $screenObject->getVar('pages');
-				foreach($pageOrdinals as $pageOrdinal) {
-					$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
-					if($key !== false) {
-						unset($pages[$pageOrdinal][$key]);
-					}
-				}
-				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-				$insertResult = $screen_handler->insert($screenObject, force: true);
-				if($insertResult == false) {
-					throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
-				}
-			}
+		}
 
+		// handle the add/remove of element from screens/pages
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		foreach($screenIdsAndPagesForAdding as $screenId=>$pageOrdinals) {
+			$screenObject = $screen_handler->get($screenId);
+			$pages = $screenObject->getVar('pages');
+			foreach($pageOrdinals as $pageOrdinal) {
+				$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
+			}
+			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+			$insertResult = $screen_handler->insert($screenObject, force: true);
+			if($insertResult == false) {
+				throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+			}
+		}
+		foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinal) {
+			$screenObject = $screen_handler->get($screenId);
+			$pages = $screenObject->getVar('pages');
+			foreach($pageOrdinals as $pageOrdinal) {
+				$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
+				if($key !== false) {
+					unset($pages[$pageOrdinal][$key]);
+				}
+			}
+			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+			$insertResult = $screen_handler->insert($screenObject, force: true);
+			if($insertResult == false) {
+				throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+			}
+		}
+
+		// maintain connections in relationships if this is a linked element (and it's new or the source has changed)
+		if($elementObject->isLinked) {
+			updateLinkedElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'), getSourceFormIdForLinkedElement($elementObject), getSourceElementHandleForLinkedElement($elementObject), $originalElementNames['source_form_id'], $originalElementNames['source_element_handle']);
+			if($makeSubformInterface) {
+				makeSubformInterface(getSourceFormIdForLinkedElement($elementObject), $elementObject->getVar('fid'), $elementObject->getVar('ele_id'));
+			}
 		}
 
 		return $elementObject;
@@ -471,10 +487,9 @@ class formulizeHandler {
 	/**
 	 * Discover available element types and their MCP descriptions
 	 * Caches results statically
-	 * @param bool $mcpTypeNames If true, will return the element type names as they should be used in the MCP (with _ instead of no space, before users or linked modifiers)
 	 * @return array [elementTypes array, elementDescriptions array]
 	 */
-	public static function discoverElementTypes($mcpTypeNames = false) {
+	public static function discoverElementTypes() {
 		static $elementTypes = [];
 		static $elementDescriptions = [];
 		if(empty($elementTypes) OR empty($elementDescriptions)) {
@@ -487,8 +502,8 @@ class formulizeHandler {
 			foreach ($elementFiles as $file) {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.basename($file);
 				$elementType = str_replace('Element.php', '', basename($file));
-				if(method_exists('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
-					$elementTypes[] = $mcpTypeNames ? str_replace('linked', '_linked', str_replace('users', '_users', $elementType)) : $elementType;
+				if(methodExistsInClass('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
+					$elementTypes[] = $elementType;
 					$className = "formulize".ucfirst($elementType)."Element";
 					$elementDescriptions[] = $className::mcpElementPropertiesDescriptionAndExamples();
 				}
