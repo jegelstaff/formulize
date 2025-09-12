@@ -184,8 +184,9 @@ class formulizeElement extends FormulizeObject {
         if ("ele_handle" == $key) {
             $value = self::sanitize_handle_name($value);
         }
-		$ele_type = $this->getVar('ele_type');
+		
 		if($key == 'ele_value') {
+			$ele_type = $this->getVar('ele_type');
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
 			if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
 				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
