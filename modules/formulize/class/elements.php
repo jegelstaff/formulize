@@ -767,3 +767,39 @@ function anySelectElementType($type) {
 	}
 	return false;
 }
+
+/**
+ * Extract the form id and element handle from the ele_value of a linked element
+ * @param object $elementObject The element object to check
+ * @return array An array with the form id as the first element and the element handle as the second element, or false if not found or not a linked element
+ */
+function getSourceFormAndElementForLinkedElement($elementObject) {
+	if(is_a($elementObject, 'formulizeElement') AND $elementObject->isLinked) {
+		$ele_value = $elementObject->getVar('ele_value');
+		list($form_id, $element_handle) = explode("#*=:*", $ele_value[2]);
+		if($form_id AND $element_handle) {
+			return array(intval($form_id), $element_handle);
+		}
+	}
+	return false;
+}
+
+/**
+ * Look at the link settings for an element and return the form id of the source form for the linked element
+ * @param object $elementObject The element object to check
+ * @return int The id of the source form for the linked element, or false if not found or not a linked element
+ */
+function getSourceFormIdForLinkedElement($elementObject) {
+	list($form_id, $element_handle) = getSourceFormAndElementForLinkedElement($elementObject);
+	return $form_id;
+}
+
+/**
+ * Look at the link settings for an element and return the element id of the source element for the linked element
+ * @param object $elementObject The element object to check
+ * @return int The id of the source element for the linked element, or false if not found or not a linked element
+ */
+function getSourceElementHandleForLinkedElement($elementObject) {
+	list($form_id, $element_handle) = getSourceFormAndElementForLinkedElement($elementObject);
+	return $element_handle;
+}
