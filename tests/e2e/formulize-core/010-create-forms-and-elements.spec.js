@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test')
 import { saveChanges } from '../utils';
 
 test.describe('Create Museum Forms and Elements', () => {
+
 	test('Create Artifacts Form', async ({ page }) => {
 		await page.goto('/');
 		await page.locator('input[name="uname"]').click();
@@ -156,7 +157,6 @@ test.describe('Create Museum Forms and Elements', () => {
 		await page.locator('input[name="pass"]').fill('password');
 		await page.locator('input[name="pass"]').press('Enter');
 		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
-  	await page.goto('/modules/formulize/admin');
 
 		await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
    	await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -316,7 +316,6 @@ test.describe('Create Museum Forms and Elements', () => {
 		await page.locator('input[name="pass"]').fill('password');
 		await page.locator('input[name="pass"]').press('Enter');
 		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
-  	await page.goto('/modules/formulize/admin');
 
    	await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
    	await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -363,6 +362,141 @@ test.describe('Create Museum Forms and Elements', () => {
     await page.getByText('The values that people have').click();
     await page.locator('#formlink').selectOption('29');
     await saveChanges(page);
+
+	}),
+	test('Create Exhibits Form', async ({ page }) => {
+
+		await page.goto('/');
+		await page.locator('input[name="uname"]').click();
+		await page.locator('input[name="uname"]').fill('admin');
+		await page.locator('input[name="uname"]').press('Tab');
+		await page.locator('input[name="pass"]').fill('password');
+		await page.locator('input[name="pass"]').press('Enter');
+		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+
+   	await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
+   	await page.getByRole('link', { name: 'Create a new form' }).click();
+		await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+		await page.getByRole('textbox', { name: 'Form title:' }).click();
+   	await page.getByRole('textbox', { name: 'Form title:' }).fill('Exhibits');
+   	await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=4&aid=1&type=text');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+		await page.locator('input[name="elements-ele_caption"]').click();
+    await page.locator('input[name="elements-ele_caption"]').fill('Name');
+		await page.locator('input[name="elements-ele_handle"]').fill('exhibits_name');
+    await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=4&aid=1&type=select');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+  	await page.locator('input[name="elements-ele_caption"]').fill('Curator');
+		await page.locator('input[name="elements-ele_handle"]').fill('exhibits_curator');
+  	await page.getByRole('link', { name: 'Options' }).click();
+  	await page.locator('input[name="ele_value\\[0\\]"]').click();
+  	await page.locator('input[name="ele_value\\[0\\]"]').fill('{USERNAMES}');
+  	await saveChanges(page);
+  	await page.locator('#element-formlink_scope').selectOption('6');
+		await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=4&aid=1&type=select');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+	  await page.locator('input[name="elements-ele_caption"]').fill('Exhibit includes artifacts from these collections');
+		await page.locator('input[name="elements-ele_colhead"]').fill('Collections');
+  	await page.locator('input[name="elements-ele_handle"]').fill('exhibits_collections');
+		await page.getByRole('link', { name: 'Options' }).click();
+  	await page.getByText('This is a "autocompletion"').click();
+  	await page.locator('#elements_multiple_allowed_auto').check();
+  	await page.getByText('The values that people have').click();
+  	await page.locator('#formlink').selectOption('29');
+		await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=4&aid=1&type=select');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+		await page.locator('input[name="elements-ele_caption"]').fill('Artifacts shown in the exhibit');
+	  await page.locator('input[name="elements-ele_colhead"]').fill('Artifacts');
+		await page.locator('input[name="elements-ele_handle"]').fill('exhibits_artifacts');
+  	await page.getByRole('link', { name: 'Options' }).click();
+  	await page.getByText('This is a "autocompletion"').click();
+  	await page.getByText('Allowed').nth(2).click();
+  	await page.getByText('The values that people have').click();
+  	await page.locator('#formlink').selectOption('2');
+  	await saveChanges(page);
+		await page.locator('[id="elements-ele_value\\[17\\]"]').selectOption(['1', '2']);
+		await page.locator('[id="elements-ele_value\\[10\\]"]').selectOption(['1', '2']);
+		await page.locator('[id="elements-ele_value\\[11\\]"]').selectOption(['1', '2']);
+	  await page.locator('#new_formlinkfilter_element').selectOption('31');
+	  await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
+		await saveChanges(page);
+
+	}),
+	test('Create Surveys Form', async ({ page }) => {
+
+		await page.goto('/');
+		await page.locator('input[name="uname"]').click();
+		await page.locator('input[name="uname"]').fill('admin');
+		await page.locator('input[name="uname"]').press('Tab');
+		await page.locator('input[name="pass"]').fill('password');
+		await page.locator('input[name="pass"]').press('Enter');
+		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+
+   	await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
+   	await page.getByRole('link', { name: 'Create a new form' }).click();
+		await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+		await page.getByRole('textbox', { name: 'Form title:' }).click();
+   	await page.getByRole('textbox', { name: 'Form title:' }).fill('Surveys');
+   	await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=5&aid=1&type=text');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+	  await page.locator('input[name="elements-ele_caption"]').fill('Your name');
+	  await page.locator('input[name="elements-ele_colhead"]').fill('Respondent name');
+		await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=5&aid=1&type=select');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+	  await page.locator('input[name="elements-ele_caption"]').fill('Which exhibit did you see?');
+		await page.locator('input[name="elements-ele_handle"]').fill('surveys_exhibit');
+		await page.locator('input[name="elements-ele_colhead"]').fill('Exhibit');
+  	await page.getByRole('link', { name: 'Options' }).click();
+  	await page.getByText('The values that people have').click();
+  	await page.locator('#formlink').selectOption('32');
+		await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=5&aid=1&type=select');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+	  await page.locator('input[name="elements-ele_caption"]').fill('Which was your favourite artifact?');
+  	await page.locator('input[name="elements-ele_colhead"]').fill('Favourite artifact');
+		await page.locator('input[name="elements-ele_handle"]').fill('surveys_favourite_artifact');
+  	await page.getByRole('link', { name: 'Options' }).click();
+  	await page.getByText('The values that people have').click();
+  	await page.locator('#formlink').selectOption('2');
+		await saveChanges(page);
+		await page.locator('[id="elements-ele_value\\[optionsLimitByElement\\]"]').selectOption('35');
+	  await page.locator('[id="elements-ele_value\\[10\\]"]').selectOption(['1', '2']);
+		await page.locator('[id="elements-ele_value\\[11\\]"]').selectOption(['1', '2']);
+		await saveChanges(page);
+  	await page.locator('#new_optionsLimitByElementFilter_element').selectOption('32');
+  	await page.locator('#new_optionsLimitByElementFilter_term').fill('{surveys_exhibit}');
+		await saveChanges(page);
+
+		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=5&aid=1&type=select');
+		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
+  	await page.locator('input[name="elements-ele_caption"]').fill('How would you rate the exhibit overall?');
+  	await page.locator('input[name="elements-ele_colhead"]').fill('Rating');
+  	await page.locator('input[name="elements-ele_handle"]').fill('surveys_rating');
+  	await page.getByRole('link', { name: 'Options' }).click();
+  	await page.getByRole('button', { name: 'Add' }).click();
+  	await page.getByRole('button', { name: 'Add' }).click();
+  	await page.getByRole('button', { name: 'Add' }).click();
+  	await page.getByRole('button', { name: 'Add' }).click();
+  	await page.locator('input[name="ele_value\\[0\\]"]').click();
+  	await page.locator('input[name="ele_value\\[0\\]"]').fill('Disappointing');
+  	await page.locator('input[name="ele_value\\[1\\]"]').fill('Average');
+		await page.locator('input[name="ele_value\\[2\\]"]').fill('Good');
+		await page.locator('input[name="ele_value\\[3\\]"]').fill('Excellent');
+  	await page.locator('input[name="ele_value\\[4\\]"]').fill('Mind blowing!');
+  	await saveChanges(page);
 
 	})
 });
