@@ -12,21 +12,6 @@ test.describe('Create Museum Forms and Elements', () => {
 		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
   	await page.goto('/modules/formulize/admin');
 		await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
-/*
-		// apply DB patch if necessary
-		const isPatchVisible = await page.locator('input[name="patch40"]').isVisible();
-		if (isPatchVisible) {
-			await page.getByRole('button', { name: 'Apply Database Patch for' }).click();
-			await expect(page.getByRole('link', { name: 'Close' })).toBeVisible();
-			await page.getByRole('link', { name: 'Close' }).click();
-		}
-
-		// update module
-		await page.getByRole('link', { name: 'arrow Modules' }).click();
-		await page.getByRole('link', { name: 'Update' }).nth(2).click();
-		await page.getByRole('button', { name: 'Update' }).click();
-		await expect(page.getByRole('link', { name: 'Back to Module Administration' })).toBeVisible();
-		await page.goto('/modules/formulize/admin/');*/
 
 		await page.getByRole('link', { name: 'Create a new form' }).click();
 		await expect(page.locator('input[name="forms-title"]')).toBeVisible();
