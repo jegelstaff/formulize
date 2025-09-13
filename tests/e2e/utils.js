@@ -7,3 +7,30 @@ export async function waitForFormulizeFormToken(page) {
 		() => document.querySelector('input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
 	);
 }
+
+export async function saveChanges(page, timeout = 30000) {
+
+	await page.getByRole('button', { name: 'Save your changes' }).click();
+	// First wait for opacity to drop (save in progress)
+	await page.waitForFunction(
+			() => {
+					const element = document.querySelector('div.admin-ui');
+					if (!element) return false;
+					const opacity = parseFloat(window.getComputedStyle(element).opacity);
+					return opacity < 1.0; // Wait for it to become less than full opacity
+			},
+			{ timeout }
+	);
+	// wait for the admin UI to become fully opaque again
+	await page.waitForFunction(
+		() => {
+			const element = document.querySelector('div.admin-ui');
+			if (!element) return false;
+			const opacity = parseFloat(window.getComputedStyle(element).opacity);
+			return opacity >= 1.0;
+		},
+  	{ timeout }
+	);
+
+}
+
