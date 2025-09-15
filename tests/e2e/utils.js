@@ -27,27 +27,39 @@ export async function loginAs(username, page) {
 }
 
 
-export async function saveChanges(page, timeout = 30000) {
+export async function saveChanges(page, type = 'regular', timeout = 30000) {
 
-	await page.getByRole('button', { name: 'Save your changes' }).click();
-	// First wait for opacity to drop (save in progress)
-	await page.waitForFunction(
-			() => {
-					const element = document.querySelector('div.admin-ui');
-					if (!element) return false;
-					const opacity = parseFloat(window.getComputedStyle(element).opacity);
-					return opacity < 1.0; // Wait for it to become less than full opacity
+	let opacityTarget = 'div.admin-ui';
+
+	// type can be 'regular' or 'popup'
+	if(type == 'regular') {
+		await page.getByRole('button', { name: 'Save your changes' }).click();
+		// First wait for opacity to drop (save in progress)
+		await page.waitForFunction(
+			(selector) => {
+				const element = document.querySelector(selector);
+				if (!element) return false;
+				const opacity = parseFloat(window.getComputedStyle(element).opacity);
+				return opacity < 1.0; // Wait for it to become less than full opacity
 			},
+			opacityTarget, // Pass the selector as an argument
 			{ timeout }
-	);
+		);
+	} else {
+		let opacityTarget = '#dialog-page-settings';
+		await page.getByLabel('Edit Page Settings').getByRole('button', { name: 'Save your changes' }).click();
+		await page.waitForTimeout(200); // wait a moment for the dialog to start closing
+	}
+
 	// wait for the admin UI to become fully opaque again
 	await page.waitForFunction(
-		() => {
-			const element = document.querySelector('div.admin-ui');
+		(selector) => {
+			const element = document.querySelector(selector);
 			if (!element) return false;
 			const opacity = parseFloat(window.getComputedStyle(element).opacity);
 			return opacity >= 1.0;
 		},
+		opacityTarget, // Pass the selector as an argument
   	{ timeout }
 	);
 

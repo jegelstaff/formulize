@@ -22,6 +22,8 @@ test.describe('Create Museum Forms and Elements', () => {
   	await page.locator('input[name="elements-ele_caption"]').fill('ID Number');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_id_number');
 		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
+	  await page.getByRole('link', { name: 'Display Settings' }).click();
+  	await page.locator('select[name="elements_ele_disabled\\[\\]"]').selectOption('all');
 		await saveChanges(page);
 
 		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=1&aid=1&type=text');
