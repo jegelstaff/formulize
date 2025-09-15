@@ -23,7 +23,7 @@ export async function loginAs(username, page) {
 	await page.locator('input[name="uname"]').press('Tab');
 	await page.locator('input[name="pass"]').fill(password);
 	await page.locator('input[name="pass"]').press('Enter');
-	await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Edit Account' })).toBeVisible();
 }
 
 
