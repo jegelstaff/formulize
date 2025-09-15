@@ -124,7 +124,7 @@ test.describe('Create Museum Forms and Elements', () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_year_era');
   	await page.getByRole('link', { name: 'Options' }).click();
   	await page.locator('div:nth-child(5) > pre:nth-child(2)').click();
-  	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('<?php\n\n$value = "artifacts_year"."artifacts_era";');
+  	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('$value = "artifacts_year"."artifacts_era";');
 		await page.getByRole('link', { name: 'Name & Settings' }).click();
 	  await saveChanges(page);
 
@@ -205,7 +205,7 @@ test.describe('Create Museum Forms and Elements', () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_name');
    	await page.getByRole('link', { name: 'Options' }).click();
    	await page.locator('.CodeMirror-scroll').click();
-   	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('<?php\n\n$type = "donors_type_of_donor";\nif($type == \'Individual\') {\n$value = "donors_first_name".\' \'."donors_last_name";\n} else {\n$value = "donors_organization_name";\n}');
+   	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('$type = "donors_type_of_donor";\nif($type == \'Individual\') {\n$value = "donors_first_name".\' \'."donors_last_name";\n} else {\n$value = "donors_organization_name";\n}');
 		await page.getByRole('link', { name: 'Name & Settings' }).click();
    	await saveChanges(page);
 
