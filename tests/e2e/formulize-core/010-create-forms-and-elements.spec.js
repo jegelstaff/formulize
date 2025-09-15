@@ -1,16 +1,12 @@
 const { test, expect } = require('@playwright/test')
 import { saveChanges } from '../utils';
+import { loginAsAdmin } from '../utils';
 
 test.describe('Create Museum Forms and Elements', () => {
 
 	test('Create Artifacts Form', async ({ page }) => {
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+
+		await loginAsAdmin(page);
   	await page.goto('/modules/formulize/admin');
 		await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
 
@@ -150,13 +146,7 @@ test.describe('Create Museum Forms and Elements', () => {
 	}),
 	test('Create Donor Form', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
 
 		await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
    	await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -309,13 +299,7 @@ test.describe('Create Museum Forms and Elements', () => {
 	});
 	test('Create Collections Form', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
 
    	await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
    	await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -361,18 +345,14 @@ test.describe('Create Museum Forms and Elements', () => {
     await page.getByRole('link', { name: 'Options' }).click();
     await page.getByText('The values that people have').click();
     await page.locator('#formlink').selectOption('29');
+	  await page.locator('#element-formlink_scope').selectOption(['4', '5']);
+	  await page.getByText('Yes. Only use groups that the').click();
     await saveChanges(page);
 
 	}),
 	test('Create Exhibits Form', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
 
    	await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
    	await page.getByRole('link', { name: 'Create a new form' }).click();
@@ -409,6 +389,8 @@ test.describe('Create Museum Forms and Elements', () => {
   	await page.locator('#elements_multiple_allowed_auto').check();
   	await page.getByText('The values that people have').click();
   	await page.locator('#formlink').selectOption('29');
+		await page.locator('#element-formlink_scope').selectOption(['4', '5']);
+	  await page.getByText('Yes. Only use groups that the').click();
 		await saveChanges(page);
 
 		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=4&aid=1&type=select');
@@ -432,13 +414,7 @@ test.describe('Create Museum Forms and Elements', () => {
 	}),
 	test('Create Surveys Form', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
 
    	await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=forms');
    	await page.getByRole('link', { name: 'Create a new form' }).click();

@@ -8,6 +8,22 @@ export async function waitForFormulizeFormToken(page) {
 	);
 }
 
+export async function loginAsAdmin(page) {
+	await loginAs('admin', page);
+}
+
+export async function loginAs(username, page) {
+	let password = username === 'admin' ? 'password' : '12345';
+	await page.goto('/');
+	await page.locator('input[name="uname"]').click();
+	await page.locator('input[name="uname"]').fill(username);
+	await page.locator('input[name="uname"]').press('Tab');
+	await page.locator('input[name="pass"]').fill(password);
+	await page.locator('input[name="pass"]').press('Enter');
+	await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+}
+
+
 export async function saveChanges(page, timeout = 30000) {
 
 	await page.getByRole('button', { name: 'Save your changes' }).click();

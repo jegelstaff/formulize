@@ -1,17 +1,12 @@
 const { test, expect } = require('@playwright/test')
 import { saveChanges } from '../utils';
+import { loginAsAdmin } from '../utils';
 
 test.describe('Create Users and Groups', () => {
 
 	test('Create Groups', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
 
    	await page.goto('/modules/system/admin.php?fct=groups');
 		await page.locator('#name').fill('Ancient History');
@@ -24,13 +19,7 @@ test.describe('Create Users and Groups', () => {
 	}),
 	test('Create Users', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
 
 		await page.goto('/modules/system/admin.php?fct=users');
 		await page.locator('#login_name').fill('ahstaff');
@@ -55,7 +44,7 @@ test.describe('Create Users and Groups', () => {
 		await page.locator('#password').fill('12345');
 		await page.locator('#vpass').fill('12345');
 		await page.getByRole('radio', { name: 'Active', exact: true }).check();
-		await page.locator('#groups').selectOption(['6', '2']);
+		await page.locator('#groups').selectOption(['4', '5', '6', '2']);
 		await page.getByRole('button', { name: 'Save changes' }).click();
 		await page.locator('#login_name').fill('curator2');
 		await page.locator('#uname').fill('Curator Two');
@@ -63,7 +52,7 @@ test.describe('Create Users and Groups', () => {
 		await page.locator('#password').fill('12345');
 		await page.locator('#vpass').fill('12345');
 		await page.getByRole('radio', { name: 'Active', exact: true }).check();
-		await page.locator('#groups').selectOption(['6', '2']);
+		await page.locator('#groups').selectOption(['4', '5', '6', '2']);
 		await page.getByRole('button', { name: 'Save changes' }).click();
 
 	})

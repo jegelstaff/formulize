@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test')
+import { loginAsAdmin } from '../utils';
 
 test.describe('Installation of Formulize', () => {
 	test('Run the Installer', async ({ page }) => {
@@ -71,13 +72,7 @@ test.describe('Installation of Formulize', () => {
 	}),
 	test('Update Formulize', async ({ page }) => {
 
-		await page.goto('/');
-		await page.locator('input[name="uname"]').click();
-		await page.locator('input[name="uname"]').fill('admin');
-		await page.locator('input[name="uname"]').press('Tab');
-		await page.locator('input[name="pass"]').fill('password');
-		await page.locator('input[name="pass"]').press('Enter');
-		await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
+		await loginAsAdmin(page);
   	await page.goto('/modules/formulize/admin');
 		await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
 
