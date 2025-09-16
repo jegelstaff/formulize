@@ -317,7 +317,7 @@ test.describe('Data Entry', () => {
 
 	}),
 	test('Create Exhibits', async ({ page }) => {
-/*
+
 		await loginAs('curator1', page);
 		await page.goto('/modules/formulize/index.php?fid=4');
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
@@ -400,7 +400,7 @@ test.describe('Data Entry', () => {
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 		await page.getByRole('link', { name: 'Logout' }).click();
-*/
+
 		await loginAs('curator2', page);
 		await page.goto('/modules/formulize/index.php?fid=4');
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
