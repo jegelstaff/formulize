@@ -361,6 +361,7 @@ test.describe('Create Museum Forms and Elements', () => {
 		await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 		await page.getByRole('textbox', { name: 'Form title:' }).click();
    	await page.getByRole('textbox', { name: 'Form title:' }).fill('Exhibits');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
    	await saveChanges(page);
 
 		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=4&aid=1&type=text');
