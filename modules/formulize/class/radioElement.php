@@ -163,7 +163,7 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 			// check for a match within an English translated value and assign that, otherwise set to zero
 			// assumption is that development was done first in English and then translated
 			// this safety net will not work if a system is developed first and gets saved data prior to translation in language other than English!!
-			} elseif(trim(trans((string)$k, "en")) == trim(trans($value,"en"))) {
+			} elseif(!is_numeric($k) AND strlen((string)$k) > 0 AND strpos((string)$k, '[en]') !== false AND trim(trans((string)$k, "en")) == trim(trans($value,"en"))) {
 				$temparray[$k] = 1;
 				$assignedSelectedValues[$k] = true;
 				break;

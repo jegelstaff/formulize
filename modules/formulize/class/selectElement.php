@@ -588,7 +588,7 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 				// this safety net will not work if a system is developed first and gets saved data prior to translation in language other than English!!
 				} else {
 					foreach($selvalarray as $selvalue) {
-						if(trim(trans((string)$k, "en")) == trim(trans($selvalue,"en"))) {
+						if(!is_numeric($k) AND strlen((string)$k) > 0 AND strpos((string)$k, '[en]') !== false AND trim(trans((string)$k, "en")) == trim(trans($selvalue,"en"))) {
 							$temparray[$k] = 1;
 							$assignedSelectedValues[$k] = true;
 							continue 2; // move on to next iteration of outer loop
