@@ -63,7 +63,7 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?fid=2');
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
-		await page.getByRole('radio', { name: 'Individual' }).check();
+		await page.getByText('Individual').click();
 		await expect(page.getByText('First name')).toBeVisible();
 	  await page.getByRole('textbox', { name: 'First name' }).fill('François-Marie');
 	  await page.getByRole('textbox', { name: 'Last name' }).fill('Arouet');
@@ -77,7 +77,7 @@ test.describe('Data Entry', () => {
   	await page.getByRole('link', { name: ' Save and Leave' }).click();
 
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
-		await page.getByRole('radio', { name: 'Individual' }).check();
+		await page.getByText('Individual').click();
 	  await expect(page.getByText('First name')).toBeVisible();
 	  await page.getByRole('textbox', { name: 'First name' }).fill('Emilie');
 	  await page.getByRole('textbox', { name: 'Last name' }).fill('Du Châtelet');
@@ -91,7 +91,7 @@ test.describe('Data Entry', () => {
   	await page.getByRole('link', { name: ' Save and Leave' }).click();
 
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
-	  await page.getByRole('radio', { name: 'Organization' }).check();
+	  await page.getByText('Organization').click();
 	  await expect(page.getByText('Organization name')).toBeVisible();
 		await page.getByRole('textbox', { name: 'Organization name' }).fill('Freeform Solutions');
 		await page.getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');
