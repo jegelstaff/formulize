@@ -91,7 +91,7 @@ test.describe('Data Entry', () => {
   	await page.getByRole('link', { name: ' Save and Leave' }).click();
 
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
-		await page.getByRole('radio', { name: 'Organization' }).check();
+	  await page.getByRole('radio', { name: 'Organization' }).check();
 	  await expect(page.getByText('Organization name')).toBeVisible();
 		await page.getByRole('textbox', { name: 'Organization name' }).fill('Freeform Solutions');
 		await page.getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');
@@ -109,12 +109,25 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?fid=1');
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
 		await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
-
-
+		await page2.getByRole('textbox', { name: 'Short name *' }).fill('Name');
+		await page2.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('There is a lot to say in the description');
+		await page2.locator('input[name="de_1_new_4"]').fill('1'); // height
+		await page2.locator('input[name="de_1_new_5"]').fill('2'); // width
+		await page2.locator('input[name="de_1_new_6"]').fill('3'); // depth
+		await page2.locator('input[name="de_1_new_8"]').fill('1999'); // year
+		await page2.getByRole('radio', { name: 'CE', exact: true }).check();
+		await page2.getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-09-17');
+		await page2.getByRole('radio', { name: 'No' }).check(); // not donated
+		await page2.getByRole('radio', { name: 'Yes' }).check(); // donated
+  	await expect(page.getByText('Donor', { exact: true })).toBeVisible(); // if donated, check that donor shows up
+		await page.getByLabel('Donor').selectOption('2'); // Emilie
+		await page.getByLabel('Donor').selectOption('1'); // Voltaire
+		await page.getByLabel('Donor').selectOption('3'); // Freeform
+		await page2.getByRole('slider', { name: 'Condition' }).fill('5'); // slider 1-10
+		await page3.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await page3.getByRole('checkbox', { name: 'Modern History' }).check();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
-
-
 
 	}),
 	test('Create Exhibits', async ({ page }) => {
