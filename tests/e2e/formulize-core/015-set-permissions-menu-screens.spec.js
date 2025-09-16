@@ -218,9 +218,13 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
 	test('Procedures for Artifacts form', async ({ page }) => {
 
 		await loginAsAdmin(page);
-		await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=1&tab=procedures');
-  	await page.getByRole('group', { name: 'Before Saving' }).getByRole('textbox').fill('// standardize the artifacts ID numbers\nif(!$artifacts_id_number) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n}');
+		await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=1&tab=screens');
+		await page.getByRole('link', { name: 'Procedures' }).click();
+		await page.getByRole('group', { name: 'After Saving' }).locator('span').first().click();
+  	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').press('ControlOrMeta+a');
+   	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').fill('<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
 		await saveChanges(page);
+
 	})
 });
 
