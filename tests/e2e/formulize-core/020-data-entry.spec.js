@@ -328,6 +328,7 @@ test.describe('Data Entry', () => {
 		await page.getByText('Modern History').click();
 		await page.locator('input[name="de_4_new_34_user"]').fill('an');
 		await page.getByText('Ancient History').click();
+		await page.waitForTimeout(1000);
 		await page.locator('#de_4_1_35_user').fill('roman');
   	await page.getByText('M001 | Roman Coin').click();
 		await page.locator('#de_4_1_35_user').fill('per');
@@ -361,6 +362,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('4');
 		await page.locator('input[name="de_4_new_34_user"]').fill('an');
 		await page.getByText('Ancient History').click();
+		await page.waitForTimeout(1000);
 		await page.locator('#de_4_1_35_user').fill('roman');
   	await page.getByText('M001 | Roman Coin').click();
 		await page.locator('#de_4_1_35_user').fill('per');
@@ -382,6 +384,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('4');
 		await page.locator('input[name="de_4_new_34_user"]').fill('mo');
 		await page.getByText('Modern History').click();
+		await page.waitForTimeout(1000);
 		await page.locator('#de_4_1_35_user').fill('flor');
 		await page.getByText('M006 | Florentine Book').click();
 		await page.locator('#de_4_1_35_user').fill('fren');
@@ -405,6 +408,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('5');
 		await page.locator('input[name="de_4_new_34_user"]').fill('weapons');
 		await page.getByText('Weapons').click();
+		await page.waitForTimeout(1000);
 		await page.locator('#de_4_1_35_user').fill('roman');
 		await page.locator('#de_4_1_35_user').fill('chin');
 		await page.getByText('M003 | Chinese Sword').click();
@@ -418,6 +422,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('5');
 		await page.locator('input[name="de_4_new_34_user"]').fill('coins');
 		await page.getByText('Coins').click();
+		await page.waitForTimeout(1000);
 		await page.locator('#de_4_1_35_user').fill('roman');
   	await page.getByText('M001 | Roman Coin').click();
 		await page.locator('#de_4_1_35_user').fill('japa');
