@@ -17,7 +17,7 @@ export async function loginAsAdmin(page) {
 
 export async function loginAs(username, page) {
 	let password = username === 'admin' ? 'password' : '12345';
-	await page.goto('/');
+	await page.goto('/user.php');
 	await page.locator('input[name="uname"]').click();
 	await page.locator('input[name="uname"]').fill(username);
 	await page.locator('input[name="uname"]').press('Tab');
