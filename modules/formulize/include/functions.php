@@ -6006,18 +6006,20 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
         $condition .= " $andor ";
     }
     $dbSource = isset($GLOBALS['formulize_DBSourceJoin'][$filterElementHandle]) ? "(".$GLOBALS['formulize_DBSourceJoin'][$filterElementHandle].")" : "$targetAlias`".$filterElementHandle."`";
-    if(strstr($conditionsFilterComparisonValue,'-->>ADDPLAINLITERAL<<--')) {
+    if(strstr($conditionsFilterComparisonValue,'-->>ADDRIGHTSIDEANDOP<<--')) {
         $boolean = 'OR';
         if($filterOp == '!=' OR $filterOp == 'NOT LIKE') {
             $boolean = 'AND';
         }
-        $conditionsFilterComparisonValue = str_replace("-->>ADDPLAINLITERAL<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
+        $conditionsFilterComparisonValue = str_replace("-->>ADDRIGHTSIDEANDOP<<--", " $boolean $dbSource $filterOp ", $conditionsFilterComparisonValue);
     }
 
 		// if we snuck a field reference into the comparison value, then make sure it is fully qualified
 		$conditionsFilterComparisonValue = str_replace([" $filterElementHandle ", " `$filterElementHandle` "], " $dbSource ", $conditionsFilterComparisonValue);
+		// setup the condition
 		$thiscondition = "($dbSource $filterOp $conditionsFilterComparisonValue)";
-
+		// handle any extra bracket funkiness that might be needed
+		$thiscondition = strpos($thiscondition, '-->>CLOSEEXTRABRACKET<<--') !== false ? "(".str_replace("-->>CLOSEEXTRABRACKET<<--", ")", $thiscondition) : $thiscondition; // sometimes the comparison value contains multiple parts, and we need to encapsulate some, but not others
 		// possibly we need to flip the order around the LIKE operator,
 		// if the dbSource field is a single value field, and the filter comparison value is a reference to an element that is a multi value field
 		// this is a concession to the fact that it's conceptually difficult to know which side of the operator has which kind of values when specifying a comparison in the UI. Trying to help the user when things are messy.
@@ -6124,8 +6126,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 						$quotes = '';
 						if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-								$filterTermToUse = "'".formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])."'";
-								$dbValueOfTerm = $filterTermToUse;
+								$dbValueOfTerm = formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]);
+								$filterTermToUse = "'".$dbValueOfTerm."'";
 						} else {
 								$filterTermToUse = " curlybracketform.`".formulize_db_escape($bareFilterTerm)."` ";
 								$curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform "; // set as a single value, we're assuming all { } terms refer to the same form
@@ -6176,7 +6178,19 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								$curlyBracketTargetElementEleValueProperties = explode("#*=:*", $curlyBracketTargetElementEleValue[2]);
 								$curlyBracketTargetSourceFid = $curlyBracketTargetElementEleValueProperties[0];
 								if ($curlyBracketTargetSourceFid == $targetSourceFid) {
+									$curlyBracketTargetSourceHandle = $curlyBracketTargetElementEleValueProperties[1];
+									$curlyBracketTargetSourceObject = $element_handler->get($curlyBracketTargetSourceHandle);
+									// a. the right value contains multiple, linked values, that point to the same source as the left side, which accepts multiple values. So we must compare against each possibility, if the match is not exact (ie: if it's LIKE or NOT LIKE)
+									if(($filterOps[$filterId] == 'LIKE' OR $filterOps[$filterId] == 'NOT LIKE') AND strpos(trim($dbValueOfTerm, ","),",") !== false AND $filterElementObject->canHaveMultipleValues) {
+										$conditionsFilterComparisonValue = array();
+										foreach(explode(",",trim($dbValueOfTerm, ",")) as $thisFilterTermPart) {
+											$conditionsFilterComparisonValue[] = " CONCAT('$likebits', ',$thisFilterTermPart,', '$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
+										}
+										$conditionsFilterComparisonValue = implode(" -->>ADDRIGHTSIDEANDOP<<-- ", $conditionsFilterComparisonValue)." -->>CLOSEEXTRABRACKET<<--"; // need to insert the element and op in between all of these, hence the placeholder. Also, will be to encapsulate all of these minus the entry id part which will be added on later. Yuck!
+									// b. otherwise, just do a normal direct comparison
+									} else {
 										$conditionsFilterComparisonValue = " CONCAT('$likebits',$filterTermToUse,'$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
+									}
 								} elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // not quite the same source...this is when the curlybracket form is the source of the linked target element. Don't ask.
 										// find entries where the filter term contains the entry id of any entry that contains the same linked reference to the common underlying source. Ack.
 										$conditionsFilterComparisonValue = " ( SELECT ss.entry_id FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS ss
@@ -6342,10 +6356,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
             $specialCharsTerm = convertStringToUseSpecialCharsToMatchDB($plainLiteralValue);
             if($specialCharsTerm != $plainLiteralValue) {
                 $quotes = (is_numeric($specialCharsTerm) AND !$likebits) ? "" : "'";
-                $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
+                $conditionsFilterComparisonValue .= '-->>ADDRIGHTSIDEANDOP<<--'.$quotes.$likebits.formulize_db_escape($specialCharsTerm).$likebits.$quotes;
             }
             $quotes = (is_numeric($plainLiteralValue) AND !$likebits) ? "" : "'";
-            $conditionsFilterComparisonValue .= '-->>ADDPLAINLITERAL<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
+            $conditionsFilterComparisonValue .= '-->>ADDRIGHTSIDEANDOP<<--'.$quotes.$likebits.formulize_db_escape($plainLiteralValue).$likebits.$quotes;
         }
     }
 
