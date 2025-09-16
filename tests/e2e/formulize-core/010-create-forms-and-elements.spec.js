@@ -411,6 +411,7 @@ test.describe('Create Museum Forms and Elements', () => {
 		await page.locator('[id="elements-ele_value\\[10\\]"]').selectOption(['1', '2']);
 		await page.locator('[id="elements-ele_value\\[11\\]"]').selectOption(['1', '2']);
 	  await page.locator('#new_formlinkfilter_element').selectOption('31');
+		await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
 	  await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
 		await saveChanges(page);
 
