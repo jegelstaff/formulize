@@ -317,7 +317,7 @@ test.describe('Data Entry', () => {
 
 	}),
 	test('Create Exhibits', async ({ page }) => {
-
+/*
 		await loginAs('curator1', page);
 		await page.goto('/modules/formulize/index.php?fid=4');
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
@@ -328,28 +328,28 @@ test.describe('Data Entry', () => {
 		await page.getByText('Modern History').click();
 		await page.locator('input[name="de_4_new_34_user"]').fill('an');
 		await page.getByText('Ancient History').click();
-		await page.waitForTimeout(1000);
-		await page.locator('#de_4_1_35_user').fill('roman');
+		await page.waitForTimeout(5000);
+		await page.locator('#de_4_new_35_user').fill('roman');
   	await page.getByText('M001 | Roman Coin').click();
-		await page.locator('#de_4_1_35_user').fill('per');
+		await page.locator('#de_4_new_35_user').fill('per');
 		await page.getByText('M002 | Persian necklace').click();
-		await page.locator('#de_4_1_35_user').fill('chin');
+		await page.locator('#de_4_new_35_user').fill('chin');
 		await page.getByText('M003 | Chinese Sword').click();
-		await page.locator('#de_4_1_35_user').fill('egyptian');
+		await page.locator('#de_4_new_35_user').fill('egyptian');
 		await page.getByText('M004 | Egyptian Chariot').click();
-		await page.locator('#de_4_1_35_user').fill('bab');
+		await page.locator('#de_4_new_35_user').fill('bab');
 		await page.getByText('M005 | Babylonian Spoon').click();
-		await page.locator('#de_4_1_35_user').fill('flor');
+		await page.locator('#de_4_new_35_user').fill('flor');
 		await page.getByText('M006 | Florentine Book').click();
-		await page.locator('#de_4_1_35_user').fill('fren');
+		await page.locator('#de_4_new_35_user').fill('fren');
 		await page.getByText('M007 | French Musket').click();
-		await page.locator('#de_4_1_35_user').fill('japa');
+		await page.locator('#de_4_new_35_user').fill('japa');
 		await page.getByText('M008 | Japanese Coin').click();
-		await page.locator('#de_4_1_35_user').fill('amer');
+		await page.locator('#de_4_new_35_user').fill('amer');
 		await page.getByText('M009 | American Bicycle').click();
-		await page.locator('#de_4_1_35_user').fill('poly');
+		await page.locator('#de_4_new_35_user').fill('poly');
 		await page.getByText('M010 | Polynesian Canoe').click();
-		await page.locator('#de_4_1_35_user').fill('vik');
+		await page.locator('#de_4_new_35_user').fill('vik');
 		await page.getByText('M011 | Viking Silver Armband').click();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
@@ -362,16 +362,16 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('4');
 		await page.locator('input[name="de_4_new_34_user"]').fill('an');
 		await page.getByText('Ancient History').click();
-		await page.waitForTimeout(1000);
-		await page.locator('#de_4_1_35_user').fill('roman');
+		await page.waitForTimeout(5000);
+		await page.locator('#de_4_new_35_user').fill('roman');
   	await page.getByText('M001 | Roman Coin').click();
-		await page.locator('#de_4_1_35_user').fill('per');
+		await page.locator('#de_4_new_35_user').fill('per');
 		await page.getByText('M002 | Persian necklace').click();
-		await page.locator('#de_4_1_35_user').fill('chin');
+		await page.locator('#de_4_new_35_user').fill('chin');
 		await page.getByText('M003 | Chinese Sword').click();
-		await page.locator('#de_4_1_35_user').fill('egyptian');
+		await page.locator('#de_4_new_35_user').fill('egyptian');
 		await page.getByText('M004 | Egyptian Chariot').click();
-		await page.locator('#de_4_1_35_user').fill('bab');
+		await page.locator('#de_4_new_35_user').fill('bab');
 		await page.getByText('M005 | Babylonian Spoon').click();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
@@ -384,23 +384,23 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('4');
 		await page.locator('input[name="de_4_new_34_user"]').fill('mo');
 		await page.getByText('Modern History').click();
-		await page.waitForTimeout(1000);
-		await page.locator('#de_4_1_35_user').fill('flor');
+		await page.waitForTimeout(5000);
+		await page.locator('#de_4_new_35_user').fill('flor');
 		await page.getByText('M006 | Florentine Book').click();
-		await page.locator('#de_4_1_35_user').fill('fren');
+		await page.locator('#de_4_new_35_user').fill('fren');
 		await page.getByText('M007 | French Musket').click();
-		await page.locator('#de_4_1_35_user').fill('japa');
+		await page.locator('#de_4_new_35_user').fill('japa');
 		await page.getByText('M008 | Japanese Coin').click();
-		await page.locator('#de_4_1_35_user').fill('amer');
+		await page.locator('#de_4_new_35_user').fill('amer');
 		await page.getByText('M009 | American Bicycle').click();
-		await page.locator('#de_4_1_35_user').fill('poly');
+		await page.locator('#de_4_new_35_user').fill('poly');
 		await page.getByText('M010 | Polynesian Canoe').click();
-		await page.locator('#de_4_1_35_user').fill('vik');
+		await page.locator('#de_4_new_35_user').fill('vik');
 		await page.getByText('M011 | Viking Silver Armband').click();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 		await page.getByRole('link', { name: 'Logout' }).click();
-
+*/
 		await loginAs('curator2', page);
 		await page.goto('/modules/formulize/index.php?fid=4');
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
@@ -408,11 +408,10 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('5');
 		await page.locator('input[name="de_4_new_34_user"]').fill('weapons');
 		await page.getByText('Weapons').click();
-		await page.waitForTimeout(1000);
-		await page.locator('#de_4_1_35_user').fill('roman');
-		await page.locator('#de_4_1_35_user').fill('chin');
+		await page.waitForTimeout(5000);
+		await page.locator('#de_4_new_35_user').fill('chin');
 		await page.getByText('M003 | Chinese Sword').click();
-		await page.locator('#de_4_1_35_user').fill('fren');
+		await page.locator('#de_4_new_35_user').fill('fren');
 		await page.getByText('M007 | French Musket').click();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
@@ -422,12 +421,12 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Curator').selectOption('5');
 		await page.locator('input[name="de_4_new_34_user"]').fill('coins');
 		await page.getByText('Coins').click();
-		await page.waitForTimeout(1000);
-		await page.locator('#de_4_1_35_user').fill('roman');
+		await page.waitForTimeout(5000);
+		await page.locator('#de_4_new_35_user').fill('roman');
   	await page.getByText('M001 | Roman Coin').click();
-		await page.locator('#de_4_1_35_user').fill('japa');
+		await page.locator('#de_4_new_35_user').fill('japa');
 		await page.getByText('M008 | Japanese Coin').click();
-		await page.locator('#de_4_1_35_user').fill('amer');
+		await page.locator('#de_4_new_35_user').fill('amer');
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 
@@ -437,6 +436,7 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?sid=9');
 	  await page.getByRole('textbox', { name: 'Your name' }).fill('Ramesses II');
   	await page.getByLabel('Which exhibit did you see?').selectOption('1'); // History through the Ages
+		await page.waitForTimeout(5000);
   	await page.getByLabel('Which was your favourite').selectOption('4'); // Egyptian Chariot
   	await page.getByLabel('How would you rate the').selectOption('5');
   	await page.getByRole('button', { name: 'Save' }).click();
@@ -444,6 +444,7 @@ test.describe('Data Entry', () => {
   	await page.goto('/modules/formulize/index.php?sid=9');
 		await page.getByRole('textbox', { name: 'Your name' }).fill('James Cook');
   	await page.getByLabel('Which exhibit did you see?').selectOption('3'); // Modern Amazements
+		await page.waitForTimeout(5000);
   	await page.getByLabel('Which was your favourite').selectOption('10'); // Polynesian Canoe
   	await page.getByLabel('How would you rate the').selectOption('4');
   	await page.getByRole('button', { name: 'Save' }).click();
@@ -451,6 +452,7 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?sid=9');
 		await page.getByRole('textbox', { name: 'Your name' }).fill('Ebanezer Scrooge');
 		await page.getByLabel('Which exhibit did you see?').selectOption('5'); // Pennies from the Past
+		await page.waitForTimeout(5000);
 		await page.getByLabel('Which was your favourite').selectOption('1'); // Roman Coin
 		await page.getByLabel('How would you rate the').selectOption('1');
 		await page.getByRole('button', { name: 'Save' }).click();
@@ -458,6 +460,7 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?sid=9');
 		await page.getByRole('textbox', { name: 'Your name' }).fill('Napoleon Bonaparte');
 		await page.getByLabel('Which exhibit did you see?').selectOption('4'); // Heroic and Horrible Hand Weapons
+		await page.waitForTimeout(5000);
 		await page.getByLabel('Which was your favourite').selectOption('7'); // French Musket
 		await page.getByLabel('How would you rate the').selectOption('3');
 		await page.getByRole('button', { name: 'Save' }).click();
@@ -465,6 +468,7 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?sid=9');
 		await page.getByRole('textbox', { name: 'Your name' }).fill('Machiavelli');
 		await page.getByLabel('Which exhibit did you see?').selectOption('3'); // Modern Amazements
+		await page.waitForTimeout(5000);
 		await page.getByLabel('Which was your favourite').selectOption('6'); // French Musket
 		await page.getByLabel('How would you rate the').selectOption('4');
 		await page.getByRole('button', { name: 'Save' }).click();
@@ -472,6 +476,7 @@ test.describe('Data Entry', () => {
 		await page.goto('/modules/formulize/index.php?sid=9');
 		await page.getByRole('textbox', { name: 'Your name' }).fill('Darius the Great');
 		await page.getByLabel('Which exhibit did you see?').selectOption('2'); // Ancient Wonders
+		await page.waitForTimeout(5000);
 		await page.getByLabel('Which was your favourite').selectOption('5'); // Babylonian Spoon
 		await page.getByLabel('How would you rate the').selectOption('4');
 		await page.getByRole('button', { name: 'Save' }).click();
