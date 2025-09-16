@@ -113,9 +113,11 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
 
 		// Donors form
 		await page.goto('/modules/formulize/admin/ui.php?page=screen&sid=3&fid=2&aid=1');
+		await page.waitForTimeout(500);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
-  	await expect(page.getByText('Title for page number')).toBeVisible();
+  	await page.waitForTimeout(500);
+		await expect(page.getByText('Title for page number')).toBeVisible();
   	await page.getByLabel('Form elements to display on').selectOption(['14', '15', '16', '17', '18', '19', '20', '21', '24', '22', '23', '25', '26']);
   	await saveChanges(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
@@ -130,11 +132,13 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
 		await saveChanges(page);
 
 		// Artifacts form
-  	await page.getByRole('link', { name: 'Museum' }).click();
-  	await page.locator('#form-details-box-1-1').getByRole('link', { name: 'Screens' }).click();
+		await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=1&tab=screens');
+		await page.waitForTimeout(500);
   	await page.getByRole('link', { name: 'Artifact', exact: true }).click();
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
+		await page.waitForTimeout(500);
+		await expect(page.getByText('Title for page number')).toBeVisible();
   	await page.getByLabel('Form elements to display on').selectOption(['1', '2', '3', '7', '4', '5', '6', '10', '8', '9', '12', '13', '27', '28', '31']);
   	await saveChanges(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
@@ -154,11 +158,13 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
   	await saveChanges(page);
 
 		// Collections form
-  	await page.getByRole('link', { name: 'Museum' }).click();
-  	await page.locator('#form-details-box-1-3').getByRole('link', { name: 'Screens' }).click();
+  	await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=3&tab=screens');
+		await page.waitForTimeout(500);
 		await page.getByRole('link', { name: 'Collection', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
+		await page.waitForTimeout(500);
+		await expect(page.getByText('Title for page number')).toBeVisible();
 		await page.getByLabel('Form elements to display on').selectOption(['29', '30']);
 		await saveChanges(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
@@ -171,11 +177,13 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
   	await saveChanges(page);
 
 		// Exhibits form
-	  await page.getByRole('link', { name: 'Museum' }).click();
-  	await page.locator('#form-details-box-1-4').getByRole('link', { name: 'Screens' }).click();
+	  await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=4&tab=screens');
+		await page.waitForTimeout(500);
 		await page.getByRole('link', { name: 'Exhibit', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
+		await page.waitForTimeout(500);
+		await expect(page.getByText('Title for page number')).toBeVisible();
    	await page.getByLabel('Form elements to display on').selectOption(['32', '33', '34', '35']);
 		await saveChanges(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
@@ -192,11 +200,13 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
 		await saveChanges(page);
 
 		// Surveys form
-  	await page.getByRole('link', { name: 'Museum' }).click();
-  	await page.locator('#form-details-box-1-5').getByRole('link', { name: 'Screens' }).click();
+  	await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=5&tab=screens');
+		await page.waitForTimeout(500);
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
+		await page.waitForTimeout(500);
+		await expect(page.getByText('Title for page number')).toBeVisible();
 		await page.getByLabel('Form elements to display on').selectOption(['36', '37', '38', '39']);
 		await saveChanges(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
