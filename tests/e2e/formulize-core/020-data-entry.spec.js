@@ -123,6 +123,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Donor').selectOption('1'); // Voltaire
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await page.getByRole('checkbox', { name: 'Coins' }).check();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 
@@ -157,6 +158,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Donor').selectOption('3'); // Freeform Solutions
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 
@@ -173,6 +175,7 @@ test.describe('Data Entry', () => {
 		await page.getByRole('radio', { name: 'No' }).check(); // not donated
 		await page.getByRole('slider', { name: 'Condition' }).fill('6');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 
@@ -228,6 +231,7 @@ test.describe('Data Entry', () => {
 		await page.getByRole('radio', { name: 'No' }).check(); // not donated
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 
@@ -245,6 +249,7 @@ test.describe('Data Entry', () => {
 		await page.getByLabel('Donor').selectOption('3'); // Freeform Solutions
 		await page.getByRole('slider', { name: 'Condition' }).fill('10');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await page.getByRole('checkbox', { name: 'Coins' }).check();
 		await waitForFormulizeFormToken(page);
 		await page.getByRole('link', { name: ' Save and Leave' }).click();
 
@@ -301,14 +306,30 @@ test.describe('Data Entry', () => {
 
 		await loginAs('curator1', page);
 		await page.goto('/modules/formulize/index.php?fid=1');
+		await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
 		await page.locator('input[name="search_artifacts_short_name"]').fill('coin');
 		await page.getByRole('link', { name: 'Short name' }).click();
-		await expect(page.getByRole('row', { name: 'Check this box to select/unselect this entry.     Japanese Coin 1880CE Modern' }).getByRole('link')).toBeVisible();
-await page.getByRole('row', { name: 'Check this box to select/unselect this entry.     Japanese Coin 1880CE Modern' }).getByRole('link').click();
+		await expect(page.getByRole('row', { name: 'Check this box to select/unselect this entry.' }).getByRole('link')).toHaveCount(2);
+		await page.locator('input[name="search_artifacts_short_name"]').fill('');
+		await page.locator('input[name="search_artifacts_collections"]').fill('weapons');
+		await page.getByRole('link', { name: 'Short name' }).click();
+		await expect(page.getByRole('row', { name: 'Check this box to select/unselect this entry.' }).getByRole('link')).toHaveCount(3);
 
 	}),
 	test('Create Exhibits', async ({ page }) => {
 
+		await loginAs('mhstaff', page);
+		await page.goto('/modules/formulize/index.php?fid=4');
+		await expect(page.getByText('No entries were found in the')).toBeVisible();
+		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
+		await page.getByRole('textbox', { name: 'Name *' }).fill('History through the Ages');
+		await page.getByLabel('Curator').selectOption('4');
+		await page.locator('input[name="de_4_new_34_user"]').fill('modern');
+		await page.getByText('Modern History').click();
+		await page.locator('input[name="de_4_new_34_user"]').fill('an');
+		await page.getByText('Ancient History').click();
+
+		await waitForFormulizeFormToken(page);
 
 
 	}),
