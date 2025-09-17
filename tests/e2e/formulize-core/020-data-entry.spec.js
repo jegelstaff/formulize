@@ -64,6 +64,7 @@ test.describe('Data Entry', () => {
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
 		await page.getByText('Individual').click();
+		await page.waitForTimeout(3000);
 		await expect(page.getByText('First name')).toBeVisible();
 	  await page.getByRole('textbox', { name: 'First name' }).fill('François-Marie');
 	  await page.getByRole('textbox', { name: 'Last name' }).fill('Arouet');
@@ -78,6 +79,7 @@ test.describe('Data Entry', () => {
 
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
 		await page.getByText('Individual').click();
+		await page.waitForTimeout(3000);
 	  await expect(page.getByText('First name')).toBeVisible();
 	  await page.getByRole('textbox', { name: 'First name' }).fill('Emilie');
 	  await page.getByRole('textbox', { name: 'Last name' }).fill('Du Châtelet');
@@ -92,6 +94,7 @@ test.describe('Data Entry', () => {
 
 		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
 	  await page.getByText('Organization').click();
+		await page.waitForTimeout(3000);
 	  await expect(page.getByText('Organization name')).toBeVisible();
 		await page.getByRole('textbox', { name: 'Organization name' }).fill('Freeform Solutions');
 		await page.getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');

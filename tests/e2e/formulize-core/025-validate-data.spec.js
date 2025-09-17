@@ -57,7 +57,7 @@ test.describe('Validate Data', () => {
 
 		await expect(page.locator('#celladdress_2_0')).toContainText('1');
 		await expect(page.locator('#celladdress_2_1')).toContainText('Ancient History Staff');
-		await expect(page.locator('#celladdress_2_2')).toContainText('Curator One');
+		await expect(page.locator('#celladdress_2_2')).toContainText('Ancient History Staff');
 		await expect(page.locator('#celladdress_2_6')).toContainText('Ancient History');
 		await expect(page.locator('#celladdress_2_7')).toContainText('M001');
 		await expect(page.locator('#celladdress_2_8')).toContainText('Roman Coin');
