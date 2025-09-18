@@ -21,7 +21,6 @@ services:
       - "3306"
     volumes:
       - ./docker/mariadb/seed:/docker-entrypoint-initdb.d
-      - ./docker/mariadb/data:/var/lib/mysql
       - ./docker/mariadb/conf.d:/etc/mysql/conf.d
     environment:
       MYSQL_ROOT_PASSWORD: "abc123"
