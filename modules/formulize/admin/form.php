@@ -504,6 +504,43 @@ $common['note'] = $note;
 $common['defaultpi'] = $defaultpi;
 $common['pioptions'] = $pioptions;
 $common['formTitle'] = "this form"; // used to refer to the form in the primary identifier selection UI
+$common['standardTypes'] = array(
+	'text',
+	'textarea',
+	'phone',
+	'email',
+	'number',
+	'select',
+	'selectLinked',
+	'selectUsers',
+	'provinceList',
+	'radio',
+	'yn',
+	'provinceRadio',
+	'checkbox',
+	'checkboxLinked',
+	'autocomplete',
+	'autocompleteLinked',
+	'autocompleteUsers',
+	'listbox',
+	'listboxLinked',
+	'listboxUsers',
+	'date',
+	'colorpick',
+	'time',
+	'duration',
+	'slider',
+	'fileUpload',
+	'googleAddress',
+	'googleFilePicker',
+	'derived',
+	'subformFullForm',
+	'subformEditableRow',
+	'subformListings',
+	'grid',
+	'areamodif',
+	'ib'
+);
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";

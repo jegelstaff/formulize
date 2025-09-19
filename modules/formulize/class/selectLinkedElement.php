@@ -32,7 +32,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
 
-class formulizeSelectlinkedElement extends formulizeSelectElement {
+class formulizeSelectLinkedElement extends formulizeSelectElement {
 
 	function __construct() {
 		parent::__construct();
@@ -67,10 +67,10 @@ Examples:
 }
 
 #[AllowDynamicProperties]
-class formulizeSelectlinkedElementHandler extends formulizeSelectElementHandler {
+class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler {
 
 	function create() {
-		return new formulizeSelectlinkedElement();
+		return new formulizeSelectLinkedElement();
 	}
 
 	/**

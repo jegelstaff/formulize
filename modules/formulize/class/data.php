@@ -1274,7 +1274,7 @@ class formulizeDataHandler {
 				$oldValues = array_keys($ele_value);
 				break;
 			case "checkbox":
-			case "checkboxlinked":
+			case "checkboxLinked":
 			case "select":
 				// special check...if this is a linked selectbox or a fullnames/usernames selectbox, then fail
 				if(!is_array($ele_value[2]) OR isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"])) {
@@ -1283,7 +1283,7 @@ class formulizeDataHandler {
 				$oldValues = array_keys($ele_value[2]);
 				break;
 		}
-		$prefix = ($ele_type == "checkbox" OR $ele_type == "checkboxlinked" OR (anySelectElementType($ele_type) AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
+		$prefix = ($ele_type == "checkbox" OR $ele_type == "checkboxLinked" OR (anySelectElementType($ele_type) AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
 		$newValues = array_keys($newValues);
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
