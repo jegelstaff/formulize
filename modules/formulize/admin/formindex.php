@@ -686,10 +686,10 @@ function patch40() {
                         }
                     }
                 }
-								// convert linked checkboxes from checkbox type to checkboxlinked
-								$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxlinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
+								// convert linked checkboxes from checkbox type to checkboxLinked
+								$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxLinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
 								if(!$xoopsDB->queryF($sql)) {
-									print "Error: could not convert linked checkboxes to checkboxlinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+									print "Error: could not convert linked checkboxes to checkboxLinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 								}
 								// AND AND AND AND convert select to all the select types!!!!
 

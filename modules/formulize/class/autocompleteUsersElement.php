@@ -32,28 +32,28 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
 
-class formulizeListboxlinkedElement extends formulizeSelectElement {
+class formulizeAutocompleteUsersElement extends formulizeSelectElement {
 
 	function __construct() {
 		parent::__construct();
-		$this->name = "Linked Listbox";
+		$this->name = "Autocomplete List of Users";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
 		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-		$this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+		$this->overrideDataType = "bigint"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-		$this->canHaveMultipleValues = true;
+		$this->canHaveMultipleValues = false;
 		$this->hasMultipleOptions = true;
-		$this->isLinked = true; // set to true if this element can have linked values
+		$this->isLinked = false; // set to true if this element can have linked values
 	}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeListboxlinkedElementHandler extends formulizeSelectElementHandler {
+class formulizeAutocompleteUsersElementHandler extends formulizeSelectElementHandler {
 
 	function create() {
-		return new formulizeListboxlinkedElement();
+		return new formulizeAutocompleteUsersElement();
 	}
 
 }

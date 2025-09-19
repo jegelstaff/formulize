@@ -2624,7 +2624,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
         if($entries_to_return !== false) {
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
-        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox' OR $selfElement->getVar('ele_type') == 'checkboxlinked') {
+        if($selfEleValue[1] OR $selfElement->getVar('ele_type') == 'checkbox' OR $selfElement->getVar('ele_type') == 'checkboxLinked') {
             if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
                 $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
                 if($entries_to_return !== false) {
@@ -3642,7 +3642,7 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
 						$switchEleType = anySelectElementType($element->getVar('ele_type')) ? "select" : $element->getVar('ele_type');
             switch ($switchEleType) {
                 case "checkbox":
-								case "checkboxlinked":
+								case "checkboxLinked":
                     $valueToWrite = $prevValue[0][$element->getVar('ele_handle')] . "*=+*:" . $value;
                     break;
 
@@ -4264,7 +4264,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 $options = $ele_value[2];
                 break;
             case "checkbox":
-						case "checkboxlinked":
+						case "checkboxLinked":
                 $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
                 $ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
                 $options = $ele_value[2];
@@ -7064,7 +7064,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 					if ($ele_value[1]) {
 						$allowsMulti = true;
 					}
-				} elseif ($ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
+				} elseif ($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
 					$allowsMulti = true;
 				}
 				if ($allowsMulti) {

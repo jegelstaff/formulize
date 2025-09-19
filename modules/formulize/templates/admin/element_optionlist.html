@@ -24,16 +24,16 @@
 
 <div class="description">
   <{if $content.type == "radio"}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
-  <{if $content.type == "checkbox" || $content.type == "checkboxlinked"}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
+  <{if $content.type == "checkbox" || $content.type == "checkboxLinked"}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
   <{if $content.typeIsSelect}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
 
-<{if $content.type != "select" AND $content.type != "selectlinked" OR $content.type != "selectusers"}>
+<{if $content.type != "radio" AND $content.type != "checkbox" AND $content.type != "checkboxLinked" AND $content.type != "select" AND $content.type != "selectLinked" AND $content.type != "selectUsers"}>
 	<{include file="db:admin/element_multiple_onoff.html"}>
 <{/if}>
 
-<{if $content.type == "autocomplete" OR $content.type == "autocompletelinked"}>
+<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
 	<br>
 	<{include file="db:admin/element_autocomplete_allownew.html"}>
 <{/if}>

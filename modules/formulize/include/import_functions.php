@@ -171,7 +171,7 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
         								switch ($switchEleType) {
                             case "select":
 														case "checkbox":
-														case "checkboxlinked":
+														case "checkboxLinked":
                                 $ele_value = unserialize($form_elementsq[$element]["ele_value"]);
                                 $options = $ele_value[2];
 
@@ -493,7 +493,7 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 
 
                             case "checkbox":
-														case "checkboxlinked":
+														case "checkboxLinked":
 
 															$ele_value = unserialize($element["ele_value"]);
 														if (isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
@@ -949,7 +949,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
 
                             case "checkbox":
-														case "checkboxlinked":
+														case "checkboxLinked":
 															$ele_value = unserialize($element["ele_value"]);
 															if ($importSet[5][1][$link] AND !strstr($row_value, ",")
 																	AND (!is_numeric($row_value) OR $row_value < 10000000))
@@ -1365,7 +1365,7 @@ function importCsvDebug(& $importSet) {
                     break;
 
                 case "checkbox":
-								case "checkboxlinked":
+								case "checkboxLinked":
                     $options = unserialize($element["ele_value"]);
 
                     if (is_array($options)) {

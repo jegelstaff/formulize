@@ -3955,7 +3955,7 @@ function mergeGoverningElements($masterList, $governingElements) {
 function _compileGoverningElements($entries, $elementObject, $renderedMarkupName, $onetoone=false) {
 	$type = $elementObject->getVar('ele_type');
 	$ele_value = $elementObject->getVar('ele_value');
-	if($type == "checkbox" OR $type == "checkboxlinked" OR (anySelectElementType($type) AND $ele_value[1])) {
+	if($type == "checkbox" OR $type == "checkboxLinked" OR (anySelectElementType($type) AND $ele_value[1])) {
 		$additionalNameParts = "[]"; // set things up with the right [] for multiple value elements
 	} else {
 		$additionalNameParts = "";

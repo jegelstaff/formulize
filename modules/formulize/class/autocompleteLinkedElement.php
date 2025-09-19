@@ -32,11 +32,11 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
 
-class formulizeAutocompleteusersElement extends formulizeSelectElement {
+class formulizeAutocompleteLinkedElement extends formulizeSelectElement {
 
 	function __construct() {
 		parent::__construct();
-		$this->name = "Autocomplete List of Users";
+		$this->name = "Linked Autocomplete List";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
 		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = "bigint"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
@@ -44,16 +44,16 @@ class formulizeAutocompleteusersElement extends formulizeSelectElement {
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
 		$this->canHaveMultipleValues = false;
 		$this->hasMultipleOptions = true;
-		$this->isLinked = false; // set to true if this element can have linked values
+		$this->isLinked = true; // set to true if this element can have linked values
 	}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeAutocompleteusersElementHandler extends formulizeSelectElementHandler {
+class formulizeAutocompleteLinkedElementHandler extends formulizeSelectElementHandler {
 
 	function create() {
-		return new formulizeAutocompleteusersElement();
+		return new formulizeAutocompleteLinkedElement();
 	}
 
 }

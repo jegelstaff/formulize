@@ -96,7 +96,7 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
 							$ele_value = $element->getVar('ele_value');
 							$filterGroups = explode(",", $ele_value[3]); // ele_value[3] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
             }
-            if($ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
+            if($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
                 $ele_value = $element->getVar('ele_value');
                 $filterGroups = explode(",", $ele_value['formlink_scope']); // ele_value['formlink_scope'] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
             }
@@ -112,7 +112,7 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
                     $ele_disabled .= "$targetGroupId,";
                 }
                 // check ele_value[3] data, which is the group filter for the sources for linked select boxes
-                if(anySelectElementType($ele_type) OR $ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
+                if(anySelectElementType($ele_type) OR $ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
                     if(in_array($sourceGroupId, $filterGroups)) {
                         $writeElement = true;
                         $filterGroups[] = $targetGroupId;
@@ -124,7 +124,7 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
                     $ele_value[3] = implode(",", $filterGroups);
                     $element->setVar('ele_value', $ele_value);
                 }
-                if($ele_type == "checkbox" OR $ele_type == "checkboxlinked") {
+                if($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
                     $ele_value['formlink_scope'] = implode(",", $filterGroups);
                     $element->setVar('ele_value', $ele_value);
                 }
