@@ -414,7 +414,7 @@ class SyncCompareCatalog {
                         $usRecord[3] = $this->stripGroupsFromCommaList($usRecord[3]);
                         /*print $usRecord[3];
                         print "<br>";*/
-                    } elseif(isset($data['ele_type']) AND ($data['ele_type'] == 'checkbox' OR $data['ele_type'] == 'checkboxlinked') AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
+                    } elseif(isset($data['ele_type']) AND ($data['ele_type'] == 'checkbox' OR $data['ele_type'] == 'checkboxLinked') AND isset($usRecord['formlink_scope']) AND is_string($usRecord['formlink_scope']) AND preg_replace("/[^,0-9]/", "", $usRecord['formlink_scope']) === $usRecord['formlink_scope']) {
                         /*print "checkbox $groupFieldName switch: ";
                         print $usRecord['formlink_scope'];
                         print "<br>";*/

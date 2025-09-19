@@ -4,11 +4,11 @@
 			<{include file="db:admin/element_linkedandusernames_scopefilter.html"}>
 		</div>
 
-		<{if $content.type != "select" AND $content.type != "selectlinked" OR $content.type != "selectusers"}>
+		<{if $content.type != "select" AND $content.type != "selectLinked" AND $content.type != "selectUsers"}>
 			<{include file="db:admin/element_multiple_onoff.html"}>
 		<{/if}>
 
-		<{if $content.type == "autocomplete" OR $content.type == "autocompletelinked"}>
+		<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
 			<br>
 			<{include file="db:admin/element_autocomplete_allownew.html"}>
 		<{/if}>

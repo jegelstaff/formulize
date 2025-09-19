@@ -1094,7 +1094,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 			or ($target_ele_value and $main_ele_value and $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])
 		) {
 		    $metaData = formulize_getElementMetaData($joinHandles[$linktargetids[$linkOrdinal]], isHandle: true);
-			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxlinked') {
+			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked') {
 				// multiple values allowed
 				$newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
 			} else {
@@ -1106,7 +1106,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 			or ($main_ele_value and $target_ele_value and $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])
 		) {
 		    $metaData = formulize_getElementMetaData($joinHandles[$linkselfids[$linkOrdinal]], isHandle: true);
-			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxlinked') {
+			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked') {
 				// multiple values allowed
 				$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
 			} else {
@@ -1770,7 +1770,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
 							$ele_value = unserialize($queryElementMetaData['ele_value']);
 							$cleanSearchTerm = convertStringToUseSpecialCharsToMatchDB($ifParts[1]);
-							if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkboxlinked' or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
+							if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkboxLinked' or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
 								if (is_numeric($ifParts[1])) {
 									$operator = "=";
 									$quotes = "";
@@ -2081,7 +2081,7 @@ function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle =
 	static $cachedElements = array();
 	if (!isset($cachedElements[$elementOrHandle])) {
 		$evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
-		if ($evqRow['ele_type'] == 'checkbox' OR $evqRow['ele_type'] == 'checkboxlinked') {
+		if ($evqRow['ele_type'] == 'checkbox' OR $evqRow['ele_type'] == 'checkboxLinked') {
 			$cachedElements[$elementOrHandle] = true;
 		} elseif (anySelectElementType($evqRow['ele_type'])) {
 			$ele_value = unserialize($evqRow['ele_value']);

@@ -95,7 +95,7 @@ function createPrimaryRelationship() {
 	}
 
 	// lookup all other linked elements not already in a relationship, add them to the Primary Relationship
-	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox', 'selectlinked', 'checkboxlinked', 'listboxlinked', 'autocompletelinked') AND ele_value LIKE '%#*=:*%'";
+	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox', 'selectLinked', 'checkboxLinked', 'listboxLinked', 'autocompleteLinked') AND ele_value LIKE '%#*=:*%'";
 	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
 		$primaryRelationshipError .= '<br>Could not collate list of existing linked elements';
 	}
@@ -388,7 +388,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
 					8 => 0
 				));
-				$element->setVar('ele_type', 'selectlinked');
+				$element->setVar('ele_type', 'selectLinked');
 				$fieldDataType = 'bigint';
 				break;
 			case 'new-linked-autocomplete':
@@ -399,7 +399,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
 					8 => 1
 				));
-				$element->setVar('ele_type', 'autocompletelinked');
+				$element->setVar('ele_type', 'autocompleteLinked');
 				$fieldDataType = 'bigint';
 				break;
 			case 'new-linked-multiselect-autocomplete':
@@ -410,13 +410,13 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
 					8 => 1
 				));
-				$element->setVar('ele_type', 'autocompletelinked');
+				$element->setVar('ele_type', 'autocompleteLinked');
 				$fieldDataType = 'text';
 				break;
 			case 'new-linked-checkboxes':
 				$element->isLinked = true;
 				$element->setVar('ele_value', array(2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle')));
-				$element->setVar('ele_type', 'checkboxlinked');
+				$element->setVar('ele_type', 'checkboxLinked');
 				$fieldDataType = 'text';
 				break;
 		}
