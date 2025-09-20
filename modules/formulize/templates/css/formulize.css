@@ -686,3 +686,31 @@ table.formulize-grid td.head {
 	display: block;
 	padding-bottom: 0.3em;
 }
+
+.formulize_text_for_display p,
+.formulize_text_for_display h1, 
+.formulize_text_for_display h2, 
+.formulize_text_for_display h3, 
+.formulize_text_for_display h4, 
+.formulize_text_for_display h5, 
+.formulize_text_for_display h6,
+.formulize_text_for_display blockquote,
+.formulize_text_for_display li {
+	margin-bottom: 0.5em;
+}
+.formulize_text_for_display blockquote {
+	margin-left: 1.0em;
+	padding-left: 0.7em;
+	border-left: 3px solid #ccc;
+}
+.formulize_text_for_display ol {
+	list-style: decimal;
+}
+.formulize_text_for_display ul {
+	list-style: disc;
+}
+.formulize_text_for_display ul, .formulize_text_for_display ol {
+	list-style-position: outside;
+	margin-left: 1.0em;
+	padding-left: 1em;
+}
