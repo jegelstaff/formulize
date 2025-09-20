@@ -27,7 +27,7 @@ define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
 define("_AM_ELE_COLHEAD_HELP","If you specify a column heading, then this text will be used instead of the caption, on the <b>List of Entries</b> screen.  This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.");
-define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE","Element handle (optional)");
 define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used.");
 define("_AM_ELE_DETAIL","Detail");
 define("_AM_ELE_REQ","Required");
@@ -35,7 +35,7 @@ define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_PRIVATE","Private");
-define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
+define("_AM_ELE_HANDLE_HEADING","Element handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");
 define("_AM_ELE_DISPLAY_HEADING","Display");
 

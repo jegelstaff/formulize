@@ -2263,7 +2263,7 @@ function findMatchingIdReq($element, $fid, $value) {
 
 // THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
 // It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
-// $handle is the data handle for the element
+// $handle is the element handle for the element
 function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 
 	if(!$textWidth AND $textWidth !== 0 AND $textWidth !== "0") {

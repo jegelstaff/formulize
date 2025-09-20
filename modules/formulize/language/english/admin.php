@@ -296,12 +296,12 @@ define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the right side");
-define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the right beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code. In the PHP code, you can use getValue(\$entry, \$dataHandle) to access information saved in the active entry. You can use \$entry_id to get the entry id number in the database.");
+define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the right beside the caption. You can refer to other elements in this form using {element_handles}, ie: by putting the element handle inside curly brackets. You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code. In the PHP code, you can use getValue(\$entry, \$dataHandle) to access information saved in the active entry. You can use \$entry_id to get the entry id number in the database.");
 define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
 define("_AM_ELE_COLHEAD_HELP","If you specify a column heading, then this text will be used instead of the caption, on the <b>List of Entries</b> screen.  This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.");
-define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE","Element handle (optional)");
 define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used.");
 define("_AM_ELE_DETAIL","Detail");
 define("_AM_ELE_REQ","Required");
@@ -310,7 +310,7 @@ define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_ELEMENTCONDITIONS","Only include this element in the form if the entry being edited meets these conditions:");
 define("_AM_ELE_PRIVATE","Private");
-define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
+define("_AM_ELE_HANDLE_HEADING","Element handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");
 define("_AM_ELE_DISPLAY_HEADING","Display");
 
@@ -418,7 +418,7 @@ define("_AM_ELE_FORMLINK_ANYALL_ADDON", " <i>that the active user is a member of
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");
-define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>You can use {datahandle} to refer to the value of an element in the current entry.  Just use the correct data handle surrounded by curly brackets.<br><br>You can also use { } values to refer to values in the URL, ie: if you use {checkpoint} and the URL contains \"&checkpoint=Start\" then the value \"Start\" will be used.  <b>Note that the URL is checked first for { } matches, and then the data handles, so a URL property with the same name as a data handle may cause problems for you!</b><br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form.");
+define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>You can use {elementhandle} to refer to the value of an element in the current entry.  Just use the correct element handle surrounded by curly brackets.<br><br>You can also use { } values to refer to values in the URL, ie: if you use {checkpoint} and the URL contains \"&checkpoint=Start\" then the value \"Start\" will be used.  <b>Note that the URL is checked first for { } matches, and then the element handles, so a URL property with the same name as a element handle may cause problems for you!</b><br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form.");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to clear existing filters).");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition");
