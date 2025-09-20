@@ -236,7 +236,7 @@ class formulizeElementRenderer{
 		return $form_ele_new;
 	}
 
-  // replace { } terms with data handle values from the current entry, if any exist
+  // replace { } terms with element handle values from the current entry, if any exist
 	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='') {
 		if(strstr($text, "}") AND strstr($text, "{")) {
 			$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
