@@ -64,7 +64,8 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // Receives the element object
     // Returns array of data to the admin UI template
     // For new elements $element might be FALSE
-    function adminPrepare($element) {
+    // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	function adminPrepare($element) {
         $ele_value = $element ? $element->getVar('ele_value') : array();
 
         $formlink = createFieldList($ele_value[3], true);
@@ -83,18 +84,18 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // Receives the element object
     // Returns an array of data that will go to the admin UI template
     // When dealing with new elements, $element might be FALSE
-    function adminSave($element, $ele_value) {
+    // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
         $changed = false;
         $element->setVar('ele_value', $ele_value);
         return $changed;
     }
 
 		/**
-		 * Returns the default value for this element, for a new entry in the specified form, or for a specific entry if one is specified.
-		 * Some elements might have defaults that depend on the values of other elements in the entry.
-		 * This method may replace the use of loadValue in the future
+		 * Returns the default value for this element, for a new entry in the specified form.
+		 * Determines database ready values, not necessarily human readable values
 		 * @param $element The element object
-		 * @param $entry_id The entry id that should be used as the context for the default value. Defaults to 'new'.
+		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
 		 * @return mixed The default value
 		 */
 		function getDefaultValue($element, $entry_id = 'new') {
@@ -103,7 +104,11 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 		}
 
     // Reads current state of element, updates ele_value to a renderable state
-    function loadValue($value, $ele_value, $element) {
+		// $element is the element object
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+				$ele_value = $element->getVar('ele_value');
         $ele_value[3] = $value;
         return $ele_value;
     }
@@ -162,11 +167,13 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
     }
 
-    // Reads what the user submitted and packages it up for the database
-    // Can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
-    function prepareDataForSaving($value, $element) {
+    // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         return formulize_db_escape($value);
     }
 
@@ -193,17 +200,18 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
-    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        return $value;
+    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+      return $value;
     }
 
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
+        $this->clickable = false; // make urls clickable
+        $this->striphtml = false; // remove html tags as a security precaution
+        $this->length = 0; // truncate to a maximum of 100 characters, and append ... on the end
 
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }

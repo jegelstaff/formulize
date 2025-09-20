@@ -27,7 +27,7 @@ define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
 define("_AM_ELE_COLHEAD_HELP","If you specify a column heading, then this text will be used instead of the caption, on the <b>List of Entries</b> screen.  This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.");
-define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE","Element handle (optional)");
 define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used.");
 define("_AM_ELE_DETAIL","Detail");
 define("_AM_ELE_REQ","Required");
@@ -35,7 +35,7 @@ define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_PRIVATE","Private");
-define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
+define("_AM_ELE_HANDLE_HEADING","Element handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");
 define("_AM_ELE_DISPLAY_HEADING","Display");
 
@@ -76,15 +76,14 @@ define("_AM_ELE_TYPE_STRING","Anything");
 define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 // added - end - August 22 2005 - jpc
 
-
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_OPT","Options");
-define("_AM_ELE_OPT_DESC","Setting a single option of '{FULLNAMES}' or '{USERNAMES}' will produce a list of users based on the group limits set below.<br /><br />Tick the check boxes for selecting default values");
+define("_AM_ELE_OPT_DESC","Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC_CHECKBOXES","Tick the check boxes for selecting default values<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
-define("_AM_ELE_OPT_DESC1","<br />Only the first check is used if multiple selection is not allowed");
+define("_AM_ELE_OPT_DESC1","");
 define("_AM_ELE_OPT_DESC2","Select the default value by checking the radio buttons<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_OPT_UITEXT", "The text visible to the user can be different from what is stored in the database.  This is useful if you want to have numbers saved in the database, but text visible to the user so they can make their selection.  To do this, use the \"pipe\" character (usually above the Enter key) like this:  \"10|It has been 10 days since I visited this website\"");
 define("_AM_ELE_ADD_OPT","Add %s options");
@@ -465,4 +464,5 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
-?>
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

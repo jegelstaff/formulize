@@ -176,8 +176,9 @@ if (empty( $mode )) {
 EOT;
 
 // for Anari theme, do some trickery in CSS so the readout works cleanly
+// but NOT if we're in the control panel
 global $xoopsConfig;
-if($xoopsConfig['theme_set'] == 'Anari') {
+if($xoopsConfig['theme_set'] == 'Anari' AND !isset($GLOBALS['control_panel_header_called']) AND strstr($_SERVER['REQUEST_URI'], '/modules/formulize/include/') == false) {
 	$ret .= "
 	if(name != 'none') {
 		$('body').css('overflow-y', 'scroll');

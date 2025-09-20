@@ -1,16 +1,17 @@
-<{if $content.type == "select"}>
+<{if $content.type == "selectLinked" OR $content.type == "selectUsers" OR $content.type == "autocompleteLinked" OR $content.type == "autocompleteUsers" OR $content.type == "listboxLinked" OR $content.type == "listboxUsers"}>
 	<{assign var="ele_value_scopelimit_DOM" value="elements-ele_value[4]"}>
 	<{assign var="ele_value_scopelimit_SMARTY" value=$content.ele_value[4]}>
 	<{assign var="ele_value_anyorall_DOM" value="elements-ele_value[6]"}>
 	<{assign var="ele_value_anyorall_SMARTY" value=$content.ele_value[6]}>
-<{elseif $content.type == "checkbox"}>
+<{elseif $content.type == "checkbox" OR $content.type == "checkboxLinked"}>
 	<{assign var="ele_value_scopelimit_DOM" value="elements-ele_value[checkbox_scopelimit]"}>
 	<{assign var="ele_value_scopelimit_SMARTY" value=$content.ele_value.checkbox_scopelimit}>
 	<{assign var="ele_value_anyorall_DOM" value="elements-ele_value[checkbox_formlink_anyorall]"}>
 	<{assign var="ele_value_anyorall_SMARTY" value=$content.ele_value.checkbox_formlink_anyorall}>
 <{/if}>
 <fieldset>
-	<legend>Should the scope of the options be limited?</legend>
+	<legend><{if $content.usernameslist}>Include users in the list if they are members of these groups<{else}>What is the scope of the included options?<{/if}></legend>
+	<{if !$content.usernameslist}>
 	<div class="form-radios">
 		<label for="elements-ele_value[formlink_useonlyusersentries]-1"><input type="radio" id="elements-ele_value[formlink_useonlyusersentries]-1" name="elements-ele_value[formlink_useonlyusersentries]" value="1"<{if $content.ele_value.formlink_useonlyusersentries eq 1}> checked="checked"<{/if}>/> The scope is: <i>data belonging to the active user</i></label>
 	</div>
@@ -18,6 +19,7 @@
 		<label for="elements-ele_value[formlink_useonlyusersentries]-0"><input type="radio" id="elements-ele_value[formlink_useonlyusersentries]-0" name="elements-ele_value[formlink_useonlyusersentries]" value="0"<{if $content.ele_value.formlink_useonlyusersentries eq 0}> checked="checked"<{/if}>/> The scope is: <i>data belonging to <b>all users</b> in the selected groups:</i></label>
 	</div>
 	<br>
+	<{/if}>
 	<select id="element-formlink_scope" name="element_formlink_scope[]" size="10" multiple>
 		<{html_options options=$content.formlink_scope_options selected=$content.formlink_scope}>
 	</select>
@@ -37,14 +39,24 @@
 	<fieldset>
 		<legend><{$smarty.const._AM_ELE_FORMLINK_ANYALL_INTRO}></legend>
 		<div class="form-radios">
-			<label for="<{$ele_value_anyorall_DOM}>-0"><input type="radio" id="<{$ele_value_anyorall_DOM}>-0" name="<{$ele_value_anyorall_DOM}>" value="0"<{if $ele_value_anyorall_SMARTY eq 0}> checked="checked"<{/if}>/> <{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}></label>
+			<label for="<{$ele_value_anyorall_DOM}>-0"><input type="radio" id="<{$ele_value_anyorall_DOM}>-0" name="<{$ele_value_anyorall_DOM}>" value="0"<{if $ele_value_anyorall_SMARTY eq 0}> checked="checked"<{/if}>/> <span id="anyall-0"><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}><{if $ele_value_scopelimit_SMARTY eq 1}><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ADDON}><{/if}></span></label>
 		</div>
 		<div class="form-radios">
-			<label for="<{$ele_value_anyorall_DOM}>-1"><input type="radio" id="<{$ele_value_anyorall_DOM}>-1" name="<{$ele_value_anyorall_DOM}>" value="1"<{if $ele_value_anyorall_SMARTY eq 1}> checked="checked"<{/if}>/> <{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}></label>
-		</div>
-		<div class="description">
-			<{$smarty.const._AM_ELE_FORMLINK_ANYALL_DESC}>
+			<label for="<{$ele_value_anyorall_DOM}>-1"><input type="radio" id="<{$ele_value_anyorall_DOM}>-1" name="<{$ele_value_anyorall_DOM}>" value="1"<{if $ele_value_anyorall_SMARTY eq 1}> checked="checked"<{/if}>/> <span id="anyall-1"><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}><{if $ele_value_scopelimit_SMARTY eq 1}><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ADDON}><{/if}></span></label>
 		</div>
 	</fieldset>
 </fieldset>
+
+<script>
+	$("input[id^=<{$ele_value_scopelimit_DOM}>-]").click(function() {
+	  if($("input[id^=<{$ele_value_scopelimit_DOM}>-]:checked").val() == 1) {
+			$("#anyall-0").html("<{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ADDON}>");
+			$("#anyall-1").html("<{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}><{$smarty.const._AM_ELE_FORMLINK_ANYALL_ADDON}>");
+		} else {
+			$("#anyall-0").html("<{$smarty.const._AM_ELE_FORMLINK_ANYALL_ANY}>");
+			$("#anyall-1").html("<{$smarty.const._AM_ELE_FORMLINK_ANYALL_ALL}>");
+		}
+	});
+</script>
+
 
