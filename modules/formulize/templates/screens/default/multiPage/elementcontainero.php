@@ -14,5 +14,5 @@ if($width OR $display) {
 }
 
 print "
-<div class='form-row' $style id='$elementContainerId'>
+<div class='form-row $elementClass' $style id='$elementContainerId'>
 ";

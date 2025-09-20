@@ -161,6 +161,7 @@ class formulizeElementRenderer{
 					$ele_value[0],
           $renderedElementMarkupName
 				);
+				$form_ele->setClass("formulize_text_for_display");
 			break;
 
 			default:
@@ -233,6 +234,7 @@ class formulizeElementRenderer{
 		if($helpText) {
 			$form_ele_new->setDescription($helpText);
 		}
+		$form_ele_new->setClass($form_ele->getClass());
 		return $form_ele_new;
 	}
 
