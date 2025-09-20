@@ -37,7 +37,7 @@ class formulizeProvinceListElement extends formulizeElement {
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
     function __construct() {
-        $this->name = "Province List";
+        $this->name = "Province Dropdown List";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = "tinyint(5)"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
@@ -70,23 +70,19 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
 	function adminPrepare($element) {
 		if (!$element){
 			$provinceSelected = 0;
-			$elementSelected = 0;
 			$sortSelected = 0;
 		} else {
 			$ele_value = $element->getVar('ele_value');
 			$provinceSelected = $ele_value[0];
-			$elementSelected = $ele_value[1];
 			$sortSelected = $ele_value[2];
 		}
 
 		$provinceOptions['none'] = "None";
 		$provinceOptions = $provinceOptions + $this->getProvinceList(); // the + operator does not affect the keys, whereas if we unshifted none onto the beginning, we'd lose the key->value associations
-		$elementOptions = array("Dropdown list", "Radio buttons");
 		$sortOptions = array("Order alphabetically", "Order by population");
 
 		return array(
 			'provinceOptions'=>$provinceOptions, 'provinceSelected'=>$provinceSelected,
-			'elementOptions'=>$elementOptions, 'elementSelected'=>$elementSelected,
 			'sortOptions'=>$sortOptions, 'sortSelected'=>$sortSelected
 		);
     }
@@ -98,7 +94,8 @@ class formulizeProvinceListElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
-        $element->setVar('ele_value', $ele_value);
+			$ele_value[1] = 0; // default to dropdown
+      $element->setVar('ele_value', $ele_value);
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
