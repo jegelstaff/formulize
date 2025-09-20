@@ -100,6 +100,7 @@ class formulize_themeForm extends XoopsThemeForm {
      * @name    string  $name   name of the element being inserted, which we keep so we can then put the right id tag into its row
      */
     public function insertBreakFormulize($extra = '', $class= '', $name='', $element_handle='') {
+				$class .= $class ? ' formulize_text_for_display' : 'formulize_text_for_display';
         $ibContents = $extra."<<||>>".$name."<<||>>".$element_handle."<<||>>".$class; // can only assign strings or real element objects with addElement, not arrays
         $this->addElement($ibContents);
     }

@@ -4,7 +4,6 @@ let tops = [];
 let lefts = [];
 
 $(window).load(function() {
-	$('.admin-ui').show(250);
 	setupDraggableBoxes();
 	if(currentOrganize == 'by-name') {;
 		organizeAlpha();
