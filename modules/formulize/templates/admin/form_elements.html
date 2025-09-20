@@ -3,65 +3,312 @@
 <{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
 
 <div id="element-mgmt-ui">
-<div id="element-mgmt-ui-left">
-	<div id="element-toolbox">
-		<!-- change all this!!!!! -->
-		<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
-		<p><b>Textboxes</b></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=phone"><img src="../images/filenew2.png"> Phone Number</a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=email"><img src="../images/filenew2.png"> Email Address</a></p>
-		<p><b>Lists</b></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_RADIO}></a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_CHECK}></a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SELECTEXPLAIN}></a></p>
-		<p><b>Text for display</b></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF}></a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF_ONE}></a></p>
-		<p><b>Containers for other elements/forms</b></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SUBFORMEXPLAIN}></a></p>
-			<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_GRID}></a></p>
-		<p><b>Miscellaneous</b></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DERIVED}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_YN}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DATEBOX}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_COLORPICK}></a></p>
-				<{foreach item=customElement from=$content.customElements}>
-					<{if $customElement.type != 'text' AND $customElement.type != 'checkbox' AND $customElement.type != 'phone' AND $customElement.type != 'email'}>
-					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>
-					<{/if}>
-				<{/foreach}>
+	<div id="element-mgmt-ui-left">
+		<!-- <div id="element-toolbox">
+			<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
+			<p><b>Textboxes</b></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=phone"><img src="../images/filenew2.png"> Phone Number</a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=email"><img src="../images/filenew2.png"> Email Address</a></p>
+			<p><b>Lists</b></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_RADIO}></a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_CHECK}></a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SELECTEXPLAIN}></a></p>
+			<p><b>Text for display</b></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF}></a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF_ONE}></a></p>
+			<p><b>Containers for other elements/forms</b></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SUBFORMEXPLAIN}></a></p>
+				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_GRID}></a></p>
+			<p><b>Miscellaneous</b></p>
+					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DERIVED}></a></p>
+					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_YN}></a></p>
+					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DATEBOX}></a></p>
+					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_COLORPICK}></a></p>
+					<{foreach item=customElement from=$content.customElements}>
+						<{if $customElement.type != 'text' AND $customElement.type != 'checkbox' AND $customElement.type != 'phone' AND $customElement.type != 'email'}>
+						<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>
+						<{/if}>
+					<{/foreach}>
+		</div> -->
+
+		<div class="accordion-box-wide">
+			<form class="formulize-admin-form">
+				<input type="hidden" name="formulize_admin_handler" value="form_elements">
+				<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
+				<input type="hidden" name="cloneelement" value="">
+				<input type="hidden" name="deleteelement" value="">
+				<input type="hidden" name="convertelement" value="">
+				<input type="hidden" name="reload_elements" value="">
+				<input type="hidden" name="aid" value="<{$content.aid}>">
+				<input type="hidden" name="elementorder" value="">
+				<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
+				<h2><a href="" onclick="showAddElementOptions();return false;">Add an element</a></h2>
+				<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
+				<div id="sortable-list">
+					<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
+				</div>
+			</form>
+			<h2><a href="" onclick="showAddElementOptions();return false;">Add an element</a></h2>
+		</div>
+
+	</div> <!-- end of mgmt ui left -->
+
+	<div id="fakeform-container">
+		<h2>Preview &mdash; <a href="" onclick="$('#fakeform').toggle(300);return false;">Show/Hide</a></h2>
+		<br>
+		<iframe style="display: none;" id="fakeform" src="fakeform.php?fid=<{$content.fid}>&aid=<{$content.aid}>"></iframe>
 	</div>
 
-	<div class="accordion-box-wide">
-		<form class="formulize-admin-form">
-			<input type="hidden" name="formulize_admin_handler" value="form_elements">
-			<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
-			<input type="hidden" name="cloneelement" value="">
-			<input type="hidden" name="deleteelement" value="">
-			<input type="hidden" name="convertelement" value="">
-			<input type="hidden" name="reload_elements" value="">
-			<input type="hidden" name="aid" value="<{$content.aid}>">
-			<input type="hidden" name="elementorder" value="">
-			<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
-			<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
-			<div id="sortable-list">
-				<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
+</div> <!-- end of mgmt ui -->
+
+<div id="addElementOptions" style="display:none;">
+
+	<div id="element-categories-container">
+
+		<ul>
+			<li><a href="#add-textboxes"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOXES}></a></li>
+			<li><a href="#add-lists"><{$smarty.const._AM_ELE_CATEGORY_LISTS}></a></li>
+			<li><a href="#add-selectors"><{$smarty.const._AM_ELE_CATEGORY_SELECTORS}></a></li>
+			<li><a href="#add-layout"><{$smarty.const._AM_ELE_CATEGORY_LAYOUT}></a></li>
+			<li><a href="#add-misc"><{$smarty.const._AM_ELE_CATEGORY_MISC}></a></li>
+			<li><a href="#add-embed"><{$smarty.const._AM_ELE_CATEGORY_EMBED}></a></li>
+		</ul>
+		<div id="add-textboxes" class="element-category-content">
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img class="element-example" src="../images/admin_elements/text.png"></a>
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><{$smarty.const._AM_ELE_CATEGORY_REGULAR}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=number"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_NUMBER}></a>
+					<p>
+				</div>
+				<div>
+					<p class="element-variations">
+						<br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=phone"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_PHONE}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=email"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_EMAIL}></a>
+					</p>
+				</div>
 			</div>
-		</form>
-	</div>
-</div>
 
-<div id="fakeform-container">
-	<h2>Preview &mdash; <a href="" onclick="$('#fakeform').toggle(300);return false;">Show/Hide</a></h2>
-	<br>
-	<iframe style="display: none;" id="fakeform" src="fakeform.php?fid=<{$content.fid}>&aid=<{$content.aid}>"></iframe>
-</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TEXTAREA}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img class="element-example" src="../images/admin_elements/textarea.png"></a>
+			</div>
+		</div>
 
+		<div id="add-lists" class="element-category-content">
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DROPDOWNLISTS}></h2><h3><{$smarty.const._AM_ELE_ONEOPTION}></h3></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img class="element-example" src="../images/admin_elements/select.png"></a>
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=selectLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=selectUsers"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=provinceList"><{$smarty.const._AM_ELE_CATEGORY_PROVINCE}></a>
+					</p>
+				</div>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_RADIOBUTTONS}></h2><h3><{$smarty.const._AM_ELE_ONEOPTION}></h3></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img class="element-example" src="../images/admin_elements/radio.png"></a>
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><{$smarty.const._AM_ELE_CATEGORY_RADIOBUTTONS_YN}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=provinceRadio"><{$smarty.const._AM_ELE_CATEGORY_PROVINCE}></a>
+					</p>
+				</div>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_CHECKBOXES}></h2><h3><{$smarty.const._AM_ELE_ONEORMOREOPTIONS}></h3></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img class="element-example" src="../images/admin_elements/checkbox.png"></a>
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkboxLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+					</p>
+				</div>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_AUTOCOMPLETE}></h2><h3><{$smarty.const._AM_ELE_ONEORMOREOPTIONS}></h3></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocomplete"><img class="element-example" src="../images/admin_elements/autocomplete.png"></a>
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocomplete"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocompleteLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocompleteUsers"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a>
+					</p>
+				</div>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_LISTBOXES}></h2><h3><{$smarty.const._AM_ELE_ONEORMOREOPTIONS}></h3></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listbox"><img class="element-example" src="../images/admin_elements/listbox.png"></a>
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listbox"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listboxLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listboxUsers"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a>
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<div id="add-selectors" class="element-category-content">
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DATE}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img class="element-example" src="../images/admin_elements/date.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TIME}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=time"><img class="element-example" src="../images/admin_elements/time.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_FILEUPLOAD}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=fileUpload"><img class="element-example" src="../images/admin_elements/fileUpload.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_SLIDER}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=slider"><img class="element-example" src="../images/admin_elements/slider.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DURATION}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=duration"><img class="element-example" src="../images/admin_elements/duration.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_COLORPICK}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img class="element-example" src="../images/admin_elements/colorpick.png"></a>
+			</div>
+		</div>
+
+		<div id="add-layout" class="element-category-content">
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_MODIF}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img class="element-example" src="../images/admin_elements/areamodif.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_MODIF_ONE}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img class="element-example" src="../images/admin_elements/ib.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TABLE}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img class="element-example" src="../images/admin_elements/grid.png"></a>
+			</div>
+		</div>
+
+		<div id="add-misc"  class="element-category-content">
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DERIVED}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img class="element-example" src="../images/admin_elements/derived.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_GOOGLE}></h2><h3><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS}></h3></div>
+			<div class="element-types">
+				<div>
+					<p class="element-variations">
+						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleAddress"><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_ADDRESS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleFilePicker"><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_FILEPICKER}></a>
+					</p>
+				</div>
+			</div>
+
+			<{foreach item=customElement from=$content.customElements}>
+				<{if $customElement.type|in_array:$content.standardTypes == true}>
+					<div class="element-title"><h2><{$customElement.name}></h2></div>
+					<div class="element-types">
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><{$customElement.name}></a>
+					</div>
+				<{/if}>
+			<{/foreach}>
+
+		</div>
+
+		<div id="add-embed"  class="element-category-content">
+			coming soon
+		</div>
+
+
+	</div> <!-- end of tabs container -->
+
+
+	 <!--
+
+
+		Embed another form
+			- subform -- NEEDS VARIATIONS!
+				- subformfullform -accordion or inline is an option in the element settings (defaults to accordion, user controllable)
+				- subformeditablerow (editable defaults to new entries as rows editing icons off, elements can be disabled if user chooses, new entry choice and view icons choices user controllable)
+				- subformlistings (defaults to new entries in modal/full screen plus editing icons on, only modal/full screen choice or view off, is user controllable, new row option not available since everything is disabled)
+
+
+
+		Text for display
+			- areamodif
+			- ib
+		
+-->
 </div>
 
 <script type="text/javascript">
+
+// Calculate 80% of the window height
+var windowHeight = $(window).height();
+var dialogHeight = windowHeight * 0.85; // 85% of window height
+
+function showAddElementOptions() {
+	$("#addElementOptions").dialog({
+		modal: true,
+		width: "700px",
+		height: dialogHeight,
+		show: 200,
+		hide: 200,
+		title: "<{$smarty.const._AM_ELE_ADDINGTOFORM}>",
+		close: function( event, ui ) {
+			$(this).dialog('destroy');
+		}
+	});
+	// Show the dialog
+	$("#addElementOptions").dialog('open');
+}
+
+$("#element-categories-container").tabs();
+
+function toggleElementCategories(clickedElement) {
+	return false;
+    const h1 = clickedElement.parentElement;
+    const contentDiv = h1.nextElementSibling;
+    const container = h1.parentElement;
+
+    // Close all other sections first
+    const allH1s = container.querySelectorAll('h1.element-category');
+    allH1s.forEach(otherH1 => {
+        if (otherH1 !== h1) {
+            const otherDiv = otherH1.nextElementSibling;
+            if (otherDiv) {
+                jQuery(otherDiv).hide(200);
+						}
+        }
+    });
+
+    // Toggle the clicked section
+    if (contentDiv.style.display === 'none' || contentDiv.style.display === '') {
+        jQuery(contentDiv).show(200);
+    } else {
+        jQuery(contentDiv).hide(200);
+    }
+
+    return false;
+}
 
 function cloneLinkSteps(target) {
 	$("[name=cloneelement]").val(target);

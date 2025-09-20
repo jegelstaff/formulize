@@ -37,7 +37,7 @@ class formulizeFileUploadElement extends formulizeElement {
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
     function __construct() {
-        $this->name = "File upload box";
+        $this->name = "File Upload Box";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.

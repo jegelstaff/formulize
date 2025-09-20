@@ -58,7 +58,7 @@ define("_AM_ELE_CONVERT_ML", "Conversion simple ligne en multi lignes.");
 define("_AM_ELE_CONVERT_SL", "Conversion multi lignes en simple ligne.");
 define("_AM_ELE_CONVERT_CB", "Conversion en cases à cocher.");
 define("_AM_ELE_CONVERT_RB", "Conversion en boutons radios.");
-define("_AM_ELE_ADDINGTOFORM","Ajout d'éléments au formulaire");
+define("_AM_ELE_ADDINGTOFORM","Ajout un élément au formulaire");
 define("_AM_ELE_MANAGINGELEFORM","Gestion des éléments du formulaire");
 define("_AM_ELE_CLICKTOADD","Cliquez sur le nom d'un élément pour l'ajouter");
 define("_AM_ELE_CLICKDRAGANDDROP","Cliquez sur un élément et utilisez le glisser-déposer pour réorganiser");
