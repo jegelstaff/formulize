@@ -394,7 +394,7 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 		$elementType = $elementObject->getVar('ele_type');
 
 		if($elementType == "ib") {
-			$elementContents = "<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>";
+			$elementContents = trans(stripslashes($form_ele[0]));
 			$breakClass = $form_ele[1];
 
 		} elseif($elementType == "grid") {

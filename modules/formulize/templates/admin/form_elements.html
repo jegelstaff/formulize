@@ -44,13 +44,13 @@
 				<input type="hidden" name="aid" value="<{$content.aid}>">
 				<input type="hidden" name="elementorder" value="">
 				<h2><{$smarty.const._AM_ELE_MANAGINGELEFORM}></h2>
-				<h2><a href="" onclick="showAddElementOptions();return false;">Add an element</a></h2>
+				<h2><a href="" onclick="showAddElementOptions();return false;"><img src="../images/filenew2.png"> Add an element</a></h2>
 				<p><{$smarty.const._AM_ELE_CLICKDRAGANDDROP}></p>
 				<div id="sortable-list">
 					<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/form_elements_sections.html" sections=$content.elements}>
 				</div>
 			</form>
-			<h2><a href="" onclick="showAddElementOptions();return false;">Add an element</a></h2>
+			<h2><a href="" onclick="showAddElementOptions();return false;"><img src="../images/filenew2.png"> Add an element</a></h2>
 		</div>
 
 	</div> <!-- end of mgmt ui left -->
@@ -223,7 +223,7 @@
 			</div>
 
 			<{foreach item=customElement from=$content.customElements}>
-				<{if $customElement.type|in_array:$content.standardTypes == true}>
+				<{if $customElement.type|in_array:$content.standardTypes == false}>
 					<div class="element-title"><h2><{$customElement.name}></h2></div>
 					<div class="element-types">
 						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><{$customElement.name}></a>
@@ -268,7 +268,7 @@ var dialogHeight = windowHeight * 0.85; // 85% of window height
 function showAddElementOptions() {
 	$("#addElementOptions").dialog({
 		modal: true,
-		width: "700px",
+		width: "825px",
 		height: dialogHeight,
 		show: 200,
 		hide: 200,
