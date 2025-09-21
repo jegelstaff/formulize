@@ -336,8 +336,8 @@ define("_formulize_NOSUBNAME", "Entry: ");
 
 define("_formulize_DEL_ENTRIES", "You are about to delete the selected entries!  Please confirm.");
 
-define("_formulize_PRINTVIEW", "Printable View");
-define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.24 - added
+define("_formulize_PRINTVIEW", "Printable Version");
+define("_formulize_PRINTALLVIEW", "Printable Version - All Pages"); // nmc 2007.03.24 - added
 
 // constants related to the new display entries functions...
 
@@ -692,4 +692,5 @@ define("_formulize_QSF_DefaultText", "Search for:");
 define("_formulize_BLANK_KEYWORD", "{BLANK}");
 
 define("_formulize_ERROR_IN_LEFTRIGHT", "There appears to be an error in the PHP code that generates the text for this space.  Please notify the webmaster.");
-?>
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

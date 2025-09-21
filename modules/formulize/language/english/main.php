@@ -360,8 +360,8 @@ define("_formulize_NOSUBNAME", "Entry: ");
 
 define("_formulize_DEL_ENTRIES", "You are about to delete the selected entries!  Please confirm.");
 
-define("_formulize_PRINTVIEW", "Printable View");
-define("_formulize_PRINTALLVIEW", "Printable View - All Pages"); // nmc 2007.03.24 - added
+define("_formulize_PRINTVIEW", "Printable Version");
+define("_formulize_PRINTALLVIEW", "Printable Version - All Pages"); // nmc 2007.03.24 - added
 
 // constants related to the new display entries functions...
 
@@ -789,3 +789,7 @@ define("_formulize_NEGATIVEFILTER", "Not: ");
 define("_formulize_COULD_NOT_GENERATE_THUMBNAIL", "Could not generate thumbnail for image");
 define("_formulize_IMAGE_NOT_FOUND", "Image not found");
 define("_formulize_IMAGE_TOO_LARGE", "Generation would likely exceed the PHP memory limit of ".ini_get('memory_limit'));
+
+define("_formulize_OFFICE_USE_ONLY", "Office Use Only");
+define("_formulize_SHOW", "Show");
+define("_formulize_HIDE", "Hide");

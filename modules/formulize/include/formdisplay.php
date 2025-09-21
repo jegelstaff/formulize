@@ -419,7 +419,7 @@ class formulize_themeForm extends XoopsThemeForm {
 								is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements())
 							)
 						) AND (
-							$ele->getName() != 'button-controls'
+							$ele->getName() != 'button-controls' AND substr($ele->getName(), 0, 15) != 'office-use-only'
 						)
 					) {
 						return "";
@@ -1879,8 +1879,23 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 			} else {
 				$proxylist->setValue('nochange');
 			}
+
+			$officeUseOnlyShow = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_SHOW." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-show');
+			$officeUseOnlyShow->setClass("no-print");
+			$officeUseOnlyShow->setClass("formulize-office-use-only-toggle");
+
+			$officeUseOnlyHide = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_HIDE." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-hide');
+			$officeUseOnlyHide->setClass("no-print");
+			$officeUseOnlyHide->setClass("formulize-office-use-only-toggle");
+			$officeUseOnlyHide->setClass("formulize-office-use-only-start-hidden");
+
 			$proxylist->setClass("no-print");
+			$proxylist->setClass("formulize-office-use-only-content");
+			$proxylist->setClass("formulize-office-use-only-start-hidden");
 			$proxylist->setExtra(" onchange='javascript:formulizechanged=1' ");
+
+			$form->addElement($officeUseOnlyShow);
+			$form->addElement($officeUseOnlyHide);
 			$form->addElement($proxylist);
 			return $form;
 }
@@ -2584,6 +2599,12 @@ if($entryId != 'new' AND isset($_POST['yposition']) AND
     }
 }
 ?>
+
+function officeUseOnlyToggle() {
+	jQuery(".formulize-office-use-only-toggle").toggle();
+	jQuery(".formulize-office-use-only-content").toggle(250);
+	return false;
+}
 
 function includeResource(filename, type) {
    if(filename in formulize_javascriptFileIncluded == false) {

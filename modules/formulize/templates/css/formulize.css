@@ -714,3 +714,7 @@ table.formulize-grid td.head {
 	margin-left: 1.0em;
 	padding-left: 1em;
 }
+
+.formulize-office-use-only-start-hidden {
+		display: none;
+}
