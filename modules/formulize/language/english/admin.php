@@ -172,6 +172,8 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 define("_AM_SETTINGS_FORM_PI1","Which element in");
 define("_AM_SETTINGS_FORM_PI2","is the principal identifier?");
 define("_AM_SETTINGS_FORM_PI_NONE","No principal identifer");
+define("_AM_SETTINGS_FORM_PI_NEW","Create a textbox in the form to use as the principal identifier?");
+define("_AM_SETTINGS_FORM_PI_NEW_YES","Yes. Use the caption: ");
 define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");

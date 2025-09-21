@@ -35,6 +35,17 @@
 
 		<{if $content.istableform == false AND $content.fid != 'new'}>
 			<{include file="db:admin/primary_identifier_selection.html" content=$content}>
+		<{elseif $content.fid == 'new'}>
+			<div class="form-item">
+				<fieldset>
+					<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_PI_NEW}></label></legend>
+					<label for="pi-new-yes"><input type="radio" id="pi-new-yes" name="pi_new_yes_no" value="yes" checked /><{$smarty.const._AM_SETTINGS_FORM_PI_NEW_YES}><input type="text" name="pi_new_caption" value="<{$smarty.const._AM_ITEMNAME}>" /></label><br>
+					<label for="pi-new-no"><input type="radio" id="pi-new-no" name="pi_new_yes_no" value="no"/><{$smarty.const._AM_NO}></label>
+					<div class="description">
+						<{$smarty.const._AM_SETTINGS_FORM_PI_DESC}>
+					</div>
+				</fieldset>
+			</div>
 		<{/if}>
 
 		<{if $content.connections}>
@@ -59,10 +70,10 @@
 					<{/if}>
 					<p><{$smarty.const._AM_SETTINGS_FORM_APPNEW}></p>
 					<div class="form-radios radio-inline">
-							<label for="new-app-yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes" <{if $content.fid == 'new' AND $content.applications|@count == 0}>checked<{/if}>/><{$smarty.const._AM_YES}></label>
+							<label for="new-app-yes"><input type="radio" id="new-app-yes" name="new_app_yes_no" value="yes" <{if $content.fid == 'new' AND $content.applications|@count == 0}>checked<{/if}> /><{$smarty.const._AM_YES}></label>
 					</div>
 					<div class="form-radios radio-inline">
-							<label for="new-app-no"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" <{if $content.fid != 'new' OR $content.applications|@count > 0}>checked<{/if}>/><{$smarty.const._AM_NO}></label>
+							<label for="new-app-no"><input type="radio" id="new-app-no" name="new_app_yes_no" value="no" <{if $content.fid != 'new' OR $content.applications|@count > 0}>checked<{/if}> /><{$smarty.const._AM_NO}></label>
 					</div>
 					<div class="form-item" id="new-application-box" <{if $content.fid != 'new' OR $content.applications|@count > 0}>style="display: none;"<{/if}>>
 					<label class="question">What is the name of the new application?</label>
