@@ -233,6 +233,7 @@ class formulizeSubformElementHandler extends formulizeElementsHandler {
 			$ele_value[1] = implode(",",(array)$_POST['elements_ele_value_1']);
 			$ele_value['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
 			list($ele_value[7], $changed) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
+			$element->setVar('ele_value', $ele_value);
 		}
 		return $changed;
 	}
@@ -374,8 +375,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $addEntriesText = $addEntriesText ? $addEntriesText : _formulize_ADD_ENTRIES;
 
 	global $xoopsDB, $xoopsUser;
-
-	$GLOBALS['framework'] = $frid;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 	// if no sub entries, then go figure out sub entries again based on the correct main form id
@@ -418,8 +417,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
 	global $formulize_subformInstance;
 	$subformInstance = $formulize_subformInstance+1;
-    $formulize_subformInstance = $subformInstance;
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$formulize_subformInstance = $subformInstance;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
 	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
         list($sub_entry_new,$sub_entry_written) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
@@ -523,16 +522,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             }
         }
 
+				// disembodied render, just to get the options (out of global space, ugh)
         list($prepopElement, $prepopDisabled) = displayElement("", $subform_element_object->ele_value['subform_prepop_element'], "new", false, null, null, false);
-        unset($GLOBALS['formulize_synchronousFormDataInDatabaseReadyFormat']); // clear the special flag, just in case -- EXCEPT TYPO! SO THIS IS NEVER ACTUALLY DONE ON THE VARIABLE INTENDED... AND EVERYTHING WORKS OK? SO UNNECESSARY TO DO THIS?
         $prepopOptions = $GLOBALS['formulize_lastRenderedElementOptions'];
 
         // if there are known linking values to the main form, then write those in.
         // Otherwise...we need to add logic to make this work like the blanks do and write links after saving!!
         // Therefore, this feature will not yet work when the mainform entry is new!!
         if($element_to_write) {
-            $linkingElementObject = $element_handler->get($element_to_write);
-            $valuesToWrite[$linkingElementObject->getVar('ele_handle')] = $value_to_write;
+					$linkingElementObject = $element_handler->get($element_to_write);
+					$valuesToWrite[$linkingElementObject->getVar('ele_handle')] = $value_to_write;
         }
         foreach($prepopOptions as $optionKey=>$optionValue) {
             // get the database ready value for this option
@@ -605,14 +604,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
 
     $deleteButton = "";
-	if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-        if((!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) AND ($gperm_handler->checkRight("delete_own_entry", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_group_entries", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_other_entries", $subform_id, $groups, $mid))) {
-            $deleteButton = "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none;' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
-        }
-        if((!isset($subform_element_object->ele_value["show_clone_button"]) OR $subform_element_object->ele_value["show_clone_button"]) AND $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid)) {
-            $deleteButton .= "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
-        }
-	}
+		if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+			if((!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) AND ($gperm_handler->checkRight("delete_own_entry", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_group_entries", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_other_entries", $subform_id, $groups, $mid))) {
+				$deleteButton = "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none;' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+			}
+			if((!isset($subform_element_object->ele_value["show_clone_button"]) OR $subform_element_object->ele_value["show_clone_button"]) AND $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid)) {
+				$deleteButton .= "&nbsp;&nbsp;&nbsp;<input class='subform-delete-clone-buttons$subformElementId$subformInstance' style='display: none' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+			}
+		}
 
     // if the 'add x entries button' should be hidden or visible
     $hidingAddEntries = false;
@@ -621,14 +620,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
     $allowed_to_add_entries = false;
     if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
-        // for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
-        // user can add entries if they have permission on the sub form
-        $allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
+			// for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
+			// user can add entries if they have permission on the sub form
+			$allowed_to_add_entries = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid);
     } else {
-        // user can add entries if they have permission on the main form
-        // the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
-        // is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
-        $allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+			// user can add entries if they have permission on the main form
+			// the user should only be able to add subform entries if they can *edit* the main form entry, since adding a subform entry
+			// is like editing the main form entry. otherwise they could add subform entries on main form entries owned by other users
+			$allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
     }
 
     if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -787,7 +786,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             $matchingEntryIds = array();
             if(isset($_POST['subformFilterBox_'.$subformInstance]) AND $_POST['subformFilterBox_'.$subformInstance]) {
                 $filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
-                $matchingEntries = gatherDataset($subform_id, $filterElementObject->getVar('ele_handle').'/**/'.htmlspecialchars(strip_tags(trim($_POST['subformFilterBox_'.$subformInstance])), ENT_QUOTES), frid: 0);
+                $matchingEntries = gatherDataset($subform_id, filter: $filterElementObject->getVar('ele_handle').'/**/'.htmlspecialchars(strip_tags(trim($_POST['subformFilterBox_'.$subformInstance])), ENT_QUOTES), frid: 0);
                 foreach($matchingEntries as $matchingEntry) {
                     $matchingEntryIds = array_merge($matchingEntryIds, getEntryIds($matchingEntry, $subform_id));
                 }
@@ -1001,28 +1000,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         </script>
     ";
 
-    $edit_link = "";
-    if (is_object($subform_element_object)) {
-        global $xoopsUser;
-        $show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
-        if ($show_element_edit_link) {
-            $application_handler = xoops_getmodulehandler('applications', 'formulize');
-            $apps = $application_handler->getApplicationsByForm($subform_id);
-            $app = is_array($apps) ? $apps[0] : $apps;
-						$appId = 0;
-						if($app) {
-            	$appId = $app->getVar('appid');
-						}
-            $edit_link = "<a class=\"formulize-element-edit-link\" tabindex=\"-1\" href=\"" . XOOPS_URL .
-                "/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
-                $subform_element_object->getVar("ele_id") . "\" target=\"_blank\">edit element</a>";
-        }
-    }
-
-    $to_return['c1'] = $edit_link.$col_one;
+    $to_return['c1'] = $col_one;
     $to_return['c2'] = $col_two;
-    $to_return['single'] = $edit_link.$col_one.$col_two;
-
+    $to_return['single'] = $col_one.$col_two;
 
     return $to_return;
 }
