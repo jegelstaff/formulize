@@ -501,7 +501,7 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
 			6 => 1,
 			8 => 'row',
 			'simple_add_one_button' => 1,
-			'simple_add_one_button_text' => 'Add One',
+			'simple_add_one_button_text' => 'Add '.$subformObject->getSingular(),
 			'disabledelements' => $subformObject->getVar('pi'),
 			'subform_prepop_element' => 0,
 			'enforceFilterChanges' => 1,
