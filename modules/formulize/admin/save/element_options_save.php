@@ -29,6 +29,33 @@
 
 // this file handles saving of submissions from the element options page of the new admin UI
 
+if(!function_exists("figureOutOrder")) {
+function figureOutOrder($orderChoice, $oldOrder, $fid) {
+	global $xoopsDB;
+	if($orderChoice === "bottom") {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+	  $res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+	} elseif($orderChoice === "top") {
+		$orderChoice = 0;
+	} else {
+		// convert the orderpref from the element ID to the order
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['ele_order'];
+	}
+	$orderValue = $orderChoice + 1;
+	if($oldOrder != $orderValue) {
+		// and we need to reorder all the elements equal to and higher than the current element
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	}
+	return $orderValue;
+}
+}
+
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
   return;
@@ -66,6 +93,23 @@ if($_POST['element_delimit']) {
   } else {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
+}
+
+if($ele_type == "grid") {
+	// position the grid immediately before the first element that's in the grid
+	// have to figure out the preceeding element, then request the figureOutOrder with that element's id
+	global $xoopsDB;
+	$position = 'top';
+	if($firstGridElement = _getElementObject($processedValues['elements']['ele_value'][4])) {
+		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
+		if($res = $xoopsDB->query($sql)) {
+			if($xoopsDB->getRowsNum($res) == 1) {
+				$array = $xoopsDB->fetchArray($res);
+				$position = $array['ele_id'];
+			}
+		}
+	}
+	$processedValues['elements']['ele_order'] = figureOutOrder($position, $element->getVar('ele_order'), $fid);
 }
 
 if($ele_type == "subform") {

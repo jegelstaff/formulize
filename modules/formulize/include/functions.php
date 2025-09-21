@@ -5145,7 +5145,7 @@ function convertTypeToText($type, $ele_value) {
             return "Subform (another form with a relationship to this one)";
 
         case "grid":
-            return "Table of existing elements";
+            return "Table of elements";
 
         default:
             // must be a custom element type

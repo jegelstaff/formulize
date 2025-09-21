@@ -88,7 +88,9 @@ if($element->isSystemElement) {
 	exit();
 }
 
-$element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
+if($element->getVar('ele_type') != 'grid') {
+	$element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
+}
 $element->setVar('ele_sort', $_POST['sortpref']);
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
