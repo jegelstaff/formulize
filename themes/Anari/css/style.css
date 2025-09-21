@@ -1170,6 +1170,29 @@ table.formulize-subform-table td {
     margin-bottom: 2em;
 }
 
+div.formulize-office-use-only-toggle .col1,
+div.formulize-office-use-only-toggle .col2,
+div#formulize-office-use-only-hide,
+div#formulize-office-use-only-show {
+	margin-bottom: 0;
+}
+div.formulize-office-use-only-content,
+div.formulize-office-use-only-content .col1,
+div.formulize-office-use-only-content .col2,
+div#formulize-button-controls,
+div#formulize-button-controls .col1,
+div#formulize-button-controls .col2 {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+div#formulize-button-controls input {
+	margin-bottom: 0;
+	margin-left: 0;
+}
+div#formulize-button-controls .col1 {
+	width: auto !important;
+}
+
 @media (min-width: 768px) {
     .col1, .col2 {
         float: left;

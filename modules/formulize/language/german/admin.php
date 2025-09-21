@@ -312,7 +312,7 @@ define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of th
 define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
 define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
 define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "The text of the link users get at the end of the form");
-define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the end of the form"); //nmc 2007.03.24
+define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable Version - All Pages' button available at the end of the form"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
