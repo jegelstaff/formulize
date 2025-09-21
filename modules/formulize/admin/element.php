@@ -160,55 +160,45 @@ if ($_GET['ele_id'] != "new") {
     $ele_uitext = $elementObject->getVar('ele_uitext');
     $ele_uitextshow = $elementObject->getVar('ele_uitextshow');
 } else {
-    $fid = intval($_GET['fid']);
-    $elementName = "New element";
-    $defaultOrder = "bottom";
-    $defaultSort = "";
-    $elementObject = false;
-    $names['ele_caption'] = $elementName;
-    $ele_type = $_GET['type'];
-    $ele_value = array();
-    $ele_delim = "br";
-    $ele_uitext = "";
-    $ele_uitextshow = 0;
-    $ele_use_default_when_blank = 0;
-    global $xoopsModuleConfig;
-    switch($ele_type) {
-        case "subform":
-            $ele_value[2] = 0;
-            $ele_value[3] = 1;
-						$ele_value[6] = 'subform';
-            $ele_value['simple_add_one_button'] = 1;
-            $ele_value['show_delete_button'] = 1;
-            $ele_value['show_clone_button'] = 1;
-            break;
-        case "grid":
-            $ele_value[3] = "horizontal";
-            $ele_value[5] = 1;
-            $ele_value[0] = "caption";
-            break;
-    }
+	$fid = intval($_GET['fid']);
+	$elementName = "New element";
+	$defaultOrder = "bottom";
+	$defaultSort = "";
+	$elementObject = false;
+	$names['ele_caption'] = $elementName;
+	$ele_type = $_GET['type'];
+	$ele_value = array();
+	$ele_delim = "br";
+	$ele_uitext = "";
+	$ele_uitextshow = 0;
+	$ele_use_default_when_blank = 0;
+	global $xoopsModuleConfig;
+	if($ele_type == "grid") {
+		$ele_value[3] = "horizontal";
+		$ele_value[5] = 1;
+		$ele_value[0] = "caption";
+	}
 
- 		$ele_required = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
-    $common['ele_req_on'] = $ele_required === false ? false : true;
+	$ele_required = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
+	$common['ele_req_on'] = $ele_required === false ? false : true;
 
-    $names['ele_req_no_on'] = " checked";
-    $display['ele_display']['all'] = " selected";
-    $display['ele_disabled']['none'] = " selected";
-    $display['filtersettings'] = formulize_createFilterUI("", "elementfilter", $fid, "form-3");
-    $ele_encrypt = 0;
-    if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
-        $advanced['ele_encrypt_no_on'] = " checked";
-        $advanced['ele_encrypt_show'] = true;
-        $ele_index = "";
-        $advanced['original_ele_index'] = strlen($ele_index) > 0;
-        $advanced['original_index_name'] = $ele_index;
-        $advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
-        $advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
-        $advanced['ele_index_show'] = true;
-    }
-		$advanced['exportoptions_onoff'] = 0;
-    $ele_id = "new";
+	$names['ele_req_no_on'] = " checked";
+	$display['ele_display']['all'] = " selected";
+	$display['ele_disabled']['none'] = " selected";
+	$display['filtersettings'] = formulize_createFilterUI("", "elementfilter", $fid, "form-3");
+	$ele_encrypt = 0;
+	if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
+		$advanced['ele_encrypt_no_on'] = " checked";
+		$advanced['ele_encrypt_show'] = true;
+		$ele_index = "";
+		$advanced['original_ele_index'] = strlen($ele_index) > 0;
+		$advanced['original_index_name'] = $ele_index;
+		$advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
+		$advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
+		$advanced['ele_index_show'] = true;
+	}
+	$advanced['exportoptions_onoff'] = 0;
+	$ele_id = "new";
 }
 
 $advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
@@ -260,74 +250,7 @@ $options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
-if ($ele_type == "subform") {
-
-    if(!isset($ele_value['show_delete_button'])) {
-        $ele_value['show_delete_button'] = 1;
-    }
-    if(!isset($ele_value['show_clone_button'])) {
-        $ele_value['show_clone_button'] = 1;
-    }
-    if(!isset($ele_value['FilterByElementStartState'])) {
-        $ele_value['FilterByElementStartState'] = 0;
-    }
-
-    $ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
-
-    $ele_value[1] = explode(",",$ele_value[1]);
-    if (is_string($ele_value['disabledelements'])) {
-        $ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
-    }
-    global $xoopsDB;
-    $defaultSubformSelection = 0;
-    $allFormsQuery = q("SELECT id_form, form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY form_title");
-    $allForms = array(_AM_FORMLINK_PICK);
-    foreach($allFormsQuery as $thisForm) {
-        $allForms[$thisForm['id_form']] = $thisForm['form_title'];
-        $defaultSubformSelection = $defaultSubformSelection ? $defaultSubformSelection : $thisForm['id_form'];
-	}
-    $validForms1 = q("SELECT t1.fl_form1_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
-    $validForms2 = q("SELECT t1.fl_form2_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
-	$validForms = array();
-    foreach($validForms1 as $vf1) {
-        $validForms[$vf1['fl_form1_id']] = $vf1['form_title'];
-    }
-    foreach($validForms2 as $vf2) {
-        if (!isset($validForms[$vf2['fl_form2_id']])) {
-            $validForms[$vf2['fl_form2_id']] = $vf2['form_title'];
-        }
-    }
-    $allForms['new'] = _AM_ELE_SUBFORM_NEW;
-		$options['allforms'] = $allForms;
-    $options['validForms'] = $validForms;
-		$options['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
-		$formtouse = $ele_value[0] ? $ele_value[0] : $defaultSubformSelection; // use the user's selection, unless there isn't one, then use the first form found
-		$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
-		$options['subformUserFilterElements'][0] = _formulize_NONE;
-		foreach($elementsq as $oneele) {
-				$options['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-				$options['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-		}
-
-    // compile a list of data-entry screens for this form
-    $options['subform_screens'] = array();
-    $screen_options = q("SELECT sid, title, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and (type='form' OR type='multiPage')");
-    $options['subform_screens'][0] = "(Use Default Screen)";
-    foreach($screen_options as $screen_option) {
-        $options['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
-    }
-		$options['selectedSubformScreenAdminURL'] = '';
-		if($formtouse AND $subformObject = $form_handler->get($formtouse)) {
-			$bestAppId = formulize_getFirstApplicationForBothForms($formObject, $subformObject);
-			$bestAppId = $bestAppId ? $bestAppId : 0;
-			$subformScreenId = $ele_value['display_screen'];
-			$subformScreenId = $subformScreenId ? $subformScreenId : $subformObject->getVar('defaultform');
-			$options['selectedSubformScreenAdminURL'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=$bestAppId&fid=$formtouse&sid=$subformScreenId";
-		}
-
-    // setup the UI for the subform conditions filter
-    $options['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
-} elseif ($ele_type == "grid") {
+if ($ele_type == "grid") {
     $options['background'] = $ele_value[3];
     $options['heading'] = $ele_value[0];
     $options['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
