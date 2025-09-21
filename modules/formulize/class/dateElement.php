@@ -189,27 +189,34 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
-		// if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
-		if(!$ele_value[0] OR $ele_value[0] == _DATE_DEFAULT) {
-			$form_ele = new XoopsFormTextDateSelect($caption, $markupName, 15, "");
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+		if($isDisabled) {
+
+			$form_ele = new XoopsFormLabel($caption, (($ele_value[0] AND $ele_value[0] != _DATE_DEFAULT) ? $this->prepareDataForDataset($ele_value[0], $element->getVar('ele_handle'), $entry_id) : ""));
+
 		} else {
-			$form_ele = new XoopsFormTextDateSelect($caption, $markupName, 15, getDateElementDefault($ele_value[0], $entry_id));
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
-		} // end of check to see if the default setting is for real
-		if (!$isDisabled) {
-			$limit_past = (isset($ele_value["date_past_days"]) and $ele_value["date_past_days"] != "");
-			$limit_future = (isset($ele_value["date_future_days"]) and $ele_value["date_future_days"] != "");
-			if ($limit_past or $limit_future) {
-				if($limit_past AND $pastSeedDate = getDateElementDefault($ele_value["date_past_days"], $entry_id)) {
-					$form_ele->setExtra(" min='".date('Y-m-d', $pastSeedDate)."' ");
-				}
-				if($limit_future AND $futureSeedDate = getDateElementDefault($ele_value["date_future_days"], $entry_id)) {
-					$form_ele->setExtra(" max='".date('Y-m-d', $futureSeedDate)."' ");
-				}
-				$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$markupName');\" onclick=\"javascript:check_date_limits('$markupName');\" onblur=\"javascript:check_date_limits('$markupName');\" jquerytag=\"$markupName\" ");
-			} else {
+
+			// if there's no value (ie: it's blank) ... OR it's the default value because someone submitted a date field without actually specifying a date, that last part added by jwe 10/23/04
+			if(!$ele_value[0] OR $ele_value[0] == _DATE_DEFAULT) {
+				$form_ele = new XoopsFormTextDateSelect($caption, $markupName, 15, "");
 				$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+			} else {
+				$form_ele = new XoopsFormTextDateSelect($caption, $markupName, 15, getDateElementDefault($ele_value[0], $entry_id));
+				$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+			} // end of check to see if the default setting is for real
+			if (!$isDisabled) {
+				$limit_past = (isset($ele_value["date_past_days"]) and $ele_value["date_past_days"] != "");
+				$limit_future = (isset($ele_value["date_future_days"]) and $ele_value["date_future_days"] != "");
+				if ($limit_past or $limit_future) {
+					if($limit_past AND $pastSeedDate = getDateElementDefault($ele_value["date_past_days"], $entry_id)) {
+						$form_ele->setExtra(" min='".date('Y-m-d', $pastSeedDate)."' ");
+					}
+					if($limit_future AND $futureSeedDate = getDateElementDefault($ele_value["date_future_days"], $entry_id)) {
+						$form_ele->setExtra(" max='".date('Y-m-d', $futureSeedDate)."' ");
+					}
+					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;check_date_limits('$markupName');\" onclick=\"javascript:check_date_limits('$markupName');\" onblur=\"javascript:check_date_limits('$markupName');\" jquerytag=\"$markupName\" ");
+				} else {
+					$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+				}
 			}
 		}
 		return $form_ele;
