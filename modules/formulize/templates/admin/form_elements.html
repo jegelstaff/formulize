@@ -211,15 +211,13 @@
 			<div class="element-types">
 				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img class="element-example" src="../images/admin_elements/derived.png"></a>
 			</div>
-			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_GOOGLE}></h2><h3><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS}></h3></div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_ADDRESS}></h2><h3><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS}></h3></div>
 			<div class="element-types">
-				<div>
-					<p class="element-variations">
-						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleAddress"><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_ADDRESS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleFilePicker"><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_FILEPICKER}></a>
-					</p>
-				</div>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleAddress"><img class="element-example" src="../images/admin_elements/googleAddress.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_FILEPICKER}></h2><h3><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS}></h3></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleFilePicker"><img class="element-example" src="../images/admin_elements/googleFilePicker.png"></a>
 			</div>
 
 			<{foreach item=customElement from=$content.customElements}>
