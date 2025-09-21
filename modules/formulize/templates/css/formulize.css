@@ -718,3 +718,11 @@ table.formulize-grid td.head {
 .formulize-office-use-only-start-hidden {
 		display: none;
 }
+
+.subform-filter-search {
+	margin-bottom: 0.5em;
+	margin-top: 0.5em;
+}
+div.subform_button_controls div.subform-filter-search input[type=text] {
+	width: 10em;
+}

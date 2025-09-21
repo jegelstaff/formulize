@@ -594,14 +594,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $addViewType = stristr($_SERVER['SCRIPT_NAME'], 'subformdisplay-elementsonly.php') ? 'Modal' : $addViewType;
 
     // div for View button dialog
-    $col_two = "<div id='subentry-dialog' style='display:none'></div>\n";
-
-    // hacking in a filter for existing entries
-    if($subform_element_object AND isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
-        $col_two .= "<br>"._formulize_SUBFORM_FILTER_SEARCH."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/> <input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /><br>";
-	} else {
-		$col_two .= "";
-    }
+    $col_two = "
+			<div id='subentry-dialog' style='display:none'></div>\n
+				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'>";
 
     $deleteButton = "";
 		if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -631,7 +626,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     }
 
     if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-        $col_two .= "<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls'>";
         if ($allowed_to_add_entries AND !$hidingAddEntries AND count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
             $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
         } elseif(!$sub_single) {
@@ -646,8 +640,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                 $col_two .= $addEntriesText;
             }
         }
-        $col_two .= $deleteButton."</div>";
+        $col_two .= $deleteButton;
     }
+
+		// hacking in a filter for existing entries
+    if($subform_element_object AND isset($subform_element_object->ele_value["UserFilterByElement"]) AND $subform_element_object->ele_value["UserFilterByElement"]) {
+			$filterElementObject = $element_handler->get($subform_element_object->ele_value["UserFilterByElement"]);
+      $col_two .= "<div class='subform-filter-search'>".sprintf(_formulize_SUBFORM_FILTER_SEARCH, ($subform_element_object->ele_value[4] ? $filterElementObject->getVar('ele_caption') : $filterElementObject->getUIName()))."<input type='text' name='subformFilterBox_$subformInstance' value='".htmlspecialchars(strip_tags(str_replace("'","&#039;",$_POST['subformFilterBox_'.$subformInstance])))."' onkeypress='javascript: if(event.keyCode == 13) validateAndSubmit();'/>&nbsp;&nbsp;&nbsp;<input type='button' value='"._formulize_SUBFORM_FILTER_GO."' onclick='validateAndSubmit();' /></div>";
+		}
+
+		$col_two .= "</div>";
 
 	// construct the limit based on what is passed in via $numberOfEntriesToDisplay and $firstRowToDisplay
 	$limitClause = "";
