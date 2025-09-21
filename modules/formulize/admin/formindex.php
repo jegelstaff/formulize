@@ -581,7 +581,7 @@ function patch40() {
                     print "Form screen save and leave text option already added. result: OK<br>";
                     $needToSetSaveAndLeave = false;
                 } elseif($key === "form_screen_printableview") {
-                    print "Form screen printable view text option already added. result: OK<br>";
+                    print "Form screen printable version text option already added. result: OK<br>";
                     $needToSetPrintableView = false;
                 } elseif($key === "form_screen_multipage_column1width" OR $key === "form_screen_multipage_column2width" OR $key === "form_screen_multipage_displaycolumns") {
                     print "Multipage form screen display columns and column widths already added. result: OK<br>";

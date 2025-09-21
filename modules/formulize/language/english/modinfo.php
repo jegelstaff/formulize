@@ -91,7 +91,7 @@ define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can c
 define("_MI_formulize_LOGPROCEDURE", "Use logging to monitor Procedures and parameters?");
 define("_MI_formulize_LOGPROCEDUREDESC", "By default, logging is off.");
 
-define("_MI_formulize_PRINTVIEWSTYLESHEETS", "What custom stylesheets, if any, should be used in the printable view?");
+define("_MI_formulize_PRINTVIEWSTYLESHEETS", "What custom stylesheets, if any, should be used in the printable versions?");
 define("_MI_formulize_PRINTVIEWSTYLESHEETSDESC", "Type the URL for each stylesheet, separated by a comma. If the URL starts with http, it will be used as is. If the URL does not start with http, it will be appended to the end of the base URL for the site.");
 
 define("_MI_formulize_DEBUGDERIVEDVALUES", "Turn on debugging mode for working with derived values?");
@@ -212,8 +212,8 @@ define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix with an apostrophe (for Go
 define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix with a TAB (for Excel)");
 define("_MI_formulize_EIC_PLAIN", "Never prefix (for programs that need clean, raw data)");
 
-define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable View Buttons"._MI_formulize_PREFHEADEND.'Enable Printable View buttons (then you can turn them on and off per screen)');
-define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable View buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable View buttons will not show up on any screens.');
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable Version Buttons"._MI_formulize_PREFHEADEND.'Enable Printable Version buttons (then you can turn them on and off per screen)');
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable Version buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable Version buttons will not show up on any screens.');
 
 define('_MI_formulize_EMAIL_USERS', 'Email Users');
 define('_MI_formulize_MANAGE_API_KEYS', 'Manage API keys');

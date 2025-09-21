@@ -396,7 +396,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
             'printableViewButtonText'=>trans(_formulize_PRINTVIEW)
         )));
-        $defaultFormScreen->setVar('printall', 0);
+        $defaultFormScreen->setVar('printall', 2);
         $defaultFormScreen->setVar('paraentryform', 0);
         $defaultFormScreen->setVar('paraentryrelationship', 0);
         $defaultFormScreen->setVar('showpagetitles', 0);

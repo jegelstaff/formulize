@@ -700,10 +700,10 @@ define("_AM_FORMULIZE_SCREEN_PREVBUTTONTEXT", "Text for the Save and Go Back but
 define("_AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT", "Text for the Save button");
 define("_AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT", "Text for the Save and Continue button");
 define("_AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT", "Text for the Save and Finish button");
-define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the bottom of each page"); //nmc 2007.03.24 //jwe 2025.06.05
+define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable Version - All Pages' button available at the bottom of each page"); //nmc 2007.03.24 //jwe 2025.06.05
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
-define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable View' button either");
+define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable Version' button either");
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
