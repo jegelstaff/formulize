@@ -48,11 +48,13 @@
 			</div>
 		<{/if}>
 
-		<{if $content.connections}>
+		<{if $content.fid != 'new'}>
 			<div class="form-item">
        	<fieldset>
 					<legend><label class="question">Connections with other forms</label></legend>
+					<{if $content.connections}>
 					<{include file="db:admin/relationship_listing.html" sectionContent=$content.connections}>
+					<{/if}>
 					<p><a class='relationship-link-create-connection' target='<{$content.fid}>' href=""><img src="../images/filenew2.png"> Create a Connection</a></p>
 				</fieldset>
 			</div>
