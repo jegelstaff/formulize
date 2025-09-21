@@ -112,47 +112,6 @@ if($ele_type == "grid") {
 	$processedValues['elements']['ele_order'] = figureOutOrder($position, $element->getVar('ele_order'), $fid);
 }
 
-if($ele_type == "subform") {
-
-    if(!isset($processedValues['elements']['ele_value']['show_delete_button'])) {
-        $processedValues['elements']['ele_value']['show_delete_button'] = 0;
-    }
-    if(!isset($processedValues['elements']['ele_value']['show_clone_button'])) {
-        $processedValues['elements']['ele_value']['show_clone_button'] = 0;
-    }
-
-    if(!isset($processedValues['elements']['ele_value']['enforceFilterChanges'])) {
-        $processedValues['elements']['ele_value']['enforceFilterChanges'] = 0;
-    }
-
-  if(!$_POST['elements-ele_value'][3]) {
-    $processedValues['elements']['ele_value'][3] = 0;
-  }
-  // handle the "start" value, formerlly the blanks value (ele_value[2])
-  // $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'
-  // We need to set ele_value[2] to be the appropriate number of blanks
-  // We need to set ele_value[subform_prepop_element] to be the element id of the element prepops are based on
-  switch($_POST['subform_start']) {
-    case "blanks":
-        $processedValues['elements']['ele_value'][2] = intval($_POST['number_of_subform_blanks']);
-        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
-        break;
-    case "prepop":
-        $processedValues['elements']['ele_value'][2] = 0;
-        $processedValues['elements']['ele_value']['subform_prepop_element'] = intval($_POST['subform_start_prepop_element']);
-        break;
-    default:
-        // implicitly case 'empty'
-        $processedValues['elements']['ele_value'][2] = 0;
-        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
-        break;
-
-  }
-  $processedValues['elements']['ele_value'][1] = implode(",",(array)$_POST['elements_ele_value_1']);
-  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
-  list($processedValues['elements']['ele_value'][7], $_POST['reload_option_page']) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
-}
-
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";
 // call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.

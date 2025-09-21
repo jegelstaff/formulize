@@ -359,7 +359,7 @@ class formulizeElementRenderer{
 		$previousCaptions = $previousForm->getVar('elementCaptions');
 		$previousElementHandle = array_search($captionToMatch, $previousCaptions);
 		if(!$previousElementHandle) { return ""; }
-		$elementName = $de ? "de_".$fid."_".$entry_id."_".$element_id : "ele_".$element_id; // displayElement elements have different names from regular elements
+		$elementName = $de ? "de_".$fid."_".$entry_id."_".$element_id : "ele_".$element_id; 
 		$previousElementId = formulize_getIdFromElementHandle($previousElementHandle); // function is in extract.php
 		// setup the javascript based on the type of question, and setup other data that is required
 		switch($type) {
