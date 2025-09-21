@@ -5136,10 +5136,10 @@ function convertTypeToText($type, $ele_value) {
     switch ($type) {
 
         case "areamodif":
-            return "Text for display (left and right cells)";
+            return "Text for display (caption and contents)";
 
         case "ib":
-            return "Text for display (spanning both cells)";
+            return "Text for display (spanning the form)";
 
         case "subform":
             return "Subform (another form with a relationship to this one)";

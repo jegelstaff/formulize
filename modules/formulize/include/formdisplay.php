@@ -100,7 +100,7 @@ class formulize_themeForm extends XoopsThemeForm {
      * @name    string  $name   name of the element being inserted, which we keep so we can then put the right id tag into its row
      */
     public function insertBreakFormulize($extra = '', $class= '', $name='', $element_handle='') {
-				$class .= $class ? ' formulize_text_for_display' : 'formulize_text_for_display';
+				$class .= $class ? ' formulize-text-for-display' : 'formulize-text-for-display';
         $ibContents = $extra."<<||>>".$name."<<||>>".$element_handle."<<||>>".$class; // can only assign strings or real element objects with addElement, not arrays
         $this->addElement($ibContents);
     }
@@ -273,7 +273,7 @@ class formulize_themeForm extends XoopsThemeForm {
 						}
 						$templateVariables = array(
 								'elementContainerId'=>'formulize-'.$ele[1],
-								'elementClass'=>'',
+								'elementClass'=>(isset($ele[3]) ? $ele[3] : ''),
 								'elementCaption'=>'',
 								'elementHelpText'=>'',
 								'renderedElement'=>$ele[0],
@@ -2767,7 +2767,7 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 			// Option 3b: element is a "text for display (two columns)"
 			// or some other type of 'pass the markup' element...
 		} elseif($ele_type == "ib" OR is_array($form_ele)) {
-				$form->insertBreakFormulize("<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>", $form_ele[1], $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
+				$form->insertBreakFormulize(trans(stripslashes($form_ele[0])), $form_ele[1], $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
 
 			// Option 3c: regular element
 		} else {

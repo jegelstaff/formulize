@@ -216,7 +216,7 @@ define("_AM_ELE_CTRE","Centré");
 define("_AM_ELE_DATE","Date");
 define("_AM_ELE_DEFAULT","Valeur par défaut");
 define("_AM_ELE_DELIM_CHOICE",'Delimitation entre chaque option');
-define("_AM_ELE_LEFTRIGHT_DESC","Tout texte ou code HTML entré ici apparaitra à coté de la légende.  Vous pouvez utiliser du PHP, mais assurez vous qu'il contient '&#36;value = &#36;something;' et Formulize lira ce texte comme du code PHP.");
+define("_AM_ELE_TEXTFORDISPLAY_DESC","Tout texte ou code HTML entré ici apparaitra sur l'écran.  Vous pouvez utiliser du PHP, mais assurez vous qu'il contient '&#36;value = &#36;something;' et Formulize lira ce texte comme du code PHP.");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contenu du coté droit");
 define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lors de l'enregistrement des changements pour ces choix, changer aussi les valeurs faites par l'utilisateur dans le formulaire pour correspondre aux nouvelles options (ie: quand l'utilisateur a sélectionné le premier choix, version ancienne, remplacer sa sélection par le nouveau premier choix)");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
