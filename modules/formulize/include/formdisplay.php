@@ -265,104 +265,105 @@ class formulize_themeForm extends XoopsThemeForm {
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
-                    if($ele[0] == '{STARTHIDDEN}') {
-                        $ele[0] = '';
-                        $GLOBALS['formulize_startHiddenElements'][] = $ele[1];
-                        $startHidden = true;
-                    }
-                    $templateVariables = array(
-                        'elementContainerId'=>'formulize-'.$ele[1],
-                        'elementClass'=>'',
-                        'elementCaption'=>'',
-                        'elementHelpText'=>'',
-                        'renderedElement'=>$ele[0],
-                        'labelClass'=>"formulize-label-".(isset($ele[2]) ? $ele[2] : 'no-handle'),
-												'inputClass'=>"",
-                        'columns'=>$columns,
-                        'column1Width'=>$column1Width,
-                        'column2Width'=>$column2Width,
-                        'colSpan'=>'',
-                        'startHidden'=>$startHidden
-                    );
-                    if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
-                        $columns = 1;
-                        $templateVariables['colSpan'] = 'colspan=2';
-                        $templateVariables['column1Width'] = 'auto';
-                    }
-                    if(isset($ele[3])) { // respect any declared class
-                        $templateVariables['cellClass'] = $ele[3];
-                    }
-				} else {
-                    $templateVariables = array(
-                        'elementContainerId'=>'',
-                        'elementClass'=>'',
-                        'elementCaption'=>'',
-                        'elementHelpText'=>'',
-                        'renderedElement'=>$ele,
-												'labelClass'=>"formulize-label-no-handle",
-												'inputClass'=>"",
-                        'columns'=>$columns,
-                        'column1Width'=>$column1Width,
-                        'column2Width'=>$column2Width,
-                        'colSpan'=>'',
-                        'startHidden'=>$startHidden
-                    );
+						if($ele[0] == '{STARTHIDDEN}') {
+								$ele[0] = '';
+								$GLOBALS['formulize_startHiddenElements'][] = $ele[1];
+								$startHidden = true;
+						}
+						$templateVariables = array(
+								'elementContainerId'=>'formulize-'.$ele[1],
+								'elementClass'=>'',
+								'elementCaption'=>'',
+								'elementHelpText'=>'',
+								'renderedElement'=>$ele[0],
+								'labelClass'=>"formulize-label-".(isset($ele[2]) ? $ele[2] : 'no-handle'),
+								'inputClass'=>"",
+								'columns'=>$columns,
+								'column1Width'=>$column1Width,
+								'column2Width'=>$column2Width,
+								'colSpan'=>'',
+								'startHidden'=>$startHidden
+						);
+						if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
+								$columns = 1;
+								$templateVariables['colSpan'] = 'colspan=2';
+								$templateVariables['column1Width'] = 'auto';
+						}
+						if(isset($ele[3])) { // respect any declared class
+								$templateVariables['cellClass'] = $ele[3];
+						}
+					} else {
+						$templateVariables = array(
+								'elementContainerId'=>'',
+								'elementClass'=>'',
+								'elementCaption'=>'',
+								'elementHelpText'=>'',
+								'renderedElement'=>$ele,
+								'labelClass'=>"formulize-label-no-handle",
+								'inputClass'=>"",
+								'columns'=>$columns,
+								'column1Width'=>$column1Width,
+								'column2Width'=>$column2Width,
+								'colSpan'=>'',
+								'startHidden'=>$startHidden
+						);
+					}
+
+				// backwards compatibility for old multipage screen templates
+				global $formulize_displayingMultipageScreen;
+				$thisElementObject = null;
+				if($formulize_displayingMultipageScreen) {
+						$templateVariables['elementObjectForRendering'] = $ele;
+						$templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
+						$templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
+						$templateVariables['element_id'] = false;
+						if(isset($ele[2])) {
+								$element_handler = xoops_getmodulehandler('elements', 'formulize');
+								if($thisElementObject = $element_handler->get($ele[2])) {
+										$templateVariables['element_id'] = $thisElementObject->getVar('ele_id');
+								}
+						}
 				}
 
-                // backwards compatibility for old multipage screen templates
-                global $formulize_displayingMultipageScreen;
-                if($formulize_displayingMultipageScreen) {
-                    $templateVariables['elementObjectForRendering'] = $ele;
-                    $templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
-                    $templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
-                    $templateVariables['element_id'] = false;
-                    if(isset($ele[2])) {
-                        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                        if($thisElementObject = $element_handler->get($ele[2])) {
-                            $templateVariables['element_id'] = $thisElementObject->getVar('ele_id');
-                        }
-                    }
-                }
+				if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
+						OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
+								$templateVariables['spacerNeeded'] = true;
+				}
 
-                if(($columnData[0] != 1 AND $columnData[2] != 'auto' AND $columnData[1] != 'auto')
-                    OR ($columnData[0] == 1 AND $columnData[1] != 'auto')) {
-                        $templateVariables['spacerNeeded'] = true;
-                }
+				$templateVariables['editElementLink'] = $this->createEditElementLink($thisElementObject);
 
-								$templateVariables['editElementLink'] = $this->createEditElementLink($thisElementObject);
+				$template = $this->getTemplate('elementcontainero');
+				$containerOpen = $this->processTemplate($template, $templateVariables);
 
-                $template = $this->getTemplate('elementcontainero');
-                $containerOpen = $this->processTemplate($template, $templateVariables);
+				$template = $this->getTemplate('elementtemplate'.$columns);
+				$containerContents = $this->processTemplate($template, $templateVariables);
 
-                $template = $this->getTemplate('elementtemplate'.$columns);
-                $containerContents = $this->processTemplate($template, $templateVariables);
-
-                $template = $this->getTemplate('elementcontainerc');
-                $containerClose = $this->processTemplate($template, $templateVariables);
+				$template = $this->getTemplate('elementcontainerc');
+				$containerClose = $this->processTemplate($template, $templateVariables);
 
 			} elseif ( !$ele->isHidden() ) {
-                $template = $this->getTemplate('elementcontainero');
-                $templateVariables = array(
-                    'elementContainerId'=>'formulize-'.$ele->getName(),
-                    'elementClass'=>$ele->getClass(),
-                    'columns'=>$columns,
-                    'column1Width'=>$column1Width,
-                    'column2Width'=>$column2Width,
-                    'column2Width'=>$column2Width,
-                    'colSpan'=>'',
-                    'startHidden'=>$startHidden
-                );
-                $containerOpen = $this->processTemplate($template, $templateVariables);
-								$containerContents = $this->_drawElementElementHTML($ele);
-                $template = $this->getTemplate('elementcontainerc', $templateVariables);
-                $containerClose = $this->processTemplate($template);
+				$template = $this->getTemplate('elementcontainero');
+				$templateVariables = array(
+						'elementContainerId'=>'formulize-'.$ele->getName(),
+						'elementClass'=>$ele->getClass(),
+						'columns'=>$columns,
+						'column1Width'=>$column1Width,
+						'column2Width'=>$column2Width,
+						'column2Width'=>$column2Width,
+						'colSpan'=>'',
+						'startHidden'=>$startHidden
+				);
+				$containerOpen = $this->processTemplate($template, $templateVariables);
+				$containerContents = $this->_drawElementElementHTML($ele);
+				$template = $this->getTemplate('elementcontainerc', $templateVariables);
+				$containerClose = $this->processTemplate($template);
 			} else {
-                // catch security token fields, render empty and set some js in validation method to fill in the token on focus
-                if(is_a($ele, 'icms_form_elements_Hiddentoken')) {
-                    $this->tokenName = $ele->getName();
-                    $this->tokenVal = $ele->getValue();
-                    $ele->setValue('');
-                }
+				// catch security token fields, render empty and set some js in validation method to fill in the token on focus
+				if(is_a($ele, 'icms_form_elements_Hiddentoken')) {
+						$this->tokenName = $ele->getName();
+						$this->tokenVal = $ele->getValue();
+						$ele->setValue('');
+				}
 				$hidden .= $ele->render();
 			}
 
@@ -380,18 +381,23 @@ class formulize_themeForm extends XoopsThemeForm {
 	/**
 	 * Generate the HTML link to edit the element, based on a given element identifier
 	 * @param int|string|object elementIdentifier - the element identifier, which can be an element id, a handle, or an element object
-	 * @return string - the HTML link to edit the element, or an empty string if identifier is invalid
+	 * @return string - the HTML link to edit the element, or an empty string if identifier is invalid, or if the user does not have permission to edit that form
 	 */
 	function createEditElementLink($elementIdentifier) {
 		$link = '';
 		if($elementObject = _getElementObject($elementIdentifier)) {
-			$application_handler = xoops_getmodulehandler('applications', 'formulize');
-			$apps = $application_handler->getApplicationsByForm($elementObject->getVar('id_form'));
-			$app = (is_array($apps) AND isset($apps[0])) ? $apps[0] : $apps;
-      $appId = is_object($app) ? $app->getVar('appid') : 0;
-			$link = "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
-					"/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
-			$elementObject->getVar("ele_id") . "' target='_blank'>edit element</a>";
+			global $xoopsUser;
+			$gperm_handler = xoops_gethandler('groupperm');
+			$fid = $elementObject->getVar('fid');
+			if($xoopsUser AND $gperm_handler->checkRight("edit_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())) {
+				$application_handler = xoops_getmodulehandler('applications', 'formulize');
+				$apps = $application_handler->getApplicationsByForm($fid);
+				$app = (is_array($apps) AND isset($apps[0])) ? $apps[0] : $apps;
+				$appId = is_object($app) ? $app->getVar('appid') : 0;
+				$link = "<a class='formulize-element-edit-link' tabindex='-1' href='" . XOOPS_URL .
+						"/modules/formulize/admin/ui.php?page=element&aid=$appId&ele_id=" .
+						$elementObject->getVar("ele_id") . "' target='_blank'>edit element</a>";
+			}
 		}
 		return $link;
 	}
@@ -400,42 +406,43 @@ class formulize_themeForm extends XoopsThemeForm {
 	// $ele is the renderable element object
 	function _drawElementElementHTML($ele) {
 
-        if(!$ele) { return ""; }
+		if(!$ele) { return ""; }
 
-        $templateVariables = array();
-        $templateVariables['renderedElement'] = trim($ele->render());
-				global $xoopsModuleConfig;
-				// Only show elements if they have values
-				// unless the user has specifically said we should show all elements regardless through the config option.
-				// Also skip any element trays that have no elements in them (this is the case for the ancient printable view button, which is not currently active, and may be resurrected in a different form)
-        if(
-						(
-							(
-								(!isset($xoopsModuleConfig['show_empty_elements_when_read_only']) OR !$xoopsModuleConfig['show_empty_elements_when_read_only'])
-								AND !$templateVariables['renderedElement']
-								AND !is_numeric($templateVariables['renderedElement'])
-							) OR (
-								is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements())
-							)
-						) AND (
-							$ele->getName() != 'button-controls'
-						)
-					) {
-						return "";
-				}
+		$templateVariables = array();
+		$templateVariables['renderedElement'] = trim($ele->render());
+		global $xoopsModuleConfig;
+		// Only show elements if they have values
+		// unless the user has specifically said we should show all elements regardless through the config option.
+		// Also skip any element trays that have no elements in them (this is the case for the ancient printable view button, which is not currently active, and may be resurrected in a different form)
+		if(
+				(
+					(
+						(!isset($xoopsModuleConfig['show_empty_elements_when_read_only']) OR !$xoopsModuleConfig['show_empty_elements_when_read_only'])
+						AND !$templateVariables['renderedElement']
+						AND !is_numeric($templateVariables['renderedElement'])
+					) OR (
+						is_object($ele) AND is_a($ele, 'XoopsFormElementTray') AND empty($ele->getElements())
+					)
+				) AND (
+					$ele->getName() != 'button-controls'
+				)
+			) {
+				return "";
+		}
 
-		static $show_element_edit_link = null;
+		static $initializationDone = null;
 		global $formulize_drawnElements;
     $columnData = $this->_getColumns();
 		// initialize things first time through...
-		if($show_element_edit_link === null) {
+		if($initializationDone === null) {
+			$initializationDone = true;
 			$formulize_drawnElements = array();
-			global $xoopsUser;
-			$show_element_edit_link = (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups()));
 		}
 
-    if(isset($ele->formulize_element) AND isset($formulize_drawnElements[trim($ele->getName())])) {
-			return $formulize_drawnElements[trim($ele->getName())];
+		$element_name = trim($ele->getName());
+
+    if(isset($ele->formulize_element) AND isset($formulize_drawnElements[$element_name])) {
+			return $formulize_drawnElements[$element_name];
 		} elseif(isset($ele->formulize_element)) {
 			$templateVariables['labelClass'] = " formulize-label-".$ele->formulize_element->getVar("ele_handle");
 			$templateVariables['inputClass'] = " formulize-input-".$ele->formulize_element->getVar("ele_handle");
@@ -444,64 +451,52 @@ class formulize_themeForm extends XoopsThemeForm {
 			$templateVariables['inputClass'] = "";
 		}
 
-        $element_name = trim($ele->getName());
+		$templateVariables['editElementLink'] = '';
+		if (is_object($ele) and isset($ele->formulize_element) AND $element_name != 'control_buttons' AND $element_name != 'proxyuser') {
+			$templateVariables['editElementLink'] = $this->createEditElementLink($ele->formulize_element);
+		}
 
-        $templateVariables['editElementLink'] = '';
-        if ($show_element_edit_link) {
-            switch ($element_name) {
-                case 'control_buttons':
-                case 'proxyuser':
-                    // Do nothing
-                    break;
-                default:
-                    if (is_object($ele) and isset($ele->formulize_element)) {
-											$templateVariables['editElementLink'] = $this->createEditElementLink($ele->formulize_element);
-                    }
-                    break;
-            }
-        }
+		$templateVariables['elementName'] = $element_name;
+		$templateVariables['elementContainerId'] = 'formulize-'.$element_name;
+		$templateVariables['elementCaption'] = $ele->getCaption();
+		$templateVariables['elementHelpText'] = $ele->getDescription();
+		$templateVariables['elementIsRequired'] = $ele->isRequired();
+		$templateVariables['elementObject'] = isset($ele->formulize_element) ? $ele->formulize_element : null;
 
-        $templateVariables['elementName'] = $element_name;
-				$templateVariables['elementContainerId'] = 'formulize-'.$ele->getName();
-				$templateVariables['elementCaption'] = $ele->getCaption();
-				$templateVariables['elementHelpText'] = $ele->getDescription();
-				$templateVariables['elementIsRequired'] = $ele->isRequired();
-				$templateVariables['elementObject'] = isset($ele->formulize_element) ? $ele->formulize_element : null;
+		// make numeric values align right (probably derived values) - only takes effect in the two column layout by default
+		// Super hack, replace the placeholder in the HTML after we've rendered all elements, because until then, we don't know what the width should be!
+		if(is_numeric($templateVariables['renderedElement'])) {
+			$GLOBALS['formulize_renderedNumericElementsMaxWidth'] = strlen($templateVariables['renderedElement']) > $GLOBALS['formulize_renderedNumericElementsMaxWidth'] ? strlen($templateVariables['renderedElement']) : $GLOBALS['formulize_renderedNumericElementsMaxWidth'];
+			$templateVariables['renderedElement'] = '<div class="numeric-text" style="width: REPLACEWITHMAXem;">'.formulize_numberFormat($templateVariables['renderedElement'],$ele->formulize_element->getVar('ele_id')).'</div>';
+		}
 
-        // make numeric values align right (probably derived values) - only takes effect in the two column layout by default
-        // Super hack, replace the placeholder in the HTML after we've rendered all elements, because until then, we don't know what the width should be!
-        if(is_numeric($templateVariables['renderedElement'])) {
-            $GLOBALS['formulize_renderedNumericElementsMaxWidth'] = strlen($templateVariables['renderedElement']) > $GLOBALS['formulize_renderedNumericElementsMaxWidth'] ? strlen($templateVariables['renderedElement']) : $GLOBALS['formulize_renderedNumericElementsMaxWidth'];
-            $templateVariables['renderedElement'] = '<div class="numeric-text" style="width: REPLACEWITHMAXem;">'.formulize_numberFormat($templateVariables['renderedElement'],$ele->formulize_element->getVar('ele_id')).'</div>';
-        }
-
-        // backwards compatibility for old multipage screen templates
-        global $formulize_displayingMultipageScreen;
-        if($formulize_displayingMultipageScreen) {
-            $templateVariables['elementObjectForRendering'] = $ele;
+		// backwards compatibility for old multipage screen templates
+		global $formulize_displayingMultipageScreen;
+		if($formulize_displayingMultipageScreen) {
+			$templateVariables['elementObjectForRendering'] = $ele;
 			$templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
 			$templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
-            if (isset($ele->formulize_element)) {
-                $templateVariables['element_id'] = $ele->formulize_element->getVar("ele_id");
-            }
-        }
+			if (isset($ele->formulize_element)) {
+					$templateVariables['element_id'] = $ele->formulize_element->getVar("ele_id");
+			}
+		}
 
-        $column1Width = str_replace(';','',$columnData[1]);
-        $column2Width = str_replace(';','',$columnData[2]);
-        $columns = $columnData[0];
+		$column1Width = str_replace(';','',$columnData[1]);
+		$column2Width = str_replace(';','',$columnData[2]);
+		$columns = $columnData[0];
 
-        $templateVariables['spacerNeeded'] = false;
-        if(($columns == 2 AND $column2Width != 'auto' AND $column1Width != 'auto')
-            OR ($columns == 1 AND $column1Width != 'auto')) {
-            $templateVariables['spacerNeeded'] = true;
-        }
+		$templateVariables['spacerNeeded'] = false;
+		if(($columns == 2 AND $column2Width != 'auto' AND $column1Width != 'auto')
+			OR ($columns == 1 AND $column1Width != 'auto')) {
+				$templateVariables['spacerNeeded'] = true;
+		}
 
-        $templateVariables['column1Width'] = $column1Width;
-        $templateVariables['column2Width'] = $column2Width;
+		$templateVariables['column1Width'] = $column1Width;
+		$templateVariables['column2Width'] = $column2Width;
 
-        // run the template for the specified number of columns
-        $template = $this->getTemplate('elementtemplate'.$columns);
-        $html = $this->processTemplate($template, $templateVariables);
+		// run the template for the specified number of columns
+		$template = $this->getTemplate('elementtemplate'.$columns);
+		$html = $this->processTemplate($template, $templateVariables);
 		if(isset($ele->formulize_element) AND $element_name) { // cache the element's html
 			$formulize_drawnElements[$element_name] = $html;
 		}
