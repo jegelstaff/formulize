@@ -160,7 +160,7 @@ EOF;
 		$renderer = new formulizeElementRenderer($element);
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
-		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
+		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subformFullForm' AND $ele_type != 'subformEditableRow' AND $ele_type != 'subformListings' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($form_id);
 			$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}

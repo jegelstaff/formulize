@@ -642,7 +642,10 @@ EOF;
 		 */
 		function hasSubformInterfaceForForm($subformId) {
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			$subformElementIds = array_keys($this->getVar('elementTypes'), 'subform');
+			$subformElementIds1 = array_keys($this->getVar('elementTypes'), 'subformFullForm');
+			$subformElementIds2 = array_keys($this->getVar('elementTypes'), 'subformEditableRow');
+			$subformElementIds3 = array_keys($this->getVar('elementTypes'), 'subformListings');
+			$subformElementIds = array_merge($subformElementIds1, $subformElementIds2, $subformElementIds3);
 			foreach($subformElementIds as $subformElementId) {
 				if($subformElementObject = $element_handler->get($subformElementId)) {
 					$ele_value = $subformElementObject->getVar('ele_value');

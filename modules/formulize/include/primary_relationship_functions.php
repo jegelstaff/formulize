@@ -490,7 +490,7 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
 		$element->setVar('ele_order', $orderChoice);
 		$element->setVar('ele_display', 1);
 		$element->setVar('ele_caption', $subformObject->getPlural());
-		$element->setVar('ele_type', 'subform');
+		$element->setVar('ele_type', 'subformListings');
 		$element->setVar('ele_value', array(
 			0 => $subformObject->getVar('fid'),
 			1 => $subformObject->getVar('pi'),
@@ -498,16 +498,23 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
 			3 => 1,
 			4 => 0,
 			5 => 0,
-			6 => 1,
+			6 => 'subform',
+			7 => [],
 			8 => 'row',
+			9 => $subformObject->getPlural(),
 			'simple_add_one_button' => 1,
-			'simple_add_one_button_text' => 'Add '.$subformObject->getSingular(),
-			'disabledelements' => $subformObject->getVar('pi'),
+			'simple_add_one_button_text' => _AM_ADD.' '.$subformObject->getSingular(),
+			'disabledelements' => [],
 			'subform_prepop_element' => 0,
 			'enforceFilterChanges' => 1,
 			'show_delete_button' => 1,
 			'show_clone_button' => 0,
-			'display_screen' => findOrMakeSubformScreen($elementIdentifier, $mainFormObject)
+			'display_screen' => findOrMakeSubformScreen($elementIdentifier, $mainFormObject),
+			'addButtonLimit' => 0,
+			'SortingElement' => 0,
+			'SortingDirection' => 'ASC',
+			'UserFilterByElement' => 0,
+			'FilterByElementStartState' => 1
 		));
 		return $element_handler->insert($element);
 	} else {

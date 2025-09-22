@@ -672,26 +672,21 @@ function patch40() {
 						}
         }
 
-                // linked checkbox data was not being stored with same , , before/after as linked selectedboxes have. As of F8, make sure there's none of that left in DB.
-                $sql = 'SELECT f.form_handle, e.ele_handle FROM '.$xoopsDB->prefix('formulize').' AS e
-                    LEFT JOIN '.$xoopsDB->prefix('formulize_id').' AS f
-                    ON e.id_form = f.id_form
-                    WHERE e.ele_type = "checkbox"
-                    AND e.ele_value LIKE "%#*=:*%"'; // look for checkboxes with the unique linking flag in ele_value
-                if($res = $xoopsDB->query($sql)) {
-                    while($row = $xoopsDB->fetchRow($res)) {
-                        $sql = 'UPDATE '.$xoopsDB->prefix('formulize_'.$row[0]).' SET `'.$row[1].'` = CONCAT(",",`'.$row[1].'`,",") WHERE `'.$row[1].'` NOT LIKE ",%,"';
-                        if(!$lcbUpdateRes = $xoopsDB->queryF($sql)) {
-                            print "Error: could not update linked checkbox storage syntax in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
-                        }
-                    }
-                }
-								// convert linked checkboxes from checkbox type to checkboxLinked
-								$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxLinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
-								if(!$xoopsDB->queryF($sql)) {
-									print "Error: could not convert linked checkboxes to checkboxLinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+				// linked checkbox data was not being stored with same , , before/after as linked selectedboxes have. As of F8, make sure there's none of that left in DB.
+				$sql = 'SELECT f.form_handle, e.ele_handle FROM '.$xoopsDB->prefix('formulize').' AS e
+						LEFT JOIN '.$xoopsDB->prefix('formulize_id').' AS f
+						ON e.id_form = f.id_form
+						WHERE e.ele_type = "checkbox"
+						AND e.ele_value LIKE "%#*=:*%"'; // look for checkboxes with the unique linking flag in ele_value
+				if($res = $xoopsDB->query($sql)) {
+						while($row = $xoopsDB->fetchRow($res)) {
+								$sql = 'UPDATE '.$xoopsDB->prefix('formulize_'.$row[0]).' SET `'.$row[1].'` = CONCAT(",",`'.$row[1].'`,",") WHERE `'.$row[1].'` NOT LIKE ",%,"';
+								if(!$lcbUpdateRes = $xoopsDB->queryF($sql)) {
+										print "Error: could not update linked checkbox storage syntax in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 								}
-								// AND AND AND AND convert select to all the select types!!!!
+						}
+				}
+
 
 				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
 				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
@@ -1595,6 +1590,43 @@ function patch40() {
 						print "ERROR: There was a problem when setting up the Primary Relationship:<br>$primaryRelationshipError<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
 					}
 				}
+
+				// convert all element types for version 8.1
+				// convert linked checkboxes from checkbox type to checkboxLinked
+				$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxLinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
+				if(!$xoopsDB->queryF($sql)) {
+					print "Error: could not convert linked checkboxes to checkboxLinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+				}
+				// AND AND AND AND convert select to all the select types!!!!
+				/*
+				new number element type for numbers only textboxes (previously text)
+					convert elements that only have a numeric default?
+
+				select becomes:
+					select
+					selectLinked
+					selectUsers
+					listbox
+					listboxLinked
+					listboxUsers
+					autocomplete
+					autocompleteLinked
+					autocompleteUsers
+
+				checkbox becomes
+					checkbox
+					checkboxLinked
+					
+				provinceList becomes
+					provinceList
+					provinceRadio
+
+				subform becomes
+					subformFullForm
+					subformEditableRow
+					subformListings
+
+				*/
 
         print "DB updates completed.  result: OK";
     	}
