@@ -31,12 +31,12 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeSubformElement extends formulizeElement {
+class formulizeSubformListingsElement extends formulizeElement {
 
 	var $defaultValueKey;
 
 	function __construct() {
-		$this->name = "Embeded Form";
+		$this->name = "Embeded Form (list view)";
 		$this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
 		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
@@ -55,7 +55,7 @@ class formulizeSubformElement extends formulizeElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples() {
 		return
-"Element: Embedded Form - editable rows (subformRows).
+"Element: Embedded Form (list view) (subformListings).
 Properties:
 - none
 Examples:
@@ -65,7 +65,7 @@ Examples:
 }
 
 #[AllowDynamicProperties]
-class formulizeSubformElementHandler extends formulizeElementsHandler {
+class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 
 	var $db;
 	var $clickable; // used in formatDataForList
@@ -79,7 +79,7 @@ class formulizeSubformElementHandler extends formulizeElementsHandler {
 	}
 
 	function create() {
-		return new formulizeSubformElement();
+		return new formulizeSubformListingsElement();
 	}
 
 	/**
@@ -100,61 +100,89 @@ class formulizeSubformElementHandler extends formulizeElementsHandler {
 	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
-		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
-			
+		
+		if(!$element) {
+			$fid = intval($_GET['fid']);
+			$ele_id = 'new';
+			// 0 is the form we're linking to, don't know it yet
+			// 1 is the elements to show in the subform, none yet
+			$ele_value[2] = 0; // show no entries by default, otherwise it's a number of blanks to show 
+			$ele_value[3] = 1; // open new entries full form by default 
+			$ele_value[4] = 0; // use column headings. 1 means use captions
+			$ele_value[5] = 0; // active user will be owner (1 means mainform entry owner will be owner)
+			$ele_value[6] = 'subform'; // showing add entries UI requires permission in subform. 'parent' means requires permission in the main form. 'hideaddentries' means don't show Add entry UI.
+			$ele_value[7] = []; // no filter conditions by default
+			$ele_value[8] = 'form'; // if subformFullForm default to collapsable forms, otherwise flatform is non collapsable. Row is for subformEditableRow and subformListings.
+			$ele_value[9] = _AM_APP_ENTRIES; // default text for add Entries button
+			$ele_value['subform_prepop_element'] = 0; // element to prepopulate subform entries, 0 means no prepopulation
+			$ele_value['simple_add_one_button'] = 1;
+			$ele_value['simple_add_one_button_text'] = _AM_ADD.' '._AM_APP_ONE;
+			$ele_value['show_delete_button'] = 1;
+			$ele_value['show_clone_button'] = 0;
+			$ele_value['enforceFilterChanges'] = 1;
+			$ele_value['disabledelements'] = []; // no disabled elements by default
+			$ele_value['display_screen'] = 0; // use default screen
+			$ele_value['SortingElement'] = 0; // entry id of element to sort by
+			$ele_value['SortingDirection'] = 'ASC'; // ASC or DESC
+			$ele_value['addButtonLimit'] = 0; // no limit on how many entries by default
+			$ele_value['UserFilterByElement'] = 0; // no element to filter entries on by default
+			$ele_value['FilterByElementStartState'] = 1; // Show entries normally. 0 means hide all entries until user applies filter.
+		} else {
 			$ele_value = $element->getVar('ele_value');
 			$fid = $element->getVar('fid');
 			$ele_id = $element->getVar('ele_id');
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$formObject = $form_handler->get($fid);
+		}
 
-			if(!isset($ele_value['show_delete_button'])) {
-        $ele_value['show_delete_button'] = 1;
-			}
-			if(!isset($ele_value['show_clone_button'])) {
-				$ele_value['show_clone_button'] = 1;
-			}
-			if(!isset($ele_value['FilterByElementStartState'])) {
-				$ele_value['FilterByElementStartState'] = 0;
-			}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($fid);
 
-			$ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
+		if(!isset($ele_value['show_delete_button'])) {
+			$ele_value['show_delete_button'] = 1;
+		}
+		if(!isset($ele_value['show_clone_button'])) {
+			$ele_value['show_clone_button'] = 0;
+		}
+		if(!isset($ele_value['FilterByElementStartState'])) {
+			$ele_value['FilterByElementStartState'] = 1;
+		}
 
-			$ele_value[1] = explode(",",$ele_value[1]);
-			if (is_string($ele_value['disabledelements'])) {
-				$ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
-			}
-			global $xoopsDB;
-			$defaultSubformSelection = 0;
-			$allFormsQuery = q("SELECT id_form, form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY form_title");
-			$allForms = array(_AM_FORMLINK_PICK);
-			foreach($allFormsQuery as $thisForm) {
-				$allForms[$thisForm['id_form']] = $thisForm['form_title'];
-				$defaultSubformSelection = $defaultSubformSelection ? $defaultSubformSelection : $thisForm['id_form'];
-			}
-			$validForms1 = q("SELECT t1.fl_form1_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
-			$validForms2 = q("SELECT t1.fl_form2_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
-			$validForms = array();
-			foreach($validForms1 as $vf1) {
-					$validForms[$vf1['fl_form1_id']] = $vf1['form_title'];
-			}
-			foreach($validForms2 as $vf2) {
-					if (!isset($validForms[$vf2['fl_form2_id']])) {
-							$validForms[$vf2['fl_form2_id']] = $vf2['form_title'];
-					}
-			}
-			$allForms['new'] = _AM_ELE_SUBFORM_NEW;
-			$dataToSendToTemplate['allforms'] = $allForms;
-			$dataToSendToTemplate['validForms'] = $validForms;
-			$dataToSendToTemplate['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
-			$formtouse = $ele_value[0] ? $ele_value[0] : $defaultSubformSelection; // use the user's selection, unless there isn't one, then use the first form found
-			$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
-			$dataToSendToTemplate['subformUserFilterElements'][0] = _formulize_NONE;
+		$ele_value['enforceFilterChanges'] = isset($ele_value['enforceFilterChanges']) ? $ele_value['enforceFilterChanges'] : 1;
+
+		$ele_value[1] = explode(",",$ele_value[1]);
+		if (is_string($ele_value['disabledelements'])) {
+			$ele_value['disabledelements'] = explode(",",$ele_value['disabledelements']);
+		}
+		global $xoopsDB;
+		$allFormsQuery = q("SELECT id_form, form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form != ".intval($fid)." ORDER BY form_title");
+		$allForms = array(_AM_FORMLINK_PICK);
+		foreach($allFormsQuery as $thisForm) {
+			$allForms[$thisForm['id_form']] = $thisForm['form_title'];
+		}
+		$validForms1 = q("SELECT t1.fl_form1_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form2_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form1_id=t2.id_form");
+		$validForms2 = q("SELECT t1.fl_form2_id, t2.form_title FROM " . $xoopsDB->prefix("formulize_framework_links") . " AS t1, " . $xoopsDB->prefix("formulize_id") . " AS t2 WHERE t1.fl_form1_id=" . intval($fid) . " AND t1.fl_unified_display=1 AND t1.fl_relationship != 1 AND t1.fl_form2_id=t2.id_form");
+		$validForms = array();
+		foreach($validForms1 as $vf1) {
+				$validForms[$vf1['fl_form1_id']] = $vf1['form_title'];
+		}
+		foreach($validForms2 as $vf2) {
+				if (!isset($validForms[$vf2['fl_form2_id']])) {
+						$validForms[$vf2['fl_form2_id']] = $vf2['form_title'];
+				}
+		}
+		$allForms['new'] = _AM_ELE_SUBFORM_NEW;
+		$dataToSendToTemplate['allforms'] = $allForms;
+		$dataToSendToTemplate['validForms'] = $validForms;
+		$dataToSendToTemplate['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
+		$formtouse = $ele_value[0] ? $ele_value[0] : 0;
+		if($formtouse) {
+			$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" ORDER BY ele_order");
+			$dataToSendToTemplate['subformUserFilterElements'][0] = _AM_FORMULIZE_SUBFORM_FILTERDEFAULT;
 			foreach($elementsq as $oneele) {
 					$dataToSendToTemplate['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
 					$dataToSendToTemplate['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
 			}
-
+			$dataToSendToTemplate['subformSortingElements'] = $dataToSendToTemplate['subformUserFilterElements'];
+			$dataToSendToTemplate['subformSortingElements'][0] = _AM_FORMULIZE_SUBFORM_SORTDEFAULT;
 			// compile a list of data-entry screens for this form
 			$dataToSendToTemplate['subform_screens'] = array();
 			$screen_options = q("SELECT sid, title, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=".intval($formtouse)." and (type='form' OR type='multiPage')");
@@ -162,27 +190,29 @@ class formulizeSubformElementHandler extends formulizeElementsHandler {
 			foreach($screen_options as $screen_option) {
 					$dataToSendToTemplate['subform_screens'][$screen_option["sid"]] = $screen_option["title"];
 			}
-			$dataToSendToTemplate['selectedSubformScreenAdminURL'] = '';
-			if($formtouse AND $subformObject = $form_handler->get($formtouse)) {
-				$bestAppId = formulize_getFirstApplicationForBothForms($formObject, $subformObject);
-				$bestAppId = $bestAppId ? $bestAppId : 0;
-				$subformScreenId = $ele_value['display_screen'];
-				$subformScreenId = $subformScreenId ? $subformScreenId : $subformObject->getVar('defaultform');
-				$dataToSendToTemplate['selectedSubformScreenAdminURL'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=$bestAppId&fid=$formtouse&sid=$subformScreenId";
-			}
-
-			// setup the UI for the subform conditions filter
-			$dataToSendToTemplate['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
-
-			$dataToSendToTemplate['ele_value'] = $ele_value;
-		} else { // new element
-			$dataToSendToTemplate['ele_value'][2] = 0;
-			$dataToSendToTemplate['ele_value'][3] = 1;
-			$dataToSendToTemplate['ele_value'][6] = 'subform';
-			$dataToSendToTemplate['ele_value']['simple_add_one_button'] = 1;
-			$dataToSendToTemplate['ele_value']['show_delete_button'] = 1;
-			$dataToSendToTemplate['ele_value']['show_clone_button'] = 1;
 		}
+		$dataToSendToTemplate['selectedSubformScreenAdminURL'] = '';
+		$dataToSendToTemplate['fullFormOption1'] = _AM_ELE_SUBFORM_UITYPE_FORM;
+		$dataToSendToTemplate['fullFormOption2'] = _AM_ELE_SUBFORM_UITYPE_FLATFORM;
+		$dataToSendToTemplate['subformSingular'] = _AM_APP_ONE;
+		$dataToSendToTemplate['subformPlural'] = _AM_APP_ENTRIES;
+		if($formtouse AND $subformObject = $form_handler->get($formtouse)) {
+			$bestAppId = formulize_getFirstApplicationForBothForms($formObject, $subformObject);
+			$bestAppId = $bestAppId ? $bestAppId : 0;
+			$subformScreenId = $ele_value['display_screen'];
+			$subformScreenId = $subformScreenId ? $subformScreenId : $subformObject->getVar('defaultform');
+			$dataToSendToTemplate['selectedSubformScreenAdminURL'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=screen&aid=$bestAppId&fid=$formtouse&sid=$subformScreenId";
+			$dataToSendToTemplate['fullFormOption1'] = str_replace('subform', $subformObject->getSingular(),_AM_ELE_SUBFORM_UITYPE_FORM);
+			$dataToSendToTemplate['fullFormOption2'] = str_replace('subform', $subformObject->getSingular(),_AM_ELE_SUBFORM_UITYPE_FLATFORM);
+			$dataToSendToTemplate['subformSingular'] = $subformObject->getSingular();
+			$dataToSendToTemplate['subformPlural'] = $subformObject->getPlural();
+		} 
+
+		// setup the UI for the subform conditions filter
+		$dataToSendToTemplate['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
+
+		$dataToSendToTemplate['ele_value'] = $ele_value;
+
 		return $dataToSendToTemplate;
 	}
 
@@ -196,6 +226,11 @@ class formulizeSubformElementHandler extends formulizeElementsHandler {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 			
+			// force row unless it's subformFullForm then we'll take whatever the user sent from UI
+			if($element->getVar('ele_type') != 'subformFullForm') {
+				$ele_value[8] = 'row';
+			} 
+
 			if(!isset($ele_value['show_delete_button'])) {
 					$ele_value['show_delete_button'] = 0;
 			}
@@ -233,6 +268,13 @@ class formulizeSubformElementHandler extends formulizeElementsHandler {
 			$ele_value[1] = implode(",",(array)$_POST['elements_ele_value_1']);
 			$ele_value['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
 			list($ele_value[7], $changed) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
+			
+			// check if display_screen changed
+			$curEleValue = $element->getVar('ele_value');
+			if(isset($curEleValue['display_screen']) AND $curEleValue['display_screen'] != $ele_value['display_screen']) {
+				$changed = true;
+			} 
+
 			$element->setVar('ele_value', $ele_value);
 		}
 		return $changed;
@@ -729,11 +771,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 				include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 				foreach($elementsToDraw as $thisele) {
 					if($thisele) {
-                        $unsetDisabledFlag = false;
-                        if($subform_element_object AND in_array($thisele, explode(',',(string)$subform_element_object->ele_value['disabledelements']))) {
-                            $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
-                            $GLOBALS['formulize_forceElementsDisabled'] = true;
-                        }
+						$unsetDisabledFlag = false;
+						if($subform_element_object AND ($subform_element_object->getVar('subformListings') OR in_array($thisele, explode(',',(string)$subform_element_object->ele_value['disabledelements'])))) {
+								$unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
+								$GLOBALS['formulize_forceElementsDisabled'] = true;
+						}
 						ob_start();
 						// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
 						$renderResult = displayElement($deFrid, $thisele, "subformCreateEntry_".$GLOBALS['formulize_globalDefaultBlankCounter']."_".$subformElementId);
@@ -858,11 +900,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 					foreach($elementsToDraw as $thisele) {
 						if($thisele) {
-                            $unsetDisabledFlag = false;
-                            if(in_array($thisele, explode(',',(string) $subform_element_object->ele_value['disabledelements']))) {
-                                $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
-                                $GLOBALS['formulize_forceElementsDisabled'] = true;
-                            }
+							$unsetDisabledFlag = false;
+							if($subform_element_object AND ($subform_element_object->getVar('ele_type') == 'subformListings' OR in_array($thisele, explode(',',(string) $subform_element_object->ele_value['disabledelements'])))) {
+									$unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
+									$GLOBALS['formulize_forceElementsDisabled'] = true;
+							}
 							ob_start(function($string) { return $string; }); // set closure output buffer, so this element will never be catalogued as a conditional element. See catalogConditionalElement function for details.
 							// critical that we *don't* ask for displayElement to return the element object, since this way the validation logic is passed back through the global space also (ugh).  Otherwise, no validation logic possible for subforms.
 							$renderResult = displayElement($deFrid, $thisele, $sub_ent);

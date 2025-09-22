@@ -697,7 +697,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 											}
 									}
 									if ($where_clause) {
-											$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order";
+											$captionq = "SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE $where_clause AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\") ORDER BY ele_order";
 											if ($rescaptionq = $xoopsDB->query($captionq)) {
 													unset($headerlist);
 													$headerlist = $metaHeaderlist;
@@ -743,7 +743,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 
 					// gather required fields for this form
 					} else {
-						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_required=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+						$reqfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_required=1 AND id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
 						if ($result = $xoopsDB->query($reqfq)) {
 								while ($row = $xoopsDB->fetchArray($result)) {
 										if ($needids) {
@@ -762,7 +762,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 
 			if (count((array) $headerlist) == 0) {
 					// IF there is no pi and no required fields THEN ... go with first three fields
-					$firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subform\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
+					$firstfq = "SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND (ele_type != \"ib\" AND ele_type != \"areamodif\" AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\") ORDER BY ele_order ASC LIMIT 3";
 					if ($result = $xoopsDB->query($firstfq)) {
 							while ($row = $xoopsDB->fetchArray($result)) {
 									if ($needids) {
@@ -1711,7 +1711,7 @@ function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $p
 	if(!is_array($cols)) { return array(); }
 	if (security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		global $xoopsDB;
-		$c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_type != \"subform\" AND ele_type != \"grid\" ORDER BY ele_order");
+		$c = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' $gq $pq $incbreaks AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\" ORDER BY ele_order");
 		$cols[$fid] = $c;
 	}
 	return $cols;
@@ -5134,19 +5134,12 @@ function getAESPassword() {
 
 function convertTypeToText($type, $ele_value) {
     switch ($type) {
-
         case "areamodif":
             return "Text for display (caption and contents)";
-
         case "ib":
             return "Text for display (spanning the form)";
-
-        case "subform":
-            return "Subform (another form with a relationship to this one)";
-
         case "grid":
             return "Table of elements";
-
         default:
             // must be a custom element type
             $customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
