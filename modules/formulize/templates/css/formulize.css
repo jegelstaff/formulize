@@ -686,3 +686,43 @@ table.formulize-grid td.head {
 	display: block;
 	padding-bottom: 0.3em;
 }
+
+.formulize-text-for-display p,
+.formulize-text-for-display h1, 
+.formulize-text-for-display h2, 
+.formulize-text-for-display h3, 
+.formulize-text-for-display h4, 
+.formulize-text-for-display h5, 
+.formulize-text-for-display h6,
+.formulize-text-for-display blockquote,
+.formulize-text-for-display li {
+	margin-bottom: 0.5em;
+}
+.formulize-text-for-display blockquote {
+	margin-left: 1.0em;
+	padding-left: 0.7em;
+	border-left: 3px solid #ccc;
+}
+.formulize-text-for-display ol {
+	list-style: decimal;
+}
+.formulize-text-for-display ul {
+	list-style: disc;
+}
+.formulize-text-for-display ul, .formulize-text-for-display ol {
+	list-style-position: outside;
+	margin-left: 1.0em;
+	padding-left: 1em;
+}
+
+.formulize-office-use-only-start-hidden {
+		display: none;
+}
+
+.subform-filter-search {
+	margin-bottom: 0.5em;
+	margin-top: 0.5em;
+}
+div.subform_button_controls div.subform-filter-search input[type=text] {
+	width: 10em;
+}

@@ -109,10 +109,6 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		// clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token'
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
 
-		if($element->getVar('ele_type') == "subform") {
-			return array("", $isDisabled);
-		}
-
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$isDisabled AND !$noSave) {
 			// note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
@@ -164,9 +160,9 @@ EOF;
 		$renderer = new formulizeElementRenderer($element);
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
-		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subform' AND $ele_type != 'grid') {
+		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subformFullForm' AND $ele_type != 'subformEditableRow' AND $ele_type != 'subformListings' AND $ele_type != 'grid') {
 			$data_handler = new formulizeDataHandler($form_id);
-			$ele_value = loadValue($prevEntry, $element, $ele_value, $data_handler->getEntryOwnerGroups($entry), $entry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+			$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 		}
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");
@@ -529,9 +525,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} elseif($entry == "new") {
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
-                // get defaults for certain element types, function needs expanding
-                $defaultValueMap = getEntryDefaults($elementObject->getVar('id_form'));
-                $compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
+				$defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
+				$compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
 			} else {
 				$compValue = "";
 			}

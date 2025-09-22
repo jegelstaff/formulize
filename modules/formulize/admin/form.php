@@ -504,6 +504,7 @@ $common['note'] = $note;
 $common['defaultpi'] = $defaultpi;
 $common['pioptions'] = $pioptions;
 $common['formTitle'] = "this form"; // used to refer to the form in the primary identifier selection UI
+$common['standardTypes'] = formulizeHandler::getStandardElementTypes();
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";

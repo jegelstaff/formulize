@@ -121,7 +121,7 @@ switch($op) {
 
   case 'get_element_option_list':
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-    $elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($_GET['fid']) . " AND ele_type != \"ib\" AND ele_type != \"subform\" ORDER BY ele_order");
+    $elementsq = q("SELECT ele_caption, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($_GET['fid']) . " AND ele_type != \"ib\" AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" ORDER BY ele_order");
     $json = "{ \"options\": [";
     $start = true;
     foreach($elementsq as $oneele) {
@@ -179,6 +179,7 @@ switch($op) {
     $entryId = intval($_GET['param3']);
     $fid = intval($_GET['param4']);
     $deInstanceCounter = intval($_GET['param5']);
+		$textWidth = isset($_GET['param6']) ? intval($_GET['param6']) : 0;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -187,7 +188,7 @@ switch($op) {
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
-    print getHTMLForList($preppedValue,$handle,$entryId,1,0,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
+    print getHTMLForList($preppedValue,$handle,$entryId,1,$textWidth,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
     break;
 
   case 'get_element_row_html':
@@ -368,6 +369,7 @@ switch($op) {
 
 }
 
+// CONDITIONAL SUBFORMS DON'T WORK WHEN SUBFORM IS SET TO ACCORDIONS! JS won't kick in if element is not visible at initial pageload (because of document ready around the instantiation of the accordion section?)
 function renderElement($elementObject, $entryId, $frid, $screenObject) {
 
 	$GLOBALS['formulize_asynchronousRendering'][$elementObject->getVar('ele_handle')] = true;
@@ -392,39 +394,17 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 		$renderedElementMarkupName = 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id');
 		$elementType = $elementObject->getVar('ele_type');
 
-		if($elementType == "ib") {
-			$elementContents = "<div class=\"formulize-text-for-display\">" . trans(stripslashes($form_ele[0])) . "</div>";
+		if($elementType == "ib" OR is_array($elementContents)) {
+			$elementContents = trans(stripslashes($form_ele[0]));
 			$breakClass = $form_ele[1];
-
 		} elseif($elementType == "grid") {
 			$elementContents = renderGrid($elementObject, $entryForDEElements); // won't take into account the existing entry's saved values or the screen config when rendering the consituent elements, but probably doesn't matter.
-
-
-		// CONDITIONAL SUBFORMS DON'T WORK WHEN SUBFORM IS SET TO ACCORDIONS! JS won't kick in if element is not visible at initial pageload (because of document ready around the instantiation of the accordion section?
-		} elseif($elementType == "subform") {
-			$elementContents = "";
-			if(elementIsAllowedForUserInEntry($elementObject, $entryId)) {
-				global $xoopsUser;
-				$ele_value = $elementObject->getVar('ele_value');
-				$uid = is_object($xoopsUser) ? $xoopsUser->getVar('uid') : 0;
-				$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-				$owner = getEntryOwner($entryId, $elementObject->getVar('id_form'));
-				$customCaption = $elementObject->getVar('ele_caption');
-				$customElements = $ele_value[1] ? explode(",", $ele_value[1]) : "";
-				$subUICols = drawSubLinks($ele_value[0], array($ele_value[0] => array()), $uid, $groups, $_GET['frid'], getFormulizeModId(), $elementObject->getVar('id_form'), $entryId, $customCaption, $customElements, $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], $owner, $ele_value[6], $ele_value[7], $elementObject->getVar('ele_id'), $ele_value[8], $ele_value[9], $elementObject);
-				if(isset($subUICols['single'])) {
-					$elementContents = $subUICols['single'];
-					$breakClass = "even";
-				} else {
-					$elementContents = new XoopsFormLabel($subUICols['c1'], $subUICols['c2'], $renderedElementMarkupName);
-				}
-			}
 		}
 
 		// render the element
 		if(is_object($elementContents)) {
 			$html = $form->_drawElementElementHTML($elementContents);
-		} else {
+		} elseif($elementContents !== false) {
 			$form->insertBreakFormulize($elementContents, $breakClass, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
 			$hidden = '';
 			$html = '';

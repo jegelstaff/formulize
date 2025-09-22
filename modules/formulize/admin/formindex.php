@@ -581,7 +581,7 @@ function patch40() {
                     print "Form screen save and leave text option already added. result: OK<br>";
                     $needToSetSaveAndLeave = false;
                 } elseif($key === "form_screen_printableview") {
-                    print "Form screen printable view text option already added. result: OK<br>";
+                    print "Form screen printable version text option already added. result: OK<br>";
                     $needToSetPrintableView = false;
                 } elseif($key === "form_screen_multipage_column1width" OR $key === "form_screen_multipage_column2width" OR $key === "form_screen_multipage_displaycolumns") {
                     print "Multipage form screen display columns and column widths already added. result: OK<br>";
@@ -672,20 +672,21 @@ function patch40() {
 						}
         }
 
-                // linked checkbox data was not being stored with same , , before/after as linked selectedboxes have. As of F8, make sure there's none of that left in DB.
-                $sql = 'SELECT f.form_handle, e.ele_handle FROM '.$xoopsDB->prefix('formulize').' AS e
-                    LEFT JOIN '.$xoopsDB->prefix('formulize_id').' AS f
-                    ON e.id_form = f.id_form
-                    WHERE e.ele_type = "checkbox"
-                    AND e.ele_value LIKE "%#*=:*%"'; // look for checkboxes with the unique linking flag in ele_value
-                if($res = $xoopsDB->query($sql)) {
-                    while($row = $xoopsDB->fetchRow($res)) {
-                        $sql = 'UPDATE '.$xoopsDB->prefix('formulize_'.$row[0]).' SET `'.$row[1].'` = CONCAT(",",`'.$row[1].'`,",") WHERE `'.$row[1].'` NOT LIKE ",%,"';
-                        if(!$lcbUpdateRes = $xoopsDB->queryF($sql)) {
-                            print "Error: could not update linked checkbox storage syntax in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
-                        }
-                    }
-                }
+				// linked checkbox data was not being stored with same , , before/after as linked selectedboxes have. As of F8, make sure there's none of that left in DB.
+				$sql = 'SELECT f.form_handle, e.ele_handle FROM '.$xoopsDB->prefix('formulize').' AS e
+						LEFT JOIN '.$xoopsDB->prefix('formulize_id').' AS f
+						ON e.id_form = f.id_form
+						WHERE e.ele_type = "checkbox"
+						AND e.ele_value LIKE "%#*=:*%"'; // look for checkboxes with the unique linking flag in ele_value
+				if($res = $xoopsDB->query($sql)) {
+						while($row = $xoopsDB->fetchRow($res)) {
+								$sql = 'UPDATE '.$xoopsDB->prefix('formulize_'.$row[0]).' SET `'.$row[1].'` = CONCAT(",",`'.$row[1].'`,",") WHERE `'.$row[1].'` NOT LIKE ",%,"';
+								if(!$lcbUpdateRes = $xoopsDB->queryF($sql)) {
+										print "Error: could not update linked checkbox storage syntax in the database.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+								}
+						}
+				}
+
 
 				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
 				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
@@ -1168,7 +1169,7 @@ function patch40() {
                     $prevHandle = $uniqueArray['fe_handle'];
                     print "&nbsp;&nbsp;&nbsp;&nbsp;In framework ".$uniqueArray['fe_frame_id'].", it is used for element ".$uniqueArray['ele_id']." (".$uniqueArray['ele_caption'].")<br>";
                     if ($uniqueArray['fe_handle'] != $uniqueArray['ele_handle']) {
-                        print "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For element ".$uniqueArray['ele_id'].", use the element's data handle instead: <b>".$uniqueArray['ele_handle']."</b><br>";
+                        print "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For element ".$uniqueArray['ele_id'].", use the element's element handle instead: <b>".$uniqueArray['ele_handle']."</b><br>";
                     }
                 }
                 // dump the last stuff we had found in the loop
@@ -1177,9 +1178,9 @@ function patch40() {
                 $warningContents[] = ob_get_clean();
             }
 
-            // need to disambiguate framework handles and elements' data handles.
-            // no framework handle can be identical to the text of any data handle, unless they refer to the same element
-            // So look up all the elements that have a data handle that matches a framework handle, which is not referring to the same element
+            // need to disambiguate framework handles and elements' element handles.
+            // no framework handle can be identical to the text of any element handle, unless they refer to the same element
+            // So look up all the elements that have a element handle that matches a framework handle, which is not referring to the same element
 
             $handleSQL = "SELECT elements.ele_id, elements.ele_caption, elements.ele_handle, handles.fe_frame_id, handles.fe_handle, handles.fe_element_id, e2.ele_caption as handlecap, e2.ele_handle as newhandle FROM ".$xoopsDB->prefix("formulize")." AS elements, ".$xoopsDB->prefix("formulize_framework_elements")." AS handles, ".$xoopsDB->prefix("formulize")." AS e2 WHERE elements.ele_handle = handles.fe_handle AND handles.fe_element_id != elements.ele_id AND handles.fe_element_id = e2.ele_id ORDER BY elements.id_form, elements.ele_order";
             $handleRes = $xoopsDB->queryF($handleSQL);
@@ -1190,7 +1191,7 @@ function patch40() {
                 print "<ul>";
                 while($handleArray = $xoopsDB->fetchArray($handleRes)) {
                     print "<li>".$handleArray['handlecap']." (element ".$handleArray['fe_element_id'].") &mdash framework handle: <b>".$handleArray['fe_handle']."</b> in framework ".$handleArray['fe_frame_id']."<br>";
-                    print "&nbsp;&nbsp;&nbsp;&nbsp;Use the element's data handle instead: <b>".$handleArray['newhandle']."</b></li>";
+                    print "&nbsp;&nbsp;&nbsp;&nbsp;Use the element's element handle instead: <b>".$handleArray['newhandle']."</b></li>";
                 }
                 print "</ul>";
                 $warningContents[] = ob_get_clean();
@@ -1589,6 +1590,43 @@ function patch40() {
 						print "ERROR: There was a problem when setting up the Primary Relationship:<br>$primaryRelationshipError<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
 					}
 				}
+
+				// convert all element types for version 8.1
+				// convert linked checkboxes from checkbox type to checkboxLinked
+				$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxLinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
+				if(!$xoopsDB->queryF($sql)) {
+					print "Error: could not convert linked checkboxes to checkboxLinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+				}
+				// AND AND AND AND convert select to all the select types!!!!
+				/*
+				new number element type for numbers only textboxes (previously text)
+					convert elements that only have a numeric default?
+
+				select becomes:
+					select
+					selectLinked
+					selectUsers
+					listbox
+					listboxLinked
+					listboxUsers
+					autocomplete
+					autocompleteLinked
+					autocompleteUsers
+
+				checkbox becomes
+					checkbox
+					checkboxLinked
+					
+				provinceList becomes
+					provinceList
+					provinceRadio
+
+				subform becomes
+					subformFullForm
+					subformEditableRow
+					subformListings
+
+				*/
 
         print "DB updates completed.  result: OK";
     	}

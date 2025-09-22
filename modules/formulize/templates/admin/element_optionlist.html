@@ -7,7 +7,7 @@
     <p class="useroptions" name="<{$smarty.foreach.optionsloop.index}>">
     <{if $content.type == "radio"}><input type="radio" name="defaultoption" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
     <{else}><input type="checkbox" name="defaultoption[<{$smarty.foreach.optionsloop.index}>]" value=<{$smarty.foreach.optionsloop.index}> <{if $checked}>checked<{/if}>></input>
-    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text}>" onchange="checkForNames()"></input> <span class='sorthandle'>&equiv;</span></p>
+    <{/if}>&nbsp;&nbsp;<input type="text" name="ele_value[<{$smarty.foreach.optionsloop.index}>]" value="<{$text|replace:'"':'&quot;'}>" onchange="checkForNames()"></input> <span class='sorthandle'>&equiv;</span></p>
   <{/foreach}>
 <{else}>
   <p class="useroptions" name="0">
@@ -24,10 +24,20 @@
 
 <div class="description">
   <{if $content.type == "radio"}><p><{$smarty.const._AM_ELE_OPT_DESC2}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
-  <{if $content.type == "checkbox"}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
-  <{if $content.type == "select"}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
+  <{if $content.type == "checkbox" || $content.type == "checkboxLinked"}><p><{$smarty.const._AM_ELE_OPT_DESC_CHECKBOXES}></p><p><{$smarty.const._AM_ELE_OTHER}></p><{/if}>
+  <{if $content.typeIsSelect}><p><{$smarty.const._AM_ELE_OPT_DESC}><{$smarty.const._AM_ELE_OPT_DESC1}></p><{/if}>
   <p><{$smarty.const._AM_ELE_OPT_UITEXT}></p>
 </div>
+
+<{if $content.type != "radio" AND $content.type != "checkbox" AND $content.type != "checkboxLinked" AND $content.type != "select" AND $content.type != "selectLinked" AND $content.type != "selectUsers"}>
+	<{include file="db:admin/element_multiple_onoff.html"}>
+<{/if}>
+
+<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
+	<br>
+	<{include file="db:admin/element_autocomplete_allownew.html"}>
+<{/if}>
+
 <hr style='margin-top: 1em; border: 0px; border-top: 1px dashed black; height: 1px;'>
 <div>
     <p>If you are using the pipe character to store alternative values in the database:<br />
@@ -37,7 +47,7 @@
 </div>
 
 <div class="description">
-  <p>The second option is for use only in cases where you need an alternative value in the database for some third party integration, but a different value shown throughout Formulize. Regardless of your choice, if you use alternative values in the database then searches will only work when you search for those alternative values (because they are what is actually stored in the database).</p>
+  <p>The second option is for use in cases where you need an alternative value in the database &mdash; for compatibility with some code, or function, or third party integration &mdash; but a different value should be shown throughout Formulize.</p>
 </div>
 
 <p><label for="element-changeuservalues"><input type="checkbox" id="element-changeuservalues" name="changeuservalues" clearAfterSave=1 value="1"/> Resynch existing entries with any option changes?</label></p>
@@ -70,16 +80,16 @@
   });
   <{/if}>
 
-	<{if $content.type eq "select"}>
+	<{if $content.typeIsSelect}>
 
 	checkForNames();
 
   function checkForNames() {
     if ($("[name=ele_value[0]]").val() == "{USERNAMES}" || $("[name=ele_value[0]]").val() == "{FULLNAMES}"){
-      <{if $content.type eq "select"}>disableForAutocomplete();<{/if}>
+      <{if $content.typeIsSelect}>disableForAutocomplete();<{/if}>
 			$('div#linked-or-usernames-options').show(200);
     }else{
-      <{if $content.type eq "select"}>enableForAutocomplete();<{/if}>
+      <{if $content.typeIsSelect}>enableForAutocomplete();<{/if}>
 			$('div#linked-or-usernames-options').hide(200);
     }
   }

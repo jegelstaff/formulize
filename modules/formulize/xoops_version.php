@@ -422,7 +422,9 @@ foreach($classFiles as $thisFile) {
 	if(substr($thisFile, -11)=="Element.php") {
 		$customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
 		$modversion['templates'][] = array('file' => 'admin/element_type_'.$customType.'.html',
-                                                   'description'=>'');
+    	'description'=>'');
+		$modversion['templates'][] = array('file' => 'admin/element_type_'.$customType.'_advanced.html',
+    	'description'=>'');
 	}
 }
 
@@ -749,6 +751,12 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/relationship_connection_options.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_autocomplete_allownew.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/element_multiple_onoff.html',
 	'description' => '');
 
 

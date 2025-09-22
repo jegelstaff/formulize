@@ -95,7 +95,7 @@ function createPrimaryRelationship() {
 	}
 
 	// lookup all other linked elements not already in a relationship, add them to the Primary Relationship
-	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox') AND ele_value LIKE '%#*=:*%'";
+	$sql = "SELECT id_form, ele_id, ele_value FROM ".$xoopsDB->prefix('formulize')." WHERE ele_type IN ('select', 'checkbox', 'selectLinked', 'checkboxLinked', 'listboxLinked', 'autocompleteLinked') AND ele_value LIKE '%#*=:*%'";
 	if(!$primaryRelationshipError AND !$res = $xoopsDB->query($sql)) {
 		$primaryRelationshipError .= '<br>Could not collate list of existing linked elements';
 	}
@@ -388,7 +388,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
 					8 => 0
 				));
-				$element->setVar('ele_type', 'select');
+				$element->setVar('ele_type', 'selectLinked');
 				$fieldDataType = 'bigint';
 				break;
 			case 'new-linked-autocomplete':
@@ -399,7 +399,7 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
 					8 => 1
 				));
-				$element->setVar('ele_type', 'select');
+				$element->setVar('ele_type', 'autocompleteLinked');
 				$fieldDataType = 'bigint';
 				break;
 			case 'new-linked-multiselect-autocomplete':
@@ -410,13 +410,13 @@ function makeNewConnectionElement($type, $fid, $otherElementId) {
 					2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle'),
 					8 => 1
 				));
-				$element->setVar('ele_type', 'select');
+				$element->setVar('ele_type', 'autocompleteLinked');
 				$fieldDataType = 'text';
 				break;
 			case 'new-linked-checkboxes':
 				$element->isLinked = true;
 				$element->setVar('ele_value', array(2 => $otherForm->getVar('fid')."#*=:*".$otherElement->getVar('ele_handle')));
-				$element->setVar('ele_type', 'checkbox');
+				$element->setVar('ele_type', 'checkboxLinked');
 				$fieldDataType = 'text';
 				break;
 		}
@@ -490,7 +490,7 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
 		$element->setVar('ele_order', $orderChoice);
 		$element->setVar('ele_display', 1);
 		$element->setVar('ele_caption', $subformObject->getPlural());
-		$element->setVar('ele_type', 'subform');
+		$element->setVar('ele_type', 'subformListings');
 		$element->setVar('ele_value', array(
 			0 => $subformObject->getVar('fid'),
 			1 => $subformObject->getVar('pi'),
@@ -498,16 +498,23 @@ function findOrMakeSubformElement($mainFormObject, $subformObject, $elementIdent
 			3 => 1,
 			4 => 0,
 			5 => 0,
-			6 => 1,
+			6 => 'subform',
+			7 => [],
 			8 => 'row',
+			9 => $subformObject->getPlural(),
 			'simple_add_one_button' => 1,
-			'simple_add_one_button_text' => 'Add One',
-			'disabledelements' => $subformObject->getVar('pi'),
+			'simple_add_one_button_text' => _AM_ADD.' '.$subformObject->getSingular(),
+			'disabledelements' => [],
 			'subform_prepop_element' => 0,
 			'enforceFilterChanges' => 1,
 			'show_delete_button' => 1,
 			'show_clone_button' => 0,
-			'display_screen' => findOrMakeSubformScreen($elementIdentifier, $mainFormObject)
+			'display_screen' => findOrMakeSubformScreen($elementIdentifier, $mainFormObject),
+			'addButtonLimit' => 0,
+			'SortingElement' => 0,
+			'SortingDirection' => 'ASC',
+			'UserFilterByElement' => 0,
+			'FilterByElementStartState' => 1
 		));
 		return $element_handler->insert($element);
 	} else {
