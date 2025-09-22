@@ -21,22 +21,30 @@
 	<fieldset>
 		<legend>User interface options</legend>
 
+		<{if $content.type == 'subformFullForm'}>
 		<div class="form-item">
 		 <div class="form-radios">
-		     <label for="elements-ele_value[8]-row"><input type="radio" id="elements-ele_value[8]-row" name="elements-ele_value[8]" value="row"<{if $content.ele_value[8] eq 'row' OR $content.ele_value[8] eq ''}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_ROW}></label>
-		 </div>
-		 <div class="form-radios">
-		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_UITYPE_FORM}></label>
+		     <label for="elements-ele_value[8]-form"><input type="radio" id="elements-ele_value[8]-form" name="elements-ele_value[8]" value="form"<{if $content.ele_value[8] eq 'form'}> checked="checked"<{/if}>/><{$content.fullFormOption1}></label>
 		 </div>
      <div class="form-radios">
-		     <label for="elements-ele_value[8]-flatform"><input type="radio" id="elements-ele_value[8]-flatform" name="elements-ele_value[8]" value="flatform"<{if $content.ele_value[8] eq 'flatform'}> checked="checked"<{/if}>/>Display each subform entry using the full form, NOT inside a collapsable area</label>
+		     <label for="elements-ele_value[8]-flatform"><input type="radio" id="elements-ele_value[8]-flatform" name="elements-ele_value[8]" value="flatform"<{if $content.ele_value[8] eq 'flatform'}> checked="checked"<{/if}>/><{$content.fullFormOption2}></label>
 		 </div>
 		</div>
-		<div class="form-item" id="rowsPerPage" <{if $content.ele_value[8] neq 'row' AND $content.ele_value[8] neq ''}>style='display: none;'<{/if}>>
-			<p>When shown as rows, subform listings can be split into multiple pages. How many rows should appear on each page? <input name="elements-ele_value[numberOfEntriesPerPage]" size="2" value="<{$content.ele_value.numberOfEntriesPerPage}>"></p>
+		<{else}>
+		<div class="form-item" id="rowsPerPage">
+			<p>How many <{$content.subformPlural}> should appear on each page?<br>
+			<input name="elements-ele_value[numberOfEntriesPerPage]" size="2" value="<{$content.ele_value.numberOfEntriesPerPage|intval}>"></p>
 			<div class="description">
 				Enter 0 for all entries on one page.
 			</div>
+		</div>
+		<{/if}>
+
+		<div class="form-item">
+			<p><{if $content.type == 'subformFullForm'}><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST_FORM}><{else}><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST_ROW}><{/if}></p>
+			<select name="elements_ele_value_1[]" size="10" multiple>
+				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
+			</select>
 		</div>
 
         <div class="form-item">
@@ -63,13 +71,13 @@
             <div class="form-radios">
                 <label for="elements-ele_value[simple_add_one_button]"><input type="radio" id="elements-ele_value[simple_add_one_button]" name="elements-ele_value[simple_add_one_button]" value="1"<{if $content.ele_value.simple_add_one_button eq 1}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_SIMPLE_BUTTON}></label>
                 <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_SIMPLE_LABEL}><br />
-                &nbsp;&nbsp;&nbsp;<input type="text" name="elements-ele_value[simple_add_one_button_text]" value="<{if $content.ele_value.simple_add_one_button_text}><{$content.ele_value.simple_add_one_button_text}><{else}>Add One<{/if}>" /></p>
+                &nbsp;&nbsp;&nbsp;<input type="text" name="elements-ele_value[simple_add_one_button_text]" value="<{if $content.ele_value.simple_add_one_button_text}><{$content.ele_value.simple_add_one_button_text}><{else}><{$smarty.const._AM_ADD}> <{$content.subformSingular}><{/if}>" /></p>
             </div>
             <br />
             <div class="form-radios">
                 <label for="elements-ele_value[simple_add_one_button]-no"><input type="radio" id="elements-ele_value[simple_add_one_button]-no" name="elements-ele_value[simple_add_one_button]" value="0"<{if $content.ele_value.simple_add_one_button eq 0}> checked="checked"<{/if}>/><{$smarty.const._formulize_SUBFORM_MULTIPLE_BUTTON}></label>
                 <p style="margin-left:2em;"><{$smarty.const._formulize_SUBFORM_MULTIPLE_LABEL}><br />
-                &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$smarty.const._formulize_ADD_ENTRIES}><{/if}>" /></p>
+                &nbsp;&nbsp;&nbsp;Add x <input type="text" name="elements-ele_value[9]" value="<{if $content.ele_value[9]}><{$content.ele_value[9]}><{else}><{$content.subformPlural}><{/if}>" /></p>
             </div>
         <div class="form-item" id="delete-clone-buttons">
             <div class="form-radios">
@@ -78,43 +86,12 @@
             </div>
         </div>
         </div>
-	</fieldset>
-    </div>
 
-		<div class="form-item">
-			<fieldset>
-				<legend><{$smarty.const._AM_ELE_SUBFORM_ELEMENT_LIST}></legend>
-
-			<select name="elements_ele_value_1[]" size="10" multiple>
-				<{html_options options=$content.subformelements selected=$content.ele_value[1]}>
-			</select>
-			<div class="description"><{$smarty.const._AM_ELE_SUBFORM_ELEMENTS_DESC}></div>
-
-			</fieldset>
-		</div>
-
+				<{if $content.type != 'subformFullForm'}>
 <div class="form-item">
-			    <fieldset>
-				    <legend><{$smarty.const._AM_ELE_SUBFORM_IFROW}></legend>
-				    <p><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS}></p>
-                    <div class="form-radios">
-                        <label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
-                    </div>
-                    <div class="form-radios">
-                        <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
-                    </div>
-    <br />
-                    <p><{$smarty.const._AM_ELE_SUBFORM_START}></p>
-                    <div class="form-radios">
-                        <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
-                    </div>
-                    <div class="form-radios">
-                        <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}>
-                    </div>
-                    <div class="form-radios">
-                        <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
-                    </div>
-                    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_START_HELP}></div>
+				    			
+	<br />
+
                     <div class="form-item">
                         <p>Show <i>View</i> buttons, and view entries in a <b>dialog box</b></p>
                         <div class="form-radios">
@@ -131,6 +108,9 @@
                         <label for="elements-ele_value[3]-0"><input type="radio" id="elements-ele_value[3]-0" name="elements-ele_value[3]" value="0"<{if !$content.ele_value[3] }> checked="checked"<{/if}>/><i>View</i> buttons are off </label>
                         </div>
                     </div>
+										<br />
+
+										<{if $content.type == 'subformEditableRow'}>
                     <div class="form-item">
                         <div class="form-radios">
                             <p>Disable these elements in each row:</p>
@@ -140,9 +120,31 @@
                             <div class="description">Elements selected will be rendered as "read only" values, instead of as form elements.</div>
                         </div>
                     </div>
+										<{/if}>
+										
+                    <p><{$smarty.const._AM_ELE_SUBFORM_START}></p>
+                    <div class="form-radios">
+                        <label for="elements-ele_value[2]-0"><input type="radio" id="elements-ele_value[2]-0" name="subform_start" value="empty"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_EMPTY}></label>
+                    </div>
+                    <div class="form-radios">
+                        <input type="radio" id="subform_start_blanks" name="subform_start" value="blanks"<{if $content.ele_value.subform_prepop_element == 0 AND $content.ele_value[2] > 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_BLANKS1}> <input type="text" id="number_of_subform_blanks" name="number_of_subform_blanks" value="<{ $content.ele_value[2] }>" size="2" maxlength="2"/> <{$smarty.const._AM_ELE_SUBFORM_START_BLANKS2}>
+                    </div>
+                    <div class="form-radios">
+                        <input type="radio" id="subform_start_prepop" name="subform_start" value="prepop"<{if $content.ele_value.subform_prepop_element > 0 AND $content.ele_value[2] == 0 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_START_PREPOPULATE}> <select id="subform_start_prepop_element" name="subform_start_prepop_element" size=1><{html_options options=$content.subformelements selected=$content.ele_value.subform_prepop_element}></select>
+                    </div>
+                    <div class="description"><{$smarty.const._AM_ELE_SUBFORM_START_HELP}></div>
 
-			    </fieldset>
+										<p><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS}></p>
+                    <div class="form-radios">
+                        <label for="elements-ele_value[4]-0"><input type="radio" id="elements-ele_value[4]-0" name="elements-ele_value[4]" value="0"<{if $content.ele_value[4] eq 0}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_HEADINGS}></label>
+                    </div>
+                    <div class="form-radios">
+                        <label for="elements-ele_value[4]-1"><input type="radio" id="elements-ele_value[4]-1" name="elements-ele_value[4]" value="1"<{if $content.ele_value[4] eq 1}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_HEADINGSORCAPTIONS_CAPTIONS}></label>
+                    </div>	
 			    </div>
+			<{/if}>	
+</fieldset>
+    </div>
 
     <div class="form-item">
         <fieldset>
@@ -154,16 +156,15 @@
 						<{if $content.ele_id != 'new'}>
 						<p><a id="subform-screen-config-url" href="<{$content.selectedSubformScreenAdminURL}>" target="_blank">Open the Configuration page for this screen</a></p>
 						<{/if}>
-            <div class="description"><{$smarty.const._AM_ELE_SUBFORM_SCREEN_HELP}></div>
         </fieldset>
     </div>
 
 <div class="form-item">
 <fieldset>
 <legend>Sorting order for the subform entries</legend>
-<p>Sort the subform entries by this element ('None' means use creation order):<br />
+<p>Sort the subform entries by this element:<br />
     <select name="elements-ele_value[SortingElement]" size="1">
-		<{html_options options=$content.subformUserFilterElements selected=$content.ele_value.SortingElement}>
+		<{html_options options=$content.subformSortingElements selected=$content.ele_value.SortingElement}>
 	</select>
     &nbsp;&nbsp;&nbsp;
     <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection != 'DESC'}>checked<{/if}> value='ASC'>A...Z</input> &nbsp;&nbsp;&nbsp; <input type='radio' name='elements-ele_value[SortingDirection]' <{if $content.ele_value.SortingDirection == 'DESC'}>checked<{/if}> value='DESC'>Z...A</input></p>
@@ -245,11 +246,14 @@
 					$("[name=elements_ele_value_1[]]").empty();
 					$("[name=elements_ele_value_disabledelements[]]").empty();
 					$("[name=elements-ele_value[SortingElement]]").empty();
+					$("#subform_start_prepop_element").empty();
+					$("[name=elements-ele_value[SortingElement]]").append("<option value='0'><{$smarty.const._AM_FORMULIZE_SUBFORM_SORTDEFAULT}></option>");
 					for( var i in results.options) {
 						if(typeof(results.options[i]) == "object") {
 							$("[name=elements_ele_value_1[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
 							$("[name=elements_ele_value_disabledelements[]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
 							$("[name=elements-ele_value[SortingElement]]").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
+							$("#subform_start_prepop_element").append("<option value='"+results.options[i].id+"'>"+results.options[i].value+"</option>");
 						}
 					}
 				}
@@ -257,7 +261,8 @@
 			$.get("<{$xoops_url}>/modules/formulize/formulize_xhr_responder.php?uid=<{$content.uid}>&op=get_form_screens_for_form&fid="+subfid, function(data) {
 				results = JSON.parse(data);
 				if(results) {
-					$("select#element-subform-screen").find('option:not(:first)').remove();
+					$("select#element-subform-screen").empty();
+					$("select#element-subform-screen").append("<option value='0'>(Use Default Screen)</option>");
 					for( var i in results.screens) {
 						if(typeof(results.screens[i]) == "object") {
 							$("select#element-subform-screen").append("<option value='"+results.screens[i].sid+"'>"+results.screens[i].title+"</option>");

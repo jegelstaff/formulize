@@ -4,34 +4,6 @@
 
 <div id="element-mgmt-ui">
 	<div id="element-mgmt-ui-left">
-		<!-- <div id="element-toolbox">
-			<h2><{$smarty.const._AM_ELE_ADDINGTOFORM}></h2>
-			<p><b>Textboxes</b></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_TEXT}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MLTEXT}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=phone"><img src="../images/filenew2.png"> Phone Number</a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=email"><img src="../images/filenew2.png"> Email Address</a></p>
-			<p><b>Lists</b></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_RADIO}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_CHECK}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SELECTEXPLAIN}></a></p>
-			<p><b>Text for display</b></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_MODIF_ONE}></a></p>
-			<p><b>Containers for other elements/forms</b></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subform"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_SUBFORMEXPLAIN}></a></p>
-				<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_GRID}></a></p>
-			<p><b>Miscellaneous</b></p>
-					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DERIVED}></a></p>
-					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_YN}></a></p>
-					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_DATEBOX}></a></p>
-					<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img src="../images/filenew2.png"> <{$smarty.const._AM_ELE_COLORPICK}></a></p>
-					<{foreach item=customElement from=$content.customElements}>
-						<{if $customElement.type != 'text' AND $customElement.type != 'checkbox' AND $customElement.type != 'phone' AND $customElement.type != 'email'}>
-						<p class="tool"><a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=<{$customElement.type}>"><img src="../images/filenew2.png"> <{$customElement.name}></a></p>
-						<{/if}>
-					<{/foreach}>
-		</div> -->
 
 		<div class="accordion-box-wide">
 			<form class="formulize-admin-form">
@@ -232,34 +204,27 @@
 		</div>
 
 		<div id="add-embed"  class="element-category-content">
-			coming soon
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_EMBED_LISTING}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformListings"><img class="element-example" src="../images/admin_elements/subformListings.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_EMBED_ROW}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformEditableRow"><img class="element-example" src="../images/admin_elements/subformEditableRow.png"></a>
+			</div>
+			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_EMBED_FULLFORM}></h2></div>
+			<div class="element-types">
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformFullForm"><img class="element-example" src="../images/admin_elements/subformFullForm.png"></a>
+			</div>
 		</div>
 
 
 	</div> <!-- end of tabs container -->
-
-
-	 <!--
-
-
-		Embed another form
-			- subform -- NEEDS VARIATIONS!
-				- subformfullform -accordion or inline is an option in the element settings (defaults to accordion, user controllable)
-				- subformeditablerow (editable defaults to new entries as rows editing icons off, elements can be disabled if user chooses, new entry choice and view icons choices user controllable)
-				- subformlistings (defaults to new entries in modal/full screen plus editing icons on, only modal/full screen choice or view off, is user controllable, new row option not available since everything is disabled)
-
-
-
-		Text for display
-			- areamodif
-			- ib
-		
--->
-</div>
+</div> <!-- end of add element dialog div -->
 
 <script type="text/javascript">
 
-// Calculate 80% of the window height
+// Calculate 85% of the window height
 var windowHeight = $(window).height();
 var dialogHeight = windowHeight * 0.85; // 85% of window height
 

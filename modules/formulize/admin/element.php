@@ -136,7 +136,7 @@ if ($_GET['ele_id'] != "new") {
     $display['ele_forcehidden'] = $elementObject->getVar('ele_forcehidden') ? " checked" : "";
     $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";
     $ele_encrypt = $elementObject->getVar('ele_encrypt');
-    if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
+    if ($ele_type != "subformFullForm" AND $ele_type != "subformEditableRow" AND $ele_type != "subformListings" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
         $advanced['ele_encrypt_no_on'] = $ele_encrypt ? "" : " checked";
         $advanced['ele_encrypt_yes_on'] = $ele_encrypt ? " checked" : "";
         $advanced['ele_encrypt_show'] = true;
@@ -187,7 +187,7 @@ if ($_GET['ele_id'] != "new") {
 	$display['ele_disabled']['none'] = " selected";
 	$display['filtersettings'] = formulize_createFilterUI("", "elementfilter", $fid, "form-3");
 	$ele_encrypt = 0;
-	if ($ele_type != "subform" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
+	if ($ele_type != "subformFullForm" AND $ele_type != "subformEditableRow" AND $ele_type != "subformListings"  AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
 		$advanced['ele_encrypt_no_on'] = " checked";
 		$advanced['ele_encrypt_show'] = true;
 		$ele_index = "";

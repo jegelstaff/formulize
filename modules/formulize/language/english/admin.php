@@ -21,6 +21,7 @@ define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
 define("_AM_APP_ELEMENTS","Elements");
 define("_AM_APP_ENTRIES","Entries");
+define("_AM_APP_ONE", "One");
 define("_AM_APP_USERS","Users");
 define("_AM_APP_IN","in");
 define("_AM_APP_GROUPS","Groups");
@@ -439,7 +440,8 @@ define("_AM_ELE_SUBFORM_DESC", "A subform interface allows users to create and m
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a Relationship first");
 define("_AM_ELE_SUBFORM_NEW", "Add a new form");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Element options");
-define("_AM_ELE_SUBFORM_ELEMENT_LIST", "Choose the elements to show in the row, or to use as the heading if you're showing the full form");
+define("_AM_ELE_SUBFORM_ELEMENT_LIST_ROW", "Which elements are shown in the row?");
+define("_AM_ELE_SUBFORM_ELEMENT_LIST_FORM", "Which elements are the headings for each entry?");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "When displayed in a row, about three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form. <b>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.</b>");
 define("_AM_ELE_SUBFORM_VIEW", "Include <i>View</i> buttons beside each entry?");
 define("_AM_ELE_SUBFORM_VIEW_DESC", "The <i>View</i> buttons let users click through to the complete entry in the subform.  This may be useful when only some elements in the subform are visible in the main interface.");
@@ -457,7 +459,8 @@ define("_AM_ELE_SUBFORM_START_HELP", "<b>If showing more than one blank row</b>:
 define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
 define("_AM_ELE_SUBFORM_BLANKS_HELP", "If you put an exclamation mark after the number (ie: 1!), then blank entries will show up whenever the form loads, as long as no subform entries have been saved yet.<br>Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
-define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
+define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry inside a collapsable area that the user can open and close");
+define("_AM_ELE_SUBFORM_UITYPE_FLATFORM", "Display each subform entry separated by headings, not inside collapsable areas");
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
 define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, only if the user can add entries in the subform");
 define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in the main form");
@@ -934,3 +937,6 @@ define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
 define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");
 
 define("_AM_FORMULIZE_ADMINISTRATION", "Administration");
+
+define("_AM_FORMULIZE_SUBFORM_SORTDEFAULT", "Creation order");
+define("_AM_FORMULIZE_SUBFORM_FILTERDEFAULT", "No filter");

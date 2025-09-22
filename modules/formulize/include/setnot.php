@@ -176,15 +176,15 @@ if($canSetNots) {
 	natcasesort($group_options);
 
 	// gather the list of elements that have user names
-	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = " . intval($fid) . " AND ele_type = \"select\" AND (ele_value LIKE \"%{FULLNAMES}%\" OR ele_value LIKE \"%{USERNAMES}%\")";
+	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form = " . intval($fid) . " AND (ele_type = \"selectUsers\" OR ele_type = \"listboxUsers\" OR ele_type = \"autocompleteUsers\") AND (ele_value LIKE \"%{FULLNAMES}%\" OR ele_value LIKE \"%{USERNAMES}%\")";
 	$element_options = buildNotOptionList($sql, "elementuid");
 
 	// gather the list of elements that are linked selectboxes
-	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND ele_type = \"select\" AND ele_value LIKE \"%#*=:*%\"";
+	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND (ele_type = \"selectLinked\" OR ele_type = \"listboxLinked\" OR ele_type = \"autocompleteLinked\" OR ele_type = \"checkboxLinked\") AND ele_value LIKE \"%#*=:*%\"";
 	$linkcreator_options = buildNotOptionList($sql, "linkcreator");
 
 	// gather the list of all elements that are not grid, subform, areamodif, ib
-	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND ele_type != \"subform\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"areamodif\"";
+	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"areamodif\"";
 	$elementemail_options = buildNotOptionList($sql, "elementemail");
 
 } else {
