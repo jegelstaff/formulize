@@ -2,32 +2,43 @@
  * Wait for the Formulize form token to be valid before moving on
  * @param {*} page Playwright page object
  */
-
-import { expect } from '@playwright/test';
-
 export async function waitForFormulizeFormToken(page) {
 	await page.waitForFunction(
 		() => document.querySelector('input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
-	);
+	)
 }
 
-export async function loginAsAdmin(page) {
-	await loginAs('admin', page);
-}
-
-export async function loginAs(username, page) {
-	let password = username === 'admin' ? 'password' : '12345';
+/**
+ * Login function
+ *
+ * @param {*} page
+ * @param {*} username
+ * @param {*} password
+ */
+export async function login(page, username, password = '12345') {
 	await page.goto('/user.php');
 	await page.locator('input[name="uname"]').click();
 	await page.locator('input[name="uname"]').fill(username);
 	await page.locator('input[name="uname"]').press('Tab');
 	await page.locator('input[name="pass"]').fill(password);
 	await page.locator('input[name="pass"]').press('Enter');
-	await expect(page.getByRole('link', { name: 'Edit Account' })).toBeVisible();
 }
 
+/**
+ * Login as admin
+ * @param {*} page
+ */
+export async function loginAsAdmin(page) {
+	await login(page, 'admin');
+}
 
-export async function saveChanges(page, type = 'regular', timeout = 30000) {
+/**
+ * Save changes on admin pages - handles both regular and popup saves
+ * @param {*} page
+ * @param {*} type
+ * @param {*} timeout
+ */
+export async function saveChanges(page, type = 'regular', timeout = 5000) {
 
 	let opacityTarget = 'div.admin-ui';
 

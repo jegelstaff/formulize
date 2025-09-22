@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test')
-import { loginAsAdmin } from '../utils';
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
+import { login } from '../utils';
 
 test.describe('Installation of Formulize', () => {
 	test('Run the Installer', async ({ page }) => {
@@ -72,7 +73,7 @@ test.describe('Installation of Formulize', () => {
 	}),
 	test('Update Formulize', async ({ page }) => {
 
-		await loginAsAdmin(page);
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
   	await page.goto('/modules/formulize/admin');
 		await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
 
