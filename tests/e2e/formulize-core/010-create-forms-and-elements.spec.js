@@ -216,14 +216,14 @@ test.describe('Create Museum Forms and Elements', () => {
 		await page.locator('input[name="elements-ele_caption"]').click();
    	await page.locator('input[name="elements-ele_caption"]').click();
 		await page.locator('input[name="elements-ele_caption"]').fill('Phone number');
-		await page.locator('input[name="elements-ele_handle"]').fill('donors_phone');
+		await page.locator('input[name="elements-ele_handle"]').fill('donors_phone_number');
    	await saveChanges(page);
 
 		await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=2&aid=1&type=email');
 		await expect(page.locator('input[name="elements-ele_caption"]')).toBeVisible();
 		await page.locator('input[name="elements-ele_caption"]').click();
    	await page.locator('input[name="elements-ele_caption"]').fill('Email address');
-		await page.locator('input[name="elements-ele_handle"]').fill('donors_email');
+		await page.locator('input[name="elements-ele_handle"]').fill('donors_email_address');
    	await saveChanges(page);
 
    	await page.goto('/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=2&aid=1&type=textarea');

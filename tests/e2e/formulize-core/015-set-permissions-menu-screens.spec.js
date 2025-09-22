@@ -127,8 +127,8 @@ test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () =
   	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-0').selectOption('donors_name');
-  	await page.locator('#cols-1').selectOption('donors_phone');
-  	await page.locator('#cols-2').selectOption('donors_email');
+  	await page.locator('#cols-1').selectOption('donors_phone_number');
+  	await page.locator('#cols-2').selectOption('donors_email_address');
 		await saveChanges(page);
 
 		// Artifacts form
