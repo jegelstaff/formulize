@@ -38,7 +38,7 @@ class formulizeProvinceRadioElement extends formulizeProvinceListElement {
 }
 
 #[AllowDynamicProperties]
-class formulizeProvinceRadioElementHandler extends formulizeElementsHandler {
+class formulizeProvinceRadioElementHandler extends formulizeProvinceListElementHandler {
 
 	function create() {
 		return new formulizeProvinceRadioElement();
