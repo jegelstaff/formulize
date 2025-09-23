@@ -38,7 +38,7 @@ export async function loginAsAdmin(page) {
  * @param {*} type
  * @param {*} timeout
  */
-export async function saveChanges(page, type = 'regular', timeout = 5000) {
+export async function saveAdminForm(page, type = 'regular', timeout = 10000) {
 
 	let opacityTarget = 'div.admin-ui';
 

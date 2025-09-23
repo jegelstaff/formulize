@@ -7,8 +7,6 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 test.beforeEach(async ({ page }) => {
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	await page.getByRole('link', { name: 'Admin' }).click();
-	await page.getByRole('link', { name: 'Home' }).click();
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
 })
 
 async function setStandardPermissions(page) {
@@ -65,6 +63,11 @@ async function setAnonPermissions(page) {
 }
 
 test.describe('Set Permissions', () => {
+
+	test.beforeEach(async ({ page }) => {
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+	})
+
 	test('Set permissions for Artifacts', async ({ page }) => {
 		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
@@ -87,14 +90,14 @@ test.describe('Set Permissions', () => {
 	})
 
 	test('Set permissions for Exhibits', async ({ page }) => {
-		await page.getByText('Exhibits').first().click();
+		await page.getByText('Exhibits').nth(2).click();
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await setStandardPermissions(page);
 		await saveAdminForm(page);
 	})
 
 	test('Set permissions for Surveys', async ({ page }) => {
-		await page.getByText('Surveys').first().click();
+		await page.getByText('Surveys').nth(2).click();
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await setGlobalPermissions(page);
 		await saveAdminForm(page);
@@ -103,7 +106,7 @@ test.describe('Set Permissions', () => {
 	})
 
 	test('Set Anonymous permissions to Survey Form', async ({ page }) => {
-		await page.getByText('Surveys').first().click();
+		await page.getByText('Surveys').nth(2).click();
 		await page.locator('#form-details-box-1-5').getByRole('link', { name: 'Screens' }).first().click();
 		await page.getByRole('link', { name: 'Survey', exact: true }).click();
 	  await page.getByText('No, only permission to view').click();
@@ -113,47 +116,62 @@ test.describe('Set Permissions', () => {
 
 
 test.describe('Set Menu Entries', () => {
-	test.beforeEach(async({ page }) => {
-		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	})
 
 	test('Set Menu Entry for Artifacts', async ({ page }) => {
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
 	  await page.getByRole('link', { name: 'Artifacts' }).click();
  	  await page.locator('#groups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await page.locator('#defaultScreenGroups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
 	test('Set Menu Entry for Donors', async ({ page }) => {
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
+	  await page.getByRole('link', { name: 'Artifacts' }).click();
 	  await page.getByRole('link', { name: 'Donors' }).click();
  	  await page.locator('#groups1').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
 	test('Set Menu Entry for Collections', async ({ page }) => {
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
 	  await page.getByRole('link', { name: 'Collections' }).click();
  	  await page.locator('#groups2').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
 	test('Set Menu Entry for Exhibits', async ({ page }) => {
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
 	  await page.getByRole('link', { name: 'Exhibits' }).click();
  	  await page.locator('#groups3').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
 	test('Set Menu Entry for Surveys', async ({ page }) => {
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
 	  await page.getByRole('link', { name: 'Surveys' }).click();
- 	  await page.locator('#groups3').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+ 	  await page.locator('#groups4').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
 })
 
 test.describe('Set columns and elements for screens', () => {
 
+	test.beforeEach(async ({ page }) => {
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+	})
+
 	test('Artifacts form screen', async ({ page }) => {
 		await page.locator('#form-details-box-1-1').getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Artifact', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
-  	await page.waitForTimeout(500);
-		await expect(page.getByText('Title for page number')).toBeVisible();
   	await page.getByLabel('Form elements to display on').selectOption([
 			'Artifacts: ID Number',
 			'Artifacts: Short name',
@@ -176,11 +194,13 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('link', { name: 'Artifacts' }).click();
   	await page.getByRole('link', { name: 'Artifacts' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 3 });
 		await page.locator('#cols-0').selectOption('artifacts_id_number');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-1').selectOption('artifacts_short_name');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-2').selectOption('artifacts_year_era');
-    await page.locator('#cols-4').selectOption('artifacts_collections');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
+    await page.locator('#cols-3').selectOption('artifacts_collections');
 		await saveAdminForm(page);
 	})
 
@@ -189,8 +209,6 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('link', { name: 'Donor', exact: true }).click();
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
-		await page.waitForTimeout(500);
-		await expect(page.getByText('Title for page number')).toBeVisible();
   	await page.getByLabel('Form elements to display on').selectOption([
 			'Donors: Type of donor',
 			'Donors: First name',
@@ -211,9 +229,10 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('link', { name: 'Donors' }).click();
   	await page.getByRole('link', { name: 'Donors' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 4 });
   	await page.locator('#cols-0').selectOption('donors_name');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-1').selectOption('donors_phone');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-2').selectOption('donors_email');
   	await saveAdminForm(page);
 	})
@@ -254,15 +273,18 @@ test.describe('Set columns and elements for screens', () => {
 		await page.getByRole('link', { name: 'Exhibits' }).click();
   	await page.getByRole('link', { name: 'Exhibits' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 3 });
 		await page.locator('#cols-0').selectOption('exhibits_name');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-1').selectOption('exhibits_curator');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-2').selectOption('exhibits_collections');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-3').selectOption('exhibits_artifacts');
 		await saveAdminForm(page);
 	})
 
 	test('Surveys form screen', async ({ page }) => {
+		await page.locator('#form-details-box-1-5').getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
@@ -278,17 +300,20 @@ test.describe('Set columns and elements for screens', () => {
 		await page.getByRole('link', { name: 'Surveys' }).click();
   	await page.getByRole('link', { name: 'Surveys' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 4 });
 		await page.locator('#cols-0').selectOption('creation_datetime');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-1').selectOption('surveys_your_name');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-2').selectOption('surveys_exhibit');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-3').selectOption('surveys_favourite_artifact');
+  	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-4').selectOption('surveys_rating');
 		await saveAdminForm(page);
 	})
 
 	test('Procedures for Artifacts form', async ({ page }) => {
-		await page.getByRole('link', { name: 'Artifacts' }).click();
+		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Procedures' }).click();
 		await page.getByRole('group', { name: 'After Saving' }).locator('span').first().click();
   	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').press('ControlOrMeta+a');

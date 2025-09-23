@@ -1,14 +1,9 @@
 const { test, expect } = require('@playwright/test')
-import { saveChanges } from '../utils';
-import { loginAs } from '../utils';
+import { login } from '../utils';
 
 test.describe('Validate Data', () => {
-
 	test('Check the Romain Coin record is complete', async ({ page }) => {
-
-		await loginAs('curator1',page);
-		await page.goto('/modules/formulize/index.php?fid=1');
-
+		await login(page, 'curator1', '12345');
 		const popupPromise = page.context().waitForEvent('page');
 		await page.getByRole('button', { name: 'Change columns' }).click();
 		const page3 = await popupPromise;
@@ -97,11 +92,9 @@ test.describe('Validate Data', () => {
 		await expect(page.locator('#celladdress_2_42')).toContainText('Disappointing');
 
 	}),
-	test('Search for specific data', async ({ page }) => {
-
-		await loginAs('curator1',page);
+	test('Search for specific collection data', async ({ page }) => {
+		await login(page, 'curator1', '12345');
 		await page.goto('/modules/formulize/index.php?fid=1');
-
 		const popupPromise = page.context().waitForEvent('page');
 		await page.getByRole('button', { name: 'Change columns' }).click();
 		const page3 = await popupPromise;
@@ -126,10 +119,12 @@ test.describe('Validate Data', () => {
 		await page.locator('input[name="search_artifacts_width"]').fill('>6 AND <7');
 		await page.getByRole('link', { name: 'Width' }).click();
 		await expect(page.getByText('Showing entries: 1 to 1 of')).toBeVisible();
-		await page.getByRole('link', { name: 'Logout' }).click();
+	})
 
-		await loginAs('ahstaff',page);
-		await page.goto('/modules/formulize/index.php?fid=4');
+	test('Search for specific artifact data as ahstaff', async ({ page }) => {
+		await login(page, 'ahstaff', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await page.locator('input[name="search_exhibits_artifacts"]').fill('x');
 		await page.getByRole('columnheader', { name: 'Artifacts' }).getByRole('link').click();
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
@@ -139,12 +134,13 @@ test.describe('Validate Data', () => {
 		await page.locator('input[name="search_exhibits_artifacts"]').fill('11');
 		await page.getByRole('columnheader', { name: 'Artifacts' }).getByRole('link').click();
 		await expect(page.getByText('Showing entries: 1 to 1 of')).toBeVisible();
-		await page.getByRole('link', { name: 'Logout' }).click();
-		await loginAs('mhstaff',page);
-		await page.goto('/modules/formulize/index.php?fid=4');
+	})
+	test('Search for specific artifact data as mhstaff', async ({ page }) => {
+		await login(page, 'mhstaff', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await page.locator('input[name="search_exhibits_artifacts"]').fill('11');
 		await page.getByRole('columnheader', { name: 'Artifacts' }).getByRole('link').click();
 		await expect(page.getByText('Showing entries: 1 to 2 of')).toBeVisible();
-
 	})
 });

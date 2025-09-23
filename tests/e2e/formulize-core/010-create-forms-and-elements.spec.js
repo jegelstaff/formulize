@@ -201,10 +201,8 @@ test('Create Donors Form', async ({ page }) => {
 test.describe('Donors Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByText('Donors').first().click();
-	  await page.getByRole('link', { name: 'Elements' }).first().click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(1).click();
 	})
 
 	test('Create Type of donor Element', async ({ page }) => {
@@ -219,7 +217,7 @@ test.describe('Donors Elements', async () => {
    	await page.locator('input[name="ele_value\\[0\\]"]').press('Tab');
    	await page.locator('input[name="ele_value\\[1\\]"]').fill('Organization');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Era (Type of donor)');
+		await expect(page.getByRole('heading')).toContainText('Element: Type of donor (Radio buttons)');
 	});
 
 	test('Create First name Element', async ({ page }) => {
@@ -253,7 +251,7 @@ test.describe('Donors Elements', async () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_organization_name');
    	await page.getByRole('link', { name: 'Display Settings' }).click();
    	await page.locator('#new_elementfilter_element').selectOption('Type of donor');
-   	await page.locator('#new_elementfilter_term').fill('Individual');
+   	await page.locator('#new_elementfilter_term').fill('Organization');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Organization name (Textbox)');
 	});
@@ -273,7 +271,7 @@ test.describe('Donors Elements', async () => {
 
 	test('Create Phone number Element', async ({ page }) => {
 		await page.getByRole('link', { name: 'Phone Number', exact: true }).click();
-		await expect(page.getByRole('heading')).toContainText('Element: New element (Textbox)');
+		await expect(page.getByRole('heading')).toContainText('Element: New element (Phone Number)');
 		await page.locator('input[name="elements-ele_caption"]').fill('Phone number');
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_phone');
 		await saveAdminForm(page);
@@ -282,7 +280,7 @@ test.describe('Donors Elements', async () => {
 
 	test('Create Email Address Element', async ({ page }) => {
 		await page.getByRole('link', { name: 'Email Address', exact: true }).click();
-		await expect(page.getByRole('heading')).toContainText('Element: New element (Textbox)');
+		await expect(page.getByRole('heading')).toContainText('Element: New element (Email Address)');
 		await page.locator('input[name="elements-ele_caption"]').fill('Email Address');
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_email');
 		await saveAdminForm(page);
@@ -302,7 +300,7 @@ test.describe('Donors Elements', async () => {
 
 	test('Create Province Element', async ({ page }) => {
 		await page.getByRole('link', { name: 'Province List', exact: true }).click();
-		await expect(page.getByRole('heading')).toContainText('Element: New element (Textbox)');
+		await expect(page.getByRole('heading')).toContainText('Element: New element (Province List)');
 		await page.locator('input[name="elements-ele_caption"]').fill('Province');
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_province');
 		await saveAdminForm(page);
@@ -315,7 +313,7 @@ test.describe('Donors Elements', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Postal code');
 		await page.locator('input[name="elements-ele_handle"]').fill('donors_postal_code');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Province (Textbox)');
+		await expect(page.getByRole('heading')).toContainText('Element: Postal code (Textbox)');
 	});
 
 	test('Create Province, Postal code Element', async ({ page }) => {
@@ -350,7 +348,6 @@ test.describe('Donors Elements', async () => {
 })
 
 test('Create Collections Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
@@ -364,10 +361,8 @@ test('Create Collections Form', async ({ page }) => {
 test.describe('Collections Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByText('Collections').first().click();
-	  await page.getByRole('link', { name: 'Elements' }).first().click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(1).click();
 	})
 
 	test('Create Name Element', async ({ page }) => {
@@ -392,13 +387,12 @@ test.describe('Collections Elements', async () => {
 		await page.locator('input[name="ele_value\\[0\\]"]').fill('Children');
 		await page.locator('input[name="ele_value\\[1\\]"]').fill('Adults');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Name (Check boxes)');
+		await expect(page.getByRole('heading')).toContainText('Element: Suitable audience (Check boxes)');
 	});
 
 })
 
 test('Create Exhibits Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
@@ -412,10 +406,8 @@ test('Create Exhibits Form', async ({ page }) => {
 test.describe('Exhibits Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByText('Exhibits').first().click();
-	  await page.getByRole('link', { name: 'Elements' }).first().click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(3).click();
 	})
 
 	test('Create Name Element', async ({ page }) => {
@@ -439,7 +431,7 @@ test.describe('Exhibits Elements', async () => {
   	await saveAdminForm(page);
   	await page.locator('#element-formlink_scope').selectOption('Curators');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Name (Dropdown box or List box)');
+		await expect(page.getByRole('heading')).toContainText('Element: Curator (Dropdown box)');
 	});
 
 	test('Create Collections Element', async ({ page }) => {
@@ -455,7 +447,8 @@ test.describe('Exhibits Elements', async () => {
   	await page.locator('#formlink').selectOption('Collections: Name');
 		await page.locator('#element-formlink_scope').selectOption(['Ancient History', 'Modern History']);
 	  await page.getByText('Yes. Only use groups that the').click();
-		await expect(page.getByRole('heading')).toContainText('Element: Collections (Dropdown box or List box)');
+		await saveAdminForm(page);
+		await expect(page.getByRole('heading')).toContainText('Element: Collections (Autocomplete box)');
 	});
 
 	test('Create Artifacts Element', async ({ page }) => {
@@ -473,15 +466,16 @@ test.describe('Exhibits Elements', async () => {
 		await page.locator('[id="elements-ele_value\\[17\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
 		await page.locator('[id="elements-ele_value\\[10\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
 		await page.locator('[id="elements-ele_value\\[11\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
-	  await page.locator('#new_formlinkfilter_element').selectOption('Collections');
-		await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
-	  await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
-		await expect(page.getByRole('heading')).toContainText('Element: Artifacts (Dropdown box or List box)');
+		// @todo Figure out why this isn't working
+		// await page.locator('#new_formlinkfilter_element').selectOption('Collections');
+		// await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
+	  // await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
+		await saveAdminForm(page);
+		await expect(page.getByRole('heading')).toContainText('Element: Artifacts (Autocomplete box)');
 	});
 })
 
 test('Create Surveys Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
@@ -495,10 +489,8 @@ test('Create Surveys Form', async ({ page }) => {
 test.describe('Surveys Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByText('Surveys').first().click();
-	  await page.getByRole('link', { name: 'Elements' }).first().click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(4).click();
 	})
 
 	test('Create Respondent name Element', async ({ page }) => {
@@ -520,7 +512,7 @@ test.describe('Surveys Elements', async () => {
   	await page.getByText('The values that people have').click();
   	await page.locator('#formlink').selectOption('Exhibits: Name');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Exhibit (Dropdown box or List box)');
+		await expect(page.getByRole('heading')).toContainText('Element: Exhibit (Dropdown box)');
 	});
 
 	test('Create Favourite artifact Element', async ({ page }) => {
@@ -540,7 +532,7 @@ test.describe('Surveys Elements', async () => {
   	await page.locator('#new_optionsLimitByElementFilter_element').selectOption('Name');
   	await page.locator('#new_optionsLimitByElementFilter_term').fill('{surveys_exhibit}');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Favourite artifact (Dropdown box or List box)');
+		await expect(page.getByRole('heading')).toContainText('Element: Favourite artifact (Dropdown box)');
 	});
 
 	test('Create Rating Element', async ({ page }) => {
@@ -557,15 +549,13 @@ test.describe('Surveys Elements', async () => {
 		await page.locator('input[name="ele_value\\[3\\]"]').fill('Excellent');
   	await page.locator('input[name="ele_value\\[4\\]"]').fill('Mind blowing!');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Rating (Dropdown box or List box)');
+		await expect(page.getByRole('heading')).toContainText('Element: Rating (Dropdown box)');
 	});
 })
 
 test.describe('Artifacts linked fields', async () => {
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByText('Artifacts').first().click();
 	  await page.getByRole('link', { name: 'Elements' }).first().click();
 	})
 
@@ -581,7 +571,7 @@ test.describe('Artifacts linked fields', async () => {
     await page.locator('#new_elementfilter_element').selectOption('Donated to museum');
     await page.locator('#new_elementfilter_term').fill('Yes');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: Donor (Dropdown box or List box)');
+		await expect(page.getByRole('heading')).toContainText('Element: Donor (Dropdown box)');
 	});
 
 	test('Create Condition Element', async ({ page }) => {

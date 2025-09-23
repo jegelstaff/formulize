@@ -77,7 +77,7 @@ test.describe('Create Users', () => {
 		await page.locator('#password').fill('12345');
 		await page.locator('#vpass').fill('12345');
 		await page.getByRole('radio', { name: 'Active', exact: true }).check();
-		await page.locator('#groups').selectOption('Curators', 'Ancient History', 'Modern History', 'Registered Users');
+		await page.locator('#groups').selectOption(['Ancient History', 'Curators', 'Modern History', 'Registered Users']);
 		await page.getByRole('button', { name: 'Save changes' }).click();
 		await page.locator('#buttonbar').getByRole('link', { name: 'Find users' }).click();
 		await page.locator('#user_email').fill('c1@museum.formulize.net');
@@ -92,7 +92,7 @@ test.describe('Create Users', () => {
 		await page.locator('#password').fill('12345');
 		await page.locator('#vpass').fill('12345');
 		await page.getByRole('radio', { name: 'Active', exact: true }).check();
-		await page.locator('#groups').selectOption('Curators', 'Ancient History', 'Modern History', 'Registered Users');
+		await page.locator('#groups').selectOption(['Ancient History', 'Curators', 'Modern History', 'Registered Users']);
 		await page.getByRole('button', { name: 'Save changes' }).click();
 		await page.locator('#buttonbar').getByRole('link', { name: 'Find users' }).click();
 		await page.locator('#user_email').fill('c2@museum.formulize.net');
