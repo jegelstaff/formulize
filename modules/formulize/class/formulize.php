@@ -487,12 +487,14 @@ class formulizeHandler {
 	/**
 	 * Discover available element types and their MCP descriptions
 	 * Caches results statically
+	 * @param bool|int $update If true, we're gathering details for update tools. Default is false, for gather details for creation tools.
 	 * @return array [elementTypes array, elementDescriptions array]
 	 */
-	public static function discoverElementTypes() {
+	public static function discoverElementTypes($update = false) {
 		static $elementTypes = [];
 		static $elementDescriptions = [];
-		if(empty($elementTypes) OR empty($elementDescriptions)) {
+		$update = $update ? 1 : 0;
+		if(empty($elementTypes) OR empty($elementDescriptions[$update])) {
 			// Scan for element class files
 			$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
 			$elementFiles = glob($elementClassPath . '/*Element.php');
@@ -505,11 +507,11 @@ class formulizeHandler {
 				if(methodExistsInClass('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
 					$elementTypes[] = $elementType;
 					$className = "formulize".ucfirst($elementType)."Element";
-					$elementDescriptions[] = $className::mcpElementPropertiesDescriptionAndExamples();
+					$elementDescriptions[$update][] = $className::mcpElementPropertiesDescriptionAndExamples($update);
 				}
 			}
 		}
-		return [$elementTypes, $elementDescriptions];
+		return [$elementTypes, $elementDescriptions[$update]];
 	}
 
 	/**
