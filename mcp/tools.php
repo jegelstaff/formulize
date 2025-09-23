@@ -811,7 +811,7 @@ Examples:
 		$propertiesPreparedByTheElement = [];
 		$elementTypeHandler = xoops_getmodulehandler($element_type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIOptions')) {
-			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIOptions($options);
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIOptions($options, ($elementObject ? $elementObject : null));
 			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
 				// special case - the element type needs to pass special parameters to the upsert function
 				// for example, if it should create a subform interface in the source form
