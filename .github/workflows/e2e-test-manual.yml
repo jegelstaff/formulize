@@ -76,10 +76,10 @@ jobs:
       run: |
         if [ -n "${{ inputs.test_filter }}" ]; then
           echo "Running filtered tests: ${{ inputs.test_filter }}"
-          npx playwright test ${{ inputs.test_filter }}
+          npx playwright test ${{ inputs.test_filter }} --reporter=line --reporter=github
         else
           echo "Running all tests"
-          npx playwright test
+          npx playwright test --reporter=line --reporter=github
         fi
       working-directory: tests/e2e
 
