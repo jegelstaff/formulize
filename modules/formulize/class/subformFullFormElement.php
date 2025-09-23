@@ -45,9 +45,10 @@ class formulizeSubformFullFormElement extends formulizeSubformListingsElement {
 	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
 	 * Concerned with the options for the ele_value property of the element object
 	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
-	public static function mcpElementPropertiesDescriptionAndExamples() {
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
 "Element: Embedded Form (full entries) (subformFullForm).
 Properties:

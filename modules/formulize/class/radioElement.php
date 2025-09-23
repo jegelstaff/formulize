@@ -30,8 +30,9 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/baseClassForLists.php";
 
-class formulizeRadioElement extends formulizeElement {
+class formulizeRadioElement extends formulizeBaseClassForListsElement {
 
 	var $defaultValueKey;
 
@@ -47,6 +48,33 @@ class formulizeRadioElement extends formulizeElement {
 		parent::__construct();
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		$descriptionAndExamples =
+"Element: Radio Buttons (radio)
+Description: A list of options where the user can select only one choice. Radio buttons are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples";
+		}
+		return $descriptionAndExamples;
+	}
+
 	// returns true if the option is one of the values the user can choose from in this element
   // returns false if the element does not have options
 	function optionIsValid($option) {
@@ -58,7 +86,7 @@ class formulizeRadioElement extends formulizeElement {
 }
 
 #[AllowDynamicProperties]
-class formulizeRadioElementHandler extends formulizeElementsHandler {
+class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHandler {
 
 	var $db;
 	var $clickable; // used in formatDataForList
@@ -71,6 +99,27 @@ class formulizeRadioElementHandler extends formulizeElementsHandler {
 
 	function create() {
 		return new formulizeRadioElement();
+	}
+
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
+		list($ele_value, $ele_uitext) = formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIOptions($options, $elementIdentifier);
+		return [
+			'ele_value' => $ele_value[2], // radio buttons are the only list elements that have plain ele_value array, all others put options in key 2 by convention, so that is what the parent method returns. We have to compensate for it here.
+			'ele_uitext' => $ele_uitext
+		];
+	}
+
+	protected function getDefaultEleValue() {
+		$ele_value = array();
+		return $ele_value;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
