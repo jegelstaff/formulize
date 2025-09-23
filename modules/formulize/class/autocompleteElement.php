@@ -47,6 +47,37 @@ class formulizeAutocompleteElement extends formulizeSelectElement {
 		$this->isLinked = false; // set to true if this element can have linked values
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		$descriptionAndExamples =
+"Element: Autocomplete List (autocomplete)
+Description: A single-line text box that provides autocomplete suggestions from a predefined list of options as the user types. The user can select one of the suggested options, or if the allowNewValues property is enabled then the user can enter a new value that is not found in the list. Autocomplete Lists can be set to allow multiple selections, with the allowMultipleSelections property. Autocomplete Lists are good for a large number of options that would be too many for a Dropdown List, Radio Buttons, or Checkboxes. For a small number of predefined options, use Radio Buttons or Dropdown Lists, or use Checkboxes if selecting multiple options must be possible.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties
+- allowNewValues (optional, a 1/0 indicating if users should be allowed to enter values that are not in the predefined list of options. Default is 0, meaning users can only select from the predefined options. Set to 1 to allow users to enter new values.)
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists, the default is 0. Set to 1 to allow multiple selections.)";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples
+- A list of cutlery and flatware, allowing multiple selections: { options: [ 'fork', 'knife', 'spoon', 'plate', 'bowl', 'cup' ], allowMultipleSelections: 1 }
+- A list of authors, allowing new values to be entered so that users don't have to select from the predefined options: { options: [ 'Isaac Asimov', 'Arthur C. Clarke', 'Philip K. Dick', 'Frank Herbert' ], allowNewValues: 1 }";
+		}
+		return $descriptionAndExamples;
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -54,6 +85,32 @@ class formulizeAutocompleteElementHandler extends formulizeSelectElementHandler 
 
 	function create() {
 		return new formulizeAutocompleteElement();
+	}
+
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
+		list($ele_value, $ele_uitext) = formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIOptions($options, $elementIdentifier);
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($options['allowMultipleSelections']) ? $options['allowMultipleSelections'] : 0;
+		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW] = isset($options['allowNewValues']) ? $options['allowNewValues'] : 0;
+		return [
+			'ele_value' => $ele_value,
+			'ele_uitext' => $ele_uitext
+		];
+	}
+
+	protected function getDefaultEleValue() {
+		$ele_value = array();
+		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
+		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 1; // a 1/0 indicating if this is an autocomplete box
+		$ele_value[ELE_VALUE_SELECT_RESTRICTSELECTION] = 0; // 0/1/2/3 indicating restrictions on how many times an option can be picked. 0 - no limit, 1 - only once, 2 - once per user, 3 - once per group
+		return $ele_value;
 	}
 
 }
