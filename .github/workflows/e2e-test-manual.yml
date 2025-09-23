@@ -1,0 +1,113 @@
+name: Manual E2E Test Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test against'
+        required: true
+        default: 'master'
+        type: string
+      skip_docker_build:
+        description: 'Skip Docker rebuild (use existing containers)'
+        required: false
+        default: false
+        type: boolean
+      test_filter:
+        description: 'Run specific tests (optional - use Playwright test filters)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+
+jobs:
+  manual-e2e-test-run:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.branch }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Set file/directory permissions
+      run: |
+        chmod 777 trust uploads modules templates_c cache mainfile.php ~/work/formulize/formulize
+
+    - name: Stop existing containers (if any)
+      run: |
+        docker compose down --remove-orphans || true
+
+    - name: Run Docker Compose up
+      run: |
+        if [ "${{ inputs.skip_docker_build }}" == "false" ]; then
+          echo "Building and starting containers..."
+          docker compose up -d --build
+        else
+          echo "Starting existing containers..."
+          docker compose up -d
+        fi
+
+    - name: Wait for MySQL
+      uses: smurfpandey/wait-for-it@main
+      with:
+        host: localhost
+        port: 3306
+        timeout: 60
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: tests/e2e
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+      working-directory: tests/e2e
+
+    - name: Run Playwright tests
+      run: |
+        if [ -n "${{ inputs.test_filter }}" ]; then
+          echo "Running filtered tests: ${{ inputs.test_filter }}"
+          npx playwright test ${{ inputs.test_filter }}
+        else
+          echo "Running all tests"
+          npx playwright test
+        fi
+      working-directory: tests/e2e
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report-${{ inputs.branch }}-${{ github.run_number }}
+        path: tests/e2e/test-report/
+        retention-days: 30
+
+    - name: Clean up containers
+      if: always()
+      run: |
+        docker compose down --remove-orphans
+
+    - name: Summary
+      if: always()
+      run: |
+        echo "## 🧪 E2E Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Skip Docker Build:** ${{ inputs.skip_docker_build }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Filter:** ${{ inputs.test_filter || 'All tests' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ **Result:** Tests completed successfully" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Result:** Tests failed or were cancelled" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "[View detailed report in artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
