@@ -94,9 +94,10 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * Options are the contents of the ele_value property on the object
 	 * @param array $options The options to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIOptions($options) {
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
 		foreach($options as $key => $value) {
 			// accept any string that starts and ends with {} as is, otherwise strings must be in YYYY-MM-DD format
 			// integers are not valid for date elements
