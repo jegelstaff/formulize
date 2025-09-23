@@ -77,10 +77,10 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * Options are the contents of the ele_value property on the object
-	 * @param array $options The options to validate
-	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too. Can include a special key for upsertParams if there are special values we need to send to the upsert method, rather than just properties to assign to the element object.
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIOptions($options) {
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
 		if(!$elementObject = _getElementObject($options['source_element'])) {
 			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
 		}
