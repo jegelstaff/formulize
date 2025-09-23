@@ -173,9 +173,10 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * Options are the contents of the ele_value property on the object
 	 * @param array $options The options to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIOptions($options) {
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
 		$validOptions = array();
 		$uiText = array();
 		if(isset($options['options'])) {
@@ -192,6 +193,12 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 		}
 		$ele_value = $this->getDefaultEleValue();
 		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $validOptions;
+		if(isset($options['updateExistingEntriesToMatchTheseOptions']) AND $options['updateExistingEntriesToMatchTheseOptions'] == 1 AND $elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+			$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+			if(!$changeResult = $data_handler->changeUserSubmittedValues($elementObject, $ele_value[ELE_VALUE_SELECT_OPTIONS])) {
+				throw new Exception("Could not change existing user submitted values to match the new options, for element '".$elementObject->getVar('ele_caption')."' (id: ".$elementObject->getVar('ele_id').")");
+			}
+		}
 		return [
 			'ele_value' => $ele_value,
 			'ele_uitext' => $uiText
