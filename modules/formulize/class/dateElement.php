@@ -61,14 +61,14 @@ class formulizeDateElement extends formulizeElement {
 		return
 "Element: Date Selector (date).
 Properties:
-- defaultvalue (date, the default date value for the date selector in YYYY-MM-DD format. Can also be {TODAY} to default to the current date, or a relative date like {TODAY+7} or {TODAY-30}. Leave blank for no default date.)
-- mindate (date, optional, the minimum date that can be selected in YYYY-MM-DD format)
-- maxdate (date, optional, the maximum date that can be selected in YYYY-MM-DD format)
+- defaultDate (date, the default date value for the date selector in YYYY-MM-DD format. Can also be {TODAY} to default to the current date, or a relative date like {TODAY+7} or {TODAY-30}. Leave blank for no default date.)
+- minDate (date, optional, the minimum date that can be selected in YYYY-MM-DD format)
+- maxDate (date, optional, the maximum date that can be selected in YYYY-MM-DD format)
 Examples:
-- A date selector that defaults to the current date: { defaultvalue: \"{TODAY}\" }
-- A date selector that defaults to May 9, 1969: { defaultvalue: \"1969-05-09\" }
-- A date selector with a minimum date: { mindate: \"2020-01-01\" }
-- A date selector with a maximum date: { maxdate: \"2020-12-31\" }
+- A date selector that defaults to the current date: { defaultDate: \"{TODAY}\" }
+- A date selector that defaults to May 9, 1969: { defaultDate: \"1969-05-09\" }
+- A date selector with a minimum date: { minDate: \"2020-01-01\" }
+- A date selector with a maximum date: { maxDate: \"2020-12-31\" }
 - A date selector that defaults to 7 days from today, with a minimum date of today and a maximum date of 30 days from today: { defaultvalue: \"{TODAY+7}\", mindate: \"{TODAY}\", maxdate: \"{TODAY+30}\" }";
 	}
 }
@@ -110,9 +110,9 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		}
 		return [
 			'ele_value' => [
-				ELE_VALUE_DATE_DEFAULT => isset($options['defaultvalue']) ? $options['defaultvalue'] : '',
-				ELE_VALUE_DATE_MIN => isset($options['mindate']) ? $options['mindate'] : '',
-				ELE_VALUE_DATE_MAX => isset($options['maxdate']) ? $options['maxdate'] : ''
+				ELE_VALUE_DATE_DEFAULT => isset($options['defaultDate']) ? $options['defaultDate'] : '',
+				ELE_VALUE_DATE_MIN => isset($options['minDate']) ? $options['minDate'] : '',
+				ELE_VALUE_DATE_MAX => isset($options['maxDate']) ? $options['maxDate'] : ''
 			]
 		];
 	}
