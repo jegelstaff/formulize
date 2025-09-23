@@ -1607,8 +1607,8 @@ function patch40() {
 								// check if all the visible elements in the row are disabled
 								// ele_value[1] is the visible elements, comma separated string
 								// ele_value[disabledelements] is the disabled elements, comma separated string
-								$visibleElements = explode(',',$ele_value[1]);
-								$disabledElements = explode(',',$ele_value['disabledelements']);
+								$visibleElements = isset($ele_value[1]) ? explode(',',$ele_value[1]) : [];
+								$disabledElements = (isset($ele_value['disabledelements']) AND is_string($ele_value['disabledelements'])) ? explode(',',$ele_value['disabledelements']) : ((isset($ele_value['disabledelements']) AND is_array($ele_value['disabledelements'])) ? $ele_value['disabledelements'] : []);
 								if(count(array_intersect($visibleElements, $disabledElements)) == count($visibleElements)) {
 									$newType = 'subformListings'; // all visible elements are disabled, so it's subformListings
 								} else {
@@ -1634,7 +1634,7 @@ function patch40() {
 							$baseType = (!$baseType AND isset($ele_value[0]) AND ($ele_value[0] != 1 OR $ele_value[1] == 1)) ? 'listbox' : $baseType;
 							$baseType = !$baseType ? 'select' : $baseType;
 							$subType = (is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) ? 'Linked' : $subType;
-							$subType = (!$subType AND is_array($ele_value[2]) AND isset($ele_value[2][0]) AND ($ele_value[2][0] == "{USERNAMES}" OR $ele_value[2][0] == "{FULLNAMES}")) ? 'Users' : $subType;
+							$subType = (!$subType AND is_array($ele_value[2]) AND (isset($ele_value[2]["{USERNAMES}"]) OR isset($ele_value[2]["{FULLNAMES}"]))) ? 'Users' : $subType;
 							$newType = $baseType.$subType;
 							// only do the update if the type is actually changing
 							if($newType != 'select') {
@@ -1676,7 +1676,7 @@ function patch40() {
 					// we presumably will never do any conversions ever again, so this one time, convert numbers-only textboxes to number type, if there are no number types already in the DB
 					// if someone had no elements to convert, but did have numbers-only textboxes, they will simply never benefit from this conversion. But we simply can't know in the future if a numbers-only textbox ought to be converted, because maybe they did that on purpose instead of making a number one.
 					// but this one time if we've done conversion operations, we'll try for the number boxes, and then in the future leave text boxes alone, ie: this step will not run
-					$checkForNumberSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'number')";
+					$checkForNumberSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'number'";
 					if($res = $xoopsDB->queryF($checkForNumberSQL)) {
 						$array = $xoopsDB->fetchArray($res);
 						if($array['count'] == 0) {
@@ -1684,7 +1684,7 @@ function patch40() {
 							if($res = $xoopsDB->queryF($checkForTextboxesSQL)) {
 								while($array = $xoopsDB->fetchArray($res)) {
 									$ele_value = unserialize($array['ele_value']);
-									if($ele_value[3] == 1 AND ($ele_value[2] == '' OR is_numeric($ele_value[2]))) { // numbers only, and has an empty or numeric default value
+									if(isset($ele_value[3]) AND $ele_value[3] == 1 AND (!isset($ele_value[2]) OR $ele_value[2] == '' OR is_numeric($ele_value[2]))) { // numbers only, and has an empty or numeric default value
 										$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "number" WHERE ele_id = '.intval($array['ele_id']);
 										if(!$xoopsDB->queryF($sql)) {
 											print "Error: could not convert numbers-only textboxes to number type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
@@ -1831,7 +1831,7 @@ function need81ElementTypeConversion() {
  */
 function pre81SubformElementTypeInDB() {
 	global $xoopsDB;
-	$checkForSubformSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'subform')";
+	$checkForSubformSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'subform'";
 	if($res = $xoopsDB->queryF($checkForSubformSQL)) {
 		$array = $xoopsDB->fetchArray($res);
 		if($array['count'] > 0) {

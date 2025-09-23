@@ -100,14 +100,14 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
-		
+
 		if(!$element) {
 			$fid = intval($_GET['fid']);
 			$ele_id = 'new';
 			// 0 is the form we're linking to, don't know it yet
 			// 1 is the elements to show in the subform, none yet
-			$ele_value[2] = 0; // show no entries by default, otherwise it's a number of blanks to show 
-			$ele_value[3] = 1; // open new entries full form by default 
+			$ele_value[2] = 0; // show no entries by default, otherwise it's a number of blanks to show
+			$ele_value[3] = 1; // open new entries full form by default
 			$ele_value[4] = 0; // use column headings. 1 means use captions
 			$ele_value[5] = 0; // active user will be owner (1 means mainform entry owner will be owner)
 			$ele_value[6] = 'subform'; // showing add entries UI requires permission in subform. 'parent' means requires permission in the main form. 'hideaddentries' means don't show Add entry UI.
@@ -120,7 +120,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value['show_delete_button'] = 1;
 			$ele_value['show_clone_button'] = 0;
 			$ele_value['enforceFilterChanges'] = 1;
-			$ele_value['disabledelements'] = []; // no disabled elements by default
+			$ele_value['disabledelements'] = ''; // no disabled elements by default
 			$ele_value['display_screen'] = 0; // use default screen
 			$ele_value['SortingElement'] = 0; // entry id of element to sort by
 			$ele_value['SortingDirection'] = 'ASC'; // ASC or DESC
@@ -206,7 +206,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$dataToSendToTemplate['fullFormOption2'] = str_replace('subform', $subformObject->getSingular(),_AM_ELE_SUBFORM_UITYPE_FLATFORM);
 			$dataToSendToTemplate['subformSingular'] = $subformObject->getSingular();
 			$dataToSendToTemplate['subformPlural'] = $subformObject->getPlural();
-		} 
+		}
 
 		// setup the UI for the subform conditions filter
 		$dataToSendToTemplate['subformfilter'] = formulize_createFilterUI($ele_value[7], "subformfilter", $ele_value[0], "form-2");
@@ -225,11 +225,11 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
 		$changed = false;
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			
+
 			// force row unless it's subformFullForm then we'll take whatever the user sent from UI
 			if($element->getVar('ele_type') != 'subformFullForm') {
 				$ele_value[8] = 'row';
-			} 
+			}
 
 			if(!isset($ele_value['show_delete_button'])) {
 					$ele_value['show_delete_button'] = 0;
@@ -266,14 +266,14 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 
 			}
 			$ele_value[1] = implode(",",(array)$_POST['elements_ele_value_1']);
-			$ele_value['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
+			$ele_value['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : '';
 			list($ele_value[7], $changed) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
-			
+
 			// check if display_screen changed
 			$curEleValue = $element->getVar('ele_value');
 			if(isset($curEleValue['display_screen']) AND $curEleValue['display_screen'] != $ele_value['display_screen']) {
 				$changed = true;
-			} 
+			}
 
 			$element->setVar('ele_value', $ele_value);
 		}
@@ -311,7 +311,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=null, $owner=null) {
-			
+
 		$thissfid = $ele_value[0];
 		if(!$thissfid) { return false; } // can't display non-specified subforms!
 
@@ -327,7 +327,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$newLinkResults = checkForLinks($GLOBALS['formulize_inlineSubformFrid'], array($fid), $fid, array($fid=>array($entry_id)), true); // final true means only include entries from unified display linkages
 			$sub_entries = $newLinkResults['sub_entries'];
 		}
-				
+
 		$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $caption, ($ele_value[1] ? explode(",", $ele_value[1]) : ""), $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], getEntryOwner($entry_id, $fid), $ele_value[6], $ele_value[7], $element->getVar('ele_id'), $ele_value[8], $ele_value[9], $element); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
 		if(!isset($subUICols['single'])) {
 			return new XoopsFormLabel($subUICols['c1'], $subUICols['c2'], $markupName);
