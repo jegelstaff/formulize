@@ -30,6 +30,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/baseClassForLists.php";
 
 // constants for the keys in ele_value
 define('ELE_VALUE_SELECT_NUMROWS', 0); // number of rows in list box, set 1 when multiple is disabled or when autocomplete, or when dropdown list
@@ -57,7 +58,7 @@ define('ELE_VALUE_SELECT_LINK_ALLOWSELFREF', 'selfreference'); // 0/1 indicating
 define('ELE_VALUE_SELECT_LINK_LIMITBYELEMENT', 'optionsLimitByElement'); // element ID of an element in another form which should be used to limit the options, by restricting them to options matching the values chosen in that other element (the specific entry is isolated using the optionsLimitByElementFilter conditions)
 define('ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER', 'optionsLimitByElementFilter'); // filter conditions to apply to isolate a sepecific entry in the form that has the element specified in optionsLimitByElement. The value of that element in the specific entry, will be used to limit the linked options.
 define('ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS', 'linkedSourceMappings'); // mapping info showing which elements in this form should be used to populate which elements in the source form, when an autocomplete creates new values
-class formulizeSelectElement extends formulizeElement {
+class formulizeSelectElement extends formulizeBaseClassForListsElement {
 
 	var $defaultValueKey;
 
@@ -78,24 +79,27 @@ class formulizeSelectElement extends formulizeElement {
 	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
 	 * Concerned with the options for the ele_value property of the element object
 	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
-	public static function mcpElementPropertiesDescriptionAndExamples() {
-		return
-"Element: Dropdown List (select).
-Properties:
-- options (array, list of options for the dropdown, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
-- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)
-- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)
-- updateExistingEntriesToMatchTheseOptions (optional, a 1/0 indicating if existing entries should be updated to match the new options. Default is 0. Set this to 1 when an element has existing options that are being changed. When set to 1, everywhere in the database where the old first option was selected, will change to having the new first option selected, and everywhere the old second option was selected will change to the new second option, etc. This is useful when correcting typos, or making refinements, such as an element with options 'S', 'M', 'L' that is changing to 'Small', 'Medium', 'Large'. Sometimes changes to options are just reordering the existing options, or adding new options, or removing removing options, and in those cases this setting should be unspecified or set to 0.)
-Examples:
-- A dropdown list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
-- A dropdown list of toppings for pizza, with 'pepperoni' and 'mushrooms' selected by default: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ], selectedByDefault: [ 'pepperoni', 'mushrooms' ] }
-- A dropdown list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
-- A dropdown list of movies, with 'Children of Men' selected by default: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ], selectedByDefault: [ 'Children of Men' ] }
-- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'CA|California', 'DE|Delaware', 'HI|Hawaii', 'ME|Maine', 'NY|New York', 'VT|Vermont' ] }
-- A dropdown list of automobile makes where the value stored in the database is a distinct code, but the user sees the full make name: { options: [ 'Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW' ], databaseValues: [ 'TYT', 'HND', 'FRD', 'CHE', 'NIS', 'BMW' ] }
-- A dropdown list which previously had the options 'No', 'Maybe', 'Yes', and is now being updated with new options, that should replace the old options everywhere people have filled in the form already: { options: [ 'Never', 'Sometimes', 'Always' ], updateExistingEntriesToMatchTheseOptions: 1 }";
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		$descriptionAndExamples = "
+Element: Dropdown List (select)
+Description: A dropdown list of options where the user can select one choice. Dropdown lists are best used when there are a moderate number of options (generally between 5 and 20) and you want to save space on the form. For a small number of options, use Radio Buttons instead, and for a large number of options use an Autocomplete List.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples";
+		}
+		return $descriptionAndExamples;
 	}
 
 	/**
@@ -137,7 +141,7 @@ Examples:
 }
 
 #[AllowDynamicProperties]
-class formulizeSelectElementHandler extends formulizeElementsHandler {
+class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHandler {
 
 	var $db;
 	var $clickable; // used in formatDataForList
@@ -150,59 +154,6 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 
 	function create() {
 		return new formulizeSelectElement();
-	}
-
-	/**
-	 * Takes an array of properties for an element Object and fills it out, validates, so it is complete
-	 * If an element should set any default values for properties more specific to it, do that here
-	 * Must return through the parent method so that the rest of the more basic properties are set correctly
-	 * In most cases, ele_value property will already have been sorted out because it came from a public source and went through validateEleValuePublicAPIOptions already
-	 * @param array $properties The properties for an element object
-	 * @return array The properties to apply to the element object
-	 */
-	public function setupAndValidateElementProperties($properties) {
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
-		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimiter'];
-		return parent::setupAndValidateElementProperties($properties);
-	}
-
-	/**
-	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
-	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
-	 * Options are the contents of the ele_value property on the object
-	 * @param array $options The options to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
-	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
-	 */
-	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
-		$validOptions = array();
-		$uiText = array();
-		if(isset($options['options'])) {
-			foreach($options['options'] as $i => $value) {
-				if(is_string($value) OR is_numeric($value)) {
-					if(isset($options['databaseValues']) AND is_array($options['databaseValues']) AND isset($options['databaseValues'][$i]) AND strlen($options['databaseValues'][$i])) {
-						$uiText[$options['databaseValues'][$i]] = $value;
-						$validOptions[$options['databaseValues'][$i]] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
-					} else {
-						$validOptions[$value] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
-					}
-				}
-			}
-		}
-		$ele_value = $this->getDefaultEleValue();
-		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $validOptions;
-		if(isset($options['updateExistingEntriesToMatchTheseOptions']) AND $options['updateExistingEntriesToMatchTheseOptions'] == 1 AND $elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
-			$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-			if(!$changeResult = $data_handler->changeUserSubmittedValues($elementObject, $ele_value[ELE_VALUE_SELECT_OPTIONS])) {
-				throw new Exception("Could not change existing user submitted values to match the new options, for element '".$elementObject->getVar('ele_caption')."' (id: ".$elementObject->getVar('ele_id').")");
-			}
-		}
-		return [
-			'ele_value' => $ele_value,
-			'ele_uitext' => $uiText
-		];
 	}
 
 	protected function getDefaultEleValue() {

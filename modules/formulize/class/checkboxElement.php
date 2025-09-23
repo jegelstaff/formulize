@@ -32,39 +32,68 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/baseClassForLists.php";
 
-class formulizeCheckboxElement extends formulizeElement {
+class formulizeCheckboxElement extends formulizeBaseClassForListsElement {
 
-    function __construct() {
-        $this->name = "Checkboxes";
-        $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-        $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-        $this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
-        $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        $this->canHaveMultipleValues = true;
-        $this->hasMultipleOptions = true;
-				$this->isLinked = false; // set to true if this element can have linked values
-        parent::__construct();
-    }
+	function __construct() {
+			$this->name = "Checkboxes";
+			$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
+			$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
+			$this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+			$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
+			$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+			$this->canHaveMultipleValues = true;
+			$this->hasMultipleOptions = true;
+			$this->isLinked = false; // set to true if this element can have linked values
+			parent::__construct();
+	}
 
-    // returns true if the option is one of the values the user can choose from in this element
-		// does not support linked values!!
-    function optionIsValid($option) {
-        $ele_value = $this->getVar('ele_value');
-        $option = is_array($option) ? $option : array($option);
-        foreach($option as $thisOption) {
-            if(!isset($ele_value[2][$thisOption]) AND !in_array($thisOption, $this->getVar('ele_uitext'))) {
-                return false;
-            }
-        }
-        return true;
-    }
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		$descriptionAndExamples = "
+Element: Checkboxes (checkbox)
+Description: A series of boxes that the user can check to select one or more options. Checkboxes are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box. For a single choice, use Radio Buttons instead, and for a large number of options use an Autocomplete List with multiple selections allowed.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples
+- A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }";
+		}
+		return $descriptionAndExamples;
+	}
+
+	// returns true if the option is one of the values the user can choose from in this element
+	// does not support linked values!!
+	function optionIsValid($option) {
+			$ele_value = $this->getVar('ele_value');
+			$option = is_array($option) ? $option : array($option);
+			foreach($option as $thisOption) {
+					if(!isset($ele_value[2][$thisOption]) AND !in_array($thisOption, $this->getVar('ele_uitext'))) {
+							return false;
+					}
+			}
+			return true;
+	}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeCheckboxElementHandler extends formulizeElementsHandler {
+class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementHandler {
 
     var $db;
     var $clickable; // used in formatDataForList
@@ -79,11 +108,17 @@ class formulizeCheckboxElementHandler extends formulizeElementsHandler {
         return new formulizeCheckboxElement();
     }
 
+		protected function getDefaultEleValue() {
+			$ele_value = array();
+			return $ele_value;
+		}
+
+
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
-	function adminPrepare($element) {
+		function adminPrepare($element) {
         $dataToSendToTemplate = array();
         if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 					$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
