@@ -85,9 +85,12 @@ class formulizeSelectElement extends formulizeElement {
 "Element: Dropdown List (select).
 Properties:
 - options (array, list of options for the dropdown, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
+- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users)
 Examples:
 - A dropdown list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
+- A dropdown list of toppings for pizza, with 'pepperoni' and 'mushrooms' selected by default: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ], selectedByDefault: [ 'pepperoni', 'mushrooms' ] }
 - A dropdown list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
+- A dropdown list of movies, with 'Children of Men' selected by default: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ], selectedByDefault: [ 'Children of Men' ] }
 - A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'CA|California', 'DE|Delaware', 'HI|Hawaii', 'ME|Maine', 'NY|New York', 'VT|Vermont' ] }";
 	}
 
@@ -169,12 +172,15 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIOptions($options) {
-		foreach($options as $key => $value) {
-			if(!is_string($value) AND !is_numeric($value)) {
-				unset($options[$key]);
+		$validOptions = array();
+		if(isset($options['options'])) {
+			foreach($options['options'] as $key => $value) {
+				if(is_string($value) OR is_numeric($value)) {
+					$validOptions[$value] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
+				}
 			}
 		}
-		list($ele_value, $ele_uitext) = formulize_extractUIText($options);
+		list($ele_value, $ele_uitext) = formulize_extractUIText($validOptions);
 		return [
 			'ele_value' => is_array($ele_value) ? $ele_value : [],
 			'ele_uitext' => $ele_uitext
