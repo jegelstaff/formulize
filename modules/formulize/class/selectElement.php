@@ -32,7 +32,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 // constants for the keys in ele_value
-define('ELE_VALUE_SELECT_NUMROWS', 0); // number of rows in list box, set 1 when multiple is disabled or when autocomplete
+define('ELE_VALUE_SELECT_NUMROWS', 0); // number of rows in list box, set 1 when multiple is disabled or when autocomplete, or when dropdown list
 define('ELE_VALUE_SELECT_MULTIPLE', 1); // set to 1 if multiple selections allowed in listbox or autocomplete
 define('ELE_VALUE_SELECT_OPTIONS', 2); // array of options for the select element, or if a user list its an array with first key {USERNAMES}, or if linked then its a string in format "formid#*=:*elementhandle" (a number and a string, separated by #*=:*)
 define('ELE_VALUE_SELECT_LINK_LIMITGROUPS', 3); // a comma separated list of group IDs used to limit the users in a user list, or the options in a linked list based on group ownership of linked form entries
@@ -180,11 +180,22 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 				}
 			}
 		}
-		list($ele_value, $ele_uitext) = formulize_extractUIText($validOptions);
+		list($validOptions, $ele_uitext) = formulize_extractUIText($validOptions);
+		$ele_value = $this->getDefaultEleValue();
+		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $validOptions;
 		return [
-			'ele_value' => is_array($ele_value) ? $ele_value : [],
+			'ele_value' => $ele_value,
 			'ele_uitext' => $ele_uitext
 		];
+	}
+
+	protected function getDefaultEleValue() {
+		$ele_value = array();
+		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // number of rows in list box, set 1 when multiple is disabled or when autocomplete
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // set to 1 if multiple selections allowed in listbox or autocomplete
+		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0; // a 1/0 indicating if this is an autocomplete box
+		$ele_value[ELE_VALUE_SELECT_RESTRICTSELECTION] = 0; // 0/1/2/3 indicating restrictions on how many times an option can be picked. 0 - no limit, 1 - only once, 2 - once per user, 3 - once per group
+		return $ele_value;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
