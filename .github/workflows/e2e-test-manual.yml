@@ -36,6 +36,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 20
+        cache: 'npm'
+        cache-dependency-path: tests/e2e/package-lock.json
 
     - name: Set file/directory permissions
       run: |
@@ -67,7 +69,7 @@ jobs:
       working-directory: tests/e2e
 
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
+      run: npx playwright install firefox --with-deps
       working-directory: tests/e2e
 
     - name: Run Playwright tests
@@ -80,14 +82,6 @@ jobs:
           npx playwright test
         fi
       working-directory: tests/e2e
-
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report-${{ inputs.branch }}-${{ github.run_number }}
-        path: tests/e2e/test-report/
-        retention-days: 30
 
     - name: Clean up containers
       if: always()
@@ -105,6 +99,12 @@ jobs:
         echo "**Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ **Result:** Tests completed successfully" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Result:** Tests failed or were cancelled" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "[View detailed report in artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
           echo "✅ **Result:** Tests completed successfully" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ **Result:** Tests failed or were cancelled" >> $GITHUB_STEP_SUMMARY
