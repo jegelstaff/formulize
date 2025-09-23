@@ -73,6 +73,9 @@ jobs:
       working-directory: tests/e2e
 
     - name: Run Playwright tests
+      env:
+        E2E_TEST_ADMIN_USERNAME: "admin"
+        E2E_TEST_ADMIN_PASSWORD: "password"
       run: |
         if [ -n "${{ inputs.test_filter }}" ]; then
           echo "Running filtered tests: ${{ inputs.test_filter }}"
