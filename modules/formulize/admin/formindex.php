@@ -687,7 +687,6 @@ function patch40() {
 						}
 				}
 
-
 				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
 				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
 				$viewFormAssigned = false;
@@ -1606,15 +1605,14 @@ function patch40() {
 								$newType = 'subformFullForm';
 							} else {
 								// check if all the visible elements in the row are disabled
-								// ele_value[1] is the array of visible elements
-								// ele_value[disabledelements] is the array of disabled elements
+								// ele_value[1] is the visible elements, comma separated string
+								// ele_value[disabledelements] is the disabled elements, comma separated string
 								$visibleElements = explode(',',$ele_value[1]);
 								$disabledElements = explode(',',$ele_value['disabledelements']);
 								if(count(array_intersect($visibleElements, $disabledElements)) == count($visibleElements)) {
-									// all visible elements are disabled, so it's subformListings, otherwise it's subformEditableRow
-									$newType = 'subformListings';
+									$newType = 'subformListings'; // all visible elements are disabled, so it's subformListings
 								} else {
-									$newType = 'subformEditableRow';
+									$newType = 'subformEditableRow'; // otherwise it's subformEditableRow
 								}
 							}
 							$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "'.$newType.'" WHERE ele_id = '.intval($array['ele_id']);
@@ -1633,10 +1631,10 @@ function patch40() {
 							$subType = '';
 							$ele_value = unserialize($array['ele_value']);
 							$baseType = (isset($ele_value[8]) AND $ele_value[8] == 1) ? 'autocomplete' : $baseType;
-							$baseType = (!$baseType AND isset($ele_value[0]) AND $ele_value[0] != 1) ? 'listbox' : $baseType;
+							$baseType = (!$baseType AND isset($ele_value[0]) AND ($ele_value[0] != 1 OR $ele_value[1] == 1)) ? 'listbox' : $baseType;
 							$baseType = !$baseType ? 'select' : $baseType;
 							$subType = (is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) ? 'Linked' : $subType;
-							$subType = (!$subType AND is_array($ele_value[2]) AND ($ele_value[2][0] == "{USERNAMES}" OR $ele_value[2][0] == "{FULLNAMES}")) ? 'Users' : $subType;
+							$subType = (!$subType AND is_array($ele_value[2]) AND isset($ele_value[2][0]) AND ($ele_value[2][0] == "{USERNAMES}" OR $ele_value[2][0] == "{FULLNAMES}")) ? 'Users' : $subType;
 							$newType = $baseType.$subType;
 							// only do the update if the type is actually changing
 							if($newType != 'select') {
