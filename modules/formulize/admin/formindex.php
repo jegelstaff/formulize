@@ -114,7 +114,7 @@ function patch40() {
 		// we need to convert code if the custom_code folder exists, or if there is no code in the 'code' folder, but we have elements, forms, or screens that have code in them in the DB
 		$needToConvertDBCodeToCodeFolder = file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
 
-    if (!$needsPatch AND primaryRelationshipExists() AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
+    if (!$needsPatch AND primaryRelationshipExists() AND !need81ElementTypeConversion() AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
         return false;
     }
 
@@ -1592,41 +1592,111 @@ function patch40() {
 				}
 
 				// convert all element types for version 8.1
-				// convert linked checkboxes from checkbox type to checkboxLinked
-				$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxLinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
-				if(!$xoopsDB->queryF($sql)) {
-					print "Error: could not convert linked checkboxes to checkboxLinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+				// need81ElementTypeConversion() caches first result from operations on this page load, so it will still return false, if we need to do conversions, even after some conversions have happened
+				// but after all conversions have happened, on subsequent pageloads, it will return false all the time
+				// if there are no 8.1 element types in the DB, then there will be more onerous checking going on until an 8.1 type is created by the webmaster
+				$didAnyConversions = false;
+				if(need81ElementTypeConversion() AND pre81SubformElementTypeInDB()) {
+					$checkForSubformSQL = "SELECT ele_id, ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'subform'";
+					if($res = $xoopsDB->queryF($checkForSubformSQL)) {
+						while($array = $xoopsDB->fetchArray($res)) {
+							$newType = '';
+							$ele_value = unserialize($array['ele_value']);
+							if($ele_value[8] != 'row' AND $ele_value[8] != '') { // not a row type so it's subformFullForm
+								$newType = 'subformFullForm';
+							} else {
+								// check if all the visible elements in the row are disabled
+								// ele_value[1] is the array of visible elements
+								// ele_value[disabledelements] is the array of disabled elements
+								$visibleElements = explode(',',$ele_value[1]);
+								$disabledElements = explode(',',$ele_value['disabledelements']);
+								if(count(array_intersect($visibleElements, $disabledElements)) == count($visibleElements)) {
+									// all visible elements are disabled, so it's subformListings, otherwise it's subformEditableRow
+									$newType = 'subformListings';
+								} else {
+									$newType = 'subformEditableRow';
+								}
+							}
+							$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "'.$newType.'" WHERE ele_id = '.intval($array['ele_id']);
+							if(!$xoopsDB->queryF($sql)) {
+								print "ERROR: could not convert subform element to $newType type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+							}
+							$didAnyConversions = true;
+						}
+					}
 				}
-				// AND AND AND AND convert select to all the select types!!!!
-				/*
-				new number element type for numbers only textboxes (previously text)
-					convert elements that only have a numeric default?
+				if(need81ElementTypeConversion() AND pre81SelectElementTypeInDB()) {
+					$checkForSelectSQL = "SELECT ele_id, ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'select'";
+					if($res = $xoopsDB->queryF($checkForSelectSQL)) {
+						while($array = $xoopsDB->fetchArray($res)) {
+							$baseType = '';
+							$subType = '';
+							$ele_value = unserialize($array['ele_value']);
+							$baseType = (isset($ele_value[8]) AND $ele_value[8] == 1) ? 'autocomplete' : $baseType;
+							$baseType = (!$baseType AND isset($ele_value[0]) AND $ele_value[0] != 1) ? 'listbox' : $baseType;
+							$baseType = !$baseType ? 'select' : $baseType;
+							$subType = (is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) ? 'Linked' : $subType;
+							$subType = (!$subType AND is_array($ele_value[2]) AND ($ele_value[2][0] == "{USERNAMES}" OR $ele_value[2][0] == "{FULLNAMES}")) ? 'Users' : $subType;
+							$newType = $baseType.$subType;
+							// only do the update if the type is actually changing
+							if($newType != 'select') {
+								$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "'.$newType.'" WHERE ele_id = '.intval($array['ele_id']);
+								if(!$xoopsDB->queryF($sql)) {
+									print "ERROR: could not convert select element to $newType type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+								}
+								$didAnyConversions = true;
+							}
+						}
+					}
+				}
+				if(need81ElementTypeConversion() AND pre81CheckboxElementTypeInDB()) {
+					// convert linked checkboxes from checkbox type to checkboxLinked
+					$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "checkboxLinked" WHERE ele_type = "checkbox" AND ele_value LIKE "%#*=:*%"';
+					if(!$xoopsDB->queryF($sql)) {
+						print "ERROR: could not convert linked checkboxes to checkboxLinked type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+					}
+					$didAnyConversions = true;
+				}
+				if(need81ElementTypeConversion() AND pre81ProvinceListElementTypeInDB()) {
+					// convert provinceList elements with radio UI from provinceList to provinceRadio
+					$checkForProvinceRadioSQL = "SELECT ele_id, ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'provinceList'";
+					if($res = $xoopsDB->queryF($checkForProvinceRadioSQL)) {
+						while($array = $xoopsDB->fetchArray($res)) {
+							$ele_value = unserialize($array['ele_value']);
+							if($ele_value[1] == 1) { // using Radio UI
+								$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "provinceRadio" WHERE ele_id = '.intval($array['ele_id']);
+								if(!$xoopsDB->queryF($sql)) {
+									print "ERROR: could not convert provinceList elements to provinceRadio type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+								}
+								$didAnyConversions = true;
+							}
+						}
+					}
+				}
 
-				select becomes:
-					select
-					selectLinked
-					selectUsers
-					listbox
-					listboxLinked
-					listboxUsers
-					autocomplete
-					autocompleteLinked
-					autocompleteUsers
-
-				checkbox becomes
-					checkbox
-					checkboxLinked
-					
-				provinceList becomes
-					provinceList
-					provinceRadio
-
-				subform becomes
-					subformFullForm
-					subformEditableRow
-					subformListings
-
-				*/
+				if($didAnyConversions) {
+					// we presumably will never do any conversions ever again, so this one time, convert numbers-only textboxes to number type, if there are no number types already in the DB
+					// if someone had no elements to convert, but did have numbers-only textboxes, they will simply never benefit from this conversion. But we simply can't know in the future if a numbers-only textbox ought to be converted, because maybe they did that on purpose instead of making a number one.
+					// but this one time if we've done conversion operations, we'll try for the number boxes, and then in the future leave text boxes alone, ie: this step will not run
+					$checkForNumberSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'number')";
+					if($res = $xoopsDB->queryF($checkForNumberSQL)) {
+						$array = $xoopsDB->fetchArray($res);
+						if($array['count'] == 0) {
+							$checkForTextboxesSQL = "SELECT ele_id, ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'text'";
+							if($res = $xoopsDB->queryF($checkForTextboxesSQL)) {
+								while($array = $xoopsDB->fetchArray($res)) {
+									$ele_value = unserialize($array['ele_value']);
+									if($ele_value[3] == 1 AND ($ele_value[2] == '' OR is_numeric($ele_value[2]))) { // numbers only, and has an empty or numeric default value
+										$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_type = "number" WHERE ele_id = '.intval($array['ele_id']);
+										if(!$xoopsDB->queryF($sql)) {
+											print "Error: could not convert numbers-only textboxes to number type.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 
         print "DB updates completed.  result: OK";
     	}
@@ -1702,6 +1772,140 @@ function saveMenuEntryAndPermissionsSQL($formid, $appid, $i, $menuText) {
             }
         }
     }
+}
+
+/**
+ * Return true or false indicating if we need to do a conversion of element types to 8.1 standard
+ * Caches result so the answer when first run on the pageload, is the answer for the entire pageload
+ * If there are 8.1 element types in the DB, then we are boldly deciding not to bother checking anything else, on the assumption that the patch was run properly at upgrade time (or it's a new installation)
+ * If there's a subform element in the DB, then we definitely DO need to do a conversion.
+ * If there are select elements in the DB that are NOT unlinked dropdown lists, then we DO need to do a conversion.
+ * If there are provinceList elements in the DB that use radio buttons, then we DO need to do a conversion.
+ * @return bool A flag indicating if we need to do an 8.1 element type conversion
+ */
+function need81ElementTypeConversion() {
+	global $xoopsDB;
+	// cache the result from the first time we checked on this pageload
+	// this way, after there are 8.1 types in the database, that one lightweight query will happen one time only, and nothing else is ever done
+	static $needsConversion = null;
+	if($needsConversion !== null) {
+		return $needsConversion;
+	}
+	$version81ElementTypes = array(
+		'selectLinked',
+		'selectUsers',
+		'listbox',
+		'listboxLinked',
+		'listboxUsers',
+		'autocomplete',
+		'autocompleteLinked',
+		'autocompleteUsers',
+		'checkboxLinked',
+		'provinceRadio',
+		'subformFullForm',
+		'subformEditableRow',
+		'subformListings',
+		'number'
+	);
+	// any 8.1 element types in the DB means no conversion needed... assuming system is already up to date if this is the case! Saves more operations every time the admin pages load.
+	$checkFor81TypesSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type IN ('".implode("','",$version81ElementTypes)."')";
+	if($res = $xoopsDB->queryF($checkFor81TypesSQL)) {
+		$array = $xoopsDB->fetchArray($res);
+		if($array['count'] > 0) {
+			$needsConversion = false;
+		}
+	}
+	if($needsConversion !== false) {
+		// no 8.1 element types in the DB, so check if there are any pre-8.1 types that need conversion
+		$needsConversion = (
+			pre81SubformElementTypeInDB()
+			OR pre81SelectElementTypeInDB()
+			OR pre81CheckboxElementTypeInDB()
+			OR pre81ProvinceListElementTypeInDB()
+		);
+	}
+	return $needsConversion;
+}
+
+/**
+ * Check if there are any subform elements in the DB
+ * @return bool A flag indicating if there are subform elements in the DB
+ */
+function pre81SubformElementTypeInDB() {
+	global $xoopsDB;
+	$checkForSubformSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'subform')";
+	if($res = $xoopsDB->queryF($checkForSubformSQL)) {
+		$array = $xoopsDB->fetchArray($res);
+		if($array['count'] > 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Check if there are any select elements in the DB that are NOT unlinked dropdown lists
+ * @return bool A flag indicating if there are select elements in the DB that are NOT unlinked dropdown lists
+ */
+function pre81SelectElementTypeInDB() {
+	global $xoopsDB;
+	// look for select elements that are linked, or that use usernames or fullnames
+	$checkForSelectSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'select' AND (ele_value LIKE '%#*=:*%' OR ele_value LIKE '%{USERNAMES}%' OR ele_value LIKE '%{FULLNAMES}%')";
+	if($res = $xoopsDB->queryF($checkForSelectSQL)) {
+		$array = $xoopsDB->fetchArray($res);
+		if($array['count'] > 0) {
+			return true;
+		}
+	}
+	// look for select elements that are not linked and not using usernames or fullnames, get their ele_value and unpack it to check settings
+	// post 8.1 select elements are non linked dropdown lists, single line, non-multiselect, non-autocomplete
+	$checkForSelectSQL = "SELECT ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'select' AND ele_value NOT LIKE '%#*=:*%' AND ele_value NOT LIKE '%{USERNAMES}%' AND ele_value NOT LIKE '%{FULLNAMES}%'";
+	if($res = $xoopsDB->queryF($checkForSelectSQL)) {
+		while($array = $xoopsDB->fetchArray($res)) {
+			$ele_value = unserialize($array['ele_value']);
+			if($ele_value[0] != 1 OR $ele_value[1] == 1 OR $ele_value[8] == 1) { // more than one line, or multiselect, or autocomplete
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * Check if there are any checkbox elements in the DB that are linked
+ * @return bool A flag indicating if there are checkbox elements in the DB
+ */
+function pre81CheckboxElementTypeInDB() {
+	global $xoopsDB;
+	// look for checkbox elements that are linked
+	$checkForCheckboxSQL = "SELECT COUNT(*) as count FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'checkbox' AND ele_value LIKE '%#*=:*%'";
+	if($res = $xoopsDB->queryF($checkForCheckboxSQL)) {
+		$array = $xoopsDB->fetchArray($res);
+		if($array['count'] > 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Check if there are any provinceList elements in the DB that use radio buttons
+ * @return bool A flag indicating if there are provinceList elements in the DB that use radio buttons
+ */
+function pre81ProvinceListElementTypeInDB() {
+	global $xoopsDB;
+	// look for provinceList elements that use radio buttons
+	// must unpack ele_value to check UI type
+	$checkForProvinceListSQL = "SELECT ele_value FROM ".$xoopsDB->prefix("formulize")." WHERE ele_type = 'provinceList'";
+	if($res = $xoopsDB->queryF($checkForProvinceListSQL)) {
+		while($array = $xoopsDB->fetchArray($res)) {
+			$ele_value = unserialize($array['ele_value']);
+			if($ele_value[1] == 1) { // has radio button UI type so needs conversion
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 /**
