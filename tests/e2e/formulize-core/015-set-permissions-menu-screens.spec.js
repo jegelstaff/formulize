@@ -1,8 +1,18 @@
 const { test, expect } = require('@playwright/test')
-import { loginAsAdmin, saveChanges } from '../utils';
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
+import { login, saveAdminForm } from '../utils';
+
+test.use({ baseURL: E2E_TEST_BASE_URL });
+
+test.beforeEach(async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	await page.getByRole('link', { name: 'Admin' }).click();
+	await page.getByRole('link', { name: 'Home' }).click();
+	await page.getByRole('link', { name: 'Application: Museum' }).click();
+})
 
 async function setStandardPermissions(page) {
-	await page.locator('#groups').selectOption(['4', '5', '6']);
+	await page.locator('#groups').selectOption(['Ancient History', 'Modern History', 'Curators']);
 	await page.getByRole('button', { name: 'Show permissions for these' }).click();
 	await expect(page.getByRole('group', { name: 'Ancient History' }).locator('legend')).toBeVisible();
 	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('View the form').check();
@@ -20,11 +30,10 @@ async function setStandardPermissions(page) {
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Update entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Delete entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('View entries by all other').check();
-	await saveChanges(page);
 }
 
 async function setGlobalPermissions(page) {
-	await page.locator('#groups').selectOption(['4', '5', '6']);
+	await page.locator('#groups').selectOption(['Ancient History', 'Modern History', 'Curators']);
 	await page.getByRole('button', { name: 'Show permissions for these' }).click();
 	await expect(page.getByRole('group', { name: 'Ancient History' }).locator('legend')).toBeVisible();
 	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('View the form').check();
@@ -42,199 +51,249 @@ async function setGlobalPermissions(page) {
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Update entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Delete entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('View entries by all other').check();
-	await saveChanges(page);
+	await saveAdminForm(page);
 }
 
 async function setAnonPermissions(page) {
-	await page.locator('#groups').selectOption(['3']);
+	await page.locator('#groups').selectOption(['Anonymous Users']);
 	await page.getByRole('button', { name: 'Show permissions for these' }).click();
 	await expect(page.getByRole('group', { name: 'Anonymous Users' }).locator('legend')).toBeVisible();
 	await page.getByRole('group', { name: 'Anonymous Users' }).getByLabel('View the form').check();
 	await page.getByRole('group', { name: 'Anonymous Users' }).getByLabel('Create their own entries in').check();
 	await page.getByRole('group', { name: 'Anonymous Users' }).getByLabel('Update entries made by themselves').check();
-	await saveChanges(page);
+	await saveAdminForm(page);
 }
 
-test.describe('Set Permissions, Menu Entries, Screen elements, Procedures', () => {
+test.describe('Set Permissions', () => {
+	test('Set permissions for Artifacts', async ({ page }) => {
+		await page.getByText('Artifacts').first().click();
+		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		await setStandardPermissions(page);
+		await saveAdminForm(page);
+	})
 
-	test('Set Permissions on first five forms', async ({ page }) => {
+	test('Set permissions for Donors', async ({ page }) => {
+		await page.getByText('Donors').first().click();
+		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		await setStandardPermissions(page);
+		await saveAdminForm(page);
+	})
 
-		await loginAsAdmin(page);
+	test('Set permissions for Collections', async ({ page }) => {
+		await page.getByText('Collections').first().click();
+		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		await setStandardPermissions(page);
+		await saveAdminForm(page);
+	})
 
-		await page.goto('/modules/formulize/admin/ui.php?page=form&fid=1&aid=1&tab=permissions');
+	test('Set permissions for Exhibits', async ({ page }) => {
+		await page.getByText('Exhibits').first().click();
+		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await setStandardPermissions(page);
-		await page.goto('/modules/formulize/admin/ui.php?page=form&fid=2&aid=1&tab=permissions');
-		await setStandardPermissions(page);
-		await page.goto('/modules/formulize/admin/ui.php?page=form&fid=3&aid=1&tab=permissions');
-		await setStandardPermissions(page);
-		await page.goto('/modules/formulize/admin/ui.php?page=form&fid=4&aid=1&tab=permissions');
-		await setStandardPermissions(page);
-		await page.goto('/modules/formulize/admin/ui.php?page=form&fid=5&aid=1&tab=permissions');
+		await saveAdminForm(page);
+	})
+
+	test('Set permissions for Surveys', async ({ page }) => {
+		await page.getByText('Surveys').first().click();
+		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await setGlobalPermissions(page);
+		await saveAdminForm(page);
 		await setAnonPermissions(page);
+		await saveAdminForm(page);
+	})
 
-	}),
-	test('Set Anon Access to Survey Form', async ({ page }) => {
-
-		await loginAsAdmin(page);
-
-		await page.goto('/modules/formulize/admin/ui.php?page=screen&aid=1&fid=5&sid=9');
+	test('Set Anonymous permissions to Survey Form', async ({ page }) => {
+		await page.getByText('Surveys').first().click();
+		await page.locator('#form-details-box-1-5').getByRole('link', { name: 'Screens' }).first().click();
+		await page.getByRole('link', { name: 'Survey', exact: true }).click();
 	  await page.getByText('No, only permission to view').click();
-		await saveChanges(page);
+		await saveAdminForm(page);
+	})
+})
 
-	}),
-	test('Set Menu Entries', async ({ page }) => {
 
-		await loginAsAdmin(page);
+test.describe('Set Menu Entries', () => {
+	test.beforeEach(async({ page }) => {
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
+	})
 
-		await page.goto('/modules/formulize/admin/ui.php?page=application&aid=1&tab=menu%20entries');
+	test('Set Menu Entry for Artifacts', async ({ page }) => {
 	  await page.getByRole('link', { name: 'Artifacts' }).click();
-    await page.waitForTimeout(500);
-	  await page.locator('#groups0').selectOption(['1', '4', '5']);
-		await page.locator('#defaultScreenGroups0').selectOption(['1', '4', '5']);
+ 	  await page.locator('#groups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+		await page.locator('#defaultScreenGroups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+		await saveAdminForm(page);
+	})
+	test('Set Menu Entry for Donors', async ({ page }) => {
 	  await page.getByRole('link', { name: 'Donors' }).click();
-	  await page.waitForTimeout(500);
-	  await page.locator('#groups1').selectOption(['1', '4', '5']);
+ 	  await page.locator('#groups1').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+		await saveAdminForm(page);
+	})
+	test('Set Menu Entry for Collections', async ({ page }) => {
 	  await page.getByRole('link', { name: 'Collections' }).click();
-		await page.waitForTimeout(500);
-	  await page.locator('#groups2').selectOption(['1', '4', '5']);
-  	await page.getByRole('link', { name: 'Exhibits' }).click();
-		await page.waitForTimeout(500);
-	  await page.locator('#groups3').selectOption(['1', '4', '5']);
+ 	  await page.locator('#groups2').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+		await saveAdminForm(page);
+	})
+	test('Set Menu Entry for Exhibits', async ({ page }) => {
+	  await page.getByRole('link', { name: 'Exhibits' }).click();
+ 	  await page.locator('#groups3').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+		await saveAdminForm(page);
+	})
+	test('Set Menu Entry for Surveys', async ({ page }) => {
 	  await page.getByRole('link', { name: 'Surveys' }).click();
-		await page.waitForTimeout(500);
-	  await page.locator('#groups4').selectOption(['1', '4', '5']);
-		await saveChanges(page);
+ 	  await page.locator('#groups3').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
+		await saveAdminForm(page);
+	})
+})
 
-	}),
-	test('Set columns and elements for screens', async ({ page }) => {
+test.describe('Set columns and elements for screens', () => {
 
-		await loginAsAdmin(page);
-
-		// Donors form
-		await page.goto('/modules/formulize/admin/ui.php?page=screen&sid=3&fid=2&aid=1');
-		await page.waitForTimeout(500);
+	test('Artifacts form screen', async ({ page }) => {
+		await page.locator('#form-details-box-1-1').getByRole('link', { name: 'Screens' }).click();
+		await page.getByRole('link', { name: 'Artifact', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
   	await page.waitForTimeout(500);
 		await expect(page.getByText('Title for page number')).toBeVisible();
-  	await page.getByLabel('Form elements to display on').selectOption(['14', '15', '16', '17', '18', '19', '20', '21', '24', '22', '23', '25', '26']);
-  	await saveChanges(page, 'popup');
+  	await page.getByLabel('Form elements to display on').selectOption([
+			'Artifacts: ID Number',
+			'Artifacts: Short name',
+			'Artifacts: Full description',
+			'Artifacts: Dimensions',
+			'Artifacts: Height',
+			'Artifacts: Width',
+			'Artifacts: Depth',
+			'Artifacts: Date of origin',
+			'Artifacts: Year',
+			'Artifacts: Era',
+			'Artifacts: Date of acquisition',
+			'Artifacts: Donated to museum',
+			'Artifacts: Donor',
+			'Artifacts: Condition',
+			'Artifacts: Collections'
+		]);
+  	await saveAdminForm(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
-  	await page.getByRole('link', { name: 'Donors' }).click();
-  	await page.getByRole('link', { name: 'Donors' }).click();
+  	await page.getByRole('link', { name: 'Artifacts' }).click();
+  	await page.getByRole('link', { name: 'Artifacts' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.locator('#cols-0').selectOption('donors_name');
-  	await page.locator('#cols-1').selectOption('donors_phone');
-  	await page.locator('#cols-2').selectOption('donors_email');
-		await saveChanges(page);
+  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 3 });
+		await page.locator('#cols-0').selectOption('artifacts_id_number');
+  	await page.locator('#cols-1').selectOption('artifacts_short_name');
+  	await page.locator('#cols-2').selectOption('artifacts_year_era');
+    await page.locator('#cols-4').selectOption('artifacts_collections');
+		await saveAdminForm(page);
+	})
 
-		// Artifacts form
-		await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=1&tab=screens');
-		await page.waitForTimeout(500);
-  	await page.getByRole('link', { name: 'Artifact', exact: true }).click();
+	test('Donors form screen', async ({ page }) => {
+		await page.locator('#form-details-box-1-2').getByRole('link', { name: 'Screens' }).click();
+  	await page.getByRole('link', { name: 'Donor', exact: true }).click();
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await page.waitForTimeout(500);
 		await expect(page.getByText('Title for page number')).toBeVisible();
-  	await page.getByLabel('Form elements to display on').selectOption(['1', '2', '3', '7', '4', '5', '6', '10', '8', '9', '12', '13', '27', '28', '31']);
-  	await saveChanges(page, 'popup');
+  	await page.getByLabel('Form elements to display on').selectOption([
+			'Donors: Type of donor',
+			'Donors: First name',
+			'Donors: Last name',
+			'Donors: Organization name',
+			'Donors: Name',
+			'Donors: Phone number',
+			'Donors: Email address',
+			'Donors: Street address',
+			'Donors: Province, Postal code',
+			'Donors: Province',
+			'Donors: Postal code',
+			'Donors: Favourite colour',
+			'Donors: Backgrounder / Resume'
+		]);
+  	await saveAdminForm(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
-  	await page.getByRole('link', { name: 'Artifacts' }).click();
-  	await page.getByRole('link', { name: 'Artifacts' }).click();
+  	await page.getByRole('link', { name: 'Donors' }).click();
+  	await page.getByRole('link', { name: 'Donors' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-	  await page.getByRole('button', { name: 'Add Column' }).click();
-		await page.getByRole('button', { name: 'Add Column' }).click();
-		await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.locator('#cols-0').selectOption('artifacts_id_number');
-  	await page.locator('#cols-1').selectOption('artifacts_short_name');
-  	await page.locator('#cols-2').selectOption('artifacts_year_era');
-    await page.locator('#cols-3').selectOption('artifacts_date_of_acquisition');
-    await page.locator('#cols-4').selectOption('artifacts_collections');
-  	await page.getByRole('row', { name: '≡ Artifacts: Date of' }).getByRole('img').click();
-  	await saveChanges(page);
+  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 4 });
+  	await page.locator('#cols-0').selectOption('donors_name');
+  	await page.locator('#cols-1').selectOption('donors_phone');
+  	await page.locator('#cols-2').selectOption('donors_email');
+  	await saveAdminForm(page);
+	})
 
-		// Collections form
-  	await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=3&tab=screens');
-		await page.waitForTimeout(500);
+	test('Collections form screen', async ({ page }) => {
+		await page.locator('#form-details-box-1-3').getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Collection', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
-		await page.waitForTimeout(500);
 		await expect(page.getByText('Title for page number')).toBeVisible();
-		await page.getByLabel('Form elements to display on').selectOption(['29', '30']);
-		await saveChanges(page, 'popup');
+		await page.getByLabel('Form elements to display on').selectOption([
+			'Collections: Name',
+			'Collections: Suitable audience'
+		]);
+		await saveAdminForm(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
 		await page.getByRole('link', { name: 'Collections' }).click();
 	  await page.getByRole('link', { name: 'Collections' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-0').selectOption('collections_name');
-  	await page.getByRole('row', { name: '≡ No element selected Search' }).getByRole('img').click();
-  	await saveChanges(page);
+  	await saveAdminForm(page);
+	})
 
-		// Exhibits form
-	  await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=4&tab=screens');
-		await page.waitForTimeout(500);
+	test('Exhibits form screen', async ({ page }) => {
+		await page.locator('#form-details-box-1-4').getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Exhibit', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
-		await page.waitForTimeout(500);
 		await expect(page.getByText('Title for page number')).toBeVisible();
-   	await page.getByLabel('Form elements to display on').selectOption(['32', '33', '34', '35']);
-		await saveChanges(page, 'popup');
+   	await page.getByLabel('Form elements to display on').selectOption([
+			'Exhibits: Name',
+			'Exhibits: Curator',
+			'Exhibits: Collections',
+			'Exhibits: Artifacts'
+		]);
+		await saveAdminForm(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
 		await page.getByRole('link', { name: 'Exhibits' }).click();
   	await page.getByRole('link', { name: 'Exhibits' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
+  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 3 });
 		await page.locator('#cols-0').selectOption('exhibits_name');
 		await page.locator('#cols-1').selectOption('exhibits_curator');
 		await page.locator('#cols-2').selectOption('exhibits_collections');
 		await page.locator('#cols-3').selectOption('exhibits_artifacts');
-		await saveChanges(page);
+		await saveAdminForm(page);
+	})
 
-		// Surveys form
-  	await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=5&tab=screens');
-		await page.waitForTimeout(500);
+	test('Surveys form screen', async ({ page }) => {
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
-		await page.waitForTimeout(500);
 		await expect(page.getByText('Title for page number')).toBeVisible();
-		await page.getByLabel('Form elements to display on').selectOption(['36', '37', '38', '39']);
-		await saveChanges(page, 'popup');
+		await page.getByLabel('Form elements to display on').selectOption([
+			'Surveys: Respondent name',
+			'Surveys: Exhibit',
+			'Surveys: Favourite artifact',
+			'Surveys: Rating'
+		]);
+		await saveAdminForm(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
 		await page.getByRole('link', { name: 'Surveys' }).click();
   	await page.getByRole('link', { name: 'Surveys' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-  	await page.getByRole('button', { name: 'Add Column' }).click();
-		await page.getByRole('button', { name: 'Add Column' }).click();
+  	await page.getByRole('button', { name: 'Add Column' }).click({ clickCount: 4 });
 		await page.locator('#cols-0').selectOption('creation_datetime');
 		await page.locator('#cols-1').selectOption('surveys_your_name');
 		await page.locator('#cols-2').selectOption('surveys_exhibit');
 		await page.locator('#cols-3').selectOption('surveys_favourite_artifact');
 		await page.locator('#cols-4').selectOption('surveys_rating');
-		await saveChanges(page);
+		await saveAdminForm(page);
+	})
 
-	}),
 	test('Procedures for Artifacts form', async ({ page }) => {
-
-		await loginAsAdmin(page);
-		await page.goto('/modules/formulize/admin/ui.php?page=form&aid=1&fid=1&tab=screens');
+		await page.getByRole('link', { name: 'Artifacts' }).click();
 		await page.getByRole('link', { name: 'Procedures' }).click();
 		await page.getByRole('group', { name: 'After Saving' }).locator('span').first().click();
   	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').press('ControlOrMeta+a');
    	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').fill('<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
-		await saveChanges(page);
-
+		await saveAdminForm(page);
 	})
 });
 
