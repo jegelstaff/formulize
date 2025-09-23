@@ -90,27 +90,3 @@ jobs:
       if: always()
       run: |
         docker compose down --remove-orphans
-
-    - name: Summary
-      if: always()
-      run: |
-        echo "## 🧪 E2E Test Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Branch:** \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
-        echo "**Skip Docker Build:** ${{ inputs.skip_docker_build }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Test Filter:** ${{ inputs.test_filter || 'All tests' }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        if [ "${{ job.status }}" == "success" ]; then
-          echo "✅ **Result:** Tests completed successfully" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "❌ **Result:** Tests failed or were cancelled" >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "[View detailed report in artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Result:** Tests completed successfully" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "❌ **Result:** Tests failed or were cancelled" >> $GITHUB_STEP_SUMMARY
-        fi
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "[View detailed report in artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
