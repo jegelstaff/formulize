@@ -85,13 +85,17 @@ class formulizeSelectElement extends formulizeElement {
 "Element: Dropdown List (select).
 Properties:
 - options (array, list of options for the dropdown, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
-- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users)
+- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)
+- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)
+- updateExistingEntriesToMatchTheseOptions (optional, a 1/0 indicating if existing entries should be updated to match the new options. Default is 0. Set this to 1 when an element has existing options that are being changed. When set to 1, everywhere in the database where the old first option was selected, will change to having the new first option selected, and everywhere the old second option was selected will change to the new second option, etc. This is useful when correcting typos, or making refinements, such as an element with options 'S', 'M', 'L' that is changing to 'Small', 'Medium', 'Large'. Sometimes changes to options are just reordering the existing options, or adding new options, or removing removing options, and in those cases this setting should be unspecified or set to 0.)
 Examples:
 - A dropdown list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
 - A dropdown list of toppings for pizza, with 'pepperoni' and 'mushrooms' selected by default: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ], selectedByDefault: [ 'pepperoni', 'mushrooms' ] }
 - A dropdown list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
 - A dropdown list of movies, with 'Children of Men' selected by default: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ], selectedByDefault: [ 'Children of Men' ] }
-- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'CA|California', 'DE|Delaware', 'HI|Hawaii', 'ME|Maine', 'NY|New York', 'VT|Vermont' ] }";
+- A dropdown list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'CA|California', 'DE|Delaware', 'HI|Hawaii', 'ME|Maine', 'NY|New York', 'VT|Vermont' ] }
+- A dropdown list of automobile makes where the value stored in the database is a distinct code, but the user sees the full make name: { options: [ 'Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW' ], databaseValues: [ 'TYT', 'HND', 'FRD', 'CHE', 'NIS', 'BMW' ] }
+- A dropdown list which previously had the options 'No', 'Maybe', 'Yes', and is now being updated with new options, that should replace the old options everywhere people have filled in the form already: { options: [ 'Never', 'Sometimes', 'Always' ], updateExistingEntriesToMatchTheseOptions: 1 }";
 	}
 
 	/**
@@ -173,19 +177,24 @@ class formulizeSelectElementHandler extends formulizeElementsHandler {
 	 */
 	public function validateEleValuePublicAPIOptions($options) {
 		$validOptions = array();
+		$uiText = array();
 		if(isset($options['options'])) {
-			foreach($options['options'] as $key => $value) {
+			foreach($options['options'] as $i => $value) {
 				if(is_string($value) OR is_numeric($value)) {
-					$validOptions[$value] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
+					if(isset($options['databaseValues']) AND is_array($options['databaseValues']) AND isset($options['databaseValues'][$i]) AND strlen($options['databaseValues'][$i])) {
+						$uiText[$options['databaseValues'][$i]] = $value;
+						$validOptions[$options['databaseValues'][$i]] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
+					} else {
+						$validOptions[$value] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
+					}
 				}
 			}
 		}
-		list($validOptions, $ele_uitext) = formulize_extractUIText($validOptions);
 		$ele_value = $this->getDefaultEleValue();
 		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $validOptions;
 		return [
 			'ele_value' => $ele_value,
-			'ele_uitext' => $ele_uitext
+			'ele_uitext' => $uiText
 		];
 	}
 
