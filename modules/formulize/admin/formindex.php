@@ -1861,8 +1861,10 @@ function pre81SelectElementTypeInDB() {
 	if($res = $xoopsDB->queryF($checkForSelectSQL)) {
 		while($array = $xoopsDB->fetchArray($res)) {
 			$ele_value = unserialize($array['ele_value']);
-			if($ele_value[0] != 1 OR $ele_value[1] == 1 OR $ele_value[8] == 1) { // more than one line, or multiselect, or autocomplete
-				return true;
+			if((isset($ele_value[0]) AND $ele_value[0] != 1)
+				OR (isset($ele_value[1]) AND $ele_value[1] == 1)
+				OR (isset($ele_value[8]) AND $ele_value[8] == 1)) { // more than one line, or multiselect, or autocomplete
+					return true;
 			}
 		}
 	}
