@@ -287,11 +287,15 @@ class formulizeElementsHandler {
 	}
 
     function _setElementProperties($element) {
-        $element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
-        $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
-        $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
-				$element->setVar('fid', $element->getVar('id_form'));
-        return $element;
+			$element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
+			$element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
+			$element->setVar('fid', $element->getVar('id_form'));
+			if(method_exists($element, 'setCanHaveMultipleValues')) {
+				$element->canHaveMultipleValues = $element->setCanHaveMultipleValues();
+			} elseif(!is_bool($element->canHaveMultipleValues)) {
+				$element->canHaveMultipleValues = false;
+			}
+			return $element;
     }
 
 	function insert(&$element, $force = false){
@@ -486,7 +490,7 @@ class formulizeElementsHandler {
 				$elements = new formulizeElement();
 			}
 			$elements->assignVars($myrow);
-            $elements = $this->_setElementProperties($elements);
+      $elements = $this->_setElementProperties($elements);
 			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
 			}elseif($id_as_key == "handle") {

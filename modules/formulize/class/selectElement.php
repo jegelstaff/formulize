@@ -138,6 +138,18 @@ $commonExamples";
 		$uitext = $this->getVar('ele_uitext');
 		return (isset($ele_value[2][$option]) OR in_array($option, $uitext)) ? true : false;
 	}
+
+	/**
+	 * Set the canHaveMultipleValues property for the element
+	 * Must be done after the element has been instantiated with the values from the database (called as part of the get method in the parent, general, element class)
+	 * Relevant for elements where the value of canHaveMultipleValues depends on a configuration choice in the database
+	 * @return bool returns the value to set for the canHaveMultipleValues property
+	 */
+	function setCanHaveMultipleValues() {
+		$ele_value = $this->getVar('ele_value');
+		return isset($ele_value[ELE_VALUE_SELECT_MULTIPLE]) ? $ele_value[ELE_VALUE_SELECT_MULTIPLE] : false;
+	}
+
 }
 
 #[AllowDynamicProperties]
