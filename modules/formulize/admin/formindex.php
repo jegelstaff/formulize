@@ -687,6 +687,12 @@ function patch40() {
 						}
 				}
 
+				// DEPRECATED AND ON DB UPDATE, LINKED SELECTS NEED TO HAVE THIS SETTING APPLIED TO THE ele_use_default_when_blank SETTING, IFF THE VALUE OF THIS SETTING IS 1
+				/*
+				ele_value[14] in select elements needs to be ported to ele_use_default_when_blank setting of the element itself, then set to zero and never do this again
+				*/
+
+
 				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
 				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
 				$viewFormAssigned = false;
