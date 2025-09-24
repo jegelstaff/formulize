@@ -13,23 +13,23 @@ test.describe('Create Groups', () => {
   	await page.getByRole('link', { name: 'Groups Groups' }).click();
   })
 
-	test.only('Create Ancient History group', async ({ page }) => {
+	test('Create Ancient History group', async ({ page }) => {
 		await page.locator('#name').fill('Ancient History');
 		await page.getByRole('button', { name: 'Create New Group' }).click();
 		await expect(page.getByRole('rowgroup')).toContainText('Ancient History');
 	})
 
-	test('Create Modern History group', async ({ page }) => {
-		await page.locator('#name').fill('Modern History');
-		await page.getByRole('button', { name: 'Create New Group' }).click();
-		await expect(page.getByRole('rowgroup')).toContainText('Modern History');
-	})
+	// test('Create Modern History group', async ({ page }) => {
+	// 	await page.locator('#name').fill('Modern History');
+	// 	await page.getByRole('button', { name: 'Create New Group' }).click();
+	// 	await expect(page.getByRole('rowgroup')).toContainText('Modern History');
+	// })
 
-	test('Create Curators group', async ({ page }) => {
-		await page.locator('#name').fill('Curators');
-		await page.getByRole('button', { name: 'Create New Group' }).click();
-		await expect(page.getByRole('rowgroup')).toContainText('Curators');
-	})
+	// test('Create Curators group', async ({ page }) => {
+	// 	await page.locator('#name').fill('Curators');
+	// 	await page.getByRole('button', { name: 'Create New Group' }).click();
+	// 	await expect(page.getByRole('rowgroup')).toContainText('Curators');
+	// })
 })
 
 // test.describe('Create Users', () => {
