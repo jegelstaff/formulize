@@ -1619,13 +1619,15 @@ private function validateFilter($filter, $andOr = 'AND') {
 	private function buildFormElementTools() {
 
 		// Discover available element types and their descriptions
-		[$elementTypes, $elementDescriptions] = formulizeHandler::discoverElementTypes();
+		[$elementTypes, $creationElementDescriptions] = formulizeHandler::discoverElementTypes();
+		[$elementTypes, $updateElementDescriptions] = formulizeHandler::discoverElementTypes(update: true);
 
 		// Build comprehensive description with examples from all element types
 		$propertyDescriptions = "Elements have different properties depending on their type.\n\nYou must use the valid properties for each element type. Here is a complete list of available element types, their properties, and examples:\n\n";
-		$propertyDescriptions .= implode("\n\n", $elementDescriptions);
-		$createFormElementDescription = "Create a new element (input field) in a Formulize form. $propertyDescriptions";
-		$updateFormElementDescription = "Update an existing element in a Formulize form. $propertyDescriptions";
+		$creationPropertyDescriptions = $propertyDescriptions . implode("\n\n", $creationElementDescriptions);
+		$updatePropertyDescriptions = $propertyDescriptions . implode("\n\n", $updateElementDescriptions);
+		$createFormElementDescription = "**Create a new element (input field) in a Formulize form.**\n\n$creationPropertyDescriptions";
+		$updateFormElementDescription = "**Update an existing element (input field) in a Formulize form.**\n\n$updatePropertyDescriptions";
 
 		$commonProperties = [
 			'caption' => [
