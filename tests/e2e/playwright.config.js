@@ -24,7 +24,7 @@ module.exports = defineConfig({
 		[['dot'], ['github'], ['html', { outputFolder: './test-report' }]] :
 		process.env.CI ?
 			[['dot'], ['html', { outputFolder: './test-report' }]] :
-			[['html', { outputFolder: './test-report' }]],
+			[['list'], ['html', { outputFolder: './test-report' }]],
 	/* Adjust the timeout for slow tests */
 	timeout: 30000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -40,11 +40,6 @@ module.exports = defineConfig({
 
 		/* Ignore HTTPS errors */
 		ignoreHTTPSErrors: true,
-
-		/* Launch Options */
-		launchOptions: {
-			slowMo: 1000
-		}
   },
 
 	expect: {
@@ -65,8 +60,8 @@ module.exports = defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
     }
   ]
 });

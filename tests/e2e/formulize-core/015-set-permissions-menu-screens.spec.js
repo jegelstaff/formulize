@@ -216,13 +216,12 @@ test.describe('Set columns and elements for screens', () => {
 			'Donors: Organization name',
 			'Donors: Name',
 			'Donors: Phone number',
-			'Donors: Email address',
+			'Donors: Email Address',
 			'Donors: Street address',
 			'Donors: Province, Postal code',
 			'Donors: Province',
 			'Donors: Postal code',
-			'Donors: Favourite colour',
-			'Donors: Backgrounder / Resume'
+			'Donors: Favourite colour'
 		]);
   	await saveAdminForm(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
