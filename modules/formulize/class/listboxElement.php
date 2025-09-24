@@ -57,8 +57,8 @@ class formulizeListboxElement extends formulizeSelectElement {
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
 		$descriptionAndExamples = "
-Element: Listbox (listbox)
-Description: A box that shows a list of options, allowing users to select one or more options from the list. The user experience with Listboxes is generally poor. Use Radio Buttons, Checkboxes, Dropdown Lists, or Autocomplete Lists instead, unless there's a specific reason to use a Listbox or the user has speciically requested one.";
+**Element:** Listbox (listbox)
+**Description:** A box that shows a list of options, allowing users to select one or more options from the list. The user experience with Listboxes is generally poor. Use Radio Buttons, Checkboxes, Dropdown Lists, or Autocomplete Lists instead, unless there's a specific reason to use a Listbox or the user has speciically requested one.";
 		if($commonNotes) {
 			$descriptionAndExamples .= "
 $commonNotes";

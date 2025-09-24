@@ -60,8 +60,8 @@ class formulizeNumberElement extends formulizeTextElement {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		return
-"Element: Number Box (number).
-Properties:
+"**Element:** Number Box (number).
+**Properties:**
 - size (int, width of the box in characters, default is ".$formulizeConfig['t_width'].")
 - defaultvalue (int or float, default value for new entries)
 - decimals (int, number of decimal places to allow, default is ".$formulizeConfig['number_decimals']."),
@@ -69,7 +69,7 @@ Properties:
 - decimals_separator (string, character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
 - thousands_separator (string, character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
 - suffix (string, text to show after the number, default is '".$formulizeConfig['number_suffix']."')
-Examples:
+**Examples:**
 - A basic number box requires no properties, system defaults will be used
 - A number box for recording values between 0 and 99: { size: 2 }
 - A three digit number box with a default value of 100: { size: 3, defaultvalue: 100 }

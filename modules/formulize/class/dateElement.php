@@ -60,12 +60,12 @@ class formulizeDateElement extends formulizeElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Date Selector (date).
-Properties:
+"**Element:** Date Selector (date).
+**Properties:**
 - defaultDate (date, the default date value for the date selector in YYYY-MM-DD format. Can also be {TODAY} to default to the current date, or a relative date like {TODAY+7} or {TODAY-30}. Leave blank for no default date.)
 - minDate (date, optional, the minimum date that can be selected in YYYY-MM-DD format)
 - maxDate (date, optional, the maximum date that can be selected in YYYY-MM-DD format)
-Examples:
+**Examples:**
 - A date selector that defaults to the current date: { defaultDate: \"{TODAY}\" }
 - A date selector that defaults to May 9, 1969: { defaultDate: \"1969-05-09\" }
 - A date selector with a minimum date: { minDate: \"2020-01-01\" }

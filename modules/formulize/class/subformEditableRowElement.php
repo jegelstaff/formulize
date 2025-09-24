@@ -50,10 +50,10 @@ class formulizeSubformEditableRowElement extends formulizeSubformListingsElement
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Embedded Form (editable rows) (subformEditableRows).
-Properties:
+"**Element:** Embedded Form (editable rows) (subformEditableRows).
+**Properties:**
 - none
-Examples:
+**Examples:**
 - An embedded form requires no properties.";
 	}
 
