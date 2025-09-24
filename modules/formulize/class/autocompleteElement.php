@@ -55,7 +55,7 @@ class formulizeAutocompleteElement extends formulizeSelectElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples = "
 **Element:** Autocomplete List (autocomplete)
 **Description:** A single-line text box that provides autocomplete suggestions from a predefined list of options as the user types. The user can select one of the suggested options, or if the allowNewValues property is enabled then the user can enter a new value that is not found in the list. Autocomplete Lists can be set to allow multiple selections, with the allowMultipleSelections property. Autocomplete Lists are good for a large number of options that would be too many for a Dropdown List, Radio Buttons, or Checkboxes. For a small number of predefined options, use Radio Buttons or Dropdown Lists, or use Checkboxes if selecting multiple options must be possible.";
