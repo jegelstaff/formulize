@@ -69,7 +69,7 @@ jobs:
       working-directory: tests/e2e
 
     - name: Install Playwright Browsers
-      run: npx playwright install firefox --with-deps
+      run: npx playwright install chromium --with-deps
       working-directory: tests/e2e
 
     - name: Run Playwright tests
