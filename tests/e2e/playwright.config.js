@@ -44,12 +44,7 @@ module.exports = defineConfig({
 
 	expect: {
     // Maximum time expect() should wait for the condition to be met.
-<<<<<<< HEAD
     timeout: 20000,
-=======
-    timeout: 10000,
->>>>>>> cd53851fc (Changes for testing in github actions.)
-
     toHaveScreenshot: {
       // An acceptable amount of pixels that could be different, unset by default.
       maxDiffPixels: 10,
