@@ -1653,7 +1653,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 			],
 			'principal_identifier' => [
 				'type' => 'boolean',
-				'description' => 'Optional. Whether the element is the Principal Identifier for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
+				'description' => 'Optional. Whether the element is the principal identifying element for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
 			],
 			'options' => [
 				'type' => 'object',

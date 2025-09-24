@@ -402,6 +402,9 @@ trait resources {
 		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
+		// rename pi to principal_identifying_element for clarity
+		$formData['principal_identifying_element'] = $formData['pi'];
+		unset($formData['pi']);
 
 		if (!$formData) {
 			throw new FormulizeMCPException(
