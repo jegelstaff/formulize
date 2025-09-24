@@ -752,6 +752,8 @@ Examples:
 		$options = $arguments['options'] ?? [];
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
 		$data_type = $arguments['data_type'] ?? false;
+		$display = isset($arguments['display']) ? ($arguments['display'] ? 1 : 0) : null;
+		$disabled = isset($arguments['disabled']) ? ($arguments['disabled'] ? 1 : 0) : null;
 
 		$makeSubformInterface = false;
 		$elementObject = null;
@@ -792,15 +794,18 @@ Examples:
 
 		// put the passed in values into an array for passing to the upsert function
 		// corresponds to the fields in the formulizeElement object
+		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
 		$elementObjectProperties = [
-			'fid' => $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0),
+			'fid' => $fid,
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
 			'ele_type' => $element_type,
 			'ele_handle' => $handle ? $handle : ($elementObject ? $elementObject->getVar('ele_handle') : ''),
 			'ele_caption' => $caption ? $caption : ($elementObject ? $elementObject->getVar('ele_caption') : ''),
 			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
 			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
-			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0)
+			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
+			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
+			'ele_disabled' => $disabled !== null ? $disabled : ($elementObject ? $elementObject->getVar('ele_disabled') : 0),
 		];
 
 		// prepare element-specific properties by calling the element type handler's
@@ -1659,6 +1664,10 @@ private function validateFilter($filter, $andOr = 'AND') {
 				'type' => 'object',
 				'description' => 'Required. Additional configuration options for the element. The properties depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
 				'additionalProperties' => true
+			],
+			'disabled' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Whether the element is disabled (visible but not usable) in the form. Default: false.'
 			]
 		];
 
@@ -1704,7 +1713,12 @@ private function validateFilter($filter, $andOr = 'AND') {
 								]
 							]
 						],
-					] + $commonProperties,
+					] + $commonProperties + [
+						'display' => [
+							'type' => 'boolean',
+							'description' => 'Optional. Whether the element is displayed in the form or hidden. Default: true.'
+						]
+					],
 				'required' => ['element_identifier']
 				]
 			]

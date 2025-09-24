@@ -359,6 +359,7 @@ class formulizeHandler {
 				'source_element_handle' => getSourceElementHandleForLinkedElement($elementObject)
 			);
 		} elseif(isset($elementObjectProperties['fid']) AND $elementObjectProperties['fid'] > 0 AND isset($elementObjectProperties['ele_type'])) {
+			if(isset($elementObjectProperties['ele_id'])) { unset($elementObjectProperties['ele_id']); } // make sure ele_id is not set, so we're acting like it's a new element request
 			$elementObject = $element_handler->create();
 			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
 			$form_id = intval($elementObjectProperties['fid']);
