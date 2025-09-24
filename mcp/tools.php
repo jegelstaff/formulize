@@ -309,7 +309,7 @@ Examples:
 		];
 
 		// only webmasters can access certain tools
-		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+		if($this->isUserAWebmaster()) {
 
 			// check the version of mariadb or mysql
 			$dbVersionSQL = "SELECT @@version as version";
@@ -1655,11 +1655,6 @@ private function validateFilter($filter, $andOr = 'AND') {
 				'type' => 'boolean',
 				'description' => 'Optional. Whether the element is the Principal Identifier for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
 			],
-			'data_type' => [
-				'type' => 'string',
-				'enum' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'],
-				'description' => 'Optional. The data type to be used for the field in the database where this data will be stored. The system will default to text in most cases, but will set smart defaults if the type is specifically a number box or linked element storing foreign keys, etc. Generally this does not need to be specified, but can be used if the user has specifically stated that a certain data type must be used for a given element. For int(x), the x is the number of digits to display in MySQL when showing the number. For decimal(x,y), the x is the total number of digits, and y is the number of digits after the decimal point. For char(x) and varchar(x), the x is the maximum number of characters to store.'
-			],
 			'options' => [
 				'type' => 'object',
 				'description' => 'Required. Additional configuration options for the element. The properties depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
@@ -1670,6 +1665,15 @@ private function validateFilter($filter, $andOr = 'AND') {
 				'description' => 'Optional. Whether the element is disabled (visible but not usable) in the form. Default: false.'
 			]
 		];
+
+		// presently only webmasters get these tools at all, but in case that changes, only webmasters will be able to muck with the data_type property
+		$webmasterProperties = $this->isUserAWebmaster() ? [
+			'data_type' => [
+				'type' => 'string',
+				'enum' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'],
+				'description' => 'Optional. The data type to be used for the field in the database where this data will be stored. The system will default to text in most cases, but will set smart defaults if the type is specifically a number box or linked element storing foreign keys, etc. Generally this does not need to be specified, but can be used if the user has specifically stated that a certain data type must be used for a given element. For int(x), the x is the number of digits to display in MySQL when showing the number. For decimal(x,y), the x is the total number of digits, and y is the number of digits after the decimal point. For char(x) and varchar(x), the x is the maximum number of characters to store.'
+			]
+		] : [];
 
 		return [
 			[
@@ -1691,7 +1695,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 								'type' => 'string',
 								'description' => 'Optional. This does not need to be specified, as the system will determine it automatically from the caption. This is the internal handle for the element, used in the database and in API calls. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system.'
 							]
-						] + $commonProperties,
+						] + $commonProperties + $webmasterProperties,
 					'required' => ['form_id', 'element_type', 'caption']
 				]
 			],
@@ -1718,7 +1722,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 							'type' => 'boolean',
 							'description' => 'Optional. Whether the element is displayed in the form or hidden. Default: true.'
 						]
-					],
+					] + $webmasterProperties,
 				'required' => ['element_identifier']
 				]
 			]
