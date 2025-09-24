@@ -72,10 +72,10 @@ class formulizeTextElement extends formulizeElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Text Box (text).
-Properties:
+"**Element:** Text Box (text).
+**Properties:**
 - none
-Examples:
+**Examples:**
 - A text box requires no properties.";
 	}
 

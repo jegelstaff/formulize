@@ -56,10 +56,10 @@ class formulizeSubformListingsElement extends formulizeElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Embedded Form (list view) (subformListings).
-Properties:
+"**Element:** Embedded Form (list view) (subformListings).
+**Properties:**
 - none
-Examples:
+**Examples:**
 - An embedded form requires no properties.";
 	}
 

@@ -52,10 +52,10 @@ class formulizeYnElement extends formulizeRadioElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Yes/No Radio Buttons (yn).
-Properties:
+"**Element:** Yes/No Radio Buttons (yn).
+**Properties:**
 - defaultvalue (int, a 1 for 'Yes' and a 0 for 'No', if omitted or empty, no default is set)
-Examples:
+**Examples:**
 - A Yes/No radio button that has no default value: { }
 - A Yes/No radio button that defaults to No: { defaultvalue: 0 }
 - A Yes/No radio button that defaults to Yes: { defaultvalue: 1 }";
