@@ -14,6 +14,7 @@ test.describe('Create Groups', () => {
   })
 
 	test('Create Ancient History group', async ({ page }) => {
+		await page.locator('#name').click();
 		await page.locator('#name').fill('Ancient History');
 		await page.getByRole('button', { name: 'Create New Group' }).click();
 		await expect(page.getByRole('rowgroup')).toContainText('Ancient History');
