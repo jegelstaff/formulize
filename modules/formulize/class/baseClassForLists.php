@@ -89,8 +89,11 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 	public function setupAndValidateElementProperties($properties) {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
-		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimiter'];
+		// creating a new element, so set some defaults if necessary (or take what was passed in)
+		if(!isset($properties['ele_id'])) {
+			$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
+			$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimeter'];
+		}
 		return parent::setupAndValidateElementProperties($properties);
 	}
 
