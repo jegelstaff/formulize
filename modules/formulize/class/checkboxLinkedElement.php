@@ -32,12 +32,38 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/checkboxElement.php";
 
 class formulizeCheckboxLinkedElement extends formulizeCheckboxElement {
 
-    function __construct() {
-			parent::__construct();
-      $this->name = "Linked Checkboxes";
-			$this->isLinked = true; // set to true if this element can have linked values
-    }
+	function __construct() {
+		parent::__construct();
+		$this->name = "Linked Checkboxes";
+		$this->isLinked = true; // set to true if this element can have linked values
+	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
+		$descriptionAndExamples = "
+**Element:** Linked Checkboxes (checkboxLinked)
+**Description:** A series of boxes that the user can check to select multiple options. Linked Checkboxes have options drawn from values entered into another form. If multiple selections are not required, use Linked Radio Buttons or a Linked Dropdown instead. In general, Checkboxes are best with a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples";
+		}
+		return $descriptionAndExamples;
+	}
 }
 
 #[AllowDynamicProperties]
@@ -46,5 +72,24 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
     function create() {
         return new formulizeCheckboxLinkedElement();
     }
+
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
+		if(!$elementObject = _getElementObject($options['source_element'])) {
+			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
+		}
+		$ele_value = [];
+		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $elementObject->getVar('fid')."#*=:*".$elementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+		return [
+			'ele_value' => $ele_value,
+		];
+	}
 
 }

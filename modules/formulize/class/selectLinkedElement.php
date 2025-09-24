@@ -55,15 +55,23 @@ class formulizeSelectLinkedElement extends formulizeSelectElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		return
-"**Element:** Linked Dropdown List (select_linked).
-**Properties:**
-- source_element (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked Dropdown List will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)
-- make_subform_element_in_linked_form (boolean, optional, default false. If true, the linked form will get a special subform interface element, so that when users are editing entries in the linked form, they can interact with the connected entries in this form too. Not all linked forms should have subform elements, but sometimes it makes sense for users to edit related data all in one place. Other times, forms might be linked solely to ensure their data is included together in a report or list but the data entry workflow is separate.)
-**Examples:**
-- A dropdown list with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { source_element: 7 }
-- A dropdown list with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { source_element: 'provinces_name' }
-- A dropdown list of province names (from the element with that handle), and a subform element will be created in the provinces form so the entries in this form are accessible there too: { source_element: 'provinces_name', make_subform_element_in_linked_form: true }";
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
+		$descriptionAndExamples = "
+**Element:** Linked Dropdown List (selectLinked).
+**Description:** A dropdown list where the options are drawn from the values entered in another element in another form. The user can select one choice.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples";
+		}
+		return $descriptionAndExamples;
 	}
 }
 
@@ -78,6 +86,7 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
 	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
@@ -85,10 +94,17 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 		if(!$elementObject = _getElementObject($options['source_element'])) {
 			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
 		}
-		$ele_value = array(
+		$ele_value = $this->getDefaultEleValue();
+		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $elementObject->getVar('fid')."#*=:*".$elementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+		return [
+			'ele_value' => $ele_value,
+		];
+	}
+
+	protected function getDefaultEleValue() {
+		return array(
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,
-			ELE_VALUE_SELECT_OPTIONS => $elementObject->getVar('fid')."#*=:*".$elementObject->getVar('ele_handle'),
 			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
 			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
 			ELE_VALUE_SELECT_LINK_FILTERS => array(),
@@ -111,12 +127,6 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 			ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => array(),
 			ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(),
 		);
-		return [
-			'ele_value' => $ele_value,
-			'upsertParams' => [
-				'makeSubformInterface' => ((isset($options['make_subform_element_in_linked_form']) AND $options['make_subform_element_in_linked_form']) ? true : false)
-			]
-		];
 	}
 
 }
