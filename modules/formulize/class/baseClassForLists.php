@@ -31,50 +31,6 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-class formulizeBaseClassForListsElement extends formulizeElement {
-
-	/**
-	 * Static function to provide the common properties and examples used by all list elements for with the mcp server
-	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
-	 * @return array an array of with the important notes first, common properties first, and the common examples second
-	 */
-	public static function mcpElementPropertiesBaseDescriptionAndExamples($update = false) {
-
-		$notes = $update ?
-"**Important notes:**
-- When altering options in a list, consider whether any data that users have entered into the form already, should be altered as well to match the new options. See the updateExistingEntriesToMatchTheseOptions property below. This is only relevant when options are being changed. If options are being re-organized, or new ones added, or old ones deleted, you do not need to update existing entries to match."
-: "";
-
-		$properties =
-"**Properties:**
-- options (array, list of options for the element, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
-- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)
-- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)";
-		$properties .= $update ?
-"- updateExistingEntriesToMatchTheseOptions (optional, a 1/0 indicating if existing entries should be updated to match the new options. Default is 0. Set this to 1 when an element has existing options that are being changed, and then every record in the database where the old first option was selected, will change to having the new first option selected, and every record where the old second option was selected will change to the new second option, etc. This works when changing storage formats from numbers to text, and when just changing wording of options. Any kind of change is supported. This is useful when correcting typos and changing workding, such as switching an option from 'Backwards' to 'Back', or when making refinements, such as an element with options 'S', 'M', 'L' that is changing to 'Small', 'Medium', 'Large'. Sometimes changes to options are just reordering the existing options, or adding new options, or removing removing options, and in those cases this setting should be left unspecified or set to 0.)"
-: "";
-
-		$examples =
-"**Examples:**
-- A list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
-- A list of toppings for pizza, with 'pepperoni' and 'mushrooms' selected by default: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ], selectedByDefault: [ 'pepperoni', 'mushrooms' ] }
-- A list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
-- A list of movies, with 'Children of Men' selected by default: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ], selectedByDefault: [ 'Children of Men' ] }
-- A list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'California', 'Delaware', 'Hawaii', 'Maine', 'New York', 'Vermont' ], databaseValues: [ 'CA', 'DE', 'HI', 'ME', 'NY', 'VT' ] }";
-		$examples .= $update ?
-"- A list which previously had the options 'No', 'Maybe', 'Yes', and is now being updated with new options, that should replace the old options everywhere people have filled in the form already: { options: [ 'Never', 'Sometimes', 'Always' ], updateExistingEntriesToMatchTheseOptions: 1 }"
-: "";
-
-		return [
-			$notes,
-			$properties,
-			$examples
-		];
-	}
-
-}
-
 #[AllowDynamicProperties]
 class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler {
 

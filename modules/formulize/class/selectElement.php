@@ -58,7 +58,7 @@ define('ELE_VALUE_SELECT_LINK_ALLOWSELFREF', 'selfreference'); // 0/1 indicating
 define('ELE_VALUE_SELECT_LINK_LIMITBYELEMENT', 'optionsLimitByElement'); // element ID of an element in another form which should be used to limit the options, by restricting them to options matching the values chosen in that other element (the specific entry is isolated using the optionsLimitByElementFilter conditions)
 define('ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER', 'optionsLimitByElementFilter'); // filter conditions to apply to isolate a sepecific entry in the form that has the element specified in optionsLimitByElement. The value of that element in the specific entry, will be used to limit the linked options.
 define('ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS', 'linkedSourceMappings'); // mapping info showing which elements in this form should be used to populate which elements in the source form, when an autocomplete creates new values
-class formulizeSelectElement extends formulizeBaseClassForListsElement {
+class formulizeSelectElement extends formulizeElement {
 
 	var $defaultValueKey;
 
@@ -83,7 +83,7 @@ class formulizeSelectElement extends formulizeBaseClassForListsElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples = "
 **Element:** Dropdown List (select)
 **Description:** A dropdown list of options where the user can select one choice. Dropdown lists are best used when there are a moderate number of options (generally between 5 and 20) and you want to save space on the form. For a small number of options, use Radio Buttons instead, and for a large number of options use an Autocomplete List.";

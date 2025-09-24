@@ -32,7 +32,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/baseClassForLists.php";
 
-class formulizeRadioElement extends formulizeBaseClassForListsElement {
+class formulizeRadioElement extends formulizeElement {
 
 	var $defaultValueKey;
 
@@ -56,7 +56,7 @@ class formulizeRadioElement extends formulizeBaseClassForListsElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeBaseClassForListsElement::mcpElementPropertiesBaseDescriptionAndExamples($update);
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples =
 "**Element:** Radio Buttons (radio)
 **Description:** A list of options where the user can select only one choice. Radio buttons are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box.";

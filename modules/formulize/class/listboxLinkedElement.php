@@ -30,9 +30,9 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectLinkedElement.php";
 
-class formulizeListboxLinkedElement extends formulizeSelectElement {
+class formulizeListboxLinkedElement extends formulizeSelectLinkedElement {
 
 	function __construct() {
 		parent::__construct();
@@ -47,13 +47,87 @@ class formulizeListboxLinkedElement extends formulizeSelectElement {
 		$this->isLinked = true; // set to true if this element can have linked values
 	}
 
+/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the options for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
+		$descriptionAndExamples = "
+**Element:** Linked Listbox (listboxLinked)
+**Description:** A box that shows a list of options, allowing users to select one or more options from the list. Options are based on values entered into another form. The user experience with Linked Listboxes is generally poor. Use Linked Autocomplete Lists or Linked Checkboxes instead, unless there's a specific reason to use a Listbox or the user has specifically requested one.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Linked Listboxes, the default is 1. Set to 0 to allow only a single selection.)";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples
+- A list of ingredients, drawn from the Name element in an Ingredients form, with only one choice allowed: { source_element: 'ingredient_name', allowMultipleSelections: 0 }";
+		}
+		return $descriptionAndExamples;
+	}
+
+
 }
 
 #[AllowDynamicProperties]
-class formulizeListboxLinkedElementHandler extends formulizeSelectElementHandler {
+class formulizeListboxLinkedElementHandler extends formulizeSelectLinkedElementHandler {
 
 	function create() {
 		return new formulizeListboxLinkedElement();
+	}
+
+	/**
+	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * Options are the contents of the ele_value property on the object
+	 * @param array $options The options to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
+		list($ele_value) = array_values(formulizeSelectLinkedElementHandler::validateEleValuePublicAPIOptions($options, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($options['allowMultipleSelections']) ? $options['allowMultipleSelections'] : 1;
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
+	protected function getDefaultEleValue() {
+		return array(
+			ELE_VALUE_SELECT_NUMROWS => 10,
+			ELE_VALUE_SELECT_MULTIPLE => 1,
+			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
+			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
+			ELE_VALUE_SELECT_LINK_FILTERS => array(),
+			ELE_VALUE_SELECT_LINK_ALLGROUPS => 0,
+			ELE_VALUE_SELECT_LINK_USEONLYUSERSENTRIES => 0,
+			ELE_VALUE_SELECT_LINK_CLICKABLEINLIST => 0,
+			ELE_VALUE_SELECT_AUTOCOMPLETE => 0,
+			ELE_VALUE_SELECT_RESTRICTSELECTION => 0,
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_SORT => 0,
+			ELE_VALUE_SELECT_LINK_DEFAULTVALUE => array(),
+			ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK => 0,
+			ELE_VALUE_SELECT_LINK_SORTORDER => 1,
+			ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW => 0,
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_SNAPSHOT => 0,
+			ELE_VALUE_SELECT_LINK_ALLOWSELFREF => 0,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT => 0,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => array(),
+			ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(),
+		);
 	}
 
 }
