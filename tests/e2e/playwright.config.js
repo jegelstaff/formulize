@@ -43,7 +43,7 @@ module.exports = defineConfig({
 
 		/* Launch Options */
 		launchOptions: {
-			slowMo: 100
+			slowMo: 1000
 		}
   },
 
