@@ -39,7 +39,12 @@ module.exports = defineConfig({
 		video: 'on',
 
 		/* Ignore HTTPS errors */
-		ignoreHTTPSErrors: true
+		ignoreHTTPSErrors: true,
+
+		/* Launch Options */
+		launchOptions: {
+			slowMo: 100
+		}
   },
 
 	expect: {
