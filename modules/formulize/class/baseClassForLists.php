@@ -42,12 +42,12 @@ class formulizeBaseClassForListsElement extends formulizeElement {
 	public static function mcpElementPropertiesBaseDescriptionAndExamples($update = false) {
 
 		$notes = $update ?
-"Important notes:
+"**Important notes:**
 - When altering options in a list, consider whether any data that users have entered into the form already, should be altered as well to match the new options. See the updateExistingEntriesToMatchTheseOptions property below. This is only relevant when options are being changed. If options are being re-organized, or new ones added, or old ones deleted, you do not need to update existing entries to match."
 : "";
 
 		$properties =
-"Properties:
+"**Properties:**
 - options (array, list of options for the element, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
 - selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)
 - databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)";
@@ -56,7 +56,7 @@ class formulizeBaseClassForListsElement extends formulizeElement {
 : "";
 
 		$examples =
-"Examples:
+"**Examples:**
 - A list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
 - A list of toppings for pizza, with 'pepperoni' and 'mushrooms' selected by default: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ], selectedByDefault: [ 'pepperoni', 'mushrooms' ] }
 - A list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }

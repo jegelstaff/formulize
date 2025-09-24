@@ -56,11 +56,11 @@ class formulizeSelectLinkedElement extends formulizeSelectElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Linked Dropdown List (select_linked).
-Properties:
+"**Element:** Linked Dropdown List (select_linked).
+**Properties:**
 - source_element (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked Dropdown List will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)
 - make_subform_element_in_linked_form (boolean, optional, default false. If true, the linked form will get a special subform interface element, so that when users are editing entries in the linked form, they can interact with the connected entries in this form too. Not all linked forms should have subform elements, but sometimes it makes sense for users to edit related data all in one place. Other times, forms might be linked solely to ensure their data is included together in a report or list but the data entry workflow is separate.)
-Examples:
+**Examples:**
 - A dropdown list with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { source_element: 7 }
 - A dropdown list with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { source_element: 'provinces_name' }
 - A dropdown list of province names (from the element with that handle), and a subform element will be created in the provinces form so the entries in this form are accessible there too: { source_element: 'provinces_name', make_subform_element_in_linked_form: true }";

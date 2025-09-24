@@ -50,10 +50,10 @@ class formulizeSubformFullFormElement extends formulizeSubformListingsElement {
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
-"Element: Embedded Form (full entries) (subformFullForm).
-Properties:
+"**Element:** Embedded Form (full entries) (subformFullForm).
+**Properties:**
 - none
-Examples:
+**Examples:**
 - An embedded form requires no properties.";
 	}
 
