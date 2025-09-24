@@ -94,7 +94,7 @@ class formulizeListboxElementHandler extends formulizeSelectElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
-		list($ele_value, $ele_uitext) = formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIOptions($options, $elementIdentifier);
+		list($ele_value, $ele_uitext) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIOptions($options, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = count($ele_value[ELE_VALUE_SELECT_OPTIONS]) < 10 ? count($ele_value[ELE_VALUE_SELECT_OPTIONS]) : 10;
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] < 1 ? 1 : $ele_value[ELE_VALUE_SELECT_NUMROWS];
 		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($options['allowMultipleSelections']) ? $options['allowMultipleSelections'] : 1;
