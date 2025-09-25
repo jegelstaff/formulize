@@ -1,10 +1,12 @@
+const { expect } = require('@playwright/test')
+
 /**
  * Wait for the Formulize form token to be valid before moving on
  * @param {*} page Playwright page object
  */
 export function waitForFormulizeFormToken(page) {
 	return page.waitForFunction(
-		() => document.querySelector('input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
+		() => document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
 	)
 }
 
@@ -25,6 +27,18 @@ export async function login(page, username, password = '12345') {
     page.waitForURL(/\/modules\/formulize\/.*/),
     page.locator('input[name="pass"]').press('Enter')
   ]);
+}
+
+/**
+ * Formulize Saving validation
+ */
+export async function saveFormulizeForm(page, timeout = 10000) {
+	// Wait for the formulize page token
+	await waitForFormulizeFormToken(page);
+	// Trigger save
+	await page.getByRole('button', { name: 'Save' }).click();
+	// Ensure the data submitted error does not occurr
+	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
 }
 
 /**

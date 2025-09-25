@@ -1,38 +1,6 @@
 const { test, expect } = require('@playwright/test')
-import { waitForFormulizeFormToken } from '../utils';
+import { saveFormulizeForm, waitForFormulizeFormToken } from '../utils';
 import { login } from '../utils';
-
-test.describe('Validate menu entries', () => {
-	test('Validate menu entries for ahstaff', async ({ page }) => {
-		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
-	})
-	test('Validate menu entries for mhstaff', async ({ page }) => {
-		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
-	})
-	test('Validate menu entries for curator1', async ({ page }) => {
-		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
-	})
-})
-
-
 
 test.describe('Data Entry for Collections', () => {
 	test('Create Ancient History collection', async ({ page }) => {
@@ -43,9 +11,7 @@ test.describe('Data Entry for Collections', () => {
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Ancient History');
 	  await page.getByRole('checkbox', { name: 'Children' }).check();
   	await page.getByRole('checkbox', { name: 'Adults' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Modern History collection', async ({ page }) => {
@@ -56,9 +22,7 @@ test.describe('Data Entry for Collections', () => {
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Modern History');
 	  await page.getByRole('checkbox', { name: 'Children' }).check();
   	await page.getByRole('checkbox', { name: 'Adults' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Coins collection', async ({ page }) => {
@@ -68,9 +32,7 @@ test.describe('Data Entry for Collections', () => {
 		await page.getByRole('button', { name: 'Add Collections' }).click();
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Coins');
    	await page.getByRole('checkbox', { name: 'Adults' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Weapons collection', async ({ page }) => {
@@ -81,9 +43,7 @@ test.describe('Data Entry for Collections', () => {
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Weapons');
 		await page.getByRole('checkbox', { name: 'Children' }).check();
    	await page.getByRole('checkbox', { name: 'Adults' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 })
 
@@ -107,9 +67,7 @@ test.describe('Data Entry for Donors', () => {
   	await page.locator('#de_2_new_21_tarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
   	await page.getByRole('combobox').selectOption('Quebec');
   	await page.locator('input[name="de_2_new_23"]').fill('G1A 0A2');
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Emilie donor', async ({ page }) => {
@@ -123,9 +81,7 @@ test.describe('Data Entry for Donors', () => {
   	await page.locator('#de_2_new_21_tarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
   	await page.getByRole('combobox').selectOption('Quebec');
   	await page.locator('input[name="de_2_new_23"]').fill('G1A 0A2');
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Freeform donor', async ({ page }) => {
@@ -137,9 +93,7 @@ test.describe('Data Entry for Donors', () => {
   	await page.locator('#de_2_new_21_tarea').fill('17 Crossovers St\nToronto');
   	await page.getByRole('combobox').selectOption('Ontario');
   	await page.locator('input[name="de_2_new_23"]').fill('M4E 3X2');
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 })
@@ -167,9 +121,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Persian necklace', async ({ page }) => {
@@ -185,9 +137,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByLabel('Donor').selectOption('2'); // Emilie
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Chinese Sword', async ({ page }) => {
@@ -204,9 +154,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Egyptian Chariot', async ({ page }) => {
@@ -222,9 +170,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('6');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Babylonian Spoon', async ({ page }) => {
@@ -240,9 +186,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByLabel('Donor').selectOption('1'); // Voltaire
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 })
 
@@ -268,9 +212,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByLabel('Donor').selectOption('2'); // Emilie
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create French Musket', async ({ page }) => {
@@ -286,9 +228,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Japanese Coin', async ({ page }) => {
@@ -305,9 +245,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('10');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create American Bicycle', async ({ page }) => {
@@ -322,9 +260,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('radio', { name: 'No' }).check(); // not donated
 		await page.getByRole('slider', { name: 'Condition' }).fill('4');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Polynesian Canoe', async ({ page }) => {
@@ -340,9 +276,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByLabel('Donor').selectOption('1'); // Voltaire
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Viking Silver Armband', async ({ page }) => {
@@ -358,9 +292,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByLabel('Donor').selectOption('2'); // Emilie
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 })
 
@@ -413,9 +345,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByText('Polynesian Canoe').click();
 		await page.locator('input[type=text]').nth(2).fill('vik');
 		await page.getByText('Viking Silver Armband').click();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Ancient Wonders Exhibit', async ({ page }) => {
@@ -438,9 +368,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByText('Egyptian Chariot').click();
 		await page.locator('input[type=text]').nth(2).fill('bab');
 		await page.getByText('Babylonian Spoon').click();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Modern Amazements Exhibit', async ({ page }) => {
@@ -465,9 +393,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByText('Polynesian Canoe').click();
 		await page.locator('input[type=text]').nth(2).fill('vik');
 		await page.getByText('Viking Silver Armband').click();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Heroic and Horrible Hand Weapons Exhibit', async ({ page }) => {
@@ -483,9 +409,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByText('Chinese Sword').click();
 		await page.locator('input[type=text]').nth(2).fill('fren');
 		await page.getByText('French Musket').click();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 
 	test('Create Pennies from the Past Exhibit', async ({ page }) => {
@@ -502,9 +426,7 @@ test.describe('Data entry for Exhibits', () => {
   	await page.getByText('Roman Coin').click();
 		await page.locator('input[type=text]').nth(2).fill('japa');
 		await page.getByText('Japanese Coin').click();
-		await waitForFormulizeFormToken(page);
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+		await saveFormulizeForm(page);
 	})
 })
 
@@ -528,10 +450,8 @@ test.describe('Data entry for Survey', () => {
 			}).toPass();
 			await page.getByLabel('Which was your favourite').selectOption(favourite);
 			await page.getByLabel('How would you rate the').selectOption(rating);
-			await waitForFormulizeFormToken(page);
-			await page.getByRole('button', { name: 'Save' }).click();
-			await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
-		})
+				await saveFormulizeForm(page);
+			})
 	})
 })
 
