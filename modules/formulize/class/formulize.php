@@ -382,6 +382,28 @@ class formulizeHandler {
 		return true;
 	}
 
+	// NOTE - ALL ELEMENT TYPES MUST HAVE THE mcpElementPropertiesDescriptionAndExamples STATIC METHOD OR ELSE THEY WON'T BE FOUND AS VALID, ONCE THE ADMIN UI USES THE UPSERT METHOD
+
+	/**
+	 * Validate that the element type
+	 * @param string $elementType The element type to validate - passed by reference so we can correct the case if needed
+	 * @throws Exception if the element type is not valid
+	 * @return void
+	 */
+	public static function validateElementType(&$elementType) {
+		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+		if(!in_array($elementType, $elementTypes)) {
+			// try to correct the case of the element type
+			foreach($elementTypes as $validElementType) {
+				if(strtolower($validElementType) == strtolower($elementType)) {
+					$elementType = $validElementType;
+					return;
+				}
+			}
+			throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $elementTypes));
+		}
+	}
+
 	/**
 	 * Builds or updates a form element, including creating or renaming the data table field, adding the element to screens, renaming files...
 	 * @param array $elementObjectProperties An associative array of properties to set on the element object.  If 'ele_id' is included and is non-zero, it will update that element.  If 'ele_id' is not included or is zero, it will create a new element.
@@ -395,15 +417,7 @@ class formulizeHandler {
 	 */
 	public static function upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding = array(), $screenIdsAndPagesForRemoving = array(), $dataType = null, $pi = false, $makeSubformInterface = false) {
 
-		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
-		if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
-			throw new Exception('Invalid element type: '.$elementObjectProperties['ele_type']. ' Valid types: '.implode(', ', $elementTypes));
-		}
-
-		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
-		if(!in_array($elementObjectProperties['ele_type'], $elementTypes)) {
-			throw new Exception('Invalid element type: '.$elementObjectProperties['ele_type']. ' valid_element_types: '.implode(', ', $elementTypes));
-		}
+		formulizeHandler::validateElementType($elementObjectProperties['ele_type']);
 
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler($elementObjectProperties['ele_type'].'Element','formulize');
@@ -566,6 +580,8 @@ class formulizeHandler {
 		static $elementDescriptions = [];
 		$update = $update ? 1 : 0;
 		if(empty($elementTypes) OR empty($elementDescriptions[$update])) {
+			$elementTypes = [];
+			$elementDescriptions[$update] = [];
 			// Scan for element class files
 			$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
 			$elementFiles = glob($elementClassPath . '/*Element.php');

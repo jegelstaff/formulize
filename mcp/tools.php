@@ -743,7 +743,7 @@ Examples:
 
 		$element_identifier = $arguments['element_identifier'] ?? '';
 		$form_id = intval($arguments['form_id'] ?? 0);
-		$element_type = strtolower(trim($arguments['element_type'] ?? ''));
+		$element_type = trim($arguments['element_type'] ?? '');
 		$handle = trim($arguments['handle'] ?? '');
 		$caption = trim($arguments['caption'] ?? '');
 		$column_heading = trim($arguments['column_heading'] ?? '');
@@ -762,10 +762,7 @@ Examples:
 			if(empty($form_id) OR $form_id <= 0 OR empty($element_type) OR empty($caption)) {
 				throw new FormulizeMCPException('form_id and element_type and caption are required for creating elements', 'invalid_data');
 			}
-			list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
-			if(!in_array($element_type, $elementTypes)) {
-				throw new FormulizeMCPException('Invalid element type: '.$element_type, 'invalid_data', context: ['valid_element_types' => $elementTypes]);
-			}
+			formulizeHandler::validateElementType($element_type);
 		}
 		if(!$isCreate) {
 			if(empty($element_identifier)) {

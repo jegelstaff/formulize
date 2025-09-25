@@ -82,6 +82,9 @@ foreach ($processedValues['elements'] as $property => $element_handle_name) {
 	$element->setVar($property, $element_handle_name);
 }
 
+// IF WHEN ELEMENTS USE UPSERT... ELEMENT TYPE DETERMINATION AND VALIDATION IS BASED ON ELEMENTS THAT HAVE MCP DESCRIPTION METHOD
+// SO CUSTOM ELEMENTS, ETC, WON'T WORK WITH THAT. NEED A MORE ROBUST SOLUTION.
+
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the element: ".$xoopsDB->error();
 }
