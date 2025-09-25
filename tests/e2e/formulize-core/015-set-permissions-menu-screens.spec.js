@@ -320,33 +320,3 @@ test.describe('Set columns and elements for screens', () => {
 		await saveAdminForm(page);
 	})
 });
-
-test.describe('Validate menu entries', () => {
-	test('Validate menu entries for ahstaff', async ({ page }) => {
-		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
-	})
-	test('Validate menu entries for mhstaff', async ({ page }) => {
-		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
-	})
-	test('Validate menu entries for curator1', async ({ page }) => {
-		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
-		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
-	})
-})

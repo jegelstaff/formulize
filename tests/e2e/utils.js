@@ -4,8 +4,8 @@ const { expect } = require('@playwright/test')
  * Wait for the Formulize form token to be valid before moving on
  * @param {*} page Playwright page object
  */
-export function waitForFormulizeFormToken(page) {
-	return page.waitForFunction(
+export async function waitForFormulizeFormToken(page) {
+	await page.waitForFunction(
 		() => document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
 	)
 }
@@ -35,8 +35,20 @@ export async function login(page, username, password = '12345') {
 export async function saveFormulizeForm(page, timeout = 10000) {
 	// Wait for the formulize page token
 	await waitForFormulizeFormToken(page);
-	// Trigger save
-	await page.getByRole('button', { name: 'Save' }).click();
+	await Promise.all([
+    page.waitForFunction(() => {
+      const element = document.getElementById('savingmessage');
+      return element &&
+             window.getComputedStyle(element).display === 'flex' &&
+             window.getComputedStyle(element).opacity === '1';
+    }),
+    page.getByRole('button', { name: 'Save' }).click()
+  ]);
+	// await saving animation dissapear
+  await page.waitForFunction(() => {
+    const element = document.getElementById('savingmessage');
+    return element && window.getComputedStyle(element).display === 'none';
+  }, { timeout: 10000 });
 	// Ensure the data submitted error does not occurr
 	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
 }
@@ -82,7 +94,6 @@ export async function saveAdminForm(page, type = 'regular', timeout = 10000) {
 		opacityTarget, // Pass the selector as an argument
   	{ timeout }
 	);
-
 }
 
 export async function waitForAdminPageReady(page) {
