@@ -1,0 +1,18 @@
+{
+	"paths": [
+		"mainfile.php",
+		"cache",
+		"modules",
+		"templates_c",
+		"tokens",
+		"uploads",
+		"modules/formulize/cache",
+		"modules/formulize/code",
+		"modules/formulize/export",
+		"modules/formulize/language/english/mail_template",
+		"modules/formulize/queue",
+		"modules/formulize/temp",
+		"modules/formulize/templates/screens",
+		"modules/formulize/upload"
+	]
+}

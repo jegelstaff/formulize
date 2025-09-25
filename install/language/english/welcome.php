@@ -1,6 +1,8 @@
 <?php
 // $Id: welcome.php 19118 2010-03-27 17:46:23Z skenow $
 // ALTERED BY FREEFORM SOLUTIONS FOR THE STANDALONE INSTALLER
+$writableFilesAndFolders = json_decode(file_get_contents('../writableFilesAndFolders.json'));
+$writableFilesAndFolders = implode(', ', $writableFilesAndFolders->paths);
 $content .= '
 <p>
 	Formulize is a data management and reporting system that lets you easily create forms on the web, and interact with the data people have submitted.  It uses the ImpressCMS platform for some operations.  This installer will setup Formulize and ImpressCMS for you at the same time.
@@ -22,7 +24,7 @@ $content .= '
 	<li>Setup the web server, PHP and database server properly.</li>
 	<li>Prepare a database for ImpressCMS. This can be an existing database as well as a newly created one.</li>
 	<li>Prepare a user account and grant this user access to the database (all rights).</li>
-	<li>Make the directories of uploads/, cache/, templates_c/, modules/ writable (chmod 777 or 755 - depending on servers).</li>
+	<li>Make the directories of '.$writableFilesAndFolders.' (chmod 775 or 755 - depending on servers).</li>
 	<li>Make the file mainfile.php writable (chmod 666 depending on server).</li>
 	<li>In your internet browser settings turn on the allowance of cookies and JavaScript.</li>
 </ul>

@@ -25,10 +25,10 @@ if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
 icms_core_Filesystem::chmod("../mainfile.php", 0444);
 if (defined('XOOPS_TRUST_PATH') && XOOPS_TRUST_PATH != '') {
-	icms_core_Filesystem::chmod(XOOPS_TRUST_PATH, 0777);
-	icms_core_Filesystem::chmod(XOOPS_ROOT_PATH.'/modules', 0777);
-	icms_core_Filesystem::chmod("/modules/protector/root/modules/protector", 0777);
-	icms_core_Filesystem::chmod("/modules/protector/trust_path/modules", 0777);
+	icms_core_Filesystem::chmod(XOOPS_TRUST_PATH, 0775);
+	icms_core_Filesystem::chmod(XOOPS_ROOT_PATH.'/modules', 0775);
+	icms_core_Filesystem::chmod("/modules/protector/root/modules/protector", 0775);
+	icms_core_Filesystem::chmod("/modules/protector/trust_path/modules", 0775);
 	if (!is_dir(XOOPS_ROOT_PATH.'/modules/protector')) {
 		icms_core_Filesystem::copyRecursive(XOOPS_ROOT_PATH.'/install/modules/protector/root/modules/protector',XOOPS_ROOT_PATH.'/modules/protector');
 	}

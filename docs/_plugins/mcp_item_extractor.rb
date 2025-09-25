@@ -132,7 +132,7 @@ module Jekyll
       end
 
       array_content = array_match[1]
-			skip_tools = ['dynamic_server_name', 'locate_captain_picard']
+			skip_tools = ['dynamic_server_name', 'locate_captain_picard', 'open_the_pod_bay_doors_hal', 'lets_play_global_thermonuclear_war']
 			# Replace the tool_pattern scanning with bracket-counting approach
 			current_pos = 0
 			while current_pos < array_content.length

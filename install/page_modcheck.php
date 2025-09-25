@@ -55,9 +55,11 @@ function xoDiagIfWritable( $path) {
         if (file_exists( $path )) {
             @chmod( $path, 0666 );
             $error = !is_writeable( $path );
-        }
+        } else {
+					$error = true;
+				}
     } else {
-        @chmod( $path, 0777 );
+        @chmod( $path, 0775 );
         $error = !is_writeable( $path );
     }
     return xoDiag( $error ? -1 : 1, $error ? 'Not writable' : 'Writable' );
@@ -148,23 +150,22 @@ ob_start();
             ?></h4>
         <div class="clear">&nbsp;</div>
     </fieldset>
-    <!--
+
+		<fieldset>
+		<h3><?php echo FILE_PERMISSIONS; ?></h3>
 	<table class="diags">
-	<caption><?php echo FILE_PERMISSIONS; ?></caption>
-    <thead>
-    	<tr><th>Path</th><th>Status</th></tr>
-    </thead>
+
 	<?php
-    $paths = array("uploads/", "cache/", "templates_c/", "mainfile.php");
-    foreach ( $paths as $path) {
+    $writableFilesAndFolders = json_decode(file_get_contents('../writableFilesAndFolders.json'));
+    foreach ( $writableFilesAndFolders->paths as $path) {
         ?>
 	<tr>
-		<th scope="row"><?php echo $path; ?></th>
+		<td scope="row"><nobr><?php echo $path; ?></nobr></td>
 		<td><?php echo xoDiagIfWritable( $path ); ?></td>
 	</tr>
 	<?php } ?>
 	</table>
-	-->
+	</fieldset>
 <?php
 $content = ob_get_contents();
 ob_end_clean();
