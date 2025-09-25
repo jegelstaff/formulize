@@ -7,24 +7,14 @@ title: Folders in Formulize that need to be writable
 # Folders in Formulize that need to be writable
 
 There are certain folders in Formulize which must be writable by the web server. If they are not, Formulize will not work properly.
+{% for path in site.data.writableFilesAndFolders.paths %}
+- /{{ path }}{% if path == 'mainfile.php' %} &mdash; only needs to be writable during installation!{% endif %}{% endfor %}
 
-- /cache
-- /logs
-- /templates_c
-- /uploads
-- /tokens
-- /modules/formulize/cache
-- /modules/formulize/code
-- /modules/formulize/export
-- /modules/formulize/language/english/mail_template (and 'mail_template' in other language folders, if applicable)
-- /modules/formulize/queue
-- /modules/formulize/temp
-- /modules/formulize/templates/screens (and all subs)
-- /modules/formulize/upload
+Note that the mail_templates folder in other language might need to be writable too, of course.
 
-## Make mainfile.php writable if you're installing for the first time
+## Make mainfile.php read-only after installation
 
-If you're going through [the installer to setup Formulize](../installing_formulize) for the first time, make sure that ```mainfile.php``` in the root of the website is writable by the web server.
+If you're going through [the installer to setup Formulize](../installing_formulize) for the first time, make sure that ```mainfile.php``` in the root of the website is writable by the web server. After installation, ```mainfile.php``` can be made read-only.
 
 ## File Permissions and Git
 
