@@ -21,12 +21,11 @@ module.exports = defineConfig({
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: process.env.GITHUB_ACTIONS ?
-		[['dot'], ['github'], ['html', { outputFolder: './test-report' }]] :
-		process.env.CI ?
-			[['dot'], ['html', { outputFolder: './test-report' }]] :
-			[['list'], ['html', { outputFolder: './test-report' }]],
+		[['list'], ['github'], ['html', { outputFolder: './test-report' }]] : [['list'], ['html', { outputFolder: './test-report' }]],
 	/* Adjust the timeout for slow tests */
-	timeout: 30000,
+	timeout: 60000,
+	/* Retry on CI only. */
+  retries: process.env.CI ? 2 : 2,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */

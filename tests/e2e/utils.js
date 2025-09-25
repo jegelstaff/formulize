@@ -2,8 +2,8 @@
  * Wait for the Formulize form token to be valid before moving on
  * @param {*} page Playwright page object
  */
-export async function waitForFormulizeFormToken(page) {
-	await page.waitForFunction(
+export function waitForFormulizeFormToken(page) {
+	return page.waitForFunction(
 		() => document.querySelector('input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
 	)
 }
@@ -21,15 +21,10 @@ export async function login(page, username, password = '12345') {
 	await page.locator('input[name="uname"]').fill(username);
 	await page.locator('input[name="uname"]').press('Tab');
 	await page.locator('input[name="pass"]').fill(password);
-	await page.locator('input[name="pass"]').press('Enter');
-}
-
-/**
- * Login as admin
- * @param {*} page
- */
-export async function loginAsAdmin(page) {
-	await login(page, 'admin');
+	await Promise.all([
+    page.waitForURL(/\/modules\/formulize\/.*/),
+    page.locator('input[name="pass"]').press('Enter')
+  ]);
 }
 
 /**
@@ -63,7 +58,7 @@ export async function saveAdminForm(page, type = 'regular', timeout = 10000) {
 	}
 
 	// wait for the admin UI to become fully opaque again
-	await page.waitForFunction(
+	return page.waitForFunction(
 		(selector) => {
 			const element = document.querySelector(selector);
 			if (!element) return false;
@@ -74,6 +69,34 @@ export async function saveAdminForm(page, type = 'regular', timeout = 10000) {
   	{ timeout }
 	);
 
+}
+
+export async function waitForAdminPageReady(page) {
+  // Wait for network to be idle first
+  await page.waitForLoadState('networkidle');
+
+  // Wait for jQuery and jQuery UI to be fully loaded and ready
+  return page.waitForFunction(() => {
+    // Check if jQuery is loaded
+    if (!window.$ || !window.jQuery) return false;
+
+    // Check if document is ready
+    if (document.readyState !== 'complete') return false;
+
+    // Check if jQuery has no pending AJAX requests
+    if ($.active && $.active > 0) return false;
+
+    // Check if jQuery UI is loaded (if you use it)
+    if (window.$ && !$.ui) return false;
+
+    // Check if all jQuery UI widgets have been initialized
+    // Look for common indicators that widgets are ready
+    const hasLoadingElements = $('.ui-loading, .loading, [data-loading="true"]').length > 0;
+    if (hasLoadingElements) return false;
+
+    // Ensure jQuery's ready event has fired
+    return $.isReady === true;
+  });
 }
 
 // Possible function to employ if accordion clicks are not working reliably

@@ -528,6 +528,7 @@ test.describe('Data entry for Survey', () => {
 			}).toPass();
 			await page.getByLabel('Which was your favourite').selectOption(favourite);
 			await page.getByLabel('How would you rate the').selectOption(rating);
+			await waitForFormulizeFormToken(page);
 			await page.getByRole('button', { name: 'Save' }).click();
 			await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
 		})
