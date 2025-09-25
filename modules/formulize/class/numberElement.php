@@ -60,7 +60,8 @@ class formulizeNumberElement extends formulizeTextElement {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		return
-"**Element:** Number Box (number).
+"**Element:** Number Box (number)
+**Description:** A single line box for entering numbers, with optional formatting for decimals, prefixes, suffixes, and thousands separators.
 **Properties:**
 - size (int, width of the box in characters, default is ".$formulizeConfig['t_width'].")
 - defaultvalue (int or float, default value for new entries)
@@ -74,6 +75,32 @@ class formulizeNumberElement extends formulizeTextElement {
 - A number box for recording values between 0 and 99: { size: 2 }
 - A three digit number box with a default value of 100: { size: 3, defaultvalue: 100 }
 - A number box for recording prices up to $999,999.99: { size: 9, defaultvalue: 0, decimals: 2, prefix: '$', thousands_separator: ',', decimals_separator: '.' }";
+	}
+
+	/**
+	 * An optional method an element class can implement, if there are special considerations for the datatype that should be used for this element type
+	 * Called by formulizeHandler::upsertElementSchemaAndResources when an element is created or updated
+	 * Also called from element_advanced_save.php when the admin UI is being used to change the datatype for an element
+	 * The if function_exists checks for a function defined in the element_adanced_save.php file, which will indicate if we should follow what the user put into the UI
+	 * Otherwise, we should go with a passed in default which will be from the upsertElementSchemaAndResources method
+	 * @param string $defaultType The default type to use if the element does not have special considerations
+	 * @return string The data type to use for this element
+	 */
+	public function getDefaultDataType($defaultType = 'int') {
+		$ele_value = $this->getVar('ele_value');
+		if(isset($ele_value[ELE_VALUE_TEXT_DECIMALS]) AND $ele_value[ELE_VALUE_TEXT_DECIMALS] > 0) {
+			if($datadecimals = intval($ele_value[ELE_VALUE_TEXT_DECIMALS])) {
+				if($datadecimals > 20) {
+					$datadecimals = 20;
+				}
+			} else {
+				$datadecimals = 2;
+			}
+			$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
+			return "decimal($datadigits,$datadecimals)";
+		} else {
+			return 'int(10)';
+		}
 	}
 
 	// write code to a file
@@ -262,6 +289,21 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		$value = preg_replace ('/[^0-9.-]+/', '', trim($value));
 		$value = (!is_numeric($value) AND $value == "") ? "{WRITEASNULL}" : $value;
 		return $value;
+	}
+
+	// this method will format a dataset value for display on screen when a list of entries is prepared
+	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
+	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		$this->clickable = false;
+		$this->striphtml = false;
+		$this->length = 100;
+		if(strpos($value, '.') !== false) {
+			$value = floatval(trim($value));
+		} else {
+			$value = intval(trim($value));
+		}
+		return formulize_numberFormat($value, $handle);
 	}
 
 }

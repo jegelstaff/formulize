@@ -4632,7 +4632,7 @@ function formulize_numberFormat($value, $elementIdOrHandle, $decimalOverride=0) 
     }
     $id = is_numeric($elementIdOrHandle) ? $elementIdOrHandle : formulize_getIdFromElementHandle($elementIdOrHandle);
     $elementMetaData = formulize_getElementMetaData($id, false);
-    if ($elementMetaData['ele_type'] == "text") {
+    if ($elementMetaData['ele_type'] == "text" OR $elementMetaData['ele_type'] == "number") {
         $ele_value = unserialize($elementMetaData['ele_value']);
         // value, decimaloverride, decimals, decsep exists, decsep, sep exists, sep, prefix exists, prefix
         return _formulize_numberFormat($value, $decimalOverride, $ele_value[5], isset($ele_value[7]), $ele_value[7], isset($ele_value[8]), $ele_value[8], isset($ele_value[6]), $ele_value[6], isset($ele_value[10]), $ele_value[10]);
