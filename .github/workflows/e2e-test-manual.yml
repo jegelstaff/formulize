@@ -41,7 +41,7 @@ jobs:
 
     - name: Set file/directory permissions
       run: |
-        chmod 777 trust uploads modules templates_c cache mainfile.php ~/work/formulize/formulize
+        chmod 777 trust uploads modules templates_c cache tokens modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
 
     - name: Stop existing containers (if any)
       run: |

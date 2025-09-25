@@ -12,6 +12,7 @@ There are certain folders in Formulize which must be writable by the web server.
 - /logs
 - /templates_c
 - /uploads
+- /tokens
 - /modules/formulize/cache
 - /modules/formulize/code
 - /modules/formulize/export
