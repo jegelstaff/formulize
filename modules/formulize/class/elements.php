@@ -274,11 +274,7 @@ class formulizeElementsHandler {
 		if($properties['fid'] <= 0) {
 			throw new Exception("You must use a valid form when working with an element");
 		}
-		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
-		$properties['ele_type'] = strtolower(trim($properties['ele_type']));
-		if(!in_array($properties['ele_type'], $elementTypes)) {
-			throw new Exception("Invalid element type: ".$properties['ele_type'].". You must use a valid element type when working with an element. Valid types: ".implode(", ", $elementTypes)	);
-		}
+		formulizeHandler::validateElementType($properties['ele_type']);
 		$properties['ele_caption'] = trim($properties['ele_caption']);
 		if($properties['ele_caption'] == "") {
 			throw new Exception("You must use a caption when working with an element");
