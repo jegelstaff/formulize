@@ -75,15 +75,10 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
-		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
-			$ele_value = $elementObject->getVar('ele_value');
-		} else {
-			$ele_value = $this->getDefaultEleValue();
-		}
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
 		if(isset($properties['defaultvalue'])) {
 			if($properties['defaultvalue']) {
 				$ele_value['_YES'] = 1;
@@ -98,7 +93,7 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 		];
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		return array(
 			'_YES' => 0, // a 1/0 indicating if Yes is the default
 			'_NO' => 0 // a 1/0 indicating if No is the default

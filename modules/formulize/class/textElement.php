@@ -169,16 +169,10 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
-		// textElement has no stated public properties
-		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
-			$ele_value = $elementObject->getVar('ele_value');
-		} else {
-			$ele_value = $this->getDefaultEleValue();
-		}
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
 		if(isset($properties['defaultValue'])) {
 			$ele_value[$this->defaultValueKey] = trim($properties['defaultValue']);
 		}
@@ -188,7 +182,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		return ['ele_value' => $ele_value ];
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value[ELE_VALUE_TEXT_WIDTH] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
