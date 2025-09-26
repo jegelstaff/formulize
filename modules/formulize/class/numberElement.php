@@ -51,9 +51,9 @@ class formulizeNumberElement extends formulizeTextElement {
 
 	/**
 	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
-	 * Concerned with the options for the ele_value property of the element object
+	 * Concerned with the properties for the ele_value property of the element object
 	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
@@ -124,49 +124,49 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 	}
 
 	/**
-	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
-	 * Options are the contents of the ele_value property on the object
-	 * @param array $options The options to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
-		foreach($options as $key => $value) {
+	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
+		foreach($properties as $key => $value) {
 			switch($key) {
 				case 'size':
 				case 'decimals':
-					$options[$key] = intval($value);
-					if($options[$key] < 0) {
-						$options[$key] = 0;
+					$properties[$key] = intval($value);
+					if($properties[$key] < 0) {
+						$properties[$key] = 0;
 					}
 					break;
 				case 'defaultvalue':
-					$options[$key] = is_numeric($value) ? $value + 0 : 0; // force to int or float
+					$properties[$key] = is_numeric($value) ? $value + 0 : 0; // force to int or float
 					break;
 				case 'prefix':
 				case 'decimals_separator':
 				case 'thousands_separator':
 				case 'suffix':
-					$options[$key] = trim($value);
+					$properties[$key] = trim($value);
 					break;
 				default:
-					unset($options[$key]); // remove anything we don't recognize
+					unset($properties[$key]); // remove anything we don't recognize
 			}
 		}
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value = array(
-			ELE_VALUE_TEXT_WIDTH => isset($options['size']) ? $options['size'] : $formulizeConfig['t_width'],
-			ELE_VALUE_TEXT_MAXCHARS => isset($options['size']) ? $options['size'] : $formulizeConfig['t_width'],
-			ELE_VALUE_TEXT_DEFAULTVALUE => isset($options['defaultvalue']) ? $options['defaultvalue'] : 0,
+			ELE_VALUE_TEXT_WIDTH => isset($properties['size']) ? $properties['size'] : $formulizeConfig['t_width'],
+			ELE_VALUE_TEXT_MAXCHARS => isset($properties['size']) ? $properties['size'] : $formulizeConfig['t_width'],
+			ELE_VALUE_TEXT_DEFAULTVALUE => isset($properties['defaultvalue']) ? $properties['defaultvalue'] : 0,
 			ELE_VALUE_TEXT_NUMBERSONLY => 1,
-			ELE_VALUE_TEXT_DECIMALS => isset($options['decimals']) ? $options['decimals'] : $formulizeConfig['number_decimals'],
-			ELE_VALUE_TEXT_PREFIX => isset($options['prefix']) ? $options['prefix'] : $formulizeConfig['number_prefix'],
-			ELE_VALUE_TEXT_DECIMALS_SEPARATOR => isset($options['decimals_separator']) ? $options['decimals_separator'] : $formulizeConfig['number_decimalsep'],
-			ELE_VALUE_TEXT_THOUSANDS_SEPARATOR => isset($options['thousands_separator']) ? $options['thousands_separator'] : $formulizeConfig['number_sep'],
+			ELE_VALUE_TEXT_DECIMALS => isset($properties['decimals']) ? $properties['decimals'] : $formulizeConfig['number_decimals'],
+			ELE_VALUE_TEXT_PREFIX => isset($properties['prefix']) ? $properties['prefix'] : $formulizeConfig['number_prefix'],
+			ELE_VALUE_TEXT_DECIMALS_SEPARATOR => isset($properties['decimals_separator']) ? $properties['decimals_separator'] : $formulizeConfig['number_decimalsep'],
+			ELE_VALUE_TEXT_THOUSANDS_SEPARATOR => isset($properties['thousands_separator']) ? $properties['thousands_separator'] : $formulizeConfig['number_sep'],
 			ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED => 0,
-			ELE_VALUE_TEXT_SUFFIX => isset($options['suffix']) ? $options['suffix'] : $formulizeConfig['number_suffix'],
+			ELE_VALUE_TEXT_SUFFIX => isset($properties['suffix']) ? $properties['suffix'] : $formulizeConfig['number_suffix'],
 			ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER => 0,
 			ELE_VALUE_TEXT_TRIM_VALUE => 1
 		);
