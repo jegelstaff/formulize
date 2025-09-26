@@ -64,7 +64,9 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		return new formulizeTextareaElement();
 	}
 
-	protected function getDefaultEleValue($formulizeConfig) {
+	protected function getDefaultEleValue() {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value = array();
 		$ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE] = "";
 		$ele_value[ELE_VALUE_TEXTAREA_ROWS] = $formulizeConfig['ta_rows'];

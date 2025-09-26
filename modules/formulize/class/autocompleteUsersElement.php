@@ -30,7 +30,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectUsersElement.php";
 
 class formulizeAutocompleteUsersElement extends formulizeSelectUsersElement {
 
@@ -95,7 +95,9 @@ class formulizeAutocompleteUsersElementHandler extends formulizeSelectUsersEleme
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
 		list($ele_value) = array_values(formulizeSelectUsersElementHandler::validateEleValuePublicAPIProperties($properties, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
-		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($properties['allowMultipleSelections']) ? $properties['allowMultipleSelections'] : 0;
+		if(isset($properties['allowMultipleSelections'])) {
+			$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $properties['allowMultipleSelections'];
+		}
 		return [
 			'ele_value' => $ele_value
 		];
@@ -106,7 +108,7 @@ class formulizeAutocompleteUsersElementHandler extends formulizeSelectUsersEleme
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,
 			ELE_VALUE_SELECT_OPTIONS => array('{USERNAMES}' => 0),
-			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
+			ELE_VALUE_SELECT_LINK_LIMITGROUPS => 'all',
 			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
 			ELE_VALUE_SELECT_LINK_FILTERS => array(),
 			ELE_VALUE_SELECT_LINK_ALLGROUPS => 0,

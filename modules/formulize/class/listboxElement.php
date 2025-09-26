@@ -97,7 +97,9 @@ class formulizeListboxElementHandler extends formulizeSelectElementHandler {
 		list($ele_value, $ele_uitext) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = count($ele_value[ELE_VALUE_SELECT_OPTIONS]) < 10 ? count($ele_value[ELE_VALUE_SELECT_OPTIONS]) : 10;
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] < 1 ? 1 : $ele_value[ELE_VALUE_SELECT_NUMROWS];
-		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($properties['allowMultipleSelections']) ? $properties['allowMultipleSelections'] : 1;
+		if(isset($properties['allowMultipleSelections'])) {
+			$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $properties['allowMultipleSelections'];
+		}
 		return [
 			'ele_value' => $ele_value,
 			'ele_uitext' => $ele_uitext
@@ -106,6 +108,9 @@ class formulizeListboxElementHandler extends formulizeSelectElementHandler {
 
 	protected function getDefaultEleValue() {
 		$ele_value = array();
+		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 10; // the number of rows to show in the listbox
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 1; // a 1/0 indicating if multiple selections should be allowed
+		$ele_value[ELE_VALUE_SELECT_OPTIONS] = array(); // an array of options for the select box
 		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0; // a 1/0 indicating if this is an autocomplete box
 		$ele_value[ELE_VALUE_SELECT_RESTRICTSELECTION] = 0; // 0/1/2/3 indicating restrictions on how many times an option can be picked. 0 - no limit, 1 - only once, 2 - once per user, 3 - once per group
 		return $ele_value;

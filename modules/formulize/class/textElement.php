@@ -172,14 +172,17 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
 		// textElement has no stated public properties
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$ele_value = $this->getDefaultEleValue($formulizeConfig);
+		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $elementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
 		return ['ele_value' => $ele_value ];
 	}
 
-	protected function getDefaultEleValue($formulizeConfig) {
-		$ele_value = array();
+	protected function getDefaultEleValue() {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value[ELE_VALUE_TEXT_WIDTH] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
 		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255;
 		$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = '';
@@ -207,9 +210,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			$dataToSendToTemplate['advanced-tab-values']['formlink'] = $formlink->render();
 			$dataToSendToTemplate['options-tab-values']['ele_value'] = $element->getVar('ele_value');
 		} else { // new element
-			$config_handler = xoops_gethandler('config');
-			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate['options-tab-values']['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
+			$dataToSendToTemplate['options-tab-values']['ele_value'] = $this->getDefaultEleValue();
 			$formlink = createFieldList(0, true);
 			$dataToSendToTemplate['advanced-tab-values']['formlink'] = $formlink->render();
 		}
