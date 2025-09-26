@@ -70,18 +70,18 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	}
 
 	/**
-	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
-	 * Options are the contents of the ele_value property on the object
-	 * @param array $options The options to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
 		return [
 			'ele_value' => [
-				'_YES' => (isset($options['defaultvalue']) AND $options['defaultvalue'] === 1) ? 1 : 0,
-				'_NO' => (isset($options['defaultvalue']) AND $options['defaultvalue'] === 0) ? 1 : 0
+				'_YES' => (isset($properties['defaultvalue']) AND $properties['defaultvalue'] === 1) ? 1 : 0,
+				'_NO' => (isset($properties['defaultvalue']) AND $properties['defaultvalue'] === 0) ? 1 : 0
 			]
 		];
 	}
