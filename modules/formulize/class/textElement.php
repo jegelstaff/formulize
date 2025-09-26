@@ -73,10 +73,12 @@ class formulizeTextElement extends formulizeElement {
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
 "**Element:** Text Box (text).
+**Description:** A single-line text input field.
 **Properties:**
-- none
+- defaultValue (string, the default value for the text box)
 **Examples:**
-- A text box requires no properties.";
+- A plain text box with no default value: { }
+- A text box with a default value of 'N/A': { defaultValue: 'N/A' }";
 	}
 
 	/**
@@ -176,6 +178,12 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			$ele_value = $elementObject->getVar('ele_value');
 		} else {
 			$ele_value = $this->getDefaultEleValue();
+		}
+		if(isset($properties['defaultValue'])) {
+			$ele_value[$this->defaultValueKey] = trim($properties['defaultValue']);
+		}
+		if(isset($properties['useRichTextEditor']) AND defined('ELE_VALUE_TEXTAREA_RICHTEXT')) {
+			$ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] = trim($properties['useRichTextEditor']);
 		}
 		return ['ele_value' => $ele_value ];
 	}

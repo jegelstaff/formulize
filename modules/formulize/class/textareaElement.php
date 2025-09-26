@@ -49,6 +49,25 @@ class formulizeTextareaElement extends formulizeTextElement {
 		$this->defaultValueKey = ELE_VALUE_TEXTAREA_DEFAULTVALUE; // text and textarea do not share the same default value key :(
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		return
+"**Element:** Multi-line Textbox (textarea).
+**Description:** A multi-line text input field. Useful for addresses, notes, and other longer text inputs. Can be set to provide a rich text editor to the user.
+**Properties:**
+- defaultValue (optional, string, default value for new entries)
+- useRichTextEditor (optional, a 1/0 indicating whether to provide a rich text editor for this field. Default is 0 (no editor). Set to 1 to provide an editor.)
+**Examples:**
+- A rich text editor box: { useRichTextEditor: 1 }
+- A multi-line text box for addresses in Toronto, ON: { defaultValue: 'Toronto, ON' }";
+	}
+
 }
 
 #[AllowDynamicProperties]
