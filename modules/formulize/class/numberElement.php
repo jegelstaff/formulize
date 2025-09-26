@@ -64,17 +64,17 @@ class formulizeNumberElement extends formulizeTextElement {
 **Description:** A single line box for entering numbers, with optional formatting for decimals, prefixes, suffixes, and thousands separators.
 **Properties:**
 - size (int, width of the box in characters, default is ".$formulizeConfig['t_width'].")
-- defaultvalue (int or float, default value for new entries)
+- defaultValue (int or float, default value for new entries)
 - decimals (int, number of decimal places to allow, default is ".$formulizeConfig['number_decimals']."),
 - prefix (string, text to show before the number, default is '".$formulizeConfig['number_prefix']."'),
-- decimals_separator (string, character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
-- thousands_separator (string, character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
+- decimalsSeparator (string, character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
+- thousandsSeparator (string, character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
 - suffix (string, text to show after the number, default is '".$formulizeConfig['number_suffix']."')
 **Examples:**
 - A basic number box requires no properties, system defaults will be used
 - A number box for recording values between 0 and 99: { size: 2 }
-- A three digit number box with a default value of 100: { size: 3, defaultvalue: 100 }
-- A number box for recording prices up to $999,999.99: { size: 9, defaultvalue: 0, decimals: 2, prefix: '$', thousands_separator: ',', decimals_separator: '.' }";
+- A three digit number box with a default value of 100: { size: 3, defaultValue: 100 }
+- A number box for recording prices up to $999,999.99: { size: 9, defaultValue: 0, decimals: 2, prefix: '$', thousandsSeparator: ',', decimalsSeparator: '.' }";
 	}
 
 	/**
@@ -141,12 +141,12 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 						$properties[$key] = 0;
 					}
 					break;
-				case 'defaultvalue':
+				case 'defaultValue':
 					$properties[$key] = is_numeric($value) ? $value + 0 : 0; // force to int or float
 					break;
 				case 'prefix':
-				case 'decimals_separator':
-				case 'thousands_separator':
+				case 'decimalsSeparator':
+				case 'thousandsSeparator':
 				case 'suffix':
 					$properties[$key] = trim($value);
 					break;
@@ -163,8 +163,8 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 			$ele_value[ELE_VALUE_TEXT_WIDTH] = $properties['size'];
 			$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $properties['size'];
 		}
-		if(isset($properties['defaultvalue'])) {
-			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = $properties['defaultvalue'];
+		if(isset($properties['defaultValue'])) {
+			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = $properties['defaultValue'];
 		}
 		if(isset($properties['decimals'])) {
 			$ele_value[ELE_VALUE_TEXT_DECIMALS] = $properties['decimals'];
@@ -172,11 +172,11 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		if(isset($properties['prefix'])) {
 			$ele_value[ELE_VALUE_TEXT_PREFIX] = $properties['prefix'];
 		}
-		if(isset($properties['decimals_separator'])) {
-			$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = $properties['decimals_separator'];
+		if(isset($properties['decimalsSeparator'])) {
+			$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = $properties['decimalsSeparator'];
 		}
-		if(isset($properties['thousands_separator'])) {
-			$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = $properties['thousands_separator'];
+		if(isset($properties['thousandsSeparator'])) {
+			$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = $properties['thousandsSeparator'];
 		}
 		if(isset($properties['suffix'])) {
 			$ele_value[ELE_VALUE_TEXT_SUFFIX] = $properties['suffix'];
