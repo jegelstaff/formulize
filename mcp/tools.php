@@ -83,7 +83,7 @@ trait tools {
 				]
 			],
 			'list_a_users_groups' => [
-				'name' => 'list_users_groups',
+				'name' => 'list_a_users_groups',
 				'description' => "List all the groups that a specific user belongs to. Use the list_users tool to get the ID numbers of all the users in the system.",
 				'inputSchema' => [
 					'type' => 'object',
