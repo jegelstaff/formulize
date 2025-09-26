@@ -171,7 +171,7 @@ class formulizeHandler {
 	/**
 	 * Static function to provide the common properties and examples used by all list elements for with the mcp server
 	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
 	 * @return array an array of with the important notes first, common properties first, and the common examples second
 	 */
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForLists($update = false) {
@@ -209,9 +209,9 @@ class formulizeHandler {
 	}
 
 	/**
-	 * Static function to provide the common properties and examples used by all list elements for with the mcp server
+	 * Static function to provide the common properties and examples used by all 'linked' elements for with the mcp server
 	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @param bool|int $update True if this is being called as part of building the options for Updating, as opposed to options for Creating. Default is false (Creating).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
 	 * @return array an array of with the important notes first, common properties first, and the common examples second
 	 */
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update = false) {
