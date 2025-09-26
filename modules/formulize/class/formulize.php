@@ -239,6 +239,34 @@ class formulizeHandler {
 	}
 
 	/**
+	 * Static function to provide the common properties and examples used by all 'users' elements for with the mcp server
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return array an array of with the important notes first, common properties first, and the common examples second
+	 */
+	public static function mcpElementPropertiesBaseDescriptionAndExamplesForUsers($update = false) {
+
+		$notes =
+"**Important notes:**
+- 'Users' elements provide a way for people to select from a list of users in the system. This is useful for providing lists of people, obviously, but it is also useful for setting up customized permissions, because there are other features in Formulize which can control the access to individual form entries based on whether that entry has a user selected in a 'Users' element.";
+
+		$properties =
+"**Properties:**
+- source_groups (optional, an array of group ids from which the users in the list should be drawn. Use the list_groups tool see a list of all the groups and their ids. Use the list_group_members tool to see a list of users who are members of a specific group. If this is not specified, or the array is empty, then all users in the system will be shown, regardless of their group membership.)";
+
+		$examples =
+"**Examples:**
+- A list of all users in the system (no properties): { }
+- A list of users from groups 3 and 6: { source_groups: [3, 6] }";
+
+		return [
+			$notes,
+			$properties,
+			$examples
+		];
+	}
+
+	/**
 	 * Builds or updates a form, including creating or renaming the data table, creating default screens, and setting up permissions, renaming resources...
 	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
 	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form (only used when creating a new form)
