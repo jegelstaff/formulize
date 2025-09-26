@@ -35,25 +35,6 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler {
 
 	/**
-	 * Takes an array of properties for an element Object and fills it out, validates, so it is complete
-	 * If an element should set any default values for properties more specific to it, do that here
-	 * Must return through the parent method so that the rest of the more basic properties are set correctly
-	 * In most cases, ele_value property will already have been sorted out because it came from a public source and went through validateEleValuePublicAPIProperties already
-	 * @param array $properties The properties for an element object
-	 * @return array The properties to apply to the element object
-	 */
-	public function setupAndValidateElementProperties($properties) {
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		// creating a new element, so set some defaults if necessary (or take what was passed in)
-		if(!isset($properties['ele_id'])) {
-			$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
-			$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimeter'];
-		}
-		return parent::setupAndValidateElementProperties($properties);
-	}
-
-	/**
 	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * properties are the contents of the ele_value property on the object
@@ -62,6 +43,7 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
+
 		if($elementIdentifier AND $thisElementObject = _getElementObject($elementIdentifier)) {
 			$ele_value = $thisElementObject->getVar('ele_value');
 		} else {
