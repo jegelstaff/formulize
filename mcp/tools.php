@@ -837,6 +837,7 @@ Examples:
 			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
 			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
+			'ele_order' => $elementObject ? $elementObject->getVar('ele_order') : figureOutOrder('bottom', fid: $fid),
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
 			'ele_disabled' => $disabled !== null ? $disabled : ($elementObject ? $elementObject->getVar('ele_disabled') : 0),
 		];
