@@ -52,12 +52,48 @@ trait tools {
 					'properties' => (object)[]
 				]
 			],
-			'list_users' => [
-				'name' => 'list_users',
-				'description' => "List all the users in the system.",
+			'list_groups' => [
+				'name' => 'list_groups',
+				'description' => "List all the groups in the system. Use the list_group_members tool to get the members of an individual group.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
+				]
+			],
+			'list_group_members' => [
+				'name' => 'list_group_members',
+				'description' => "List all the members of a specific group. Use the list_groups tool to get the ID numbers of all the groups in the system.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'group_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the group to list members for'
+						]
+					],
+					'required' => ['group_id']
+				]
+			],
+			'list_users' => [
+				'name' => 'list_users',
+				'description' => "List all the users in the system. Use the list_a_users_groups tool to get the groups that a specific user belongs to.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_a_users_groups' => [
+				'name' => 'list_users_groups',
+				'description' => "List all the groups that a specific user belongs to. Use the list_users tool to get the ID numbers of all the users in the system.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'user_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the user to list groups for'
+						]
+					],
+					'required' => ['user_id']
 				]
 			],
 			'get_form_details' => [
@@ -1109,10 +1145,63 @@ private function validateFilter($filter, $andOr = 'AND') {
 	}
 
 	/**
+	 * List all the groups - tool version of the resource
+	 */
+	private function list_groups() {
+		return $this->groups_list();
+	}
+
+	/**
+	 * List all the members of a group
+	 */
+	private function list_group_members($arguments) {
+		$group_id = intval($arguments['group_id'] ?? 0);
+		if(empty($group_id) OR $group_id <= 0) {
+			throw new FormulizeMCPException('group_id is required and must be a positive integer', 'invalid_data');
+		}
+		if(!$this->authenticatedUid OR ($this->isUserAWebmaster() == false AND !in_array($group_id, $this->userGroups))) {
+			throw new FormulizeMCPException('Permission denied: You must be a webmaster or a member of the group to list its members.', 'authentication_error');
+		}
+		$limitBy = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l ON l.uid = u.uid WHERE l.groupid = ".intval($group_id);
+		$groupMemberData = [];
+		$groupData = $this->groups_list($group_id);
+		$groupMemberData['group_details'] = $groupData['groups'][0] ?? [];
+		if($result = $this->getUserDetails(limitBy: $limitBy)) {
+			if($result) {
+				while($row = $this->db->fetchArray($result)) {
+					$groupMemberData['members'][] = $this->formatTimestamps($row);
+				}
+			}
+		}
+		return $groupMemberData;
+	}
+
+	/**
 	 * List all the users - tool version of the resource
 	 */
 	private function list_users() {
 		return $this->users_list();
+	}
+
+	/**
+	 * List all the groups a user belongs to
+	 */
+	private function list_a_users_groups($arguments) {
+		$user_id = intval($arguments['user_id'] ?? 0);
+		if(empty($user_id) OR $user_id <= 0) {
+			throw new FormulizeMCPException('user_id is required and must be a positive integer', 'invalid_data');
+		}
+		$users = $this->users_list(); // get a list of the users the authenticated user is allowed to see
+		$allowedUserIds = array_column($users['users'], 'user_id');
+		if(!in_array($user_id, $allowedUserIds)) {
+			throw new FormulizeMCPException('Permission denied: You do not have access to this user.', 'authentication_error');
+		}
+		$userDetails = [];
+		if($result = $this->getUserDetails($user_id)) {
+			$row = $this->db->fetchArray($result);
+			$userDetails['user_details'] = $this->formatTimestamps($row);
+		}
+		return $userDetails + $this->groups_list(user_id: $user_id);
 	}
 
 	/**
