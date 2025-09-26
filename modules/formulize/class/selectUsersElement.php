@@ -88,10 +88,10 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
 		$groupIds = is_array($properties['source_groups']) ? array_unique($properties['source_groups']) : [];
 		global $xoopsDB;
 		if(count($groupIds) > 0) {
@@ -104,11 +104,6 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 				throw new Exception("You must provide a valid source_groups property for the linked dropdown list element. One or more of the group ids you provided do not exist.");
 			}
 		}
-		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
-			$ele_value = $elementObject->getVar('ele_value');
-		} else {
-			$ele_value = $this->getDefaultEleValue();
-		}
 		if(is_array($groupIds) AND count($groupIds) > 0) {
 			$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS] = implode(',', array_map('intval', $groupIds));
 		}
@@ -117,7 +112,7 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 		];
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		return array(
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,
