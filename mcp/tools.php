@@ -837,7 +837,7 @@ Examples:
 			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
 			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
-			'ele_order' => $elementObject ? $elementObject->getVar('ele_order') : figureOutOrder('bottom', fid: $fid),
+			'ele_order' => $elementObject ? $elementObject->getVar('ele_order') : figureOutOrder('bottom', fid: $fid), // ele_order not specifiable as a property yet, so set every new element to the bottom
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
 			'ele_disabled' => $disabled !== null ? $disabled : ($elementObject ? $elementObject->getVar('ele_disabled') : 0),
 		];
@@ -850,7 +850,8 @@ Examples:
 		$propertiesPreparedByTheElement = [];
 		$elementTypeHandler = xoops_getmodulehandler($element_type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
-			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, ($elementObject ? $elementObject : null));
+			$ele_value = $elementObject ? $elementObject->getVar('ele_value') : $elementTypeHandler->getDefaultEleValue();
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value);
 			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
 				// special case - the element type needs to pass special parameters to the upsert function
 				// for example, if it should create a subform interface in the source form

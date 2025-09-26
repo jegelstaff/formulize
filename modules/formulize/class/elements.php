@@ -261,7 +261,7 @@ class formulizeElementsHandler {
 	/**
 	 * Set up and validate a set of element properties
 	 * Focuses on the non ele_value properties that are common to all element types
-	 * The ele_value options are handled in the child class, since they are element-type specific, and the child classes need to pass back to the parent
+	 * The ele_value options are handled in the child class, since they are element-type specific
 	 * @param array $properties The properties to set on the element object
 	 * @return array The processed properties that are ready to set on the element object
 	 */
