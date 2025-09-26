@@ -628,15 +628,19 @@ trait resources {
 		$group_id = intval($group_id);
 		$user_id = intval($user_id);
 
-		$groupIdsToUse = $user_id ? $this->getGroupIdsFromUserId($user_id) : $this->userGroups;
+		$groupIdsToUse = $user_id ? $this->getGroupIdsFromUserId($user_id) : ($this->isUserAWebmaster() ? [] : $this->userGroups);
 
-		// limit non webmasters to their own groups, or the passed in group
 		$groupLimitWhereClause = "";
+		// if a group id is requested, allow for webmasters and members of the group
 		if($group_id AND ($this->isUserAWebmaster() OR in_array($group_id, $groupIdsToUse))) {
 			$groupLimitWhereClause = "WHERE groupid = $group_id"; // already sanitized by intval above
-		} elseif(!$group_id AND $this->isUserAWebmaster() == false) {
+
+		// otherwise, if a set of group ids has been determined, either from a passed in user, or the authenticated user, limit to those groups
+		} elseif(!$group_id AND !empty($groupIdsToUse)) {
 			$groupLimitWhereClause = "WHERE groupid IN (".implode(", ", array_filter($groupIdsToUse, 'is_numeric')).")";
-		} else {
+
+		// otherwise, no limits specified, so if they're not a webmaster, then this is not allowed
+		} elseif($this->isUserAWebmaster() == false) {
 			throw new FormulizeMCPException(
 				"Permission denied: user does not have access to this group information.",
 				'authentication_error'
@@ -714,14 +718,12 @@ trait resources {
 
 	/**
 	 * Query for user data
+	 * @param int|null $user_id The ID of a specific user to retrieve, or null for all users
+	 * @param string|null $limitBy Optional SQL clause to limit which users are returned, e.g. a JOIN to groups_users_link and a WHERE clause. Strong assumption that this is sanitized by the caller!
+	 * @return PDOStatement|false The database result, or false on failure
 	 */
 	private function getUserDetails($user_id = null, $limitBy = null) {
-		if(!$user_id AND !$limitBy) {
-			throw new FormulizeMCPException(
-				'Must provide user_id or limitBy clause to get user details',
-				'invalid_data'
-			);
-		}
+		$user_id = intval($user_id);
 		if(!$limitBy AND $user_id) {
 			$limitBy = "WHERE u.uid = ".intval($user_id);
 		}
