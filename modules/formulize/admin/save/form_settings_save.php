@@ -90,6 +90,28 @@ if(isset($_POST['forms-tableform'])) {
   }
 }
 
+// create the PI element if requested
+if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_POST['pi_new_caption'] != "") {
+	$element_handler = xoops_getmodulehandler('textElement','formulize');
+	$options = $element_handler->validateEleValuePublicAPIProperties([]);
+	$elementObjectProperties = array(
+		'id_form' => $fid,
+		'ele_type' => 'text',
+		'ele_caption' => $_POST['pi_new_caption'],
+		'ele_handle' => $formObject->getVar('form_handle')."_".formulizeElement::sanitize_handle_name($_POST['pi_new_caption']),
+		'ele_required' => 1,
+		'ele_display' => 1,
+		'ele_disabled' => 0,
+		'ele_order' => 0,
+		'ele_value' => $options['ele_value']
+	);
+	$screenIdsAndPagesForAdding = array(
+		$formObject->getVar('defaultform') => array(0) // page 0 is the first page
+	);
+	$dataType = 'text';
+	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding, $dataType, pi: true);
+}
+
 // if the form name was changed, etc, then force a reload of the page...
 if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
   if(!in_array($_POST['application_url_id'], $applicationIds)) {
