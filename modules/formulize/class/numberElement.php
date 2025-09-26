@@ -154,27 +154,42 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 					unset($properties[$key]); // remove anything we don't recognize
 			}
 		}
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$ele_value = array(
-			ELE_VALUE_TEXT_WIDTH => isset($properties['size']) ? $properties['size'] : $formulizeConfig['t_width'],
-			ELE_VALUE_TEXT_MAXCHARS => isset($properties['size']) ? $properties['size'] : $formulizeConfig['t_width'],
-			ELE_VALUE_TEXT_DEFAULTVALUE => isset($properties['defaultvalue']) ? $properties['defaultvalue'] : 0,
-			ELE_VALUE_TEXT_NUMBERSONLY => 1,
-			ELE_VALUE_TEXT_DECIMALS => isset($properties['decimals']) ? $properties['decimals'] : $formulizeConfig['number_decimals'],
-			ELE_VALUE_TEXT_PREFIX => isset($properties['prefix']) ? $properties['prefix'] : $formulizeConfig['number_prefix'],
-			ELE_VALUE_TEXT_DECIMALS_SEPARATOR => isset($properties['decimals_separator']) ? $properties['decimals_separator'] : $formulizeConfig['number_decimalsep'],
-			ELE_VALUE_TEXT_THOUSANDS_SEPARATOR => isset($properties['thousands_separator']) ? $properties['thousands_separator'] : $formulizeConfig['number_sep'],
-			ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED => 0,
-			ELE_VALUE_TEXT_SUFFIX => isset($properties['suffix']) ? $properties['suffix'] : $formulizeConfig['number_suffix'],
-			ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER => 0,
-			ELE_VALUE_TEXT_TRIM_VALUE => 1
-		);
-		return ['ele_value' => $ele_value ];
+		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $elementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
+		if(isset($properties['size'])) {
+			$ele_value[ELE_VALUE_TEXT_WIDTH] = $properties['size'];
+			$ele_value[ELE_VALUE_TEXT_MAXCHARS] = $properties['size'];
+		}
+		if(isset($properties['defaultvalue'])) {
+			$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE] = $properties['defaultvalue'];
+		}
+		if(isset($properties['decimals'])) {
+			$ele_value[ELE_VALUE_TEXT_DECIMALS] = $properties['decimals'];
+		}
+		if(isset($properties['prefix'])) {
+			$ele_value[ELE_VALUE_TEXT_PREFIX] = $properties['prefix'];
+		}
+		if(isset($properties['decimals_separator'])) {
+			$ele_value[ELE_VALUE_TEXT_DECIMALS_SEPARATOR] = $properties['decimals_separator'];
+		}
+		if(isset($properties['thousands_separator'])) {
+			$ele_value[ELE_VALUE_TEXT_THOUSANDS_SEPARATOR] = $properties['thousands_separator'];
+		}
+		if(isset($properties['suffix'])) {
+			$ele_value[ELE_VALUE_TEXT_SUFFIX] = $properties['suffix'];
+		}
+		return [
+			'ele_value' => $ele_value
+		];
 	}
 
-	protected function getDefaultEleValue($formulizeConfig) {
+	protected function getDefaultEleValue() {
+		$ele_value = array();
 		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value[ELE_VALUE_TEXT_WIDTH] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
 		$ele_value[ELE_VALUE_TEXT_MAXCHARS] = isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30;
 		$ele_value[ELE_VALUE_TEXT_NUMBERSONLY] = 1;
@@ -196,9 +211,7 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
 			$dataToSendToTemplate['ele_value'] = $element->getVar('ele_value');
 		} else { // new element
-			$config_handler = xoops_gethandler('config');
-			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate['ele_value'] = $this->getDefaultEleValue($formulizeConfig);
+			$dataToSendToTemplate['ele_value'] = $this->getDefaultEleValue();
 		}
 		return $dataToSendToTemplate;
 	}

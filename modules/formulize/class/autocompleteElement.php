@@ -97,8 +97,12 @@ class formulizeAutocompleteElementHandler extends formulizeSelectElementHandler 
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
 		list($ele_value, $ele_uitext) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
-		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($properties['allowMultipleSelections']) ? $properties['allowMultipleSelections'] : 0;
-		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW] = isset($properties['allowNewValues']) ? $properties['allowNewValues'] : 0;
+		if(isset($properties['allowMultipleSelections'])) {
+			$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $properties['allowMultipleSelections'];
+		}
+		if(isset($properties['allowNewValues'])) {
+			$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW] = $properties['allowNewValues'];
+		}
 		return [
 			'ele_value' => $ele_value,
 			'ele_uitext' => $ele_uitext
@@ -108,8 +112,11 @@ class formulizeAutocompleteElementHandler extends formulizeSelectElementHandler 
 	protected function getDefaultEleValue() {
 		$ele_value = array();
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1;
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // a 1/0 indicating if multiple selections should be allowed
+		$ele_value[ELE_VALUE_SELECT_OPTIONS] = array(); // an array of options for the select box
 		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 1; // a 1/0 indicating if this is an autocomplete box
 		$ele_value[ELE_VALUE_SELECT_RESTRICTSELECTION] = 0; // 0/1/2/3 indicating restrictions on how many times an option can be picked. 0 - no limit, 1 - only once, 2 - once per user, 3 - once per group
+		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW] = 0; // a 1/0 indicating if users should be allowed to enter values that are not in the predefined list of options
 		return $ele_value;
 	}
 

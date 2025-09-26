@@ -91,11 +91,18 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
-		if(!$elementObject = _getElementObject($properties['source_element'])) {
+		if($elementIdentifier AND $thisElementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $thisElementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
+		$sourceElementObject = null;
+		if(isset($properties['source_element']) AND !$sourceElementObject = _getElementObject($properties['source_element'])) {
 			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
 		}
-		$ele_value = $this->getDefaultEleValue();
-		$ele_value[ELE_VALUE_SELECT_OPTIONS] = $elementObject->getVar('fid')."#*=:*".$elementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+		if($sourceElementObject) {
+			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+		}
 		return [
 			'ele_value' => $ele_value,
 		];
@@ -105,7 +112,8 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 		return array(
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,
-			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
+			ELE_VALUE_SELECT_OPTIONS => '', // an element reference for the source of the options for the linked element
+			ELE_VALUE_SELECT_LINK_LIMITGROUPS => 'all',
 			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
 			ELE_VALUE_SELECT_LINK_FILTERS => array(),
 			ELE_VALUE_SELECT_LINK_ALLGROUPS => 0,

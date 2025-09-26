@@ -78,12 +78,30 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
+		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $elementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
+		if(isset($properties['defaultvalue'])) {
+			if($properties['defaultvalue']) {
+				$ele_value['_YES'] = 1;
+				$ele_value['_NO'] = 0;
+			} elseif(!$properties['defaultvalue']) {
+				$ele_value['_YES'] = 0;
+				$ele_value['_NO'] = 1;
+			}
+		}
 		return [
-			'ele_value' => [
-				'_YES' => (isset($properties['defaultvalue']) AND $properties['defaultvalue'] === 1) ? 1 : 0,
-				'_NO' => (isset($properties['defaultvalue']) AND $properties['defaultvalue'] === 0) ? 1 : 0
-			]
+			'ele_value' => $ele_value
 		];
+	}
+
+	protected function getDefaultEleValue() {
+		return array(
+			'_YES' => 0, // a 1/0 indicating if Yes is the default
+			'_NO' => 0 // a 1/0 indicating if No is the default
+		);
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class

@@ -92,9 +92,9 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
-		$groupIds = array_unique($properties['source_groups']);
+		$groupIds = is_array($properties['source_groups']) ? array_unique($properties['source_groups']) : [];
 		global $xoopsDB;
-		if(is_array($groupIds) AND count($groupIds) == 0) {
+		if(count($groupIds) > 0) {
 			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("groups")." WHERE groupid IN (".implode(',', array_map('intval', $groupIds)).")";
 			$foundGroupIds = 0;
 			if($result = $xoopsDB->query($sql)) {
@@ -104,8 +104,14 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 				throw new Exception("You must provide a valid source_groups property for the linked dropdown list element. One or more of the group ids you provided do not exist.");
 			}
 		}
-		$ele_value = $this->getDefaultEleValue();
-		$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS] = (is_array($groupIds) AND count($groupIds) == 0) ? implode(',', array_map('intval', $groupIds)) : '';
+		if($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $elementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
+		if(is_array($groupIds) AND count($groupIds) > 0) {
+			$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS] = implode(',', array_map('intval', $groupIds));
+		}
 		return [
 			'ele_value' => $ele_value,
 		];
@@ -116,7 +122,7 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,
 			ELE_VALUE_SELECT_OPTIONS => array('{USERNAMES}' => 0),
-			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
+			ELE_VALUE_SELECT_LINK_LIMITGROUPS => 'all',
 			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
 			ELE_VALUE_SELECT_LINK_FILTERS => array(),
 			ELE_VALUE_SELECT_LINK_ALLGROUPS => 0,
