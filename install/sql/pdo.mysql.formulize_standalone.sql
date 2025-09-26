@@ -423,9 +423,9 @@ INSERT INTO `REPLACE_WITH_PREFIX_newblocks` (`bid`, `mid`, `func_num`, `options`
 (21, 0, 0, '', 'Custom Block (Auto Format + smilies)', 'Welcome!', 'Please login on the left.', 4, 0, 1, 'C', 'S', 1, '', '', '', '', '', 0, 1324230576),
 (22, 2, 0, '0|1|1|1', 'Content', 'Content', '', 1, 0, 0, 'M', 'H', 1, 'content', 'content_display.php', 'content_content_display_show', 'content_content_display_edit', 'content_content_display.html', 0, 1324009074),
 (23, 2, 1, 'content_title|ASC|1|#59ADDB|0', 'Content Menu', 'Content Menu', '', 1, 0, 0, 'M', 'H', 1, 'content', 'content_menu.php', 'content_content_menu_show', 'content_content_menu_edit', 'content_content_menu.html', 0, 1324009074),
-(24, 3, 1, '', 'Form Menu', '', '', 1, 0, 1, 'M', 'H', 1, 'formulize', 'mymenu.php', 'block_formulizeMENU_show', '', 'menu_controller.html', 0, 1324230836),
-(25, 4, 1, '5', 'My friends', 'My friends', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_friends_show', 'b_profile_friends_edit', 'profile_block_friends.html', 0, 1324009084),
-(26, 4, 2, '', 'User Menu', 'User Menu', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_usermenu_show', '', 'profile_block_usermenu.html', 0, 1324009084);
+(24, REPLACE_WITH_FORMULIZE_MODULE_ID, 1, '', 'Form Menu', '', '', 1, 0, 1, 'M', 'H', 1, 'formulize', 'mymenu.php', 'block_formulizeMENU_show', '', 'menu_controller.html', 0, 1324230836),
+(25, REPLACE_WITH_PROFILE_MODULE_ID, 1, '5', 'My friends', 'My friends', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_friends_show', 'b_profile_friends_edit', 'profile_block_friends.html', 0, 1324009084),
+(26, REPLACE_WITH_PROFILE_MODULE_ID, 2, '', 'User Menu', 'User Menu', '', 1, 0, 0, 'M', 'H', 1, 'profile', 'blocks.php', 'b_profile_usermenu_show', '', 'profile_block_usermenu.html', 0, 1324009084);
 
 TRUNCATE `REPLACE_WITH_PREFIX_profile_configs`;
 

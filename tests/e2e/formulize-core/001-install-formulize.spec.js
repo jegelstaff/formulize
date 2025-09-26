@@ -58,10 +58,6 @@ test.describe('Installation of Formulize', () => {
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Install modules results
 		await expect(page.locator('h2')).toContainText('Installation of modules');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Content installed successfully');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Profile installed successfully.');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Forms installed successfully');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Protector installed successfully');
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Install finished
 		await expect(page.locator('h2')).toContainText('Installation completed');
@@ -86,11 +82,11 @@ test.describe('Installation of Formulize', () => {
 		}
 
 		// update module
-		// await page.getByRole('link', { name: 'arrow Modules' }).click();
-		// await page.getByRole('link', { name: 'Update' }).nth(2).click();
-		// await page.getByRole('button', { name: 'Update' }).click();
-		// await expect(page.getByRole('link', { name: 'Back to Module Administration' })).toBeVisible();
-		// await page.goto('/modules/formulize/admin/');
+		await page.getByRole('link', { name: 'arrow Modules' }).click();
+		await page.getByRole('link', { name: 'Update' }).nth(2).click();
+		await page.getByRole('button', { name: 'Update' }).click();
+		await expect(page.getByRole('link', { name: 'Back to Module Administration' })).toBeVisible();
+		await page.goto('/modules/formulize/admin/');
 
 	})
 });

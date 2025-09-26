@@ -502,10 +502,6 @@ test.describe('Exhibits Elements', async () => {
 		await page.locator('[id="elements-ele_value\\[17\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
 		await page.locator('[id="elements-ele_value\\[10\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
 		await page.locator('[id="elements-ele_value\\[11\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
-		// @todo Figure out why this isn't working
-		// await page.locator('#new_formlinkfilter_element').selectOption('Collections');
-		// await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
-	  // await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Artifacts (Autocomplete box)');
 	});
@@ -644,5 +640,18 @@ test.describe('Artifacts linked fields', async () => {
 	  await page.getByText('Yes. Only use groups that the').click();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Collections (Check boxes)');
+	});
+})
+
+test.describe('Exhibit field updates', () => {
+	test('Update Artifacts Element', async ({ page }) => {
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(3).click();
+		await page.getByRole('link', { name: 'Artifacts Autocomplete box -' }).click();
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('#new_formlinkfilter_element').selectOption('Collections');
+		await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
+		await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
 	});
 })
