@@ -743,7 +743,7 @@ Examples:
 	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
 	 * - 'description': Optional. A description for the element.
 	 * - 'required': Optional. Whether the element is required. Defaults to false.
-	 * - 'options': Optional. An array of options for the given element type
+	 * - 'properties': Optional. An array of properties for the given element type
 	 * @return array An associative array containing details about the newly created element, including its ID
 	 */
 	private function create_form_element($arguments, $isCreate = true) {
@@ -758,7 +758,7 @@ Examples:
 	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
 	 * - 'description': Optional. A description for the element.
 	 * - 'required': Optional. Whether the element is required. Defaults to false.
-	 * - 'options': Optional. An array of options for the given element type
+	 * - 'properties': Optional. An array of properties for the given element type
 	 * @return array An associative array containing details about the element
 	 */
 	private function update_form_element($arguments) {
@@ -785,7 +785,7 @@ Examples:
 		$column_heading = trim($arguments['column_heading'] ?? '');
 		$description = trim($arguments['description'] ?? '');
 		$required = isset($arguments['required']) ? ($arguments['required'] ? 1 : 0) : null;
-		$options = $arguments['options'] ?? [];
+		$properties = $arguments['properties'] ?? [];
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
 		$data_type = $arguments['data_type'] ?? false;
 		$display = isset($arguments['display']) ? ($arguments['display'] ? 1 : 0) : null;
@@ -843,13 +843,13 @@ Examples:
 
 		// prepare element-specific properties by calling the element type handler's
 		// validation function, if it exists this allows each element type to validate
-		// and prepare its own options the function returns an array of key/value pairs
+		// and prepare its own properties the function returns an array of key/value pairs
 		// that are merged into the $elementObjectProperties array
-		// this allows each element type to handle its own options and validation
+		// this allows each element type to handle its own properties and validation
 		$propertiesPreparedByTheElement = [];
 		$elementTypeHandler = xoops_getmodulehandler($element_type.'Element', 'formulize');
-		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIOptions')) {
-			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIOptions($options, ($elementObject ? $elementObject : null));
+		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, ($elementObject ? $elementObject : null));
 			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
 				// special case - the element type needs to pass special parameters to the upsert function
 				// for example, if it should create a subform interface in the source form
@@ -862,7 +862,7 @@ Examples:
 		// this will overwrite any keys that are the same, which would be rare, but
 		// important if a special element needs to control some more general aspect
 		// of the element for example, a special element might want to force ele_required
-		// to true so the element-specific properties should take precedence
+		// to true so the element-specific properties should take precedence and so they are set last here
 		foreach($propertiesPreparedByTheElement as $key => $value) {
 			$elementObjectProperties[$key] = $value;
 		}
@@ -878,7 +878,7 @@ Examples:
 			'column_heading' => $elementObject->getVar('ele_colhead'),
 			'description' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
-			'options' => $elementObject->getVar('ele_value'),
+			'properties' => $elementObject->getVar('ele_value'),
 			'success' => true,
 			'message' => 'Element and related resources created successfully'
 		];
@@ -1741,9 +1741,9 @@ private function validateFilter($filter, $andOr = 'AND') {
 				'type' => 'boolean',
 				'description' => 'Optional. Whether the element is the principal identifying element for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
 			],
-			'options' => [
+			'properties' => [
 				'type' => 'object',
-				'description' => 'Required. Additional configuration options for the element. The properties depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
+				'description' => 'Required. Additional configuration settings for the element. The properties depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
 				'additionalProperties' => true
 			],
 			'disabled' => [
