@@ -32,5 +32,7 @@ try {
 			'type' => $e->getType(),
 			'timestamp' => $e->getTimestamp()
 		]
-	], $e->toHTTPStatusCode());
+	],
+	$e->toHTTPStatusCode(),
+	$e->getAdditionalHTTPHeaders());
 }
