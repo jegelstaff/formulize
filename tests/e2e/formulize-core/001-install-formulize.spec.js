@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test')
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
+import { login } from '../utils';
 
-test.describe('Installer', () => {
-	test('Installation of Formulize', async ({ page }) => {
+test.describe('Installation of Formulize', () => {
+	test('Run the Installer', async ({ page }) => {
 		await page.goto('/install/index.php');
   	// Welcome page
 		await expect(page.locator('h2')).toContainText('Welcome to the Formulize installation assistant');
@@ -56,10 +58,6 @@ test.describe('Installer', () => {
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Install modules results
 		await expect(page.locator('h2')).toContainText('Installation of modules');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Content installed successfully');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Profile installed successfully.');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Forms installed successfully');
-		// await expect(page.locator('#modulesinstall')).toContainText('Module Protector installed successfully');
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Install finished
 		await expect(page.locator('h2')).toContainText('Installation completed');
@@ -67,5 +65,28 @@ test.describe('Installer', () => {
   	await page.getByRole('button', { name: 'Show my site' }).click();
 		// Running instance
 		await expect(page.locator('#main-logo').getByRole('link', { name: 'Logo image' })).toBeVisible();
+
+	}),
+	test('Update Formulize', async ({ page }) => {
+
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+  	await page.goto('/modules/formulize/admin');
+		await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
+
+		// apply DB patch if necessary
+		const isPatchVisible = await page.locator('input[name="patch40"]').isVisible();
+		if (isPatchVisible) {
+			await page.getByRole('button', { name: 'Apply Database Patch for' }).click();
+			await expect(page.getByRole('link', { name: 'Close' })).toBeVisible();
+			await page.getByRole('link', { name: 'Close' }).click();
+		}
+
+		// update module
+		await page.getByRole('link', { name: 'arrow Modules' }).click();
+		await page.getByRole('link', { name: 'Update' }).nth(2).click();
+		await page.getByRole('button', { name: 'Update' }).click();
+		await expect(page.getByRole('link', { name: 'Back to Module Administration' })).toBeVisible();
+		await page.goto('/modules/formulize/admin/');
+
 	})
-})
+});
