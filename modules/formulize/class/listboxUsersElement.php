@@ -32,7 +32,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
 
-class formulizeListboxUsersElement extends formulizeSelectElement {
+class formulizeListboxUsersElement extends formulizeSelectUsersElement {
 
 	function __construct() {
 		parent::__construct();
@@ -47,13 +47,87 @@ class formulizeListboxUsersElement extends formulizeSelectElement {
 		$this->isLinked = false; // set to true if this element can have linked values
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForUsers($update);
+		$descriptionAndExamples = "
+**Element:** Listbox of Users (listboxUsers)
+**Description:** A listbox that allows users to select one or more users from a list. In general, Listboxes provide a poor user experience. Use a Dropdown List of Users or an Autocomplete List of Users instead, unless a Listbox is specifically called for.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Listboxes of Users, the default is 1. Set to 0 to allow only a single selection.)";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples
+- A list of users from group 12, and more than one user can be selected: { source_groups: [12], allowMultipleSelections: 1 }";
+		}
+		return $descriptionAndExamples;
+	}
+
 }
 
 #[AllowDynamicProperties]
-class formulizeListboxUsersElementHandler extends formulizeSelectElementHandler {
+class formulizeListboxUsersElementHandler extends formulizeSelectUsersElementHandler {
 
 	function create() {
 		return new formulizeListboxUsersElement();
+	}
+
+	/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
+		list($ele_value) = array_values(formulizeSelectUsersElementHandler::validateEleValuePublicAPIProperties($properties, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = isset($properties['allowMultipleSelections']) ? $properties['allowMultipleSelections'] : 1;
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
+	protected function getDefaultEleValue() {
+		return array(
+			ELE_VALUE_SELECT_NUMROWS => 10,
+			ELE_VALUE_SELECT_MULTIPLE => 1,
+			ELE_VALUE_SELECT_OPTIONS => array('{USERNAMES}' => 0),
+			ELE_VALUE_SELECT_LINK_LIMITGROUPS => '',
+			ELE_VALUE_SELECT_LINK_USERSGROUPS => 0,
+			ELE_VALUE_SELECT_LINK_FILTERS => array(),
+			ELE_VALUE_SELECT_LINK_ALLGROUPS => 0,
+			ELE_VALUE_SELECT_LINK_USEONLYUSERSENTRIES => 0,
+			ELE_VALUE_SELECT_LINK_CLICKABLEINLIST => 0,
+			ELE_VALUE_SELECT_AUTOCOMPLETE => 0,
+			ELE_VALUE_SELECT_RESTRICTSELECTION => 0,
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_SORT => 0,
+			ELE_VALUE_SELECT_LINK_DEFAULTVALUE => array(),
+			ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK => 0,
+			ELE_VALUE_SELECT_LINK_SORTORDER => 1,
+			ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW => 0,
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS => array(),
+			ELE_VALUE_SELECT_LINK_SNAPSHOT => 0,
+			ELE_VALUE_SELECT_LINK_ALLOWSELFREF => 0,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT => 0,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => array(),
+			ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(),
+		);
 	}
 
 }
