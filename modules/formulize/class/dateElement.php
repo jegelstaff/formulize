@@ -110,13 +110,31 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 				unset($properties[$key]);
 			}
 		}
+		if($elementIdentifier AND $thisElementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $thisElementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
+		if(isset($properties['defaultDate'])) {
+			$ele_value[ELE_VALUE_DATE_DEFAULT] = $properties['defaultDate'];
+		}
+		if(isset($properties['minDate'])) {
+			$ele_value[ELE_VALUE_DATE_MIN] = $properties['minDate'];
+		}
+		if(isset($properties['maxDate'])) {
+			$ele_value[ELE_VALUE_DATE_MAX] = $properties['maxDate'];
+		}
 		return [
-			'ele_value' => [
-				ELE_VALUE_DATE_DEFAULT => isset($properties['defaultDate']) ? $properties['defaultDate'] : '',
-				ELE_VALUE_DATE_MIN => isset($properties['minDate']) ? $properties['minDate'] : '',
-				ELE_VALUE_DATE_MAX => isset($properties['maxDate']) ? $properties['maxDate'] : ''
-			]
+			'ele_value' => $ele_value
 		];
+	}
+
+	protected function getDefaultEleValue() {
+		return array(
+			ELE_VALUE_DATE_DEFAULT => '',
+			ELE_VALUE_DATE_MIN => '',
+			ELE_VALUE_DATE_MAX => ''
+		);
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class

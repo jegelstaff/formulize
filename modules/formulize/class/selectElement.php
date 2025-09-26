@@ -172,6 +172,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$ele_value = array();
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // number of rows in list box, set 1 when multiple is disabled or when autocomplete
 		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // set to 1 if multiple selections allowed in listbox or autocomplete
+		$ele_value[ELE_VALUE_SELECT_OPTIONS] = array(); // an array of options for the select box
 		$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] = 0; // a 1/0 indicating if this is an autocomplete box
 		$ele_value[ELE_VALUE_SELECT_RESTRICTSELECTION] = 0; // 0/1/2/3 indicating restrictions on how many times an option can be picked. 0 - no limit, 1 - only once, 2 - once per user, 3 - once per group
 		return $ele_value;

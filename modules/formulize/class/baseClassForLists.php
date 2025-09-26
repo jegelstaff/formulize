@@ -62,6 +62,11 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
+		if($elementIdentifier AND $thisElementObject = _getElementObject($elementIdentifier)) {
+			$ele_value = $thisElementObject->getVar('ele_value');
+		} else {
+			$ele_value = $this->getDefaultEleValue();
+		}
 		$validOptions = array();
 		$uiText = array();
 		if(isset($properties['options'])) {
@@ -75,9 +80,10 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 					}
 				}
 			}
+			if(!empty($validOptions)) {
+				$ele_value[2] = $validOptions;
+			}
 		}
-		$ele_value = $this->getDefaultEleValue();
-		$ele_value[2] = $validOptions;
 		if(isset($properties['updateExistingEntriesToMatchTheseOptions']) AND $properties['updateExistingEntriesToMatchTheseOptions'] == 1 AND $elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
 			$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
 			if(!$changeResult = $data_handler->changeUserSubmittedValues($elementObject, $ele_value[2])) {
