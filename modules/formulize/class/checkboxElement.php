@@ -108,7 +108,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
         return new formulizeCheckboxElement();
     }
 
-		protected function getDefaultEleValue() {
+		public function getDefaultEleValue() {
 			$ele_value = array();
 			$ele_value[2] = array(); // an array of options for the select box
 			return $ele_value;

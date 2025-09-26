@@ -168,7 +168,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		return new formulizeSelectElement();
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		$ele_value = array();
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = 1; // number of rows in list box, set 1 when multiple is disabled or when autocomplete
 		$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // set to 1 if multiple selections allowed in listbox or autocomplete

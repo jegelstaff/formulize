@@ -90,11 +90,11 @@ class formulizeListboxUsersElementHandler extends formulizeSelectUsersElementHan
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
-		list($ele_value) = array_values(formulizeSelectUsersElementHandler::validateEleValuePublicAPIProperties($properties, $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
+		list($ele_value) = array_values(formulizeSelectUsersElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		if(isset($properties['allowMultipleSelections'])) {
 			$ele_value[ELE_VALUE_SELECT_MULTIPLE] = $properties['allowMultipleSelections'];
 		}
@@ -103,7 +103,7 @@ class formulizeListboxUsersElementHandler extends formulizeSelectUsersElementHan
 		];
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		return array(
 			ELE_VALUE_SELECT_NUMROWS => 10,
 			ELE_VALUE_SELECT_MULTIPLE => 1,

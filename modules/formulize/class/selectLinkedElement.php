@@ -87,15 +87,10 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
-		if($elementIdentifier AND $thisElementObject = _getElementObject($elementIdentifier)) {
-			$ele_value = $thisElementObject->getVar('ele_value');
-		} else {
-			$ele_value = $this->getDefaultEleValue();
-		}
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
 		$sourceElementObject = null;
 		if(isset($properties['source_element']) AND !$sourceElementObject = _getElementObject($properties['source_element'])) {
 			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
@@ -108,7 +103,7 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 		];
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		return array(
 			ELE_VALUE_SELECT_NUMROWS => 1,
 			ELE_VALUE_SELECT_MULTIPLE => 0,

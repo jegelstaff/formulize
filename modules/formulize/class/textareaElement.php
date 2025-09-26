@@ -83,7 +83,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		return new formulizeTextareaElement();
 	}
 
-	protected function getDefaultEleValue() {
+	public function getDefaultEleValue() {
 		$config_handler = xoops_gethandler('config');
 		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 		$ele_value = array();
