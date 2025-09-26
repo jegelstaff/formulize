@@ -38,7 +38,7 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 	 * Takes an array of properties for an element Object and fills it out, validates, so it is complete
 	 * If an element should set any default values for properties more specific to it, do that here
 	 * Must return through the parent method so that the rest of the more basic properties are set correctly
-	 * In most cases, ele_value property will already have been sorted out because it came from a public source and went through validateEleValuePublicAPIOptions already
+	 * In most cases, ele_value property will already have been sorted out because it came from a public source and went through validateEleValuePublicAPIProperties already
 	 * @param array $properties The properties for an element object
 	 * @return array The properties to apply to the element object
 	 */
@@ -54,31 +54,31 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 	}
 
 	/**
-	 * Validate options for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
-	 * Options are the contents of the ele_value property on the object
-	 * @param array $options The options to validate
-	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing options for. Null if unknown.
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param int|string|object|null $elementIdentifier the id, handle, or element object of the element we're preparing properties for. Null if unknown.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIOptions($options, $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $elementIdentifier = null) {
 		$validOptions = array();
 		$uiText = array();
-		if(isset($options['options'])) {
-			foreach($options['options'] as $i => $value) {
+		if(isset($properties['options'])) {
+			foreach($properties['options'] as $i => $value) {
 				if(is_string($value) OR is_numeric($value)) {
-					if(isset($options['databaseValues']) AND is_array($options['databaseValues']) AND isset($options['databaseValues'][$i]) AND strlen($options['databaseValues'][$i])) {
-						$uiText[$options['databaseValues'][$i]] = $value;
-						$validOptions[$options['databaseValues'][$i]] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
+					if(isset($properties['databaseValues']) AND is_array($properties['databaseValues']) AND isset($properties['databaseValues'][$i]) AND strlen($properties['databaseValues'][$i])) {
+						$uiText[$properties['databaseValues'][$i]] = $value;
+						$validOptions[$properties['databaseValues'][$i]] = (isset($properties['selectedByDefault']) AND in_array($value, $properties['selectedByDefault'])) ? 1 : 0;
 					} else {
-						$validOptions[$value] = (isset($options['selectedByDefault']) AND in_array($value, $options['selectedByDefault'])) ? 1 : 0;
+						$validOptions[$value] = (isset($properties['selectedByDefault']) AND in_array($value, $properties['selectedByDefault'])) ? 1 : 0;
 					}
 				}
 			}
 		}
 		$ele_value = $this->getDefaultEleValue();
 		$ele_value[2] = $validOptions;
-		if(isset($options['updateExistingEntriesToMatchTheseOptions']) AND $options['updateExistingEntriesToMatchTheseOptions'] == 1 AND $elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+		if(isset($properties['updateExistingEntriesToMatchTheseOptions']) AND $properties['updateExistingEntriesToMatchTheseOptions'] == 1 AND $elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
 			$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
 			if(!$changeResult = $data_handler->changeUserSubmittedValues($elementObject, $ele_value[2])) {
 				throw new Exception("Could not change existing user submitted values to match the new options, for element '".$elementObject->getVar('ele_caption')."' (id: ".$elementObject->getVar('ele_id').")");
