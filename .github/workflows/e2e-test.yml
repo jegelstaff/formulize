@@ -15,7 +15,7 @@ jobs:
       skip: ${{ steps.check.outputs.skip }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Check commit message
       id: check
       run: |
@@ -67,6 +67,9 @@ jobs:
       working-directory: tests/e2e
 
     - name: Run Playwright tests
+      env:
+        E2E_TEST_ADMIN_USERNAME: "admin"
+        E2E_TEST_ADMIN_PASSWORD: "password"
       run: npx playwright test
       working-directory: tests/e2e
 
