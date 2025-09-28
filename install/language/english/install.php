@@ -145,7 +145,7 @@ define( "ERR_NO_XOOPS_FOUND", "No ImpressCMS installation could be found in the 
 define( "ERR_INVALID_EMAIL", "Invalid Email" ); // L73
 define( "ERR_REQUIRED", "Please enter all the required info." ); // L41
 define( "ERR_PASSWORD_MATCH", "The two passwords do not match" );
-define( "ERR_NEED_WRITE_ACCESS", "The server must be given write access to the following files and folders<br />(i.e. <em>chmod 777 directory_name</em> on a UNIX/LINUX server)" ); // L72
+define( "ERR_NEED_WRITE_ACCESS", "The server must be given write access to the following files and folders<br />(i.e. <em>chmod 775 directory_name</em> or <em>chmod 755 directory_name</em> on a UNIX/LINUX server)" ); // L72
 define( "ERR_NO_DATABASE", "Could not create database. Contact the server administrator for details." ); // L31
 define( "ERR_NO_DBCONNECTION", "Could not connect to the database server." ); // L106
 define( "ERR_WRITING_CONSTANT", "Failed writing constant %s." ); // L122

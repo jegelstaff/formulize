@@ -20,11 +20,11 @@
 require_once 'common.inc.php';
 if (!defined( 'XOOPS_INSTALL' ) )	exit();
 
-icms_core_Filesystem::chmod("../modules", 0777);
-icms_core_Filesystem::chmod("../mainfile.php", 0777);
-icms_core_Filesystem::chmod("../uploads", 0777);
-icms_core_Filesystem::chmod("../templates_c", 0777);
-icms_core_Filesystem::chmod("../cache", 0777);
+icms_core_Filesystem::chmod("../modules", 0775);
+icms_core_Filesystem::chmod("../mainfile.php", 0775);
+icms_core_Filesystem::chmod("../uploads", 0775);
+icms_core_Filesystem::chmod("../templates_c", 0775);
+icms_core_Filesystem::chmod("../cache", 0775);
 $wizard->setPage( 'start' );
 $pageHasForm = false;
 

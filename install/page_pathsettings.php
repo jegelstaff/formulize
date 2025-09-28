@@ -155,7 +155,7 @@ class PathStuffController {
 	}
 
 	function createTrustPath() {
-		if (@icms_core_Filesystem::mkdir($this->xoopsTrustPath, 0777, '', array('[', '?', '"', '<', '>', '|', ' ' ))) {
+		if (@icms_core_Filesystem::mkdir($this->xoopsTrustPath, 0775, '', array('[', '?', '"', '<', '>', '|', ' ' ))) {
 			if (@is_dir( $this->xoopsTrustPath ) && @is_readable( $this->xoopsTrustPath )) {
 				$_SESSION['settings']['TRUST_PATH'] = $this->xoopsTrustPath;
 				return $this->validTrustPath = true;
@@ -165,9 +165,9 @@ class PathStuffController {
 	}
 
 	function checkPermissions() {
-		$paths = array( 'mainfile.php', 'uploads', 'modules', 'templates_c', 'cache' );
 		$errors = array();
-		foreach ( $paths as $path) {
+		$writableFilesAndFolders = json_decode(file_get_contents('../writableFilesAndFolders.json'));
+		foreach ( $writableFilesAndFolders->paths as $path) {
 			$errors[$path] = $this->makeWritable( "$this->xoopsRootPath/$path" );
 		}
 		if (in_array( false, $errors )) {
@@ -211,7 +211,7 @@ class PathStuffController {
 			}
 			clearstatcache();
 			if (!@is_writable( $path )) {
-				@chmod( $path, octdec( '0' . $perm . $perm . $perm ) );
+				@chmod( $path, octdec( '0' . $perm . $perm . 5 ) );
 			}
 		}
 		clearstatcache();
