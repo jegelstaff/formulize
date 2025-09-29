@@ -49,12 +49,28 @@ class formulizeSubformFullFormElement extends formulizeSubformListingsElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		return
-"**Element:** Embedded Form (full entries) (subformFullForm).
-**Properties:**
-- none
-**Examples:**
-- An embedded form requires no properties.";
+list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update);
+		$descriptionAndExamples = "
+**Subform Interface Type:** Full Form (subformFullForm).
+**Description:** This Subform Interface embeds a full version of the connected form, inside this form (ie: inside the form that the Subform Interface belongs to). The connected entries are shown as full forms, one after the other, inside the interface. They can be organized into collapsable accordions (generally the preferred option), or simply embedded right into the page (generally best for small forms, so as not to overwhelm the user). 'Full Form' Subform Interfaces are good for situations where users need to be able to edit the _entire_ connected entry quickly, without necessarily having to open up each entry in a separate interface via a clickable icon.";
+		if($commonNotes) {
+			$descriptionAndExamples .= "
+$commonNotes";
+		}
+		if($commonProperties) {
+			$descriptionAndExamples .= "
+$commonProperties
+- showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, based on their permission to add entries in the Subform Interface. Default is 1. Set to 0 if this Subform Interface is for viewing only and should never include an Add Entry button.)
+- elementsInHeading (Required. An array of element ids, indicating which elements from the source form should be shown as the headings that introduce each connected entry.)
+- fullFormMode (Optional. A string, either 'collapsable' or 'not_collapsable'. Default is 'collapsable'. If 'collapsable', then the connected entries will be shown in collapsable accordions, labelled with the values of the element specified in the elementsInHeading property. If 'not_collapsable', then the connected entries will be embedded in the page one after the other, with the elements specified in the elementsInHeading property used as headers above each form.)";
+		}
+		if($commonExamples) {
+			$descriptionAndExamples .= "
+$commonExamples
+- A 'Full Form' Subform Interface that shows connected entries in form 198. Show the values of elements 201 and 202 as the heading for each connected entry. Do not show the Add Entry button: { sourceForm: 198, elementsInHeading: [201, 202],showAddButton: 0 }
+- A 'Full Form' Subform Interface that shows connected entries in form 31. Show the value of element 69 as the heading for each connected entry. Sort the connected entries by the value of element 69. Show the connected entries as embedded forms one after the other, not in collapsable accordions: { sourceForm: 31, elementsInHeading: [69], sortingElement: 69, fullFormMode: 'not_collapsable' }";
+		}
+		return $descriptionAndExamples;
 	}
 
 }
