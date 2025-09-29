@@ -403,7 +403,9 @@ Examples:
 				]
 			];
 
-			list($this->tools['create_form_element'], $this->tools['update_form_element']) = $this->buildFormElementTools();
+			foreach($this->buildFormElementTools() as $tool) {
+				$this->tools[$tool['name']] = $tool;
+			}
 
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
@@ -737,7 +739,7 @@ Examples:
 	 * Create a new form element in a form
 	 * @param array $arguments An associative array containing the parameters for creating a new form element.
 	 * - 'form_id': The ID of the form to add the element to (required).
-	 * - 'element_type': The type of the element (required).
+	 * - 'type': The type of the element (required).
 	 * - 'handle': The unique handle for the element. If omitted, a handle will be generated from the caption.
 	 * - 'caption': The caption (label) for the element (required).
 	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
@@ -768,7 +770,7 @@ Examples:
 	/**
 	 * Generic function that takes element details from create_form_element and update_form_element and interacts with the element handlers to manage the elements
 	 */
-	private function upsert_form_element($arguments, $isCreate = false) {
+	private function upsert_form_element($arguments, $isCreate = false, $elementCategory = null) {
 
 		if (!$this->isUserAWebmaster()) {
 			throw new FormulizeMCPException(
@@ -779,7 +781,7 @@ Examples:
 
 		$element_identifier = $arguments['element_identifier'] ?? '';
 		$form_id = intval($arguments['form_id'] ?? 0);
-		$element_type = trim($arguments['element_type'] ?? '');
+		$type = trim($arguments['type'] ?? '');
 		$handle = trim($arguments['handle'] ?? '');
 		$caption = trim($arguments['caption'] ?? '');
 		$column_heading = trim($arguments['column_heading'] ?? '');
@@ -795,10 +797,10 @@ Examples:
 		$elementObject = null;
 
 		if($isCreate) {
-			if(empty($form_id) OR $form_id <= 0 OR empty($element_type) OR empty($caption)) {
-				throw new FormulizeMCPException('form_id and element_type and caption are required for creating elements', 'invalid_data');
+			if(empty($form_id) OR $form_id <= 0 OR empty($type) OR empty($caption)) {
+				throw new FormulizeMCPException('form_id and type and caption are required for creating elements', 'invalid_data');
 			}
-			formulizeHandler::validateElementType($element_type);
+			formulizeHandler::validateElementType($type, $elementCategory);
 		}
 		if(!$isCreate) {
 			if(empty($element_identifier)) {
@@ -806,7 +808,7 @@ Examples:
 			} elseif(!$elementObject = _getElementObject($element_identifier)) {
 				throw new FormulizeMCPException('Element not found for element_identifier: '.$element_identifier, 'element_not_found');
 			}
-			$element_type = $elementObject->getVar('ele_type');
+			$type = $elementObject->getVar('ele_type');
 		}
 
 		// validate that $data_type conforms to the element type's valid data types as specified in the tool schema
@@ -831,7 +833,7 @@ Examples:
 		$elementObjectProperties = [
 			'fid' => $fid,
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
-			'ele_type' => $element_type,
+			'ele_type' => $type,
 			'ele_handle' => $handle ? $handle : ($elementObject ? $elementObject->getVar('ele_handle') : ''),
 			'ele_caption' => $caption ? $caption : ($elementObject ? $elementObject->getVar('ele_caption') : ''),
 			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
@@ -848,7 +850,7 @@ Examples:
 		// that are merged into the $elementObjectProperties array
 		// this allows each element type to handle its own properties and validation
 		$propertiesPreparedByTheElement = [];
-		$elementTypeHandler = xoops_getmodulehandler($element_type.'Element', 'formulize');
+		$elementTypeHandler = xoops_getmodulehandler($type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
 			$ele_value = $elementObject ? $elementObject->getVar('ele_value') : $elementTypeHandler->getDefaultEleValue();
 			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value);
@@ -874,7 +876,7 @@ Examples:
 		return [
 			'element_id' => $elementObject->getVar('ele_id'),
 			'form_id' => $elementObject->getVar('fid'),
-			'element_type' => $element_type,
+			'type' => $type,
 			'handle' => $elementObject->getVar('ele_handle'),
 			'caption' => $elementObject->getVar('ele_caption'),
 			'column_heading' => $elementObject->getVar('ele_colhead'),
@@ -1711,51 +1713,40 @@ private function validateFilter($filter, $andOr = 'AND') {
 	 */
 	private function buildFormElementTools() {
 
-		// Discover available element types and their descriptions
-		[$elementTypes, $creationElementDescriptions] = formulizeHandler::discoverElementTypes();
-		[$elementTypes, $updateElementDescriptions] = formulizeHandler::discoverElementTypes(update: true);
-
-		// Build comprehensive description with examples from all element types
-		$propertyDescriptions = "Elements have different properties depending on their type.\n\nYou must use the valid properties for each element type. Here is a complete list of available element types, their properties, and examples:\n\n";
-		$creationPropertyDescriptions = $propertyDescriptions . implode("\n\n", $creationElementDescriptions);
-		$updatePropertyDescriptions = $propertyDescriptions . implode("\n\n", $updateElementDescriptions);
-		$createFormElementDescription = "**Create a new element (input field) in a Formulize form.**\n\n$creationPropertyDescriptions";
-		$updateFormElementDescription = "**Update an existing element (input field) in a Formulize form.**\n\n$updatePropertyDescriptions";
-
-		$commonProperties = [
-			'caption' => [
-				'type' => 'string',
-				'description' => 'Required. The label for the element as it will appear to users in forms and in lists.'
-			],
+		// for creating and updating
+		$commonDataElementProperties = [
 			'column_heading' => [
 				'type' => 'string',
 				'description' => 'Optional. The heading to use at the top of a column in lists of entries. If not specified, the caption will be used. Some captions are long and descriptive, and a shorter heading would be more appropriate for in a list of data.'
 			],
 			'description' => [
 				'type' => 'string',
-				'description' => 'Optional. A longer description or help text for the element, shown to users filling out the form.'
+				'description' => 'Optional. A longer description or help text for the REPLACEWITHSINGLUARCATEGORYNAME, shown to users filling out the form.'
 			],
 			'required' => [
 				'type' => 'boolean',
-				'description' => 'Optional. Whether the element is required to have a value when users fill out the form. Default: false'
+				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME is required to have a value when users fill out the form. Default: false'
 			],
 			'principal_identifier' => [
 				'type' => 'boolean',
-				'description' => 'Optional. Whether the element is the principal identifying element for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
-			],
-			'properties' => [
-				'type' => 'object',
-				'description' => 'Required. Additional configuration settings for the element. The properties depend on the element_type. See the tool description for examples of what properties are needed for different element types.',
-				'additionalProperties' => true
+				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME is the principal identifying element for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
 			],
 			'disabled' => [
 				'type' => 'boolean',
-				'description' => 'Optional. Whether the element is disabled (visible but not usable) in the form. Default: false.'
+				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME element is disabled (visible but not usable) in the form. Default: false.'
+			]
+		];
+
+		// for creating only
+		$creationDataElementProperties = [
+			'handle' => [
+				'type' => 'string',
+				'description' => 'Optional. This does not need to be specified, as the system will determine it automatically from the caption. This is the internal name, used in the database and in API calls. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system.'
 			]
 		];
 
 		// presently only webmasters get these tools at all, but in case that changes, only webmasters will be able to muck with the data_type property
-		$webmasterProperties = $this->isUserAWebmaster() ? [
+		$dataTypeProperty = $this->isUserAWebmaster() ? [
 			'data_type' => [
 				'type' => 'string',
 				'enum' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'],
@@ -1763,33 +1754,58 @@ private function validateFilter($filter, $andOr = 'AND') {
 			]
 		] : [];
 
-		return [
-			[
-				'name' => 'create_form_element',
-				'description' => $createFormElementDescription,
+		// Discover available element types and their descriptions
+		[$elementTypes, $creationElementDescriptions] = formulizeHandler::discoverElementTypes();
+		[$elementTypes, $updateElementDescriptions] = formulizeHandler::discoverElementTypes(update: true);
+
+		// Build comprehensive description with examples from all element types
+		$basePropertyDescriptions = " have different properties depending on their type.\n\nYou must use the valid properties for each type. Here is a complete list of available types, their properties, and examples:\n\n";
+		$categoryNames = formulizeHandler::getElementTypeReadableNames();
+		$formElementTools = [];
+		foreach($elementTypes as $category => $types) {
+			$pluralCategoryName = ucfirst($categoryNames[$category]['plural']);
+			$singularCategoryName = ucfirst($categoryNames[$category]['singular']);
+			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\n$pluralCategoryName $basePropertyDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
+			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$pluralCategoryName $basePropertyDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
+			$commonDataElementPropertiesForThisCategory = [];
+			$dataTypePropertyForThisCategory = [];
+			$creationDataElementPropertiesForThisCategory = [];
+			if($category != 'subforms') {
+				$commonDataElementPropertiesForThisCategory = recursiveReplaceInArray('REPLACEWITHSINGLUARCATEGORYNAME', $singularCategoryName, $commonDataElementProperties);
+				$dataTypePropertyForThisCategory = $dataTypeProperty;
+				$creationDataElementPropertiesForThisCategory = $creationDataElementProperties;
+			}
+			$formElementTools[] = [
+				'name' => 'create_'.str_replace(' ', '_', strtolower($singularCategoryName)),
+				'description' => $creationDescription,
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
 						'form_id' => [
 								'type' => 'integer',
-								'description' => 'Required. ID of the form to add this element to'
+								'description' => 'Required. ID of the form that this will be part of.'
 							],
-							'element_type' => [
+							'type' => [
 								'type' => 'string',
-								'enum' => $elementTypes,
-								'description' => 'Required. The type of element to create.'
+								'enum' => $types,
+								'description' => "Required. The type of $singularCategoryName to create."
 							],
-							'handle' => [
+							'caption' => [
 								'type' => 'string',
-								'description' => 'Optional. This does not need to be specified, as the system will determine it automatically from the caption. This is the internal handle for the element, used in the database and in API calls. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system.'
-							]
-						] + $commonProperties + $webmasterProperties,
-					'required' => ['form_id', 'element_type', 'caption']
+								'description' => "Required. The label for the $singularCategoryName as it will appear to users in forms and in lists."
+							],
+							'properties' => [
+								'type' => 'object',
+								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the type. See the tool description for examples of what properties are needed for different element types.",
+								'additionalProperties' => true
+							],
+						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $dataTypePropertyForThisCategory,
+					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
-			],
-			[
-				'name' => 'update_form_element',
-				'description' => $updateFormElementDescription,
+			];
+			$formElementTools[] = [
+				'name' => 'update_'.str_replace(' ', '_', strtolower($singularCategoryName)),
+				'description' => $updateDescription,
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -1797,25 +1813,50 @@ private function validateFilter($filter, $andOr = 'AND') {
 							'oneOf' => [
 								[
 									'type' => 'string',
-									'description' => 'The handle for the element to update.'
+									'description' => "The handle for the $singularCategoryName to update."
 								],
 								[
 									'type' => 'integer',
-									'description' => 'The ID number of the element to update.'
+									'description' => "The ID number of the $singularCategoryName to update."
 								]
 							]
 						],
-					] + $commonProperties + [
+						'caption' => [
+							'type' => 'string',
+							'description' => "Optional. The new label for the $singularCategoryName as it will now appear to users in forms."
+						],
+						'properties' => [
+							'type' => 'object',
+							'description' => "Optional. Updated configuration settings for the $singularCategoryName. The available properties depend on the type. See the tool description for examples of what properties are needed for different types.",
+							'additionalProperties' => true
+						],
+					] + $commonDataElementPropertiesForThisCategory + [
 						'display' => [
 							'type' => 'boolean',
-							'description' => 'Optional. Whether the element is displayed in the form or hidden. Default: true.'
+							'description' => "Optional. Whether the $singularCategoryName is displayed in the form or hidden. Default: true."
 						]
-					] + $webmasterProperties,
+					] + $dataTypePropertyForThisCategory,
 				'required' => ['element_identifier']
 				]
-			]
-		];
+			];
+		}
+
+		return $formElementTools;
 
 	}
 
+}
+
+function recursiveReplaceInArray($search, $replace, $array) {
+	$result = [];
+	foreach ($array as $key => $value) {
+		if (is_array($value)) {
+			$result[$key] = recursiveReplaceInArray($search, $replace, $value);
+		} elseif (is_string($value)) {
+			$result[$key] = str_replace($search, $replace, $value);
+		} else {
+			$result[$key] = $value;
+		}
+	}
+	return $result;
 }

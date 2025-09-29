@@ -178,16 +178,15 @@ class formulizeHandler {
 
 		$notes = $update ?
 "**Important notes:**
-- When altering options in a list, consider whether any data that users have entered into the form already, should be altered as well to match the new options. See the updateExistingEntriesToMatchTheseOptions property below. This is only relevant when options are being changed. If options are being re-organized, or new ones added, or old ones deleted, you do not need to update existing entries to match."
-: "";
+- When altering options in a list, consider whether any data that users have entered into the form already, should be altered as well to match the new options. See the updateExistingEntriesToMatchTheseOptions property below. This is only relevant when options are being changed. If options are being re-organized, or new ones added, or old ones deleted, you do not need to update existing entries to match." : "";
 
 		$properties =
 "**Properties:**
-- options (array, list of options for the element, optionally a distinct value to store in the database vs to show the user can be specified using the pipe character: | See the examples for details.)
-- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)
-- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)";
+- options (array, list of options for the element)
+- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)
+- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)";
 		$properties .= $update ?
-"- updateExistingEntriesToMatchTheseOptions (optional, a 1/0 indicating if existing entries should be updated to match the new options. Default is 0. Set this to 1 when an element has existing options that are being changed, and then every record in the database where the old first option was selected, will change to having the new first option selected, and every record where the old second option was selected will change to the new second option, etc. This works when changing storage formats from numbers to text, and when just changing wording of options. Any kind of change is supported. This is useful when correcting typos and changing workding, such as switching an option from 'Backwards' to 'Back', or when making refinements, such as an element with options 'S', 'M', 'L' that is changing to 'Small', 'Medium', 'Large'. Sometimes changes to options are just reordering the existing options, or adding new options, or removing removing options, and in those cases this setting should be left unspecified or set to 0.)"
+"- updateExistingEntriesToMatchTheseOptions (optional, a 1/0 indicating if existing entries should be updated to match the new options. Default is 0. Set this to 1 when an element has existing options that are being changed, and then every record in the database where the old first option was selected, will change to having the new first option selected, and every record where the old second option was selected will change to the new second option, etc. This works when changing storage formats from numbers to text, and when just changing wording of options. Any kind of change is supported. This is useful when correcting typos and changing wording, such as switching an option from 'Backwards' to 'Back', or when making refinements, such as an element with options 'S', 'M', 'L' that is changing to 'Small', 'Medium', 'Large'. Sometimes changes to options are just reordering the existing options, or adding new options, or removing removing options, and in those cases this setting should be left unspecified or set to 0.)"
 : "";
 
 		$examples =
@@ -224,12 +223,12 @@ class formulizeHandler {
 
 		$properties =
 "**Properties:**
-- source_element (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked element will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)";
+- sourceElement (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked element will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)";
 
 		$examples =
 "**Examples:**
-- A Linked element with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { source_element: 7 }
-- A Linked element with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { source_element: 'provinces_name' }";
+- A Linked element with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { sourceElement: 7 }
+- A Linked element with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { sourceElement: 'provinces_name' }";
 
 		return [
 			$notes,
@@ -252,12 +251,43 @@ class formulizeHandler {
 
 		$properties =
 "**Properties:**
-- source_groups (optional, an array of group ids from which the users in the list should be drawn. Use the list_groups tool see a list of all the groups and their ids. Use the list_group_members tool to see a list of users who are members of a specific group. If this is not specified, or the array is empty, then all users in the system will be shown, regardless of their group membership.)";
+- sourceGroups (optional, an array of group ids from which the users in the list should be drawn. Use the list_groups tool see a list of all the groups and their ids. Use the list_group_members tool to see a list of users who are members of a specific group. If this is not specified, or the array is empty, then all users in the system will be shown, regardless of their group membership.)";
 
 		$examples =
 "**Examples:**
 - A list of all users in the system (no properties): { }
-- A list of users from groups 3 and 6: { source_groups: [3, 6] }";
+- A list of users from groups 3 and 6: { sourceGroups: [3, 6] }";
+
+		return [
+			$notes,
+			$properties,
+			$examples
+		];
+	}
+
+	/**
+	 * Static function to provide the common properties and examples used by all 'subform' elements for with the mcp server
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return array an array of with the important notes first, common properties first, and the common examples second
+	 */
+	public static function mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update) {
+
+		$notes =
+"**Important notes:**
+- Subform Interfaces are used to provide an interface in one form, that shows the entries in another form. They are designed to work with forms that are connected in a one to many relationship, such as Each Province has many Cities, or Each Budget has many Budget Line Items, etc.
+- Subform Interfaces do not store user data. They are a collection of settings that control how the entries in the 'many' form are to be displayed and managed, when viewed from the 'one' form.
+- Subform Interfaces are very powerful tools for supporting complex data management scenarios. They allow users to manage entire sets of data through one screen, instead of having to manage each individual entry separately.";
+
+		$properties =
+"**Properties:**
+- sourceForm (int, the form ID of the form to be displayed in this Subform Interface. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier.)
+- sortingElement (int, the element ID of an element in the source form to sort the entries by. If not specified, entries will be shown in creation order.)
+- sortingDirection (string, either 'ASC' or 'DESC', indicating if the entries should be sorted in ascending or descending order. Default is 'ASC'.)
+- showDeleteButton (int, either 1 or 0, indicating if a Delete Entry button should be shown to users, if they have permission to delete entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include a Delete Entry button.)";
+
+		$examples =
+"**Examples:**";
 
 		return [
 			$notes,
@@ -418,18 +448,22 @@ class formulizeHandler {
 	 * @throws Exception if the element type is not valid
 	 * @return void
 	 */
-	public static function validateElementType(&$elementType) {
+	public static function validateElementType(&$elementType, $requestedCategory = null) {
 		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
-		if(!in_array($elementType, $elementTypes)) {
-			// try to correct the case of the element type
-			foreach($elementTypes as $validElementType) {
-				if(strtolower($validElementType) == strtolower($elementType)) {
-					$elementType = $validElementType;
-					return;
+		$allValidElementTypes = array();
+		foreach($elementTypes as $category=>$categoryTypes) {
+			if((!$requestedCategory OR $category == $requestedCategory) AND (!in_array($elementType, $categoryTypes))) {
+				// try correcting the case of the element type to see if it is in fact in this category
+				foreach($categoryTypes as $validElementType) {
+					$allValidElementTypes[] = $validElementType;
+					if(strtolower($validElementType) == strtolower($elementType)) {
+						$elementType = $validElementType;
+						return;
+					}
 				}
 			}
-			throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $elementTypes));
 		}
+		throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $allValidElementTypes));
 	}
 
 	/**
@@ -622,9 +656,10 @@ class formulizeHandler {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.basename($file);
 				$elementType = str_replace('Element.php', '', basename($file));
 				if(methodExistsInClass('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
-					$elementTypes[] = $elementType;
 					$className = "formulize".ucfirst($elementType)."Element";
-					$elementDescriptions[$update][] = $className::mcpElementPropertiesDescriptionAndExamples($update);
+					$category = $className::$category;
+					$elementTypes[$category][] = $elementType;
+					$elementDescriptions[$update][$category][] = $className::mcpElementPropertiesDescriptionAndExamples($update);
 				}
 			}
 		}
