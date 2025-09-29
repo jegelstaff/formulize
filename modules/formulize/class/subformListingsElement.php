@@ -105,13 +105,46 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+
+		$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
 
 		if(isset($properties['sourceForm']) AND $properties['sourceForm'] > 0) {
-			$ele_value[0] = intval($properties['sourceForm']);
-			// make sure the source form is connected to this form via a linked dropdown list
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$sourceFid = intval($properties['sourceForm']);
+			if($sourceFormObject = $form_handler->get($sourceFid)) {
+				$ele_value[0] = $sourceFid;
+				$existingConnection = false;
+				if($sourceFid AND $elementObject = _getElementObject($elementIdentifier)) {
+					$connection_handler = xoops_getmodulehandler('frameworks', 'formulize');
+					if($connections = $connection_handler->getLinksGroupedByForm($connection_handler->get(-1), $elementObject->getVar('fid'))) {
+						foreach($connections[$elementObject->getVar('fid')] as $connection) {
+							if($connection['form2'] == $sourceFid) {
+								$existingConnection = true;
+								break;
+							}
+						}
+					}
+				}
+				if($sourceFid AND $elementObject AND !$existingConnection) {
+					$formObject = $form_handler->get($elementObject->getVar('fid'));
+					if($pi = $formObject->getVar('pi')) {
+						if($newLinkedElementId = makeNewConnectionElement('new-linked-dropdown', $sourceFid, $pi)) {
+							// if it's a row-based subform with no specific screen set, then let's try creating a new subform screen for displaying the sub entries
+							if($ele_value[8] == 'row' AND $ele_value['display_screen'] == 0 AND $newSubformScreenId = findOrMakeSubformScreen($newLinkedElementId, $elementObject->getVar('fid'))) {
+								$ele_value['display_screen'] = $newSubformScreenId;
+							}
+						}
+					} else {
+						throw new Exception("There is no Principal Identifier set for '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid').") . The default connection between '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid').") and '".$sourceFormObject->getVar('title')."' (form ".$sourceFormObject->getVar('fid').") requires a Principal Identifier in '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid')."), in order to create a new linked element in '".$sourceFormObject->getVar('title')."' (form ".$sourceFormObject->getVar('fid')."), which will connect the two forms. Set an existing element in '".$formObject->getVar('title')."' (form ".$formObject->getVar('fid').") to be its Principal Indentifier, or create a new element as the Principal Identifier, and then try creating the Subform Interface again.");
+					}
+				}
+			} else {
+				throw new Exception("You must provide a valid sourceForm property for the subform listings element. The sourceForm you provided does not exist.");
+			}
 		}
 		if(isset($properties['sortingElement']) AND $properties['sortingElement'] > 0) {
 			$ele_value['SortingElement'] = intval($properties['sortingElement']);
@@ -133,7 +166,6 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value['disabledelements'] = implode(',', array_map('intval', $properties['disabledElementsInRow']));
 		}
 		if(isset($properties['entryViewingMode']) AND in_array($properties['entryViewingMode'], ['off','form_screen','modal'])) {
-			$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
 			switch($properties['entryViewingMode']) {
 				case 'off':
 					$ele_value[3] = 0;
