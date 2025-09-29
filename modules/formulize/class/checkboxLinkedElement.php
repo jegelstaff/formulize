@@ -83,9 +83,10 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 	 * properties are the contents of the ele_value property on the object
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
 		$sourceElementObject = null;
 		if(isset($properties['sourceElement']) AND !$sourceElementObject = _getElementObject($properties['sourceElement'])) {
 			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
