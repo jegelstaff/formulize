@@ -284,6 +284,7 @@ class formulizeHandler {
 - sourceForm (int, the form ID of the form to be displayed in this Subform Interface. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier.)
 - sortingElement (int, the element ID of an element in the source form to sort the entries by. If not specified, entries will be shown in creation order.)
 - sortingDirection (string, either 'ASC' or 'DESC', indicating if the entries should be sorted in ascending or descending order. Default is 'ASC'.)
+- showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, if they have permission to add entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include an Add Entry button.)
 - showDeleteButton (int, either 1 or 0, indicating if a Delete Entry button should be shown to users, if they have permission to delete entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include a Delete Entry button.)";
 
 		$examples =
