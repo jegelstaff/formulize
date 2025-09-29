@@ -43,14 +43,15 @@ class formulizeElement extends FormulizeObject {
 
 	var $isLinked;
 	var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
-    var $canHaveMultipleValues;
-    var $hasMultipleOptions;
-    var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
+	var $overrideDataType;
+	var $hasData;
+	var $name;
+	var $adminCanMakeRequired;
+	var $alwaysValidateInputs;
+	var $canHaveMultipleValues;
+	var $hasMultipleOptions;
+	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
+	public static $category = 'misc'; // the category this element belongs to - textboxes, selectors, lists, layout, misc, subforms
 
 	function __construct(){
         parent::__construct();

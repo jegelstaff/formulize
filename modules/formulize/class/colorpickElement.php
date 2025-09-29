@@ -34,6 +34,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeColorpickElement extends formulizeElement {
 
 	var $defaultValueKey;
+	public static $category = "selectors";
 
 	function __construct() {
 		$this->name = "Color Picker";

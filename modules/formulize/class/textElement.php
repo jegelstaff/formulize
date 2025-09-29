@@ -49,6 +49,7 @@ define('ELE_VALUE_TEXT_TRIM_VALUE', 12);
 class formulizeTextElement extends formulizeElement {
 
 	var $defaultValueKey;
+	public static $category = "textboxes";
 
 	function __construct() {
 		$this->name = "Text Box";

@@ -37,6 +37,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeEmailElement extends formulizeElement {
 
+		public static $category = "textboxes";
+
     function __construct() {
         $this->name = "Email Address";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid

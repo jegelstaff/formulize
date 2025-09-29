@@ -36,6 +36,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/baseClassForLists.php";
 
 class formulizeCheckboxElement extends formulizeElement {
 
+	public static $category = "lists";
+
 	function __construct() {
 			$this->name = "Checkboxes";
 			$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
