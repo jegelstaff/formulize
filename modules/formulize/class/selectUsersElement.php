@@ -92,7 +92,7 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
-		$groupIds = is_array($properties['sourceGroups']) ? array_unique($properties['sourceGroups']) : [];
+		$groupIds = (isset($properties['sourceGroups']) AND is_array($properties['sourceGroups'])) ? array_unique($properties['sourceGroups']) : [];
 		global $xoopsDB;
 		if(count($groupIds) > 0) {
 			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("groups")." WHERE groupid IN (".implode(',', array_map('intval', $groupIds)).")";

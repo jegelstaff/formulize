@@ -60,7 +60,6 @@ $commonNotes";
 		if($commonProperties) {
 			$descriptionAndExamples .= "
 $commonProperties
-- showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, based on their permission to add entries in the Subform Interface. Default is 1. Set to 0 if this Subform Interface is for viewing only and should never include an Add Entry button.)
 - elementsInHeading (Required. An array of element ids, indicating which elements from the source form should be shown as the headings that introduce each connected entry.)
 - fullFormMode (Optional. A string, either 'collapsable' or 'not_collapsable'. Default is 'collapsable'. If 'collapsable', then the connected entries will be shown in collapsable accordions, labelled with the values of the element specified in the elementsInHeading property. If 'not_collapsable', then the connected entries will be embedded in the page one after the other, with the elements specified in the elementsInHeading property used as headers above each form.)";
 		}
@@ -93,6 +92,13 @@ class formulizeSubformFullFormElementHandler extends formulizeSubformListingsEle
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
 		// subform has no stated public properties yet!
 		return ['ele_value' => array() ];
+	}
+
+	public function getDefaultEleValue() {
+		$ele_value = parent::getDefaultEleValue();
+		$ele_value[3] = 0; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
+		$ele_value[8] = 'form'; // if subformFullForm default to collapsable forms ('form'), otherwise 'flatform' is non collapsable. 'row' or empty string/non value is for subformEditableRow and subformListings.
+		return $ele_value;
 	}
 
 }
