@@ -549,15 +549,17 @@ class formulizeHandler {
 				addElementToMultiPageScreens($elementObject->getVar('fid'), $elementObject);
 			}
 			// override passed in $dataType from the element class, if appropriate
-			if(method_exists($elementObject, 'getDefaultDataType')) {
-				$dataType = $elementObject->getDefaultDataType($dataType);
-			} elseif(property_exists($elementObject, 'overrideDataType') AND $elementObject->overrideDataType != "") {
-				$dataType = $elementObject->overrideDataType;
-			} elseif($dataType === null) {
-				$dataType = 'text'; // default if nothing else is specified
-			}
-			if($form_handler->insertElementField($elementObject, $dataType) == false) {
-				throw new Exception("Could not create or update the database field for this element: ".$elementObject->getVar('ele_handle')." DB error: ".$xoopsDB->error());
+			if($elementObject->hasData) {
+				if(method_exists($elementObject, 'getDefaultDataType')) {
+					$dataType = $elementObject->getDefaultDataType($dataType);
+				} elseif(property_exists($elementObject, 'overrideDataType') AND $elementObject->overrideDataType != "") {
+					$dataType = $elementObject->overrideDataType;
+				} elseif($dataType === null) {
+					$dataType = 'text'; // default if nothing else is specified
+				}
+				if($form_handler->insertElementField($elementObject, $dataType) == false) {
+					throw new Exception("Could not create or update the database field for this element: ".$elementObject->getVar('ele_handle')." DB error: ".$xoopsDB->error());
+				}
 			}
 		}
 
