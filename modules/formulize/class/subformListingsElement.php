@@ -108,10 +108,50 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
-		// subform has no stated public properties yet!
-		// for entryViewingMode, we accept 'off', 'form_screen' and 'modal' as valid valuesm and they correspond to 0, 1 (full form) or 2 (modal) in ele_value[3] -- need to make sure admin UI elements work this way too (strip down options in template)
-		// entryViewingMode is optional, default to 'form_screen'
-		return ['ele_value' => array() ];
+
+		if(isset($properties['sourceForm']) AND $properties['sourceForm'] > 0) {
+			$ele_value[0] = intval($properties['sourceForm']);
+			// make sure the source form is connected to this form via a linked dropdown list
+		}
+		if(isset($properties['sortingElement']) AND $properties['sortingElement'] > 0) {
+			$ele_value['SortingElement'] = intval($properties['sortingElement']);
+		}
+		if(isset($properties['sortingDirection']) AND in_array($properties['sortingDirection'], ['ASC','DESC'])) {
+			$ele_value['SortingDirection'] = $properties['sortingDirection'];
+		}
+		if(isset($properties['showAddButton'])) {
+			$ele_value[6] = $properties['showAddButton'] ? 'subform' : 'hideaddentries';
+		}
+		if(isset($properties['showDeleteButton'])) {
+			$ele_value['ShowDeleteButton'] = ($properties['showDeleteButton']) ? 1 : 0;
+		}
+		if((isset($properties['elementsInRow']) AND is_array($properties['elementsInRow']) AND count($properties['elementsInRow']) > 0) OR (isset($properties['elementsInHeading']) AND is_array($properties['elementsInHeading']) AND count($properties['elementsInHeading']) > 0)) {
+			$elementsArray = isset($properties['elementsInRow']) ? $properties['elementsInRow'] : $properties['elementsInHeading'];
+			$ele_value[1] = implode(',', array_map('intval', $elementsArray));
+		}
+		if(isset($properties['disabledElementsInRow']) AND is_array($properties['disabledElementsInRow']) AND count($properties['disabledElementsInRow']) > 0) {
+			$ele_value['disabledelements'] = implode(',', array_map('intval', $properties['disabledElementsInRow']));
+		}
+		if(isset($properties['entryViewingMode']) AND in_array($properties['entryViewingMode'], ['off','form_screen','modal'])) {
+			$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
+			switch($properties['entryViewingMode']) {
+				case 'off':
+					$ele_value[3] = 0;
+					break;
+				case 'form_screen':
+					$ele_value[3] = $elementTypeName == 'subformeditablerow' ? 4 : 1;
+					break;
+				case 'modal':
+					$ele_value[3] = $elementTypeName == 'subformeditablerow' ? 3 : 2;
+					break;
+			}
+		}
+		if(isset($properties['fullFormMode']) AND in_array($properties['fullFormMode'], ['collapsable','not_collapsable'])) {
+			$ele_value[8] = $properties['fullFormMode'];
+		}
+		return [
+			'ele_value' => $ele_value,
+		];
 	}
 
 	public function getDefaultEleValue() {
@@ -119,12 +159,12 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value[0] = 0; // form we're linking to
 			$ele_value[1] = ''; // elements to show in the subform. A comma separated list of element ids
 			$ele_value[2] = 0; // show no entries by default, otherwise it's a number of blanks to show
-			$ele_value[3] = 2; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
+			$ele_value[3] = 4; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
 			$ele_value[4] = 0; // use column headings. 1 means use captions
 			$ele_value[5] = 0; // active user will be owner (1 means mainform entry owner will be owner)
 			$ele_value[6] = 'subform'; // showing add entries UI requires permission in subform. 'parent' means requires permission in the main form. 'hideaddentries' means don't show Add entry UI.
 			$ele_value[7] = []; // no filter conditions by default
-			$ele_value[8] = 'row'; // if subformFullForm default to collapsable forms, otherwise flatform is non collapsable. Row is for subformEditableRow and subformListings.
+			$ele_value[8] = 'row'; // if subformFullForm default to collapsable forms ('form'), otherwise 'flatform' is non collapsable. 'row' or empty string/non value is for subformEditableRow and subformListings.
 			$ele_value[9] = _AM_APP_ENTRIES; // default text for add Entries button
 			$ele_value['subform_prepop_element'] = 0; // element to prepopulate subform entries, 0 means no prepopulation
 			$ele_value['simple_add_one_button'] = 1;

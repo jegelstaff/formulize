@@ -60,7 +60,6 @@ $commonNotes";
 		if($commonProperties) {
 			$descriptionAndExamples .= "
 $commonProperties
-- showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, if they have permission to add entries in the source form. Default is 1. Set to 0 if this Subform Interface is for viewing only and should never include an Add Entry button.)
 - elementsInRow (Required. An array of element ids, indicating which elements from the source form should be shown in each row.)
 - disabledElementsInRow (Optional. An array of element ids, indicating which elements in the row should be disabled (not editable). Default is an empty array, meaning all elements in the row are editable.)
 - entryViewingMode (Optional. A string, either 'off', 'form_screen' or 'modal'. Default is 'off', which means there are no clickable icons for opening up each source form entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the source form entry. If 'modal' then there are clickable icons, and they will open a modal popup box for showing the source form entry. For small forms, 'modal' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the source form entries, or does not need to, then set this to 'off'.";
