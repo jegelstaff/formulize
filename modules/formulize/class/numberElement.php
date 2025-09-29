@@ -35,6 +35,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/textElement.php"; // we
 class formulizeNumberElement extends formulizeTextElement {
 
 	var $defaultValueKey;
+	public static $category = "textboxes";
 
 	function __construct() {
 		parent::__construct();

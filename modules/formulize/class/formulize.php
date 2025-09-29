@@ -107,6 +107,29 @@ class formulizeHandler {
 	function __construct() {
 	}
 
+	public static function getElementTypeReadableNames() {
+		return array(
+			'textboxes' => array(
+				'singular' => 'text box element',
+				'plural' => 'text boxes elements'
+			),
+			'lists' => array(
+				'singular' => 'list element',
+				'plural' => 'list elements'
+			),
+			'selectors' => array(
+				'singular' => 'selector element',
+				'plural' => 'selector elements'
+			),
+			'subforms' => array(
+				'singular' => 'subform interface',
+				'plural' => 'subform interfaces'
+			),
+			// WILL NEED TO BE FILLED IN FURTHER FOR 'LAYOUT' ELEMENTS WHEN THEY HAVE CLASSES
+			// AND WHAT TO DO ABOUT DERIVED ELEMENTS IS NOT ENTIRELY CLEAR (NOR OTHER MISC ELEMENTS)
+		);
+	}
+
 	public static function getStandardElementTypes() {
 		return array(
 			'text',

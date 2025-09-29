@@ -61,6 +61,7 @@ define('ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS', 'linkedSourceMappings'); // mappi
 class formulizeSelectElement extends formulizeElement {
 
 	var $defaultValueKey;
+	public static $category = "lists";
 
 	function __construct() {
 		$this->name = "Dropdown List";

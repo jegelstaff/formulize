@@ -38,6 +38,7 @@ define('ELE_VALUE_DATE_MAX', 'date_future_days');
 class formulizeDateElement extends formulizeElement {
 
 	var $defaultValueKey;
+	public static $category = "selectors";
 
 	function __construct() {
 		$this->name = "Date Selector";

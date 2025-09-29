@@ -34,6 +34,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeTimeElement extends formulizeElement {
 
+	public static $category = "selectors";
+
 	function __construct() {
 		$this->name = "Time Selector";
 		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid

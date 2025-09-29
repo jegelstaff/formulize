@@ -35,6 +35,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/baseClassForLists.php";
 class formulizeRadioElement extends formulizeElement {
 
 	var $defaultValueKey;
+	public static $category = "lists";
 
 	function __construct() {
 		$this->name = "Radio Buttons";

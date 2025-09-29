@@ -36,6 +36,8 @@ class formulizeFileUploadElement extends formulizeElement {
     var $name;
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
+		public static $category = "selectors";
+
     function __construct() {
         $this->name = "File Upload Box";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid

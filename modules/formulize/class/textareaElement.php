@@ -41,6 +41,8 @@ define('ELE_VALUE_TEXTAREA_RICHTEXT', 'use_rich_text');
 
 class formulizeTextareaElement extends formulizeTextElement {
 
+	public static $category = "textboxes";
+
 	function __construct() {
 		parent::__construct();
 		// set different properties last when extending other elements

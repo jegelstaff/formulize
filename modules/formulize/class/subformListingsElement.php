@@ -34,6 +34,7 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeSubformListingsElement extends formulizeElement {
 
 	var $defaultValueKey;
+	public static $category = "subforms";
 
 	function __construct() {
 		$this->name = "Embeded Form (list view)";
