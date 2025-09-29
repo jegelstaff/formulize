@@ -369,7 +369,7 @@ Examples:
 
 			$this->tools['create_form'] = [
 				'name' => 'create_form',
-				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, use the create_form_element tool to add elements (fields) to the form. Elements are the individual input fields like textboxes, dropdowns, checkboxes, etc. that users will fill out.',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form: create_text_box_element, create_list_element, and create_selector_element. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -882,7 +882,7 @@ Examples:
 		$elementTypeHandler = xoops_getmodulehandler($type.'Element', 'formulize');
 		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
 			$ele_value = $elementObject ? $elementObject->getVar('ele_value') : $elementTypeHandler->getDefaultEleValue();
-			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value);
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value, $elementObject);
 			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
 				// special case - the element type needs to pass special parameters to the upsert function
 				// for example, if it should create a subform interface in the source form
