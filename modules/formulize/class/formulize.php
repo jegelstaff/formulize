@@ -453,7 +453,9 @@ class formulizeHandler {
 		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {
-			if((!$requestedCategory OR $category == $requestedCategory) AND (!in_array($elementType, $categoryTypes))) {
+			if(in_array($elementType, $categoryTypes)) {
+				return;
+			} elseif(!$requestedCategory OR $category == $requestedCategory) {
 				// try correcting the case of the element type to see if it is in fact in this category
 				foreach($categoryTypes as $validElementType) {
 					$allValidElementTypes[] = $validElementType;
