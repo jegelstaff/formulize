@@ -737,6 +737,8 @@ Examples:
 
 	/**
 	 * Create a new form element in a form
+	 * Various tool names for different categories of elements, based on the getElementTypeReadableNames method
+	 * in the formulizeHandler class.
 	 * @param array $arguments An associative array containing the parameters for creating a new form element.
 	 * - 'form_id': The ID of the form to add the element to (required).
 	 * - 'type': The type of the element (required).
@@ -746,14 +748,28 @@ Examples:
 	 * - 'description': Optional. A description for the element.
 	 * - 'required': Optional. Whether the element is required. Defaults to false.
 	 * - 'properties': Optional. An array of properties for the given element type
+	 * - 'disabled': Optional. Whether the element is disabled (not editable) in forms
+	 * - 'principal_identifier': Optional. Whether the element is a principal identifier for entries in the form (used for identifying entries in linked elements). Defaults to false.
+	 * - 'data_type': Optional. The data type for the element, if applicable. See valid data types in the tool schema. If omitted, the default data type for the element type will be used.
 	 * @return array An associative array containing details about the newly created element, including its ID
 	 */
-	private function create_form_element($arguments, $isCreate = true) {
-		return $this->upsert_form_element($arguments, true);
+	private function create_text_box_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_selector_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_subform_interface($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
 	}
 
 	/**
 	 * Update a form element in a form
+ 	 * Various tool names for different categories of elements, based on the getElementTypeReadableNames method
+	 * in the formulizeHandler class.
 	 * @param array $arguments An associative array containing the parameters for creating a new form element.
 	 * - 'element_identifier': The ID or handle of the element to update (required).
 	 * - 'caption': The caption (label) for the element (required).
@@ -761,10 +777,23 @@ Examples:
 	 * - 'description': Optional. A description for the element.
 	 * - 'required': Optional. Whether the element is required. Defaults to false.
 	 * - 'properties': Optional. An array of properties for the given element type
+	 * - 'display': Optional. Whether the element is displayed in forms. Defaults to true.
+	 * - 'disabled': Optional. Whether the element is disabled (not editable) in forms
+	 * - 'principal_identifier': Optional. Whether the element is a principal identifier for entries in the form (used for identifying entries in linked elements). Defaults to false.
+	 * - 'data_type': Optional. The data type for the element, if applicable. See valid data types in the tool schema. If omitted, the default data type for the element type will be used.
 	 * @return array An associative array containing details about the element
 	 */
-	private function update_form_element($arguments) {
-		return $this->upsert_form_element($arguments);
+	private function update_text_box_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_selector_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_subform_interface($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 
 	/**
