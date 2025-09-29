@@ -71,7 +71,7 @@ $commonProperties
 		if($commonExamples) {
 			$descriptionAndExamples .= "
 $commonExamples
-- A list of ingredients, drawn from the Name element in an Ingredients form, with only one choice allowed: { source_element: 'ingredient_name', allowMultipleSelections: 0 }";
+- A list of ingredients, drawn from the Name element in an Ingredients form, with only one choice allowed: { sourceElement: 'ingredient_name', allowMultipleSelections: 0 }";
 		}
 		return $descriptionAndExamples;
 	}

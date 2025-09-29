@@ -28,6 +28,10 @@
 
 // There is a corresponding admin template for this element type in the templates/admin folder
 
+if(class_exists("formulizeSelectLinkedElement")) {
+	return;
+}
+
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
@@ -92,8 +96,8 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
 		$sourceElementObject = null;
-		if(isset($properties['source_element']) AND !$sourceElementObject = _getElementObject($properties['source_element'])) {
-			throw new Exception("You must provide a valid source_element property for the linked dropdown list element");
+		if(isset($properties['sourceElement']) AND !$sourceElementObject = _getElementObject($properties['sourceElement'])) {
+			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
 		}
 		if($sourceElementObject) {
 			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method

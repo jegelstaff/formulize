@@ -92,7 +92,7 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = []) {
-		$groupIds = is_array($properties['source_groups']) ? array_unique($properties['source_groups']) : [];
+		$groupIds = is_array($properties['sourceGroups']) ? array_unique($properties['sourceGroups']) : [];
 		global $xoopsDB;
 		if(count($groupIds) > 0) {
 			$sql = "SELECT groupid FROM ".$xoopsDB->prefix("groups")." WHERE groupid IN (".implode(',', array_map('intval', $groupIds)).")";
@@ -101,7 +101,7 @@ class formulizeSelectUsersElementHandler extends formulizeSelectElementHandler {
 				$foundGroupIds = $xoopsDB->getRowsNum($result);
 			}
 			if(count($groupIds) != $foundGroupIds) {
-				throw new Exception("You must provide a valid source_groups property for the linked dropdown list element. One or more of the group ids you provided do not exist.");
+				throw new Exception("You must provide a valid sourceGroups property for the linked dropdown list element. One or more of the group ids you provided do not exist.");
 			}
 		}
 		if(is_array($groupIds) AND count($groupIds) > 0) {
