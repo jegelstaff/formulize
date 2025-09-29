@@ -72,8 +72,8 @@ $commonProperties
 		if($commonExamples) {
 			$descriptionAndExamples .= "
 $commonExamples
-- A list of inventory items, drawing options from the Item Name element in a separate Inventory form, and allowing new inventory items to be added: { source_element: 'inventory_item_name', allowNewValues: 1 }
-- A list of countries with options drawn from the Name element in a separate Countries form, and multiple selections are allowed: { source_element: 'country_name', allowMultipleSelections: 1 }";
+- A list of inventory items, drawing options from the Item Name element in a separate Inventory form, and allowing new inventory items to be added: { sourceElement: 'inventory_item_name', allowNewValues: 1 }
+- A list of countries with options drawn from the Name element in a separate Countries form, and multiple selections are allowed: { sourceElement: 'country_name', allowMultipleSelections: 1 }";
 		}
 		return $descriptionAndExamples;
 	}

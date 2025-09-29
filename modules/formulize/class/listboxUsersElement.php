@@ -71,7 +71,7 @@ $commonProperties
 		if($commonExamples) {
 			$descriptionAndExamples .= "
 $commonExamples
-- A list of users from group 12, and more than one user can be selected: { source_groups: [12], allowMultipleSelections: 1 }";
+- A list of users from group 12, and more than one user can be selected: { sourceGroups: [12], allowMultipleSelections: 1 }";
 		}
 		return $descriptionAndExamples;
 	}
