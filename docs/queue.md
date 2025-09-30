@@ -8,7 +8,7 @@ title: queue
 
 Requests for the queue process method with a valid _queue_handle_, will trigger processing of the specified queue.
 
-To trigger processing of all queues, use __all__ as the queue_handle.
+To trigger processing of all queues, use __all__ as the queue_handle. This can be a useful endpoint to setup a cron job for, to ensure automated processing of whatever goes into the queue.
 
 If the queue is processed asynchronously, then the API will return true. If the queue is processed synchronously as part of the http request, then the API will return a JSON string that contains an array of the filenames that were processed in the queue.
 
