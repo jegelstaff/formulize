@@ -36,8 +36,10 @@ class formulizeFileUploadElement extends formulizeElement {
     var $name;
     var $adminCanMakeRequired;
     var $alwaysValidateInputs;
+		public static $category = "selectors";
+
     function __construct() {
-        $this->name = "File upload box";
+        $this->name = "File Upload Box";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->overrideDataType = "text"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
@@ -67,7 +69,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
-    function adminPrepare($element) {
+    // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	function adminPrepare($element) {
         if(!$element) {
             $ele_value = array(10,'doc,docx,xls,xlsx,ppt,pptx,csv,txt,pdf,jpg,jpeg,gif,png,odt,ods,odp'); // nothing has been saved yet, so let's set a default of 10MB, and some default file types
             $directLinkNo = " checked ";
@@ -88,7 +91,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-    function adminSave($element, $ele_value) {
+    // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
         $changed = false;
         if($ele_value[0] == 0) {
             $ele_value[0] = 10; // set ten as a default if there is no file size specified
@@ -100,10 +104,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-    // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
-    // $element is the element object
-    function loadValue($value, $ele_value, $element) {
+		// $element is the element object
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+				$ele_value = $element->getVar('ele_value');
         $value = unserialize($value); // what we've got in the database is a serialized array, first key is filename, second key is flag for whether the filename is for real (might be an error message)
         $ele_value[3] = (isset($value['name']) AND $value['name']) ? $value['name'] : null; // add additional keys to ele_value where we'll put the value that is coming from the database for user's to see, plus other flags and so on
         $ele_value[4] = $this->getFileDisplayName(strval($ele_value[3]));
@@ -224,10 +229,12 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-    // You can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
-    function prepareDataForSaving($value, $element) {
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
 
         // mimetype map - thanks to https://stackoverflow.com/questions/7519393/php-mime-types-list-of-mime-types-publically-available
         // file defines $mime_types_map, array of key=>value pairs that is extensions and mime types
@@ -362,7 +369,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
     // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
-    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
 

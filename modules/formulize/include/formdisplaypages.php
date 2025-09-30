@@ -287,13 +287,15 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 				// check perm for add perm on forms of any subform elements
 				foreach($forminfo['elements'] as $elementId) {
 					if($candidateSubformElementObject = $element_handler->get($elementId)) {
-						if($candidateSubformElementObject->getVar('ele_type') == 'subform') {
-							$candidateSubformElementEleValue = $candidateSubformElementObject->getVar('ele_value');
-							// could be made smarter if we went and figured out exactly which entries are connected through an active relationship, etc
-							// but all that metadata is not available here, so we simply go off of whether people can add entries
-							if($usersCanSave = formulizePermHandler::user_can_edit_entry($candidateSubformElementEleValue[0], $uid, 'new')) {
-								break;
-							}
+						if($candidateSubformElementObject->getVar('ele_type') == 'subformFullForm'
+							OR $candidateSubformElementObject->getVar('ele_type') == 'subformEditableRow'
+							OR $candidateSubformElementObject->getVar('ele_type') == 'subformListings') {
+								$candidateSubformElementEleValue = $candidateSubformElementObject->getVar('ele_value');
+								// could be made smarter if we went and figured out exactly which entries are connected through an active relationship, etc
+								// but all that metadata is not available here, so we simply go off of whether people can add entries
+								if($usersCanSave = formulizePermHandler::user_can_edit_entry($candidateSubformElementEleValue[0], $uid, 'new')) {
+									break;
+								}
 						}
 					}
 				}

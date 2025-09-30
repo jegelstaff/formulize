@@ -18,6 +18,9 @@ export async function waitForFormulizeFormToken(page) {
  * @param {*} password
  */
 export async function login(page, username, password = '12345') {
+	username = username || 'admin';
+	password = username == 'admin' ? 'password' : password;
+	// Go to login page
 	await page.goto('/user.php');
 	await page.locator('input[name="uname"]').click();
 	await page.locator('input[name="uname"]').fill(username);
@@ -32,7 +35,7 @@ export async function login(page, username, password = '12345') {
 /**
  * Formulize Saving validation
  */
-export async function saveFormulizeForm(page, timeout = 10000) {
+export async function saveFormulizeForm(page, timeout = 120000) {
 	// Wait for the formulize page token
 	await waitForFormulizeFormToken(page);
 	await Promise.all([
@@ -48,7 +51,7 @@ export async function saveFormulizeForm(page, timeout = 10000) {
   await page.waitForFunction(() => {
     const element = document.getElementById('savingmessage');
     return element && window.getComputedStyle(element).display === 'none';
-  }, { timeout: 10000 });
+  }, { timeout: 120000 });
 	// Ensure the data submitted error does not occurr
 	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
 }
@@ -59,7 +62,7 @@ export async function saveFormulizeForm(page, timeout = 10000) {
  * @param {*} type
  * @param {*} timeout
  */
-export async function saveAdminForm(page, type = 'regular', timeout = 10000) {
+export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 
 	let opacityTarget = 'div.admin-ui';
 

@@ -21,6 +21,7 @@ define("_AM_APP_FORMWITHNOAPP","Forms that don't belong to an application");
 define("_AM_APP_SCREENS","Screens");
 define("_AM_APP_ELEMENTS","Elements");
 define("_AM_APP_ENTRIES","Entries");
+define("_AM_APP_ONE", "One");
 define("_AM_APP_USERS","Users");
 define("_AM_APP_IN","in");
 define("_AM_APP_GROUPS","Groups");
@@ -74,7 +75,7 @@ define("_AM_ELE_CONVERT_ML", "Convert to multi-line text box");
 define("_AM_ELE_CONVERT_SL", "Convert to single-line text box");
 define("_AM_ELE_CONVERT_CB", "Convert to check boxes");
 define("_AM_ELE_CONVERT_RB", "Convert to radio buttons.");
-define("_AM_ELE_ADDINGTOFORM","Add elements to the form");
+define("_AM_ELE_ADDINGTOFORM","Add an element to the form");
 define("_AM_ELE_MANAGINGELEFORM","Manage the elements in the form");
 define("_AM_ELE_CLICKTOADD","Click an element name to add it");
 define("_AM_ELE_CLICKDRAGANDDROP","Click and drag the elements to re-order them");
@@ -90,6 +91,50 @@ define("_AM_CONVERT_RB_CB", "Convert these radio buttons to checkboxes?");
 define("_AM_CONVERT_CB_RB", "Convert these checkboxes to radio buttons?");
 define("_AM_CONVERT_SB_CB", "Convert this select box to checkboxes?");
 
+define("_AM_ELE_CATEGORY_CHOOSEATYPE","Choose a Type:");
+define("_AM_ELE_CATEGORY_TEXTBOXES","Text Boxes");
+define("_AM_ELE_CATEGORY_SELECTORS","Selectors");
+define("_AM_ELE_CATEGORY_MISC","Misc");
+define("_AM_ELE_CATEGORY_LAYOUT","Layout");
+
+define("_AM_ELE_CATEGORY_LISTS","Lists");
+define("_AM_ELE_CATEGORY_TEXTBOX","Text Box");
+define("_AM_ELE_CATEGORY_REGULAR","Regular");
+define("_AM_ELE_CATEGORY_TEXTBOX_NUMBER","Numbers Only");
+define("_AM_ELE_CATEGORY_TEXTBOX_PHONE","Phone Number");
+define("_AM_ELE_CATEGORY_TEXTBOX_EMAIL","Email Address");
+define("_AM_ELE_CATEGORY_TEXTAREA","Multi-line Text Box");
+define("_AM_ELE_ONEOPTION","(user selects one option)");
+define("_AM_ELE_ONEORMOREOPTIONS","(user can select one or more options)");
+define("_AM_ELE_CATEGORY_DROPDOWNLISTS","Dropdown List");
+define("_AM_ELE_CATEGORY_REGULAR_OPTIONS","Regular (you define the options)");
+define("_AM_ELE_CATEGORY_LINKED","Options are Linked to Another Form");
+define("_AM_ELE_CATEGORY_USERS","Options are Names of Users");
+define("_AM_ELE_CATEGORY_PROVINCE","Options are Canadian Provinces");
+define("_AM_ELE_CATEGORY_RADIOBUTTONS","Radio Buttons");
+define("_AM_ELE_CATEGORY_RADIOBUTTONS_YN","Options are Yes/No");
+define("_AM_ELE_CATEGORY_CHECKBOXES","Check Boxes");
+define("_AM_ELE_CATEGORY_LISTBOXES","Listbox");
+define("_AM_ELE_CATEGORY_AUTOCOMPLETE","Autocomplete List");
+define("_AM_ELE_CATEGORY_DATE","Date Selector");
+define("_AM_ELE_CATEGORY_TIME","Time Selector");
+define("_AM_ELE_CATEGORY_FILEUPLOAD","File Upload Box");
+define("_AM_ELE_CATEGORY_COLORPICK","Color Picker");
+define("_AM_ELE_CATEGORY_DURATION","Duration");
+define("_AM_ELE_CATEGORY_SLIDER","Range Slider");
+define("_AM_ELE_CATEGORY_DISPLAY","Text for display");
+define("_AM_ELE_MODIF","Separate text on left and right sides");
+define("_AM_ELE_MODIF_ONE","Single text spanning the form");
+define("_AM_ELE_CATEGORY_DERIVED","Derived value");
+define("_AM_ELE_CATEGORY_EMBED","Embed a form");
+define("_AM_ELE_CATEGORY_EMBED_FULLFORM","Show the full form");
+define("_AM_ELE_CATEGORY_EMBED_ROW","Show rows of elements");
+define("_AM_ELE_CATEGORY_EMBED_LISTING","Show rows of values");
+define("_AM_ELE_CATEGORY_GOOGLE","Google Widgets");
+define("_AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS","(Requires a Google API key, etc)");
+define("_AM_ELE_CATEGORY_GOOGLE_ADDRESS","Google Address Selector");
+define("_AM_ELE_CATEGORY_GOOGLE_FILEPICKER","Google File Picker");
+define("_AM_ELE_CATEGORY_TABLE","Group elements into a table");
 
 /*mod Language for form*/
 define("_AM_FORM_CREATE"," Create a new form");
@@ -128,6 +173,8 @@ define("_AM_SETTINGS_FORM_DEFAULT_GROUP_PERM","Which groups of users should have
 define("_AM_SETTINGS_FORM_PI1","Which element in");
 define("_AM_SETTINGS_FORM_PI2","is the principal identifier?");
 define("_AM_SETTINGS_FORM_PI_NONE","No principal identifer");
+define("_AM_SETTINGS_FORM_PI_NEW","Create a textbox in the form to use as the principal identifier?");
+define("_AM_SETTINGS_FORM_PI_NEW_YES","Yes. Use the caption: ");
 define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON", "A new element, common value with<br>%s");
 define("_AM_SETTINGS_NEW_CONNECTION_COMMON_PARALLEL", "A new element, same settings as<br>%s");
@@ -252,12 +299,12 @@ define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the right side");
-define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the right beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code. In the PHP code, you can use getValue(\$entry, \$dataHandle) to access information saved in the active entry. You can use \$entry_id to get the entry id number in the database.");
+define("_AM_ELE_TEXTFORDISPLAY_DESC","You can type plain text, HTML, or PHP.<br><br>In text and HTML, you can include the values from other elements in this form using {element_handle}, ie: by putting the element handle inside curly brackets. Basic HTML styling is supported for these tags: &lt;h1> through &lt;h4>, &lt;p>, &lt;ol>, &lt;ul>, &lt;li>, and &lt;blockquote>.<br><br>You can use PHP code instead of text or HTML by putting a PHP open tag at the top (ie: &lt;?php ) and including '&#36;value = &#36;something;' in the code. You can use getValue(\$entry, \$dataHandle) to access information saved in the active entry. You can use \$entry_id to get the entry id number of the active entry in the database.");
 define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
 define("_AM_ELE_COLHEAD_HELP","If you specify a column heading, then this text will be used instead of the caption, on the <b>List of Entries</b> screen.  This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.");
-define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE","Element handle (optional)");
 define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used.");
 define("_AM_ELE_DETAIL","Detail");
 define("_AM_ELE_REQ","Required");
@@ -266,7 +313,7 @@ define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_ELEMENTCONDITIONS","Only include this element in the form if the entry being edited meets these conditions:");
 define("_AM_ELE_PRIVATE","Private");
-define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
+define("_AM_ELE_HANDLE_HEADING","Element handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");
 define("_AM_ELE_DISPLAY_HEADING","Display");
 
@@ -277,8 +324,6 @@ define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email;<br />{ID} will cause the entry ID number of the entry to be inserted into the textbox, when the entry is first saved.<br />{SEQUENCE} will cause the values in the box to be a series of consecutive numbers.<br />PHP Code (ending with the line '&#36;default = &#36;something;') will be interpreted to generate the default value.");
 define("_AM_ELE_TEXT_DESC2","<br />PHP Code is the only situation where more than one line of this box will be read.  In your PHP code, you can use \$form_id to get the ID number of the form, and \$entry_id to get the ID number of the particular entry that the user is editing.");
 define("_AM_ELE_TAREA","Text area");
-define("_AM_ELE_MODIF","Separate text on left and right sides");
-define("_AM_ELE_MODIF_ONE","Single text spanning the form");
 define("_AM_ELE_INSERTBREAK","HTML content for this line:");
 define("_AM_ELE_IB_DESC","The caption will not display.  Only the text in this box will appear on screen, in a single row spanning both columns of the form.");
 define("_AM_ELE_IB_CLASS","CSS class for the row:");
@@ -298,7 +343,7 @@ define("_AM_ELE_NO_PLACEHOLDER","Add it to the text box when the form loads, it 
 define("_AM_ELE_PLACEHOLDER_OPTION","Show it as an example in the text box, but don't save it if the form is submitted");
 
 // number options for textboxes
-define("_AM_ELE_NUMBER_OPTS","If a number is typed...");
+define("_AM_ELE_NUMBER_OPTS","How should numbers be formatted?");
 define("_AM_ELE_NUMBER_OPTS_DESC","You can set these options to control how decimals are handled, and how numbers are formatted on screen.");
 define("_AM_ELE_NUMBER_OPTS_DEC","Number of decimal places:");
 define("_AM_ELE_NUMBER_OPTS_PREFIX","Display numbers with this prefix (ie: '$'):");
@@ -330,7 +375,7 @@ define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_USERICHTEXT","Display this element using a Rich Text Editor");
 define("_AM_ELE_RICHTEXT_DESC","This option provides a full editor interface in the textbox, with font sizes and bold, etc, instead of just a simple box. You can control which editor is used on <a href='../../system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>the General Settings page</a>");
 define("_AM_ELE_OPT","Options");
-define("_AM_ELE_OPT_DESC","Setting a single option of '{FULLNAMES}' or '{USERNAMES}' will produce a list of users based on the group limits set below.<br /><br />Tick the check boxes for selecting default values");
+define("_AM_ELE_OPT_DESC","Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC_CHECKBOXES","Tick the check boxes for selecting default values<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_OPT_DESC_RANKORDERLISTS","Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_OPT_DESC1","<br />Only the first check is used if multiple selection is not allowed");
@@ -364,19 +409,19 @@ define("_AM_ELE_FORMLINK_TEXTBOX", "Associate values with another form element")
 define("_AM_ELE_FORMLINK_DESC_TEXTBOX","If you select another form element here, then text that users type into this element will be compared with values entered in the other element.  If a match is found then the text users type into this element will be clickable in the \"List of Entries\" screen, and will take users to the matching entry in the other form.");
 define("_AM_FORMLINK_NONE_TEXTBOX", "No association in effect");
 define("_AM_ELE_FORMLINK_SCOPE", "If the options are linked -- or are {FULLNAMES} or {USERNAMES} -- limit them to values from the groups selected here.");
-define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>Optionally, you can choose to have the current user's group memberships further limit the options.  In that case, groups you select will be ignored if the current user is not also a member of the group.</p>");
+define("_AM_ELE_FORMLINK_SCOPE_DESC", "<p>This option causes the active user's group memberships to further limit the options.  In that case, groups you select will be ignored if the active user is not also a member of the group.</p>");
 define("_AM_ELE_FORMLINK_SCOPE_ALL", "Use all groups");
-define("_AM_ELE_FORMLINK_SCOPELIMIT_INTRO", "Should the active user limit the scope?");
+define("_AM_ELE_FORMLINK_SCOPELIMIT_INTRO", "Limit the scope to groups the active user is a member of?");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_NO", "No. Use all selected groups.");
 define("_AM_ELE_FORMLINK_SCOPELIMIT_YES", "Yes. Only use groups that the current user is a member of");
 define("_AM_ELE_FORMLINK_ANYALL_INTRO", "Include data as long as it belongs to:");
-define("_AM_ELE_FORMLINK_ANYALL_ANY", "Any one of the groups in scope");
-define("_AM_ELE_FORMLINK_ANYALL_ALL", "All of the groups in scope");
-define("_AM_ELE_FORMLINK_ANYALL_DESC", "If the active user is limiting the scope, then the <b>All</b> option may not necessarily mean all the groups selected, depending on the group memberships of the active user.");
+define("_AM_ELE_FORMLINK_ANYALL_ANY", "Any one of the selected groups");
+define("_AM_ELE_FORMLINK_ANYALL_ALL", "All of the selected groups");
+define("_AM_ELE_FORMLINK_ANYALL_ADDON", " <i>that the active user is a member of</i>");
 
 // formlink scope filters -- feb 6 2008
 define("_AM_ELE_FORMLINK_SCOPEFILTER", "If the options are linked -- or are {FULLNAMES} OR {USERNAMES} -- filter them based on these properties of their entry in the source form.");
-define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>You can use {datahandle} to refer to the value of an element in the current entry.  Just use the correct data handle surrounded by curly brackets.<br><br>You can also use { } values to refer to values in the URL, ie: if you use {checkpoint} and the URL contains \"&checkpoint=Start\" then the value \"Start\" will be used.  <b>Note that the URL is checked first for { } matches, and then the data handles, so a URL property with the same name as a data handle may cause problems for you!</b><br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form.");
+define("_AM_ELE_FORMLINK_SCOPEFILTER_DESC", "When you link to values in another form, you may wish to limit the values included in the list based on certain properties of the entries in the other form.  For example, if you are linking to the names of tasks in a task form, you might want to list only tasks that are incomplete.  If there's a question in the task form that asks if the task is complete, you could specify a filter like: \"Task is complete = No\".<br><br>You can use {elementhandle} to refer to the value of an element in the current entry.  Just use the correct element handle surrounded by curly brackets.<br><br>You can also use { } values to refer to values in the URL, ie: if you use {checkpoint} and the URL contains \"&checkpoint=Start\" then the value \"Start\" will be used.  <b>Note that the URL is checked first for { } matches, and then the element handles, so a URL property with the same name as a element handle may cause problems for you!</b><br><br>If the options are {FULLNAMES} or {USERNAMES}, and you are using a custom profile form in conjunction with the Registration Codes module, you can filter the names based on the profile form.");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ALL", "No filter in effect (select this to clear existing filters).");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_CON", "Filter the options based on this/these conditions:");
 define("_AM_ELE_FORMLINK_SCOPEFILTER_ADDCON", "Add another condition");
@@ -395,7 +440,8 @@ define("_AM_ELE_SUBFORM_DESC", "A subform interface allows users to create and m
 define("_AM_ELE_SUBFORM_NONE", "No subforms available - define a Relationship first");
 define("_AM_ELE_SUBFORM_NEW", "Add a new form");
 define("_AM_ELE_SUBFORM_ELEMENTS", "Element options");
-define("_AM_ELE_SUBFORM_ELEMENT_LIST", "Choose the elements to show in the row, or to use as the heading if you're showing the full form");
+define("_AM_ELE_SUBFORM_ELEMENT_LIST_ROW", "Which elements are shown in the row?");
+define("_AM_ELE_SUBFORM_ELEMENT_LIST_FORM", "Which elements are the headings for each entry?");
 define("_AM_ELE_SUBFORM_ELEMENTS_DESC", "When displayed in a row, about three or four elements from the subform can be displayed comfortably as part of the main form.  More than four elements starts to make the interface cluttered.  You can choose which elements you want to display by selecting them from this list.  Users can always modify all elements by clicking a button next to each subform entry that it listed in the main form. <b>You do not need to choose the element that joins the subform to the mainform; Formulize will automatically populate that element with the correct values for you.</b>");
 define("_AM_ELE_SUBFORM_VIEW", "Include <i>View</i> buttons beside each entry?");
 define("_AM_ELE_SUBFORM_VIEW_DESC", "The <i>View</i> buttons let users click through to the complete entry in the subform.  This may be useful when only some elements in the subform are visible in the main interface.");
@@ -413,14 +459,15 @@ define("_AM_ELE_SUBFORM_START_HELP", "<b>If showing more than one blank row</b>:
 define("_AM_ELE_SUBFORM_UITYPE_ROW", "Display each subform entry as a row with only the elements selected below showing");
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
 define("_AM_ELE_SUBFORM_BLANKS_HELP", "If you put an exclamation mark after the number (ie: 1!), then blank entries will show up whenever the form loads, as long as no subform entries have been saved yet.<br>Note: if you have more than one blank space, do not use file upload elements in your subform.  File upload elements only work effectively with one blank subform row at a time.");
-define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry using the full form, inside a collapsable area that the user can open and close");
+define("_AM_ELE_SUBFORM_UITYPE_FORM", "Display each subform entry inside a collapsable area that the user can open and close");
+define("_AM_ELE_SUBFORM_UITYPE_FLATFORM", "Display each subform entry separated by headings, not inside collapsable areas");
 define("_AM_ELE_SUBFORM_ADD_NONE", "No");
 define("_AM_ELE_SUBFORM_ADD_SUBFORM", "Yes, only if the user can add entries in the subform");
 define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in the main form");
 
 
 // grids
-define("_AM_ELE_GRID", "Table of existing elements");
+define("_AM_ELE_GRID", "Table of elements");
 define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this table?");
 define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
 define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");
@@ -656,10 +703,10 @@ define("_AM_FORMULIZE_SCREEN_PREVBUTTONTEXT", "Text for the Save and Go Back but
 define("_AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT", "Text for the Save button");
 define("_AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT", "Text for the Save and Continue button");
 define("_AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT", "Text for the Save and Finish button");
-define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the bottom of each page"); //nmc 2007.03.24 //jwe 2025.06.05
+define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable Version - All Pages' button available at the bottom of each page"); //nmc 2007.03.24 //jwe 2025.06.05
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
-define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable View' button either");
+define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "No, and not the regular 'Printable Version' button either");
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE", "Are you sure you want to delete this screen?  Please confirm!");
 define("_AM_FORMULIZE_CONFIRM_SCREEN_DELETE_PAGE", "Are you sure you want to delete this page?  Please confirm!");
@@ -890,3 +937,6 @@ define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "%s Form");
 define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "%s List");
 
 define("_AM_FORMULIZE_ADMINISTRATION", "Administration");
+
+define("_AM_FORMULIZE_SUBFORM_SORTDEFAULT", "Creation order");
+define("_AM_FORMULIZE_SUBFORM_FILTERDEFAULT", "No filter");

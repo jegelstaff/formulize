@@ -37,6 +37,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeEmailElement extends formulizeElement {
 
+		public static $category = "textboxes";
+
     function __construct() {
         $this->name = "Email Address";
         $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
@@ -68,7 +70,8 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
-    function adminPrepare($element) {
+    // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	function adminPrepare($element) {
 
 
     }
@@ -78,16 +81,17 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-    function adminSave($element, $ele_value) {
+    // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
 
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-    // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
-    // $element is the element object
-    function loadValue($value, $ele_value, $element) {
+		// $element is the element object
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
         $ele_value = $value;
         return $ele_value;
     }
@@ -170,7 +174,8 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
-    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         return $value;
     }
 

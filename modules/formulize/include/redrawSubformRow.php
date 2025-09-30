@@ -29,7 +29,7 @@ $markup = "";
 foreach($elements as $thisele=>$elementObject) {
     if($thisele) { 
         $unsetDisabledFlag = false;
-        if(in_array($thisele, explode(',',$subformElement->ele_value['disabledelements']))) {
+        if(is_string($subformElement->ele_value['disabledelements']) AND in_array($thisele, explode(',',$subformElement->ele_value['disabledelements']))) {
             $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
             $GLOBALS['formulize_forceElementsDisabled'] = true;
         }

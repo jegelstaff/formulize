@@ -36,6 +36,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 class formulizeDurationElement extends formulizeElement
 {
 
+	public static $category = "selectors";
+
 	function __construct()
 	{
 		$this->name = "Duration";
@@ -132,9 +134,14 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		return false;
 	}
 
-	// Convert form input to minutes for storage
-	function prepareDataForSaving($value, $element, $entry_id = null)
-	{
+	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+
 		if (!is_array($value)) {
 			return NULL;
 		}
@@ -167,6 +174,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		return $value;
 	}
 
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		$pattern = '/(\d+)d|(\d+)h|(\d+)m/';
 		preg_match_all($pattern, $value, $matches);
@@ -201,9 +209,13 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		return $total == 0 ? false : $total;
 	}
 
-	// Convert stored minutes back to time units for display
-	function loadValue($value, $ele_value, $element)
-	{
+	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
+  // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
+	// $element is the element object
+	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+	// $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+		$ele_value = $element->getVar('ele_value');
 		if (!is_numeric($value)) {
 			return $ele_value;
 		}

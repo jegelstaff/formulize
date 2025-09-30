@@ -21,6 +21,7 @@ print '
 <!DOCTYPE html>
 <html>
 <link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.'/themes/Anari/css/style.css?v=1.5" />
+<link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.'/modules/formulize/templates/css/formulize.css?v=1.5" />
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script type="text/javascript" src="'.XOOPS_URL.'/libraries/jquery/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
@@ -65,7 +66,6 @@ body {
 ';
 
 $fakeForm = new formulize_themeForm('', 'fakeform', XOOPS_URL);
-
 foreach($elementObjects as $elementObject) {
 	$deReturnValue = displayElement($fid, $elementObject, 'new', renderElement: false);
 	if(is_array($deReturnValue)) {
@@ -75,12 +75,18 @@ foreach($elementObjects as $elementObject) {
 		$form_ele = $deReturnValue;
 		$isDisabled = false;
 	}
-	$fakeForm->addElement($form_ele);
-	unset($form_ele);
+	if($elementObject->getVar('ele_type') == "ib" OR is_array($form_ele)) {
+		$fakeForm->insertBreakFormulize(trans(stripslashes($form_ele[0])), $form_ele[1], 'markup-name-moot', $elementObject->getVar("ele_handle"));
+	} elseif($form_ele !== false) {
+		$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
+		$fakeForm->addElement($form_ele, $req);
+		unset($form_ele); 
+	}
 }
 
-// RAW DISPLAY OF ELEMENTS DOES NOT RENDER GRIDS AND SUBFORMS, NOR POSSIBLY ib AND OTHER STUFF
+// RAW DISPLAY OF ELEMENTS DOES NOT RENDER GRIDS (NOR POSSIBLY OTHER STUFF?)
 // BUT USING COMPILE ELEMENTS LOOKS AT CONTEXT AND DOESN'T GIVE US ALL ELEMENTS ALL THE TIME
+// So sticking with raw display as above for now.
 //$fakeForm = compileElements($fid, $fakeForm, "", 'new', array(0=>XOOPS_GROUP_ADMIN, 1=>XOOPS_GROUP_USERS), "", 0, array(), array());
 
 print $fakeForm->render();

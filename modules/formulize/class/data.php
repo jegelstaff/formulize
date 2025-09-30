@@ -474,19 +474,19 @@ class formulizeDataHandler {
 		if(!$element = _getElementObject($element_id)) {
 			return false;
 		}
-        $likeBits = $operator == "LIKE" ? "%" : "";
+    $likeBits = ($operator == "LIKE" OR $operator == "NOT LIKE") ? "%" : "";
 		global $xoopsDB;
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $formObject = $form_handler->get($this->fid);
-        $scopeFilter = $this->_buildScopeFilter($scope_uids);
-        $desc = $desc ? 'DESC' : '';
-        $sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($operator)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->fid);
+		$scopeFilter = $this->_buildScopeFilter($scope_uids);
+		$desc = $desc ? 'DESC' : '';
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($operator)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
-        if($xoopsDB->getRowsNum($res)==0) {
-            return false;
-        }
+		if($xoopsDB->getRowsNum($res)==0) {
+			return false;
+		}
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
@@ -1268,11 +1268,13 @@ class formulizeDataHandler {
 		// we need to determine if this element allows multiple values and prepare to handle it
 		$ele_type = $element->getVar('ele_type');
 		$ele_value = $element->getVar('ele_value');
-		switch($ele_type) {
+		$testEleType = anySelectElementType($ele_type) ? "select" : $ele_type;
+		switch($testEleType) {
 			case "radio":
 				$oldValues = array_keys($ele_value);
 				break;
 			case "checkbox":
+			case "checkboxLinked":
 			case "select":
 				// special check...if this is a linked selectbox or a fullnames/usernames selectbox, then fail
 				if(!is_array($ele_value[2]) OR isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"])) {
@@ -1281,7 +1283,7 @@ class formulizeDataHandler {
 				$oldValues = array_keys($ele_value[2]);
 				break;
 		}
-		$prefix = ($ele_type == "checkbox" OR ($ele_type == "select" AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
+		$prefix = ($ele_type == "checkbox" OR $ele_type == "checkboxLinked" OR (anySelectElementType($ele_type) AND $ele_value[1])) ? "*=+*:" : ""; // multiple selection possible? if so, setup prefix
 		$newValues = array_keys($newValues);
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1366,3 +1368,19 @@ class formulizeDataHandler {
 
 }
 
+/**
+ * Take an array of element handle -> value pairs, and add default values for any elements in the form that don't already have a value
+ * @param array values - The values array that we're appending to
+ * @param int fid - The ID of the form we're getting default values for
+ * @return array Returns the passed array with default values added, if any
+ */
+function addDefaultValuesToDataToWrite($values, $fid) {
+	$defaultValueMap = getEntryDefaultsInDBFormat($fid);
+	foreach($defaultValueMap as $defaultValueElementHandle=>$defaultValueToWrite) {
+		// if the element is not a value that we received, then let's use the default value
+		if(!isset($values[$defaultValueElementHandle])) {
+			$values[$defaultValueElementHandle] = $defaultValueToWrite;
+		}
+	}
+	return $values;
+}
