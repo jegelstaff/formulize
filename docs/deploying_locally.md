@@ -12,14 +12,7 @@ Formulize can be run locally using Docker containers. Among other things, this m
 
 ## First, if you're running Windows
 
-1. Find this file in your repository: ```/docker/maraidb/conf.d/lower_case_table_names.cnf.windows```
-
-2. Copy or rename it to: ```/docker/maraidb/conf.d/lower_case_table_names.cnf```\
-ie: Remove the ```.windows``` part on the end.
-
-3. __make the file read-only__ (if it is writable, MariaDB will ignore it).
-
-Next, you might want to look at the [step-by-step instructions for setting up Formulize and Docker in VS Code on Windows](/developers/debugging#formulize-vscode).
+You might want to look at the [step-by-step instructions for setting up Formulize and Docker in VS Code on Windows](/developers/debugging#formulize-vscode).
 
 ## <a name='quick-start'></a>Quick Start
 
@@ -74,9 +67,9 @@ If you have a copy of files from an existing Formulize website, you could use th
 
 4. Delete any database in ```docker/mariadb/data/``` folder, other than the ```.gitignore file```. (These files will be the database from the last time you ran the ```monastery``` branch in Docker. You may want to save a back up of these files!)
 
-5. Download a dump of the entire database from the live website. Make sure it includes commands to create the tables. Make sure it is using the UTF-8 character set. Make sure it ends with a ```.sql``` extension.
+5. Download a dump of the entire database from the live website. Make sure it includes commands to create the tables. Make sure it is using the UTF-8 character set. This can be a `.sql` file or it can also be a tar/gzipped sql file (.e.g `backup.tar.gz`)
 
-6. Place the database dump in the ```docker/mariadb/seed/``` folder. Delete any other ```.sql``` files in that folder.
+6. Place the database dump in the ```docker/mariadb/seed/``` folder. Delete any other database files in that folder.
 
 7. Find the trust path file in your live website. If you don't know where it is, check ```mainfile.php``` in the root of your website and look for code like this near the top:
 ```php
@@ -116,8 +109,16 @@ include_once XOOPS_TRUST_PATH . '/r87678sd908asdf48ffecfbfd223af293d.php' ;
 
 2. There is a ```docker``` folder that contains a ```Dockerfile```, and a ```php``` folder with ```.ini``` files in it, and a ```mariadb``` folder with the database in it. The database persists between Docker sessions.
 
-3. You can delete the contents of the ```docker/mariadb/data``` folder to erase the database and start over. (__Pro tip:__ don't delete the .gitignore file in there!)
+3. The ```docker/mariadb/seed``` folder can contain ```.sql``` files which Docker will execute when it first sets up the database. If there is an existing database, the ```docker/mariadb/seed``` folder is ignored. __It can take a little while for the ```.sql``` files to be processed, depending on their size and the speed of your computer!__
 
-4. The ```docker/mariadb/seed``` folder can contain ```.sql``` files which Docker will execute when it first sets up the database. If there is an existing database, the ```docker/mariadb/seed``` folder is ignored. __It can take a little while for the ```.sql``` files to be processed, depending on their size and the speed of your computer!__
+4. The URL for accessing the Docker container is [http://localhost:8080](http://localhost:8080)
 
-5. The URL for accessing the Docker container is [http://localhost:8080](http://localhost:8080)
+## Database files in Docker
+
+The database is stored in a docker volume. Previous iterations of our docker compose configuration had the data directory mounted on the hosts file system. We chose to move to storing the files in a docker linux volume to alleviate any compatibility issues with how different operating systems handle case sensitivity.
+
+The database is stored in the `FOLDERNAME_mariadb_data` volume (Where FOLDERNAME is the directory name of your formulize codebase). This volume is created when you run `docker compose up` for the first time. It is persisted between runs and will remain persisten even if you perform a `docker compose down` operation.
+
+### Deleting the maraidb volume
+
+In order to purge your volume perform a `docker compose down -v` to ensure volumes are deleted as well containers

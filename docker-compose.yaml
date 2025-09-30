@@ -1,7 +1,7 @@
 services:
   web:
     image: "formulize/php-dev:latest"
-    restart: 'no'
+    restart: "unless-stopped"
     depends_on:
       - mariadb
     volumes:
@@ -21,10 +21,13 @@ services:
       - "3306"
     volumes:
       - ./docker/mariadb/seed:/docker-entrypoint-initdb.d
-      - ./docker/mariadb/data:/var/lib/mysql
       - ./docker/mariadb/conf.d:/etc/mysql/conf.d
+      - mariadb_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: "abc123"
       MYSQL_DATABASE: "formulize"
       MYSQL_USER: "user"
       MYSQL_PASSWORD: "password"
+
+volumes:
+  mariadb_data:
