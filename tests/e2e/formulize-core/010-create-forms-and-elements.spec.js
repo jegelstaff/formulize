@@ -42,7 +42,8 @@ test.describe('Artifacts Elements', async () => {
 			});
 
 	test('Create Short Name Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Text box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+ 		await page.getByRole('link', { name: 'Regular' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Text Box)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').click();
@@ -54,7 +55,8 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Full description Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Multi-line text box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+ 		await page.getByRole('link').filter({ hasText: /^$/ }).nth(3).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Multi-line Textbox)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Full description');
@@ -67,7 +69,8 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Height Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Text box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+ 		await page.getByRole('link', { name: 'Numbers Only' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Number Box)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Height');
@@ -80,7 +83,8 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Width Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Text box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+ 		await page.getByRole('link', { name: 'Numbers Only' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Number Box)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Width');
@@ -93,7 +97,8 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Depth Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Text box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+		await page.getByRole('link', { name: 'Numbers Only' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Number Box)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Depth');
@@ -106,7 +111,9 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Dimensions Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Table of existing elements', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+	  await page.getByRole('link', { name: 'Layout' }).click();
+  	await page.getByRole('link').filter({ hasText: /^$/ }).nth(4).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Table of elements)')
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Dimensions');
@@ -119,7 +126,8 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Year Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Text box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+ 		await page.getByRole('link', { name: 'Numbers Only' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Number Box)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Year');
@@ -131,7 +139,9 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Era Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Radio buttons', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+	  await page.getByRole('link', { name: 'Lists' }).click();
+  	await page.getByLabel('Add an element to the form').getByRole('link').filter({ hasText: /^$/ }).nth(1).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Radio Buttons)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Era');
@@ -147,7 +157,9 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Date of origin Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Table of existing elements', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+	  await page.getByRole('link', { name: 'Layout' }).click();
+  	await page.getByRole('link').filter({ hasText: /^$/ }).nth(4).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Table of elements)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Date of origin');
@@ -160,7 +172,9 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Year-Era Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Value derived from other elements', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+	  await page.getByRole('link', { name: 'Misc' }).click();
+  	await page.getByRole('link').filter({ hasText: /^$/ }).nth(2).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Value derived from other elements)');
 		await waitForAdminPageReady(page)
   	await page.locator('input[name="elements-ele_caption"]').fill('Year-Era');
@@ -173,7 +187,9 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Date of acquisition Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Date box', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+		await page.getByRole('link', { name: 'Selectors' }).click();
+		await page.locator('#add-selectors > div:nth-child(2) > a').click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Date Selector)');
 		await waitForAdminPageReady(page)
   	await page.locator('input[name="elements-ele_caption"]').fill('Date of acquisition');
@@ -183,7 +199,9 @@ test.describe('Artifacts Elements', async () => {
 	});
 
 	test('Create Donated to museum Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Simple yes/no radio buttons', exact: true }).click();
+		await page.locator('#element-mgmt-ui-left form').getByRole('link', { name: 'Add an element' }).click();
+		await page.getByRole('link', { name: 'Lists' }).click();
+		await page.getByRole('link', { name: 'Options are Yes/No' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Yes/No Radio Buttons)');
 		await waitForAdminPageReady(page)
    	await page.locator('input[name="elements-ele_caption"]').fill('Was the artifact donated to the museum?');
