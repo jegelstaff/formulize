@@ -74,7 +74,6 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_height');
 		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
 		await page.getByRole('link', { name: 'Options' }).click();
-		await page.getByText('Numbers Only', { exact: true }).click();
 		await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('1');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Height (Number Box)');
@@ -88,7 +87,6 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_width');
 		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
 		await page.getByRole('link', { name: 'Options' }).click();
-		await page.getByText('Numbers Only', { exact: true }).click();
 		await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('1');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Width (Number Box)');
@@ -102,7 +100,6 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_depth');
 		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
 		await page.getByRole('link', { name: 'Options' }).click();
-		await page.getByText('Numbers Only', { exact: true }).click();
 		await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('1');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Depth (Number Box)');
@@ -113,12 +110,12 @@ test.describe('Artifacts Elements', async () => {
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Table of elements)')
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Dimensions');
-		await page.locator('select[name="orderpref"]').selectOption('After: Full description');
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('textbox', { name: 'Enter the captions for the columns of this table*' }).fill('Height,Width,Depth');
 		await page.getByLabel('Choose the first element,').selectOption('Height');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Dimensions (Table of elements)');
+		// Complex assertion could be added to verify that the position/order of the element has been assigned immediately before the Height box in the form
 	});
 
 	test('Create Year Element', async ({ page }) => {
@@ -128,7 +125,7 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Year');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_year');
 		await page.getByRole('link', { name: 'Options' }).click();
-		await page.getByText('Numbers Only', { exact: true }).click();
+	  await page.getByRole('textbox', { name: 'Separate thousands with this' }).fill('');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Year (Number Box)');
 	});
@@ -154,12 +151,12 @@ test.describe('Artifacts Elements', async () => {
 		await expect(page.getByRole('heading')).toContainText('Element: New element (Table of elements)');
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Date of origin');
-		await page.locator('select[name="orderpref"]').selectOption('After: Depth');
   	await page.getByRole('link', { name: 'Options' }).click();
 	  await page.getByRole('textbox', { name: 'Enter the captions for the columns of this table*' }).fill('Year,Era');
 	  await page.getByLabel('Choose the first element,').selectOption('Year');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Element: Date of origin (Table of elements)');
+		// Complex assertion could be added to verify that the position/order of the element has been assigned immediately before the Year box in the form
 	});
 
 	test('Create Year-Era Element', async ({ page }) => {
