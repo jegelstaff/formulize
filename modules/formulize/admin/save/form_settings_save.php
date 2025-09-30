@@ -119,7 +119,6 @@ if($_POST['formulize_admin_key'] == "new") {
 	if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_POST['pi_new_caption'] != "") {
 		$element_handler = xoops_getmodulehandler('textElement','formulize');
 		$piElement = $element_handler->create();
-		$options = $element_handler->validateEleValuePublicAPIOptions([]);
 		$piElement->setVar('id_form', $fid);
 		$piElement->setVar('ele_type', 'text');
 		$piElement->setVar('ele_caption', $_POST['pi_new_caption']);
@@ -128,12 +127,12 @@ if($_POST['formulize_admin_key'] == "new") {
 		$piElement->setVar('ele_display', 1);
 		$piElement->setVar('ele_disabled', 0);
 		$piElement->setVar('ele_order', 0);
-		$piElement->setVar('ele_value', $options['ele_value']);
+		$piElement->setVar('ele_value', $element_handler->getDefaultEleValue());
 
 		$piId = $element_handler->insert($piElement);
 		if(!$piId) {
 			throw new Exception("Could not create the principal identifier element properly: ".$xoopsDB->error());
-		} 
+		}
 		$formObject->setVar('pi', $piId);
 		if(!$form_handler->insert($formObject)) {
 			throw new Exception("Could not update the form object with the principal identifier element id: ".$xoopsDB->error());
@@ -143,7 +142,7 @@ if($_POST['formulize_admin_key'] == "new") {
 	// NOTE REGARDING MCP UPSERT AND PI CREATION... when passed form id, method retrieves object, which will include the new PI element, and the field will be created with default datatype text at the moment of table creation.
   if(!$tableCreateRes = $form_handler->createDataTable($fid)) {
     print "Error: could not create data table for new form";
-  } 
+  }
   global $xoopsDB;
 
   // create the default screens for this form
@@ -159,7 +158,7 @@ if($_POST['formulize_admin_key'] == "new") {
 
   if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
     print "Error: could not create default form screen";
-  } 
+  }
   $listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
     $screen = $listScreenHandler->create();
     $listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
