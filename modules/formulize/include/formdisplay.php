@@ -1201,24 +1201,23 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 		$title = "";
 
-        // determine the order of fids in $elements_allowed and go by that.
-        // currently we don't generally finesse the order in $elements_allowed, but this will be sort of ready for controlling the order if we ever do??
-        // compile elements probably needs a really big refactor, actually
-        $elements_handler = xoops_getmodulehandler('elements', 'formulize');
-        $newFids = array();
-        foreach($elements_allowed as $ele_id) {
-            if($elementObject = $elements_handler->get($ele_id)) {
-                $elementFid = $elementObject->getVar('id_form');
-                // if we could refactor so the newFids array is a series of fid/elements_allowed pairs, and we set them as the start of the main foreach(fids) loop, then maybe that would work to respect whatever order of whatever elements in whatever form? As long as elements allowed is constructed in the right order going into this function
-                if(!isset($newFids[$elementFid])) {
-                    $newFids[$elementFid] = $elementFid;
-                }
-            }
-        }
-        if(count((array) $newFids)>0) {
-            $fids = $newFids;
-        }
-		foreach($fids as $this_fid) {
+		// determine the order of fids in $elements_allowed and go by that.
+		// currently we don't generally finesse the order in $elements_allowed, but this will be sort of ready for controlling the order if we ever do??
+		// compile elements probably needs a really big refactor, actually
+		$elements_handler = xoops_getmodulehandler('elements', 'formulize');
+		$newFids = array();
+		foreach($elements_allowed as $ele_id) {
+			if($elementObject = $elements_handler->get($ele_id)) {
+				$elementFid = $elementObject->getVar('id_form');
+				// if we could refactor so the newFids array is a series of fid/elements_allowed pairs, and we set them as the start of the main foreach(fids) loop, then maybe that would work to respect whatever order of whatever elements in whatever form? As long as elements allowed is constructed in the right order going into this function
+				if(!isset($newFids[$elementFid])) {
+					$newFids[$elementFid] = $elementFid;
+				}
+			}
+		}
+
+		// only loop through the fids that have elements we are going to show
+		foreach($newFids as $this_fid) {
 
 			if(!$scheck = security_check($this_fid, $entries[$this_fid][0]) AND !$viewallforms) {
 				continue;
@@ -1354,7 +1353,27 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			formulize_benchmark("Before Compile Elements.");
 			$form = compileElements($this_fid, $form, $prevEntry, $entries[$this_fid][0], $groups, $elements_allowed, $frid, (isset($sub_entries) ? $sub_entries : null), (isset($sub_fids) ? $sub_fids : null), $screen, $printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
-		}	// end of for each fids
+		}	// end of for each 'newFids' ie: the forms that have elements to render
+
+		// set some ugly state information that we're going to listen for in various places on the next pageload. :(
+		$newHiddenElements = array();
+		foreach($fids as $thisFid) {
+			if(isset($entries[$thisFid][0]) AND $entries[$thisFid][0] AND !is_a($form, 'formulize_elementsOnlyForm')) {
+				// two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
+				// the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
+				$newHiddenElements[] = new XoopsFormHidden ('entry'.$thisFid, $entries[$thisFid][0]);
+				if(is_numeric($entries[$thisFid][0])) {
+					$newHiddenElements[] = new XoopsFormHidden ('lastentry', $entries[$thisFid][0]);
+				}
+			}
+		}
+		if(isset($_POST['parent_form']) AND $_POST['parent_form']) { // if we just came back from a parent form, then set this flag so we'll know on the next pageload... legacy but has one key use?
+			$newHiddenElements[] = new XoopsFormHidden ('back_from_sub', 1);
+		}
+		foreach($newHiddenElements as $nhe) {
+			$form->addElement($nhe);
+			unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
+		}
 
 		// if a new entry was created in a subform element that displays in multipage, then jump to that entry
 		// VERY UGLY THAT WE ARE HAVING TO COMPILE ALL THE ELEMENTS JUST TO DETERMINE THIS??!! So messy and potentially slow!
@@ -1512,36 +1531,40 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
 		if(count((array) $fids)>1) {
 			foreach($fids as $thisFid) {
-				$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-				$relationship = $relationship_handler->get($frid);
-				$keyElement = false;
-				foreach($relationship->getVar('links') as $thisLink) {
-					if($thisLink->getVar('relationship') != 1 OR $thisLink->getVar('one2one_conditional') != 1 ) {
-						// this loop will always land on the first one-to-one linkage involving the given form. If there are multiple one-to-one linkages involving the given from, only the first will be taken into account.
-						continue;
-					}
-					if($thisLink->getVar('form1') == $thisFid) {
-						$keyElement = $thisLink->getVar('key2');
-						break;
-					} elseif($thisLink->getVar('form2') == $thisFid) {
-						$keyElement = $thisLink->getVar('key1');
-						break;
-					}
-				}
-				if($keyElement AND $keyElementObject = _getElementObject($keyElement)) {
-					// prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
-					$entryToLoop = isset($entries[$thisFid][0]) ? $entries[$thisFid][0] : null;
-					if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid]['new'])) {
-							$entryToLoop = 'new';
-					}
-					foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
-						$GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement; // super ugly and kludgy, normally an array would be set here, but from this point forward, it's actually only the keys of this array that matter, so setting a single value is okay. Yuck. :(
-						$governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
-						foreach($governingElements2 as $key=>$value) {
-							$formulize_oneToOneElements[$key] = true;
-							$formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
+				if(isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid])) {
+					$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+					$relationship = $relationship_handler->get($frid);
+					$keyElement = false;
+					foreach($relationship->getVar('links') as $thisLink) {
+						if($thisLink->getVar('relationship') != 1 OR $thisLink->getVar('one2one_conditional') != 1 ) {
+							// this loop will always land on the first one-to-one linkage involving the given form. If there are multiple one-to-one linkages involving the given from, only the first will be taken into account.
+							continue;
 						}
-						$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
+						if($thisLink->getVar('form1') == $thisFid) {
+							$keyElement = $thisLink->getVar('key2');
+							break;
+						} elseif($thisLink->getVar('form2') == $thisFid) {
+							$keyElement = $thisLink->getVar('key1');
+							break;
+						}
+					}
+					if($keyElement AND $keyElementObject = _getElementObject($keyElement)) {
+						// prepare to loop through elements for the rendered entry, or 'new', if there is no rendered entry
+						$entryToLoop = isset($entries[$thisFid][0]) ? $entries[$thisFid][0] : null;
+						if(!$entryToLoop AND isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid]['new'])) {
+								$entryToLoop = 'new';
+						}
+						if(isset($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop]) AND is_array($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop])) {
+							foreach($GLOBALS['formulize_renderedElementsForForm'][$thisFid][$entryToLoop] as $renderedMarkupName => $thisElement) {
+								$GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement; // super ugly and kludgy, normally an array would be set here, but from this point forward, it's actually only the keys of this array that matter, so setting a single value is okay. Yuck. :(
+								$governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
+								foreach($governingElements2 as $key=>$value) {
+									$formulize_oneToOneElements[$key] = true;
+									$formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
+								}
+								$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
+							}
+						}
 					}
 				}
 			}
@@ -2758,23 +2781,6 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 	}
 
 	formulize_benchmark("Done looping elements.");
-
-	$newHiddenElements = array();
-  if($entry_id AND !is_a($form, 'formulize_elementsOnlyForm')) {
-		// two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
-		// the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
-		$newHiddenElements[] = new XoopsFormHidden ('entry'.$fid, $entry_id);
-    if(is_numeric($entry_id)) {
-      $newHiddenElements[] = new XoopsFormHidden ('lastentry', $entry_id);
-    }
-	}
-	if(isset($_POST['parent_form']) AND $_POST['parent_form']) { // if we just came back from a parent form, then set this flag so we'll know on the next pageload... legacy but has one key use?
-		$newHiddenElements[] = new XoopsFormHidden ('back_from_sub', 1);
-	}
-	foreach($newHiddenElements as $nhe) {
-		$form->addElement($nhe);
-		unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
-	}
 
 	// Add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php, but not added to the main form themselves for whatever reason
 	// This is a very complex, but necessary part of the form setup, because of the multiple times that displayForm might be called, multiple parts of forms that are rendered, as inline subforms, as all kinds of things, and we need to capture all the validation JS from everywhere, and ensure it is executed at the right level, as part of the normal page submission
