@@ -16,6 +16,7 @@ test('Create Artifacts Form', async ({ page }) => {
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Artifacts');
 	await page.locator('#applications-name').fill('Museum');
+await page.locator('input[name="pi_new_caption"]').fill('ID Number');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
@@ -31,18 +32,14 @@ test.describe('Artifacts Elements', async () => {
 	  await page.getByRole('link', { name: 'Elements' }).first().click();
 	})
 
-	test('Create ID Number Element', async ({ page }) => {
-		await page.getByRole('link', { name: 'Text box', exact: true }).click();
-		await expect(page.getByRole('heading')).toContainText('Element: New element (Textbox)');
+	test('Update ID Number Element', async ({ page }) => {
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await expect(page.getByRole('heading')).toContainText('Element: ID Number (Text Box)');
 		await waitForAdminPageReady(page)
-		await page.locator('input[name="elements-ele_caption"]').fill('ID Number');
-		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_id_number');
-		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
-		await page.getByRole('link', { name: 'Display Settings' }).click();
+				await page.getByRole('link', { name: 'Display Settings' }).click();
 		await page.locator('select[name="elements_ele_disabled\\[\\]"]').selectOption('all');
 		await saveAdminForm(page);
-		await expect(page.getByRole('heading')).toContainText('Element: ID Number (Textbox)');
-	});
+			});
 
 	test('Create Short Name Element', async ({ page }) => {
 		await page.getByRole('link', { name: 'Text box', exact: true }).click();
