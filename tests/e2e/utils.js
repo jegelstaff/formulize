@@ -18,6 +18,9 @@ export async function waitForFormulizeFormToken(page) {
  * @param {*} password
  */
 export async function login(page, username, password = '12345') {
+	username = username || 'admin';
+	password = username == 'admin' ? 'password' : password;
+	// Go to login page
 	await page.goto('/user.php');
 	await page.locator('input[name="uname"]').click();
 	await page.locator('input[name="uname"]').fill(username);
