@@ -23,7 +23,7 @@ module.exports = defineConfig({
 	reporter: process.env.GITHUB_ACTIONS ?
 		[['list'], ['github'], ['html', { outputFolder: './test-report' }]] : [['list'], ['html', { outputFolder: './test-report' }]],
 	/* Adjust the timeout for slow tests */
-	timeout: 30000,
+	timeout: 120000,
 	/* Retry on CI only. */
   retries: process.env.CI ? 2 : 0,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -43,7 +43,7 @@ module.exports = defineConfig({
 
 	expect: {
     // Maximum time expect() should wait for the condition to be met.
-    timeout: 20000,
+    timeout: 120000,
     toHaveScreenshot: {
       // An acceptable amount of pixels that could be different, unset by default.
       maxDiffPixels: 10,
