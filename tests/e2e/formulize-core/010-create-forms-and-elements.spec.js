@@ -189,7 +189,7 @@ test('Create Donors Form', async ({ page }) => {
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Donors');
- 	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').check();
+ 	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
@@ -350,7 +350,7 @@ test('Create Collections Form', async ({ page }) => {
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Collections');
-	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').check();
+	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
@@ -397,7 +397,7 @@ test('Create Exhibits Form', async ({ page }) => {
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Exhibits');
- 	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').check();
+ 	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
@@ -471,7 +471,7 @@ test('Create Surveys Form', async ({ page }) => {
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Surveys');
- 	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').check();
+ 	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
