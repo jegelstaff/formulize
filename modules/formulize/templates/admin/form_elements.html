@@ -54,22 +54,22 @@
 				<div>
 					<p class="element-variations">
 						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text"><{$smarty.const._AM_ELE_CATEGORY_REGULAR}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=number"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_NUMBER}></a>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=text" data-testid="element-text"><{$smarty.const._AM_ELE_CATEGORY_REGULAR}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=number" data-testid="element-text-number"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_NUMBER}></a>
 					<p>
 				</div>
 				<div>
 					<p class="element-variations">
 						<br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=phone"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_PHONE}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=email"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_EMAIL}></a>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=phone" data-testid="element-text-phone"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_PHONE}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=email" data-testid="element-text-email"><{$smarty.const._AM_ELE_CATEGORY_TEXTBOX_EMAIL}></a>
 					</p>
 				</div>
 			</div>
 
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TEXTAREA}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea"><img class="element-example" src="../images/admin_elements/textarea.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=textarea" data-testid="element-textarea"><img class="element-example" src="../images/admin_elements/textarea.png"></a>
 			</div>
 		</div>
 
@@ -80,10 +80,10 @@
 				<div>
 					<p class="element-variations">
 						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=selectLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=selectUsers"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=provinceList"><{$smarty.const._AM_ELE_CATEGORY_PROVINCE}></a>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=select" data-testid="element-select"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=selectLinked" data-testid="element-select-linked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=selectUsers" data-testid="element-select-users"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=provinceList" data-testid="element-select-province"><{$smarty.const._AM_ELE_CATEGORY_PROVINCE}></a>
 					</p>
 				</div>
 			</div>
@@ -93,9 +93,9 @@
 				<div>
 					<p class="element-variations">
 						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn"><{$smarty.const._AM_ELE_CATEGORY_RADIOBUTTONS_YN}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=provinceRadio"><{$smarty.const._AM_ELE_CATEGORY_PROVINCE}></a>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=radio" data-testid="element-radio"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=yn" data-testid="element-radio-yn"><{$smarty.const._AM_ELE_CATEGORY_RADIOBUTTONS_YN}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=provinceRadio" data-testid="element-radio-province"><{$smarty.const._AM_ELE_CATEGORY_PROVINCE}></a>
 					</p>
 				</div>
 			</div>
@@ -105,8 +105,8 @@
 				<div>
 					<p class="element-variations">
 						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkboxLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkbox" data-testid="element-checkbox"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=checkboxLinked" data-testid="element-checkbox-linked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
 					</p>
 				</div>
 			</div>
@@ -116,9 +116,9 @@
 				<div>
 					<p class="element-variations">
 						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocomplete"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocompleteLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocompleteUsers"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocomplete" data-testid="element-autocomplete"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocompleteLinked" data-testid="element-autocomplete-linked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=autocompleteUsers" data-testid="element-autocomplete-users"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a>
 					</p>
 				</div>
 			</div>
@@ -128,9 +128,9 @@
 				<div>
 					<p class="element-variations">
 						<{$smarty.const._AM_ELE_CATEGORY_CHOOSEATYPE}><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listbox"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listboxLinked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
-						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listboxUsers"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listbox" data-testid="element-listbox"><{$smarty.const._AM_ELE_CATEGORY_REGULAR_OPTIONS}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listboxLinked" data-testid="element-listbox-linked"><{$smarty.const._AM_ELE_CATEGORY_LINKED}></a><br>
+						<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=listboxUsers" data-testid="element-listbox-users"><{$smarty.const._AM_ELE_CATEGORY_USERS}></a>
 					</p>
 				</div>
 			</div>
@@ -139,57 +139,57 @@
 		<div id="add-selectors" class="element-category-content">
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DATE}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date"><img class="element-example" src="../images/admin_elements/date.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=date" data-testid="element-date"><img class="element-example" src="../images/admin_elements/date.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TIME}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=time"><img class="element-example" src="../images/admin_elements/time.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=time" data-testid="element-time"><img class="element-example" src="../images/admin_elements/time.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_FILEUPLOAD}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=fileUpload"><img class="element-example" src="../images/admin_elements/fileUpload.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=fileUpload" data-testid="element-fileupload"><img class="element-example" src="../images/admin_elements/fileUpload.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_SLIDER}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=slider"><img class="element-example" src="../images/admin_elements/slider.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=slider" data-testid="element-slider"><img class="element-example" src="../images/admin_elements/slider.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DURATION}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=duration"><img class="element-example" src="../images/admin_elements/duration.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=duration" data-testid="element-duration"><img class="element-example" src="../images/admin_elements/duration.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_COLORPICK}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick"><img class="element-example" src="../images/admin_elements/colorpick.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=colorpick" data-testid="element-colorpick"><img class="element-example" src="../images/admin_elements/colorpick.png"></a>
 			</div>
 		</div>
 
 		<div id="add-layout" class="element-category-content">
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_MODIF}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif"><img class="element-example" src="../images/admin_elements/areamodif.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=areamodif" data-testid="element-areadmodif"><img class="element-example" src="../images/admin_elements/areamodif.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_MODIF_ONE}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib"><img class="element-example" src="../images/admin_elements/ib.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=ib" data-testid="element-ib"><img class="element-example" src="../images/admin_elements/ib.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_TABLE}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid"><img class="element-example" src="../images/admin_elements/grid.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=grid" data-testid="element-grid"><img class="element-example" src="../images/admin_elements/grid.png"></a>
 			</div>
 		</div>
 
 		<div id="add-misc"  class="element-category-content">
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_DERIVED}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived"><img class="element-example" src="../images/admin_elements/derived.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=derived" data-testid="element-derived"><img class="element-example" src="../images/admin_elements/derived.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_ADDRESS}></h2><h3><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS}></h3></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleAddress"><img class="element-example" src="../images/admin_elements/googleAddress.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleAddress" data-testid="element-googleaddress"><img class="element-example" src="../images/admin_elements/googleAddress.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_FILEPICKER}></h2><h3><{$smarty.const._AM_ELE_CATEGORY_GOOGLE_REQUIREMENTS}></h3></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleFilePicker"><img class="element-example" src="../images/admin_elements/googleFilePicker.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=googleFilePicker" data-testid="element-googlefilepicker"><img class="element-example" src="../images/admin_elements/googleFilePicker.png"></a>
 			</div>
 
 			<{foreach item=customElement from=$content.customElements}>
@@ -206,15 +206,15 @@
 		<div id="add-embed"  class="element-category-content">
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_EMBED_LISTING}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformListings"><img class="element-example" src="../images/admin_elements/subformListings.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformListings" data-testid="element-subformlistings"><img class="element-example" src="../images/admin_elements/subformListings.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_EMBED_ROW}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformEditableRow"><img class="element-example" src="../images/admin_elements/subformEditableRow.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformEditableRow" data-testid="element-subformeditablerow"><img class="element-example" src="../images/admin_elements/subformEditableRow.png"></a>
 			</div>
 			<div class="element-title"><h2><{$smarty.const._AM_ELE_CATEGORY_EMBED_FULLFORM}></h2></div>
 			<div class="element-types">
-				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformFullForm"><img class="element-example" src="../images/admin_elements/subformFullForm.png"></a>
+				<a href="ui.php?page=element&ele_id=new&fid=<{$content.fid}>&aid=<{$content.aid}>&type=subformFullForm" data-testid="element-subformfullform"><img class="element-example" src="../images/admin_elements/subformFullForm.png"></a>
 			</div>
 		</div>
 
