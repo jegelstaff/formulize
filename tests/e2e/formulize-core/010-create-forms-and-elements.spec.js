@@ -16,6 +16,7 @@ test('Create Artifacts Form', async ({ page }) => {
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Artifacts');
 	await page.locator('#applications-name').fill('Museum');
+	await page.locator('#pi-new-yes').check();
 	await page.locator('input[name="pi_new_caption"]').fill('ID Number');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
