@@ -46,6 +46,28 @@ class formulizeTimeElement extends formulizeElement {
 		parent::__construct();
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		return
+"**Element:** Time Selector (time)
+**Description:** A time selector, the user interface is provided by the browser.
+**Properties:**
+- - defaultValue (string, a time in 24H format including colon, or '{NOW}' to show the current time, or '{NOW+60}' for an offset in minutes from the current time.)
+**Examples:**
+- A time selector that defaults to the current time: { defaultValue: \"{NOW}\" }
+- A time selector that defaults to 7pm: { defaultValue: \"19:00\" }
+- A time selector that defaults to 90 minutes ago: { defaultValue: \"{NOW-90}\" }
+- A time selector with no default value: { }";
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -62,6 +84,28 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 
 	function create() {
 			return new formulizeTimeElement();
+	}
+
+	/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		if(isset($properties['defaultValue']) AND strstr($properties['defaultValue'], ":") !== false) {
+			$ele_value[0] = interpretTimeElementValue($properties['defaultValue']);
+		}
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
+	public function getDefaultEleValue() {
+		return [0 => ''];
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class

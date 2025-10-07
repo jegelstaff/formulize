@@ -42,6 +42,31 @@ class formulizeSliderElement extends formulizeElement {
         $this->alwaysValidateInputs = false; // only validate when the admin says it's a required element
         parent::__construct();
     }
+
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		return
+"**Element:** Range Slider (slider)
+**Description:** A line with a knob that can be dragged with a mouse (or with a finger on a touchscreen). The setting of the knob indicates a certain number. Range Sliders are useful for allowing users to pick a number from a range of numbers, without having to type in the number.
+**Properties:**
+- minValue (integer, the minimum value for the slider. Default is 0.)
+- maxValue (integer, the maximum value for the slider. Default is 100.)
+- stepValue (integer, the increments allowed for the slider. Default is 10.)
+- defaultValue (integer, the starting value for the slider. Default is 0.)
+**Examples:**
+- A range slider where the user can pick any number between 0 and 100, defaults to 50: { minValue: 0, maxValue: 100, stepValue: 1, defaultValue: 50 }
+- A range slider where the user can pick 10, 20, 30, 40, or 50. Default to 10: { minValue: 10, maxValue: 50, stepValue: 10, defaultValue: 10 }
+- A range slider where the user can pick any number from -10 to 10. Default will be 0 since it is not specified: { minValue: -10, maxValue: 10, stepValue: 1 }";
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -54,6 +79,42 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
     function __construct($db) {
         $this->db =& $db;
     }
+
+	/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		if(isset($properties['minValue']) AND is_numeric($properties['minValue'])) {
+			$ele_value[1] = $properties['minValue'];
+		}
+		if(isset($properties['maxValue']) AND is_numeric($properties['maxValue'])) {
+			$ele_value[2] = $properties['maxValue'];
+		}
+		if(isset($properties['stepValue']) AND is_numeric($properties['stepValue'])) {
+			$ele_value[3] = $properties['stepValue'];
+		}
+		if(isset($properties['defaultValue']) AND is_numeric($properties['defaultValue'])) {
+			$ele_value[4] = $properties['defaultValue'];
+		}
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
+		public function getDefaultEleValue() {
+			return [
+				0 => 0, // min
+				1 => 100, // max
+				2 => 10, // step
+				3 => 0 // default
+			];
+		}
 
     function create() {
         return new formulizeSliderElement();
