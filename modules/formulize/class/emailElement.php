@@ -49,6 +49,25 @@ class formulizeEmailElement extends formulizeElement {
         parent::__construct();
     }
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		return
+"**Element:** Email Address (email)
+**Description:** A single line box for entering an email address. The address is checked for validity, to prevent non-email addresses from being saved.
+**Properties:**
+- none. Email Address elements have no properties. They are always simply an empty text box for entering an email address.
+**Examples:**
+- A phone number element requires no properties: { }";
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -62,6 +81,25 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     function __construct($db) {
         $this->db =& $db;
     }
+
+		/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
+		public function getDefaultEleValue() {
+			return [];
+		}
 
     function create() {
         return new formulizeEmailElement();

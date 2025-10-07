@@ -245,8 +245,30 @@ class formulizeForm extends FormulizeObject {
 
     public function setVar($key, $value, $not_gpc = false) {
         if ("form_handle" == $key) {
-            $value = self::sanitize_handle_name($value);
+					if($value == "") {
+						$value = $this->getVar('title');
+					}
+          $value = strtolower(self::sanitize_handle_name($value));
+					$startingFormHandle = $value;
+					$uniqueCheckCounter = 1;
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					while (!$uniqueCheck = $form_handler->isFormHandleUnique($value, $this->getVar('fid'))) {
+        		$value = $startingFormHandle . "_".$uniqueCheckCounter;
+						$uniqueCheckCounter++;
+					}
         }
+				if("id_form" == $key) {
+					parent::setVar("fid", $value, $not_gpc);
+				}
+				if("fid" == $key) {
+					parent::setVar("id_form", $value, $not_gpc);
+				}
+				if("singular" == $key AND $value == "") {
+					$value = $this->getSingular();
+				}
+				if("plural" == $key AND $value == "") {
+					$value = $this->getPlural();
+				}
         parent::setVar($key, $value, $not_gpc);
         if ("on_before_save" == $key) {
             $this->cache_on_before_save_code();
@@ -681,8 +703,12 @@ class formulizeFormsHandler {
 		static $cachedForms = array();
 		if(!$refreshCache AND isset($cachedForms[$form_id_or_handle][$includeAllElements])) { return $cachedForms[$form_id_or_handle][$includeAllElements]; }
 		if($form_id_or_handle) {
-			$cachedForms[$form_id_or_handle][$includeAllElements] = new formulizeForm($form_id_or_handle,$includeAllElements);
-			return $cachedForms[$form_id_or_handle][$includeAllElements];
+			$candidateFormObject = new formulizeForm($form_id_or_handle,$includeAllElements);
+			// invalid form id or handle will return a form object with no id set, so validate that what we got back is the right object
+			if((is_numeric($form_id_or_handle) AND $candidateFormObject->getVar('fid') == $form_id_or_handle) OR (!is_numeric($form_id_or_handle) AND $candidateFormObject->getVar('form_handle') == $form_id_or_handle)) {
+				$cachedForms[$form_id_or_handle][$includeAllElements] = $candidateFormObject;
+				return $cachedForms[$form_id_or_handle][$includeAllElements];
+			}
 		}
 		return false;
 	}
@@ -794,39 +820,58 @@ class formulizeFormsHandler {
 						break;
 				}
 
-                if($formObject->isNew() || empty($id_form)) {
-                    $sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-                        "`defaultform`, `defaultlist`, `menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
-                        $this->db->quoteString($title).", ".
-                        $this->db->quoteString($singular).", ".
-                        $this->db->quoteString($plural).", ".
-												$this->db->quoteString($singleToWrite).", ".
-                        $this->db->quoteString($tableform).", ".intval($defaultform).", ".intval($defaultlist).
-                        ", ".$this->db->quoteString($menutext).", ".$this->db->quoteString($form_handle).", ".
-                        intval($store_revisions).", ".$this->db->quoteString($note).", ".intval($send_digests).", ".intval($pi).")";
-                } else {
-                    $sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
-                        " `form_title` = ".$this->db->quoteString($title).
-												", `singular` = ".$this->db->quoteString($singular).
-												", `plural` = ".$this->db->quoteString($plural).
-                        ", `singleentry` = ".$this->db->quoteString($singleToWrite).
-                        ", `headerlist` = ".$this->db->quoteString($headerlist).
-                        ", `defaultform` = ".intval($defaultform).
-                        ", `defaultlist` = ".intval($defaultlist).
-                        ", `menutext` = ".$this->db->quoteString($menutext).
-                        ", `form_handle` = ".$this->db->quoteString($form_handle).
-                        ", `store_revisions` = ".intval($store_revisions).
-                        ", `note` = ".$this->db->quoteString($note).
-                        ", `send_digests` = ".intval($send_digests).
-												", `pi` = ".intval($pi).
-                        " WHERE id_form = ".intval($id_form);
-                }
+				if($formObject->isNew() || empty($id_form)) {
 
-                if (false != $force) {
-                    $result = $this->db->queryF($sql);
-                } else{
-                    $result = $this->db->query($sql);
-                }
+					// some basic safetynets for new forms
+					if($form_handle == "") {
+						$formObject->setVar('form_handle', $title);
+						$form_handle = $formObject->getVar('form_handle');
+					}
+					if($singular == "") {
+						$formObject->setVar('singular', $formObject->getSingular());
+						$singular = $formObject->getVar('singular');
+					}
+					if($plural == "") {
+						$formObject->setVar('plural', $formObject->getPlural());
+						$plural = $formObject->getVar('plural');
+					}
+
+					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
+							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
+							$this->db->quoteString($title).", ".
+							$this->db->quoteString($singular).", ".
+							$this->db->quoteString($plural).", ".
+							$this->db->quoteString($singleToWrite).", ".
+							$this->db->quoteString($tableform).", ".
+							$this->db->quoteString($menutext).", ".
+							$this->db->quoteString($form_handle).", ".
+							intval($store_revisions).", ".
+							$this->db->quoteString($note).", ".
+							intval($send_digests).", ".
+							intval($pi).")";
+				} else {
+					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
+							" `form_title` = ".$this->db->quoteString($title).
+							", `singular` = ".$this->db->quoteString($singular).
+							", `plural` = ".$this->db->quoteString($plural).
+							", `singleentry` = ".$this->db->quoteString($singleToWrite).
+							", `headerlist` = ".$this->db->quoteString($headerlist).
+							", `defaultform` = ".intval($defaultform).
+							", `defaultlist` = ".intval($defaultlist).
+							", `menutext` = ".$this->db->quoteString($menutext).
+							", `form_handle` = ".$this->db->quoteString($form_handle).
+							", `store_revisions` = ".intval($store_revisions).
+							", `note` = ".$this->db->quoteString($note).
+							", `send_digests` = ".intval($send_digests).
+							", `pi` = ".intval($pi).
+							" WHERE id_form = ".intval($id_form);
+				}
+
+				if (false != $force) {
+						$result = $this->db->queryF($sql);
+				} else{
+						$result = $this->db->query($sql);
+				}
 
 				if( !$result ){
 					print "Error: this form could not be saved in the database.  SQL: $sql<br>".$this->db->error();
@@ -834,12 +879,45 @@ class formulizeFormsHandler {
 				}
 				if( empty($id_form) ){
 					$id_form = $this->db->getInsertId();
+					$formObject->assignVar('id_form', $id_form);
+					$formObject->assignVar('fid', $id_form);
+					if(!$tableCreateRes = $this->createDataTable($id_form)) {
+						throw new Exception("Could not create the data table for new form");
+					}
+					// create the default screens for this form
+					$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+					$defaultFormScreen = $multiPageScreenHandler->create();
+					$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
+					if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen)) {
+						throw new Exception("Could not create default form screen");
+					}
+					$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+					$screen = $listScreenHandler->create();
+					$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
+					if(!$defaultListScreenId = $listScreenHandler->insert($screen)) {
+						throw new Exception("Could not create default list screen");
+					}
+					$defaultScreensSQL = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
+							" `defaultform` = ".intval($defaultFormScreenId).
+							", `defaultlist` = ".intval($defaultListScreenId).
+							" WHERE id_form = ".intval($id_form);
+					if (false != $force) {
+							$result = $this->db->queryF($defaultScreensSQL);
+					} else{
+							$result = $this->db->query($defaultScreensSQL);
+					}
+					if( !$result ){
+						throw new Exception("Could not set default screens for form. SQL: $defaultScreensSQL<br>".$this->db->error());
+					}
+					$formObject->setVar('defaultform', $defaultFormScreenId);
+					$formObject->setVar('defaultlist', $defaultListScreenId);
 				}
-				$formObject->assignVar('id_form', $id_form);
 
-				if( $form_handle == "" ){ // only occurs when forms have no handles specified by the user, which is probably only new forms, because non-new forms would default to the fid (but for new forms, fid is not known yet when insert is called)
-					$formObject->setVar('form_handle', $id_form);
-					$this->insert($formObject, $force);
+				// if the revision history flag was on, then create the revisions history table, if it doesn't exist already
+				if($formObject->getVar('store_revisions') AND !$this->revisionsTableExists($formObject)) {
+					if(!$this->createDataTable($id_form, revisionsTable: true)) { // 0 is the id of a form we're cloning
+						throw new Exception("Could not create the revision history table for the form");
+					}
 				}
 
 				$procedures = array(
@@ -865,10 +943,10 @@ class formulizeFormsHandler {
 	/**
 	 * Check if a form's Singular or Plural values have changed, and rename any screens and menu links involved if their titles match exactly the changed name
 	 * @param object formObject - The object representation of the form we're working with. Will include the new names as the singular and plural.
-	 * @param array originalFormNames - An array with two keys, singular and plural, which contain the old names that potentially need replacing
+	 * @param array originalFormNames - An array with three keys, singular, plural, form_handle, which contain the old names that potentially need replacing
 	 * @return boolean Returns true if queries succeeded, or false if one or more failed.
 	 */
-	function renameScreensAndMenuLinks($formObject, $originalFormNames) {
+	function renameFormResources($formObject, $originalFormNames) {
 		global $xoopsDB;
 		$result = null;
 		$namesNeedingReplacement = array();
@@ -896,6 +974,20 @@ class formulizeFormsHandler {
 			if(!$res = $xoopsDB->query($sql)) {
 				print "Error: could not rename menu links from '".strip_tags(htmlspecialchars($oldName))."' to '".strip_tags(htmlspecialchars($newName))."'";
 				$result = false;
+			}
+		}
+		if( $formObject->getVar( "form_handle" ) != $originalFormNames['form_handle'] ) {
+			if(!$renameResult = $this->renameDataTable($originalFormNames['form_handle'], $formObject->getVar( "form_handle" ), $formObject)) {
+				throw new Exception("Could not rename the data table in the database.");
+			}
+			// update code files with this form handle
+			$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
+			foreach($events as $event) {
+				$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$originalFormNames['form_handle'].'.php';
+				$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
+				if(file_exists($oldFileName)) {
+					rename($oldFileName, $newFileName);
+				}
 			}
 		}
 		return $result;
@@ -953,6 +1045,14 @@ class formulizeFormsHandler {
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
 		global $xoopsDB;
+		// validate element id, convert to element id if it was a handle or object
+		if($element_id) {
+			$elementObject = _getElementObject($element_id);
+			if(!$elementObject) {
+				throw new Exception("Could not load element object to verify uniqueness of handle");
+			}
+			$element_id = $elementObject->getVar('ele_id');
+		}
 		$element_id_condition = $element_id ? " AND ele_id != " . intval($element_id) : "";
 		$sql = "SELECT count(ele_handle) FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' $element_id_condition";
 		if(!$res = $xoopsDB->query($sql)) {
@@ -1013,37 +1113,21 @@ class formulizeFormsHandler {
 		}
 		$sql = "SELECT sid, type FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
 		if($res = $xoopsDB->query($sql)) {
+			$application_handler = xoops_getmodulehandler('applications', 'formulize');
 			while($array = $xoopsDB->fetchArray($res)) {
 				$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen_".strtolower($array['type']))." WHERE sid=".intval($array['sid']);
 				if(!$xoopsDB->query($sql)) {
 					print "Error: could not delete screen ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
 					$isError = true;
 				}
-				$application_handler = xoops_getmodulehandler('applications', 'formulize');
 				$application_handler->deleteMenuLinkByScreen("sid=".intval($array['sid']));
-				/*
-				$sql1="select menu_id from ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
-				$res1=$xoopsDB->query($sql1);
-				$sql2="DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." where sid=".intval($array['sid']);
-
-				if(!$result = $xoopsDB->query($sql2)) {
-						print "Error: could not delete menu item ".htmlspecialchars(strip_tags($array['sid']))." for form $fid";
-						$isError=true;
-				}else{
-						while($arr=$xoopsDB->fecthArray($res1)){
-								$deletemenupermissions = "DELETE FROM `".$xoopsDB->prefix("formulize_menu_permissions")."` WHERE menu_id=" .intval($arr['menu_id']) .";";
-								$xoopsDB->query($deletemenupermissions);
-						}
-				}
-				*/
 			}
 			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_screen")." WHERE fid=$fid";
 			if(!$xoopsDB->query($sql)) {
 				print "Error: could not delete screens for form $fid";
 				$isError = true;
 			}
-				$application_handler = xoops_getmodulehandler('applications', 'formulize');
-				$application_handler->deleteMenuLinkByScreen("fid=".intval($fid));
+			$application_handler->deleteMenuLinkByScreen("fid=".intval($fid));
 		}
 		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_application_form_link")." WHERE fid=$fid";
 		if(!$xoopsDB->query($sql)) {
