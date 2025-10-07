@@ -93,7 +93,6 @@ if(isset($_POST['forms-tableform'])) {
 // create the PI element if requested
 if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_POST['pi_new_caption'] != "") {
 	$element_handler = xoops_getmodulehandler('textElement','formulize');
-	$options = $element_handler->validateEleValuePublicAPIProperties([]);
 	$elementObjectProperties = array(
 		'id_form' => $fid,
 		'ele_type' => 'text',
@@ -103,7 +102,7 @@ if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_PO
 		'ele_display' => 1,
 		'ele_disabled' => 0,
 		'ele_order' => 0,
-		'ele_value' => $options['ele_value']
+		'ele_value' => $element_handler->getDefaultEleValue()
 	);
 	$screenIdsAndPagesForAdding = array(
 		$formObject->getVar('defaultform') => array(0) // page 0 is the first page
