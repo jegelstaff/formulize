@@ -49,6 +49,26 @@ class formulizePhoneElement extends formulizeElement {
 		parent::__construct();
 	}
 
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		return
+"**Element:** Phone Number (phone)
+**Description:** A single line box for entering a phone number. Enforces a specific format on the number that the user enters.
+**Properties:**
+- phoneNumberFormat (string, a series of Xs plus other characters, to indicate the way that phone numbers should be formatted, in the predomonant locale among the users. For example, XXXX-XXXX for two groups of four digits with a hyphen in the middle. Users can enter numbers in whatever way they want and with whatever formatting, hyphens or no hyphens, etc. Users must enter a number of digits equal to the number of Xs in the prescribed format. The prescribed format will be used to standardize the number formatting when saved. If no phoneNumberFormat is provided then XXX-XXX-XXXX is used, ie: standard North American phone number format.)
+**Examples:**
+- A phone number element that requires the user to enter six digits, that will be formatted as one set of six: { phoneNumberFormat: \"XXXXXX\" }
+- A phone number element that will store standard North American phone numbers (the default format, so no need to specify anything): { }";
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -67,10 +87,32 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
         return new formulizePhoneElement();
     }
 
-    // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
-    // it receives the element object and returns an array of data that will go to the admin UI template
-    // when dealing with new elements, $element might be FALSE
-    // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		if(isset($properties['phoneNumberFormat']) AND strstr($properties['phoneNumberFormat'], 'X') !== false) {
+			$ele_value['format'] = $properties['phoneNumberFormat'];
+		}
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
+	public function getDefaultEleValue() {
+		return ['format' => 'XXX-XXX-XXXX'];
+	}
+
+	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
+	// it receives the element object and returns an array of data that will go to the admin UI template
+	// when dealing with new elements, $element might be FALSE
+	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
         $ele_value = $element ? $element->getVar('ele_value') : array();
         $format = $ele_value['format'] ? $ele_value['format'] : 'XXX-XXX-XXXX';

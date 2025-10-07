@@ -62,15 +62,17 @@ class formulizeDateElement extends formulizeElement {
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
 		return
 "**Element:** Date Selector (date).
+**Description:** A date selector. The user interface is provided by the browser.
 **Properties:**
-- defaultDate (date, the default date value for the date selector in YYYY-MM-DD format. Can also be {TODAY} to default to the current date, or a relative date like {TODAY+7} or {TODAY-30}. Leave blank for no default date.)
-- minDate (date, optional, the minimum date that can be selected in YYYY-MM-DD format)
-- maxDate (date, optional, the maximum date that can be selected in YYYY-MM-DD format)
+- defaultDate (date, the default date value for the date selector. Provide a value in one of the following formats:  YYYY-MM-DD for a specific date, {TODAY} for the current date, {TODAY+7} for a date relative to the current date (accepts any positive or negative integer). Leave blank for no default date.)
+- minDate (date, optional, the minimum date that can be selected. Provide a value in YYYY-MM-DD format.)
+- maxDate (date, optional, the maximum date that can be selected. Provide a value in YYYY-MM-DD format.)
 **Examples:**
 - A date selector that defaults to the current date: { defaultDate: \"{TODAY}\" }
+- A date selector that defaults to one year before the current date: { defaultDate: \"{TODAY-365}\" }
 - A date selector that defaults to May 9, 1969: { defaultDate: \"1969-05-09\" }
-- A date selector with a minimum date: { minDate: \"2020-01-01\" }
-- A date selector with a maximum date: { maxDate: \"2020-12-31\" }
+- A date selector with no default date and a minimum date of Jan 1 2020: { minDate: \"2020-01-01\" }
+- A date selector with no default date and a maximum date of Dec 31 2020: { maxDate: \"2020-12-31\" }
 - A date selector that defaults to 7 days from today, with a minimum date of today and a maximum date of 30 days from today: { defaultvalue: \"{TODAY+7}\", mindate: \"{TODAY}\", maxdate: \"{TODAY+30}\" }";
 	}
 }
