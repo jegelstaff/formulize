@@ -1,0 +1,149 @@
+<div class="panel-content content">
+
+    <div id="linked-or-usernames-options" class="form-item">
+			<{include file="db:admin/element_linkedandusernames_scopefilter.html"}>
+		</div>
+
+		<{if $content.type != "select" AND $content.type != "selectLinked" AND $content.type != "selectUsers"}>
+			<{include file="db:admin/element_multiple_onoff.html"}>
+		<{/if}>
+
+		<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
+			<br>
+			<{include file="db:admin/element_autocomplete_allownew.html"}>
+		<{/if}>
+
+</div>
+
+<script type="text/javascript">
+
+  $("[name='new-mapping']").click(function (){
+    number = $(".elementmappings:last").attr('name');
+    number = parseInt(number) + 1;
+    $('#mappingcontainer').append('<div class="elementmappings" name="'+number+'"><select id="mappingthisform-'+number+'" name="mappingthisform['+number+']" size="1"></select> >> <select id="mappingsourceform-'+number+'" name="mappingsourceform['+number+']" size="1"></select> <img class="removeMapping" style="cursor: pointer;" onclick="removeMapping('+number+')" src="../images/editdelete.gif"></img></div>');
+    var thisformoptions = $('#mappingthisform-0 > option').clone();
+    $('#mappingthisform-'+number).append(thisformoptions);
+    $('#mappingthisform-'+number+' option:selected').removeAttr('selected');
+    $('#mappingthisform-'+number).append('<option value="mapaliteralvalue">Map a literal value</option>');
+    var sourceformoptions = $('#mappingsourceform-0 > option').clone();
+    $('#mappingsourceform-'+number).append(sourceformoptions);
+    $('#mappingsourceform-'+number+' option:selected').removeAttr('selected');
+    $("[name='new-mapping']").blur();
+    setDisplay('savewarning','block');
+  });
+
+    $("[name^=mappingthisform]").live('change', function() {
+        if ($(this).val() == 'mapaliteralvalue') {
+            $(this).attr('name', 'turnedoff');
+            $(this).parent().prepend('<input name="mappingthisform['+$(this).parent().attr('name')+']">');
+            $(this).hide();
+        }
+    });
+
+    function removeMapping(number) {
+        $('.elementmappings').remove('[name="'+number+'"]');
+        setDisplay('savewarning','block');
+    }
+
+ $("#elements-ele_value_0").focus(function() {
+	  $("#list").attr('checked',1);
+ });
+
+ $("#elements_multiple_notallowed").click( function(){
+ 	alert("WARNING: You may lose data when changing the multiple selection of your List box!");
+ });
+
+ $("#formlink").change(function() {
+		$("#yes").attr('checked',1);
+		$("[name=reload_option_page]").val(1);
+		$("#filterdiv").empty();
+		$("#filterdiv").append('<p><input type="button" class="formButton" name="refreshfilter" onclick="refreshfilterjq()" value="Save changes to update filter options"></p>');
+ });
+
+ function refreshfilterjq() {
+	 $("[name=reload_option_page]").val(1);
+	 $(".savebutton").click();
+
+ }
+
+ $("[name=addoption]").click(function () {
+		$("#no").attr('checked',1);
+ })
+
+ $("[name=ele_value[0]]").keydown(function () {
+	$("#no").attr('checked',1);
+	$("#formlink").val('none');
+	$("#filterdiv").empty();
+	$("#filterdiv").append('<p>The options are not linked.</p>');
+
+ });
+
+    $("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
+		$("#selfreference-<{$content.ele_value.selfreference}>").attr('checked',1);
+
+    <{if $content.ele_id != 'new'}>
+    var snapshotWarning = true;
+    $('input[name*="snapshot"]').change(function() {
+        if (snapshotWarning) {
+            alert('*** WARNING: If you change the "snapshot" setting of an element that users have saved data in already, then all the existing data will be lost. Change the setting back BEFORE SAVING if you need to preserve the data. ***');
+            snapshotWarning = false;
+        }
+    })
+    <{/if}>
+
+		$('input[name="linked_yesno"]').change(function() {
+			if($('input[name="linked_yesno"]:checked').val() == 1) {
+				$('div#fixedListOptions').hide(200);
+				$('div#linkedSourceOptions').show(200);
+				$('div#linked-options').show(200);
+				$('div#linked-filter').show(200);
+				enableForAutocomplete();
+				$('div#linked-or-usernames-options').show(200);
+			} else {
+				$('div#fixedListOptions').show(200);
+				$('div#linkedSourceOptions').hide(200);
+				$('div#linked-options').hide(200);
+				$('div#linked-filter').hide(200);
+				checkForNames();
+			}
+			showHideLinkedSourceMapping();
+    });
+
+
+    function showHideLinkedSourceMapping() {
+        if ($('input[name="linked_yesno"]:checked').val() == 1 && $('[name="elements_listordd"]:checked').val()==2 && $('[name="elements-ele_value\\[snapshot\\]"]:checked').val() != 1 && $('[name="elements-ele_value\\[16\\]"]:checked').val() == 1 && $('#formlink').val() != 'none') {
+            if($('#linkedsourcemapping').css('display') == 'none') {
+                $('#linkedsourcemapping').show(200);
+            }
+            return false;
+        } else {
+            if($('#linkedsourcemapping').css('display') == 'none') {
+							return false;
+            }
+            $('#linkedsourcemapping').hide(200);
+        }
+    }
+
+    $(document).ready(function() {
+        showHideLinkedSourceMapping();
+
+        $('[name="elements_listordd"]').change(function() {
+            showHideLinkedSourceMapping();
+        });
+
+        $('[name="elements-ele_value\\[16\\]"]').change(function() {
+            showHideLinkedSourceMapping();
+        });
+
+        $('#formlink').change(function() {
+            showHideLinkedSourceMapping();
+	});
+
+        $('[name="elements-ele_value\\[snapshot\\]"]').change(function() {
+            showHideLinkedSourceMapping();
+        })
+
+
+	});
+
+</script>

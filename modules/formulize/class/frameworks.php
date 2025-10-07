@@ -228,7 +228,7 @@ class formulizeFrameworkLink extends XoopsObject {
         $formulize_mgr =& xoops_getmodulehandler('elements');
 
         // get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
-        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE (ele_type=\"select\" OR ele_type=\"checkbox\") AND ele_value LIKE '%#*=:*%' AND (id_form = ".intval($this->getVar('form1'))." OR id_form = ".intval($this->getVar('form2')).") ORDER BY id_form");
+        $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE (ele_type=\"selectLinked\" OR ele_type=\"listboxLinked\" OR ele_type=\"autocompleteLinked\" OR ele_type=\"checkboxLinked\") AND ele_value LIKE '%#*=:*%' AND (id_form = ".intval($this->getVar('form1'))." OR id_form = ".intval($this->getVar('form2')).") ORDER BY id_form");
         while ($rowlinksq = $xoopsDB->fetchRow($resgetlinksq)) {
             $target_form_ids[] = $rowlinksq[0];
             $target_captions[] = $rowlinksq[1];

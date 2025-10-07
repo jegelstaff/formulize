@@ -364,7 +364,11 @@ if(isset($updateOwnerFid) AND $gperm_handler->checkRight("update_entry_ownership
     // if so, reassign the submitted entries from that form too
     $formulize_formObject = $form_handler->get($updateOwnerFid);
     $elementTypes = $formulize_formObject->getVar('elementTypes');
-    foreach(array_keys($elementTypes, 'subform') as $subformElementId) {
+		$elementSubformFullFormIds = array_keys($elementTypes, 'subformFullForm');
+		$elementSubformEditableRowIds = array_keys($elementTypes, 'subformEditableRow');
+		$elementSubformListingsIds = array_keys($elementTypes, 'subformListings');
+		$elementSubformIds = array_merge((array) $elementSubformFullFormIds, (array) $elementSubformEditableRowIds, (array) $elementSubformListingsIds);
+    foreach($elementSubformIds as $subformElementId) {
         $subformElement = $element_handler->get($subformElementId);
         $subformEleValue = $subformElement->getVar('ele_value');
         if(isset($_POST['form_'.$subformEleValue[0].'_rendered_entry']) AND $subformEleValue[5] == 1) { // this subform was part of the page, and it's supposed to have the same owner as the mainform entry

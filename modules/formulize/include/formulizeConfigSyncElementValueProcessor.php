@@ -93,6 +93,22 @@ class FormulizeConfigSyncElementValueProcessor
 	 */
 	private function initializeElementMapping()
 	{
+		// REVIEW QUESTION FOR ARVIN... THIS SEEMS LIKE SOMETHING WE COULD/SHOULD ADD INTO THE ELEMENT CLASS FILES THEMSELVES, NOW THAT WE HAVE CLASS FILES FOR ALL ELEMENT TYPES??
+		// FURTHERMORE, WE HAVE SOME ADDITIONAL TYPES NOW:
+		// checkbox is standard checkboxes
+		// checkboxLinked is checkboxes with linked values
+		// select is standard select dropdowns
+		// selectLinked is select dropdowns with linked values
+		// selectUsers is a username list
+		// listbox is a multi-select listbox
+		// listboxLinked is a multi-select listbox with linked values
+		// listboxUsers is a multi-select listbox of usernames
+		// autocomplete is an autocomplete box
+		// autocompleteLinked is an autocomplete box with linked values
+		// autocompleteUsers is an autocomplete box of usernames
+		// The function anySelectElementType can be passed the type of an element object and will return true if it is any of the ones based on "select" (all the select, listbox and autocomplete types extend the monster selectElement class)
+		// Also, number is a numbers-only text box (but standard textboxes can also be switched into numbers only mode if you want, and switch back. Number elements are always only number elements.)
+		// The great part is we have a specific class file for every single type now! So we can put in helper methods in the element classes to provide type-specific options/functionality as required
 		$this->elementMapping = [
 			'text' => $this->textElementMapping,
 			'textarea' => $this->textareaMapping,

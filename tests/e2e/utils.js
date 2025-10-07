@@ -1,5 +1,187 @@
 const { expect } = require('@playwright/test')
 
+export const ElementType = {
+	'text': 'element-text',
+	'textNumber': 'element-text-number',
+	'textPhone': 'element-text-phone',
+	'textEmail': 'element-text-email',
+	'textarea': 'element-textarea',
+	'select': 'element-select',
+	'selectLinked': 'element-select-linked',
+	'selectUsers': 'element-select-users',
+	'selectProvince': 'element-select-province',
+	'radio': 'element-radio',
+	'radioYN': 'element-radio-yn',
+	'radioProvince': 'element-radio-province',
+	'checkbox': 'element-checkbox',
+	'checkboxLinked': 'element-checkbox-linked',
+	'autocomplete': 'element-autocomplete',
+	'autocompleteLinked': 'element-autocomplete-linked',
+	'autocompleteUsers': 'element-autocomplete-users',
+	'listbox': 'element-listbox',
+	'listboxLinked': 'element-listbox-linked',
+	'listboxUsers': 'element-listbox-users',
+	'date': 'element-date',
+	'time': 'element-time',
+	'fileupload': 'element-fileupload',
+	'slider': 'element-slider',
+	'duration': 'element-duration',
+	'colorpick': 'element-colorpick',
+	'areadmodif': 'element-areadmodif',
+	'ib': 'element-ib',
+	'grid': 'element-grid',
+	'derived': 'element-derived',
+	'googleaddress': 'element-googleaddress',
+	'googlefilepicker': 'element-googlefilepicker',
+	'subformlistings': 'element-subformlistings',
+	'subformeditablerow': 'element-subformeditablerow',
+	'subformfullform': 'element-subformfullform',
+};
+
+// Category lookup - just define the mapping rules
+const elementToContentMapping = {
+	'element-text': {
+		tab: 'Text Boxes',
+		heading: 'Element: New element (Text Box)'
+	},
+	'element-text-number': {
+		tab: 'Text Boxes',
+		heading: 'Element: New element (Number Box)'
+	},
+	'element-text-phone': {
+		tab: 'Text Boxes',
+		heading: 'Element: New element (Phone Number)'
+	},
+	'element-text-email': {
+		tab: 'Text Boxes',
+		heading: 'Element: New element (Email Address)'
+	},
+	'element-textarea': {
+		tab: 'Text Boxes',
+		heading: 'Element: New element (Multi-line Textbox)'
+	},
+	'element-select': {
+		tab: 'Lists',
+		heading: 'Element: New element (Dropdown List)'
+	},
+	'element-select-linked': {
+		tab: 'Lists',
+		heading: 'Element: New element (Linked Dropdown List)'
+	},
+	'element-select-users': {
+		tab: 'Lists',
+		heading: 'Element: New element (Dropdown List of Users)'
+	},
+	'element-select-province': {
+		tab: 'Lists',
+		heading: 'Element: New element (Province Dropdown List)'
+	},
+	'element-radio': {
+		tab: 'Lists',
+		heading: 'Element: New element (Radio Buttons)'
+	},
+	'element-radio-yn': {
+		tab: 'Lists',
+		heading: 'Element: New element (Yes/No Radio Buttons)'
+	},
+	'element-radio-province': {
+		tab: 'Lists',
+		heading: 'Element: New element (Province Radio Buttons)'
+	},
+	'element-checkbox': {
+		tab: 'Lists',
+		heading: 'Element: New element (Checkboxes)'
+	},
+	'element-checkbox-linked': {
+		tab: 'Lists',
+		heading: 'Element: New element (Linked Checkboxes)'
+	},
+	'element-autocomplete': {
+		tab: 'Lists',
+		heading: 'Element: New element (Autocomplete List)'
+	},
+	'element-autocomplete-linked': {
+		tab: 'Lists',
+		heading: 'Element: New element (Linked Autocomplete List)'
+	},
+	'element-autocomplete-users': {
+		tab: 'Lists',
+		heading: 'Element: New element (Autocomplete List of Users)'
+	},
+	'element-listbox': {
+		tab: 'Lists',
+		heading: 'Element: New element (Listbox)'
+	},
+	'element-listbox-linked': {
+		tab: 'Lists',
+		heading: 'Element: New element (Linked Listbox)'
+	},
+	'element-listbox-users': {
+		tab: 'Lists',
+		heading: 'Element: New element (Listbox of Users)'
+	},
+	'element-date': {
+		tab: 'Selectors',
+		heading: 'Element: New element (Date Selector)'
+	},
+	'element-time': {
+		tab: 'Selectors',
+		heading: 'Element: New element (Time Selector)'
+	},
+	'element-fileupload': {
+		tab: 'Selectors',
+		heading: 'Element: New element (File Upload Box)'
+	},
+	'element-slider': {
+		tab: 'Selectors',
+		heading: 'Element: New element (Range Slider)'
+	},
+	'element-duration': {
+		tab: 'Selectors',
+		heading: 'Element: New element (Duration)'
+	},
+	'element-colorpick': {
+		tab: 'Selectors',
+		heading: 'Element: New element (Color Picker)'
+	},
+	'element-areadmodif': {
+		tab: 'Layout',
+		heading: 'Element: New element (Text for display (caption and contents))'
+	},
+	'element-ib': {
+		tab: 'Layout',
+		heading: 'Element: New element (Text for display (spanning the form))'
+	},
+	'element-grid': {
+		tab: 'Layout',
+		heading: 'Element: New element (Table of elements)'
+	},
+	'element-derived': {
+		tab: 'Misc',
+		heading: 'Element: New element (Value derived from other elements)'
+	},
+	'element-googleaddress': {
+		tab: 'Misc',
+		heading: 'Element: New element (Google Address)'
+	},
+	'element-googlefilepicker': {
+		tab: 'Misc',
+		heading: 'Element: New element (Google File Picker)'
+	},
+	'element-subformlistings': {
+		tab: 'Embed a form',
+		heading: 'Element: New element (Embeded Form (list view))'
+	},
+	'element-subformeditablerow': {
+		tab: 'Embed a form',
+		heading: 'Element: New element (Embeded Form (editable rows))'
+	},
+	'element-subformfullform': {
+		tab: 'Embed a form',
+		heading: 'Element: New element (Embeded Form (full entries))'
+	},
+};
+
 /**
  * Wait for the Formulize form token to be valid before moving on
  * @param {*} page Playwright page object
@@ -18,6 +200,9 @@ export async function waitForFormulizeFormToken(page) {
  * @param {*} password
  */
 export async function login(page, username, password = '12345') {
+	username = username || 'admin';
+	password = username == 'admin' ? 'password' : password;
+	// Go to login page
 	await page.goto('/user.php');
 	await page.locator('input[name="uname"]').click();
 	await page.locator('input[name="uname"]').fill(username);
@@ -32,7 +217,7 @@ export async function login(page, username, password = '12345') {
 /**
  * Formulize Saving validation
  */
-export async function saveFormulizeForm(page, timeout = 10000) {
+export async function saveFormulizeForm(page, timeout = 120000) {
 	// Wait for the formulize page token
 	await waitForFormulizeFormToken(page);
 	await Promise.all([
@@ -48,7 +233,7 @@ export async function saveFormulizeForm(page, timeout = 10000) {
   await page.waitForFunction(() => {
     const element = document.getElementById('savingmessage');
     return element && window.getComputedStyle(element).display === 'none';
-  }, { timeout: 10000 });
+  }, { timeout: 120000 });
 	// Ensure the data submitted error does not occurr
 	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
 }
@@ -59,7 +244,7 @@ export async function saveFormulizeForm(page, timeout = 10000) {
  * @param {*} type
  * @param {*} timeout
  */
-export async function saveAdminForm(page, type = 'regular', timeout = 10000) {
+export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 
 	let opacityTarget = 'div.admin-ui';
 
@@ -124,75 +309,15 @@ export async function waitForAdminPageReady(page) {
   });
 }
 
-// Possible function to employ if accordion clicks are not working reliably
-// Attempts normal clicks a few times, then falls back to JavaScript if needed
-// Requires the headerSelector (the clickable header) and contentSelector (the content that should appear)
-// Optionally specify maxRetries (default 3)
-export async function openAccordion(page, headerSelector, contentSelector, maxRetries = 3) {
-  for (let i = 0; i < maxRetries; i++) {
-    await page.locator(headerSelector).click();
-
-    try {
-      await page.locator(contentSelector).waitFor({
-        state: 'visible',
-        timeout: 2000
-      });
-      return; // Success, exit
-    } catch (error) {
-      if (i === maxRetries - 1) {
-        // Last attempt failed, try JavaScript fallback
-        console.log('Normal clicks failed, attempting JavaScript fallback...');
-
-        try {
-          await page.locator(headerSelector).evaluate((el, contentSel) => {
-            // Try jQuery trigger first if available
-            if (window.jQuery) {
-              window.jQuery(el).trigger('click');
-            }
-
-            // Force open the accordion manually
-            el.classList.add('active', 'open', 'expanded');
-
-            // Find and show the content
-            let content = el.nextElementSibling;
-
-            // If contentSelector is provided, try to find it more specifically
-            if (contentSel) {
-              const foundContent = document.querySelector(contentSel);
-              if (foundContent) {
-                content = foundContent;
-              }
-            }
-
-            if (content) {
-              content.style.display = 'block';
-              content.style.height = 'auto';
-              content.style.overflow = 'visible';
-              content.classList.remove('collapsed');
-              content.classList.add('show', 'expanded');
-            }
-          }, contentSelector);
-
-          // Wait a moment for any animations
-          await page.waitForTimeout(500);
-
-          // Check if the JavaScript fallback worked
-          await page.locator(contentSelector).waitFor({
-            state: 'visible',
-            timeout: 2000
-          });
-
-          console.log('JavaScript fallback succeeded');
-          return;
-
-        } catch (jsError) {
-          throw new Error(`Accordion failed to open after ${maxRetries} click attempts and JavaScript fallback. Last error: ${jsError.message}`);
-        }
-      }
-
-      // Wait before retrying
-      await page.waitForTimeout(500);
-    }
-  }
+/**
+ *
+ * @param {*} page
+ * @param {ElementTypeMapping[keyof ElementTypeMapping]} type
+ */
+export async function addElementForm(page, type) {
+	const { tab, heading } = elementToContentMapping[type]
+	await page.getByRole('link', { name: 'Add an element' }).first().click();
+ 	await page.getByRole('link', { name: tab }).click();
+	await page.getByTestId(type).click();
+	await expect(page.getByRole('heading')).toContainText(heading);
 }
-

@@ -177,9 +177,9 @@ Valid URL parameters for the Formulize makecsv.php file:
 
 key,a valid authentication key issued by a webmaster for your site (if there is no key, a user must be logged in)
 fid,required,the id number of the form you are querying - if absent this help text is displayed
-showHandles,optional,a flag to trigger showing data handles as the second line of the spreadsheet - value doesn't matter
-fields,optional,the data handle or id number of the elements you want to display in the spreadsheet (comma separated list)
-excludeFields,optional,the data handle of elements that you do not want displayed in the spreadsheet (comma separated list)
+showHandles,optional,a flag to trigger showing element handles as the second line of the spreadsheet - value doesn't matter
+fields,optional,the element handle or id number of the elements you want to display in the spreadsheet (comma separated list)
+excludeFields,optional,the element handle of elements that you do not want displayed in the spreadsheet (comma separated list)
 handle=searchterm,optional,use the handle for a field to specify a search term for the field - search terms are case insensitive and support partial matches and support greater-than/less-than for numbers (ie: >1969)
 filter,optional,a filter string compatible with the getData function - details in this document:
 ,,http://formulize.org/formulize/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf

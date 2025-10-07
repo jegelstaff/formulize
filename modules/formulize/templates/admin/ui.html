@@ -293,6 +293,7 @@ $(document).ready(function() {
 					$('input[clearAfterSave=1]').removeAttr('checked');
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
+				// ele_id is set in the eval operation passed back from the initial element save operation (names/settings tab), and then passed to the rest of the save operations. Elegant or hacky?!
         sendFormData(formdata[saveCounter], ele_id);
       }
     });
@@ -334,6 +335,7 @@ $(document).ready(function() {
   });
 
   $(window).load(function () {
+		$('.admin-ui').show(250);
     $(window).scrollTop(<{$scrollx}>);
   });
 
@@ -380,22 +382,27 @@ $(document).ready(function() {
 		refreshCodemirrors();
 	});
 
+	let refreshAttempts = 0;
 	function refreshCodemirrors() {
+		if (!refreshAttempts) {
+			refreshAttempts++;
+			setTimeout(refreshCodemirrors, 100); // too many jQuery UI widgets and other stuff bound to window.load, etc, codemirrors need to refresh after final arrangement in browser is set, some pages that won't have happened right away. In practice, 100ms delay means this happens before admin-ui reaches full opacity anyway!
+		}
 		for (var x = 0; x < codemirrors.length; x++) {
 			codemirrors[x].refresh();
 		}
 	}
 
-    // change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
-    $("[name='screens-theme']").change(function() {
-        window.document.scrollposition.themeswitch.value  = $(this).val();
-        reloadWithScrollPosition();
-    });
+	// change the themes, only possible when no changes to screen settings yet. Change theme property of screen and reload page.
+	$("[name='screens-theme']").change(function() {
+		window.document.scrollposition.themeswitch.value  = $(this).val();
+		reloadWithScrollPosition();
+	});
 
-    // seed the templates, only possible when no custom templates yet exist for a screen.
-    $("#seedtemplates").click(function() {
-        window.document.scrollposition.seedtemplates.value = 1;
-        reloadWithScrollPosition();
-    });
+	// seed the templates, only possible when no custom templates yet exist for a screen.
+	$("#seedtemplates").click(function() {
+		window.document.scrollposition.seedtemplates.value = 1;
+		reloadWithScrollPosition();
+	});
 
 </script>

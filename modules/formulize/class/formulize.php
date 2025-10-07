@@ -38,7 +38,7 @@ class FormulizeObject extends XoopsObject {
 
 	static function sanitize_handle_name($handle_name) {
 		// strip non-alphanumeric characters from handles
-		return preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "_", $handle_name));
+		return strtolower(preg_replace("/[^a-zA-Z0-9_-]+/", "", str_replace(" ", "_", $handle_name)));
 	}
 
 	/**
@@ -97,6 +97,77 @@ class FormulizeObject extends XoopsObject {
 				'datasets'
 			]
 		];
+	}
+
+}
+
+#[AllowDynamicProperties]
+class formulizeHandler {
+
+	function __construct() {
+	}
+
+	public static function getElementTypeReadableNames() {
+		return array(
+			'textboxes' => array(
+				'singular' => 'text box element',
+				'plural' => 'text boxes elements'
+			),
+			'lists' => array(
+				'singular' => 'list element',
+				'plural' => 'list elements'
+			),
+			'selectors' => array(
+				'singular' => 'selector element',
+				'plural' => 'selector elements'
+			),
+			'subforms' => array(
+				'singular' => 'subform interface',
+				'plural' => 'subform interfaces'
+			),
+			// WILL NEED TO BE FILLED IN FURTHER FOR 'LAYOUT' ELEMENTS WHEN THEY HAVE CLASSES
+			// AND WHAT TO DO ABOUT DERIVED ELEMENTS IS NOT ENTIRELY CLEAR (NOR OTHER MISC ELEMENTS)
+		);
+	}
+
+	public static function getStandardElementTypes() {
+		return array(
+			'text',
+			'textarea',
+			'phone',
+			'email',
+			'number',
+			'select',
+			'selectLinked',
+			'selectUsers',
+			'provinceList',
+			'radio',
+			'yn',
+			'provinceRadio',
+			'checkbox',
+			'checkboxLinked',
+			'autocomplete',
+			'autocompleteLinked',
+			'autocompleteUsers',
+			'listbox',
+			'listboxLinked',
+			'listboxUsers',
+			'date',
+			'colorpick',
+			'time',
+			'duration',
+			'slider',
+			'fileUpload',
+			'googleAddress',
+			'googleFilePicker',
+			'derived',
+			'subformFullForm',
+			'subformEditableRow',
+			'subformListings',
+			'grid',
+			'areamodif',
+			'ib'
+		);
 	}
 
 }

@@ -1,0 +1,25 @@
+<div class="panel-content content">
+
+	<{include file="db:admin/element_linkedoptionlist.html"}>
+
+  <{include file="db:admin/element_options_delimiter_choice.html"}>
+
+	<div id="linked-filter" class="form-item">
+  	<{include file="db:admin/element_linkedfilter.html"}>
+	</div>
+
+	<div id="linked-or-usernames-options" class="form-item">
+		<{include file="db:admin/element_linkedandusernames_scopefilter.html"}>
+	</div>
+
+	<div id="linked-options" class="form-item">
+  	<{include file="db:admin/element_linkedsortoptions.html"}>
+	  <{include file="db:admin/alternate_fields_for_linked_elements.html"}>
+	</div>
+
+</div>
+
+<script>
+$("#snapshot-<{$content.ele_value.snapshot}>").attr('checked',1);
+$("#selfreference-<{$content.ele_value.selfreference}>").attr('checked',1);
+</script>

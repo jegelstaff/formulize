@@ -43,14 +43,15 @@ class formulizeElement extends FormulizeObject {
 
 	var $isLinked;
 	var $needsDataType;
-    var $overrideDataType;
-    var $hasData;
-    var $name;
-    var $adminCanMakeRequired;
-    var $alwaysValidateInputs;
-    var $canHaveMultipleValues;
-    var $hasMultipleOptions;
-    var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
+	var $overrideDataType;
+	var $hasData;
+	var $name;
+	var $adminCanMakeRequired;
+	var $alwaysValidateInputs;
+	var $canHaveMultipleValues;
+	var $hasMultipleOptions;
+	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
+	public static $category = 'misc'; // the category this element belongs to - textboxes, selectors, lists, layout, misc, subforms
 
 	function __construct(){
         parent::__construct();
@@ -184,13 +185,11 @@ class formulizeElement extends FormulizeObject {
         if ("ele_handle" == $key) {
             $value = self::sanitize_handle_name($value);
         }
-		$ele_type = $this->getVar('ele_type');
+		
 		if($key == 'ele_value') {
+			$ele_type = $this->getVar('ele_type');
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			if($ele_type == 'derived'
-				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
-				OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
-				) {
+			if(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value")) {
 				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 				formulize_writeCodeToFile($filename, $valueToWrite[0]);
 				$valueToWrite[0] = '';
@@ -204,12 +203,9 @@ class formulizeElement extends FormulizeObject {
 			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
 			if($key == 'ele_value') {
-				$format = 'f';
 				$ele_type = $this->getVar('ele_type');
-				if(($ele_type == 'derived'
-					OR $ele_type == 'ib'
-					OR $ele_type == 'areamodif'
-					OR $ele_type == 'textarea')
+				if(($ele_type == 'ib'
+					OR $ele_type == 'areamodif')
 					AND is_array($value)) {
 						$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 						$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
@@ -223,44 +219,10 @@ class formulizeElement extends FormulizeObject {
 			return $value;
 		}
 
-    // returns an array of the default values (since there could be more than one in some element types)
-    // entry_id is the entry for which we're getting the default value, if any
-    public function getDefaultValues($entry_id='new') {
-        $default = array();
-        $ele_value = $this->getVar('ele_value');
-        $ele_type = $this->getVar('ele_type');
-        switch($ele_type) {
-            case 'select':
-                if($this->isLinked === false) { // linked element support needs to be added!!
-                    foreach($ele_value[2] as $option=>$selected) {
-                        if($selected) {
-                            $default[] = $option;
-                        }
-                    }
-                }
-                break;
-            case 'text':
-            case 'textarea':
-               	$default[] = interpretTextboxValue($this, $entry_id);
-                break;
-            default: // other element types need to be implemented! And a new method needs to be added to custom classes???
-        }
-        return $default;
-    }
-
     // returns true if the option is one of the values the user can choose from in this element
     // returns false if the element does not have options
+		// must be overridden in the child class
     function optionIsValid($option) {
-        $ele_value = $this->getVar('ele_value');
-        $uitext = $this->getVar('ele_uitext');
-        switch($this->getVar('ele_type')) {
-            case "radio":
-                return (isset($ele_value[$option]) OR in_array($option, $uitext)) ? true : false;
-                break;
-            case "select":
-                return (isset($ele_value[2][$option]) OR in_array($option, $uitext)) ? true : false;
-                break;
-        }
         return false;
     }
 
@@ -318,7 +280,7 @@ class formulizeElementsHandler {
 				$element = new formulizeElement();
 			}
 			$element->assignVars($array);
-            $element = $this->_setElementProperties($element);
+      $element = $this->_setElementProperties($element);
 			$cachedElements[$id] = $element;
 			return $element;
 		}
@@ -326,30 +288,15 @@ class formulizeElementsHandler {
 	}
 
     function _setElementProperties($element) {
-        $element->isLinked = false;
-        $element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
-        $element->canHaveMultipleValues = is_bool($element->canHaveMultipleValues) ? $element->canHaveMultipleValues : false;
-				$element->setVar('fid', $element->getVar('id_form'));
-        $ele_type = $element->getVar('ele_type');
-        $ele_value = $element->getVar('ele_value');
-        if($ele_type == "textarea" OR $ele_type == "select" OR $ele_type=="radio" OR $ele_type=="date" OR $ele_type=="colorpick" OR $ele_type=="yn" OR $ele_type=="derived") {
-            $element->hasData = true;
-        }
-        if($ele_type=="select") {
-            $element->hasMultipleOptions = true;
-            if($ele_value[1] == 1) {
-                $element->canHaveMultipleValues = true;
-            }
-        }
-        if($ele_type=="select" OR $ele_type=="checkbox") { // isLinked SHOULD BE BROKEN OUT INTO A METHOD OR SOMETHING ON ELEMENT OBJECTS, SO IT DOESN'T HAVE TO BE HERE IN A METHOD IN THE PARENT CLASS! ELEMENT CLASSES SHOULD BE ABLE TO ANSWER THIS ON THEIR OWN.
-            if(!is_array($ele_value[2])) {
-                $element->isLinked = strstr($ele_value[2], "#*=:*") ? true : false;
-            }
-        }
-        if($ele_type == "radio") {
-            $element->hasMultipleOptions = true;
-        }
-        return $element;
+			$element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
+			$element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
+			$element->setVar('fid', $element->getVar('id_form'));
+			if(method_exists($element, 'setCanHaveMultipleValues')) {
+				$element->canHaveMultipleValues = $element->setCanHaveMultipleValues();
+			} elseif(!is_bool($element->canHaveMultipleValues)) {
+				$element->canHaveMultipleValues = false;
+			}
+			return $element;
     }
 
 	function insert(&$element, $force = false){
@@ -449,7 +396,6 @@ class formulizeElementsHandler {
             // changed - end - August 19 2005 - jpc
  		}
 
-
         if( false != $force ){
             $result = $this->db->queryF($sql);
         }else{
@@ -545,7 +491,7 @@ class formulizeElementsHandler {
 				$elements = new formulizeElement();
 			}
 			$elements->assignVars($myrow);
-            $elements = $this->_setElementProperties($elements);
+      $elements = $this->_setElementProperties($elements);
 			if($id_as_key === true OR $id_as_key == "element_id"){
 				$ret[$myrow['ele_id']] =& $elements;
 			}elseif($id_as_key == "handle") {
@@ -599,6 +545,7 @@ class formulizeElementsHandler {
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
+		$value = trans($value);
 		if(!$this->length AND $this->length !== 0 AND $this->length !== '0') {
 			$this->length = 35;
 		}
@@ -606,10 +553,10 @@ class formulizeElementsHandler {
 			$value = $myts->htmlSpecialChars($value, ENT_QUOTES);
 		}
 		if($this->length > 0) {
-			$value = printSmart(trans($value),$this->length);
+			$value = printSmart($value,$this->length);
 		}
 		if($this->clickable) {
-			$value = $myts->makeClickable($value);
+			$value = formulize_text_to_hyperlink($value);
 		}
 		return $value;
 	}
@@ -667,6 +614,8 @@ class formulizeElementsHandler {
         return false;
     }
 
+	// overridden in child classes
+	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		return $value;
 	}
@@ -674,8 +623,25 @@ class formulizeElementsHandler {
 
 function optionIsValidForElement($option, $elementHandleOrId) {
     if(!$element = _getElementObject($elementHandleOrId)) {
-		return false;
+			return false;
     }
     return $element->optionIsValid($option);
 }
 
+/**
+ * Take a type string and return true if it is any type of element based on the Select type
+ * @param string $type
+ * @return bool
+ */
+function anySelectElementType($type) {
+	$baseTypes = array("select","autocomplete","listbox");
+	$subTypes = array("","linked","users");
+	foreach($baseTypes as $base) {
+		foreach($subTypes as $sub) {
+			if ($type == $base.$sub) {
+				return true;
+			}
+		}
+	}
+	return false;
+}

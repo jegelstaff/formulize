@@ -642,7 +642,10 @@ EOF;
 		 */
 		function hasSubformInterfaceForForm($subformId) {
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			$subformElementIds = array_keys($this->getVar('elementTypes'), 'subform');
+			$subformElementIds1 = array_keys($this->getVar('elementTypes'), 'subformFullForm');
+			$subformElementIds2 = array_keys($this->getVar('elementTypes'), 'subformEditableRow');
+			$subformElementIds3 = array_keys($this->getVar('elementTypes'), 'subformListings');
+			$subformElementIds = array_merge($subformElementIds1, $subformElementIds2, $subformElementIds3);
 			foreach($subformElementIds as $subformElementId) {
 				if($subformElementObject = $element_handler->get($subformElementId)) {
 					$ele_value = $subformElementObject->getVar('ele_value');
@@ -1128,39 +1131,43 @@ class formulizeFormsHandler {
 		$newTableSQL .= "`creation_uid` int(7) default '0',";
 		$newTableSQL .= "`mod_uid` int(7) default '0',";
 		foreach($formObject->getVar('elementHandles') as $elementId=>$thisHandle) {
-						// NOTE: THIS WILL FAIL IF/WHEN SOMEONE CREATE A CUSTOM ELEMENT TYPE THAT IS NOT A DATA-STORING ELEMENT!!
-						// WE WILL NEED TO GO GET THE ELEMENT OBJECT HERE, AND CHECK IF IT'S A DATA STORING ELEMENT TYPE OR NOT.  THIS IS A PROPERTY ON THE CUSTOM ELEMENT OBJECTS, SO NOT HARD, BUT A PAIN AND ADDS QUERIES TO THE PAGE.
-						if($elementTypes[$elementId] == "areamodif" OR $elementTypes[$elementId] == "ib" OR $elementTypes[$elementId] == "sep" OR $elementTypes[$elementId] == "grid" OR $elementTypes[$elementId] == "subform") { continue; } // do not attempt to create certain types of fields since they don't live in the db!
-						if(count((array)$map)>0 OR $revisionsTable) {
-							// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
-							if(!isset($dataTypeMap)) {
-								$dataTypeMap = array();
-								$dataTypeSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_".$clonedFormObject->getVar('form_handle'));
-								if($dataTypeRes = $xoopsDB->queryF($dataTypeSQL)) {
-									while($dataTypeArray = $xoopsDB->fetchArray($dataTypeRes)) {
-										$dataTypeMap[$dataTypeArray['Field']] = $dataTypeArray['Type'];
-									}
-								} else {
-									print "Error: could not get column datatype information for the source form.<br>$dataTypeSQL<br>";
-									return false;
-								}
-							}
-							if($revisionsTable) {
-								// for revision tables, the handles will be exactly the same, so the lookup in the dataTypeMap is really easy
-								$type_with_default = ("text" == $dataTypeMap[$thisHandle] ? "text" : $dataTypeMap[$thisHandle]." NULL default NULL");
-								$newTableSQL .= "`$thisHandle` $type_with_default,";
-								// for cloned forms, we have to look up the handle name in the map that was passed in, since element handles will have changed in the cloning process
-							} else {
-								$type_with_default = ("text" == $dataTypeMap[array_search($thisHandle, (array)$map)] ? "text" : $dataTypeMap[array_search($thisHandle, (array)$map)]." NULL default NULL");
-								$newTableSQL .= "`$thisHandle` $type_with_default,";
-							}
-						} else {
-							if($elementTypes[$elementId] == "date") {
-								$newTableSQL .= "`$thisHandle` date NULL default NULL,";
-							} else {
-								$newTableSQL .= "`$thisHandle` text,";
-							}
+			$elementObject = _getElementObject($elementId);
+			if(!$elementObject OR !$elementObject->hasData) { continue; } // skip elements that don't exist, and do not attempt to create certain types of fields since they don't live in the db!
+			if(count((array)$map)>0 OR $revisionsTable) {
+				// we're cloning with data, so base the new field's datatype on the original form's datatype for the corresponding field
+				if(!isset($dataTypeMap)) {
+					$dataTypeMap = array();
+					$dataTypeSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_".$clonedFormObject->getVar('form_handle'));
+					if($dataTypeRes = $xoopsDB->queryF($dataTypeSQL)) {
+						while($dataTypeArray = $xoopsDB->fetchArray($dataTypeRes)) {
+							$dataTypeMap[$dataTypeArray['Field']] = $dataTypeArray['Type'];
 						}
+					} else {
+						print "Error: could not get column datatype information for the source form.<br>$dataTypeSQL<br>";
+						return false;
+					}
+				}
+				if($revisionsTable) {
+					// for revision tables, the handles will be exactly the same, so the lookup in the dataTypeMap is really easy
+					$type_with_default = ("text" == $dataTypeMap[$thisHandle] ? "text" : $dataTypeMap[$thisHandle]." NULL default NULL");
+					$newTableSQL .= "`$thisHandle` $type_with_default,";
+					// for cloned forms, we have to look up the handle name in the map that was passed in, since element handles will have changed in the cloning process
+				} else {
+					$type_with_default = ("text" == $dataTypeMap[array_search($thisHandle, (array)$map)] ? "text" : $dataTypeMap[array_search($thisHandle, (array)$map)]." NULL default NULL");
+					$newTableSQL .= "`$thisHandle` $type_with_default,";
+				}
+			} else {
+				// STRONG ASSUMPTION IS WE'RE MAKING A NEW TABLE, WITH NO ELEMENTS
+				// BUT WE HAVE A BASIC FALLBACK HERE IF THE FORM DOES HAVE ELEMENTS
+				// default to text, except for date fields
+				// we could do better here by looking at the element type and making more intelligent decisions
+				// Works for PI elements added at the time of form creation, because they are only textboxes!
+				if($elementTypes[$elementId] == "date") {
+					$newTableSQL .= "`$thisHandle` date NULL default NULL,";
+				} else {
+					$newTableSQL .= "`$thisHandle` text,";
+				}
+			}
 		}
 		if($revisionsTable) {
 			$newTableSQL .= "PRIMARY KEY (`revision_id`),";

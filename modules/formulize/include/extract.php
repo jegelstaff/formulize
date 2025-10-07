@@ -86,220 +86,236 @@ function extract_makeUidFilter($users)
 	return $uq;
 }
 
-// id_req and ffcaption only used for converting 'other' values
+/**
+ * Sort out 'Other' values from the database for the given entry, if it has an {OTHER|XX} value in it
+ * Apply UI Text if applicable
+ * Convert uids to usernames for USERNAMES lists
+ * Convert foreign keys to readable values for linked elements
+ * @param mixed $value The raw value from the database for a given element in a given entry
+ * @param string $handle The handle of the element
+ * @param int $entry_id The ID of the entry
+ * @return array The values, with all the transformations applied
+ */
+function applyReadableValueTransformations($value, $handle, $entry_id) {
+
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementObject = $element_handler->get($handle);
+
+	// not linked element...
+	if($elementObject->isLinked == false) {
+
+		// put the values into an array
+		$values = is_array($value) ? $value : explode('*=+*:', trim($value, '*=+*:'));
+
+		// if there's OTHER text in the original passed in element value
+		// then replace whichever items in the array have the {OTHER|XX} pattern
+		if (preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
+			global $xoopsDB;
+			$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle='" . formulize_db_escape($handle) . "' AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
+			if (!empty($newValueq)) {
+				$value_other = $newValueq[0]['other_text'];
+				foreach($values as $i=>$value) {
+					$values[$i] = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
+				}
+			}
+
+		// if it's a usernames box (cannot have OTHER and usernames in same element)
+		// which cannot co-occur with OTHER text, hence 'else'
+		} elseif(!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
+			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
+
+			$ele_value = $elementObject->getVar('ele_value');
+
+			if (count($values) > 0
+				AND is_array($ele_value)
+				AND isset($ele_value[2])
+				AND is_array($ele_value[2])
+				AND $listtype = array_key_first($ele_value[2])
+				AND ($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}")) {
+
+				$uidFilter = extract_makeUidFilter($values);
+				$values = []; // empty it and remake below
+				$listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
+				if (strlen($uidFilter) > 4) {   // skip this when $uidFilter = "uid=" becaues the query will fail
+					$names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
+					foreach ($names as $thisname) {
+						if ($thisname[$listtype]) {
+							$values[] = $thisname[$listtype];
+						} else {
+							$values[] = $thisname['uname'];
+						}
+					}
+				}
+			}
+		}
+
+		// handle any uitext, which could co-occur with OTHER values and/or just regular values
+		if(!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
+			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
+			AND $elementObject->getVar('ele_uitextshow')) {
+				$uitext = $elementObject->getVar('ele_uitext');
+				foreach($values as $i=>$value) {
+					$values[$i] = formulize_swapUIText($value, $uitext);
+				}
+		}
+
+	// linked element, convert foreign keys...
+	} else {
+		$values = convertForeignKeysToReadableValues($value, $handle, $entry_id);
+	}
+
+	return $values;
+}
+
+/**
+ * Convert foreign keys to readable values, for linked elements
+ * If foreign key override is in place for datasets, foreign keys are preserved
+ * @param mixed $value The raw value from the database for a given element in a given entry
+ * @param string $handle The handle of the element
+ * @param int $entry_id The ID of the entry
+ * @return array An array of the converted values. If the element is not linked, the array will contain the original value(s) split on the standard separator.
+ */
+function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
+
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementObject = $element_handler->get($handle);
+
+	// is a linked element...
+	if($elementObject->isLinked) {
+
+		// get array of foreign keys
+		// if we're not keeping foreign keys in the dataset, then convert them to readable values
+		$value = trim($value, ",");
+		$values = strstr($value, ",") ? explode(",", $value) : array($value);
+
+		if (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
+			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
+			AND $source_ele_value = formulize_isLinkedElement($handle)
+			AND $value != 'new') {
+			// value is an entry id in another form
+			// need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
+			// Also, value could be multiple entries in a comma separate list! So check for that and run in a loop.
+			global $xoopsDB;
+			$sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
+			$newValues = [];
+			if(!empty($values) AND $sourceMeta[1]) {
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				foreach($values as $value) {
+					$value = intval(trim($value));
+					// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
+					// save the value before convertElementIdsToElementHandles()
+					$before_conversion = $sourceMeta[1];
+					$altFieldSource = "";
+					if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
+						$altFieldSource = $source_ele_value[11];
+					} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
+						$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
+					}
+					if ($altFieldSource) {
+						$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
+						$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
+						// remove empty entries, which can happen if the "use the linked field selected above" option is selected
+						$sourceMeta[1] = array_filter($sourceMeta[1]);
+						// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
+						// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
+						// check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
+						if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) or $sourceMeta[1] == "none") {
+							$sourceMeta[1] = $before_conversion;
+						}
+					}
+					$sourceFormObject = $form_handler->get($sourceMeta[0]);
+					$sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
+					$query_columns = array();
+					foreach ($sourceMeta[1] as $key => $handle) {
+						// check if this is a link to a link
+						if ($second_source_ele_value = formulize_isLinkedElement($handle)) {
+							$secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
+							$secondFormObject = $form_handler->get($secondSourceMeta[0]);
+							$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
+								" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` = $value
+								AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $handle . "`)) ORDER BY t2.`entry_id`";
+							if (!$res = $xoopsDB->query($sql)) {
+								print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($handle) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+							} else {
+								$row = $xoopsDB->fetchRow($res);
+								$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to
+								$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
+							}
+						} else {
+							$query_columns[] = "`$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
+						}
+					}
+					$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
+						" WHERE entry_id = $value ORDER BY entry_id";
+					if (!$res = $xoopsDB->query($sql)) {
+						print "Error: could not retrieve the source values for a linked selectbox (for $handle) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
+					} else {
+						$row = $xoopsDB->fetchRow($res);
+						if(!empty($row)) {
+							$newValues[] = implode(" - ", $row);
+						}
+					}
+				}
+			}
+			$values = $newValues;
+		}
+
+	// non linked value passed in by mistake? split on standard separator and return array
+	} else {
+		$values = explode("*=+*:", $value);
+	}
+
+	// return the array of readable values, or the array of foreign keys, or the array made from splitting on standard separator if not linked value
+	return $values;
+}
+
 // this function takes a value and a handle (field) and an entry id, and returns an array containing the item(s) that represent the value in a human readable way for use in a list of entries, dataset, etc
 // unless the handle is a metadata handle, and then it is returned flat, because there's no way it would ever have multiple values
 // in some cases, even a textbox field would come back with an array of values here, because an array of values could have been passed in, if for example the textbox field is on the many side of a one to many relationship
-function prepvalues($value, $field, $entry_id)
+function prepvalues($value, $handle, $entry_id)
 {
 
 	$original_value = $value;
 	static $cachedPrepedValues = array();
-	$fk = (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$field]) and !isset($GLOBALS['formulize_useForeignKeysInDataset']['all']));
-	if (isset($cachedPrepedValues[$original_value][$field][$entry_id][$fk])) {
-		/*global $xoopsUser;
-    if($xoopsUser->getVar('uid')==110) {
-        print "RETURNING FROM CACHE<br>";
-    }*/
-		return $cachedPrepedValues[$original_value][$field][$entry_id][$fk];
+	$fk = (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle]) and !isset($GLOBALS['formulize_useForeignKeysInDataset']['all']));
+	if (isset($cachedPrepedValues[$original_value][$handle][$entry_id][$fk])) {
+		return $cachedPrepedValues[$original_value][$handle][$entry_id][$fk];
 	}
-
-	global $xoopsDB;
 
 	// return metadata values without putting them in an array
-	if (isMetaDataField($field)) {
+	if (isMetaDataField($handle)) {
 		if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-			$cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
+			$cachedPrepedValues[$original_value][$handle][$entry_id][$fk] = $value;
 		}
 		return $value;
 	}
 
-	$elementArray = formulize_getElementMetaData($field, true);
+	$elementArray = formulize_getElementMetaData($handle, true);
 	$type = $elementArray['ele_type'];
-
-	// handle yes/no cases
-	if ($type == "yn") { // if we've found one
-		if ($value == "1") {
-			$value = _formulize_TEMP_QYES;
-		} elseif ($value == "2") {
-			$value = _formulize_TEMP_QNO;
-		} else {
-			$value = "";
-		}
-		$value = array($value); // bottom level items in a getData array are supposed to be arrays. Display function will figure it out if there's only one value, and return that one alone.
-		if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-			$cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $value;
-		}
-		return $value;
-	}
 
 	// decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
 	if ($elementArray['ele_encrypt']) {
 		$decryptSQL = "SELECT AES_DECRYPT('" . formulize_db_escape($value) . "', '" . getAESPassword() . "')";
+		global $xoopsDB;
 		if ($decryptResult = $xoopsDB->query($decryptSQL)) {
 			$decryptRow = $xoopsDB->fetchRow($decryptResult);
-			if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-				$cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $decryptRow[0];
-			}
-			return $decryptRow[0];
+			$value = $decryptRow[0];
 		} else {
-			if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-				$cachedPrepedValues[$original_value][$field][$entry_id][$fk] = "";
-			}
-			return "";
+			$value = "";
 		}
 	}
-
-	// handle cases where the value is linked to another form...returns false if the box is not linked
-	if (
-		$source_ele_value = formulize_isLinkedSelectBox($field, true)
-		and !isset($GLOBALS['formulize_useForeignKeysInDataset'][$field])
-		and !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
-		and $value != 'new'
-	) {
-		// value is an entry id in another form
-		// need to get the form id by checking the ele_value[2] property of the element definition, to get the form id from the first part of that
-		// Also, value could be multiple entries in a comma separate list! So check for that and run in a loop.
-		$value = trim($value, ",");
-		$sourceMeta = explode("#*=:*", $source_ele_value[2]); // [0] will be the fid of the form we're after, [1] is the handle of that element
-		if($value AND $sourceMeta[1]) {
-			if(strstr($value, ",")) {
-				$values = explode(",", $value);
-			} else {
-				$values = array($value);
-			}
-			$newValue = "";
-			foreach($values as $value) {
-				$value = intval($value);
-				// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
-				// save the value before convertElementIdsToElementHandles()
-				$before_conversion = $sourceMeta[1];
-				$altFieldSource = "";
-				if (isset($GLOBALS['formulize_doingExport']) AND $GLOBALS['formulize_doingExport'] AND isset($source_ele_value[11]) AND $source_ele_value[11] != "none") {
-					$altFieldSource = $source_ele_value[11];
-				} elseif (isset($source_ele_value[EV_MULTIPLE_LIST_COLUMNS]) AND $source_ele_value[EV_MULTIPLE_LIST_COLUMNS] != "none") {
-					$altFieldSource = $source_ele_value[EV_MULTIPLE_LIST_COLUMNS];
-				}
-				if ($altFieldSource) {
-					$altFieldSource = is_array($altFieldSource) ? $altFieldSource : array($altFieldSource);
-					$sourceMeta[1] = convertElementIdsToElementHandles($altFieldSource, $sourceMeta[0]);
-					// remove empty entries, which can happen if the "use the linked field selected above" option is selected
-					$sourceMeta[1] = array_filter($sourceMeta[1]);
-					// unfortunately, sometimes sourceMeta[1] seems to be saved as element handles rather than element IDs, and in that case,
-					// convertElementIdsToElementHandles() returns array(0 => 'none') which causes an error in the query below.
-					// check for that case here and revert back to the value of sourceMeta[1] before convertElementIdsToElementHandles()
-					if ((1 == count((array) $sourceMeta[1]) and isset($sourceMeta[1][0]) and "none" == $sourceMeta[1][0]) or $sourceMeta[1] == "none") {
-						$sourceMeta[1] = $before_conversion;
-					}
-				}
-				$form_handler = xoops_getmodulehandler('forms', 'formulize');
-				$sourceFormObject = $form_handler->get($sourceMeta[0]);
-				$sourceMeta[1] = is_array($sourceMeta[1]) ? $sourceMeta[1] : array($sourceMeta[1]);
-				$query_columns = array();
-				foreach ($sourceMeta[1] as $key => $handle) {
-					// check if this is a link to a link
-					if ($second_source_ele_value = formulize_isLinkedSelectBox($handle, true)) {
-						$secondSourceMeta = explode("#*=:*", $second_source_ele_value[2]);
-						$secondFormObject = $form_handler->get($secondSourceMeta[0]);
-						$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
-							" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` = $value
-							AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $handle . "`)) ORDER BY t2.`entry_id`";
-						if (!$res = $xoopsDB->query($sql)) {
-							print "Error: could not retrieve the source values for a LINKED LINKED selectbox ($field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
-						} else {
-							$row = $xoopsDB->fetchRow($res);
-							$linkedvalue = prepvalues($row[0], $secondSourceMeta[1], $row[1]); // prep the source value we found, based on its own handle, and the entry id it belongs to
-							$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
-						}
-					} else {
-						$query_columns[] = "`$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
-					}
-				}
-				$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
-					" WHERE entry_id = $value ORDER BY entry_id";
-				if (!$res = $xoopsDB->query($sql)) {
-					print "Error: could not retrieve the source values for a linked selectbox (for $field) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
-				} else {
-					$row = $xoopsDB->fetchRow($res);
-					if(!empty($row)) {
-						$newValue .= "*=+*:" . implode(" - ", $row);
-					}
-				}
-			}
-			$value = $newValue;
-		} else {
-			$value = ""; // if there was no sourceMeta[1], which is the handle for the field in the source form, then the value should be empty, ie: we cannot make a link...this probably only happens in cases where there's a really old element that had its caption changed, and that happened before Formulize automatically updated all the linked selectboxes that rely on that element's caption, back when captions mattered in the pre F3 days
-		}
-	}
-
-	// check if this is fullnames/usernames box
-	// wickedly inefficient to go to DB for each value!!  This loop executes once per datapoint in the result set!!
-	if ($type == "select" and !isset($GLOBALS['formulize_useForeignKeysInDataset'][$field]) and !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
-		$ele_value = unserialize($elementArray['ele_value']);
-		if (is_array($ele_value) and isset($ele_value[2]) and is_array($ele_value[2])) {
-			$listtype = key($ele_value[2]);
-			if ($listtype === "{USERNAMES}" or $listtype === "{FULLNAMES}") {
-				$uids = explode("*=+*:", $value);
-				if (count((array) $uids) > 0) {
-					if (count((array) $uids) > 1) {
-						array_shift($uids);
-					}
-					$uidFilter = extract_makeUidFilter($uids);
-					$listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
-					$value = "";
-					if (strlen($uidFilter) > 4) {   // skip this when $uidFilter = "uid=" becaues the query will fail
-						$names = go("SELECT uname, name FROM " . DBPRE . "users WHERE $uidFilter ORDER BY $listtype");
-						foreach ($names as $thisname) {
-							if ($thisname[$listtype]) {
-								$value .= "*=+*:" . $thisname[$listtype];
-							} else {
-								$value .= "*=+*:" . $thisname['uname'];
-							}
-						}
-					}
-				} else {
-					$value = "";
-				}
-			}
-		}
-	}
-
-	//and remove any leading *=+*: while we're at it...
-	if (substr($value, 0, 5) == "*=+*:") {
-		$value = substr_replace($value, "", 0, 5);
-	}
-
-	// Convert 'Other' options into the actual text the user typed
-	if (($type == "radio") and preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-		$newValueq = go("SELECT other_text FROM " . DBPRE . "formulize_other, " . DBPRE . "formulize WHERE " . DBPRE . "formulize_other.ele_id=" . DBPRE . "formulize.ele_id AND " . DBPRE . "formulize.ele_handle='" . formulize_db_escape($field) . "' AND " . DBPRE . "formulize_other.id_req='" . intval($entry_id) . "' LIMIT 0,1");
-		//$value_other = _formulize_OPT_OTHER . $newValueq[0]['other_text'];
-		// removing the "Other: " part...we just want to show what people actually typed...doesn't have to be flagged specifically as an "other" value
-		$value_other = $newValueq[0]['other_text'];
-		$value = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
-	} elseif ($elementArray['ele_uitextshow']) {
-		$value = formulize_swapUIText($value, unserialize($elementArray['ele_uitext']));
-	}
-
-
 
 	$valueToReturn = "";
-	if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/" . $type . "Element.php")) {
-		$elementTypeHandler = xoops_getmodulehandler($type . "Element", "formulize");
-		$preppedValue = $elementTypeHandler->prepareDataForDataset($value, $field, $entry_id);
-		if (!is_array($preppedValue)) {
-			$valueToReturn = array($preppedValue);
-		} else {
-			$valueToReturn = $preppedValue;
-		}
-	}
-
-
-	if (!$valueToReturn) {
-		$valueToReturn = explode("*=+*:", $value);
+	$elementTypeHandler = xoops_getmodulehandler($type . "Element", "formulize");
+	$preppedValue = $elementTypeHandler->prepareDataForDataset($value, $handle, $entry_id);
+	if (!is_array($preppedValue)) {
+		$valueToReturn = explode("*=+*:", trim($preppedValue, "*=+*:"));
+	} else {
+		$valueToReturn = $preppedValue;
 	}
 
 	if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
-		$cachedPrepedValues[$original_value][$field][$entry_id][$fk] = $valueToReturn;
+		$cachedPrepedValues[$original_value][$handle][$entry_id][$fk] = $valueToReturn;
 	}
 	return $valueToReturn;
 }
@@ -665,8 +681,6 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					continue;
 				}
 
-
-
 				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 				if (($joinHandles[$linkselfids[$id]] and $joinHandles[$linktargetids[$id]]) or ($linkselfids[$id] == '' and $linktargetids[$id] == '')) {
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
@@ -749,7 +763,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 			if ($sortFieldMetaData['ele_encrypt']) {
 				$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '" . getAESPassword() . "')"; // sorts as text, which will screw up number fields
-			} elseif (formulize_isLinkedSelectBox($sortField, true)) {
+			} elseif (formulize_isLinkedElement($sortField)) {
 				$ele_value = unserialize($sortFieldMetaData['ele_value']);
 				$boxproperties = explode("#*=:*", $ele_value[2]);
 				$target_fid = $boxproperties[0];
@@ -955,6 +969,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	//   print "<br>";
 	//}
 	//}
+
 	formulize_benchmark("Before query");
 
 	if (count((array) $linkformids) > 1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
@@ -1064,14 +1079,14 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 
 	if ($linkcommonvalue[$linkOrdinal]) { // common value
 		$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "`";
-	} elseif ($linktargetids[$linkOrdinal]) { // linked selectbox
+	} elseif ($linktargetids[$linkOrdinal]) { // linked element
 		// set some values to use for figuring out the comparison of things in a sec...
 		$mainBoxProperties = array('', '');
 		$targetBoxProperties = array('', '');
-		if ($main_ele_value = formulize_isLinkedSelectBox($linkselfids[$linkOrdinal])) {
+		if ($main_ele_value = formulize_isLinkedElement($linkselfids[$linkOrdinal])) {
 			$mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
 		}
-		if ($target_ele_value = formulize_isLinkedSelectBox($linktargetids[$linkOrdinal])) {
+		if ($target_ele_value = formulize_isLinkedElement($linktargetids[$linkOrdinal])) {
 			$targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
 		}
 		// if the target is the link, or they're both links and the target is pointing to the main
@@ -1079,7 +1094,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 			or ($target_ele_value and $main_ele_value and $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])
 		) {
 		    $metaData = formulize_getElementMetaData($joinHandles[$linktargetids[$linkOrdinal]], isHandle: true);
-			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox') {
+			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked') {
 				// multiple values allowed
 				$newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
 			} else {
@@ -1091,7 +1106,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 			or ($main_ele_value and $target_ele_value and $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])
 		) {
 		    $metaData = formulize_getElementMetaData($joinHandles[$linkselfids[$linkOrdinal]], isHandle: true);
-			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox') {
+			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked') {
 				// multiple values allowed
 				$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
 			} else {
@@ -1754,18 +1769,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							}
 							$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
 							$ele_value = unserialize($queryElementMetaData['ele_value']);
-							if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox' or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
+							$cleanSearchTerm = convertStringToUseSpecialCharsToMatchDB($ifParts[1]);
+							if ($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkboxLinked' or (($ele_value[0] > 1 or $ele_value[8]) and $ele_value[1])) { // if checkbox, or a selectbox where the element supports multiple selections [1], and number of rows is greater than 1 [0], or it is an autocomplete element [8]
 								if (is_numeric($ifParts[1])) {
 									$operator = "=";
 									$quotes = "";
 									$likebits = "";
 									$search_column = "source.`entry_id`";
 								}
-								$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE (
-									$queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%') OR $queryElement LIKE CONCAT(source.entry_id,',%') OR $queryElement LIKE CONCAT('%,',source.entry_id)
-									) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+								$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE ($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%')) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
 							} else {
-								$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
+								$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
 							}
 						}
 					}
@@ -1806,65 +1820,24 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// check if there's any conversion necessary from what the user typed into a special value that will work in the database
 					$searchTerm = $ifParts[1];
 					$searchTermToUse = "";
-					if (file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/" . $formFieldFilterMap[$mappedForm][$element_id]['ele_type'] . "Element.php")) {
-						$customTypeHandler = xoops_getmodulehandler($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] . "Element", 'formulize');
-						if (trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") {
-							$searchTerm = $customTypeHandler->prepareLiteralTextForDB($ifParts[1], $customTypeHandler->get($element_id), true); // true means partial matching is in effect
-							if (is_array($searchTerm) and count($searchTerm) > 1) { // method has returned a list of complete values in the database that match the term, so we need to construct an OR series to match this value in the database
-								$searchTermToUse = " (";
-								$start = true;
-								foreach ($searchTerm as $thisTerm) {
-									if (!$start) {
-										$searchTermToUse .= " OR ";
-									}
-									$searchTermToUse .= "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($thisTerm) . $likebits . $quotes;
-									$start = false;
+					$searchTerm = prepareLiteralTextForDB($element_id, $searchTerm, partialMatch: (trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE"));
+					if (trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") {
+						if (is_array($searchTerm) and count($searchTerm) > 1) { // method has returned a list of complete values in the database that match the term, so we need to construct an OR series to match this value in the database
+							$searchTermToUse = " (";
+							$start = true;
+							foreach ($searchTerm as $thisTerm) {
+								if (!$start) {
+									$searchTermToUse .= " OR ";
 								}
-								$searchTermToUse .= ") ";
-							} elseif (is_array($searchTerm)) {
-								$searchTerm = $searchTerm[0];
+								$searchTermToUse .= "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($thisTerm) . $likebits . $quotes;
+								$start = false;
 							}
-						} else {
-							$searchTerm = $customTypeHandler->prepareLiteralTextForDB($ifParts[1], $customTypeHandler->get($element_id));
+							$searchTermToUse .= ") ";
 						}
-
-						// check if the element is a radio button or selectbox or checkbox series that uses the pipe character
-						// if so, check if the list uses the human readable version (and only the DB has the data values)
-						// if so, then let's look in the list of possible values for this element, and convert what the user typed to the right data value
-					} elseif (($formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'radio'
-							or $formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'select'
-							or $formFieldFilterMap[$mappedForm][$element_id]['ele_type'] == 'checkbox')
-						and $formFieldFilterMap[$mappedForm][$element_id]['ele_uitextshow']
-					) {
-						$thisElementUITexts = $formFieldFilterMap[$mappedForm][$element_id]['ele_uitext']; // unserialized when assigned to the map in formulize_mapFormFieldFilter
-						// if there's an actual value for the first UI text key, then we must have some real UI text, not just an empty array which happens when there's nothing
-						if (
-							is_array($thisElementUITexts)
-							and count($thisElementUITexts) > 0
-							and $thisElementUITexts[array_key_first($thisElementUITexts)]
-						) {
-							foreach ($thisElementUITexts as $thisDBValue => $thisUIText) {
-								switch ($operator) {
-									case '=':
-										if ($thisUIText == $searchTerm) {
-											$searchTerm = $thisDBValue;
-											break 2; // Break out of the foreach
-										}
-									default:
-										if ($searchTerm and stristr($thisUIText, $searchTerm) !== false) {
-											$searchTerm = $thisDBValue;
-											break 2; // Break out of the foreach
-										}
-								}
-							}
-						}
-
-						// do any other prep of search terms to match DB values if necessary
-						// this is a nasty safety net for now. It's safe to run the search term through this even though this function has cases for types of elements already handled
-						// because since they're already handled, no double-processing will happen that could mangle the strings.
-						// As all elements become their own classes, this case will be redundant and we can get rid of the ugly spaghetti here
-					} else {
-						$searchTerm = prepareLiteralTextForDB($element_id, $searchTerm);
+					}
+					// default to the first element if we get multiple matches... multiple matches should only be happening when there's a partial match caused by the LIKE and NOT LIKE operators which would be caught above
+					if (is_array($searchTerm)) {
+						$searchTerm = $searchTerm[0];
 					}
 
 					// if we got a value to search for...
@@ -2043,12 +2016,12 @@ function formulize_mapFormFieldFilter($element_id, $formFieldFilterMap)
 			$formFieldFilterMap[$array['id_form']][$element_id]['islinked'] = false;
 		}
 		$formFieldFilterMap[$array['id_form']][$element_id]['isyn'] = $array['ele_type'] == "yn" ? true : false;
-		if (($array['ele_type'] == "radio" or $array['ele_type'] == "checkbox") and strstr($array['ele_value'], "{OTHER|")) {
+		if (($array['ele_type'] == "radio" OR $array['ele_type'] == "checkbox" OR anySelectElementType($array['ele_type'])) AND strstr($array['ele_value'], "{OTHER|")) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = true;
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['hasother'] = false;
 		}
-		if ($array['ele_type'] == "select" and (strstr($array['ele_value'], "{FULLNAMES}") or strstr($array['ele_value'], "{USERNAMES}"))) {
+		if (anySelectElementType($array['ele_type']) and (strstr($array['ele_value'], "{FULLNAMES}") or strstr($array['ele_value'], "{USERNAMES}"))) {
 			$formFieldFilterMap[$array['id_form']][$element_id]['isnamelist'] = strstr($array['ele_value'], "{FULLNAMES}") ? "{FULLNAMES}" : "{USERNAMES}";
 		} else {
 			$formFieldFilterMap[$array['id_form']][$element_id]['isnamelist'] = false;
@@ -2084,23 +2057,21 @@ function formulize_getElementHandleFromID($element_id)
 	return isset($cachedHandles[$element_id]) ? $cachedHandles[$element_id] : false;
 }
 
-// takes element ID, or handle (second param indicates if it's a handle or not)
-// returns the ele_value array for this element if it is linked
-// does not return the link if the values are snapshotted
-function formulize_isLinkedSelectBox($elementOrHandle, $isHandle = false)
-{
-	static $cachedElements = array();
-	if (!isset($cachedElements[$elementOrHandle])) {
-		$cachedElements[$elementOrHandle] = false; // default to false
-		$evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
-		if (strstr($evqRow['ele_value'], "#*=:*")) {
-			$ele_value = unserialize($evqRow['ele_value']);
-			if (!isset($ele_value['snapshot']) or !$ele_value['snapshot']) {
-				$cachedElements[$elementOrHandle] = $ele_value; // linked element that is not a snapshot, yay!
-			}
+/**
+ * Gets the ele_value property of the element passed to it, if and only if that element is a linked element, and not a snapshot element.
+ * @param int|string element id or handle
+ * @return bool|array Returns the ele_value property (an array) of the element, or false if the element is invalid or not a linked element and not a snapshot element
+ */
+function formulize_isLinkedElement($elementIdOrHandle) {
+	$isHandle = is_numeric($elementIdOrHandle) ? false : true;
+	$evqRow = formulize_getElementMetaData($elementIdOrHandle, $isHandle);
+	if (strstr($evqRow['ele_value'], "#*=:*")) {
+		$ele_value = unserialize($evqRow['ele_value']);
+		if (!isset($ele_value['snapshot']) OR !$ele_value['snapshot']) {
+			return $ele_value; // linked element that is not a snapshot, yay!
 		}
 	}
-	return $cachedElements[$elementOrHandle];
+	return false;
 }
 
 // This function returns true or false depending on whether an element is a multiselect selectbox or checkboxes
@@ -2110,9 +2081,9 @@ function formulize_elementAllowsMultipleSelections($elementOrHandle, $isHandle =
 	static $cachedElements = array();
 	if (!isset($cachedElements[$elementOrHandle])) {
 		$evqRow = formulize_getElementMetaData($elementOrHandle, $isHandle);
-		if ($evqRow['ele_type'] == 'checkbox') {
+		if ($evqRow['ele_type'] == 'checkbox' OR $evqRow['ele_type'] == 'checkboxLinked') {
 			$cachedElements[$elementOrHandle] = true;
-		} elseif ($evqRow['ele_type'] == 'select') {
+		} elseif (anySelectElementType($evqRow['ele_type'])) {
 			$ele_value = unserialize($evqRow['ele_value']);
 			$cachedElements[$elementOrHandle] = ($ele_value[1] == 1) ? true : false;
 		} else {

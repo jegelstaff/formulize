@@ -22,12 +22,12 @@ define("_AM_ELE_CAPTION","Caption");
 define("_AM_ELE_CAPTION_DESC","<br /></b>{SEPAR} permit you to not display the element name");
 define("_AM_ELE_DEFAULT","Default value");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contents of the left side");
-define("_AM_ELE_LEFTRIGHT_DESC","Any text or HTML code that you type here will appear on the left beside the caption.  You can use PHP code instead of text or HTML, just make sure it contains '&#36;value = &#36;something;' and Formulize will read this text as PHP code.");
+define("_AM_ELE_TEXTFORDISPLAY_DESC","You can type plain text, HTML, or PHP.<br><br>In text and HTML, you can include the values from other elements in this form using {element_handle}, ie: by putting the element handle inside curly brackets. Basic HTML styling is supported for these tags: &lt;h1> through &lt;h4>, &lt;p>, &lt;ol>, &lt;ul>, &lt;li>, and &lt;blockquote>.<br><br>You can use PHP code instead of text or HTML by putting a PHP open tag at the top (ie: &lt;?php ) and including '&#36;value = &#36;something;' in the code. You can use getValue(\$entry, \$dataHandle) to access information saved in the active entry. You can use \$entry_id to get the entry id number of the active entry in the database.");
 define("_AM_ELE_DESC","Descriptive text");
 define("_AM_ELE_DESC_HELP","Whatever you type in this box will appear below the caption, just like this text does.");
 define("_AM_ELE_COLHEAD","Column Heading (optional)");
 define("_AM_ELE_COLHEAD_HELP","If you specify a column heading, then this text will be used instead of the caption, on the <b>List of Entries</b> screen.  This is useful if the caption is very long, or if you want the captions written from a user point of view, and the column headings written from a report-consumer point of view.");
-define("_AM_ELE_HANDLE","Data handle (optional)");
+define("_AM_ELE_HANDLE","Element handle (optional)");
 define("_AM_ELE_HANDLE_HELP","You can specify a short name for this element.  The short name will be used by the database when storing information.  If you leave this blank, the element ID number will be used.");
 define("_AM_ELE_DETAIL","Detail");
 define("_AM_ELE_REQ","Required");
@@ -35,7 +35,7 @@ define("_AM_ELE_ORDER","Order");
 define("_AM_ELE_DISPLAY","Display this element to these groups");
 //define("_AM_ELE_DISPLAYLIST","Display this element to these groups, in the list of entries");
 define("_AM_ELE_PRIVATE","Private");
-define("_AM_ELE_HANDLE_HEADING","Data handle/ID");
+define("_AM_ELE_HANDLE_HEADING","Element handle/ID");
 define("_AM_ELE_TYPE_HEADING","Type");
 define("_AM_ELE_DISPLAY_HEADING","Display");
 
@@ -44,8 +44,8 @@ define("_AM_ELE_TEXT","Text box");
 define("_AM_ELE_TEXT_DESC","{NAME} will print full name;<br />{UNAME} will print user name;<br />{EMAIL} will print user email;<br />{ID} will cause the entry ID number of the entry to be inserted into the textbox, when the entry is first saved.<br />{SEQUENCE} will cause the values in the box to be a series of consecutive numbers.<br />PHP Code (ending with the line '&#36;default = &#36;something;') will be interpreted to generate the default value.");
 define("_AM_ELE_TEXT_DESC2","<br />PHP Code is the only situation where more than one line of this box will be read.");
 define("_AM_ELE_TAREA","Text area");
-define("_AM_ELE_MODIF","Text for display (left and right cells)");
-define("_AM_ELE_MODIF_ONE","Text for display (spanning both cells)");
+define("_AM_ELE_MODIF","Text for display (caption and contents)");
+define("_AM_ELE_MODIF_ONE","Text for display (spanning the form)");
 define("_AM_ELE_INSERTBREAK","HTML content for this line:");
 define("_AM_ELE_IB_DESC","The caption will not display.  Only the text in this box will appear on screen, in a single row spanning both columns of the form.");
 define("_AM_ELE_IB_CLASS","CSS class for the row:");
@@ -76,15 +76,14 @@ define("_AM_ELE_TYPE_STRING","Anything");
 define("_AM_ELE_TYPE_NUMBER","Numbers Only");
 // added - end - August 22 2005 - jpc
 
-
 define("_AM_ELE_SIZE","Size");
 define("_AM_ELE_MAX_LENGTH","Maximum length");
 define("_AM_ELE_ROWS","Rows");
 define("_AM_ELE_COLS","Columns");
 define("_AM_ELE_OPT","Options");
-define("_AM_ELE_OPT_DESC","Setting a single option of '{FULLNAMES}' or '{USERNAMES}' will produce a list of users based on the group limits set below.<br /><br />Tick the check boxes for selecting default values");
+define("_AM_ELE_OPT_DESC","Tick the check boxes for selecting default values");
 define("_AM_ELE_OPT_DESC_CHECKBOXES","Tick the check boxes for selecting default values<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
-define("_AM_ELE_OPT_DESC1","<br />Only the first check is used if multiple selection is not allowed");
+define("_AM_ELE_OPT_DESC1","");
 define("_AM_ELE_OPT_DESC2","Select the default value by checking the radio buttons<br>Boxes with no text in them will be ignored when you click <i>Save</i>");
 define("_AM_ELE_OPT_UITEXT", "The text visible to the user can be different from what is stored in the database.  This is useful if you want to have numbers saved in the database, but text visible to the user so they can make their selection.  To do this, use the \"pipe\" character (usually above the Enter key) like this:  \"10|It has been 10 days since I visited this website\"");
 define("_AM_ELE_ADD_OPT","Add %s options");
@@ -143,7 +142,7 @@ define("_AM_ELE_SUBFORM_REFRESH", "Refresh elements list to match selected form"
 define("_AM_ELE_SUBFORM_BLANKS", "How many blank spaces should be shown for this subform when the page first loads?");
 
 // grids
-define("_AM_ELE_GRID", "Table of existing elements");
+define("_AM_ELE_GRID", "Table of elements");
 define("_AM_ELE_GRID_HEADING", "What text should appear as the heading for this table?");
 define("_AM_ELE_GRID_HEADING_USE_CAPTION", "The caption typed above");
 define("_AM_ELE_GRID_HEADING_USE_FORM", "The title of this form");
@@ -313,7 +312,7 @@ define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of th
 define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
 define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL for the link users get at the end of the form");
 define("_AM_FORMULIZE_SCREEN_BUTTONTEXT", "The text of the link users get at the end of the form");
-define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable View - All Pages' button available at the end of the form"); //nmc 2007.03.24
+define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable Version - All Pages' button available at the end of the form"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Yes"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_PRINTALL_N", "No"); //nmc 2007.03.24
 define("_AM_FORMULIZE_DELETE_THIS_PAGE", "Delete this page");
@@ -465,4 +464,5 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_VALUE", "Use what value?");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace the current value with the specified value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
-?>
+
+include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

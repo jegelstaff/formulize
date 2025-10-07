@@ -167,9 +167,11 @@ function importCsvSetup(&$importSet, $pkColumn=false) {
                         $mapIndex = $element;
 
                         // links?
-                        switch($form_elementsq[$element]["ele_type"]) {
+												$switchEleType = anySelectElementType($form_elementsq[$element]["ele_type"]) ? "select" : $form_elementsq[$element]["ele_type"];
+        								switch ($switchEleType) {
                             case "select":
 														case "checkbox":
+														case "checkboxLinked":
                                 $ele_value = unserialize($form_elementsq[$element]["ele_value"]);
                                 $options = $ele_value[2];
 
@@ -333,7 +335,8 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 												}
 
                         // check columns from form
-                        switch($element["ele_type"]) {
+                        $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+        								switch ($switchEleType) {
                             case "select":
                                 $ele_value = unserialize($element["ele_value"]);
                                 if (isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
@@ -490,6 +493,7 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 
 
                             case "checkbox":
+														case "checkboxLinked":
 
 															$ele_value = unserialize($element["ele_value"]);
 														if (isset($importSet[5][1][$link]) AND !strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
@@ -785,7 +789,8 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                     }
 
                     if ($row_value != "") {
-                        switch($element["ele_type"]) {
+                        $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+        								switch ($switchEleType) {
 
                             case "derived":
                                 break; // ignore derived values for importing
@@ -944,6 +949,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
 
                             case "checkbox":
+														case "checkboxLinked":
 															$ele_value = unserialize($element["ele_value"]);
 															if ($importSet[5][1][$link] AND !strstr($row_value, ",")
 																	AND (!is_numeric($row_value) OR $row_value < 10000000))
@@ -1329,7 +1335,8 @@ function importCsvDebug(& $importSet) {
                 $element["ele_type"];
             $output .= "<td>";
 
-            switch($element["ele_type"]) {
+            $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
+        		switch ($switchEleType) {
                 case "select":
                     $ele_value = unserialize($element["ele_value"]);
                     $options = $ele_value[2];
@@ -1358,6 +1365,7 @@ function importCsvDebug(& $importSet) {
                     break;
 
                 case "checkbox":
+								case "checkboxLinked":
                     $options = unserialize($element["ele_value"]);
 
                     if (is_array($options)) {

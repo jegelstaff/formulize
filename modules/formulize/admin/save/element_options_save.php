@@ -27,35 +27,34 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
-// $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
-if(!function_exists("formulize_extractUIText")) {
-function formulize_extractUIText($values) {
-	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-	// values are the text that was typed in
-	// keys should remain unchanged
-	$uitext = array();
-	foreach($values as $key=>$value) {
-		//print "<br>original value: $value<br>";
-		//print "key: $key<br>";
-		if(strstr($value, "|") AND substr(trans($value), 0, 7) != "{OTHER|") { // check for the pressence of the uitext deliminter, the "pipe" character
-			$pipepos = strpos($value, "|");
-			//print "pipe found: $pipepos<br>";
-			$uivalue = substr($value, $pipepos+1);
-			//print "uivalue: $uivalue<br>";
-			$value = substr($value, 0, $pipepos);
-			//print "value: $value<br>";
-			$values[$key] = $value;
-			$uitext[$value] = $uivalue;
-		} else {
-			$values[$key] = $value;
-		}
-	}
-	return array(0=>$values, 1=>$uitext);
-}
-}
-
 // this file handles saving of submissions from the element options page of the new admin UI
+
+if(!function_exists("figureOutOrder")) {
+function figureOutOrder($orderChoice, $oldOrder, $fid) {
+	global $xoopsDB;
+	if($orderChoice === "bottom") {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+	  $res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+	} elseif($orderChoice === "top") {
+		$orderChoice = 0;
+	} else {
+		// convert the orderpref from the element ID to the order
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['ele_order'];
+	}
+	$orderValue = $orderChoice + 1;
+	if($oldOrder != $orderValue) {
+		// and we need to reorder all the elements equal to and higher than the current element
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	}
+	return $orderValue;
+}
+}
 
 // if we aren't coming from what appears to be save.php, then return nothing
 if(!isset($processedValues)) {
@@ -88,10 +87,6 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-if($ele_type == "textarea" AND $_POST['formlink'] != "none") {
-  $processedValues['elements']['ele_value'][3] = $_POST['formlink'];
-}
-
 if($_POST['element_delimit']) {
   if($_POST['element_delimit'] == "custom") {
     $processedValues['elements']['ele_delim'] = $_POST['element_delim_custom'];
@@ -99,216 +94,23 @@ if($_POST['element_delimit']) {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }
 }
-if($ele_type == "date" AND $processedValues['elements']['ele_value'][0] != _DATE_DEFAULT AND $processedValues['elements']['ele_value'][0] != "") { // still checking for old YYYY-mm-dd string, just in case.  It should never be sent back as a value now, but if we've missed something and it is sent back, leaving this check here ensures it will properly be turned into "", ie: no date.
-	if(preg_replace("/[^A-Z{}]/","", $processedValues['elements']['ele_value'][0]) === "{TODAY}") {
-	  $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0];
-	} elseif(substr($processedValues['elements']['ele_value'][0], 0, 1) !='{' OR substr($processedValues['elements']['ele_value'][0], -1) !='}') {
-	  $processedValues['elements']['ele_value'][0] = date("Y-m-d", strtotime($processedValues['elements']['ele_value'][0]));
-	}
-} elseif($ele_type == "date") {
-	$processedValues['elements']['ele_value'][0] = "";
-}
-if($ele_type == "yn") {
-  if($_POST['elements_ele_value'] == "_YES") {
-    $processedValues['elements']['ele_value']['_YES'] = 1;
-    $processedValues['elements']['ele_value']['_NO'] = 0;
-  } elseif($_POST['elements_ele_value'] == "_NO") {
-    $processedValues['elements']['ele_value']['_YES'] = 0;
-    $processedValues['elements']['ele_value']['_NO'] = 1;
-  } else {
-    $processedValues['elements']['ele_value']['_YES'] = 0;
-    $processedValues['elements']['ele_value']['_NO'] = 0;
-  }
-}
-if($ele_type == "subform") {
 
-    if(!isset($processedValues['elements']['ele_value']['show_delete_button'])) {
-        $processedValues['elements']['ele_value']['show_delete_button'] = 0;
-    }
-    if(!isset($processedValues['elements']['ele_value']['show_clone_button'])) {
-        $processedValues['elements']['ele_value']['show_clone_button'] = 0;
-    }
-
-    if(!isset($processedValues['elements']['ele_value']['enforceFilterChanges'])) {
-        $processedValues['elements']['ele_value']['enforceFilterChanges'] = 0;
-    }
-
-  if(!$_POST['elements-ele_value'][3]) {
-    $processedValues['elements']['ele_value'][3] = 0;
-  }
-  // handle the "start" value, formerlly the blanks value (ele_value[2])
-  // $_POST['subform_start'] will be 'empty', 'blanks', or 'prepop'
-  // We need to set ele_value[2] to be the appropriate number of blanks
-  // We need to set ele_value[subform_prepop_element] to be the element id of the element prepops are based on
-  switch($_POST['subform_start']) {
-    case "blanks":
-        $processedValues['elements']['ele_value'][2] = intval($_POST['number_of_subform_blanks']);
-        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
-        break;
-    case "prepop":
-        $processedValues['elements']['ele_value'][2] = 0;
-        $processedValues['elements']['ele_value']['subform_prepop_element'] = intval($_POST['subform_start_prepop_element']);
-        break;
-    default:
-        // implicitly case 'empty'
-        $processedValues['elements']['ele_value'][2] = 0;
-        $processedValues['elements']['ele_value']['subform_prepop_element'] = 0;
-        break;
-
-  }
-  $processedValues['elements']['ele_value'][1] = implode(",",(array)$_POST['elements_ele_value_1']);
-  $processedValues['elements']['ele_value']['disabledelements'] = (isset($_POST['elements_ele_value_disabledelements']) AND count((array) $_POST['elements_ele_value_disabledelements']) > 0) ? implode(",",$_POST['elements_ele_value_disabledelements']) : array();
-  list($processedValues['elements']['ele_value'][7], $_POST['reload_option_page']) = parseSubmittedConditions('subformfilter', 'optionsconditionsdelete'); // post key, delete key
-}
-
-if($ele_type == "radio") {
-  $checked = is_numeric($_POST['defaultoption']) ? intval($_POST['defaultoption']) : "";
-  list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
-  foreach($_POST['ele_value'] as $id=>$text) {
-		if($text !== "") {
-			$processedValues['elements']['ele_value'][$text] = intval($id) === $checked ? 1 : 0;
-		}
-  }
-}
-
-if($ele_type == "select") {
-  $ele_value = $element->getVar('ele_value');
-
-  if(isset($_POST['formlink']) AND $_POST['formlink'] != "none") {
-    // select box is not currently linked and user is requesting to link (as long as it's not the first save of the element)
-    if ($_POST['formulize_admin_key'] != 'new' AND !$element->isLinked) {
-      $form_handler->updateField($element, $element->getVar("ele_handle"), "bigint(20)");
-    }
-
-    global $xoopsDB;
-    $sql_link = "SELECT ele_caption, id_form, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id = " . intval($_POST['formlink']);
-    $res_link = $xoopsDB->query($sql_link);
-    $array_link = $xoopsDB->fetchArray($res_link);
-    $processedValues['elements']['ele_value'][2] = $array_link['id_form'] . "#*=:*" . $array_link['ele_handle'];
-		// ensure there is a primary relationship link representing this connection / update existing connection
-    // Get existing linked settings, if any
-		$currentLinkedFormId = 0;
-		$currentLinkedElementId = 0;
-		$currentEleValue = $element->getVar('ele_value');
-		if($element->isLinked) {
-				$currentEleValue2Parts = explode('#*=:*', $currentEleValue[2]);
-				$currentLinkedFormId = $currentEleValue2Parts[0];
-				$currentLinkedElementId = convertElementHandlesToElementIds(array($currentEleValue2Parts[1]));
-				$currentLinkedElementId = $currentLinkedElementId[0];
-		}
-		updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId);
-		if(isset($_POST['makeSubformInterface']) AND $_POST['makeSubformInterface']) {
-			if(makeSubformInterface($array_link['id_form'], $element->getVar('fid'), $element->getVar('ele_id'))) {
-				$_POST['reload_option_page'] = true;
+if($ele_type == "grid") {
+	// position the grid immediately before the first element that's in the grid
+	// have to figure out the preceeding element, then request the figureOutOrder with that element's id
+	global $xoopsDB;
+	$position = 'top';
+	if($firstGridElement = _getElementObject($processedValues['elements']['ele_value'][4])) {
+		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
+		if($res = $xoopsDB->query($sql)) {
+			if($xoopsDB->getRowsNum($res) == 1) {
+				$array = $xoopsDB->fetchArray($res);
+				$position = $array['ele_id'];
 			}
 		}
-	} else {
-    // a user requests to unlink the select box and select box is currently linked
-    if ($_POST['formlink'] == "none" AND $element->isLinked){
-      $form_handler->updateField($element, $element->getVar("ele_handle"), "text");
-			// remove any primary relationship link representing this connection
-			deleteLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
-    }
-    list($_POST['ele_value'], $processedValues['elements']['ele_uitext']) = formulize_extractUIText($_POST['ele_value']);
-    foreach($_POST['ele_value'] as $id=>$text) {
-      if($text !== "") {
-				$processedValues['elements']['ele_value'][2][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
-      }
-    }
-  }
-
-  // gather any additional mappings specified by the user
-  $mappingCounter = 0;
-  $processedValues['elements']['ele_value']['linkedSourceMappings'] = array();
-  foreach($_POST['mappingthisform'] as $key=>$thisFormValue) {
-    if($thisFormValue != 'none' AND $_POST['mappingsourceform'][$key] != 'none') {
-        $thisFormValue = is_numeric($thisFormValue) ? intval($thisFormValue) : $thisFormValue;
-        $processedValues['elements']['ele_value']['linkedSourceMappings'][$mappingCounter] = array('thisForm'=>$thisFormValue, 'sourceForm'=>intval($_POST['mappingsourceform'][$key]));
-        $mappingCounter++;
-    }
-  }
-  if($mappingCounter == 0) { // nothing written
-    $processedValues['elements']['ele_value']['linkedSourceMappings'] = null;
-  }
-
-  $processedValues['elements']['ele_value'][8] = 0;
-  if($_POST['elements_listordd'] == 2) {
-    $processedValues['elements']['ele_value'][0] = 1; // rows is 1
-    $processedValues['elements']['ele_value'][8] = 1; // is autocomplete
-    $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple_auto'];
-  } else if($_POST['elements_listordd']) {
-    $processedValues['elements']['ele_value'][0] = $processedValues['elements']['ele_value'][0] > 1 ? intval($processedValues['elements']['ele_value'][0]) : 1;
-    $processedValues['elements']['ele_value'][1] = $_POST['elements_multiple'];
-  } else {
-    $processedValues['elements']['ele_value'][0] = 1;
-    $processedValues['elements']['ele_value'][1] = 0; // multiple selections not allowed for drop down lists
-  }
-
-  // if there is a change to the multiple selection status, need to adjust the database!!
-  if ((
-      ($processedValues['elements']['ele_value'][8] == 0 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple'])
-      OR ($processedValues['elements']['ele_value'][8] == 1 AND isset($ele_value[1]) AND $ele_value[1] != $_POST['elements_multiple_auto'])
-      ) AND !$ele_value['snapshot']) {
-    if ($ele_value[1] == 0) {
-      $result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
-    } else {
-      $result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $ele_id);
-    }
-    if (!$result) {
-       print "Could not convert select boxes from multiple options to single option or vice-versa.";
-    }
-  }
-  $processedValues['elements']['ele_value'][3] = implode(",", $_POST['element_formlink_scope']);
-
-	list($processedValues['elements']['ele_value'][5], $formLinkFilterChanged) = parseSubmittedConditions('formlinkfilter', 'optionsconditionsdelete');
-  list($processedValues['elements']['ele_value']['optionsLimitByElementFilter'], $optionsLimitChanged) = parseSubmittedConditions('optionsLimitByElementFilter', 'optionsLimitByElementFilterDelete');
-	$_POST['reload_option_page'] = ($formLinkFilterChanged OR $optionsLimitChanged OR $_POST['reload_option_page']) ? true : false;
-
-  /**newly added for autocomplete box to make sure when {USERNAMES} and {FULLNAMES} are selected, system will not allow new entries to be added
-    *ele_value[8] ==1 will make sure it's an autocomplete box
-    *ele_value[16]=0 means say no match found,
-    *	       1 means add as new entry.
-    *
-    *when $processedValues['elements']['ele_value'][2]['{USERNAMES}'] = 1, that means this one is checked;
-    *	if it's 0, then it's not checked
-    *
-    *this also applys in database: "{USERNAMES}";i:1; as selected;
-    *			       "{USERNAMES}";i:0; for not selected.
-    *
-    *you can use those lines to check the value.
-    *  error_log("usernames: ".print_r($processedValues['elements']['ele_value'][2]['{USERNAMES}']));
-    *  error_log("fullnames: ".print_r($processedValues['elements']['ele_value'][2]['{FULLNAMES}']));
-    *
-    *Added by Jinfu MAR 2015
-    */
-
-    if($processedValues['elements']['ele_value'][8] == 1 && is_array($processedValues['elements']['ele_value'][2]) &&
-       (isset($processedValues['elements']['ele_value'][2]['{USERNAMES}']) || isset($processedValues['elements']['ele_value'][2]['{FULLNAMES}']))) {
-      $processedValues['elements']['ele_value'][16]=0;
-  }
-}
-
-// check to see if we should be reassigning user submitted values, and if so, trap the old ele_value settings, and the new ones, and then pass off the job to the handling function that does that change
-// SHOULD BE MOVED INSIDE CUSTOM ELEMENT CLASS FILES?
-if(isset($_POST['changeuservalues']) AND $_POST['changeuservalues']==1) {
-  include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-  $data_handler = new formulizeDataHandler($fid);
-	$newValues = array();
-  switch($ele_type) {
-    case "radio":
-      $newValues = $processedValues['elements']['ele_value'];
-      break;
-    case "select":
-      $newValues = $processedValues['elements']['ele_value'][2];
-      break;
-  }
-	if(!empty($newValues)) {
-  	if(!$changeResult = $data_handler->changeUserSubmittedValues($ele_id, $newValues)) {
-    	print "Error updating user submitted values for the options in element $ele_id";
-  	}
 	}
+	$processedValues['elements']['ele_order'] = figureOutOrder($position, $element->getVar('ele_order'), $fid);
 }
-
 
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";

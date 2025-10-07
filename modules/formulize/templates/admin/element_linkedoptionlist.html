@@ -1,17 +1,20 @@
 <div class="form-item">
 	<fieldset>
 		<legend>What is the source of the options the user can choose from?</legend>
-		<div class="form-radios">
-			<label for="yes"><input type="radio" id="yes" name="linked_yesno" value="1"<{if $content.islinked eq 1}> checked="checked"<{/if}>/> The values that people have entered in another form element</label>
-		</div>
-		<div class="form-radios">
-			<label for="no"><input type="radio" id="no" name="linked_yesno" value="0"<{if $content.islinked eq 0}> checked="checked"<{/if}>/> Values from a fixed list of options</label>
-		</div>
-
-		<hr style="margin-top: 1em; margin-bottom: 1em;">
-
-		<div id="linkedSourceOptions" <{if $content.islinked != 1}>style="display: none;"<{/if}>>
+		<div id="linkedSourceOptions">
 			<{$content.linkedoptions}>
+
+			<{if $content.type == "listbox" OR $content.type == "listboxLinked" OR $content.type == "listboxUsers" OR $content.type == "autocomplete" OR $content.type == "autocompleteLinked" OR $content.type == "autocompleteUsers"}>
+				<br>
+				<br>
+				<{include file="db:admin/element_multiple_onoff.html"}>
+			<{/if}>
+
+			<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>
+				<br>
+				<{include file="db:admin/element_autocomplete_allownew.html"}>
+			<{/if}>
+
 			<div class="form-radios" id="snapshot-values" style="padding-top: 1em;">
 				<label for="snapshot-0"><input type="radio" id="snapshot-0" name="elements-ele_value[snapshot]" value=0 checked> When people select a value, save a reference to the source</label><br>
 				<label for="snapshot-1"><input type="radio" id="snapshot-1" name="elements-ele_value[snapshot]" value=1> When people select a value, save a snapshot of the value</label>
@@ -26,20 +29,18 @@
 					<p>For example, imagine an Activity Log that contains a linked list of all the activities in the log. When you're editing an entry, should the list contain the activity you're editing or not?</p>
 				</div>
 			</div>
-			<div class="form-radios">
-			<{if $content.subformInterfaceAdminUrl}>
-				<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
-			<{elseif $content.type == "select"}>
-				<p><label for="makeSubformInterface"><input type="checkbox" id="makeSubformInterface" name="makeSubformInterface" clearAfterSave=1 value=1> Create a Subform interface for the <i><{$content.formTitle}></i> form inside the other form?</label></p>
-				<div class="description">
-					<p>If you check this option, a Subform interface will be created <b>in the source form</b> (not this form). A Subform interface allows users to interact with the linked entries from this form, inside the other form. You can control when and how the Subform interface shows up for users, just like any other element. If a Subform interface for <b><{$content.formTitle}></b> already exists in the other form, then this option will have no effect.</p>
+			<{if $content.type == "selectLinked" OR $content.type == "listboxLinked" OR $content.type == "autocompleteLinked" OR $content.type == "checkboxLinked"}>
+				<div class="form-radios">
+				<{if $content.subformInterfaceAdminUrl}>
+					<p><a href="<{$content.subformInterfaceAdminUrl}>" target="_blank">Open the Configuration page for the Subform interface</a></p>
+				<{else}>
+					<p><label for="makeSubformInterface"><input type="checkbox" id="makeSubformInterface" name="makeSubformInterface" clearAfterSave=1 value=1> Create a Subform interface for the <i><{$content.formTitle}></i> form inside the other form?</label></p>
+					<div class="description">
+						<p>If you check this option, a Subform interface will be created <b>in the source form</b> (not this form). A Subform interface allows users to interact with the linked entries from this form, inside the other form. You can control when and how the Subform interface shows up for users, just like any other element. If a Subform interface for <b><{$content.formTitle}></b> already exists in the other form, then this option will have no effect.</p>
+					</div>
+				<{/if}>
 				</div>
 			<{/if}>
-			</div>
-		</div>
-
-		<div id="fixedListOptions" <{if $content.islinked == 1}>style="display: none;"<{/if}>>
-			<{include file="db:admin/element_optionlist.html"}>
 		</div>
 	</fieldset>
 </div>

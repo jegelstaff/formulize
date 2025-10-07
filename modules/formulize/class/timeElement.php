@@ -34,64 +34,81 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeTimeElement extends formulizeElement {
 
-    function __construct() {
-        $this->name = "Time Selector";
-        $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-        $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-        $this->overrideDataType = "time"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
-        $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
-        parent::__construct();
-    }
+	public static $category = "selectors";
+
+	function __construct() {
+		$this->name = "Time Selector";
+		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
+		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
+		$this->overrideDataType = "time"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
+		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
+		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+		parent::__construct();
+	}
 
 }
 
 #[AllowDynamicProperties]
 class formulizeTimeElementHandler extends formulizeElementsHandler {
 
-    var $db;
-    var $clickable; // used in formatDataForList
-    var $striphtml; // used in formatDataForList
-    var $length; // used in formatDataForList
+	var $db;
+	var $clickable; // used in formatDataForList
+	var $striphtml; // used in formatDataForList
+	var $length; // used in formatDataForList
 
-    function __construct($db) {
-        $this->db =& $db;
-    }
+	function __construct($db) {
+			$this->db =& $db;
+	}
 
-    function create() {
-        return new formulizeTimeElement();
-    }
+	function create() {
+			return new formulizeTimeElement();
+	}
 
-    // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
-    // it receives the element object and returns an array of data that will go to the admin UI template
-    // when dealing with new elements, $element might be FALSE
-    function adminPrepare($element) {
-        $dataToSendToTemplate = array();
-        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-            // no options for the time element yet, many would be possible, there's lot of config for the jquery plugin
-        }
-        return $dataToSendToTemplate;
-    }
+	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
+	// it receives the element object and returns an array of data that will go to the admin UI template
+	// when dealing with new elements, $element might be FALSE
+	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	function adminPrepare($element) {
+		$dataToSendToTemplate = array();
+		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
+			// no options for the time element yet, many would be possible, there's lot of config for the jquery plugin
+		}
+		return $dataToSendToTemplate;
+  }
 
-    // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
-    // this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
-    // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
-    // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
-    // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-    function adminSave($element, $ele_value) {
-        $changed = false;
-        if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-            $element->setVar('ele_value', $ele_value);
-        }
-        return $changed;
-    }
+	// this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
+	// this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
+	// the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
+	// You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
+	// You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
+	// advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	function adminSave($element, $ele_value = array(), $advancedTab = false) {
+		$changed = false;
+		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
+			$element->setVar('ele_value', $ele_value);
+		}
+		return $changed;
+  }
+
+		/**
+		 * Returns the default value for this element, for a new entry in the specified form.
+		 * Determines database ready values, not necessarily human readable values
+		 * @param object $element The element object
+		 * @param int|string $entry_id 'new' or the id of an entry we should use when evaluating the default value - only relevant when determining second pass at defaults when subform entries are written? (which would be better done by comprehensive conditional rendering?)
+		 * @return mixed The default value
+		 */
+		function getDefaultValue($element, $entry_id = 'new') {
+			$ele_value = $element->getVar('ele_value');
+			return interpretTimeElementValue($ele_value[0], $entry_id);
+		}
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
     // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-    // $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $ele_value will contain the options set for this element (based on the admin UI choices set by the user, possibly altered in the adminSave method)
     // $element is the element object
-    function loadValue($value, $ele_value, $element) {
+		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+    // $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+				$ele_value = $element->getVar('ele_value');
         if($value) {
             $ele_value = $value;
         }
@@ -126,10 +143,12 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-    // You can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
-    function prepareDataForSaving($value, $element) {
+	// You can return {WRITEASNULL} to cause a null value to be saved in the database
+	// $value is what the user submitted
+	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+	// $subformBlankCounter is the counter for the subform blank entries, if applicable
+	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         // have to convert this to a 24 hour time for saving
         //$value = $this->convert12To24HourTime($value); // RIGHT NOW THE TIME WIDGET FORCES 24 HOURS ON EVERYONE. THIS IS DONE IN THE JS FILE. SO NO NEED TO CONVERT VALUES.
         if($value == "") { $value = "{WRITEASNULL}"; }
@@ -160,7 +179,8 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
-    function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
         // some conversion here ought to be done to support searching for >1:00PM etc
         return $this->convert12To24HourTime($value);
     }
@@ -170,9 +190,9 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
     // For time elements, you don't need handle or entry id to format stuff
     function formatDataForList($value, $handle="", $entry_id="", $textWidth=100) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 100; // truncate to a maximum of 100 characters, and append ... on the end
+        $this->clickable = false;
+        $this->striphtml = false;
+        $this->length = 0;
 
         $timeParts = explode(":", $value);
         if($timeParts[0]>12) {
