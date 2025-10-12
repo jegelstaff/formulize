@@ -1309,34 +1309,33 @@ private function validateFilter($filter, $andOr = 'AND') {
 	private function writeFormEntry($formId, $entryId, $data, $relationshipId = -1)
 	{
 		$resultEntryId = null;
-		try {
-			// Enhanced input validation
-			if (!is_array($data) || empty($data)) {
-				throw new FormulizeMCPException(
-					'Data must be a non-empty array',
-					'invalid_data'
-				);
-			}
+		// Enhanced input validation
+		if (!is_array($data) || empty($data)) {
+			throw new FormulizeMCPException(
+				'Data must be a non-empty array',
+				'invalid_data'
+			);
+		}
 
-			// Validate form ID
-			if (!is_numeric($formId) || $formId <= 0) {
-				throw new FormulizeMCPException('Form ID must be a positive integer', 'invalid_data');
-			}
-			$formId = intval($formId);
+		// Validate form ID
+		if (!is_numeric($formId) || $formId <= 0) {
+			throw new FormulizeMCPException('Form ID must be a positive integer', 'invalid_data');
+		}
+		$formId = intval($formId);
 
-			// Validate relationship ID
-			if (!is_numeric($relationshipId) || $relationshipId == 0 || $relationshipId < -1) {
-				throw new FormulizeMCPException('Relationship ID must be a positive integer or -1 for the Primary Relationship that includes all connections.', 'invalid_data');
-			}
-			$relationshipId = intval($relationshipId);
+		// Validate relationship ID
+		if (!is_numeric($relationshipId) || $relationshipId == 0 || $relationshipId < -1) {
+			throw new FormulizeMCPException('Relationship ID must be a positive integer or -1 for the Primary Relationship that includes all connections.', 'invalid_data');
+		}
+		$relationshipId = intval($relationshipId);
 
-			// Validate entry ID
-			if ($entryId !== 'new' && (!is_numeric($entryId) || $entryId <= 0)) {
-				throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
-			}
-			if ($entryId !== 'new') {
-				$entryId = intval($entryId);
-			}
+		// Validate entry ID
+		if ($entryId !== 'new' && (!is_numeric($entryId) || $entryId <= 0)) {
+			throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
+		}
+		if ($entryId !== 'new') {
+			$entryId = intval($entryId);
+		}
 
 		// Step 1: Check permissions
 		if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {

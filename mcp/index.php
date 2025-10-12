@@ -3,7 +3,7 @@
 define('FORMULIZE_MCP_REQUEST', 1);
 
 require_once '../mainfile.php';
-include_once XOOPS_ROOT_PATH . '/mcp/mcp.php';
+require_once XOOPS_ROOT_PATH . '/mcp/mcp.php';
 
 // Handle the HTTP request with proper Formulize authentication
 try {
