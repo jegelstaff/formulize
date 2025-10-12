@@ -33,15 +33,18 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
 class formulizeSliderElement extends formulizeElement {
-    function __construct() {
-        $this->name = "Range Slider";
-        $this->hasData = true;
-        $this->needsDataType = false; // should always take integer
-        $this->overrideDataType = 'int';
-        $this->adminCanMakeRequired = true;
-        $this->alwaysValidateInputs = false; // only validate when the admin says it's a required element
-        parent::__construct();
-    }
+
+	public static $category = "selectors";
+
+	function __construct() {
+			$this->name = "Range Slider";
+			$this->hasData = true;
+			$this->needsDataType = false; // should always take integer
+			$this->overrideDataType = 'int';
+			$this->adminCanMakeRequired = true;
+			$this->alwaysValidateInputs = false; // only validate when the admin says it's a required element
+			parent::__construct();
+	}
 
 	/**
 	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
