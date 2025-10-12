@@ -94,16 +94,16 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
 		if(isset($properties['minValue']) AND is_numeric($properties['minValue'])) {
-			$ele_value[1] = $properties['minValue'];
+			$ele_value[0] = $properties['minValue'];
 		}
 		if(isset($properties['maxValue']) AND is_numeric($properties['maxValue'])) {
-			$ele_value[2] = $properties['maxValue'];
+			$ele_value[1] = $properties['maxValue'];
 		}
 		if(isset($properties['stepValue']) AND is_numeric($properties['stepValue'])) {
-			$ele_value[3] = $properties['stepValue'];
+			$ele_value[2] = $properties['stepValue'];
 		}
 		if(isset($properties['defaultValue']) AND is_numeric($properties['defaultValue'])) {
-			$ele_value[4] = $properties['defaultValue'];
+			$ele_value[3] = $properties['defaultValue'];
 		}
 		return [
 			'ele_value' => $ele_value
