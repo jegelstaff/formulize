@@ -345,10 +345,11 @@ test('Test \'Close\' button functionality', async ({ page }) => {
 	await login(page, 'curator1', '12345');
 	await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
 	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
-	await expect(page.getByText('A very lovely')).toBeVisible();
+	await expect(page.getByText('Ancient History')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Short Name' }).fill('Testdfgfdg');
 	page.on('dialog', dialog => dialog.accept());
 	await page.getByRole('button', { name: 'Close' }).click();
+	await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
 	await expect(page.getByText('Roman Coin')).toBeVisible();
 })
 
