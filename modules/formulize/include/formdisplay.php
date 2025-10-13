@@ -1478,7 +1478,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// draw in the submitbutton if necessary
 		if (!$formElementsOnly) {
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $elements_allowed, $allDoneOverride, $printall, $screen);
-    	}
+    }
 
 		$newHiddenElements = array();
 		if(!$formElementsOnly) {
@@ -1656,9 +1656,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 // add the submit button to a form
 function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $cur_entry, $elements_allowed="", $allDoneOverride=false, $printall=0, $screen=null) { //nmc 2007.03.24 - added $printall
 
-    global $xoopsUser;
-    $fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
-    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+	global $xoopsUser;
+	$fid = $fids[key($fids)]; // get first element in array, might not be keyed as 0 :(
+	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+
+	drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
 
 	if($printall == 2) { // 2 is special setting in multipage screens that means do not include any printable buttons of any kind
 		return $form;
@@ -1667,8 +1669,6 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 	if(strstr($currentURL, "printview.php")) { // don't do anything if we're on the print view
 		return $form;
 	}
-
-	drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen);
 
 	$pv_text_temp = _formulize_PRINTVIEW;
 	if(!$button_text OR ($button_text == "{NOBUTTON}" AND $go_back['form'])) { // presence of a goback form (ie: parent form) overrides {NOBUTTON} -- assumption is the save button will not also be overridden at the same time
