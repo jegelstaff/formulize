@@ -254,6 +254,9 @@
 	$('input[name=pi_new_caption]').keyup(function() {
 		$('input[name=pi_new_yes_no][value=yes]').attr('checked', true);
 	});
+	$('input[name=pi_new_caption]').change(function() {
+		$('input[name=pi_new_yes_no][value=yes]').attr('checked', true);
+	});
 
 </script>
 <div style="clear: both"></div>
