@@ -318,7 +318,7 @@ define("_formulize_ADD_HELP3", "Update an entry by changing the values on the ri
 define("_formulize_ADD_HELP4", "Delete an entry by checking the boxes and clicking the button below.");
 define("_formulize_SUBFORM_VIEW", "View");
 define("_formulize_SAVE", "Save");
-define("_formulize_DONE", "All Done");
+define("_formulize_DONE", "Close");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
 
 define("_formulize_INFO_SAVED", "Your information has been saved.");

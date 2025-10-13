@@ -1598,27 +1598,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 		print "<div $idForForm>".$form->render()."</div><!-- end of formulizeform -->"; // note, security token is included in the form by the xoops themeform render method, that's why there's no explicity references to the token in the compiling/generation of the main form object
 
-        // floating save button
-        if($printall != 2 AND isset($formulizeConfig['floatSave']) AND $formulizeConfig['floatSave'] AND !strstr($currentURL, "printview.php") AND !$formElementsOnly){
-            print "<div id=floattest></div>";
-            if( $done_text !="{NOBUTTON}" OR $save_text !="{NOBUTTON}") {
-                print "<div id=floatingsave>";
-                if( $subButtonText == _formulize_SAVE ){
-                    if($save_text) { $subButtonText = $save_text; }
-                    if($subButtonText != "{NOBUTTON}") {
-                        print "<input type='button' name='submitx' id='submitx' class=floatingsavebuttons onclick=javascript:validateAndSubmit(); value='"._formulize_SAVE."' >";
-                        print "<input type='button' name='submit_save_and_leave' id='submit_save_and_leave' class=floatingsavebuttons onclick=javascript:validateAndSubmit('leave'); value='"._formulize_SAVE_AND_LEAVE."' >";
-                    }
-                }
-                if((($button_text != "{NOBUTTON}" AND !$done_text) OR (isset($done_text) AND $done_text != "{NOBUTTON}")) AND !$allDoneOverride){
-                    if($done_text) { $button_text = $done_text_temp; }
-                    print "<input type='button' class=floatingsavebuttons onclick=javascript:verifyDone(); value='"._formulize_DONE."' >";
-                }
-                print "</div>";
-            }
-        }
-        // end floating save button
-
 		// if we're in Drupal, include the main XOOPS js file, so the calendar will work if present...
 		// assumption is that the calendar javascript has already been included by the datebox due to no
 		// $xoopsTpl being in effect in Drupal -- this assumption will fail if Drupal is displaying a pageworks
@@ -1783,7 +1762,7 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 	}
 
 	if(isset($save_and_leave_text_temp) AND $save_and_leave_text_temp != "{NOBUTTON}" AND formulizePermHandler::user_can_edit_entry($fid, $uid, $entry)) {
-		// also add in the save and leave button
+		// also add in the save and close button
 		$saveAndLeaveButton = new XoopsFormButton('', 'submit_save_and_leave', trans($save_and_leave_text_temp), 'button');
 		$saveAndLeaveButton->setExtra("onclick=javascript:validateAndSubmit('leave');");
 		$buttontray->addElement($saveAndLeaveButton);
@@ -1818,8 +1797,8 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 		print "<form name=go_parent action=\"$currentURL\" method=post>"; //onsubmit=\"javascript:verifyDone();\" method=post>";
 		print "<input type=hidden name=parent_form value=" . $go_back['form'] . ">";
 		print "<input type=hidden name=parent_entry value=" . $go_back['entry'] . ">";
-        print "<input type=hidden name=parent_page value=" . $go_back['page'] . ">";
-        print "<input type=hidden name=parent_subformElementId value=" . $go_back['subformElementId'] . ">";
+		print "<input type=hidden name=parent_page value=" . $go_back['page'] . ">";
+		print "<input type=hidden name=parent_subformElementId value=" . $go_back['subformElementId'] . ">";
 		print "<input type=hidden name=ventry value=" . $settings['ventry'] . ">";
 		if(is_array($settings)) { writeHiddenSettings($settings, null, array(), array(), $screen, 'forceWrite'); }
 		print "<input type=hidden name=lastentry value=$entry>";
@@ -2166,7 +2145,6 @@ function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $pr
 	$ele_value = $elementObject->getVar('ele_value');
 	// get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 	if($prevEntry) {
-		$dataHandler = new formulizeDataHandler($fid);
 		$ele_value = loadValue($elementObject, $entry_id, $prevEntry);
 	}
 	// get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains validation javascript that we need to add to the form
@@ -2768,17 +2746,18 @@ if(!$nosave) {
 }
 print "   return false;"; // removeEntryLocks calls the go_parent form for us
 print "	}\n";
-print " function removeEntryLocks(action) {\n";
-global $entriesThatHaveBeenLockedThisPageLoad;
-if(count((array) $entriesThatHaveBeenLockedThisPageLoad)>0) {
+print " function removeEntryLocks(action) {
+	jQuery(\"#formulizeform\").animate({opacity:0.4}, 200, \"linear\");\n";
+	global $entriesThatHaveBeenLockedThisPageLoad;
+	if(count((array) $entriesThatHaveBeenLockedThisPageLoad)>0) {
 		print "var killLocks = " . formulize_javascriptForRemovingEntryLocks();
-		print "		killLocks.done(function() { \n";
-		print "			formulize_javascriptForAfterRemovingLocks(action);\n";
-    print "			});\n";
-} else {
-		print "formulize_javascriptForAfterRemovingLocks(action);\n";
-}
-print " }\n";
+		print " 	killLocks.done(function() { \n";
+		print "	    formulize_javascriptForAfterRemovingLocks(action);\n";
+		print "	  });\n";
+	} else {
+			print "formulize_javascriptForAfterRemovingLocks(action);\n";
+	}
+print "}\n";
 
 ?>
 

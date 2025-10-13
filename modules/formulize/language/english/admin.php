@@ -698,9 +698,10 @@ define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>The Thank-you page</b
 define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>The last page with questions</b>, and when the user clicks the \"Save and Finish\" button, they leave the form");
 define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL that users go to when leaving the form (Optional, Formulize will usually set this automatically when the form is displayed, based on where the user came from.  If the last page of the form has questions, then the next page the users go to should be a Formulize page or else the answers to the questions won't be saved)");
 define("_AM_FORMULIZE_SCREEN_THANKYOULINKTEXT", "If the Thank-you page is shown, what should be used as the clickable text for the URL?");
-define("_AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT", "Text for the Save and Leave button");
+define("_AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT", "Text for the Save and Close button");
 define("_AM_FORMULIZE_SCREEN_PREVBUTTONTEXT", "Text for the Save and Go Back button");
 define("_AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT", "Text for the Save button");
+define("_AM_FORMULIZE_SCREEN_CLOSEBUTTONTEXT", "Text for the Close button");
 define("_AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT", "Text for the Save and Continue button");
 define("_AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT", "Text for the Save and Finish button");
 define("_AM_FORMULIZE_SCREEN_PRINTALL", "Make the 'Printable Version - All Pages' button available at the bottom of each page"); //nmc 2007.03.24 //jwe 2025.06.05
@@ -922,7 +923,7 @@ define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE2", "You can use <i>\$quickSear
 //template screen
 define("_AM_FORM_SCREEN_TEMPLATES_OPTIONS","Options");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_SAVEBUTTONTEXT", "Text for the 'Save' button: ");
-define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEBUTTONTEXT", "Text for the 'Done' button: ");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEBUTTONTEXT", "Text for the 'Close' button: ");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_DONEDEST", "The URL that users should be directed to when leaving the page (Optional, Formulize will set this automatically when the page is displayed, based on where the user came from, and will return them to that page after. Form submissions are saved when leaving the page.)");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_HELP", "All variables defined in the custom code below will be available in the template by using <{\$variableName}>, and you can also use <{\$saveButton}> to position the a button that triggers saving of any form elements, and <{\$doneButton}> to position a button that triggers saving and will redirect the user to the done destination. Button text and the done destination can be set in the 'Options' tab.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_VIEWENTRYSCREEN", "If you use the <i>viewEntryLink</i> or <i>viewEntryButton</i> functions, which screen should be used to display the entries?");

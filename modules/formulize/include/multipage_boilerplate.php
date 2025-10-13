@@ -23,7 +23,6 @@ function submitForm(page, prevpage) {
         if (formulizechanged) {
             validateAndSubmit();
         } else {
-            jQuery("#formulizeform").animate({opacity:0.4}, 200, "linear");
             jQuery("input[name^='decue_']").remove();
             // 'rewritePage' will trigger the page to change after the locks have been removed
             removeEntryLocks('rewritePage');

@@ -12,7 +12,7 @@
 <div class="panel-content content">
 	<fieldset>
         <legend>Appearance</legend>
-        
+
         <div class="form-item">
             <input id="navstyletabs" type="checkbox" name="navstyletabs" value=1 <{$content.navstyletabs}>> <label for="navstyletabs">Show navigation tabs at the top of the form</label><br>
             <input id="navstylebuttons" type="checkbox" name="navstylebuttons" value=1 <{$content.navstylebuttons}>> <label for="navstylebuttons">Show navigation buttons at the bottom of the form</label><br>
@@ -20,7 +20,7 @@
             <input id="showpageselector" type="checkbox" name="screens-showpageselector" value=1 <{$content.showpageselector}>> <label for="showpageselector">Show the page selection dropdown list</label><br>
             <input id="showpagetitles" type="checkbox" name="screens-showpagetitles" value=1 <{$content.showpagetitles}>> <label for="showpagetitles">Show the page title at the top of the form</label>
 	    </div>
-        
+
         <div class="form-item">
             <p>Layout Options:<br>
             <table style='border: none; width: auto; margin-top: 0.5em;'>
@@ -48,12 +48,12 @@
 		<input type="radio" id=screens-finishisdone-0 name="screens-finishisdone" value=0> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE}><br />
 		<input type="radio" id=screens-finishisdone-1 name="screens-finishisdone" value=1> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON}>
 	  </div><br><br>
-      
+
 	  <div class="form-item">
 		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></label><br>
       <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/><br><br>
 	  </div>
-      
+
       <div class="form-item">
             <p>How should the form reload, after the user has saved a <b>new</b> entry?</p>
             <div class="form-radios">
@@ -79,6 +79,10 @@
 	  <div class="form-item">
 		  <label for="saveButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT}></label><br>
       <input type="text" id="saveButtonText" name="saveButtonText" value="<{$content.saveButtonText}>" size="50" maxlength="255"/><br><br>
+	  </div>
+		<div class="form-item">
+		  <label for="closeButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_CLOSEBUTTONTEXT}></label><br>
+      <input type="text" id="closeButtonText" name="closeButtonText" value="<{$content.closeButtonText}>" size="50" maxlength="255"/><br><br>
 	  </div>
 	  <div class="form-item">
 		  <label for="nextButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT}></label><br>
@@ -107,7 +111,7 @@
       </div>
       <{/if}>
 	</fieldset>
-    
+
     <fieldset>
 		<legend>Element Defaults</legend>
 		<div class="form-item">
@@ -122,7 +126,7 @@
 			<div class="description">Defaults that you set for elements here, will take effect only on this screen. The elements will behave normally on other screens (if those screens do not have any defaults set of their own).</div>
 		</div>
 	</fieldset>
-    
+
     <fieldset>
       <legend>Answers from a previous entry</legend>
 	  <div class="form-item">
@@ -140,7 +144,7 @@
 	    </select>
 	  </div>
 	</fieldset>
-	
+
 </div>
 
 </form>
@@ -152,7 +156,7 @@ $("#<{$content.displaycolumns}>").attr('checked', true);
 
 $("#edadd").click(function() {
     appendDefault($('#elementchoice').val(), $('#elementchoice').children('option:selected').text(), $('#elementdefault').val().replace(/"/g, '&quot;'));
-    $('#elementdefault').val('');       
+    $('#elementdefault').val('');
 });
 $('.adefault').live('click', function() {
     $('#'+$(this).attr('id').replace('def','hidden')).remove();
@@ -167,7 +171,7 @@ appendDefault(<{$id}>, '<{$content.element_list.$id}>', "<{$defaultText|replace:
 <{/foreach}>
 
 function appendDefault(id, elementText, defaultText) {
-    $('#addeddefaults').append('<input type="hidden" name="screens-elementdefaults['+id+']" id="hidden_'+id+'" value="'+defaultText+'"><span class="adefault" id="def_'+id+'">'+elementText+' >> '+defaultText+'<br></span>');    
+    $('#addeddefaults').append('<input type="hidden" name="screens-elementdefaults['+id+']" id="hidden_'+id+'" value="'+defaultText+'"><span class="adefault" id="def_'+id+'">'+elementText+' >> '+defaultText+'<br></span>');
 }
 
 </script>
