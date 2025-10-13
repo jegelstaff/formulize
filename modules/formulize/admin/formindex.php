@@ -34,7 +34,7 @@
 ###############################################################################
 
 include("admin_header.php");
-
+global $xoopsConfig;
 if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
     include_once "../language/".$xoopsConfig['language']."/main.php";
 } else {
@@ -91,7 +91,7 @@ function patch40() {
     /*
     * ====================================== */
 
-		global $xoopsDB;
+		global $xoopsDB, $xoopsConfig;
     $module_handler = xoops_gethandler('module');
     $formulizeModule = $module_handler->getByDirname("formulize");
     $metadata = $formulizeModule->getInfo();
@@ -578,7 +578,7 @@ function patch40() {
                 } elseif($key === "form_screen_column1width" OR $key === "form_screen_column2width") {
                     print "Form screen column widths already added. result: OK<br>";
                 } elseif($key === "form_screen_saveandleave") {
-                    print "Form screen save and leave text option already added. result: OK<br>";
+                    print "Form screen save and close text option already added. result: OK<br>";
                     $needToSetSaveAndLeave = false;
                 } elseif($key === "form_screen_printableview") {
                     print "Form screen printable version text option already added. result: OK<br>";
@@ -1019,7 +1019,6 @@ function patch40() {
 					}
         }
 
-        global $xoopsConfig;
         $themeSql = 'UPDATE '.$xoopsDB->prefix('formulize_screen').' SET theme = "'.$xoopsConfig['theme_set'].'" WHERE theme = ""';
         if(!$res = $xoopsDB->queryF($themeSql)) {
             exit("Error patching DB for Formulize $versionNumber. Could not update screens with default theme. SQL dump:<br>".$themeSql."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
@@ -1441,7 +1440,8 @@ function patch40() {
                     'saveButtonText'=>($formScreenObject->getVar('savebuttontext') ? $formScreenObject->getVar('savebuttontext') : trans(_formulize_SAVE)),
                     'nextButtonText'=>trans(_formulize_DMULTI_NEXT),
                     'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
-                    'printableViewButtonText'=>($formScreenObject->getVar('printableviewbuttontext') ? $formScreenObject->getVar('printableviewbuttontext') : trans(_formulize_PRINTVIEW))
+                    'printableViewButtonText'=>($formScreenObject->getVar('printableviewbuttontext') ? $formScreenObject->getVar('printableviewbuttontext') : trans(_formulize_PRINTVIEW)),
+										'closeButtonText'=>trans(_formulize_DONE)
                 )));
                 $multipageScreenObject->setVar('finishisdone', 1);
                 // use the declared elements for the page, or if none that means use all so go look up all the ids

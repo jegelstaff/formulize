@@ -62,7 +62,8 @@ $buttonText = array(
     'saveButtonText'=>$_POST['saveButtonText'],
     'nextButtonText'=>$_POST['nextButtonText'],
     'finishButtonText'=>$_POST['finishButtonText'],
-    'printableViewButtonText'=>$_POST['printableViewButtonText']
+    'printableViewButtonText'=>$_POST['printableViewButtonText'],
+		'closeButtonText'=>$_POST['closeButtonText']
 );
 
 $navstyle = 1;
@@ -71,14 +72,14 @@ if($_POST['navstyletabs'] == 1 AND $_POST['navstylebuttons'] == 1) {
 } elseif($_POST['navstyletabs'] != 1 AND $_POST['navstylebuttons'] != 1) {
     $navstyle = 3; // show nothing!
 } elseif($_POST['navstyletabs'] == 1 AND $_POST['navstylebuttons'] != 1) {
-    $navstyle = 1;    
+    $navstyle = 1;
 } elseif($_POST['navstyletabs'] != 1 AND $_POST['navstylebuttons'] == 1) {
-    $navstyle = 0;    
+    $navstyle = 0;
 }
 
 $column1width = null;
 if(isset($_POST['singlecolumn1width']) AND isset($screens['displaycolumns']) AND $screens['displaycolumns'] == 1) {
-    $column1width = $_POST['singlecolumn1width'];     
+    $column1width = $_POST['singlecolumn1width'];
 } elseif(isset($_POST['doublecolumn1width']) AND isset($screens['displaycolumns']) AND $screens['displaycolumns'] == 2) {
     $column1width = $_POST['doublecolumn1width'];
 }

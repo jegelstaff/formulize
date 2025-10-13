@@ -235,7 +235,7 @@ export async function saveFormulizeForm(page, timeout = 120000) {
     return element && window.getComputedStyle(element).display === 'none';
   }, { timeout: 120000 });
 	// Ensure the data submitted error does not occurr
-	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible();
+	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**

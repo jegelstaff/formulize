@@ -341,6 +341,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					$saveAndContinueButtonText['finishButtonText'] =  trans(_formulize_DMULTI_SAVE);
 					$saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
 					$saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
+					$saveAndContinueButtonText['closeButtonText'] = trans(_formulize_DONE);
 			}
 
 			if($currentPage != 1) {
@@ -356,9 +357,11 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			} else {
 					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
 			}
+			$closeButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['closeButtonText'])) ? $saveAndContinueButtonText['closeButtonText'] : '';
 			$previousPageButton = generatePrevNextButtonMarkup("prev", $previousButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 			$nextPageButton = generatePrevNextButtonMarkup("next", $nextButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 			$savePageButton = generatePrevNextButtonMarkup("save", $saveButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
+			$closePageButton = generatePrevNextButtonMarkup("close", $closeButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 			$totalPages = count((array) $pages);
 			$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
 			$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
@@ -372,6 +375,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					'previousPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $previousPageButton),
 					'nextPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $nextPageButton),
 					'savePageButton' => $savePageButton,
+					'closePageButton' => $closePageButton,
 					'totalPages' => $totalPages,
 					'currentPage' => $currentPage,
 					'skippedPageMessage' => $skippedPageMessage,
@@ -407,7 +411,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					$templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
 
 			// otherwise... if there was an originally specified done destination,
-			// or the user has permission to see a list of entries, then "save and leave"
+			// or the user has permission to see a list of entries, then "save and close"
 			} elseif($originalDoneDest
 				OR ($single_result['flag'] == 0 AND $xoopsUser)
 				OR $view_globalscope
@@ -467,6 +471,9 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
             break;
         case 'save':
             $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm(".(intval($previousPage)+1).", ".(intval($previousPage)+1).");return false;\"";
+						break;
+				case 'close':
+						$buttonJavascriptAndExtraCode = "onclick=\"javascript:verifyDone();return false;\"";
     }
 
     if($buttonType == "next" OR $buttonType == "save") {
@@ -476,7 +483,9 @@ function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $
             $buttonJavascriptAndExtraCode = "onclick=\"javascript:submitForm($thanksPage, 1);return false;\"";
         }
         $buttonMarkup = "<input type=button name='prev' id='prev' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
-    }
+    } elseif($buttonType == "close") {
+				$buttonMarkup = "<input type=button name='close' id='close' class='formulize-form-submit-button' value='" . $buttonText . "' $buttonJavascriptAndExtraCode>\n";
+		}
     return $buttonMarkup;
 }
 

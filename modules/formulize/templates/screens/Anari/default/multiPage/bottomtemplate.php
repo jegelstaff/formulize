@@ -7,6 +7,6 @@ print "
 </div>
 
 <div id='multipage-controls'>
-$previousPageButton $savePageButton $nextPageButton $pageIndicator $pageSelector
+$previousPageButton $savePageButton $closePageButton $nextPageButton $pageIndicator $pageSelector
 </div>
 ";

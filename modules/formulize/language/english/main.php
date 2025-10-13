@@ -338,8 +338,8 @@ define("_formulize_SUBFORM_FILTER_SEARCH","Filter by '%s' using this value:");
 define("_AM_ELE_SUBFORM_NEWENTRY_LABEL", "New entry");
 define("_formulize_SAVE", "Save");
 define("_formulize_SAVE_AND_GOBACK", "Save and Go Back");
-define("_formulize_SAVE_AND_LEAVE", "Save and Leave");
-define("_formulize_DONE", "Leave Page");
+define("_formulize_SAVE_AND_LEAVE", "Save and Close");
+define("_formulize_DONE", "Close");
 define("_formulize_CONFIRMNOSAVE", "You have not saved your changes!  Is that OK?  Click 'Cancel' to return to the form and then click 'Save' to save your changes.");
 define("_formulize_CONFIRMNOSAVE_UNLOAD", "You have not saved your changes!  Is that OK?");
 

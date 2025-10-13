@@ -149,7 +149,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         $previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
 
-        // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND LEAVE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
+        // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND CLOSE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!
 
         global $xoTheme;
         if($xoTheme) {
