@@ -326,7 +326,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 test('Test \'Close\' button functionality', async ({ page }) => {
 	await login(page, 'curator1', '12345');
 	await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
-	await page.getByRole('row', { name: '  M0001' }).getByRole('link').click();
+	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
 	await expect(page.getByText('A very lovely')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Short Name' }).fill('Testdfgfdg');
 	page.on('dialog', dialog => dialog.accept());
