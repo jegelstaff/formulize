@@ -188,7 +188,6 @@ test('Create Donors Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
-	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Donors');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
@@ -349,7 +348,6 @@ test('Create Collections Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
-	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Collections');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
@@ -396,7 +394,6 @@ test('Create Exhibits Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
-	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Exhibits');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
@@ -470,7 +467,6 @@ test('Create Surveys Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
-	await page.getByRole('group', { name: 'Create a textbox in the form' }).getByLabel('No').click();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Surveys');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
