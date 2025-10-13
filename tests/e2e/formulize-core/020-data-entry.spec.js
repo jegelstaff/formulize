@@ -39,6 +39,7 @@ test.describe('Data Entry for Collections', () => {
 	  await page.getByRole('checkbox', { name: 'Children' }).check();
   	await page.getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Modern History collection', async ({ page }) => {
@@ -50,6 +51,7 @@ test.describe('Data Entry for Collections', () => {
 	  await page.getByRole('checkbox', { name: 'Children' }).check();
   	await page.getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Coins collection', async ({ page }) => {
@@ -60,6 +62,7 @@ test.describe('Data Entry for Collections', () => {
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Coins');
    	await page.getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Weapons collection', async ({ page }) => {
@@ -71,6 +74,7 @@ test.describe('Data Entry for Collections', () => {
 		await page.getByRole('checkbox', { name: 'Children' }).check();
    	await page.getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 })
 
@@ -95,6 +99,7 @@ test.describe('Data Entry for Donors', () => {
   	await page.getByRole('combobox').selectOption('Quebec');
   	await page.locator('input[name="de_2_new_23"]').fill('G1A 0A2');
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Emilie donor', async ({ page }) => {
@@ -109,6 +114,7 @@ test.describe('Data Entry for Donors', () => {
   	await page.getByRole('combobox').selectOption('Quebec');
   	await page.locator('input[name="de_2_new_23"]').fill('G1A 0A2');
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Freeform donor', async ({ page }) => {
@@ -121,6 +127,7 @@ test.describe('Data Entry for Donors', () => {
   	await page.getByRole('combobox').selectOption('Ontario');
   	await page.locator('input[name="de_2_new_23"]').fill('M4E 3X2');
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 })
@@ -149,6 +156,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Persian necklace', async ({ page }) => {
@@ -165,6 +173,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Chinese Sword', async ({ page }) => {
@@ -182,6 +191,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Egyptian Chariot', async ({ page }) => {
@@ -198,6 +208,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Babylonian Spoon', async ({ page }) => {
@@ -214,6 +225,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 })
 
@@ -240,6 +252,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create French Musket', async ({ page }) => {
@@ -256,6 +269,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Japanese Coin', async ({ page }) => {
@@ -273,6 +287,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create American Bicycle', async ({ page }) => {
@@ -288,6 +303,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('4');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Polynesian Canoe', async ({ page }) => {
@@ -304,6 +320,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Viking Silver Armband', async ({ page }) => {
@@ -320,6 +337,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 })
 
@@ -384,6 +402,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('input[type=text]').nth(2).fill('vik');
 		await page.getByText('Viking Silver Armband').click();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Ancient Wonders Exhibit', async ({ page }) => {
@@ -407,6 +426,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('input[type=text]').nth(2).fill('bab');
 		await page.getByText('Babylonian Spoon').click();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Modern Amazements Exhibit', async ({ page }) => {
@@ -432,6 +452,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('input[type=text]').nth(2).fill('vik');
 		await page.getByText('Viking Silver Armband').click();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Heroic and Horrible Hand Weapons Exhibit', async ({ page }) => {
@@ -448,6 +469,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('input[type=text]').nth(2).fill('fren');
 		await page.getByText('French Musket').click();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
 	test('Create Pennies from the Past Exhibit', async ({ page }) => {
@@ -465,6 +487,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('input[type=text]').nth(2).fill('japa');
 		await page.getByText('Japanese Coin').click();
 		await saveFormulizeForm(page);
+		await page.getByRole('button', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 })
 
