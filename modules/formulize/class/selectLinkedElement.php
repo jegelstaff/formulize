@@ -38,6 +38,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
 
 class formulizeSelectLinkedElement extends formulizeSelectElement {
 
+	public static $category = "linked";
+
 	function __construct() {
 		parent::__construct();
 		$this->name = "Linked Dropdown List";
@@ -59,23 +61,11 @@ class formulizeSelectLinkedElement extends formulizeSelectElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
 		$descriptionAndExamples = "
 **Element:** Linked Dropdown List (selectLinked).
-**Description:** A dropdown list where the options are drawn from the values entered in another element in another form. The user can select one choice.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples";
-		}
-		return $descriptionAndExamples;
+**Description:** A dropdown list where the options are drawn from the values entered in another element in another form. The user can select one choice.
+**Properties:**
+- all the common properties for Linked elements";
 	}
 }
 

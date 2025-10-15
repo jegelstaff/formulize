@@ -55,26 +55,16 @@ class formulizeAutocompleteElement extends formulizeSelectElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples = "
 **Element:** Autocomplete List (autocomplete)
-**Description:** A single-line text box that provides autocomplete suggestions from a predefined list of options as the user types. The user can select one of the suggested options, or if the allowNewValues property is enabled then the user can enter a new value that is not found in the list. Autocomplete Lists can be set to allow multiple selections, with the allowMultipleSelections property. Autocomplete Lists are good for a large number of options that would be too many for a Dropdown List, Radio Buttons, or Checkboxes. For a small number of predefined options, use Radio Buttons or Dropdown Lists, or use Checkboxes if selecting multiple options must be possible.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
+**Description:** A single-line text box that provides autocomplete suggestions from a predefined list of options as the user types. The user can select one of the suggested options, or if the allowNewValues property is enabled then the user can enter a new value that is not found in the list. Autocomplete Lists can be set to allow multiple selections, with the allowMultipleSelections property. Autocomplete Lists are good for a large number of options that would be too many for a Dropdown List, Radio Buttons, or Checkboxes. For a small number of predefined options, use Radio Buttons or Dropdown Lists, or use Checkboxes if selecting multiple options must be possible.
+**Properties:**
+- all the common properties for List elements, plus:
 - allowNewValues (optional, a 1/0 indicating if users should be allowed to enter values that are not in the predefined list of options. Default is 0, meaning users can only select from the predefined options. Set to 1 to allow users to enter new values.)
-- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists, the default is 0. Set to 1 to allow multiple selections.)";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists, the default is 0. Set to 1 to allow multiple selections.)
+**Examples:**
 - A list of cutlery and flatware, allowing multiple selections: { options: [ 'fork', 'knife', 'spoon', 'plate', 'bowl', 'cup' ], allowMultipleSelections: 1 }
 - A list of authors, allowing new values to be entered so that users don't have to select from the predefined options: { options: [ 'Isaac Asimov', 'Arthur C. Clarke', 'Philip K. Dick', 'Frank Herbert' ], allowNewValues: 1 }";
-		}
 		return $descriptionAndExamples;
 	}
 

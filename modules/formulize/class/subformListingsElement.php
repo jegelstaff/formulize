@@ -56,26 +56,15 @@ class formulizeSubformListingsElement extends formulizeElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update);
 		$descriptionAndExamples = "
 **Subform Interface Type:** Listings (subformListings).
-**Description:** This Subform Interface provides a list view of connected entries. Each entry shows up as a row in a table, with a clickable icon to open up the full entry for viewing or editing. This is best for situations when users simply need to see a listing of entries, and/or when forms have a too many elements for comfortably showing in editable rows (generally more than 5).";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
+**Description:** This Subform Interface provides a list view of connected entries. Each entry shows up as a row in a table, with a clickable icon to open up the full entry for viewing or editing. This is best for situations when users simply need to see a listing of entries, and/or when forms have a too many elements for comfortably showing in editable rows (generally more than 5).
+**Properties:**
+- all the common properties for Subform Interfaces, plus:
 - elementsInRow (Required. An array of element ids, indicating which elements from the source form should be shown in the list view. The values of these elements will be shown in each row. The values will not be editable, they will be shown as plain text.)
-- entryViewingMode (Optional. A string, either 'off', 'form_screen' or 'modal'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'modal' then there are clickable icons, and they will open a modal popup box for showing the connected entry. Default is 'full_screen'. For small forms, 'modal' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
-- A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in a modal popup for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'modal' }
-";
-		}
+- entryViewingMode (Optional. A string, either 'off', 'form_screen' or 'modal'. If 'off', then there are no clickable icons for opening up each connected entry for viewing/editing. If 'full_screen' then there are clickable icons, and they will cause the page to reload with the correct Form Screen for showing the connected entry. If 'modal' then there are clickable icons, and they will open a modal popup box for showing the connected entry. Default is 'full_screen'. For small forms, 'modal' is usually best. For large forms, 'full_screen' is usually best. If a user should not be able to view/edit the embedded entries, or does not need to, then set this to 'off'.
+**Example:**
+- A 'Listings' Subform Interface that shows the values of elements 101, 102, 103, and 104, from connected entries in form 97. Sort the entries by the value of element 101. Open entries in a modal popup for viewing/editing: { sourceForm: 97, elementsInRow: [101, 102, 103, 104], sortingElement: 101, entryViewingMode: 'modal' }";
 		return $descriptionAndExamples;
 	}
 

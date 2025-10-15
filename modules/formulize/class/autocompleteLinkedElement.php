@@ -55,26 +55,16 @@ class formulizeAutocompleteLinkedElement extends formulizeSelectLinkedElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
 		$descriptionAndExamples = "
 **Element:** Linked Autocomplete List (autocompleteLinked)
-**Description:** A single-line text box that provides autocomplete suggestions from a set of options based on values entered into another form. The user can select one of the suggested options, or if the allowNewValues property is enabled then the user can enter a new value that is not found in the list. Linked Autocomplete Lists can be set to allow multiple selections, with the allowMultipleSelections property. If new values are allowed, the new value will be added as a new entry in the source form, which is very convenient, because otherwise the user would have to go to the other form and enter the value there first.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
+**Description:** A single-line text box that provides autocomplete suggestions from a set of options based on values entered into another form. The user can select one of the suggested options, or if the allowNewValues property is enabled then the user can enter a new value that is not found in the list. Linked Autocomplete Lists can be set to allow multiple selections, with the allowMultipleSelections property. If new values are allowed, the new value will be added as a new entry in the source form, which is very convenient, because otherwise the user would have to go to the other form and enter the value there first.
+**Properties:**
+- all the common properties for Linked elements, plus:
 - allowNewValues (optional, a 1/0 indicating if users should be allowed to enter values that are not in the source form already.  Default is 0, meaning users can only select from the existing options. Set to 1 to allow users to enter new values, which will be saved as entries in the source form.)
-- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists, the default is 0. Set to 1 to allow multiple selections.)";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists, the default is 0. Set to 1 to allow multiple selections.)
+**Examples:**
 - A list of inventory items, drawing options from the Item Name element in a separate Inventory form, and allowing new inventory items to be added: { sourceElement: 'inventory_item_name', allowNewValues: 1 }
 - A list of countries with options drawn from the Name element in a separate Countries form, and multiple selections are allowed: { sourceElement: 'country_name', allowMultipleSelections: 1 }";
-		}
 		return $descriptionAndExamples;
 	}
 

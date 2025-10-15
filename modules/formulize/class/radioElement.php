@@ -57,22 +57,11 @@ class formulizeRadioElement extends formulizeElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples =
 "**Element:** Radio Buttons (radio)
-**Description:** A list of options where the user can select only one choice. Radio buttons are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples";
-		}
+**Description:** A list of options where the user can select only one choice. Radio buttons are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box.
+**Properties:**
+- all the common properties for List elements";
 		return $descriptionAndExamples;
 	}
 

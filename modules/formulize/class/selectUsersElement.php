@@ -34,6 +34,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
 
 class formulizeSelectUsersElement extends formulizeSelectElement {
 
+	public static $category = "userlists";
+
 	function __construct() {
 		parent::__construct();
 		$this->name = "Dropdown List of Users";
@@ -55,22 +57,11 @@ class formulizeSelectUsersElement extends formulizeSelectElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
 		$descriptionAndExamples = "
 **Element:** Dropdown List of Users (selectUsers).
-**Description:** A dropdown list where the options are the users from one or more groups, or the entire system. The user can select one choice.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples";
-		}
+**Description:** A dropdown list where the options are the users from one or more groups, or the entire system. The user can select one choice.
+**Properties:**
+- all the common properties for 'Users' elements";
 		return $descriptionAndExamples;
 	}
 

@@ -55,24 +55,14 @@ class formulizeListboxUsersElement extends formulizeSelectUsersElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForUsers($update);
 		$descriptionAndExamples = "
 **Element:** Listbox of Users (listboxUsers)
-**Description:** A listbox that allows users to select one or more users from a list. In general, Listboxes provide a poor user experience. Use a Dropdown List of Users or an Autocomplete List of Users instead, unless a Listbox is specifically called for.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
-- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Listboxes of Users, the default is 1. Set to 0 to allow only a single selection.)";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
+**Description:** A listbox that allows users to select one or more users from a list. In general, Listboxes provide a poor user experience. Use a Dropdown List of Users or an Autocomplete List of Users instead, unless a Listbox is specifically called for.
+**Properties:**
+- all the common properties for 'Users' elements, plus:
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Listboxes of Users, the default is 1. Set to 0 to allow only a single selection.)
+**Example:**
 - A list of users from group 12, and more than one user can be selected: { sourceGroups: [12], allowMultipleSelections: 1 }";
-		}
 		return $descriptionAndExamples;
 	}
 

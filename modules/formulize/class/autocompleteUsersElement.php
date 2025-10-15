@@ -55,24 +55,14 @@ class formulizeAutocompleteUsersElement extends formulizeSelectUsersElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForUsers($update);
 		$descriptionAndExamples = "
 **Element:** Autocomplete List of Users (autocompleteUsers)
-**Description:** A single-line text box that provides autocomplete suggestions based on a list of users.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
-- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists of Users, the default is 0. Set to 1 to allow multiple selections.)";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
+**Description:** A single-line text box that provides autocomplete suggestions based on a list of users.
+**Properties:**
+- all the common properties for 'Users' elements, plus:
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed. For Autocomplete Lists of Users, the default is 0. Set to 1 to allow multiple selections.)
+**Example:**
 - A list of users in the system, and more than one user can be selected: { sourceGroups: [], allowMultipleSelections: 1 }";
-		}
 		return $descriptionAndExamples;
 	}
 

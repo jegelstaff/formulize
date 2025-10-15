@@ -119,6 +119,14 @@ class formulizeHandler {
 				'singular' => 'selector element',
 				'plural' => 'selector elements'
 			),
+			'userlists' => array(
+				'singular' => 'user list element',
+				'plural' => 'user list elements'
+			),
+			'linked' => array(
+				'singular' => 'linked list element',
+				'plural' => 'linked list elements'
+			),
 			'subforms' => array(
 				'singular' => 'subform interface',
 				'plural' => 'subform interfaces'
@@ -176,35 +184,31 @@ class formulizeHandler {
 	 */
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForLists($update = false) {
 
-		$notes = $update ?
+		$description = $update ?
 "**Important notes:**
 - When altering options in a list, consider whether any data that users have entered into the form already, should be altered as well to match the new options. See the updateExistingEntriesToMatchTheseOptions property below. This is only relevant when options are being changed. If options are being re-organized, or new ones added, or old ones deleted, you do not need to update existing entries to match." : "";
-
-		$properties =
-"**Properties:**
+		$description .= "
+**Properties common to all List elements:**
 - options (array, list of options for the element)
-- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)
-- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. If alternate database values are being used, the values in this array should be from the options array, not the databaseValues array.)";
-		$properties .= $update ?
+- selectedByDefault (optional, an array containing a value or values from the options array that should be selected by default when the element appears on screen to users. If this is not specified, no options will be selected by default. The values in this array should match what's in the options array, even if the databaseValues property is being used.)
+- databaseValues (optional, an array of values to store in the database, if different from the values shown to users. This is not normally used, but if the application would require a coded value to be stored in the database, for compatibility with other code or other systems, this is useful. Must be the same length as the options array, and each value in this array corresponds by position to the value in the options array. If not provided, the values in the options array will be used as the values stored in the database.)";
+		$description .= $update ?
 "- updateExistingEntriesToMatchTheseOptions (optional, a 1/0 indicating if existing entries should be updated to match the new options. Default is 0. Set this to 1 when an element has existing options that are being changed, and then every record in the database where the old first option was selected, will change to having the new first option selected, and every record where the old second option was selected will change to the new second option, etc. This works when changing storage formats from numbers to text, and when just changing wording of options. Any kind of change is supported. This is useful when correcting typos and changing wording, such as switching an option from 'Backwards' to 'Back', or when making refinements, such as an element with options 'S', 'M', 'L' that is changing to 'Small', 'Medium', 'Large'. Sometimes changes to options are just reordering the existing options, or adding new options, or removing removing options, and in those cases this setting should be left unspecified or set to 0.)"
 : "";
-
-		$examples =
-"**Examples:**
+		$description .= "
+**Basic examples:**
 - A list of toppings for pizza: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ] }
 - A list of toppings for pizza, with 'pepperoni' and 'mushrooms' selected by default: { options: [ 'pepperoni', 'mushrooms', 'onions', 'extra cheese', 'green peppers', 'bacon' ], selectedByDefault: [ 'pepperoni', 'mushrooms' ] }
 - A list of movies: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ] }
 - A list of movies, with 'Children of Men' selected by default: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ], selectedByDefault: [ 'Children of Men' ] }
-- A list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'California', 'Delaware', 'Hawaii', 'Maine', 'New York', 'Vermont' ], databaseValues: [ 'CA', 'DE', 'HI', 'ME', 'NY', 'VT' ] }";
-		$examples .= $update ?
-"- A list which previously had the options 'No', 'Maybe', 'Yes', and is now being updated with new options, that should replace the old options everywhere people have filled in the form already: { options: [ 'Never', 'Sometimes', 'Always' ], updateExistingEntriesToMatchTheseOptions: 1 }"
+- A list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'California', 'Delaware', 'Hawaii', 'Maine', 'New York', 'Vermont' ], databaseValues: [ 'CA', 'DE', 'HI', 'ME', 'NY', 'VT' ] }
+- A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }
+- A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default, and numeric values stored in the database instead of text: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], databaseValues: [ 101, 102, 103, 104 ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }";
+		$description .= $update ?
+"- A list which previously had the options 'No', 'Maybe', 'Yes', and is now being updated with new options, that should replace the old options in every entry people have made in the form already: { options: [ 'Never', 'Sometimes', 'Always' ], updateExistingEntriesToMatchTheseOptions: 1 }"
 : "";
 
-		return [
-			$notes,
-			$properties,
-			$examples
-		];
+		return $description;
 	}
 
 	/**
@@ -215,26 +219,17 @@ class formulizeHandler {
 	 */
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update = false) {
 
-		$notes =
-"**Important notes:**
+		$description = "
+**Important notes:**
 - Linked elements are very powerful tools. They generally work best when pointing to a source element that is the principal identifying element of the entries in the source form. For example, if there is a form called Provinces, and another form called Cities, the Cities form might naturally have a Linked element that points to a Text Box called 'Name' in the Provinces form. This way, when entering a new City, the user can select the Province it is in from a dropdown list of Province names, and the two entries will be connected together.
 - When Linked elements allow a single choice by the user (for example, Radio Buttons, Dropdown Lists, etc), they represent one-to-many relationships between forms. The Linked element is on the 'many' side of the relationship. The source element is on the 'one' side. This is the most common way to use Linked elements.
-- Some Linked elements can support multiple selections by the user (for example, Checkboxes, Autocomplete Lists with allowMultipleSelections turned on). These Linked elements will represent many-to-many relationships between forms. For example, if there is a form called Participants, and a form called Activities, the Participants form can have a Linked Checkboxes element that points to a Text Box called 'Name' in the Activities form. This way, when entering a new Participant, the user can check the boxes for all the Activities that the person is participating in. This is a more complex situation, and not all Linked element types support multiple selections.";
-
-		$properties =
-"**Properties:**
+- Some Linked elements can support multiple selections by the user (for example, Checkboxes, Autocomplete Lists with allowMultipleSelections turned on). These Linked elements will represent many-to-many relationships between forms. For example, if there is a form called Participants, and a form called Activities, the Participants form can have a Linked Checkboxes element that points to a Text Box called 'Name' in the Activities form. This way, when entering a new Participant, the user can check the boxes for all the Activities that the person is participating in. This is a more complex situation, and not all Linked element types support multiple selections.
+**Properties common to all Linked elements:**
 - sourceElement (int or string, the element ID or element handle of an element in another form. The options displayed in this Linked element will be based on the values entered into this source element. Element ID numbers and handles are globally unique, so the form can be determined based on the element reference alone.)";
-
-		$examples =
-"**Examples:**
+"**Basic examples:**
 - A Linked element with options drawn from the values entered in element 7 (element IDs are globally unique and so imply a certain form): { sourceElement: 7 }
 - A Linked element with options drawn from the values entered in the element with handle 'provinces_name' (element handles are globally unique as well): { sourceElement: 'provinces_name' }";
-
-		return [
-			$notes,
-			$properties,
-			$examples
-		];
+		return $description;
 	}
 
 	/**
@@ -243,26 +238,17 @@ class formulizeHandler {
 	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
 	 * @return array an array of with the important notes first, common properties first, and the common examples second
 	 */
-	public static function mcpElementPropertiesBaseDescriptionAndExamplesForUsers($update = false) {
+	public static function mcpElementPropertiesBaseDescriptionAndExamplesForUserlists($update = false) {
 
-		$notes =
-"**Important notes:**
-- 'Users' elements provide a way for people to select from a list of users in the system. This is useful for providing lists of people, obviously, but it is also useful for setting up customized permissions, because there are other features in Formulize which can control the access to individual form entries based on whether that entry has a user selected in a 'Users' element.";
-
-		$properties =
-"**Properties:**
-- sourceGroups (optional, an array of group ids from which the users in the list should be drawn. Use the list_groups tool see a list of all the groups and their ids. Use the list_group_members tool to see a list of users who are members of a specific group. If this is not specified, or the array is empty, then all users in the system will be shown, regardless of their group membership.)";
-
-		$examples =
-"**Examples:**
+		$description = "
+**Important notes:**
+- 'Users' elements provide a way for people to select from a list of users in the system. This is useful for providing lists of people, obviously, but it is also useful for setting up customized permissions, because there are other features in Formulize which can control the access to individual form entries based on whether that entry has a user selected in a 'Users' element.
+**Properties common to all 'Users' elements:**
+- sourceGroups (optional, an array of group ids from which the users in the list should be drawn. Use the list_groups tool see a list of all the groups and their ids. Use the list_group_members tool to see a list of users who are members of a specific group. If this is not specified, or the array is empty, then all users in the system will be shown, regardless of their group membership.)
+**Basic examples:**
 - A list of all users in the system (no properties): { }
 - A list of users from groups 3 and 6: { sourceGroups: [3, 6] }";
-
-		return [
-			$notes,
-			$properties,
-			$examples
-		];
+		return $description;
 	}
 
 	/**
@@ -271,30 +257,20 @@ class formulizeHandler {
 	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
 	 * @return array an array of with the important notes first, common properties first, and the common examples second
 	 */
-	public static function mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update) {
+	public static function mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update = false) {
 
-		$notes =
-"**Important notes:**
+		$description = "
+**Important notes:**
 - Subform Interfaces are used to provide an interface in one form, that shows the entries in another form. They are designed to work with forms that are connected in a one to many relationship, such as Each Province has many Cities, or Each Budget has many Budget Line Items, etc.
 - Subform Interfaces do not store user data. They are a collection of settings that control how the entries in the 'many' form are to be displayed and managed, when viewed from the 'one' form.
-- Subform Interfaces are very powerful tools for supporting complex data management scenarios. They allow users to manage entire sets of data through one screen, instead of having to manage each individual entry separately.";
-
-		$properties =
-"**Properties:**
+- Subform Interfaces are very powerful tools for supporting complex data management scenarios. They allow users to manage entire sets of data through one screen, instead of having to manage each individual entry separately.
+**Properties common to all Subform Interfaces:**
 - sourceForm (int, the form ID of the form to be displayed in this Subform Interface. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier.)
 - sortingElement (int, the element ID of an element in the source form to sort the entries by. If not specified, entries will be shown in creation order.)
 - sortingDirection (string, either 'ASC' or 'DESC', indicating if the entries should be sorted in ascending or descending order. Default is 'ASC'.)
 - showAddButton (int, either 1 or 0, indicating if an Add Entry button should be shown to users, if they have permission to add entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include an Add Entry button.)
 - showDeleteButton (int, either 1 or 0, indicating if a Delete Entry button should be shown to users, if they have permission to delete entries in the source form. Default is 1. Set to 0 if this Subform Interface should never include a Delete Entry button.)";
-
-		$examples =
-"**Examples:**";
-
-		return [
-			$notes,
-			$properties,
-			$examples
-		];
+		return $description;
 	}
 
 	/**

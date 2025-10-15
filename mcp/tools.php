@@ -1793,8 +1793,15 @@ private function validateFilter($filter, $andOr = 'AND') {
 		foreach($elementTypes as $category => $types) {
 			$pluralCategoryName = ucfirst($categoryNames[$category]['plural']);
 			$singularCategoryName = ucfirst($categoryNames[$category]['singular']);
-			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\n$pluralCategoryName $basePropertyDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
-			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$pluralCategoryName $basePropertyDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
+			$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+			$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+			if(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
+				$staticMethodName = 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category);
+				$categoryCreationBaseDescriptions = formulizeHandler::$staticMethodName(update: false);
+				$categoryUpdateBaseDescriptions = formulizeHandler::$staticMethodName(update: true);
+			}
+			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\n$categoryCreationBaseDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
+			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$categoryUpdateBaseDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
 			$commonDataElementPropertiesForThisCategory = [];
 			$dataTypePropertyForThisCategory = [];
 			$creationDataElementPropertiesForThisCategory = [];
