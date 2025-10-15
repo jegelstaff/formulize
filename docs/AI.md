@@ -16,6 +16,8 @@ title: AI and Formulize
 
 You can use AI assistants, like Claude, Copilot, etc, to help you work with Formulize. They can understand the way it's configured, and they can help you create data, update data, analyze data, maintain, validate and correct data...
 
+The AI can even create forms and elements based on your prompts, or based on documents you upload, or whatever other information you can provide. The AI can connect multiple forms into useful applications, and it can update the configuration of the elements too.
+
 With AI, instead of having to do all the clicking and organizing yourself, you can just tell the AI what you want, and it will help you create it or find it or update it, and so on. Think of it like having a super fast and overeager intern, who knows everything about your Formulize system.
 
 ### Formulize is ideal for AI
@@ -28,7 +30,7 @@ So, when the AI connects to Formulize, it truly gets the big picture. And when y
 
 As with any overeager intern, AI might do the wrong thing sometimes. However, because the _Formulize <—> AI_ connection includes the entire configuration of your Formulize system, the AI does not have to guess about anything.
 
-The so-called _hallucinations_ that AI sometimes has, are usually when it's missing some information and it's just trying to come up with something that would fit with everything else it knows. With Formulize, the AI has the _complete picture_ of how your system works, so it will generally do the right thing.
+The so-called _hallucinations_ that AI sometimes has, are usually when it's missing some information and it's just trying to come up with something that would be consistent with everything else it knows. With Formulize, the AI has the _complete picture_ of how your system works, so it will generally do the right thing.
 
 Also, when the AI asks Formulize for something, Formulize validates what the AI is asking for, and if something is wrong, Formulize helps the AI self-correct from any mistakes. For example, if the AI is asking about a form that doesn't exist, Formulize will suggest to the AI that it check the list of existing forms first.
 
@@ -46,7 +48,7 @@ You need to [follow a few steps](../ai/setup) to get Formulize working with AI. 
 
 ### The Basics
 
-Presently, AI Assistants can discover all the configuration information about your Formulize system, they can read the data that has been entered into forms, and they can create and update entries in forms. Soon, they will have the ability to create forms and update aspects of the configuration.
+AI Assistants can discover all the configuration information about your Formulize system, they can read the data that has been entered into forms, and they can create and update entries in forms.
 
 To work with Formulize and AI, you just need to send a prompt the AI assistant, and your prompt can be anything at all. Some examples:
 
@@ -64,11 +66,27 @@ To work with Formulize and AI, you just need to send a prompt the AI assistant, 
 
 > Please check the activity logs for recent interactions with the Expenses form.
 
+### Creating forms
+
+AI Assistants can create forms and elements in Formulize, including connecting forms together into useful applications. The AI can also update the configuration of existing forms and elements.
+
+The AI cannot do everything that you can do through the administration interface in Formulize. But it can do the most common actions. The AI is a great way to create a working prototype of an application, and then you can refine it from there with more advanced configuration options if necessary.
+
+Some examples:
+
+> Please create a Geography database in the Formulize system. It should record countries, states/provinces, and cities. Make sure it has space to record population numbers.
+
+> I'm uploading PDFs of our intake forms. Please recreate these in Formulize.
+
+> I'm uploading .csv files of our contacts lists. Look at the data in the files, and create a single contact form for us that will have space for all the different contact info we have been collecting. Then copy all the entries from the .csv files into the new contact form. Make sure to include a yes/no question in the form to flag possible duplicate entries, since we know we have multiple copies of some people's contact information. We will review the duplicates after you've created all the entries in the new form.
+
+### Pro tips
+
 Even though the AI isn't a person, it's often better to communicate with it the same way you would with a person, because AI has been trained on human language, so a more fluid conversation like you would have with a person, often yields better results.
 
 The more information you can give the AI, the better it does. So if you can reference forms by their ID numbers or actual names, that's good. If you can be precise about entries you're interested in, by date, or by the value of certain elements, that's good. The more information the AI has about what you want it to do, the better it does.
 
-The AI is also usually eager to please, so if you don't want it to do something, you should be specific, such as:
+The AI is also usually eager to please, so if you __don't__ want it to do something, you should be specific, such as:
 
 > I'm uploading information about a new client. Please read it and extract the information necessary to fill in the Client Profile form. Tell me what information you've found, but DO NOT make an entry in the form. I want to see the information first before you create any new entries.
 
