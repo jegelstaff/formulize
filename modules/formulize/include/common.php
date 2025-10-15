@@ -111,7 +111,7 @@ function formulize_exception_handler($exception) {
 		$errorMessage = sprintf(_formulize_ERRORMSGONSCREEN, $exception->getMessage(), $exception->getLine(), str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()));
 		$notifyWebmaster = '';
 		$token = '';
-		$assistance = "<p>You can contact <a href='mailto:help@formulize.net?subject=Formulize error: $errorMessage'>help@formulize.net</a> for assistance.</p>";
+		$assistance = "<p>You can contact <a href='mailto:help@formulize.net?subject=Formulize error: ".str_replace("'", "&#039;", $errorMessage)."'>help@formulize.net</a> for assistance.</p>";
 	} else {
 		$token = $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_error_token');
 		$mailTemplateFolder = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template";
