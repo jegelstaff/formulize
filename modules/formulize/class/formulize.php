@@ -184,9 +184,13 @@ class formulizeHandler {
 	 */
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForLists($update = false) {
 
-		$description = $update ?
-"**Important notes:**
+		$description = "
+**Overview:** List elements let the user select from a set of options. There are several types of list elements: radio buttons, checkboxes, dropdown lists, etc.";
+
+		$description .= $update ? "
+**Important notes:**
 - When altering options in a list, consider whether any data that users have entered into the form already, should be altered as well to match the new options. See the updateExistingEntriesToMatchTheseOptions property below. This is only relevant when options are being changed. If options are being re-organized, or new ones added, or old ones deleted, you do not need to update existing entries to match." : "";
+
 		$description .= "
 **Properties common to all List elements:**
 - options (array, list of options for the element)
@@ -203,7 +207,7 @@ class formulizeHandler {
 - A list of movies, with 'Children of Men' selected by default: { options: [ '2001: A Space Odyssey', 'WarGames', 'WALL-E', 'The Matrix', 'Inception', 'Children of Men' ], selectedByDefault: [ 'Children of Men' ] }
 - A list of states where the value stored in the database is the shortform code, but the user sees the full state name: { options: [ 'California', 'Delaware', 'Hawaii', 'Maine', 'New York', 'Vermont' ], databaseValues: [ 'CA', 'DE', 'HI', 'ME', 'NY', 'VT' ] }
 - A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }
-- A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default, and numeric values stored in the database instead of text: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], databaseValues: [ 101, 102, 103, 104 ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }";
+- A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default, and numeric values stored in the database instead of text: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], databaseValues: [ 11, 22, 33, 44 ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }";
 		$description .= $update ?
 "- A list which previously had the options 'No', 'Maybe', 'Yes', and is now being updated with new options, that should replace the old options in every entry people have made in the form already: { options: [ 'Never', 'Sometimes', 'Always' ], updateExistingEntriesToMatchTheseOptions: 1 }"
 : "";
@@ -220,6 +224,7 @@ class formulizeHandler {
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update = false) {
 
 		$description = "
+**Overview:** Linked elements let the user select from a set of options, that are based on values entered into another form. Most of the standard types of list elements can be implemented as a Linked element.
 **Important notes:**
 - Linked elements are very powerful tools. They generally work best when pointing to a source element that is the principal identifying element of the entries in the source form. For example, if there is a form called Provinces, and another form called Cities, the Cities form might naturally have a Linked element that points to a Text Box called 'Name' in the Provinces form. This way, when entering a new City, the user can select the Province it is in from a dropdown list of Province names, and the two entries will be connected together.
 - When Linked elements allow a single choice by the user (for example, Radio Buttons, Dropdown Lists, etc), they represent one-to-many relationships between forms. The Linked element is on the 'many' side of the relationship. The source element is on the 'one' side. This is the most common way to use Linked elements.
@@ -241,8 +246,9 @@ class formulizeHandler {
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForUserlists($update = false) {
 
 		$description = "
+**Overview:** 'Users' elements provide a way for people to select from a list of users in the system. Most of the standard types of list elements can be implemented as 'Users' elements.
 **Important notes:**
-- 'Users' elements provide a way for people to select from a list of users in the system. This is useful for providing lists of people, obviously, but it is also useful for setting up customized permissions, because there are other features in Formulize which can control the access to individual form entries based on whether that entry has a user selected in a 'Users' element.
+- 'Users' elements are useful for providing lists of users, but they are also useful for setting up customized permissions, because there are other features in Formulize which can control the access to individual form entries based on whether that entry has a user selected in a 'Users' element.
 **Properties common to all 'Users' elements:**
 - sourceGroups (optional, an array of group ids from which the users in the list should be drawn. Use the list_groups tool see a list of all the groups and their ids. Use the list_group_members tool to see a list of users who are members of a specific group. If this is not specified, or the array is empty, then all users in the system will be shown, regardless of their group membership.)
 **Basic examples:**
@@ -260,8 +266,9 @@ class formulizeHandler {
 	public static function mcpElementPropertiesBaseDescriptionAndExamplesForSubforms($update = false) {
 
 		$description = "
-**Important notes:**
+**Overview:**
 - Subform Interfaces are used to provide an interface in one form, that shows the entries in another form. They are designed to work with forms that are connected in a one to many relationship, such as Each Province has many Cities, or Each Budget has many Budget Line Items, etc.
+**Important notes:**
 - Subform Interfaces do not store user data. They are a collection of settings that control how the entries in the 'many' form are to be displayed and managed, when viewed from the 'one' form.
 - Subform Interfaces are very powerful tools for supporting complex data management scenarios. They allow users to manage entire sets of data through one screen, instead of having to manage each individual entry separately.
 **Properties common to all Subform Interfaces:**

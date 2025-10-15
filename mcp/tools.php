@@ -1831,7 +1831,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 							],
 							'properties' => [
 								'type' => 'object',
-								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the type. See the tool description for examples of what properties are needed for different element types.",
+								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types.",
 								'additionalProperties' => true
 							],
 						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $dataTypePropertyForThisCategory,
@@ -1862,7 +1862,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 						],
 						'properties' => [
 							'type' => 'object',
-							'description' => "Optional. Updated configuration settings for the $singularCategoryName. The available properties depend on the type. See the tool description for examples of what properties are needed for different types.",
+							'description' => "Optional. Updated configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types. Use the get_form_details tool to see all the element types for the existing elements.",
 							'additionalProperties' => true
 						],
 					] + $commonDataElementPropertiesForThisCategory + [
