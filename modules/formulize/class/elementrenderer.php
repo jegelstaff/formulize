@@ -165,6 +165,9 @@ class formulizeElementRenderer{
 			break;
 
 			default:
+				if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+					return false; // element type not found
+				}
 				$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
 				$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $renderedElementMarkupName, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 				// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
@@ -359,7 +362,7 @@ class formulizeElementRenderer{
 		$previousCaptions = $previousForm->getVar('elementCaptions');
 		$previousElementHandle = array_search($captionToMatch, $previousCaptions);
 		if(!$previousElementHandle) { return ""; }
-		$elementName = $de ? "de_".$fid."_".$entry_id."_".$element_id : "ele_".$element_id; 
+		$elementName = $de ? "de_".$fid."_".$entry_id."_".$element_id : "ele_".$element_id;
 		$previousElementId = formulize_getIdFromElementHandle($previousElementHandle); // function is in extract.php
 		// setup the javascript based on the type of question, and setup other data that is required
 		switch($type) {
