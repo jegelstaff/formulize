@@ -210,6 +210,79 @@ module Jekyll
         }
       end
 
+			admin_only_tools << {
+				'name' => 'create_text_box_element',
+				'description' => 'Create a new text box element (field) in a specified form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'create_list_element',
+      	'description' => 'Create a new list element (field) in a specified form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'create_linked_list_element',
+				'description' => 'Create a new list element (field) in a specified form, with options linked to entries in another form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'create_user_list_element',
+				'description' => 'Create a new list element (field) in a specified form, with options based on user accounts in the system.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'create_selector_element',
+      	'description' => 'Create a new selector element (field) in a specified form, such as date selector, time selector, etc.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'create_subform_interface',
+				'description' => 'Create a new subform interface in a specified form, for displaying entries in a connected form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'update_text_box_element',
+				'description' => 'Update an existing text box element (field) in a specified form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'update_list_element',
+				'description' => 'Update an existing list element (field) in a specified form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'update_linked_list_element',
+				'description' => 'Update an existing linked list element (field) in a specified form, with options linked to entries in another form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'update_user_list_element',
+				'description' => 'Update an existing user list element (field) in a specified form, with options based on user accounts in the system.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'update_selector_element',
+				'description' => 'Update an existing selector element (field) in a specified form, such as date selector, time selector, etc.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+    	admin_only_tools << {
+				'name' => 'update_subform_interface',
+      	'description' => 'Update an existing subform interface in a specified form, for displaying entries in a connected form.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+
       all_tools = (tools + admin_only_tools)
 
       {
