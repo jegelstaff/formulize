@@ -57,7 +57,7 @@
 
     <table style='max-width: 700px;'>
     <{foreach from=$adminPage.keys item=key}>
-        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;<{$key.expiry}></td></tr>
+        <tr><td><a href='' onclick="setDelete('<{$key.key}>');return false;"><img src='../images/x.gif'/></a>&nbsp;<{$key.user}>&nbsp;&nbsp;&nbsp;<br/>&nbsp;</td><td id="key-{$key.ordinal}"><{$key.key}></td><td>&nbsp;&nbsp;&nbsp;<{$key.expiry}></td></tr>
     <{/foreach}>
     </table>
 </div>
