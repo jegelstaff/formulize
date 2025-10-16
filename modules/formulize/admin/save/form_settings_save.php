@@ -94,7 +94,7 @@ if(isset($_POST['forms-tableform'])) {
 if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_POST['pi_new_caption'] != "") {
 	$element_handler = xoops_getmodulehandler('textElement','formulize');
 	$elementObjectProperties = array(
-		'id_form' => $fid,
+		'fid' => $fid,
 		'ele_type' => 'text',
 		'ele_caption' => $_POST['pi_new_caption'],
 		'ele_handle' => $formObject->getVar('form_handle')."_".formulizeElement::sanitize_handle_name($_POST['pi_new_caption']),
