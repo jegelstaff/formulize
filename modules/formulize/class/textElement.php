@@ -424,26 +424,27 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	private function getAssociatedElementMatchingText($text, $associatedElementId, $textWidth = 100) {
 		global $myts;
 		$associatedText = "";
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		$target_element = $element_handler->get($associatedElementId);
-		$target_fid = $target_element->getVar('fid');
 		$foundAssociatedMatch = false;
-		// if user has no perm in target fid, then do not make link!
-		if ($target_allowed = security_check($target_fid)) {
-			$textLines = explode(";", $text); // have to breakup the textbox's text since it may contain multiple matches.  Note no space after semicolon spliter, but we trim the results in the foreach loop below.
-			$start = 1;
-			foreach ($textLines as $thistext) {
-				$thistext = trim($thistext);
-				if (!$start) {
-					$associatedText .= ", ";
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if($target_element = $element_handler->get($associatedElementId)) {
+			$target_fid = $target_element->getVar('fid');
+			// if user has no perm in target fid, then do not make link!
+			if ($target_allowed = security_check($target_fid)) {
+				$textLines = explode(";", $text); // have to breakup the textbox's text since it may contain multiple matches.  Note no space after semicolon spliter, but we trim the results in the foreach loop below.
+				$start = 1;
+				foreach ($textLines as $thistext) {
+					$thistext = trim($thistext);
+					if (!$start) {
+						$associatedText .= ", ";
+					}
+					if ($id_req = findMatchingIdReq($target_element, $target_fid, convertStringToUseSpecialCharsToMatchDB($thistext))) {
+						$foundAssociatedMatch = true;
+						$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
+					} else {
+						$associatedText .= $myts->htmlSpecialChars($thistext);
+					}
+					$start = 0;
 				}
-				if ($id_req = findMatchingIdReq($target_element, $target_fid, convertStringToUseSpecialCharsToMatchDB($thistext))) {
-					$foundAssociatedMatch = true;
-					$associatedText .= "<a href='" . XOOPS_URL . "/modules/formulize/index.php?fid=$target_fid&ve=$id_req' target='_blank'>" . printSmart(trans($myts->htmlSpecialChars($thistext)), $textWidth) . "</a>";
-				} else {
-					$associatedText .= $myts->htmlSpecialChars($thistext);
-				}
-				$start = 0;
 			}
 		}
 		return $foundAssociatedMatch ? $associatedText : false;
