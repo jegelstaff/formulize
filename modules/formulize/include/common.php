@@ -145,6 +145,12 @@ function formulize_exception_handler($exception) {
 	while(ob_get_level()) {
     ob_end_clean();
 	}
+	// if we're in the admin interface, just print a simple message
+	if(strstr(getCurrentURL(), "/modules/formulize/admin/save.php")) {
+		print strip_tags($errorMessage);
+		exit();
+	}
+	// otherwise, create a themed error page, with feedback options
 	include XOOPS_ROOT_PATH.'/header.php';
 	print "<style>
 		#notifyWebmasterForm {
