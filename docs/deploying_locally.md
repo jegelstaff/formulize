@@ -65,27 +65,25 @@ If you have a copy of files from an existing Formulize website, you could use th
 
 2. Make a new branch, if you intend to do work and keep track of changes, start a pull request, etc.
 
-4. Delete any database in ```docker/mariadb/data/``` folder, other than the ```.gitignore file```. (These files will be the database from the last time you ran the ```monastery``` branch in Docker. You may want to save a back up of these files!)
+3. Download a dump of the entire database from the live website. Make sure it includes commands to create the tables. Make sure it is using the UTF-8 character set. This can be a `.sql` file or it can also be a tar/gzipped sql file (.e.g `backup.tar.gz`)
 
-5. Download a dump of the entire database from the live website. Make sure it includes commands to create the tables. Make sure it is using the UTF-8 character set. This can be a `.sql` file or it can also be a tar/gzipped sql file (.e.g `backup.tar.gz`)
+4. Place the database dump in the ```docker/mariadb/seed/``` folder. Delete any other database files in that folder.
 
-6. Place the database dump in the ```docker/mariadb/seed/``` folder. Delete any other database files in that folder.
-
-7. Find the trust path file in your live website. If you don't know where it is, check ```mainfile.php``` in the root of your website and look for code like this near the top:
+5. Find the trust path file in your live website. If you don't know where it is, check ```mainfile.php``` in the root of your website and look for code like this near the top:
 ```php
 define( 'XOOPS_TRUST_PATH', '/var/www/mysite.com/sadg876kjhg89' );
 include_once XOOPS_TRUST_PATH . '/r87678sd908asdf48ffecfbfd223af293d.php' ;
 ```
 
-8. Open the trust path file, and note the ```SDATA_DB_PREFIX``` and ```SDATA_DB_SALT``` values
+6. Open the trust path file, and note the ```SDATA_DB_PREFIX``` and ```SDATA_DB_SALT``` values
 
-9. In your local Formulize, open up the file: ```trust/e039c9b9cb48ffecfbfd223af293d984.php``` and change the value of ```SDATA_DB_PREFIX``` and ```SDATA_DB_SALT``` to match the values sepecified in the trust path file in your live site.
+7. In your local Formulize, open up the file: ```trust/e039c9b9cb48ffecfbfd223af293d984.php``` and change the value of ```SDATA_DB_PREFIX``` and ```SDATA_DB_SALT``` to match the values sepecified in the trust path file in your live site.
 
-10. If your site uses any custom code files or has made changes to core Formulize files, or has extra files of its own, you need to download/recreate those files and changes in the local repository.
+8. If your site uses any custom code files or has made changes to core Formulize files, or has extra files of its own, you need to download/recreate those files and changes in the local repository.
 
-11. Run ```docker compose up```, or right click on the docker-compose.yaml file in your IDE, etc
+9. Run ```docker compose up```, or right click on the docker-compose.yaml file in your IDE, etc
 
-12. Browse to [http://localhost:8080](http://localhost:8080) and login with any username and password from the live site.
+10. Browse to [http://localhost:8080](http://localhost:8080) and login with any username and password from the live site.
 
 ## The Formulize environment in Docker
 
@@ -115,9 +113,9 @@ include_once XOOPS_TRUST_PATH . '/r87678sd908asdf48ffecfbfd223af293d.php' ;
 
 ## Database files in Docker
 
-The database is stored in a docker volume. Previous iterations of our docker compose configuration had the data directory mounted on the hosts file system. We chose to move to storing the files in a docker linux volume to alleviate any compatibility issues with how different operating systems handle case sensitivity.
+The database is stored in a docker volume. Previous iterations of our docker compose configuration had the data directory mounted on the host's file system. We chose to move to storing the files in a docker linux volume to alleviate any compatibility issues with how different operating systems handle case sensitivity.
 
-The database is stored in the `FOLDERNAME_mariadb_data` volume (Where FOLDERNAME is the directory name of your formulize codebase). This volume is created when you run `docker compose up` for the first time. It is persisted between runs and will remain persisten even if you perform a `docker compose down` operation.
+The database is stored in the `FOLDERNAME_mariadb_data` volume (Where FOLDERNAME is the directory name of your formulize codebase). This volume is created when you run `docker compose up` for the first time. It is persisted between runs and will remain persistent even if you perform a `docker compose down` operation.
 
 ### Deleting the maraidb volume
 
