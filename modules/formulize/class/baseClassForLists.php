@@ -67,9 +67,25 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 				throw new Exception("Could not change existing user submitted values to match the new options, for element '".$elementObject->getVar('ele_caption')."' (id: ".$elementObject->getVar('ele_id').")");
 			}
 		}
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$delimiter = $formulizeConfig['delimeter']; // yes, misspelled in the preferences :(
+		if(isset($properties['delimiter']) AND is_string($properties['delimiter'])) {
+			switch($properties['delimiter']) {
+				case 'linebreak':
+					$delimiter = "br";
+					break;
+				case 'space':
+				default:
+					$delimiter = $properties['delimiter'];
+			}
+		} elseif($elementIdentifier AND $elementObject = _getElementObject($elementIdentifier)) {
+			$delimiter = $elementObject->getVar('ele_delim');
+		}
 		return [
 			'ele_value' => $ele_value,
-			'ele_uitext' => $uiText
+			'ele_uitext' => $uiText,
+			'ele_delim' => $delimiter
 		];
 	}
 

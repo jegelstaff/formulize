@@ -268,7 +268,7 @@ class formulizeElementsHandler {
 	public function setupAndValidateElementProperties($properties) {
 
 		// KEY ASSUMPTION IS THAT THE PROPERTIES HAVE BEEN SET ALREADY BASED ON THE EXISTING ELEMENT OBJECT, IF THERE IS ONE
-		// SOME PROPERTIES NOT HANDLED BY THE MCP LAYER (DELIMITER, UITEXTSHOW) AND WE'RE ESSENTIALLY FORCING THEM ALWAYS TO DEFAULTS HERE
+		// SOME PROPERTIES NOT HANDLED BY THE MCP LAYER (UITEXTSHOW) AND WE'RE ESSENTIALLY FORCING THEM ALWAYS TO DEFAULTS HERE
 		// IF/WHEN THIS IS USED MORE WIDELY, WE WILL NEED TO MAKE SURE THAT ALL PROPERTIES ARE HANDLED APPROPRIATELY, ON NEW *AND* EXISTING ELEMENTS
 
 		$config_handler = xoops_gethandler('config');
@@ -287,7 +287,7 @@ class formulizeElementsHandler {
 		$properties['ele_handle'] = trim($properties['ele_handle']);
 		$properties['ele_desc'] = trim($properties['ele_desc']);
 		$properties['ele_required']	= $properties['ele_required'] ? 1 : 0;
-		$properties['ele_delim'] = isset($properties['ele_delim']) ? trim($properties['ele_delim']) : $formulizeConfig['delimiter'];
+		$properties['ele_delim'] = isset($properties['ele_delim']) ? $properties['ele_delim'] : $formulizeConfig['delimeter'];
 		$properties['ele_uitextshow'] = isset($properties['ele_uitextshow']) ? $properties['ele_uitextshow'] : 0;
 		$properties['ele_order'] = isset($properties['ele_order']) ? intval($properties['ele_order']) : figureOutOrder('bottom', fid: $properties['fid']);
 		$properties['ele_display'] = isset($properties['ele_display']) ? $properties['ele_display'] : 1;

@@ -61,7 +61,11 @@ class formulizeRadioElement extends formulizeElement {
 "**Element:** Radio Buttons (radio)
 **Description:** A list of options where the user can select only one choice. Radio buttons are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box.
 **Properties:**
-- all the common properties for List elements";
+- all the common properties for List elements, plus:
+- delimiter (optional, a string indicating how to separate the items in the list. Valid values are 'linebreak', 'space', or a custom string, which can include any valid HTML. Default is 'linebreak', however this can be altered in the Formulize preferences. It is not normally necessary to specify this property, unless you want to override the default for the system, or use a custom string.)
+**Examples:**
+- A Radio Button element with options 'Red', 'Green' and 'Blue', with 'Green' selected by default, and with a delimiter of a space: { options: ['Red', 'Green', 'Blue'], selectedByDefault: ['Green'], delimiter: 'space' }
+- A Radio Button element with options 'Red', 'Green' and 'Blue', with 'Green' selected by default, and with a delimiter of a tilde with an HTML span around it so it can be styled with CSS: { options: ['Red', 'Green', 'Blue'], selectedByDefault: ['Green'], delimiter: \"<span class='list_element_delimiter'>~</span>\" }";
 		return $descriptionAndExamples;
 	}
 
@@ -101,10 +105,11 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		list($ele_value, $ele_uitext) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+		list($ele_value, $ele_uitext, $ele_delim) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		return [
 			'ele_value' => $ele_value[2], // radio buttons are the only list elements that have plain ele_value array, all others put options in key 2 by convention, so that is what the parent method returns. We have to compensate for it here.
-			'ele_uitext' => $ele_uitext
+			'ele_uitext' => $ele_uitext,
+			'ele_delim' => $ele_delim
 		];
 	}
 
