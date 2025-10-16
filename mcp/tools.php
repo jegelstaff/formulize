@@ -759,6 +759,12 @@ Examples:
 	private function create_list_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: true);
 	}
+	private function create_linked_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_user_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
 	private function create_selector_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: true);
 	}
@@ -787,6 +793,12 @@ Examples:
 		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 	private function update_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_linked_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_user_list_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 	private function update_selector_element($arguments) {
