@@ -1,24 +1,34 @@
 const { test, expect } = require('@playwright/test')
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
 import { login } from '../utils';
 
 test.describe('Check that tools/list is responding', () => {
 	test('Create API Key', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.getByRole('link', { name: 'Admin' }).click();
+		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Manage API keys' }).click();
 		await page.getByRole('textbox').fill('admin');
 		await page.getByRole('button', { name: 'Search' }).click();
 		await page.getByRole('radio', { name: 'admin' }).check();
 		await page.getByRole('button', { name: 'Create' }).click();
-  	await expect(page.getByRole('cell', { id: 'key-1' })).toBeVisible();
+		await expect(page.locator('td[id=key-1]')).toBeVisible();
 	}),
 	test('Run tools list with API key', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.getByRole('link', { name: 'Admin' }).click();
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+  	await page.locator('#formulizeMCPServerEnabled-15').check();
+		await page.locator('#formulizeLoggingOnOff-9').check();
+  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await expect(page.getByText('Create an API Key — Go to the')).toBeVisible();
+  	await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
 		await page.getByRole('link', { name: 'Manage API keys' }).click();
-		const apiKey = await page.getByRole('cell', { id: 'key-1' }).innerText();
+		const apiKey = await page.locator('td[id=key-1]').innerText();
     await page.goto('/mcp/test.html');
    	await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
+		await page.getByRole('button', { name: 'Clear', exact: true }).click();
     await page.getByRole('button', { name: '🚀 Send Request' }).click();
     await expect(page.getByText('0: "name": "formulize" "')).toBeVisible();
 		await expect(page.getByText('1: "name": "list_forms" "')).toBeVisible();
@@ -37,9 +47,8 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('14: "name": "prepare_database_values_for_human_readability" "')).toBeVisible();
 		await expect(page.getByText('15: "name": "test_connection" "')).toBeVisible();
 		await expect(page.getByText('19: "name": "query_the_database_directly" "')).toBeVisible();
-		await expect(page.getByText('19: "name": "create_form" "')).toBeVisible();
-		await expect(page.getByText('20: "name": "create_list_element" "')).toBeVisible();
-		await expect(page.getByText('21: "name": "create_application" "')).toBeVisible();
+		await expect(page.getByText('20: "name": "create_form" "')).toBeVisible();
+		await expect(page.getByText('21: "name": "create_list_element" "')).toBeVisible();
 		await expect(page.getByText('22: "name": "update_list_element" "')).toBeVisible();
 		await expect(page.getByText('23: "name": "create_linked_list_element" "')).toBeVisible();
 		await expect(page.getByText('24: "name": "update_linked_list_element" "')).toBeVisible();

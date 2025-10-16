@@ -70,9 +70,11 @@ class FormulizeMCP
 		$this->baseUrl = $this->getBaseUrl();
 
 		// Register tools, resources, and prompts
-		$this->registerTools();
-		$this->registerResources();
-		$this->registerPrompts();
+		if($this->enabled) {
+			$this->registerTools();
+			$this->registerResources();
+			$this->registerPrompts();
+		}
 	}
 
 	/**
