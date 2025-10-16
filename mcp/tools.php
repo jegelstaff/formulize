@@ -369,7 +369,7 @@ Examples:
 
 			$this->tools['create_form'] = [
 				'name' => 'create_form',
-				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form: create_text_box_element, create_list_element, and create_selector_element. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form: create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, and create_selector_element. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
