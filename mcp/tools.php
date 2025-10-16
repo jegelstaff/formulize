@@ -54,7 +54,7 @@ trait tools {
 			],
 			'list_groups' => [
 				'name' => 'list_groups',
-				'description' => "List all the groups in the system. Use the list_group_members tool to get the members of an individual group.",
+				'description' => "List all the groups in the system. Use the list_group_members tool to get the users who are members of an individual group.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
@@ -62,7 +62,7 @@ trait tools {
 			],
 			'list_group_members' => [
 				'name' => 'list_group_members',
-				'description' => "List all the members of a specific group. Use the list_groups tool to get the ID numbers of all the groups in the system.",
+				'description' => "List all the users who are members of a specific group. Use the list_groups tool to get the ID numbers of all the groups in the system.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
