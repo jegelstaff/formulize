@@ -26,10 +26,12 @@ $member_handler = xoops_gethandler('member');
 
 // gather all keys and send to screen
 $allKeys = array();
+$ordinal = 1;
 foreach($apiKeyHandler->get() as $key) {
     $userObject = $member_handler->getUser($key->getVar('uid'));
     $uid = $userObject ? $userObject->getVar('login_name') : 0;
-    $allKeys[] = array('user'=>$uid,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
+    $allKeys[] = array('ordinal'=>$ordinal,'user'=>$uid,'key'=>$key->getVar('key'),'expiry'=>$key->getVar('expiry'));
+    $ordinal++;
 }
 
 // if user has searched for a username, find the matches...

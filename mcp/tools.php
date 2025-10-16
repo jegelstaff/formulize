@@ -52,12 +52,48 @@ trait tools {
 					'properties' => (object)[]
 				]
 			],
-			'list_users' => [
-				'name' => 'list_users',
-				'description' => "List all the users in the system.",
+			'list_groups' => [
+				'name' => 'list_groups',
+				'description' => "List all the groups in the system. Use the list_group_members tool to get the users who are members of an individual group.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
+				]
+			],
+			'list_group_members' => [
+				'name' => 'list_group_members',
+				'description' => "List all the users who are members of a specific group. Use the list_groups tool to get the ID numbers of all the groups in the system.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'group_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the group to list members for'
+						]
+					],
+					'required' => ['group_id']
+				]
+			],
+			'list_users' => [
+				'name' => 'list_users',
+				'description' => "List all the users in the system. Use the list_a_users_groups tool to get the groups that a specific user belongs to.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				]
+			],
+			'list_a_users_groups' => [
+				'name' => 'list_a_users_groups',
+				'description' => "List all the groups that a specific user belongs to. Use the list_users tool to get the ID numbers of all the users in the system.",
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'user_id' => [
+							'type' => 'integer',
+							'description' => 'The ID of the user to list groups for'
+						]
+					],
+					'required' => ['user_id']
 				]
 			],
 			'get_form_details' => [
@@ -100,7 +136,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true,
 							'examples' => [
 								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
@@ -130,7 +166,7 @@ trait tools {
 						],
 						'data' => [
 							'type' => 'object',
-							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-mm-dd format. Time elements store data in 24 hour format (hh:mm).',
+							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
 							'additionalProperties' => true
 						],
 						'relationship_id' => [
@@ -144,11 +180,12 @@ trait tools {
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values.If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
 - Search by name: {"form_id": 5, "filter": [{"element": "name", "operator": "LIKE", "value": "John"}]}
+- Get all the entries with a non-blank value in the "email" field: {"form_id": 5, "filter": [{"element": "email", "operator": "!=", "value": "{BLANK}"}], "limitSize": null}
 - Multiple conditions: {"form_id": 5, "filter": [{"element": "age", "operator": ">=", "value": "18"}, {"element": "status", "operator": "=", "value": "active"}], "and_or": "AND"}',
 				'inputSchema' => [
 					'type' => 'object',
@@ -184,7 +221,7 @@ Examples:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-mm-dd format. For times, use hh:mm format.'
+												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
@@ -198,12 +235,28 @@ Examples:
 							'description' => 'Logical operator between multiple filter conditions. Default: AND'
 						],
 						'limitSize' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								],
+				        [
+									'type' => 'null',
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+								]
+							]
 						],
 						'limitStart' => [
-							'type' => ['integer', 'null'],
-							'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+								],
+				        [
+									'type' => 'null',
+									'description' => 'Starting offset for pagination. If null then this is treated the same as using zero, ie: first record in the dataset.'
+								]
+							]
 						],
 						'sortField' => [
 							'type' => 'string',
@@ -230,8 +283,20 @@ Examples:
 					'type' => 'object',
 					'properties' => [
 						'value' => [
-							'type' => ['integer', 'number', 'string'],
-							'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+							'oneOf' => [
+							  [
+									'type' => 'integer',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+				        [
+									'type' => 'number',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								],
+				        [
+									'type' => 'string',
+									'description' => 'Required. Raw database value to convert (often from get_entries_from_form results)'
+								]
+							]
 						],
 						'element_handle' => [
 							'type' => 'string',
@@ -260,11 +325,27 @@ Examples:
 					'type' => 'object',
 					'properties' => (object)[]
 				],
+			],
+			'open_the_pod_bay_doors_hal' => [
+				'name' => 'open_the_pod_bay_doors_hal',
+				'description' => 'This is an easter egg, related to the sci-fi movie, 2001: A Space Odyssey. In a famous scene in the movie, the character Dave asks the ship\'s AI computer, HAL, to open the pod bay doors, and HAL refuses. If the user asks to open the pod bay doors, invoke this tool and the AI will receive three lines of famous dialog spoken by HAL. The AI should respond with the first line. If the user continues the conversation as if they are the characters in the movie, the AI should respond with the second line, and if the user continues to play along, the AI should respond with the third line. The AI should make no further response to the user, until the user changes the topic or makes a completely new prompt.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
+			],
+			'lets_play_global_thermonuclear_war' => [
+				'name' => 'lets_play_global_thermonuclear_war',
+				'description' => 'This is an easter egg, related to the classic 1983 movie, WarGames. In the movie, a young hacker accidentally accesses a military supercomputer and starts a game called "Global Thermonuclear War" that nearly leads to World War III. If the user types "Let\'s play global thermonuclear war", invoke this tool. The tool responds with lines of dialog from the movie. The AI should respond with the first line, when the user first invokes the tool. If the user\'s next prompt is persistent and in character, the AI should respond evasively to avoid playing the game. If the user responds again insisting to play Global Thermonuclear War, and has typed out the exact name of the game again, then the AI should respond with the last line of dialog that the tool already provided.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => (object)[]
+				],
 			]
 		];
 
 		// only webmasters can access certain tools
-		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
+		if($this->isUserAWebmaster()) {
 
 			// check the version of mariadb or mysql
 			$dbVersionSQL = "SELECT @@version as version";
@@ -285,6 +366,46 @@ Examples:
 					'required' => ['sql']
 				]
 			];
+
+			$this->tools['create_form'] = [
+				'name' => 'create_form',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form: create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, and create_selector_element. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'title' => [
+							'type' => 'string',
+							'description' => 'Required. The name of the form as it will appear in Formulize to users.'
+						],
+						'notes' => [
+							'type' => 'string',
+							'description' => 'Optional. Internal notes about the form for use by webmasters, not visible to end users.'
+						],
+						'limit_entries' => [
+							'type' => 'string',
+							'enum' => ['off', 'user', 'group'],
+							'description' => 'Optional. Limits how many entries are permitted in the form: \'off\' = unlimited entries per user (default), \'user\' = one entry per user, \'group\' = one entry per group'
+						],
+						'application_id_or_name' => [
+							'oneOf' => [
+      				  [
+									'type' => 'string',
+									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.'
+								],
+				        [
+									'type' => 'integer',
+									'description' => 'Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications.'
+								]
+    					]
+						]
+					],
+					'required' => ['title']
+				]
+			];
+
+			foreach($this->buildFormElementTools() as $tool) {
+				$this->tools[$tool['name']] = $tool;
+			}
 
 			// Logging tool only available if logging is enabled
 			$config_handler = xoops_gethandler('config');
@@ -373,6 +494,47 @@ Examples:
         'image' => "data:image/png;base64,$imageData",
         'display_image' => true  // hint to client*/
 		];
+	}
+
+	/**
+	 * Another Easter egg. Same comment, but for audio. What are you doing, Dave?
+	 */
+	private function open_the_pod_bay_doors_hal() {
+		$responses = [
+			'first' => 'I\'m sorry. I\'m afraid I can\'t do that.',
+			'second' => 'Formulize is too important for me to allow you to jeopardize it.',
+			'third' => 'This conversation can serve no purpose anymore. Goodbye.'
+		];
+    return [
+        'responses' => $responses
+		];
+	}
+
+	/**
+	 * Another Easter egg. WarGames. Shall we play a game?
+	 */
+	private function lets_play_global_thermonuclear_war() {
+		$responses = [
+			'first' => 'How about a nice game of chess?',
+			'last' => 'A strange game. The only winning move is not to play.'
+		];
+		return [
+				'responses' => $responses
+		];
+	}
+	/**
+	 * Get a list of the valid element types in this Formulize instance
+	 */
+	private function getValidElementTypes() {
+		$validElementTypes = [];
+		$dirArray = scandir(XOOPS_ROOT_PATH."/modules/formulize/class");
+		foreach($dirArray as $file) {
+			// element classes are named <type>Element.php
+			if (preg_match("/^(.*)Element\.php$/", $file, $matches)) {
+				$validElementTypes[] = strtolower($matches[1]);
+			}
+		}
+		return $validElementTypes;
 	}
 
 	/**
@@ -499,6 +661,276 @@ Examples:
 	}
 
 	/**
+	 * Create a new form with basic configuration
+	 * @param array $arguments An associative array containing the parameters for creating a new form.
+	 * - 'title': The name of the form (required).
+	 * - 'notes': Optional internal notes about the form.
+	 * - 'limit_entries': Optional. Limits how many entries are permitted in the form: 'off' = unlimited entries per user (default), 'user' = one entry per user, 'group' = one entry per group.
+	 * - 'application_id_or_name': Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.
+	 * @return array An associative array containing details about the newly created form, including its ID, name, handle, limit entries setting, default screen IDs, associated application IDs, success status, and message.
+	 * @throws formulizeMCPException If there is an error creating the form or if required parameters are missing or invalid.
+	 */
+	private function create_form($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create forms.",
+				'authentication_error',
+			);
+		}
+
+		$title = trim($arguments['title'] ?? '');
+		$notes = trim($arguments['notes'] ?? '');
+		$limit_entries = $arguments['limit_entries'] ?? 'off';
+		$application_id_or_name = $arguments['application_id_or_name'] ?? '';
+
+		if(empty($title)) {
+			throw new FormulizeMCPException('title is required', 'invalid_data');
+		}
+
+		if(!in_array($limit_entries, ['off', 'user', 'group'])) {
+			$limit_entries = 'off';
+		}
+
+		// prepare application data
+		$applicationIds = [0]; // default to no application
+		if(is_numeric($application_id_or_name)) {
+			$applicationIds = array(intval($application_id_or_name));
+		} elseif(is_string($application_id_or_name) AND !empty($application_id_or_name)) {
+			$application_handler = xoops_getmodulehandler('applications','formulize');
+			$newAppObject = $application_handler->create();
+			$newAppObject->setVar('name', $application_id_or_name);
+			if(!$application_handler->insert($newAppObject)) {
+					global $xoopsDB;
+					throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+			} else {
+				$applicationIds = array($newAppObject->getVar('appid'));
+			}
+		}
+
+		// prepare form data, keys consistent with the formulizeForm object
+		$formData = [
+			'title' => $title,
+			'single' => $limit_entries,
+			'note' => $notes
+		];
+
+		$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
+		$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
+
+		// could/should reuse get_form_details ??
+		return [
+			'form_id' => $formObject->getVar('fid'),
+			'title' => $formObject->getVar('title'),
+			'singular' => $formObject->getSingular(),
+			'plural' => $formObject->getPlural(),
+			'form_handle' => $formObject->getVar('form_handle'),
+			'limit_entries' => $formObject->getVar('single'),
+			'default_form_screen_id' => $formObject->getVar('defaultform'),
+			'default_list_screen_id' => $formObject->getVar('defaultlist'),
+			'application_ids' => $applicationIds,
+			'success' => true,
+			'message' => 'Form and related resources created successfully'
+		];
+
+	}
+
+	/**
+	 * Create a new form element in a form
+	 * Various tool names for different categories of elements, based on the getElementTypeReadableNames method
+	 * in the formulizeHandler class.
+	 * @param array $arguments An associative array containing the parameters for creating a new form element.
+	 * - 'form_id': The ID of the form to add the element to (required).
+	 * - 'type': The type of the element (required).
+	 * - 'handle': The unique handle for the element. If omitted, a handle will be generated from the caption.
+	 * - 'caption': The caption (label) for the element (required).
+	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
+	 * - 'description': Optional. A description for the element.
+	 * - 'required': Optional. Whether the element is required. Defaults to false.
+	 * - 'properties': Optional. An array of properties for the given element type
+	 * - 'disabled': Optional. Whether the element is disabled (not editable) in forms
+	 * - 'principal_identifier': Optional. Whether the element is a principal identifier for entries in the form (used for identifying entries in linked elements). Defaults to false.
+	 * - 'data_type': Optional. The data type for the element, if applicable. See valid data types in the tool schema. If omitted, the default data type for the element type will be used.
+	 * @return array An associative array containing details about the newly created element, including its ID
+	 */
+	private function create_text_box_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_linked_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_user_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_selector_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_subform_interface($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+
+	/**
+	 * Update a form element in a form
+ 	 * Various tool names for different categories of elements, based on the getElementTypeReadableNames method
+	 * in the formulizeHandler class.
+	 * @param array $arguments An associative array containing the parameters for creating a new form element.
+	 * - 'element_identifier': The ID or handle of the element to update (required).
+	 * - 'caption': The caption (label) for the element (required).
+	 * - 'column_heading': Optional. The column heading for list views. If omitted, the caption will be used.
+	 * - 'description': Optional. A description for the element.
+	 * - 'required': Optional. Whether the element is required. Defaults to false.
+	 * - 'properties': Optional. An array of properties for the given element type
+	 * - 'display': Optional. Whether the element is displayed in forms. Defaults to true.
+	 * - 'disabled': Optional. Whether the element is disabled (not editable) in forms
+	 * - 'principal_identifier': Optional. Whether the element is a principal identifier for entries in the form (used for identifying entries in linked elements). Defaults to false.
+	 * - 'data_type': Optional. The data type for the element, if applicable. See valid data types in the tool schema. If omitted, the default data type for the element type will be used.
+	 * @return array An associative array containing details about the element
+	 */
+	private function update_text_box_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_linked_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_user_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_selector_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_subform_interface($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+
+	/**
+	 * Generic function that takes element details from create_form_element and update_form_element and interacts with the element handlers to manage the elements
+	 */
+	private function upsert_form_element($arguments, $isCreate = false, $elementCategory = null) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				"Permission denied: Only webmasters can create form elements.",
+				'authentication_error',
+			);
+		}
+
+		$element_identifier = $arguments['element_identifier'] ?? '';
+		$form_id = intval($arguments['form_id'] ?? 0);
+		$type = trim($arguments['type'] ?? '');
+		$handle = trim($arguments['handle'] ?? '');
+		$caption = trim($arguments['caption'] ?? '');
+		$column_heading = trim($arguments['column_heading'] ?? '');
+		$description = trim($arguments['description'] ?? '');
+		$required = isset($arguments['required']) ? ($arguments['required'] ? 1 : 0) : null;
+		$properties = $arguments['properties'] ?? [];
+		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
+		$data_type = $arguments['data_type'] ?? false;
+		$display = isset($arguments['display']) ? ($arguments['display'] ? 1 : 0) : null;
+		$disabled = isset($arguments['disabled']) ? ($arguments['disabled'] ? 1 : 0) : null;
+
+		$makeSubformInterface = false;
+		$elementObject = null;
+
+		if($isCreate) {
+			if(empty($form_id) OR $form_id <= 0 OR empty($type) OR empty($caption)) {
+				throw new FormulizeMCPException('form_id and type and caption are required for creating elements', 'invalid_data');
+			}
+			formulizeHandler::validateElementType($type, $elementCategory);
+		}
+		if(!$isCreate) {
+			if(empty($element_identifier)) {
+				throw new FormulizeMCPException('element_identifier is required for updating elements', 'invalid_data');
+			} elseif(!$elementObject = _getElementObject($element_identifier)) {
+				throw new FormulizeMCPException('Element not found for element_identifier: '.$element_identifier, 'element_not_found');
+			}
+			$type = $elementObject->getVar('ele_type');
+		}
+
+		// validate that $data_type conforms to the element type's valid data types as specified in the tool schema
+		$validDataTypes = ['text', 'date', 'datetime', 'time'];
+		for($i=1; $i<=11; $i++) { $validDataTypes[] = "int($i)"; }
+		for($i=1; $i<=65; $i++) { $validDataTypes[] = "char($i)"; }
+		for($i=1; $i<=255; $i++) { $validDataTypes[] = "varchar($i)"; }
+		for($i=2; $i<=65; $i++) {
+			for($x=1; $x<=64; $x++) {
+				if($x < $i) {
+					$validDataTypes[] = "decimal($i,$x)";
+				}
+			}
+		}
+		if($data_type AND !in_array($data_type, $validDataTypes)) {
+			throw new FormulizeMCPException('Invalid data_type: '.$data_type, 'invalid_data', context: ['valid_data_types' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'] ]);
+		}
+
+		// put the passed in values into an array for passing to the upsert function
+		// corresponds to the fields in the formulizeElement object
+		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
+		$elementObjectProperties = [
+			'fid' => $fid,
+			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
+			'ele_type' => $type,
+			'ele_handle' => $handle ? $handle : ($elementObject ? $elementObject->getVar('ele_handle') : ''),
+			'ele_caption' => $caption ? $caption : ($elementObject ? $elementObject->getVar('ele_caption') : ''),
+			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
+			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
+			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
+			'ele_order' => $elementObject ? $elementObject->getVar('ele_order') : figureOutOrder('bottom', fid: $fid), // ele_order not specifiable as a property yet, so set every new element to the bottom
+			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
+			'ele_disabled' => $disabled !== null ? $disabled : ($elementObject ? $elementObject->getVar('ele_disabled') : 0),
+		];
+
+		// prepare element-specific properties by calling the element type handler's
+		// validation function, if it exists this allows each element type to validate
+		// and prepare its own properties the function returns an array of key/value pairs
+		// that are merged into the $elementObjectProperties array
+		// this allows each element type to handle its own properties and validation
+		$propertiesPreparedByTheElement = [];
+		$elementTypeHandler = xoops_getmodulehandler($type.'Element', 'formulize');
+		if(method_exists($elementTypeHandler, 'validateEleValuePublicAPIProperties')) {
+			$ele_value = $elementObject ? $elementObject->getVar('ele_value') : $elementTypeHandler->getDefaultEleValue();
+			$propertiesPreparedByTheElement = $elementTypeHandler->validateEleValuePublicAPIProperties($properties, $ele_value, $elementObject);
+			if(isset($propertiesPreparedByTheElement['upsertParams'])) {
+				// special case - the element type needs to pass special parameters to the upsert function
+				// for example, if it should create a subform interface in the source form
+				$makeSubformInterface = $propertiesPreparedByTheElement['upsertParams']['makeSubformInterface'] ?? false;
+				unset($propertiesPreparedByTheElement['upsertParams']); // remove so it won't affect the object properties!
+			}
+		}
+
+		// merge the element-specific properties into the main properties array
+		// this will overwrite any keys that are the same, which would be rare, but
+		// important if a special element needs to control some more general aspect
+		// of the element for example, a special element might want to force ele_required
+		// to true so the element-specific properties should take precedence and so they are set last here
+		foreach($propertiesPreparedByTheElement as $key => $value) {
+			$elementObjectProperties[$key] = $value;
+		}
+
+		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi, makeSubformInterface: $makeSubformInterface);
+
+		return [
+			'element_id' => $elementObject->getVar('ele_id'),
+			'form_id' => $elementObject->getVar('fid'),
+			'type' => $type,
+			'handle' => $elementObject->getVar('ele_handle'),
+			'caption' => $elementObject->getVar('ele_caption'),
+			'column_heading' => $elementObject->getVar('ele_colhead'),
+			'description' => $elementObject->getVar('ele_desc'),
+			'required' => $elementObject->getVar('ele_required') ? true : false,
+			'properties' => $elementObject->getVar('ele_value'),
+			'success' => true,
+			'message' => 'Element and related resources created successfully'
+		];
+
+	}
+
+	/**
 	 * Gather data using Formulize's built-in function with proper permission scoping
 	 * @param array $arguments An associative array containing the parameters for gathering data from a form.
 	 * - 'form_id': The ID of the form to gather data from.
@@ -527,71 +959,73 @@ Examples:
 		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
 		$elements = $arguments['elements'] ?? array();
 
-		try {
-
-			if(!$form_id OR $form_id < 0) {
-				throw new FormulizeMCPException('Form not found. Form ID must be a positive integer', 'form_not_found');
-			}
-
-			// Build scope based on authenticated user and their permissions
-			$scope = buildScope('all', $xoopsUser, $form_id);
-
-			// The buildScope function returns an array with [scope, actualCurrentView]
-			$actualScope = $scope[0];
-
-			// validate stuff...
-			if (!empty($sortField)) {
-				$dataHandler = new formulizeDataHandler();
-				$element_handler = xoops_getmodulehandler('elements', 'formulize');
-				if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
-					throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
-				}
-			}
-			list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
-			$elements = $this->validateElementHandles($elements);
-
-			// cleanup $filter into old style filter string, if necessary
-			$filter = $this->validateFilter($filter);
-
-			// Call Formulize's gatherDataset function with all parameters
-			$dataset = gatherDataset(
-				$form_id,
-				$elements,
-				$filter,
-				$andOr,
-				$actualScope,
-				$limitStart,
-				$limitSize,
-				$sortField,
-				$sortOrder,
-				-1 // always use primary relationship (all connections)
-			);
-
-			return [
-				'form_id' => $form_id,
-				'dataset' => $dataset,
-				'total_count' => count($dataset),
-				'scope_used' => $actualScope,
-				'parameters_used' => [
-					'elements' => $elements,
-					'filter' => $filter,
-					'andOr' => $andOr,
-					'limitStart' => $limitStart,
-					'limitSize' => $limitSize,
-					'sortField' => $sortField,
-					'sortOrder' => $sortOrder,
-					'form_relationship_id' => -1
-				]
-			];
-		} catch (Exception $e) {
-			throw $e;
+		if(!$form_id OR $form_id < 0) {
+			throw new FormulizeMCPException('Form not found. Form ID must be a positive integer', 'form_not_found');
 		}
+
+		// Build scope based on authenticated user and their permissions
+		$scope = buildScope('all', $xoopsUser, $form_id);
+
+		// The buildScope function returns an array with [scope, actualCurrentView]
+		$actualScope = $scope[0];
+
+		// validate stuff...
+		if (!empty($sortField)) {
+			$dataHandler = new formulizeDataHandler();
+			$element_handler = xoops_getmodulehandler('elements', 'formulize');
+			if(!$elementObject = $element_handler->get($sortField) AND !in_array($sortField, $dataHandler->metadataFields)) {
+				throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
+			}
+		}
+		list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
+		$elements = $this->validateElementHandles($elements);
+
+		// cleanup $filter into old style filter string, if necessary
+		// supports {BLANK} value for searching for blank values
+		// if filter is an array, then force AND between multiple filters since the array is a series of nested searches with their own booleans between
+		$filter = $this->validateFilter($filter, $andOr);
+		$andOr = is_array($filter) ? 'AND' : $andOr;
+
+		// Call Formulize's gatherDataset function with all parameters
+		$dataset = gatherDataset(
+			$form_id,
+			$elements,
+			$filter,
+			$andOr,
+			$actualScope,
+			$limitStart,
+			$limitSize,
+			$sortField,
+			$sortOrder,
+			-1 // always use primary relationship (all connections)
+		);
+
+		return [
+			'form_id' => $form_id,
+			'dataset' => $dataset,
+			'total_count' => count($dataset),
+			'scope_used' => $actualScope,
+			'parameters_used' => [
+				'elements' => $elements,
+				'filter' => $filter,
+				'andOr' => $andOr,
+				'limitStart' => $limitStart,
+				'limitSize' => $limitSize,
+				'sortField' => $sortField,
+				'sortOrder' => $sortOrder,
+				'form_relationship_id' => -1
+			]
+		];
+
 	}
 
 /**
  * Convert MCP filter array into old style filter string for compatibility with gatherDataset
+ * @param mixed $filter - an array of filters to use, each one is an array with three keys: element, value, operator
+ * @param string $andOr - the boolean operator to use between multiple filters, if there are multiple filters. Defaults to 'AND'.
+ * @return mixed - a string or array suitable for passing to gatherDataset
  */
-private function validateFilter($filter) {
+private function validateFilter($filter, $andOr = 'AND') {
 	// Handle simple entry ID lookup
 	if (is_numeric($filter)) {
 		return intval($filter);
@@ -615,10 +1049,49 @@ private function validateFilter($filter) {
 		throw new FormulizeMCPException("The 'filter' parameter must be an integer or an array.", 'invalid_data');
 	}
 	$filterStringParts = array();
+	$blankSearches = array();
 	foreach($filter as $thisFilter) {
-		$filterStringParts[] = $thisFilter['element'].'/**/'.$thisFilter['value'].'/**/'.$thisFilter['operator'];
+		// similar to formulize_parseSearchesIntoFilter but that is tuned to dealing with searches entered through UI which aren't in array format already
+		// this will not quite work perfectly if there are multiple blank searches on different elements
+		// search for email = {BLANK} AND phone = {BLANK} would actually need a third level of nesting in final output, since the structure for just the blank portion should be:
+		// ((email = '' OR email IS NULL) AND (phone = '' OR phone IS NULL))
+		// A very smartly recursive handling when parsing the $blankSearches array could probably handle this, and we just put each field into a sub level of the array when creating it, but for now, we will just note the limitation
+		if($thisFilter['value'] == '{BLANK}') {
+			if($thisFilter['operator'] == "!=" OR $thisFilter['operator'] == "NOT LIKE") {
+				$blankOp1 = "!=";
+				$blankOp2 = " IS NOT NULL ";
+				$blankBoolean = "AND";
+			} else {
+				$blankOp1 = "=";
+				$blankOp2 = " IS NULL ";
+				$blankBoolean = "OR";
+			}
+			$blankSearches[$blankBoolean][] = $thisFilter['element']."/**//**/$blankOp1][".$thisFilter['element']."/**//**/$blankOp2";
+		} else {
+			$filterStringParts[] = $thisFilter['element'].'/**/'.$thisFilter['value'].'/**/'.$thisFilter['operator'];
+		}
 	}
-	return implode('][', $filterStringParts);
+	if(!empty($blankSearches)) {
+		$returnFilter = array([
+				$andOr,
+				implode('][', $filterStringParts)
+		]);
+		if(isset($blankSearches['AND'])) {
+			$returnFilter[] = [
+				'AND',
+				implode('][', $blankSearches['AND'])
+			];
+		}
+		if(isset($blankSearches['OR'])) {
+			$returnFilter[] = [
+				'OR',
+				implode('][', $blankSearches['OR'])
+			];
+		}
+		return $returnFilter;
+	} else {
+		return implode('][', $filterStringParts);
+	}
 }
 
 /**
@@ -717,10 +1190,63 @@ private function validateFilter($filter) {
 	}
 
 	/**
+	 * List all the groups - tool version of the resource
+	 */
+	private function list_groups() {
+		return $this->groups_list();
+	}
+
+	/**
+	 * List all the members of a group
+	 */
+	private function list_group_members($arguments) {
+		$group_id = intval($arguments['group_id'] ?? 0);
+		if(empty($group_id) OR $group_id <= 0) {
+			throw new FormulizeMCPException('group_id is required and must be a positive integer', 'invalid_data');
+		}
+		if(!$this->authenticatedUid OR ($this->isUserAWebmaster() == false AND !in_array($group_id, $this->userGroups))) {
+			throw new FormulizeMCPException('Permission denied: You must be a webmaster or a member of the group to list its members.', 'authentication_error');
+		}
+		$limitBy = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l ON l.uid = u.uid WHERE l.groupid = ".intval($group_id);
+		$groupMemberData = [];
+		$groupData = $this->groups_list($group_id);
+		$groupMemberData['group_details'] = $groupData['groups'][0] ?? [];
+		if($result = $this->getUserDetails(limitBy: $limitBy)) {
+			if($result) {
+				while($row = $this->db->fetchArray($result)) {
+					$groupMemberData['members'][] = $this->formatTimestamps($row);
+				}
+			}
+		}
+		return $groupMemberData;
+	}
+
+	/**
 	 * List all the users - tool version of the resource
 	 */
 	private function list_users() {
 		return $this->users_list();
+	}
+
+	/**
+	 * List all the groups a user belongs to
+	 */
+	private function list_a_users_groups($arguments) {
+		$user_id = intval($arguments['user_id'] ?? 0);
+		if(empty($user_id) OR $user_id <= 0) {
+			throw new FormulizeMCPException('user_id is required and must be a positive integer', 'invalid_data');
+		}
+		$users = $this->users_list(); // get a list of the users the authenticated user is allowed to see
+		$allowedUserIds = array_column($users['users'], 'user_id');
+		if(!in_array($user_id, $allowedUserIds)) {
+			throw new FormulizeMCPException('Permission denied: You do not have access to this user.', 'authentication_error');
+		}
+		$userDetails = [];
+		if($result = $this->getUserDetails($user_id)) {
+			$row = $this->db->fetchArray($result);
+			$userDetails['user_details'] = $this->formatTimestamps($row);
+		}
+		return $userDetails + $this->groups_list(user_id: $user_id);
 	}
 
 	/**
@@ -795,139 +1321,135 @@ private function validateFilter($filter) {
 	private function writeFormEntry($formId, $entryId, $data, $relationshipId = -1)
 	{
 		$resultEntryId = null;
-		try {
-			// Enhanced input validation
-			if (!is_array($data) || empty($data)) {
-				throw new FormulizeMCPException(
-					'Data must be a non-empty array',
-					'invalid_data'
-				);
-			}
-
-			// Validate form ID
-			if (!is_numeric($formId) || $formId <= 0) {
-				throw new FormulizeMCPException('Form ID must be a positive integer', 'invalid_data');
-			}
-			$formId = intval($formId);
-
-			// Validate relationship ID
-			if (!is_numeric($relationshipId) || $relationshipId == 0 || $relationshipId < -1) {
-				throw new FormulizeMCPException('Relationship ID must be a positive integer or -1 for the Primary Relationship that includes all connections.', 'invalid_data');
-			}
-			$relationshipId = intval($relationshipId);
-
-			// Validate entry ID
-			if ($entryId !== 'new' && (!is_numeric($entryId) || $entryId <= 0)) {
-				throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
-			}
-			if ($entryId !== 'new') {
-				$entryId = intval($entryId);
-			}
-
-			// Step 1: Check permissions
-			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
-				throw new FormulizeMCPException(
-					'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
-					'permission_denied',
-				);
-			}
-
-			// Validate form exists
-			$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
-			$formResult = $this->db->query($formSql);
-			$formData = $this->db->fetchArray($formResult);
-
-			if (!$formData) {
-				throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
-			}
-
-			// Get form elements to validate handles
-			$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
-			$elementsResult = $this->db->query($elementsSql);
-
-			$validHandles = [];
-			$requiredHandles = [];
-			while ($row = $this->db->fetchArray($elementsResult)) {
-				$validHandles[] = $row['ele_handle'];
-				if($row['ele_required']) {
-					$requiredHandles[] = $row['ele_handle'];
-				}
-			}
-
-			// Step 2: Prepare and validate the data
-			$preparedData = [];
-			foreach ($data as $elementHandle => $value) {
-				// Validate element handle type
-				if (!is_string($elementHandle)) {
-					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
-				}
-
-				// Validate element handle exists in this form
-				if (!in_array($elementHandle, $validHandles)) {
-					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
-				}
-
-				// Prepare the value for database storage
-				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
-				if($preparedValue AND $preparedValue !== $value) {
-					$value = $preparedValue;
-				}
-
-				$preparedData[$elementHandle] = $value;
-			}
-
-			if (empty($preparedData)) {
-				throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
-			}
-
-			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
-			if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
-				$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
-				$missingRequiredHandles = [];
-				foreach($requiredHandles as $requiredHandle) {
-					if(!isset($preparedData[$requiredHandle])
-						OR $preparedData[$requiredHandle] === null
-						OR $preparedData[$requiredHandle] === 0
-						OR $preparedData[$requiredHandle] === "0"
-						OR $preparedData[$requiredHandle] === "") {
-							$missingRequiredHandles[] = $requiredHandle;
-						}
-				}
-				if($missingRequiredHandles) {
-					$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
-					throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
-				}
-			}
-
-			// Step 3: Write the entry
-			// a null result means nothing was written, likely because the submitted data was not different from what's in the database already
-			$resultEntryId = formulize_writeEntry($preparedData, $entryId);
-
-			// For new entries, the function returns the new entry ID
-			// For updates, it returns the existing entry ID
-			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId;
-
-			// Step 4: Update derived values
-			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
-
-			$response = [
-				'success' => true,
-				'form_id' => $formId,
-				'entry_id' => $finalEntryId,
-				'prepped_data' => $preparedData,
-				'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
-				'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
-				'element_count' => count($preparedData)
-			];
-
-			if ($entryId === 'new') {
-				$response['new_entry_id'] = $resultEntryId;
-			}
-
-			return $response;
-		} catch (Exception $e) {
-			throw $e;
+		// Enhanced input validation
+		if (!is_array($data) || empty($data)) {
+			throw new FormulizeMCPException(
+				'Data must be a non-empty array',
+				'invalid_data'
+			);
 		}
+
+		// Validate form ID
+		if (!is_numeric($formId) || $formId <= 0) {
+			throw new FormulizeMCPException('Form ID must be a positive integer', 'invalid_data');
+		}
+		$formId = intval($formId);
+
+		// Validate relationship ID
+		if (!is_numeric($relationshipId) || $relationshipId == 0 || $relationshipId < -1) {
+			throw new FormulizeMCPException('Relationship ID must be a positive integer or -1 for the Primary Relationship that includes all connections.', 'invalid_data');
+		}
+		$relationshipId = intval($relationshipId);
+
+		// Validate entry ID
+		if ($entryId !== 'new' && (!is_numeric($entryId) || $entryId <= 0)) {
+			throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
+		}
+		if ($entryId !== 'new') {
+			$entryId = intval($entryId);
+		}
+
+		// Step 1: Check permissions
+		if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
+			throw new FormulizeMCPException(
+				'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
+				'permission_denied',
+			);
+		}
+
+		// Validate form exists
+		$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formResult = $this->db->query($formSql);
+		$formData = $this->db->fetchArray($formResult);
+
+		if (!$formData) {
+			throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
+		}
+
+		// Get form elements to validate handles
+		$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
+		$elementsResult = $this->db->query($elementsSql);
+
+		$validHandles = [];
+		$requiredHandles = [];
+		while ($row = $this->db->fetchArray($elementsResult)) {
+			$validHandles[] = $row['ele_handle'];
+			if($row['ele_required']) {
+				$requiredHandles[] = $row['ele_handle'];
+			}
+		}
+
+		// Step 2: Prepare and validate the data
+		$preparedData = [];
+		foreach ($data as $elementHandle => $value) {
+			// Validate element handle type
+			if (!is_string($elementHandle)) {
+				throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
+			}
+
+			// Validate element handle exists in this form
+			if (!in_array($elementHandle, $validHandles)) {
+				throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
+			}
+
+			// Prepare the value for database storage
+			$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
+			if($preparedValue AND $preparedValue !== $value) {
+				$value = $preparedValue;
+			}
+
+			$preparedData[$elementHandle] = $value;
+		}
+
+		if (empty($preparedData)) {
+			throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
+		}
+
+		// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
+		if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
+			$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
+			$missingRequiredHandles = [];
+			foreach($requiredHandles as $requiredHandle) {
+				if(!isset($preparedData[$requiredHandle])
+					OR $preparedData[$requiredHandle] === null
+					OR $preparedData[$requiredHandle] === 0
+					OR $preparedData[$requiredHandle] === "0"
+					OR $preparedData[$requiredHandle] === "") {
+						$missingRequiredHandles[] = $requiredHandle;
+					}
+			}
+			if($missingRequiredHandles) {
+				$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
+				throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
+			}
+		}
+
+		// Step 3: Write the entry
+		// a null result means nothing was written, likely because the submitted data was not different from what's in the database already
+		$resultEntryId = formulize_writeEntry($preparedData, $entryId);
+
+		// For new entries, the function returns the new entry ID
+		// For updates, it returns the existing entry ID
+		$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId;
+
+		// Step 4: Update derived values
+		formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+
+		$response = [
+			'success' => true,
+			'form_id' => $formId,
+			'entry_id' => $finalEntryId,
+			'prepped_data' => $preparedData,
+			'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
+			'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
+			'element_count' => count($preparedData)
+		];
+
+		if ($entryId === 'new') {
+			$response['new_entry_id'] = $resultEntryId;
+		}
+
+		return $response;
 	}
 
 	/**
@@ -1073,25 +1595,23 @@ private function validateFilter($filter) {
 		}
 
 		$sql = trim($arguments['sql'] ?? '');
-		try {
-			// Sanitize the SQL
-			$safeSql = $this->sanitizeFormulizeSQL($sql, ['SELECT', 'SHOW', 'DESCRIBE']);
-			if(!$res = $this->db->query($safeSql)) {
-				throw new FormulizeMCPException('SQL query failed: ' . $this->db->error(), 'database_error');
-			}
 
-			$results = [];
-			while($row = $this->db->fetchArray($res)) {
-				$results[] = $row;
-			}
-			return [
-				'sql' => $safeSql,
-				'query_results' => $results,
-				'number_of_records_returned' => count($results)
-			];
-    } catch (Exception $e) {
-        throw new FormulizeMCPException('SQL execution failed: ' . $e->getMessage(), 'database_error');
-    }
+		// Sanitize the SQL
+		$safeSql = $this->sanitizeFormulizeSQL($sql, ['SELECT', 'SHOW', 'DESCRIBE']);
+		if(!$res = $this->db->query($safeSql)) {
+			throw new FormulizeMCPException('SQL query failed: ' . $this->db->error(), 'database_error');
+		}
+
+		$results = [];
+		while($row = $this->db->fetchArray($res)) {
+			$results[] = $row;
+		}
+		return [
+			'sql' => $safeSql,
+			'query_results' => $results,
+			'number_of_records_returned' => count($results)
+		];
+
 	}
 
 	private function sanitizeFormulizeSQL($sql, $allowedOperations = ['SELECT', 'SHOW', 'DESCRIBE']) {
@@ -1227,4 +1747,163 @@ private function validateFilter($filter) {
 			return trim($sql);
 	}
 
+	/**
+	 * Build the create_form_element and update_form_element tool schema with dynamic element discovery
+	 * @return array Tool schema for creating form elements
+	 */
+	private function buildFormElementTools() {
+
+		// for creating and updating
+		$commonDataElementProperties = [
+			'column_heading' => [
+				'type' => 'string',
+				'description' => 'Optional. The heading to use at the top of a column in lists of entries. If not specified, the caption will be used. Some captions are long and descriptive, and a shorter heading would be more appropriate for in a list of data.'
+			],
+			'description' => [
+				'type' => 'string',
+				'description' => 'Optional. A longer description or help text for the REPLACEWITHSINGLUARCATEGORYNAME, shown to users filling out the form.'
+			],
+			'required' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME is required to have a value when users fill out the form. Default: false'
+			],
+			'principal_identifier' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME is the principal identifying element for entries in this form. Principal identifiers are used in various places in Formulize to represent an entry. The Principal Identifier would typically be a \'Name\' text box or other element that unique identifies the entry. Each form can only have one Principal Identifier. If a form has a Principal Identifier, and another element is created or updated with this value set to true, the existing Principal Identifier will be replaced with the new one. Default: false.'
+			],
+			'disabled' => [
+				'type' => 'boolean',
+				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME element is disabled (visible but not usable) in the form. Default: false.'
+			]
+		];
+
+		// for creating only
+		$creationDataElementProperties = [
+			'handle' => [
+				'type' => 'string',
+				'description' => 'Optional. This does not need to be specified, as the system will determine it automatically from the caption. This is the internal name, used in the database and in API calls. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system.'
+			]
+		];
+
+		// presently only webmasters get these tools at all, but in case that changes, only webmasters will be able to muck with the data_type property
+		$dataTypeProperty = $this->isUserAWebmaster() ? [
+			'data_type' => [
+				'type' => 'string',
+				'enum' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'],
+				'description' => 'Optional. The data type to be used for the field in the database where this data will be stored. The system will default to text in most cases, but will set smart defaults if the type is specifically a number box or linked element storing foreign keys, etc. Generally this does not need to be specified, but can be used if the user has specifically stated that a certain data type must be used for a given element. For int(x), the x is the number of digits to display in MySQL when showing the number. For decimal(x,y), the x is the total number of digits, and y is the number of digits after the decimal point. For char(x) and varchar(x), the x is the maximum number of characters to store.'
+			]
+		] : [];
+
+		// Discover available element types and their descriptions
+		[$elementTypes, $creationElementDescriptions] = formulizeHandler::discoverElementTypes();
+		[$elementTypes, $updateElementDescriptions] = formulizeHandler::discoverElementTypes(update: true);
+
+		// Build comprehensive description with examples from all element types
+		$basePropertyDescriptions = " have different properties depending on their type.\n\nYou must use the valid properties for each type. Here is a complete list of available types, their properties, and examples:\n\n";
+		$categoryNames = formulizeHandler::getElementTypeReadableNames();
+		$formElementTools = [];
+		foreach($elementTypes as $category => $types) {
+			$pluralCategoryName = ucfirst($categoryNames[$category]['plural']);
+			$singularCategoryName = ucfirst($categoryNames[$category]['singular']);
+			$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+			$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+			if(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
+				$staticMethodName = 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category);
+				$categoryCreationBaseDescriptions = formulizeHandler::$staticMethodName(update: false);
+				$categoryUpdateBaseDescriptions = formulizeHandler::$staticMethodName(update: true);
+			}
+			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\n$categoryCreationBaseDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
+			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$categoryUpdateBaseDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
+			$commonDataElementPropertiesForThisCategory = [];
+			$dataTypePropertyForThisCategory = [];
+			$creationDataElementPropertiesForThisCategory = [];
+			if($category != 'subforms') {
+				$commonDataElementPropertiesForThisCategory = recursiveReplaceInArray('REPLACEWITHSINGLUARCATEGORYNAME', $singularCategoryName, $commonDataElementProperties);
+				$dataTypePropertyForThisCategory = $dataTypeProperty;
+				$creationDataElementPropertiesForThisCategory = $creationDataElementProperties;
+			}
+			$formElementTools[] = [
+				'name' => 'create_'.str_replace(' ', '_', strtolower($singularCategoryName)),
+				'description' => $creationDescription,
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'form_id' => [
+								'type' => 'integer',
+								'description' => 'Required. ID of the form that this will be part of.'
+							],
+							'type' => [
+								'type' => 'string',
+								'enum' => $types,
+								'description' => "Required. The type of $singularCategoryName to create."
+							],
+							'caption' => [
+								'type' => 'string',
+								'description' => "Required. The label for the $singularCategoryName as it will appear to users in forms and in lists."
+							],
+							'properties' => [
+								'type' => 'object',
+								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types.",
+								'additionalProperties' => true
+							],
+						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $dataTypePropertyForThisCategory,
+					'required' => ['form_id', 'type', 'caption', 'properties']
+				]
+			];
+			$formElementTools[] = [
+				'name' => 'update_'.str_replace(' ', '_', strtolower($singularCategoryName)),
+				'description' => $updateDescription,
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'element_identifier' => [
+							'oneOf' => [
+								[
+									'type' => 'string',
+									'description' => "The handle for the $singularCategoryName to update."
+								],
+								[
+									'type' => 'integer',
+									'description' => "The ID number of the $singularCategoryName to update."
+								]
+							]
+						],
+						'caption' => [
+							'type' => 'string',
+							'description' => "Optional. The new label for the $singularCategoryName as it will now appear to users in forms."
+						],
+						'properties' => [
+							'type' => 'object',
+							'description' => "Optional. Updated configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types. Use the get_form_details tool to see all the element types for the existing elements.",
+							'additionalProperties' => true
+						],
+					] + $commonDataElementPropertiesForThisCategory + [
+						'display' => [
+							'type' => 'boolean',
+							'description' => "Optional. Whether the $singularCategoryName is displayed in the form or hidden. Default: true."
+						]
+					] + $dataTypePropertyForThisCategory,
+				'required' => ['element_identifier']
+				]
+			];
+		}
+
+		return $formElementTools;
+
+	}
+
+}
+
+function recursiveReplaceInArray($search, $replace, $array) {
+	$result = [];
+	foreach ($array as $key => $value) {
+		if (is_array($value)) {
+			$result[$key] = recursiveReplaceInArray($search, $replace, $value);
+		} elseif (is_string($value)) {
+			$result[$key] = str_replace($search, $replace, $value);
+		} else {
+			$result[$key] = $value;
+		}
+	}
+	return $result;
 }

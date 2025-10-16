@@ -55,24 +55,14 @@ class formulizeListboxElement extends formulizeSelectElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples = "
 **Element:** Listbox (listbox)
-**Description:** A box that shows a list of options, allowing users to select one or more options from the list. The user experience with Listboxes is generally poor. Use Radio Buttons, Checkboxes, Dropdown Lists, or Autocomplete Lists instead, unless there's a specific reason to use a Listbox or the user has speciically requested one.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
-- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Listboxes, the default is 1. Set to 0 to allow only a single selection.)";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
+**Description:** A box that shows a list of options, allowing users to select one or more options from the list. The user experience with Listboxes is generally poor. Use Radio Buttons, Checkboxes, Dropdown Lists, or Autocomplete Lists instead, unless there's a specific reason to use a Listbox or the user has speciically requested one.
+**Properties:**
+- all the common properties for List elements, plus:
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Listboxes, the default is 1. Set to 0 to allow only a single selection.)
+**Example:**
 - A list of favorite colors, and only one choice is allowed: { options: [ 'red', 'blue', 'green', 'yellow', 'purple', 'orange' ], allowMultipleSelections: 0 }";
-		}
 		return $descriptionAndExamples;
 	}
 
@@ -95,7 +85,7 @@ class formulizeListboxElementHandler extends formulizeSelectElementHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		list($ele_value, $ele_uitext) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+		list($ele_value, $ele_uitext, $ele_delim) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, $ele_value)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = count($ele_value[ELE_VALUE_SELECT_OPTIONS]) < 10 ? count($ele_value[ELE_VALUE_SELECT_OPTIONS]) : 10;
 		$ele_value[ELE_VALUE_SELECT_NUMROWS] = $ele_value[ELE_VALUE_SELECT_NUMROWS] < 1 ? 1 : $ele_value[ELE_VALUE_SELECT_NUMROWS];
 		if(isset($properties['allowMultipleSelections'])) {
@@ -103,7 +93,8 @@ class formulizeListboxElementHandler extends formulizeSelectElementHandler {
 		}
 		return [
 			'ele_value' => $ele_value,
-			'ele_uitext' => $ele_uitext
+			'ele_uitext' => $ele_uitext,
+			'ele_delim' => $ele_delim
 		];
 	}
 

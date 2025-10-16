@@ -402,6 +402,9 @@ trait resources {
 		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
+		// rename pi to principal_identifying_element for clarity
+		$formData['principal_identifying_element'] = $formData['pi'];
+		unset($formData['pi']);
 
 		if (!$formData) {
 			throw new FormulizeMCPException(
@@ -619,22 +622,38 @@ trait resources {
 	 * Get groups that the user is a member of, or all groups if the user is a webmaster
 	 * @return array Returns an array with 'groups' (list of groups) and 'group_count' (number of groups). Each group is an associative array with 'groupid', 'name', and 'description.
 	 */
-	private function groups_list()
+	private function groups_list($group_id = 0, $user_id = 0)
 	{
 
-		// limit non webmasters to their own groups
+		$group_id = intval($group_id);
+		$user_id = intval($user_id);
+
+		$groupIdsToUse = $user_id ? $this->getGroupIdsFromUserId($user_id) : ($this->isUserAWebmaster() ? [] : $this->userGroups);
+
 		$groupLimitWhereClause = "";
-		if(!in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$groupLimitWhereClause = "WHERE groupid IN (".implode(", ", array_filter($this->userGroups, 'is_numeric')).")";
+		// if a group id is requested, allow for webmasters and members of the group
+		if($group_id AND ($this->isUserAWebmaster() OR in_array($group_id, $groupIdsToUse))) {
+			$groupLimitWhereClause = "WHERE groupid = $group_id"; // already sanitized by intval above
+
+		// otherwise, if a set of group ids has been determined, either from a passed in user, or the authenticated user, limit to those groups
+		} elseif(!$group_id AND !empty($groupIdsToUse)) {
+			$groupLimitWhereClause = "WHERE groupid IN (".implode(", ", array_filter($groupIdsToUse, 'is_numeric')).")";
+
+		// otherwise, no limits specified, so if they're not a webmaster, then this is not allowed
+		} elseif($this->isUserAWebmaster() == false) {
+			throw new FormulizeMCPException(
+				"Permission denied: user does not have access to this group information.",
+				'authentication_error'
+			);
 		}
 
 		// Get groups
 		$groupsSql = "SELECT groupid, name, description FROM " . $this->db->prefix('groups') . " $groupLimitWhereClause ORDER BY name";
-		$groupsResult = $this->db->query($groupsSql);
-
 		$groups = [];
-		while ($row = $this->db->fetchArray($groupsResult)) {
-			$groups[] = $row;
+		if($groupsResult = $this->db->query($groupsSql)) {
+			while ($row = $this->db->fetchArray($groupsResult)) {
+				$groups[] = $row;
+			}
 		}
 
 		return [
@@ -644,33 +663,76 @@ trait resources {
 	}
 
 	/**
+	 * Get the groups that a given user id is a member of
+	 */
+	private function getGroupIdsFromUserId($user_id) {
+		$user_id = intval($user_id);
+		$groupIds = [];
+		$sql = "SELECT groupid FROM ".$this->db->prefix('groups_users_link')." WHERE uid = $user_id";
+		if($result = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($result)) {
+				$groupIds[] = $row['groupid'];
+			}
+		}
+		return $groupIds;
+	}
+
+	/**
 	 * Get a list of the users in the system, all users for webmasters, users in groups the authenticated user can see data from otherwise
 	 */
 	private function users_list() {
-
-		$fields = "u.uid as user_id, u.uname as name, u.timezone_offset as timezone";
-		$limitByGroups = "";
-		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$fields .= ", u.email as email, u.login_name, u.last_login as last_login_timestamp";
-		} elseif($groupIds = $this->groupsAuthenticatedUserCanSeeDataFrom()) {
-			$limitByGroups = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l
+		$limitBy = null;
+		$user_id = null;
+		if($this->isUserAWebmaster() == false) {
+			if($groupIds = $this->groupsAuthenticatedUserCanSeeDataFrom()) {
+				$limitBy = " INNER JOIN ".$this->db->prefix('groups_users_link')." as l
 				ON l.uid = u.uid WHERE l.groupid IN (".implode(",", $groupIds).")";
-		} else {
-			$limitByGroups = "WHERE u.uid = ".$this->authenticatedUid;
+			} else {
+				$user_id = $this->authenticatedUid;
+			}
 		}
-		$sql = "SELECT $fields FROM ".$this->db->prefix('users')." as u $limitByGroups ORDER BY uid";
-		$result = $this->db->query($sql);
-
 		$users = [];
-		while ($row = $this->db->fetchArray($result)) {
-			$users[] = $row;
+		if($result = $this->getUserDetails($user_id, $limitBy)) {
+			while ($row = $this->db->fetchArray($result)) {
+				$users[] = $this->formatTimestamps($row);
+			}
 		}
-
 		return [
 			'users' => $users,
 			'user_count' => count($users),
 		];
+	}
 
+	/**
+	 * Convert any timestamps in the user data to ISO 8601 format
+	 */
+	private function formatTimestamps($userData) {
+		foreach($userData as $k=>$v) {
+			// format timestamps as ISO 8601 dates
+			if(strstr($k, 'timestamp') !== false) {
+				$userData[$k] = $v ? date('c', $v) : null; // dates are stored as unix timestamps and PHP is always set to UTC
+			}
+		}
+		return $userData;
+	}
+
+	/**
+	 * Query for user data
+	 * @param int|null $user_id The ID of a specific user to retrieve, or null for all users
+	 * @param string|null $limitBy Optional SQL clause to limit which users are returned, e.g. a JOIN to groups_users_link and a WHERE clause. Strong assumption that this is sanitized by the caller!
+	 * @return PDOStatement|false The database result, or false on failure
+	 */
+	private function getUserDetails($user_id = null, $limitBy = null) {
+		$user_id = intval($user_id);
+		if(!$limitBy AND $user_id) {
+			$limitBy = "WHERE u.uid = ".intval($user_id);
+		}
+		$fields = "u.uid as user_id, u.uname as name, u.timezone_offset as user_timezone";
+		if($this->isUserAWebmaster()) {
+			$fields .= ", u.user_regdate as registration_timestamp, u.email as email, u.login_name, u.last_login as last_login_timestamp";
+		}
+		$sql = "SELECT $fields FROM ".$this->db->prefix('users')." as u $limitBy ORDER BY name";
+		return $this->db->query($sql);
 	}
 
 	/**

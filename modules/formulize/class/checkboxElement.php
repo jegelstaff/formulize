@@ -59,23 +59,15 @@ class formulizeCheckboxElement extends formulizeElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
 		$descriptionAndExamples = "
 **Element:** Checkboxes (checkbox)
-**Description:** A series of boxes that the user can check to select one or more options. Checkboxes are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box. For a single choice, use Radio Buttons instead, and for a large number of options use an Autocomplete List with multiple selections allowed.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
-- A list of chocolate flavours, with both milk chocolate and dark chocolate selected by default: { options: [ 'milk chocolate', 'dark chocolate', 'white chocolate', 'orange chocolate' ], selectedByDefault: [ 'milk chocolate', 'dark chocolate' ] }";
-		}
+**Description:** A series of boxes that the user can check to select one or more options. Checkboxes are best used when there are a small number of options (generally less than 7) and you want the user to see all the options at once, without having to open a dropdown list or type in an autocomplete box. For a single choice, use Radio Buttons instead, and for a large number of options use an Autocomplete List with multiple selections allowed.
+**Properties:**
+- all the common properties for List elements, plus:
+- delimiter (optional, a string indicating how to separate the items in the list. Valid values are 'linebreak', 'space', or a custom string, which can include any valid HTML. Default is 'linebreak', however this can be altered in the Formulize preferences. It is not normally necessary to specify this property, unless you want to override the default for the system, or use a custom string.)
+**Examples:**
+- A checkbox element with the options 'A', 'B' and 'C', with a delimiter of a space: { options: ['A', 'B', 'C'], delimiter: 'space' }
+- A checkbox element with the options 'A', 'B' and 'C', with a delimiter of a slash: { options: ['A', 'B', 'C'], delimiter: ' / ' }";
 		return $descriptionAndExamples;
 	}
 

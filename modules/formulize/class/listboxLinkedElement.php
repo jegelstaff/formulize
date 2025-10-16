@@ -55,28 +55,16 @@ class formulizeListboxLinkedElement extends formulizeSelectLinkedElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLinked($update);
 		$descriptionAndExamples = "
 **Element:** Linked Listbox (listboxLinked)
-**Description:** A box that shows a list of options, allowing users to select one or more options from the list. Options are based on values entered into another form. The user experience with Linked Listboxes is generally poor. Use Linked Autocomplete Lists or Linked Checkboxes instead, unless there's a specific reason to use a Listbox or the user has specifically requested one.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties
-- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Linked Listboxes, the default is 1. Set to 0 to allow only a single selection.)";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples
-- A list of ingredients, drawn from the Name element in an Ingredients form, with only one choice allowed: { sourceElement: 'ingredient_name', allowMultipleSelections: 0 }";
-		}
+**Description:** A box that shows a list of options, allowing users to select one or more options from the list. Options are based on values entered into another form. The user experience with Linked Listboxes is generally poor. Use Linked Autocomplete Lists or Linked Checkboxes instead, unless there's a specific reason to use a Listbox or the user has specifically requested one.
+**Properties:**
+- all the common properties for Linked elements, plus:
+- allowMultipleSelections (optional, a 1/0 indicating if multiple selections should be allowed in the listbox. For Linked Listboxes, the default is 1. Set to 0 to allow only a single selection.)
+**Example:**
+- A list of ingredients, drawn from the Name element in an Ingredients form, with only one choice allowed: { sourceElement: 'ingredients_name', allowMultipleSelections: 0 }";
 		return $descriptionAndExamples;
 	}
-
-
 }
 
 #[AllowDynamicProperties]

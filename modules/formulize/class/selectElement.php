@@ -84,22 +84,12 @@ class formulizeSelectElement extends formulizeElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		list($commonNotes, $commonProperties, $commonExamples) = formulizeHandler::mcpElementPropertiesBaseDescriptionAndExamplesForLists($update);
+
 		$descriptionAndExamples = "
 **Element:** Dropdown List (select)
-**Description:** A dropdown list of options where the user can select one choice. Dropdown lists are best used when there are a moderate number of options (generally between 5 and 20) and you want to save space on the form. For a small number of options, use Radio Buttons instead, and for a large number of options use an Autocomplete List.";
-		if($commonNotes) {
-			$descriptionAndExamples .= "
-$commonNotes";
-		}
-		if($commonProperties) {
-			$descriptionAndExamples .= "
-$commonProperties";
-		}
-		if($commonExamples) {
-			$descriptionAndExamples .= "
-$commonExamples";
-		}
+**Description:** A dropdown list of options where the user can select one choice. Dropdown lists are best used when there are a moderate number of options (generally between 5 and 20) and you want to save space on the form. For a small number of options, use Radio Buttons instead, and for a large number of options use an Autocomplete List.
+**Properties:**
+- all the common properties for List elements";
 		return $descriptionAndExamples;
 	}
 

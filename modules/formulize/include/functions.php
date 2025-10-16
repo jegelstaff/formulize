@@ -8556,54 +8556,54 @@ function correctStringIntFloatTypes($value) {
 }
 
 /**
-	 * Look in the uitext for an element and see if a value matches, return the DB value that corresponds to the passed in value
-	 * @param string $value The value to check
-	 * @param object $element The element to check against
-	 * @param bool $partialMatch Whether to allow partial matches
-	 * @return string|array|bool The matching database term for the value passed in to use, or an array of matching terms, or the original value if there was no uitext, or boolean false if there was no match at all and the term is invalid
-	 */
-	function checkUITextForValue($value, $element, $partialMatch=false) {
-		$foundValue = $value;
-		if($element->getVar('ele_uitextshow')
-			AND $thisElementUITexts = $element->getVar('ele_uitext')
-			AND is_array($thisElementUITexts)
-			AND count($thisElementUITexts) > 0
-			AND $thisElementUITexts[array_key_first($thisElementUITexts)]) {
-				$foundValue = array();
-				$comparisonValue = undoAllHTMLChars($value);
-				foreach ($thisElementUITexts as $thisDBValue => $thisUIText) {
-					if(undoAllHTMLChars($thisDBValue) === $comparisonValue) { // exact match on DB value trumps everything
-						$foundValue[] = $thisDBValue;
-						if($partialMatch === false) {
-							break; // we're done, found a match
-						} else {
-							continue; // keep looking for more matches
-						}
-					}
-					$thisUIText = undoAllHTMLChars($thisUIText);
-					switch ($partialMatch) {
-						case false:
-							if ($thisUIText == $comparisonValue) {
-								$foundValue[] = $thisDBValue;
-								break 2; // Break out of the foreach
-							}
-							continue; // continue foreach
-						case true:
-						default:
-							if ($comparisonValue and stristr($thisUIText, $comparisonValue) !== false) {
-								$foundValue[] = $thisDBValue;
-							}
+ * Look in the uitext for an element and see if a value matches, return the DB value that corresponds to the passed in value
+ * @param string $value The value to check
+ * @param object $element The element to check against
+ * @param bool $partialMatch Whether to allow partial matches
+ * @return string|array|bool The matching database term for the value passed in to use, or an array of matching terms, or the original value if there was no uitext, or boolean false if there was no match at all and the term is invalid
+ */
+function checkUITextForValue($value, $element, $partialMatch=false) {
+	$foundValue = $value;
+	if($element->getVar('ele_uitextshow')
+		AND $thisElementUITexts = $element->getVar('ele_uitext')
+		AND is_array($thisElementUITexts)
+		AND count($thisElementUITexts) > 0
+		AND $thisElementUITexts[array_key_first($thisElementUITexts)]) {
+			$foundValue = array();
+			$comparisonValue = undoAllHTMLChars($value);
+			foreach ($thisElementUITexts as $thisDBValue => $thisUIText) {
+				if(undoAllHTMLChars($thisDBValue) === $comparisonValue) { // exact match on DB value trumps everything
+					$foundValue[] = $thisDBValue;
+					if($partialMatch === false) {
+						break; // we're done, found a match
+					} else {
+						continue; // keep looking for more matches
 					}
 				}
-				$foundValue = count($foundValue) == 1 ? $foundValue[0] : $foundValue;
-		}
-		// will either be empty or have more than one value
-		if(is_array($foundValue)) {
-			return !empty($foundValue) ? $foundValue : false;
-		} else {
-			return $foundValue;
-		}
+				$thisUIText = undoAllHTMLChars($thisUIText);
+				switch ($partialMatch) {
+					case false:
+						if ($thisUIText == $comparisonValue) {
+							$foundValue[] = $thisDBValue;
+							break 2; // Break out of the foreach
+						}
+						continue; // continue foreach
+					case true:
+					default:
+						if ($comparisonValue and stristr($thisUIText, $comparisonValue) !== false) {
+							$foundValue[] = $thisDBValue;
+						}
+				}
+			}
+			$foundValue = count($foundValue) == 1 ? $foundValue[0] : $foundValue;
 	}
+	// will either be empty or have more than one value
+	if(is_array($foundValue)) {
+		return !empty($foundValue) ? $foundValue : false;
+	} else {
+		return $foundValue;
+	}
+}
 
 // THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
 // $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
@@ -8664,4 +8664,40 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
 		}
 	}
 	return $foundAssociatedMatch ? $associatedText : false;
+}
+
+function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
+	global $xoopsDB;
+	if($orderChoice === "bottom") {
+		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
+	  $res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['new_order'] + 1;
+	} elseif($orderChoice === "top") {
+		$orderChoice = 0;
+	} else {
+		// convert the orderpref from the element ID to the order
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = $array['ele_order'];
+	}
+	$orderValue = $orderChoice + 1;
+	if($oldOrder AND $oldOrder != $orderValue) {
+		// and we need to reorder all the elements equal to and higher than the current element
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		$res = $xoopsDB->query($sql);
+	}
+	return $orderValue;
+}
+
+/**
+ * Check if a method exists in a class, and that it is not inherited from a parent class
+ * @param string $class The class name
+ * @param string $method The method name
+ * @return bool Returns true if the method exists in the class and is not inherited, false otherwise
+ */
+function methodExistsInClass($class, $method) {
+	$reflection = new ReflectionClass($class);
+	return $reflection->hasMethod($method) && $reflection->getMethod($method)->getDeclaringClass()->getName() === $class;
 }

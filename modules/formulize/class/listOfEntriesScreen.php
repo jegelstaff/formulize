@@ -369,7 +369,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
 			// Buttons
 			$defaultListScreen->setVar('useaddupdate', ($formObject->getVar('singular') ? sprintf(_formulize_DE_ADDSINGULAR, $formObject->getVar('singular')) : _formulize_DE_ADDENTRY));
-			$defaultListScreen->setVar('useaddmultiple', ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
+			$defaultListScreen->setVar('useaddmultiple', ''); // to set default text: ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
 			$defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
 			$defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
 			$defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);

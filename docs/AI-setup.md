@@ -32,11 +32,13 @@ RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 ```
 
-4. Configure your AI assistant. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.2/formulize-mcp.dxt' download='formulize-mcp.dxt'>download the Formulize DXT extention</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
+4. Write some introductory notes for the AI. When AI is enabled in Formulize, there is a preference called _System Specific Instructions for the AI Assistant_. This is a very useful and powerful feature! Everything you type in this preference, will be communicated to the AI every time it connects to your Formulize system. This is your chance to give it any unique background info it might need in order to understand your system, what it's for, and how it works. Include details. The AI loves details.
 
-	Other AI assistants might be compatible with DXT extensions as well, now or in the future.
+5. Configure your AI assistant. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.3.3/formulize-mcp.mcpb' download='formulize-mcp.mcpb'>download the Formulize MCPB extention</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
 
-5. If your AI assistant is does not support DXT extensions, you need to update the configuration of your AI assistant manually. Exactly how to do this varies from assistant to assistant:
+	Other AI assistants might be compatible with MCPB extensions as well, now or in the future.
+
+6. If your AI assistant is does not support MCPB extensions, you need to update the configuration of your AI assistant manually. Exactly how to do this varies from assistant to assistant:
 
 	- For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
 
@@ -61,7 +63,7 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 	- Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
 
-	- For Claude Desktop, if you're not using the DXT file, modify the file ```claude_desktop_config.json```. Where is it?\
+	- For Claude Desktop, if you're not using the MCPB file, modify the file ```claude_desktop_config.json```. Where is it?\
 	Windows: ```%APPDATA%\Claude\claude_desktop_config.json```\
 	macOS: ```~/Library/Application Support/Claude/claude_desktop_config.json```\
 	\
@@ -92,7 +94,7 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 There are five options you can configure in your AI assistant, for working with Formulize.
 
-The DXT extension will give you a user interface to fill in with these options.
+The MCPB extension will give you a user interface to fill in with these options.
 
 If you are manually configuring through a .json file, you need to include the options as the environment variables (env).
 

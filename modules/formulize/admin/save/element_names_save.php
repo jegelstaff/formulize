@@ -28,33 +28,6 @@
 ###############################################################################
 
 
-if(!function_exists("figureOutOrder")) {
-function figureOutOrder($orderChoice, $oldOrder, $fid) {
-	global $xoopsDB;
-	if($orderChoice === "bottom") {
-		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
-	  $res = $xoopsDB->query($sql);
-	  $array = $xoopsDB->fetchArray($res);
-		$orderChoice = $array['new_order'] + 1;
-	} elseif($orderChoice === "top") {
-		$orderChoice = 0;
-	} else {
-		// convert the orderpref from the element ID to the order
-		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
-		$res = $xoopsDB->query($sql);
-	  $array = $xoopsDB->fetchArray($res);
-		$orderChoice = $array['ele_order'];
-	}
-	$orderValue = $orderChoice + 1;
-	if($oldOrder != $orderValue) {
-		// and we need to reorder all the elements equal to and higher than the current element
-		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
-		$res = $xoopsDB->query($sql);
-	}
-	return $orderValue;
-}
-}
-
 // this file handles saving of submissions from the element_names page of the new admin UI
 
 // if we aren't coming from what appears to be save.php, then return nothing
@@ -76,6 +49,7 @@ if($_POST['formulize_admin_key'] == "new") {
   $element->setVar('ele_disabled', 0);
   $element->setVar('ele_required', 0);
   $element->setVar('ele_encrypt', 0);
+	$element->setVar('ele_order', null);
   $original_handle = "";
 } else {
   $ele_id = intval($_POST['formulize_admin_key']);
@@ -105,30 +79,23 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 
 $isNew = $_POST['formulize_admin_key'] == "new" ? true : false;
 foreach ($processedValues['elements'] as $property => $element_handle_name) {
-    if ($property == "ele_handle") {
-        $element_handle_name = formulizeElement::sanitize_handle_name($element_handle_name);
-        if (strlen($element_handle_name)) {
-            $firstUniqueCheck = true;
-            while (!$uniqueCheck = $form_handler->isElementHandleUnique($element_handle_name, $ele_id)) {
-                if ($firstUniqueCheck) {
-                    $element_handle_name = $element_handle_name . "_".$fid;
-                    $firstUniqueCheck = false;
-                } else {
-                    $element_handle_name = $element_handle_name . "_copy";
-                }
-            }
-        }
-        $ele_handle = $element_handle_name;
-        if ($element_handle_name != $processedValues['elements']['ele_handle']) {
-            $_POST['reload_names_page'] = 1;
-        }
-    }
-    $element->setVar($property, $element_handle_name);
+	$element->setVar($property, $element_handle_name);
 }
+
+// IF WHEN ELEMENTS USE UPSERT... ELEMENT TYPE DETERMINATION AND VALIDATION IS BASED ON ELEMENTS THAT HAVE MCP DESCRIPTION METHOD
+// SO CUSTOM ELEMENTS, ETC, WON'T WORK WITH THAT. NEED A MORE ROBUST SOLUTION.
 
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the element: ".$xoopsDB->error();
 }
+
+$finalHandle = $element->getVar('ele_handle');
+if($finalHandle != $processedValues['elements']['ele_handle']) {
+	$_POST['reload_names_page'] = 1;
+}
+
+// if the handle changed, we need to rename references to it in other elements, code files
+$element_handler->renameElementResources($element, $original_handle);
 
 // handle principal identifier
 if($_POST['principalidentifier']) {
@@ -137,56 +104,6 @@ if($_POST['principalidentifier']) {
 } elseif($formObject->getVar('pi') == $ele_id) {
 	$formObject->setVar('pi', 0);
 	$form_handler->insert($formObject);
-}
-
-if($original_handle) {
-	if($ele_handle != $original_handle) {
-		// rewrite references in other elements to this handle (linked selectboxes)
-		$ele_handle_len = strlen($ele_handle) + 5 + strlen($fid);
-		$orig_handle_len = strlen($original_handle) + 5 + strlen($fid);
-		$lsbHandleFormDefSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = REPLACE(ele_value, 's:$orig_handle_len:\"$fid#*=:*$original_handle', 's:$ele_handle_len:\"$fid#*=:*$ele_handle') WHERE ele_value LIKE '%$fid#*=:*$original_handle%'"; // must include the cap lengths or else the unserialization of this info won't work right later, since ele_value is a serialized array!
-		if(!$res = $xoopsDB->query($lsbHandleFormDefSQL)) {
-			print "Error:  update of linked selectbox element definitions failed.";
-		}
-		// rewrite references in derived values code
-		foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
-			if(strstr($file, 'derived_') !== false) {
-				$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
-				$encapsulatingCharacter1 = '"';
-				$encapsulatingCharacter2 = '"';
-				$newCode = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $code);
-				if($newCode != $code) {
-					formulize_writeCodeToFile($file, $newCode);
-				}
-			}
-		}
-		// rewrite references in text for display
-		$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'areamodif' OR ele_type = 'ib')";
-		if($res = $xoopsDB->query($selectElementsSQL)) {
-				while($row = $xoopsDB->fetchRow($res)) {
-						$thisEleId = $row[0];
-						$thisEleValue = $row[1];
-						$encapsulatingCharacter1 = '{';
-						$encapsulatingCharacter2 = '}';
-						$thisEleValue = unserialize($thisEleValue);
-						$eleValueZero = $thisEleValue[0];
-						$eleValueZero = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $eleValueZero);
-						$thisEleValue[0] = $eleValueZero;
-						$thisEleValue = serialize($thisEleValue);
-						$updateSQL = "UPDATE " . $xoopsDB->prefix("formulize") . " SET ele_value = '".formulize_db_escape($thisEleValue)."' WHERE ele_id = $thisEleId";
-						$xoopsDB->query($updateSQL);
-				}
-		}
-		// update element code file names
-		$elementTypes = array('ib', 'areamodif', 'text', 'textarea', 'derived');
-		foreach($elementTypes as $type) {
-			$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
-			$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';
-			if(file_exists($oldFileName)) {
-				rename($oldFileName, $newFileName);
-			}
-		}
-	}
 }
 
 if($_POST['reload_names_page'] OR $isNew) {

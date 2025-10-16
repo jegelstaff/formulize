@@ -252,6 +252,8 @@ test.describe('Set columns and elements for screens', () => {
 	  await page.getByRole('link', { name: 'Collections' }).click();
   	await page.getByRole('link', { name: 'Entries' }).click();
   	await page.locator('#cols-0').selectOption('collections_name');
+		await page.getByRole('link', { name: 'Buttons', exact: true }).click();
+  	await page.getByRole('textbox', { name: 'What text should be on the \'Add multiple entries\' button?' }).fill('Add Collections');
   	await saveAdminForm(page);
 	})
 

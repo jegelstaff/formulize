@@ -573,17 +573,16 @@ function findOrMakeSubformScreen($elementIdentifier, $mainForm) {
  * But abort if any screen has the element already, since we then leave it up to the webmaster who has already been at work with this element
  * Optionally, create a new page and add the element to the page. Name the new page with the element colhead or caption.
  * @param int fid - the form id number that we're looking for screens in
- * @param int elementId - the element id number that we're adding to the pages
+ * @param int elementIdentifier - the element id number, or handle, or element object that we're adding to the pages
  * @param boolean makeNewPageIfNotAddedToExistingPages - a flag to indicate whether a new page should be added to the screen if the element wasn't added to an existing page
  * @param int positionAtTopOfPage - passing any non null, non false value will position the element at the top of the page. Default is zero, for bottom of the page.
  * @return boolean Return true, or false if one or more additions to pages failed
  */
-function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedToExistingPages = false, $positionAtTopOfPage = 0) {
+function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNotAddedToExistingPages = false, $positionAtTopOfPage = 0) {
 	$result = true;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$element_handler = xoops_getmodulehandler('elements', 'formulize');
-	$element = $element_handler->get($elementId);
-	if($element AND $form = $form_handler->get($fid)) {
+	if($element = _getElementObject($elementIdentifier) AND $form = $form_handler->get($fid)) {
+		$elementId = $element->getVar('ele_id');
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
 		$screens = $screen_handler->getObjects($criteria_object,intval($fid));
@@ -648,6 +647,8 @@ function addElementToMultiPageScreens($fid, $elementId, $makeNewPageIfNotAddedTo
 				}
 			}
 		}
+	} else {
+	 throw new Exception("Invalid element or form identifier passed to addElementToMultiPageScreens function.");
 	}
 	return $result;
 }

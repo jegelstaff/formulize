@@ -29,7 +29,7 @@ $markup = "";
 foreach($elements as $thisele=>$elementObject) {
     if($thisele) { 
         $unsetDisabledFlag = false;
-        if(is_string($subformElement->ele_value['disabledelements']) AND in_array($thisele, explode(',',$subformElement->ele_value['disabledelements']))) {
+        if($subformElement->getVar('ele_type') == 'subformListings' OR (is_string($subformElement->ele_value['disabledelements']) AND in_array($thisele, explode(',',$subformElement->ele_value['disabledelements'])))) {
             $unsetDisabledFlag = !isset($GLOBALS['formulize_forceElementsDisabled']);
             $GLOBALS['formulize_forceElementsDisabled'] = true;
         }
@@ -46,8 +46,6 @@ foreach($elements as $thisele=>$elementObject) {
                 $textAlign = " right-align-text";
             }
             $markup .= "<td class='formulize_subform_".$thisele."$textAlign'>$col_two_temp</td>\n";
-        } else {
-            $markup .= "<td>******</td>";
         }
     }
 }

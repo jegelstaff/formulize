@@ -79,7 +79,7 @@ class formulizeTextElement extends formulizeElement {
 - defaultValue (string, the default value for the text box)
 **Examples:**
 - A plain text box with no default value: { }
-- A text box with a default value of 'N/A': { defaultValue: 'N/A' }";
+- A text box with a default value of 'N/A': { defaultValue: \"N/A\" }";
 	}
 
 	/**

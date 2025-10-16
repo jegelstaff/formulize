@@ -793,3 +793,9 @@ define("_formulize_IMAGE_TOO_LARGE", "Generation would likely exceed the PHP mem
 define("_formulize_OFFICE_USE_ONLY", "Office Use Only");
 define("_formulize_SHOW", "Show");
 define("_formulize_HIDE", "Hide");
+define("_formulize_ERRORTITLE", "There was an error when preparing this page");
+define("_formulize_ERRORLOGGED", "We apologize for the inconvenience. This error has been logged.");
+define("_formulize_ERRORMSGONSCREEN", "<blockquote>\n\"%s\"<br>\nOn line <b>%u</b> in %s\n</blockquote>\n");
+define("_formulize_ERRORREPORT", "**Error:\n\"%s\"\nOn line %u in %s\n\n**Stacktrace:\n%s\n\n**User reported details:\n");
+define("_formulize_ERRORSENT1", "Thank you for the report");
+define("_formulize_ERRORSENT2", "A webmaster will review the details shortly.");
