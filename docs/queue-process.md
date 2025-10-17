@@ -20,7 +20,7 @@ The normal way to trigger the queue through cron, is to hit the right endpoint o
 
 ## Parameters
 
-__$queue_or_queue_handle__ - [a queue object](../../queue_object), or a string used to identify the queue
+__$queue_or_queue_handle__ - [a queue object](../../queue_object), or a string used to identify the queue<br>
 __$synchronous__ - Optional. A boolean flag to indicate if we should run the queue synchronously, even if we could run it asynchronously through 'exec' on the server. Defaults to false. Useful as a fallback in manual code, if you can't get the queue to run any other way.
 
 ## Return Values
