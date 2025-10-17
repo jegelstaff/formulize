@@ -180,7 +180,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$ele_value[0] = 0; // form we're linking to
 			$ele_value[1] = ''; // elements to show in the subform. A comma separated list of element ids
 			$ele_value[2] = 0; // show no entries by default, otherwise it's a number of blanks to show
-			$ele_value[3] = 4; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
+			$ele_value[3] = 1; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
 			$ele_value[4] = 0; // use column headings. 1 means use captions
 			$ele_value[5] = 0; // active user will be owner (1 means mainform entry owner will be owner)
 			$ele_value[6] = 'subform'; // showing add entries UI requires permission in subform. 'parent' means requires permission in the main form. 'hideaddentries' means don't show Add entry UI.
