@@ -357,6 +357,9 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			// Trim the value if the option is set
 			if (isset($ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) && $ele_value[ELE_VALUE_TEXT_TRIM_VALUE]) {
 				$value = trim($value);
+				while (strstr($value, "  ") !== false) {
+					$value = str_replace("  ", " ", $value);
+				}
 			}
 			if ($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] AND $value != "{ID}" AND $value != "{SEQUENCE}") {
 					$value = preg_replace ('/[^0-9.-]+/', '', $value);
