@@ -1037,6 +1037,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	$formulize_cachedDataId = null;
+  print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
 	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
 	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filterToCompare) . "\">\n"; // save the filter to check for a change on next page load
 	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($flatScope) . "\">\n"; // save the scope to check for a change on next page load
@@ -4518,8 +4519,6 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
     $entriesPerPageSelector .= '</select>';
 
     if($numberPerPage > 0) {
-        // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
-        print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n";
         $allPageStarts = array();
         $pageNumbers = 0;
         for($i = 0; $i < $GLOBALS['formulize_countMasterResultsForPageNumbers']; $i = $i + $numberPerPage) {

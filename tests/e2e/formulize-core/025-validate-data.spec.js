@@ -142,5 +142,12 @@ test.describe('Validate Data', () => {
 		await page.locator('input[name="search_exhibits_artifacts"]').fill('11');
 		await page.getByRole('columnheader', { name: 'Artifacts' }).getByRole('link').click();
 		await expect(page.getByText('Showing entries: 1 to 2 of')).toBeVisible();
+	}),
+	test('Check that we can get to page 2 of entries', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await page.getByRole('link', { name: '2', exact: true }).click();
+		await expect(page.getByText('Showing entries: 11 to')).toBeVisible();
 	})
 });
