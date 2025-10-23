@@ -224,7 +224,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                     // pretty hacky! include the js for lists, so that the viewEntryLink etc will work
                     // can mimic add buttons by calling addNew('single') in js or addNew() for multiple entry
                     include_once XOOPS_ROOT_PATH.'/modules/formulize/include/entriesdisplay.php';
-                    interfaceJavascript('',$screen->getVar('fid'), null, null, null, null);
+                    interfaceJavascript('',$screen->getVar('fid'), null, null, null, null, $screen);
                 }
 
             // no viewEntryLink etc in the template, so away we go like normal, just the template
