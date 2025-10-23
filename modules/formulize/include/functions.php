@@ -6063,6 +6063,10 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         $output .= '</span>';
         $counter++;
     }
+		// if there were no values, still need to draw the edit icon container if applicable
+		if($counter == 1 AND $deDisplay AND $element_type != 'derived') {
+			$output .= '<div class="formulize-display-element-edit-icon"><a class="de-edit-icon" href="" onclick="renderElement(\''.$handle.'\', '.$cachedElementIds[$handle].', '.$entryId.', '.$fid.',0,'.$deInstanceCounter.');return false;"></a></div><div class="formulize-display-element-contents">';
+		}
 		if ($deDisplay AND $element_type != 'derived') {
 			$output .= '</div>';
 		}
