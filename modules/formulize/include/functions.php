@@ -2487,6 +2487,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
     }
 
     global $xoopsDB;
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     //targetForm is a special array containing the keys as specified in the framework, and the target form
     //keys:  fid, keyself, keyother
     //keyself and other are the ele_id from the form table for the elements that need to be matched.  Must get captions and convert to formulize_form format in order to find the matching values
@@ -2513,7 +2514,6 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
 	  $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother']); // "other" and "start" are semantically the same here, both meaning the form that the main fid joins to
 	  // if keyother is a username list and the found value is numeric, and keyself is not a username list, then convert to the proper sort of name according to the rules for that type of list.
 	  // if keyself is a username list and keyother is not, then lookup the user id for the username that we found
-	  $element_handler = xoops_getmodulehandler('elements', 'formulize');
 	  $otherElement = $element_handler->get($targetForm['keyother']);
 	  $otherEleValue = $otherElement->getVar('ele_value');
   	  $otherListType = (anySelectElementType($otherElement->getVar('ele_type'))
@@ -2556,7 +2556,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             }
             if($selfEleValue[1]) {
                 $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], '%*=+*:'.$thisFoundValue.'*=+*:%', $all_users, $all_groups, "LIKE");
-        if (count((array) $entry_ids) > 0) {
+        				if (count((array) $entry_ids) > 0) {
                     $entries_to_return = array_unique(array_merge($entries_to_return, $entry_ids));
                 }
                 $entry_ids = $data_handler_target->findAllEntriesWithValue($targetForm['keyself'], '%*=+*:'.$thisFoundValue, $all_users, $all_groups, "LIKE");
@@ -2566,11 +2566,9 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             }
         }
         return $entries_to_return;
-    } else {
+    } elseif($startElement = $element_handler->get($targetForm['keyother'])) {
         // linking based on a shared value.  in the case of one to one forms assumption is that the shared value does not appear more than once in either form's field (otherwise this will be a defacto one to many link)
         // else we're looking at a classic "shared value" which is really a linked selectbox
-        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-        $startElement = $element_handler->get($targetForm['keyother']);
         $startEleValue = $startElement->getVar('ele_value');
         $startEleValueParts = strstr($startEleValue[2], "#*=:*") ? explode("#*=:*", $startEleValue[2]) : array();
         // option 2, start form is the linked selectbox that points to the form in question
@@ -2588,10 +2586,10 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             } else {
                 return false;
             }
-        } else { // option 3. target form is the linked selectbox
+        } elseif($targetElement = $element_handler->get($targetForm['keyself'])) {
+						// option 3. target form is the linked selectbox
             // so look for all the entry ids in the target form, where the linked field has the startEntry in it
             // if the targetFormKeySelf is a snapshot field, then we don't want to look up the entry id, convert to the value of the keyother field in the startform
-            $targetElement = $element_handler->get($targetForm['keyself']);
             $targetEleValue = $targetElement->getVar('ele_value');
             if($targetEleValue['snapshot']) {
                 $data_handler_start = new formulizeDataHandler($startForm);
@@ -2608,7 +2606,9 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             }
             return _findLinkedEntries($targetForm['keyself'], $targetForm['fid'], $valuesToLookFor, $all_users, $all_groups);
         }
-    }
+    } else {
+			return false;
+		}
 }
 
 function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor, $all_users, $all_groups) {
