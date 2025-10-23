@@ -856,8 +856,16 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 14 - JUMP TO DISPLAYING AN ENTRY IF REQUIRED, EITHER ONE THE USER CLICKED ON IN THE LIST, OR ONE THEY'RE GOING BACK TO IF THEY'RE ALREADY A FEW LEVELS DEEP IN SOME FORM SCREENS. PROBABLY HAVE TO DO THIS LATE IN THE PROCESS BECAUSE WE PASS THE DEDUCED SETTINGS TO THE FORM, SO IT CAN PROPGATE THEM BACK TO THE LIST.
 	 */
 
-	// if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely
-	if(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
+	// if there's parent info from the go_parent form submission, use that
+	// otherwise, if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely -- comes from the calreturnform only? (used by multipage forms, but could/should they use the parent stuff instead? Nasty legacy controller issue that shall wait till that is all disentangled)
+	// otherwise, use the declared originalVentry if any, that will be the initial entry that we're showing
+	// otherwise, try the URL ve= parameter if any
+  if(isset($_POST['parent_entry']) AND isset($_POST['parent_form']) AND isset($_POST['parent_page']) AND isset($_POST['parent_subformElementId'])) {
+		$parentEntries = strstr($_POST['parent_entry'], ',') ? explode(',',$_POST['parent_entry']) : array($_POST['parent_entry']);
+    $lastKey = count($parentEntries)-1;
+		$_POST['ventry'] = $parentEntries[$lastKey];
+		$settings['ventry'] = $_POST['ventry'];
+	} elseif(isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
 		$_POST['ventry'] = setupParentFormValuesInPostAndReturnEntryId();
 		$settings['ventry'] = $_POST['ventry'];
 	} elseif(isset($_POST['formulize_originalVentry']) AND is_numeric($_POST['formulize_originalVentry'])) {
