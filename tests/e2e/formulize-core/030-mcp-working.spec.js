@@ -27,9 +27,11 @@ test.describe('Check that tools/list is responding', () => {
 		await page.getByRole('link', { name: 'Manage API keys' }).click();
 		const apiKey = await page.locator('td[id=key-1]').innerText();
     await page.goto('/mcp/test.html');
-   	await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
-    await page.getByRole('button', { name: '🚀 Send Request' }).click();
+   	await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
+  	await expect(page.getByText('📊 1 total')).toBeVisible();
+		await page.getByRole('button', { name: 'Clear', exact: true }).click();
+		await page.getByRole('button', { name: '🚀 Send Request' }).click();
     await expect(page.getByText('0: "name": "formulize" "')).toBeVisible();
 		await expect(page.getByText('1: "name": "list_forms" "')).toBeVisible();
 		await expect(page.getByText('2: "name": "list_applications" "')).toBeVisible();
