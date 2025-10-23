@@ -100,4 +100,4 @@ if ($icmsConfigPersona['multi_login']) {
 // -- finalize boot process
 icms::$preload->triggerEvent('finishCoreBoot');
 
-include XOOPS_ROOT_PATH."/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH."/modules/formulize/include/common.php";
