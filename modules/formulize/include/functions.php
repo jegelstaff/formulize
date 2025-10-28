@@ -1899,7 +1899,7 @@ function getLinkedOptionsSourceForm($elementIdOrObject) {
  * @param int curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
  * @param int userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
  * @param bool partialMatch Optional. If true, then the value will be checked in the method call for multiple matches and an array could be returned.
- * @return string|array|bool The prepared value compatible with data in the databse, or the false if the elementObjectOrIdentifier is not valid, or the search term is deemed invalid by the method call (matches nothing in the DB). Can be an array of values if partialMatch is true.
+ * @return string|array|bool The prepared value compatible with data in the databse, or the false if the elementObjectOrIdentifier is not valid, or the search term is deemed invalid by the method call (matches nothing in the DB). Can be an array of values if partialMatch is true, or multiple linked source entries match a single search term.
  */
 function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null, $partialMatch = false) {
 
@@ -1951,7 +1951,7 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 
 		// handle generic checks for matches with linked elements, or in UI text for non linked elements
 		$ele_value = $elementObject->getVar('ele_value');
-		if($value != "{BLANK}" AND $elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1)) {
+		if($value != "{BLANK}" AND $elementObject->isLinked AND (!isset($ele_value['snapshot']) OR $ele_value['snapshot'] != 1) AND (substr($value,0,1) != "{" OR substr($value,-1) != "}" OR _getElementObject(substr($value, 1, -1)) === false)) {
 			list($sourceFidOfElement, $sourceHandleOfElement) = getLinkedOptionsSourceForm($elementObject);
 			// get the entry id of the value in the linked source of the elementObject selectbox
 			// does not handle links to links!
@@ -8591,7 +8591,7 @@ function checkUITextForValue($value, $element, $partialMatch=false) {
 							$foundValue[] = $thisDBValue;
 							break 2; // Break out of the foreach
 						}
-						continue; // continue foreach
+						break; // continue foreach
 					case true:
 					default:
 						if ($comparisonValue and stristr($thisUIText, $comparisonValue) !== false) {
