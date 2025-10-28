@@ -1958,6 +1958,7 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 			$dataHandler = new formulizeDataHandler($sourceFidOfElement);
 			$operator = $partialMatch ? 'LIKE' : '=';
 			$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, $value, operator: $operator);
+			$value = (is_array($value) AND count($value) == 1) ? $value[0] : $value;
 		} elseif($value != "{BLANK}") {
 			$value = checkUITextForValue($value, $elementObject, $partialMatch);
 		}
