@@ -1202,23 +1202,25 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 
 		$title = "";
 
-		// determine the order of fids in $elements_allowed and go by that.
-		// currently we don't generally finesse the order in $elements_allowed, but this will be sort of ready for controlling the order if we ever do??
-		// compile elements probably needs a really big refactor, actually
-		$elements_handler = xoops_getmodulehandler('elements', 'formulize');
-		$newFids = array();
-		foreach($elements_allowed as $ele_id) {
-			if($elementObject = $elements_handler->get($ele_id)) {
-				$elementFid = $elementObject->getVar('id_form');
-				// if we could refactor so the newFids array is a series of fid/elements_allowed pairs, and we set them as the start of the main foreach(fids) loop, then maybe that would work to respect whatever order of whatever elements in whatever form? As long as elements allowed is constructed in the right order going into this function
-				if(!isset($newFids[$elementFid])) {
-					$newFids[$elementFid] = $elementFid;
+		$fidsToRender = $fids; // default to all fids
+		if($screen AND is_array($elements_allowed) AND count($elements_allowed) > 0) {
+			// determine the order of fids in $elements_allowed and go by that.
+			// currently we don't generally finesse the order in $elements_allowed, but this will be sort of ready for controlling the order if we ever do??
+			// compile elements probably needs a really big refactor, actually
+			$fidsToRender = array();
+			$elements_handler = xoops_getmodulehandler('elements', 'formulize');
+			foreach($elements_allowed as $ele_id) {
+				if($elementObject = $elements_handler->get($ele_id)) {
+					$elementFid = $elementObject->getVar('id_form');
+					if(!isset($fidsToRender[$elementFid])) {
+						$fidsToRender[$elementFid] = $elementFid;
+					}
 				}
 			}
 		}
 
 		// only loop through the fids that have elements we are going to show
-		foreach($newFids as $this_fid) {
+		foreach($fidsToRender as $this_fid) {
 
 			if(!$scheck = security_check($this_fid, $entries[$this_fid][0]) AND !$viewallforms) {
 				continue;
@@ -1354,7 +1356,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			formulize_benchmark("Before Compile Elements.");
 			$form = compileElements($this_fid, $form, $prevEntry, $entries[$this_fid][0], $groups, $elements_allowed, $frid, (isset($sub_entries) ? $sub_entries : null), (isset($sub_fids) ? $sub_fids : null), $screen, $printViewPages, $printViewPageTitles);
 			formulize_benchmark("After Compile Elements.");
-		}	// end of for each 'newFids' ie: the forms that have elements to render
+		}	// end of for each 'fidsToRender' ie: the forms that have elements to render
 
 		// set some ugly state information that we're going to listen for in various places on the next pageload. :(
 		$newHiddenElements = array();
@@ -1362,6 +1364,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(isset($entries[$thisFid][0]) AND $entries[$thisFid][0] AND !is_a($form, 'formulize_elementsOnlyForm')) {
 				// two hidden fields encode the main entry id, the first difficult-to-use format is a legacy thing
 				// the 'lastentry' format is more sensible, but is only available when there was a real entry, not 'new' (also a legacy convention)
+				// This will be problematic in printable view (only place lastentry value is actually used??) when there are multiple one to one fids on the screen?
 				$newHiddenElements[] = new XoopsFormHidden ('entry'.$thisFid, $entries[$thisFid][0]);
 				if(is_numeric($entries[$thisFid][0])) {
 					$newHiddenElements[] = new XoopsFormHidden ('lastentry', $entries[$thisFid][0]);
