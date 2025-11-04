@@ -313,16 +313,14 @@ class formulize_themeForm extends XoopsThemeForm {
 				// backwards compatibility for old multipage screen templates
 				global $formulize_displayingMultipageScreen;
 				$thisElementObject = null;
-				if($formulize_displayingMultipageScreen) {
-						$templateVariables['elementObjectForRendering'] = $ele;
-						$templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
-						$templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
-						$templateVariables['element_id'] = false;
-						if(isset($ele[2])) {
-								$element_handler = xoops_getmodulehandler('elements', 'formulize');
-								if($thisElementObject = $element_handler->get($ele[2])) {
-										$templateVariables['element_id'] = $thisElementObject->getVar('ele_id');
-								}
+				$templateVariables['elementObjectForRendering'] = $ele;
+				$templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
+				$templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
+				$templateVariables['element_id'] = false;
+				if(isset($ele[2])) {
+						$element_handler = xoops_getmodulehandler('elements', 'formulize');
+						if($thisElementObject = $element_handler->get($ele[2])) {
+								$templateVariables['element_id'] = $thisElementObject->getVar('ele_id');
 						}
 				}
 
