@@ -757,7 +757,7 @@ function optionIsValidForElement($option, $elementHandleOrId) {
  */
 function anySelectElementType($type) {
 	$baseTypes = array("select","autocomplete","listbox");
-	$subTypes = array("","linked","users");
+	$subTypes = array("","Linked","Users");
 	foreach($baseTypes as $base) {
 		foreach($subTypes as $sub) {
 			if ($type == $base.$sub) {
