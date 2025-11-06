@@ -188,6 +188,6 @@ if (!defined("XOOPS_MAINFILE_INCLUDED")) {
 	define( 'ICMS_TRUST_PATH', XOOPS_TRUST_PATH );
 	define( 'ICMS_ROOT_PATH', XOOPS_ROOT_PATH );
 	if (!isset($xoopsOption['nocommon']) && XOOPS_ROOT_PATH != '') {
-		include XOOPS_ROOT_PATH."/include/common.php";
+		include_once XOOPS_ROOT_PATH."/include/common.php";
 	}
 }
