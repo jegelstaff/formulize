@@ -2245,6 +2245,12 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 		while ((strlen($formula) > $quotePos + 1) and ($quotePos = strpos($formula, "\"", $quotePos + 1))) {
 			$endQuotePos = strpos($formula, "\"", $quotePos + 1);
 			$term = substr($formula, $quotePos, $endQuotePos - $quotePos + 1);
+			// no term, carry on with next character
+			if($term === '""') {
+				$quotePos = $quotePos + 2;
+				continue;
+			}
+			// if non-numeric term, try to convert to a proper getValue call
 			if (!is_numeric($term)) {
 				list($newterm, $termFid) = formulize_convertCapOrColHeadToHandle($frid, $fid, $term);
 				if ($newterm != "{nonefound}") {
@@ -2297,7 +2303,7 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term)
 	static $results_array = array();
 	static $framework_results = array();
 	$handle = "";
-
+	$term = trim($term, "\"");
 	if ($term == "") {
 		return "{nonefound}";
 	}
@@ -2319,7 +2325,6 @@ function formulize_convertCapOrColHeadToHandle($frid, $fid, $term)
 
 	// Short circuit. If we've got an element handle in a valid form, go with that!
 	// Dramatically faster.
-	$term = trim($term, "\"");
 	$elementMetaData = formulize_getElementMetaData($term, true);
 	if(!empty($elementMetaData) AND in_array($elementMetaData['id_form'], $formList)) {
 		return array($term, $elementMetaData['id_form']);
