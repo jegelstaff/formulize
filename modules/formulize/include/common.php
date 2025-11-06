@@ -151,6 +151,10 @@ function formulize_exception_handler($exception) {
 		exit();
 	}
 	// otherwise, create a themed error page, with feedback options
+	// translate the page if possible
+	if(function_exists('easiestml')) {
+		ob_start('easiestml');
+	}
 	include XOOPS_ROOT_PATH.'/header.php';
 	print "<style>
 		#notifyWebmasterForm {
