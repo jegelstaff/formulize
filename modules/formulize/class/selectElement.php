@@ -49,7 +49,7 @@ define('ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS', 11); // array of element(s) in
 define('ELE_VALUE_SELECT_LINK_SORT', 12); // element ID of the element in the source form used to sort the options
 define('ELE_VALUE_SELECT_LINK_DEFAULTVALUE', 13); // array of the entries in the source form that have the values which should be selected by default
 // DEPRECATED AND ON DB UPDATE, LINKED SELECTS NEED TO HAVE THIS SETTING APPLIED TO THE ele_use_default_when_blank SETTING, IFF THE VALUE OF THIS SETTING IS 1
-define('ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK', 14); // 0/1 indicating if the default values should be used when the value is blank (vs default which is only use defaults on new entries)
+define('ELE_VALUE_SELECT_LINK_SHOWDEFAULTWHENBLANK', 14); // 0/1 indicating if the default values should be used when the value is blank (vs default which is only use defaults on new entries -- DEPRECATED!!)
 define('ELE_VALUE_SELECT_LINK_SORTORDER', 15); // 1/2 indicating if the sort order for linked options is ASC or DESC
 define('ELE_VALUE_SELECT_AUTOCOMPLETEALLOWSNEW', 16); // 0/1 indicating if the autocomplete allows new values to be entered (vs default which is only allowing selection of existing values)
 define('ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS', 17); // array of element(s) in source form to use as the value shown in the rendered dropdown/listbox/autocomplete
