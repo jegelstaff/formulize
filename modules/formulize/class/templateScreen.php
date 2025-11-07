@@ -234,7 +234,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                     print "\n<script>\n$code\n</script>\n";
                 }
             }
-						print "</div>"; // close template screen div
+
 
             // determine proper admin link
             $firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
@@ -243,6 +243,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }
+
+				print "</div>"; // close template screen div
+
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
