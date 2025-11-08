@@ -1045,7 +1045,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	$formulize_cachedDataId = null;
-  print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+	$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+  print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$formulize_LOEPageStart\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
 	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
 	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filterToCompare) . "\">\n"; // save the filter to check for a change on next page load
 	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($flatScope) . "\">\n"; // save the scope to check for a change on next page load
@@ -1679,8 +1680,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	$useSearchCalcMsgs = 1;
 	$inlineButtons = array();
 	$hiddenColumns = array();
-	$formulize_LOEPageSize = 10;
-    $searchTypes = array_fill_keys($cols, 'Box');
+  $searchTypes = array_fill_keys($cols, 'Box');
 	if($screen) {
 		$useScrollBox = $screen->getVar('usescrollbox');
 		$useHeadings = $screen->getVar('useheadings');
@@ -1703,11 +1703,9 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 				}
 			}
 		}
-		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
-        $formulize_LOEPageSize = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
-        foreach($screen->getVar('advanceview') as $avData) {
-            $searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
-        }
+		foreach($screen->getVar('advanceview') as $avData) {
+				$searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
+		}
 	}
 
 	// Prepare link for downloading calculations
@@ -1862,10 +1860,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		$headcounter = 0;
 		$blankentries = 0;
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
-		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
-		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
-		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResultsForPageNumbers'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $formulize_LOEPageSize;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
+
 		if(isset($data)) {
 
 			$templateVariables['class'] = 'even'; // seed the table row class... will flip to odd on first row
@@ -4423,7 +4418,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 			$regeneratePageNumbers = true;
 		}
 	$formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
-    $formulize_LOEPageSize = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
+  $formulize_LOEPageSize = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
 	if($formulize_LOEPageSize) {
 	  $limitStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 	  $limitSize = $formulize_LOEPageSize;
@@ -4503,8 +4498,11 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
  	$numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND intval($_POST['formulize_entriesPerPage']) > 0) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
 
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
-	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
- 	$userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
+	$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+	if($formulize_LOEPageStart < $numberPerPage) {
+		$formulize_LOEPageStart = 0;
+	}
+ 	$userPageNumber = $formulize_LOEPageStart > 0 ? ($formulize_LOEPageStart / $numberPerPage) + 1 : 1;
 
     $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
     $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
@@ -4551,7 +4549,7 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
         }
 
 				$jsFunctionName = 'pageJump';
-				$pageNav = formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentPage, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
+				$pageNav = formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $formulize_LOEPageStart, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
 
     }
 
