@@ -835,9 +835,9 @@ function allowedForms() {
 
     // EXCLUDE THE USERPROFILE FORM UNLESS THE USER HAS VIEW_GROUPSCOPE OR VIEW_GLOBALSCOPE ON IT
     // added Mar 15 2006, jwe
-    $config_handler =& xoops_gethandler('config');
-    $xoopsModuleConfig =& $config_handler->getConfigsByCat(0, $module_id); // get the *Formulize* module config settings
-    $pform = $xoopsModuleConfig['profileForm'];
+    $config_handler = xoops_gethandler('config');
+    $xoopsModuleConfig = $config_handler->getConfigsByCat(0, $module_id); // get the *Formulize* module config settings
+    $pform = isset($xoopsModuleConfig['profileForm']) ? $xoopsModuleConfig['profileForm'] : null;
     if (!$pform) {
         return $allowedForms;
     }
@@ -4276,9 +4276,11 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             default:
                 $options = array();
         }
-				foreach($options as $checkThisKey=>$checkThisValue) {
-					if(strstr($checkThisKey, "{OTHER|")) {
-						unset($options[$checkThisKey]);
+				if(is_array($options)) {
+					foreach($options as $checkThisKey=>$checkThisValue) {
+						if(strstr($checkThisKey, "{OTHER|")) {
+							unset($options[$checkThisKey]);
+						}
 					}
 				}
 
@@ -4320,17 +4322,19 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 global $xoopsUser;
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
                 // remove any dynamic filters pointing to form elements since we're rendering without entry context
-                foreach($ele_value[5][2] as $i=>$conditionTerm) {
-                    if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
-                        $termToCheck = substr($conditionTerm, 1, -1);
-                        if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
-                            unset($ele_value[5][0][$i]);
-                            unset($ele_value[5][1][$i]);
-                            unset($ele_value[5][2][$i]);
-                            unset($ele_value[5][3][$i]);
-                        }
-                    }
-                }
+								if(isset($ele_value[5]) AND is_array($ele_value[5]) AND isset($ele_value[5][2]) AND is_array($ele_value[5][2])) {
+									foreach($ele_value[5][2] as $i=>$conditionTerm) {
+											if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
+													$termToCheck = substr($conditionTerm, 1, -1);
+													if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
+															unset($ele_value[5][0][$i]);
+															unset($ele_value[5][1][$i]);
+															unset($ele_value[5][2][$i]);
+															unset($ele_value[5][3][$i]);
+													}
+											}
+									}
+								}
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
                 $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
                 list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);

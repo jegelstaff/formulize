@@ -256,7 +256,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
-		$ele_value[$this->defaultValueKey] = str_replace("'", "&#039;", $value);
+		$ele_value[$this->defaultValueKey] = ($value AND strpos($value, "'") !== false) ? str_replace("'", "&#039;", $value) : $value;
 		return $ele_value;
 	}
 

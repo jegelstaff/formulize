@@ -451,7 +451,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$_loaded_sv_use_features = '';
 	$features_loaded_from_saved_view = array();
 	// handling change in view, and loading reports/saved views if necessary
-	if($_POST['loadreport']) {
+	if(isset($_POST['loadreport']) AND $_POST['loadreport']) {
 
 		if(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
 			$loadedView = $_POST['currentview'];
@@ -471,8 +471,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_POST['lockcontrols'],
 				$_loaded_quicksearches,
 				$_loaded_global_search,
-        		$_POST['pubfilters'],
-        		$_loaded_formulize_entriesPerPage,
+				$_POST['pubfilters'],
+				$_loaded_formulize_entriesPerPage,
 				$_loaded_sv_use_features,
 				$_loaded_searches_are_fundamental) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 
@@ -597,9 +597,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$_POST['lockcontrols'] = 0;
 		}
 
-	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
+	} elseif(isset($_POST['advscope']) AND $_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
-	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
+	} elseif(isset($_POST['currentview']) AND $_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
 		if(is_numeric(substr($_POST['currentview'], 1))) {
 			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
 			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
@@ -673,10 +673,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
 	if(isset($_POST['loadviewname']) AND $_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
-	if($settings['curviewid']) {
+	if(isset($settings['curviewid']) AND $settings['curviewid']) {
 		$settings['lastloaded'] = $settings['curviewid'];
 	} else {
-		$settings['lastloaded'] = $_POST['lastloaded'];
+		$settings['lastloaded'] = (isset($_POST['lastloaded']) AND $_POST['lastloaded']) ? $_POST['lastloaded'] : "";
 	}
 	$screen = enforceSearchesAsFundamentalFilters($settings['lastloaded'], $screen);
 
@@ -684,7 +684,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 11 - TIDY UP SEARCHES BASED ON THE ACTUAL SEARCHES / COLUMNS WE'RE SHOWING, NOW THAT WE KNOW ALL THE DETAILS OF WHAT WE'RE SHOWING THE USER
 	 */
 
-	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : array();
+	$pubfilters = (isset($_POST['pubfilters']) && strlen($_POST['pubfilters']) > 0) ? explode(",", $_POST['pubfilters']) : array();
 
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
@@ -758,7 +758,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['hcalc'] = isset($_POST['hcalc']) ? $_POST['hcalc'] : 1;
 
 	// determine if the controls should really be locked...
-	if($_POST['lockcontrols']) { // if a view locks the controls
+	if(isset($_POST['lockcontrols']) AND $_POST['lockcontrols']) { // if a view locks the controls
 		// only lock the controls when the user is not a member of the currentview groups AND has no globalscope
 		// OR if they are a member of the currentview groups AND has no groupscope or no globalscope
 		switch($currentView) {
@@ -1120,7 +1120,7 @@ function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
 	static $savedViewsEnforcedAlready = array();
 	if($screen AND !isset($savedViewsEnforcedAlready[$savedViewIndentifier])) {
 		$savedViewsEnforcedAlready[$savedViewIndentifier] = true;
-		$savedViewId = substr($savedViewIndentifier, 1);
+		$savedViewId = $savedViewIndentifier ? substr($savedViewIndentifier, 1) : null;
 		if(is_numeric($savedViewId)) {
 			$savedViewSettings = loadReport($savedViewId, $screen->getVar('fid'), $screen->getVar('frid'));
 			$features_loaded_from_saved_view = explode(',',$savedViewSettings[LR_USE_FEATURES]);
@@ -4457,7 +4457,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 		// if we deleted entries and the current page is now empty, then shunt back 1 page
-		if(count((array) $data)==0 AND $_POST['delconfirmed'] AND $limitStart > 0) {
+		if(count((array) $data)==0 AND isset($_POST['delconfirmed']) AND $_POST['delconfirmed'] AND $limitStart > 0) {
 			$_POST['formulize_LOEPageStart'] = $_POST['formulize_LOEPageStart']-$formulize_LOEPageSize;
 			$data = getData($frid, $fid, $filter, "AND", $scope, ($limitStart-$formulize_LOEPageSize), $limitSize, $sort, $order, $forcequery);
 		}

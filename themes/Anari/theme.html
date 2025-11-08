@@ -41,7 +41,7 @@
 
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
 
 <{php}>
 // set the base font size if the user has adjusted it in their profile
@@ -142,7 +142,7 @@ if($xoopsUser) {
               <div class="user-actions">
 
                   <{if $xoops_isadmin}>
-                  <a class="user-actions__link" href="<{if $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>" title="admin">Admin</a>
+                  <a class="user-actions__link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>" title="admin">Admin</a>
                   <{/if}>
                   <{if $xoops_isuser}>
                   <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
@@ -197,7 +197,7 @@ if($xoopsUser) {
         <div style="clear:both;"></div>
     <{ /if }>
 
-	<{if $formulize_customCodeForApplications}>
+	<{if isset($formulize_customCodeForApplications) && $formulize_customCodeForApplications}>
 		<{$formulize_customCodeForApplications}>
 	<{/if}>
 </body>

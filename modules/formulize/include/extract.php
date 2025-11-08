@@ -998,6 +998,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		} else {
 			// FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 			foreach ($linkformids as $linkId => $thisLinkFid) {
+				if(!isset($joinTextIndex["f" . $linkId])) {
+					continue;
+				}
 				$linkedFormObject = $form_handler->get($thisLinkFid);
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
 					. $linkSelectIndex[$thisLinkFid] .
@@ -1138,11 +1141,13 @@ function formulize_filterHasSingleEntry($filter)
 		);
 	}
 	foreach ($filter as $thisFilter) {
-		$filterDetails = $thisFilter[1];
-		$filterParts = explode('][', (string) $filterDetails);
-		foreach ($filterParts as $part) {
-			if (is_numeric($part)) {
-				return $part;
+		$filterDetails = isset($thisFilter[1]) ? $thisFilter[1] : null;
+		if(is_string($filterDetails)) {
+			$filterParts = explode('][', $filterDetails);
+			foreach ($filterParts as $part) {
+				if (is_numeric($part)) {
+					return $part;
+				}
 			}
 		}
 	}
