@@ -194,14 +194,23 @@ class formulizeElement extends FormulizeObject {
 			if($key == 'ele_value') {
 				$ele_type = $this->getVar('ele_type');
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
-				if($ele_type == 'derived'
-				OR (($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
-				OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
+				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
+
+				// check if the value is a code block, and if so write to file instead of assigning to property of object
+				if(
+					(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
+					OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
 				) {
-					$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 					formulize_writeCodeToFile($filename, $valueToWrite[0]);
 					$valueToWrite[0] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
+
+				// delete the file if it exists but the value no longer contains code, since these elements can have code or plain text values, and plain text is not written as a file
+				} elseif(
+					((($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value") === false)
+					OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default") === false))
+					AND file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
+						unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
 				}
 			}
 			parent::setVar($key, $value, $not_gpc);
