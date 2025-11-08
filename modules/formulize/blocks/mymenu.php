@@ -122,6 +122,10 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 	$itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
 
+	$getMenuId = isset($_GET['menuid']) ? $_GET['menuid'] : null;
+	$getSid = isset($_GET['sid']) ? $_GET['sid'] : null;
+	$getFid = isset($_GET['fid']) ? $_GET['fid'] : null;
+
 	$menuActive = '';
 	if($forceOpen
 		OR (
@@ -139,11 +143,11 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 
 	if (!$topwritten) {
-			$block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
-			$topwritten = 1;
-		} else {
-				$block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
-		}
+		$block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
+		$topwritten = 1;
+	} else {
+		$block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
+	}
 
 	$data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0), 'target'=>'', 'icon'=>'');
 
@@ -151,10 +155,6 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
 	list($defaultFid,$defaultSid,$defaultURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
-
-	$getMenuId = isset($_GET['menuid']) ? $_GET['menuid'] : null;
-	$getSid = isset($_GET['sid']) ? $_GET['sid'] : null;
-	$getFid = isset($_GET['fid']) ? $_GET['fid'] : null;
 
 	foreach($menulinks as $menulink) {
 		$url = buildMenuLinkURL($menulink);

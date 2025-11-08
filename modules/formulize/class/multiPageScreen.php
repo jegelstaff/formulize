@@ -454,7 +454,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 					$completePageNumber = count($completePages) + 1; // arrays are keyed from 1 in this case, so the new page will be count plus 1
 					$completePages[$completePageNumber] = $items;
 					$completePageTitles[$completePageNumber] = $pageTitles[$pageNumber];
-					$completePageConditions[$completePageNumber] = $pageConditions[$pageNumber];
+					$completePageConditions[$completePageNumber] = isset($pageConditions[$pageNumber]) ? $pageConditions[$pageNumber] : array();
 				}
 			}
 			unset($screenCatalogue[$screen->getVar('sid')]); // we can revisit this screen now safely, since we're done traversing it.

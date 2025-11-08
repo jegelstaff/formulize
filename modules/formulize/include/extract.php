@@ -697,7 +697,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					}
 					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
-					if (is_array($oneSideFilters[$linkedFid]) and count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+					if (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 						$existsJoinText .= $newexistsJoinText . $newJoinText;
 						foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
 							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
@@ -886,7 +886,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
 		$oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
 		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
-		if (is_array($oneSideFilters[$fid]) and count($oneSideFilters[$fid]) > 0) {
+		if (isset($oneSideFilters[$fid]) AND is_array($oneSideFilters[$fid]) AND count($oneSideFilters[$fid]) > 0) {
 			$oneSideSQL .= " AND (";
 			$start = true;
 			foreach ($oneSideFilters[$fid] as $thisOneSideFilter) {
