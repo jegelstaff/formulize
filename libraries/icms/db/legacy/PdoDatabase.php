@@ -25,7 +25,7 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
         if($res = $this->query('SELECT @@character_set_database, @@collation_database')) {
             $collation = $this->fetchRow($res);
             if(strstr($collation[0], 'utf8mb4') AND strstr($collation[1], 'utf8mb4')) {
-                $this->query('SET NAMES utf8mb4');
+                $this->queryF('SET NAMES utf8mb4');
             }
         }
         $getModes = 'SELECT @@SESSION.sql_mode';
@@ -77,7 +77,12 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
 
 	public function query($sql, $limit = 0, $start = 0) {
 		if (!$this->allowWebChanges && strtolower(substr(trim($sql), 0, 6)) != 'select')  {
-			trigger_error(_CORE_DB_NOTALLOWEDINGET, E_USER_WARNING);
+			$bt = debug_backtrace();
+			// get the calling file and function and line number
+			$caller = array_shift($bt);
+			$callerFile = $caller['file'];
+			$callerLine = $caller['line'];
+			trigger_error(_CORE_DB_NOTALLOWEDINGET. " (attempted from line $callerLine in $callerFile). Thrown by the query method ", E_USER_WARNING);
 			return false;
 		}
 		return $this->queryF($sql, $limit, $start);
