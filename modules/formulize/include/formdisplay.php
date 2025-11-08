@@ -2166,16 +2166,16 @@ function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $pr
  * @param array $prevEntry The values from the database for the elements in this entry. A multidimensional array, with one key for an array of the handles and one for the values. Ugh.
  * @return array Returns the ele_value property that should be used for this element, based on the saved value for this element in this entry, if any.
  */
-function loadValue($element, $entry_id, $prevEntry) {
+function loadValue($element, $entry_id, $prevEntry=null) {
 
 	// validate that we have a valid element object
 	if(!is_a($element, 'formulizeElement')) {
 		return array();
 	}
+
 	$ele_value = $element->getVar('ele_value');
-	// validate that we have prevEntry data, and we have an entry ID that we're working with
-	// if not, just return the ele_value as is
-	if(!is_array($prevEntry) OR !is_numeric($entry_id) OR $entry_id == 0) {
+	// if there is no previous entry data to load, then just return the default ele_value
+	if(!is_array($prevEntry)) {
 		return $ele_value;
 	}
 
