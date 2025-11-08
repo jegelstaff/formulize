@@ -687,11 +687,34 @@ function patch40() {
 						}
 				}
 
-				// DEPRECATED AND ON DB UPDATE, LINKED SELECTS NEED TO HAVE THIS SETTING APPLIED TO THE ele_use_default_when_blank SETTING, IFF THE VALUE OF THIS SETTING IS 1
-				/*
-				ele_value[14] in select elements needs to be ported to ele_use_default_when_blank setting of the element itself, then set to zero and never do this again
-				*/
+				// LINKED SELECTS NEED TO HAVE ele_value[14] SETTING APPLIED TO THE ele_use_default_when_blank PROPERTY, IFF THE VALUE OF THIS SETTING IS 1
+				$sql = 'UPDATE '.$xoopsDB->prefix('formulize').' SET ele_use_default_when_blank = 1
+					WHERE (ele_type LIKE "select%" OR ele_type LIKE "autocomplete%" OR ele_type LIKE "listbox%")
+					AND ele_value LIKE "%#*=:*%"
+					AND (ele_use_default_when_blank IS NULL OR ele_use_default_when_blank != 1)
+					AND `ele_value` LIKE \'%i:14;s:1:"1"%\'';
+				if(!$res = $xoopsDB->query($sql)) {
+					print "Error: could not update legacy linked select elements with 'use default when blank' setting.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+				}
 
+				// Check for elementcontainero.php files in the modules/formulize/templates/screens subfolders, that DO NOT have $elementClass present in the contents
+				// Alert the user that they should update these files to include $elementClass for the Office Use Only layout to work in F8.1+
+				$elementContainerOFilesMissingElementClass = [];
+				$baseElementContainerDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
+				$ecoDirectory = new RecursiveDirectoryIterator($baseElementContainerDir);
+				$iterator = new RecursiveIteratorIterator($ecoDirectory);
+				$regex = new RegexIterator($iterator, '/^.+\/elementcontainero\.php$/i', RecursiveRegexIterator::GET_MATCH);
+				$ecoFiles = array_keys(iterator_to_array($regex));
+				foreach ($ecoFiles as $ecoFilePath) {
+						$contents = file_get_contents($ecoFilePath);
+						if (strlen($contents) > 0 AND strpos($contents, '$elementClass') === false) {
+								$elementContainerOFilesMissingElementClass[] = $ecoFilePath;
+						}
+				}
+				if(count($elementContainerOFilesMissingElementClass) > 0) {
+					$ecoMessage = "You have one or more 'elementcontainero.php' files which are missing the \$elementClass variable used in Formulize 8.1+.\n\nThe normal usage looks like this:\n\nprint \"<div class='form-row \$elementClass' \$style id='\$elementContainerId'>\";\n\nThe 'Office Use Only' layout at the bottom of forms will not work correctly on the affected screens until these files are updated.\n\nThe affected files are:\n\n" . implode("\n", $elementContainerOFilesMissingElementClass);
+					echo '<script>alert(' . json_encode($ecoMessage) . ');</script>';
+				}
 
 				// Webmasters group needs explicit view_form permission on every form always! Or else the owner groups column won't work, and that will mess up datasets because the found owner groups to the mainform records in the datasets won't be parallel to that actual dataset (it will be mising owner group info for the Webmasters group for any entries created by webmasters!)
 				$sql = "SELECT id_form FROM ".$xoopsDB->prefix('formulize_id')." AS f WHERE NOT EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("group_permission")." AS p WHERE p.gperm_itemid = f.id_form AND p.gperm_name = 'view_form' AND p.gperm_groupid = 1)";
