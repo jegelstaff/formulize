@@ -411,10 +411,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
-	// override with loadview if that is specified
+	// override with loadview if that is specified and still set
 
 	$subsequentPageloadAfterInitialLoading = isset($_POST['currentview']) ? true : false;
-	if($loadview AND ((
+	if(isset($loadview) AND $loadview AND ((
 		(!isset($_POST['currentview']) OR !$_POST['currentview'])
 		AND (!isset($_POST['advscope']) OR $_POST['advscope'] == ""))
 		OR (isset($_POST['userClickedReset']) AND $_POST['userClickedReset']))) {
@@ -608,7 +608,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} else {
 			$currentView = $_POST['currentview'];
 		}
-	} elseif($loadview) {
+	} elseif(isset($loadview) AND $loadview) {
 		$currentView = $loadview;
 	}
 
@@ -689,9 +689,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
-  	$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
-	$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
-	$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
+	$ownerOfLastLoadedView = 0;
+	$activeViewId = (isset($settings['lastloaded']) AND strlen($settings['lastloaded']) > 1) ? substr($settings['lastloaded'], 1) : null; // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+	if($activeViewId) {
+		$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
+		if(!empty($ownerOfLastLoadedViewData)) {
+			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
+		}
+	}
 	foreach($_POST as $k=>$v) {
 
 		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
@@ -987,7 +992,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	ob_start();
 
 	// drawInterface... renders the top template, sets up searches, many template variables including all the action buttons...
-	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector);
+	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, (isset($loadview) ? $loadview : null), $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector);
 
 	// drawEntries ... renders the openlist, list and closelist templates
 	formulize_benchmark("before entries");
@@ -1614,7 +1619,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	// delete view
 	print "<input type=hidden name=delview id=delview value=\"\"></input>\n";
-	print "<input type=hidden name=delviewid_formulize id=delviewid_formulize value=\"$loadedview\"></input>\n";
+	print "<input type=hidden name=delviewid_formulize id=delviewid_formulize value=\"".(isset($settings['loadedview']) ? $settings['loadedview'] : "")."\"></input>\n";
 
 	// related to saving a new view
 	print "<input type=hidden name=saveid_formulize id=saveid_formulize value=\"\"></input>\n";
