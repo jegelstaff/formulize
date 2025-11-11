@@ -877,7 +877,7 @@ class formulizeDataHandler {
 	 * Write a set of values to an entry in a form's data table
 	 * @param int|string $entry_id The entry that we are writing to, or 'new' for a new entry
 	 * @param array $values An array of key-value pairs, where the keys are the element handles or element ids of the fields we are writing to, and the values are the values we are writing. The array must use all ids or all handles as the keys. Cannot mix and match!
-	 * @param boolean|int $proxyUser Optional. The user id of the user who is to be recorded as creating this entry, or false if the currently active user should be used
+	 * @param boolean|int $proxyUser Optional. The user id of the user who is to be recorded as creating/updating this entry, or false if the currently active user should be used
 	 * @param boolean $forceUpdate Optional. True/false to indicate if the query should be written even on a GET request. Defaults to false (so data is only written on POST requests)
 	 * @param boolean $update_metadata Optional. True/false to indicate if the metadata of the entry should be updated (is set to false when updating derived values for example).
 	 */
@@ -887,7 +887,12 @@ class formulizeDataHandler {
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
-		$creation_uid = is_numeric($proxyUser) ? intval($proxyUser) : intval($uid);
+		$mod_uid = ($entry_id != 'new' AND is_numeric($proxyUser)) ? intval($proxyUser) : intval($uid);
+		if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+      $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
+    } else {
+			$creation_uid = is_numeric($proxyUser) ? intval($proxyUser) : intval($uid);
+		}
 		static $cachedMaps = array();
     static $cachedDataTypeMaps = array();
 		$mapIDs = true; // assume we're mapping elements based on their IDs, because the values array is based on ids as keys
@@ -967,10 +972,6 @@ class formulizeDataHandler {
 			}
 		}
 
-		if(isset($GLOBALS['formulize_overrideProxyUser'])) {
-      $creation_uid = intval($GLOBALS['formulize_overrideProxyUser']);
-    }
-
 		// no values to save, which may be caused by the onBeforeSave() handler deleting all of the values, or nothing has changed from the state in the database, so return null up the chain.
     if (0 == count((array) $element_values)) {
       return null;
@@ -993,7 +994,7 @@ class formulizeDataHandler {
 		if ($update_metadata or "new" == $entry_id) {
 			// update entry metadata
 			$element_values["`mod_datetime`"]   = "NOW()";
-			$element_values["`mod_uid`"]        = intval($uid);
+			$element_values["`mod_uid`"]        = $mod_uid;
 		}
 
 		// prepare query to write a new record

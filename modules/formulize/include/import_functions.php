@@ -722,7 +722,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
             $this_id_req = "";
             if(isset($importSet[7]['idreqs'])) {
 							if(!$pkColumn OR $pkColumn == _formulize_ENTRY_ID OR (isset($_POST['usePkColumnAsEntryId']) AND $_POST['usePkColumnAsEntryId'])) {
-								$this_id_req = $row[$importSet[7]['idreqs']];
+								$this_id_req = intval($row[$importSet[7]['idreqs']]);
 							} elseif($pkColumn) {
 								$this_id_req = getImportEntryIdFromPkColumnValue($row[$importSet[7]['idreqs']], $importSet[5][0][$importSet[6][$importSet[7]['idreqs']]]);
 							}
@@ -747,7 +747,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
             } else {
                 $max_id_req = $this_id_req;
                 // get the uid and creation date too
-                $member_handler =& xoops_gethandler('member');
+                $member_handler = xoops_gethandler('member');
                 $this_metadata = getMetaData($this_id_req, $member_handler, $importSet[4]); // importSet[4] is id_form (fid)
                 $this_uid = $this_metadata['created_by_uid'];
                 $this_creation_date = $this_metadata['created'];
@@ -1093,89 +1093,55 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                     } // end of if there's a value in the current column
                 } elseif (isset($importSet[7]['usethisentryid']) AND $link == $importSet[7]['usethisentryid']) {
                     // if this is not a valid column, but it is an entry id column, then capture the entry id from the cell
-                    $newEntryId = $row[$link] ? $row[$link] : "";
+                    $newEntryId = $row[$link] ? intval($row[$link]) : "";
                 } // end of if this is a valid column
             } // end of looping through $links (columns?)
 
             // now that we've recorded all the values, do the actual updating/inserting of this record
-						// WRITING DATA COULD/SHOULD BE DONE WITH DATA HANDLER CLASS writeEntry METHOD!? -- THAT WOULD INVOKE ON BEFORE SAVE AND ON AFTER SAVE PROPERLY, STANDARDIZE EVERYTHING, ETC
-						// AND DATA IS ALREADY IN DATABASE READY FORMAT NOW, SO JUST USE THE fieldValues ARRAY? BUT DOING SO AND TESTING IS BEYOND THE SCOPE OF CURRENT WORK
-            if ($data_handler->entryExists($this_id_req) AND $userHasImportPermission AND formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $this_id_req)) {
+						if(IMPORT_WRITE
+							AND $userHasImportPermission
+							AND (
+								$data_handler->entryExists($this_id_req) == false
+								OR formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $this_id_req)
+							)) {
 
-                // first, record a revisions if necessary
-                formulize_updateRevisionData($formObject, $this_id_req, true);
+								$writeEntryUid = $form_proxyid; // the creation/mod user will be the form_proxyid, which will be the active xoops user id
+								$writeEntryEntryId = $this_id_req;
+								$notType = 'update_entry';
 
-                // updating an entry
-                $form_uid = $this_uid;
-                $updateSQL = "UPDATE " . $xoopsDB->prefix("formulize_".$importSet[8])." SET ";
-                $start = true;
-                foreach ($fieldValues as $elementHandle=>$fieldValue) {
-                    if (!$start) {
-                        // on subsequent fields, add a comma
-                        $updateSQL .= ", ";
-                    }
-                    $start = false;
-                    $fieldValue = $data_handler->formatValueForQuery($elementHandle, trim($fieldValue), $this_id_req);
-                    $updateSQL .= "`$elementHandle` = $fieldValue";
-                }
-                $updateSQL .= ", mod_datetime=NOW(), mod_uid=$form_proxyid WHERE entry_id=".intval($this_id_req);
+								// if we're making a new entry, then...
+								// use any user specified in the row as the creation user
+								// use any PK indicator specified in the row as the entry id
+								if($data_handler->entryExists($this_id_req) == false) {
+									$notType = 'new_entry';
+									$writeEntryEntryId = 'new';
+									if ($form_uid != 0) {
+										$writeEntryUid = $form_uid;
+									}
+								}
 
-                if (IMPORT_WRITE) {
-                    if (!$result = $xoopsDB->queryF($updateSQL)) {
-                        print "<br><b>FAILED</b> to update data, SQL: $updateSQL<br>".$xoopsDB->error()."<br>";
-                    }
-                    $entriesMap[] = $this_id_req;
-                    $notEntriesList['update_entry'][$importSet[4]][] = $this_id_req; // log the notification info
-                }
-            } elseif($userHasImportPermission) {
-                // inserting a new entry
-								$newEntryId = intval($this_id_req);
-                $fields = "";
-                $values = "";
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                foreach ($fieldValues as $elementHandle=>$fieldValue) {
-                    $fields .= ", `".$elementHandle."`";
-                    $values .= ", ".$data_handler->formatValueForQuery($elementHandle, trim($fieldValue), 'new');
-                    $elementObject = $element_handler->get($elementHandle);
-                    if ($elementObject->getVar('ele_desc')=="Primary Key") {
-                        $newEntryId = $fieldValue;
-                    }
-                }
+								$resultEntryId = $data_handler->writeEntry($writeEntryEntryId, $fieldValues, $writeEntryUid, forceUpdate: true);
 
-                if ($form_uid == 0) {
-                    $form_uid = $form_proxyid;
-                }
+								if($resultEntryId) {
+									$entriesMap[] = $resultEntryId;
+									$notEntriesList[$notType][$importSet[4]][] = $resultEntryId; // log the notification info
+									if($writeEntryEntryId == 'new') {
+										$usersMap[] = $writeEntryUid;
+										$newEntriesMap[] = $resultEntryId;
+									}
+								} elseif($resultEntryId !== null) {
+									static $duplicatesFound = false;
+									if (strstr($xoopsDB->error(), "Duplicate entry")) {
+										if (!$duplicatesFound) {
+											print "<br><b>FAILED</b> to create/update an entry. At least one duplicate value was found in a column that does not allow duplicate values.<br>";
+											$duplicatesFound = true;
+										}
+									} else {
+										print "<br><b>FAILED</b> to create/update data for entry $writeEntryEntryId.<br>".$xoopsDB->error()."<br>";
+									}
+								}
+							}
 
-                $entryIdFieldText = $newEntryId ? "entry_id, " : "";
-                $newEntryId = $newEntryId ? $newEntryId.", " : "";
-                $insertElement = "INSERT INTO " . $xoopsDB->prefix("formulize_".$importSet[8])." (".$entryIdFieldText."creation_datetime, mod_datetime, creation_uid, mod_uid".$fields.") VALUES (".$newEntryId."NOW(), NOW(), '" . intval($form_uid) . "', '" . intval($form_proxyid)."'".$values.")";
-
-                if (IMPORT_WRITE) {
-                    if (!$result = $xoopsDB->queryF($insertElement)) {
-                        static $duplicatesFound = false;
-                        if (strstr($xoopsDB->error(), "Duplicate entry")) {
-                            if (!$duplicatesFound) {
-                                print "<br><b>FAILED</b> to insert <i>some</i> data.  At least one duplicate value was found in a column that does not allow duplicate values.<br>";
-                                $duplicatesFound = true;
-                            }
-                        } else {
-                            print "<br><b>FAILED</b> to insert data, SQL: $insertElement<br>".$xoopsDB->error()."<br>";
-                        }
-                    } else {
-                        // need to record new group ownership info too
-                        $usersMap[] = $form_uid;
-                        $insertedId = $xoopsDB->getInsertId();
-                        $entriesMap[] = $insertedId;
-												$newEntriesMap[] = $insertedId;
-                        $notEntriesList['new_entry'][$importSet[4]][] = $insertedId; // log the notification info
-                    }
-                } else {
-                    echo "<br>" . $insertElement . "<br>";
-                }
-            }
-
-            $idToShow = $newEntryId ? $newEntryId : $max_id_req;
-            //echo "line $rowCount, id $idToShow<br>";
         } // end of if we have contents in this row
     } // end of looping through each row of the file
 
