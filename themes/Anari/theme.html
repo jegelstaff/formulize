@@ -35,13 +35,15 @@
     <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
 
     <!-- CSS -->
-    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) AND $icms_rtl}>rtl/<{/if}>css/style.css?v=1.7" />
+    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) AND $icms_rtl}>rtl/<{/if}>css/style.css?v=1.8" />
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
 </head>
 
 <body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>" style='display: none; overflow: hidden;'>
+
+<{includeq file="$theme_name/session-timeout-warning.html"}>
 
 <{php}>
 // set the base font size if the user has adjusted it in their profile
