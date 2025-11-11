@@ -25,7 +25,7 @@ This function calls the [writeEntry](../../classes/data_handler/writeEntry/) met
 __$values__ - An array of the values to write to the database. The keys must be the element ids or element handles. "{WRITEASNULL}" indicates to write null as the value of the element. Setting actual NULL will work as well.<br>
 __$entry_id__ - Optional. The entry id to write the values to. If omitted then a new entry is written to the database.<br>
 __$action__ - Deprecated. Has no effect. Left in as a placeholder due to legacy code.<br>
-__$proxyUser__ - Optional. An alternate user id to use as the creator and owner of _new_ entries. By default, the creator is the user of the active session. This has no effect on existing entries.<br>
+__$proxyUser__ - Optional. An alternate user id to use as the creator of new entries, or modifier of existing entries. By default, this is the user of the active session.<br>
 __$forceUpdate__ - Optional. A boolean to indicate whether the query should be performed on GET requests. By default data can only be written to the database through a POST request.<br>
 __$writeOwnerInfo__ - Optional. A boolean to indicate whether the ownership information should be written to the database. Has an effect only when $entry_id is "new". The only time you would want to set this to false, is if you are writing multiple entries to the database, and are going to use the [setEntryOwnerGroups](../../classes/data_handler/setEntryOwnerGroups/) method of the [data handler](../../classes/data_handler/) class at a later point in time, to set the ownership for all the entries at once. It is more efficient to write the ownership information all at once for multiple new entries, than to write them one at a time when the entries are inserted into the database.
 

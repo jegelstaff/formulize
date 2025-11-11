@@ -24,7 +24,7 @@ __This method does _not_ write any entry ownership information to the Entry Owne
 
 __$entry_id__ - The entry id being updated, or "new" for creating a new entry.<br>
 __$values__ - An array of the values to write to the database. The keys must be the element ids or element handles. Values must be the database-ready values for the element. "{WRITEASNULL}" indicates to write null as the value of the element. You can also simply use NULL.<br>
-__$proxyUser__ - Optional. An alternate user id to use as the creator of new entries. By default, the creator is the user of the active session.<br>
+__$proxyUser__ - Optional. An alternate user id to use as the creator of new entries, or modifier of existing entries. By default, this is the user of the active session.<br>
 __$forceUpdate__ - Optional. A boolean to indicate whether the query should be performed on GET requests. By default data can only be written to the database through a POST request.<br>
 __$update_metadata__ - Optional. A boolean to indicate whether the modification user id and modification datatime should be updated when writing to an existing entry. Defaults to true. Set to false if you are updating an existing record and you do not want the modification metadata to change.
 
