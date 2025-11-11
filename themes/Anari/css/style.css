@@ -3656,7 +3656,7 @@ span.page-navigation-total {
 #session-timeout-warning img.session-timeout-warning-icon {
   position: absolute;
   top: calc(50% - 16px);
-  left: 5em;
+  left: 3em;
 	top: 1em; }
 
 #session-timeout-warning img.session-timeout-warning-close {

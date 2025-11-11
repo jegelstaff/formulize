@@ -19,7 +19,7 @@ setTimeout(function(){jQuery("#session-timeout-warning").show();}, <{php}>
     echo ($session_timeout_ms - $grace_time_ms);
 <{/php}>);
 jQuery(".session-timeout-warning-close").click(function(){jQuery("#session-timeout-warning").hide()});
-const timeoutTime = new Date(Date.now() + <{php}>echo intval($icmsConfig['session_expire']);<{/php}> * 60 * 1000);
+const timeoutTime = new Date(Date.now() + <{php}>echo $session_timeout_ms;<{/php}>);
 const formattedTime = timeoutTime.toLocaleTimeString(undefined, {
   hour: 'numeric',
   minute: '2-digit'
