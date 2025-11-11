@@ -168,6 +168,7 @@ define('_MONTH', '1 mois');
 define("_DATESTRING","Y-m-d");
 define("_MEDIUMDATESTRING","G:i, j F Y");
 define("_SHORTDATESTRING","Y-m-d");
+define("_SHORTTIMESTRING","G:i");
 /*
 The following characters are recognized in the format string:
 a - "am" or "pm"
@@ -319,5 +320,8 @@ define("_US_LOGIN_WITH_NEW_PW","You can now login with your new password");
 define("_US_INVALID_CODE","Invalid Two Factor Authentication code");
 define("_US_RESET_PW_NO_EMAIL","Erreur : votre compte n'a pas d'adresse e-mail");
 define("_US_RESET_PW_CONTACT_ADMIN", "Contactez un administrateur pour réinitialiser votre email et votre mot de passe");
+
+define("_SESSION_TIMEOUT_AT", "Votre session expirera à ");
+define("_SESSION_TIMEOUT_UNSAVED_CHANGES", "Si vous avez des modifications non sauvegardés, sauvegarder-les maintenant.");
 
 include_once ICMS_ROOT_PATH.'/language/english/global.php'; // define any other constants that aren't included here for some reason

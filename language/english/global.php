@@ -168,6 +168,7 @@ define('_MONTH', '1 month');
 define("_DATESTRING","Y/n/j G:i:s");
 define("_MEDIUMDATESTRING","Y-m-d g:ia");
 define("_SHORTDATESTRING","Y-m-d"); // ALTERED BY FREEFORM SOLUTIONS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS DATE FORMATS
+define("_SHORTTIMESTRING","g:ia");
 /*
  The following characters are recognized in the format string:
  a - "am" or "pm"
@@ -365,3 +366,6 @@ define("_US_LOGIN_WITH_NEW_PW","You can now login with your new password");
 define("_US_INVALID_CODE","Invalid Two Factor Authentication code");
 define("_US_RESET_PW_NO_EMAIL","Error: your account has no email address");
 define("_US_RESET_PW_CONTACT_ADMIN", "Contact an administrator to reset your email and password");
+
+define("_SESSION_TIMEOUT_AT", "Your session will time out at ");
+define("_SESSION_TIMEOUT_UNSAVED_CHANGES", "If you have unsaved changes, save them now.");

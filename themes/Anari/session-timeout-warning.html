@@ -3,12 +3,12 @@
     global $icmsConfig;
     if(ini_get('session.cookie_lifetime') OR ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '')) {
 <{/php}>
-    
+
 <div id="session-timeout-warning" style="display: none;">
     <img class="session-timeout-warning-icon" src="<{$icms_url}>/modules/formulize/images/warning.png">
     <img class="session-timeout-warning-close" src="<{$icms_url}>/modules/formulize/images/x.gif">
-    <p>Your session will time out soon.</p>
-    <p>If you have unsaved changes, you should save now.</p>
+    <p><{$smarty.const._SESSION_TIMEOUT_AT}> <span id="timeout-time-here"></span></p>
+    <p><{$smarty.const._SESSION_TIMEOUT_UNSAVED_CHANGES}></p>
 </div>
 <script type="text/javascript">
 setTimeout(function(){jQuery("#session-timeout-warning").show();}, <{php}>
@@ -19,6 +19,12 @@ setTimeout(function(){jQuery("#session-timeout-warning").show();}, <{php}>
     echo ($session_timeout_ms - $grace_time_ms);
 <{/php}>);
 jQuery(".session-timeout-warning-close").click(function(){jQuery("#session-timeout-warning").hide()});
+const timeoutTime = new Date(Date.now() + <{php}>echo intval($icmsConfig['session_expire']);<{/php}> * 60 * 1000);
+const formattedTime = timeoutTime.toLocaleTimeString(undefined, {
+  hour: 'numeric',
+  minute: '2-digit'
+});
+document.getElementById('timeout-time-here').textContent = formattedTime;
 </script>
 
 <{php}>
