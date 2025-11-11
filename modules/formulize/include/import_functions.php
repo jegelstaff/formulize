@@ -1111,7 +1111,6 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
 								// if we're making a new entry, then...
 								// use any user specified in the row as the creation user
-								// use any PK indicator specified in the row as the entry id
 								if($data_handler->entryExists($this_id_req) == false) {
 									$notType = 'new_entry';
 									$writeEntryEntryId = 'new';
