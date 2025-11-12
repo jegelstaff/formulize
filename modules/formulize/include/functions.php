@@ -3786,7 +3786,7 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
             return $result;
         } else {
             if($result !== null) {
-            	exit("Error: data could not be written to the database for entry $entry_id in form ". $elementObject->getVar('id_form').".");
+            	throw new Exception("Data could not be written to the database for entry $entry_id in form ". $elementObject->getVar('id_form').".");
             } else {
 							// This really clutters up the error logs, because it's quite normal anytime someone doesn't make any changes! But we may want to do something else in this eventuality so we'll keep the 'else' here, at least so it's clear what happens/has happened at this point.
               // error_log('Formulize Notice: Nothing written for entry "'.$entry_id.'" presumably because the passed in values are unchanged from the saved values.');

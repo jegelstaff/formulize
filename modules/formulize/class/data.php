@@ -1034,10 +1034,10 @@ class formulizeDataHandler {
 
 		if($forceUpdate) {
 			if(!$res = $xoopsDB->queryF($sql)) {
-				exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
+				throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
 			}
 		} elseif(!$res = $xoopsDB->query($sql)) {
-			exit("Error: your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
+			throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
 
 		if($entry_to_return) {
@@ -1058,10 +1058,10 @@ class formulizeDataHandler {
 			$pkSQL = "UPDATE ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) .  " SET ".implode(" = entry_id, ", $writePrimaryKeyToElements)." = entry_id WHERE entry_id = $entry_to_return";
 			if($forceUpdate) {
 				if(!$res = $xoopsDB->queryF($pkSQL)) {
-					exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
+					throw new Exception("Could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
 				}
 			} elseif(!$res = $xoopsDB->query($pkSQL)) {
-				exit("Error: could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>".$xoopsDB->error());
+				throw new Exception("Could not record entry id value for {ID} requested in element(s) ".implode(", ",$writePrimaryKeyToElements).". This was the query that failed:<br>$pkSQL<br>".$xoopsDB->error());
 			}
 			// update the officially recorded value that was saved since we've just done a last minute swap (otherwise the officially saved value would be {ID} which isn't correct now)
 			foreach($writePrimaryKeyToElements as $wpkElementHandle) {
