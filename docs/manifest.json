@@ -2,10 +2,10 @@
 layout: null
 ---
 {
-  "dxt_version": "0.1",
+  "manifest_version": "0.2",
   "name": "formulize-mcp",
   "display_name": "Formulize",
-  "version": "1.3.2",
+  "version": "1.3.4",
   "description": "A local MCP server for connecting to Formulize, the open source data management platform.",
   "long_description": "Formulize lets people organize their data and customize the workflows around their data. Many Formulize users are not developers, they are power users who understand how their systems should work, and they can use Formulize to configure their database applications, instead of programming them. With this MCP server, people can connect AI assistants to their Formulize system, have conversations about their data, and get their AI assistant to help in configuring Formulize. Through MCP, people will be able to simply outline their use cases and business processes, and then the AI assistant can use tools in Formulize to create the applications they have imagined. People can also have AI assistants validate, summarize, and help manage their data, and even add data to the database based on the context and prompts provided by users.",
   "author": {
