@@ -7,7 +7,7 @@
         "formulize-mcp"
       ],
       "env": {
-        "FORMULIZE_BASE_URL": "https://<your.formulize.site.url>/mcp/",
+        "FORMULIZE_URL": "https://<your.formulize.site.url>",
         "FORMULIZE_API_KEY": "<your api key from your formulize site>"
       }
     }
