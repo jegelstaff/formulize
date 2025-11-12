@@ -105,11 +105,11 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 	if($elementObject->isLinked == false) {
 
 		// put the values into an array
-		$values = is_array($value) ? $value : explode('*=+*:', trim($value, '*=+*:'));
+		$values = is_array($value) ? $value : (is_string($value) ? explode('*=+*:', trim($value, '*=+*:')) : array($value));
 
 		// if there's OTHER text in the original passed in element value
 		// then replace whichever items in the array have the {OTHER|XX} pattern
-		if (preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
+		if (is_string($value) AND preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
 			global $xoopsDB;
 			$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle='" . formulize_db_escape($handle) . "' AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
 			if (!empty($newValueq)) {
@@ -185,8 +185,12 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 
 		// get array of foreign keys
 		// if we're not keeping foreign keys in the dataset, then convert them to readable values
-		$value = trim($value, ",");
-		$values = strstr($value, ",") ? explode(",", $value) : array($value);
+		if(is_string($value)) {
+			$value = trim($value, ",");
+			$values = strstr($value, ",") ? explode(",", $value) : array($value);
+		} else {
+			$values = array($value);
+		}
 
 		if (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
 			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
@@ -312,7 +316,7 @@ function prepvalues($value, $handle, $entry_id)
 	$elementTypeHandler = xoops_getmodulehandler($type . "Element", "formulize");
 	$preppedValue = $elementTypeHandler->prepareDataForDataset($value, $handle, $entry_id);
 	if (!is_array($preppedValue)) {
-		$valueToReturn = explode("*=+*:", trim($preppedValue, "*=+*:"));
+		$valueToReturn = is_string($preppedValue) ? explode("*=+*:", trim($preppedValue, "*=+*:")) : array($preppedValue);
 	} else {
 		$valueToReturn = $preppedValue;
 	}
@@ -700,7 +704,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					}
 					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
-					if (is_array($oneSideFilters[$linkedFid]) and count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
+					if (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
 						$existsJoinText .= $newexistsJoinText . $newJoinText;
 						foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
 							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
@@ -889,7 +893,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
 		$oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
 		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
-		if (is_array($oneSideFilters[$fid]) and count($oneSideFilters[$fid]) > 0) {
+		if (isset($oneSideFilters[$fid]) AND is_array($oneSideFilters[$fid]) AND count($oneSideFilters[$fid]) > 0) {
 			$oneSideSQL .= " AND (";
 			$start = true;
 			foreach ($oneSideFilters[$fid] as $thisOneSideFilter) {
@@ -1001,6 +1005,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		} else {
 			// FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
 			foreach ($linkformids as $linkId => $thisLinkFid) {
+				if(!isset($joinTextIndex["f" . $linkId])) {
+					continue;
+				}
 				$linkedFormObject = $form_handler->get($thisLinkFid);
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
 					. $linkSelectIndex[$thisLinkFid] .
@@ -1141,11 +1148,13 @@ function formulize_filterHasSingleEntry($filter)
 		);
 	}
 	foreach ($filter as $thisFilter) {
-		$filterDetails = $thisFilter[1];
-		$filterParts = explode('][', (string) $filterDetails);
-		foreach ($filterParts as $part) {
-			if (is_numeric($part)) {
-				return $part;
+		$filterDetails = isset($thisFilter[1]) ? $thisFilter[1] : null;
+		if(is_string($filterDetails)) {
+			$filterParts = explode('][', $filterDetails);
+			foreach ($filterParts as $part) {
+				if (is_numeric($part)) {
+					return $part;
+				}
 			}
 		}
 	}

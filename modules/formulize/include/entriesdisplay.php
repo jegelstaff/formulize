@@ -411,10 +411,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
-	// override with loadview if that is specified
+	// override with loadview if that is specified and still set
 
 	$subsequentPageloadAfterInitialLoading = isset($_POST['currentview']) ? true : false;
-	if($loadview AND ((
+	if(isset($loadview) AND $loadview AND ((
 		(!isset($_POST['currentview']) OR !$_POST['currentview'])
 		AND (!isset($_POST['advscope']) OR $_POST['advscope'] == ""))
 		OR (isset($_POST['userClickedReset']) AND $_POST['userClickedReset']))) {
@@ -451,7 +451,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$_loaded_sv_use_features = '';
 	$features_loaded_from_saved_view = array();
 	// handling change in view, and loading reports/saved views if necessary
-	if($_POST['loadreport']) {
+	if(isset($_POST['loadreport']) AND $_POST['loadreport']) {
 
 		if(is_numeric(substr($_POST['currentview'], 1))) { // saved or published view
 			$loadedView = $_POST['currentview'];
@@ -471,8 +471,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				$_POST['lockcontrols'],
 				$_loaded_quicksearches,
 				$_loaded_global_search,
-        		$_POST['pubfilters'],
-        		$_loaded_formulize_entriesPerPage,
+				$_POST['pubfilters'],
+				$_loaded_formulize_entriesPerPage,
 				$_loaded_sv_use_features,
 				$_loaded_searches_are_fundamental) = loadReport(substr($_POST['currentview'], 1), $fid, $frid);
 
@@ -597,9 +597,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$_POST['lockcontrols'] = 0;
 		}
 
-	} elseif($_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
+	} elseif(isset($_POST['advscope']) AND $_POST['advscope'] AND strstr($_POST['advscope'], ",")) { // looking for comma sort of means that we're checking that a valid advanced scope is being sent
 		$currentView = $_POST['advscope'];
-	} elseif($_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
+	} elseif(isset($_POST['currentview']) AND $_POST['currentview']) { // could have been unset by deletion of a view or something else, so we must check to make sure it exists before we override the default that was determined above
 		if(is_numeric(substr($_POST['currentview'], 1))) {
 			// a saved view was requested as the current view, but we don't want to load the entire thing....this means that we just want to use the view to generate the scope, we don't want to load all settings.  So we have to load the view, but discard everything but the view's currentview value
 			// if we were supposed to load the whole thing, loadreport would have been set in post and the above code would have kicked in
@@ -608,7 +608,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		} else {
 			$currentView = $_POST['currentview'];
 		}
-	} elseif($loadview) {
+	} elseif(isset($loadview) AND $loadview) {
 		$currentView = $loadview;
 	}
 
@@ -673,10 +673,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
 	if(isset($_POST['loadviewname']) AND $_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
-	if($settings['curviewid']) {
+	if(isset($settings['curviewid']) AND $settings['curviewid']) {
 		$settings['lastloaded'] = $settings['curviewid'];
 	} else {
-		$settings['lastloaded'] = $_POST['lastloaded'];
+		$settings['lastloaded'] = (isset($_POST['lastloaded']) AND $_POST['lastloaded']) ? $_POST['lastloaded'] : "";
 	}
 	$screen = enforceSearchesAsFundamentalFilters($settings['lastloaded'], $screen);
 
@@ -684,14 +684,19 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 11 - TIDY UP SEARCHES BASED ON THE ACTUAL SEARCHES / COLUMNS WE'RE SHOWING, NOW THAT WE KNOW ALL THE DETAILS OF WHAT WE'RE SHOWING THE USER
 	 */
 
-	$pubfilters = strlen($_POST['pubfilters']) > 0 ? explode(",", $_POST['pubfilters']) : array();
+	$pubfilters = (isset($_POST['pubfilters']) && strlen($_POST['pubfilters']) > 0) ? explode(",", $_POST['pubfilters']) : array();
 
 	// clear quick searches for any columns not included now
 	// also, convert any { } terms to literal values for users who can't update other reports, if the last loaded report doesn't belong to them (they're presumably just report consumers, so they don't need to preserve the abstract terms)
 	$hiddenQuickSearches = array(); // array used to indicate quick searches that should be present even if the column is not displayed to the user
-  	$activeViewId = substr($settings['lastloaded'], 1); // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
-	$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
-	$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
+	$ownerOfLastLoadedView = 0;
+	$activeViewId = (isset($settings['lastloaded']) AND strlen($settings['lastloaded']) > 1) ? substr($settings['lastloaded'], 1) : null; // will have a p in front of the number, to show it's a published view (or an s, but that's unlikely to ever happen in this case)
+	if($activeViewId) {
+		$ownerOfLastLoadedViewData = q("SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id=".intval($activeViewId));
+		if(!empty($ownerOfLastLoadedViewData)) {
+			$ownerOfLastLoadedView = $ownerOfLastLoadedViewData[0]['sv_owner_uid'];
+		}
+	}
 	foreach($_POST as $k=>$v) {
 
 		if(substr($k, 0, 7) == "search_" AND !in_array(substr($k, 7), $showcols) AND !in_array(substr($k, 7), $pubfilters)) {
@@ -753,7 +758,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['hcalc'] = isset($_POST['hcalc']) ? $_POST['hcalc'] : 1;
 
 	// determine if the controls should really be locked...
-	if($_POST['lockcontrols']) { // if a view locks the controls
+	if(isset($_POST['lockcontrols']) AND $_POST['lockcontrols']) { // if a view locks the controls
 		// only lock the controls when the user is not a member of the currentview groups AND has no globalscope
 		// OR if they are a member of the currentview groups AND has no groupscope or no globalscope
 		switch($currentView) {
@@ -987,7 +992,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	ob_start();
 
 	// drawInterface... renders the top template, sets up searches, many template variables including all the action buttons...
-	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector);
+	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, (isset($loadview) ? $loadview : null), $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector);
 
 	// drawEntries ... renders the openlist, list and closelist templates
 	formulize_benchmark("before entries");
@@ -1045,7 +1050,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	$formulize_cachedDataId = null;
-  print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$currentPage\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
+	$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+  print "\n<input type=hidden name=formulize_LOEPageStart id=formulize_LOEPageStart value=\"$formulize_LOEPageStart\">\n"; // will receive via javascript the page number that was clicked, or will cause the current page to reload if anything else happens
 	print "<input type=hidden name=formulize_cacheddata id=formulize_cacheddata value=\"$formulize_cachedDataId\">\n"; // set the cached data id that we might want to read on next page load
 	print "<input type=hidden name=formulize_previous_filter id=formulize_previous_filter value=\"" . htmlSpecialChars($filterToCompare) . "\">\n"; // save the filter to check for a change on next page load
 	print "<input type=hidden name=formulize_previous_scope id=formulize_previous_scope value=\"" . htmlSpecialChars($flatScope) . "\">\n"; // save the scope to check for a change on next page load
@@ -1114,7 +1120,7 @@ function enforceSearchesAsFundamentalFilters($savedViewIndentifier, $screen) {
 	static $savedViewsEnforcedAlready = array();
 	if($screen AND !isset($savedViewsEnforcedAlready[$savedViewIndentifier])) {
 		$savedViewsEnforcedAlready[$savedViewIndentifier] = true;
-		$savedViewId = substr($savedViewIndentifier, 1);
+		$savedViewId = $savedViewIndentifier ? substr($savedViewIndentifier, 1) : null;
 		if(is_numeric($savedViewId)) {
 			$savedViewSettings = loadReport($savedViewId, $screen->getVar('fid'), $screen->getVar('frid'));
 			$features_loaded_from_saved_view = explode(',',$savedViewSettings[LR_USE_FEATURES]);
@@ -1613,7 +1619,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
 	// delete view
 	print "<input type=hidden name=delview id=delview value=\"\"></input>\n";
-	print "<input type=hidden name=delviewid_formulize id=delviewid_formulize value=\"$loadedview\"></input>\n";
+	print "<input type=hidden name=delviewid_formulize id=delviewid_formulize value=\"".(isset($settings['loadedview']) ? $settings['loadedview'] : "")."\"></input>\n";
 
 	// related to saving a new view
 	print "<input type=hidden name=saveid_formulize id=saveid_formulize value=\"\"></input>\n";
@@ -1679,8 +1685,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	$useSearchCalcMsgs = 1;
 	$inlineButtons = array();
 	$hiddenColumns = array();
-	$formulize_LOEPageSize = 10;
-    $searchTypes = array_fill_keys($cols, 'Box');
+  $searchTypes = array_fill_keys($cols, 'Box');
 	if($screen) {
 		$useScrollBox = $screen->getVar('usescrollbox');
 		$useHeadings = $screen->getVar('useheadings');
@@ -1703,11 +1708,9 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 				}
 			}
 		}
-		$formulize_LOEPageSize = $screen->getVar('entriesperpage');
-        $formulize_LOEPageSize = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
-        foreach($screen->getVar('advanceview') as $avData) {
-            $searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
-        }
+		foreach($screen->getVar('advanceview') as $avData) {
+				$searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
+		}
 	}
 
 	// Prepare link for downloading calculations
@@ -1862,10 +1865,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 		$headcounter = 0;
 		$blankentries = 0;
 		$GLOBALS['formulize_displayElement_LOE_Used'] = false;
-		$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
-		// adjust formulize_LOEPageSize if the actual count of entries is less than the page size
-		$formulize_LOEPageSize = $GLOBALS['formulize_countMasterResultsForPageNumbers'] < $formulize_LOEPageSize ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $formulize_LOEPageSize;
-		$actualPageSize = $formulize_LOEPageSize ? $formulize_LOEPageStart + $formulize_LOEPageSize : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
+
 		if(isset($data)) {
 
 			$templateVariables['class'] = 'even'; // seed the table row class... will flip to odd on first row
@@ -4423,7 +4423,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 			$regeneratePageNumbers = true;
 		}
 	$formulize_LOEPageSize = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
-    $formulize_LOEPageSize = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
+  $formulize_LOEPageSize = (isset($_POST['formulize_entriesPerPage']) AND $_POST['formulize_entriesPerPage'] !== "") ? intval($_POST['formulize_entriesPerPage']) : $formulize_LOEPageSize;
 	if($formulize_LOEPageSize) {
 	  $limitStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
 	  $limitSize = $formulize_LOEPageSize;
@@ -4457,7 +4457,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 		// if we deleted entries and the current page is now empty, then shunt back 1 page
-		if(count((array) $data)==0 AND $_POST['delconfirmed'] AND $limitStart > 0) {
+		if(count((array) $data)==0 AND isset($_POST['delconfirmed']) AND $_POST['delconfirmed'] AND $limitStart > 0) {
 			$_POST['formulize_LOEPageStart'] = $_POST['formulize_LOEPageStart']-$formulize_LOEPageSize;
 			$data = getData($frid, $fid, $filter, "AND", $scope, ($limitStart-$formulize_LOEPageSize), $limitSize, $sort, $order, $forcequery);
 		}
@@ -4503,8 +4503,11 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
  	$numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND intval($_POST['formulize_entriesPerPage']) > 0) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
 
 	// regenerate essentially causes the user to jump back to page 0 because something about the dataset has fundamentally changed (like a new search term or something)
-	$currentPage = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
- 	$userPageNumber = $currentPage > 0 ? ($currentPage / $numberPerPage) + 1 : 1;
+	$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+	if($formulize_LOEPageStart < $numberPerPage) {
+		$formulize_LOEPageStart = 0;
+	}
+ 	$userPageNumber = $formulize_LOEPageStart > 0 ? ($formulize_LOEPageStart / $numberPerPage) + 1 : 1;
 
     $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
     $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
@@ -4551,7 +4554,7 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
         }
 
 				$jsFunctionName = 'pageJump';
-				$pageNav = formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentPage, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
+				$pageNav = formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $formulize_LOEPageStart, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
 
     }
 

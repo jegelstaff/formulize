@@ -539,7 +539,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			}
 
 			if($temparraykeys[0] === "{FULLNAMES}" OR $temparraykeys[0] === "{USERNAMES}") { // ADDED June 18 2005 to handle pulling in usernames for the user's group(s)
-				$ele_value[ELE_VALUE_SELECT_OPTIONS]['{SELECTEDNAMES}'] = explode("*=+*:", $value);
+				$ele_value[ELE_VALUE_SELECT_OPTIONS]['{SELECTEDNAMES}'] = is_string($value) ? explode("*=+*:", $value) : array($value);
 				if(count((array) $ele_value[ELE_VALUE_SELECT_OPTIONS]['{SELECTEDNAMES}']) > 1) { array_shift($ele_value[ELE_VALUE_SELECT_OPTIONS]['{SELECTEDNAMES}']); }
 				// get the entry owner groups...
 				$dataHandler = new formulizeDataHandler($element->getVar('fid'));
@@ -788,7 +788,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 							$linked_value = '';
 							if ($rowlinkedvaluesq[$linked_column_index] !== "") {
 								$linked_value = prepvalues($rowlinkedvaluesq[$linked_column_index], $linked_columns[$linked_column_index - 1], $rowlinkedvaluesq[0]);
-								$linked_value = $linked_value[0];
+								$linked_value = (is_array($linked_value) AND isset($linked_value[0])) ? $linked_value[0] : null;
 							}
 							if($linked_value != '' OR is_numeric($linked_value)) {
 								$linked_column_values[] = $linked_value;
@@ -1018,7 +1018,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				if(is_array($selected)) {
 					$hiddenElementName = $ele_value[ELE_VALUE_SELECT_MULTIPLE] ? $form_ele1->getName()."[]" : $form_ele1->getName();
 					foreach($selected as $thisSelected) {
-						$disabledOutputText[] = $options[$thisSelected];
+						$disabledOutputText[] = isset($options[$thisSelected]) ? $options[$thisSelected] : "";
 						$disabledHiddenValue[] = "<input type=hidden name=\"$hiddenElementName\" value=\"$thisSelected\">";
 					}
 				} elseif($ele_value[ELE_VALUE_SELECT_MULTIPLE]) { // need to keep [] in the hidden element name if multiple values are expected, even if only one is chosen
@@ -1095,7 +1095,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$multipleClass = 'formulize_autocomplete_multiple';
 		} else {
 			$selectedValues = '';
-			$default_value_user = $default_value_user[key($default_value_user)];
+			$default_value_user = isset($default_value_user[key($default_value_user)]) ? $default_value_user[key($default_value_user)] : '';
 			$multipleClass = '';
 		}
 
@@ -1103,7 +1103,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$output = "<div class=\"formulize_autocomplete\"><input type='text' class='formulize_autocomplete $multipleClass' name='".$markupName."_user' id = '".$markupName."_user' autocomplete='off' value='".str_replace("'", "&#039;", $default_value_user)."' aria-describedby='".$markupName."-help-text' /></div><img src='".XOOPS_URL."/modules/formulize/images/magnifying_glass.png' class='autocomplete-icon'>\n";
 		$output .= "<div id='".$markupName."_defaults'>\n";
 		if(!$multiple) {
-				$output .= "<input type='hidden' name='".$markupName."' id = '".$markupName."' value='".$default_value[0]."' />\n";
+				$output .= "<input type='hidden' name='".$markupName."' id = '".$markupName."' value='".(isset($default_value[0]) ? $default_value[0] : '')."' />\n";
 		} else {
 				$output .= "<input type='hidden' name='last_selected_".$markupName."' id = 'last_selected_".$markupName."' value='' />\n";
 				foreach($default_value as $i=>$this_default_value) {

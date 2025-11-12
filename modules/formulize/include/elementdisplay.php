@@ -542,7 +542,7 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			}
 			$compValue = addslashes(implode(",",$compValue));
 		} else {
-			$compValue = addslashes($compValue);
+			$compValue = is_string($compValue) ? addslashes($compValue) : $compValue;
 		}
 		$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
 

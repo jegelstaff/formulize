@@ -81,17 +81,14 @@ if(!isset($fid)) {
     $fid = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $fid ;
 }
 
-// if we're being called from pageworks, or elsewhere, then certain values won't be set so we'll need to check for them in other ways...
-if(!$gperm_handler) {
-	$gperm_handler =& xoops_gethandler('groupperm');
-}
+// if we're being called from pageworks, or elsewhere, then certain values won't be set so we'll need to check for them in other ways.
+$gperm_handler = xoops_gethandler('groupperm');
 if(!isset($mid)) {
 	$mid = getFormulizeModId();
 }
 
-if(!$myts) { $myts =& MyTextSanitizer::getInstance(); }
+if(!$myts) { $myts = MyTextSanitizer::getInstance(); }
 
-//$formulize_submittedElementCaptions = array(); // put into global scope and pulled down by readform.php when determining what elements have been submitted, so we don't blank data that is sent this way
 global $xoopsUser;
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -189,7 +186,7 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
   $formulizeModule =& $module_handler->getByDirname("formulize");
   $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
   $modulePrefUseToken = $formulizeConfig['useToken'];
-	$useToken = $screen ? $screen->getVar('useToken') : $modulePrefUseToken;
+	$useToken = (isset($screen) AND $screen) ? $screen->getVar('useToken') : $modulePrefUseToken;
 	if(isset($GLOBALS['xoopsSecurity']) AND $useToken) { // avoid security check for versions of XOOPS that don't have that feature, or for when it's turned off
 		$GLOBALS['formulize_securityCheckPassed'] = false;
 		if ($GLOBALS['xoopsSecurity']->check()) {
@@ -314,7 +311,7 @@ unset($GLOBALS['formulize_afterSavingLogicRequired']); // now that saving is don
 // May want to refactor to use formulize_renderedEntryScreen, rather than deducing from settings and making assumptions?
 $fundamentalDefaults = array();
 $viewEntryScreenObject = false;
-if(isset($_POST['formulize_renderedEntryScreen']) AND $screenToLoad = determineViewEntryScreen($screen, $fid)) {
+if(isset($_POST['formulize_renderedEntryScreen']) AND (isset($screen) AND $screen) AND $screenToLoad = determineViewEntryScreen($screen, $fid)) {
     $ves_handler = xoops_getmodulehandler('screen', 'formulize');
     if($viewEntryScreenObject = $ves_handler->get($screenToLoad)) {
         if($viewEntryScreenObject->getVar('type') != 'form' AND $viewEntryScreenObject->getVar('type') != 'multiPage') { // only work with form screens or multipage screens now
@@ -322,7 +319,7 @@ if(isset($_POST['formulize_renderedEntryScreen']) AND $screenToLoad = determineV
         }
     }
 }
-if(!$viewEntryScreenObject AND $screen AND (is_a($screen, 'formulizeFormScreen') OR is_a($screen, 'formulizeMultiPageFormScreen'))) {
+if(!$viewEntryScreenObject AND (isset($screen) AND $screen) AND (is_a($screen, 'formulizeFormScreen') OR is_a($screen, 'formulizeMultiPageFormScreen'))) {
     $viewEntryScreenObject = $screen;
 }
 if($viewEntryScreenObject) {
@@ -336,8 +333,8 @@ if($viewEntryScreenObject) {
         }
     }
 }
-if(count((array) $fundamentalDefaults) == 0 AND $screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
-    $fundamental_filters = $screen->getVar('fundamental_filters')    ;
+if(count((array) $fundamentalDefaults) == 0 AND (isset($screen) AND $screen) AND is_a($screen, 'formulizeListOfEntriesScreen')) {
+    $fundamental_filters = $screen->getVar('fundamental_filters');
     if(is_array($fundamental_filters)) {
         $fundamentalDefaults = getFilterValuesForEntry($fundamental_filters);
     }
