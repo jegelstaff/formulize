@@ -291,6 +291,9 @@ function prepvalues($value, $handle, $entry_id)
 	}
 
 	$elementArray = formulize_getElementMetaData($handle, true);
+	if(empty($elementArray)){
+		throw new Exception("Could not find element metadata for handle '$handle' when preparing value for dataset.");
+	}
 	$type = $elementArray['ele_type'];
 
 	// decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
