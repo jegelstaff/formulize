@@ -1973,30 +1973,30 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 									foreach($entryFormData as $internalID=>$entryElements) {
 										$deThisIntId = false;
 										foreach($entryElements as $entryHandle=>$values) {
-											$values = is_array($values) ? $values[0] : $values;
-											$values = prepvalues($values, $entryHandle, $internalID);
-											if($entryHandle == $col AND $internalID) { // we found the element that we're trying to display
-												$displayElementObject = $element_handler->get($entryHandle);
-												if(formulizePermHandler::user_can_edit_entry($displayElementObject->getVar('id_form'), $uid, $internalID)) {
-													if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
-													list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($displayElementObject, $internalID);
-													if($displayIconsToActivateElements AND !$isDisabled) {
-														if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
-														print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
-														print getHTMLForList($values, $colhandle, $internalID, $displayIconsToActivateElements, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
-														print "</div>";
-														$deInstanceCounter++;
-													} else {
-														if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
-														// NEEDS DEBUG - ELEMENTS NOT DISPLAYING
-														$colHandleElementObject = $element_handler->get($colhandle);
-														$colHandleElementObject = overrideSeparatorToLineBreak($colHandleElementObject);
-														displayElement("", $colHandleElementObject, $internalID);
-													}
-													$deThisIntId = true;
-													$multiValueBRNeeded = true;
-													$elementDisplayed = true;
+											if($entryHandle == $col
+											AND $internalID
+											AND $displayElementObject = $element_handler->get($entryHandle)
+											AND formulizePermHandler::user_can_edit_entry($displayElementObject->getVar('id_form'), $uid, $internalID)) { // we found the element that we're trying to display, and it's valid, and the user can edit the entry
+												$values = is_array($values) ? $values[0] : $values;
+												$values = prepvalues($values, $entryHandle, $internalID);
+												if($deThisIntId) { print "\n<br />\n"; } // could be a subform so we'd display multiple values
+												list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($displayElementObject, $internalID);
+												if($displayIconsToActivateElements AND !$isDisabled) {
+													if($multiValueBRNeeded) { print "\n<br />\n"; } // in the case of multiple values, split them based on this
+													print '<div id="deDiv_'.$colhandle.'_'.$internalID.'_'.$deInstanceCounter.'">';
+													print getHTMLForList($values, $colhandle, $internalID, $displayIconsToActivateElements, $textWidth, $internalID, $fid, $cellRowAddress, $i, $deInstanceCounter); // $internalID passed in in place of $currentColumnLocalId because we are manually looping through the data to get to the lowest level, so we can be sure of the local id that is in use, and it won't be an array, etc (unless we're showing a checkbox element??? or something else with multiple values??? - probably doesn't matter because the entry id is the same for all values of a single element that allows multiple selection)
+													print "</div>";
+													$deInstanceCounter++;
+												} else {
+													if($deThisIntId) { print "\n<br />\n"; } // extra break to separate multiple form elements in the same cell, for readability/usability
+													// NEEDS DEBUG - ELEMENTS NOT DISPLAYING
+													$colHandleElementObject = $element_handler->get($colhandle);
+													$colHandleElementObject = overrideSeparatorToLineBreak($colHandleElementObject);
+													displayElement("", $colHandleElementObject, $internalID);
 												}
+												$deThisIntId = true;
+												$multiValueBRNeeded = true;
+												$elementDisplayed = true;
 											}
 										}
 									}
