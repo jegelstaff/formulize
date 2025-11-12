@@ -2619,11 +2619,11 @@ function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $ra
 				$GLOBALS['formulize_mostRecentLocalId'] = $lid;
 				return $elements[$handle];
 			} elseif($raw) {
-		    $foundValues[] = htmlspecialchars_decode($elements[$handle]);
+		    $foundValues[] = ($elements[$handle] AND is_string($elements[$handle])) ? htmlspecialchars_decode($elements[$handle]) : $elements[$handle];
 				$formulize_mostRecentLocalId[] = $lid;
 		  } else {
 				foreach (prepvalues($elements[$handle], $handle, $lid) as $thisValue) {
-					$foundValues[] = htmlspecialchars_decode($thisValue);
+					$foundValues[] = ($thisValue AND is_string($thisValue)) ? htmlspecialchars_decode($thisValue) : $thisValue;
 					$formulize_mostRecentLocalId[] = $lid;
 				}
 			}
