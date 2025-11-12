@@ -109,7 +109,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 				$ele_value = $element->getVar('ele_value');
-        $value = unserialize($value); // what we've got in the database is a serialized array, first key is filename, second key is flag for whether the filename is for real (might be an error message)
+        $value = $value ? unserialize($value) : array(); // what we've got in the database is a serialized array, first key is filename, second key is flag for whether the filename is for real (might be an error message)
         $ele_value[3] = (isset($value['name']) AND $value['name']) ? $value['name'] : null; // add additional keys to ele_value where we'll put the value that is coming from the database for user's to see, plus other flags and so on
         $ele_value[4] = $this->getFileDisplayName(strval($ele_value[3]));
         $ele_value[5] = (isset($value['isfile']) AND $value['isfile']) ? $ele_value[3] : null;
