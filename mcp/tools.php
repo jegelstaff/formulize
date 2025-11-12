@@ -124,9 +124,9 @@ trait tools {
 					'required' => ['screen_id']
 				]
 			],
-			'create_entry' => [
-				'name' => 'create_entry',
-				'description' => 'Create a new entry in a Formulize form. Returns success status and new entry ID. Formulize may automatically add default values for required elements, if they have default values defined. Do not be concerned about required elements unless this tool returns an error saying that required elements are missing.',
+			'create_entries' => [
+				'name' => 'create_entries',
+				'description' => 'Create one or more new entries in a Formulize form. Returns success status and new entry IDs. Formulize may automatically add default values for required elements, if they have default values defined. Do not be concerned about required elements unless this tool returns an error saying that required elements are missing.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -135,11 +135,16 @@ trait tools {
 							'description' => 'Required. Form ID where the entry will be created.'
 						],
 						'data' => [
-							'type' => 'object',
-							'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
-							'additionalProperties' => true,
+							'type' => 'array',
+							'description' => 'Required. An array of data to use for the entry or entries. Each item in the array is the data for one entry.',
+							'items' => [
+								'type' => 'object',
+								'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
+								'additionalProperties' => true
+							],
 							'examples' => [
-								'{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"}'
+								'[{"book_title": "The Wind in the Willows", "book_author": "Kenneth Grahame", "book_publication_date": "1908-10-08"}]',
+								'[{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"},{"first_name": "Jane", "last_name": "Smith", "birth_date": "1975-11-23"}]'
 							]
 						],
 						'relationship_id' => [
@@ -150,31 +155,35 @@ trait tools {
 					'required' => ['form_id', 'data']
 				]
 			],
-			'update_entry' => [
-				'name' => 'update_entry',
-				'description' => 'Update an existing entry in a Formulize form.',
+			'update_entries' => [
+				'name' => 'update_entries',
+				'description' => 'Update an existing entry or entries in a Formulize form.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
 						'form_id' => [
 							'type' => 'integer',
-							'description' => 'Required. Form ID containing the entry to update.'
-						],
-						'entry_id' => [
-							'type' => 'integer',
-							'description' => 'Required. ID of the entry to update. Must exist and be accessible to current user.'
+							'description' => 'Required. Form ID containing the entries to update.'
 						],
 						'data' => [
-							'type' => 'object',
-							'description' => 'Required. Data to update as key-value pairs. Only specified elements will be updated; others remain unchanged. You can lookup the element handles in a form with the get_form_details tool. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
-							'additionalProperties' => true
+							'type' => 'array',
+							'description' => 'Required. An array where each item is a key-value pair of data to update in an entry. The key-value pairs must include the key "entry_id" paired with the ID of the entry to update.',
+							'items' => [
+								'type' => 'object',
+								'description' => 'Required. Data to update as key-value pairs. Keys must be valid element handles from the form, and must include "entry_id". Use get_form_details to find valid handles and data types. Only specified elements will be updated; others remain unchanged. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
+								'additionalProperties' => true
+							],
+							'examples' => [
+								'[{"entry_id": 127, "city_population": "2800000"}]',
+								'[{"entry_id": 35, "product_price": "32.99", "product_quantity": "1000" }, {"entry_id": 36, "product_price": "95.25", "product_quantity": "497"}]'
+							]
 						],
 						'relationship_id' => [
 							'type' => 'integer',
 							'description' => 'Optional. Relationship context for derived value calculations. Default: -1 (Primary Relationship)'
 						]
 					],
-					'required' => ['form_id', 'entry_id', 'data']
+					'required' => ['form_id', 'data']
 				]
 			],
 			'get_entries_from_form' => [
@@ -1286,12 +1295,12 @@ private function validateFilter($filter, $andOr = 'AND') {
 	 * Create a new entry in a Formulize form
 	 * @param array $arguments An associative array containing the parameters for creating the entry.
 	 * - 'form_id': The ID of the form to create an entry in.
-	 * - 'data': An associative array of key-value pairs where keys are element handles and values are the data to store.
+	 * - 'data': An array of associative arrays of key-value pairs where keys are element handles and values are the data to store.
 	 * - 'relationship_id': Optional. The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship which includes all connected forms.
 	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
 	 */
-	private function create_entry($arguments) {
-		return $this->writeFormEntry(intval($arguments['form_id']), 'new', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+	private function create_entries($arguments) {
+		return $this->writeFormEntries(intval($arguments['form_id']), 'create', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
 	}
 
 	/**
@@ -1299,12 +1308,12 @@ private function validateFilter($filter, $andOr = 'AND') {
 	 * @param array $arguments An associative array containing the parameters for creating the entry.
 	 * - 'form_id': The ID of the form to create an entry in.
 	 * - 'entry_id': The ID of the entry to update.
-	 * - 'data': An associative array of key-value pairs where keys are element handles and values are the data to store.
+	 * - 'data': An array of associative arrays of key-value pairs where keys are element handles and values are the data to store. Each associative array must include "entry_id".
 	 * - 'relationship_id': Optional. The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship which includes all connected forms.
 	 * @return array An associative array with the result of the create operation, including success status, form ID, entry ID, action performed, and any additional information such as new entry ID if created.
 	 */
-	private function update_entry($arguments) {
-		return $this->writeFormEntry(intval($arguments['form_id']), $arguments['entry_id'], $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
+	private function update_entries($arguments) {
+		return $this->writeFormEntries(intval($arguments['form_id']), 'update', $arguments['data'] ?? [], intval($arguments['relationship_id'] ?? -1));
 	}
 
 	/**
@@ -1312,16 +1321,16 @@ private function validateFilter($filter, $andOr = 'AND') {
 	 * The form id is not actually required in the underlying formulize_writeEntry function, because the element references are globally unique and the form can be derived from them.
 	 * However, this method still validates that the form exists and that the elements are part of the form, which is useful since the AI assistant might have hallucinated elements!
 	 * @param int $formId The ID of the form to write the entry to
-	 * @param int|string $entryId The ID of the entry to update, or 'new' to create a new entry
-	 * @param array $data The data to write, where keys are element handles and values are the data to store.
+	 * @param string $operation Either 'create' or 'update'
+	 * @param array $data The data to write. Each value is an array of key-value pairs, representing the element handles and values of the data to store. If $operation is 'update', entry_id must be a key and the value is the entry ID to update.
 	 * @param int $relationshipId The ID of the relationship to use for derived value calculations. Defaults to -1 for the Primary Relationship, which includes all connected forms.
-	 * @return array An associative array with the result of the write operation, including success status, form ID, entry ID, action performed (created or updated), and any additional information such as new entry ID if created.
+	 * @return array An associative array with the result of the write operation, including success status.
 	 * @throws Exception If there is an error during the write operation, such as permission issues, form not found, invalid element handles, or failure to prepare data for storage.
 	 */
-	private function writeFormEntry($formId, $entryId, $data, $relationshipId = -1)
+	private function writeFormEntries($formId, $operation, $data, $relationshipId = -1)
 	{
-		$resultEntryId = null;
-		// Enhanced input validation
+
+		// Validate data
 		if (!is_array($data) || empty($data)) {
 			throw new FormulizeMCPException(
 				'Data must be a non-empty array',
@@ -1341,37 +1350,18 @@ private function validateFilter($filter, $andOr = 'AND') {
 		}
 		$relationshipId = intval($relationshipId);
 
-		// Validate entry ID
-		if ($entryId !== 'new' && (!is_numeric($entryId) || $entryId <= 0)) {
-			throw new FormulizeMCPException('Entry ID must be a positive integer', 'invalid_data'); // can be 'new' also, but only 'new' when we call specifically from the create_entry tool, so for error reporting only state that positive integers are allowed because an error would be in the use of update_entry with an invalid entry id specified.
-		}
-		if ($entryId !== 'new') {
-			$entryId = intval($entryId);
-		}
-
-		// Step 1: Check permissions
-		if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
-			throw new FormulizeMCPException(
-				'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
-				'permission_denied',
-			);
-		}
-
 		// Validate form exists
 		$formSql = "SELECT id_form FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
-		$formData = $this->db->fetchArray($formResult);
-
-		if (!$formData) {
+		if(!$formData = $this->db->fetchArray($formResult)) {
 			throw new FormulizeMCPException('Form not found: ' . $formId, 'form_not_found');
 		}
 
 		// Get form elements to validate handles
-		$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
-		$elementsResult = $this->db->query($elementsSql);
-
 		$validHandles = [];
 		$requiredHandles = [];
+		$elementsSql = "SELECT ele_handle, ele_required FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
+		$elementsResult = $this->db->query($elementsSql);
 		while ($row = $this->db->fetchArray($elementsResult)) {
 			$validHandles[] = $row['ele_handle'];
 			if($row['ele_required']) {
@@ -1380,74 +1370,103 @@ private function validateFilter($filter, $andOr = 'AND') {
 		}
 
 		// Step 2: Prepare and validate the data
+
+		// Validate creation permission if applicable
+		if($operation == 'create') {
+			if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, 'new')) {
+				throw new FormulizeMCPException(
+					'Permission denied: cannot create entries in form ' . $formId,
+					'permission_denied',
+				);
+			}
+		}
+
+		// Prepare and validate each entry
 		$preparedData = [];
-		foreach ($data as $elementHandle => $value) {
-			// Validate element handle type
-			if (!is_string($elementHandle)) {
-				throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
+		foreach ($data as $i => $entryData) {
+
+			$entryId = $operation == 'create' ? 'new' : (isset($entryData['entry_id']) ? $entryData['entry_id'] : null);
+			$preparedDataKey = $operation == 'create' ? $i : $entryId;
+
+			// Validate entry IDs and update permission if applicable
+			if($operation == 'update') {
+				if (!is_numeric($entryId) || $entryId <= 0) {
+					throw new FormulizeMCPException('Entry IDs must be positive integers', 'invalid_data');
+				}
+				$entryId = intval($entryId);
+				if (!formulizePermHandler::user_can_edit_entry($formId, $this->authenticatedUid, $entryId)) {
+					throw new FormulizeMCPException(
+						'Permission denied: cannot update entry ' . $entryId . ' in form ' . $formId,
+						'permission_denied',
+					);
+				}
+				unset($entryData['entry_id']);
 			}
 
-			// Validate element handle exists in this form
-			if (!in_array($elementHandle, $validHandles)) {
-				throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
+			foreach($entryData as $elementHandle => $value) {
+
+				// Validate element handle type
+				if (!is_string($elementHandle)) {
+					throw new FormulizeMCPException('Element handle must be a string', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
+				}
+
+				// Validate element handle exists in this form
+				if (!in_array($elementHandle, $validHandles)) {
+					throw new FormulizeMCPException('Invalid element handle for this form: ' . $elementHandle, 'unknown_element', context: [ "valid_element_handles" => $validHandles ]);
+				}
+
+				// Prepare the value for database storage
+				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
+				if($preparedValue AND $preparedValue !== $value) {
+					$value = $preparedValue;
+				}
+
+				$preparedData[$preparedDataKey][$elementHandle] = $value;
 			}
 
-			// Prepare the value for database storage
-			$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
-			if($preparedValue AND $preparedValue !== $value) {
-				$value = $preparedValue;
+			if (empty($preparedData[$preparedDataKey])) {
+				$entryDescriptor = $entryId === 'new' ? 'new entry' : "entry ID $entryId";
+				throw new FormulizeMCPException("No valid data provided for $entryDescriptor.", 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
 			}
 
-			$preparedData[$elementHandle] = $value;
-		}
-
-		if (empty($preparedData)) {
-			throw new FormulizeMCPException('No valid data provided.', 'invalid_data', context: [ "valid_element_handles" => $validHandles ]);
-		}
-
-		// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
-		if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
-			$preparedData = addDefaultValuesToDataToWrite($preparedData, $formId);
-			$missingRequiredHandles = [];
-			foreach($requiredHandles as $requiredHandle) {
-				if(!isset($preparedData[$requiredHandle])
-					OR $preparedData[$requiredHandle] === null
-					OR $preparedData[$requiredHandle] === 0
-					OR $preparedData[$requiredHandle] === "0"
-					OR $preparedData[$requiredHandle] === "") {
-						$missingRequiredHandles[] = $requiredHandle;
-					}
+			// If there are required elements, fill in default values that might be missing, and validate that all required elements have values
+			if(!is_numeric($entryId) AND $entryId == "new" AND !empty($requiredHandles)) {
+				$preparedData[$preparedDataKey] = addDefaultValuesToDataToWrite($preparedData[$preparedDataKey], $formId);
+				$missingRequiredHandles = [];
+				foreach($requiredHandles as $requiredHandle) {
+					if(!isset($preparedData[$preparedDataKey][$requiredHandle])
+						OR $preparedData[$preparedDataKey][$requiredHandle] === null
+						OR $preparedData[$preparedDataKey][$requiredHandle] === 0
+						OR $preparedData[$preparedDataKey][$requiredHandle] === "0"
+						OR $preparedData[$preparedDataKey][$requiredHandle] === "") {
+							$missingRequiredHandles[] = $requiredHandle;
+						}
+				}
+				if($missingRequiredHandles) {
+					$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
+					throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
+				}
 			}
-			if($missingRequiredHandles) {
-				$elementText = count($missingRequiredHandles) > 1 ? 'elements' : 'element';
-				throw new FormulizeMCPException("Required $elementText missing from from the data. If necessary, ask the user for more information about what the values should be.", 'invalid_data', context: [ "missing_required_$elementText" => $missingRequiredHandles] );
-			}
+
 		}
 
 		// Step 3: Write the entry
-		// a null result means nothing was written, likely because the submitted data was not different from what's in the database already
-		$resultEntryId = formulize_writeEntry($preparedData, $entryId);
-
-		// For new entries, the function returns the new entry ID
-		// For updates, it returns the existing entry ID
-		$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId;
-
-		// Step 4: Update derived values
-		formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+		// keys are entry ids when updating, or sequential integers when creating
+		foreach($preparedData as $i => $entryData) {
+			$entryId = $operation == 'create' ? 'new' : $i;
+			$resultEntryId = formulize_writeEntry($entryData, $entryId); // writes data and manages ownership info
+			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId; // for updates, formulize_writeEntry can return null if no data actually changed from current DB state
+			// Step 4: Update derived values
+			formulize_updateDerivedValues($finalEntryId, $formId, $relationshipId);
+			// Lastly, put the entry id into the prepared data for reference
+			$preparedData[$i] = array_merge(array('entry_id' => $finalEntryId), $preparedData[$i]);
+		}
 
 		$response = [
 			'success' => true,
 			'form_id' => $formId,
-			'entry_id' => $finalEntryId,
-			'prepped_data' => $preparedData,
-			'action' => $resultEntryId === null ? 'No data was written (submitted values may be the same as current values in the database)' : ($entryId === 'new' ? 'created' : 'updated'),
-			'elements_written' => $resultEntryId === null ? 0 : array_keys($preparedData),
-			'element_count' => count($preparedData)
+			'data_written_to_entries' => $preparedData,
 		];
-
-		if ($entryId === 'new') {
-			$response['new_entry_id'] = $resultEntryId;
-		}
 
 		return $response;
 	}
