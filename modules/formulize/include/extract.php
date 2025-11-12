@@ -105,11 +105,11 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 	if($elementObject->isLinked == false) {
 
 		// put the values into an array
-		$values = is_array($value) ? $value : explode('*=+*:', trim($value, '*=+*:'));
+		$values = is_array($value) ? $value : (is_string($value) ? explode('*=+*:', trim($value, '*=+*:')) : array($value));
 
 		// if there's OTHER text in the original passed in element value
 		// then replace whichever items in the array have the {OTHER|XX} pattern
-		if (preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
+		if (is_string($value) AND preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
 			global $xoopsDB;
 			$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle='" . formulize_db_escape($handle) . "' AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
 			if (!empty($newValueq)) {

@@ -188,11 +188,11 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
     // handle any filter that might be specified on the user profile form
 
     // determine which form the "User Profile" is
-    $module_handler =& xoops_gethandler('module');
-    $config_handler =& xoops_gethandler('config');
-    $formulizeModule =& $module_handler->getByDirname("formulize");
-    $formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-    $fid = $formulizeConfig['profileForm'];
+    $module_handler = xoops_gethandler('module');
+    $config_handler = xoops_gethandler('config');
+    $formulizeModule = $module_handler->getByDirname("formulize");
+    $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+    $fid = (isset($formulizeConfig['profileForm']) AND $formulizeConfig['profileForm']) ? intval($formulizeConfig['profileForm']) : 0;
 
     if (is_array($filter) AND $fid) {
         $filterElements = $filter[0];

@@ -361,9 +361,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     function prepareDataForDataset($value, $handle, $entry_id) {
         $url = $this->createFileURL($this->get($handle), $entry_id, $value);
         // store the displayName in case we need to format this in a list later -- only the URL will be passed to the formatDataForList method, since that's all we're passing back here, so we need another way of getting the displayName into that method
-        $value = unserialize($value);
-        $name = isset($value['name']) ? $value['name'] : '';
-        $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] = $this->getFileDisplayName($name);
+        $value = $value ? unserialize($value) : $value;
+				if(is_array($value)) {
+					$name = isset($value['name']) ? $value['name'] : '';
+					$GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] = $this->getFileDisplayName($name);
+				}
         return $url;
     }
 
@@ -392,9 +394,9 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID number of this entry
     // $value is the serialized raw value from the database for this particular entry
     function createFileURL($element, $entry_id, $value) {
-			$value = unserialize($value);
-			$fileName = isset($value['name']) ? $value['name'] : '';
-			$isFile = isset($value['isfile']) ? $value['isfile'] : '';
+			$value = $value ? unserialize($value) : $value;
+			$fileName = (is_array($value) AND isset($value['name'])) ? $value['name'] : '';
+			$isFile = (is_array($value) AND isset($value['isfile'])) ? $value['isfile'] : '';
 			if($isFile) {
 				$ele_value = $element->getVar('ele_value');
 				$basePath = "/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/";
