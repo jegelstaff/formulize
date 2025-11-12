@@ -1374,7 +1374,12 @@ function processGetDataResults($resultData)
 				} elseif (!strstr($field, "main_email") and !strstr($field, "main_user_viewemail")) {
 					// dealing with a regular element field
 					$prevFieldNotMeta = true;
-					$elementHandle = $field;
+					if(formulize_getElementMetaData($field, isHandle: true)) {
+						$elementHandle = $field;
+					} else {
+						trigger_error("Formulize error: could not find element with handle $field in form " . getFormHandle($curFormId) . ". This may be due to a deleted element that is still present in the data table.");
+						continue;
+					}
 				} else { // it's some other field...??
 					continue;
 				}
