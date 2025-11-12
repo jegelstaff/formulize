@@ -384,7 +384,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         $this->clickable = false; // make urls clickable
         $this->striphtml = false; // remove html tags as a security precaution
         $this->length = 2000; // truncate to a maximum of 2000 characters, and append ... on the end
-        $displayName = $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle]; // set aside in GLOBALS by the prepareDataForDataset method above
+        $displayName = $value ? $GLOBALS['formulize_fileUploadElementDisplayName'][$entry_id][$handle] : ''; // set aside in GLOBALS by the prepareDataForDataset method above
         $value = strstr($value, 'http') ? $this->createDownloadLink($this->get($handle), $value, $displayName) : $value; // we make the clickable links manually here, since we don't just want the URL part to become a link, we want to wrap the display name in a link to the URL
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }

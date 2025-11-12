@@ -2272,7 +2272,7 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 	}
 
 	// if the value has HTML formatting, leave it alone
-	if(strlen($matchtext) > strlen(strip_tags($matchtext))) {
+	if($matchtext AND is_string($matchtext) AND strlen($matchtext) > strlen(strip_tags($matchtext))) {
 		return $matchtext;
 	}
 

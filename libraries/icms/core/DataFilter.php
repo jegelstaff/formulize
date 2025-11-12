@@ -108,7 +108,7 @@ class icms_core_DataFilter {
 	* @return  string
 	*/
 	static public function undoHtmlSpecialChars($text) {
-		return htmlspecialchars_decode($text, ENT_QUOTES);
+		return ($text AND is_string($text)) ? htmlspecialchars_decode($text, ENT_QUOTES) : $text;
 	}
 
 	/**
@@ -338,10 +338,10 @@ class icms_core_DataFilter {
 
 	/**
 	 * Filter an array of variables, such as $_GET or $_POST, using a set of filters.
-	 * 
-	 * Any items in the input array not found in the filter array will be filtered as 
-	 * a string. 
-	 * 
+	 *
+	 * Any items in the input array not found in the filter array will be filtered as
+	 * a string.
+	 *
 	 * @param 	array	$input		items to be filtered
 	 * @param 	array	$filters 	the keys of this array should match the keys in
 	 * 								the input array and the values should be valid types
@@ -366,11 +366,11 @@ class icms_core_DataFilter {
 			}
 			$output[$key] = self::checkVar($input[$key], $filter, $options[0], $options[1]);
 		}
-		
+
 		if (!$strict) {
 			foreach ($diff = array_diff_key($input, $filters) as $key => $value) {
 				$output[$key] = self::checkVar($diff[$key], 'str');
-			} 
+			}
 		}
 		return $output;
 	}
