@@ -351,8 +351,8 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		global $myts;
 		$value = $myts->undoHtmlSpecialChars($value);
 
-		$selvalarray = explode("*=+*:", $value);
-		$numberOfSelectedValues = strstr($value, "*=+*:") ? count((array) $selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
+		$selvalarray = ($value AND is_string($value)) ? explode("*=+*:", $value) : array($value);
+		$numberOfSelectedValues = ($value AND is_string($value) AND strstr($value, "*=+*:")) ? count((array) $selvalarray)-1 : 1; // if this is a multiple selection value, then count the array values, minus 1 since there will be one leading separator on the string.  Otherwise, it's a single value element so the number of selections is 1.
 
 		$assignedSelectedValues = array();
 		foreach($temparraykeys as $k) {

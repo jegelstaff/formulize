@@ -205,7 +205,7 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 			if(!empty($values) AND $sourceMeta[1]) {
 				$form_handler = xoops_getmodulehandler('forms', 'formulize');
 				foreach($values as $value) {
-					$value = intval(trim($value));
+					$value = is_string($value) ? intval(trim($value)) : intval($value);
 					// need to check if an alternative value field has been defined, or if we're in an export and an alterative field for exports has been defined
 					// save the value before convertElementIdsToElementHandles()
 					$before_conversion = $sourceMeta[1];
