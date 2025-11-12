@@ -266,57 +266,56 @@ class formulize_themeForm extends XoopsThemeForm {
 			if (!is_object($ele)) {// just plain add stuff if it's a literal string...
 				if(strstr($ele, "<<||>>")) {
 					$ele = explode("<<||>>", $ele);
-						if($ele[0] == '{STARTHIDDEN}') {
-								$ele[0] = '';
-								$GLOBALS['formulize_startHiddenElements'][] = $ele[1];
-								$startHidden = true;
-						}
-						$templateVariables = array(
-								'elementContainerId'=>'formulize-'.$ele[1],
-								'elementClass'=>(isset($ele[3]) ? $ele[3] : ''),
-								'elementCaption'=>'',
-								'elementHelpText'=>'',
-								'renderedElement'=>$ele[0],
-								'labelClass'=>"formulize-label-".(isset($ele[2]) ? $ele[2] : 'no-handle'),
-								'inputClass'=>"",
-								'columns'=>$columns,
-								'column1Width'=>$column1Width,
-								'column2Width'=>$column2Width,
-								'colSpan'=>'',
-								'startHidden'=>$startHidden
-						);
-						if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
-								$columns = 1;
-								$templateVariables['colSpan'] = 'colspan=2';
-								$templateVariables['column1Width'] = 'auto';
-						}
-						if(isset($ele[3])) { // respect any declared class
-								$templateVariables['cellClass'] = $ele[3];
-						}
-					} else {
-						$templateVariables = array(
-								'elementContainerId'=>'',
-								'elementClass'=>'',
-								'elementCaption'=>'',
-								'elementHelpText'=>'',
-								'renderedElement'=>$ele,
-								'labelClass'=>"formulize-label-no-handle",
-								'inputClass'=>"",
-								'columns'=>$columns,
-								'column1Width'=>$column1Width,
-								'column2Width'=>$column2Width,
-								'colSpan'=>'',
-								'startHidden'=>$startHidden
-						);
+					if($ele[0] == '{STARTHIDDEN}') {
+						$ele[0] = '';
+						$GLOBALS['formulize_startHiddenElements'][] = $ele[1];
+						$startHidden = true;
 					}
+					$templateVariables = array(
+						'elementContainerId'=>'formulize-'.$ele[1],
+						'elementClass'=>(isset($ele[3]) ? $ele[3] : ''),
+						'elementCaption'=>'',
+						'elementHelpText'=>'',
+						'renderedElement'=>$ele[0],
+						'labelClass'=>"formulize-label-".(isset($ele[2]) ? $ele[2] : 'no-handle'),
+						'inputClass'=>"",
+						'columns'=>$columns,
+						'column1Width'=>$column1Width,
+						'column2Width'=>$column2Width,
+						'colSpan'=>'',
+						'startHidden'=>$startHidden
+					);
+					if($columnData[0] == 2 AND isset($ele[3])) { // by convention, only formulizeInsertBreak element, "spanning both columns" has a [3] key, so we need to put in the span flag
+						$columns = 1;
+						$templateVariables['colSpan'] = 'colspan=2';
+						$templateVariables['column1Width'] = 'auto';
+					}
+					if(isset($ele[3])) { // respect any declared class
+						$templateVariables['cellClass'] = $ele[3];
+					}
+				} else {
+					$templateVariables = array(
+						'elementContainerId'=>'',
+						'elementClass'=>'',
+						'elementCaption'=>'',
+						'elementHelpText'=>'',
+						'renderedElement'=>$ele,
+						'labelClass'=>"formulize-label-no-handle",
+						'inputClass'=>"",
+						'columns'=>$columns,
+						'column1Width'=>$column1Width,
+						'column2Width'=>$column2Width,
+						'colSpan'=>'',
+						'startHidden'=>$startHidden
+					);
+				}
 
-				// backwards compatibility for old multipage screen templates
-				global $formulize_displayingMultipageScreen;
 				$thisElementObject = null;
 				$templateVariables['elementObjectForRendering'] = $ele;
 				$templateVariables['elementMarkup'] = $templateVariables['renderedElement'];
 				$templateVariables['elementDescription'] = $templateVariables['elementHelpText'];
 				$templateVariables['element_id'] = false;
+				$templateVariables['elementIsRequired'] = false;
 				if(isset($ele[2])) {
 						$element_handler = xoops_getmodulehandler('elements', 'formulize');
 						if($thisElementObject = $element_handler->get($ele[2])) {
@@ -3281,7 +3280,7 @@ function _compileGoverningLinkedSelectBoxSourceConditionElements($handle) {
 	if(is_object($elementObject) AND $elementObject->isLinked) {
 		$ele_value = $elementObject->getVar('ele_value');
 		$elementConditions = $ele_value[5];
-        if (is_array($elementConditions[2])) {
+        if (is_array($elementConditions) AND isset($elementConditions[2]) AND is_array($elementConditions[2])) {
             foreach($elementConditions[2] as $thisTerm) {
                 if (substr($thisTerm,0,1) == "{" AND substr($thisTerm, -1) == "}") {
                     // figure out the element, which is presumably in the same form, and assume the same entry

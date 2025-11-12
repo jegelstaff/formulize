@@ -185,8 +185,12 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 
 		// get array of foreign keys
 		// if we're not keeping foreign keys in the dataset, then convert them to readable values
-		$value = trim($value, ",");
-		$values = strstr($value, ",") ? explode(",", $value) : array($value);
+		if(is_string($value)) {
+			$value = trim($value, ",");
+			$values = strstr($value, ",") ? explode(",", $value) : array($value);
+		} else {
+			$values = array($value);
+		}
 
 		if (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
 			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
@@ -309,7 +313,7 @@ function prepvalues($value, $handle, $entry_id)
 	$elementTypeHandler = xoops_getmodulehandler($type . "Element", "formulize");
 	$preppedValue = $elementTypeHandler->prepareDataForDataset($value, $handle, $entry_id);
 	if (!is_array($preppedValue)) {
-		$valueToReturn = explode("*=+*:", trim($preppedValue, "*=+*:"));
+		$valueToReturn = is_string($preppedValue) ? explode("*=+*:", trim($preppedValue, "*=+*:")) : array($preppedValue);
 	} else {
 		$valueToReturn = $preppedValue;
 	}
