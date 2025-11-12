@@ -43,8 +43,8 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('8: "name": "list_a_users_groups" "')).toBeVisible();
 		await expect(page.getByText('9: "name": "get_form_details" "')).toBeVisible();
 		await expect(page.getByText('10: "name": "get_screen_details" "')).toBeVisible();
-		await expect(page.getByText('11: "name": "create_entry" "')).toBeVisible();
-		await expect(page.getByText('12: "name": "update_entry" "')).toBeVisible();
+		await expect(page.getByText('11: "name": "create_entries" "')).toBeVisible();
+		await expect(page.getByText('12: "name": "update_entries" "')).toBeVisible();
 		await expect(page.getByText('13: "name": "get_entries_from_form" "')).toBeVisible();
 		await expect(page.getByText('14: "name": "prepare_database_values_for_human_readability" "')).toBeVisible();
 		await expect(page.getByText('15: "name": "test_connection" "')).toBeVisible();
