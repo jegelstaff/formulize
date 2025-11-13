@@ -55,13 +55,13 @@ class icms_db_legacy_PdoDatabase extends icms_db_legacy_Database {
   		return true;
 	}
 	public function quoteString($string) {
-		return (is_string($string) AND strlen($string) > 0) ? $this->pdo->quote($string) : $string;
+		return $this->pdo->quote($string);
 	}
 	public function quote($string) {
-		return (is_string($string) AND strlen($string) > 0) ? $this->pdo->quote($string) : $string;
+		return $this->pdo->quote($string);
 	}
 	public function escape($string) {
-		return (is_string($string) AND strlen($string) > 0) ? $this->pdo->escape($string) : $string;
+		return $this->pdo->escape($string);
 	}
 	public function error() {
 		$error = $this->pdo->errorInfo();
