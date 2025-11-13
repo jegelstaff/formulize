@@ -20,3 +20,12 @@ tests/e2e/test-report
 tests/e2e/node_modules
 modules/formulize/language/english/mail_template/error_report_*
 mail_template/tempmailbody.tpl
+
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
