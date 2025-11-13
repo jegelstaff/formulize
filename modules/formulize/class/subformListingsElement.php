@@ -514,7 +514,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
-	if(is_array($subformConditions) and is_array($sub_entries[$subform_id])) {
+	if(is_array($subformConditions) AND isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id])) {
 		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
 		$subformObject = $form_handler->get($subform_id);
 		$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", $sub_entries[$subform_id]).") $conditionsFilter $conditionsFilterOOM";
@@ -527,21 +527,21 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-	$target_sub_to_use = ($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) ? $_POST['target_sub'] : $subform_id;
-    list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
+	$target_sub_to_use = (isset($_POST['target_sub']) AND $_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND isset($_POST['target_sub_instance']) AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) ? $_POST['target_sub'] : $subform_id;
+	list($elementq, $element_to_write, $value_to_write, $value_source, $value_source_form, $alt_element_to_write) = formulize_subformSave_determineElementToWrite($frid, $fid, $entry, $target_sub_to_use);
 
-    if (0 == strlen($element_to_write)) {
-        error_log("Relationship $frid does not include subform $subform_id, when displaying the main form $fid.");
-        $to_return = array("c1"=>"", "c2"=>"", "sigle"=>"");
-        if (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
-            if (0 == $frid) {
-                $to_return['single'] = "This subform cannot be shown because no relationship is active.";
-            } else {
-                $to_return['single'] = "This subform interface cannot be shown because the the form to be displayed (id: $subform_id) is not part of the active relationship (id: $frid). Check if the active screen is using the relationship, or just \"the form only.\", and check whether the relationship includes all the forms it should.";
-            }
-        }
-        return $to_return;
-    }
+	if (0 == strlen($element_to_write)) {
+			error_log("Relationship $frid does not include subform $subform_id, when displaying the main form $fid.");
+			$to_return = array("c1"=>"", "c2"=>"", "sigle"=>"");
+			if (is_object($xoopsUser) and in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+					if (0 == $frid) {
+							$to_return['single'] = "This subform cannot be shown because no relationship is active.";
+					} else {
+							$to_return['single'] = "This subform interface cannot be shown because the the form to be displayed (id: $subform_id) is not part of the active relationship (id: $frid). Check if the active screen is using the relationship, or just \"the form only.\", and check whether the relationship includes all the forms it should.";
+					}
+			}
+			return $to_return;
+	}
 
 	// check for adding of a sub entry, and handle accordingly -- added September 4 2006
 	global $formulize_subformInstance;
@@ -549,7 +549,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$formulize_subformInstance = $subformInstance;
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
-	if($_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
+	$sub_entry_new = false;
+	$sub_entry_written = false;
+	if(isset($_POST['target_sub']) AND $_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND isset($_POST['target_sub_instance']) AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
         list($sub_entry_new,$sub_entry_written) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
         if(is_array($sub_entry_written)) {
             global $formulize_subFidsWithNewEntries, $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
@@ -571,11 +573,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$sub_entries[$subform_id][0] = $sub_single_result['entry'];
 	}
 
-    if(!is_array($sub_entries[$subform_id])) {
-        $sub_entries[$subform_id] = array();
-    }
+	if(!isset($sub_entries[$subform_id]) OR !is_array($sub_entries[$subform_id])) {
+			$sub_entries[$subform_id] = array();
+	}
 
-	if($sub_entry_new AND !$sub_single AND $_POST['target_sub'] == $subform_id) {
+	if($sub_entry_new AND !$sub_single AND isset($_POST['target_sub']) AND $_POST['target_sub'] == $subform_id) {
 		for($i=0;$i<$_POST['numsubents'];$i++) {
 			array_unshift($sub_entries[$subform_id], $sub_entry_new);
 		}
@@ -756,11 +758,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
         if ($allowed_to_add_entries AND !$hidingAddEntries AND count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
-            $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
+            $col_two .= "<input type=button name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
         } elseif(!$sub_single) {
             $use_simple_add_one_button = (isset($subform_element_object->ele_value["simple_add_one_button"]) ? 1 == $subform_element_object->ele_value["simple_add_one_button"] : false);
             if($allowed_to_add_entries AND !$hidingAddEntries) {
-                $col_two .= "<input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".intval($_GET['subformElementId']).");\">";
+                $col_two .= "<input type=button name=addsub value='".($use_simple_add_one_button ? trans($subform_element_object->ele_value['simple_add_one_button_text']) : _formulize_ADD)."' onclick=\"javascript:add_sub('$subform_id', jQuery('#addsubentries".$subform_id.$subformElementId.$subformInstance."').val(), ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
             }
             if ($allowed_to_add_entries AND !$hidingAddEntries AND $use_simple_add_one_button) {
                 $col_two .= "<input type=\"hidden\" name=addsubentries$subform_id$subformElementId$subformInstance id=addsubentries$subform_id$subformElementId$subformInstance value=\"1\">";
@@ -783,7 +785,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	// construct the limit based on what is passed in via $numberOfEntriesToDisplay and $firstRowToDisplay
 	$limitClause = "";
 	$pageNav = "";
-	$numberOfEntriesToDisplay = $numberOfEntriesToDisplay ? $numberOfEntriesToDisplay : $subform_element_object->ele_value['numberOfEntriesPerPage'];
+	$numberOfEntriesToDisplay = $numberOfEntriesToDisplay ? $numberOfEntriesToDisplay : (isset($subform_element_object->ele_value['numberOfEntriesPerPage']) ? $subform_element_object->ele_value['numberOfEntriesPerPage'] : 0);
 	if($numberOfEntriesToDisplay AND $numberOfEntriesToDisplay < count($sub_entries[$subform_id])) {
 		$firstRowToDisplay = intval($firstRowToDisplay);
 		if(isset($_POST['formulizeFirstRowToDisplay']) AND isset($_POST['formulizeSubformPagingInstance']) AND $_POST['formulizeSubformPagingInstance'] == $subformElementId.$subformInstance) {
@@ -827,7 +829,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         $defaultblanks = intval($defaultblanks);
     }
 
-	if((!$_POST['form_submitted'] OR $ignoreFormSubmitted) AND count((array) $sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
+	if((!isset($_POST['form_submitted']) OR !$_POST['form_submitted'] OR $ignoreFormSubmitted) AND count((array) $sub_entries[$subform_id]) == 0 AND $defaultblanks > 0 AND ($rowsOrForms == "row"  OR $rowsOrForms =='')) {
 
         if(!isset($GLOBALS['formulize_globalDefaultBlankCounter'])) {
             $GLOBALS['formulize_globalDefaultBlankCounter'] = -1;

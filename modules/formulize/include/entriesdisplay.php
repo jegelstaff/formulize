@@ -803,8 +803,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$settings['oldcols'] = implode(",", $showcols);
 
-	$settings['sort'] = $_POST['sort'];
-	$settings['order'] = $_POST['order'];
+	$settings['sort'] = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$settings['order'] = isset($_POST['order']) ? $_POST['order'] : null;
 
 	//get all submitted search text
 	$searches = array();
@@ -1519,7 +1519,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('openlisttemplate', $screenOrScreenType)));
 	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('closelisttemplate', $screenOrScreenType)));
     // add any columns for which the advanceview settings call for not just a box
-    if($screen) {
+    if($screen AND is_array($screen->getVar('advanceview'))) {
         foreach($screen->getVar('advanceview') as $avData) {
             if(isset($avData[3]) AND $avData[3] != 'Box') {
                 if(!in_array($avData[0], $filterHandles)) {
@@ -1708,8 +1708,10 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 				}
 			}
 		}
-		foreach($screen->getVar('advanceview') as $avData) {
-				$searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
+		if(is_array($screen->getVar('advanceview'))) {
+			foreach($screen->getVar('advanceview') as $avData) {
+					$searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
+			}
 		}
 	}
 

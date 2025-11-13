@@ -144,8 +144,8 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 function clickableSortLink($elementHandle, $clickableContent) {
 
 	// get current sorting element and order
-	$sort = $_POST['sort'];
-	$order = $_POST['order'];
+	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$order = isset($_POST['order']) ? $_POST['order'] : null;
 
 	// setup containers for the clickable item
 	$clickableSortLink = "
@@ -175,8 +175,8 @@ function clickableSortLink($elementHandle, $clickableContent) {
  * @return string Returns the aria sort value
  */
 function getAriaSort($elementHandle) {
-	$sort = $_POST['sort'];
-	$order = $_POST['order'];
+	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$order = isset($_POST['order']) ? $_POST['order'] : null;
 
 	if ($sort == $elementHandle) {
 		if ($order == 'SORT_ASC') {

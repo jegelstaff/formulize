@@ -647,7 +647,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 					}
 
 					// if the headerlist is using the new ID based system
-					if (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0])) {
+					if (is_array($headerlist) AND isset($headerlist[0]) AND (is_numeric($headerlist[0]) OR isMetaDataField($headerlist[0]))) {
 							// if we want actual text headers, convert ids to text
 							if (!$needids) {
 									$start = 1;
@@ -812,6 +812,7 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 // now only used when opening a legacy report from 1.6 or older, or when reading a headerlist that is based on the old non-ID based system
 function convertHeadersToIds($headers, $fid) {
     global $xoopsDB;
+		$ele_ids = array();
     foreach ($headers as $cap) {
         $cap = addslashes($cap);
         $ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND ele_caption='" . str_replace("`", "'", $cap) . "'"); // assume only one match, even though that is not enforced!  Ignores colheads since no use of this function should ever be passing colheads to it (only used for legacy purposes).
