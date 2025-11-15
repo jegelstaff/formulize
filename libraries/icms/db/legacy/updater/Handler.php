@@ -397,6 +397,13 @@ class icms_db_legacy_updater_Handler {
 	 */
 	function moduleUpgrade(&$module, $tables_first=false) {
 		$dirname = $module->getVar('dirname');
+		
+		// Check if tokens folder exists and is writable before proceeding with upgrade
+		$tokens_path = ICMS_ROOT_PATH . '/tokens';
+		if (!is_dir($tokens_path) || !is_writable($tokens_path)) {
+			$this->_messages[] = sprintf(_DATABASEUPDATER_MSG_TOKENS_NOT_WRITABLE, '<strong>' . $tokens_path . '</strong>');
+			return false;
+		}
 
 		//		ob_start();
 

@@ -28,4 +28,5 @@ define("_DATABASEUPDATER_MSG_UPDATE_TABLE", "Les tables %s ont &eacute;t&eacute;
 define("_DATABASEUPDATER_MSG_UPDATE_TABLE_ERR", "Une erreur s'est produite en mettant &agrave; jour dans la table %s");
 define("_DATABASEUPDATER_MSG_DELETE_TABLE", "Les tables %s ont &eacute;t&eacute; supprim&eacute;s avec succ&egrave;s");
 define("_DATABASEUPDATER_MSG_DELETE_TABLE_ERR", "Une erreur s'est produite en supprimant les donn&eacute;es indiqu&eacute;s dans la table %s");
+define("_DATABASEUPDATER_MSG_TOKENS_NOT_WRITABLE", "<p><strong>ERREUR CRITIQUE:</strong> Le dossier <strong>%s</strong> n'existe pas ou n'est pas accessible en &eacute;criture.</p><p>Ce dossier est essentiel au bon fonctionnement du site. Veuillez vous assurer que le dossier existe et dispose des permissions d'&eacute;criture (chmod 777 ou similaire), puis r&eacute;essayez la mise &agrave; jour.</p>");
 ?>

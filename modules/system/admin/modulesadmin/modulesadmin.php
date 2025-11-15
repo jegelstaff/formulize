@@ -989,6 +989,13 @@ function icms_module_update($dirname) {
 	$msgs = array();
 
 	$dirname = trim($dirname);
+	
+	// Check if tokens folder exists and is writable before proceeding with update
+	$tokens_path = ICMS_ROOT_PATH . '/tokens';
+	if (!is_dir($tokens_path) || !is_writable($tokens_path)) {
+		return sprintf(_DATABASEUPDATER_MSG_TOKENS_NOT_WRITABLE, '<strong>' . $tokens_path . '</strong>');
+	}
+	
 	$module_handler = icms::handler('icms_module');
 	$module =& $module_handler->getByDirname($dirname);
 
