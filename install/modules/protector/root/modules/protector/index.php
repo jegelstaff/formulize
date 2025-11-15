@@ -12,5 +12,3 @@ if( @$_GET['mode'] == 'admin' ) {
 } else {
 	require XOOPS_TRUST_PATH.'/modules/'.$mytrustdirname.'/main.php' ;
 }
-
-?>

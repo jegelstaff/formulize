@@ -122,4 +122,3 @@ define($constpref.'_MANIPUVALUE','value for manipulation checking');
 define($constpref.'_MANIPUVALUEDSC','do not edit this field');
 
 }
-?>

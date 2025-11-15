@@ -1114,4 +1114,3 @@ function call_filter( $type , $dying_message = '' )
 
 
 }
-?>

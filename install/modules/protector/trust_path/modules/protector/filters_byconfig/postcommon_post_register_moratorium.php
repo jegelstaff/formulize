@@ -25,4 +25,3 @@ class protector_postcommon_post_register_moratorium extends ProtectorFilterAbstr
 
 }
 
-?>

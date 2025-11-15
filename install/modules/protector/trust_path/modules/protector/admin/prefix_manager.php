@@ -276,4 +276,4 @@ if( ! empty( $_SESSION['protector_logger'] ) ) {
 }
 
 xoops_cp_footer();
-?>
+

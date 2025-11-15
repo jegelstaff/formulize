@@ -10,5 +10,3 @@ class protector_prepurge_exit_message extends ProtectorFilterAbstract {
 	}
 
 }
-
-?>

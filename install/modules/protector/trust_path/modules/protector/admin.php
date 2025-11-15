@@ -69,5 +69,3 @@ if( ! empty( $_GET['lib'] ) ) {
 		die( 'wrong request' ) ;
 	}
 }
-
-?>

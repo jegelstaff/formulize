@@ -11,4 +11,3 @@ class protector_f5attack_overrun_message extends ProtectorFilterAbstract {
 
 }
 
-?>

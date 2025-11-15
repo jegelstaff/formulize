@@ -14,4 +14,3 @@ class protector_precommon_badip_redirection extends ProtectorFilterAbstract {
 
 }
 
-?>

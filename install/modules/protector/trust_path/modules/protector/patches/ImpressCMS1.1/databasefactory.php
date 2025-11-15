@@ -103,4 +103,3 @@ class icms_db_legacy_Factory{
 		return $databaseUpdater;
 	}
 }
-?>

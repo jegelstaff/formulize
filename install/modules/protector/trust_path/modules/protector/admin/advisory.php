@@ -128,4 +128,3 @@ echo "</div>\n" ;
 
 
 xoops_cp_footer();
-?>

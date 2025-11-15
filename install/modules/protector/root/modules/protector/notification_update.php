@@ -11,4 +11,3 @@ require $mydirpath.'/mytrustdirname.php' ; // set $mytrustdirname
 $_GET['page'] = basename( __FILE__ , '.php');
 
 require XOOPS_TRUST_PATH.'/modules/'.$mytrustdirname.'/main.php' ;
-?>

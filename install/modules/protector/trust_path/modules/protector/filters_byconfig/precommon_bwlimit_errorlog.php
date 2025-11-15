@@ -14,4 +14,3 @@ class protector_precommon_bwlimit_errorlog extends ProtectorFilterAbstract {
 
 }
 
-?>

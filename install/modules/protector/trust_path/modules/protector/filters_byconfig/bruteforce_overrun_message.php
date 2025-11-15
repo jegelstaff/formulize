@@ -11,4 +11,3 @@ class protector_bruteforce_overrun_message extends ProtectorFilterAbstract {
 
 }
 
-?>

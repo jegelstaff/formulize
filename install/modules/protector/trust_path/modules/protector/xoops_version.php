@@ -365,4 +365,4 @@ $modversion['onInstall'] = 'oninstall.php' ;
 $modversion['onUpdate'] = 'onupdate.php' ;
 $modversion['onUninstall'] = 'onuninstall.php' ;
 
-?>
+

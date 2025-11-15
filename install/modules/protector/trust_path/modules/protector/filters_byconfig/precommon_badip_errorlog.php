@@ -15,4 +15,3 @@ class protector_precommon_badip_errorlog extends ProtectorFilterAbstract {
 
 }
 
-?>

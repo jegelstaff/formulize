@@ -42,4 +42,3 @@ class protector_postcommon_post_htmlpurify4everyone extends ProtectorFilterAbstr
 
 }
 
-?>

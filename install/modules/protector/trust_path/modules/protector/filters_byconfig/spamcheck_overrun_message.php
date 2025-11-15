@@ -10,5 +10,3 @@ class protector_spamcheck_overrun_message extends ProtectorFilterAbstract {
 	}
 
 }
-
-?>

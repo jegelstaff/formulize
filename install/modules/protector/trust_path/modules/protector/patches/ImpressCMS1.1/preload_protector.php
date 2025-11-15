@@ -26,12 +26,11 @@ class IcmsPreloadProtector extends IcmsPreloadItem
 			include $filename;
 		}
 	}
-	
+
 	function eventFinishCoreBoot() {
 		$filename = ICMS_TRUST_PATH.'/modules/protector/include/postcheck.inc.php';
-		if (file_exists($filename)) { 
+		if (file_exists($filename)) {
 			include $filename;
 		}
 	}
 }
-?>

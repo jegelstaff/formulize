@@ -52,5 +52,3 @@ if( $draw_dirname && function_exists( 'imagecreatefrompng' ) && function_exists(
 	readfile( $icon_fullpath ) ;
 
 }
-
-?>

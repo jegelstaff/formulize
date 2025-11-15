@@ -9,5 +9,3 @@ define('_MD_PROTECTOR_DENYBYMULTIBYTE','Protector rejects your post, because you
 define('_MD_PROTECTOR_FMT_REGISTER_MORATORIUM','Post it again %s minutes later. (for Anti-SPAMMING, sorry)') ;
 define('_MD_PROTECTOR_MANIPUNOTIFYSBJ','Notify from Protector') ;
 define('_MD_PROTECTOR_FMT_MANIPUNOTIFYBODY','%s\n\nThe root of your site has been modified.\n If you dont know this modification, check it carefully against ftp worms etc.') ;
-
-?>

@@ -47,7 +47,7 @@ $pageHasHelp = false;
 $vars =& $_SESSION['settings'];
 
 include "../mainfile.php";
-if (!defined("XOOPS_ROOT_PATH")) {
+if (!defined("XOOPS_TRUST_PATH") OR XOOPS_TRUST_PATH == '') {
     sleep(1);
     // mainfile.php does not yet contain the saved changes written by the installer, so reload the page and try again
     header("Location: ".$_SERVER["REQUEST_URI"]);

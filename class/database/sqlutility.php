@@ -14,4 +14,3 @@
  * This file is deprecated. Including the real file and that's it.
  */
 include_once ICMS_ROOT_PATH.'/class/database/drivers/'.XOOPS_DB_TYPE.'/sqlutility.php';
-?>

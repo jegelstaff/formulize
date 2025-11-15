@@ -27,4 +27,3 @@ function protector_notify_base( $mydirname , $category , $item_id )
 
 }
 
-?>

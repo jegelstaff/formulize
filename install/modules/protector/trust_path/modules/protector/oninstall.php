@@ -114,4 +114,3 @@ function protector_message_append_oninstall( &$module_obj , &$log )
 
 }
 
-?>

@@ -19,5 +19,3 @@ if( file_exists( "$mydirpath/language/$language/blocks.php" ) ) {
 }
 
 require_once "$mytrustdirpath/blocks/block_functions.php" ;
-
-?>

@@ -8,10 +8,10 @@ class icms_db_legacy_Factory
 
 	/**
 	 * Get a reference to the only instance of database class and connects to DB
-     * 
-     * if the class has not been instantiated yet, this will also take 
+     *
+     * if the class has not been instantiated yet, this will also take
      * care of that
-	 * 
+	 *
      * @static
      * @staticvar   object  The only instance of database class
      * @return      object  Reference to the only instance of database class
@@ -43,7 +43,7 @@ class icms_db_legacy_Factory
 	/**
 	 * Gets a reference to the only instance of database class. Currently
 	 * only being used within the installer.
-	 * 
+	 *
      * @static
      * @staticvar   object  The only instance of database class
      * @return      object  Reference to the only instance of database class
@@ -66,4 +66,3 @@ class icms_db_legacy_Factory
 
 
 }
-?>

@@ -10,5 +10,3 @@ if( ! defined( 'PROTECTOR_PRECHECK_INCLUDED' ) ) {
 define( 'PROTECTOR_POSTCHECK_INCLUDED' , 1 ) ;
 if( ! class_exists( 'Database' ) ) return ;
 protector_postcommon() ;
-
-?>

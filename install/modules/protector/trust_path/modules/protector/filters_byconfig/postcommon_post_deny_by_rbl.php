@@ -15,11 +15,11 @@ class protector_postcommon_post_deny_by_rbl extends ProtectorFilterAbstract {
 #			'bsb.empty.us' ,
 #			'bsb.spamlookup.net' ,
 		) ;
-	
+
 		global $xoopsUser ;
-	
+
 		$rev_ip = implode( '.' , array_reverse( explode( '.' , @$_SERVER['REMOTE_ADDR'] ) ) ) ;
-	
+
 		foreach( $rbls as $rbl ) {
 			$host = $rev_ip . '.' . $rbl ;
 			if( gethostbyname( $host ) != $host ) {
@@ -29,10 +29,9 @@ class protector_postcommon_post_deny_by_rbl extends ProtectorFilterAbstract {
 				die( _MD_PROTECTOR_DENYBYRBL ) ;
 			}
 		}
-		
+
 		return true ;
 	}
 
 }
 
-?>

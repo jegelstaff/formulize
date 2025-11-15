@@ -89,4 +89,3 @@ foreach( $adminmenu as $menuitem ) {
 }
 echo "</div>\n<hr style='clear:"._GLOBAL_LEFT.";display:block;' />\n" ;
 
-?>

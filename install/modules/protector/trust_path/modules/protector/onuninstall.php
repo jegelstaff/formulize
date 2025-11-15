@@ -77,4 +77,3 @@ function protector_message_append_onuninstall( &$module_obj , &$log )
 
 }
 
-?>

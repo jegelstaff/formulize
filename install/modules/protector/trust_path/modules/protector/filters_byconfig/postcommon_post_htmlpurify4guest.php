@@ -48,4 +48,3 @@ class protector_postcommon_post_htmlpurify4guest extends ProtectorFilterAbstract
 
 }
 
-?>

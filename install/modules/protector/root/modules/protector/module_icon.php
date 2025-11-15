@@ -10,5 +10,3 @@ $mydirpath = dirname( __FILE__ ) ;
 require $mydirpath.'/mytrustdirname.php' ; // set $mytrustdirname
 
 require XOOPS_TRUST_PATH.'/modules/'.$mytrustdirname.'/module_icon.php' ;
-
-?>

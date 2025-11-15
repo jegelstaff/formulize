@@ -53,7 +53,7 @@ class protector_postcommon_register_insert_js_check extends ProtectorFilterAbstr
 			}
 			xoopsGetElementById('antispam_md5').value = antispam_md5 ;
 		" ;
-	
+
 		return array(
 			'html_in_form' => '<input type="hidden" name="antispam_md5" id="antispam_md5" value="" />' ,
 			'js_global' => '<script type="text/javascript"><!--//'."\n".$js_in_validate_function."\n".'//--></script><noscript><div class="errorMsg">'._MD_PROTECTOR_TURNJAVASCRIPTON.'</div></noscript>' ,
@@ -63,7 +63,7 @@ class protector_postcommon_register_insert_js_check extends ProtectorFilterAbstr
 	function checkValidate()
 	{
 		$user_md5 = trim( @$_POST['antispam_md5'] ) ;
-	
+
 		// 2-3 hour margin
 		if( $user_md5 != $this->getMd5() && $user_md5 != $this->getMd5( time() - 3600 ) && $user_md5 != $this->getMd5( time() - 7200 ) ) {
 			$this->errors[] = _MD_PROTECTOR_TURNJAVASCRIPTON ;
@@ -73,4 +73,3 @@ class protector_postcommon_register_insert_js_check extends ProtectorFilterAbstr
 	}
 }
 
-?>

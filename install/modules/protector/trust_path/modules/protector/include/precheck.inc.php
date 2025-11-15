@@ -22,5 +22,3 @@ if ( empty( $_SERVER[ 'REQUEST_URI' ] ) ) {		 // Not defined by IIS
 }
 
 protector_prepare() ;
-
-?>

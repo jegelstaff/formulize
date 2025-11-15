@@ -281,4 +281,3 @@ function protector_ip_cmp( $a , $b )
 	return $aval > $bval ? 1 : -1 ;
 }
 
-?>

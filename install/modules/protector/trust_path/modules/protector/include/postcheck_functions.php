@@ -158,5 +158,3 @@ function protector_postcommon()
 	}
 
 }
-
-?>

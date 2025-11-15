@@ -56,4 +56,3 @@ define("_AM_ADV_DBFACTORYUNPATCHED","Your databasefactory is not ready for DBLay
 define("_AM_ADV_SUBTITLECHECK","Check if Protector works well");
 define("_AM_ADV_CHECKCONTAMI","Contaminations");
 define("_AM_ADV_CHECKISOCOM","Isolated Comments");
-?>

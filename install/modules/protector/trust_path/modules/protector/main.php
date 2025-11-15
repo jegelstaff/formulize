@@ -27,6 +27,3 @@ if( file_exists( "$mytrustdirpath/main/$page.php" ) ) {
 } else {
 	include "$mytrustdirpath/main/index.php" ;
 }
-
-
-?>

@@ -13,4 +13,3 @@ class protector_precommon_bwlimit_message extends ProtectorFilterAbstract {
 
 }
 
-?>
