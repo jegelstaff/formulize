@@ -46,12 +46,6 @@ if (!isset($_GET['op']) AND !defined('_FORMULIZE_UI_PHP_INCLUDED')){
     exit();
 }
 
-if(!file_exists(XOOPS_ROOT_PATH.'/tokens') OR !is_writable(XOOPS_ROOT_PATH.'/tokens')) {
-  print "<h1>Your system is missing the ".XOOPS_ROOT_PATH."/tokens folder, or the folder is not writable by the web server.</h1>
-<p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>";
-return;
-}
-
 include_once XOOPS_ROOT_PATH."/modules/formulize/class/forms.php"; // form class
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/extract.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
@@ -74,6 +68,12 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
 
 // database patch logic for 4.0 and higher
 function patch40() {
+
+    if(!file_exists(XOOPS_ROOT_PATH.'/tokens') OR !is_writable(XOOPS_ROOT_PATH.'/tokens')) {
+      print "<h1>Your system is missing the ".XOOPS_ROOT_PATH."/tokens folder, or the folder is not writable by the web server.</h1>
+<p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>";
+return;
+    }
 
     /* ======================================
      * We must check here for the latest change, so we can tell the user whether they need to update or not!!
