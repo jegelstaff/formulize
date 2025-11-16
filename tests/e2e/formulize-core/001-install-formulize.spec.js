@@ -47,7 +47,7 @@ test.describe('Installation of Formulize', () => {
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Saving to DB
 		await expect(page.locator('h2')).toContainText('Saving your settings to the database');
-		await expect(page.getByRole('paragraph')).toContainText('The installer is now ready to insert initial data into your database.THIS COULD TAKE A REALLY LONG TIME DEPENDING ON YOUR SERVER SOFTWARE AND CONFIGURATION!');
+		await expect(page.getByRole('paragraph')).toContainText('The installer is now ready to insert initial data into your database.');
   	await page.getByRole('button', { name: 'Next' }).click();
 		// DB saving results
 		await expect(page.locator('h2')).toContainText('Saving your settings to the database');

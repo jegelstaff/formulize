@@ -496,3 +496,5 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_visibility` (`fieldid`, `user_group`, `
 UPDATE `REPLACE_WITH_PREFIX_users` SET theme='Anari';
 
 UPDATE `REPLACE_WITH_PREFIX_block_module_link` SET page_id=1 WHERE block_id = 2 AND module_id = 0;
+
+INSERT INTO `REPLACE_WITH_PREFIX_formulize_frameworks` (`frame_id`, `frame_name`) VALUES (-1, 'Primary Relationship');

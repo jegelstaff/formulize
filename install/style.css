@@ -31,7 +31,7 @@
 
 	select#modinstall, select#modperms {margin-left: 25%; text-align: center; width: 50%; height: 125px; font-size: 12px; text-transform: uppercase; margin-bottom: 10px;}
 	.langselect {margin: 3px; font-family: Arial, Helvetica, sans-serif; text-align: center; text-decoration: none; font-size: 11px; display: inline-block;}
-	.langselect a {display: inline-block; height: 70px !important; height: 70px; width: 70px !important; width: 70px; vertical-align: middle; text-decoration: none; text-transform: uppercase; border: 1px solid #CCCCCC; padding: 2px 5px 1px 5px; margin: 0; margin-bottom:4px; color: #666666;}
+	.langselect a {display: inline-block; height: 70px !important; height: 70px; width: 70px !important; width: 70px; vertical-align: middle; text-decoration: none; border: 1px solid #CCCCCC; padding: 2px 5px 1px 5px; margin: 0; margin-bottom:4px; color: #666666;}
 	.langselect a:hover{background-color: #FFF6C1; border: 1px solid #FF9900; color: #1E90FF;}
 	.langselect a img {text-align: center; text-decoration: none; border: 0px; margin: 5px 0px;}
 
