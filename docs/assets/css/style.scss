@@ -16,6 +16,13 @@ div.downloads {
 	overflow: hidden;
 	margin: 20px 0;
 
+	.downloads-icon-link-icon, span.downloads-icon-link-icon img {
+		text-align: right;
+		max-height: 24px;
+		margin-left: 3px;
+		margin-left: 3px;
+	}
+
 	.downloads-icon-link {
 		background: #f4f4f4;
 		display: flex;
@@ -29,10 +36,6 @@ div.downloads {
 		line-height: 1.1em;
 		padding: 0 4px;
 		border-right: 1px solid #e0e0e0;
-
-		.downloads-icon-link-icon {
-			text-align: right;
-		}
 
 		.downloads-icon-link-text {
 			max-width: 100%;
@@ -108,6 +111,10 @@ body section img {
 .social-image {
 	border: 0;
 	vertical-align: middle;
+	max-height: 1.2em;
+	top: -0.1em;
+	position: relative;
+	padding-left: 0.3em;
 }
 
 h2 {
