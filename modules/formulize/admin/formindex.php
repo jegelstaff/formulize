@@ -69,10 +69,21 @@ function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
 // database patch logic for 4.0 and higher
 function patch40() {
 
-    if(!file_exists(XOOPS_ROOT_PATH.'/tokens') OR !is_writable(XOOPS_ROOT_PATH.'/tokens')) {
-      print "<h1>Your system is missing the ".XOOPS_ROOT_PATH."/tokens folder, or the folder is not writable by the web server.</h1>
-<p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>";
-return;
+    if(!file_exists(XOOPS_ROOT_PATH.'/tokens')) {
+			if(mkdir(XOOPS_ROOT_PATH.'/tokens', 0755) === false) {
+				print "<h1>Your system is missing the ".XOOPS_ROOT_PATH."/tokens folder.</h1><p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>";
+				return;
+			} else {
+				file_put_contents(XOOPS_ROOT_PATH.'/tokens/index.html', '<script>history.go(-1);</script>');
+				file_put_contents(XOOPS_ROOT_PATH.'/tokens/.gitignore', '*');
+			}
+		}
+
+		if(!is_writable(XOOPS_ROOT_PATH.'/tokens')) {
+			if(chmod(XOOPS_ROOT_PATH.'/tokens', 0755) === false) {
+      	print "<h1>The ".XOOPS_ROOT_PATH."/tokens folder is not writable by the web server.</h1><p>Formulize will not work until this folder is writable by the web server.</p>";
+				return;
+			}
     }
 
     /* ======================================
