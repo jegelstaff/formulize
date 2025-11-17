@@ -495,8 +495,6 @@ class FormulizeConfigSync
 
 	private function applyElementChange(array $change): void
 	{
-		$table = $this->getTableForType($change['type']);
-		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 		$dataType = $change['metadata']['data_type'];
 
 		switch ($change['operation']) {
@@ -510,12 +508,10 @@ class FormulizeConfigSync
 				$form = $this->formHandler->getByHandle($formHandle);
 				if (!$form OR !is_object($form) OR $form->getVar('form_handle') != $formHandle) {
 					throw new \Exception("Form handle $formHandle not found");
-				} else {
-					$formId = $form->getVar('id_form');
-					$change['data']['id_form'] = $formId;
-					$elementId = $this->insertRecord($table, $change['data']);
-					$this->formHandler->insertElementField($elementId, $dataType);
 				}
+				$formId = $form->getVar('id_form');
+				$change['data']['id_form'] = $formId;
+				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
 				break;
 
 			case 'update':
@@ -524,9 +520,8 @@ class FormulizeConfigSync
 				if (!$existingElement) {
 					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
 				}
-				$this->updateRecord($table, $change['data'], $primaryKey);
-				// Apply data type changes to the element
-				$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
+				$change['data']['ele_id'] = $existingElement->getVar('ele_id');
+				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
 				break;
 
 			case 'delete':
@@ -540,80 +535,6 @@ class FormulizeConfigSync
 		}
 
 		return;
-	}
-
-	/**
-	 * Insert a record into a database table
-	 *
-	 * @param string $table
-	 * @param array $data
-	 * @return void
-	 */
-	private function insertRecord(string $table, array $data): int
-	{
-		$fields = array_keys($data);
-		$placeholders = array_fill(0, count($fields), '?');
-
-		$sql = sprintf(
-			"INSERT INTO %s (%s) VALUES (%s)",
-			$this->prefixTable($table),
-			'`' . implode('`, `', $fields) . '`',
-			implode(', ', $placeholders)
-		);
-
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute(array_values($data));
-
-		return (int) $this->db->lastInsertId();
-	}
-
-	/**
-	 * Update a record in a database table
-	 *
-	 * @param string $table
-	 * @param array $data
-	 * @param string $primaryKey
-	 * @return void
-	 */
-	private function updateRecord(string $table, array $data, string $primaryKey): void
-	{
-		$fields = array_keys($data);
-		$sets = array_map(function ($field) {
-			return "`{$field}` = ?";
-		}, $fields);
-
-		$sql = sprintf(
-			"UPDATE %s SET %s WHERE %s = ?",
-			$this->prefixTable($table),
-			implode(', ', $sets),
-			$primaryKey
-		);
-
-		$values = array_values($data);
-		$values[] = $data[$primaryKey];
-
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute($values);
-	}
-
-	/**
-	 * Delete a record from a database table
-	 *
-	 * @param string $table
-	 * @param array $data
-	 * @param string $primaryKey
-	 * @return void
-	 */
-	private function deleteRecord(string $table, array $data, string $primaryKey): void
-	{
-		$sql = sprintf(
-			"DELETE FROM %s WHERE %s = ?",
-			$this->prefixTable($table),
-			$primaryKey
-		);
-
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute([$data[$primaryKey]]);
 	}
 
 	/**
