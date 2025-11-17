@@ -316,9 +316,8 @@ class FormulizeConfigSync
 			$eleValueDiff = [];
 			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
-				$convertedConfigEleValue = $value !== "" ? unserialize($value) : [];
 				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
-				foreach ($convertedConfigEleValue as $key => $val) {
+				foreach ($value as $key => $val) {
 					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
 						$eleValueDiff[$key] = [
 							'config_value' => $val,
@@ -352,7 +351,7 @@ class FormulizeConfigSync
 	 *
 	 * @param array $element
 	 * @param int $eleOrder The value to use for the ele_order field
-	 * @return array
+	* @return array
 	 */
 	private function prepareElementForDb(array $element, int $eleOrder): array
 	{
@@ -360,9 +359,9 @@ class FormulizeConfigSync
 		foreach ($preparedElement as $key => $value) {
 			if (is_object($value) || is_array($value)) {
 				if ($key == 'ele_value') {
-					$preparedElement[$key] = serialize($this->elementValueProcessor->processElementValueForImport($element['ele_type'], $value));
+					$preparedElement[$key] = $this->elementValueProcessor->processElementValueForImport($element['ele_type'], $value);
 				} else {
-					$preparedElement[$key] = serialize($value);
+					$preparedElement[$key] = $value;
 				}
 			}
 		}
@@ -676,8 +675,7 @@ class FormulizeConfigSync
 	 */
 	private function normalizeValue($value)
 	{
-		if (is_string($value) && unserialize($value) !== false) {
-			$unserialized = unserialize($value);
+		if (is_string($value) AND $unserialized = unserialize($value) AND is_array(unserialize($value))) {
 			ksort($unserialized);
 			return $unserialized;
 		}
