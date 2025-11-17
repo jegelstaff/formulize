@@ -783,18 +783,6 @@ class FormulizeConfigSync
 	}
 
 	/**
-	 * Rename the key in an array
-	 */
-	private function renameArrayKey(array $configArray, string $from, string $to): array
-	{
-		if (array_key_exists($from, $configArray)) {
-        $configArray[$to] = $configArray[$from];
-        unset($configArray[$from]);
-    }
-    return $configArray;
-	}
-
-	/**
 	 * Get the database table name for a configuration type
 	 *
 	 * @param string $type
