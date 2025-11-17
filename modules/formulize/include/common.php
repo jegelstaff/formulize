@@ -145,8 +145,8 @@ function formulize_exception_handler($exception) {
 	while(ob_get_level()) {
 		ob_end_clean();
 	}
-	// if we're in the admin interface, just print a simple message
-	if(strstr(getCurrentURL(), "/modules/formulize/admin/save.php")) {
+	// if we're in the admin interface, or doing an asynch derived value update, just print a simple message
+	if(strstr(getCurrentURL(), "/modules/formulize/admin/save.php") OR strstr(getCurrentURL(), "op=update_derived_value")) {
 		print strip_tags($errorMessage);
 		exit();
 	}
