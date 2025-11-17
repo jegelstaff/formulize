@@ -510,7 +510,7 @@ class FormulizeConfigSync
 					throw new \Exception("Form handle $formHandle not found");
 				}
 				$formId = $form->getVar('id_form');
-				$change['data']['id_form'] = $formId;
+				$change['data']['fid'] = $formId;
 				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
 				break;
 
