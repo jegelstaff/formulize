@@ -126,7 +126,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("form_title", XOBJ_DTYPE_TXTBOX, $formq[0]['form_title'], true, 255);
 		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
 		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
-		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
+		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], false, 255);
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
 		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
@@ -141,8 +141,8 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("viewPublished", XOBJ_DTYPE_ARRAY, serialize($viewPublished));
 		$this->initVar("filterSettings", XOBJ_DTYPE_ARRAY, serialize($filterSettings));
 		$this->initVar("headerlist", XOBJ_DTYPE_TXTAREA, $headerlist);
-		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform, true);
-		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist, true);
+		$this->initVar("defaultform", XOBJ_DTYPE_INT, $defaultform);
+		$this->initVar("defaultlist", XOBJ_DTYPE_INT, $defaultlist);
 		$this->initVar("menutext", XOBJ_DTYPE_TXTBOX, $formq[0]['menutext'], false, 255);
 		$this->initVar("form_handle", XOBJ_DTYPE_TXTBOX, $formq[0]['form_handle'], false, 255);
 		$this->initVar("store_revisions", XOBJ_DTYPE_INT, (formulizeRevisionsForAllFormsIsOn() ? 1 : $formq[0]['store_revisions']), true); // override based on module preference
@@ -151,8 +151,8 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("on_delete", XOBJ_DTYPE_TXTAREA, $this->getVar('on_delete'));
 		$this->initVar("custom_edit_check", XOBJ_DTYPE_TXTAREA, $this->getVar('custom_edit_check'));
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
-		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests'], true);
-		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi'], false);
+		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests']);
+		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi']);
     }
 
 	/**
