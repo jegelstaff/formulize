@@ -36,15 +36,17 @@ class FormulizeConfigSyncElementValueProcessor
 		'width' => 0,
 		'maxlength' => 1,
 		'default' => 2,
-		'regex' => 11,
-		'regexdescription' => 3,
-		'regexerror' => 5,
-		'regexplaceholders' => 6,
-		'regexmods' => 10,
-		'decimal_places' => 7,
-		'thousands_sep' => 8,
-		'numbertype' => 4,
-	];
+		'numbers_only' => 3,
+		'associated_element_id' => 4,
+		'decimals' => 5,
+		'prefix' => 6,
+		'decimal_separator' => 7,
+		'thousands_separator' => 8,
+		'unique_value_reqiured' => 9,
+		'suffix' => 10,
+		'default_value_as_placeholder' => 11,
+		'trim_value' => 12
+ 	];
 	private $checkboxElementMapping = [
 		'options' => 2,
 	];
@@ -63,12 +65,16 @@ class FormulizeConfigSyncElementValueProcessor
 		'export_supplied_values_element_id' => 11,
 		'sort_values_element_id' => 12,
 		'default_value_entry_id' => 13,
-		'show_default_text_when_no_values' => 14
+		'show_default_text_when_no_values' => 14,
+		'sort_order' => 15,
+		'autocomplete_allow_new_values' => 16,
+		'alternative_form_for_element' => 17
 	];
 	private $textareaMapping = [
 		'default_text' => 0,
 		'rows' => 1,
-		'columns' => 2
+		'columns' => 2,
+		'associated_element_id' => 3,
 	];
 	private $ynradioMapping = [
 		'yes' => '_YES',
@@ -93,29 +99,24 @@ class FormulizeConfigSyncElementValueProcessor
 	 */
 	private function initializeElementMapping()
 	{
-		// REVIEW QUESTION FOR ARVIN... THIS SEEMS LIKE SOMETHING WE COULD/SHOULD ADD INTO THE ELEMENT CLASS FILES THEMSELVES, NOW THAT WE HAVE CLASS FILES FOR ALL ELEMENT TYPES??
-		// FURTHERMORE, WE HAVE SOME ADDITIONAL TYPES NOW:
-		// checkbox is standard checkboxes
-		// checkboxLinked is checkboxes with linked values
-		// select is standard select dropdowns
-		// selectLinked is select dropdowns with linked values
-		// selectUsers is a username list
-		// listbox is a multi-select listbox
-		// listboxLinked is a multi-select listbox with linked values
-		// listboxUsers is a multi-select listbox of usernames
-		// autocomplete is an autocomplete box
-		// autocompleteLinked is an autocomplete box with linked values
-		// autocompleteUsers is an autocomplete box of usernames
-		// The function anySelectElementType can be passed the type of an element object and will return true if it is any of the ones based on "select" (all the select, listbox and autocomplete types extend the monster selectElement class)
-		// Also, number is a numbers-only text box (but standard textboxes can also be switched into numbers only mode if you want, and switch back. Number elements are always only number elements.)
-		// The great part is we have a specific class file for every single type now! So we can put in helper methods in the element classes to provide type-specific options/functionality as required
+		// @todo this mapping could be provided by the element classes
 		$this->elementMapping = [
 			'text' => $this->textElementMapping,
+			'number' => $this->textElementMapping,
 			'textarea' => $this->textareaMapping,
 			'checkbox' => $this->checkboxElementMapping,
+			'checkboxLinked' => $this->checkboxElementMapping,
 			'radio' => $this->checkboxElementMapping,
 			'yn' => $this->ynradioMapping,
 			'select' => $this->selectElementMapping,
+			'selectLinked' => $this->selectElementMapping,
+			'selectUsers' => $this->selectElementMapping,
+			'listbox' => $this->selectElementMapping,
+			'listboxLinked' => $this->selectElementMapping,
+			'listboxUsers' => $this->selectElementMapping,
+			'autocomplete' => $this->selectElementMapping,
+			'autocompleteLinked' => $this->selectElementMapping,
+			'autocompleteUsers' => $this->selectElementMapping,
 			'date' => $this->dateMapping,
 			'slider' => $this->sliderMapping,
 		];

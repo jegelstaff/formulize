@@ -169,6 +169,7 @@ class FormulizeConfigSync
 			// Find the corresponding DB form and compare to the configuration
 			$dbForm = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
 
+			// Remove elements so we can just compare the formConfig aginst the DB
 			$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
 
 			if (!$dbForm) {
@@ -456,7 +457,6 @@ class FormulizeConfigSync
 
 	private function applyFormChange(array $change): void
 	{
-		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 
 		switch ($change['operation']) {
@@ -470,7 +470,7 @@ class FormulizeConfigSync
 				$applicationIds = array(0); // forms with no application
 				$groupsThatCanEditForm = array(XOOPS_GROUP_ADMIN); // only webmasters can edit forms initially
 				$change['data']['fid'] = 0; // ensure it's treated as a new form
-				$formObject = formulizeHandler::upsertFormSchemaAndResources($change['data'], $groupsThatCanEditForm, $applicationIds);
+				formulizeHandler::upsertFormSchemaAndResources($change['data'], $groupsThatCanEditForm, $applicationIds);
 				break;
 
 			case 'update':
@@ -480,7 +480,7 @@ class FormulizeConfigSync
 					throw new \Exception("Form handle {$change['data']['form_handle']} does not exist");
 				}
 				$change['data']['fid'] = $primaryKey;
-				list($formId, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($change['data']);
+				formulizeHandler::upsertFormSchemaAndResources($change['data']);
 				break;
 
 			case 'delete':
@@ -637,7 +637,7 @@ class FormulizeConfigSync
 		try {
 			$forms = $this->exportForms();
 			$config = [
-				'version' => '1.0',
+				'version' => '1.1',
 				'lastUpdated' => date('Y-m-d H:i:s'),
 				'forms' => $forms,
 				'metadata' => [
@@ -661,16 +661,16 @@ class FormulizeConfigSync
 	 */
 	private function exportForms(): array
 	{
-		$forms = [];
+		$formsForExport = [];
 		$formRows = $this->loadDatabaseConfig('formulize_id');
 
 		foreach ($formRows as $formRow) {
-			$form = $this->prepareFormForExport($formRow);
-			$form['elements'] = $this->exportElementsForForm($formRow['id_form']);
-			$forms[] = $form;
+			$formForExport = $this->prepareFormForExport($formRow);
+			$formForExport['elements'] = $this->exportElementsForForm($formRow['id_form']);
+			$formsForExport[] = $formForExport;
 		}
 
-		return $forms;
+		return $formsForExport;
 	}
 
 	/**
@@ -682,14 +682,12 @@ class FormulizeConfigSync
 	private function prepareFormForExport(array $formRow): array
 	{
 		$preparedForm = [];
-		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check', 'defaultform', 'defaultlist'];
+		$excludedFields = ['defaultform', 'defaultlist', 'id_form'];
 		foreach ($formRow as $field => $value) {
 			if (!in_array($field, $excludedFields)) {
 				$preparedForm[$field] = $value;
 			}
 		}
-		// Remove not needed fields
-		unset($preparedForm['id_form']);
 		return $preparedForm;
 	}
 
@@ -701,14 +699,14 @@ class FormulizeConfigSync
 	 */
 	private function exportElementsForForm(int $formId): array
 	{
-		$elements = [];
+		$elementsForExport = [];
 		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order");
 
 		foreach ($elementRows as $elementRow) {
-			$elements[] = $this->prepareElementForExport($elementRow);
+			$elementsForExport[] = $this->prepareElementForExport($elementRow);
 		}
 
-		return $elements;
+		return $elementsForExport;
 	}
 
 	/**
@@ -784,6 +782,17 @@ class FormulizeConfigSync
 		return $strippedConfigArray;
 	}
 
+	/**
+	 * Rename the key in an array
+	 */
+	private function renameArrayKey(array $configArray, string $from, string $to): array
+	{
+		if (array_key_exists($from, $configArray)) {
+        $configArray[$to] = $configArray[$from];
+        unset($configArray[$from]);
+    }
+    return $configArray;
+	}
 
 	/**
 	 * Get the database table name for a configuration type
