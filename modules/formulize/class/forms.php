@@ -123,6 +123,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("fid", XOBJ_DTYPE_INT, $formq[0]['id_form'], true);
 		$this->initVar("lockedform", XOBJ_DTYPE_INT, $formq[0]['lockedform'], true);
 		$this->initVar("title", XOBJ_DTYPE_TXTBOX, $formq[0]['form_title'], true, 255);
+		$this->initVar("form_title", XOBJ_DTYPE_TXTBOX, $formq[0]['form_title'], true, 255);
 		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
 		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], true, 255);
@@ -262,6 +263,12 @@ class formulizeForm extends FormulizeObject {
 				}
 				if("fid" == $key) {
 					parent::setVar("id_form", $value, $not_gpc);
+				}
+				if("title" == $key) {
+					parent::setVar("form_title", $value, $not_gpc);
+				}
+				if("form_title" == $key) {
+					parent::setVar("title", $value, $not_gpc);
 				}
 				if("singular" == $key AND $value == "") {
 					$value = $this->getSingular();
@@ -824,7 +831,7 @@ class formulizeFormsHandler {
 
 					// some basic safetynets for new forms
 					if($form_handle == "") {
-						$formObject->setVar('form_handle', $title);
+						$formObject->setVar('form_handle', $form_title);
 						$form_handle = $formObject->getVar('form_handle');
 					}
 					if($singular == "") {
@@ -838,7 +845,7 @@ class formulizeFormsHandler {
 
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
 							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
-							$this->db->quoteString($title).", ".
+							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
 							$this->db->quoteString($singleToWrite).", ".
@@ -851,7 +858,7 @@ class formulizeFormsHandler {
 							intval($pi).")";
 				} else {
 					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
-							" `form_title` = ".$this->db->quoteString($title).
+							" `form_title` = ".$this->db->quoteString($form_title).
 							", `singular` = ".$this->db->quoteString($singular).
 							", `plural` = ".$this->db->quoteString($plural).
 							", `singleentry` = ".$this->db->quoteString($singleToWrite).

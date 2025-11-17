@@ -321,7 +321,7 @@ class formulizeHandler {
 			}
 			$formObject = false;
 			$formObject = $form_handler->create();
-			$formObjectProperties['title'] = $formObjectProperties['title'] ? $formObjectProperties['title'] : 'New Form';
+			$formObjectProperties['form_title'] = $formObjectProperties['form_title'] ? $formObjectProperties['form_title'] : 'New Form';
 		}
 
 		// set all the properties that were passed in
