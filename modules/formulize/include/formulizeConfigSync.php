@@ -682,7 +682,7 @@ class FormulizeConfigSync
 	private function prepareFormForExport(array $formRow): array
 	{
 		$preparedForm = [];
-		$excludedFields = ['defaultform', 'defaultlist', 'id_form'];
+		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check', 'defaultform', 'defaultlist', 'id_form'];
 		foreach ($formRow as $field => $value) {
 			if (!in_array($field, $excludedFields)) {
 				$preparedForm[$field] = $value;
