@@ -82,11 +82,11 @@
                   <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$sub.title}></a></li>
                 <{elseif $item.id == 'opsystem'}>
                   <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>"><{$sub.title}></a>
-                    <{if $sub.hassubs}>
+                    <{if isset($sub.hassubs) AND $sub.hassubs}>
                       <ul>
                         <{foreach item=subitem from=$sub.subs}>
                           <li><a href="<{$subitem.link}>" style="background-image: url(<{if $subitem.small!=''}><{$icms_url}>/modules/system/<{$subitem.small}><{else}><{$icms_url}>/modules/system/images/imagesarrow1.gif<{/if}>);"><{$subitem.title}></a>
-                            <{if $subitem.hassubs}>
+                            <{if isset($subitem.hassubs) AND $subitem.hassubs}>
                               <ul>
                                 <{foreach item=subsubitem from=$subitem.subs}>
                                   <li><a href="<{$subsubitem.link}>"><{$subsubitem.title}></a></li>
@@ -100,7 +100,7 @@
                   </li>
                 <{elseif $item.id == 'modules'}>
                   <li><a href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{else}><{$icms_url}>/modules/system/images/modulesitem.png<{/if}>);"><{$sub.title}></a>
-                  <{if $sub.hassubs}>
+                  <{if isset($sub.hassubs) AND $sub.hassubs}>
                     <ul>
                       <{foreach item=subitem from=$sub.subs}>
                         <li><a href="<{$subitem.link}>"><{$subitem.title}></a></li>
@@ -110,11 +110,11 @@
                   </li>
                 <{elseif}>
                   <li><a <{if $sub.link != '#' AND $item.id != 'home'}>rel="external" target="_blank"<{/if}> href="<{if $sub.absolute==1}><{$sub.link}><{else}><{$icms_url}>/modules/<{$sub.dir}>/<{$sub.link}><{/if}>" style="background-image: url(<{if $sub.small!=''}><{$sub.small}><{/if}>);"><{$sub.title}></a>
-								  <{if $sub.hassubs}>
+								  <{if isset($sub.hassubs) AND $sub.hassubs}>
 										<ul>
 											<{foreach item=subitem from=$sub.subs}>
 												<li><a href="<{$subitem.link}>"><{$subitem.title}></a>
-													<{if $subitem.hassubs}>
+													<{if isset($subitem.hassubs) AND $subitem.hassubs}>
 														<ul>
 															<{foreach item=subsubitem from=$subitem.subs}>
 																<li><a rel="external" target="_blank" href="<{$subsubitem.link}>"><{$subsubitem.title}></a></li>
