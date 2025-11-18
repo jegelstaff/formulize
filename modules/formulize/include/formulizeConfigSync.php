@@ -121,12 +121,20 @@ class FormulizeConfigSync
 		$stmt = $this->db->prepare($sql);
 		$stmt->execute();
 		$result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
 		// ele_delim will become the system default if it has no value, so sub that in for comparison purposes later
-		if(isset($result['ele_delim']) AND (is_null($result['ele_delim']) OR $result['ele_delim'] === '')) {
+		// This is a stub of behaviour that could/should be expanded/generalized, and moved into the form and/or elements classes
+		// knowledge and handling of the semantics of the configuration needs to exist somewhere
+		if($table === $this->prefixTable('formulize')) {
 			$config_handler = xoops_gethandler('config');
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$result['ele_delim'] = $formulizeConfig['delimeter'];
+			foreach($result as $index => $row) {
+				if(isset($row['ele_delim']) AND (is_null($row['ele_delim']) OR $row['ele_delim'] === '')) {
+					$result[$index]['ele_delim'] = $formulizeConfig['delimeter'];
+				}
+			}
 		}
+
 		return $result;
 	}
 
