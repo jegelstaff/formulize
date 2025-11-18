@@ -304,6 +304,74 @@ class formulizeElementsHandler {
 		return $properties;
 	}
 
+	/**
+	 * Get the elements that the passed in element depends on
+	 * The elementData ought to be an array coming from config-as-code, which has had all numeric references to elements converted to element handles!
+	 * @param array $elementData The element data to check for dependencies, conforms to the structure of the properties of an element object
+	 * @return array An array of element handles that this element depends on
+	 */
+	function getElementDependencies($elementData) {
+		if(!$elementObject = _getElementObject($elementData)) {
+			return array();
+		}
+		$dependencies = array();
+		// possible depedencies:
+		foreach($elementData as $property => $value) {
+			// ele_caption could have { } references to other element handles
+			// ele_desc could have { } references to other element handles
+			if($property == 'ele_caption' OR $property == 'ele_desc') {
+				$text = $value;
+				if(strstr($text, "}") AND strstr($text, "{")) {
+					$bracketPos = 0;
+					$start = true; // flag used to force the loop to execute, even if the 0th position has the {
+					while($bracketPos <= strlen($text) AND $bracketPos = strpos($text, "{", $bracketPos) OR $start == true) {
+						$start = false;
+						$endBracketPos = strpos($text, "}", $bracketPos+1);
+						$dependencies[] = substr($text, $bracketPos+1, $endBracketPos-$bracketPos-1);
+						$bracketPos = $bracketPos + 1;
+					}
+				}
+			}
+			// ele_filtersettings could have references to other elements in the 0 array
+			// ele_disabledconditions could have references to other elements in the 0 array
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work!
+			if($property == 'ele_filtersettings' OR $property == 'ele_disabledconditions') {
+				$filterDependencies = $this->formulize_getFilterDependencies($value);
+				$dependencies = array_merge($dependencies, $filterDependencies);
+			}
+			// ele_value could have various references depending on the element type
+			if($property == 'ele_value' AND method_exists($this, 'getEleValueDependencies')) {
+				$settingsArray = is_array($value) ? $value : unserialize($value);
+				if(is_array($settingsArray)) {
+					$dependencies = array_merge($dependencies, $this->getEleValueDependencies($settingsArray));
+				}
+			}
+		}
+		return $dependencies;
+	}
+
+	/**
+	 * Get element dependencies from a standard filter settings array
+	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
+	 * @return array An array of element handles that this filter depends on
+	 */
+	private function formulize_getFilterDependencies($filterSettings) {
+		$dependencies = array();
+		$settingsArray = is_array($filterSettings) ? $filterSettings : unserialize($filterSettings);
+		if(is_array($settingsArray)) {
+			foreach($settingsArray[0] as $dependency) {
+				if(is_numeric($dependency)) {
+					if($depElement = _getElementObject($dependency)) {
+						$dependencies[] = $depElement->getVar('ele_handle');
+					}
+				} else {
+					$dependencies[] = $dependency;
+				}
+			}
+		}
+		return $dependencies;
+	}
+
 	function get($id){
 		static $cachedElements = array();
 		if(isset($cachedElements[$id])) {

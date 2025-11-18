@@ -169,6 +169,60 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		return $ele_value;
 	}
 
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 */
+	private function getEleValueDependencies($values) {
+		$dependencies = array();
+		foreach($values as $key => $value) {
+			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
+				$linkedMetaDataParts = explode("#*=:*", $value);
+				if(count($linkedMetaDataParts) == 2) {
+					$dependencies[] = trim($linkedMetaDataParts[1]);
+				}
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work!
+			if($key == ELE_VALUE_SELECT_LINK_FILTERS OR $key == ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER) {
+				$filterDependencies = $this->formulize_getFilterDependencies($value);
+				$dependencies = array_merge($dependencies, $filterDependencies);
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else these keys may have numeric refs to elements not yet in existence in DB!
+			if(in_array($key, array(ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS, ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS, ELE_VALUE_SELECT_LINK_SORT, ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS, ELE_VALUE_SELECT_LINK_LIMITBYELEMENT))) {
+				if(!is_array($value)) {
+					$unserialized = unserialize($value);
+					if(is_array($unserialized)) {
+						$value = $unserialized;
+					} else {
+						$value = array($value);
+					}
+				}
+				foreach($value as $element) {
+					if(is_numeric($element)) {
+						$elementObject = _getElementObject($element);
+						$dependencies[] = $elementObject->getVar('ele_handle');
+					} else {
+						$dependencies[] = $element;
+					}
+				}
+			}
+			if($key == ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS) {
+				foreach($value as $thisMapping) {
+					foreach(array('thisForm', 'sourceForm') as $mappingKey) {
+						if(is_numeric($thisMapping[$mappingKey]) AND $mappingElement = _getElementObject($thisMapping[$mappingKey])) {
+							$dependencies[] = $mappingElement->getVar('ele_handle');
+						} else {
+							// text needs to be validated as an element handle, against what's in the database already, or what's in the entire set of changes, which is not available at this level!
+							// But if the values have all been converted to non_numeric handles already, then this could be OK, could just return whatever we find.
+							// Except the challenge in this case is that text could be just literal text being mapped, not an element ref. Canonical behaviour in live system is that numeric values indicate elements, literal values are text.
+							// So basically, if the text is identified as an element handle either in DB our set of changes, it's a dependency. Otherwise, it's not a dependency.
+						}
+					}
+				}
+			}
+		}
+		return $dependencies;
+	}
+
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
 	// when dealing with new elements, $element might be FALSE
