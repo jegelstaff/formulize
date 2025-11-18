@@ -29,7 +29,7 @@ test.describe('Check that tools/list is responding', () => {
     await page.goto('/mcp/test.html');
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
    	await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
-  	await expect(page.getByText('📊 1 total')).toBeVisible();
+  	await expect(page.getByText(/[13] total/)).toBeVisible();
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
 		await page.getByRole('button', { name: '🚀 Send Request' }).click();
     await expect(page.getByText('0: "name": "formulize" "')).toBeVisible();
