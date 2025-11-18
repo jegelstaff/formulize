@@ -662,7 +662,7 @@ class FormulizeConfigSync
 				throw new Exception("Checking if we need to defer a change that was already applied: $elementHandle");
 			} else {
 				// check that all the required elements are in the database already
-				foreach($change['data']['dependencies'] as $requiredElementHandle) {
+				foreach($change['metadata']['dependencies'] as $requiredElementHandle) {
 					if(!$requiredElementObject = $this->elementHandler->get($requiredElementHandle)) {
 						// if required element is not in the database but will be created in a queued change, then defer this change
 						if(isset($this->queuedElementChanges[$requiredElementHandle])
@@ -678,7 +678,9 @@ class FormulizeConfigSync
 				}
 			}
 		}
-		unset($this->deferredElementChanges[$change['data']['ele_handle']]);
+		if(isset($this->deferredElementChanges[$change['data']['ele_handle']])) {
+			unset($this->deferredElementChanges[$change['data']['ele_handle']]);
+		}
 		return false;
 	}
 
