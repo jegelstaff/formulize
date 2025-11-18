@@ -13,7 +13,7 @@ test('Create Artifacts Form', async ({ page }) => {
 	await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
-	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Artifacts');
 	await page.locator('#applications-name').fill('Museum');
 	await page.locator('input[name="pi_new_caption"]').fill('ID Number');
@@ -187,7 +187,7 @@ test('Create Donors Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
-	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Donors');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
@@ -347,7 +347,7 @@ test('Create Collections Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
-	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Collections');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
@@ -393,7 +393,7 @@ test('Create Exhibits Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
-	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Exhibits');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
@@ -466,7 +466,7 @@ test('Create Surveys Form', async ({ page }) => {
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
-	await expect(page.locator('input[name="forms-title"]')).toBeVisible();
+	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Surveys');
 	await saveAdminForm(page);
 	await page.getByRole('link', { name: 'Home' }).click();
