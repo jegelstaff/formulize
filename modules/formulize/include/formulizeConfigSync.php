@@ -291,8 +291,8 @@ class FormulizeConfigSync
 			$normalizedDBValue = $this->normalizeValue($dbObject[$field]);
 			if ($normalizedJSONValue !== $normalizedDBValue) {
 				$differences[$field] = [
-					'config_value' => $normalizedJSONValue,
-					'db_value' => $normalizedDBValue
+					'config_value' => json_encode($normalizedJSONValue),
+					'db_value' => json_encode($normalizedDBValue)
 				];
 			}
 		}
@@ -320,8 +320,8 @@ class FormulizeConfigSync
 				foreach ($value as $key => $val) {
 					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
 						$eleValueDiff[$key] = [
-							'config_value' => $val,
-							'db_value' => $dbEleValue[$key] ?? null
+							'config_value' => json_encode($val),
+							'db_value' => json_encode($dbEleValue[$key]) ?? null
 						];
 					}
 				}
@@ -330,8 +330,8 @@ class FormulizeConfigSync
 				}
 			} elseif (!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
 				$differences[$field] = [
-					'config_value' => $value,
-					'db_value' => $dbElement[$field] ?? null
+					'config_value' => json_encode($value),
+					'db_value' => json_encode($dbElement[$field]) ?? null
 				];
 			}
 		}
