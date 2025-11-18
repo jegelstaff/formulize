@@ -17,8 +17,8 @@
 		<div class="form-item required">
         	<fieldset>
                 <legend>Form Name and Labels</legend>
-								<p><label for="forms-title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE}></label>
-								<input type="text" id="forms-title" name="forms-title" class="required_formulize_element" value="<{$content.name}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWFORM}>"<{/if}> onkeyup="fillHandle()" /> <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_TITLE_EXPLAIN}></span></a></p>
+								<p><label for="forms-form_title" class="question"><{$smarty.const._AM_SETTINGS_FORM_TITLE}></label>
+								<input type="text" id="forms-form_title" name="forms-form_title" class="required_formulize_element" value="<{$content.name}>" <{if $content.name == ""}>placeholder="<{$smarty.const._AM_APP_NEWFORM}>"<{/if}> onkeyup="fillHandle()" /> <a class="tooltip"><span><{$smarty.const._AM_SETTINGS_FORM_TITLE_EXPLAIN}></span></a></p>
 								<div id="form-names-flex">
 									<div class='spacer-line'></div>
 									<p><label for="forms-singular" class="question"><{$smarty.const._AM_SETTINGS_FORM_SINGULAR}></label>
@@ -157,7 +157,7 @@
 <{else if $content.istableform == false}>
 	<div class="form-item">
 		<fieldset>
-					<legend><label for="forms-title" class="question"><{$smarty.const._AM_EOG_Repair}>
+					<legend><label for="forms-form_title" class="question"><{$smarty.const._AM_EOG_Repair}>
 					</label>
 					</legend><input type="button" id="fix_entries" value="Repair Ownership table">
 			 </fieldset>
@@ -192,7 +192,7 @@
   $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);
   $("#send_digests-<{$content.send_digests}>").attr('checked', true);
 
-	$("#forms-title").keydown(function () {
+	$("#forms-form_title").keydown(function () {
 		window.document.getElementById('reload_settings').value = 1;
 	});
 
@@ -205,9 +205,9 @@
 		});
 
 	$(".savebutton").click(function() {
-		if($("[name=forms-title]").val() == "") {
+		if($("[name=forms-form_title]").val() == "") {
 			alert("Forms must have a name!");
-			$("[name=forms-title]").focus();
+			$("[name=forms-form_title]").focus();
 		}
 		if ($("[name=forms-form_handle]").val() == "") {
 			fillHandle();
@@ -215,7 +215,7 @@
 
 	});
 	function fillHandle(){
-		var str=$("[name=forms-title]").val();
+		var str=$("[name=forms-form_title]").val();
 		if ("<{$content.fid}>" == "new") {
 			handle=str.toLowerCase().replace(new RegExp("[^a-z0-9]","gm"),"_");
 			handle=handle.replace(new RegExp("_{2,}","gm"),"_").substring(0,20);

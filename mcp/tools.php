@@ -719,7 +719,7 @@ Examples:
 
 		// prepare form data, keys consistent with the formulizeForm object
 		$formData = [
-			'title' => $title,
+			'form_title' => $title,
 			'single' => $limit_entries,
 			'note' => $notes
 		];

@@ -120,7 +120,22 @@ class FormulizeConfigSync
 		}
 		$stmt = $this->db->prepare($sql);
 		$stmt->execute();
-		return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+		$result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+		// ele_delim will become the system default if it has no value, so sub that in for comparison purposes later
+		// This is a stub of behaviour that could/should be expanded/generalized, and moved into the form and/or elements classes
+		// knowledge and handling of the semantics of the configuration needs to exist somewhere
+		if($table === $this->prefixTable('formulize')) {
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			foreach($result as $index => $row) {
+				if(isset($row['ele_delim']) AND (is_null($row['ele_delim']) OR $row['ele_delim'] === '')) {
+					$result[$index]['ele_delim'] = $formulizeConfig['delimeter'];
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -167,14 +182,15 @@ class FormulizeConfigSync
 		$dbForms = $this->loadDatabaseConfig('formulize_id');
 		foreach ($config['forms'] as $configForm) {
 			// Find the corresponding DB form and compare to the configuration
-			$dbForm = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
+			list($dbForm, $dbOrdinal) = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
 
+			// Remove elements so we can just compare the formConfig aginst the DB
 			$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
 
 			if (!$dbForm) {
 				$this->addChange('forms', 'create', $strippedFormConfig['form_handle'], $strippedFormConfig);
 			} else {
-				$differences = $this->compareFields($strippedFormConfig, $dbForm, $formExcludedFields);
+				$differences = $this->compareFormFields($strippedFormConfig, $dbForm, $formExcludedFields);
 				if (!empty($differences)) {
 					$this->addChange('forms', 'update', $strippedFormConfig['form_handle'], $strippedFormConfig, $differences);
 				}
@@ -182,7 +198,7 @@ class FormulizeConfigSync
 
 			if (isset($configForm['elements'])) {
 				if ($dbForm) {
-					$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+					$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']} ORDER BY ele_order ASC");
 					$this->compareElements($configForm['elements'], $dbElements, $configForm['form_handle']);
 				} else {
 					$this->compareElements($configForm['elements'], [], $configForm['form_handle']);
@@ -201,7 +217,7 @@ class FormulizeConfigSync
 			}
 			if (!$found) {
 				$this->addChange('forms', 'delete', $dbForm['form_handle'], $dbForm);
-				$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+				$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']} ORDER BY ele_order ASC");
 				$this->compareElements([], $dbElements, $dbForm['form_handle']);
 			}
 		}
@@ -217,9 +233,22 @@ class FormulizeConfigSync
 	 */
 	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
 	{
+		$elementsAreInSameOrder = true;
+		$eleOrder = 0;
 		foreach ($configElements as $index => $element) {
-			$eleOrder = $index + 1;
-			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
+
+			list($dbElement, $dbOrdinal) = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
+
+			// if the element is in the same position, use the ele_order from the DB, so that this is not marked as a change
+			if($elementsAreInSameOrder AND $dbElement AND $dbOrdinal === $index) {
+				$eleOrder = $dbElement['ele_order'];
+
+			// element in config is not in same position it currently has in the database (or does not exist in DB)
+			// so we now increment element order from the last value it had
+			} else {
+				$elementsAreInSameOrder == false;
+				$eleOrder = $eleOrder + 1;
+			}
 			$preparedElement = $this->prepareElementForDb($element, $eleOrder);
 			$configMetadata = [
 				'form_handle' => $formHandle,
@@ -261,14 +290,22 @@ class FormulizeConfigSync
 		}
 	}
 
+	/**
+	 * Find an item in an array by key and value
+	 *
+	 * @param array $array
+	 * @param string $key
+	 * @param mixed $value
+	 * @return array An array containing the item, and the index of that item in the array
+	 */
 	private function findInArray(array $array, string $key, $value)
 	{
-		foreach ($array as $item) {
+		foreach ($array as $index =>$item) {
 			if ($item[$key] === $value) {
-				return $item;
+				return array($item, $index);
 			}
 		}
-		return null;
+		return array();
 	}
 
 	/**
@@ -279,7 +316,7 @@ class FormulizeConfigSync
 	 * @param array $excludeFields
 	 * @return array
 	 */
-	private function compareFields(array $configObject, array $dbObject, array $excludeFields = []): array
+	private function compareFormFields(array $configObject, array $dbObject, array $excludeFields = []): array
 	{
 		$differences = [];
 		foreach ($configObject as $field => $value) {
@@ -290,8 +327,8 @@ class FormulizeConfigSync
 			$normalizedDBValue = $this->normalizeValue($dbObject[$field]);
 			if ($normalizedJSONValue !== $normalizedDBValue) {
 				$differences[$field] = [
-					'config_value' => $normalizedJSONValue,
-					'db_value' => $normalizedDBValue
+					'config_value' => json_encode($normalizedJSONValue),
+					'db_value' => json_encode($normalizedDBValue)
 				];
 			}
 		}
@@ -315,13 +352,12 @@ class FormulizeConfigSync
 			$eleValueDiff = [];
 			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
-				$convertedConfigEleValue = $value !== "" ? unserialize($value) : [];
 				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
-				foreach ($convertedConfigEleValue as $key => $val) {
+				foreach ($value as $key => $val) {
 					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
 						$eleValueDiff[$key] = [
-							'config_value' => $val,
-							'db_value' => $dbEleValue[$key] ?? null
+							'config_value' => json_encode($val),
+							'db_value' => json_encode($dbEleValue[$key]) ?? null
 						];
 					}
 				}
@@ -330,8 +366,8 @@ class FormulizeConfigSync
 				}
 			} elseif (!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
 				$differences[$field] = [
-					'config_value' => $value,
-					'db_value' => $dbElement[$field] ?? null
+					'config_value' => json_encode($value),
+					'db_value' => json_encode($dbElement[$field]) ?? null
 				];
 			}
 		}
@@ -351,7 +387,7 @@ class FormulizeConfigSync
 	 *
 	 * @param array $element
 	 * @param int $eleOrder The value to use for the ele_order field
-	 * @return array
+	* @return array
 	 */
 	private function prepareElementForDb(array $element, int $eleOrder): array
 	{
@@ -359,10 +395,31 @@ class FormulizeConfigSync
 		foreach ($preparedElement as $key => $value) {
 			if (is_object($value) || is_array($value)) {
 				if ($key == 'ele_value') {
-					$preparedElement[$key] = serialize($this->elementValueProcessor->processElementValueForImport($element['ele_type'], $value));
+					$preparedElement[$key] = $this->elementValueProcessor->processElementValueForImport($element['ele_type'], $value);
 				} else {
-					$preparedElement[$key] = serialize($value);
+					$preparedElement[$key] = $value;
 				}
+			} elseif(is_string($value)) {
+
+				// ele_delim will become the system default if it has no value, so sub that in
+				if($key == 'ele_delim' AND (is_null($value) OR $value === '')) {
+					$config_handler = xoops_gethandler('config');
+					$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+					$preparedElement[$key] = $formulizeConfig['delimeter'];
+
+				// if the string is a serialized array, use the unserialized array as the value
+				} else {
+					$unserialized = unserialize($value);
+					if($unserialized !== false AND is_array($unserialized)) {
+						ksort($unserialized);
+						$preparedElement[$key] = $unserialized;
+					}
+				}
+
+			} elseif(is_bool($value)) {
+				$preparedElement[$key] = (int) $value;
+			} elseif(!is_null($value)) {
+				$preparedElement[$key] = (string) $value;
 			}
 		}
 		// Remove metadata type fields
@@ -456,7 +513,6 @@ class FormulizeConfigSync
 
 	private function applyFormChange(array $change): void
 	{
-		$table = $this->getTableForType($change['type']);
 		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 
 		switch ($change['operation']) {
@@ -470,7 +526,7 @@ class FormulizeConfigSync
 				$applicationIds = array(0); // forms with no application
 				$groupsThatCanEditForm = array(XOOPS_GROUP_ADMIN); // only webmasters can edit forms initially
 				$change['data']['fid'] = 0; // ensure it's treated as a new form
-				$formObject = formulizeHandler::upsertFormSchemaAndResources($change['data'], $groupsThatCanEditForm, $applicationIds);
+				formulizeHandler::upsertFormSchemaAndResources($change['data'], $groupsThatCanEditForm, $applicationIds);
 				break;
 
 			case 'update':
@@ -480,7 +536,7 @@ class FormulizeConfigSync
 					throw new \Exception("Form handle {$change['data']['form_handle']} does not exist");
 				}
 				$change['data']['fid'] = $primaryKey;
-				list($formId, $singularPluralChanged) = formulizeHandler::upsertFormSchemaAndResources($change['data']);
+				formulizeHandler::upsertFormSchemaAndResources($change['data']);
 				break;
 
 			case 'delete':
@@ -495,8 +551,6 @@ class FormulizeConfigSync
 
 	private function applyElementChange(array $change): void
 	{
-		$table = $this->getTableForType($change['type']);
-		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 		$dataType = $change['metadata']['data_type'];
 
 		switch ($change['operation']) {
@@ -510,12 +564,10 @@ class FormulizeConfigSync
 				$form = $this->formHandler->getByHandle($formHandle);
 				if (!$form OR !is_object($form) OR $form->getVar('form_handle') != $formHandle) {
 					throw new \Exception("Form handle $formHandle not found");
-				} else {
-					$formId = $form->getVar('id_form');
-					$change['data']['id_form'] = $formId;
-					$elementId = $this->insertRecord($table, $change['data']);
-					$this->formHandler->insertElementField($elementId, $dataType);
 				}
+				$formId = $form->getVar('id_form');
+				$change['data']['fid'] = $formId;
+				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
 				break;
 
 			case 'update':
@@ -524,9 +576,8 @@ class FormulizeConfigSync
 				if (!$existingElement) {
 					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
 				}
-				$this->updateRecord($table, $change['data'], $primaryKey);
-				// Apply data type changes to the element
-				$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
+				$change['data']['ele_id'] = $existingElement->getVar('ele_id');
+				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
 				break;
 
 			case 'delete':
@@ -540,80 +591,6 @@ class FormulizeConfigSync
 		}
 
 		return;
-	}
-
-	/**
-	 * Insert a record into a database table
-	 *
-	 * @param string $table
-	 * @param array $data
-	 * @return void
-	 */
-	private function insertRecord(string $table, array $data): int
-	{
-		$fields = array_keys($data);
-		$placeholders = array_fill(0, count($fields), '?');
-
-		$sql = sprintf(
-			"INSERT INTO %s (%s) VALUES (%s)",
-			$this->prefixTable($table),
-			'`' . implode('`, `', $fields) . '`',
-			implode(', ', $placeholders)
-		);
-
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute(array_values($data));
-
-		return (int) $this->db->lastInsertId();
-	}
-
-	/**
-	 * Update a record in a database table
-	 *
-	 * @param string $table
-	 * @param array $data
-	 * @param string $primaryKey
-	 * @return void
-	 */
-	private function updateRecord(string $table, array $data, string $primaryKey): void
-	{
-		$fields = array_keys($data);
-		$sets = array_map(function ($field) {
-			return "`{$field}` = ?";
-		}, $fields);
-
-		$sql = sprintf(
-			"UPDATE %s SET %s WHERE %s = ?",
-			$this->prefixTable($table),
-			implode(', ', $sets),
-			$primaryKey
-		);
-
-		$values = array_values($data);
-		$values[] = $data[$primaryKey];
-
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute($values);
-	}
-
-	/**
-	 * Delete a record from a database table
-	 *
-	 * @param string $table
-	 * @param array $data
-	 * @param string $primaryKey
-	 * @return void
-	 */
-	private function deleteRecord(string $table, array $data, string $primaryKey): void
-	{
-		$sql = sprintf(
-			"DELETE FROM %s WHERE %s = ?",
-			$this->prefixTable($table),
-			$primaryKey
-		);
-
-		$stmt = $this->db->prepare($sql);
-		$stmt->execute([$data[$primaryKey]]);
 	}
 
 	/**
@@ -637,7 +614,7 @@ class FormulizeConfigSync
 		try {
 			$forms = $this->exportForms();
 			$config = [
-				'version' => '1.0',
+				'version' => '1.1',
 				'lastUpdated' => date('Y-m-d H:i:s'),
 				'forms' => $forms,
 				'metadata' => [
@@ -649,7 +626,7 @@ class FormulizeConfigSync
 
 			return json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 		} catch (\Exception $e) {
-			error_log("Error exporting configuration: " . $e->getMessage());
+			throw new Exception("Error exporting configuration: " . $e->getMessage());
 			return '';
 		}
 	}
@@ -661,16 +638,16 @@ class FormulizeConfigSync
 	 */
 	private function exportForms(): array
 	{
-		$forms = [];
+		$formsForExport = [];
 		$formRows = $this->loadDatabaseConfig('formulize_id');
 
 		foreach ($formRows as $formRow) {
-			$form = $this->prepareFormForExport($formRow);
-			$form['elements'] = $this->exportElementsForForm($formRow['id_form']);
-			$forms[] = $form;
+			$formForExport = $this->prepareFormForExport($formRow);
+			$formForExport['elements'] = $this->exportElementsForForm($formRow['id_form']);
+			$formsForExport[] = $formForExport;
 		}
 
-		return $forms;
+		return $formsForExport;
 	}
 
 	/**
@@ -682,14 +659,12 @@ class FormulizeConfigSync
 	private function prepareFormForExport(array $formRow): array
 	{
 		$preparedForm = [];
-		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check', 'defaultform', 'defaultlist'];
+		$excludedFields = ['on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check', 'defaultform', 'defaultlist', 'id_form'];
 		foreach ($formRow as $field => $value) {
 			if (!in_array($field, $excludedFields)) {
 				$preparedForm[$field] = $value;
 			}
 		}
-		// Remove not needed fields
-		unset($preparedForm['id_form']);
 		return $preparedForm;
 	}
 
@@ -701,14 +676,14 @@ class FormulizeConfigSync
 	 */
 	private function exportElementsForForm(int $formId): array
 	{
-		$elements = [];
-		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order");
+		$elementsForExport = [];
+		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order ASC");
 
 		foreach ($elementRows as $elementRow) {
-			$elements[] = $this->prepareElementForExport($elementRow);
+			$elementsForExport[] = $this->prepareElementForExport($elementRow);
 		}
 
-		return $elements;
+		return $elementsForExport;
 	}
 
 	/**
@@ -757,16 +732,22 @@ class FormulizeConfigSync
 	 */
 	private function normalizeValue($value)
 	{
-		if (is_string($value) && unserialize($value) !== false) {
+		if(is_string($value)) {
 			$unserialized = unserialize($value);
-			ksort($unserialized);
-			return $unserialized;
+			if($unserialized !== false AND is_array($unserialized)) {
+				ksort($unserialized);
+				return empty($unserialized) ? null : $unserialized;
+			}
+			return $value === "" ? null : $value;
 		}
 		if (is_array($value)) {
-			return array_values($value);
+			return empty($value) ? null : $value;
 		}
 		if (is_bool($value)) {
 			return (int) $value;
+		}
+		if(is_null($value)) {
+			return null;
 		}
 		return (string) $value;
 	}
@@ -783,7 +764,6 @@ class FormulizeConfigSync
 		unset($strippedConfigArray[$key]);
 		return $strippedConfigArray;
 	}
-
 
 	/**
 	 * Get the database table name for a configuration type
