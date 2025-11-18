@@ -174,7 +174,7 @@ class FormulizeConfigSync
 		$dbForms = $this->loadDatabaseConfig('formulize_id');
 		foreach ($config['forms'] as $configForm) {
 			// Find the corresponding DB form and compare to the configuration
-			$dbForm = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
+			list($dbForm, $dbOrdinal) = $this->findInArray($dbForms, 'form_handle', $configForm['form_handle']);
 
 			// Remove elements so we can just compare the formConfig aginst the DB
 			$strippedFormConfig = $this->stripArrayKey($configForm, 'elements');
@@ -190,7 +190,7 @@ class FormulizeConfigSync
 
 			if (isset($configForm['elements'])) {
 				if ($dbForm) {
-					$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+					$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']} ORDER BY ele_order ASC");
 					$this->compareElements($configForm['elements'], $dbElements, $configForm['form_handle']);
 				} else {
 					$this->compareElements($configForm['elements'], [], $configForm['form_handle']);
@@ -209,7 +209,7 @@ class FormulizeConfigSync
 			}
 			if (!$found) {
 				$this->addChange('forms', 'delete', $dbForm['form_handle'], $dbForm);
-				$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']}");
+				$dbElements = $this->loadDatabaseConfig('formulize', "id_form = {$dbForm['id_form']} ORDER BY ele_order ASC");
 				$this->compareElements([], $dbElements, $dbForm['form_handle']);
 			}
 		}
@@ -225,9 +225,22 @@ class FormulizeConfigSync
 	 */
 	private function compareElements(array $configElements, array $dbElements, string $formHandle): void
 	{
+		$elementsAreInSameOrder = true;
+		$eleOrder = 0;
 		foreach ($configElements as $index => $element) {
-			$eleOrder = $index + 1;
-			$dbElement = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
+
+			list($dbElement, $dbOrdinal) = $this->findInArray($dbElements, 'ele_handle', $element['ele_handle']);
+
+			// if the element is in the same position, use the ele_order from the DB, so that this is not marked as a change
+			if($elementsAreInSameOrder AND $dbElement AND $dbOrdinal === $index) {
+				$eleOrder = $dbElement['ele_order'];
+
+			// element in config is not in same position it currently has in the database (or does not exist in DB)
+			// so we now increment element order from the last value it had
+			} else {
+				$elementsAreInSameOrder == false;
+				$eleOrder = $eleOrder + 1;
+			}
 			$preparedElement = $this->prepareElementForDb($element, $eleOrder);
 			$configMetadata = [
 				'form_handle' => $formHandle,
@@ -269,14 +282,22 @@ class FormulizeConfigSync
 		}
 	}
 
+	/**
+	 * Find an item in an array by key and value
+	 *
+	 * @param array $array
+	 * @param string $key
+	 * @param mixed $value
+	 * @return array An array containing the item, and the index of that item in the array
+	 */
 	private function findInArray(array $array, string $key, $value)
 	{
-		foreach ($array as $item) {
+		foreach ($array as $index =>$item) {
 			if ($item[$key] === $value) {
-				return $item;
+				return array($item, $index);
 			}
 		}
-		return null;
+		return array();
 	}
 
 	/**
@@ -648,7 +669,7 @@ class FormulizeConfigSync
 	private function exportElementsForForm(int $formId): array
 	{
 		$elementsForExport = [];
-		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order");
+		$elementRows = $this->loadDatabaseConfig('formulize', "id_form = '$formId' ORDER BY ele_order ASC");
 
 		foreach ($elementRows as $elementRow) {
 			$elementsForExport[] = $this->prepareElementForExport($elementRow);
