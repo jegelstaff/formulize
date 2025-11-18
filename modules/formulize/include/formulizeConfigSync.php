@@ -363,6 +363,16 @@ class FormulizeConfigSync
 				} else {
 					$preparedElement[$key] = $value;
 				}
+			} elseif(is_string($value)) {
+				$unserialized = unserialize($value);
+				if($unserialized !== false AND is_array($unserialized)) {
+					ksort($unserialized);
+					$preparedElement[$key] = $unserialized;
+				}
+			} elseif(is_bool($value)) {
+				$preparedElement[$key] = (int) $value;
+			} elseif(!is_null($value)) {
+				$preparedElement[$key] = (string) $value;
 			}
 		}
 		// Remove metadata type fields
@@ -675,15 +685,22 @@ class FormulizeConfigSync
 	 */
 	private function normalizeValue($value)
 	{
-		if (is_string($value) AND $unserialized = unserialize($value) AND is_array(unserialize($value))) {
-			ksort($unserialized);
-			return $unserialized;
+		if(is_string($value)) {
+			$unserialized = unserialize($value);
+			if($unserialized !== false AND is_array($unserialized)) {
+				ksort($unserialized);
+				return empty($unserialized) ? null : $unserialized;
+			}
+			return $value === "" ? null : $value;
 		}
 		if (is_array($value)) {
-			return array_values($value);
+			return empty($value) ? null : $value;
 		}
 		if (is_bool($value)) {
 			return (int) $value;
+		}
+		if(is_null($value)) {
+			return null;
 		}
 		return (string) $value;
 	}
