@@ -626,7 +626,7 @@ class FormulizeConfigSync
 
 			return json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 		} catch (\Exception $e) {
-			error_log("Error exporting configuration: " . $e->getMessage());
+			throw new Exception("Error exporting configuration: " . $e->getMessage());
 			return '';
 		}
 	}
