@@ -101,4 +101,49 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 		return $ele_value;
 	}
 
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
+	 */
+	public function getEleValueDependencies($values) {
+		$dependencies = array();
+		foreach($values as $key => $value) {
+			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
+				$linkedMetaDataParts = explode("#*=:*", $value);
+				if(count($linkedMetaDataParts) == 2) {
+					$dependencies[] = trim($linkedMetaDataParts[1]);
+				}
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work!
+			if($key == 5) {
+				$filterDependencies = $this->formulize_getFilterDependencies($value);
+				$dependencies = array_merge($dependencies, $filterDependencies);
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else these keys may have numeric refs to elements not yet in existence in DB!
+			if(in_array($key, array(12, EV_MULTIPLE_LIST_COLUMNS, EV_MULTIPLE_FORM_COLUMNS, EV_MULTIPLE_SPREADSHEET_COLUMNS))) {
+				if(!is_array($value)) {
+					$unserialized = unserialize($value);
+					if(is_array($unserialized)) {
+						$value = $unserialized;
+					} else {
+						$value = array($value);
+					}
+				}
+				foreach($value as $element) {
+					if(is_numeric($element)) {
+						if($elementObject = _getElementObject($element)) {
+							$dependencies[] = $elementObject->getVar('ele_handle');
+						}
+					} elseif($element AND $element != 'none') {
+						$dependencies[] = $element;
+					}
+				}
+			}
+		}
+		return array_filter($dependencies, function($value) {
+			return $value !== 'none';
+		});
+	}
+
 }
