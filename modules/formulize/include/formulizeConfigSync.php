@@ -120,7 +120,14 @@ class FormulizeConfigSync
 		}
 		$stmt = $this->db->prepare($sql);
 		$stmt->execute();
-		return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+		$result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+		// ele_delim will become the system default if it has no value, so sub that in for comparison purposes later
+		if(isset($result['ele_delim']) AND (is_null($result['ele_delim']) OR $result['ele_delim'] === '')) {
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$result['ele_delim'] = $formulizeConfig['delimeter'];
+		}
+		return $result;
 	}
 
 	/**
@@ -364,11 +371,22 @@ class FormulizeConfigSync
 					$preparedElement[$key] = $value;
 				}
 			} elseif(is_string($value)) {
-				$unserialized = unserialize($value);
-				if($unserialized !== false AND is_array($unserialized)) {
-					ksort($unserialized);
-					$preparedElement[$key] = $unserialized;
+
+				// ele_delim will become the system default if it has no value, so sub that in
+				if($key == 'ele_delim' AND (is_null($value) OR $value === '')) {
+					$config_handler = xoops_gethandler('config');
+					$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+					$preparedElement[$key] = $formulizeConfig['delimeter'];
+
+				// if the string is a serialized array, use the unserialized array as the value
+				} else {
+					$unserialized = unserialize($value);
+					if($unserialized !== false AND is_array($unserialized)) {
+						ksort($unserialized);
+						$preparedElement[$key] = $unserialized;
+					}
 				}
+
 			} elseif(is_bool($value)) {
 				$preparedElement[$key] = (int) $value;
 			} elseif(!is_null($value)) {
