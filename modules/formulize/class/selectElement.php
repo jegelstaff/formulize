@@ -171,8 +171,10 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 	/**
 	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
 	 */
-	private function getEleValueDependencies($values) {
+	public function getEleValueDependencies($values) {
 		$dependencies = array();
 		foreach($values as $key => $value) {
 			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
@@ -198,29 +200,30 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				}
 				foreach($value as $element) {
 					if(is_numeric($element)) {
-						$elementObject = _getElementObject($element);
-						$dependencies[] = $elementObject->getVar('ele_handle');
-					} else {
+						if($elementObject = _getElementObject($element)) {
+							$dependencies[] = $elementObject->getVar('ele_handle');
+						}
+					} elseif($element AND $element != 'none') {
 						$dependencies[] = $element;
 					}
 				}
 			}
+			// passed in elementData ought to have had all numeric references converted to element handles, wrapped with { } for this key. Or else these keys may have numeric refs to elements not yet in existence in DB!
 			if($key == ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS) {
 				foreach($value as $thisMapping) {
 					foreach(array('thisForm', 'sourceForm') as $mappingKey) {
 						if(is_numeric($thisMapping[$mappingKey]) AND $mappingElement = _getElementObject($thisMapping[$mappingKey])) {
 							$dependencies[] = $mappingElement->getVar('ele_handle');
-						} else {
-							// text needs to be validated as an element handle, against what's in the database already, or what's in the entire set of changes, which is not available at this level!
-							// But if the values have all been converted to non_numeric handles already, then this could be OK, could just return whatever we find.
-							// Except the challenge in this case is that text could be just literal text being mapped, not an element ref. Canonical behaviour in live system is that numeric values indicate elements, literal values are text.
-							// So basically, if the text is identified as an element handle either in DB our set of changes, it's a dependency. Otherwise, it's not a dependency.
+						} elseif(substr($thisMapping[$mappingKey], 0, 1) == '{' AND substr($thisMapping[$mappingKey], -1) == '}') {
+							$dependencies[] = substr($thisMapping[$mappingKey], 1, -1);
 						}
 					}
 				}
 			}
 		}
-		return $dependencies;
+		return array_filter($dependencies, function($value) {
+			return $value !== 'none';
+		});
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class

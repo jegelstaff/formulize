@@ -310,10 +310,7 @@ class formulizeElementsHandler {
 	 * @param array $elementData The element data to check for dependencies, conforms to the structure of the properties of an element object
 	 * @return array An array of element handles that this element depends on
 	 */
-	function getElementDependencies($elementData) {
-		if(!$elementObject = _getElementObject($elementData)) {
-			return array();
-		}
+	public function getElementDependencies($elementData) {
 		$dependencies = array();
 		// possible depedencies:
 		foreach($elementData as $property => $value) {
@@ -355,7 +352,7 @@ class formulizeElementsHandler {
 	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
 	 * @return array An array of element handles that this filter depends on
 	 */
-	private function formulize_getFilterDependencies($filterSettings) {
+	public function formulize_getFilterDependencies($filterSettings) {
 		$dependencies = array();
 		$settingsArray = is_array($filterSettings) ? $filterSettings : unserialize($filterSettings);
 		if(is_array($settingsArray)) {
