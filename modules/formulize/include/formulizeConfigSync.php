@@ -175,7 +175,7 @@ class FormulizeConfigSync
 			if (!$dbForm) {
 				$this->addChange('forms', 'create', $strippedFormConfig['form_handle'], $strippedFormConfig);
 			} else {
-				$differences = $this->compareFields($strippedFormConfig, $dbForm, $formExcludedFields);
+				$differences = $this->compareFormFields($strippedFormConfig, $dbForm, $formExcludedFields);
 				if (!empty($differences)) {
 					$this->addChange('forms', 'update', $strippedFormConfig['form_handle'], $strippedFormConfig, $differences);
 				}
@@ -280,7 +280,7 @@ class FormulizeConfigSync
 	 * @param array $excludeFields
 	 * @return array
 	 */
-	private function compareFields(array $configObject, array $dbObject, array $excludeFields = []): array
+	private function compareFormFields(array $configObject, array $dbObject, array $excludeFields = []): array
 	{
 		$differences = [];
 		foreach ($configObject as $field => $value) {
