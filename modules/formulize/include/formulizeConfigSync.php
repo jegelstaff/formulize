@@ -42,6 +42,9 @@ class FormulizeConfigSync
 	private $changes = [];
 	private $diffLog = [];
 	private $errorLog = [];
+	private $deferredElementChanges = [];
+	private $appliedElementChanges = [];
+	private $queuedElementChanges = [];
 
 	private $configFiles = [
 		'forms' => 'forms.json'
@@ -446,7 +449,18 @@ class FormulizeConfigSync
 		array $differences = [],
 		array $metadata = []
 	): void {
-		$this->changes[] = [
+		switch($type) {
+			case 'forms':
+				$dataIdentifier = $data['form_handle'];
+				break;
+			case 'elements':
+				$dataIdentifier = $data['ele_handle'];
+				$metadata = $this->gatherElementDependencies($data, $metadata);
+				break;
+			default:
+				throw new \Exception("Unknown change type: $type");
+		}
+		$this->changes[$dataIdentifier] = [
 			'type' => $type,
 			'operation' => $operation,
 			'id' => $id,
@@ -466,6 +480,21 @@ class FormulizeConfigSync
 	}
 
 	/**
+	 * Gather dependencies for an element change
+	 */
+	private function gatherElementDependencies(array $elementData, array $metadata): array
+	{
+		$dependencies = [];
+		$elementType = $elementData['ele_type'] ?? '';
+		if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$elementType."Element.php")) {
+	    $elementTypeHandler = xoops_getmodulehandler($elementType."Element", 'formulize');
+			$dependencies = $elementTypeHandler->getElementDependencies($elementData);
+		}
+		$metadata['dependencies'] = $dependencies;
+		return $metadata;
+	}
+
+	/**
 	 * Apply changes to the database
 	 *
 	 * @return array
@@ -478,14 +507,14 @@ class FormulizeConfigSync
 		if (empty($changeIds)) {
 			$changes = $this->changes;
 		} else {
-			foreach ($this->changes as $change) {
+			foreach ($this->changes as $dataIdentifier => $change) {
 				if (in_array($change['id'], $changeIds)) {
-					$changes[] = $change;
+					$changes[$dataIdentifier] = $change;
 				}
 			}
 		}
 		// Apply all form changes
-		foreach ($changes as $change) {
+		foreach ($changes as $dataIdentifier => $change) {
 			if ($change['type'] === 'forms') {
 				try {
 					$this->applyFormChange($change);
@@ -497,13 +526,30 @@ class FormulizeConfigSync
 		}
 
 		// Apply all element changes
-		foreach ($changes as $change) {
-			if ($change['type'] === 'elements') {
-				try {
-					$this->applyElementChange($change);
+		$this->deferredElementChanges = [];
+		$this->appliedElementChanges = [];
+		$this->queuedElementChanges = array_filter($changes, function($item) {
+			return $item['type'] === 'elements';
+		});
+		foreach ($this->queuedElementChanges as $dataIdentifier => $change) {
+			try {
+				if($this->applyElementChange($change)) {
 					$results['success'][] = $change;
+					$this->appliedElementChanges[] = $change['data']['ele_handle'];
+				}
+			} catch (\Exception $e) {
+				$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
+			}
+		}
+		while(count($this->deferredElementChanges) > 0) {
+			foreach($this->deferredElementChanges as $elementHandle => $deferredChange) {
+				try {
+					if($this->applyElementChange($deferredChange)) {
+						$results['success'][] = $deferredChange;
+						$this->appliedElementChanges[] = $elementHandle;
+					}
 				} catch (\Exception $e) {
-					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
+					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $deferredChange];
 				}
 			}
 		}
@@ -549,7 +595,7 @@ class FormulizeConfigSync
 		return;
 	}
 
-	private function applyElementChange(array $change): void
+	private function applyElementChange(array $change): ?string
 	{
 		$dataType = $change['metadata']['data_type'];
 
@@ -565,9 +611,13 @@ class FormulizeConfigSync
 				if (!$form OR !is_object($form) OR $form->getVar('form_handle') != $formHandle) {
 					throw new \Exception("Form handle $formHandle not found");
 				}
-				$formId = $form->getVar('id_form');
-				$change['data']['fid'] = $formId;
-				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
+				if($this->deferElementChangeIfNecessary($change) === false) {
+					$formId = $form->getVar('id_form');
+					$change['data']['fid'] = $formId;
+					if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
+						return true;
+					}
+				}
 				break;
 
 			case 'update':
@@ -576,21 +626,60 @@ class FormulizeConfigSync
 				if (!$existingElement) {
 					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
 				}
-				$change['data']['ele_id'] = $existingElement->getVar('ele_id');
-				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
+				if($this->deferElementChangeIfNecessary($change) === false) {
+					$change['data']['ele_id'] = $existingElement->getVar('ele_id');
+					if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
+						return true;
+					}
+				}
 				break;
 
 			case 'delete':
-				$elementId = $change['data']['ele_id'];
-				$element = $this->elementHandler->get($elementId);
-				if ($element) {
-					$this->elementHandler->delete($element);
-					$this->formHandler->deleteElementField($elementId);
+				if ($element = _getElementObject($change['data']['ele_id'])
+					AND $this->elementHandler->delete($element)
+					AND $this->formHandler->deleteElementField($element)) {
+						return true;
 				}
 				break;
 		}
 
-		return;
+		if(!isset($this->deferredElementChanges[$change['data']['ele_handle']])) {
+			throw new \Exception("Failed to perform ".$change['operation']." for element handle {$change['data']['ele_handle']}");
+		}
+		return false;
+	}
+
+	/**
+	 * If a change has dependencies, defer the change for later processing
+	 */
+	private function deferElementChangeIfNecessary(array $change): bool
+	{
+		// if this change has dependencies, check that they are met
+		if(!empty($change['metadata']['dependencies'])) {
+			$elementHandle = $change['data']['ele_handle'];
+			// if this change was already applied, throw an exception
+			if(in_array($elementHandle, $this->appliedElementChanges)) {
+				throw new Exception("Checking if we need to defer a change that was already applied: $elementHandle");
+			} else {
+				// check that all the required elements are in the database already
+				foreach($change['data']['dependencies'] as $requiredElementHandle) {
+					if(!$requiredElementObject = $this->elementHandler->get($requiredElementHandle)) {
+						// if required element is not in the database but will be created in a queued change, then defer this change
+						if(isset($this->queuedElementChanges[$requiredElementHandle])
+							AND $this->queuedElementChanges[$requiredElementHandle]['operation'] == 'create'
+							AND !in_array($requiredElementHandle, $this->appliedElementChanges)) {
+								$this->deferredElementChanges[$elementHandle] = $change;
+								return true;
+						// otherwise, the dependency is will never be met
+						} else {
+							throw new \Exception("Element $elementHandle has unmet dependency on missing element $requiredElementHandle");
+						}
+					}
+				}
+			}
+		}
+		unset($this->deferredElementChanges[$change['data']['ele_handle']]);
+		return false;
 	}
 
 	/**
