@@ -170,6 +170,78 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	}
 
 	/**
+	 * Take data representing an element's properties, and convert any numeric dependencies to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+
+		if(strstr($eleValueData[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
+			// formId#*=:*elementHandle is the format
+			$linkedMetaDataParts = explode("#*=:*", $eleValueData[ELE_VALUE_SELECT_OPTIONS]);
+			if(count($linkedMetaDataParts) == 2) {
+				$formHandler = xoops_getmodulehandler('forms', 'formulize');
+				if($sourceFormObject = $formHandler->get($linkedMetaDataParts[0])) {
+					$eleValueData[ELE_VALUE_SELECT_OPTIONS] = $sourceFormObject->getVar('form_handle')."#*=:*".$linkedMetaDataParts[1];
+				} else {
+					throw new Exception("Could not convert form id to handle for linked select element. Invalid form id ".$linkedMetaDataParts[0]);
+				}
+			}
+		}
+
+		$eleValueData[ELE_VALUE_SELECT_LINK_FILTERS] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[ELE_VALUE_SELECT_LINK_FILTERS], $dependencyIdToHandleMap);
+		$eleValueData[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $dependencyIdToHandleMap);
+
+		foreach(array(
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS,
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS,
+			ELE_VALUE_SELECT_LINK_SORT,
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT) as $key) {
+
+			// prep as array
+			if(!is_array($eleValueData[$key])) {
+				$unserialized = unserialize($eleValueData[$key]);
+				if(is_array($unserialized)) {
+					$workingValues = $unserialized;
+				} else {
+					$workingValues = array($eleValueData[$key]);
+				}
+			} else {
+				$workingValues = $eleValueData[$key];
+			}
+			// convert ids to handles
+			foreach($workingValues as $i => $element) {
+				if(is_numeric($element)) {
+					$workingValues[$i] = $dependencyIdToHandleMap[$element];
+				}
+			}
+			// put back in original format
+			if(!is_array($eleValueData[$key])) {
+				$unserialized = unserialize($eleValueData[$key]);
+				if(is_array($unserialized)) {
+					$eleValueData[$key] = serialize($workingValues);
+				} else {
+					$eleValueData[$key] = $workingValues[0];
+				}
+			} else {
+				$eleValueData[$key] = $workingValues;
+			}
+		}
+
+		// convert numeric ids within ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS to {elementHandle} refs so they can be distinguished from literal text values when importing
+		foreach($eleValueData[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS] as $mappingIndex => $thisMapping) {
+			foreach(array('thisForm', 'sourceForm') as $mappingKey) {
+				if(is_numeric($thisMapping[$mappingKey]) AND $elementObject = $this->get($thisMapping[$mappingKey])) {
+					$eleValueData[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS][$mappingIndex][$mappingKey] = '{'.$dependencyIdToHandleMap[$thisMapping[$mappingKey]].'}';
+				}
+			}
+		}
+		return $eleValueData;
+	}
+
+	/**
 	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
 	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
 	 * @return array An array of element handles that this element depends on
@@ -221,7 +293,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				}
 			}
 		}
-		return array_filter($dependencies, function($value) {
+		return array_filter(array_unique($dependencies), function($value) {
 			return $value !== 'none';
 		});
 	}

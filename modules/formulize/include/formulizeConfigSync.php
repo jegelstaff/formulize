@@ -875,7 +875,7 @@ class FormulizeConfigSync
 				$preparedForm[$field] = $value;
 			}
 		}
-		return $preparedForm;
+		return $this->formHandler->convertDependenciesForExport($preparedForm);
 	}
 
 	/**
@@ -926,6 +926,9 @@ class FormulizeConfigSync
 		$preparedElement['metadata'] = [
 			'data_type' => $elementDataType['dataTypeCompleteString']
 		];
+
+		$preparedElement = $this->elementHandler->convertDependenciesForExport($preparedElement);
+
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
 		unset($preparedElement['ele_id']);

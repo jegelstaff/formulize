@@ -102,6 +102,67 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 	}
 
 	/**
+	 * Take data representing an element's properties, and convert any numeric dependencies to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+
+		if(strstr($eleValueData[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
+			// formId#*=:*elementHandle is the format
+			$linkedMetaDataParts = explode("#*=:*", $eleValueData[ELE_VALUE_SELECT_OPTIONS]);
+			if(count($linkedMetaDataParts) == 2) {
+				$formHandler = xoops_getmodulehandler('forms', 'formulize');
+				if($sourceFormObject = $formHandler->get($linkedMetaDataParts[0])) {
+					$eleValueData[ELE_VALUE_SELECT_OPTIONS] = $sourceFormObject->getVar('form_handle')."#*=:*".$linkedMetaDataParts[1];
+				} else {
+					throw new Exception("Could not convert form id to handle for linked checkbox element. Invalid form id ".$linkedMetaDataParts[0]);
+				}
+			}
+		}
+
+		$eleValueData[5] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[5], $dependencyIdToHandleMap);
+
+		foreach(array(
+			EV_MULTIPLE_LIST_COLUMNS,
+			EV_MULTIPLE_FORM_COLUMNS,
+			EV_MULTIPLE_SPREADSHEET_COLUMNS) as $key) {
+
+			// prep as array
+			if(!is_array($eleValueData[$key])) {
+				$unserialized = unserialize($eleValueData[$key]);
+				if(is_array($unserialized)) {
+					$workingValues = $unserialized;
+				} else {
+					$workingValues = array($eleValueData[$key]);
+				}
+			} else {
+				$workingValues = $eleValueData[$key];
+			}
+			// convert ids to handles
+			foreach($workingValues as $i => $element) {
+				if(is_numeric($element)) {
+					$workingValues[$i] = $dependencyIdToHandleMap[$element];
+				}
+			}
+			// put back in original format
+			if(!is_array($eleValueData[$key])) {
+				$unserialized = unserialize($eleValueData[$key]);
+				if(is_array($unserialized)) {
+					$eleValueData[$key] = serialize($workingValues);
+				} else {
+					$eleValueData[$key] = $workingValues[0];
+				}
+			} else {
+				$eleValueData[$key] = $workingValues;
+			}
+		}
+
+		return $eleValueData;
+	}
+
+	/**
 	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
 	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
 	 * @return array An array of element handles that this element depends on
@@ -141,7 +202,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 				}
 			}
 		}
-		return array_filter($dependencies, function($value) {
+		return array_filter(array_unique($dependencies), function($value) {
 			return $value !== 'none';
 		});
 	}

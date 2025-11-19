@@ -705,6 +705,33 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
+	/**
+	 * Take data representing a form's properties, and convert any numeric dependencies to handles
+	 * @param array $formData An associative array of form data, following the form object structure
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertDependenciesForExport($formData) {
+		// convert pi, defaultform, and defaultlist to handles
+		$elementHandler = xoops_getmodulehandler('elements', 'formulize');
+		$screenHandler = xoops_getmodulehandler('screen', 'formulize');
+		if(isset($formData['pi']) AND is_numeric($formData['pi'])) {
+			if($piElement = $elementHandler->get($formData['pi'])) {
+				$formData['pi'] = $piElement->getVar('ele_handle');
+			}
+		}
+		if(isset($formData['defaultform']) AND is_numeric($formData['defaultform'])) {
+			if($defaultFormScreen = $screenHandler->get($formData['defaultform'])) {
+				$formData['defaultform'] = $defaultFormScreen->getVar('screen_handle');
+			}
+		}
+		if(isset($formData['defaultlist']) AND is_numeric($formData['defaultlist'])) {
+			if($defaultListScreen = $screenHandler->get($formData['defaultlist'])) {
+				$formData['defaultlist'] = $defaultListScreen->getVar('screen_handle');
+			}
+		}
+		return $formData;
+	}
+
 	function get($form_id_or_handle,$includeAllElements=false,$refreshCache=false) {
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();

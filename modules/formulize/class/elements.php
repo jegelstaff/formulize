@@ -305,12 +305,33 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Take data representing a form's properties, and convert any numeric dependencies to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertDependenciesForExport($elementData) {
+		if($dependencyIdToHandleMap = $this->getElementDependencies($elementData, keyByIds: true)) {
+			// ids that should become handles are...
+			// ele_filtersettings could have references to other elements in the 0 array
+			// ele_disabledconditions could have references to other elements in the 0 array
+			$elementData['ele_filtersettings'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_filtersettings'], $dependencyIdToHandleMap);
+			$elementData['ele_disabledconditions'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_disabledconditions'], $dependencyIdToHandleMap);
+			// after replacing those, pass elementData to submethod based on type to element
+			if(method_exists($this, 'convertEleValueDependenciesForExport')) {
+				$elementData['ele_value'] = $this->convertEleValueDependenciesForExport($elementData['ele_value'], $dependencyIdToHandleMap);
+			}
+		}
+		return $elementData;
+	}
+
+	/**
 	 * Get the elements that the passed in element depends on
 	 * The elementData ought to be an array coming from config-as-code, which has had all numeric references to elements converted to element handles!
 	 * @param array $elementData The element data to check for dependencies, conforms to the structure of the properties of an element object
-	 * @return array An array of element handles that this element depends on
+	 * @param boolean $keyWithIds If true, the returned array is keyed by the element ids of the dependent elements. Must only be used when the passed in elementData is based on current database data, where the ids can be determined from the handles!
+	 * @return array An array of element handles that this element depends on, keyed by the element ids of those handles
 	 */
-	public function getElementDependencies($elementData) {
+	public function getElementDependencies($elementData, $keyByIds = false) {
 		$dependencies = array();
 		// possible depedencies:
 		foreach($elementData as $property => $value) {
@@ -331,7 +352,7 @@ class formulizeElementsHandler {
 			}
 			// ele_filtersettings could have references to other elements in the 0 array
 			// ele_disabledconditions could have references to other elements in the 0 array
-			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work!
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work. If numeric refs are valid for the current state of database, then we're OK.
 			if($property == 'ele_filtersettings' OR $property == 'ele_disabledconditions') {
 				$filterDependencies = $this->formulize_getFilterDependencies($value);
 				$dependencies = array_merge($dependencies, $filterDependencies);
@@ -344,7 +365,38 @@ class formulizeElementsHandler {
 				}
 			}
 		}
+		$dependencies = array_unique($dependencies);
+		if($keyByIds) {
+			$mappedDependencies = array();
+			foreach($dependencies as $depHandle) {
+				if($depElement = _getElementObject($depHandle)) {
+					$mappedDependencies[$depElement->getVar('ele_id')] = $depHandle;
+				} else {
+					throw new Exception("Could not find element with handle $depHandle when trying to map dependencies for export");
+				}
+			}
+			$dependencies = $mappedDependencies;
+		}
 		return $dependencies;
+	}
+
+	/**
+	 * Convert passed in filter settings to use handles for the zero array
+	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
+	 * @param array $idHandleMap An associative array mapping element ids to element handles
+	 * @return array The converteed filterSettings, or throws exception if non-array passed in
+	 */
+	public function formulize_convertFilterDependenciesToHandles($filterSettings, $idHandleMap) {
+		$settingsArray = is_array($filterSettings) ? $filterSettings : unserialize($filterSettings);
+		if(is_array($settingsArray) AND !empty($settingsArray)) {
+			foreach($settingsArray[0] as $i => $elementIdentifier) {
+				if(is_numeric($elementIdentifier)) {
+					$settingsArray[0][$i] = $idHandleMap[$elementIdentifier];
+				}
+			}
+			$filterSettings = !is_array($filterSettings) ? serialize($settingsArray) : $settingsArray;
+		}
+		return $filterSettings;
 	}
 
 	/**
@@ -355,7 +407,7 @@ class formulizeElementsHandler {
 	public function formulize_getFilterDependencies($filterSettings) {
 		$dependencies = array();
 		$settingsArray = is_array($filterSettings) ? $filterSettings : unserialize($filterSettings);
-		if(is_array($settingsArray)) {
+		if(is_array($settingsArray) AND !empty($settingsArray)) {
 			foreach($settingsArray[0] as $dependency) {
 				if(is_numeric($dependency)) {
 					if($depElement = _getElementObject($dependency)) {
