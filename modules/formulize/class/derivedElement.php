@@ -60,20 +60,50 @@ class formulizeDerivedElement extends formulizeElement {
 		$descriptionAndExamples =
 "**Element:** Derived Value (derived)
 **Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements.
-**Properties:**
-- code (string, PHP code that derives a value from other elements. In the PHP code, the value must be assigned to a variable called \$value. Refer to other elements in this and other forms, using variables named after their element handles, ie: \$profile_first_name)
-- decimals (int, if the value will be a number, this is the number of decimal places to allow, default is ".$formulizeConfig['number_decimals'].")
-- prefix (string, if the value will be a number, this is text to show before the number, default is '".$formulizeConfig['number_prefix']."')
-- decimalsSeparator (string, if the value will be a number, this is the character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
-- thousandsSeparator (string, if the value will be a number, this is the character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
-- suffix (string, if the value will be a number, this is text to show after the number, default is '".$formulizeConfig['number_suffix']."')
 **Examples:**
 - A derived value element that puts the first name and last name together: { code: \"\$value = \$profile_first_name.' '.\$profile_last_name;\" }
 - A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }";
 		return $descriptionAndExamples;
 	}
 
-	// THIS AND OTHER ELEMENTS THAT DO THIS (TEXT BOXES TEXT AREAS?) SHOULD SET A PROPERTY AND THEN THE PARENT CAN HANDLE EVERYTHING??
+	/**
+	 * For single-type elements, this method provides the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpSingleTypeElementProperties() {
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		return [
+			'properties' => [
+				'code' => [
+					'type' => 'string',
+					'description' => 'PHP code that derives a value from other elements. In the PHP code, the value must be assigned to a variable called $value. Refer to other elements in this and other forms, using variables named after their element handles, ie: $profile_first_name',
+				],
+				'decimals' => [
+					'type' => 'integer',
+					'description' => 'If the value will be a number, this is the number of decimal places to allow. Default is '.$formulizeConfig['number_decimals'],
+				],
+				'prefix' => [
+					'type' => 'string',
+					'description' => 'If the value will be a number, this is text to show before the number. Default is '.$formulizeConfig['number_prefix'],
+				],
+				'decimalsSeparator' => [
+					'type' => 'string',
+					'description' => 'If the value will be a number, this is the character to use as the decimal separator. Default is '.$formulizeConfig['number_decimalsep'],
+				],
+				'thousandsSeparator' => [
+					'type' => 'string',
+					'description' => 'If the value will be a number, this is the character to use as the thousands separator. Default is '.$formulizeConfig['number_sep'],
+				],
+				'suffix' => [
+					'type' => 'string',
+					'description' => 'If the value will be a number, this is text to show after the number. Default is '.$formulizeConfig['number_suffix'],
+				]
+			],
+			'required' => ['code']
+		];
+	}
+
 	function setVar($key, $value, $not_gpc = false) {
 		if($key == 'ele_value') {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
@@ -189,6 +219,18 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 		];
 	}
 
+	public function getDefaultEleValue() {
+		$ele_value = array();
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$ele_value[0] = "<?php";
+		$ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
+		$ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
+		$ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
+		$ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
+		$ele_value[5] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+		return $ele_value;
+	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template

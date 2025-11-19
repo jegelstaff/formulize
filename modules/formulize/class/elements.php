@@ -432,15 +432,7 @@ class formulizeElementsHandler {
 					${$k} = $v;
 				}
 
-				if(!$ele_handle) {
-					$form_handler = xoops_getmodulehandler('forms', 'formulize');
-					if(!$formObject = $form_handler->get($id_form)) {
-						throw new Exception("Could not retrieve form object for id $id_form, when trying to make default ele_handle for element.");
-					}
-					$form_handle = $formObject->getVar('form_handle');
-					$ele_handle = $form_handle.'_'.formulizeElement::sanitize_handle_name($ele_caption);
-				}
-				$ele_handle = formulizeHandler::enforceUniqueElementHandles($ele_handle, $ele_id, $id_form);
+				$ele_handle = $this->validateElementHandle($element);
 				$element->setVar('ele_handle', $ele_handle); // must set it back on the object so it can be accessed later!
 
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
@@ -555,6 +547,30 @@ class formulizeElementsHandler {
 			$this->insert($element);
 		}
 		return $ele_id;
+	}
+
+	/**
+	 * Initialize an element handle based on the caption, or element id if no caption
+	 * @param object $element The element object to initialize the handle for
+	 * @return string The initialized element handle, or existing handle if there is one
+	 */
+	function validateElementHandle($element) {
+		if(!$element instanceof formulizeElement) {
+			throw new Exception("Invalid element object passed to initializeElementHandle");
+		}
+		$ele_handle = $element->getVar('ele_handle');
+		if(!$ele_handle) {
+			// make a sanitized handle based on the caption
+			// if no caption, use the element id
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if(!$formObject = $form_handler->get($element->getVar('fid'))) {
+				throw new Exception("Could not retrieve form object for id ".$element->getVar('fid').", when trying to make default ele_handle for element.");
+			}
+			$form_handle = $formObject->getVar('form_handle');
+			$ele_handle = $form_handle.'_'.formulizeElement::sanitize_handle_name($element->getVar('ele_caption'));
+		}
+		$ele_handle = formulizeHandler::enforceUniqueElementHandles($ele_handle, $element->getVar('ele_id'), $element->getVar('fid'));
+		return $ele_handle;
 	}
 
 	/**

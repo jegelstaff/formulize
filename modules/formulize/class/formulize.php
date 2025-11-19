@@ -488,7 +488,6 @@ class formulizeHandler {
 		// get the element object that we care about, or start a new one from scratch if ele_id is 0, null, etc.
 		if($element_id AND $elementObject = $element_handler->get($element_id)) {
 			$elementIsNew = false;
-			$form_id = $elementObject->getVar('fid');
 			$originalElementNames = array(
 				'ele_handle' => $elementObject->getVar('ele_handle'),
 				'source_form_id' => getSourceFormIdForLinkedElement($elementObject),
@@ -498,9 +497,13 @@ class formulizeHandler {
 			if(isset($elementObjectProperties['ele_id'])) {
 				unset($elementObjectProperties['ele_id']); // make sure ele_id is not set, so we're acting like it's a new element request
 			}
+			// create the element and set initial required properties that are necessary for writing files, etc
 			$elementObject = $element_handler->create();
 			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
-			$form_id = intval($elementObjectProperties['fid']);
+			$elementObject->setVar('ele_caption', $elementObjectProperties['ele_caption']);
+			$elementObject->setVar('fid', $elementObjectProperties['fid']);
+			$elementObjectProperties['ele_handle'] = $element_handler->validateElementHandle($elementObject);
+			$elementObject->setVar('ele_handle', $elementObjectProperties['ele_handle']);
 		} else {
 			throw new Exception('Must provide a valid ele_id to update an existing element, or a valid fid and ele_type to create a new element');
 		}
@@ -508,7 +511,7 @@ class formulizeHandler {
 		global $xoopsUser, $xoopsDB;
 		$mid = getFormulizeModId();
 		$gperm_handler = xoops_gethandler('groupperm');
-		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $form_id, $xoopsUser->getGroups(), $mid) == false) {
+		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $elementObject->getVar('fid'), $xoopsUser->getGroups(), $mid) == false) {
 			throw new Exception("Permission denied: You don't have permission to edit this form.");
 		}
 
@@ -634,10 +637,12 @@ class formulizeHandler {
 	public static function discoverElementTypes($update = false) {
 		static $elementTypes = [];
 		static $elementDescriptions = [];
+		static $singleTypeElementProperties = [];
 		$update = $update ? 1 : 0;
 		if(empty($elementTypes) OR empty($elementDescriptions[$update])) {
 			$elementTypes = [];
 			$elementDescriptions[$update] = [];
+			$singleTypeElementProperties = [];
 			// Scan for element class files
 			$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
 			$elementFiles = glob($elementClassPath . '/*Element.php');
@@ -647,15 +652,19 @@ class formulizeHandler {
 			foreach ($elementFiles as $file) {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.basename($file);
 				$elementType = str_replace('Element.php', '', basename($file));
-				if(methodExistsInClass('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
-					$className = "formulize".ucfirst($elementType)."Element";
+				$className = "formulize".ucfirst($elementType)."Element";
+				if(methodExistsInClass($className, 'mcpElementPropertiesDescriptionAndExamples')) {
 					$category = $className::$category;
 					$elementTypes[$category][] = $elementType;
 					$elementDescriptions[$update][$category][] = $className::mcpElementPropertiesDescriptionAndExamples($update);
+					$singleTypeElementProperties[$category] = null;
+					if(methodExistsInClass($className, 'mcpSingleTypeElementProperties')) {
+						$singleTypeElementProperties[$category] = $className::mcpSingleTypeElementProperties($update);
+					}
 				}
 			}
 		}
-		return [$elementTypes, $elementDescriptions[$update]];
+		return [$elementTypes, $elementDescriptions[$update], $singleTypeElementProperties];
 	}
 
 	/**
