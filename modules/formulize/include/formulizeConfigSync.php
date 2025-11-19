@@ -559,8 +559,6 @@ class FormulizeConfigSync
 
 	private function applyFormChange(array $change): void
 	{
-		$primaryKey = $this->getPrimaryKeyForType($change['type']);
-
 		switch ($change['operation']) {
 			case 'create':
 				// Ensure the form does not exist
@@ -581,7 +579,10 @@ class FormulizeConfigSync
 				if (!$existingForm OR !is_object($existingForm) OR $existingForm->getVar('form_handle') != $change['data']['form_handle']) {
 					throw new \Exception("Form handle {$change['data']['form_handle']} does not exist");
 				}
-				$change['data']['fid'] = $primaryKey;
+				if(isset($change['data']['id_form'])) {
+					unset($change['data']['id_form']);
+				}
+				$change['data']['fid'] = $existingForm->getVar('id_form');
 				formulizeHandler::upsertFormSchemaAndResources($change['data']);
 				break;
 
@@ -789,7 +790,7 @@ class FormulizeConfigSync
 		$elementObject = $this->elementHandler->get($elementRow['ele_handle']);
 		$elementDataType = $elementObject->getDataTypeInformation();
 
-		$serializeFields = ['ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
+		$serializeFields = ['ele_value', 'ele_uitext','ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
 		$preparedElement = [];
 		foreach ($elementRow as $field => $value) {
 			if (in_array($field, $serializeFields)) {
@@ -810,7 +811,6 @@ class FormulizeConfigSync
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
 		unset($preparedElement['ele_id']);
-		unset($preparedElement['form_handle']);
 		unset($preparedElement['ele_order']);
 		return $preparedElement;
 	}
@@ -874,21 +874,4 @@ class FormulizeConfigSync
 		}
 	}
 
-	/**
-	 * Get the primary key field for a configuration type
-	 *
-	 * @param string $type
-	 * @return string
-	 */
-	private function getPrimaryKeyForType(string $type): string
-	{
-		switch ($type) {
-			case 'forms':
-				return 'form_handle';
-			case 'elements':
-				return 'ele_handle';
-			default:
-				throw new \Exception("Unknown configuration type: {$type}");
-		}
-	}
 }
