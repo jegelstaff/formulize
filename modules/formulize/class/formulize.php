@@ -433,27 +433,33 @@ class formulizeHandler {
 	/**
 	 * Validate that the element type
 	 * @param string $elementType The element type to validate - passed by reference so we can correct the case if needed
-	 * @throws Exception if the element type is not valid
-	 * @return void
+	 * @param string|null $requestedCategory Optional. If provided, a case insensitive double check of elements with this static $category designation will be attempted
+	 * @param bool $return Default is false. If true, the function will return instead of throwing an exception on invalid type
+	 * @throws Exception if the element type is not valid, if return is false.
+	 * @return bool Returns true if valid. If $return param is true, returns false if not valid, or throws the exception.
 	 */
-	public static function validateElementType(&$elementType, $requestedCategory = null) {
-		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+	public static function validateElementType(&$elementType, $requestedCategory = null, $return = false) {
+		list($elementTypes, $mcpElementDescriptions, $mcpSingleTypeDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {
 			if(in_array($elementType, $categoryTypes)) {
-				return;
+				return true;
 			} elseif(!$requestedCategory OR $category == $requestedCategory) {
 				// try correcting the case of the element type to see if it is in fact in this category
 				foreach($categoryTypes as $validElementType) {
 					$allValidElementTypes[] = $validElementType;
 					if(strtolower($validElementType) == strtolower($elementType)) {
 						$elementType = $validElementType;
-						return;
+						return true;
 					}
 				}
 			}
 		}
-		throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $allValidElementTypes));
+		if($return) {
+			return false;
+		} else {
+			throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $allValidElementTypes));
+		}
 	}
 
 	/**
