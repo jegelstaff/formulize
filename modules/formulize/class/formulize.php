@@ -502,8 +502,8 @@ class formulizeHandler {
 			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
 			$elementObject->setVar('ele_caption', $elementObjectProperties['ele_caption']);
 			$elementObject->setVar('fid', $elementObjectProperties['fid']);
-			$elementObjectProperties['ele_handle'] = $element_handler->validateElementHandle($elementObject);
 			$elementObject->setVar('ele_handle', $elementObjectProperties['ele_handle']);
+			$elementObjectProperties['ele_handle'] = $element_handler->validateElementHandle($elementObject);
 		} else {
 			throw new Exception('Must provide a valid ele_id to update an existing element, or a valid fid and ele_type to create a new element');
 		}

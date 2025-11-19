@@ -433,7 +433,6 @@ class formulizeElementsHandler {
 				}
 
 				$ele_handle = $this->validateElementHandle($element);
-				$element->setVar('ele_handle', $ele_handle); // must set it back on the object so it can be accessed later!
 
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
@@ -570,6 +569,7 @@ class formulizeElementsHandler {
 			$ele_handle = $form_handle.'_'.formulizeElement::sanitize_handle_name($element->getVar('ele_caption'));
 		}
 		$ele_handle = formulizeHandler::enforceUniqueElementHandles($ele_handle, $element->getVar('ele_id'), $element->getVar('fid'));
+		$element->setVar('ele_handle', $ele_handle);
 		return $ele_handle;
 	}
 
