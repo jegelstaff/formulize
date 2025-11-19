@@ -481,6 +481,7 @@ class FormulizeConfigSync
 
 	/**
 	 * Gather dependencies for an element change
+	 * @TODO GET COMPREHENSIVE DEPENDENCIES FROM ALL ELEMENTS, AND ALSO INCLUDE STUFF LIKE SUBFORM ELEMENTS IN SOURCE FORMS FOR LINKED ELEMENTS, ETC
 	 */
 	private function gatherElementDependencies(array $elementData, array $metadata): array
 	{
@@ -608,7 +609,16 @@ class FormulizeConfigSync
 
 	private function applyElementChange(array $change): ?string
 	{
+
+		$table = $this->getTableForType($change['type']);
 		$dataType = $change['metadata']['data_type'];
+		if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true) === false) {
+			$elementIdentifier = $change['operation'] == 'create' ? null : $change['data']['ele_handle'];
+			$enforcedEleHandle = formulizeHandler::enforceUniqueElementHandles($change['data']['ele_handle'], $elementIdentifier, $change['data']['id_form']);
+			if($enforcedEleHandle != $change['data']['ele_handle']) {
+				throw new \Exception($change['data']['ele_handle']. " is not a unique element handle. Globally unique element handles are required.");
+			}
+		}
 
 		switch ($change['operation']) {
 			case 'create':
@@ -625,8 +635,24 @@ class FormulizeConfigSync
 				if($this->deferElementChangeIfNecessary($change) === false) {
 					$formId = $form->getVar('id_form');
 					$change['data']['fid'] = $formId;
-					if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
-						return true;
+					// use upsert if a compatible element type
+					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
+						if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
+							return true;
+						}
+					// otherwise, do a direct update and then update the field separately
+					} else {
+						if($elementId = $this->insertRecord($table, $change['data'])) {
+							$this->formHandler->insertElementField($elementId, $dataType);
+							if($elementObject = $this->elementHandler->get($elementId)) {
+								addElementToMultiPageScreens($elementObject->getVar('fid'), $elementObject);
+								// maintain connections in relationships if this is a linked element (and it's new or the source has changed)
+								if($elementObject->isLinked) {
+									updateLinkedElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'), getSourceFormIdForLinkedElement($elementObject), getSourceElementHandleForLinkedElement($elementObject), '', '');
+								}
+							}
+							return true;
+						}
 					}
 				}
 				break;
@@ -639,8 +665,26 @@ class FormulizeConfigSync
 				}
 				if($this->deferElementChangeIfNecessary($change) === false) {
 					$change['data']['ele_id'] = $existingElement->getVar('ele_id');
-					if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
-						return true;
+					// use upsert if a compatible element type
+					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
+						if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
+							return true;
+						}
+					// otherwise, do a direct update and then update the field separately
+					} else {
+						if($existingElement->isLinked) {
+							$orig_source_form_id = getSourceFormIdForLinkedElement($existingElement);
+							$orig_source_element_handle = getSourceElementHandleForLinkedElement($existingElement);
+						}
+						$this->updateRecord($table, $change['data'], $this->getPrimaryKeyForType($change['type']));
+						// Apply data type changes to the element
+						$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
+						if($elementObject = $this->elementHandler->get($change['data']['ele_handle'])) {
+							if($elementObject->isLinked) {
+								updateLinkedElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'), getSourceFormIdForLinkedElement($elementObject), getSourceElementHandleForLinkedElement($elementObject), $orig_source_form_id, $orig_source_element_handle);
+							}
+							return true;
+						}
 					}
 				}
 				break;
@@ -704,6 +748,67 @@ class FormulizeConfigSync
 	private function prefixTable(string $table): string
 	{
 		return XOOPS_DB_PREFIX . '_' . trim($table, '_');
+	}
+
+	/**
+	 * Insert a record into a database table, used when upsert not available
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @return int|bool The inserted record ID on success, false on failure
+	 */
+	private function insertRecord(string $table, array $data): int|bool
+	{
+		$fields = array_keys($data);
+		$placeholders = array_fill(0, count($fields), '?');
+		foreach($placeholders as $index => $placeholder) {
+			$placeholders[$index] = formulize_db_escape($placeholder);
+		}
+
+		$sql = sprintf(
+			"INSERT INTO %s (%s) VALUES (%s)",
+			$this->prefixTable($table),
+			'`' . implode('`, `', $fields) . '`',
+			implode(', ', $placeholders)
+		);
+
+		$stmt = $this->db->prepare($sql);
+		$result = $stmt->execute(array_values($data));
+
+		return $result ? (int) $this->db->lastInsertId() : false;
+	}
+
+	/**
+	 * Update a record in a database table, used when upsert not available
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @param string $primaryKey
+	 * @return bool True on success, false on failure
+	 */
+	private function updateRecord(string $table, array $data, string $primaryKey): bool
+	{
+		$fields = array_keys($data);
+		$sets = array_map(function ($field) {
+			return "`{$field}` = ?";
+		}, $fields);
+
+		$sql = sprintf(
+			"UPDATE %s SET %s WHERE %s = ?",
+			$this->prefixTable($table),
+			implode(', ', $sets),
+			$primaryKey
+		);
+
+		$values = [];
+		foreach($data as $key => $value) {
+			$values[] = formulize_db_escape($value);
+		}
+		$values[] = formulize_db_escape($data[$primaryKey]);
+
+		$stmt = $this->db->prepare($sql);
+		$result = $stmt->execute($values);
+		return $result;
 	}
 
 	/**
@@ -884,4 +989,21 @@ class FormulizeConfigSync
 		}
 	}
 
+	/**
+	 * Get the primary key field for a configuration type
+	 *
+	 * @param string $type
+	 * @return string
+	 */
+	private function getPrimaryKeyForType(string $type): string
+	{
+		switch ($type) {
+			case 'forms':
+				return 'form_handle';
+			case 'elements':
+				return 'ele_handle';
+			default:
+				throw new \Exception("Unknown configuration type: {$type}");
+		}
+	}
 }
