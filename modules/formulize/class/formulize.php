@@ -131,8 +131,12 @@ class formulizeHandler {
 				'singular' => 'subform interface',
 				'plural' => 'subform interfaces'
 			),
+			'derived' => array(
+				'singular' => 'derived value element',
+				'plural' => 'derived value elements'
+			),
 			// WILL NEED TO BE FILLED IN FURTHER FOR 'LAYOUT' ELEMENTS WHEN THEY HAVE CLASSES
-			// AND WHAT TO DO ABOUT DERIVED ELEMENTS IS NOT ENTIRELY CLEAR (NOR OTHER MISC ELEMENTS)
+
 		);
 	}
 

@@ -1824,9 +1824,12 @@ private function validateFilter($filter, $andOr = 'AND') {
 		foreach($elementTypes as $category => $types) {
 			$pluralCategoryName = ucfirst($categoryNames[$category]['plural']);
 			$singularCategoryName = ucfirst($categoryNames[$category]['singular']);
-			$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
-			$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
-			if(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
+			$categoryCreationBaseDescriptions = "";
+			$categoryUpdateBaseDescriptions = "";
+			if(count($types) > 1) {
+				$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+				$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+			} elseif(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
 				$staticMethodName = 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category);
 				$categoryCreationBaseDescriptions = formulizeHandler::$staticMethodName(update: false);
 				$categoryUpdateBaseDescriptions = formulizeHandler::$staticMethodName(update: true);
@@ -1838,6 +1841,9 @@ private function validateFilter($filter, $andOr = 'AND') {
 			$creationDataElementPropertiesForThisCategory = [];
 			if($category != 'subforms') {
 				$commonDataElementPropertiesForThisCategory = recursiveReplaceInArray('REPLACEWITHSINGLUARCATEGORYNAME', $singularCategoryName, $commonDataElementProperties);
+				if($category == 'derived') {
+					unset($commonDataElementPropertiesForThisCategory['required']);
+				}
 				$dataTypePropertyForThisCategory = $dataTypeProperty;
 				$creationDataElementPropertiesForThisCategory = $creationDataElementProperties;
 			}
@@ -1869,6 +1875,9 @@ private function validateFilter($filter, $andOr = 'AND') {
 					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
 			];
+			if(count($types) == 1) {
+				unset($formElementTools[0]['inputSchema']['properties']['type']);
+			}
 			$formElementTools[] = [
 				'name' => 'update_'.str_replace(' ', '_', strtolower($singularCategoryName)),
 				'description' => $updateDescription,

@@ -33,6 +33,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 class formulizeDerivedElement extends formulizeElement {
 
+ 	public static $category = "derived"; // the category of element this belongs to, used in the mcp tools to organize element types
+
 	var $defaultValueKey;
 
 	function __construct() {
@@ -45,6 +47,30 @@ class formulizeDerivedElement extends formulizeElement {
 		$this->canHaveMultipleValues = false;
 		$this->hasMultipleOptions = false;
 		parent::__construct();
+	}
+
+	/**
+	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
+	 * Concerned with the properties for the ele_value property of the element object
+	 * Follows the convention of properties used publically (MCP, Public API, etc).
+	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
+	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
+	 */
+	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
+		$descriptionAndExamples =
+"**Element:** Derived Value (derived)
+**Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements.
+**Properties:**
+- code (string, PHP code that derives a value from other elements. In the PHP code, the value must be assigned to a variable called \$value. Refer to other elements in this and other forms, using variables named after their element handles, ie: \$profile_first_name)
+- decimals (int, if the value will be a number, this is the number of decimal places to allow, default is ".$formulizeConfig['number_decimals'].")
+- prefix (string, if the value will be a number, this is text to show before the number, default is '".$formulizeConfig['number_prefix']."')
+- decimalsSeparator (string, if the value will be a number, this is the character to use as the decimal separator, default is '".$formulizeConfig['number_decimalsep']."')
+- thousandsSeparator (string, if the value will be a number, this is the character to use as the thousands separator, default is '".$formulizeConfig['number_sep']."')
+- suffix (string, if the value will be a number, this is text to show after the number, default is '".$formulizeConfig['number_suffix']."')
+**Examples:**
+- A derived value element that puts the first name and last name together: { code: \"\$value = \$profile_first_name.' '.\$profile_last_name;\" }
+- A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }";
+		return $descriptionAndExamples;
 	}
 
 	// THIS AND OTHER ELEMENTS THAT DO THIS (TEXT BOXES TEXT AREAS?) SHOULD SET A PROPERTY AND THEN THE PARENT CAN HANDLE EVERYTHING??
@@ -91,6 +117,78 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function create() {
 		return new formulizeDerivedElement();
 	}
+
+	/**
+	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
+	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
+	 * properties are the contents of the ele_value property on the object
+	 * @param array $properties The properties to validate
+	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
+	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
+	 */
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+		foreach($properties as $key => $value) {
+			switch($key) {
+				case 'decimals':
+					$properties[$key] = intval($value);
+					if($properties[$key] < 0) {
+						$properties[$key] = 0;
+					}
+					break;
+				case 'prefix':
+				case 'decimalsSeparator':
+				case 'thousandsSeparator':
+				case 'suffix':
+					$properties[$key] = trim($value);
+					break;
+				case 'code':
+					if(substr(trim($value), 0, 5) != '<?php') {
+						$value = "<?php\n".$value;
+					}
+					// replace all $element_handle occurrences with "element_handle" instead, for now (future format will be to use the variable names with dollar signs)
+					// Must match $element_handle based on the allowed characters for PHP variable names, and terminate at the first non-valid character (whitespace, punctuation, etc)
+					// Must check if the element exists, and only replace if it does
+					preg_match_all('/\$([a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)/', $value, $matches);
+					if(!empty($matches[1])) {
+						foreach($matches[1] as $possibleElementHandle) {
+							if($possibleElement = _getElementObject($possibleElementHandle)) {
+								$value = str_replace('$'.$possibleElementHandle, '"'.$possibleElementHandle.'"', $value);
+							}
+						}
+					}
+					if($parseError = formulize_validatePHPCode($value)) {
+						throw new Exception("The code provided for the derived value element cannot be parsed. $parseError. Please correct this and try again.");
+					}
+					$properties[$key] = $value;
+					break;
+				default:
+					unset($properties[$key]); // remove anything we don't recognize
+			}
+		}
+		if(isset($properties['code'])) {
+			$ele_value[0] = $properties['code'];
+		}
+		if(isset($properties['decimals'])) {
+			$ele_value[1] = $properties['decimals'];
+		}
+		if(isset($properties['prefix'])) {
+			$ele_value[2] = $properties['prefix'];
+		}
+		if(isset($properties['decimalsSeparator'])) {
+			$ele_value[3] = $properties['decimalsSeparator'];
+		}
+		if(isset($properties['thousandsSeparator'])) {
+			$ele_value[4] = $properties['thousandsSeparator'];
+		}
+		if(isset($properties['suffix'])) {
+			$ele_value[5] = $properties['suffix'];
+		}
+		return [
+			'ele_value' => $ele_value
+		];
+	}
+
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
@@ -157,9 +255,9 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')])) {
-			$ele_value[5] = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')];
+			$ele_value[15] = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')];
 		} else {
-			$ele_value[5] = $value;	// there is not a number 5 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
+			$ele_value[15] = $value;	// there is not a number 15 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
 		}
 		return $ele_value;
 	}
@@ -177,7 +275,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
 
 		if($entry_id != "new") {
-			$form_ele = new xoopsFormLabel($caption, $ele_value[5], $markupName);
+			$form_ele = new xoopsFormLabel($caption, formulize_numberFormat($ele_value[15], $element->getVar('ele_id')), $markupName);
 		} else {
 			$form_ele = new xoopsFormLabel($caption, _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE, $markupName);
 		}
