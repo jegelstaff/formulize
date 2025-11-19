@@ -542,6 +542,7 @@ class FormulizeConfigSync
 			}
 		}
 		while(count($this->deferredElementChanges) > 0) {
+			$beforeLoopDefferredCount = count($this->deferredElementChanges);
 			foreach($this->deferredElementChanges as $elementHandle => $deferredChange) {
 				try {
 					if($this->applyElementChange($deferredChange)) {
@@ -551,6 +552,15 @@ class FormulizeConfigSync
 				} catch (\Exception $e) {
 					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $deferredChange];
 				}
+			}
+			if(count($this->deferredElementChanges) == $beforeLoopDefferredCount) {
+				// no progress made, likely due to unresolvable dependencies
+				// we could/should give the user more information, or dig deeper to resolve these somehow
+				// probably by writing the element and then rewriting the dependent element refs afterwards
+				foreach($this->deferredElementChanges as $elementHandle => $deferredChange) {
+					$results['failure'][] = ['error' => "Unresolvable dependencies for $elementHandle. Depends on " . implode(', ', $deferredChange['metadata']['dependencies']), 'change' => $deferredChange];
+				}
+				break;
 			}
 		}
 
