@@ -531,19 +531,6 @@ class formulizeElementsHandler {
 		if( !$ele_id ){ // only occurs for new elements
 			$ele_id = $this->db->getInsertId();
 			$element->setVar('ele_id', $ele_id);
-			if(!$element->getVar('ele_handle')) { // set the handle same as the element id on new elements, as long as the handle wasn't actually passed in with the element
-				$element->setVar('ele_handle', $ele_id);
-				$this->insert($element);
-			}
-		}
-		if($ele_handle === "") {
-			$form_handler =& xoops_getmodulehandler('forms', 'formulize');
-			$ele_handle = $ele_id;
-      while(!$uniqueCheck = $form_handler->isElementHandleUnique($ele_handle, $ele_id)) {
-        $ele_handle = $ele_handle . "_copy";
-      }
-			$element->setVar('ele_handle', $ele_handle);
-			$this->insert($element);
 		}
 		return $ele_id;
 	}
