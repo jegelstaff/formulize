@@ -610,11 +610,16 @@ class FormulizeConfigSync
 	private function applyElementChange(array $change): ?string
 	{
 
+		$formHandle = $change['metadata']['form_handle'];
+		if(!$formObject = $this->formHandler->get($formHandle)) {
+			throw new \Exception("Form handle $formHandle not found");
+		}
+		$formId = $formObject->getVar('id_form');
 		$table = $this->getTableForType($change['type']);
 		$dataType = $change['metadata']['data_type'];
 		if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true) === false) {
 			$elementIdentifier = $change['operation'] == 'create' ? null : $change['data']['ele_handle'];
-			$enforcedEleHandle = formulizeHandler::enforceUniqueElementHandles($change['data']['ele_handle'], $elementIdentifier, $change['data']['id_form']);
+			$enforcedEleHandle = formulizeHandler::enforceUniqueElementHandles($change['data']['ele_handle'], $elementIdentifier, $formId);
 			if($enforcedEleHandle != $change['data']['ele_handle']) {
 				throw new \Exception($change['data']['ele_handle']. " is not a unique element handle. Globally unique element handles are required.");
 			}
@@ -627,13 +632,8 @@ class FormulizeConfigSync
 				if ($existingElement) {
 					throw new \Exception("Element handle {$change['data']['ele_handle']} already exists");
 				}
-				$formHandle = $change['metadata']['form_handle'];
-				$form = $this->formHandler->getByHandle($formHandle);
-				if (!$form OR !is_object($form) OR $form->getVar('form_handle') != $formHandle) {
-					throw new \Exception("Form handle $formHandle not found");
-				}
+
 				if($this->deferElementChangeIfNecessary($change) === false) {
-					$formId = $form->getVar('id_form');
 					$change['data']['fid'] = $formId;
 					// use upsert if a compatible element type
 					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
