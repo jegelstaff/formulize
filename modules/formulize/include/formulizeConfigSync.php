@@ -357,7 +357,7 @@ class FormulizeConfigSync
 			if ($field === 'ele_value') {
 				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
 				foreach ($value as $key => $val) {
-					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
+					if ($dbEleValue AND (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key])) {
 						$eleValueDiff[$key] = [
 							'config_value' => json_encode($val),
 							'db_value' => json_encode($dbEleValue[$key]) ?? null
@@ -634,14 +634,15 @@ class FormulizeConfigSync
 				}
 
 				if($this->deferElementChangeIfNecessary($change) === false) {
-					$change['data']['fid'] = $formId;
 					// use upsert if a compatible element type
 					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
+						$change['data']['fid'] = $formId;
 						if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
 							return true;
 						}
 					// otherwise, do a direct update and then update the field separately
 					} else {
+						$change['data']['id_form'] = $formId;
 						if($elementId = $this->insertRecord($table, $change['data'])) {
 							$this->formHandler->insertElementField($elementId, $dataType);
 							if($elementObject = $this->elementHandler->get($elementId)) {
@@ -761,8 +762,9 @@ class FormulizeConfigSync
 	{
 		$fields = array_keys($data);
 		$placeholders = array_fill(0, count($fields), '?');
-		foreach($placeholders as $index => $placeholder) {
-			$placeholders[$index] = formulize_db_escape($placeholder);
+		foreach($data as $index => $value) {
+			$value = is_array($value) ? serialize($value) : $value;
+			$data[$index] = formulize_db_escape($value);
 		}
 
 		$sql = sprintf(
@@ -802,6 +804,7 @@ class FormulizeConfigSync
 
 		$values = [];
 		foreach($data as $key => $value) {
+			$value = is_array($value) ? serialize($value) : $value;
 			$values[] = formulize_db_escape($value);
 		}
 		$values[] = formulize_db_escape($data[$primaryKey]);
