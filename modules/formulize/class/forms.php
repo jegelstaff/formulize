@@ -1046,15 +1046,15 @@ class formulizeFormsHandler {
 	}
 
 	// check to see if a handle is unique within a form
-	function isElementHandleUnique($handle, $element_id="") {
+	function isElementHandleUnique($handle, $elementIdentifier="") {
         $handle = formulizeElement::sanitize_handle_name($handle);
 		if(isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
 		global $xoopsDB;
 		// validate element id, convert to element id if it was a handle or object
-		if($element_id) {
-			$elementObject = _getElementObject($element_id);
+		if($elementIdentifier) {
+			$elementObject = _getElementObject($elementIdentifier);
 			if(!$elementObject) {
 				throw new Exception("Could not load element object to verify uniqueness of handle");
 			}
