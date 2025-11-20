@@ -515,11 +515,13 @@ class FormulizeConfigSync
 			}
 		}
 		// Apply all form changes
+		$allFormChanges = [];
 		foreach ($changes as $dataIdentifier => $change) {
 			if ($change['type'] === 'forms') {
 				try {
 					$this->applyFormChange($change);
 					$results['success'][] = $change;
+					$allFormChanges[] = $change;
 				} catch (\Exception $e) {
 					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
 				}
@@ -565,11 +567,31 @@ class FormulizeConfigSync
 			}
 		}
 
+		// adjust forms that were changed, to update any dependencies they contain (pi, defaultform, defaultlist)
+		foreach($allFormChanges as $change) {
+			$convertedChange = $this->formHandler->convertDependenciesForImport($change['data']);
+			if($convertedChange !== $change['data']) {
+				try {
+					if(isset($convertedChange['id_form'])) {
+						unset($convertedChange['id_form']);
+					}
+					if($existingForm = $this->formHandler->getByHandle($convertedChange['form_handle'])) {
+						$convertedChange['fid'] = $existingForm->getVar('id_form');
+						$this->formHandler->upsertFormSchemaAndResources($convertedChange);
+					} else {
+						$results['failure'][] = ['error' => "Form handle {$convertedChange['form_handle']} not found for dependency update", 'change' => $convertedChange];
+					}
+				} catch (\Exception $e) {
+					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $convertedChange];
+				}
+			}
+		}
 		return $results;
 	}
 
 	private function applyFormChange(array $change): void
 	{
+
 		switch ($change['operation']) {
 			case 'create':
 				// Ensure the form does not exist
@@ -634,6 +656,7 @@ class FormulizeConfigSync
 				}
 
 				if($this->deferElementChangeIfNecessary($change) === false) {
+					$change['data'] = $this->elementHandler->convertDependenciesForImport($change['data']);
 					// use upsert if a compatible element type
 					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
 						$change['data']['fid'] = $formId;
@@ -665,6 +688,7 @@ class FormulizeConfigSync
 					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
 				}
 				if($this->deferElementChangeIfNecessary($change) === false) {
+					$change['data'] = $this->elementHandler->convertDependenciesForImport($change['data']);
 					$change['data']['ele_id'] = $existingElement->getVar('ele_id');
 					// use upsert if a compatible element type
 					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
