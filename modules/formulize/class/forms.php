@@ -706,30 +706,55 @@ class formulizeFormsHandler {
 	}
 
 	/**
+	 * Take data representing a form's properties, and convert any handle/id refs
+	 * Presumption is that this is being done after all the dependencies exist in the database!
+	 * @param array $formData An associative array of form data, following the form object structure
+	 * @param string $direction 'import' to convert handles to numeric ids, 'export' to convert numeric ids to handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	private function convertDependencies($formData, $direction) {
+		// convert pi, defaultform, and defaultlist to handles
+		if($direction != 'import' AND $direction != 'export') {
+			throw new Exception("Invalid direction passed to convertDependencies: ".$direction.".	Must be 'import' or 'export'.");
+			return $formData; // might have exited with the exception, but we'll send this back anyway just in case
+		}
+		$elementHandler = xoops_getmodulehandler('elements', 'formulize');
+		$screenHandler = xoops_getmodulehandler('screen', 'formulize');
+		if(isset($formData['pi']) AND (($direction == 'import' AND !is_numeric($formData['pi'])) OR ($direction == 'export' AND is_numeric($formData['pi'])))) {
+			if($piElement = $elementHandler->get($formData['pi'])) {
+				$formData['pi'] = $direction == 'import' ? $piElement->getVar('ele_id') : $piElement->getVar('ele_handle');
+			}
+		}
+		if(isset($formData['defaultform']) AND (($direction == 'import' AND !is_numeric($formData['defaultform'])) OR ($direction == 'export' AND is_numeric($formData['defaultform'])))) {
+			if($defaultFormScreen = $screenHandler->get($formData['defaultform'])) {
+				$formData['defaultform'] = $direction == 'import' ? $defaultFormScreen->getVar('sid') : $defaultFormScreen->getVar('screen_handle');
+			}
+		}
+		if(isset($formData['defaultlist']) AND (($direction == 'import' AND !is_numeric($formData['defaultlist'])) OR ($direction == 'export' AND is_numeric($formData['defaultlist'])))) {
+			if($defaultListScreen = $screenHandler->get($formData['defaultlist'])) {
+				$formData['defaultlist'] = $direction == 'import' ? $defaultListScreen->getVar('sid') : $defaultListScreen->getVar('screen_handle');
+			}
+		}
+		return $formData;
+	}
+
+	/**
+	 * Take data representing a form's properties, and convert any handle refs to numeric ids
+	 * Presumption is that this is being done after all the dependencies exist in the database!
+	 * @param array $formData An associative array of form data, following the form object structure
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertDependenciesForImport($formData) {
+		return $this->convertDependencies($formData, 'import');
+	}
+
+	/**
 	 * Take data representing a form's properties, and convert any numeric dependencies to handles
 	 * @param array $formData An associative array of form data, following the form object structure
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertDependenciesForExport($formData) {
-		// convert pi, defaultform, and defaultlist to handles
-		$elementHandler = xoops_getmodulehandler('elements', 'formulize');
-		$screenHandler = xoops_getmodulehandler('screen', 'formulize');
-		if(isset($formData['pi']) AND is_numeric($formData['pi'])) {
-			if($piElement = $elementHandler->get($formData['pi'])) {
-				$formData['pi'] = $piElement->getVar('ele_handle');
-			}
-		}
-		if(isset($formData['defaultform']) AND is_numeric($formData['defaultform'])) {
-			if($defaultFormScreen = $screenHandler->get($formData['defaultform'])) {
-				$formData['defaultform'] = $defaultFormScreen->getVar('screen_handle');
-			}
-		}
-		if(isset($formData['defaultlist']) AND is_numeric($formData['defaultlist'])) {
-			if($defaultListScreen = $screenHandler->get($formData['defaultlist'])) {
-				$formData['defaultlist'] = $defaultListScreen->getVar('screen_handle');
-			}
-		}
-		return $formData;
+		return $this->convertDependencies($formData, 'export');
 	}
 
 	function get($form_id_or_handle,$includeAllElements=false,$refreshCache=false) {

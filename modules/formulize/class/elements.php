@@ -305,6 +305,31 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Take data representing a form's properties, and convert any handle refs to ids
+	 * Premised on the idea that all the dependencies exist in the database by the time this is being run!
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertDependenciesForImport($elementData) {
+		if($dependencyIdToHandleMap = $this->getElementDependencies($elementData, keyByIds: true)) {
+			// handles that should become ids are...
+			// ele_filtersettings could have references to other elements in the 0 array
+			// ele_disabledconditions could have references to other elements in the 0 array
+			$elementData['ele_filtersettings'] = $this->formulize_convertFilterDependenciesToIds($elementData['ele_filtersettings'], $dependencyIdToHandleMap);
+			$elementData['ele_disabledconditions'] = $this->formulize_convertFilterDependenciesToIds($elementData['ele_disabledconditions'], $dependencyIdToHandleMap);
+			// after replacing those, pass elementData to submethod based on type to element
+			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php')) {
+				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
+				$typeHandler = xoops_getmodulehandler($elementData['ele_type'].'Element', 'formulize');
+				if(method_exists($typeHandler, 'convertEleValueDependenciesForImport')) {
+					$elementData['ele_value'] = $typeHandler->convertEleValueDependenciesForImport($elementData['ele_value'], $dependencyIdToHandleMap);
+				}
+			}
+		}
+		return $elementData;
+	}
+
+	/**
 	 * Take data representing a form's properties, and convert any numeric dependencies to handles
 	 * @param array $elementData An associative array of form data, following the form object structure
 	 * @return array The modified $formData with numeric dependencies converted to handles
@@ -317,8 +342,12 @@ class formulizeElementsHandler {
 			$elementData['ele_filtersettings'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_filtersettings'], $dependencyIdToHandleMap);
 			$elementData['ele_disabledconditions'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_disabledconditions'], $dependencyIdToHandleMap);
 			// after replacing those, pass elementData to submethod based on type to element
-			if(method_exists($this, 'convertEleValueDependenciesForExport')) {
-				$elementData['ele_value'] = $this->convertEleValueDependenciesForExport($elementData['ele_value'], $dependencyIdToHandleMap);
+			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php')) {
+				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
+				$typeHandler = xoops_getmodulehandler($elementData['ele_type'].'Element', 'formulize');
+				if(method_exists($typeHandler, 'convertEleValueDependenciesForExport')) {
+					$elementData['ele_value'] = $typeHandler->convertEleValueDependenciesForExport($elementData['ele_value'], $dependencyIdToHandleMap);
+				}
 			}
 		}
 		return $elementData;
@@ -358,14 +387,20 @@ class formulizeElementsHandler {
 				$dependencies = array_merge($dependencies, $filterDependencies);
 			}
 			// ele_value could have various references depending on the element type
-			if($property == 'ele_value' AND method_exists($this, 'getEleValueDependencies')) {
-				$settingsArray = is_array($value) ? $value : unserialize($value);
-				if(is_array($settingsArray)) {
-					$dependencies = array_merge($dependencies, $this->getEleValueDependencies($settingsArray));
+			if($property == 'ele_value' AND file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php')) {
+				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
+				$typeHandler = xoops_getmodulehandler($elementData['ele_type'].'Element', 'formulize');
+				if(method_exists($typeHandler, 'getEleValueDependencies')) {
+					$settingsArray = is_array($value) ? $value : unserialize($value);
+					if(is_array($settingsArray)) {
+						$dependencies = array_merge($dependencies, $typeHandler->getEleValueDependencies($settingsArray));
+					}
 				}
 			}
 		}
-		$dependencies = array_unique($dependencies);
+		$dependencies = array_filter(array_unique($dependencies), function($value) {
+			return $value !== 'none';
+		});
 		if($keyByIds) {
 			$mappedDependencies = array();
 			foreach($dependencies as $depHandle) {
@@ -386,12 +421,37 @@ class formulizeElementsHandler {
 	 * @param array $idHandleMap An associative array mapping element ids to element handles
 	 * @return array The converteed filterSettings, or throws exception if non-array passed in
 	 */
-	public function formulize_convertFilterDependenciesToHandles($filterSettings, $idHandleMap) {
+	protected function formulize_convertFilterDependenciesToHandles($filterSettings, $idHandleMap) {
+		return $this->formulize_convertFilterDependencies($filterSettings, $idHandleMap, 'export');
+	}
+
+	/**
+	 * Convert passed in filter settings to use ids for the zero array
+	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
+	 * @param array $idHandleMap An associative array mapping element ids to element handles
+	 * @return array The converteed filterSettings, or throws exception if non-array passed in
+	 */
+	protected function formulize_convertFilterDependenciesToIds($filterSettings, $idHandleMap) {
+		return $this->formulize_convertFilterDependencies($filterSettings, $idHandleMap, 'import');
+	}
+
+	/**
+	 * Convert passed in filter settings to use handles for the zero array
+	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
+	 * @param array $idHandleMap An associative array mapping element ids to element handles
+	 * @param string $direction Either 'import' or 'export' - determines the direction of conversion. Import means handles to ids, export means ids to handles
+	 * @return array The converteed filterSettings, or throws exception if non-array passed in
+	 */
+	private function formulize_convertFilterDependencies($filterSettings, $idHandleMap, $direction) {
+		if($direction != 'import' AND $direction != 'export') {
+			throw new Exception("Invalid direction passed to convertDependencies: ".$direction.".	Must be 'import' or 'export'.");
+			return $filterSettings; // might have exited with the exception, but we'll send this back anyway just in case
+		}
 		$settingsArray = is_array($filterSettings) ? $filterSettings : unserialize($filterSettings);
 		if(is_array($settingsArray) AND !empty($settingsArray)) {
 			foreach($settingsArray[0] as $i => $elementIdentifier) {
-				if(is_numeric($elementIdentifier)) {
-					$settingsArray[0][$i] = $idHandleMap[$elementIdentifier];
+				if(($direction === 'import' && !is_numeric($elementIdentifier)) || ($direction === 'export' && is_numeric($elementIdentifier))) {
+					$settingsArray[0][$i] = $direction == 'export' ? $idHandleMap[$elementIdentifier] : array_search($elementIdentifier, $idHandleMap);
 				}
 			}
 			$filterSettings = !is_array($filterSettings) ? serialize($settingsArray) : $settingsArray;
@@ -400,11 +460,76 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Convert element references in a value from handles to ids
+	 * @param mixed $value The value to convert, either serialized array string or real array
+	 * @param array $idToHandleMap An array mapping element ids to handles
+	 * @return mixed The converted value
+	 */
+	protected function convertElementRefsToIds($value, $idToHandleMap) {
+		return $this->convertElementRefsToHandlesOrIds($value, $idToHandleMap, 'import');
+	}
+
+	/**
+	 * Convert element references in a value from ids to handles
+	 * @param mixed $value The value to convert, either serialized array string or real array
+	 * @param array $idToHandleMap An array mapping element ids to handles
+	 * @return mixed The converted value
+	 */
+	protected function convertElementRefsToHandles($value, $idToHandleMap) {
+		return $this->convertElementRefsToHandlesOrIds($value, $idToHandleMap, 'export');
+	}
+
+	/**
+	 * Convert element references in a value between handles and ids
+	 * @param mixed $value The value to convert, either serialized array string or real array
+	 * @param array $idToHandleMap An array mapping element ids to handles
+	 * @param string $direction 'import' to convert handles to ids, 'export' to convert ids to handles
+	 * @return mixed The converted value
+	 */
+	private function convertElementRefsToHandlesOrIds($value, $idToHandleMap, $direction) {
+		if($direction != 'import' AND $direction != 'export') {
+			throw new Exception("Invalid direction passed to convert dependencies: ".$direction.".	Must be 'import' or 'export'.");
+			return $value; // might have exited with the exception, but we'll send this back anyway just in case
+		}
+		// prep as array
+		if(!is_array($value)) {
+			$unserialized = unserialize($value);
+			if(is_array($unserialized)) {
+				$workingValues = $unserialized;
+			} else {
+				$workingValues = array($value);
+			}
+		} else {
+			$workingValues = $value;
+		}
+		// convert
+		foreach($workingValues as $i => $element) {
+			if($direction == 'import' AND !is_numeric($element)) {
+				$workingValues[$i] = array_search($element, $idToHandleMap);
+			} elseif($direction == 'export' AND is_numeric($element)) {
+				$workingValues[$i] = $idToHandleMap[$element];
+			}
+		}
+		// put back in original format
+		if(!is_array($value)) {
+			$unserialized = unserialize($value);
+			if(is_array($unserialized)) {
+				$value = serialize($workingValues);
+			} else {
+				$value = $workingValues[0];
+			}
+		} else {
+			$value = $workingValues;
+		}
+		return $value;
+	}
+
+	/**
 	 * Get element dependencies from a standard filter settings array
 	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
 	 * @return array An array of element handles that this filter depends on
 	 */
-	public function formulize_getFilterDependencies($filterSettings) {
+	protected function formulize_getFilterDependencies($filterSettings) {
 		$dependencies = array();
 		$settingsArray = is_array($filterSettings) ? $filterSettings : unserialize($filterSettings);
 		if(is_array($settingsArray) AND !empty($settingsArray)) {
@@ -421,21 +546,27 @@ class formulizeElementsHandler {
 		return $dependencies;
 	}
 
-	function get($id){
+	/**
+	 * Get an element object based on id or handle
+	 * Caches elements so that multiple calls for the same element do not hit the database more than once
+	 * @param mixed $id The element id (int) or handle (string)
+	 * @return mixed The element object, or false if not found
+	 */
+	function get($idOrHandle){
 		static $cachedElements = array();
-		if(isset($cachedElements[$id])) {
-			return $cachedElements[$id];
+		if(isset($cachedElements[$idOrHandle])) {
+			return $cachedElements[$idOrHandle];
 		}
-		if ($id > 0 AND is_numeric($id)) {
-			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$id;
+		if (is_numeric($idOrHandle) AND $idOrHandle > 0) {
+			$sql = 'SELECT * FROM '.formulize_TABLE.' WHERE ele_id='.$idOrHandle;
 			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$id] = false;
+				$cachedElements[$idOrHandle] = false;
 				return false;
 			}
 		} else {
-			$sql = "SELECT * FROM ".formulize_TABLE." WHERE ele_handle='".formulize_db_escape($id)."'";
+			$sql = "SELECT * FROM ".formulize_TABLE." WHERE ele_handle='".formulize_db_escape($idOrHandle)."'";
 			if (!$result = $this->db->query($sql)) {
-				$cachedElements[$id] = false;
+				$cachedElements[$idOrHandle] = false;
 				return false;
 			}
 		}
@@ -452,7 +583,7 @@ class formulizeElementsHandler {
 			}
 			$element->assignVars($array);
       $element = $this->_setElementProperties($element);
-			$cachedElements[$id] = $element;
+			$cachedElements[$idOrHandle] = $element;
 			return $element;
 		}
 		return false;
