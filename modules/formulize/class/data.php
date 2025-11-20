@@ -953,6 +953,13 @@ class formulizeDataHandler {
 			$element_values = addDefaultValuesToDataToWrite($element_values, $this->fid);
 		}
 
+		// remove legacy {WRITEASNULL} values that may have been set in the $element_values (by prepDataForWrite and related functions/methods)
+		foreach ($element_values as $key => $value) {
+			if ($value === "{WRITEASNULL}") {
+				$element_values[$key] = null;
+			}
+		}
+
 		// call a hook which can modify the values before saving. If it returns false, then return null up the chain.
 		list($element_values, $existing_values) = $formObject->onBeforeSave($entry_id, $element_values);
 		if ($element_values === false) { return null; }
