@@ -117,7 +117,9 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 			EV_MULTIPLE_LIST_COLUMNS,
 			EV_MULTIPLE_FORM_COLUMNS,
 			EV_MULTIPLE_SPREADSHEET_COLUMNS) as $key) {
-				$eleValueData[$key] = $this->convertElementRefsToIds($eleValueData[$key], $dependencyIdToHandleMap);
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToIds($eleValueData[$key], $dependencyIdToHandleMap);
+				}
 		}
 
 		return $eleValueData;
@@ -139,7 +141,9 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 			EV_MULTIPLE_LIST_COLUMNS,
 			EV_MULTIPLE_FORM_COLUMNS,
 			EV_MULTIPLE_SPREADSHEET_COLUMNS) as $key) {
-				$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				}
 		}
 
 		return $eleValueData;

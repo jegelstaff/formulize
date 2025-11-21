@@ -322,6 +322,7 @@ class FormulizeConfigSync
 	private function compareFormFields(array $configObject, array $dbObject, array $excludeFields = []): array
 	{
 		$differences = [];
+		$dbObject = $this->prepareFormForExport($dbObject); // need to prep it same as the contents of the file would have been prepped
 		foreach ($configObject as $field => $value) {
 			if (in_array($field, $excludeFields)) {
 				continue;
@@ -351,14 +352,18 @@ class FormulizeConfigSync
 	{
 		$differences = [];
 
+		// Convert any dependencies in the DB element to handle references for comparison
+		$dbElement = $this->elementHandler->convertDependenciesForExport($dbElement);
+
 		foreach ($configElement as $field => $value) {
 			$eleValueDiff = [];
 			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
-				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
+				$dbEleValue = (is_string($dbElement['ele_value']) AND $dbElement['ele_value'] !== "") ? unserialize($dbElement['ele_value']) : [];
 				foreach ($value as $key => $val) {
-					if ($dbEleValue AND (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key])) {
-						$eleValueDiff[$key] = [
+					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
+						$readableKey = array_flip($this->elementValueProcessor->elementMapping[$configElement['ele_type']])[$key] ?? $key;
+						$eleValueDiff[$readableKey] = [
 							'config_value' => json_encode($val),
 							'db_value' => json_encode($dbEleValue[$key]) ?? null
 						];
@@ -367,10 +372,17 @@ class FormulizeConfigSync
 				if (!empty($eleValueDiff)) {
 					$differences['ele_value'] = $eleValueDiff;
 				}
-			} elseif (!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
+			} elseif(!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
+				$db_value = $dbElement[$field];
+				if(is_string($dbElement[$field]) AND $dbElement[$field] !== "") {
+					$unserialized = unserialize($dbElement[$field]);
+					if($unserialized !== false AND is_array($unserialized)) {
+						$db_value = $unserialized;
+					}
+				}
 				$differences[$field] = [
 					'config_value' => json_encode($value),
-					'db_value' => json_encode($dbElement[$field]) ?? null
+					'db_value' => json_encode($db_value) ?? null
 				];
 			}
 		}
@@ -577,7 +589,7 @@ class FormulizeConfigSync
 					}
 					if($existingForm = $this->formHandler->getByHandle($convertedChange['form_handle'])) {
 						$convertedChange['fid'] = $existingForm->getVar('id_form');
-						$this->formHandler->upsertFormSchemaAndResources($convertedChange);
+						formulizeHandler::upsertFormSchemaAndResources($convertedChange);
 					} else {
 						$results['failure'][] = ['error' => "Form handle {$convertedChange['form_handle']} not found for dependency update", 'change' => $convertedChange];
 					}
@@ -692,6 +704,7 @@ class FormulizeConfigSync
 					$change['data']['ele_id'] = $existingElement->getVar('ele_id');
 					// use upsert if a compatible element type
 					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
+						$change['data']['fid'] = $formId;
 						if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
 							return true;
 						}
@@ -932,26 +945,28 @@ class FormulizeConfigSync
 		$elementObject = $this->elementHandler->get($elementRow['ele_handle']);
 		$elementDataType = $elementObject->getDataTypeInformation();
 
+		// convert serialized data into arrays
 		$serializeFields = ['ele_value', 'ele_uitext','ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
 		$preparedElement = [];
 		foreach ($elementRow as $field => $value) {
 			if (in_array($field, $serializeFields)) {
 				$unserialized = $value !== "" ? @unserialize($value) : [];
-				if ($field == 'ele_value') {
-					$preparedElement[$field] = $this->elementValueProcessor->processElementValueForExport($elementRow['ele_type'], $unserialized);
-				} else {
-					$preparedElement[$field] = $unserialized;
-				}
+				$preparedElement[$field] = $unserialized;
 			} else {
 				$preparedElement[$field] = $value;
 			}
 		}
+
+		// convert element refs to handles throughout
+		$preparedElement = $this->elementHandler->convertDependenciesForExport($preparedElement);
+
+		// clean up ele_value for export, so it's more readable
+		$preparedElement['ele_value'] = $this->elementValueProcessor->processElementValueForExport($preparedElement['ele_type'], $preparedElement['ele_value']);
+
 		// Add element Metadata
 		$preparedElement['metadata'] = [
 			'data_type' => $elementDataType['dataTypeCompleteString']
 		];
-
-		$preparedElement = $this->elementHandler->convertDependenciesForExport($preparedElement);
 
 		// Remove not needed fields
 		unset($preparedElement['id_form']);

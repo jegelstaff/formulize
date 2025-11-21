@@ -31,7 +31,7 @@
 ###############################################################################
 class FormulizeConfigSyncElementValueProcessor
 {
-	private $elementMapping = [];
+	public $elementMapping = [];
 	private $textElementMapping = [
 		'width' => 0,
 		'maxlength' => 1,

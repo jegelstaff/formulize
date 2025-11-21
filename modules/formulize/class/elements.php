@@ -322,7 +322,9 @@ class formulizeElementsHandler {
 				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
 				$typeHandler = xoops_getmodulehandler($elementData['ele_type'].'Element', 'formulize');
 				if(method_exists($typeHandler, 'convertEleValueDependenciesForImport')) {
-					$elementData['ele_value'] = $typeHandler->convertEleValueDependenciesForImport($elementData['ele_value'], $dependencyIdToHandleMap);
+					$settingsArray = is_array($elementData['ele_value']) ? $elementData['ele_value'] : unserialize($elementData['ele_value']);
+					$settingsArray = $typeHandler->convertEleValueDependenciesForImport($settingsArray, $dependencyIdToHandleMap);
+					$elementData['ele_value'] = is_array($elementData['ele_value']) ? $settingsArray : serialize($settingsArray);
 				}
 			}
 		}
@@ -346,7 +348,9 @@ class formulizeElementsHandler {
 				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
 				$typeHandler = xoops_getmodulehandler($elementData['ele_type'].'Element', 'formulize');
 				if(method_exists($typeHandler, 'convertEleValueDependenciesForExport')) {
-					$elementData['ele_value'] = $typeHandler->convertEleValueDependenciesForExport($elementData['ele_value'], $dependencyIdToHandleMap);
+					$settingsArray = is_array($elementData['ele_value']) ? $elementData['ele_value'] : unserialize($elementData['ele_value']);
+					$settingsArray = $typeHandler->convertEleValueDependenciesForExport($settingsArray, $dependencyIdToHandleMap);
+					$elementData['ele_value'] = is_array($elementData['ele_value']) ? $settingsArray : serialize($settingsArray);
 				}
 			}
 		}

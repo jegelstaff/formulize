@@ -189,7 +189,9 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			ELE_VALUE_SELECT_LINK_SORT,
 			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS,
 			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT) as $key) {
-				$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				}
 		}
 
 		// convert numeric ids within ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS to {elementHandle} refs so they can be distinguished from literal text values when importing
@@ -222,7 +224,9 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			ELE_VALUE_SELECT_LINK_SORT,
 			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS,
 			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT) as $key) {
-				$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				}
 		}
 
 		// convert numeric ids within ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS to {elementHandle} refs so they can be distinguished from literal text values when importing
