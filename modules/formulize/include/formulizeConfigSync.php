@@ -361,7 +361,7 @@ class FormulizeConfigSync
 			if ($field === 'ele_value') {
 				$dbEleValue = (is_string($dbElement['ele_value']) AND $dbElement['ele_value'] !== "") ? unserialize($dbElement['ele_value']) : [];
 				foreach ($value as $key => $val) {
-					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
+					if (is_array($dbEleValue) AND (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key])) {
 						$readableKey = array_flip($this->elementValueProcessor->elementMapping[$configElement['ele_type']])[$key] ?? $key;
 						$eleValueDiff[$readableKey] = [
 							'config_value' => json_encode($val),
@@ -589,7 +589,7 @@ class FormulizeConfigSync
 					}
 					if($existingForm = $this->formHandler->getByHandle($convertedChange['form_handle'])) {
 						$convertedChange['fid'] = $existingForm->getVar('id_form');
-						formulizeHandler::upsertFormSchemaAndResources($convertedChange);
+						formulizeHandler::upsertFormSchemaAndResources($convertedChange, applicationIds: null);
 					} else {
 						$results['failure'][] = ['error' => "Form handle {$convertedChange['form_handle']} not found for dependency update", 'change' => $convertedChange];
 					}
@@ -628,7 +628,7 @@ class FormulizeConfigSync
 					unset($change['data']['id_form']);
 				}
 				$change['data']['fid'] = $existingForm->getVar('id_form');
-				formulizeHandler::upsertFormSchemaAndResources($change['data']);
+				formulizeHandler::upsertFormSchemaAndResources($change['data'], applicationIds: null);
 				break;
 
 			case 'delete':
