@@ -651,11 +651,19 @@ class FormulizeConfigSync
 		$formId = $formObject->getVar('id_form');
 		$table = $this->getTableForType($change['type']);
 		$dataType = $change['metadata']['data_type'];
+		// check that the element is valid for upsert
+		// if not then sanitize handle and we will be using the direct DB writing
 		if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true) === false) {
 			$elementIdentifier = $change['operation'] == 'create' ? null : $change['data']['ele_handle'];
 			$enforcedEleHandle = formulizeHandler::enforceUniqueElementHandles($change['data']['ele_handle'], $elementIdentifier, $formId);
 			if($enforcedEleHandle != $change['data']['ele_handle']) {
 				throw new \Exception($change['data']['ele_handle']. " is not a unique element handle. Globally unique element handles are required.");
+			}
+			// since we're writing direct, make sure arrays are serialized
+			foreach($change['data'] as $key => $value) {
+				if (is_array($value)) {
+					$change['data'][$key] = serialize($value);
+				}
 			}
 		}
 
@@ -682,10 +690,6 @@ class FormulizeConfigSync
 							$this->formHandler->insertElementField($elementId, $dataType);
 							if($elementObject = $this->elementHandler->get($elementId)) {
 								addElementToMultiPageScreens($elementObject->getVar('fid'), $elementObject);
-								// maintain connections in relationships if this is a linked element (and it's new or the source has changed)
-								if($elementObject->isLinked) {
-									updateLinkedElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'), getSourceFormIdForLinkedElement($elementObject), getSourceElementHandleForLinkedElement($elementObject), '', '');
-								}
 							}
 							return true;
 						}
@@ -710,17 +714,9 @@ class FormulizeConfigSync
 						}
 					// otherwise, do a direct update and then update the field separately
 					} else {
-						if($existingElement->isLinked) {
-							$orig_source_form_id = getSourceFormIdForLinkedElement($existingElement);
-							$orig_source_element_handle = getSourceElementHandleForLinkedElement($existingElement);
-						}
-						$this->updateRecord($table, $change['data'], $this->getPrimaryKeyForType($change['type']));
-						// Apply data type changes to the element
-						$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
-						if($elementObject = $this->elementHandler->get($change['data']['ele_handle'])) {
-							if($elementObject->isLinked) {
-								updateLinkedElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'), getSourceFormIdForLinkedElement($elementObject), getSourceElementHandleForLinkedElement($elementObject), $orig_source_form_id, $orig_source_element_handle);
-							}
+						if($this->updateRecord($table, $change['data'], $this->getPrimaryKeyForType($change['type']))) {
+							// Apply data type changes to the element
+							$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
 							return true;
 						}
 					}
