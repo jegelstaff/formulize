@@ -131,8 +131,12 @@ class formulizeHandler {
 				'singular' => 'subform interface',
 				'plural' => 'subform interfaces'
 			),
+			'derived' => array(
+				'singular' => 'derived value element',
+				'plural' => 'derived value elements'
+			),
 			// WILL NEED TO BE FILLED IN FURTHER FOR 'LAYOUT' ELEMENTS WHEN THEY HAVE CLASSES
-			// AND WHAT TO DO ABOUT DERIVED ELEMENTS IS NOT ENTIRELY CLEAR (NOR OTHER MISC ELEMENTS)
+
 		);
 	}
 
@@ -429,27 +433,33 @@ class formulizeHandler {
 	/**
 	 * Validate that the element type
 	 * @param string $elementType The element type to validate - passed by reference so we can correct the case if needed
-	 * @throws Exception if the element type is not valid
-	 * @return void
+	 * @param string|null $requestedCategory Optional. If provided, a case insensitive double check of elements with this static $category designation will be attempted
+	 * @param bool $return Default is false. If true, the function will return instead of throwing an exception on invalid type
+	 * @throws Exception if the element type is not valid, if return is false.
+	 * @return bool Returns true if valid. If $return param is true, returns false if not valid, or throws the exception.
 	 */
-	public static function validateElementType(&$elementType, $requestedCategory = null) {
-		list($elementTypes, $mcpElementDescriptions) = formulizeHandler::discoverElementTypes();
+	public static function validateElementType(&$elementType, $requestedCategory = null, $return = false) {
+		list($elementTypes, $mcpElementDescriptions, $mcpSingleTypeDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {
 			if(in_array($elementType, $categoryTypes)) {
-				return;
+				return true;
 			} elseif(!$requestedCategory OR $category == $requestedCategory) {
 				// try correcting the case of the element type to see if it is in fact in this category
 				foreach($categoryTypes as $validElementType) {
 					$allValidElementTypes[] = $validElementType;
 					if(strtolower($validElementType) == strtolower($elementType)) {
 						$elementType = $validElementType;
-						return;
+						return true;
 					}
 				}
 			}
 		}
-		throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $allValidElementTypes));
+		if($return) {
+			return false;
+		} else {
+			throw new Exception("Element type '$elementType' is not valid. Valid element types are: ".implode(', ', $allValidElementTypes));
+		}
 	}
 
 	/**
@@ -484,7 +494,6 @@ class formulizeHandler {
 		// get the element object that we care about, or start a new one from scratch if ele_id is 0, null, etc.
 		if($element_id AND $elementObject = $element_handler->get($element_id)) {
 			$elementIsNew = false;
-			$form_id = $elementObject->getVar('fid');
 			$originalElementNames = array(
 				'ele_handle' => $elementObject->getVar('ele_handle'),
 				'source_form_id' => getSourceFormIdForLinkedElement($elementObject),
@@ -494,9 +503,13 @@ class formulizeHandler {
 			if(isset($elementObjectProperties['ele_id'])) {
 				unset($elementObjectProperties['ele_id']); // make sure ele_id is not set, so we're acting like it's a new element request
 			}
+			// create the element and set initial required properties that are necessary for writing files, etc
 			$elementObject = $element_handler->create();
 			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
-			$form_id = intval($elementObjectProperties['fid']);
+			$elementObject->setVar('ele_caption', $elementObjectProperties['ele_caption']);
+			$elementObject->setVar('fid', $elementObjectProperties['fid']);
+			$elementObject->setVar('ele_handle', $elementObjectProperties['ele_handle']);
+			$elementObjectProperties['ele_handle'] = $element_handler->validateElementHandle($elementObject);
 		} else {
 			throw new Exception('Must provide a valid ele_id to update an existing element, or a valid fid and ele_type to create a new element');
 		}
@@ -504,7 +517,7 @@ class formulizeHandler {
 		global $xoopsUser, $xoopsDB;
 		$mid = getFormulizeModId();
 		$gperm_handler = xoops_gethandler('groupperm');
-		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $form_id, $xoopsUser->getGroups(), $mid) == false) {
+		if(!$xoopsUser OR $gperm_handler->checkRight("edit_form", $elementObject->getVar('fid'), $xoopsUser->getGroups(), $mid) == false) {
 			throw new Exception("Permission denied: You don't have permission to edit this form.");
 		}
 
@@ -630,10 +643,12 @@ class formulizeHandler {
 	public static function discoverElementTypes($update = false) {
 		static $elementTypes = [];
 		static $elementDescriptions = [];
+		static $singleTypeElementProperties = [];
 		$update = $update ? 1 : 0;
 		if(empty($elementTypes) OR empty($elementDescriptions[$update])) {
 			$elementTypes = [];
 			$elementDescriptions[$update] = [];
+			$singleTypeElementProperties = [];
 			// Scan for element class files
 			$elementClassPath = XOOPS_ROOT_PATH . '/modules/formulize/class';
 			$elementFiles = glob($elementClassPath . '/*Element.php');
@@ -643,15 +658,19 @@ class formulizeHandler {
 			foreach ($elementFiles as $file) {
 				include_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.basename($file);
 				$elementType = str_replace('Element.php', '', basename($file));
-				if(methodExistsInClass('formulize'.ucfirst($elementType).'Element', 'mcpElementPropertiesDescriptionAndExamples')) {
-					$className = "formulize".ucfirst($elementType)."Element";
+				$className = "formulize".ucfirst($elementType)."Element";
+				if(methodExistsInClass($className, 'mcpElementPropertiesDescriptionAndExamples')) {
 					$category = $className::$category;
 					$elementTypes[$category][] = $elementType;
 					$elementDescriptions[$update][$category][] = $className::mcpElementPropertiesDescriptionAndExamples($update);
+					$singleTypeElementProperties[$category] = null;
+					if(methodExistsInClass($className, 'mcpSingleTypeElementProperties')) {
+						$singleTypeElementProperties[$category] = $className::mcpSingleTypeElementProperties($update);
+					}
 				}
 			}
 		}
-		return [$elementTypes, $elementDescriptions[$update]];
+		return [$elementTypes, $elementDescriptions[$update], $singleTypeElementProperties];
 	}
 
 	/**

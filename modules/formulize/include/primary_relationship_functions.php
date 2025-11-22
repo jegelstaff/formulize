@@ -237,10 +237,10 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 		} else {
 			$e1 = _getElementObject($k1);
 			$e2 = _getElementObject($k2);
-			if(is_object($e1) AND strlen($e1->has_index()) == 0){
+			if(strlen($e1->has_index()) == 0){
         $e1->createIndex();
       }
-			if(is_object($e2) AND strlen($e2->has_index()) == 0){
+			if(strlen($e2->has_index()) == 0){
         $e2->createIndex();
       }
 		}

@@ -89,6 +89,54 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 		];
 	}
 
+	/**
+	 * Convert linked element source references from ids to handles
+	 * @param string $value The value to convert
+	 * @return string The converted value
+	 */
+	protected function convertLinkedElementSourceRefToHandles($value) {
+		return $this->convertLinkedElementSourceRefToHandlesOrIds($value, 'export');
+	}
+
+	/**
+	 * Convert linked element source references from handles to ids
+	 * @param string $value The value to convert
+	 * @return string The converted value
+	 */
+	protected function convertLinkedElementSourceRefToIds($value) {
+		return $this->convertLinkedElementSourceRefToHandlesOrIds($value, 'import');
+	}
+
+	/**
+	 * Convert linked element source form references between handles and ids
+	 * @param string $value The value to convert
+	 * @param string $direction 'import' to convert handles to ids, 'export' to convert ids to handles
+	 * @return string The converted value
+	 */
+	private function convertLinkedElementSourceRefToHandlesOrIds($value, $direction) {
+		if($direction != 'import' AND $direction != 'export') {
+			throw new Exception("Invalid direction passed to convert dependencies: ".$direction.".	Must be 'import' or 'export'.");
+			return $value; // might have exited with the exception, but we'll send this back anyway just in case
+		}
+		if(strstr($value, "#*=:*")) {
+			// formId#*=:*elementHandle is the format canonical format in DB
+			$linkedMetaDataParts = explode("#*=:*", $value);
+			if(count($linkedMetaDataParts) == 2) {
+				$formHandler = xoops_getmodulehandler('forms', 'formulize');
+				if($sourceFormObject = $formHandler->get($linkedMetaDataParts[0])) {
+					if($direction == 'import' AND !is_numeric($linkedMetaDataParts[0])) {
+						$value = $sourceFormObject->getVar('fid')."#*=:*".$linkedMetaDataParts[1];
+					} elseif($direction == 'export' AND is_numeric($linkedMetaDataParts[0])) {
+						$value = $sourceFormObject->getVar('form_handle')."#*=:*".$linkedMetaDataParts[1];
+					}
+				} else {
+					throw new Exception("Could not convert form id to handle for linked select element. Invalid form identifier: ".$linkedMetaDataParts[0]);
+				}
+			}
+		}
+		return $value;
+	}
+
 }
 
 

@@ -53,6 +53,10 @@ $adminPage['success'] = [];
 $adminPage['failure'] = [];
 
 if (isset($_POST['action']) && $_POST['action'] == 'export') {
+	icms::$logger->disableLogger();
+	while(ob_get_level()) {
+			ob_end_clean();
+	}
 	$export = $configSync->exportConfiguration();
 	header('Content-Type: application/json');
 	header('Content-Disposition: attachment; filename="forms.json"');
