@@ -797,7 +797,7 @@ class FormulizeConfigSync
 		$placeholders = array_fill(0, count($fields), '?');
 		foreach($data as $index => $value) {
 			$value = is_array($value) ? serialize($value) : $value;
-			$data[$index] = formulize_db_escape($value);
+			$data[$index] = $value;
 		}
 
 		$sql = sprintf(
@@ -838,9 +838,9 @@ class FormulizeConfigSync
 		$values = [];
 		foreach($data as $key => $value) {
 			$value = is_array($value) ? serialize($value) : $value;
-			$values[] = formulize_db_escape($value);
+			$values[] = $value;
 		}
-		$values[] = formulize_db_escape($data[$primaryKey]);
+		$values[] = $data[$primaryKey];
 
 		$stmt = $this->db->prepare($sql);
 		$result = $stmt->execute($values);
