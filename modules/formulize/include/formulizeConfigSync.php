@@ -957,7 +957,7 @@ class FormulizeConfigSync
 		$preparedElement = $this->elementHandler->convertDependenciesForExport($preparedElement);
 
 		// clean up ele_value for export, so it's more readable
-		$preparedElement['ele_value'] = $this->elementValueProcessor->processElementValueForExport($preparedElement['ele_type'], $preparedElement['ele_value']);
+		$preparedElement['ele_value'] = is_array($preparedElement['ele_value']) ? $this->elementValueProcessor->processElementValueForExport($preparedElement['ele_type'], $preparedElement['ele_value']) : array();
 
 		// Add element Metadata
 		$preparedElement['metadata'] = [
@@ -988,7 +988,11 @@ class FormulizeConfigSync
 			return $value === "" ? null : $value;
 		}
 		if (is_array($value)) {
-			return empty($value) ? null : $value;
+			if(!empty($value)) {
+				ksort($value);
+				return $value;
+			}
+			return null;
 		}
 		if (is_bool($value)) {
 			return (int) $value;
