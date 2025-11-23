@@ -288,7 +288,7 @@ class formulizeHandler {
 	 * Builds or updates a form, including creating or renaming the data table, creating default screens, and setting up permissions, renaming resources...
 	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
 	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form (only used when creating a new form)
-	 * @param array $applicationIds An array of existing application ids to assign this form to (only used when creating a new form)
+	 * @param array|null $applicationIds An array of existing application ids to assign this form to. Set to null to skip application assignment.  Default is array(0) to assign to the default application.
 	 * @throws Exception if there are any problems creating or updating the form
 	 * @return object returns the form object
 	 */
