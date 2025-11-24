@@ -58,6 +58,14 @@ class FormulizeConfigSyncElementValueProcessor
 	private $checkboxElementMapping = [
 		'options' => 2,
 	];
+	private $checkboxLinkedElementMapping = [
+		'options' => 2,
+		'sort_values_element_id' => 12,
+		'sort_order' => 15,
+		'list_supplied_values_element_ids' => 10,
+		'export_supplied_values_element_ids' => 11,
+		'form_supplied_values_element_ids' => 17
+	];
 	private $selectElementMapping = [
 		'number_of_rows' => 0,
 		'multiple_selections' => 1,
@@ -69,14 +77,14 @@ class FormulizeConfigSyncElementValueProcessor
 		'clickable' => 7,
 		'autocomplete' => 8,
 		'selection_limit' => 9,
-		'list_supplied_values_element_id' => 10,
-		'export_supplied_values_element_id' => 11,
+		'list_supplied_values_element_ids' => 10,
+		'export_supplied_values_element_ids' => 11,
 		'sort_values_element_id' => 12,
 		'default_value_entry_id' => 13,
 		'show_default_text_when_no_values' => 14,
 		'sort_order' => 15,
 		'autocomplete_allow_new_values' => 16,
-		'alternative_form_for_element' => 17
+		'form_supplied_values_element_ids' => 17
 	];
 	private $textareaMapping = [
 		'default_text' => 0,
@@ -113,7 +121,7 @@ class FormulizeConfigSyncElementValueProcessor
 			'number' => $this->textElementMapping,
 			'textarea' => $this->textareaMapping,
 			'checkbox' => $this->checkboxElementMapping,
-			'checkboxLinked' => $this->checkboxElementMapping,
+			'checkboxLinked' => $this->checkboxLinkedElementMapping,
 			'radio' => $this->checkboxElementMapping,
 			'yn' => $this->ynradioMapping,
 			'select' => $this->selectElementMapping,
