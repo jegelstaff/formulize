@@ -147,7 +147,7 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	/**
 	 * Take data representing an element's properties, and convert any handles to numeric ids
 	 * @param array $elementData An associative array of form data, following the form object structure
-	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
@@ -160,7 +160,7 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	/**
 	 * Take data representing an element's properties, and convert any numeric id refs to handles
 	 * @param array $elementData An associative array of form data, following the form object structure
-	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {

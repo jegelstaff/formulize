@@ -529,6 +529,33 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Get element dependencies from a value that may contain element references
+	 * @param mixed $value The value to check, either an integer, string, an array or a serialized array string
+	 * @param array $dependencies An array of element handles that this value depends on
+	 */
+	protected function formulize_getRegularDependencies($value) {
+		$dependencies = array();
+		if(!is_array($value)) {
+			$unserialized = unserialize($value);
+			if(is_array($unserialized)) {
+				$value = $unserialized;
+			} else {
+				$value = array($value);
+			}
+		}
+		foreach($value as $element) {
+			if(is_numeric($element)) {
+				if($elementObject = _getElementObject($element)) {
+					$dependencies[] = $elementObject->getVar('ele_handle');
+				}
+			} elseif($element AND $element != 'none') {
+				$dependencies[] = $element;
+			}
+		}
+		return $dependencies;
+	}
+
+	/**
 	 * Get element dependencies from a standard filter settings array
 	 * @param mixed $filterSettings The filter settings, either as an array or a serialized array
 	 * @return array An array of element handles that this filter depends on

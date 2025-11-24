@@ -175,6 +175,129 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		];
 	}
 
+	/**
+	 * Take data representing an element's properties, and convert any handle refs to numeric ids
+	 * Premise is that everything exists in the database now or else this won't work
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
+
+		// display_screen todo when screens supported
+
+		// 0 is form id
+		$formHandler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $formHandler->get($eleValueData[0]);
+		$eleValueData[0] = $formObject->getVar('fid');
+
+		// disabledelements and 1 are comma separated element ids
+		foreach(array('disabledelements', 1) as $key) {
+			$elementIdsArray = array();
+			foreach(explode(',', $eleValueData[$key]) as $elementHandle) {
+				if($id = array_search($elementHandle, $dependencyIdToHandleMap)) {
+					$elementIdsArray[] = $id;
+				}
+			}
+			$eleValueData[$key] = count($elementIdsArray) > 0 ? implode(",", $elementIdsArray) : $eleValueData[$key];
+		}
+
+		$eleValueData[7] = $this->formulize_convertFilterDependenciesToIds($eleValueData[7], $dependencyIdToHandleMap);
+
+		foreach(array(
+			'subform_prepop_element',
+			'SortingElement',
+			'UserFilterByElement') as $key) {
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToIds($eleValueData[$key], $dependencyIdToHandleMap);
+				}
+		}
+
+		return $eleValueData;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any numeric id refs to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+
+		// display_screen todo when screens supported
+
+		// 0 is form id
+		$formHandler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $formHandler->get($eleValueData[0]);
+		$eleValueData[0] = $formObject->getVar('form_handle');
+
+		// disabledelements and 1 are comma separated element ids
+		foreach(array('disabledelements', 1) as $key) {
+			$elementHandlesArray = array();
+			foreach(explode(',', $eleValueData[$key]) as $elementId) {
+				if(isset($dependencyIdToHandleMap[intval($elementId)])) {
+					$elementHandlesArray[] = $dependencyIdToHandleMap[intval($elementId)];
+				}
+			}
+			$eleValueData[$key] = count($elementHandlesArray) > 0 ? implode(",", $elementHandlesArray) : $eleValueData[$key];
+		}
+
+		$eleValueData[7] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[7], $dependencyIdToHandleMap);
+
+		foreach(array(
+			'subform_prepop_element',
+			'SortingElement',
+			'UserFilterByElement') as $key) {
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				}
+		}
+
+		return $eleValueData;
+	}
+
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
+	 */
+	public function getEleValueDependencies($values) {
+
+		$dependencies = array();
+
+		// disabledelements and 1 are comma separated element ids
+		foreach(array('disabledelements', 1) as $key) {
+			if(isset($values[$key])) {
+				$elementHandlesArray = array();
+				foreach(explode(',', $values[$key]) as $elementIdentifier) {
+					if(is_numeric($elementIdentifier)) {
+						if($elementObject = _getElementObject($elementIdentifier)) {
+							$dependencies[] = $elementObject->getVar('ele_handle');
+						}
+					} else {
+						$dependencies[] = $elementIdentifier;
+					}
+				}
+			}
+		}
+
+		$filterDependencies = $this->formulize_getFilterDependencies($values[7]);
+		$dependencies = array_merge($dependencies, $filterDependencies);
+
+		foreach(array(
+			'subform_prepop_element',
+			'SortingElement',
+			'UserFilterByElement') as $key) {
+				if(isset($values[$key])) {
+					$dependencies = array_merge($dependencies, $this->formulize_getRegularDependencies($values[$key]));
+				}
+		}
+
+		return array_filter(array_unique($dependencies), function($value) {
+			return $value !== 'none';
+		});
+	}
+
 	public function getDefaultEleValue() {
 			$ele_value = array();
 			$ele_value[0] = 0; // form we're linking to

@@ -104,7 +104,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 	/**
 	 * Take data representing an element's properties, and convert any handles to numeric ids
 	 * @param array $elementData An associative array of form data, following the form object structure
-	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
@@ -128,7 +128,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 	/**
 	 * Take data representing an element's properties, and convert any numeric id refs to handles
 	 * @param array $elementData An associative array of form data, following the form object structure
-	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
@@ -170,23 +170,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 			}
 			// passed in elementData ought to have had all numeric references converted to element handles already! Or else these keys may have numeric refs to elements not yet in existence in DB!
 			if(in_array($key, array(12, EV_MULTIPLE_LIST_COLUMNS, EV_MULTIPLE_FORM_COLUMNS, EV_MULTIPLE_SPREADSHEET_COLUMNS))) {
-				if(!is_array($value)) {
-					$unserialized = unserialize($value);
-					if(is_array($unserialized)) {
-						$value = $unserialized;
-					} else {
-						$value = array($value);
-					}
-				}
-				foreach($value as $element) {
-					if(is_numeric($element)) {
-						if($elementObject = _getElementObject($element)) {
-							$dependencies[] = $elementObject->getVar('ele_handle');
-						}
-					} elseif($element AND $element != 'none') {
-						$dependencies[] = $element;
-					}
-				}
+				$dependencies = array_merge($dependencies, $this->formulize_getRegularDependencies($value));
 			}
 		}
 		return array_filter(array_unique($dependencies), function($value) {

@@ -105,6 +105,18 @@ class FormulizeConfigSyncElementValueProcessor
 		'stepSize' => 2,
 		'defaultValue' => 3,
 	];
+	private $subformListingsElementMapping = [
+		'subform_form_id' => 0,
+		'elements_to_show' => 1,
+		'number_of_blanks' => 2,
+		'view_entry_mode' => 3,
+		'column_headings_or_captions' => 4,
+		'mainform_as_entry_owner' => 5,
+		'add_entries_perm_source' => 6,
+		'filter_included_entries' => 7,
+		'subform_type' => 8,
+		'add_entry_button_text' => 9
+	];
 
 	public function __construct()
 	{
@@ -136,6 +148,9 @@ class FormulizeConfigSyncElementValueProcessor
 			'date' => $this->dateMapping,
 			'slider' => $this->sliderMapping,
 			'grid' => $this->gridElementMapping,
+			'subformFullForm' => $this->subformListingsElementMapping,
+			'subformEditableRow' => $this->subformListingsElementMapping,
+			'subformListings' => $this->subformListingsElementMapping,
 		];
 	}
 

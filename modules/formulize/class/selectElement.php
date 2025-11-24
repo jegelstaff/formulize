@@ -173,7 +173,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	 * Take data representing an element's properties, and convert any handle refs to numeric ids
 	 * Premise is that everything exists in the database now or else this won't work
 	 * @param array $elementData An associative array of form data, following the form object structure
-	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
@@ -208,7 +208,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	/**
 	 * Take data representing an element's properties, and convert any numeric id refs to handles
 	 * @param array $elementData An associative array of form data, following the form object structure
-	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
 	 * @return array The modified $formData with numeric dependencies converted to handles
 	 */
 	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
@@ -261,23 +261,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			}
 			// passed in elementData ought to have had all numeric references converted to element handles already! Or else these keys may have numeric refs to elements not yet in existence in DB!
 			if(in_array($key, array(ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS, ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS, ELE_VALUE_SELECT_LINK_SORT, ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS, ELE_VALUE_SELECT_LINK_LIMITBYELEMENT))) {
-				if(!is_array($value)) {
-					$unserialized = unserialize($value);
-					if(is_array($unserialized)) {
-						$value = $unserialized;
-					} else {
-						$value = array($value);
-					}
-				}
-				foreach($value as $element) {
-					if(is_numeric($element)) {
-						if($elementObject = _getElementObject($element)) {
-							$dependencies[] = $elementObject->getVar('ele_handle');
-						}
-					} elseif($element AND $element != 'none') {
-						$dependencies[] = $element;
-					}
-				}
+				$dependencies = array_merge($dependencies, $this->formulize_getRegularDependencies($value));
 			}
 			// passed in elementData ought to have had all numeric references converted to element handles, wrapped with { } for this key. Or else these keys may have numeric refs to elements not yet in existence in DB!
 			if($key == ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS) {
