@@ -262,11 +262,13 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		$dataToSendToTemplate['subformTitle'] = $ele_id != 'new' ? $validForms[intval($ele_value[0])] : '';
 		$formtouse = $ele_value[0] ? $ele_value[0] : 0;
 		if($formtouse) {
-			$elementsq = q("SELECT ele_caption, ele_colhead, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=" . intval($formtouse) . " AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" ORDER BY ele_order");
+			$subFormObject = $form_handler->get($formtouse);
 			$dataToSendToTemplate['subformUserFilterElements'][0] = _AM_FORMULIZE_SUBFORM_FILTERDEFAULT;
-			foreach($elementsq as $oneele) {
-					$dataToSendToTemplate['subformelements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
-					$dataToSendToTemplate['subformUserFilterElements'][$oneele['ele_id']] = $oneele['ele_colhead'] ? $oneele['ele_colhead'] : printSmart($oneele['ele_caption']);
+			$subformColheads = $subFormObject->getVar('elementColheads');
+			$subformCaptions = $subFormObject->getVar('elementCaptions');
+			foreach($subFormObject->getVar('elementsWithData') as $subformElementWithDataId) {
+				$dataToSendToTemplate['subformelements'][$subformElementWithDataId] = $subformColheads[$subformElementWithDataId] ? $subformColheads[$subformElementWithDataId] : printSmart($subformCaptions[$subformElementWithDataId]);
+				$dataToSendToTemplate['subformUserFilterElements'][$subformElementWithDataId] = $subformColheads[$subformElementWithDataId] ? $subformColheads[$subformElementWithDataId] : printSmart($subformCaptions[$subformElementWithDataId]);
 			}
 			$dataToSendToTemplate['subformSortingElements'] = $dataToSendToTemplate['subformUserFilterElements'];
 			$dataToSendToTemplate['subformSortingElements'][0] = _AM_FORMULIZE_SUBFORM_SORTDEFAULT;

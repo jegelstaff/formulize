@@ -394,18 +394,16 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 		$renderedElementMarkupName = 'de_'.$elementObject->getVar('id_form').'_'.$entryForDEElements.'_'.$elementObject->getVar('ele_id');
 		$elementType = $elementObject->getVar('ele_type');
 
-		if($elementType == "ib" OR is_array($elementContents)) {
-			$elementContents = trans(stripslashes($form_ele[0]));
-			$breakClass = $form_ele[1];
-		} elseif($elementType == "grid") {
-			$elementContents = renderGrid($elementObject, $entryForDEElements); // won't take into account the existing entry's saved values or the screen config when rendering the consituent elements, but probably doesn't matter.
+		if($elementType == "ib" OR is_string($elementContents) OR is_array($elementContents)) {
+			$breakClass = (is_array($elementContents) AND isset($elementContents[1]) AND $elementContents[1]) ? $elementContents[1] : "head";
+			$elementContents = (is_array($elementContents) AND isset($elementContents[0]) AND $elementContents[0]) ? $elementContents[0] : $elementContents;
 		}
 
 		// render the element
 		if(is_object($elementContents)) {
 			$html = $form->_drawElementElementHTML($elementContents);
 		} elseif($elementContents !== false) {
-			$form->insertBreakFormulize($elementContents, $breakClass, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
+			$form->insertBreakFormulize(trans(stripslashes($elementContents)), $breakClass, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
 			$hidden = '';
 			$html = '';
 			list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);

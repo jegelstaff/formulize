@@ -347,12 +347,6 @@ function renderGrid($elementObject, $entry_id = 'new', $prevEntry = null, $scree
 	$gridContents = displayGrid($fid, $entry_id, $grid_row_caps, $grid_col_caps, $grid_title, $grid_background, $grid_start, "", "", true, $screen, $headingAtSide, $elementObject, $prevEntry); // also sets the $GLOBALS['elementsInGridsAndTheirContainers'] which references the elements that were rendered into the grid
 	if($headingAtSide) { // grid contents is the two bits for the xoopsformlabel when heading is at side, otherwise, it's just the contents for the break
 		$gridElement = new XoopsFormLabel($gridContents[0], $gridContents[1], $renderedElementMarkupName);
-		$helpText = $elementObject->getVar('ele_desc');
-		if(trim($helpText)) {
-$elementRenderer = new formulizeElementRenderer($elementObject);
-			$helpText = $elementRenderer->formulize_replaceCurlyBracketVariables($helpText, $entry_id, $elementObject->getVar('id_form'), $renderedElementMarkupName);
-			$gridElement->setDescription($helpText);
-		}
 		// if any of the elements in the grid are required, mark as required so we get the asterisk
 		if(gridHasRequiredElements($grid_start, $fid, $grid_count)) {
 			$gridElement->setRequired();
@@ -388,7 +382,9 @@ function elementsInGrid($startID, $fid, $gridCount = 0, $requiredOnly = false) {
 		$starting_order = $order_query[0]['ele_order'];
 		$required = $requiredOnly ? "ele_required = 1 AND" : "";
 		$limitCondition = $gridCount ? " LIMIT 0, ".intval($gridCount) : "";
-		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' AND id_form='$fid' AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\" ORDER BY ele_order $limitCondition", 'ele_id', true);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($fid);
+		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' AND id_form='$fid' AND ele_id IN (".implode(",",$formObject->getVar('elementsWithData')).") ORDER BY ele_order $limitCondition", 'ele_id', true);
 		$cachedGridElements[$fid][$startID][$gridCount][$requiredOnly] = $element_ids_result;
 	}
 	return $cachedGridElements[$fid][$startID][$gridCount][$requiredOnly];

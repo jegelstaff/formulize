@@ -68,23 +68,6 @@ if($_POST['element_delimit']) {
   }
 }
 
-if($ele_type == "grid") {
-	// position the grid immediately before the first element that's in the grid
-	// have to figure out the preceeding element, then request the figureOutOrder with that element's id
-	global $xoopsDB;
-	$position = 'top';
-	if($firstGridElement = _getElementObject($processedValues['elements']['ele_value'][4])) {
-		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
-		if($res = $xoopsDB->query($sql)) {
-			if($xoopsDB->getRowsNum($res) == 1) {
-				$array = $xoopsDB->fetchArray($res);
-				$position = $array['ele_id'];
-			}
-		}
-	}
-	$processedValues['elements']['ele_order'] = figureOutOrder($position, $element->getVar('ele_order'), $fid);
-}
-
 $ele_value_before_adminSave = "";
 $ele_value_after_adminSave = "";
 // call the adminSave method. IT SHOULD SET ele_value ON THE ELEMENT OBJECT, AND MUST SET IT IF IT IS MAKING CHANGES.
