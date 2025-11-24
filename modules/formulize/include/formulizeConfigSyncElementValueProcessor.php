@@ -47,6 +47,14 @@ class FormulizeConfigSyncElementValueProcessor
 		'default_value_as_placeholder' => 11,
 		'trim_value' => 12
  	];
+	private $gridElementMapping = [
+		'source_of_caption' => 0,
+		'row_labels' => 1,
+		'column_labels' => 2,
+		'shading_orientation' => 3,
+		'initial_element_id' => 4,
+		'caption_at_side' => 5
+	];
 	private $checkboxElementMapping = [
 		'options' => 2,
 	];
@@ -119,6 +127,7 @@ class FormulizeConfigSyncElementValueProcessor
 			'autocompleteUsers' => $this->selectElementMapping,
 			'date' => $this->dateMapping,
 			'slider' => $this->sliderMapping,
+			'grid' => $this->gridElementMapping,
 		];
 	}
 

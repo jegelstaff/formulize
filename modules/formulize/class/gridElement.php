@@ -60,11 +60,16 @@ class formulizeGridElement extends formulizeElement {
 "**Element:** Table of elements (grid).
 **Description:** A table that contains elements from the form, so they can be displayed together in rows and/or columns. This is useful for display first name/last name boxes, or parts of addresses, like province and postal code, etc.
 **Properties:**
--
+- initialElementId (Required. The element id of the first element in the table. This element will appear in the upper left corner, and the remaining spaces in the table will be filled by the subsequent elements in the form in order.)
+- numberOfRows (Required. The number of rows in the table.)
+- numberOfColumns (Required. The number of columns in the table.)
+- rowLabels (Optional. Comma separated list of labels, one for each row in the table.)
+- columnLabels (Optional. Comma separated list of labels for the columns in the table.)
 **Examples:**
-- A table to show first name and last name beside each other in the form: { }
-- A table to show province and postal code beside each other in the form: { }
-- A table to show a series of preferences in a single column all together in the form: { }";
+- A table to show first name and last name beside each other in the form: { initialElementId: 12, numberOfRows: 1, numberOfColumns: 2, rowLabels: \"\", columnLabels: \"First Name, Last Name\" }
+- A table to show province and postal code beside each other in the form: { initialElementId: 15, numberOfRows: 1, numberOfColumns: 2, rowLabels: \"\", columnLabels: \"Province, Postal Code\" }
+- A table to show five preferences in a single column all together in the form, with no labels (four commas will mean five rows with no text labels): { initialElementId: 20, numberOfRows: 5, numberOfColumns: 1 }
+- A table with three rows, each row gives users a choice of meals, a gluten-free yes/no option, and a choice of music. The yes/no option is self-explanatory and so has no column label: { initialElementId: 25, numberOfRows: 3, numberOfColumns: 3, rowLabels: \"Option 1, Option 2, Option 3\", columnLabels: \"Meals, , Music\" }";
 	}
 
 }
@@ -95,18 +100,87 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		if(isset($properties['defaultValue'])) {
-			$ele_value[$this->defaultValueKey] = trim($properties['defaultValue']);
+		if($ele_value[1] == '' AND $ele_value[2] == '' AND (!isset($properties['numberOfRows']) OR !isset($properties['numberOfColumns']))) {
+			throw new Exception("You must specify at least one row and one column for the grid.");
 		}
-		if(isset($properties['useRichTextEditor']) AND defined('ELE_VALUE_TEXTAREA_RICHTEXT')) {
-			$ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] = trim($properties['useRichTextEditor']);
+		if(!$ele_value[4] AND !isset($properties['initialElementId'])) {
+			throw new Exception("You must specify the initialElementId property to indicate the first element in the grid.");
 		}
+		if(isset($properties['initialElementId'])) {
+			$ele_value[4] = intval($properties['initialElementId']);
+		}
+		$passedRowLabels = isset($properties['rowLabels']) ? explode(",", $properties['rowLabels']) : [];
+		$passedColumnLabels = isset($properties['columnLabels']) ? explode(",", $properties['columnLabels']) : [];
+		$rowLabels = [];
+		$colLabels = [];
+		if(isset($properties['numberOfRows']) AND isset($properties['numberOfColumns'])) {
+			for($row = 0; $row < intval($properties['numberOfRows']); $row++) {
+				$rowLabels[] = isset($passedRowLabels[$row]) ? trim($passedRowLabels[$row]) : "";
+			}
+			for($col = 0; $col < intval($properties['numberOfColumns']); $col++) {
+				$colLabels[] = isset($passedColumnLabels[$col]) ? trim($passedColumnLabels[$col]) : "";
+			}
+		}
+		$ele_value[1] = implode(",", $rowLabels);
+		$ele_value[2] = implode(",", $colLabels);
 		return ['ele_value' => $ele_value ];
 	}
 
 	public function getDefaultEleValue() {
-		$ele_value = array();
+		// 0 - string - use heading from: caption or form or none
+		// 1 - row captions, comma separated
+		// 2 - column captions, comma separated
+		// 3 - string - alternate shading in the grid: horizontal (rows) or vertical (columns) (no effect in Anari?)
+		// 4 - starting element id
+		// 5 - heading at side (1) or above (0)
+		$ele_value = array(
+			0 => "caption",
+			1 => "",
+			2 => "",
+			3 => "horizontal",
+			4 => 0,
+			5 => 1
+		);
 		return $ele_value;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any handles to numeric ids
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
+		if($initialElementObject = _getElementObject($eleValueData[4])) {
+			$eleValueData[4] = $initialElementObject->getVar('ele_id');
+		}
+		return $eleValueData;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any numeric id refs to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An associative array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+		if($initialElementObject = _getElementObject($eleValueData[4])) {
+			$eleValueData[4] = $initialElementObject->getVar('ele_handle');
+		}
+		return $eleValueData;
+	}
+
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
+	 */
+	public function getEleValueDependencies($values) {
+		$dependencies = array();
+		if($initialElementObject = _getElementObject($values[4])) {
+			$dependencies[] = $initialElementObject->getVar('ele_handle');
+		}
+		return $dependencies;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -143,6 +217,7 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	// You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
 	// advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
+		$element->setVar('ele_value', $ele_value);
 		return false;
 	}
 
