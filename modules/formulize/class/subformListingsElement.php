@@ -194,10 +194,14 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		// disabledelements and 1 are comma separated element ids
 		foreach(array('disabledelements', 1) as $key) {
 			$elementIdsArray = array();
-			foreach(explode(',', $eleValueData[$key]) as $elementHandle) {
-				if($id = array_search($elementHandle, $dependencyIdToHandleMap)) {
-					$elementIdsArray[] = $id;
+			if(isset($eleValueData[$key]) AND is_string($eleValueData[$key])) {
+				foreach(explode(',', $eleValueData[$key]) as $elementHandle) {
+					if($id = array_search($elementHandle, $dependencyIdToHandleMap)) {
+						$elementIdsArray[] = $id;
+					}
 				}
+			} else {
+				$eleValueData[$key] = '';
 			}
 			$eleValueData[$key] = count($elementIdsArray) > 0 ? implode(",", $elementIdsArray) : $eleValueData[$key];
 		}
@@ -234,10 +238,14 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		// disabledelements and 1 are comma separated element ids
 		foreach(array('disabledelements', 1) as $key) {
 			$elementHandlesArray = array();
-			foreach(explode(',', $eleValueData[$key]) as $elementId) {
-				if(isset($dependencyIdToHandleMap[intval($elementId)])) {
-					$elementHandlesArray[] = $dependencyIdToHandleMap[intval($elementId)];
+			if(isset($eleValueData[$key]) AND is_string($eleValueData[$key])) {
+				foreach(explode(',', $eleValueData[$key]) as $elementId) {
+					if(isset($dependencyIdToHandleMap[intval($elementId)])) {
+						$elementHandlesArray[] = $dependencyIdToHandleMap[intval($elementId)];
+					}
 				}
+			} else {
+				$eleValueData[$key] = '';
 			}
 			$eleValueData[$key] = count($elementHandlesArray) > 0 ? implode(",", $elementHandlesArray) : $eleValueData[$key];
 		}
@@ -267,7 +275,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 
 		// disabledelements and 1 are comma separated element ids
 		foreach(array('disabledelements', 1) as $key) {
-			if(isset($values[$key])) {
+			if(isset($values[$key]) AND is_string($values[$key])) {
 				$elementHandlesArray = array();
 				foreach(explode(',', $values[$key]) as $elementIdentifier) {
 					if(is_numeric($elementIdentifier)) {
