@@ -135,6 +135,10 @@ class formulizeHandler {
 				'singular' => 'derived value element',
 				'plural' => 'derived value elements'
 			),
+			'table' => array(
+				'singular' => 'table of elements',
+				'plural' => 'tables of elements'
+			),
 			// WILL NEED TO BE FILLED IN FURTHER FOR 'LAYOUT' ELEMENTS WHEN THEY HAVE CLASSES
 
 		);

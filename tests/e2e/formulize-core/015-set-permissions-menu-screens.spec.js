@@ -129,7 +129,6 @@ test.describe('Set Menu Entries', () => {
 		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	  await page.getByRole('link', { name: 'Artifacts' }).click();
 	  await page.getByRole('link', { name: 'Donors' }).click();
  	  await page.locator('#groups1').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
@@ -282,6 +281,20 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('button', { name: 'Add Column' }).click();
 		await page.locator('#cols-3').selectOption('exhibits_artifacts');
 		await saveAdminForm(page);
+	})
+
+	test('Set Preferences for Rewrite Rules', async ({ page }) => {
+		await page.locator('#nav').getByRole('link', { name: 'Formulize', exact: true }).click();
+		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+		await page.locator('#formulizeRewriteRulesEnabled-13').check();
+		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await expect(page.locator('#formulizeRewriteRulesEnabled-13')).toBeChecked();
+  	await page.locator('#nav').getByRole('link', { name: 'Formulize', exact: true }).click();
+  	await page.getByRole('link', { name: 'Application: Museum' }).click();
+  	await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
+  	await page.getByRole('link', { name: 'Survey', exact: true }).click();
+  	await page.locator('input[name="screens-rewriteruleAddress"]').fill('survey');
+  	await page.getByRole('button', { name: 'Save your changes' }).click();
 	})
 
 	test('Surveys form screen', async ({ page }) => {

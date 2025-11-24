@@ -240,6 +240,18 @@ module Jekyll
 				'type' => 'admin_only',
 				'category' => 'tool'
 			}
+			admin_only_tools << {
+				'name' => 'create_derived_value_element',
+      	'description' => 'Create a new derived value element (field) in a specified form, where the value will be based on the values of other elements in the entry.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+			admin_only_tools << {
+				'name' => 'create_table_of_elements',
+      	'description' => 'Create a new table of elements in a specified form, which will allow related elements to be laid out together.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
     	admin_only_tools << {
 				'name' => 'create_subform_interface',
 				'description' => 'Create a new subform interface in a specified form, for displaying entries in a connected form.',
@@ -273,6 +285,18 @@ module Jekyll
     	admin_only_tools << {
 				'name' => 'update_selector_element',
 				'description' => 'Update an existing selector element (field) in a specified form, such as date selector, time selector, etc.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+			admin_only_tools << {
+				'name' => 'update_derived_value_element',
+      	'description' => 'Update an existing derived value element (field) in a specified form, where the value is based on the values of other elements in the entry.',
+				'type' => 'admin_only',
+				'category' => 'tool'
+			}
+			admin_only_tools << {
+				'name' => 'update_table_of_elements',
+      	'description' => 'Update an existing table of elements in a specified form, which allows related elements to be laid out together.',
 				'type' => 'admin_only',
 				'category' => 'tool'
 			}

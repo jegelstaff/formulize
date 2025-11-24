@@ -408,10 +408,12 @@ class formulizeElementsHandler {
 		if($keyByIds) {
 			$mappedDependencies = array();
 			foreach($dependencies as $depHandle) {
-				if($depElement = _getElementObject($depHandle)) {
-					$mappedDependencies[$depElement->getVar('ele_id')] = $depHandle;
-				} else {
-					throw new Exception("Could not find element with handle $depHandle when trying to map dependencies for export");
+				if($depHandle) {
+					if($depElement = _getElementObject($depHandle)) {
+						$mappedDependencies[$depElement->getVar('ele_id')] = $depHandle;
+					} else {
+						throw new Exception("Could not find element with handle $depHandle when trying to map dependencies for export");
+					}
 				}
 			}
 			$dependencies = $mappedDependencies;

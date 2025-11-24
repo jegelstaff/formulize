@@ -222,7 +222,7 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	}
 
 	// override the insert method so that we can do special stuff with grid elements
-	function insert($element, $force = false) {
+	function insert(&$element, $force = false) {
 
 		// position the grid immediately before the first element that's in the grid
 		// have to figure out the preceeding element, then request the figureOutOrder with that element's id
