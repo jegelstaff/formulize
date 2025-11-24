@@ -190,7 +190,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS,
 			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT) as $key) {
 				if(isset($eleValueData[$key])) {
-					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+					$eleValueData[$key] = $this->convertElementRefsToIds($eleValueData[$key], $dependencyIdToHandleMap);
 				}
 		}
 

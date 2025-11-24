@@ -557,7 +557,7 @@ class FormulizeConfigSync
 			}
 		}
 		while(count($this->deferredElementChanges) > 0) {
-			$beforeLoopDefferredCount = count($this->deferredElementChanges);
+			$beforeLoopDeferredCount = count($this->deferredElementChanges);
 			foreach($this->deferredElementChanges as $elementHandle => $deferredChange) {
 				try {
 					if($this->applyElementChange($deferredChange)) {
@@ -568,7 +568,7 @@ class FormulizeConfigSync
 					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $deferredChange];
 				}
 			}
-			if(count($this->deferredElementChanges) == $beforeLoopDefferredCount) {
+			if(count($this->deferredElementChanges) == $beforeLoopDeferredCount) {
 				// no progress made, likely due to unresolvable dependencies
 				// we could/should give the user more information, or dig deeper to resolve these somehow
 				// probably by writing the element and then rewriting the dependent element refs afterwards

@@ -248,9 +248,8 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 			// if grid has filter settings...
 			if(is_array($gridFilterSettings) AND is_array($gridFilterSettings[0]) AND count($gridFilterSettings[0]) > 0) {
 				$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
-				include_once XOOPS_ROOT_PATH.'/modules/formulize/include/griddisplay.php';
 				foreach(elementsInGrid($ele_value[4], $element->getVar('id_form'), $gridCount) as $gridElementId) {
-					$gridElementObject = $element_handler->get($gridElementId);
+					$gridElementObject = $this->get($gridElementId);
 					$gridElementFilterSettings = $gridElementObject->getVar('ele_filtersettings');
 					// if constitiuent element has no filter settings...
 					if(!is_array($gridElementFilterSettings) OR !is_array($gridElementFilterSettings[0]) OR count($gridElementFilterSettings[0]) == 0) {
