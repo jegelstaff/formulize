@@ -94,7 +94,8 @@ test.describe('Validate Data', () => {
 	}),
 	test('Search for specific collection data', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.goto('/modules/formulize/index.php?fid=1');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
 		const popupPromise = page.context().waitForEvent('page');
 		await page.getByRole('button', { name: 'Change columns' }).click();
 		const page3 = await popupPromise;

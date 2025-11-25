@@ -58,10 +58,14 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('26: "name": "update_user_list_element" "')).toBeVisible();
 		await expect(page.getByText('27: "name": "create_selector_element" "')).toBeVisible();
 		await expect(page.getByText('28: "name": "update_selector_element" "')).toBeVisible();
-		await expect(page.getByText('29: "name": "create_text_box_element" "')).toBeVisible();
-		await expect(page.getByText('30: "name": "update_text_box_element" "')).toBeVisible();
-		await expect(page.getByText('31: "name": "create_subform_interface" "')).toBeVisible();
-		await expect(page.getByText('32: "name": "update_subform_interface" "')).toBeVisible();
-		await expect(page.getByText('33: "name": "read_system_activity_log" "')).toBeVisible();
+		await expect(page.getByText('29: "name": "create_derived_value_element" "')).toBeVisible();
+		await expect(page.getByText('30: "name": "update_derived_value_element" "')).toBeVisible();
+		await expect(page.getByText('31: "name": "create_text_box_element" "')).toBeVisible();
+		await expect(page.getByText('32: "name": "update_text_box_element" "')).toBeVisible();
+		await expect(page.getByText('33: "name": "create_table_of_elements" "')).toBeVisible();
+		await expect(page.getByText('34: "name": "update_table_of_elements" "')).toBeVisible();
+		await expect(page.getByText('35: "name": "create_subform_interface" "')).toBeVisible();
+		await expect(page.getByText('36: "name": "update_subform_interface" "')).toBeVisible();
+		await expect(page.getByText('37: "name": "read_system_activity_log" "')).toBeVisible();
 	})
 });

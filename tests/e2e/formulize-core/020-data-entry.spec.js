@@ -34,7 +34,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'ahstaff', '12345');
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collection', exact: true }).click();
+		await page.getByRole('button', { name: 'Add Collections', exact: true }).click();
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Ancient History');
 	  await page.getByRole('checkbox', { name: 'Children' }).check();
   	await page.getByRole('checkbox', { name: 'Adults' }).check();
@@ -46,7 +46,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'mhstaff', '12345');
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collection', exact: true }).click();
+		await page.getByRole('button', { name: 'Add Collections', exact: true }).click();
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Modern History');
 	  await page.getByRole('checkbox', { name: 'Children' }).check();
   	await page.getByRole('checkbox', { name: 'Adults' }).check();
@@ -58,7 +58,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'curator1', '12345');
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collection' }).click();
+		await page.getByRole('button', { name: 'Add Collections' }).click();
   	await page.getByRole('textbox', { name: 'Name *' }).fill('Coins');
    	await page.getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
@@ -69,7 +69,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'curator1', '12345');
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collection' }).click();
+		await page.getByRole('button', { name: 'Add Collections' }).click();
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Weapons');
 		await page.getByRole('checkbox', { name: 'Children' }).check();
    	await page.getByRole('checkbox', { name: 'Adults' }).check();
