@@ -47,6 +47,7 @@ if($element->isSystemElement) {
 	exit();
 }
 $ele_type = $element->getVar('ele_type');
+$element_handler = xoops_getmodulehandler($ele_type.'Element','formulize');
 $fid = $element->getVar('id_form');
 
 
@@ -84,7 +85,6 @@ if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.ph
     $_POST['reload_option_page'] = true; // force a reload, since the developer probably changed something the user did in the form, so we should reload to show the effect of this change
   }
 }
-
 
 foreach($processedValues['elements'] as $property=>$value) {
   // if we're setting something other than ele_value, or
