@@ -457,7 +457,12 @@ class formulizeElementsHandler {
 		if(is_array($settingsArray) AND !empty($settingsArray)) {
 			foreach($settingsArray[0] as $i => $elementIdentifier) {
 				if(($direction === 'import' && !is_numeric($elementIdentifier)) || ($direction === 'export' && is_numeric($elementIdentifier))) {
-					$settingsArray[0][$i] = $direction == 'export' ? $idHandleMap[$elementIdentifier] : array_search($elementIdentifier, $idHandleMap);
+					if($direction === 'import') {
+						$settingsArray[0][$i] = isset($idHandleMap[$elementIdentifier]) ? $idHandleMap[$elementIdentifier] : $elementIdentifier;
+					} else {
+						$foundValue = array_search($elementIdentifier, $idHandleMap);
+						$settingsArray[0][$i] = $foundValue !== false ? $foundValue : $elementIdentifier;
+					}
 				}
 			}
 			$filterSettings = !is_array($filterSettings) ? serialize($settingsArray) : $settingsArray;
@@ -511,9 +516,10 @@ class formulizeElementsHandler {
 		// convert
 		foreach($workingValues as $i => $element) {
 			if($direction == 'import' AND !is_numeric($element)) {
-				$workingValues[$i] = array_search($element, $idToHandleMap);
+				$foundValue = array_search($element, $idToHandleMap);
+				$workingValues[$i] = $foundValue !== false ? $foundValue : $element;
 			} elseif($direction == 'export' AND is_numeric($element)) {
-				$workingValues[$i] = $idToHandleMap[$element];
+				$workingValues[$i] = isset($idToHandleMap[$element]) ? $idToHandleMap[$element] : $element;
 			}
 		}
 		// put back in original format
