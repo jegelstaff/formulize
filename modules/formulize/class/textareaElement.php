@@ -140,6 +140,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 		$validationCode = array();
+		$ele_value = $element->getVar('ele_value');
 		if (!strstr(getCurrentURL(),"printview.php") AND isset($ele_value[ELE_VALUE_TEXTAREA_RICHTEXT]) AND $ele_value[ELE_VALUE_TEXTAREA_RICHTEXT] AND $element->getVar('ele_required')) {
 			$eltname = $markupName;
 			$eltmsg = empty($caption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($caption, ENT_QUOTES)));
