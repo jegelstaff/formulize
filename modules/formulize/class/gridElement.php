@@ -234,18 +234,20 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 		// position the grid immediately before the first element that's in the grid
 		// have to figure out the preceeding element, then request the figureOutOrder with that element's id
 		$position = 'top';
+		$oldOrder = $element->getVar('ele_order');
 		$ele_value = $element->getVar('ele_value');
 		$fid = $element->getVar('fid');
 		if(is_array($ele_value) AND isset($ele_value[4]) AND $ele_value[4] AND $firstGridElement = _getElementObject($ele_value[4])) {
-			$sql = "SELECT ele_id FROM ".$this->db->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
+			$sql = "SELECT ele_id, ele_order FROM ".$this->db->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
 			if($res = $this->db->query($sql)) {
 				if($this->db->getRowsNum($res) == 1) {
 					$array = $this->db->fetchArray($res);
 					$position = $array['ele_id'];
+					$oldOrder = $array['ele_order'];
 				}
 			}
 		}
-		$element->setVar('ele_order', figureOutOrder($position, $element->getVar('ele_order'), $fid));
+		$element->setVar('ele_order', figureOutOrder($position, $oldOrder, $fid));
 
 		// do the insert the normal way
 		if($result = parent::insert($element, $force)) {

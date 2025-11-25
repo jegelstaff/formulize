@@ -8694,9 +8694,13 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 	}
 	$orderValue = $orderChoice + 1;
 	if($oldOrder AND $oldOrder != $orderValue) {
-		// and we need to reorder all the elements equal to and higher than the current element
-		$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+		// if there is already an element this order value, then we need to reorder all the elements equal to and higher than the current element
+		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE ele_order = $orderValue AND id_form = $fid";
 		$res = $xoopsDB->query($sql);
+		if($xoopsDB->getRowsNum($res) > 0) {
+			$sql = "UPDATE ".$xoopsDB->prefix("formulize")." SET ele_order = ele_order + 1 WHERE ele_order >= $orderValue AND id_form = $fid";
+			$res = $xoopsDB->query($sql);
+		}
 	}
 	return $orderValue;
 }
