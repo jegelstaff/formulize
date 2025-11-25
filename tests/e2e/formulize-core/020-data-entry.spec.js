@@ -504,9 +504,14 @@ test.describe('Data entry for Survey', () => {
 	].forEach(({ name, exhibit, favourite, rating }) => {
 		test(`Create survey for ${name}`, async ({ page }) => {
 			if(rewriteWorks) {
-				await page.goto('/survey');
-				await page.waitForLoadState('networkidle');
-				rewriteWorks = await page.locator('[name="Your name"]').count() > 0;
+				try {
+					await page.goto('/survey');
+					await page.waitForLoadState('networkidle');
+					await page.waitForLoadState('domcontentloaded');
+					rewriteWorks = await page.locator('div.formulize-label-surveys_your_name').count() > 0;
+				} catch {
+					rewriteWorks = false;
+				}
 			}
 			if(!rewriteWorks) {
 				await page.goto('/modules/formulize/index.php?sid=9');
