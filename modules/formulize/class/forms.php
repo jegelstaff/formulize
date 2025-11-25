@@ -492,12 +492,9 @@ EOF;
                 foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
 										$value = correctStringIntFloatTypes($value);
                     $existingValues[$handle] = $value;
-                    if(!isset($element_values[$handle])) { // if this element is not set for writing, then set the current value so we have it available in the function
+                    if(!array_key_exists($handle, $element_values)) { // if this element is not set for writing, then set the current value so we have it available in the function
                         $element_values[$handle] = $value;
                     }
-										if($element_values[$handle] === '{WRITEASNULL}') {
-											$element_values[$handle] = null;
-										}
                 }
             }
         }
