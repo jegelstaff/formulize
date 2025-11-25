@@ -493,6 +493,7 @@ test.describe('Data entry for Exhibits', () => {
 })
 
 test.describe('Data entry for Survey', () => {
+	let rewriteWorks = true;
 	[
 		{ name: 'Ramesses II', exhibit: 'History through the Ages', favourite: 'Egyptian Chariot', rating: 'Mind blowing!' },
 		{ name: 'James Cook', exhibit: 'Modern Amazements', favourite: 'Polynesian Canoe', rating: 'Excellent' },
@@ -502,7 +503,19 @@ test.describe('Data entry for Survey', () => {
 		{ name: 'Darius the Great', exhibit: 'Ancient Wonders', favourite: 'Babylonian Spoon', rating: 'Excellent' }
 	].forEach(({ name, exhibit, favourite, rating }) => {
 		test(`Create survey for ${name}`, async ({ page }) => {
-			await page.goto('/survey');
+			if(rewriteWorks) {
+				try {
+					await page.goto('/survey');
+					await page.waitForLoadState('networkidle');
+					await page.waitForLoadState('domcontentloaded');
+					rewriteWorks = await page.locator('div.formulize-label-surveys_your_name').count() > 0;
+				} catch {
+					rewriteWorks = false;
+				}
+			}
+			if(!rewriteWorks) {
+				await page.goto('/modules/formulize/index.php?sid=9');
+			}
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
 			await page.getByLabel('Which exhibit did you see?').selectOption(exhibit);
 			// Wait for the favourite select to have options

@@ -39,6 +39,16 @@ jobs:
         cache: 'npm'
         cache-dependency-path: tests/e2e/package-lock.json
 
+    - name: Create .htaccess file in project root
+      run: |
+        cat > .htaccess << 'EOF'
+        RewriteEngine On
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-l
+        RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]
+        EOF
+
     - name: Set file/directory permissions
       run: |
         chmod 777 trust uploads modules templates_c cache tokens modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
