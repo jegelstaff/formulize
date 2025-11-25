@@ -44,7 +44,7 @@ class formulizeNumberElement extends formulizeTextElement {
 		$this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 		$this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
-		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+		$this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true. -- in this case we need the parent routine of the textElement to always run!
 		$this->canHaveMultipleValues = false;
 		$this->hasMultipleOptions = false;
 		$this->defaultValueKey = ELE_VALUE_TEXT_DEFAULTVALUE; // text and textarea do not share the same default value key :(
@@ -281,12 +281,6 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 			$form_ele = new XoopsFormLabel ($caption, formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle')), $markupName);
 		}
 		return $form_ele;
-	}
-
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
