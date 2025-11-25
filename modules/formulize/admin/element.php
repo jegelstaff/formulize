@@ -66,6 +66,8 @@ foreach($allGroups as $thisGroup) {
 
 $firstElementOrder = "";
 $advanced['ele_index_show'] = false;
+
+$customTypeHandler = false;
 if ($_GET['ele_id'] != "new") {
     $ele_id = intval($_GET['ele_id']);
     $elementObject = $element_handler->get($ele_id);
@@ -78,6 +80,9 @@ if ($_GET['ele_id'] != "new") {
     $colhead = $elementObject->getVar('ele_colhead');
     $caption = $elementObject->getVar('ele_caption', "f"); // the f causes no stupid reformatting by the ICMS core to take place, like making clickable links, etc
     $ele_type = $elementObject->getVar('ele_type');
+		if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+  		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+		}
     $ele_value = $elementObject->getVar('ele_value');
     $ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
     $ele_delim = $elementObject->getVar('ele_delim');
@@ -136,7 +141,7 @@ if ($_GET['ele_id'] != "new") {
     $display['ele_forcehidden'] = $elementObject->getVar('ele_forcehidden') ? " checked" : "";
     $display['ele_private'] = $elementObject->getVar('ele_private') ? " checked" : "";
     $ele_encrypt = $elementObject->getVar('ele_encrypt');
-    if ($ele_type != "subformFullForm" AND $ele_type != "subformEditableRow" AND $ele_type != "subformListings" AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
+    if ($elementObject->hasData) {
         $advanced['ele_encrypt_no_on'] = $ele_encrypt ? "" : " checked";
         $advanced['ele_encrypt_yes_on'] = $ele_encrypt ? " checked" : "";
         $advanced['ele_encrypt_show'] = true;
@@ -167,17 +172,15 @@ if ($_GET['ele_id'] != "new") {
 	$elementObject = false;
 	$names['ele_caption'] = $elementName;
 	$ele_type = $_GET['type'];
+	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+	}
 	$ele_value = array();
 	$ele_delim = "br";
 	$ele_uitext = "";
 	$ele_uitextshow = 0;
 	$ele_use_default_when_blank = 0;
 	global $xoopsModuleConfig;
-	if($ele_type == "grid") {
-		$ele_value[3] = "horizontal";
-		$ele_value[5] = 1;
-		$ele_value[0] = "caption";
-	}
 
 	$ele_required = removeNotApplicableRequireds($ele_type); // function returns false when the element cannot be required.
 	$common['ele_req_on'] = $ele_required === false ? false : true;
@@ -187,15 +190,18 @@ if ($_GET['ele_id'] != "new") {
 	$display['ele_disabled']['none'] = " selected";
 	$display['filtersettings'] = formulize_createFilterUI("", "elementfilter", $fid, "form-3");
 	$ele_encrypt = 0;
-	if ($ele_type != "subformFullForm" AND $ele_type != "subformEditableRow" AND $ele_type != "subformListings"  AND $ele_type != "grid" AND $ele_type != "ib" AND $ele_type != "areamodif") {
-		$advanced['ele_encrypt_no_on'] = " checked";
-		$advanced['ele_encrypt_show'] = true;
-		$ele_index = "";
-		$advanced['original_ele_index'] = strlen($ele_index) > 0;
-		$advanced['original_index_name'] = $ele_index;
-		$advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
-		$advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
-		$advanced['ele_index_show'] = true;
+	if ($customTypeHandler) {
+		$customTypeObject = $customTypeHandler->create();
+    if($customTypeObject->hasData) {
+			$advanced['ele_encrypt_no_on'] = " checked";
+			$advanced['ele_encrypt_show'] = true;
+			$ele_index = "";
+			$advanced['original_ele_index'] = strlen($ele_index) > 0;
+			$advanced['original_index_name'] = $ele_index;
+			$advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
+			$advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
+			$advanced['ele_index_show'] = true;
+		}
 	}
 	$advanced['exportoptions_onoff'] = 0;
 	$ele_id = "new";
@@ -250,22 +256,9 @@ $options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
 
 // setup various special things per element, including ele_value
-if ($ele_type == "grid") {
-    $options['background'] = $ele_value[3];
-    $options['heading'] = $ele_value[0];
-    $options['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
-    $grid_elements_criteria = new Criteria('');
-    $grid_elements_criteria->setSort('ele_order');
-    $grid_elements_criteria->setOrder('ASC');
-    $grid_elements = $element_handler->getObjects($grid_elements_criteria, $fid);
-    foreach($grid_elements as $this_element) {
-        $grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
-    }
-    $options['grid_start_options'] = $grid_start_options;
-
-} elseif ($ele_type=="ib") {
-    $options['ib_style_options']['head'] = "head";
-    $options['ib_style_options']['form-heading'] = "form-heading";
+if ($ele_type=="ib") {
+  $options['ib_style_options']['head'] = "head";
+  $options['ib_style_options']['form-heading'] = "form-heading";
 }
 
 
@@ -278,8 +271,7 @@ $options['ele_value'] = $ele_value;
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();
 $advancedCustomValues = array();
-if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
-    $customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+if($customTypeHandler) {
     $customValues = $customTypeHandler->adminPrepare($elementObject);
 		if (is_array($customValues) AND count($customValues) == 2 AND isset($customValues['options-tab-values']) AND isset($customValues['advanced-tab-values'])) {
 			$advancedCustomValues = $customValues['advanced-tab-values'];

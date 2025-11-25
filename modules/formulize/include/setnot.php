@@ -183,10 +183,14 @@ if($canSetNots) {
 	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND (ele_type = \"selectLinked\" OR ele_type = \"listboxLinked\" OR ele_type = \"autocompleteLinked\" OR ele_type = \"checkboxLinked\") AND ele_value LIKE \"%#*=:*%\"";
 	$linkcreator_options = buildNotOptionList($sql, "linkcreator");
 
-	// gather the list of all elements that are not grid, subform, areamodif, ib
-	$sql = "SELECT ele_id, ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize")  . " WHERE id_form = " . intval($fid) . " AND ele_type != \"subformFullForm\" AND ele_type != \"subformEditableRow\" AND ele_type != \"subformListings\" AND ele_type != \"grid\" AND ele_type != \"ib\" AND ele_type != \"areamodif\"";
-	$elementemail_options = buildNotOptionList($sql, "elementemail");
-
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	$formColheads = $formObject->getVar('elementColheads');
+	$formCaptions = $formObject->getVar('elementCaptions');
+	$elementemail_options = array();
+	foreach($formObject->getVar('elementsWithData') as $elementWithDataId) {
+		$elementemail_options[$elementWithDataId] = $formColheads[$elementWithDataId] ? $formColheads[$elementWithDataId] : printSmart($formCaptions[$elementWithDataId]);
+	}
 } else {
 	$set_groups = array();
 }

@@ -237,12 +237,16 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 		} else {
 			$e1 = _getElementObject($k1);
 			$e2 = _getElementObject($k2);
-			if(is_object($e1) AND strlen($e1->has_index()) == 0){
-        $e1->createIndex();
-      }
-			if(is_object($e2) AND strlen($e2->has_index()) == 0){
-        $e2->createIndex();
-      }
+			if(!is_object($e1) OR !is_object($e2)) {
+				throw new Error("Formulize Warning: could not load element objects to create indexes on elements $k1 and/or $k2");
+			} else {
+				if(strlen($e1->has_index()) == 0){
+					$e1->createIndex();
+				}
+				if(strlen($e2->has_index()) == 0){
+					$e2->createIndex();
+				}
+			}
 		}
 	} elseif(intval($del) == 0) {
 		// Already created the primary relationship entry for this link, but need to validate the del option

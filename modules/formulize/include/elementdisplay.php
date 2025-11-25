@@ -160,9 +160,16 @@ EOF;
 		$renderer = new formulizeElementRenderer($element);
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
-		if(($prevEntry OR $profileForm === "new") AND $ele_type != 'subformFullForm' AND $ele_type != 'subformEditableRow' AND $ele_type != 'subformListings' AND $ele_type != 'grid') {
-			$data_handler = new formulizeDataHandler($form_id);
-			$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+		static $typesWithData = array();
+		if(($prevEntry OR $profileForm === "new") AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+			if(!isset($typesWithData[$ele_type])) {
+				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+				$customTypeObject = $customTypeHandler->create();
+		    $typesWithData[$ele_type] = $customTypeObject->hasData ? true : false;
+			}
+	    if($typesWithData[$ele_type]) {
+				$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
+			}
 		}
 
 		//formulize_benchmark("About to render element ".$element->getVar('ele_caption').".");

@@ -11,6 +11,9 @@ const { defineConfig, devices } = require('@playwright/test');
  * @see https://playwright.dev/docs/test-configuration
  */
 module.exports = defineConfig({
+
+  globalSetup: require.resolve('./htaccess-setup.js'),
+
   testDir: './',
 	outputDir: './test-results',
   /* Run tests in files in parallel */

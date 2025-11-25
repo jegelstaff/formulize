@@ -1943,12 +1943,12 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 	} else {
 		$criteria = $criteriaBase; // otherwise, just use the base
 	}
-    // exclude grids on mobile
-    if(userHasMobileClient()) {
-        $criteriaNoGrid = new CriteriaCompo();
-        $criteriaNoGrid->add(new Criteria('ele_type', 'grid', '!='), 'AND');
-        $criteria->add($criteriaNoGrid);
-    }
+	// exclude grids on mobile
+	if(userHasMobileClient()) {
+		$criteriaNoGrid = new CriteriaCompo();
+		$criteriaNoGrid->add(new Criteria('ele_type', 'grid', '!='), 'AND');
+		$criteria->add($criteriaNoGrid);
+	}
 	$criteria->setSort('ele_order');
 	$criteria->setOrder('ASC');
 	$elements = $element_handler->getObjects($criteria,intval($fid),true); // true makes the keys of the returned array be the element ids
@@ -2006,62 +2006,45 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 
 		$GLOBALS['sub_entries'] = $sub_entries; // set here for reference, just in case??
 
-		// Option 1: grid element...
-		if($ele_type == "grid") {
-			list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups, false, $renderedElementMarkupName, false);
-			if($allowed) {
-				$renderedGrid = renderGrid($elementObject, $entry_id, $prevEntry, $screen);
-				if(is_object($renderedGrid)) {
-					$form->addElement($renderedGrid);
-					unset($renderedGrid); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-        } else {
-					$form->insertBreakFormulize($renderedGrid, "head", $renderedElementMarkupName, $elementObject->getVar('ele_handle')); // head is the css class of the cell
-				}
-      } else {
+		$deReturnValue = displayElement("", $elementObject, $entry_id, false, $screen, $prevEntry, false, $groups);
+		if(is_array($deReturnValue)) {
+			$form_ele = $deReturnValue[0];
+			$isDisabled = $deReturnValue[1];
+		} else {
+			$form_ele = $deReturnValue;
+			$isDisabled = false;
+		}
+
+		// Option 1: the element is not allowed (did not pass the 'elementIsAllowedForUserInEntry' check inside displayElement, when that happens displayElement returns 'not_allowed')
+		if($form_ele == "not_allowed") {
+
+			if($elementObject->getVar('ele_type') == 'grid') {
 				// A hidden grid. We need to catalogue the grid elements, and if they have conditions we need to put them in the conditional catalogue as well and make placeholders for them (which handles any validation JS generation)
 				$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
 				foreach(elementsInGrid($ele_value[4], $fid, $gridCount) as $thisGridElementId) {
 					catalogueGridElement($thisGridElementId, $entry_id, $elementObject, null, $prevEntry, $screen); // renderedElementMarkupName is the containing grid
 				}
-        if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
-					$form->addElement($placeholderElement);
-					unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-				}
+			}
+			if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
+				$form->addElement($placeholderElement);
+				unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 			}
 
-		// Option 2: Not a grid, try the standard approach with the displayElement function, see what happens...
-    } else {
-			$deReturnValue = displayElement("", $elementObject, $entry_id, false, $screen, $prevEntry, false, $groups);
-			if(is_array($deReturnValue)) {
-				$form_ele = $deReturnValue[0];
-				$isDisabled = $deReturnValue[1];
-      } else {
-				$form_ele = $deReturnValue;
-				$isDisabled = false;
-			}
+		// Option 2: element is a "text for display (two columns)"
+		// or some other type of 'pass the markup' element... (like subforms, grids, etc)
+		} elseif($ele_type == "ib" OR is_string($form_ele) OR is_array($form_ele)) {
+			$className = (is_array($form_ele) AND isset($form_ele[1]) AND $form_ele[1]) ? $form_ele[1] : "head";
+			$contents = (is_array($form_ele) AND isset($form_ele[0])) ? $form_ele[0] : $form_ele;
+			$form->insertBreakFormulize(trans(stripslashes($contents)), $className, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
 
-			// Option 2a: the element is not allowed (did not pass the 'elementIsAllowedForUserInEntry' check inside displayElement, when that happens displayElement returns 'not_allowed')
-			if($form_ele == "not_allowed") {
-				if($placeholderElement = makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEntry, $screen)) {
-					$form->addElement($placeholderElement);
-					unset($placeholderElement); // because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
-				}
-
-			// Option 2b: element is a "text for display (two columns)"
-			// or some other type of 'pass the markup' element... (like subforms)
-		} elseif($ele_type == "ib" OR is_array($form_ele)) {
-				$form->insertBreakFormulize(trans(stripslashes($form_ele[0])), $form_ele[1], $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
-
-			// Option 2c: regular element
+		// Option 3: regular element
 		} elseif($form_ele !== false) {
 			$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
 			$form->addElement($form_ele, $req);
 			unset($form_ele); // apparently necessary for compatibility with PHP 4.4.0 -- suggested by retspoox, sept 25, 2005 -- because addElement receives values by reference, we need to destroy it here, so if it is recreated in a subsequent iteration, we don't end up overwriting elements we've already assigned. Ack! Ugly!
 		}
 
-			$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here for reference, just in case??
-		}
-
+		$GLOBALS['formulize_sub_fids'] = $sub_fids; // set here for reference, just in case??
 	}
 
 	formulize_benchmark("Done looping elements.");

@@ -378,7 +378,7 @@ Examples:
 
 			$this->tools['create_form'] = [
 				'name' => 'create_form',
-				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form: create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, and create_selector_element. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form, such as create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, create_derived_value_element, create_selector_element, etc. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -774,6 +774,14 @@ Examples:
 	private function create_user_list_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: true);
 	}
+	private function create_derived_value_element($arguments) {
+		$arguments['type'] = 'derived';
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
+	private function create_table_of_elements($arguments) {
+		$arguments['type'] = 'grid';
+		return $this->upsert_form_element($arguments, isCreate: true);
+	}
 	private function create_selector_element($arguments) {
 		return $this->upsert_form_element($arguments, isCreate: true);
 	}
@@ -808,6 +816,14 @@ Examples:
 		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 	private function update_user_list_element($arguments) {
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_derived_value_element($arguments) {
+		$arguments['type'] = 'derived';
+		return $this->upsert_form_element($arguments, isCreate: false);
+	}
+	private function update_table_of_elements($arguments) {
+		$arguments['type'] = 'grid';
 		return $this->upsert_form_element($arguments, isCreate: false);
 	}
 	private function update_selector_element($arguments) {
@@ -1814,19 +1830,22 @@ private function validateFilter($filter, $andOr = 'AND') {
 		] : [];
 
 		// Discover available element types and their descriptions
-		[$elementTypes, $creationElementDescriptions] = formulizeHandler::discoverElementTypes();
-		[$elementTypes, $updateElementDescriptions] = formulizeHandler::discoverElementTypes(update: true);
+		[$elementTypes, $creationElementDescriptions, $singleTypeProperties] = formulizeHandler::discoverElementTypes();
+		[$elementTypes, $updateElementDescriptions, $singleTypeProperties] = formulizeHandler::discoverElementTypes(update: true);
 
 		// Build comprehensive description with examples from all element types
 		$basePropertyDescriptions = " have different properties depending on their type.\n\nYou must use the valid properties for each type. Here is a complete list of available types, their properties, and examples:\n\n";
 		$categoryNames = formulizeHandler::getElementTypeReadableNames();
 		$formElementTools = [];
 		foreach($elementTypes as $category => $types) {
-			$pluralCategoryName = ucfirst($categoryNames[$category]['plural']);
-			$singularCategoryName = ucfirst($categoryNames[$category]['singular']);
-			$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
-			$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
-			if(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
+			$pluralCategoryName = ucwords($categoryNames[$category]['plural']);
+			$singularCategoryName = ucwords($categoryNames[$category]['singular']);
+			$categoryCreationBaseDescriptions = "";
+			$categoryUpdateBaseDescriptions = "";
+			if(count($types) > 1) {
+				$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+				$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+			} elseif(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
 				$staticMethodName = 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category);
 				$categoryCreationBaseDescriptions = formulizeHandler::$staticMethodName(update: false);
 				$categoryUpdateBaseDescriptions = formulizeHandler::$staticMethodName(update: true);
@@ -1836,8 +1855,18 @@ private function validateFilter($filter, $andOr = 'AND') {
 			$commonDataElementPropertiesForThisCategory = [];
 			$dataTypePropertyForThisCategory = [];
 			$creationDataElementPropertiesForThisCategory = [];
-			if($category != 'subforms') {
+			if($category == 'table') {
+				$commonDataElementPropertiesForThisCategory = [
+						'description' => [
+						'type' => 'string',
+						'description' => 'Optional. A longer description or help text for the '.$singularCategoryName.' shown to users filling out the form.'
+					]
+				];
+			} elseif($category != 'subforms') {
 				$commonDataElementPropertiesForThisCategory = recursiveReplaceInArray('REPLACEWITHSINGLUARCATEGORYNAME', $singularCategoryName, $commonDataElementProperties);
+				if($category == 'derived') {
+					unset($commonDataElementPropertiesForThisCategory['required']);
+				}
 				$dataTypePropertyForThisCategory = $dataTypeProperty;
 				$creationDataElementPropertiesForThisCategory = $creationDataElementProperties;
 			}
@@ -1869,6 +1898,13 @@ private function validateFilter($filter, $andOr = 'AND') {
 					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
 			];
+			if(count($types) == 1 AND !empty($singleTypeProperties[$category])) {
+				unset($formElementTools[count($formElementTools) - 1]['inputSchema']['properties']['type']);
+				$formElementTools[count($formElementTools) - 1]['inputSchema']['properties']['properties'] = [
+					'type' => 'object',
+					'description' => "Required. Additional configuration settings for the $singularCategoryName."
+				] + $singleTypeProperties[$category];
+			}
 			$formElementTools[] = [
 				'name' => 'update_'.str_replace(' ', '_', strtolower($singularCategoryName)),
 				'description' => $updateDescription,

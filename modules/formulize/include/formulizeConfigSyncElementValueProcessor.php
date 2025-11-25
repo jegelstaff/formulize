@@ -31,7 +31,7 @@
 ###############################################################################
 class FormulizeConfigSyncElementValueProcessor
 {
-	private $elementMapping = [];
+	public $elementMapping = [];
 	private $textElementMapping = [
 		'width' => 0,
 		'maxlength' => 1,
@@ -47,8 +47,24 @@ class FormulizeConfigSyncElementValueProcessor
 		'default_value_as_placeholder' => 11,
 		'trim_value' => 12
  	];
+	private $gridElementMapping = [
+		'source_of_caption' => 0,
+		'row_labels' => 1,
+		'column_labels' => 2,
+		'shading_orientation' => 3,
+		'initial_element_id' => 4,
+		'caption_at_side' => 5
+	];
 	private $checkboxElementMapping = [
 		'options' => 2,
+	];
+	private $checkboxLinkedElementMapping = [
+		'options' => 2,
+		'sort_values_element_id' => 12,
+		'sort_order' => 15,
+		'list_supplied_values_element_ids' => 10,
+		'export_supplied_values_element_ids' => 11,
+		'form_supplied_values_element_ids' => 17
 	];
 	private $selectElementMapping = [
 		'number_of_rows' => 0,
@@ -61,14 +77,14 @@ class FormulizeConfigSyncElementValueProcessor
 		'clickable' => 7,
 		'autocomplete' => 8,
 		'selection_limit' => 9,
-		'list_supplied_values_element_id' => 10,
-		'export_supplied_values_element_id' => 11,
+		'list_supplied_values_element_ids' => 10,
+		'export_supplied_values_element_ids' => 11,
 		'sort_values_element_id' => 12,
 		'default_value_entry_id' => 13,
 		'show_default_text_when_no_values' => 14,
 		'sort_order' => 15,
 		'autocomplete_allow_new_values' => 16,
-		'alternative_form_for_element' => 17
+		'form_supplied_values_element_ids' => 17
 	];
 	private $textareaMapping = [
 		'default_text' => 0,
@@ -89,6 +105,18 @@ class FormulizeConfigSyncElementValueProcessor
 		'stepSize' => 2,
 		'defaultValue' => 3,
 	];
+	private $subformListingsElementMapping = [
+		'subform_form_id' => 0,
+		'elements_to_show' => 1,
+		'number_of_blanks' => 2,
+		'view_entry_mode' => 3,
+		'column_headings_or_captions' => 4,
+		'mainform_as_entry_owner' => 5,
+		'add_entries_perm_source' => 6,
+		'filter_included_entries' => 7,
+		'subform_type' => 8,
+		'add_entry_button_text' => 9
+	];
 
 	public function __construct()
 	{
@@ -105,7 +133,7 @@ class FormulizeConfigSyncElementValueProcessor
 			'number' => $this->textElementMapping,
 			'textarea' => $this->textareaMapping,
 			'checkbox' => $this->checkboxElementMapping,
-			'checkboxLinked' => $this->checkboxElementMapping,
+			'checkboxLinked' => $this->checkboxLinkedElementMapping,
 			'radio' => $this->checkboxElementMapping,
 			'yn' => $this->ynradioMapping,
 			'select' => $this->selectElementMapping,
@@ -119,6 +147,10 @@ class FormulizeConfigSyncElementValueProcessor
 			'autocompleteUsers' => $this->selectElementMapping,
 			'date' => $this->dateMapping,
 			'slider' => $this->sliderMapping,
+			'grid' => $this->gridElementMapping,
+			'subformFullForm' => $this->subformListingsElementMapping,
+			'subformEditableRow' => $this->subformListingsElementMapping,
+			'subformListings' => $this->subformListingsElementMapping,
 		];
 	}
 

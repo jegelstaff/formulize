@@ -42,6 +42,9 @@ class FormulizeConfigSync
 	private $changes = [];
 	private $diffLog = [];
 	private $errorLog = [];
+	private $deferredElementChanges = [];
+	private $appliedElementChanges = [];
+	private $queuedElementChanges = [];
 
 	private $configFiles = [
 		'forms' => 'forms.json'
@@ -319,6 +322,7 @@ class FormulizeConfigSync
 	private function compareFormFields(array $configObject, array $dbObject, array $excludeFields = []): array
 	{
 		$differences = [];
+		$dbObject = $this->prepareFormForExport($dbObject); // need to prep it same as the contents of the file would have been prepped
 		foreach ($configObject as $field => $value) {
 			if (in_array($field, $excludeFields)) {
 				continue;
@@ -348,14 +352,18 @@ class FormulizeConfigSync
 	{
 		$differences = [];
 
+		// Convert any dependencies in the DB element to handle references for comparison
+		$dbElement = $this->elementHandler->convertDependenciesForExport($dbElement);
+
 		foreach ($configElement as $field => $value) {
 			$eleValueDiff = [];
 			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
-				$dbEleValue = $dbElement['ele_value'] !== "" ? unserialize($dbElement['ele_value']) : [];
+				$dbEleValue = (is_string($dbElement['ele_value']) AND $dbElement['ele_value'] !== "") ? unserialize($dbElement['ele_value']) : [];
 				foreach ($value as $key => $val) {
-					if (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key]) {
-						$eleValueDiff[$key] = [
+					if (is_array($dbEleValue) AND (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key])) {
+						$readableKey = array_flip($this->elementValueProcessor->elementMapping[$configElement['ele_type']])[$key] ?? $key;
+						$eleValueDiff[$readableKey] = [
 							'config_value' => json_encode($val),
 							'db_value' => json_encode($dbEleValue[$key]) ?? null
 						];
@@ -364,10 +372,17 @@ class FormulizeConfigSync
 				if (!empty($eleValueDiff)) {
 					$differences['ele_value'] = $eleValueDiff;
 				}
-			} elseif (!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
+			} elseif(!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
+				$db_value = $dbElement[$field];
+				if(is_string($dbElement[$field]) AND $dbElement[$field] !== "") {
+					$unserialized = unserialize($dbElement[$field]);
+					if($unserialized !== false AND is_array($unserialized)) {
+						$db_value = $unserialized;
+					}
+				}
 				$differences[$field] = [
 					'config_value' => json_encode($value),
-					'db_value' => json_encode($dbElement[$field]) ?? null
+					'db_value' => json_encode($db_value) ?? null
 				];
 			}
 		}
@@ -446,7 +461,18 @@ class FormulizeConfigSync
 		array $differences = [],
 		array $metadata = []
 	): void {
-		$this->changes[] = [
+		switch($type) {
+			case 'forms':
+				$dataIdentifier = $data['form_handle'];
+				break;
+			case 'elements':
+				$dataIdentifier = $data['ele_handle'];
+				$metadata = $this->gatherElementDependencies($data, $metadata);
+				break;
+			default:
+				throw new \Exception("Unknown change type: $type");
+		}
+		$this->changes[$dataIdentifier] = [
 			'type' => $type,
 			'operation' => $operation,
 			'id' => $id,
@@ -466,6 +492,22 @@ class FormulizeConfigSync
 	}
 
 	/**
+	 * Gather dependencies for an element change
+	 * @TODO GET COMPREHENSIVE DEPENDENCIES FROM ALL ELEMENTS, AND ALSO INCLUDE STUFF LIKE SUBFORM ELEMENTS IN SOURCE FORMS FOR LINKED ELEMENTS, ETC
+	 */
+	private function gatherElementDependencies(array $elementData, array $metadata): array
+	{
+		$dependencies = [];
+		$elementType = $elementData['ele_type'] ?? '';
+		if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$elementType."Element.php")) {
+	    $elementTypeHandler = xoops_getmodulehandler($elementType."Element", 'formulize');
+			$dependencies = $elementTypeHandler->getElementDependencies($elementData);
+		}
+		$metadata['dependencies'] = $dependencies;
+		return $metadata;
+	}
+
+	/**
 	 * Apply changes to the database
 	 *
 	 * @return array
@@ -478,18 +520,20 @@ class FormulizeConfigSync
 		if (empty($changeIds)) {
 			$changes = $this->changes;
 		} else {
-			foreach ($this->changes as $change) {
+			foreach ($this->changes as $dataIdentifier => $change) {
 				if (in_array($change['id'], $changeIds)) {
-					$changes[] = $change;
+					$changes[$dataIdentifier] = $change;
 				}
 			}
 		}
 		// Apply all form changes
-		foreach ($changes as $change) {
+		$allFormChanges = [];
+		foreach ($changes as $dataIdentifier => $change) {
 			if ($change['type'] === 'forms') {
 				try {
 					$this->applyFormChange($change);
 					$results['success'][] = $change;
+					$allFormChanges[] = $change;
 				} catch (\Exception $e) {
 					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
 				}
@@ -497,23 +541,68 @@ class FormulizeConfigSync
 		}
 
 		// Apply all element changes
-		foreach ($changes as $change) {
-			if ($change['type'] === 'elements') {
-				try {
-					$this->applyElementChange($change);
+		$this->deferredElementChanges = [];
+		$this->appliedElementChanges = [];
+		$this->queuedElementChanges = array_filter($changes, function($item) {
+			return $item['type'] === 'elements';
+		});
+		foreach ($this->queuedElementChanges as $dataIdentifier => $change) {
+			try {
+				if($this->applyElementChange($change)) {
 					$results['success'][] = $change;
-				} catch (\Exception $e) {
-					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
+					$this->appliedElementChanges[] = $change['data']['ele_handle'];
 				}
+			} catch (\Exception $e) {
+				$results['failure'][] = ['error' => $e->getMessage(), 'change' => $change];
+			}
+		}
+		while(count($this->deferredElementChanges) > 0) {
+			$beforeLoopDeferredCount = count($this->deferredElementChanges);
+			foreach($this->deferredElementChanges as $elementHandle => $deferredChange) {
+				try {
+					if($this->applyElementChange($deferredChange)) {
+						$results['success'][] = $deferredChange;
+						$this->appliedElementChanges[] = $elementHandle;
+					}
+				} catch (\Exception $e) {
+					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $deferredChange];
+				}
+			}
+			if(count($this->deferredElementChanges) == $beforeLoopDeferredCount) {
+				// no progress made, likely due to unresolvable dependencies
+				// we could/should give the user more information, or dig deeper to resolve these somehow
+				// probably by writing the element and then rewriting the dependent element refs afterwards
+				foreach($this->deferredElementChanges as $elementHandle => $deferredChange) {
+					$results['failure'][] = ['error' => "Unresolvable dependencies for $elementHandle. Depends on " . implode(', ', $deferredChange['metadata']['dependencies']), 'change' => $deferredChange];
+				}
+				break;
 			}
 		}
 
+		// adjust forms that were changed, to update any dependencies they contain (pi, defaultform, defaultlist)
+		foreach($allFormChanges as $change) {
+			$convertedChange = $this->formHandler->convertDependenciesForImport($change['data']);
+			if($convertedChange !== $change['data']) {
+				try {
+					if(isset($convertedChange['id_form'])) {
+						unset($convertedChange['id_form']);
+					}
+					if($existingForm = $this->formHandler->getByHandle($convertedChange['form_handle'])) {
+						$convertedChange['fid'] = $existingForm->getVar('id_form');
+						formulizeHandler::upsertFormSchemaAndResources($convertedChange, applicationIds: null);
+					} else {
+						$results['failure'][] = ['error' => "Form handle {$convertedChange['form_handle']} not found for dependency update", 'change' => $convertedChange];
+					}
+				} catch (\Exception $e) {
+					$results['failure'][] = ['error' => $e->getMessage(), 'change' => $convertedChange];
+				}
+			}
+		}
 		return $results;
 	}
 
 	private function applyFormChange(array $change): void
 	{
-		$primaryKey = $this->getPrimaryKeyForType($change['type']);
 
 		switch ($change['operation']) {
 			case 'create':
@@ -535,8 +624,11 @@ class FormulizeConfigSync
 				if (!$existingForm OR !is_object($existingForm) OR $existingForm->getVar('form_handle') != $change['data']['form_handle']) {
 					throw new \Exception("Form handle {$change['data']['form_handle']} does not exist");
 				}
-				$change['data']['fid'] = $primaryKey;
-				formulizeHandler::upsertFormSchemaAndResources($change['data']);
+				if(isset($change['data']['id_form'])) {
+					unset($change['data']['id_form']);
+				}
+				$change['data']['fid'] = $existingForm->getVar('id_form');
+				formulizeHandler::upsertFormSchemaAndResources($change['data'], applicationIds: null);
 				break;
 
 			case 'delete':
@@ -549,9 +641,31 @@ class FormulizeConfigSync
 		return;
 	}
 
-	private function applyElementChange(array $change): void
+	private function applyElementChange(array $change): ?string
 	{
+
+		$formHandle = $change['metadata']['form_handle'];
+		if(!$formObject = $this->formHandler->get($formHandle)) {
+			throw new \Exception("Form handle $formHandle not found");
+		}
+		$formId = $formObject->getVar('id_form');
+		$table = $this->getTableForType($change['type']);
 		$dataType = $change['metadata']['data_type'];
+		// check that the element is valid for upsert
+		// if not then sanitize handle and we will be using the direct DB writing
+		if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true) === false) {
+			$elementIdentifier = $change['operation'] == 'create' ? null : $change['data']['ele_handle'];
+			$enforcedEleHandle = formulizeHandler::enforceUniqueElementHandles($change['data']['ele_handle'], $elementIdentifier, $formId);
+			if($enforcedEleHandle != $change['data']['ele_handle']) {
+				throw new \Exception($change['data']['ele_handle']. " is not a unique element handle. Globally unique element handles are required.");
+			}
+			// since we're writing direct, make sure arrays are serialized
+			foreach($change['data'] as $key => $value) {
+				if (is_array($value)) {
+					$change['data'][$key] = serialize($value);
+				}
+			}
+		}
 
 		switch ($change['operation']) {
 			case 'create':
@@ -560,14 +674,27 @@ class FormulizeConfigSync
 				if ($existingElement) {
 					throw new \Exception("Element handle {$change['data']['ele_handle']} already exists");
 				}
-				$formHandle = $change['metadata']['form_handle'];
-				$form = $this->formHandler->getByHandle($formHandle);
-				if (!$form OR !is_object($form) OR $form->getVar('form_handle') != $formHandle) {
-					throw new \Exception("Form handle $formHandle not found");
+
+				if($this->deferElementChangeIfNecessary($change) === false) {
+					$change['data'] = $this->elementHandler->convertDependenciesForImport($change['data']);
+					// use upsert if a compatible element type
+					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
+						$change['data']['fid'] = $formId;
+						if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
+							return true;
+						}
+					// otherwise, do a direct update and then update the field separately
+					} else {
+						$change['data']['id_form'] = $formId;
+						if($elementId = $this->insertRecord($table, $change['data'])) {
+							$this->formHandler->insertElementField($elementId, $dataType);
+							if($elementObject = $this->elementHandler->get($elementId)) {
+								addElementToMultiPageScreens($elementObject->getVar('fid'), $elementObject);
+							}
+							return true;
+						}
+					}
 				}
-				$formId = $form->getVar('id_form');
-				$change['data']['fid'] = $formId;
-				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
 				break;
 
 			case 'update':
@@ -576,21 +703,74 @@ class FormulizeConfigSync
 				if (!$existingElement) {
 					throw new \Exception("Element handle {$change['data']['ele_handle']} does not exists");
 				}
-				$change['data']['ele_id'] = $existingElement->getVar('ele_id');
-				formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType);
+				if($this->deferElementChangeIfNecessary($change) === false) {
+					$change['data'] = $this->elementHandler->convertDependenciesForImport($change['data']);
+					$change['data']['ele_id'] = $existingElement->getVar('ele_id');
+					// use upsert if a compatible element type
+					if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true)) {
+						$change['data']['fid'] = $formId;
+						if(formulizeHandler::upsertElementSchemaAndResources($change['data'], dataType: $dataType)) {
+							return true;
+						}
+					// otherwise, do a direct update and then update the field separately
+					} else {
+						if($this->updateRecord($table, $change['data'], $this->getPrimaryKeyForType($change['type']))) {
+							// Apply data type changes to the element
+							$this->formHandler->updateField($existingElement, $change['data']['ele_handle'], $dataType);
+							return true;
+						}
+					}
+				}
 				break;
 
 			case 'delete':
-				$elementId = $change['data']['ele_id'];
-				$element = $this->elementHandler->get($elementId);
-				if ($element) {
-					$this->elementHandler->delete($element);
-					$this->formHandler->deleteElementField($elementId);
+				if ($element = _getElementObject($change['data']['ele_id'])
+					AND $this->elementHandler->delete($element)
+					AND $this->formHandler->deleteElementField($element)) {
+						return true;
 				}
 				break;
 		}
 
-		return;
+		if(!isset($this->deferredElementChanges[$change['data']['ele_handle']])) {
+			throw new \Exception("Failed to perform ".$change['operation']." for element handle {$change['data']['ele_handle']}");
+		}
+		return false;
+	}
+
+	/**
+	 * If a change has dependencies, defer the change for later processing
+	 */
+	private function deferElementChangeIfNecessary(array $change): bool
+	{
+		// if this change has dependencies, check that they are met
+		if(!empty($change['metadata']['dependencies'])) {
+			$elementHandle = $change['data']['ele_handle'];
+			// if this change was already applied, throw an exception
+			if(in_array($elementHandle, $this->appliedElementChanges)) {
+				throw new Exception("Checking if we need to defer a change that was already applied: $elementHandle");
+			} else {
+				// check that all the required elements are in the database already
+				foreach($change['metadata']['dependencies'] as $requiredElementHandle) {
+					if(!$requiredElementObject = $this->elementHandler->get($requiredElementHandle)) {
+						// if required element is not in the database but will be created in a queued change, then defer this change
+						if(isset($this->queuedElementChanges[$requiredElementHandle])
+							AND $this->queuedElementChanges[$requiredElementHandle]['operation'] == 'create'
+							AND !in_array($requiredElementHandle, $this->appliedElementChanges)) {
+								$this->deferredElementChanges[$elementHandle] = $change;
+								return true;
+						// otherwise, the dependency is will never be met
+						} else {
+							throw new \Exception("Element $elementHandle has unmet dependency on missing element $requiredElementHandle");
+						}
+					}
+				}
+			}
+		}
+		if(isset($this->deferredElementChanges[$change['data']['ele_handle']])) {
+			unset($this->deferredElementChanges[$change['data']['ele_handle']]);
+		}
+		return false;
 	}
 
 	/**
@@ -602,6 +782,69 @@ class FormulizeConfigSync
 	private function prefixTable(string $table): string
 	{
 		return XOOPS_DB_PREFIX . '_' . trim($table, '_');
+	}
+
+	/**
+	 * Insert a record into a database table, used when upsert not available
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @return int|bool The inserted record ID on success, false on failure
+	 */
+	private function insertRecord(string $table, array $data): int|bool
+	{
+		$fields = array_keys($data);
+		$placeholders = array_fill(0, count($fields), '?');
+		foreach($data as $index => $value) {
+			$value = is_array($value) ? serialize($value) : $value;
+			$data[$index] = $value;
+		}
+
+		$sql = sprintf(
+			"INSERT INTO %s (%s) VALUES (%s)",
+			$this->prefixTable($table),
+			'`' . implode('`, `', $fields) . '`',
+			implode(', ', $placeholders)
+		);
+
+		$stmt = $this->db->prepare($sql);
+		$result = $stmt->execute(array_values($data));
+
+		return $result ? (int) $this->db->lastInsertId() : false;
+	}
+
+	/**
+	 * Update a record in a database table, used when upsert not available
+	 *
+	 * @param string $table
+	 * @param array $data
+	 * @param string $primaryKey
+	 * @return bool True on success, false on failure
+	 */
+	private function updateRecord(string $table, array $data, string $primaryKey): bool
+	{
+		$fields = array_keys($data);
+		$sets = array_map(function ($field) {
+			return "`{$field}` = ?";
+		}, $fields);
+
+		$sql = sprintf(
+			"UPDATE %s SET %s WHERE %s = ?",
+			$this->prefixTable($table),
+			implode(', ', $sets),
+			$primaryKey
+		);
+
+		$values = [];
+		foreach($data as $key => $value) {
+			$value = is_array($value) ? serialize($value) : $value;
+			$values[] = $value;
+		}
+		$values[] = $data[$primaryKey];
+
+		$stmt = $this->db->prepare($sql);
+		$result = $stmt->execute($values);
+		return $result;
 	}
 
 	/**
@@ -665,7 +908,7 @@ class FormulizeConfigSync
 				$preparedForm[$field] = $value;
 			}
 		}
-		return $preparedForm;
+		return $this->formHandler->convertDependenciesForExport($preparedForm);
 	}
 
 	/**
@@ -698,28 +941,32 @@ class FormulizeConfigSync
 		$elementObject = $this->elementHandler->get($elementRow['ele_handle']);
 		$elementDataType = $elementObject->getDataTypeInformation();
 
-		$serializeFields = ['ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
+		// convert serialized data into arrays
+		$serializeFields = ['ele_value', 'ele_uitext','ele_filtersettings', 'ele_disabledconditions', 'ele_exportoptions'];
 		$preparedElement = [];
 		foreach ($elementRow as $field => $value) {
 			if (in_array($field, $serializeFields)) {
 				$unserialized = $value !== "" ? @unserialize($value) : [];
-				if ($field == 'ele_value') {
-					$preparedElement[$field] = $this->elementValueProcessor->processElementValueForExport($elementRow['ele_type'], $unserialized);
-				} else {
-					$preparedElement[$field] = $unserialized;
-				}
+				$preparedElement[$field] = $unserialized;
 			} else {
 				$preparedElement[$field] = $value;
 			}
 		}
+
+		// convert element refs to handles throughout
+		$preparedElement = $this->elementHandler->convertDependenciesForExport($preparedElement);
+
+		// clean up ele_value for export, so it's more readable
+		$preparedElement['ele_value'] = is_array($preparedElement['ele_value']) ? $this->elementValueProcessor->processElementValueForExport($preparedElement['ele_type'], $preparedElement['ele_value']) : array();
+
 		// Add element Metadata
 		$preparedElement['metadata'] = [
 			'data_type' => $elementDataType['dataTypeCompleteString']
 		];
+
 		// Remove not needed fields
 		unset($preparedElement['id_form']);
 		unset($preparedElement['ele_id']);
-		unset($preparedElement['form_handle']);
 		unset($preparedElement['ele_order']);
 		return $preparedElement;
 	}
@@ -741,7 +988,11 @@ class FormulizeConfigSync
 			return $value === "" ? null : $value;
 		}
 		if (is_array($value)) {
-			return empty($value) ? null : $value;
+			if(!empty($value)) {
+				ksort($value);
+				return $value;
+			}
+			return null;
 		}
 		if (is_bool($value)) {
 			return (int) $value;

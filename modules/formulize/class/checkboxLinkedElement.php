@@ -101,4 +101,81 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 		return $ele_value;
 	}
 
+	/**
+	 * Take data representing an element's properties, and convert any handles to numeric ids
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
+
+		$eleValueData[ELE_VALUE_SELECT_OPTIONS] = $this->convertLinkedElementSourceRefToIds($eleValueData[ELE_VALUE_SELECT_OPTIONS]);
+
+		$eleValueData[5] = $this->formulize_convertFilterDependenciesToIds($eleValueData[5], $dependencyIdToHandleMap);
+
+		foreach(array(
+			EV_MULTIPLE_LIST_COLUMNS,
+			EV_MULTIPLE_FORM_COLUMNS,
+			EV_MULTIPLE_SPREADSHEET_COLUMNS) as $key) {
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToIds($eleValueData[$key], $dependencyIdToHandleMap);
+				}
+		}
+
+		return $eleValueData;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any numeric id refs to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+
+		$eleValueData[ELE_VALUE_SELECT_OPTIONS] = $this->convertLinkedElementSourceRefToHandles($eleValueData[ELE_VALUE_SELECT_OPTIONS]);
+
+		$eleValueData[5] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[5], $dependencyIdToHandleMap);
+
+		foreach(array(
+			EV_MULTIPLE_LIST_COLUMNS,
+			EV_MULTIPLE_FORM_COLUMNS,
+			EV_MULTIPLE_SPREADSHEET_COLUMNS) as $key) {
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				}
+		}
+
+		return $eleValueData;
+	}
+
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
+	 */
+	public function getEleValueDependencies($values) {
+		$dependencies = array();
+		foreach($values as $key => $value) {
+			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
+				$linkedMetaDataParts = explode("#*=:*", $value);
+				if(count($linkedMetaDataParts) == 2) {
+					$dependencies[] = trim($linkedMetaDataParts[1]);
+				}
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work!
+			if($key == 5) {
+				$filterDependencies = $this->formulize_getFilterDependencies($value);
+				$dependencies = array_merge($dependencies, $filterDependencies);
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else these keys may have numeric refs to elements not yet in existence in DB!
+			if(in_array($key, array(12, EV_MULTIPLE_LIST_COLUMNS, EV_MULTIPLE_FORM_COLUMNS, EV_MULTIPLE_SPREADSHEET_COLUMNS))) {
+				$dependencies = array_merge($dependencies, $this->formulize_getRegularDependencies($value));
+			}
+		}
+		return array_filter(array_unique($dependencies), function($value) {
+			return $value !== 'none';
+		});
+	}
+
 }

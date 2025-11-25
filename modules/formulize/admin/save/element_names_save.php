@@ -61,8 +61,7 @@ if($_POST['formulize_admin_key'] == "new") {
 if($element->isSystemElement) {
 	exit();
 }
-
-if($element->getVar('ele_type') != 'grid') {
+if(isset($_POST['orderpref'])) {
 	$element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
 }
 $element->setVar('ele_sort', $_POST['sortpref']);

@@ -705,6 +705,58 @@ class formulizeFormsHandler {
 		return new formulizeForm();
 	}
 
+	/**
+	 * Take data representing a form's properties, and convert any handle/id refs
+	 * Presumption is that this is being done after all the dependencies exist in the database!
+	 * @param array $formData An associative array of form data, following the form object structure
+	 * @param string $direction 'import' to convert handles to numeric ids, 'export' to convert numeric ids to handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	private function convertDependencies($formData, $direction) {
+		// convert pi, defaultform, and defaultlist to handles
+		if($direction != 'import' AND $direction != 'export') {
+			throw new Exception("Invalid direction passed to convertDependencies: ".$direction.".	Must be 'import' or 'export'.");
+			return $formData; // might have exited with the exception, but we'll send this back anyway just in case
+		}
+		$elementHandler = xoops_getmodulehandler('elements', 'formulize');
+		$screenHandler = xoops_getmodulehandler('screen', 'formulize');
+		if(isset($formData['pi']) AND (($direction == 'import' AND !is_numeric($formData['pi'])) OR ($direction == 'export' AND is_numeric($formData['pi'])))) {
+			if($piElement = $elementHandler->get($formData['pi'])) {
+				$formData['pi'] = $direction == 'import' ? $piElement->getVar('ele_id') : $piElement->getVar('ele_handle');
+			}
+		}
+		if(isset($formData['defaultform']) AND (($direction == 'import' AND !is_numeric($formData['defaultform'])) OR ($direction == 'export' AND is_numeric($formData['defaultform'])))) {
+			if($defaultFormScreen = $screenHandler->get($formData['defaultform'])) {
+				$formData['defaultform'] = $direction == 'import' ? $defaultFormScreen->getVar('sid') : $defaultFormScreen->getVar('screen_handle');
+			}
+		}
+		if(isset($formData['defaultlist']) AND (($direction == 'import' AND !is_numeric($formData['defaultlist'])) OR ($direction == 'export' AND is_numeric($formData['defaultlist'])))) {
+			if($defaultListScreen = $screenHandler->get($formData['defaultlist'])) {
+				$formData['defaultlist'] = $direction == 'import' ? $defaultListScreen->getVar('sid') : $defaultListScreen->getVar('screen_handle');
+			}
+		}
+		return $formData;
+	}
+
+	/**
+	 * Take data representing a form's properties, and convert any handle refs to numeric ids
+	 * Presumption is that this is being done after all the dependencies exist in the database!
+	 * @param array $formData An associative array of form data, following the form object structure
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertDependenciesForImport($formData) {
+		return $this->convertDependencies($formData, 'import');
+	}
+
+	/**
+	 * Take data representing a form's properties, and convert any numeric dependencies to handles
+	 * @param array $formData An associative array of form data, following the form object structure
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertDependenciesForExport($formData) {
+		return $this->convertDependencies($formData, 'export');
+	}
+
 	function get($form_id_or_handle,$includeAllElements=false,$refreshCache=false) {
 		// this is cheap...we're caching form objects potentially twice because of a possible difference in whether we want all objects included or not.  This could be handled much better.  Maybe iterators could go over the object to return all elements, or all visible elements, or all kinds of other much more elegant stuff.
 		static $cachedForms = array();
@@ -1046,15 +1098,15 @@ class formulizeFormsHandler {
 	}
 
 	// check to see if a handle is unique within a form
-	function isElementHandleUnique($handle, $element_id="") {
+	function isElementHandleUnique($handle, $elementIdentifier="") {
         $handle = formulizeElement::sanitize_handle_name($handle);
 		if(isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
 		global $xoopsDB;
 		// validate element id, convert to element id if it was a handle or object
-		if($element_id) {
-			$elementObject = _getElementObject($element_id);
+		if($elementIdentifier) {
+			$elementObject = _getElementObject($elementIdentifier);
 			if(!$elementObject) {
 				throw new Exception("Could not load element object to verify uniqueness of handle");
 			}

@@ -169,6 +169,118 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		return $ele_value;
 	}
 
+	/**
+	 * Take data representing an element's properties, and convert any handle refs to numeric ids
+	 * Premise is that everything exists in the database now or else this won't work
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
+
+		$eleValueData[ELE_VALUE_SELECT_OPTIONS] = $this->convertLinkedElementSourceRefToIds($eleValueData[ELE_VALUE_SELECT_OPTIONS]);
+
+		$eleValueData[ELE_VALUE_SELECT_LINK_FILTERS] = $this->formulize_convertFilterDependenciesToIds($eleValueData[ELE_VALUE_SELECT_LINK_FILTERS], $dependencyIdToHandleMap);
+		$eleValueData[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER] = $this->formulize_convertFilterDependenciesToIds($eleValueData[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $dependencyIdToHandleMap);
+
+		foreach(array(
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS,
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS,
+			ELE_VALUE_SELECT_LINK_SORT,
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT) as $key) {
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToIds($eleValueData[$key], $dependencyIdToHandleMap);
+				}
+		}
+
+		// convert numeric ids within ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS to {elementHandle} refs so they can be distinguished from literal text values when importing
+		foreach($eleValueData[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS] as $mappingIndex => $thisMapping) {
+			foreach(array('thisForm', 'sourceForm') as $mappingKey) {
+				if(!is_numeric($thisMapping[$mappingKey]) AND substr($thisMapping[$mappingKey], 0, 1) == '{' AND substr($thisMapping[$mappingKey], -1) == '}' AND $elementObject = $this->get(substr($thisMapping[$mappingKey], 1, -1))) {
+					$eleValueData[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS][$mappingIndex][$mappingKey] = array_search($thisMapping[$mappingKey], $dependencyIdToHandleMap);
+				}
+			}
+		}
+		return $eleValueData;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any numeric id refs to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+
+		$eleValueData[ELE_VALUE_SELECT_OPTIONS] = $this->convertLinkedElementSourceRefToHandles($eleValueData[ELE_VALUE_SELECT_OPTIONS]);
+
+		$eleValueData[ELE_VALUE_SELECT_LINK_FILTERS] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[ELE_VALUE_SELECT_LINK_FILTERS], $dependencyIdToHandleMap);
+		$eleValueData[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER] = $this->formulize_convertFilterDependenciesToHandles($eleValueData[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $dependencyIdToHandleMap);
+
+		foreach(array(
+			ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS,
+			ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS,
+			ELE_VALUE_SELECT_LINK_SORT,
+			ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS,
+			ELE_VALUE_SELECT_LINK_LIMITBYELEMENT) as $key) {
+				if(isset($eleValueData[$key])) {
+					$eleValueData[$key] = $this->convertElementRefsToHandles($eleValueData[$key], $dependencyIdToHandleMap);
+				}
+		}
+
+		// convert numeric ids within ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS to {elementHandle} refs so they can be distinguished from literal text values when importing
+		foreach($eleValueData[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS] as $mappingIndex => $thisMapping) {
+			foreach(array('thisForm', 'sourceForm') as $mappingKey) {
+				if(is_numeric($thisMapping[$mappingKey]) AND $elementObject = $this->get($thisMapping[$mappingKey])) {
+					$eleValueData[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS][$mappingIndex][$mappingKey] = '{'.$dependencyIdToHandleMap[$thisMapping[$mappingKey]].'}';
+				}
+			}
+		}
+		return $eleValueData;
+	}
+
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
+	 */
+	public function getEleValueDependencies($values) {
+		$dependencies = array();
+		foreach($values as $key => $value) {
+			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
+				$linkedMetaDataParts = explode("#*=:*", $value);
+				if(count($linkedMetaDataParts) == 2) {
+					$dependencies[] = trim($linkedMetaDataParts[1]);
+				}
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work!
+			if($key == ELE_VALUE_SELECT_LINK_FILTERS OR $key == ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER) {
+				$filterDependencies = $this->formulize_getFilterDependencies($value);
+				$dependencies = array_merge($dependencies, $filterDependencies);
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles already! Or else these keys may have numeric refs to elements not yet in existence in DB!
+			if(in_array($key, array(ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS, ELE_VALUE_SELECT_LINK_ALTEXPORTELEMENTS, ELE_VALUE_SELECT_LINK_SORT, ELE_VALUE_SELECT_LINK_ALTFORMELEMENTS, ELE_VALUE_SELECT_LINK_LIMITBYELEMENT))) {
+				$dependencies = array_merge($dependencies, $this->formulize_getRegularDependencies($value));
+			}
+			// passed in elementData ought to have had all numeric references converted to element handles, wrapped with { } for this key. Or else these keys may have numeric refs to elements not yet in existence in DB!
+			if($key == ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS) {
+				foreach($value as $thisMapping) {
+					foreach(array('thisForm', 'sourceForm') as $mappingKey) {
+						if(is_numeric($thisMapping[$mappingKey]) AND $mappingElement = _getElementObject($thisMapping[$mappingKey])) {
+							$dependencies[] = $mappingElement->getVar('ele_handle');
+						} elseif(substr($thisMapping[$mappingKey], 0, 1) == '{' AND substr($thisMapping[$mappingKey], -1) == '}') {
+							$dependencies[] = substr($thisMapping[$mappingKey], 1, -1);
+						}
+					}
+				}
+			}
+		}
+		return array_filter(array_unique($dependencies), function($value) {
+			return $value !== 'none';
+		});
+	}
+
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
 	// it receives the element object and returns an array of data that will go to the admin UI template
 	// when dealing with new elements, $element might be FALSE

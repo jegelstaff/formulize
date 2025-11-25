@@ -30,17 +30,16 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/griddisplay.php";
 
-class formulizeDerivedElement extends formulizeElement {
+class formulizeGridElement extends formulizeElement {
 
- 	public static $category = "derived"; // the category of element this belongs to, used in the mcp tools to organize element types
-
-	var $defaultValueKey;
+	public static $category = "table";
 
 	function __construct() {
-		$this->name = "Value derived from other elements";
-		$this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
-		$this->needsDataType = true; // set to false if you're going force a specific datatype for this element using the overrideDataType
+		$this->name = "Table of elements";
+		$this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
+		$this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
 		$this->overrideDataType = ""; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
 		$this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
 		$this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
@@ -57,83 +56,26 @@ class formulizeDerivedElement extends formulizeElement {
 	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
 	 */
 	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		$descriptionAndExamples =
-"**Element:** Derived Value (derived)
-**Description:** An element that derives its value from other elements using custom PHP code. This element allows for calculations or data manipulations based on the values of other form elements.
+		return
+"**Element:** Table of elements (grid).
+**Description:** A table that contains elements from the form, so they can be displayed together in rows and/or columns. This is useful for display first name/last name boxes, or parts of addresses, like province and postal code, etc.
+**Properties:**
+- initialElementId (Required. The element id of the first element in the table. This element will appear in the upper left corner, and the remaining spaces in the table will be filled by the subsequent elements in the form in order.)
+- numberOfRows (Required. The number of rows in the table.)
+- numberOfColumns (Required. The number of columns in the table.)
+- rowLabels (Optional. Comma separated list of labels, one for each row in the table.)
+- columnLabels (Optional. Comma separated list of labels for the columns in the table.)
 **Examples:**
-- A derived value element that puts the first name and last name together: { code: \"\$value = \$profile_first_name.' '.\$profile_last_name;\" }
-- A derived value element that calculates a 10% tax on a subtotal field: { code: \"\$value = \$order_subtotal * 0.10;\", decimals: \"2\", prefix: \"$\" }";
-		return $descriptionAndExamples;
-	}
-
-	/**
-	 * For single-type elements, this method provides the schema for the properties that can be used with the create_form_element and update_form_element tools
-	 * @return array The schema for the properties that can be used with the create_form_element and update_form_element tools
-	 */
-	public static function mcpSingleTypeElementProperties() {
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		return [
-			'properties' => [
-				'code' => [
-					'type' => 'string',
-					'description' => 'PHP code that derives a value from other elements. In the PHP code, the value must be assigned to a variable called $value. Refer to other elements in this and other forms, using variables named after their element handles, ie: $profile_first_name',
-				],
-				'decimals' => [
-					'type' => 'integer',
-					'description' => 'If the value will be a number, this is the number of decimal places to allow. Default is '.$formulizeConfig['number_decimals'],
-				],
-				'prefix' => [
-					'type' => 'string',
-					'description' => 'If the value will be a number, this is text to show before the number. Default is '.$formulizeConfig['number_prefix'],
-				],
-				'decimalsSeparator' => [
-					'type' => 'string',
-					'description' => 'If the value will be a number, this is the character to use as the decimal separator. Default is '.$formulizeConfig['number_decimalsep'],
-				],
-				'thousandsSeparator' => [
-					'type' => 'string',
-					'description' => 'If the value will be a number, this is the character to use as the thousands separator. Default is '.$formulizeConfig['number_sep'],
-				],
-				'suffix' => [
-					'type' => 'string',
-					'description' => 'If the value will be a number, this is text to show after the number. Default is '.$formulizeConfig['number_suffix'],
-				]
-			],
-			'required' => ['code']
-		];
-	}
-
-	function setVar($key, $value, $not_gpc = false) {
-		if($key == 'ele_value') {
-			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
-			formulize_writeCodeToFile($filename, $valueToWrite[0]);
-			$valueToWrite[0] = '';
-			$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
-		}
-		parent::setVar($key, $value, $not_gpc);
-	}
-
-	function getVar($key, $format = 's') {
-		$format = $key == "ele_value" ? "f" : $format;
-		$value = parent::getVar($key, $format);
-		if($key == 'ele_value') {
-			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
-			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
-			$fileValue = "";
-			if(file_exists($filePath)) {
-				$fileValue = strval(file_get_contents($filePath));
-			}
-			$value[0] = $fileValue ? $fileValue : $value[0];
-		}
-		return $value;
+- A table to show first name and last name beside each other in the form: { initialElementId: 12, numberOfRows: 1, numberOfColumns: 2, rowLabels: \"\", columnLabels: \"First Name, Last Name\" }
+- A table to show province and postal code beside each other in the form: { initialElementId: 15, numberOfRows: 1, numberOfColumns: 2, rowLabels: \"\", columnLabels: \"Province, Postal Code\" }
+- A table to show five preferences in a single column all together in the form, with no labels (four commas will mean five rows with no text labels): { initialElementId: 20, numberOfRows: 5, numberOfColumns: 1 }
+- A table with three rows, each row gives users a choice of meals, a gluten-free yes/no option, and a choice of music. The yes/no option is self-explanatory and so has no column label: { initialElementId: 25, numberOfRows: 3, numberOfColumns: 3, rowLabels: \"Option 1, Option 2, Option 3\", columnLabels: \"Meals, , Music\" }";
 	}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeDerivedElementHandler extends formulizeElementsHandler {
+class formulizeGridElementHandler extends formulizeElementsHandler {
 
 	var $db;
 	var $clickable; // used in formatDataForList
@@ -145,7 +87,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	}
 
 	function create() {
-		return new formulizeDerivedElement();
+		return new formulizeGridElement();
 	}
 
 	/**
@@ -158,78 +100,91 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		foreach($properties as $key => $value) {
-			switch($key) {
-				case 'decimals':
-					$properties[$key] = intval($value);
-					if($properties[$key] < 0) {
-						$properties[$key] = 0;
-					}
-					break;
-				case 'prefix':
-				case 'decimalsSeparator':
-				case 'thousandsSeparator':
-				case 'suffix':
-					$properties[$key] = trim($value);
-					break;
-				case 'code':
-					if(substr(trim($value), 0, 5) != '<?php') {
-						$value = "<?php\n".$value;
-					}
-					// replace all $element_handle occurrences with "element_handle" instead, for now (future format will be to use the variable names with dollar signs)
-					// Must match $element_handle based on the allowed characters for PHP variable names, and terminate at the first non-valid character (whitespace, punctuation, etc)
-					// Must check if the element exists, and only replace if it does
-					preg_match_all('/\$([a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)/', $value, $matches);
-					if(!empty($matches[1])) {
-						foreach($matches[1] as $possibleElementHandle) {
-							if($possibleElement = _getElementObject($possibleElementHandle)) {
-								$value = str_replace('$'.$possibleElementHandle, '"'.$possibleElementHandle.'"', $value);
-							}
-						}
-					}
-					if($parseError = formulize_validatePHPCode($value)) {
-						throw new Exception("The code provided for the derived value element cannot be parsed. $parseError. Please correct this and try again.");
-					}
-					$properties[$key] = $value;
-					break;
-				default:
-					unset($properties[$key]); // remove anything we don't recognize
+		if($ele_value[1] == '' AND $ele_value[2] == '' AND (!isset($properties['numberOfRows']) OR !isset($properties['numberOfColumns']))) {
+			throw new Exception("You must specify at least one row and one column for the grid.");
+		}
+		if(!$ele_value[4] AND !isset($properties['initialElementId'])) {
+			throw new Exception("You must specify the initialElementId property to indicate the first element in the grid.");
+		}
+		if(isset($properties['initialElementId'])) {
+			$ele_value[4] = intval($properties['initialElementId']);
+		}
+		$passedRowLabels = isset($properties['rowLabels']) ? explode(",", $properties['rowLabels']) : [];
+		$passedColumnLabels = isset($properties['columnLabels']) ? explode(",", $properties['columnLabels']) : [];
+		$rowLabels = [];
+		$colLabels = [];
+		if(isset($properties['numberOfRows']) AND isset($properties['numberOfColumns'])) {
+			for($row = 0; $row < intval($properties['numberOfRows']); $row++) {
+				$rowLabels[] = isset($passedRowLabels[$row]) ? trim($passedRowLabels[$row]) : "";
+			}
+			for($col = 0; $col < intval($properties['numberOfColumns']); $col++) {
+				$colLabels[] = isset($passedColumnLabels[$col]) ? trim($passedColumnLabels[$col]) : "";
 			}
 		}
-		if(isset($properties['code'])) {
-			$ele_value[0] = $properties['code'];
-		}
-		if(isset($properties['decimals'])) {
-			$ele_value[1] = $properties['decimals'];
-		}
-		if(isset($properties['prefix'])) {
-			$ele_value[2] = $properties['prefix'];
-		}
-		if(isset($properties['decimalsSeparator'])) {
-			$ele_value[3] = $properties['decimalsSeparator'];
-		}
-		if(isset($properties['thousandsSeparator'])) {
-			$ele_value[4] = $properties['thousandsSeparator'];
-		}
-		if(isset($properties['suffix'])) {
-			$ele_value[5] = $properties['suffix'];
-		}
-		return [
-			'ele_value' => $ele_value
-		];
+		$ele_value[1] = implode(",", $rowLabels);
+		$ele_value[2] = implode(",", $colLabels);
+		return ['ele_value' => $ele_value ];
 	}
 
 	public function getDefaultEleValue() {
-		$ele_value = array();
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		$ele_value[0] = "<?php";
-		$ele_value[1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-		$ele_value[2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-		$ele_value[3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-		$ele_value[4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-		$ele_value[5] = isset($formulizeConfig['number_suffix']) ? $formulizeConfig['number_suffix'] : '';
+		// 0 - string - use heading from: caption or form or none
+		// 1 - row captions, comma separated
+		// 2 - column captions, comma separated
+		// 3 - string - alternate shading in the grid: horizontal (rows) or vertical (columns) (no effect in Anari?)
+		// 4 - starting element id
+		// 5 - heading at side (1) or above (0)
+		$ele_value = array(
+			0 => "caption",
+			1 => "",
+			2 => "",
+			3 => "horizontal",
+			4 => 0,
+			5 => 1
+		);
 		return $ele_value;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any handles to numeric ids
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForImport($eleValueData, $dependencyIdToHandleMap) {
+		if($initialElementObject = _getElementObject($eleValueData[4])) {
+			$eleValueData[4] = $initialElementObject->getVar('ele_id');
+		}
+		return $eleValueData;
+	}
+
+	/**
+	 * Take data representing an element's properties, and convert any numeric id refs to handles
+	 * @param array $elementData An associative array of form data, following the form object structure
+	 * @param array $dependencyIdToHandleMap An array mapping numeric element ids to element handles
+	 * @return array The modified $formData with numeric dependencies converted to handles
+	 */
+	public function convertEleValueDependenciesForExport($eleValueData, $dependencyIdToHandleMap) {
+		if($initialElementObject = _getElementObject($eleValueData[4])) {
+			$eleValueData[4] = $initialElementObject->getVar('ele_handle');
+		}
+		return $eleValueData;
+	}
+
+	/**
+	 * Check an array, structured as ele_value would be structured, and return an array of elements that the element depends on
+	 * @param array $values The ele_value array to check for dependencies - numeric element refs ought to have been replaced with handles, when this data was created
+	 * @return array An array of element handles that this element depends on
+	 */
+	public function getEleValueDependencies($values) {
+		$dependencies = array();
+		if(is_numeric($values[4])) {
+			if($initialElementObject = _getElementObject($values[4])) {
+				$dependencies[] = $initialElementObject->getVar('ele_handle');
+			}
+		} else {
+			$dependencies[] = $values[4];
+		}
+		return $dependencies;
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -239,29 +194,26 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
-			// list of relationships for using as context when updating derived values
-			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-			$allRelationships = $framework_handler->getFrameworksByForm($form_id, true);
-			$relationships = array();
-			$relationships[""] = "this form only, no relationship.";
-			foreach ($allRelationships as $thisRelationship) {
-				$frid = $thisRelationship->getVar('frid');
-				if (!isset($relationships[$frid])) {
-					$relationships[$frid] = $thisRelationship->getVar('name');
-				}
-			}
-			$listOfRelationships = new XoopsFormSelect("", 'listofrelationshipoptions');
-			$listOfRelationships->addOptionArray($relationships);
-			$dataToSendToTemplate['listofrelationshipoptions'] = $listOfRelationships->render();
-		} else {
-			$config_handler = $config_handler = xoops_gethandler('config');
-			$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$dataToSendToTemplate['ele_value'][1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
-			$dataToSendToTemplate['ele_value'][2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
-			$dataToSendToTemplate['ele_value'][3] = isset($formulizeConfig['number_decimalsep']) ? $formulizeConfig['number_decimalsep'] : '.';
-			$dataToSendToTemplate['ele_value'][4] = isset($formulizeConfig['number_sep']) ? $formulizeConfig['number_sep'] : ',';
-			$dataToSendToTemplate['ele_value'][0] = "<?php\n";
+			$ele_value = $element->getVar('ele_value');
+			$dataToSendToTemplate['background'] = $ele_value[3];
+			$dataToSendToTemplate['heading'] = $ele_value[0];
+			$dataToSendToTemplate['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
+			$dataToSendToTemplate[4] = $ele_value[4];
+		} else { // new element
+			$dataToSendToTemplate['background'] = "horizontal";
+			$dataToSendToTemplate['sideortop'] = "side";
+			$dataToSendToTemplate['heading'] = "caption";
+			$dataToSendToTemplate[4] = 0;
 		}
+		$grid_elements_criteria = new Criteria('');
+		$grid_elements_criteria->setSort('ele_order');
+		$grid_elements_criteria->setOrder('ASC');
+		$fid = is_object($element) ? $element->getVar('fid') : $_GET['fid'];
+		$grid_elements = $this->getObjects($grid_elements_criteria, $fid);
+		foreach($grid_elements as $this_element) {
+				$grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
+		}
+		$dataToSendToTemplate['grid_start_options'] = $grid_start_options;
 		return $dataToSendToTemplate;
 	}
 
@@ -272,11 +224,54 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
 	// advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
-		$changed = false;
-		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			$element->setVar('ele_value', $ele_value);
+		$element->setVar('ele_value', $ele_value);
+		return false;
+	}
+
+	// override the insert method so that we can do special stuff with grid elements
+	function insert(&$element, $force = false) {
+
+		// position the grid immediately before the first element that's in the grid
+		// have to figure out the preceeding element, then request the figureOutOrder with that element's id
+		$position = 'top';
+		$oldOrder = $element->getVar('ele_order');
+		$ele_value = $element->getVar('ele_value');
+		$fid = $element->getVar('fid');
+		if(is_array($ele_value) AND isset($ele_value[4]) AND $ele_value[4] AND $firstGridElement = _getElementObject($ele_value[4])) {
+			$sql = "SELECT ele_id, ele_order FROM ".$this->db->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
+			if($res = $this->db->query($sql)) {
+				if($this->db->getRowsNum($res) == 1) {
+					$array = $this->db->fetchArray($res);
+					$position = $array['ele_id'];
+					$oldOrder = $array['ele_order'];
+				}
+			}
 		}
-		return $changed;
+		$element->setVar('ele_order', figureOutOrder($position, $oldOrder, $fid));
+
+		// do the insert the normal way
+		if($result = parent::insert($element, $force)) {
+
+			// now propagate display settings to constituent elements
+			$gridFilterSettings = $element->getVar('ele_filtersettings');
+			// if grid has filter settings...
+			if(is_array($gridFilterSettings) AND is_array($gridFilterSettings[0]) AND count($gridFilterSettings[0]) > 0) {
+				$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
+				foreach(elementsInGrid($ele_value[4], $element->getVar('id_form'), $gridCount) as $gridElementId) {
+					$gridElementObject = $this->get($gridElementId);
+					$gridElementFilterSettings = $gridElementObject->getVar('ele_filtersettings');
+					// if constitiuent element has no filter settings...
+					if(!is_array($gridElementFilterSettings) OR !is_array($gridElementFilterSettings[0]) OR count($gridElementFilterSettings[0]) == 0) {
+						$gridElementObject->setVar('ele_filtersettings', $gridFilterSettings);
+						if(!parent::insert($gridElementObject)) {
+							$elementLabel = $gridElementObject->getVar('ele_colhead') ? $gridElementObject->getVar('ele_colhead') : $gridElementObject->getVar('ele_caption');
+							throw new Exception("Could not apply grid display settings to the element ".$elementLabel."\n");
+						}
+					}
+				}
+			}
+		}
+		return $result;
 	}
 
 	/**
@@ -287,7 +282,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	 * @return mixed The default value
 	 */
 	function getDefaultValue($element, $entry_id = 'new') {
-		return null;
+		return;
 	}
 
 	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -296,12 +291,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
-		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')])) {
-			$ele_value[15] = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$element->getVar('ele_handle')];
-		} else {
-			$ele_value[15] = $value;	// there is not a number 15 position in ele_value for derived values...we add the value to print in this position so we don't mess up any other information that might need to be carried around
-		}
-		return $ele_value;
+		return;
 	}
 
 	// this method renders the element for display in a form
@@ -315,28 +305,24 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
-
-		if($entry_id != "new") {
-			$form_ele = new xoopsFormLabel($caption, formulize_numberFormat($ele_value[15], $element->getVar('ele_id')), $markupName);
-		} else {
-			$form_ele = new xoopsFormLabel($caption, _formulize_VALUE_WILL_BE_CALCULATED_AFTER_SAVE, $markupName);
-		}
-		return $form_ele;
+		return renderGrid($element, $entry_id, screen: $screen);
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element
 	// 'myform' is a name enforced by convention that refers to the form where this element resides
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
-		return array();
+		return;
 	}
 
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
 	// You can return {WRITEASNULL} to cause a null value to be saved in the database
 	// $value is what the user submitted
 	// $element is the element object
+	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
+		return;
 	}
 
 	// this method will handle any final actions that have to happen after data has been saved
@@ -365,17 +351,14 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-		return $value;
+		return;
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
 	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
 	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-		$this->clickable = true;
-		$this->striphtml = false;
-		$this->length = $textWidth;
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		return;
 	}
 
 }

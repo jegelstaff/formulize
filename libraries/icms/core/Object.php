@@ -192,6 +192,17 @@ class icms_core_Object {
 	 */
 	public function setVar($key, $value, $not_gpc = false) {
 		if (!empty($key) && isset($value) && isset($this->vars[$key])) {
+			// array types only accept arrays, or serialized arrays
+			if($this->vars[$key]['data_type'] == XOBJ_DTYPE_ARRAY) {
+				if(is_string($value)) {
+					$unserialized = unserialize($value);
+					if($unserialized === false) {
+						$value = array();
+					} elseif(!is_array($unserialized)) {
+						$value = serialize(array($unserialized));
+					}
+				}
+			}
 			$this->vars[$key]['value'] =& $value;
 			$this->vars[$key]['not_gpc'] = $not_gpc;
 			$this->vars[$key]['changed'] = true;
