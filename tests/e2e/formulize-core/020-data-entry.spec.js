@@ -142,11 +142,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 	})
 
 	test('Create Roman Coin', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Roman Coin');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('0.2'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('1.5'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('1.5'); // depth
 		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('150'); // year
 		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2020-08-21');
@@ -155,6 +151,22 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
+		page.once('dialog', dialog => {
+			console.log(`Dialog message: ${dialog.message()}`);
+			dialog.dismiss().catch(() => {});
+		});
+		await page.getByRole('button', { name: 'Save' }).click();
+		await expect(page.locator('div.formulize-input-artifacts_short_name input[type="text"]')).toBeFocused();
+		await page.getByRole('textbox', { name: 'Short name *' }).fill('Roman Coin');
+		page.once('dialog', dialog => {
+			console.log(`Dialog message: ${dialog.message()}`);
+			dialog.dismiss().catch(() => {});
+		});
+		await page.getByRole('button', { name: 'Save' }).click();
+		await expect(page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0)).toBeFocused();
+		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('0.2'); // height
+		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('1.5'); // width
+		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('1.5'); // depth
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})

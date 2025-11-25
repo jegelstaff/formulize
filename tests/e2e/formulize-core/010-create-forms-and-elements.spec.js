@@ -70,6 +70,7 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Height');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_height');
 		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('1');
 		await saveAdminForm(page);
@@ -82,6 +83,7 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Width');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_width');
 		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('1');
 		await saveAdminForm(page);
@@ -94,6 +96,7 @@ test.describe('Artifacts Elements', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Depth');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_depth');
 		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('textbox', { name: 'Number of decimal places:' }).fill('1');
 		await saveAdminForm(page);
