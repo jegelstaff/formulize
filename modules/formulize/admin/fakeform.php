@@ -22,9 +22,9 @@ print '
 <html>
 <link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.'/themes/Anari/css/style.css?v=1.5" />
 <link rel="stylesheet" type="text/css" media="all" href="'.XOOPS_URL.'/modules/formulize/templates/css/formulize.css?v=1.5" />
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script type="text/javascript" src="'.XOOPS_URL.'libraries/jquery/1.12.4/jquery.min.js"></script>
 <script type="text/javascript" src="'.XOOPS_URL.'/libraries/jquery/jquery-migrate-1.2.1.min.js"></script>
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<script type="text/javascript" src="'.XOOPS_URL.'/libraries/jqueryui/1.11.4/jquery-ui.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 <script>
 function noaction() {
@@ -80,7 +80,7 @@ foreach($elementObjects as $elementObject) {
 	} elseif($form_ele !== false) {
 		$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
 		$fakeForm->addElement($form_ele, $req);
-		unset($form_ele); 
+		unset($form_ele);
 	}
 }
 
