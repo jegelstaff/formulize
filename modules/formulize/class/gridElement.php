@@ -198,19 +198,22 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 			$dataToSendToTemplate['background'] = $ele_value[3];
 			$dataToSendToTemplate['heading'] = $ele_value[0];
 			$dataToSendToTemplate['sideortop'] = $ele_value[5] == 1 ? "side" : "above";
-			$grid_elements_criteria = new Criteria('');
-			$grid_elements_criteria->setSort('ele_order');
-			$grid_elements_criteria->setOrder('ASC');
-			$grid_elements = $this->getObjects($grid_elements_criteria, $element->getVar('fid'));
-			foreach($grid_elements as $this_element) {
-					$grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
-			}
-			$dataToSendToTemplate['grid_start_options'] = $grid_start_options;
+			$dataToSendToTemplate[4] = $ele_value[4];
 		} else { // new element
-			$dataToSendToTemplate[3] = "horizontal";
-			$dataToSendToTemplate[5] = 1;
-			$dataToSendToTemplate[0] = "caption";
+			$dataToSendToTemplate['background'] = "horizontal";
+			$dataToSendToTemplate['sideortop'] = "side";
+			$dataToSendToTemplate['heading'] = "caption";
+			$dataToSendToTemplate[4] = 0;
 		}
+		$grid_elements_criteria = new Criteria('');
+		$grid_elements_criteria->setSort('ele_order');
+		$grid_elements_criteria->setOrder('ASC');
+		$fid = is_object($element) ? $element->getVar('fid') : $_GET['fid'];
+		$grid_elements = $this->getObjects($grid_elements_criteria, $fid);
+		foreach($grid_elements as $this_element) {
+				$grid_start_options[$this_element->getVar('ele_id')] = $this_element->getVar('ele_colhead') ? printSmart(trans($this_element->getVar('ele_colhead'))) : printSmart(trans($this_element->getVar('ele_caption')));
+		}
+		$dataToSendToTemplate['grid_start_options'] = $grid_start_options;
 		return $dataToSendToTemplate;
 	}
 
