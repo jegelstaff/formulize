@@ -177,8 +177,12 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	 */
 	public function getEleValueDependencies($values) {
 		$dependencies = array();
-		if($initialElementObject = _getElementObject($values[4])) {
-			$dependencies[] = $initialElementObject->getVar('ele_handle');
+		if(is_numeric($values[4])) {
+			if($initialElementObject = _getElementObject($values[4])) {
+				$dependencies[] = $initialElementObject->getVar('ele_handle');
+			}
+		} else {
+			$dependencies[] = $values[4];
 		}
 		return $dependencies;
 	}
