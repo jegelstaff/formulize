@@ -163,7 +163,7 @@ class formulizeScreenHandler {
 		}
 		return $instance;
 	}
-	function &create() {
+	function create() {
 		return new formulizeScreen();
 	}
 
