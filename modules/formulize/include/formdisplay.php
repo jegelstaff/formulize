@@ -131,7 +131,7 @@ class formulize_themeForm extends XoopsThemeForm {
 
         $GLOBALS['formulize_renderedNumericElementsMaxWidth'] = 0;
 
-		$ele_name = $this->getName();
+				$ele_name = $this->getName();
         $displayStyle = !strstr(getCurrentURL(), "printview.php") ? "style='display: none;'" : "";
 
         // start form
@@ -194,6 +194,27 @@ class formulize_themeForm extends XoopsThemeForm {
 
 	public function renderValidationJS($withtags = true) {
 		$js = "\n<!-- Start Form Validation JavaScript //-->\n<script type='text/javascript'>\n<!--//\n";
+
+		$js .= "
+				if(typeof jQuery === 'undefined') {
+					function formulizeFadeIn(element, duration = 200) {
+						element.style.opacity = '0';
+						element.style.display = '';
+						element.style.transition = `opacity \${duration}ms ease-in-out`;
+
+						// Force a reflow to ensure the initial state is applied
+						element.offsetHeight;
+
+						element.style.opacity = '1';
+					}
+					window.addEventListener('load', function() {
+							document.querySelectorAll('.formulizeThemeForm').forEach(function(form) {
+									formulizeFadeIn(form, 200);
+							});
+					});
+				}
+				";
+
         $js .= "jQuery(document).ready(function() {\n";
 
         // make form functional when it loads, and when a user interacts with it
