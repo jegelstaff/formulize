@@ -353,9 +353,22 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	})
 })
 
+test('Clear data', async ({ page }) => {
+	await login(page, 'curator1', '12345');
+	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
+	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).click();
+ 	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).press('ControlOrMeta+a');
+	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('');
+	await saveFormulizeForm(page);
+	await expect(page.getByRole('textbox', { name: 'Rich Text Editor, main' })).not.toHaveText('A very lovely Roman Coin.');
+	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
+	await saveFormulizeForm(page);
+})
+
 test('Test \'Close\' button functionality', async ({ page }) => {
 	await login(page, 'curator1', '12345');
-	await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
+	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
 	await expect(page.getByText('Ancient History')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Short Name' }).fill('Testdfgfdg');

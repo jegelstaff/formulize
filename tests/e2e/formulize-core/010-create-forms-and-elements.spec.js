@@ -120,6 +120,7 @@ test.describe('Artifacts Elements', async () => {
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Year');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_year');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
 		await page.getByRole('link', { name: 'Options' }).click();
 	  await page.getByRole('textbox', { name: 'Separate thousands with this' }).fill('');
 		await saveAdminForm(page);
@@ -131,6 +132,7 @@ test.describe('Artifacts Elements', async () => {
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Era');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_era');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
   	await page.getByRole('link', { name: 'Options' }).click();
   	await page.getByRole('button', { name: 'Add' }).click();
   	await page.locator('input[name="ele_value\\[0\\]"]').click();
