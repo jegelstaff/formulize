@@ -457,7 +457,7 @@ class formulizeElementsHandler {
 		if(is_array($settingsArray) AND !empty($settingsArray)) {
 			foreach($settingsArray[0] as $i => $elementIdentifier) {
 				if(($direction === 'import' && !is_numeric($elementIdentifier)) || ($direction === 'export' && is_numeric($elementIdentifier))) {
-					if($direction === 'import') {
+					if($direction === 'export') {
 						$settingsArray[0][$i] = isset($idHandleMap[$elementIdentifier]) ? $idHandleMap[$elementIdentifier] : $elementIdentifier;
 					} else {
 						$foundValue = array_search($elementIdentifier, $idHandleMap);
