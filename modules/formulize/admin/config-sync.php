@@ -43,7 +43,7 @@ include_once '../include/formulizeConfigSync.php';
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['text'] = "Configuration Synchronization";
+$breadcrumbtrail[2]['text'] = "Import/Export Forms and Apps";
 
 $configSync = new FormulizeConfigSync('/config');
 $diff = $configSync->compareConfigurations();

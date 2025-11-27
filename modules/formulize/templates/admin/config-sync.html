@@ -1,5 +1,7 @@
 <div class="panel-content content config-sync">
-	<h2>Configuration Synchronization</h2>
+	<h1>Import/Export Forms and Apps</h1>
+
+	<p>Configuration file: <{$smarty.const.XOOPS_ROOT_PATH}>/modules/formulize/config/forms.json</p>
 
 	<{if count($adminPage.success) > 0}>
 		<ul class="success">
@@ -23,19 +25,31 @@
 		</ul>
 	<{/if}>
 
-	<p>
-		Here you will see differences between the configuration file and the database. Applying a change will update your database to match what is in the configuration file (This includes deleting forms or elements which are in the database, but in the configuration file). Apply changes by clicking the "Apply Selected" button. If you wish to update the configuration file to match what is in the database you can export a new configuration file by clicking the "Export Configuration" button. This will generate a new file based on the current state of the database.
-	</p>
-
-	<form name="export" method="post">
-		<input type="hidden" name="action" value="export">
-		<button type="submit">Export Configuration</button>
-	</form>
 	<div class="config-changes">
 		<{if count($adminPage.changes) == 0}>
 			<p class="info">No changes detected.</p>
 		<{else}>
-			<form name="apply" method="post">
+			<div class="sticky-controls">
+				<div class="control-group">
+					<h3>Select Config and Apply</h3>
+					<div class="toggle-buttons">
+						<button type="button" class="toggle-btn" data-operation="create">Toggle All Creates</button>
+						<button type="button" class="toggle-btn" data-operation="update">Toggle All Updates</button>
+						<button type="button" class="toggle-btn" data-operation="delete">Toggle All Deletes</button>
+						<button type="button" class="action-btn apply-btn" id="apply-config-btn">Apply Selected Config to DB</button>
+					</div>
+				</div>
+				<div class="control-group">
+					<h3>Export Current Configuration</h3>
+					<div class="action-buttons">
+						<form name="export" method="post" style="display: inline;">
+							<input type="hidden" name="action" value="export">
+							<button type="submit" class="action-btn export-btn">Export Entire DB to Config</button>
+						</form>
+					</div>
+				</div>
+			</div>
+			<form name="apply" method="post" id="apply-form">
 				<input type="hidden" name="action" value="apply">
 				<table class="changes-table">
 					<thead>
@@ -103,12 +117,89 @@
 						<{/foreach}>
 					</tbody>
 				</table>
-				<button type="submit">Apply Selected</button>
 			</form>
 		<{/if}>
 	</div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	// Get all rows in the table
+	const rows = document.querySelectorAll('.changes-table tbody tr');
+
+	// Build a map of form checkboxes to their element checkboxes based on row order
+	const formToElements = new Map();
+	let currentFormCheckbox = null;
+
+	rows.forEach(row => {
+		const checkbox = row.querySelector('input[type="checkbox"][name="handles[]"]');
+		if (!checkbox) return;
+
+		const isForm = row.classList.contains('forms');
+
+		if (isForm) {
+			// This is a form row - track it as the current form
+			currentFormCheckbox = checkbox;
+			formToElements.set(currentFormCheckbox, []);
+		} else if (currentFormCheckbox && row.classList.contains('elements')) {
+			// This is an element row - add it to the current form's elements
+			formToElements.get(currentFormCheckbox).push(checkbox);
+		}
+	});
+
+	// Add change listeners to form checkboxes
+	formToElements.forEach((elementCheckboxes, formCheckbox) => {
+		formCheckbox.addEventListener('change', function() {
+			if (!this.checked) {
+				// Form unchecked: if all elements are checked, uncheck them
+				const allElementsChecked = elementCheckboxes.length > 0 &&
+					elementCheckboxes.every(el => el.checked);
+				if (allElementsChecked) {
+					elementCheckboxes.forEach(el => el.checked = false);
+				}
+			} else {
+				// Form checked: if all elements are unchecked, check them
+				const allElementsUnchecked = elementCheckboxes.length > 0 &&
+					elementCheckboxes.every(el => !el.checked);
+				if (allElementsUnchecked) {
+					elementCheckboxes.forEach(el => el.checked = true);
+				}
+			}
+		});
+	});
+
+	// Add toggle functionality for create/update/delete buttons
+	const toggleButtons = document.querySelectorAll('.toggle-btn');
+	toggleButtons.forEach(button => {
+		button.addEventListener('click', function() {
+			const operation = this.dataset.operation;
+			const operationRows = document.querySelectorAll(`.change-row.${operation}`);
+
+			// Determine if we should check or uncheck based on current state
+			// If any are unchecked, check all; if all are checked, uncheck all
+			const checkboxes = Array.from(operationRows).map(row =>
+				row.querySelector('input[type="checkbox"][name="handles[]"]')
+			);
+			const anyUnchecked = checkboxes.some(cb => !cb.checked);
+			const newState = anyUnchecked;
+
+			checkboxes.forEach(cb => {
+				cb.checked = newState;
+			});
+		});
+	});
+
+	// Wire up the Apply Config to DB button to submit the main form
+	const applyButton = document.getElementById('apply-config-btn');
+	const applyForm = document.getElementById('apply-form');
+	if (applyButton && applyForm) {
+		applyButton.addEventListener('click', function() {
+			applyForm.submit();
+		});
+	}
+});
+</script>
 
 <style>
 	.config-sync p {
@@ -117,9 +208,92 @@
 	.config-sync form {
 		margin: 1em 0;
 	}
+	.config-sync form[name="export"] {
+		margin: 0;
+	}
 	.config-changes {
 			margin: 0 auto;
 	}
+
+	/* Sticky controls */
+	.sticky-controls {
+		position: sticky;
+		top: 0;
+		background: white;
+		border: 2px solid #ddd;
+		border-radius: 8px;
+		padding: 15px;
+		margin-bottom: 20px;
+		z-index: 100;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		display: flex;
+		gap: 30px;
+		flex-wrap: wrap;
+	}
+
+	.control-group {
+		flex: 1;
+		min-width: 250px;
+	}
+
+	.control-group h3 {
+		margin: 0 0 10px 0;
+		font-size: 1em;
+		color: #333;
+	}
+
+	.toggle-buttons,
+	.action-buttons {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+
+	.toggle-btn,
+	.action-btn {
+		padding: 8px 16px;
+		border: 2px solid #ddd;
+		border-radius: 5px;
+		background: white;
+		cursor: pointer;
+		font-size: 14px;
+		transition: all 0.2s;
+	}
+
+	.toggle-btn:hover,
+	.action-btn:hover {
+		background: #f5f5f5;
+		border-color: #999;
+	}
+
+	.action-btn {
+		font-weight: bold;
+	}
+
+	.apply-btn {
+		background: #4CAF50;
+		color: white;
+		border-color: #4CAF50;
+	}
+
+	.apply-btn:hover {
+		background: #45a049;
+		border-color: #45a049;
+	}
+
+	.export-btn {
+		background: #2196F3;
+		color: white;
+		border-color: #2196F3;
+	}
+
+	.export-btn:hover {
+		background: #0b7dda;
+		border-color: #0b7dda;
+	}
+
+	/* Table styles */
 	.changes-table {
 			width: 100%;
 			border-collapse: collapse;
@@ -160,7 +334,6 @@
 	}
 	.change-row.delete.elements {
 		background-color: var(--delete-color);
-	}
 	}
 	.change-details {
 			list-style-type: none;
