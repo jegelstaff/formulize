@@ -3,7 +3,7 @@
 define("_formulize_ENTRY_ID", "Entry ID");
 define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
 define("_AM_CATGENERAL", "General Forms");
-define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
+define("_AM_NOFORMS_AVAIL", "");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
 define("_formulize_MSG_SUBJECT", (isset($xoopsConfig['sitename']) ? '['.$xoopsConfig['sitename'].'] -' : ''));
 define("_formulize_MSG_FORM", ' Form: ');

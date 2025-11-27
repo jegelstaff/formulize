@@ -2,7 +2,7 @@
 // Module main
 define("_formulize_FORM_TITLE", "Nehmen Sie Kontakt zu uns auf, in dem Sie dieses Formular ausfüllen.");
 define("_AM_CATGENERAL", "Generelle Formulare");
-define("_AM_NOFORMS_AVAIL", "There are no forms currently available.");
+define("_AM_NOFORMS_AVAIL", "");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
 define("_formulize_MSG_SUBJECT", '['.$xoopsConfig['Seitenname'].'] -');
 define("_formulize_MSG_FORM", ' Formular: ');

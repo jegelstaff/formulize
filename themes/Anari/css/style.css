@@ -669,6 +669,10 @@ table:first-child div.applinks h1 {
   position: relative;
 }
 
+.xo-block {
+	margin-bottom: 1.5em;
+}
+
 .xo-blocktitle h3 {
     font-weight: bold;
     font-size: 1.5rem;
