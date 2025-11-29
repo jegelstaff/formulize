@@ -115,6 +115,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 		function adminPrepare($element) {
         $dataToSendToTemplate = array();
+				$dataToSendToTemplate['subformInterfaceAdminUrl'] = "";
         if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 					$ele_value = $this->backwardsCompatibility($element->getVar('ele_value'));
           if(is_array($ele_value[2])) { // an array will be a set of hard coded options
@@ -144,7 +145,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
         // $selectedLinkElementId can be used later to initialize a set of filters, if we add that to checkboxes.
         list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
         $dataToSendToTemplate['linkedoptions'] = $formlink->render();
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
         $selectedElementObject = $selectedLinkElementId ? $element_handler->get($selectedLinkElementId) : null;
 
         if ($selectedLinkElementId AND $selectedElementObject) {
@@ -179,6 +180,17 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
                 "elements-ele_value[".EV_MULTIPLE_SPREADSHEET_COLUMNS."]", _AM_ELE_VALUEINLIST, true);
             $exportValue->setValue($ele_value[EV_MULTIPLE_SPREADSHEET_COLUMNS]); // mark the current selections in the form element
             $dataToSendToTemplate['exportValue'] = $exportValue->render();
+
+						// subform interface link
+						$form_handler = xoops_getmodulehandler('forms', 'formulize');
+						if($mainFormObject = $form_handler->get($selectedElementObject->getVar('id_form'))) {
+							if($subformElementId = $mainFormObject->hasSubformInterfaceForForm($element->getVar('fid'))) {
+								$bestAppId = formulize_getFirstApplicationForBothForms($mainFormObject, $element->getVar('fid'));
+								$bestAppId = $bestAppId ? $bestAppId : 0;
+								$dataToSendToTemplate['subformInterfaceAdminUrl'] = XOOPS_URL."/modules/formulize/admin/ui.php?page=element&aid=$bestAppId&ele_id=$subformElementId&tab=options";
+							}
+						}
+
 
 		} else {
 			$dataToSendToTemplate['optionSortOrder'] = "";
