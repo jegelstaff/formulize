@@ -181,7 +181,7 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 			if($initialElementObject = _getElementObject($values[4])) {
 				$dependencies[] = $initialElementObject->getVar('ele_handle');
 			}
-		} else {
+		} elseif($values[4] AND $values[4] != 'none') {
 			$dependencies[] = $values[4];
 		}
 		return $dependencies;

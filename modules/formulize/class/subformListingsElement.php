@@ -194,8 +194,9 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		// disabledelements and 1 are comma separated element ids
 		foreach(array('disabledelements', 1) as $key) {
 			$elementIdsArray = array();
-			if(isset($eleValueData[$key]) AND is_string($eleValueData[$key])) {
-				foreach(explode(',', $eleValueData[$key]) as $elementHandle) {
+			if(isset($eleValueData[$key])) {
+				$items = is_array($eleValueData[$key]) ? $eleValueData[$key] : explode(',', $eleValueData[$key]);
+				foreach($items as $elementHandle) {
 					if($id = array_search($elementHandle, $dependencyIdToHandleMap)) {
 						$elementIdsArray[] = $id;
 					}
@@ -238,8 +239,9 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		// disabledelements and 1 are comma separated element ids
 		foreach(array('disabledelements', 1) as $key) {
 			$elementHandlesArray = array();
-			if(isset($eleValueData[$key]) AND is_string($eleValueData[$key])) {
-				foreach(explode(',', $eleValueData[$key]) as $elementId) {
+			if(isset($eleValueData[$key])) {
+				$items = is_array($eleValueData[$key]) ? $eleValueData[$key] : explode(',', $eleValueData[$key]);
+				foreach($items as $elementId) {
 					if(isset($dependencyIdToHandleMap[intval($elementId)])) {
 						$elementHandlesArray[] = $dependencyIdToHandleMap[intval($elementId)];
 					}
@@ -275,14 +277,15 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 
 		// disabledelements and 1 are comma separated element ids
 		foreach(array('disabledelements', 1) as $key) {
-			if(isset($values[$key]) AND is_string($values[$key])) {
+			if(isset($values[$key])) {
 				$elementHandlesArray = array();
-				foreach(explode(',', $values[$key]) as $elementIdentifier) {
+				$items = is_array($values[$key]) ? $values[$key] : explode(',', $values[$key]);
+				foreach($items as $elementIdentifier) {
 					if(is_numeric($elementIdentifier)) {
 						if($elementObject = _getElementObject($elementIdentifier)) {
 							$dependencies[] = $elementObject->getVar('ele_handle');
 						}
-					} else {
+					} elseif($elementIdentifier) {
 						$dependencies[] = $elementIdentifier;
 					}
 				}
