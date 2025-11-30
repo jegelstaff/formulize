@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test')
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
-import { login, saveAdminForm } from '../utils';
+import { login, saveAdminForm, waitForAdminPageReady } from '../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -180,13 +180,15 @@ test.describe('Set columns and elements for screens', () => {
 			'Artifacts: Width',
 			'Artifacts: Depth',
 			'Artifacts: Date of origin',
+			'Artifacts: Year-Era',
 			'Artifacts: Year',
 			'Artifacts: Era',
 			'Artifacts: Date of acquisition',
 			'Artifacts: Donated to museum',
 			'Artifacts: Donor',
 			'Artifacts: Condition',
-			'Artifacts: Collections'
+			'Artifacts: Collections',
+			'Artifacts: Appears in these exhibits'
 		]);
   	await saveAdminForm(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
@@ -220,9 +222,18 @@ test.describe('Set columns and elements for screens', () => {
 			'Donors: Province, Postal code',
 			'Donors: Province',
 			'Donors: Postal code',
-			'Donors: Favourite colour'
+			'Donors: Favourite colour',
+			'Donors: Backgrounder / Resume'
 		]);
   	await saveAdminForm(page, 'popup');
+		await page.getByRole('button', { name: 'close' }).click();
+		await page.getByRole('link', { name: 'Create a new page' }).click();
+		await waitForAdminPageReady(page)
+		await page.getByRole('link', { name: 'New page', exact: true }).click();
+		await page.getByRole('link', { name: 'Edit this page' }).click();
+  	await page.getByRole('textbox', { name: 'Title for page number' }).fill('Donated Artifacts');
+		await page.getByLabel('Form elements to display on').selectOption(['Donors: Name', 'Donors: Donated artifacts']);
+		await saveAdminForm(page, 'popup');
   	await page.getByRole('button', { name: 'close' }).click();
   	await page.getByRole('link', { name: 'Donors' }).click();
   	await page.getByRole('link', { name: 'Donors' }).click();
@@ -243,7 +254,8 @@ test.describe('Set columns and elements for screens', () => {
 		await expect(page.getByText('Title for page number')).toBeVisible();
 		await page.getByLabel('Form elements to display on').selectOption([
 			'Collections: Name',
-			'Collections: Suitable audience'
+			'Collections: Suitable audience',
+			'Collections: Artifacts'
 		]);
 		await saveAdminForm(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
@@ -266,7 +278,8 @@ test.describe('Set columns and elements for screens', () => {
 			'Exhibits: Name',
 			'Exhibits: Curator',
 			'Exhibits: Collections',
-			'Exhibits: Artifacts'
+			'Exhibits: Artifacts',
+			'Exhibits: Surveys',
 		]);
 		await saveAdminForm(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
@@ -306,7 +319,9 @@ test.describe('Set columns and elements for screens', () => {
 			'Surveys: Respondent name',
 			'Surveys: Exhibit',
 			'Surveys: Favourite artifact',
-			'Surveys: Rating'
+			'Surveys: Rating',
+			'Surveys: Flagged',
+			'Surveys: Staff comments'
 		]);
 		await saveAdminForm(page, 'popup');
 		await page.getByRole('button', { name: 'close' }).click();
@@ -328,9 +343,13 @@ test.describe('Set columns and elements for screens', () => {
 	test('Procedures for Artifacts form', async ({ page }) => {
 		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Procedures' }).click();
+		await page.getByRole('group', { name: 'Before Saving' }).locator('span').first().click();
+  	await page.getByRole('group', { name: 'Before Saving' }).getByRole('textbox').press('ControlOrMeta+a');
+   	await page.getByRole('group', { name: 'Before Saving' }).getByRole('textbox').fill('<?php\n\n// If there\'s a donor, mark as donated\nif($artifacts_donor) {\n\t$artifacts_donated_to_museum = 1; // yes is 1 in the database\n}\n');
 		await page.getByRole('group', { name: 'After Saving' }).locator('span').first().click();
   	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').press('ControlOrMeta+a');
    	await page.getByRole('group', { name: 'After Saving' }).getByRole('textbox').fill('<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
 		await saveAdminForm(page);
 	})
+
 });

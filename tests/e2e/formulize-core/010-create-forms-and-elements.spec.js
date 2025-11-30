@@ -107,6 +107,7 @@ test.describe('Artifacts Elements', async () => {
 		await addElementForm(page, ElementType.grid);
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Dimensions');
+		await page.locator('textarea[name="elements-ele_desc"]').fill('in cm');
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('textbox', { name: 'Enter the captions for the columns of this table*' }).fill('Height,Width,Depth');
 		await page.getByLabel('Choose the first element,').selectOption('Height');
@@ -267,6 +268,7 @@ test.describe('Donors Elements', async () => {
    	await page.locator('.CodeMirror-scroll').click();
    	await page.getByRole('group', { name: 'Formula for generating values' }).getByRole('textbox').fill('$type = "donors_type_of_donor";\nif($type == \'Individual\') {\n$value = "donors_first_name".\' \'."donors_last_name";\n} else {\n$value = "donors_organization_name";\n}');
 		await page.getByRole('link', { name: 'Name & Settings' }).click();
+	  await page.getByRole('radio', { name: 'Yes' }).check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Name');
 	});
@@ -458,6 +460,7 @@ test.describe('Exhibits Elements', async () => {
   	await page.getByRole('link', { name: 'Options' }).click();
   	await page.locator('#formlink').selectOption('Artifacts: Short name');
 		await page.getByRole('radio', { name: 'Allowed', exact: true }).check();
+		await page.getByRole('checkbox', { name: 'Create a Subform interface' }).check();
   	await saveAdminForm(page);
 		await page.locator('[id="elements-ele_value\\[17\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
 		await page.locator('[id="elements-ele_value\\[10\\]"]').selectOption(['Artifacts: ID Number', 'Artifacts: Short name']);
@@ -503,6 +506,7 @@ test.describe('Surveys Elements', async () => {
 		await page.locator('input[name="elements-ele_colhead"]').fill('Exhibit');
   	await page.getByRole('link', { name: 'Options' }).click();
   	await page.locator('#formlink').selectOption('Exhibits: Name');
+		await page.getByRole('checkbox', { name: 'Create a Subform interface' }).check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Exhibit');
 	});
@@ -541,6 +545,43 @@ test.describe('Surveys Elements', async () => {
   	await page.locator('input[name="ele_value\\[4\\]"]').fill('Mind blowing!');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Rating');
+	});
+
+	test('Create Flagged Element', async ({ page }) => {
+		await addElementForm(page, ElementType.radioYN);
+		await waitForAdminPageReady(page);
+		await page.locator('input[name="elements-ele_caption"]').fill('Flagged to the staff');
+		await page.locator('input[name="elements-ele_colhead"]').fill('Flagged');
+		await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.getByRole('radio', { name: 'No' }).check();
+		await page.getByRole('link', { name: 'Display Settings' }).click();
+		await page.locator('select[name="elements_ele_display[]"]').selectOption([{label: 'Webmasters'},{label: 'Curators'}]);
+		await saveAdminForm(page);
+	});
+
+	test('Create Comments Element', async ({ page }) => {
+		await addElementForm(page, ElementType.textarea);
+		await waitForAdminPageReady(page);
+  	await page.locator('input[name="elements-ele_caption"]').fill('Staff comments');
+		await page.getByRole('link', { name: 'Display Settings' }).click();
+		await page.locator('select[name="elements_ele_display[]"]').selectOption([{label: 'Webmasters'},{label: 'Curators'},{label: 'Staff Only'}]);
+		await saveAdminForm(page);
+	});
+
+})
+
+test.describe('Set Special Survey Permissions', async () => {
+	test('Adjust permission for flagged surveys', async ({ page }) => {
+		await page.getByRole('link', { name: 'Application: Museum' }).click();
+	  await page.locator('div[id^=form-details-box-]').nth(4).getByText('Surveys').first().click();
+  	await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		await page.locator('#groups').selectOption({label: 'Staff Only'});
+		await page.getByRole('button', { name: 'Show permissions for these' }).click();
+		await waitForAdminPageReady(page);
+		await page.locator('div.groupselectionbox').nth(1).locator('select').first().selectOption({label: 'Flagged'});
+		await page.locator('div.groupselectionbox').nth(1).locator('input').first().fill('Yes');
+		await saveAdminForm(page);
 	});
 })
 
@@ -587,7 +628,121 @@ test.describe('Artifacts linked fields', async () => {
     await page.locator('#formlink').selectOption('Collections: Name');
 	  await page.locator('#element-formlink_scope').selectOption(['Ancient History', 'Modern History']);
 	  await page.getByText('Yes. Only use groups that the').click();
+		await page.getByRole('checkbox', { name: 'Create a Subform interface' }).check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Collections');
 	});
+});
+
+test.describe('Create/Update Subform Interfaces', async () => {
+
+	test('Update Exhibits Subform Interface in Artifacts', async ({ page }) => {
+		await page.getByRole('link', { name: 'Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).first().click();
+		await page.getByRole('link', { name: 'Exhibits Embeded Form (list' }).click();
+		await expect(page.getByRole('link', { name: 'Configure' })).toHaveCount(1);
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.locator('input[name="elements-ele_caption"]').fill('Appears in these exhibits');
+		await page.locator('select[name="orderpref"]').selectOption('bottom');
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.getByRole('radio', { name: 'No', exact: true }).check();
+		await page.getByRole('checkbox', { name: 'Show the Delete button' }).uncheck();
+		await page.getByRole('link', { name: 'Display Settings' }).click();
+		await page.locator('ul#multi-screen-tree li.leaf').first().locator('input[type=checkbox]').check();
+		await saveAdminForm(page);
+	});
+
+	test('Create Artifacts screen for Donors Subform Interface', async ({ page }) => {
+		await page.getByRole('link', { name: 'Museum' }).click();
+		await page.getByRole('link', { name: 'Screens' }).nth(1).click();
+		await page.getByRole('link', { name: 'Create a new Screen' }).click();
+		await page.getByRole('textbox', { name: 'Name of the screen:' }).fill('Artifact Form - subform of Donors');
+		await page.getByLabel('What kind of screen is this:').selectOption('multiPage');
+		await page.getByRole('textbox', { name: 'Handle for the screen:' }).fill('artifacts_donor_subform');
+		await saveAdminForm(page);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Pages' }).click();
+		await page.getByRole('link', { name: 'Edit this page' }).click();
+		await expect(page.getByText('Form elements to display on page 1:')).toBeVisible();
+		await page.getByLabel('Form elements to display on').selectOption([
+			'Artifacts: ID Number',
+			'Artifacts: Short name',
+			'Artifacts: Full description',
+			'Artifacts: Dimensions',
+			'Artifacts: Height',
+			'Artifacts: Width',
+			'Artifacts: Depth',
+			'Artifacts: Date of origin',
+			'Artifacts: Year',
+			'Artifacts: Era',
+			'Artifacts: Date of acquisition',
+			'Artifacts: Condition',
+			'Artifacts: Collections',
+			'Artifacts: Appears in these exhibits'
+		]);
+		await saveAdminForm(page, 'popup');
+	});
+
+	test('Create Artifacts Subform Interface in Donors', async ({ page }) => {
+		await page.getByRole('link', { name: 'Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
+		await addElementForm(page, ElementType.subformFullForm);
+		await waitForAdminPageReady(page);
+		await page.locator('input[name="elements-ele_caption"]').fill('Donated artifacts');
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('#element-subform').selectOption({ label: 'Artifacts' });
+		await page.getByRole('listbox').selectOption([{label: 'ID Number'},{label: 'Short name'}]);
+		await page.locator('input[name="elements-ele_value[simple_add_one_button_text]"]').fill('Add new artifact');
+		await page.getByRole('checkbox', { name: 'Show the Delete button' }).uncheck();
+		await page.locator('select[name="elements-ele_value[SortingElement]"]').selectOption({label: 'Date of acquisition'});
+		await page.locator('#element-subform-screen').selectOption({label: 'Artifact Form - subform of Donors'});
+		await saveAdminForm(page);
+	});
+
+	test('Update Artifacts Subform Interface in Collections', async ({ page }) => {
+		await page.getByRole('link', { name: 'Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(1).click();
+		await page.getByRole('link', { name: 'Artifacts Embeded Form (list' }).click();
+		await expect(page.getByRole('link', { name: 'Configure' })).toHaveCount(1);
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.getByRole('listbox').selectOption([{label: 'ID Number'},{label: 'Short name'}]);
+		await page.locator('input[name="elements-ele_value[simple_add_one_button_text]"]').fill('Add new artifact');
+		await page.getByRole('checkbox', { name: 'Show the Delete button' }).uncheck();
+		await saveAdminForm(page);
+	});
+
+	test('Create Surveys Subform Interface in Exhibits', async ({ page }) => {
+		await page.getByRole('link', { name: 'Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(3).click();
+		await page.getByRole('link', { name: 'Surveys Embeded Form (list' }).click();
+		await expect(page.getByRole('link', { name: 'Delete' })).toHaveCount(1);
+		page.once('dialog', dialog => {
+			console.log(`Dialog message: ${dialog.message()}`);
+			dialog.accept().catch(() => {});
+		});
+		await page.getByRole('link', { name: 'Delete' }).click();
+		await waitForAdminPageReady(page);
+		await expect(page.getByRole('link', { name: 'Surveys Embeded Form (list' })).not.toBeVisible();
+		await addElementForm(page, ElementType.subformEditableRow);
+		await waitForAdminPageReady(page);
+		await page.locator('input[name="elements-ele_caption"]').click();
+		await page.locator('input[name="elements-ele_caption"]').press('ControlOrMeta+a');
+		await page.locator('input[name="elements-ele_caption"]').fill('Surveys');
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('#element-subform').selectOption({ label: 'Surveys'});
+		await page.locator('select[name="elements_ele_value_1[]"]').selectOption([
+			{label: 'Which was your favourite artifact?'},
+			{label: 'How would you rate the exhibit...'},
+			{label: 'Flagged to the staff'},
+			{label: 'Staff comments'}]);
+		await page.getByRole('radio', { name: 'No', exact: true }).check();
+		await page.locator('select[name="elements_ele_value_disabledelements[]"]').selectOption([
+			{label: 'Which was your favourite artifact?'},
+			{label: 'How would you rate the exhibit...'}]);
+		await page.getByRole('radio', { name: 'View buttons are off' }).check();
+		await page.locator('input[name="elements-ele_value[SortingDirection]"]').nth(1).check();
+		await saveAdminForm(page);
+	});
+
 })

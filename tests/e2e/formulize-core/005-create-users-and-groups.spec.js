@@ -30,6 +30,13 @@ test.describe('Create Groups', () => {
 		await page.getByRole('button', { name: 'Create New Group' }).click();
 		await expect(page.getByRole('rowgroup')).toContainText('Curators');
 	})
+
+	test('Create Staff Only group', async ({ page }) => {
+		await page.locator('#name').fill('Staff Only');
+		await page.locator('#desc_tarea').fill('No curators');
+		await page.getByRole('button', { name: 'Create New Group' }).click();
+		await expect(page.getByRole('rowgroup')).toContainText('Staff Only');
+	})
 })
 
 test.describe('Create Users', () => {
@@ -48,7 +55,7 @@ test.describe('Create Users', () => {
  		await page.locator('#password').fill('12345');
 		await page.locator('#vpass').fill('12345');
 		await page.getByRole('radio', { name: 'Active', exact: true }).check();
-		await page.locator('#groups').selectOption(['Ancient History', 'Registered Users']);
+		await page.locator('#groups').selectOption(['Ancient History', 'Registered Users', 'Staff Only']);
 		await page.getByRole('button', { name: 'Save changes' }).click();
 		await page.locator('#buttonbar').getByRole('link', { name: 'Find users' }).click();
 		await page.locator('#user_email').fill('ahstaff@museum.formulize.net');
@@ -63,7 +70,7 @@ test.describe('Create Users', () => {
 		await page.locator('#password').fill('12345');
 		await page.locator('#vpass').fill('12345');
 		await page.getByRole('radio', { name: 'Active', exact: true }).check();
-		await page.locator('#groups').selectOption(['Modern History', 'Registered Users']);
+		await page.locator('#groups').selectOption(['Modern History', 'Registered Users', 'Staff Only']);
 		await page.getByRole('button', { name: 'Save changes' }).click();
 		await page.locator('#buttonbar').getByRole('link', { name: 'Find users' }).click();
 		await page.locator('#user_email').fill('mhstaff@museum.formulize.net');

@@ -539,9 +539,11 @@ test.describe('Data entry for Survey', () => {
 				}
 			}
 			if(!rewriteWorks) {
-				await page.goto('/modules/formulize/index.php?sid=9');
+				await page.goto('/modules/formulize/index.php?sid=10');
 			}
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
+			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
+			await expect(page.getByText('Staff comments')).not.toBeVisible();
 			await page.getByLabel('Which exhibit did you see?').selectOption(exhibit);
 			// Wait for the favourite select to have options
 			await expect(async () => {
@@ -550,8 +552,104 @@ test.describe('Data entry for Survey', () => {
 			}).toPass();
 			await page.getByLabel('Which was your favourite').selectOption(favourite);
 			await page.getByLabel('How would you rate the').selectOption(rating);
-				await saveFormulizeForm(page);
+			await saveFormulizeForm(page);
+			await page.goto('/'); // clear entry locks
 			})
+	})
+})
+
+test.describe('Staff Comments for Surveys', () => {
+
+		test('Staff see no comments by default' , async ({ page }) => {
+			await login(page, 'mhstaff', '12345');
+			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true }).click();
+			await expect(page.getByText('No entries were found in the current view that match the current search terms.')).toBeVisible();
+		}),
+		test('Flag Ancient Wonders Survey' , async ({ page }) => {
+			await login(page, 'curator1', '12345');
+			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
+			await expect(page.getByText('Showing entries: 1 to 5')).toBeVisible();
+			await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   History through the Ages Curator' }).getByRole('link').click();
+			await page.getByRole('radio', { name: 'Yes' }).check();
+   		await page.locator('td.subform-textarea-element textarea').first().fill('Great Job -c1');
+			await saveFormulizeForm(page);
+			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		}),
+		test('Flag Modern Amazements Survey' , async ({ page }) => {
+			await login(page, 'curator2', '12345');
+			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
+			await expect(page.getByText('Showing entries: 1 to 5')).toBeVisible();
+			await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   Pennies from the Past Curator' }).getByRole('link').click();
+			await page.getByRole('radio', { name: 'Yes' }).check();
+   		await page.locator('td.subform-textarea-element textarea').first().fill('Can we do better? -c2');
+			await saveFormulizeForm(page);
+			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+
+		}),
+		test('AH Staff Comment' , async ({ page }) => {
+			await login(page, 'ahstaff', '12345');
+			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
+			await expect(page.getByText('Showing entries: 1 to 4')).toBeVisible();
+			await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   History through the Ages Curator' }).getByRole('link').click();
+			const currentValue = await page.locator('td.subform-textarea-element textarea').first().inputValue();
+			await page.locator('td.subform-textarea-element textarea').first().fill(currentValue + "\nThanks! -ahstaff");
+			await expect(page.getByText('Flagged')).not.toBeVisible();
+			await saveFormulizeForm(page);
+			await expect(page.getByText('Great Job -c1 Thanks! -ahstaff')).toHaveValue('Great Job -c1\nThanks! -ahstaff');
+			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		}),
+		test('MH Staff Comment' , async ({ page }) => {
+			await login(page, 'mhstaff', '12345');
+			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true }).click();
+			await expect(page.getByText('Showing entries: 1 to 2')).toBeVisible();
+			await page.getByRole('row', { name: 'Ebanezer Scrooge' }).getByRole('link').click();
+			await expect(page.getByText('Which was your favourite artifact?')).toBeVisible();
+			const currentValue = await page.locator('div.formulize-input-surveys_staff_comments textarea').inputValue();
+			await page.locator('div.formulize-input-surveys_staff_comments textarea').fill(currentValue + "\nBah Humbug -mhstaff");
+			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
+			await saveFormulizeForm(page);
+			await expect(page.getByText('Can we do better? -c2 Bah Humbug -mhstaff')).toHaveValue('Can we do better? -c2\nBah Humbug -mhstaff');
+			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		})
+
+})
+
+test.describe('New donation inside Donor record', () => {
+	test('Create donation from Voltaire', async ({ page }) => {
+		await login(page, 'mhstaff', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
+	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
+		await page.getByRole('button', { name: 'Add new artifact' }).click();
+		await page.getByRole('tab').first().click(); // BUG - new entry showing up at top of list, sorting order is by aquisition date, no acquisition date yet so this is first in list, and by default UI opens the last entry in list because when sorted by creation order (which is default) the last entry in list would be the new one. Yuck.
+		await page.getByRole('textbox', { name: 'Short name *' }).fill('Candide - first edition');
+		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('Pristine copy, signed by the author');
+		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('25'); // height
+		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('10'); // width
+		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('3'); // depth
+		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1759'); // year
+		await page.getByRole('radio', { name: 'CE', exact: true }).check();
+		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-11-29');
+		await page.getByRole('slider', { name: 'Condition' }).fill('10');
+		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await saveFormulizeForm(page);
+		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+	}),
+	test('Verify artifact shows as from Voltaire', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await page.locator('input[name="search_artifacts_short_name"]').fill('Candide');
+		await page.getByRole('link', { name: 'Short name' }).click();
+		await page.getByRole('row', { name: 'Candide - first edition' }).getByRole('link').click();
+		await expect(page.getByRole('radio', { name: 'Yes' })).toBeChecked();
+		await expect(page.locator('div.formulize-input-artifacts_donor select option[selected]')).toContainText('François-Marie Arouet');
 	})
 })
 
