@@ -33,9 +33,9 @@ export const ElementType = {
 	'derived': 'element-derived',
 	'googleaddress': 'element-googleaddress',
 	'googlefilepicker': 'element-googlefilepicker',
-	'subformlistings': 'element-subformlistings',
-	'subformeditablerow': 'element-subformeditablerow',
-	'subformfullform': 'element-subformfullform',
+	'subformListings': 'element-subformlistings',
+	'subformEditableRow': 'element-subformeditablerow',
+	'subformFullForm': 'element-subformfullform',
 };
 
 // Category lookup - just define the mapping rules
