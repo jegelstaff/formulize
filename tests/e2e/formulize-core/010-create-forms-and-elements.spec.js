@@ -585,13 +585,13 @@ test.describe('Set Special Survey Permissions', async () => {
 	});
 })
 
-test.describe('Artifacts linked fields', async () => {
+test.describe('Create linked fields and settings', async () => {
 	test.beforeEach(async ({ page }) => {
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
-	  await page.getByRole('link', { name: 'Elements' }).first().click();
 	})
 
 	test('Create Donor Element', async ({ page }) => {
+		await page.getByRole('link', { name: 'Elements' }).first().click();
 		await addElementForm(page, ElementType.selectLinked);
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Donor');
@@ -606,6 +606,7 @@ test.describe('Artifacts linked fields', async () => {
 	});
 
 	test('Create Condition Element', async ({ page }) => {
+		await page.getByRole('link', { name: 'Elements' }).first().click();
 		await addElementForm(page, ElementType.slider);
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Condition');
@@ -620,6 +621,7 @@ test.describe('Artifacts linked fields', async () => {
 	});
 
 	test('Create Collections Element', async ({ page }) => {
+		await page.getByRole('link', { name: 'Elements' }).first().click();
 		await addElementForm(page, ElementType.checkboxLinked);
 		await waitForAdminPageReady(page)
 		await page.locator('input[name="elements-ele_caption"]').fill('Collections');
@@ -631,6 +633,18 @@ test.describe('Artifacts linked fields', async () => {
 		await page.getByRole('checkbox', { name: 'Create a Subform interface' }).check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Collections');
+	});
+
+	test('Filter exhibit artifacts by collection artifacts', async ({ page }) => {
+		await page.getByRole('link', { name: 'Elements' }).nth(3).click();
+		await page.getByRole('link', { name: 'Artifacts Linked Autocomplete List' }).click();
+		await expect(page.getByRole('link', { name: 'Configure' })).toHaveCount(1);
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('#new_formlinkfilter_element').selectOption('Collections');
+  	await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
+  	await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
+  	await saveAdminForm(page);
 	});
 });
 

@@ -310,6 +310,38 @@ export async function waitForAdminPageReady(page) {
 }
 
 /**
+ * Waits for a conditional element to be removed and recreated
+ * @param {Page} page - Playwright page object
+ * @param {string} className - The class name of the conditional element (without the dot)
+ * @param {Function} triggerAction - An async function that triggers the conditional behavior
+ */
+export async function conditionalElementReady(page, handle, triggerAction) {
+
+	// The child element has a reliable class
+	const childSelector = `.formulize-label-${handle}`;
+
+	// Get the parent of that child
+	const parent = page.locator(childSelector).locator('..');
+
+	const initialHTML = await parent.innerHTML();
+
+	await triggerAction();
+
+	// Wait for the parent's content to change
+	await page.waitForFunction(
+		({ handle, initialHTML }) => {
+			const child = document.querySelector(`.formulize-label-${handle}`);
+			const parent = child ? child.parentElement : null;
+			return parent && parent.innerHTML !== initialHTML;
+		},
+		{ handle, initialHTML }
+	);
+
+	// Wait for the child to fade in
+	await expect(page.locator(childSelector)).toHaveCSS('opacity', '1');
+}
+
+/**
  *
  * @param {*} page
  * @param {ElementTypeMapping[keyof ElementTypeMapping]} type

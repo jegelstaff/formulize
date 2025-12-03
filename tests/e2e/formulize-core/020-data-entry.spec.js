@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test')
 import { saveFormulizeForm } from '../utils';
+import { conditionalElementReady } from '../utils';
 import { login } from '../utils';
 
 test.describe('Validate menu entries', () => {
@@ -398,13 +399,24 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-
 		await page.getByRole('textbox', { name: 'Name *' }).fill('History through the Ages');
 		await page.getByLabel('Curator').selectOption('Curator One');
-		await page.locator('input[type=text]').nth(1).fill('modern')
-		await page.getByText('Modern History').click();
+		await page.locator('input[type=text]').nth(1).fill('modern');
+		// handle the conditional behaviour that happens when Modern History is selected
+		await conditionalElementReady(
+			page,
+			'exhibits_artifacts',
+			async () => {
+				await page.getByText('Modern History').click();
+			}
+		);
+		// handle the conditional behaviour that happens when Ancient History is selected
 		await page.locator('input[type=text]').nth(1).fill('an');
-		await page.getByText('Ancient History').click();
+		await conditionalElementReady(
+			page,
+			'exhibits_artifacts',
+			() => page.getByText('Ancient History').click()
+		);
 		await page.locator('input[type=text]').nth(2).fill('roman');
   	await page.getByText('Roman Coin').click();
 		await page.locator('input[type=text]').nth(2).fill('per');
@@ -436,11 +448,15 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Ancient Wonders');
 		await page.getByLabel('Curator').selectOption('Curator One');
+		// handle the conditional behaviour that happens when Ancient History is selected
 		await page.locator('input[type=text]').nth(1).fill('an');
-		await page.getByText('Ancient History').click();
+		await conditionalElementReady(
+			page,
+			'exhibits_artifacts',
+			() => page.getByText('Ancient History').click()
+		);
 		await page.locator('input[type=text]').nth(2).fill('roman');
   	await page.getByText('Roman Coin').click();
 		await page.locator('input[type=text]').nth(2).fill('per');
@@ -451,6 +467,8 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByText('Egyptian Chariot').click();
 		await page.locator('input[type=text]').nth(2).fill('bab');
 		await page.getByText('Babylonian Spoon').click();
+		await page.locator('input[type=text]').nth(2).fill('M');
+		await expect(page.getByText('No match found')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -460,11 +478,15 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Modern Amazements');
 		await page.getByLabel('Curator').selectOption('Curator One');
+		// handle the conditional behaviour that happens when Modern History is selected
 		await page.locator('input[type=text]').nth(1).fill('mo');
-		await page.getByText('Modern History').click();
+		await conditionalElementReady(
+			page,
+			'exhibits_artifacts',
+			() => page.getByText('Modern History').click()
+		);
 		await page.locator('input[type=text]').nth(2).fill('flor');
 		await page.getByText('Florentine Book').click();
 		await page.locator('input[type=text]').nth(2).fill('fren');
@@ -477,6 +499,8 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByText('Polynesian Canoe').click();
 		await page.locator('input[type=text]').nth(2).fill('vik');
 		await page.getByText('Viking Silver Armband').click();
+		await page.locator('input[type=text]').nth(2).fill('M');
+		await expect(page.getByText('No match found')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -488,12 +512,19 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Heroic and Horrible Hand Weapons');
 		await page.getByLabel('Curator').selectOption('Curator Two');
+		// handle the conditional behaviour that happens when Weapons is selected
 		await page.locator('input[type=text]').nth(1).fill('weapons');
-		await page.getByText('Weapons').click();
+		await conditionalElementReady(
+			page,
+			'exhibits_artifacts',
+			() => page.getByText('Weapons').click()
+		);
 		await page.locator('input[type=text]').nth(2).fill('chin');
 		await page.getByText('Chinese Sword').click();
 		await page.locator('input[type=text]').nth(2).fill('fren');
 		await page.getByText('French Musket').click();
+		await page.locator('input[type=text]').nth(2).fill('M');
+		await expect(page.getByText('Egyptian Chariot')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -503,15 +534,21 @@ test.describe('Data entry for Exhibits', () => {
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Pennies from the Past');
 		await page.getByLabel('Curator').selectOption('Curator Two');
+		// handle the conditional behaviour that happens when Coins is selected
 		await page.locator('input[type=text]').nth(1).fill('coins');
-		await page.getByText('Coins').click();
+		await conditionalElementReady(
+			page,
+			'exhibits_artifacts',
+			() => page.getByText('Coins').click()
+		);
 		await page.locator('input[type=text]').nth(2).fill('roman');
   	await page.getByText('Roman Coin').click();
 		await page.locator('input[type=text]').nth(2).fill('japa');
 		await page.getByText('Japanese Coin').click();
+		await page.locator('input[type=text]').nth(2).fill('M');
+		await expect(page.getByText('No match found')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
