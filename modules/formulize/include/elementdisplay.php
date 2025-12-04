@@ -310,6 +310,21 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry_id][$renderedElementMarkupName] = $elementObject->getVar('ele_handle');
 	}
 
+	// check for dynamic default conditions and make the element conditional if it depends on a dynamic element reference
+	$elementDynamicDefaultSource = $elementObject->getVar('ele_dynamicdefault_source');
+	$elementDynamicDefaultConditions = $elementObject->getVar('ele_dynamicdefault_conditions');
+	if($allowed AND $elementDynamicDefaultSource AND $elementDynamicDefaultConditions) {
+		if(!$subformCreateEntry) {
+			$governingElements = array();
+			foreach($elementDynamicDefaultConditions[2] as $dynamicDefaultTerm) {
+				if(substr($dynamicDefaultTerm, 0, 1) == "{" AND substr($dynamicDefaultTerm, -1) == "}" AND $dynamicDefaultTermElementObject = _getElementObject(substr($dynamicDefaultTerm, 1, -1))) {
+					$governingElements[] = $dynamicDefaultTermElementObject->getVar('ele_handle');
+				}
+			}
+			catalogConditionalElement($renderedElementMarkupName, array_unique($governingElements));
+		}
+	}
+
 	$elementFilterSettings = $elementObject->getVar('ele_filtersettings');
 	if($allowed AND isset($elementFilterSettings[0]) AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements

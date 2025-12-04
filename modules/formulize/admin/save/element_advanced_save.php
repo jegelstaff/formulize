@@ -191,9 +191,10 @@ $element->setVar('ele_encrypt', $ele_encrypt);
 $element->setVar('ele_use_default_when_blank', intval($_POST['elements-ele_use_default_when_blank']));
 
 list($dynamicDefaultConditions, $dynamicDefaultChanged) = parseSubmittedConditions('dynamicDefaultConditions', 'dynamicdefaults-conditionsdelete');
-if($element->getVar('ele_dynamicdefault_source') != intval($_POST['elements-ele_use_default_when_blank']) OR $dynamicDefaultChanged) {
-	$element->setVar('ele_dynamicdefault_source', intval($_POST['elements-ele_dynamicdefault_source']));
-	$element->setVar('ele_dynamicdefault_conditions', $dynamicDefaultConditions);
+$dynamicDefaultSource = intval($_POST['elements-ele_dynamicdefault_source']);
+if($element->getVar('ele_dynamicdefault_source') != intval($_POST['elements-ele_dynamicdefault_source']) OR $dynamicDefaultChanged) {
+	$element->setVar('ele_dynamicdefault_source', $dynamicDefaultSource);
+	$element->setVar('ele_dynamicdefault_conditions', $dynamicDefaultSource ? $dynamicDefaultConditions: []);
 	$reloadneeded = true;
 }
 

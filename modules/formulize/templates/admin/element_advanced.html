@@ -99,13 +99,13 @@
 	$("#elements-ele_use_default_when_blank<{$content.ele_use_default_when_blank}>").attr('checked', 'checked');
   $("#exportoptions_onoff<{$content.exportoptions_onoff}>").attr('checked', 'checked');
 
-	$("div#dynamic-defaults > input[name=addcon]").click(function () {
+	$("div#dynamic-defaults input[name=addcon]").click(function () {
 		$("[name=reload_advanced_pages]").val(1);
 		$(".savebutton").click();
 		return false;
 	});
 
-	$("div#dynamic-defaults > a.conditionsdelete").click(function () {
+	$("div#dynamic-defaults a.conditionsdelete").click(function () {
 		$(".dynamicdefaults-conditionsdelete").val($(this).attr('target'));
 		$("[name=reload_advanced_pages]").val(1);
 		$(".savebutton").click();

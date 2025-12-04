@@ -337,8 +337,8 @@ $(document).ready(function() {
   });
 
   $(window).load(function () {
-		$('.admin-ui').show(250);
-    $(window).scrollTop(<{$scrollx}>);
+		$('.admin-ui').css('opacity', 0).show().animate({opacity: 1}, 250);
+   	$(window).scrollTop(<{$scrollx}>);
   });
 
   function setDisplay( elementId, styleDisplay ) {

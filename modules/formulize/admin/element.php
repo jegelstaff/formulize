@@ -219,7 +219,7 @@ list($dynamicDefaultElement, $dynamicDefaultSourceElementId) = createFieldList($
 $advanced['dynamicDefaultSourceList'] = $dynamicDefaultElement->render();
 $advanced['dynamicDefaultConditions'] = "";
 if($dynamicDefaultSourceElementId) {
-	$dynamicDefaultSourceElementObject = $this->get($dynamicDefaultSourceElementId);
+	$dynamicDefaultSourceElementObject = _getElementObject($dynamicDefaultSourceElementId);
 	if($dynamicDefaultSourceElementObject) {
 		$advanced['dynamicDefaultConditions'] = formulize_createFilterUI($advanced['ele_dynamicdefault_conditions'], "dynamicDefaultConditions", $dynamicDefaultSourceElementObject->getVar('fid'), "form-4");
 	}
