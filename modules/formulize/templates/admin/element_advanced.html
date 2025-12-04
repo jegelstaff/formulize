@@ -6,6 +6,8 @@
 <input type="hidden" name="original_handle" value="<{$content.original_handle}>">
 <input type="hidden" name="original_index_name" value="<{$content.original_index_name}>">
 <input type="hidden" name="original_ele_index" value="<{$content.original_ele_index}>">
+<input type="hidden" name="reload_advanced_pages" value="0">
+<input type="hidden" class="dynamicdefaults-conditionsdelete" name="dynamicdefaults-conditionsdelete" value="">
 
 <{if $content.datatypeui}>
 <div class="form-item">
@@ -49,11 +51,23 @@
 <{if $content.ele_req_on}>
 	<div class="form-item">
    	<fieldset>
-      <legend><label for="elements-ele_required" class="question"><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></label></legend>
-			<p><input type="radio" id="elements-ele_use_default_when_blank0" name="elements-ele_use_default_when_blank" value=0> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW}></p>
-			<p><input type="radio" id="elements-ele_use_default_when_blank1" name="elements-ele_use_default_when_blank" value=1> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK}></p>
+      <legend><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK}></legend>
+			<p><label for="elements-ele_use_default_when_blank0"><input type="radio" id="elements-ele_use_default_when_blank0" name="elements-ele_use_default_when_blank" value=0> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW}></label></p>
+			<p><label for="elements-ele_use_default_when_blank1"><input type="radio" id="elements-ele_use_default_when_blank1" name="elements-ele_use_default_when_blank" value=1> <{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK}></label></p>
 			<div class=description>
 				<p><{$smarty.const._AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC}></p>
+			</div>
+		</fieldset>
+	</div>
+	<div class="form-item" id="dynamic-defaults">
+   	<fieldset>
+      <legend><{$smarty.const._AM_FORMULIZE_USE_DYNAMIC_DEFAULT}></legend>
+			<p><{$smarty.const._AM_FORMULIZE_DYNAMIC_DEFAULT_LABEL}> <{$content.dynamicDefaultSourceList}></p><br />
+			<{if isset($content.dynamicDefaultConditions) AND $content.dynamicDefaultConditions}>
+			<{$content.dynamicDefaultConditions}>
+			<{/if}>
+			<div class=description>
+				<p><{if isset($content.dynamicDefaultConditions) AND $content.dynamicDefaultConditions}><{$smarty.const._AM_FORMULIZE_USE_DYNAMIC_DEFAULT_DESC}><{else}><{$smarty.const._AM_FORMULIZE_USE_DYNAMIC_DEFAULT_BLANK}><{/if}></p>
 			</div>
 		</fieldset>
 	</div>
@@ -82,6 +96,20 @@
 </div> <!--// end content -->
 
 <script type="text/javascript">
-		$("#elements-ele_use_default_when_blank<{$content.ele_use_default_when_blank}>").attr('checked', 'checked');
-        $("#exportoptions_onoff<{$content.exportoptions_onoff}>").attr('checked', 'checked');
+	$("#elements-ele_use_default_when_blank<{$content.ele_use_default_when_blank}>").attr('checked', 'checked');
+  $("#exportoptions_onoff<{$content.exportoptions_onoff}>").attr('checked', 'checked');
+
+	$("div#dynamic-defaults > input[name=addcon]").click(function () {
+		$("[name=reload_advanced_pages]").val(1);
+		$(".savebutton").click();
+		return false;
+	});
+
+	$("div#dynamic-defaults > a.conditionsdelete").click(function () {
+		$(".dynamicdefaults-conditionsdelete").val($(this).attr('target'));
+		$("[name=reload_advanced_pages]").val(1);
+		$(".savebutton").click();
+		return false;
+	});
+
 </script>

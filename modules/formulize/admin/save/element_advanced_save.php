@@ -117,7 +117,7 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 $ele_value = $element->getVar('ele_value');
 $ele_encrypt = $_POST['elements-ele_encrypt'];
 $databaseElement = (property_exists($element,'hasData') AND $element->hasData == true) ? true : false;
-$reloadneeded = false;
+$reloadneeded = isset($_POST['reload_advanced_pages']) ? $_POST['reload_advanced_pages'] : false;
 if($ele_encrypt != $element->getVar('ele_encrypt') AND $databaseElement AND !$isNewElement) { // the setting has changed on this pageload, and it's a database element, and it's not new
   $reloadneeded = true; // display of data type goes on/off when encryption is off/on
   // if the encryption setting changed, then we need to encrypt/decrypt all the existing data
@@ -189,6 +189,13 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
 
 $element->setVar('ele_encrypt', $ele_encrypt);
 $element->setVar('ele_use_default_when_blank', intval($_POST['elements-ele_use_default_when_blank']));
+
+list($dynamicDefaultConditions, $dynamicDefaultChanged) = parseSubmittedConditions('dynamicDefaultConditions', 'dynamicdefaults-conditionsdelete');
+if($element->getVar('ele_dynamicdefault_source') != intval($_POST['elements-ele_use_default_when_blank']) OR $dynamicDefaultChanged) {
+	$element->setVar('ele_dynamicdefault_source', intval($_POST['elements-ele_dynamicdefault_source']));
+	$element->setVar('ele_dynamicdefault_conditions', $dynamicDefaultConditions);
+	$reloadneeded = true;
+}
 
 // figure out exportoptions for element
 // do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays

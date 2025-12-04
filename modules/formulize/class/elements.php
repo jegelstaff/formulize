@@ -84,6 +84,8 @@ class formulizeElement extends FormulizeObject {
 		$this->initVar("ele_disabledconditions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_use_default_when_blank", XOBJ_DTYPE_INT);
     $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
+		$this->initVar("ele_dynamicdefault_source", XOBJ_DTYPE_INT);
+		$this->initVar('ele_dynamicdefault_conditions', XOBJ_DTYPE_ARRAY);
 	}
 
 	/**
@@ -317,6 +319,8 @@ class formulizeElementsHandler {
 			// ele_disabledconditions could have references to other elements in the 0 array
 			$elementData['ele_filtersettings'] = $this->formulize_convertFilterDependenciesToIds($elementData['ele_filtersettings'], $dependencyIdToHandleMap);
 			$elementData['ele_disabledconditions'] = $this->formulize_convertFilterDependenciesToIds($elementData['ele_disabledconditions'], $dependencyIdToHandleMap);
+			$elementData['ele_dynamicdefault_conditions'] = $this->formulize_convertFilterDependenciesToIds($elementData['ele_dynamicdefault_conditions'], $dependencyIdToHandleMap);
+			$elementData['ele_dynamicdefault_source'] = $this->convertElementRefsToIds($elementData['ele_dynamicdefault_source'], $dependencyIdToHandleMap);
 			// after replacing those, pass elementData to submethod based on type to element
 			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php')) {
 				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
@@ -343,6 +347,8 @@ class formulizeElementsHandler {
 			// ele_disabledconditions could have references to other elements in the 0 array
 			$elementData['ele_filtersettings'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_filtersettings'], $dependencyIdToHandleMap);
 			$elementData['ele_disabledconditions'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_disabledconditions'], $dependencyIdToHandleMap);
+			$elementData['ele_dynamicdefault_conditions'] = $this->formulize_convertFilterDependenciesToHandles($elementData['ele_dynamicdefault_conditions'], $dependencyIdToHandleMap);
+			$elementData['ele_dynamicdefault_source'] = $this->convertElementRefsToHandles($elementData['ele_dynamicdefault_source'], $dependencyIdToHandleMap);
 			// after replacing those, pass elementData to submethod based on type to element
 			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php')) {
 				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php';
@@ -386,9 +392,12 @@ class formulizeElementsHandler {
 			// ele_filtersettings could have references to other elements in the 0 array
 			// ele_disabledconditions could have references to other elements in the 0 array
 			// passed in elementData ought to have had all numeric references converted to element handles already! Or else formulize_getFilterDependencies will not work. If numeric refs are valid for the current state of database, then we're OK.
-			if($property == 'ele_filtersettings' OR $property == 'ele_disabledconditions') {
+			if($property == 'ele_filtersettings' OR $property == 'ele_disabledconditions' OR $property == 'ele_dynamicdefault_conditions') {
 				$filterDependencies = $this->formulize_getFilterDependencies($value);
 				$dependencies = array_merge($dependencies, $filterDependencies);
+			}
+			if($property == 'ele_dynamicdefault_source') {
+				$dependencies = array_merge($dependencies, $this->formulize_getRegularDependencies($value));
 			}
 			// ele_value could have various references depending on the element type
 			if($property == 'ele_value' AND file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$elementData['ele_type'].'Element.php')) {
@@ -658,9 +667,9 @@ class formulizeElementsHandler {
 
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_required, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_required, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions, ele_dynamicdefault_source, ele_dynamicdefault_conditions
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s
+				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %u, %s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -684,7 +693,9 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_filtersettings),
 				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
-                $this->db->quoteString($ele_exportoptions)
+        $this->db->quoteString($ele_exportoptions),
+				$ele_dynamicdefault_source,
+				$this->db->quoteString($ele_dynamicdefault_conditions)
 			);
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -710,7 +721,9 @@ class formulizeElementsHandler {
 				ele_filtersettings = %s,
 				ele_disabledconditions = %s,
 				ele_use_default_when_blank = %u,
-                ele_exportoptions = %s
+        ele_exportoptions = %s,
+				ele_dynamicdefault_source = %u,
+				ele_dynamicdefault_conditions = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -733,7 +746,9 @@ class formulizeElementsHandler {
 				$this->db->quoteString($ele_filtersettings),
 				$this->db->quoteString($ele_disabledconditions),
 				$ele_use_default_when_blank,
-                $this->db->quoteString($ele_exportoptions),
+        $this->db->quoteString($ele_exportoptions),
+				$ele_dynamicdefault_source,
+				$this->db->quoteString($ele_dynamicdefault_conditions),
 				$ele_id,
 				$id_form
 			);

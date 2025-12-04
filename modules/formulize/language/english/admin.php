@@ -918,6 +918,12 @@ define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_DESC", "For example, showing defaul
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ONLY_NEW", "Only for new entries");
 define("_AM_FORMULIZE_USE_DEFAULT_WHEN_BLANK_ALL_WHEN_BLANK", "For any entry, when the saved value is blank");
 
+define("_AM_FORMULIZE_USE_DYNAMIC_DEFAULT", "The default value for this element should be dynamic, based on a value in another form:");
+define("_AM_FORMULIZE_DYNAMIC_DEFAULT_LABEL", "The element to get the default value from:");
+define("_AM_FORMULIZE_USE_DYNAMIC_DEFAULT_DESC", "Use the filter options to isolate a specific entry in the other form. Dynamic { } references are possible for referring to the values of elements in this form. ie: <i>Type = {form_typeelement}</i> will cause the default value for this element, to be the value of the selected source element in the entry in the source form, where the <i>Type</i> element matches the value of the <i>form_typeelement</i> element in this form.");
+define("_AM_FORMULIZE_USE_DYNAMIC_DEFAULT_BLANK", "Select an element and then save, to get filter options for isolating a single entry in the selected form.");
+
+
 define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE", "You can type PHP code into either or both of the template boxes below.  Code in the <i>top template</i> box will be rendered above the calendar.  Code in the <i>bottom template</i> box will be rendered below the calendar.");
 define("_AM_FORMULIZE_SCREEN_CAL_DESC_TOPTEMPLATE2", "You can use <i>\$quickSearch</i> and <i>\$quickFilter</i> variables in the template to display search boxes and filters, ie: \$quickSearchelement_handle. The list of available element handles is available below the top template.");
 //template screen
