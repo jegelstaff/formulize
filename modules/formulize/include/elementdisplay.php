@@ -153,8 +153,8 @@ EOF;
 			$isDisabled = true;
 		}
 
-		if($prevEntry==null) { // preferable to pass in prevEntry!
-			$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
+		if($prevEntry==null) { // preferable to pass in prevEntry for existing entries, as determined in the displayForm function, since that filters by the elements being displayed. If not determined there, almost certainly we're displaying a new entry, so prevEntry will be initialized with only the dyanmic defaults anyway, so not that big a deal.
+			$prevEntry = getEntryValues($entry, $form_id, groupEntryWithUpdateRights: $groupEntryWithUpdateRights);
 		}
 
 		$renderer = new formulizeElementRenderer($element);
