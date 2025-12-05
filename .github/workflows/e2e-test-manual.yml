@@ -96,6 +96,29 @@ jobs:
         fi
       working-directory: tests/e2e
 
+    - name: Create database dump and collect files
+      if: always()
+      run: |
+        # Create directory for the final state after tests
+        mkdir -p tests/e2e/final-state/docker/mariadb/seed
+        mkdir -p tests/e2e/final-state/trust
+
+        # Dump the database
+        docker exec formulize-mariadb-1 mariadb-dump --user user --password=password --default-character-set=utf8mb4 --databases formulize > tests/e2e/final-state/docker/mariadb/seed/formulize.sql
+        # Copy mainfile.php and install.lock
+        cp mainfile.php tests/e2e/final-state/ || echo "mainfile.php not found"
+        cp install.lock tests/e2e/final-state/ || echo "install.lock not found"
+
+        # Copy trust folder contents
+        if [ -d "trust" ]; then
+          cp -r trust/* tests/e2e/final-state/trust/ || echo "trust folder empty or not accessible"
+        fi
+
+        # Copy code folder contents
+        if [ -d "modules/formulize/code" ]; then
+          cp -r modules/formulize/code/* tests/e2e/final-state/modules/formulize/code/ || echo "code folder empty or not accessible"
+        fi
+
     - name: Clean up containers
       if: always()
       run: |
