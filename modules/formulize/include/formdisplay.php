@@ -2234,7 +2234,7 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 
 	$ele_value = $element->getVar('ele_value');
 	// if there is no previous entry data to load, then just return the default ele_value
-	if(!is_array($prevEntry)) {
+	if(empty($prevEntry)) {
 		return $ele_value;
 	}
 
