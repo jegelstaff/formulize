@@ -651,21 +651,54 @@ function getParentLinks($fid, $frid) {
 
 }
 
+/**
+ * Get a dynamic default value for an element, based on the value saved in another entry
+ * There ought to have been a prior determination that the element has dynamic defaults, and this is a new entry, or it is an existing entry with no saved value plus the use-defaults-when-blank option is turned on
+ * It's expensive to do that determination in here, because we have to get a bunch of objects, so we leave it to the caller to have done that first, and this only runs when necessary
+ * @param mixed $elementIdentifier - the element for which we're setting the dynamic default. Can be element ID, handle, or object.
+ * @param int|string $currentEntryId - Optional. The entry ID which is the context in which this default is being determined. Defaults to 'new'.
+ * @return mixed - the value found, if any, or an empty string if there was no value
+ */
+function getDynamicDefaultValue($elementIdentifier, $currentEntryId = 'new' ) {
+	// in case of program staff, get the value of stafflist element from the program entry found by looking up the value of {learner_profile_program} as found in the current context entry
+	// in the case of placement properties, get the value of the xyz element from the Agencies entry found by looking up the value of the {placement_agency} element as found in the current context entry
+	$value = '';
+	global $xoopsDB;
+	$formHandler = xoops_getmodulehandler('forms', 'formulize');
+	if($elementObject = _getElementObject($elementIdentifier)
+		AND $sourceElementObject = _getElementObject($elementObject->getVar('ele_dynamicdefault_source'))
+		AND $sourceFormObject = $formHandler->get($sourceElementObject->getVar('fid'))) {
+		list($conditionsWhereClauseAll, $conditionsWhereClauseOOM, $parentFormFrom) = buildConditionsFilterSQL($elementObject->getVar('ele_dynamicdefault_conditions'), $sourceFormObject->getVar('fid'), $currentEntryId, curlyBracketForm: $elementObject->getVar('fid'), targetAlias: 't1');
+		$sql = "SELECT `".formulize_db_escape($sourceElementObject->getVar('ele_handle'))."` FROM " . $xoopsDB->prefix('formulize_'.$sourceFormObject->getVar('form_handle')) . " as t1 $parentFormFrom WHERE entry_id > 0 $conditionsWhereClauseAll $conditionsWhereClauseOOM";
+		if($res = $xoopsDB->query($sql)) {
+			if($xoopsDB->getRowsNum($res) == 1) {
+				$array = $xoopsDB->fetchArray($res);
+				return $array[$sourceElementObject->getVar('ele_handle')];
+			}
+		} else {
+			throw new Exception("Database error when trying to get dynamic default value for element ".$elementObject->getVar('ele_handle')." based on source element ".$sourceElementObject->getVar('ele_handle').".");
+		}
+	}
+	return $value;
+}
 
-// this function returns the captions and values that are in the DB for an existing entry
-// $elements is used to specify a shortlist of elements to display, based on their IDs.  Used in conjunction with the array option for $formform
-// $element_handler is not required any longer!
-function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid, $uid, $owner, $groupEntryWithUpdateRights) {
+/**
+ * This function returns the values that are in the DB for an existing entry, and for new entries, includes dynamic defaults based on other entries
+ * These values are used by the loadValue function/methods to replace the canonical default values for an element (as specified in its ele_value property)
+ * So that the display of existing entries is accurate and shows the current values from the database.
+ * @param int|string $entryId - the entry
+ * @param int $fid - the form id
+ * @param array $elements - optional array of element IDs to limit the retrieval to
+ * @param bool|null $groupEntryWithUpdateRights - a flag for whether the entry is a group entry where the user has update rights, in which case the private element exclusion doesn't apply. If null, it will be determined automatically.
+ * @return array - an array with 'handles' and 'values' keys, each containing an array of the respective data for each element retrieved.
+ */
+function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpdateRights = null) {
 
 	if(!$fid) { // fid is required
-		return "";
+		throw new Exception("Form ID is required when gathering entry values.");
 	}
 
-	if(!is_numeric($entry) OR !$entry) {
-		return "";
-	}
-
-	// add in any elements contained in any grids that are being displayed
+	// if there's a specified series of elements, add in any elements contained in any grids that are being displayed
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	foreach($elements as $thisElement) {
 		if($thisElementObject = $element_handler->get($thisElement)) {
@@ -683,97 +716,120 @@ function getEntryValues($entry, $element_handler, $groups, $fid, $elements, $mid
 
 	static $cachedEntryValues = array();
 	$serializedElements = serialize($elements);
-	if(!isset($cachedEntryValues[$fid][$entry][$serializedElements])) {
+	if(!isset($cachedEntryValues[$fid][$entryId][$serializedElements])) {
 
-		global $xoopsDB;
-
-		if(!$mid) { $mid = getFormulizeModId(); }
-
-		if(!$uid) {
-			global $xoopsUser;
-			$uid = $xoopsUser ? $xoopsUser->getVar("uid") : 0; // if there is no uid, then use the $xoopsUser uid if there is one, or zero for anons
+		// setup variables we need
+		global $xoopsDB, $xoopsUser;
+		$gperm_handler = xoops_gethandler('groupperm');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$prevEntry = array();
+		$mid = getFormulizeModId();
+		$uid = $xoopsUser ? $xoopsUser->getVar("uid") : 0;
+		$owner = ($entryId AND $entryId != 'new') ? getEntryOwner($entryId, $fid) : $uid;
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+		if($groupEntryWithUpdateRights === null) {
+			$single_result = getSingle($fid, $uid, $groups);
+			$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid) AND $entryId == $single_result['entry']) ? true : false;
 		}
 
-		if(!$owner) {
-			$owner = getEntryOwner($entry, $fid); // if there is no owner, then get the owner for this entry in this form
+		// get form object and properties we'll need to reference
+		if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Form with ID $fid could not be found, when gathering entry values.");
 		}
-
-		// viewquery changed in light of 3.0 data structure changes...
-		//$viewquery = q("SELECT ele_caption, ele_value FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req=$entry $element_query");
-		// NEED TO CHECK THE FORM FOR ENCRYPTED ELEMENTS, AND ADD THEM AFTER THE * WITH SPECIAL ALIASES. tHEN IN THE LOOP, LOOK FOR THE ALIASES, AND SKIP PROCESSING THOSE ELEMENTS NORMALLY, BUT IF WHEN PROCESSING A NORMAL ELEMENT, IT IS IN THE LIST OF ENCRYPTED ELEMENTS, THEN GET THE ALIASED, DECRYPTED VALUE INSTEAD OF THE NORMAL ONE
-		// NEED TO ADD RETRIEVING ENCRYPTED ELEMENT LIST FROM FORM OBJECT
-		$form_handler =& xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($fid);
 		$formHandles = $formObject->getVar('elementHandles');
-		$formCaptions = $formObject->getVar('elementCaptions');
 		$formEncryptedElements = $formObject->getVar('encryptedElements');
-		$encryptedSelect = "";
-		foreach($formEncryptedElements as $thisEncryptedElement) {
-			$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
-		}
 
-		$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " WHERE entry_id=$entry");
-		$viewquery = array();
-		// need to parse the result based on the elements requested and setup the viewquery array for use later on
-		$vqindexer = 0;
-		foreach($viewquerydb[0] as $thisField=>$thisValue) {
-			if(strstr($thisField, "decrypted_value_for_")) { continue; } // don't process these values normally, instead, we just refer to them later to grab the decrypted value, if this iteration is over an encrypted element.
-			$includeElement = false;
-			if(is_array($elements)) {
-				if(in_array(array_search($thisField, $formHandles), $elements) AND $thisValue !== "") {
-					$includeElement = true;
-				}
-			} elseif(!strstr($thisField, "creation_uid") AND !strstr($thisField, "creation_datetime") AND !strstr($thisField, "mod_uid") AND !strstr($thisField, "mod_datetime") AND !strstr($thisField, "entry_id") AND $thisValue !== "") {
-				$includeElement = true;
-			}
-			if($includeElement) {
-				$viewquery[$vqindexer]["ele_handle"] = $thisField;
-				$viewquery[$vqindexer]["ele_caption"] = $formCaptions[array_search($thisField, $formHandles)];
-				if(in_array($thisField, $formEncryptedElements)) {
-					$viewquery[$vqindexer]["ele_value"] = $viewquerydb[0]["decrypted_value_for_".$thisField];
-				} else {
-					$viewquery[$vqindexer]["ele_value"] = $thisValue;
-				}
-			}
-			$vqindexer++;
-		}
-
+		// determine the allowed elements based on group permissions
 		// build query for display groups
 		$gq = '';
 		foreach($groups as $thisgroup) {
-			$gq .= " OR ele_display LIKE '%,$thisgroup,%'";
+			$gq .= " OR ele_display LIKE '%,".intval($thisgroup).",%'";
 		}
 
 		// exclude private elements unless the user has view_private_elements permission, or update_entry permission on a one-entry-per group entry
 		$private_filter = "";
-		$gperm_handler =& xoops_gethandler('groupperm');
 		$view_private_elements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid);
-
 		if(!$view_private_elements AND $uid != $owner AND !$groupEntryWithUpdateRights) {
 			$private_filter = " AND ele_private=0";
 		}
 
-		$allowedquery = q("SELECT ele_caption, ele_disabled, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND (ele_display='1' $gq) $private_filter");
-		$allowedDisabledStatus = array();
+		// lookup by element unless there aren't any specified, then lookup all elements for form
+		$fidOrElementWhereClause = "";
+		if(is_array($elements) AND count($elements) > 0) {
+			$fidOrElementWhereClause = "(ele_id = " . implode(" OR ele_id = ", array_filter($elements, 'is_numeric')) . ")";
+		} else {
+			$fidOrElementWhereClause = "id_form=".intval($fid);
+		}
+
+		// lookup metadata for allowed elements, and catalogue it
+		$allowedquery = q("SELECT ele_handle, ele_dynamicdefault_source, ele_use_default_when_blank FROM " . $xoopsDB->prefix("formulize") . " WHERE $fidOrElementWhereClause AND (ele_display='1' $gq) $private_filter");
 		$allowedhandles = array();
+		$dynamicDefaults = array();
+		$useDefaultWhenBlank = array();
 		foreach($allowedquery as $onecap) {
 			$allowedhandles[] = $onecap['ele_handle'];
-			$allowedDisabledStatus[$onecap['ele_handle']] = $onecap['ele_disabled'];
+			$dynamicDefaults[$onecap['ele_handle']] = $onecap['ele_dynamicdefault_source'];
+			$useDefaultWhenBlank[$onecap['ele_handle']] = $onecap['ele_use_default_when_blank'];
 		}
 
-		foreach($viewquery as $vq) {
-			// check that this caption is an allowed caption before recording the value
-			if(in_array($vq["ele_handle"], $allowedhandles)) {
-				$prevEntry['handles'][] = $vq["ele_handle"];
-				$prevEntry['captions'][] = $vq["ele_caption"];
-				$prevEntry['values'][] = $vq["ele_value"];
-				$prevEntry['disabled'][] = $allowedDisabledStatus[$vq['ele_handle']];
+		// for a new entry, we just care about setting dynamic defaults, nothing else
+		if($entryId == 'new') {
+
+			foreach($dynamicDefaults as $handle=>$dd) {
+				if($dd) {
+					$prevEntry['handles'][] = $handle;
+					$prevEntry['values'][] = getDynamicDefaultValue($handle);
+				}
+			}
+
+			$cachedEntryValues[$fid][$entryId][$serializedElements] = $prevEntry;
+
+		// otherwise, for existing entries, start by looking up the values from the database
+		// and if there's an elements list, only include elements from that list
+		} else {
+
+			if(!is_numeric($entryId) OR !$entryId) {
+				return "";
+			}
+
+			$encryptedSelect = "";
+			foreach($formEncryptedElements as $thisEncryptedElement) {
+				$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
+			}
+
+			$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " WHERE entry_id=$entryId");
+			foreach($viewquerydb[0] as $thisField=>$thisValue) {
+				if(strstr($thisField, "decrypted_value_for_")) { continue; } // don't process these values normally, instead, we just refer to them later to grab the decrypted value, if this iteration is over an encrypted element.
+				$includeElement = false;
+				if(!empty($elements)) {
+					if(in_array(array_search($thisField, $formHandles), $elements) AND $thisValue !== "") {
+						$includeElement = true;
+					}
+				} elseif(!strstr($thisField, "creation_uid") AND !strstr($thisField, "creation_datetime") AND !strstr($thisField, "mod_uid") AND !strstr($thisField, "mod_datetime") AND !strstr($thisField, "entry_id") AND $thisValue !== "") {
+					$includeElement = true;
+				}
+				if($includeElement AND in_array($thisField, $allowedhandles)) {
+					if(in_array($thisField, $formEncryptedElements)) {
+						$thisValue = $viewquerydb[0]["decrypted_value_for_".$thisField];
+					}
+					// see if we need to apply a dynamic default when blank
+					if(($thisValue === null OR $thisValue == '')
+						AND $useDefaultWhenBlank[$thisField]
+						AND $dynamicDefaults[$thisField]
+					) {
+						$thisValue = getDynamicDefaultValue($thisField, $entryId);
+					}
+
+					$prevEntry['handles'][] = $thisField;
+					$prevEntry['values'][] = $thisValue;
+				}
 			}
 		}
-		$cachedEntryValues[$fid][$entry][$serializedElements] = $prevEntry;
+
+		$cachedEntryValues[$fid][$entryId][$serializedElements] = $prevEntry;
 	}
 
-	return $cachedEntryValues[$fid][$entry][$serializedElements];
+	return $cachedEntryValues[$fid][$entryId][$serializedElements];
 
 }
 
@@ -1245,10 +1301,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			}
 
 				unset($prevEntry);
-            // if there is an entry, then get the data for that entry
-            if ($entries[$this_fid]) {
-                $groupEntryWithUpdateRights = ($single == "group" AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid) AND $entry == $single_result['entry']);
-					$prevEntry = getEntryValues($entries[$this_fid][0], $element_handler, $groups, $this_fid, $elements_allowed, $mid, $uid, $owner, $groupEntryWithUpdateRights);
+				// if there is an entry, then get the data for that entry
+				if ($entries[$this_fid]) {
+					$groupEntryWithUpdateRights = ($single == "group" AND $gperm_handler->checkRight("update_own_entry", $fid, $groups, $mid) AND $entry == $single_result['entry']);
+					$prevEntry = getEntryValues($entries[$this_fid][0], $this_fid, $elements_allowed, $groupEntryWithUpdateRights);
 				}
 
 				// display the form
@@ -2178,7 +2234,7 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 
 	$ele_value = $element->getVar('ele_value');
 	// if there is no previous entry data to load, then just return the default ele_value
-	if(!is_array($prevEntry)) {
+	if(empty($prevEntry)) {
 		return $ele_value;
 	}
 
@@ -2189,13 +2245,14 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 	if($key !== false) {
 		$value = $prevEntry['values'][$key];
 	}
-	// If the value is blank, and the element is required or the element has the use-defaults-when-blank option on
+	// If the value is blank, and this is a new entry, or the element is required or the element has the use-defaults-when-blank option on
 	// then do not load in saved value over top of ele_value, just return the default instead
-	if($value === "" OR $value === null AND ($element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
+	if(($value === "" OR $value === null) AND ($entry_id == 'new' OR $element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
 		return $ele_value;
 	}
 
 	// based on element type, swap in the value for this element in this entry...
+	// for new entries, there could be dynamic defaults set in prevEntry that lead us here
 	$type = $element->getVar('ele_type');
 	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');

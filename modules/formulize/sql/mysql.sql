@@ -407,6 +407,8 @@ CREATE TABLE formulize (
   ele_private tinyint(1) NOT NULL default '0',
   ele_use_default_when_blank tinyint(1) NOT NULL default '0',
   ele_exportoptions text NOT NULL,
+	ele_dynamicdefault_source smallint(5) unsigned NULL default 0,
+	ele_dynamicdefault_conditions text NULL,
   PRIMARY KEY  (`ele_id`),
   KEY `ele_order` (`ele_order`),
   KEY `ele_display` ( `ele_display` ( 255 ) )

@@ -152,6 +152,8 @@ if ($_GET['ele_id'] != "new") {
         $advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
         $advanced['ele_index_show'] = true;
         $advanced['original_handle'] = $elementObject->getVar('ele_handle');
+				$advanced['ele_dynamicdefault_source'] = $elementObject->getVar('ele_dynamicdefault_source');
+				$advanced['ele_dynamicdefault_conditions'] = $elementObject->getVar('ele_dynamicdefault_conditions');
     }
 		if($elementObject->hasMultipleOptions AND !$elementObject->isLinked) {
 			$advanced['hasMultipleOptions'] = true;
@@ -201,6 +203,8 @@ if ($_GET['ele_id'] != "new") {
 			$advanced['ele_index_no_on'] = strlen($ele_index) > 0 ? "" : " checked";
 			$advanced['ele_index_yes_on'] = strlen($ele_index) > 0 ? " checked" : "";
 			$advanced['ele_index_show'] = true;
+			$advanced['ele_dynamicdefault_source'] = 0;
+			$advanced['ele_dynamicdefault_conditions'] = "";
 		}
 	}
 	$advanced['exportoptions_onoff'] = 0;
@@ -211,9 +215,19 @@ $advanced['ele_use_default_when_blank'] = $ele_use_default_when_blank;
 $advanced['datatypeui'] = createDataTypeUI($ele_type, $elementObject,$fid,$ele_encrypt);
 $advanced['advancedTypeTemplate'] = file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/admin/element_type_".$ele_type."_advanced.html") ? "db:admin/element_type_".$ele_type."_advanced.html" : "";
 
+list($dynamicDefaultElement, $dynamicDefaultSourceElementId) = createFieldList($advanced['ele_dynamicdefault_source'], false, false, "elements-ele_dynamicdefault_source", _NONE);
+$advanced['dynamicDefaultSourceList'] = $dynamicDefaultElement->render();
+$advanced['dynamicDefaultConditions'] = "";
+if($dynamicDefaultSourceElementId) {
+	$dynamicDefaultSourceElementObject = _getElementObject($dynamicDefaultSourceElementId);
+	if($dynamicDefaultSourceElementObject) {
+		$advanced['dynamicDefaultConditions'] = formulize_createFilterUI($advanced['ele_dynamicdefault_conditions'], "dynamicDefaultConditions", $dynamicDefaultSourceElementObject->getVar('fid'), "form-4");
+	}
+}
+
 $formObject = $form_handler->get($fid);
 $formName = printSmart($formObject->getVar('title'), 30);
-$formHandle=printSmart($formObject->getVar('form_handle'), 30);
+$formHandle = printSmart($formObject->getVar('form_handle'), 30);
 
 $common['formTitle'] = strip_tags($formName);
 

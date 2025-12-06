@@ -101,7 +101,7 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize';
-    $checkThisField = 'ele_required';
+    $checkThisField = 'ele_dynamicdefault_source';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -511,6 +511,8 @@ function patch40() {
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
 				$sql['form_title'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `desc_form` `form_title` varchar(255) NOT NULL default ''";
 				$sql['ele_required'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " CHANGE `ele_req` `ele_required` tinyint(1) NOT NULL default 0";
+				$sql['add_dynamicdefault_source'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_source` smallint(5) unsigned NULL default 0";
+				$sql['add_dynamicdefault_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_conditions` text NULL";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -655,6 +657,8 @@ function patch40() {
 										print "Form title already renamed. result: OK<br>";
                 } elseif($key === "ele_required") {
 										print "Element required already renamed. result: OK<br>";
+								} elseif($key === "add_dynamicdefault_source" OR $key === "add_dynamicdefault_conditions") {
+										print "Dynamic defaults already added. result: OK<br>";
                 }else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

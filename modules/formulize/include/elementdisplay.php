@@ -153,8 +153,8 @@ EOF;
 			$isDisabled = true;
 		}
 
-		if($prevEntry==null) { // preferable to pass in prevEntry!
-			$prevEntry = getEntryValues($entry, "", $groups, $form_id, "", $mid, $user_id, $owner, $groupEntryWithUpdateRights);
+		if($prevEntry==null) { // preferable to pass in prevEntry for existing entries, as determined in the displayForm function, since that filters by the elements being displayed. If not determined there, almost certainly we're displaying a new entry, so prevEntry will be initialized with only the dyanmic defaults anyway, so not that big a deal.
+			$prevEntry = getEntryValues($entry, $form_id, groupEntryWithUpdateRights: $groupEntryWithUpdateRights);
 		}
 
 		$renderer = new formulizeElementRenderer($element);
@@ -308,6 +308,21 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	// record the list of elements that are allowed in principle for a form (regardless of conditional status)
 	if($allowed) {
 		$GLOBALS['formulize_renderedElementsForForm'][$form_id][$entry_id][$renderedElementMarkupName] = $elementObject->getVar('ele_handle');
+	}
+
+	// check for dynamic default conditions and make the element conditional if it depends on a dynamic element reference
+	$elementDynamicDefaultSource = $elementObject->getVar('ele_dynamicdefault_source');
+	$elementDynamicDefaultConditions = $elementObject->getVar('ele_dynamicdefault_conditions');
+	if($allowed AND $elementDynamicDefaultSource AND $elementDynamicDefaultConditions) {
+		if(!$subformCreateEntry) {
+			$governingElements = array();
+			foreach($elementDynamicDefaultConditions[2] as $dynamicDefaultTerm) {
+				if(substr($dynamicDefaultTerm, 0, 1) == "{" AND substr($dynamicDefaultTerm, -1) == "}" AND $dynamicDefaultTermElementObject = _getElementObject(substr($dynamicDefaultTerm, 1, -1))) {
+					$governingElements[] = $dynamicDefaultTermElementObject->getVar('ele_handle');
+				}
+			}
+			catalogConditionalElement($renderedElementMarkupName, array_unique($governingElements));
+		}
 	}
 
 	$elementFilterSettings = $elementObject->getVar('ele_filtersettings');
