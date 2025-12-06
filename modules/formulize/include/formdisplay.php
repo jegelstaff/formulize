@@ -671,9 +671,7 @@ function getDynamicDefaultValue($elementIdentifier, $currentEntryId = 'new' ) {
 		list($conditionsWhereClauseAll, $conditionsWhereClauseOOM, $parentFormFrom) = buildConditionsFilterSQL($elementObject->getVar('ele_dynamicdefault_conditions'), $sourceFormObject->getVar('fid'), $currentEntryId, curlyBracketForm: $elementObject->getVar('fid'), targetAlias: 't1');
 		$sql = "SELECT `".formulize_db_escape($sourceElementObject->getVar('ele_handle'))."` FROM " . $xoopsDB->prefix('formulize_'.$sourceFormObject->getVar('form_handle')) . " as t1 $parentFormFrom WHERE entry_id > 0 $conditionsWhereClauseAll $conditionsWhereClauseOOM";
 		if($res = $xoopsDB->query($sql)) {
-			if($xoopsDB->getRowsNum($res) > 1) {
-				throw new Error("Multiple entries found when trying to get dynamic default value for element ".$elementObject->getVar('ele_handle')." based on source element ".$sourceElementObject->getVar('ele_handle').".  Cannot determine unique value.");
-			} elseif($xoopsDB->getRowsNum($res) == 1) {
+			if($xoopsDB->getRowsNum($res) == 1) {
 				$array = $xoopsDB->fetchArray($res);
 				return $array[$sourceElementObject->getVar('ele_handle')];
 			}
@@ -697,10 +695,10 @@ function getDynamicDefaultValue($elementIdentifier, $currentEntryId = 'new' ) {
 function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpdateRights = null) {
 
 	if(!$fid) { // fid is required
-		return "";
+		throw new Exception("Form ID is required when gathering entry values.");
 	}
 
-	// add in any elements contained in any grids that are being displayed
+	// if there's a specified series of elements, add in any elements contained in any grids that are being displayed
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	foreach($elements as $thisElement) {
 		if($thisElementObject = $element_handler->get($thisElement)) {
@@ -735,7 +733,9 @@ function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpda
 		}
 
 		// get form object and properties we'll need to reference
-		$formObject = $form_handler->get($fid);
+		if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Form with ID $fid could not be found, when gathering entry values.");
+		}
 		$formHandles = $formObject->getVar('elementHandles');
 		$formEncryptedElements = $formObject->getVar('encryptedElements');
 
@@ -801,7 +801,7 @@ function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpda
 			foreach($viewquerydb[0] as $thisField=>$thisValue) {
 				if(strstr($thisField, "decrypted_value_for_")) { continue; } // don't process these values normally, instead, we just refer to them later to grab the decrypted value, if this iteration is over an encrypted element.
 				$includeElement = false;
-				if(is_array($elements)) {
+				if(!empty($elements)) {
 					if(in_array(array_search($thisField, $formHandles), $elements) AND $thisValue !== "") {
 						$includeElement = true;
 					}

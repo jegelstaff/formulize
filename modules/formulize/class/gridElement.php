@@ -305,7 +305,10 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen=false, $owner=null) {
-		return renderGrid($element, $entry_id, screen: $screen);
+		$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
+		$elementsInGrid = elementsInGrid($ele_value[4], $element->getVar('fid'), $gridCount);
+		$prevEntry = getEntryValues($entry_id, $element->getVar('fid'), $elementsInGrid);
+		return renderGrid($element, $entry_id, $prevEntry, $screen);
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element
