@@ -39,15 +39,16 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 if(!$uid) {
-    print "Error: only logged in users can access master.php";
-    exit();
+	throw new Exception("Only logged in users can access master.php");
+	exit();
 }
-$mid = getFormulizeModId();
-$gperm_handler = xoops_gethandler('groupperm');
-if($gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
-    $formulize_masterUIOverride = true; // user has requested the master UI by using this URL, and they have edit_form permission, so we will give them the full default UI for the form
-} else {
-    $formulize_masterUIOverride = false;
+if(isset($_GET['fid']) AND $fid = intval($_GET['fid'])) {
+	$mid = getFormulizeModId();
+	$gperm_handler = xoops_gethandler('groupperm');
+	if($gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
+		$formulize_masterUIOverride = true; // user has requested the master UI by using this URL, and they have edit_form permission, so we will give them the full default UI for the form
+	} else {
+		$formulize_masterUIOverride = false;
+	}
 }
-
 include "index.php";
