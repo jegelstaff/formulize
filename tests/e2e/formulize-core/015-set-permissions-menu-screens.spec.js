@@ -210,6 +210,7 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('link', { name: 'Donor', exact: true }).click();
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
+		await page.getByRole('textbox', { name: 'Title for page number' }).fill('Profile');
   	await page.getByLabel('Form elements to display on').selectOption([
 			'Donors: Type of donor',
 			'Donors: First name',

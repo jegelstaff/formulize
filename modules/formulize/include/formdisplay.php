@@ -1728,6 +1728,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         }
     }
 
+		setTitleOfPageInTemplate($entries[$fid][0], (is_object($screen) ? $screen : null), $settings);
+
 }
 
 // add the submit button to a form

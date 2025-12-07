@@ -8715,3 +8715,51 @@ function methodExistsInClass($class, $method) {
 	$reflection = new ReflectionClass($class);
 	return $reflection->hasMethod($method) && $reflection->getMethod($method)->getDeclaringClass()->getName() === $class;
 }
+
+/**
+ * Deduce the title of the page being rendered, based on the screen and entry being rendered, and set it in the XOOPS template for passing out to the theme
+ * @param int entryId The entry id being rendered, if any
+ * @param object renderedFormulizeScreen The screen object being rendered, if any
+ * @param array settings An array of settings for the screen rendering, if any. Used to gather the current page number for multipage screens
+ * @return void assigns the title to the global $xoopsTpl object if possible, returns nothing
+ */
+function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = null, $settings = array()) {
+	global $xoopsTpl;
+	if(is_object($xoopsTpl)) {
+		$entryDescriptor = $renderedFormulizeScreen->getVar('title');
+		// if we're rendering an entry, try to get the principal identifier value for the entry if there is one
+		if(($renderedFormulizeScreen->getVar('type') == 'multiPage' OR $renderedFormulizeScreen->getVar('type') == 'form' OR $renderedFormulizeScreen->getVar('type') == 'template')) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$entryId = intval($entryId);
+			if($entryId AND $formObject = $form_handler->get($renderedFormulizeScreen->getVar('fid')) AND $principalIdentifierElementId = $formObject->getVar('pi')) {
+				// try to get the value of a principal identifier element if there is one, for an existing entry
+				$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
+				if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					$principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId);
+					$principalIdentifierHandle = $principalIdentifierElementObject->getVar('ele_handle');
+					$principalIdentifierValueArray = prepvalues($principalIdentifierValue, $principalIdentifierHandle, $entryId);
+					$entryDescriptor .= ' : ' . (isset($principalIdentifierValueArray[0]) ? $principalIdentifierValueArray[0] : '');
+				}
+
+			// no pi set on form, so use entry id number
+			} elseif($entryId) {
+				$entryDescriptor .= ' : ' . _formulize_ENTRY . ' ' . $entryId;
+
+			// new entry, but assume that template screens are not handling new entries, only form screens
+			} elseif(!$entryId AND $renderedFormulizeScreen->getVar('type') != 'template') {
+				$entryDescriptor .= ' : ' . _formulize_NEWENTRY;
+			}
+
+			// add page title if multipage form and we're on a specific page
+			if(isset($settings['formulize_currentPage'])) {
+				$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+				list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($renderedFormulizeScreen);
+				$entryDescriptor .= ' : ' . $pageTitles[$settings['formulize_currentPage']];
+			}
+		}
+		if($entryDescriptor) {
+			$xoopsTpl->assign('xoops_pagetitle', $entryDescriptor);
+		}
+	}
+}

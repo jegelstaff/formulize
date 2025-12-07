@@ -326,12 +326,16 @@ if (!$rendered AND $uid) {
 
 // renderedFormulizeScreen is a global, and might be altered by entriesdisplay.php if it sends the user off to a different screen (like a form screen instead of the list)
 if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
-    $xoopsTpl->assign('xoops_pagetitle', $renderedFormulizeScreen->getVar('title'));
-    $xoopsTpl->assign('icms_pagetitle', $renderedFormulizeScreen->getVar('title'));
-    $xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
+	if($xoopsTpl->get_template_vars('xoops_pagetitle') == '') {
+		$xoopsTpl->assign('xoops_pagetitle', $renderedFormulizeScreen->getVar('title'));
+		$xoopsTpl->assign('icms_pagetitle', $renderedFormulizeScreen->getVar('title'));
+	} else {
+		$xoopsTpl->assign('icms_pagetitle', $xoopsTpl->get_template_vars('xoops_pagetitle'));
+	}
+	$xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
 } elseif (is_object($xoopsTpl))  {
-    $xoopsTpl->assign('xoops_pagetitle', $title);
-    $xoopsTpl->assign('icms_pagetitle', $title);
+	$xoopsTpl->assign('xoops_pagetitle', $title);
+	$xoopsTpl->assign('icms_pagetitle', $title);
 }
 if(is_object($xoopsTpl)) {
 	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
