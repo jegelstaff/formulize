@@ -236,7 +236,7 @@ function getCurrentURL($rewriteruleAddress='') {
 			$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
 			$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
 			// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
-			$url .= $rewriteruleAddress ? "/$rewriteruleAddress/" : str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+			$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($rewriteruleAddress ? "/$rewriteruleAddress/" : $_SERVER['REQUEST_URI'])));
 		}
     return $url;
 }
@@ -8037,6 +8037,7 @@ function formulize_handleHtaccessRewriteRule() {
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$entryIdentifier = isset($addressData[1]) ? $addressData[1] : null;
+		$pageIdentifier = isset($addressData[2]) ? $addressData[2] : null;
 		if($sid = formulize_getSidFromRewriteAddress($address, $entryIdentifier)) {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
@@ -8044,20 +8045,31 @@ function formulize_handleHtaccessRewriteRule() {
 			}
 			$queryString = "sid=$sid";
 			if($entryIdentifier) {
+				$currentPage = "";
 				$ve = intval($entryIdentifier);
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 				if($screenObject = $screen_handler->get($sid)) {
 					$ve = formulize_getEntryIdFromRewriteruleElement($screenObject, $entryIdentifier);
+					$currentPage = formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObject, $pageIdentifier);
 				}
 				if($ve AND (!$screenObject OR security_check($screenObject->getVar('fid'), $ve))) {
 					$queryString = "sid=$sid&ve=$ve";
 					$_GET['ve'] = $ve;
 					$_REQUEST['ve'] = $ve;
+					if($currentPage) {
+						$_POST['formulize_currentPage'] = $currentPage;
+					}
+					if($pageIdentifier) {
+						// when we get to JS later, we'll need to alter the URL to remove the page identifier. It will be put back in URL by history api in JS. And the loading of the page will work based only on the entry identifier. Page identifier is simply a UI convenience in URL when rewriting is enabled.
+						$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', ".json_encode(XOOPS_URL."/$address/".$entryIdentifier."/").");";
+						// seed the current URL with the correct address
+						getCurrentURL($address."/".$entryIdentifier."/");
+					}
 				} else {
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
-					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/".($entryIdentifier ? "$entryIdentifier/" : '')."');";
+					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
 					// seed the current URL with the correct address
-					getCurrentURL($address.($entryIdentifier ? "/$entryIdentifier" : ''));
+					getCurrentURL($address);
 					// redetermine the sid, since there is in fact no valid identifier so maybe we want a list-ish screen instead?
 					$sid = formulize_getSidFromRewriteAddress($address);
 					$queryString = "sid=$sid";
@@ -8076,6 +8088,30 @@ function formulize_handleHtaccessRewriteRule() {
 			exit();
 		}
 	}
+}
+
+/**
+ * Determine the page ordinal starting from 1, based on the page identifier found in any rewrite rule string
+ * @param mixed screenObjectOrIdentifier The screen object, or an identifier
+ * @param string pageIdentifier The page identifier from the clean URL, should be a page title in the screen
+ * @return int|false The page number found, or false if none found
+ */
+function formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObjectOrIdentifier, $pageIdentifier) {
+	$pageNumber = false;
+	if(!isset($_POST['formulize_currentPage']) AND $pageIdentifier) {
+		$screenObject = $screenObjectOrIdentifier;
+		$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		if(!is_object($screenObject) ) {
+			$screenObject = $multiPageScreenHandler->get($screenObjectOrIdentifier);
+		} elseif(!is_a($screenObject, 'formulizeMultiPageScreen')) {
+			$screenObject = $multiPageScreenHandler->get($screenObject->getVar('sid'));
+		}
+		if(is_object($screenObject) AND is_a($screenObject, 'formulizeMultiPageScreen')) {
+			list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($screenObject);
+			$pageNumber = array_search(urldecode($pageIdentifier), $pageTitles);
+		}
+	}
+	return $pageNumber;
 }
 
 /**
@@ -8181,13 +8217,21 @@ function extractOperatorFromString($string) {
  * Create a js history api snippet to update the URL if there are rewrite rules in effect
  * @param object $screen The screen object being displayed
  * @param int|string $entry_id The entry id being displayed, or 'new' when a blank form is displayed yet to be saved
+ * @param array $settings Optional. The $settings array if applicable. Used with multipage screens to identify the current page.
  * @return string The code snippet generated, or and empty string if there is no snippet
  */
-function updateAlternateURLIdentifierCode($screen, $entry_id) {
-    $code = '';
-		$entry_id = intval($entry_id);
-    if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress') AND strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
-			$entryIdentifier = $entry_id;
+function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array()) {
+	$code = '';
+	$entry_id = intval($entry_id);
+	if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress')) {
+		$initialURL = trim(getCurrentURL(), '/');
+		$URLAddOn = '/';
+		// if the rewriteaddress of this screen has no entry identifier, or if the currentURL is for a different screen
+		// then figure out the entry identifier for the URL
+		if(strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false
+			OR !strstr($initialURL, $rewriteruleAddress)
+		) {
+			$URLAddOn = "/".$entry_id."/";
 			if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
@@ -8195,11 +8239,34 @@ function updateAlternateURLIdentifierCode($screen, $entry_id) {
 				$dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
 				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
 				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
-				$entryIdentifier = urlencode(htmlspecialchars_decode($preppedValue));
+				$URLAddOn = "/".htmlspecialchars_decode($preppedValue)."/";
 			}
-			$code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
-    }
-    return $code;
+			// furthermore, if we're on a different screen, we need to use that rewriteruleAddress as our base address.
+			if(!strstr($initialURL, $rewriteruleAddress)) {
+				$initialURL = XOOPS_URL.'/'.$rewriteruleAddress;
+			}
+		}
+		// if it's a multipage screen, then remove any page titles, and get the current page title and append that, if it's not already there
+		if($screen->getVar('type') == 'multiPage' AND isset($settings['formulize_currentPage'])) {
+			$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($screen);
+			if(count($pages) > 1 AND
+				$currentPageTitle = isset($pageTitles[$settings['formulize_currentPage']]) ? $pageTitles[$settings['formulize_currentPage']] : ''
+				AND !strstr($initialURL, '/'.htmlspecialchars_decode($currentPageTitle))) {
+				foreach($pageTitles as $pageTitle) {
+					$initialURL = str_replace('/'.htmlspecialchars_decode($pageTitle), '', $initialURL);
+				}
+				$URLAddOn .= htmlspecialchars_decode($currentPageTitle)."/";
+			}
+		}
+		$code = "window.history.replaceState(null, '', ".json_encode($initialURL.$URLAddOn).");
+		jQuery(window).load(function() {
+			jQuery('a.navtab:not(:first)').each(function() {
+				jQuery(this).attr('href', '../' + jQuery(this).text());
+			});
+		});";
+	}
+	return $code;
 }
 
 /**
@@ -8714,4 +8781,64 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 function methodExistsInClass($class, $method) {
 	$reflection = new ReflectionClass($class);
 	return $reflection->hasMethod($method) && $reflection->getMethod($method)->getDeclaringClass()->getName() === $class;
+}
+
+/**
+ * Deduce the title of the page being rendered, based on the screen and entry being rendered, and set it in the XOOPS template for passing out to the theme
+ * Page title is a semantic aid to the user to read history in browser, and bookmarks, etc. Not necessarily a unique identifier, since multiple form screens would end up with the PI value for the entry as the title of the screen. Titles can be long and internally descriptive for webmasters to tell screens apart, and PI is more meaningful to users, if present.
+ * @param int entryId The entry id being rendered, if any
+ * @param object renderedFormulizeScreen The screen object being rendered, if any
+ * @param array settings An array of settings for the screen rendering, if any. Used to gather the current page number for multipage screens
+ * @return void assigns the title to the global $xoopsTpl object if possible, returns nothing
+ */
+function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = null, $settings = array()) {
+	global $xoopsTpl;
+	if(is_object($renderedFormulizeScreen) AND is_object($xoopsTpl)) {
+
+		// default to screen title, for lists, etc
+		$entryDescriptor = $renderedFormulizeScreen->getVar('title');
+
+		// if we're rendering an entry, try to get more specific...
+		if(($renderedFormulizeScreen->getVar('type') == 'multiPage'
+			OR $renderedFormulizeScreen->getVar('type') == 'form'
+			OR $renderedFormulizeScreen->getVar('type') == 'template')
+		) {
+			$entryId = intval($entryId);
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($formObject = $form_handler->get($renderedFormulizeScreen->getVar('fid'))) {
+
+				if($entryId) {
+					// for entries, set a basic identifier, then try to get something with principal identifier value if possible...
+					$entryDescriptor = $formObject->getSingular() . ' : ' . _formulize_ENTRY . ' ' . $entryId;
+
+					$principalIdentifierValue = null;
+					if($principalIdentifierElementId = $formObject->getVar('pi')) {
+						$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
+						if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
+							$element_handler = xoops_getmodulehandler('elements', 'formulize');
+							$principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId);
+							$principalIdentifierHandle = $principalIdentifierElementObject->getVar('ele_handle');
+							$principalIdentifierValueArray = prepvalues($principalIdentifierValue, $principalIdentifierHandle, $entryId);
+							$entryDescriptor = (isset($principalIdentifierValueArray[0]) ? $principalIdentifierValueArray[0] : '');
+						}
+					}
+
+					// add page title if multipage form and we're on a specific page, if it's different from the screen title
+					if(isset($settings['formulize_currentPage'])) {
+						$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+						list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($renderedFormulizeScreen);
+						if(isset($pageTitles[$settings['formulize_currentPage']]) AND ($principalIdentifierValue OR $formObject->getSingular() != $pageTitles[$settings['formulize_currentPage']])) { // singular value for form is semantically redundant in the title, unless there's a PI
+							$entryDescriptor .= ' : ' . $pageTitles[$settings['formulize_currentPage']];
+						}
+					}
+
+				// new entry, but assume that template screens are not handling new entries, only form screens. Template screens will go with screen title, like Lists, etc
+				} elseif(!$entryId AND $renderedFormulizeScreen->getVar('type') != 'template') {
+					$entryDescriptor = $formObject->getSingular() . ' : ' . _formulize_NEWENTRY;
+				}
+
+			}
+		}
+		$xoopsTpl->assign('xoops_pagetitle', $entryDescriptor);
+	}
 }

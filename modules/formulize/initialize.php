@@ -45,7 +45,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
 $GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set to the screen id if we're displaying a multipage screen, or just true if we're displaying a multipage form without a screen specified
 
-global $xoopsDB, $myts, $xoopsUser, $xoopsModule, $xoopsTpl, $xoopsConfig, $renderedFormulizeScreen, $formulizeCanonicalURI;
+global $xoopsDB, $xoopsUser, $xoopsModule, $xoopsTpl, $renderedFormulizeScreen, $formulizeCanonicalURI;
 
 if(is_object($xoopsTpl) AND !$xoopsUser) {
 	$xoopsTpl->assign('formulize_redirect', '/user.php?xoops_redirect='.urlencode(getCurrentURL()));
@@ -73,9 +73,7 @@ if(isset($formulize_screen_id) AND is_numeric($formulize_screen_id)) {
     $sid="";
 }
 
-// query added Oct 2013
 // get the default menu link for the current user, and set the fid or sid based on it
-
 if( !$fid AND !$sid) {
 	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
 	list($fid,$sid,$defaultMenuLinkUrl) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
@@ -85,10 +83,10 @@ if( !$fid AND !$sid) {
 	}
 }
 
-$screen_handler =& xoops_getmodulehandler('screen', 'formulize');
+$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 if($sid) {
-    $thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
-    $fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
+	$thisscreen1 = $screen_handler->get($sid); // first get basic screen object to determine type
+	$fid = is_object($thisscreen1) ? $thisscreen1->getVar('fid') : 0;
 }
 
 // set the flag to force derived value updates, if it is in the URL
@@ -96,32 +94,15 @@ if(isset($_GET['forceDerivedValueUpdate'])) {
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 }
 
-// query modified to include singleentry - July 28, 2005 -- part of switch to new intnerface
-$sql=sprintf("SELECT singleentry,form_title FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form='$fid'");
-if(!$res = $xoopsDB->query ( $sql )) {
-	redirect_header(XOOPS_URL . "/modules/formulize/admin/ui.php?op=patchDB", 5, "Your database needs to be updated. Please update it on the following page.", true);
-}
-//global $nb_fichier;
-
-if ( $res ) {
-  while ( $row = $xoopsDB->fetchArray ( $res ) ) {
-    $singleentry = $row['singleentry'];
-    $form_title = $row['form_title'];
-  }
-}
-
-$myts = MyTextSanitizer::getInstance();
-$title = $myts->displayTarea($form_title);
 $currentURL = getCurrentURL();
 
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 $mid = getFormulizeModId();
-$gperm_handler = &xoops_gethandler('groupperm');
+$gperm_handler = xoops_gethandler('groupperm');
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
 $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
-$config_handler =& xoops_gethandler('config');
-$formulizeConfig =& $config_handler->getConfigsByCat(0, $mid);
 
 if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
     if(strstr($currentURL, "/modules/formulize/") OR $formulizeCanonicalURI) { // if it's a formulize page reload to login screen (check URL and check if there was a valid Formulize clean URL)
@@ -147,9 +128,9 @@ $screen = false;
 if($sid) {
     if(is_object($thisscreen1)) {
         unset($screen_handler); // reset handler to that type of screen
-        $screen_handler =& xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
+        $screen_handler = xoops_getmodulehandler($thisscreen1->getVar('type').'Screen', 'formulize');
         $screen = $screen_handler->get($sid); // get the full screen object
-
+				$formObject = $form_handler->get($screen->getVar('fid')); // get the form object for this screen
         if(isset($_POST['ventry']) AND $_POST['ventry'] AND $screen->getVar('type') == 'listOfEntries' AND $screen->getVar("viewentryscreen") != "none" AND $screen->getVar("viewentryscreen") AND !strstr($screen->getVar("viewentryscreen"), "p")) { // if the user is viewing an entry off a list, then check what screen gets used to display entries instead, since that's what we're doing (but only if there is a screen specified, and it's not a pageworks page)
             // do all this to set the Frid properly. That's it. Otherwise, no change. Frid affects behaviour in readelements.php
             $base_screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -182,7 +163,6 @@ if ($screen) {
 		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-
 
     // validate any passcode for anon users that has been saved in session, or require one from users first before anything else
     if($uid == 0 AND $screen->getVar('anonNeedsPasscode')) {
@@ -217,7 +197,7 @@ if ($screen) {
 				'screen_id' => $screen->getVar('sid')
 			));
 
-			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // form itself specifically requested, so force it to load here instead of a list
+			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // OLD OPTIONS DEPRECATED NOW. Form itself specifically requested, so force it to load here instead of a list
 					if($screen->getVar('frid')) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 							displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
@@ -257,11 +237,11 @@ if (!$rendered AND $uid) {
 				'form_id' => intval($fid)
 			));
 
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($fid);
+				$single = $formObject->getVar('single'); // 'user' means one entry per user, 'group' means multi-entry. 'off' or blank means multiple entries per user.
         $defaultFormScreen = $formObject->getVar('defaultform');
         $defaultListScreen = $formObject->getVar('defaultlist');
-        if (((!$singleentry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleentry != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
+        if ((((!$single OR $single == 'off') AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $single != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
             if ($defaultListScreen AND !$formulize_masterUIOverride) {
                 $basescreenObject = $screen_handler->get($defaultListScreen);
                 $finalscreen_handler = xoops_getmodulehandler($basescreenObject->getVar('type').'Screen', 'formulize');
@@ -324,16 +304,19 @@ if (!$rendered AND $uid) {
 	exit();
 }
 
-// renderedFormulizeScreen is a global, and might be altered by entriesdisplay.php if it sends the user off to a different screen (like a form screen instead of the list)
-if ($renderedFormulizeScreen AND is_object($xoopsTpl)) {
-    $xoopsTpl->assign('xoops_pagetitle', $renderedFormulizeScreen->getVar('title'));
-    $xoopsTpl->assign('icms_pagetitle', $renderedFormulizeScreen->getVar('title'));
-    $xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
-} elseif (is_object($xoopsTpl))  {
-    $xoopsTpl->assign('xoops_pagetitle', $title);
-    $xoopsTpl->assign('icms_pagetitle', $title);
-}
-if(is_object($xoopsTpl)) {
+if (is_object($xoopsTpl)) {
+	// use whatever title was set already during rendering, which should be more accurate/descriptive
+	if($xoopsTpl->get_template_vars('xoops_pagetitle') != '' AND $xoopsTpl->get_template_vars('xoops_pagetitle') != $xoopsModule->getVar('name')) {
+		$xoopsTpl->assign('icms_pagetitle', $xoopsTpl->get_template_vars('xoops_pagetitle'));
+	// else set the page title based on the form being viewed
+	} elseif(is_object($formObject)) {
+		$entryText = (isset($_POST['ventry']) AND intval($_POST['ventry'])) ? _formulize_ENTRY . ' ' . intval($_POST['ventry']) : _formulize_NEWENTRY;
+		$xoopsTpl->assign('xoops_pagetitle', (isset($_POST['ventry']) AND $_POST['ventry']) ? $formObject->getSingular() . " : $entryText" : $formObject->getPlural());
+		$xoopsTpl->assign('icms_pagetitle', (isset($_POST['ventry']) AND $_POST['ventry']) ? $formObject->getSingular() . " : $entryText" : $formObject->getPlural());
+	}
+	if ($renderedFormulizeScreen) {
+		$xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
+	}
 	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
 }
 // go back to the previous rendering flag, in case this operation was nested inside something else

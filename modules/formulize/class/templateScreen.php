@@ -247,6 +247,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 				print "</div>"; // close template screen div
 
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
+
+				setTitleOfPageInTemplate($entry_id, (is_object($screen) ? $screen : null));
+
     }
 
 

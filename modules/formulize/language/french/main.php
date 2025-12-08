@@ -643,4 +643,7 @@ define("_SHOW_BLANKS", "Afficher les blancs");
 
 define("_formulize_NEGATIVEFILTER", "Pas : ");
 
+define("_formulize_NEWENTRY", "nouvelle entrée");
+define("_formulize_ENTRY", "entrée");
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

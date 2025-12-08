@@ -1094,6 +1094,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	print "</div>\n"; // end of the listofentries div, started in gatherdataset
 
+	setTitleOfPageInTemplate(renderedFormulizeScreen: (is_object($screen) ? $screen : null));
+
 }
 
 /**

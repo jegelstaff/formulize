@@ -128,7 +128,7 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
-		RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]<br>
+		RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L,B]<br>
 		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for alternate URLs.</i>";
 		break;
 	}
@@ -146,7 +146,7 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		RewriteCond %{REQUEST_FILENAME} !-f<br>
 		RewriteCond %{REQUEST_FILENAME} !-d<br>
 		RewriteCond %{REQUEST_FILENAME} !-l<br>
-		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L]<br>
+		RewriteRule ^(.*)$ /modules/formulize/public_api/index.php?apiPath=$1 [L,B]<br>
 		</blockquote><i>If you enabled this option, but these instructions are still here, and the option is off again, then your server is not yet properly configured for the Public API.</i>";
 		break;
 	}

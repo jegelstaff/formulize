@@ -799,3 +799,6 @@ define("_formulize_ERRORMSGONSCREEN", "<blockquote>\n\"%s\"<br>\nOn line <b>%u</
 define("_formulize_ERRORREPORT", "**Error:\n\"%s\"\nOn line %u in %s\n\n**Stacktrace:\n%s\n\n**User reported details:\n");
 define("_formulize_ERRORSENT1", "Thank you for the report");
 define("_formulize_ERRORSENT2", "A webmaster will review the details shortly.");
+
+define("_formulize_NEWENTRY", "New Entry");
+define("_formulize_ENTRY", "Entry");

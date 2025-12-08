@@ -5,7 +5,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_modid`, `conf_catid`, `conf_name
 (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
 (0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1);
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
-(1, 0, 1, 'sitename', '_MD_AM_SITENAME', 'Formulize Standalone', '_MD_AM_SITENAMEDSC', 'textbox', 'text', 0),
+(1, 0, 1, 'sitename', '_MD_AM_SITENAME', 'Formulize', '_MD_AM_SITENAMEDSC', 'textbox', 'text', 0),
 (2, 0, 1, 'slogan', '_MD_AM_SLOGAN', '', '_MD_AM_SLOGANDSC', 'textbox', 'text', 1),
 (3, 0, 1, 'adminmail', '_MD_AM_ADMINML', '', '_MD_AM_ADMINMLDSC', 'textbox', 'text', 2),
 (4, 0, 1, 'language', '_MD_AM_LANGUAGE', 'english', '_MD_AM_LANGUAGEDSC', 'language', 'other', 3),
