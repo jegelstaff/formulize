@@ -8239,7 +8239,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
 				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
 				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
-				$URLAddOn = "/".urlencode(htmlspecialchars_decode($preppedValue))."/";
+				$URLAddOn = "/".htmlspecialchars_decode($preppedValue)."/";
 			}
 			// furthermore, if we're on a different screen, we need to use that rewriteruleAddress as our base address.
 			if(!strstr($initialURL, $rewriteruleAddress)) {
@@ -8252,14 +8252,14 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 			list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($screen);
 			if(count($pages) > 1 AND
 				$currentPageTitle = isset($pageTitles[$settings['formulize_currentPage']]) ? $pageTitles[$settings['formulize_currentPage']] : ''
-				AND !strstr(urlencode(urldecode($initialURL)), '%2F'.urlencode(htmlspecialchars_decode($currentPageTitle)))) {
+				AND !strstr($initialURL, '/'.htmlspecialchars_decode($currentPageTitle))) {
 				foreach($pageTitles as $pageTitle) {
-					$initialURL = str_replace('%2F'.urlencode(htmlspecialchars_decode($pageTitle)), '', urlencode(urldecode($initialURL)));
+					$initialURL = str_replace('/'.htmlspecialchars_decode($pageTitle), '', $initialURL);
 				}
-				$URLAddOn .= urlencode(htmlspecialchars_decode($currentPageTitle))."/";
+				$URLAddOn .= htmlspecialchars_decode($currentPageTitle)."/";
 			}
 		}
-		$code = "window.history.replaceState(null, '', '".urldecode($initialURL.$URLAddOn)."');
+		$code = "window.history.replaceState(null, '', ".json_encode($initialURL.$URLAddOn).");
 		jQuery(window).load(function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());
