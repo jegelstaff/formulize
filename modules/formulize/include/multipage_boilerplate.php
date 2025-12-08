@@ -63,6 +63,7 @@ jQuery('.navtab').click(function(){
     if (targetPage > 0) {
         submitForm(targetPage, <?php print $currentPage; ?>);
     }
+		return false;
 });
 
 </script><noscript>

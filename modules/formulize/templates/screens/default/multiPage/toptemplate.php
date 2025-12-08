@@ -8,7 +8,7 @@ if($showTabs) {
             $activeClass = $i == $currentPage ? "pill-tabs__item--active" : "";
             $thisPage = $i != $currentPage ? "this-page='$i'" : "";
             print "
-            <a href='#' class='pill-tabs__item navtab $activeClass' $thisPage>$title</a>";
+            <a href='' class='pill-tabs__item navtab $activeClass' $thisPage>$title</a>";
         }
 
         print"

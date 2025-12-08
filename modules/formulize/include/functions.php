@@ -8259,7 +8259,12 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$URLAddOn .= urlencode(htmlspecialchars_decode($currentPageTitle))."/";
 			}
 		}
-		$code = "window.history.replaceState(null, '', '".urldecode($initialURL.$URLAddOn)."');";
+		$code = "window.history.replaceState(null, '', '".urldecode($initialURL.$URLAddOn)."');
+		jQuery(window).load(function() {
+			jQuery('a.navtab:not(:first)').each(function() {
+				jQuery(this).attr('href', '../' + jQuery(this).text());
+			});
+		});";
 	}
 	return $code;
 }
