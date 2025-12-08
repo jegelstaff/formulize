@@ -1578,7 +1578,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         $newHiddenElements[] = new XoopsFormHidden ('deletesubsflag', 0);
         $newHiddenElements[] = new XoopsFormHidden ('clonesubsflag', 0);
 			}
-			drawJavascript((isset($nosave) ? $nosave : null), $entry, $screen, $frid); // must be called after compileElements, for entry locking to work, and probably other things!
+			drawJavascript((isset($nosave) ? $nosave : null), $entry, $screen, $frid, $settings); // must be called after compileElements, for entry locking to work, and probably other things!
       $newHiddenElements[] = new xoopsFormHidden('save_and_leave', 0);
 			// lastly, put in a hidden element, that will tell us what the first, primary form was that we were working with on this form submission
 			$newHiddenElements[] = new XoopsFormHidden ('primaryfid', (isset($fids[0]) ? $fids[0] : 0));
@@ -2451,7 +2451,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
-function drawJavascript($nosave=false, $entryId=null, $screen=null, $frid=null) {
+function drawJavascript($nosave=false, $entryId=null, $screen=null, $frid=null, $settings=array()) {
 
 if($screen AND !$frid) {
 	$frid = $screen->getVar('frid');
@@ -3128,7 +3128,7 @@ function check_date_limits(element_id) {
 
 <?php
 // replace the history and URL with a more canonical URL that is human readable, if alternate URLs are in effect
-if($code = updateAlternateURLIdentifierCode($screen, $entryId)) {
+if($code = updateAlternateURLIdentifierCode($screen, $entryId, $settings)) {
     print "\n$code\n";
 }
 

@@ -8037,6 +8037,7 @@ function formulize_handleHtaccessRewriteRule() {
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
 		$entryIdentifier = isset($addressData[1]) ? $addressData[1] : null;
+		$pageIdentifier = isset($addressData[2]) ? $addressData[2] : null;
 		if($sid = formulize_getSidFromRewriteAddress($address, $entryIdentifier)) {
 			foreach($_GET as $k=>$v) {
 				unset($_REQUEST[$k]);
@@ -8044,20 +8045,30 @@ function formulize_handleHtaccessRewriteRule() {
 			}
 			$queryString = "sid=$sid";
 			if($entryIdentifier) {
+				$currentPage = "";
 				$ve = intval($entryIdentifier);
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 				if($screenObject = $screen_handler->get($sid)) {
 					$ve = formulize_getEntryIdFromRewriteruleElement($screenObject, $entryIdentifier);
+					$currentPage = formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObject, $pageIdentifier);
 				}
 				if($ve AND (!$screenObject OR security_check($screenObject->getVar('fid'), $ve))) {
 					$queryString = "sid=$sid&ve=$ve";
 					$_GET['ve'] = $ve;
 					$_REQUEST['ve'] = $ve;
+					if($currentPage) {
+						$_POST['formulize_currentPage'] = $currentPage;
+					} elseif($pageIdentifier AND !isset($_POST['formulize_currentPage'])) {
+						// when we get to JS later, we'll need to alter the URL to remove the invalid page identifier
+						$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/".urlencode($entryIdentifier)."/');";
+						// seed the current URL with the correct address
+						getCurrentURL($address."/".urlencode($entryIdentifier)."/");
+					}
 				} else {
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
-					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/".($entryIdentifier ? "$entryIdentifier/" : '')."');";
+					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/');";
 					// seed the current URL with the correct address
-					getCurrentURL($address.($entryIdentifier ? "/$entryIdentifier" : ''));
+					getCurrentURL($address);
 					// redetermine the sid, since there is in fact no valid identifier so maybe we want a list-ish screen instead?
 					$sid = formulize_getSidFromRewriteAddress($address);
 					$queryString = "sid=$sid";
@@ -8076,6 +8087,30 @@ function formulize_handleHtaccessRewriteRule() {
 			exit();
 		}
 	}
+}
+
+/**
+ * Determine the page ordinal starting from 1, based on the page identifier found in any rewrite rule string
+ * @param mixed screenObjectOrIdentifier The screen object, or an identifier
+ * @param string pageIdentifier The page identifier from the clean URL, should be a page title in the screen
+ * @return int|false The page number found, or false if none found
+ */
+function formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObjectOrIdentifier, $pageIdentifier) {
+	$pageNumber = false;
+	if(!isset($_POST['formulize_currentPage']) AND $pageIdentifier) {
+		$screenObject = $screenObjectOrIdentifier;
+		$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		if(!is_object($screenObject) ) {
+			$screenObject = $multiPageScreenHandler->get($screenObjectOrIdentifier);
+		} elseif(!is_a($screenObject, 'formulizeMultiPageScreen')) {
+			$screenObject = $multiPageScreenHandler->get($screenObject->getVar('sid'));
+		}
+		if(is_object($screenObject) AND is_a($screenObject, 'formulizeMultiPageScreen')) {
+			list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($screenObject);
+			$pageNumber = array_search(urldecode($pageIdentifier), $pageTitles);
+		}
+	}
+	return $pageNumber;
 }
 
 /**
@@ -8181,13 +8216,17 @@ function extractOperatorFromString($string) {
  * Create a js history api snippet to update the URL if there are rewrite rules in effect
  * @param object $screen The screen object being displayed
  * @param int|string $entry_id The entry id being displayed, or 'new' when a blank form is displayed yet to be saved
+ * @param array $settings Optional. The $settings array if applicable. Used with multipage screens to identify the current page.
  * @return string The code snippet generated, or and empty string if there is no snippet
  */
-function updateAlternateURLIdentifierCode($screen, $entry_id) {
-    $code = '';
-		$entry_id = intval($entry_id);
-    if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress') AND strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
-			$entryIdentifier = $entry_id;
+function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array()) {
+	$code = '';
+	$entry_id = intval($entry_id);
+	if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress')) {
+		$initialURL = trim(getCurrentURL(), '/');
+		$URLAddOn = '/';
+		if(strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
+			$URLAddOn = "/".$entry_id."/";
 			if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
@@ -8195,11 +8234,25 @@ function updateAlternateURLIdentifierCode($screen, $entry_id) {
 				$dbValue = $dataHandler->getElementValueInEntry($entry_id, $rewriteruleElementObject);
 				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
 				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
-				$entryIdentifier = urlencode(htmlspecialchars_decode($preppedValue));
+				$URLAddOn = "/".urlencode(htmlspecialchars_decode($preppedValue))."/";
 			}
-			$code = "window.history.replaceState(null, '', '".trim(getCurrentURL(), '/')."/".$entryIdentifier."/');";
-    }
-    return $code;
+		}
+		// if it's a multipage screen, then remove any page titles, and get the current page title and append that, if it's not already there
+		if($screen->getVar('type') == 'multiPage' AND isset($settings['formulize_currentPage'])) {
+			$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($screen);
+			if(count($pages) > 1 AND
+				$currentPageTitle = isset($pageTitles[$settings['formulize_currentPage']]) ? $pageTitles[$settings['formulize_currentPage']] : ''
+				AND !strstr(urlencode(urldecode($initialURL)), '%2F'.urlencode(htmlspecialchars_decode($currentPageTitle)))) {
+				foreach($pageTitles as $pageTitle) {
+					$initialURL = str_replace('%2F'.urlencode(htmlspecialchars_decode($pageTitle)), '', urlencode(urldecode($initialURL)));
+				}
+				$URLAddOn .= urlencode(htmlspecialchars_decode($currentPageTitle))."/";
+			}
+		}
+		$code = "window.history.replaceState(null, '', '".urldecode($initialURL.$URLAddOn)."');";
+	}
+	return $code;
 }
 
 /**
@@ -8759,7 +8812,7 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 					if(isset($settings['formulize_currentPage'])) {
 						$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 						list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($renderedFormulizeScreen);
-						if($formObject->getSingular() != $pageTitles[$settings['formulize_currentPage']]) { // singular value for form is semantically redundant in the title, whether there's a PI or not
+						if(isset($pageTitles[$settings['formulize_currentPage']]) AND $formObject->getSingular() != $pageTitles[$settings['formulize_currentPage']]) { // singular value for form is semantically redundant in the title, whether there's a PI or not
 							$entryDescriptor .= ' : ' . $pageTitles[$settings['formulize_currentPage']];
 						}
 					}
