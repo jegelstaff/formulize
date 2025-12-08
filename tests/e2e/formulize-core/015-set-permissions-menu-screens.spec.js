@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test')
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
-import { login, saveAdminForm, waitForAdminPageReady } from '../utils';
+import { login, saveAdminForm, openMenuAccordion, waitForAdminPageReady } from '../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -111,6 +111,11 @@ test.describe('Set Permissions', () => {
 		await page.getByRole('link', { name: 'Survey', exact: true }).click();
 	  await page.getByText('No, only permission to view').click();
 		await saveAdminForm(page);
+		await page.goto('/');
+		await page.getByText('Logout').click();
+		await page.goto('/modules/formulize/index.php?sid=10');
+		await expect(page.getByRole('heading', { name: 'Password:' })).not.toBeVisible();
+		await expect(page.getByText('Which exhibit did you see?')).toBeVisible();
 	})
 })
 
@@ -120,7 +125,7 @@ test.describe('Set Menu Entries', () => {
 	test('Set Menu Entry for Artifacts', async ({ page }) => {
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	  await page.getByRole('link', { name: 'Artifacts' }).click();
+		await openMenuAccordion(page, 'Artifacts');
  	  await page.locator('#groups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await page.locator('#defaultScreenGroups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
@@ -129,7 +134,7 @@ test.describe('Set Menu Entries', () => {
 		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	  await page.getByRole('link', { name: 'Donors' }).click();
+		await openMenuAccordion(page, 'Donors');
  	  await page.locator('#groups1').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
@@ -137,7 +142,7 @@ test.describe('Set Menu Entries', () => {
 		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	  await page.getByRole('link', { name: 'Collections' }).click();
+		await openMenuAccordion(page, 'Collections');
  	  await page.locator('#groups2').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
@@ -145,7 +150,7 @@ test.describe('Set Menu Entries', () => {
 		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	  await page.getByRole('link', { name: 'Exhibits' }).click();
+		await openMenuAccordion(page, 'Exhibits');
  	  await page.locator('#groups3').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})
@@ -153,7 +158,7 @@ test.describe('Set Menu Entries', () => {
 		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
-	  await page.getByRole('link', { name: 'Surveys' }).click();
+		await openMenuAccordion(page, 'Surveys');
  	  await page.locator('#groups4').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
 		await saveAdminForm(page);
 	})

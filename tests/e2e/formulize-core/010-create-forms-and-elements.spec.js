@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test')
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType } from '../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion } from '../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -637,8 +637,7 @@ test.describe('Create linked fields and settings', async () => {
 
 	test('Filter exhibit artifacts by collection artifacts', async ({ page }) => {
 		await page.getByRole('link', { name: 'Elements' }).nth(3).click();
-		await page.getByRole('link', { name: 'Artifacts Linked Autocomplete List' }).click();
-		await expect(page.getByRole('link', { name: 'Configure' })).toHaveCount(1);
+		await openElementAccordion(page, 'Artifacts Linked Autocomplete List');
 		await page.getByRole('link', { name: 'Configure' }).click();
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.locator('#new_formlinkfilter_element').selectOption('Collections');
@@ -653,8 +652,7 @@ test.describe('Create/Update Subform Interfaces', async () => {
 	test('Update Exhibits Subform Interface in Artifacts', async ({ page }) => {
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).first().click();
-		await page.getByRole('link', { name: 'Exhibits Embeded Form (list' }).click();
-		await expect(page.getByRole('link', { name: 'Configure' })).toHaveCount(1);
+		await openElementAccordion(page, 'Exhibits Embeded Form (list');
 		await page.getByRole('link', { name: 'Configure' }).click();
 		await page.locator('input[name="elements-ele_caption"]').fill('Appears in these exhibits');
 		await page.locator('select[name="orderpref"]').selectOption('bottom');
@@ -716,8 +714,7 @@ test.describe('Create/Update Subform Interfaces', async () => {
 	test('Update Artifacts Subform Interface in Collections', async ({ page }) => {
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(1).click();
-		await page.getByRole('link', { name: 'Artifacts Embeded Form (list' }).click();
-		await expect(page.getByRole('link', { name: 'Configure' })).toHaveCount(1);
+		await openElementAccordion(page, 'Artifacts Embeded Form (list');
 		await page.getByRole('link', { name: 'Configure' }).click();
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('listbox').selectOption([{label: 'ID Number'},{label: 'Short name'}]);
@@ -729,8 +726,7 @@ test.describe('Create/Update Subform Interfaces', async () => {
 	test('Create Surveys Subform Interface in Exhibits', async ({ page }) => {
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(3).click();
-		await page.getByRole('link', { name: 'Surveys Embeded Form (list' }).click();
-		await expect(page.getByRole('link', { name: 'Delete' })).toHaveCount(1);
+		await openElementAccordion(page, 'Surveys Embeded Form (list');
 		page.once('dialog', dialog => {
 			console.log(`Dialog message: ${dialog.message()}`);
 			dialog.accept().catch(() => {});

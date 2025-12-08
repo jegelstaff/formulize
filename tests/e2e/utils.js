@@ -281,6 +281,90 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 	);
 }
 
+/**
+ * Open an accordion, with different options for different types of accordions
+ * @param {object} page - Playwright page object
+ * @param {string} accordionType - The type of accordion, element and menu supported at present
+ * @param {string} accordionHeaderText - Text in the header of the accordion we're going to open
+ * @param {number} timeout - Maximum time to wait for animation completion (default 2000ms)
+ */
+ async function openAccordion(page, accordionType, accordionHeaderText, timeout = 2000) {
+	await expect(page.getByRole('link', { name: accordionHeaderText })).toBeVisible();
+
+	if(accordionType !== 'element' && accordionType !== 'menu') {
+		throw new Error('Unsupported accordion type: ' + accordionType);
+	}
+
+	let targetNumber = 0; // all menu accordions are closed by default
+	let linkClass = 'deletemenulink';
+	if(accordionType == 'element') {
+		targetNumber = 1
+		linkClass = 'deleteelementlink';
+	}
+
+	// Check there's the expected number of links visible (menu starts empty)
+	await page.waitForFunction((targetNumber) => {
+		const deleteLinks = Array.from(document.querySelectorAll('a'))
+			.filter(a => a.textContent.includes('Delete') && a.offsetParent !== null);
+		return deleteLinks.length === targetNumber;
+	}, targetNumber, { timeout });
+
+	// click what we want to open
+	await page.getByRole('link', { name: accordionHeaderText }).click();
+
+	// debugging... show browser console messages
+	page.on('console', msg => console.log('Browser log:', msg.text()));
+
+	// Wait for the accordion animation to complete
+	await page.waitForFunction(({text, linkClass}) => {
+
+		// Normalize whitespace function
+		const normalizeText = (str) => str.replace(/\s+/g, '');
+		const normalizedSearchText = normalizeText(text);
+
+		// Find the h3 with this text
+		const headers = Array.from(document.querySelectorAll('h3'));
+		const targetHeader = headers.find(h => normalizeText(h.textContent).includes(normalizedSearchText));
+
+		if (!targetHeader) return false;
+
+		// Get the content div (next sibling of h3)
+		const contentPanel = targetHeader.nextElementSibling;
+		if (!contentPanel) return false;
+
+		// Check if the delete link exists and is visible within this content panel
+		const deleteLink = contentPanel.querySelector('a.'+linkClass);
+		const deleteVisible = deleteLink && deleteLink.offsetParent !== null;
+
+		// Check there's only one Delete link visible on the page
+		const deleteLinks = Array.from(document.querySelectorAll('a'))
+			.filter(a => a.textContent.includes('Delete') && a.offsetParent !== null);
+
+		return deleteVisible && deleteLinks.length === 1;
+	}, { text: accordionHeaderText, linkClass: linkClass }, { timeout });
+}
+
+/**
+ * Clicks an element accordion item and waits for the jQuery UI accordion animation to complete
+ * @param {object} page - Playwright page object
+ * @param {string} accordionHeaderText - Text in the header of the accordion we're going to open
+ * @param {number} timeout - Maximum time to wait for animation completion (default 2000ms)
+ */
+export async function openElementAccordion(page, accordionHeaderText, timeout = 2000) {
+	await openAccordion(page, 'element', accordionHeaderText, timeout);
+}
+
+/**
+ * Clicks a menu accordion item and waits for the jQuery UI accordion animation to complete
+ * @param {object} page - Playwright page object
+ * @param {string} accordionHeaderText - Text in the header of the accordion we're going to open
+ * @param {number} timeout - Maximum time to wait for animation completion (default 2000ms)
+ */
+export async function openMenuAccordion(page, accordionHeaderText, timeout = 2000) {
+	await openAccordion(page, 'menu', accordionHeaderText, timeout);
+}
+
+
 export async function waitForAdminPageReady(page) {
   // Wait for network to be idle first
   await page.waitForLoadState('networkidle');
