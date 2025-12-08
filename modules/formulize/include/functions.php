@@ -236,7 +236,7 @@ function getCurrentURL($rewriteruleAddress='') {
 			$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
 			$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
 			// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
-			$url .= $rewriteruleAddress ? "/$rewriteruleAddress/" : str_replace("&amp;", "&", htmlSpecialChars(strip_tags($_SERVER['REQUEST_URI'])));
+			$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($rewriteruleAddress ? "/$rewriteruleAddress/" : $_SERVER['REQUEST_URI'])));
 		}
     return $url;
 }
@@ -8061,9 +8061,9 @@ function formulize_handleHtaccessRewriteRule() {
 					}
 					if($pageIdentifier) {
 						// when we get to JS later, we'll need to alter the URL to remove the page identifier. It will be put back in URL by history api in JS. And the loading of the page will work based only on the entry identifier. Page identifier is simply a UI convenience in URL when rewriting is enabled.
-						$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/".urlencode($entryIdentifier)."/');";
+						$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', ".json_encode(XOOPS_URL."/$address/".$entryIdentifier."/").");";
 						// seed the current URL with the correct address
-						getCurrentURL($address."/".urlencode($entryIdentifier)."/");
+						getCurrentURL($address."/".$entryIdentifier."/");
 					}
 				} else {
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
