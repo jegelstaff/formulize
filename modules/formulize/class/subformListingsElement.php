@@ -1144,8 +1144,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						$entryIdentifier = $sub_ent;
 						if($displayScreenRewriteRuleElement = $element_handler->get($displayScreenObject->getVar('rewriteruleElement'))) {
 							$dataHandler = new formulizeDataHandler($displayScreenRewriteRuleElement->getVar('fid'));
-							$rawEntryIdenfitierValue = $dataHandler->getElementValueInEntry($sub_ent, $displayScreenRewriteRuleElement->getVar('ele_handle'));
-							$entryIdentifier = prepvalues($rawEntryIdenfitierValue, $displayScreenRewriteRuleElement->getVar('ele_handle'), $sub_ent);
+							$rawEntryIdentifierValue = $dataHandler->getElementValueInEntry($sub_ent, $displayScreenRewriteRuleElement->getVar('ele_handle'));
+							$entryIdentifier = prepvalues($rawEntryIdentifierValue, $displayScreenRewriteRuleElement->getVar('ele_handle'), $sub_ent);
 							$entryIdentifier = is_array($entryIdentifier) ? urlencode($entryIdentifier[0]) : urlencode($entryIdentifier);
 							$entryIdentifier = $entryIdentifier ? $entryIdentifier : $sub_ent;
 						}
