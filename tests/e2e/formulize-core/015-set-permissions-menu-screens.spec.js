@@ -215,7 +215,6 @@ test.describe('Set columns and elements for screens', () => {
 			'Donors: First name',
 			'Donors: Last name',
 			'Donors: Organization name',
-			'Donors: Name',
 			'Donors: Phone number',
 			'Donors: Email Address',
 			'Donors: Street address',
