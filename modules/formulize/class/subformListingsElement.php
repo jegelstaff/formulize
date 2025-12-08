@@ -1089,6 +1089,18 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             }
         }
 
+		// if there is a display screen for this subform, then build the base visual URL to it
+		$baseVisualURL = '';
+		global $formulizeCanonicalURI;
+		if($formulizeCanonicalURI AND $display_screen = get_display_screen_for_subform($subform_element_object)) {
+			$subScreen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if($displayScreenObject = $subScreen_handler->get($display_screen)) {
+				if($displayScreenRewriteRuleAddress = $displayScreenObject->getVar('rewriteruleAddress')) {
+					$baseVisualURL = XOOPS_URL . '/' . $displayScreenRewriteRuleAddress . '/';
+				}
+			}
+		}
+
 		foreach($sub_entries[$subform_id] as $sub_ent) {
 
 						// only show sub entries the user has permission to view
@@ -1125,8 +1137,23 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
 						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
 					}
-                    $additionalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', $subElementId, 0" : $subElementId;
-                    if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<td class='subentry-view-cell'><a href='' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $additionalParams);return false;\">&nbsp;</a></td>\n"; }
+					$additionalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', $subElementId, 0" : $subElementId;
+					// add entry identifier to the visualURL
+					$visualURL = '';
+					if($baseVisualURL) {
+						$entryIdentifier = $sub_ent;
+						if($displayScreenRewriteRuleElement = $element_handler->get($displayScreenObject->getVar('rewriteruleElement'))) {
+							$dataHandler = new formulizeDataHandler($displayScreenRewriteRuleElement->getVar('fid'));
+							$rawEntryIdenfitierValue = $dataHandler->getElementValueInEntry($sub_ent, $displayScreenRewriteRuleElement->getVar('ele_handle'));
+							$entryIdentifier = prepvalues($rawEntryIdenfitierValue, $displayScreenRewriteRuleElement->getVar('ele_handle'), $sub_ent);
+							$entryIdentifier = is_array($entryIdentifier) ? urlencode($entryIdentifier[0]) : urlencode($entryIdentifier);
+							$entryIdentifier = $entryIdentifier ? $entryIdentifier : $sub_ent;
+						}
+						$visualURL = $baseVisualURL . $entryIdentifier . '/';
+					}
+					if(!$renderingSubformUIInModal AND $showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+						$col_two .= "<td class='subentry-view-cell'><a href='$visualURL' class='loe-edit-entry' id='view".$sub_ent."' onclick=\"javascript:goSub".$viewType."('$sub_ent', '$subform_id', $additionalParams);return false;\">&nbsp;</a></td>\n";
+					}
 					include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 					foreach($elementsToDraw as $thisele) {
 						if($thisele) {

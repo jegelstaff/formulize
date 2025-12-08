@@ -8058,8 +8058,9 @@ function formulize_handleHtaccessRewriteRule() {
 					$_REQUEST['ve'] = $ve;
 					if($currentPage) {
 						$_POST['formulize_currentPage'] = $currentPage;
-					} elseif($pageIdentifier AND !isset($_POST['formulize_currentPage'])) {
-						// when we get to JS later, we'll need to alter the URL to remove the invalid page identifier
+					}
+					if($pageIdentifier) {
+						// when we get to JS later, we'll need to alter the URL to remove the page identifier. It will be put back in URL by history api in JS. And the loading of the page will work based only on the entry identifier. Page identifier is simply a UI convenience in URL when rewriting is enabled.
 						$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', '".XOOPS_URL."/$address/".urlencode($entryIdentifier)."/');";
 						// seed the current URL with the correct address
 						getCurrentURL($address."/".urlencode($entryIdentifier)."/");
@@ -8225,7 +8226,11 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 	if($screen AND $entry_id AND $rewriteruleAddress = $screen->getVar('rewriteruleAddress')) {
 		$initialURL = trim(getCurrentURL(), '/');
 		$URLAddOn = '/';
-		if(strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false) {
+		// if the rewriteaddress of this screen has no entry identifier, or if the currentURL is for a different screen
+		// then figure out the entry identifier for the URL
+		if(strpos(trim(str_replace(XOOPS_URL, '', getCurrentURL()), '/'), '/') === false
+			OR !strstr($initialURL, $rewriteruleAddress)
+		) {
 			$URLAddOn = "/".$entry_id."/";
 			if($rewriteruleElement = $screen->getVar('rewriteruleElement')) {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -8235,6 +8240,10 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$preppedValue = prepvalues($dbValue, $rewriteruleElementObject->getVar('ele_handle'), $entry_id); // will be array sometimes. Ugh!
 				$preppedValue = is_array($preppedValue) ? $preppedValue[0] : $preppedValue;
 				$URLAddOn = "/".urlencode(htmlspecialchars_decode($preppedValue))."/";
+			}
+			// furthermore, if we're on a different screen, we need to use that rewriteruleAddress as our base address.
+			if(!strstr($initialURL, $rewriteruleAddress)) {
+				$initialURL = XOOPS_URL.'/'.$rewriteruleAddress;
 			}
 		}
 		// if it's a multipage screen, then remove any page titles, and get the current page title and append that, if it's not already there
@@ -8812,7 +8821,7 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 					if(isset($settings['formulize_currentPage'])) {
 						$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 						list($pages, $pageTitles, $pageConditions) = $multiPageScreenHandler->traverseScreenPages($renderedFormulizeScreen);
-						if(isset($pageTitles[$settings['formulize_currentPage']]) AND $formObject->getSingular() != $pageTitles[$settings['formulize_currentPage']]) { // singular value for form is semantically redundant in the title, whether there's a PI or not
+						if(isset($pageTitles[$settings['formulize_currentPage']]) AND ($principalIdentifierValue OR $formObject->getSingular() != $pageTitles[$settings['formulize_currentPage']])) { // singular value for form is semantically redundant in the title, unless there's a PI
 							$entryDescriptor .= ' : ' . $pageTitles[$settings['formulize_currentPage']];
 						}
 					}
