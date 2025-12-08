@@ -11,12 +11,40 @@
  * @author	Sina Asghari (aka stranger) <pesian_stranger@users.sourceforge.net>
  * @version	$Id: footer.php 20900 2011-02-27 02:18:47Z skenow $
  */
- 
+
 defined('ICMS_ROOT_PATH') || die('ICMS root path not defined');
 
 if (defined("XOOPS_FOOTER_INCLUDED")) exit();
 
-global $xoopsOption, $icmsConfigMetaFooter, $xoopsTpl, $icmsModule;
+global $xoopsOption, $icmsConfigMetaFooter, $xoopsTpl, $icmsModule, $xoopsUser, $icmsConfig;
+
+if(is_object($xoopsTpl) AND $icmsConfig['startpage'] == 'formulize') {
+	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+	$logoURL = XOOPS_URL;
+	list($startFid,$startSid,$startURL) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+	if(!$xoopsUser AND !$startFid AND !$startSid AND !$startURL) {
+		$icmsConfig['startpage'] = '--';
+	} elseif($startURL) {
+		$logoURL = $startURL;
+	} else {
+		if(!$startSid AND $startFid) {
+			$startSid = determineScreenForUserFromFid($startFid);
+		}
+		if($startSid) {
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+			if($screenObject = $screen_handler->get($startSid)) {
+				if($screenObject->getVar('rewriteruleAddress')) {
+					$logoURL = XOOPS_URL.'/'.urlencode(strip_tags($screenObject->getVar('rewriteruleAddress')));
+				} else {
+					$logoURL = XOOPS_URL.'/modules/formulize/index.php?sid='.$startSid;
+				}
+			}
+		} elseif($startFid) {
+			$logoURL = XOOPS_URL.'/modules/formulize/index.php?fid='.$startFid;
+		}
+	}
+	$xoopsTpl->assign('logo_url', $logoURL);
+}
 
 /** Set the constant XOOPS_FOOTER_INCLUDED to 1 - this file has been included */
 define("XOOPS_FOOTER_INCLUDED", 1);

@@ -100,4 +100,25 @@ if ($icmsConfigPersona['multi_login']) {
 // -- finalize boot process
 icms::$preload->triggerEvent('finishCoreBoot');
 
+// added failover to default startpage for the registered users group -- JULIAN EGELSTAFF Apr 3 2017
+// "getUserBestGroup" finds the group that has the most permissions assigned! May not be semantically "best" depending on the setup!
+// "Best Group" takes precedence over "Registered Users" group for startpage selection, otherwise Registered Users gets it.
+// Since the startpage config is generally left alone, pretty much everyone will failover to Registered Users, unless something really funky is going on.
+$member_handler = icms::handler('icms_member');
+$group = $member_handler->getUserBestGroup((@is_object(icms::$user) ? icms::$user->getVar('uid') : 0));
+$groups = @is_object(icms::$user) ? icms::$user->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+if((
+			!isset($icmsConfig['startpage'][$group])
+			OR $icmsConfig['startpage'][$group] == ""
+			OR $icmsConfig['startpage'][$group] == "--"
+		)
+		AND in_array(XOOPS_GROUP_USERS, $groups)
+		AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != ""
+		AND $icmsConfig['startpage'][XOOPS_GROUP_USERS] != "--"
+	) {
+    $icmsConfig['startpage'] = $icmsConfig['startpage'][XOOPS_GROUP_USERS];
+} else {
+    $icmsConfig['startpage'] = $icmsConfig['startpage'][$group];
+}
+
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/common.php";
