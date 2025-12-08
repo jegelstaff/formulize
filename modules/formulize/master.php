@@ -40,7 +40,6 @@ $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS)
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 if(!$uid) {
 	throw new Exception("Only logged in users can access master.php");
-	exit();
 }
 if(isset($_GET['fid']) AND $fid = intval($_GET['fid'])) {
 	$mid = getFormulizeModId();
