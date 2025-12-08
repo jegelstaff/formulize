@@ -8811,6 +8811,7 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 					// for entries, set a basic identifier, then try to get something with principal identifier value if possible...
 					$entryDescriptor = $formObject->getSingular() . ' : ' . _formulize_ENTRY . ' ' . $entryId;
 
+					$principalIdentifierValue = null;
 					if($principalIdentifierElementId = $formObject->getVar('pi')) {
 						$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
 						if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
