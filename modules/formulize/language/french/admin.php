@@ -189,7 +189,7 @@ define("_AM_CONFIRM_DELCAT", "Vous allez effacer une catégorie du menu!  Merci 
 define("_AM_CONVERT", "Convertir");
 define("_AM_CONVERT_CONFIRM", "Voulez vous convertir cette boite de texte de simple ligne à multi-lignes (ou vice et versa)?");
 define("_AM_CONVERT_HELP", "Convertir cette boite de texte de simple ligne à multi lignes (ou vice versa)");
-define("_AM_COPIED","copier - %s");
+define("_AM_COPIED","%s - copié");
 define("_AM_DBUPDATED","Base de données mise à jour avec succès!");
 define("_AM_DELETE","Suppression");
 define("_AM_DELETEMENUITEM","Suppression d'élément de menu");

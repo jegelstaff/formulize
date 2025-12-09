@@ -112,7 +112,7 @@ class formulizeElement extends FormulizeObject {
 				ksort($pages);
 				foreach($pages as $pageNumber=>$items) {
 					// check that page is a list of element ids
-					$firstItem = $items[array_key_first($items)];
+					$firstItem = (is_array($items) AND count($items) > 0) ? $items[array_key_first($items)] : null;
 					if(is_numeric($firstItem)) {
 						// if element is on this page, record the page as part of that screen
 						if(in_array($this->getVar('ele_id'), $items)) {

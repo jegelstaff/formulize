@@ -195,18 +195,24 @@ if($_POST['convertelement']) {
 
 if($_POST['deleteelement']) {
   $element = $element_handler->get($_POST['deleteelement']);
-	$element_handler->delete($element);
-	$_POST['reload_elements'] = 1;
+	if($element && $element->getVar('fid') == $fid) { // validate that it's part of this form which they have edit_form perm on!
+		$element_handler->delete($element);
+		$_POST['reload_elements'] = 1;
+	}
 }
 
 if($_POST['cloneelement']) {
 
-	if($originalElementObject = $element_handler->get($_POST['cloneelement']) AND $targetFormObject = $form_handler->get(intval($_POST['clonefid']))) {
+	// validate that the element exists, the target form exists, and the element belongs to this form that they have edit_form perm on!
+	if($originalElementObject = $element_handler->get($_POST['cloneelement'])
+		AND $targetFormObject = $form_handler->get(intval($_POST['clonefid']))
+		AND $originalElementObject->getVar('fid') == $fid
+	) {
 		$elementObjectProperties = array();
 		foreach($originalElementObject->vars as $key => $value) {
 
 			// fid will always be the target form selected - defaults to current form
-			if($key == 'fid' OR 'key' == 'id_form') {
+			if($key == 'fid' OR $key == 'id_form') {
 				$elementObjectProperties['fid'] = intval($_POST['clonefid']);
 
 			// if cloning to the same form, append " - copied" to the caption

@@ -8747,17 +8747,18 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
  * Figure out the correct order value for an element based on the order choice made by the user
  * Also moves subsequent elements down if necessary
  * @param mixed orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
- * @param int|float oldOrder The old order value of the element that is being placed, if any. Not required for new elements. Required for repositioned elements. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
- * @param int fid The form id the element belongs to. Required, unless the form is going to the bottom.
+ * @param int|float oldOrder The old order value of the element that is being placed, if any. Not required for new elements going to the bottom. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
+ * @param int fid The form id the element belongs to. Required.
  * @return int The order value to use for the element
  * @throws Exception if invalid parameters are passed in
  */
 function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 	global $xoopsDB;
+	$fid = intval($fid);
+	if(!$fid) {
+		throw new Exception("figureOutOrder function called without a valid form id");
+	}
 	if($orderChoice === "bottom") {
-		if(!$fid OR !is_numeric($fid)) {
-			throw new Exception("figureOutOrder function called without a valid form id for 'bottom' order choice");
-		}
 		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
 	  $res = $xoopsDB->query($sql);
 	  $array = $xoopsDB->fetchArray($res);
@@ -8767,14 +8768,15 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 	} else {
 		// convert the orderpref from the element ID to the order
 		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = ".intval($orderChoice);
-		if($res = $xoopsDB->query($sql)) {
-		  $array = $xoopsDB->fetchArray($res);
+		$orderChoice = 0;
+		if($res = $xoopsDB->query($sql) AND $xoopsDB->getRowsNum($res) == 1) {
+			$array = $xoopsDB->fetchArray($res);
 			$orderChoice = $array['ele_order'];
 		} else {
 			throw new Exception("figureOutOrder function called without a valid element id for order choice");
 		}
 	}
-	$orderValue = $orderChoice + 1;
+	$orderValue = intval($orderChoice + 1);
 	if($oldOrder AND $oldOrder != $orderValue) {
 		// if there is already an element this order value, then we need to reorder all the elements equal to and higher than the current element
 		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE ele_order = $orderValue AND id_form = $fid";
