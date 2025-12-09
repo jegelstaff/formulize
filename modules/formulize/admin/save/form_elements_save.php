@@ -242,12 +242,9 @@ if($_POST['cloneelement']) {
 			$screenIdsAndPagesForAdding = $originalElementObject->getScreenIdsAndPages();
 		}
 		if($clonedElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding, dataType: $dataType)) {
-			$appForRedirect = false;
+			$appForRedirect = intval($_POST['aid']);
 			if($originalElementObject->getVar('fid') != intval($_POST['clonefid'])) {
-				$appForRedirect = formulize_getFirstApplicationForForm(intval($_POST['clonefid']));
-			}
-			if(!$appForRedirect) {
-				$appForRedirect = intval($_POST['aid']);
+				$appForRedirect = intval(formulize_getFirstApplicationForForm(intval($_POST['clonefid']))); // could be no app
 			}
   		print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=".$clonedElementObject->getVar('ele_id')."&aid=".$appForRedirect."';";
 		}
