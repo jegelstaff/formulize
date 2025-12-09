@@ -33,6 +33,7 @@ test.describe('Artifacts Elements', async () => {
 	})
 
 	test('Update ID Number Element', async ({ page }) => {
+		await openElementAccordion(page, 'ID Number Text Box');
 		await page.getByRole('link', { name: 'Configure' }).click();
 		await expect(page.getByRole('heading')).toContainText('Element: ID Number (Text Box)');
 		await waitForAdminPageReady(page)

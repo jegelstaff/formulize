@@ -72,8 +72,26 @@
         <div class="form-item">
             <fieldset>
                 <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_REVIEW_PERMISSIONS}></label></legend>
-
-                    <input type="text" name="submitted_user">
+										<script><{php}>print checkForChrome();<{/php}></script>
+                    <script src="<{$xoops_url}>/modules/formulize/include/js/autocomplete.js"></script>
+                    <style>
+                        div:has(> input#submitted_user_user) {
+                            float: left;
+                            margin-right: 1em;
+                        }
+                        input#submitted_user_user {
+                            width: 400px;
+                        }
+                        .ui-autocomplete .ui-menu-item a {
+                            display: inline;
+                            line-height: 2;
+                        }
+                        .ui-autocomplete .ui-menu-item a.ui-state-hover {
+                            font-weight: bold;
+                            color: #0078ae;
+                        }
+                    </style>
+                    <{$content.userSelectionList}>
                     <input name="show_user_perms" value="Show permissions for the user" type="button">
                     <input type="hidden" name="search_by_user" value="" />
             </fieldset>
@@ -194,14 +212,16 @@
                              </p>
                          <{/if}>
 
-                         <{if $content.userperms.view_groupscope.checked}>
+                         <{if !$content.userperms.view_globalscope && $content.userperms.view_groupscope.checked}>
                              <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}> </p>
                              <ul>
                                  <{foreach from=$content.groups item=group}>
                                      <{if $content.userperms.view_groupscope[$group.id]}>
-                                         <li class="user_perms_li"><{$group.name}> <span class="user_groups">--
+                                         <li class="user_perms_li"><{$group.name}> <span class="user_groups">
+																						 <{assign var=dashPrinted value=false}>
                                              <{foreach from=$content.userperms.view_groupscope[$group.id] item=group}>
-                                                 <{$group}>;
+																						 		<{if $group != "" && !$dashPrinted}>--<{assign var=dashPrinted value=true}><{/if}>
+                                                <{$group}><{if $dashPrinted}>;<{/if}>
                                              <{/foreach}> </span>
                                          </li>
                                      <{/if}>

@@ -217,16 +217,21 @@ if ($_GET['fid'] != "new") {
     $member_handler = xoops_gethandler('member');
     $allGroups = $member_handler->getGroups();
     $groups = array();
+    $submitted_user = "";
     if (!isset($selectedGroups)) {
-        if ($_POST['search_by_user']) {
-            $submitted_user = $_POST['submitted_user'];
-            $requestedUser = $member_handler->getUsers(new Criteria('uname', formulize_db_escape($submitted_user)));
-            if (is_object($requestedUser[0])) {
-                $selectedGroups = $requestedUser[0]->getGroups();
-            }
-        } else {
-            $selectedGroups = isset($_POST['groups']) ? $_POST['groups'] : array();
-        }
+			$selectedGroups = array();
+			if ($_POST['search_by_user']) {
+            $searchUser = $_POST['submitted_user'];
+            $requestedUser = $member_handler->getUsers(new Criteria('uid', formulize_db_escape($searchUser)));
+				if (is_object($requestedUser[0])) {
+					$selectedGroups = $requestedUser[0]->getGroups();
+                $submitted_user = $requestedUser[0]->getVar('uname');
+				} else {
+                $submitted_user = _formulize_NO_MATCH_FOUND;
+				}
+			} else {
+				$selectedGroups = (isset($_POST['groups']) AND is_array($_POST['groups'])) ? $_POST['groups'] : array();
+			}
     }
 		$selectedGroups = array_filter($selectedGroups, 'is_numeric');
     $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
@@ -238,6 +243,19 @@ if ($_GET['fid'] != "new") {
     if ($orderGroups == "alpha") {
         ksort($groups);
     }
+
+    // setup the user selection list
+    // 1. Make Formulize Autocomplete Users Element Object - config settings for element
+    $autocompleteUsersHandler = xoops_getmodulehandler('autocompleteUsersElement', 'formulize');
+    $autocompleteUsersObject = $autocompleteUsersHandler->create();
+    $autocompleteUsersObject->setVar('ele_value', $autocompleteUsersHandler->getDefaultEleValue());
+    $autocompleteUsersObject->setVar('ele_handle', 'permissionUserList');
+    $autocompleteUsersObject->setVar('ele_type', 'autocompleteUsers');
+    $autocompleteUsersObject->setVar('ele_display', 1);
+    // 2. Render the element to get a xoopsform element object
+    $userSelectionList = $autocompleteUsersHandler->render($autocompleteUsersObject->getVar('ele_value'), '', 'submitted_user', isDisabled: false, element: $autocompleteUsersObject, entry_id: 'new');
+    // 3. Render the xoopsform element object to get the markup
+    $userSelectionList = $userSelectionList->render();
 
     // get all the permissions for the selected groups for this form
     $gperm_handler =& xoops_gethandler('groupperm');
@@ -361,9 +379,13 @@ if ($_GET['fid'] != "new") {
             }
 
             foreach($groups as $group) {
-                if ($groupperm['groupscope_choice'][$group['id']] == " selected" ) {
-                    $userperms['view_groupscope']["checked"] = true;
-                    array_push($userperms['view_groupscope'][$group['id']], $groupperm['name']);
+								if ($groupperm['groupscope_choice'][0] == " selected" AND $groupperm['name'] == $group['name']) {
+   								$userperms['view_groupscope']["checked"] = true;
+									array_push($userperms['view_groupscope'][$group['id']], '');
+								}
+                if ($groupperm['groupscope_choice'][$group['id']] == " selected") {
+                  $userperms['view_groupscope']["checked"] = true;
+                  array_push($userperms['view_groupscope'][$group['id']], $groupperm['name']);
                 }
             }
 
@@ -609,6 +631,7 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
     $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
     $adminPage['tabs'][$i]['content']['submitted_user'] = $submitted_user;
+    $adminPage['tabs'][$i]['content']['userSelectionList'] = $userSelectionList;
     $adminPage['tabs'][$i]['content']['userperms'] = $userperms;
     $i++;
 

@@ -879,7 +879,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				}
 				$form_ele = new XoopsFormSelect($caption, $markupName, $defaultSelected, $ele_value[ELE_VALUE_SELECT_NUMROWS], $ele_value[ELE_VALUE_SELECT_MULTIPLE]);
 				$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$markupName'");
-				if($ele_value[ELE_VALUE_SELECT_NUMROWS] == 1) { // add the initial default entry, singular or plural based on whether the box is one line or not.
+				if($ele_value[ELE_VALUE_SELECT_NUMROWS] == 1 AND !$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE]) { // add the initial default entry, singular or plural based on whether the box is one line or not.
 					$form_ele->addOption("none", _AM_FORMLINK_PICK);
 				}
 			} else {
@@ -1009,7 +1009,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$hiddenOutOfRangeValuesToWrite = array();
 
 			// add the initial default entry, singular or plural based on whether the box is one line or not.
-			if($ele_value[0] == 1) {
+			if($ele_value[ELE_VALUE_SELECT_NUMROWS] == 1 AND !$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE]) {
 				$options["none"] = _AM_FORMLINK_PICK;
 			}
 

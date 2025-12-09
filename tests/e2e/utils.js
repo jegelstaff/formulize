@@ -295,12 +295,8 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		throw new Error('Unsupported accordion type: ' + accordionType);
 	}
 
-	let targetNumber = 0; // all menu accordions are closed by default
-	let linkClass = 'deletemenulink';
-	if(accordionType == 'element') {
-		targetNumber = 1
-		linkClass = 'deleteelementlink';
-	}
+	let targetNumber = 0; // all menu and element accordions are closed by default
+	let linkClass = 'delete'+accordionType+'link';
 
 	// Check there's the expected number of links visible (menu starts empty)
 	await page.waitForFunction((targetNumber) => {

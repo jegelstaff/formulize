@@ -94,6 +94,18 @@ test.describe('Set Permissions', () => {
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await setStandardPermissions(page);
 		await saveAdminForm(page);
+  	await page.locator('#submitted_user_user').pressSequentially('hist');
+  	await page.getByText('Modern History Staff').click();
+  	await page.getByRole('button', { name: 'Show permissions for the user' }).click();
+		await waitForAdminPageReady(page);
+	  await expect(page.getByText('View entries by other users')).toBeVisible();
+		await expect(page.getByText('View entries by all other')).not.toBeVisible();
+		await page.locator('#submitted_user_user').pressSequentially('cur');
+  	await page.getByText('Curator One').click();
+  	await page.getByRole('button', { name: 'Show permissions for the user' }).click();
+		await waitForAdminPageReady(page);
+		await expect(page.getByText('View entries by all other')).toBeVisible();
+		await expect(page.getByText('View entries by other users')).not.toBeVisible();
 	})
 
 	test('Set permissions for Surveys', async ({ page }) => {
