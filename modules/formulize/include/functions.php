@@ -8743,9 +8743,21 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
 	return $foundAssociatedMatch ? $associatedText : false;
 }
 
+/**
+ * Figure out the correct order value for an element based on the order choice made by the user
+ * Also moves subsequent elements down if necessary
+ * @param mixed orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
+ * @param int oldOrder The old order value of the element that is being placed, if any
+ * @param int fid The form id the element belongs to. Required if orderChoice is "bottom", otherwise not required.
+ * @return int The order value to use for the element
+ * @throws Exception if invalid parameters are passed in
+ */
 function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 	global $xoopsDB;
 	if($orderChoice === "bottom") {
+		if(!$fid OR !is_numeric($fid)) {
+			throw new Exception("figureOutOrder function called without a valid form id for 'bottom' order choice");
+		}
 		$sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
 	  $res = $xoopsDB->query($sql);
 	  $array = $xoopsDB->fetchArray($res);
@@ -8754,10 +8766,13 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 		$orderChoice = 0;
 	} else {
 		// convert the orderpref from the element ID to the order
-		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = $orderChoice AND id_form = $fid";
-		$res = $xoopsDB->query($sql);
-	  $array = $xoopsDB->fetchArray($res);
-		$orderChoice = $array['ele_order'];
+		$sql = "SELECT ele_order FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id = ".intval($orderChoice);
+		if($res = $xoopsDB->query($sql)) {
+		  $array = $xoopsDB->fetchArray($res);
+			$orderChoice = $array['ele_order'];
+		} else {
+			throw new Exception("figureOutOrder function called without a valid element id for order choice");
+		}
 	}
 	$orderValue = $orderChoice + 1;
 	if($oldOrder AND $oldOrder != $orderValue) {

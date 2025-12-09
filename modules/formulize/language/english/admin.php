@@ -286,7 +286,7 @@ define("_AM_FORCE_GROUPSCOPE_INTRO", "Use specific groups for groupscope?");
 define("_AM_PER_GROUP_FILTER_INTRO", "Filter the entries this group can see in this form?");
 
 define("_AM_SAVE","Save");
-define("_AM_COPIED","%s copy");
+define("_AM_COPIED","%s - copied");
 define("_AM_DBUPDATED","Database Updated Successfully!");
 define("_AM_ELE_CREATE","Create form elements");
 define("_AM_ELE_EDIT","Edit form element: %s");
@@ -947,3 +947,7 @@ define("_AM_FORMULIZE_ADMINISTRATION", "Administration");
 
 define("_AM_FORMULIZE_SUBFORM_SORTDEFAULT", "Creation order");
 define("_AM_FORMULIZE_SUBFORM_FILTERDEFAULT", "No filter");
+
+define("_AM_ELE_CLONE_TO_FORM", "Clone this element into which form?");
+define("_AM_ELE_CLONE_TO_FORM_THISFORM", "This form");
+define("_AM_ELE_CLONE_TO_FORM_BUTTON", "Clone");

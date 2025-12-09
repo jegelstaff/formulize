@@ -189,7 +189,7 @@ define("_AM_CONFIRM_DELCAT", "Vous allez effacer une catégorie du menu!  Merci 
 define("_AM_CONVERT", "Convertir");
 define("_AM_CONVERT_CONFIRM", "Voulez vous convertir cette boite de texte de simple ligne à multi-lignes (ou vice et versa)?");
 define("_AM_CONVERT_HELP", "Convertir cette boite de texte de simple ligne à multi lignes (ou vice versa)");
-define("_AM_COPIED","copier %s");
+define("_AM_COPIED","copier - %s");
 define("_AM_DBUPDATED","Base de données mise à jour avec succès!");
 define("_AM_DELETE","Suppression");
 define("_AM_DELETEMENUITEM","Suppression d'élément de menu");
@@ -622,5 +622,9 @@ define("_formulize_CAPTION_SLASH", "La ne peut contenir d'anti slash. Ces dernie
 
 define("_AM_FORMULIZE_FORM_SCREEN_TITLE", "Formulaire - %s");
 define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "Liste - %s");
+
+define("_AM_ELE_CLONE_TO_FORM", "Cloner cet élément dans quel formulaire ?");
+define("_AM_ELE_CLONE_TO_FORM_THISFORM", "Ce formulaire");
+define("_AM_ELE_CLONE_TO_FORM_BUTTON", "Cloner");
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

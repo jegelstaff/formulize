@@ -469,8 +469,8 @@ class formulizeHandler {
 	/**
 	 * Builds or updates a form element, including creating or renaming the data table field, adding the element to screens, renaming files...
 	 * @param array $elementObjectProperties An associative array of properties to set on the element object.  If 'ele_id' is included and is non-zero, it will update that element.  If 'ele_id' is not included or is zero, it will create a new element.
-	 * @param array $screenIdsAndPagesForAdding Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be added to. For new elements, if this is empty then they will be added to all multipage screens, on their form, that include all elements.
-	 * @param array $screenIdsAndPagesForRemoving Optional. An array of screen id keys, each with an array of pages (keyed from zero) which this element should be removed from. For new elements, this is ignored.
+	 * @param array $screenIdsAndPagesForAdding Optional. An array of screen id keys, each with an array of pages (0 is page 1) which this element should be added to. For new elements, if this is empty then they will be added to all multipage screens, on their form, that include all elements.
+	 * @param array $screenIdsAndPagesForRemoving Optional. An array of screen id keys, each with an array of pages (0 is page 1) which this element should be removed from. For new elements, this is ignored.
 	 * @param string $dataType The data type to use for the database field for this element. If null, default determination of datatypes is used.
 	 * @param bool $pi If true, this element will be set as the Principal Identifier for the form it belongs to. Only one element per form can be the Principal Identifier, so if another element is already the PI it will be replaced.
 	 * @param bool $makeSubformInterface If true, and this is a linked element, a subform interface will be created on the main form, that the linked entries in this element's form can be easily created/edited
@@ -512,7 +512,7 @@ class formulizeHandler {
 			$elementObjectProperties['ele_caption'] = $elementObjectProperties['ele_caption'] ? $elementObjectProperties['ele_caption'] : 'New Element';
 			$elementObject->setVar('ele_caption', $elementObjectProperties['ele_caption']);
 			$elementObject->setVar('fid', $elementObjectProperties['fid']);
-			$elementObject->setVar('ele_handle', $elementObjectProperties['ele_handle']);
+			$elementObject->setVar('ele_handle', isset($elementObjectProperties['ele_handle']) ? $elementObjectProperties['ele_handle'] : '');
 			$elementObjectProperties['ele_handle'] = $element_handler->validateElementHandle($elementObject);
 		} else {
 			throw new Exception('Must provide a valid ele_id to update an existing element, or a valid fid and ele_type to create a new element');
@@ -573,7 +573,7 @@ class formulizeHandler {
 			// rename the field in the data table if necessary
 			// also manage the datatype in the database if necessary
 	    $currentDataTypeInfo = $elementObject->getDataTypeInformation();
-	 	  $currentDataType = $currentDataTypeInfo['dataType'];
+	 	  $currentDataType = $currentDataTypeInfo['dataTypeCompleteString'];
 			$ele_value = $elementObject->getVar('ele_value');
 
 			if($elementObject->hasData AND

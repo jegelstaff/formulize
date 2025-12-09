@@ -16,7 +16,7 @@ define("_FORM_CLONEDATA_TEXT", "Clone este formulário e seus dados"); //GibaPhp
 define("_FORM_DELETE_TEXT", "Excluir este formulário"); //GibaPhp 3.0
 
 define("_AM_SAVE","Salvar");
-define("_AM_COPIED","%s copiado");
+define("_AM_COPIED","%s - copiado");
 define("_AM_DBUPDATED","Base de Dados atualizada com sucesso!");
 define("_AM_ELE_CREATE","Criar elementos do formulário");
 define("_AM_ELE_EDIT","Editar elemento de formulário: %s");

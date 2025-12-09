@@ -773,6 +773,21 @@ class formulizeFormsHandler {
 		return $this->get($formHandle);
 	}
 
+	function getAllFormTitles($formIds=array(), $includeTableForms=false) {
+		global $xoopsDB;
+		$formLimitClause = $formIds ? " id_form IN (".implode(",",array_filter($formIds, 'is_numeric')).") " : "";
+		$excludeTableFormsClause = $includeTableForms == false ? " tableform = '' " : "";
+		$excludeTableFormsClause = ($formLimitClause AND $excludeTableFormsClause) ? " AND $excludeTableFormsClause " : $excludeTableFormsClause;
+		$whereClause = ($formLimitClause OR $excludeTableFormsClause) ? " WHERE $formLimitClause $excludeTableFormsClause " : "";
+		$allFidsQuery = "SELECT id_form, form_title FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
+		$allFidsRes = $xoopsDB->query($allFidsQuery);
+		$foundForms = array();
+		while($allFidsArray = $xoopsDB->fetchArray($allFidsRes)) {
+			$foundForms[$allFidsArray['id_form']] = $allFidsArray['form_title'];
+		}
+		return $foundForms;
+	}
+
 	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true) {
 		global $xoopsDB;
 		$formLimitClause = $formIds ? " id_form IN (".implode(",",array_filter($formIds, 'is_numeric')).") " : "";
