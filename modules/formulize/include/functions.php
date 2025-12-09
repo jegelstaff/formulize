@@ -8747,8 +8747,8 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
  * Figure out the correct order value for an element based on the order choice made by the user
  * Also moves subsequent elements down if necessary
  * @param mixed orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
- * @param int oldOrder The old order value of the element that is being placed, if any
- * @param int fid The form id the element belongs to. Required if orderChoice is "bottom", otherwise not required.
+ * @param int|float oldOrder The old order value of the element that is being placed, if any. Not required for new elements. Required for repositioned elements. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
+ * @param int fid The form id the element belongs to. Required, unless the form is going to the bottom.
  * @return int The order value to use for the element
  * @throws Exception if invalid parameters are passed in
  */

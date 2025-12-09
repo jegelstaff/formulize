@@ -38,7 +38,7 @@
 
 <div id="cloneElementFormChoice" style="display:none;">
 	<{html_options name="cloneformselect" options=$content.allFormTitles selected=$content.fid}><br>
-	<button style="float: right;" onclick="$('[name=clonefid]').val($('[name=cloneformselect]').val());$('.savebutton').click();"><{$smarty.const._AM_ELE_CLONE_TO_FORM_BUTTON}></button>
+	<button style="float: right;" onclick="$('[name=clonefid]').val($('[name=cloneformselect]').val());$('.savebutton').click();$('div#cloneElementFormChoice').dialog('destroy');"><{$smarty.const._AM_ELE_CLONE_TO_FORM_BUTTON}></button>
 </div>
 
 <div id="addElementOptions" style="display:none;">

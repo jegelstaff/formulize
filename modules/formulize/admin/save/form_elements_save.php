@@ -204,19 +204,32 @@ if($_POST['cloneelement']) {
 	if($originalElementObject = $element_handler->get($_POST['cloneelement']) AND $targetFormObject = $form_handler->get(intval($_POST['clonefid']))) {
 		$elementObjectProperties = array();
 		foreach($originalElementObject->vars as $key => $value) {
+
+			// fid will always be the target form selected - defaults to current form
 			if($key == 'fid' OR 'key' == 'id_form') {
 				$elementObjectProperties['fid'] = intval($_POST['clonefid']);
-			} elseif($key == 'ele_caption') {
+
+			// if cloning to the same form, append " - copied" to the caption
+			} elseif($key == 'ele_caption' AND $originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
 				$elementObjectProperties['ele_caption'] = sprintf(_AM_COPIED, $originalElementObject->getVar('ele_caption'));
-			} elseif($key == 'ele_colhead') {
+
+			// if there's a colhead and cloning to the same form, append " - copied" to the colhead
+			} elseif($key == 'ele_colhead' AND $originalElementObject->getVar('ele_colhead') AND $originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
 				$elementObjectProperties['ele_colhead'] = sprintf(_AM_COPIED, $originalElementObject->getVar('ele_colhead'));
+
+			// if cloning to the same form, set the ele_order to be after the original element
 			} elseif($key == 'ele_order') {
 				// position after the element we're cloning, if they're in the same form. Otherwise, element will default to bottom of form.
 				if($originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
-					$oldOrder = $originalElementObject->getVar('ele_order') + 1;
-					$elementObjectProperties['ele_order'] = figureOutOrder($originalElementObject->getVar('ele_id'), $oldOrder);
+					$oldOrder = $originalElementObject->getVar('ele_order')+1.1;
+					$elementObjectProperties['ele_order'] = figureOutOrder($originalElementObject->getVar('ele_id'), $oldOrder, intval($_POST['clonefid']));
 				}
-			} elseif($key != 'ele_id' AND $key != 'ele_handle') { // skip ele_id so a new element will be created, assign all other vars as is, skip ele_handle so a new one will generate from the form and caption
+
+			// append _copied to the ele_handle if cloning to the same form, otherwise leave empty so handle can be generated on creation
+			} elseif($key == 'ele_handle' AND $originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
+				$elementObjectProperties['ele_handle'] = $originalElementObject->getVar('ele_handle').'_'.str_replace(['-',' ','%s'], '', _AM_COPIED);
+
+			} elseif($key != 'ele_id' AND $key != 'ele_handle') { // skip ele_id so a new element will be created, assign all other vars as is (except ele_handle which we leave blank unless set specifically above)
 				$elementObjectProperties[$key] = $originalElementObject->getVar($key);
 			}
 		}
