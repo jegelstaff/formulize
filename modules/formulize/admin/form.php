@@ -487,16 +487,16 @@ $classFiles = scandir(XOOPS_ROOT_PATH."/modules/formulize/class/");
 $customElements = array();
 $i = 0;
 foreach($classFiles as $thisFile) {
-    if (substr($thisFile, -11)=="Element.php") {
-        $customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
-        $customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
-        $customElementObject = $customElementHandler->create();
-        if(!$customElementObject->isSystemElement) {
-        $customElements[$i]['type'] = $customType;
-        $customElements[$i]['name'] = $customElementObject->name;
-        $i++;
-    }
-}
+	if (substr($thisFile, -11)=="Element.php") {
+			$customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
+			$customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
+			$customElementObject = $customElementHandler->create();
+			if(!$customElementObject->isSystemElement) {
+			$customElements[$i]['type'] = $customType;
+			$customElements[$i]['name'] = $customElementObject->name;
+			$i++;
+		}
+	}
 }
 
 
@@ -527,8 +527,10 @@ $common['defaultpi'] = $defaultpi;
 $common['pioptions'] = $pioptions;
 $common['formTitle'] = "this form"; // used to refer to the form in the primary identifier selection UI
 $common['standardTypes'] = formulizeHandler::getStandardElementTypes();
-$common['allFormTitles'] = $form_handler->getAllFormTitles();
-$common['allFormTitles'][$fid] = _AM_ELE_CLONE_TO_FORM_THISFORM;
+if($fid != "new") {
+	$common['allFormTitles'] = $form_handler->getAllFormTitles();
+	$common['allFormTitles'][$fid] = _AM_ELE_CLONE_TO_FORM_THISFORM;
+}
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";
