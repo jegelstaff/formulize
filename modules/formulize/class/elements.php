@@ -97,6 +97,35 @@ class formulizeElement extends FormulizeObject {
 		return $colhead ? $colhead : trans(strip_tags($this->getVar('ele_caption')));
 	}
 
+	/**
+	 * Get the screen ids and pages that this element appears on
+	 * @return array An array of arrays, primary key is sid, and each sid has an array of page ordinals, 0 is page 1
+	 */
+	function getScreenIdsAndPages() {
+		global $xoopsDB;
+		$screenIdsAndPages = array();
+		$sql = "SELECT `sid`, `pages` FROM ".$xoopsDB->prefix("formulize_screen_multipage");
+		if($res = $xoopsDB->query($sql)) {
+			while($array = $xoopsDB->fetchArray($res)) {
+				$sid = $array['sid'];
+				$pages = unserialize($array['pages']);
+				ksort($pages);
+				foreach($pages as $pageNumber=>$items) {
+					// check that page is a list of element ids
+					$firstItem = (is_array($items) AND count($items) > 0) ? $items[array_key_first($items)] : null;
+					if(is_numeric($firstItem)) {
+						// if element is on this page, record the page as part of that screen
+						if(in_array($this->getVar('ele_id'), $items)) {
+							$screenIdsAndPages[$sid][] = $pageNumber;
+						}
+					}
+				}
+			}
+		}
+		return $screenIdsAndPages;
+	}
+
+
 	//this method is used to to retreive the elements dataType and size
 	function getDataTypeInformation() {
 		$defaultType = "text";

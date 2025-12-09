@@ -527,6 +527,8 @@ $common['defaultpi'] = $defaultpi;
 $common['pioptions'] = $pioptions;
 $common['formTitle'] = "this form"; // used to refer to the form in the primary identifier selection UI
 $common['standardTypes'] = formulizeHandler::getStandardElementTypes();
+$common['allFormTitles'] = $form_handler->getAllFormTitles();
+$common['allFormTitles'][$fid] = _AM_ELE_CLONE_TO_FORM_THISFORM;
 
 $permissions = array();
 $permissions['hello'] = "Hello Permission World";

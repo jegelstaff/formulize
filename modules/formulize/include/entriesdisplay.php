@@ -2472,16 +2472,14 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	list($allowedValues, $excludedValues) = calcParseBlanksSetting($excludes[$cid]);
 
     if($calcElementObject) {
-        $dataTypeInfo = $calcElementObject->getDataTypeInformation();
-				$numericDataType = $calcElementObject->hasNumericDataType();
+			$numericDataType = $calcElementObject->hasNumericDataType();
     } else {
-        $dataHandler = new formulizeDataHandler($fid);
-        if(isset($dataHandler->metadataFieldTypes[$handle])) {
-            $dataTypeInfo = array('dataType'=>$dataHandler->metadataFieldTypes[$handle]);
-						$numericDataType = false;
-        } else {
-            print "Error: could not determine datatype for element '$handle'<br>";
-        }
+			$dataHandler = new formulizeDataHandler($fid);
+			if(isset($dataHandler->metadataFieldTypes[$handle])) {
+					$numericDataType = false;
+			} else {
+					print "Error: could not determine datatype for element '$handle'<br>";
+			}
     }
 
 	$allowedWhere = "";

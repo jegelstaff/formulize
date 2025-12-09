@@ -195,46 +195,68 @@ if($_POST['convertelement']) {
 
 if($_POST['deleteelement']) {
   $element = $element_handler->get($_POST['deleteelement']);
-	$element_handler->delete($element);
+	if($element && $element->getVar('fid') == $fid) { // validate that it's part of this form which they have edit_form perm on!
+		$element_handler->delete($element);
+		$_POST['reload_elements'] = 1;
+	}
 }
 
 if($_POST['cloneelement']) {
-  global $xoopsDB;
-  // create a new element, and then direct them to the page for editing that element
-  $thisElementObject = $element_handler->get($_POST['cloneelement']);
-  $oldHandle = $thisElementObject->getVar('ele_handle');
-  $thisElementObject->setVar('ele_id', 0);
-  $thisElementObject->setVar('ele_handle', "");
-  $sql = "SELECT max(ele_order) as new_order FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = $fid";
-  $res = $xoopsDB->query($sql);
-  $array = $xoopsDB->fetchArray($res);
-  $thisElementObject->setVar('ele_order', $array['new_order'] + 1);
-  $ele_caption = $thisElementObject->getVar('ele_caption');
-  $ele_colhead = $thisElementObject->getVar('ele_colhead');
-  $thisElementObject->setVar('ele_caption', $ele_caption . " copy");
-  if($ele_colhead) {
-    $thisElementObject->setVar('ele_colhead', $ele_colhead . " copy");
-  }
-  $element_handler->insert($thisElementObject);
-  $ele_id = $thisElementObject->getVar('ele_id');
-  $thisElementObject->setVar('ele_handle',$oldHandle.'_'.$ele_id);
-  $element_handler->insert($thisElementObject);
-  $ele_type = $thisElementObject->getVar('ele_type');
-  if($thisElementObject->hasData) {
-  	$fieldStateSQL = "SHOW COLUMNS FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldHandle'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-		if(!$fieldStateRes = $xoopsDB->query($fieldStateSQL)) {
-			$dataType = "text";
-		} else {
-			$fieldStateData = $xoopsDB->fetchArray($fieldStateRes);
-			$dataType = $fieldStateData['Type'];
+
+	// validate that the element exists, the target form exists, and the element belongs to this form that they have edit_form perm on!
+	if($originalElementObject = $element_handler->get($_POST['cloneelement'])
+		AND $targetFormObject = $form_handler->get(intval($_POST['clonefid']))
+		AND $originalElementObject->getVar('fid') == $fid
+	) {
+		$elementObjectProperties = array();
+		foreach($originalElementObject->vars as $key => $value) {
+
+			// fid will always be the target form selected - defaults to current form
+			if($key == 'fid' OR $key == 'id_form') {
+				$elementObjectProperties['fid'] = intval($_POST['clonefid']);
+
+			// if cloning to the same form, append " - copied" to the caption
+			} elseif($key == 'ele_caption' AND $originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
+				$elementObjectProperties['ele_caption'] = sprintf(_AM_COPIED, $originalElementObject->getVar('ele_caption'));
+
+			// if there's a colhead and cloning to the same form, append " - copied" to the colhead
+			} elseif($key == 'ele_colhead' AND $originalElementObject->getVar('ele_colhead') AND $originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
+				$elementObjectProperties['ele_colhead'] = sprintf(_AM_COPIED, $originalElementObject->getVar('ele_colhead'));
+
+			// if cloning to the same form, set the ele_order to be after the original element
+			} elseif($key == 'ele_order') {
+				// position after the element we're cloning, if they're in the same form. Otherwise, element will default to bottom of form.
+				if($originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
+					$oldOrder = $originalElementObject->getVar('ele_order')+1.1;
+					$elementObjectProperties['ele_order'] = figureOutOrder($originalElementObject->getVar('ele_id'), $oldOrder, intval($_POST['clonefid']));
+				}
+
+			// append _copied to the ele_handle if cloning to the same form, otherwise leave empty so handle can be generated on creation
+			} elseif($key == 'ele_handle' AND $originalElementObject->getVar('fid') == intval($_POST['clonefid'])) {
+				$elementObjectProperties['ele_handle'] = $originalElementObject->getVar('ele_handle').'_'.str_replace(['-',' ','%s'], '', _AM_COPIED);
+
+			} elseif($key != 'ele_id' AND $key != 'ele_handle') { // skip ele_id so a new element will be created, assign all other vars as is (except ele_handle which we leave blank unless set specifically above)
+				$elementObjectProperties[$key] = $originalElementObject->getVar($key);
+			}
 		}
-    $form_handler->insertElementField($thisElementObject, $dataType);
-  }
-  print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=$ele_id&aid=".intval($_POST['aid'])."';";
+		$dataTypeInformation = $originalElementObject->getDataTypeInformation();
+		$dataType = $dataTypeInformation['dataTypeCompleteString'];
+		// if moving forms, add to default screens (pages with all elements, triggered by empty array for screenIdsAndPagesForAdding)
+		// if staying in same form, add to same screens as original element
+		$screenIdsAndPagesForAdding = array();
+		if($_POST['clonefid'] == $originalElementObject->getVar('fid')) {
+			$screenIdsAndPagesForAdding = $originalElementObject->getScreenIdsAndPages();
+		}
+		if($clonedElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding, dataType: $dataType)) {
+			$appForRedirect = intval($_POST['aid']);
+			if($originalElementObject->getVar('fid') != intval($_POST['clonefid'])) {
+				$appForRedirect = intval(formulize_getFirstApplicationForForm(intval($_POST['clonefid']))); // could be no app
+			}
+  		print "/* eval */ window.location = '".XOOPS_URL."/modules/formulize/admin/ui.php?page=element&ele_id=".$clonedElementObject->getVar('ele_id')."&aid=".$appForRedirect."';";
+		}
+	}
 }
 
 if($_POST['reload_elements']) {
   print "/* eval */ reloadWithScrollPosition();";
 }
-
-?>

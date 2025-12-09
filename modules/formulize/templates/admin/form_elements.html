@@ -10,6 +10,7 @@
 				<input type="hidden" name="formulize_admin_handler" value="form_elements">
 				<input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
 				<input type="hidden" name="cloneelement" value="">
+				<input type="hidden" name="clonefid" value="<{$content.fid}>">
 				<input type="hidden" name="deleteelement" value="">
 				<input type="hidden" name="convertelement" value="">
 				<input type="hidden" name="reload_elements" value="">
@@ -34,6 +35,11 @@
 	</div>
 
 </div> <!-- end of mgmt ui -->
+
+<div id="cloneElementFormChoice" style="display:none;">
+	<{html_options name="cloneformselect" options=$content.allFormTitles selected=$content.fid}><br>
+	<button type="button" style="float: right;" onclick="$('[name=clonefid]').val($('[name=cloneformselect]').val());$('.savebutton').click();$('div#cloneElementFormChoice').dialog('destroy');"><{$smarty.const._AM_ELE_CLONE_TO_FORM_BUTTON}></button>
+</div>
 
 <div id="addElementOptions" style="display:none;">
 
@@ -275,7 +281,18 @@ function toggleElementCategories(clickedElement) {
 
 function cloneLinkSteps(target) {
 	$("[name=cloneelement]").val(target);
-	$(".savebutton").click();
+	$("#cloneElementFormChoice").dialog({
+		modal: true,
+		height: 100,
+		width: 400,
+		show: 200,
+		hide: 200,
+		title: "<{$smarty.const._AM_ELE_CLONE_TO_FORM}>",
+		close: function( event, ui ) {
+			$("[name=cloneelement]").val(0);
+			$(this).dialog('destroy');
+		}
+	});
 	return false;
 }
 

@@ -7,7 +7,7 @@
 * --------------------------------------------------------------------
 */
 define("_AM_SAVE","Salva");
-define("_AM_COPIED","%s copia");
+define("_AM_COPIED","%s - copia");
 define("_AM_DBUPDATED","Archivio aggiornato con successo!");
 define("_AM_ELE_CREATE","Crea elementi form");
 define("_AM_ELE_EDIT","Modifica elementi form: %s");

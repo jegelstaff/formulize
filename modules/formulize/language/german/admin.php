@@ -8,7 +8,7 @@ define("_FORM_CLONEDATA_TEXT", "Clone this form and its data");
 define("_FORM_DELETE_TEXT", "Dieses Formular löschen");
 
 define("_AM_SAVE","Speichern");
-define("_AM_COPIED","%s kopieren");
+define("_AM_COPIED","%s - kopieren");
 define("_AM_DBUPDATED","Datenbank erfolgreich aktualisiert!");
 define("_AM_ELE_CREATE","Create form elements");
 define("_AM_ELE_EDIT","Edit form element: %s");
