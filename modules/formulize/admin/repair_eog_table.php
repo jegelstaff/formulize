@@ -55,4 +55,6 @@ if (!$gperm_handler->checkRight($permissionToCheck, $itemToCheck, $groups, $modu
 
 if($missingEntries = repairEOGTable($_POST['form_id'])) {
     echo "found and fixed ". count((array) $missingEntries) . " ownership problems in your form";
+} else {
+		echo "No missing entry ownership data found in your form";
 }
