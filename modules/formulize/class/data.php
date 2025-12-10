@@ -564,7 +564,7 @@ class formulizeDataHandler {
 						$value = formulize_db_escape($value);
 						if($opp == 'IN') {
 							$quotes = '';
-							$value = "($value)";
+							$value = "(".$this->prepareValueForInOperator($value).")";
 						} else {
 							$quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
 						}
@@ -598,6 +598,34 @@ class formulizeDataHandler {
 		}
 	}
 
+	/**
+	 * This function prepares a value for use in an IN operator SQL clause
+	 * If the value is a string, it is split on commas to get the individual components
+	 * If the value is an array, it is treated as is
+	 * All components/items are then checked to see if they are numeric or not, and quoted as needed
+	 * Finally the components/items are joined with commas and returned as a string
+	 * @param mixed $value The value to prepare, either a comma separated string or an array
+	 * @return string The prepared value, ready for use in an IN operator SQL clause
+	 */
+	function prepareValueForInOperator($value) {
+		if(is_string($value)) {
+			$items = explode(",", trim($value, ","));
+		} elseif(is_array($value)) {
+			$items = $value;
+		} else {
+			$items = array($value);
+		}
+		$preparedItems = array();
+		foreach($items as $item) {
+			if(is_numeric(trim($item))) {
+				$preparedItems[] = formulize_db_escape(trim($item));
+			} else {
+				$preparedItems[] = "'" . formulize_db_escape($item) . "'";
+			}
+		}
+		return implode(",", $preparedItems);
+	}
+
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_group_ids=array(), $operator="=") {
@@ -608,7 +636,11 @@ class formulizeDataHandler {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$queryValue = "'" . formulize_db_escape($value) . "'";
+		if($operator == "IN") {
+			$queryValue = "(".$this->prepareValueForInOperator($value).")";
+		} else {
+			$queryValue = is_numeric($value) ? formulize_db_escape($value) : "'" . formulize_db_escape($value) . "'";
+		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
