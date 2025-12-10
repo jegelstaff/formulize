@@ -241,7 +241,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) { // existing element
 			// list of relationships for using as context when updating derived values
 			$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-			$allRelationships = $framework_handler->getFrameworksByForm($form_id, true);
+			$allRelationships = $framework_handler->getFrameworksByForm($element->getVar('fid'), true);
 			$relationships = array();
 			$relationships[""] = "this form only, no relationship.";
 			foreach ($allRelationships as $thisRelationship) {
