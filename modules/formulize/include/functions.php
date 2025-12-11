@@ -8829,14 +8829,23 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 					$entryDescriptor = $formObject->getSingular() . ' : ' . _formulize_ENTRY . ' ' . $entryId;
 
 					$principalIdentifierValue = null;
+					$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
 					if($principalIdentifierElementId = $formObject->getVar('pi')) {
-						$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
 						if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
-							$element_handler = xoops_getmodulehandler('elements', 'formulize');
 							$principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId);
 							$principalIdentifierHandle = $principalIdentifierElementObject->getVar('ele_handle');
 							$principalIdentifierValueArray = prepvalues($principalIdentifierValue, $principalIdentifierHandle, $entryId);
 							$entryDescriptor = (isset($principalIdentifierValueArray[0]) ? $principalIdentifierValueArray[0] : '');
+						}
+
+					// try for the rewriterule element value, if applicable
+					} elseif($rewriteruleElement = $renderedFormulizeScreen->getVar('rewriteruleElement')) {
+						if($rewriteruleElementValue = $data_handler->getElementValueInEntry($entryId, $rewriteruleElement)) {
+							$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
+							$rewriteruleElementHandle = $rewriteruleElementObject->getVar('ele_handle');
+							$rewriteruleElementValueArray = prepvalues($rewriteruleElementValue, $rewriteruleElementHandle, $entryId);
+							$entryDescriptor = (isset($rewriteruleElementValueArray[0]) ? $rewriteruleElementValueArray[0] : '');
 						}
 					}
 
