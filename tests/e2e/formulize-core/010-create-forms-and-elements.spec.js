@@ -184,6 +184,8 @@ test.describe('Artifacts Elements', async () => {
    	await page.locator('input[name="elements-ele_caption"]').fill('Was the artifact donated to the museum?');
    	await page.locator('input[name="elements-ele_colhead"]').fill('Donated to museum');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_donated_to_museum');
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.getByRole('radio', { name: 'No' }).check();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Donated to museum');
 	});

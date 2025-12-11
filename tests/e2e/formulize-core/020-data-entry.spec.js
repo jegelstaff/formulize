@@ -217,11 +217,12 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1850'); // year
 		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2011-09-19');
-		await page.getByRole('radio', { name: 'No' }).check(); // not donated
 		await page.getByRole('slider', { name: 'Condition' }).fill('6');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
+		await expect(page.getByRole('radio', { name: 'No' })).toBeChecked(); // default should be selected already
 		await saveFormulizeForm(page);
+		await expect(page.getByRole('radio', { name: 'No' })).toBeChecked(); // default should have been saved
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
 
@@ -278,7 +279,6 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1804'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1927-03-04');
-		await page.getByRole('radio', { name: 'No' }).check(); // not donated
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
@@ -313,7 +313,6 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1884'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2007-05-09');
-		await page.getByRole('radio', { name: 'No' }).check(); // not donated
 		await page.getByRole('slider', { name: 'Condition' }).fill('4');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
