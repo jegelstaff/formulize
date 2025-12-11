@@ -658,6 +658,7 @@ test.describe('Create/Update Subform Interfaces', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Appears in these exhibits');
 		await page.locator('select[name="orderpref"]').selectOption('bottom');
 		await page.getByRole('link', { name: 'Options' }).click();
+		await waitForAdminPageReady(page); // had a timing issue here once? might need to wait for admin page ready after every tab click?? this is why we used to have retries 2.
 		await page.getByRole('radio', { name: 'No', exact: true }).check();
 		await page.getByRole('checkbox', { name: 'Show the Delete button' }).uncheck();
 		await page.getByRole('link', { name: 'Display Settings' }).click();
