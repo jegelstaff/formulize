@@ -69,6 +69,7 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
     if(!is_array($subformSubEntryMap)) {
         $subformSubEntryMap = array(); // initialize as array
     }
+		$sub_entry_written = array();
     if($element_to_write != 0) {
 				$sub_entry_new = "";
 				// need to also enforce any equals conditions that are on the subform element, if any, and assign those values to the entries
@@ -100,7 +101,6 @@ function formulize_subformSave_writeNewEntry($element_to_write, $value_to_write,
         }
     } else {
         $sub_entry_new = "new"; // this happens in uid-link situations?
-        $sub_entry_written = "";
     }
     // also, enforce any derived values on the subform entry itself
 		// and take another pass at defaults

@@ -688,12 +688,13 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	$sub_entry_new = false;
 	$sub_entry_written = false;
 	if(isset($_POST['target_sub']) AND $_POST['target_sub'] AND $_POST['target_sub'] == $subform_id AND isset($_POST['target_sub_instance']) AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance) { // important we only do this on the run through for that particular sub form (hence target_sub == sfid), and also only for the specific instance of this subform on the page too, since not all entries may apply to all subform instances any longer with conditions in effect now
-        list($sub_entry_new,$sub_entry_written) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
-        if(is_array($sub_entry_written)) {
-            global $formulize_subFidsWithNewEntries, $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
-            $formulize_subFidsWithNewEntries[] = $_POST['target_sub'];
-            $formulize_subformElementsWithNewEntries[] = $subform_element_object;
-            $formulize_newSubformEntries[$_POST['target_sub']] = $sub_entry_written; // an array of entries that were written, since multiple subs can be created at once
+		list($sub_entry_new,$sub_entry_written) = formulize_subformSave_writeNewEntry($element_to_write, $value_to_write, $fid, $frid, $_POST['target_sub'], $entry, $subformConditions, $overrideOwnerOfNewEntries, $mainFormOwner, $_POST['numsubents']);
+		$sub_entry_written = (is_array($sub_entry_written) AND !empty($sub_entry_written)) ? $sub_entry_written : false;
+		if(is_array($sub_entry_written)) {
+			global $formulize_subFidsWithNewEntries, $formulize_subformElementsWithNewEntries, $formulize_newSubformEntries;
+			$formulize_subFidsWithNewEntries[] = $_POST['target_sub'];
+			$formulize_subformElementsWithNewEntries[] = $subform_element_object;
+			$formulize_newSubformEntries[$_POST['target_sub']] = $sub_entry_written; // an array of entries that were written, since multiple subs can be created at once
 		}
 	}
 

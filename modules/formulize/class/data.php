@@ -1415,7 +1415,7 @@ class formulizeDataHandler {
  * @return array Returns the passed array with default values added, if any
  */
 function addDefaultValuesToDataToWrite($values, $fid) {
-	$defaultValueMap = getEntryDefaultsInDBFormat($fid);
+	$defaultValueMap = getEntryDefaultsInDBFormat($fid, dataToBeWritten: $values);
 	foreach($defaultValueMap as $defaultValueElementHandle=>$defaultValueToWrite) {
 		// if the element is not a value that we received, then let's use the default value
 		if(!isset($values[$defaultValueElementHandle])) {

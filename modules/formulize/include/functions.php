@@ -7655,9 +7655,14 @@ function secondPassWritingSubformEntryDefaults($target_fid,$target_entry,$exclud
  * @param int $targetObjectOrFormId - And element object to get the default value for, or a form object or form id to get all the default values for.
  * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry. Defaults to 'new'. Only case where this is not 'new' is the second pass at default values when generating new subform entries?? See comment in new subform entry writing code... there is surly a better way to handle that? Properly conditional elements would update in real time before saving in response to the value typed in other elements on screen?
  * @param boolean $keyByIds - a flag to indicate if the resulting array should be keyed by element id. Default is false and array will be keyed by element handles.
+ * @param array $dataToBeWritten - an array of data that is about to be written to the entry, in case certain default values depend on other values being set in the entry at the same time. Required when a specific target_entry is provided. Defaults to null.
  * @return array Returns an array of element id/default value pairs. The values are database-ready values, not human readable values (ie: foreign keys, not text, if applicable. In many cases database values for elements are human readable)
  */
-function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new', $keyByIds = false) {
+function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new', $keyByIds = false, $dataToBeWritten = null) {
+
+	if($target_entry !== 'new' AND !is_numeric($target_entry)) {
+		throw new Exception("Invalid target entry id used for getting entry defaults.");
+	}
 
 	$elementsForDefaults = array();
 	if(is_a($targetObjectOrFormId, 'formulizeElement')) {
@@ -7680,7 +7685,12 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($target_fid);
 		foreach($formObject->getVar('elementsWithData') as $thisElementId) {
-			if($elementObject = $element_handler->get($thisElementId)) {
+			if($elementObject = $element_handler->get($thisElementId)
+				AND (
+					empty($dataToBeWritten)
+					OR !is_array($dataToBeWritten)
+					OR !in_array($elementObject->getVar('ele_handle'), array_keys($dataToBeWritten))
+				)) {
 				$elementsForDefaults[] = $elementObject;
 			}
 		}
@@ -7688,34 +7698,62 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 
   foreach($elementsForDefaults as $thisDefaultEle) {
 
+		// key for the return array
 		$key = $keyByIds ? $thisDefaultEle->getVar('ele_id') : $thisDefaultEle->getVar('ele_handle');
 
-		// used cached value if we have one
+		// check for dynamic default and use that if there is one
+		$elementDynamicDefaultSource = $thisDefaultEle->getVar('ele_dynamicdefault_source');
+		$elementDynamicDefaultConditions = $thisDefaultEle->getVar('ele_dynamicdefault_conditions');
+		if($elementDynamicDefaultSource AND $elementDynamicDefaultConditions) {
+			// for new entries, if there's data we're about to write to the DB, put it into the asynchronous global values, so that the dynamic default calculation can use them even though they're not in DB yet
+			if($target_entry === 'new' AND !empty($dataToBeWritten)) {
+				$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'] = array();
+				foreach($dataToBeWritten as $dataHandle=>$dataValue) {
+					$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'][$dataHandle] = $dataValue;
+				}
+			}
+			// get the dynamic default value
+			$dynamicDefaultValue = getDynamicDefaultValue($thisDefaultEle, $target_entry);
+			// if there is a value, and either this is a new entry, or for an existing entry the value differs from what's already in the DB, use it
+			if($dynamicDefaultValue !== ""
+				AND $dynamicDefaultValue !== false
+				AND $dynamicDefaultValue !== null
+				AND (
+					$target_entry === 'new'
+					OR ($target_entry AND $dynamicDefaultValue !== $targetFidDataHandler->getElementValueInEntry($target_entry, $thisDefaultEle))
+				)
+			) {
+					$defaultValueMap[$key] = $dynamicDefaultValue;
+					continue;
+			}
+		}
+
+		// still here, check for a cached default value first
 		if(isset($cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry])) {
     	$defaultValueMap[$key] = $cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry];
 			continue;
 		}
 
-		// figure out the default value for this element
+		// still here, get the default value the regular way
     $defaultTextToWrite = "";
 		$ele_type = $thisDefaultEle->getVar('ele_type');
 		$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
 		if(method_exists($elementTypeHandler, 'getDefaultValue')) {
 			$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
 		}
-		// if there's no value, move on
+		// if there's no value, or it's an existing entry and the default matches the DB
     if($defaultTextToWrite === ""
 			OR $defaultTextToWrite === false
-			OR $defaultTextToWrite === null) {
+			OR $defaultTextToWrite === null
+			OR (
+				$target_entry
+				AND $target_entry !== 'new'
+				AND $defaultTextToWrite === $targetFidDataHandler->getElementValueInEntry($target_entry, $thisDefaultEle)
+			)) {
 				continue;
 		}
-		// if the value matches what's in the DB already, move on
-		if($target_entry AND $target_entry !== 'new') {
-				if($defaultTextToWrite === $targetFidDataHandler->getElementValueInEntry($target_entry, $thisDefaultEle)) {
-						continue;
-				}
-    }
-		// otherwise, catalogue the default value
+
+		// otherwise, catalogue this default value
 		$cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry] = $defaultTextToWrite;
     $defaultValueMap[$key] = $defaultTextToWrite;
   }
