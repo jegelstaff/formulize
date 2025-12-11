@@ -1595,7 +1595,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$formulize_governingElements = array();
 		}
 		if(!is_array($formulize_oneToOneElements)) {
-				$oneToOneElements = array();
+				$oneToOneElements = array(); // meant to be $formulize_oneToOneElements?? -- but missnaming and non-assignment doesn't have a logical effect since it's not setting an affirmative value?
 		}
 		if(!isset($oneToOneMetaData) OR !is_array($oneToOneMetaData)) {
 				$oneToOneMetaData = array();
@@ -1603,7 +1603,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(count((array) $GLOBALS['formulize_renderedElementHasConditions'])>0) {
 			$governingElements1 = compileGoverningElementsForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
 			foreach($governingElements1 as $key=>$value) {
-					$oneToOneElements[$key]	= false;
+					$oneToOneElements[$key]	= false; // meant to be $formulize_oneToOneElements?? -- but missnaming and non-assignment doesn't have a logical effect since it's not setting an affirmative value?
 			}
 			$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements1);
 		}
@@ -1638,8 +1638,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 								$GLOBALS['formulize_renderedElementHasConditions'][$renderedMarkupName] = $thisElement; // super ugly and kludgy, normally an array would be set here, but from this point forward, it's actually only the keys of this array that matter, so setting a single value is okay. Yuck. :(
 								$governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
 								foreach($governingElements2 as $key=>$value) {
-									$formulize_oneToOneElements[$key] = true;
-									$formulize_oneToOneMetaData[$key] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
+									$formulize_oneToOneElements[markupNameAttr($key)] = true;
+									$formulize_oneToOneMetaData[markupNameAttr($key)] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
 								}
 								$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
 							}
@@ -3186,6 +3186,21 @@ function removeTags(html) {
     $drawnJavascript = true;
 }
 
+/**
+ * Add [] if necessary to a given element markup name, if the element can have multiple values, so it matches the name attribute in the HTML form
+ * @param string $renderedMarkupName The rendered markup name of the element
+ * @return string The markup name, with [] appended if necessary
+ */
+function markupNameAttr($renderedMarkupName) {
+	$nameParts = explode("_", $renderedMarkupName);
+	$elementId = $nameParts[3];
+	$elementObject = _getElementObject($elementId);
+	if($elementObject->canHaveMultipleValues AND strstr($renderedMarkupName, "[]") === false) {
+		$renderedMarkupName .= "[]";
+	}
+	return $renderedMarkupName;
+}
+
 // THIS FUNCTION ACTUALLY DRAWS IN THE NECESSARY JAVASCRIPT FOR ALL ELEMENTS FOR WHICH ITS PROPERTIES ARE DEPENDENT ON ANOTHER ELEMENT
 // PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
 // conditionalElements is array of the elements (DOM ids, ie: de_fid_entryId_elementId) of the elements that have conditions.
@@ -3199,8 +3214,10 @@ jQuery(document).ready(function() {
 	$topKey = 0;
 	$relevantElementArray = array();
 	foreach($governingElements as $thisGoverningElement=>$theseGovernedElements) {
+		$thisGoverningElement = markupNameAttr($thisGoverningElement);
 		$initCode .= "governedElements['".$thisGoverningElement."'] = new Array();\n";
 		foreach($theseGovernedElements as $innerKey=>$thisGovernedElement) {
+			$thisGovernedElement = markupNameAttr($thisGovernedElement);
 			if(!isset($relevantElementArray[$thisGovernedElement])) {
 				$initCode .= "relevantElements['".$thisGovernedElement."'] = new Array();\n";
 				$initCode .= "oneToOneElements['".$thisGovernedElement."'] = new Array();\n";
@@ -3228,8 +3245,9 @@ jQuery(document).ready(function() {
 
     // setup the triggers
     foreach(array_keys($governingElements) as $ge) {
-        $initCode .= "  jQuery(document).on('change', '[name=\"".$ge."\"]', function() {
-        callCheckCondition(jQuery(this).attr('name'));
+			$ge = markupNameAttr($ge);
+			$initCode .= "  jQuery(document).on('change', '[name=\"".$ge."\"]', function() {
+			callCheckCondition('$ge');
     });\n";
     }
 
@@ -3308,6 +3326,7 @@ function mergeGoverningElements($masterList, $governingElements) {
 function _compileGoverningElements($entries, $elementObject, $renderedMarkupName, $onetoone=false) {
 	$type = $elementObject->getVar('ele_type');
 	$ele_value = $elementObject->getVar('ele_value');
+	// This determination does not always (or usually?) end up being used in the keys for the elements! But we have compensated for this by gathering the right stuff at the time the JS is generated from all the gathered metadata. See markupNameAttr function and its use.
 	if($type == "checkbox" OR $type == "checkboxLinked" OR (anySelectElementType($type) AND $ele_value[1])) {
 		$additionalNameParts = "[]"; // set things up with the right [] for multiple value elements
 	} else {
@@ -3322,7 +3341,7 @@ function _compileGoverningElements($entries, $elementObject, $renderedMarkupName
 			if($thisEntry == "") {
 				$thisEntry = "new";
 			}
-            if(($onetoone OR $thisEntry == $renderedEntryId) AND !isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName])) {
+      if(($onetoone OR $thisEntry == $renderedEntryId) AND !isset($recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName])) {
 			$governingElements['de_'.$elementObject->getVar('id_form').'_'.$thisEntry.'_'.$elementObject->getVar('ele_id').$additionalNameParts][] = $renderedMarkupName;
 				$recordedEntries[$elementObject->getVar('id_form')][$thisEntry][$elementObject->getVar('ele_id')][$renderedMarkupName] = true;
 			}

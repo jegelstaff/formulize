@@ -8,7 +8,7 @@ var conditionalCheckInProgress = 0;
 
 function callCheckCondition(name) {
 	const checks = [];
-    const relevantElementSets = [];
+  const relevantElementSets = [];
 	const relevantElementSetsUseOneToOne = [];
 	var oneToOne;
 	for(key in governedElements[name]) {
@@ -33,7 +33,8 @@ function callCheckCondition(name) {
         // if only one operation sent, then results are flat and not in an array. Make an array to standardize what we're working with.
         if(typeof arguments[0] === 'string') {
             arguments[0] = new Array(arguments[0]);
-		}
+				}
+				const deferredCalls = []; // in case we need to call callCheckCondition again in response to a result we got back this time
         jQuery.each(arguments, function(index, responseData){
             if(Array.isArray(responseData) === false || 0 in responseData === false) { return false; }
 			try {
@@ -70,8 +71,14 @@ function callCheckCondition(name) {
                         } else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
                             ShowHideTableRow(handle,false,1000,true);
 						}
-                        if(data != '{NOCHANGE}') {
-                            assignConditionalHTML(handle, data);
+						if(data != '{NOCHANGE}') {
+								assignConditionalHTML(handle, data);
+								if(typeof governedElements[handle] !== 'undefined') {
+									deferredCalls.push(handle);
+								}
+								if(typeof governedElements[handle+'[]'] !== 'undefined') {
+									deferredCalls.push(handle+'[]');
+								}
 						}
 						conditionalCheckInProgress = conditionalCheckInProgress - 1;
 					}
@@ -79,6 +86,9 @@ function callCheckCondition(name) {
                     return false;
                 }
             }
+		});
+		deferredCalls.forEach(function(deferredHandle) {
+			callCheckCondition(deferredHandle);
 		});
 	});
 }

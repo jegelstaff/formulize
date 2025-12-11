@@ -202,6 +202,16 @@ switch($op) {
       if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' OR $k == 'frid' OR substr($k, 0, 8) == 'onetoone' OR $k == 'sid') { // serveral onetoone keys can be passed back too
         if($k == 'onetooneentries' OR $k == 'onetoonefids') {
             ${$k} = unserialize($v);
+				} elseif($k == 'elementId') {
+					if(strstr($v,",") !== false) {
+						$elementId = array();
+						foreach(explode(",",$v) as $thisV) {
+							$elementId[] = trim($thisV, "[]");
+						}
+						$elementId = implode(",",$elementId);
+					} else {
+						$elementId = trim($v, "[]");
+					}
         } else {
             ${$k} = $v;
         }
@@ -212,7 +222,7 @@ switch($op) {
     foreach($elementsToProcess as $k => $v) {
       $keyParts = explode("_", $k); // ANY KEY PASSED THAT IS THE NAME OF A DE_ ELEMENT IN MARKUP, WILL GET UNPACKED AS A VALUE THAT CAN BE SUBBED IN WHEN DOING LOOKUPS LATER ON. This is because these elements are the elements that might determine how the conditionally rendered element behaves; it might be sensitive to these values.
       $passedEntryId = $keyParts[2];
-      $passedElementId = $keyParts[3];
+      $passedElementId = trim($keyParts[3], "[]"); // in case it's an array element, strip the brackets
       $passedElementObject = $element_handler->get($passedElementId);
       $handle = $passedElementObject->getVar('ele_handle');
       if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
