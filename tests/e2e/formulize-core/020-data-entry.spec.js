@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test')
+const { test, expect } = require('../test-fixtures');
 import { saveFormulizeForm } from '../utils';
 import { conditionalElementReady } from '../utils';
 import { login } from '../utils';

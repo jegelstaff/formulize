@@ -47,7 +47,7 @@ module.exports = defineConfig({
 
 	expect: {
     // Maximum time expect() should wait for the condition to be met.
-    timeout: 120000,
+    timeout: 20000,
     toHaveScreenshot: {
       // An acceptable amount of pixels that could be different, unset by default.
       maxDiffPixels: 10,
@@ -64,7 +64,7 @@ module.exports = defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'] }
     }
   ]
 });

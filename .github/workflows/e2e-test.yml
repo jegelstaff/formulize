@@ -20,11 +20,11 @@ jobs:
       id: check
       run: |
         MESSAGE=$(git log --format=%B -n 1 ${{ github.event.after }})
-        if [[ "$MESSAGE" == *"[SKIP TEST]"* ]]; then
-          echo "Commit message contains [SKIP TEST]. We will skip running test."
-          echo "::set-output name=skip::true"
+        if [[ "$MESSAGE" == *"[SKIP TEST]"* || "$MESSAGE" == *"[SKIP TESTS]"* ]]; then
+          echo "Commit message says to skip testing."
+          echo "skip=true" >> $GITHUB_OUTPUT
         else
-          echo "::set-output name=skip::false"
+          echo "skip=false" >> $GITHUB_OUTPUT
         fi
   e2e-test-run:
     needs: check_commit
@@ -51,7 +51,7 @@ jobs:
 
     - name: Set file/directory permissions
       run: |
-        chmod 777 trust uploads modules templates_c cache tokens modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
+        chmod 777 trust uploads modules templates_c cache tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
 
     - name: Stop existing containers (if any)
       run: |
@@ -89,6 +89,7 @@ jobs:
         # Create directory for the final state after tests
         mkdir -p tests/e2e/final-state/docker/mariadb/seed
         mkdir -p tests/e2e/final-state/trust
+        mkdir -p tests/e2e/final-state/logs
 
         # Dump the database
         docker exec formulize-mariadb-1 mariadb-dump --user user --password=password --default-character-set=utf8mb4 --databases formulize > tests/e2e/final-state/docker/mariadb/seed/formulize.sql
@@ -99,6 +100,11 @@ jobs:
         # Copy trust folder contents
         if [ -d "trust" ]; then
           cp -r trust/* tests/e2e/final-state/trust/ || echo "trust folder empty or not accessible"
+        fi
+
+        # Copy logs folder contents
+        if [ -d "logs" ]; then
+          cp -r logs/* tests/e2e/final-state/logs/ || echo "logs folder empty or not accessible"
         fi
 
         # Copy code folder contents

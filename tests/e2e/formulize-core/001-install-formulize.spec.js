@@ -1,6 +1,6 @@
-const { test, expect } = require('@playwright/test')
+const { test, expect } = require('../test-fixtures');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
-import { login } from '../utils';
+import { login, waitForAdminPageReady } from '../utils';
 
 test.describe('Installation of Formulize', () => {
 	test('Run the Installer', async ({ page }) => {
@@ -85,8 +85,18 @@ test.describe('Installation of Formulize', () => {
 		await page.getByRole('link', { name: 'arrow Modules' }).click();
 		await page.locator('a[href*="fct=modulesadmin"][href*="op=update"][href*="module=formulize"]').click();
 		await page.getByRole('button', { name: 'Update' }).click();
+		await expect(page.getByText('Module Formulize updated successfully')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Back to Module Administration' })).toBeVisible();
 		await page.goto('/modules/formulize/admin/');
 
+	}),
+	test('Enable Formulize Logging', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		await page.goto('/modules/formulize/admin');
+		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+		await page.locator('#formulizeLoggingOnOff-9').check();
+		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await waitForAdminPageReady(page);
+		await expect(page.locator('#formulizeLoggingOnOff-9')).toBeChecked();
 	})
 });

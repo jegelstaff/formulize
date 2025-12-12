@@ -83,6 +83,7 @@ function formulize_exception_handler($exception) {
 	// log everything
 	error_log($exception->getMessage());
 	writeToFormulizeLog(array(
+		'formulize_event' => 'PHP-error-recorded',
 		'PHP_error_number' => $exception->getCode(),
 		'PHP_error_string' => $exception->getMessage(),
 		'PHP_error_file' => $exception->getFile(),

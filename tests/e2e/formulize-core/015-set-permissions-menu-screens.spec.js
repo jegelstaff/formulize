@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test')
+const { test, expect } = require('../test-fixtures');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
 import { login, saveAdminForm, openMenuAccordion, waitForAdminPageReady } from '../utils';
 
@@ -317,6 +317,7 @@ test.describe('Set columns and elements for screens', () => {
 		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
 		await page.locator('#formulizeRewriteRulesEnabled-13').check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await waitForAdminPageReady(page);
 		await expect(page.locator('#formulizeRewriteRulesEnabled-13')).toBeChecked();
   	await page.locator('div.CPbigTitle').getByRole('link', { name: 'Formulize', exact: true }).click();
   	await page.getByRole('link', { name: 'Application: Museum' }).click();
