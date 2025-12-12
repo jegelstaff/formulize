@@ -66,7 +66,7 @@
     <{/foreach}>
   </div>
   <{/foreach}>
-  <{if $allow_profile_usercontributions && $modules|count > 0}>
+  <{if $allow_profile_usercontributions && is_array($modules) && $modules|count > 0}>
   <div id="profile-profile-search-results" class="outer">
     <h3 class="profile-profiletitle head"><{$lang_usercontributions}></h3>
     <{foreach item=module from=$modules name="search_results"}>

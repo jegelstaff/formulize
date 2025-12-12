@@ -83,10 +83,6 @@ if($icmsUser AND in_array(XOOPS_GROUP_ADMIN, $icmsUser->getGroups()) AND $icmsCo
 	$_SESSION['xoopsUserTheme'] = $icmsConfig['theme_admin_set'];
 }
 
-if ($icmsConfig['closesite'] == 1) {
-	include ICMS_INCLUDE_PATH . '/site-closed.php';
-}
-
 icms::launchModule();
 
 if ($icmsConfigPersona['multi_login']) {
@@ -122,3 +118,7 @@ if((
 }
 
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/common.php";
+
+if ($icmsConfig['closesite'] == 1) {
+	include ICMS_INCLUDE_PATH . '/site-closed.php';
+}

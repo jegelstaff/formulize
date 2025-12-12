@@ -33,7 +33,7 @@ if (!$allowed) {
 	$themeFactory->defaultTheme = $icmsConfig['theme_set'];
 	$icmsTheme =& $themeFactory->createInstance(array("plugins" => array()));
 	$icmsTheme->addScript('/include/xoops.js', array('type' => 'text/javascript'));
-	$icmsTheme->addStylesheet(ICMS_URL . "/icms" 
+	$icmsTheme->addStylesheet(ICMS_URL . "/icms"
 		. ((defined('_ADM_USE_RTL') && _ADM_USE_RTL) ? "_rtl" : "") . ".css", array("media" => "screen"));
 	$icmsTpl =& $icmsTheme->template;
 
@@ -46,10 +46,10 @@ if (!$allowed) {
 		'icms_slogan' => htmlspecialchars($icmsConfig['slogan'], ENT_QUOTES),
 		'icms_dirname' => @$icmsModule ? $icmsModule->getVar('dirname') : 'system',
 		'icms_banner' => $icmsConfig['banners'] ? xoops_getbanner() : '&nbsp;',
-		'icms_pagetitle' => isset($icmsModule) && is_object($icmsModule) 
-			? $icmsModule->getVar('name') 
+		'icms_pagetitle' => isset($icmsModule) && is_object($icmsModule)
+			? $icmsModule->getVar('name')
 			: htmlspecialchars($icmsConfig['slogan'], ENT_QUOTES),
-		'lang_login' => _LOGIN,
+		'lang_login' => _WEBMASTER_LOGIN,
 		'lang_username' => _USERNAME,
 		'lang_password' => _PASSWORD,
 		'lang_siteclosemsg' => $icmsConfig['closesite_text'])

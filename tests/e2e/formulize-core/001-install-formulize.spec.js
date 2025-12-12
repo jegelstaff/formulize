@@ -98,5 +98,28 @@ test.describe('Installation of Formulize', () => {
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
 		await expect(page.locator('#formulizeLoggingOnOff-9')).toBeChecked();
+	}),
+	test('Lock site and try to login', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
+		await page.locator('#closesite-11').check();
+  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await waitForAdminPageReady(page);
+		await expect(page.locator('#closesite-11')).toBeChecked();
+  	await page.getByRole('link', { name: 'arrow Go to the front page' }).hover();
+  	await page.getByRole('link', { name: 'Logout' }).click();
+		await expect(page.getByText('The site is currently closed for maintenance. Please come back later.')).toBeVisible();
+		await page.locator('input[name="uname"]').fill((E2E_TEST_ADMIN_USERNAME || 'admin'));
+		await page.locator('input[name="pass"]').fill((E2E_TEST_ADMIN_PASSWORD || 'password'));
+		await page.getByRole('button', { name: 'Login' }).click();
+		await expect(page.getByText('Edit Account')).toBeVisible();
+		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
+		await page.locator('#closesite-12').check();
+  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await waitForAdminPageReady(page);
+		await expect(page.locator('#closesite-12')).toBeChecked();
+  	await page.getByRole('link', { name: 'arrow Go to the front page' }).hover();
+  	await page.getByRole('link', { name: 'Logout' }).click();
+		await expect(page.getByText('The site is currently closed for maintenance. Please come back later.')).not.toBeVisible();
 	})
 });

@@ -93,6 +93,7 @@ define('_HIDDENC', 'Contenu cach&eacute;:');
 define('_HIDDENTEXT', 'Ce contenu est cach&eacute; pour les visiteurs anonymes, merci <a href="'.ICMS_URL.'/register.php" title="enregistrement &agrave; ' . htmlspecialchars ( $xoopsConfig ['sitename'], ENT_QUOTES ) . '">de l\'enregistrer</a> pour qu\'il soit visible par tous.');
 define('_LIST', 'Liste');
 define('_LOGIN','Connexion');
+define('_WEBMASTER_LOGIN','Connexion webmestre');
 define('_USERNAME','Membre:&nbsp;');
 define('_PASSWORD','Mot de passe:&nbsp;');
 define("_SELECT","&Eacute;diteur de texte");
