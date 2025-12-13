@@ -895,6 +895,14 @@ class formulizeElementsHandler {
 		if($element->isSystemElement) {
 			return false;
 		}
+		$elementType = $element->getVar('ele_type');
+		$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
+		$result0 = true;
+		if(method_exists($typeElementHandler, 'deleteAssociatedDataAndResources')) {
+			if(!$result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all')) {
+				print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($element->getVar('ele_id')))." failed";
+			}
+		}
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
 		if( false != $force ){
@@ -916,7 +924,7 @@ class formulizeElementsHandler {
 			}
 		}
 
-		return ($result1 AND $result2 AND $result3 AND $result4) ? true : false;
+		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}
 
 	// id_as_key can be true, false or "handle" or "element_id" in which case handles or the element ids will be used
@@ -970,7 +978,7 @@ class formulizeElementsHandler {
 	}
 
 
-    function getCount($criteria = null){
+  function getCount($criteria = null){
 		$sql = 'SELECT COUNT(*) FROM '.formulize_TABLE;
 		if( isset($criteria) ) {
 			$sql .= ' '.$criteria->renderWhere();
@@ -981,18 +989,6 @@ class formulizeElementsHandler {
 		}
 		list($count) = $this->db->fetchRow($result);
 		return $count;
-	}
-
-    function deleteAll($criteria = null){
-    	global $xoopsDB;
-		$sql = 'DELETE FROM '.formulize_TABLE;
-		if( isset($criteria) ) {
-			$sql .= ' '.$criteria->renderWhere();
-		}
-		if( !$result = $this->db->query($sql) ){
-			return false;
-		}
-		return true;
 	}
 
 	// this method returns the id number of the element with the next highest order, below the specified order, in the specified form

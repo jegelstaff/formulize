@@ -1156,16 +1156,44 @@ class formulizeFormsHandler {
 		}
 	}
 
+	/**
+	 * Delete any associated data and resources for all elements in a form
+	 * @param object formObject - The object representation of the form we're working with.
+	 * @param string entryScope - 'all' to delete associated data and resources from all entries, an entry ID to delete from a single entry only
+	 * @return boolean Returns true if all deletions succeeded, or false if one or more failed.
+	 */
+	function deleteAssociatedDataAndResourcesForAllElements($formObject, $entryScope = null) {
+		if($entryScope === 'null' || !is_a($formObject, 'formulizeForm')) {
+			return false;
+		}
+		$result = true;
+		foreach($formObject->getVar('elements') as $elementId) {
+			$elementObject = _getElementObject($elementId);
+			$elementType = $elementObject->getVar('ele_type');
+			$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
+			if(method_exists($typeElementHandler, 'deleteAssociatedDataAndResources')) {
+				if(!$typeElementHandler->deleteAssociatedDataAndResources($elementObject, $entryScope)) {
+					print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." for form ".$formObject->getVar('fid')." failed";
+					$result = false;
+				}
+			}
+		}
+		return $result;
+	}
+
 	function delete($fid) {
 		if(is_object($fid)) {
 			if(!get_class($fid) == "formulizeForm") {
 				return false;
 			}
-			$fid = $fid->getVar('id_form');
+			$formObject = $fid;
+			$fid = $formObject->getVar('id_form');
 		} elseif(!is_numeric($fid)) {
 			return false;
+		} elseif(!$formObject = $this->get($fid)) {
+			return false;
 		}
-		$isError = false;
+		$isError = $this->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: 'all');
 		global $xoopsDB;
 		$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form = $fid";
 		if(!$xoopsDB->query($sql)) {
