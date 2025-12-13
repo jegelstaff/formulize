@@ -145,8 +145,6 @@ Here is a partial listing of the files and folders in Formulize, and what they d
 
     * _getEntryValues_ which gathers the current values from the database for a given entry so they can be displayed in the form when editing an entry
 
-    * _drawSubLinks_ which has extensive code related to the rendering of subform elements, which are elements that contain entire entries from another form
-
     * _compileElements_ which loops through the elements that are part of the page, and converts the Formulize configuration settings for each one into a XOOPS form element object, which can be rendered in the _formulize_themeForm_ class (this conversion happens in the _include/entriesdisplay.php_ file, and the _class/elementrenderer.php_ file)
 
     * _loadValue_ which takes the values from the database for a given entry, and injects them into the Formulize configuration settings for a given element, so that when the element is rendered, it shows the saved value instead of its default value
