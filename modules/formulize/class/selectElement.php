@@ -522,7 +522,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				list($_POST['ele_value'], $ele_uitext) = formulize_extractUIText($_POST['ele_value']);
 				foreach($_POST['ele_value'] as $id=>$text) {
 					if($text !== "") {
-						$ele_value[ELE_VALUE_SELECT_OPTIONS][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+						// For select elements, defaultoption is a single value (radio button)
+						// For other elements (listbox, autocomplete), it's an array (checkboxes)
+						if($selectTypeName == 'select') {
+							$ele_value[ELE_VALUE_SELECT_OPTIONS][$text] = (isset($_POST['defaultoption']) && $_POST['defaultoption'] == $id) ? 1 : 0;
+						} else {
+							$ele_value[ELE_VALUE_SELECT_OPTIONS][$text] = isset($_POST['defaultoption'][$id]) ? 1 : 0;
+						}
 					}
 				}
 			}
