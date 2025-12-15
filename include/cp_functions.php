@@ -611,28 +611,29 @@ function impresscms_get_adminmenu() {
 	];
 
 	$docSubs = array();
-	$availableDocs = organizeAvailableDocs(array_keys($targetFileTypes));
-	foreach($targetFileTypes as $type => $details) {
-		if (!isset($availableDocs[$type]) || !is_array($availableDocs[$type])) {
-			continue; // skip if no files of this type are available
-		}
-		$menu = array();
-		$files = $availableDocs[$type];
-		foreach($files as $file) {
-			$menu[] = array(
-				'link' => 'https://formulize.org/developers/API/'.$details['docPath']. '/' . $file,
-				'title' => $file,
+	if($availableDocs = organizeAvailableDocs(array_keys($targetFileTypes))) {
+		foreach($targetFileTypes as $type => $details) {
+			if (!isset($availableDocs[$type]) || !is_array($availableDocs[$type])) {
+				continue; // skip if no files of this type are available
+			}
+			$menu = array();
+			$files = $availableDocs[$type];
+			foreach($files as $file) {
+				$menu[] = array(
+					'link' => 'https://formulize.org/developers/API/'.$details['docPath']. '/' . $file,
+					'title' => $file,
+					'absolute' => 1,
+					'small' => ICMS_URL .'/modules/system/images/item.png'
+				);
+			}
+			$admin_menu[] = array(
+				'id' => 'docs_' . $type,
 				'absolute' => 1,
-				'small' => ICMS_URL .'/modules/system/images/item.png'
+				'text' => $details['label'],
+				'link' => '#',
+				'menu' => $menu,
 			);
 		}
-		$admin_menu[] = array(
-			'id' => 'docs_' . $type,
-			'absolute' => 1,
-			'text' => $details['label'],
-			'link' => '#',
-			'menu' => $menu,
-		);
 	}
 
 	#########################################################################
@@ -777,8 +778,7 @@ function xoops_write_index_file($path = '') {
  * Focuses only on the files that start with a specific prefix
  * Returns an associative array with file types as keys and arrays of function/methods as values
  * @param array $targetFileTypes array of the prefixes we care about in file names (corresponds to the different categories of API docs, as found in /docs folder)
- * @return array Associative array of documentation files organized by type
- * @throws Exception If the docs directory does not exist, or the passed in target types are invalid or missing
+ * @return array Associative array of documentation files organized by type, or empty array if there are no docs available
  */
 function organizeAvailableDocs($targetFileTypes) {
 
@@ -791,39 +791,37 @@ function organizeAvailableDocs($targetFileTypes) {
 		$directoryPath = XOOPS_ROOT_PATH .'/docs';
 
     // Check if directory exists
-    if (!is_dir($directoryPath)) {
-        throw new Exception("Directory does not exist: $directoryPath");
-    }
+    if (is_dir($directoryPath)) {
+			// Get all files in the directory
+			$files = scandir($directoryPath);
 
-    // Get all files in the directory
-    $files = scandir($directoryPath);
-
-    // Filter out . and .. and process each file
-    foreach ($files as $file) {
-        // Skip current and parent directory references
-        if ($file === '.' || $file === '..') {
-            continue;
-        }
-        // Skip directories, only process files
-        $fullPath = $directoryPath . DIRECTORY_SEPARATOR . $file;
-        if (!is_file($fullPath)) {
-            continue;
-        }
+			// Filter out . and .. and process each file
+			foreach ($files as $file) {
+				// Skip current and parent directory references
+				if ($file === '.' || $file === '..') {
+					continue;
+				}
+				// Skip directories, only process files
+				$fullPath = $directoryPath . DIRECTORY_SEPARATOR . $file;
+				if (!is_file($fullPath)) {
+					continue;
+				}
 
 				// Extract prefix (everything before the first hyphen)
 				// if there's a prefix and it matches one of the target file types...
-        $hyphenPos = strpos($file, '-');
-        if ($hyphenPos !== false AND $prefix = substr($file, 0, $hyphenPos) AND in_array($prefix, $targetFileTypes)) {
+				$hyphenPos = strpos($file, '-');
+				if ($hyphenPos !== false AND $prefix = substr($file, 0, $hyphenPos) AND in_array($prefix, $targetFileTypes)) {
 
-            // Initialize array for this prefix if it doesn't exist
-            if (!isset($result[$prefix])) {
-                $result[$prefix] = [];
-            }
+					// Initialize array for this prefix if it doesn't exist
+					if (!isset($result[$prefix])) {
+							$result[$prefix] = [];
+					}
 
-            // Add filename to the appropriate prefix array
-            $result[$prefix][] = str_replace(array($prefix.'-', '.md'), '', $file);
-        }
-    }
+					// Add filename to the appropriate prefix array
+					$result[$prefix][] = str_replace(array($prefix.'-', '.md'), '', $file);
+				}
+			}
+		}
 
     return $result;
 }
