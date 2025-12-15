@@ -873,7 +873,7 @@ function deleteMaintenance($id_req, $fid) {
 		throw new Error("Failed to delete 'Other' text for entry $id_req");
 	}
 	if(!$resourcesDeleteResult = $form_handler->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: $id_req)) {
-		throw new Error("Failed to delete delete associated resources for entry $id_req in form $fid");
+		throw new Error("Failed to delete associated resources for entry $id_req in form $fid");
 	}
 }
 

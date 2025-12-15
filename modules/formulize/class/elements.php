@@ -899,7 +899,7 @@ class formulizeElementsHandler {
 		$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
 		$result0 = true;
 		if(method_exists($typeElementHandler, 'deleteAssociatedDataAndResources')) {
-			if(!$result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all')) {
+			if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all') === false) {
 				print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($element->getVar('ele_id')))." failed";
 			}
 		}
