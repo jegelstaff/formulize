@@ -857,18 +857,24 @@ function allowedForms() {
 }
 
 
-// THIS FUNCTION REMOVES ENTRIES FROM THE OTHER TABLE BASED ON AN IDREQ
+/**
+ * Remove entries from the Other table, and delete associated resources when an entry is deleted from a form
+ * @param int $id_req The entry ID to delete
+ * @param int $fid The form ID from which the entry is being deleted
+ * @throws Error if an operation fails
+ */
 function deleteMaintenance($id_req, $fid) {
-    global $xoopsDB;
-
-    // remove entries in the formulize_other table
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($fid);
-
-    $sql3 = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id IN (" . implode(",", $formObject->getVar('elements')) . ")"; //limit to id_reqs where the element is from the right form, since the new id_reqs (entry_ids) can be repeated across forms
-    if (!$result3 = $xoopsDB->query($sql3)) {
-        exit("Error: failed to delete 'Other' text for entry $id_req");
-    }
+	global $xoopsDB;
+	// remove entries in the formulize_other table
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	$sql3 = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id IN (" . implode(",", $formObject->getVar('elements')) . ")"; //limit to id_reqs where the element is from the right form, since the new id_reqs (entry_ids) can be repeated across forms
+	if (!$result3 = $xoopsDB->query($sql3)) {
+		throw new Error("Failed to delete 'Other' text for entry $id_req");
+	}
+	if(!$resourcesDeleteResult = $form_handler->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: $id_req)) {
+		throw new Error("Failed to delete associated resources for entry $id_req in form $fid");
+	}
 }
 
 
@@ -877,8 +883,7 @@ function deleteIdReq($id_req, $fid) {
     $data_handler = new formulizeDataHandler($fid);
     if (!$deleteResult = $data_handler->deleteEntries($id_req)) {
         exit("<br />Error deleting entry $id_req from the database for form $fid<br />");
-    }
-
+		}
     deleteMaintenance($id_req, $fid);
 }
 

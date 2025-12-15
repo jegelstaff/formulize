@@ -492,6 +492,16 @@ test.describe('Surveys Elements', async () => {
 	  await page.getByRole('link', { name: 'Elements' }).nth(4).click();
 	})
 
+	test('Create Survey Intro', async ({ page }) => {
+		await addElementForm(page, ElementType.ib);
+		await waitForAdminPageReady(page)
+		await page.locator('input[name="elements-ele_caption"]').fill('Thank you for visiting the Museum!');
+		await page.getByRole('link', { name: 'Options' }).click();
+  	await page.getByRole('group', { name: 'Single text spanning the form' }).getByRole('textbox').fill('<h1>Thank you for visiting the Museum!</h1>');
+		await saveAdminForm(page);
+		await expect(page.getByRole('heading')).toContainText('Thank you for visiting the...');
+	});
+
 	test('Create Respondent name Element', async ({ page }) => {
 		await addElementForm(page, ElementType.text);
 		await waitForAdminPageReady(page)

@@ -389,6 +389,49 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 
+		/**
+		 * Delete any associated data and resources for this element when an element is deleted from a form
+		 * @param object $element The element object that is being deleted
+		 * @param string|null $entryScope Required. The scope of the deletion. Can be 'all' or an entry ID. If null (default), no action is taken.
+		 * @return array A list of the full paths to the files that were deleted
+		 */
+		function deleteAssociatedDataAndResources($element, $entryScope = null) {
+			$deletedFilePaths = array();
+			if($entryScope !== 'null' AND $entryScope === 'all' OR intval($entryScope) > 0) {
+				// we need to delete uploaded files associated with this element
+				// folder names are: formulize_{fid}_{entryId}_{elementId}
+				// delete all folders in the /uploads folder off the root of the XOOPS installation that match this pattern
+				// regex for matching folder names: /^formulize_\d+_\d+_{$elementId}$/
+				// if $scope is 'all', delete all folders that match the elementId
+				// if $scope is an entry ID, delete only the folder that matches that entry ID and the elementId
+				if($entryScope === 'all') {
+					$entryId = '\d+';
+				} else {
+					$entryId = intval($entryScope);
+				}
+				$regex = "/^formulize_".$element->getVar('id_form')."_".$entryId."_".$element->getVar('ele_id')."$/";
+				$uploadDir = XOOPS_ROOT_PATH."/uploads/";
+				$allFolders = scandir($uploadDir);
+				foreach($allFolders as $folder) {
+					if(preg_match($regex, $folder)) {
+						$folderLocation = $uploadDir.$folder;
+						if(file_exists($folderLocation) AND is_dir($folderLocation)) {
+							$files = scandir($folderLocation);
+							foreach($files as $file) {
+								if($file != "." AND $file != "..") {
+									if(unlink($folderLocation."/".$file)) {
+										$deletedFilePaths[] = $folderLocation."/".$file;
+									}
+								}
+							}
+							rmdir($folderLocation);
+						}
+					}
+				}
+			}
+			return $deletedFilePaths;
+		}
+
     // this method returns the URL for a file, not a href - or the text value that is in place of a file name, such as an error message
     // $element is the element object
     // $entry_id is the ID number of this entry
