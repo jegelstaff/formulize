@@ -334,6 +334,7 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();
 		await page.getByLabel('Form elements to display on').selectOption([
+			'Surveys: Thank you for visiting...',
 			'Surveys: Respondent name',
 			'Surveys: Exhibit',
 			'Surveys: Favourite artifact',
