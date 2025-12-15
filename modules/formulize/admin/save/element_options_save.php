@@ -47,9 +47,12 @@ if($element->isSystemElement) {
 	exit();
 }
 $ele_type = $element->getVar('ele_type');
-$element_handler = xoops_getmodulehandler($ele_type.'Element','formulize');
+if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+	$element_handler = xoops_getmodulehandler($ele_type.'Element','formulize');
+} else {
+	$element_handler = xoops_getmodulehandler('elements','formulize');
+}
 $fid = $element->getVar('id_form');
-
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);

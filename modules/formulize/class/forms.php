@@ -1170,12 +1170,14 @@ class formulizeFormsHandler {
 		foreach($formObject->getVar('elements') as $elementId) {
 			$elementObject = _getElementObject($elementId);
 			$elementType = $elementObject->getVar('ele_type');
-			$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
-			if(method_exists($typeElementHandler, 'deleteAssociatedDataAndResources')) {
-				if($typeElementHandler->deleteAssociatedDataAndResources($elementObject, $entryScope) === false) {
-					print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." for form ".$formObject->getVar('fid')." failed";
-					$result = false;
-				}
+			if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/elements/".$elementType."Element.php")) {
+				$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
+			} else {
+				$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
+			}
+			if($typeElementHandler->deleteAssociatedDataAndResources($elementObject, $entryScope) === false) {
+				print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." for form ".$formObject->getVar('fid')." failed";
+				$result = false;
 			}
 		}
 		return $result;

@@ -299,6 +299,27 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Delete any associated data and resources for this element when an element is deleted from a form
+	 * @param object $element The element object that is being deleted
+	 * @param string|null $entryScope Required. The scope of the deletion. Can be 'all' or an entry ID. If null (default), no action is taken.
+	 * @return array A list of the full paths to the files that were deleted
+	 */
+	function deleteAssociatedDataAndResources($element, $entryScope = null) {
+		$deletedFilePaths = array();
+		if($entryScope !== 'null' AND $entryScope === 'all') { // only remove code files if the element is being deleted, or the form is being deleted. When an entry is being deleted, entryScope will be the entry ID.
+			// we need to delete saved code files if any for this element
+			$ele_type = $element->getVar('ele_type');
+			$filename = $ele_type.'_'.$element->getVar('ele_handle').'.php';
+			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
+				if(unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
+					$deletedFilePaths[] = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+				}
+			}
+		}
+		return $deletedFilePaths;
+	}
+
+	/**
 	 * Set up and validate a set of element properties
 	 * Focuses on the non ele_value properties that are common to all element types
 	 * The ele_value options are handled in the child class, since they are element-type specific
@@ -896,12 +917,13 @@ class formulizeElementsHandler {
 			return false;
 		}
 		$elementType = $element->getVar('ele_type');
-		$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
-		$result0 = true;
-		if(method_exists($typeElementHandler, 'deleteAssociatedDataAndResources')) {
-			if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all') === false) {
-				print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($element->getVar('ele_id')))." failed";
-			}
+		if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/elements/".$elementType."Element.php")) {
+			$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
+		} else {
+			$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
+		}
+		if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all') === false) {
+			print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($element->getVar('ele_id')))." failed";
 		}
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
