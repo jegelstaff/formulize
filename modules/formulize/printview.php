@@ -88,9 +88,6 @@ h2, th {
 .subform-caption b {
     font-weight: normal;
 }
-p.subform-caption {
-    display: none;
-}
 .formulize-subform-title {
     display: none;
 }
@@ -169,57 +166,43 @@ $titleOverride = "";
 
 // only present when a specific page in a multipage is requested (or in future, a list of elements from a form screen)
 if ($ele_allowed) {
-    $elements_allowed = explode(",",$ele_allowed);
-    $formframetemp = $formframe;
-    unset($formframe);
-    $formframe['formframe'] = $formframetemp;
-    $formframe['elements'] = $elements_allowed;
-    // if there's a currentPage, then use that page title from the screen (currentpage is only present if there's a screen id)
-    if ($currentPage) {
-        $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-        $multiPageScreen = $screen_handler->get($screenid);
-        $pageTitles = $multiPageScreen->getVar('pagetitles');
-        $titleOverride = $pageTitles[$currentPage-1];
-    }
+	$elements_allowed = explode(",",$ele_allowed);
+	$formframetemp = $formframe;
+	unset($formframe);
+	$formframe['formframe'] = $formframetemp;
+	$formframe['elements'] = $elements_allowed;
+	// if there's a currentPage, then use that page title from the screen (currentpage is only present if there's a screen id)
+	if ($currentPage) {
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		if($multiPageScreen = $screen_handler->get($screenid)) {
+			list($pages, $pageTitles, $pageConditions) = $screen_handler->traverseScreenPages($multiPageScreen);
+			$titleOverride = $pageTitles[$currentPage];
+		}
+	}
 }
 
-// no element list passed in, but there is a screen id, so assume a multipage form
-if (! is_array($formframe) && $screenid && !$ele_allowed) {
-    $screen_handler =& xoops_getmodulehandler('screen', 'formulize');
-    $screen = $screen_handler->get($screenid);
-    $screen_type = $screen->getVar('type');
+// no element list passed in, but there is a screen id, so assume a full multipage form and show all pages
+if(!$ele_allowed AND $screenid) {
 
-    if ($screen_type == 'multiPage') {
-        $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-        $multiPageScreen = $screen_handler->get($screenid);
-        $conditions = $multiPageScreen->getConditions();
-				$pages = $multiPageScreen->getVar('pages');
-        $pagetitles = $multiPageScreen->getVar('pagetitles');
-        ksort($pages); // make sure the arrays are sorted by key, ie: page number
-        ksort($pagetitles);
-        // convention dictates that the page arrays start with [1] and not [0],
-        //  for readability when manually using the API, so we bump up all the numbers by one by adding
-        //  something to the front of the array
-        array_unshift($pages, "");
-        array_unshift($pagetitles, "");
-        unset($pages[0]); // get rid of the part we just unshifted, so the page count is correct
-        unset($pagetitles[0]);
+	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	$screen = $screen_handler->get($screenid);
+	$screen_type = $screen->getVar('type');
 
-        foreach ($pages as $currentPage=>$page) {
-            if(pageMeetsConditions($conditions, $currentPage, $ventry, $fid, $frid)) {
-								$elements = array();
-                foreach ($page as $element) {
-                  $elements[] = $element;
-                }
-								displayForm(array('formframe' => $formframe, 'elements' => $elements), $ventry, $mainform, "", "{NOBUTTON}", "", $pagetitles[$currentPage]);
-            }
-        }
-    }
+	if ($screen_type == 'multiPage') {
+		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$multiPageScreen = $screen_handler->get($screenid);
+		list($pages, $pageTitles, $pageConditions) = $screen_handler->traverseScreenPages($multiPageScreen);
+		foreach ($pages as $currentPage=>$elements) {
+			if(pageMeetsConditions($pageConditions, $currentPage, $ventry, $fid, $frid)) {
+				displayForm(array('formframe' => $formframe, 'elements' => $elements), $ventry, $mainform, "", "{NOBUTTON}", "", $pageTitles[$currentPage], screen:  ($multiPageScreen ? $multiPageScreen : null));
+			}
+		}
+	}
+
+// otherwise, try regular displayForm with the passed in/prepped params (likely there's an element list / we're showing a single page)
 } else {
-	// if it's a single
-	displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}", "", $titleOverride);
+	displayForm($formframe, $ventry, $mainform, "", "{NOBUTTON}", "", $titleOverride, screen: ($multiPageScreen ? $multiPageScreen : null));
 }
-
 
 
 if(!$makingPDF) {

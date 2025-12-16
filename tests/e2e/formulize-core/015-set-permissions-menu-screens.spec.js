@@ -225,6 +225,9 @@ test.describe('Set columns and elements for screens', () => {
 	test('Donors form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(2).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Donor', exact: true }).click();
+		await page.getByRole('link', { name: 'Options' }).click();
+  	await page.locator('#form-3 label').filter({ hasText: /^No$/ }).locator('#screens-printall').check();
+		await saveAdminForm(page);
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await page.getByRole('textbox', { name: 'Title for page number' }).fill('Profile');
