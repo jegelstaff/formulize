@@ -579,6 +579,7 @@ test.describe('Data entry for Survey', () => {
 				await page.goto('/modules/formulize/index.php?sid=10');
 			}
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
+			await expect(page.getByText('Thank you for visiting the Museum!')).toBeVisible();
 			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
 			await expect(page.getByText('Staff comments')).not.toBeVisible();
 			await page.getByLabel('Which exhibit did you see?').selectOption(exhibit);
