@@ -219,6 +219,7 @@ export async function login(page, username, password = '12345') {
  */
 export async function saveFormulizeForm(page, timeout = 120000) {
 	// Wait for the formulize page token
+  await page.locator('div#formulizeform').click();
 	await waitForFormulizeFormToken(page);
 	await Promise.all([
     page.waitForFunction(() => {
