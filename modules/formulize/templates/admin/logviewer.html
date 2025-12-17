@@ -1,0 +1,395 @@
+<div class="panel-content content log-viewer-container">
+    <h2>System Log Viewer</h2>
+
+    <{if $adminPage.error}>
+        <div class="log-viewer-error">
+            <p><strong>Error:</strong> <{$adminPage.error}></p>
+        </div>
+    <{/if}>
+
+    <{if $adminPage.info}>
+        <div class="log-viewer-info">
+            <p><{$adminPage.info}></p>
+        </div>
+    <{/if}>
+
+    <!-- File selector and filters -->
+    <div class="log-viewer-controls">
+        <form id="log-filter-form" method="post" action="ui.php?page=logviewer">
+
+            <div class="log-control-row">
+                <div class="log-control-group">
+                    <label for="log-file-select">Log File:</label>
+                    <select name="file" id="log-file-select" onchange="this.form.submit();">
+                        <{foreach from=$adminPage.log_files key=fileKey item=fileInfo}>
+                            <option value="<{$fileKey}>"
+                                    <{if $adminPage.selected_file == $fileKey}>selected<{/if}>>
+                                <{$fileInfo.display}> (<{$fileInfo.size|number_format}> bytes)
+                            </option>
+                        <{/foreach}>
+                    </select>
+                </div>
+
+                <div class="log-control-group">
+                    <label for="per-page">Entries per page:</label>
+                    <select name="per_page" id="per-page" onchange="this.form.submit();">
+                        <option value="250" <{if $adminPage.per_page == 250}>selected<{/if}>>250</option>
+                        <option value="500" <{if $adminPage.per_page == 500}>selected<{/if}>>500</option>
+                        <option value="1000" <{if $adminPage.per_page == 1000}>selected<{/if}>>1000</option>
+                    </select>
+                </div>
+
+                <div class="log-control-group">
+                    <button type="submit" class="log-apply-filters">Apply Filters</button>
+                    <a href="ui.php?page=logviewer" class="log-clear-filters">Clear Filters</a>
+                </div>
+            </div>
+
+            <!-- Filters accordion -->
+            <div class="log-filters-accordion">
+                <h3 class="log-filters-header" id="log-filters-toggle">
+                    <span class="log-filter-toggle">▶</span> Filters
+                    <{assign var="activeCount" value=0}>
+                    <{if $adminPage.filters.session_id}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.request_id}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.user_id !== ''}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.event_type}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.form_id !== ''}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.screen_id !== ''}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.entry_id !== ''}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.time_from}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.time_to}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $adminPage.filters.ignore_anonymous}><{assign var="activeCount" value=$activeCount+1}><{/if}>
+                    <{if $activeCount > 0}>
+                        <span class="log-active-filter-count">(<{$activeCount}> active)</span>
+                    <{/if}>
+                </h3>
+
+                <div class="log-filters-content" id="log-filters-content">
+                    <div class="log-filter-row">
+                        <div class="log-filter-field">
+                            <label>Session ID:</label>
+                            <input type="text" name="session_id" value="<{$adminPage.filters.session_id}>"
+                                   placeholder="e.g., mquhq07maeslv7330r6qp46ebi" />
+                        </div>
+
+                        <div class="log-filter-field">
+                            <label>Request ID:</label>
+                            <input type="text" name="request_id" value="<{$adminPage.filters.request_id}>"
+                                   placeholder="e.g., 6941b1dfb87163.60530629" />
+                        </div>
+                    </div>
+
+                    <div class="log-filter-row">
+                        <div class="log-filter-field">
+                            <label>Event Type:</label>
+                            <select name="event_type">
+                                <{foreach from=$adminPage.event_types key=eventKey item=eventLabel}>
+                                    <option value="<{$eventKey}>"
+                                            <{if $adminPage.filters.event_type == $eventKey}>selected<{/if}>>
+                                        <{$eventLabel}>
+                                    </option>
+                                <{/foreach}>
+                            </select>
+                        </div>
+
+                        <div class="log-filter-field">
+                            <label>User ID:</label>
+                            <input type="number" name="user_id" value="<{$adminPage.filters.user_id}>"
+                                   placeholder="e.g., 1" />
+                        </div>
+
+                        <div class="log-filter-field log-filter-checkbox">
+                            <input type="checkbox" id="ignore_anonymous" name="ignore_anonymous" value="1"
+                                   <{if $adminPage.filters.ignore_anonymous}>checked<{/if}> />
+                            <label for="ignore_anonymous">Ignore Anonymous Users</label>
+                        </div>
+                    </div>
+
+                    <div class="log-filter-row">
+                        <div class="log-filter-field">
+                            <label>Form ID:</label>
+                            <input type="number" name="form_id" value="<{$adminPage.filters.form_id}>" />
+                        </div>
+
+                        <div class="log-filter-field">
+                            <label>Screen ID:</label>
+                            <input type="number" name="screen_id" value="<{$adminPage.filters.screen_id}>" />
+                        </div>
+
+                        <div class="log-filter-field">
+                            <label>Entry ID:</label>
+                            <input type="number" name="entry_id" value="<{$adminPage.filters.entry_id}>" />
+                        </div>
+                    </div>
+
+                    <div class="log-filter-row">
+                        <div class="log-filter-field">
+                            <label>Time From (local):</label>
+                            <input type="time" name="time_from" value="<{$adminPage.filters.time_from}>" />
+                        </div>
+
+                        <div class="log-filter-field">
+                            <label>Time To (local):</label>
+                            <input type="time" name="time_to" value="<{$adminPage.filters.time_to}>" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results summary -->
+    <{if $adminPage.session_count > 0}>
+        <div class="log-results-summary">
+            <p>
+                Showing <strong><{$adminPage.session_count}></strong> session<{if $adminPage.session_count != 1}>s<{/if}>
+                with <strong><{$adminPage.total_entries}></strong> log entr<{if $adminPage.total_entries != 1}>ies<{else}>y<{/if}>
+                (Page <{$adminPage.current_page}>)
+            </p>
+        </div>
+    <{/if}>
+
+    <!-- Session/timeline view -->
+    <div class="log-sessions-container">
+        <{foreach from=$adminPage.sessions item=session}>
+            <div class="log-session-block <{if $session.has_errors}>log-session-has-errors<{/if}>">
+                <!-- Session header (collapsible) -->
+                <div class="log-session-header" onclick="toggleSession(this);">
+                    <span class="log-session-toggle">▶</span>
+                    <div class="log-session-info">
+                        <span class="log-session-user">
+                            User: <strong><{$session.username}></strong> <{if $session.user_id > 0}>(ID: <{$session.user_id}>)<{/if}>
+                        </span>
+                        <span class="log-session-stats">
+                            <{$session.request_count}> request<{if $session.request_count != 1}>s<{/if}> |
+                            <{$session.event_count}> event<{if $session.event_count != 1}>s<{/if}>
+                        </span>
+                        <span class="log-session-time">
+                            <{$session.first_seen|date_format:"%Y-%m-%d %H:%M:%S"}>
+                            to
+                            <{$session.last_seen|date_format:"%H:%M:%S"}>
+                        </span>
+                        <{if $session.has_errors}>
+                            <span class="log-error-badge">⚠ Contains Errors</span>
+                        <{/if}>
+                    </div>
+                    <span class="log-session-id">
+                        (Session: <code><{$session.session_id}></code>)
+                    </span>
+                </div>
+
+                <!-- Session requests (timeline) -->
+                <div class="log-session-events" style="display: none;">
+                    <div class="log-timeline">
+                        <{foreach from=$session.requests item=request}>
+                            <!-- Request group -->
+                            <div class="log-request-group">
+                                <div class="log-request-header">
+                                    <span class="log-request-time">
+                                        <{$request.first_event_time|date_format:"%H:%M:%S"}><{php}>$micro = $this->_tpl_vars['request']['first_event_time']; echo '.' . str_pad(round(($micro - floor($micro)) * 1000), 3, '0', STR_PAD_LEFT);<{/php}>
+                                    </span>
+                                    <span class="log-request-url">
+                                        <{if $request.url}>
+                                            <a href="<{$request.url}>" target="_blank"><{$request.url}></a>
+                                        <{else}>
+                                            (No URL)
+                                        <{/if}>
+                                    </span>
+                                    <{if $request.is_admin}>
+                                        <span class="log-request-badge log-admin-badge">ADMIN</span>
+                                    <{/if}>
+                                    <{if $request.is_mcp}>
+                                        <span class="log-request-badge log-mcp-badge">MCP</span>
+                                    <{/if}>
+                                    <span class="log-request-id">
+                                        (Request: <code><{$request.request_id}></code>)
+                                    </span>
+                                </div>
+
+                                <!-- Events within this request -->
+                                <div class="log-request-events">
+                                    <{foreach from=$request.events item=event}>
+                                        <{assign var="hasError" value=false}>
+                                        <{if $event.PHP_error_number || $event.formulize_event|strstr:'error'}>
+                                            <{assign var="hasError" value=true}>
+                                        <{/if}>
+                                        <div class="log-event-row <{if $hasError}>log-event-error<{/if}>">
+                                            <!-- Compact view -->
+                                            <div class="log-event-compact" onclick="toggleEventDetails(this);">
+                                                <span class="log-event-toggle">▶</span>
+                                                <span class="log-event-time">
+                                                    <{$event.microtime|date_format:"%H:%M:%S"}><{php}>$micro = $this->_tpl_vars['event']['microtime']; echo '.' . str_pad(round(($micro - floor($micro)) * 1000), 3, '0', STR_PAD_LEFT);<{/php}>
+                                                </span>
+                                                <span class="log-event-type">
+                                                    <{$event.formulize_event}>
+                                                </span>
+                                                <{if $event.form_title}>
+                                                    <span class="log-event-context">Form: <strong><{$event.form_title}></strong> (ID: <{$event.form_id}>)</span>
+                                                <{elseif $event.form_id}>
+                                                    <span class="log-event-context">Form ID: <{$event.form_id}></span>
+                                                <{/if}>
+                                                <{if $event.screen_title}>
+                                                    <span class="log-event-context">Screen: <strong><{$event.screen_title}></strong> (ID: <{$event.screen_id}>)</span>
+                                                <{elseif $event.screen_id}>
+                                                    <span class="log-event-context">Screen ID: <{$event.screen_id}></span>
+                                                <{/if}>
+                                                <{if $event.entry_descriptor}>
+                                                    <span class="log-event-context">Entry: <strong><{$event.entry_descriptor}></strong> (ID: <{$event.entry_id}>)</span>
+                                                <{elseif $event.entry_id}>
+                                                    <span class="log-event-context">Entry ID: <{$event.entry_id}></span>
+                                                <{/if}>
+                                                <{if $event.PHP_error_number}>
+                                                    <span class="log-error-indicator">⚠ PHP Error</span>
+                                                <{/if}>
+                                            </div>
+
+                                            <!-- Expandable details -->
+                                            <div class="log-event-details" style="display: none;">
+                                                <table class="log-event-table">
+                                                    <{foreach from=$event key=fieldName item=fieldValue}>
+                                                        <{if $fieldValue !== ''}>
+                                                            <tr>
+                                                                <td class="log-field-name"><{$fieldName}></td>
+                                                                <td class="log-field-value">
+                                                                    <{if $fieldName == 'url'}>
+                                                                        <a href="<{$fieldValue}>" target="_blank"><{$fieldValue}></a>
+                                                                    <{elseif $fieldName == 'microtime'}>
+                                                                        <{php}>echo date('Y-m-d H:i:s', $this->_tpl_vars['fieldValue']) . '.' . str_pad(round(($this->_tpl_vars['fieldValue'] - floor($this->_tpl_vars['fieldValue'])) * 1000000), 6, '0', STR_PAD_LEFT);<{/php}>
+                                                                    <{else}>
+                                                                        <code><{$fieldValue}></code>
+                                                                    <{/if}>
+                                                                </td>
+                                                            </tr>
+                                                        <{/if}>
+                                                    <{/foreach}>
+                                                </table>
+
+                                                <!-- Quick filter links -->
+                                                <div class="log-event-actions">
+                                                    <a href="?page=logviewer&file=<{$adminPage.selected_file}>&session_id=<{$event.session_id}>">Filter by this session</a> |
+                                                    <a href="?page=logviewer&file=<{$adminPage.selected_file}>&request_id=<{$event.request_id}>">Filter by this request</a> |
+                                                    <a href="?page=logviewer&file=<{$adminPage.selected_file}>&event_type=<{$event.formulize_event}>">Filter by this event type</a><{if $event.user_id}> |
+                                                    <a href="?page=logviewer&file=<{$adminPage.selected_file}>&user_id=<{$event.user_id}>">Filter by this user</a><{/if}><{if $event.form_id}> |
+                                                    <a href="?page=logviewer&file=<{$adminPage.selected_file}>&form_id=<{$event.form_id}>">Filter by this form</a><{/if}><{if $event.screen_id}> |
+                                                    <a href="?page=logviewer&file=<{$adminPage.selected_file}>&screen_id=<{$event.screen_id}>">Filter by this screen</a><{/if}>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <{/foreach}>
+                                </div>
+                            </div>
+                        <{/foreach}>
+                    </div>
+                </div>
+            </div>
+        <{/foreach}>
+    </div>
+
+    <!-- Pagination -->
+    <{if $adminPage.session_count > 0}>
+        <div class="log-pagination">
+            <{php}>
+                // Check if we're not on the first page (offset > 0 or if we have POST offset)
+                $currentOffset = isset($_POST['offset']) ? intval($_POST['offset']) : (isset($_GET['offset']) ? intval($_GET['offset']) : 0);
+
+                if($currentOffset > 0) {
+                    echo '<button type="button" onclick="navigateToPage(0)" class="log-nav-button">← First Page</button> ';
+                }
+            <{/php}>
+
+            <span class="log-page-info">Lines <{$adminPage.line_start}> - <{$adminPage.line_end}></span>
+
+            <button type="button" onclick="navigateToPage(<{$adminPage.next_offset|default:0}>)" class="log-nav-button">Next →</button>
+        </div>
+    <{/if}>
+</div>
+
+<script src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-logviewer.js"></script>
+
+<style>
+/* Log Viewer Styles */
+.log-viewer-container { max-width: 100%; padding: 10px; }
+.log-viewer-error { background: #ffe6e6; border: 1px solid #cc0000; padding: 10px; margin-bottom: 20px; border-radius: 4px; }
+.log-viewer-info { background: #e6f3ff; border: 1px solid #0066cc; padding: 10px; margin-bottom: 20px; border-radius: 4px; }
+.log-viewer-controls { background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+.log-control-row { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.log-control-group { display: flex; align-items: center; gap: 10px; }
+.log-control-group label { font-weight: bold; margin: 0; }
+.log-control-group select, .log-control-group input { padding: 5px; }
+.log-apply-filters { background: #0066cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.log-apply-filters:hover { background: #0052a3; }
+.log-clear-filters { color: #cc0000; text-decoration: none; padding: 8px 16px; }
+.log-clear-filters:hover { text-decoration: underline; }
+
+.log-filters-accordion { margin-top: 15px; border: 1px solid #ddd; border-radius: 4px; }
+.log-filters-header { cursor: pointer; background: #e0e0e0; padding: 10px; user-select: none; margin: 0; font-size: 14px; font-weight: bold; }
+.log-filters-header:hover { background: #d0d0d0; }
+.log-filter-toggle { display: inline-block; width: 12px; transition: transform 0.2s; }
+.log-active-filter-count { color: #0066cc; font-weight: normal; }
+.log-filters-content { padding: 15px; border-top: 1px solid #ddd; display: none; background: white; }
+.log-filters-content.active { display: block; }
+.log-filter-row { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+.log-filter-field { flex: 1; min-width: 200px; }
+.log-filter-field.log-filter-checkbox { flex: 0; min-width: auto; display: flex; align-items: flex-end; }
+.log-filter-field label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 12px; }
+.log-filter-field.log-filter-checkbox label { font-weight: normal; margin-bottom: 0; }
+.log-filter-field input, .log-filter-field select { width: 100%; padding: 6px; font-size: 13px; }
+.log-filter-field.log-filter-checkbox input { width: auto; margin-right: 5px; }
+
+.log-results-summary { margin-bottom: 20px; font-size: 14px; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+.log-sessions-container { }
+.log-session-block { border: 1px solid #ccc; margin-bottom: 15px; border-radius: 5px; background: white; }
+.log-session-block.log-session-has-errors { border-left: 4px solid #cc0000; }
+.log-session-header { background: #f0f0f0; padding: 12px; cursor: pointer; user-select: none; display: flex; gap: 10px; align-items: center; }
+.log-session-header:hover { background: #e8e8e8; }
+.log-session-toggle { font-size: 12px; display: inline-block; width: 12px; }
+.log-session-info { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; flex: 1; font-size: 13px; }
+.log-session-id code { background: #fff; padding: 2px 6px; border-radius: 3px; font-size: 11px; border: 1px solid #ddd; }
+.log-error-badge { background: #ffcccc; color: #cc0000; padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 11px; }
+
+.log-session-events { padding: 10px; background: #fafafa; }
+.log-timeline { }
+
+.log-request-group { margin-bottom: 15px; padding-left: 10px; }
+.log-request-header { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 8px; background: #e8f4f8; border-left: 3px solid #0066cc; margin-bottom: 8px; font-size: 13px; }
+.log-request-time { font-family: monospace; color: #666; font-size: 12px; font-weight: bold; }
+.log-request-url { flex: 1; }
+.log-request-url a { color: #0066cc; text-decoration: none; word-break: break-all; }
+.log-request-url a:hover { text-decoration: underline; }
+.log-request-id { font-size: 11px; color: #666; }
+.log-request-id code { background: #fff; padding: 2px 6px; border-radius: 3px; border: 1px solid #ddd; }
+.log-request-badge { padding: 2px 8px; border-radius: 3px; font-weight: bold; font-size: 10px; }
+.log-admin-badge { background: #fff3cd; color: #856404; border: 1px solid #ffc107; }
+.log-mcp-badge { background: #d1ecf1; color: #0c5460; border: 1px solid #17a2b8; }
+.log-request-events { padding-left: 15px; }
+
+.log-event-row { border-left: 2px solid #ccc; margin-left: 20px; padding-left: 15px; margin-bottom: 8px; }
+.log-event-row.log-event-error { border-left-color: #cc0000; }
+.log-event-compact { cursor: pointer; padding: 5px; display: flex; gap: 10px; align-items: center; font-size: 13px; }
+.log-event-compact:hover { background: #f0f0f0; }
+.log-event-toggle { font-size: 10px; display: inline-block; width: 10px; transition: transform 0.2s; }
+.log-event-compact.expanded .log-event-toggle { transform: rotate(90deg); }
+.log-event-time { font-family: monospace; color: #666; font-size: 12px; min-width: 90px; }
+.log-event-type { font-weight: bold; color: #0066cc; }
+.log-event-context { font-size: 12px; color: #666; }
+.log-error-indicator { color: #cc0000; font-weight: bold; }
+
+.log-event-details { margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
+.log-event-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+.log-event-table tr { border-bottom: 1px solid #f0f0f0; }
+.log-event-table tr:last-child { border-bottom: none; }
+.log-event-table td { padding: 6px 8px; vertical-align: top; }
+.log-field-name { font-weight: bold; width: 200px; color: #333; }
+.log-field-value code { background: #f5f5f5; padding: 2px 4px; font-size: 11px; word-break: break-all; }
+.log-field-value a { color: #0066cc; }
+.log-event-actions { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; font-size: 12px; }
+.log-event-actions a { color: #0066cc; margin-right: 8px; }
+
+.log-pagination { display: flex; justify-content: center; gap: 20px; margin-top: 30px; padding: 20px; }
+.log-pagination a { color: #0066cc; text-decoration: none; padding: 8px 16px; border: 1px solid #0066cc; border-radius: 4px; }
+.log-pagination a:hover { background: #0066cc; color: white; }
+.log-nav-button { color: #0066cc; text-decoration: none; padding: 8px 16px; border: 1px solid #0066cc; border-radius: 4px; background: white; cursor: pointer; font-size: 14px; }
+.log-nav-button:hover { background: #0066cc; color: white; }
+.log-page-info { padding: 8px 16px; }
+</style>

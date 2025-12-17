@@ -147,6 +147,9 @@ switch($active_page) {
 		case "config-sync":
 				include "config-sync.php";
 				break;
+    case "logviewer":
+        include "logviewer.php";
+        break;
     default:
     case "home":
         include "home.php";
