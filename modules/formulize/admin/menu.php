@@ -54,3 +54,6 @@ $adminmenu[] = array(
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS,
 	'link'	=> 'admin/ui.php?page=managetokens');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_SYSTEM_LOG_VIEWER,
+	'link'	=> 'admin/ui.php?page=logviewer');

@@ -221,4 +221,5 @@ define('_MI_formulize_IMPORT_EXPORT', 'Import/Export Forms and Apps');
 define('_MI_formulize_COPY_GROUP_PERMS', 'Copy Group Permissions');
 define('_MI_formulize_SYNCHRONIZE', 'Synchronize With Another System');
 define('_MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS', 'Manage Account Creation Tokens');
+define('_MI_formulize_SYSTEM_LOG_VIEWER', 'System Log Viewer');
 define('_MI_formulize_MANAGE_FORM_ACCESS', 'Manage Access to Forms');
