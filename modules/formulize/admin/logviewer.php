@@ -16,7 +16,18 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 // Get log configuration
 $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+$formulizeLoggingOnOff = $formulizeConfig['formulizeLoggingOnOff'];
 $logPath = $formulizeConfig['formulizeLogFileLocation'];
+
+if(!$formulizeLoggingOnOff) {
+    $formulizeModId = getFormulizeModId();
+    $preferencesUrl = XOOPS_URL . "/modules/system/admin.php?fct=preferences&op=showmod&mod=" . $formulizeModId;
+    $adminPage['error'] = "Logging is currently disabled. Enable it in <a href=\"" . htmlspecialchars($preferencesUrl) . "\">Formulize preferences</a> to view logs.";
+    $adminPage['template'] = "db:admin/logviewer.html";
+    $adminPage['sessions'] = array();
+    $adminPage['log_files'] = array();
+    return;
+}
 
 if(!$logPath || !is_dir($logPath)) {
     $adminPage['error'] = "Log directory not configured or not accessible: " . htmlspecialchars($logPath);
@@ -96,13 +107,25 @@ $adminPage['event_types'] = array(
     'attempting-screen-rendering' => 'Screen Rendering',
     'attempting-raw-rendering' => 'Raw Rendering',
     'completed-page-rendering' => 'Page Rendered',
+    'rendering-form-screen-page' => 'Form Screen Page',
+    'rendering-form' => 'Form Rendering',
     'gathering-data-for-list-of-entries' => 'Data Gathering',
     'saving-data' => 'Data Saved',
+    'new-entry' => 'New Entry Created',
+    'update-entry' => 'Entry Updated',
+    'delete-entry' => 'Entry Deleted',
+    'processing-notification-for-new-entry' => 'Notification: New Entry',
+    'processing-notification-for-update-entry' => 'Notification: Update Entry',
+    'processing-notification-for-delete-entry' => 'Notification: Delete Entry',
+    'mcp-request-being-handled' => 'MCP Request',
     'PHP-error-recorded' => 'PHP Error',
     'queue-processing-beginning' => 'Queue Processing Start',
     'queue-processing-complete' => 'Queue Processing Complete',
     'item-written-to-queue' => 'Item Queued',
     'processing-queue-item' => 'Processing Queue Item',
+    'error-processing-queue-item' => 'Queue Item Error',
+    'error-writing-item-to-queue' => 'Queue Write Error',
+    'syntax-error-in-queue-item' => 'Queue Syntax Error',
 );
 
 if($entries && count($entries) > 0) {
