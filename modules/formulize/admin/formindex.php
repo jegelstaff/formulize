@@ -402,6 +402,12 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
+				// if the registered users group does not have module_admin permission, then remove all edit_form permissions they might have from time immemorial
+				$gperm_handler = xoops_gethandler('groupperm');
+				if($gperm_handler->checkRight("module_admin", getFormulizeModId(), XOOPS_GROUP_USERS, 1) === false) {
+					$sql['remove_registered_users_edit_form_perms'] = "DELETE FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_name='edit_form' AND gperm_modid=".getFormulizeModId()." AND gperm_groupid=".XOOPS_GROUP_USERS;
+				}
+
         // if this is a standalone installation, then we want to make sure the session id field in the DB is large enough to store whatever session id we might be working with
         if (file_exists(XOOPS_ROOT_PATH."/integration_api.php")) {
             $sql['increase_session_id_size'] = "ALTER TABLE ".$xoopsDB->prefix("session")." CHANGE `sess_id` `sess_id` varchar(60) NOT NULL";

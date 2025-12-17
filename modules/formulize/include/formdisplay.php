@@ -408,7 +408,10 @@ class formulize_themeForm extends XoopsThemeForm {
 			global $xoopsUser;
 			$gperm_handler = xoops_gethandler('groupperm');
 			$fid = $elementObject->getVar('fid');
-			if($xoopsUser AND $gperm_handler->checkRight("edit_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())) {
+			if($xoopsUser
+				AND $gperm_handler->checkRight("edit_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())
+				AND $gperm_handler->checkRight("module_admin", getFormulizeModId(), $xoopsUser->getGroups(), 1)
+				) {
 				$application_handler = xoops_getmodulehandler('applications', 'formulize');
 				$apps = $application_handler->getApplicationsByForm($fid);
 				$app = (is_array($apps) AND isset($apps[0])) ? $apps[0] : $apps;
