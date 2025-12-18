@@ -4,7 +4,7 @@ $style = "";
 $width = "";
 $display = "";
 if($columns == 1 AND $column1Width) {
-    $width = "width: '$column1Width';";
+    $width = "width: $column1Width;";
 }
 if($startHidden) {
     $display = "display: none;";
