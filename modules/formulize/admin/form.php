@@ -66,6 +66,8 @@ if ($_GET['fid'] != "new") {
     $send_digests = $formObject->getVar('send_digests');
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
+		$entries_are_users = $formObject->getVar('entries_are_users');
+		$entries_are_groups = $formObject->getVar('entries_are_groups');
 
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
@@ -465,6 +467,8 @@ if ($_GET['fid'] != "new") {
 		$send_digests = 0;
 		$defaultpi = 0;
 		$pioptions = array();
+		$entries_are_users = 0;
+		$entries_are_groups = 0;
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -584,6 +588,8 @@ $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
+$settings['entries_are_users'] = $entries_are_users;
+$settings['entries_are_groups'] = $entries_are_groups;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
