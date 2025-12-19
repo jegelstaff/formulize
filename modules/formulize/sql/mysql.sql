@@ -381,6 +381,8 @@ CREATE TABLE formulize_id (
   note text,
   send_digests tinyint(1) NOT NULL default 0,
 	`pi` int(5) NOT NULL default 0,
+  entries_are_users tinyint(1) NOT NULL default 0,
+  entries_are_groups tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=InnoDB;
 
