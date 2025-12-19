@@ -113,6 +113,84 @@
 				</div>
              </fieldset>
 		</div>
+
+		<!-- Entries Represent Users -->
+		<div class="form-item" id="entries_are_users_container">
+			<fieldset>
+				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS}></label></legend>
+				<div class="form-radios">
+					<label for="entries_are_users-0">
+						<input type="radio" id="entries_are_users-0" name="forms-entries_are_users" value="0" />
+						<{$smarty.const._AM_NO}>
+					</label>
+				</div>
+				<div class="form-radios">
+					<label for="entries_are_users-1">
+						<input type="radio" id="entries_are_users-1" name="forms-entries_are_users" value="1" />
+						<{$smarty.const._AM_YES}>
+					</label>
+				</div>
+				<div class="description">
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
+				</div>
+			</fieldset>
+		</div>
+
+		<!-- Entries Represent Groups -->
+		<div class="form-item" id="entries_are_groups_container">
+			<fieldset>
+				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS}></label></legend>
+				<div class="form-radios">
+					<label for="entries_are_groups-0">
+						<input type="radio" id="entries_are_groups-0" name="forms-entries_are_groups" value="0" />
+						<{$smarty.const._AM_NO}>
+					</label>
+				</div>
+				<div class="form-radios">
+					<label for="entries_are_groups-1">
+						<input type="radio" id="entries_are_groups-1" name="forms-entries_are_groups" value="1" />
+						<{$smarty.const._AM_YES}>
+					</label>
+				</div>
+				<div class="description">
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN}></p>
+				</div>
+			</fieldset>
+		</div>
+
+		<script>
+		// Initialize checked state
+		$("#entries_are_users-<{$content.entries_are_users}>").attr('checked', 'checked');
+		$("#entries_are_groups-<{$content.entries_are_groups}>").attr('checked', 'checked');
+
+		// Initialize visibility based on current values
+		if (<{$content.entries_are_users}> == 1) {
+			$("#entries_are_groups_container").hide();
+		}
+		if (<{$content.entries_are_groups}> == 1) {
+			$("#entries_are_users_container").hide();
+		}
+
+		// Mutual exclusivity: if one is set to Yes, set the other to No and hide it
+		$("input[name='forms-entries_are_users']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#entries_are_groups-0").attr('checked', 'checked');
+				$("#entries_are_groups_container").slideUp();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#entries_are_groups_container").slideDown();
+			}
+		});
+
+		$("input[name='forms-entries_are_groups']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#entries_are_users-0").attr('checked', 'checked');
+				$("#entries_are_users_container").slideUp();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#entries_are_users_container").slideDown();
+			}
+		});
+		</script>
+
 			<div class="form-item">
 				<fieldset>
 					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
@@ -143,66 +221,6 @@
 				</fieldset>
 			</div>
 
-		<!-- Entries Represent Users -->
-		<div class="form-item">
-			<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS}></label></legend>
-				<p class="helptext"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
-				<div class="form-radios">
-					<label for="entries_are_users-0">
-						<input type="radio" id="entries_are_users-0" name="forms-entries_are_users" value="0" />
-						<{$smarty.const._AM_NO}>
-					</label>
-				</div>
-				<div class="form-radios">
-					<label for="entries_are_users-1">
-						<input type="radio" id="entries_are_users-1" name="forms-entries_are_users" value="1" />
-						<{$smarty.const._AM_YES}>
-					</label>
-				</div>
-			</fieldset>
-		</div>
-
-		<script>
-		$("#entries_are_users-<{$content.entries_are_users}>").attr('checked', true);
-		</script>
-
-		<!-- Entries Represent Groups -->
-		<div class="form-item">
-			<fieldset>
-				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS}></label></legend>
-				<p class="helptext"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN}></p>
-				<div class="form-radios">
-					<label for="entries_are_groups-0">
-						<input type="radio" id="entries_are_groups-0" name="forms-entries_are_groups" value="0" />
-						<{$smarty.const._AM_NO}>
-					</label>
-				</div>
-				<div class="form-radios">
-					<label for="entries_are_groups-1">
-						<input type="radio" id="entries_are_groups-1" name="forms-entries_are_groups" value="1" />
-						<{$smarty.const._AM_YES}>
-					</label>
-				</div>
-			</fieldset>
-		</div>
-
-		<script>
-		$("#entries_are_groups-<{$content.entries_are_groups}>").attr('checked', true);
-
-		// Mutual exclusivity: if one is set to Yes, set the other to No
-		$("input[name='forms-entries_are_users']").change(function() {
-			if ($(this).val() == "1" && $(this).is(':checked')) {
-				$("#entries_are_groups-0").prop('checked', true);
-			}
-		});
-
-		$("input[name='forms-entries_are_groups']").change(function() {
-			if ($(this).val() == "1" && $(this).is(':checked')) {
-				$("#entries_are_users-0").prop('checked', true);
-			}
-		});
-		</script>
 
 	<{/if}>
 
