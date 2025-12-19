@@ -61,6 +61,23 @@
 <script type="text/javascript">
 
 	var multipagePopupTextareaInitialized = false;
+	var activeLanguage = '<{$smarty.const.XOOPS_LOCALE}>';
+
+	// Extract text for active language from multilingual string
+	function getLocalizedText(text) {
+		if (!text) return '';
+
+		// Check if text contains language tags
+		var langPattern = new RegExp('\\[' + activeLanguage + '\\]([^\\[]*)\\[\\/' + activeLanguage + '\\]');
+		var match = text.match(langPattern);
+
+		if (match && match[1]) {
+			return match[1];
+		}
+
+		// If no match for active language, return the original text
+		return text;
+	}
 
 	// If saveLock is turned on, do not display save button to user, instead display "READ ONLY"
 	$( document ).ready(function() {
@@ -211,7 +228,7 @@ $(".conditionsdelete").click(function () {
 							alert(data);
 						}
 					}
-					$('div#drawer-5-<{$pageIndex}> span.accordion-name').text($('input#screens-pagetitle_<{$pageIndex}>').val());
+					$('div#drawer-5-<{$pageIndex}> span.accordion-name').text(getLocalizedText($('input#screens-pagetitle_<{$pageIndex}>').val()));
 					$.get('<{$smarty.const.XOOPS_URL}>/modules/formulize/admin/multipageScreenGeneratePageItemDescription.php?sid=<{$sid}>&page=<{$pageIndex}>', function(data) {
 						$('div#drawer-5-<{$pageIndex}> div.accordion-content').empty();
 						$('div#drawer-5-<{$pageIndex}> div.accordion-content').append(data);

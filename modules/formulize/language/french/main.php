@@ -650,4 +650,15 @@ define("_formulize_NEGATIVEFILTER", "Pas : ");
 define("_formulize_NEWENTRY", "nouvelle entrée");
 define("_formulize_ENTRY", "entrée");
 
+define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
+define("_formulize_USER_ACCOUNT_EN", "User Account");
+define("_formulize_USERACCOUNTFIRSTNAME", "Prenom");
+define("_formulize_USERACCOUNTLASTNAME", "Nom de famille");
+define("_formulize_USERACCOUNTEMAIL", "Adresse e-mail");
+define("_formulize_USERACCOUNTUSERNAME", "Nom d'utilisateur");
+define("_formulize_USERACCOUNTPASSWORD", "Mot de passe");
+define("_formulize_USERACCOUNTTIMEZONE", "Fuseau horaire");
+define("_formulize_USERACCOUNTPHONE", "Numéro de téléphone");
+define("_formulize_USERACCOUNT2FA", "Paramètres d'authentification à deux facteurs");
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

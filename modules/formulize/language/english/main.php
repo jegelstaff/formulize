@@ -815,3 +815,14 @@ define("_formulize_ERRORSENT2", "A webmaster will review the details shortly.");
 
 define("_formulize_NEWENTRY", "New Entry");
 define("_formulize_ENTRY", "Entry");
+
+define("_formulize_USER_ACCOUNT_EN", "User Account");
+define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
+define("_formulize_USERACCOUNTFIRSTNAME", "First Name");
+define("_formulize_USERACCOUNTLASTNAME", "Last Name");
+define("_formulize_USERACCOUNTEMAIL", "Email Address");
+define("_formulize_USERACCOUNTUSERNAME", "Username");
+define("_formulize_USERACCOUNTPASSWORD", "Password");
+define("_formulize_USERACCOUNTTIMEZONE", "Timezone");
+define("_formulize_USERACCOUNTPHONE", "Phone Number");
+define("_formulize_USERACCOUNT2FA", "Two-Factor Authentication Settings");

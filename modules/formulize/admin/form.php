@@ -84,7 +84,7 @@ if ($_GET['fid'] != "new") {
     $i = 1;
 		$elementsInRelationshipLinks = getElementsInRelationshipLinks($elementObjects);
     foreach($elementObjects as $thisElement) {
-        if($thisElement->isSystemElement) { continue; }
+        if($thisElement->getVar('ele_type') == "anonPasscode") { continue; } // we don't expose these in the element tab admin page, they are simply maintained in the background
         $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
         $colhead = trans(strip_tags($thisElement->getVar('ele_colhead')));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
@@ -126,6 +126,7 @@ if ($_GET['fid'] != "new") {
             $converttext = "";
             $linktype = "";
         }
+				$elements[$i]['content']['isSystemElement'] = $thisElement->isSystemElement;
         $elements[$i]['content']['converttext'] = $converttext;
         $elements[$i]['content']['linktype'] = $linktype;
         $elements[$i]['content']['ele_type'] = $cleanType;
