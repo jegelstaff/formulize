@@ -29,6 +29,8 @@ $(document).ready(function() {
 });
 </script>
 
+<{if $content.isSystemElement == false}>
+
 <div class="accordion-box">
 
 	<div class="form-item">
@@ -86,6 +88,8 @@ $(document).ready(function() {
 
 	</div>
 
+<{/if}>
+
 <div class="accordion-box">
     <div class="form-item">
     <fieldset>
@@ -136,7 +140,7 @@ $(document).ready(function() {
 	<div class="form-item">
    	<fieldset>
       <legend><label class="question">Additional display options:</label></legend>
-			<input type="checkbox" name="elements-ele_private" value="1"<{$content.ele_private}>> Only display this element to users who have permission to "view private elements".
+			<input type="checkbox" name="elements-ele_private" value="1" <{$content.ele_private}> <{if $content.isUserAccountElement}>disabled="disabled"<{/if}>> Only display this element to users who have permission to "view private elements".
 			<div class="description">
 				This can be useful for hiding information like phone numbers and other personal details from most other users.
 			</div>
