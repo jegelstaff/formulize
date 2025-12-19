@@ -277,6 +277,9 @@ $(document).ready(function() {
           redirect = data;
         } else if(data.substr(0,13)=="/* evalnow */") {
           eval(data);
+				} else if(data.substr(0,22)=="/* evalnowandreturn */") {
+					eval(data);
+					return; // abort further processing
         } else {
 					let strippedStyles = data.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ""); // remove style tags and content
 					let strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, ""); // strip HTML tags
