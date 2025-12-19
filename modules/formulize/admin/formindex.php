@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize';
-    $checkThisField = 'ele_dynamicdefault_source';
+    $checkThisTable = 'formulize_id';
+    $checkThisField = 'entries_are_users';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -667,7 +667,9 @@ function patch40() {
 										print "Element required already renamed. result: OK<br>";
 								} elseif($key === "add_dynamicdefault_source" OR $key === "add_dynamicdefault_conditions") {
 										print "Dynamic defaults already added. result: OK<br>";
-                }else {
+                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_groups") {
+										print "Entries-are-users/groups options already added. result: OK<br>";
+								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
