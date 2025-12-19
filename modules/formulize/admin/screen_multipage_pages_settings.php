@@ -93,6 +93,9 @@ $pageConditions = formulize_createFilterUI($filterSettingsToSend, "pagefilter_".
 // make isSaveLocked preference available to template
 $content['isSaveLocked'] = sendSaveLockPrefToTemplate();
 
+global $easiestml_lang;
+define('XOOPS_LOCALE', $easiestml_lang);
+
 $xoopsTpl->assign("content",$content);
 $xoopsTpl->assign("pageTitle",$pageTitle);
 $xoopsTpl->assign("pageNumber",$pageNumber);
