@@ -153,6 +153,8 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests']);
 		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi']);
+		$this->initVar("entries_are_users", XOBJ_DTYPE_INT, $formq[0]['entries_are_users']);
+		$this->initVar("entries_are_groups", XOBJ_DTYPE_INT, $formq[0]['entries_are_groups']);
     }
 
 	/**
@@ -908,7 +910,7 @@ class formulizeFormsHandler {
 					}
 
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
+							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_groups`) VALUES (".
 							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
@@ -919,7 +921,9 @@ class formulizeFormsHandler {
 							intval($store_revisions).", ".
 							$this->db->quoteString($note).", ".
 							intval($send_digests).", ".
-							intval($pi).")";
+							intval($pi).", ".
+							intval($entries_are_users).", ".
+							intval($entries_are_groups).")";
 				} else {
 					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
 							" `form_title` = ".$this->db->quoteString($form_title).
@@ -935,6 +939,8 @@ class formulizeFormsHandler {
 							", `note` = ".$this->db->quoteString($note).
 							", `send_digests` = ".intval($send_digests).
 							", `pi` = ".intval($pi).
+							", `entries_are_users` = ".intval($entries_are_users).
+							", `entries_are_groups` = ".intval($entries_are_groups).
 							" WHERE id_form = ".intval($id_form);
 				}
 
