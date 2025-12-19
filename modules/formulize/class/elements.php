@@ -50,7 +50,7 @@ class formulizeElement extends FormulizeObject {
 	var $alwaysValidateInputs;
 	var $canHaveMultipleValues;
 	var $hasMultipleOptions;
-	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
+	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be primarily managed by the system
 	public static $category = 'misc'; // the category this element belongs to - textboxes, selectors, lists, layout, misc, subforms
 
 	function __construct(){
@@ -976,6 +976,9 @@ class formulizeElementsHandler {
 				$result4 = $form_handler->insert($formObject);
 			}
 		}
+
+		$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$screenHandler->removeElementsFromScreens($element->getVar('ele_id'));
 
 		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}

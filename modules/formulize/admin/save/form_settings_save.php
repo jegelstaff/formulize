@@ -41,9 +41,11 @@ $newAppObject = false;
 if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->create();
 	$fid = 0;
+	$oldEntriesAreUsers = null;
 } else {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
+	$oldEntriesAreUsers = $formObject->getVar('entries_are_users');
 }
 $processedValues['forms']['fid'] = $fid;
 
@@ -112,13 +114,22 @@ if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_PO
 }
 
 // if the form name was changed, etc, then force a reload of the page...
-if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
+	OR ($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0)
+	OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)
+	OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged
+	OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
+
   if(!in_array($_POST['application_url_id'], $applicationIds)) {
     $appidToUse = count($applicationIds) > 0 ? intval($applicationIds[0]) : 0;
   } else {
     $appidToUse = intval($_POST['application_url_id']);
   }
-  print "/* eval */ ";
+	if(($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0) OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)) {
+		print "/* evalnowandreturn */ ";  // have to abort doing anything else... should probably do this all the time with evalnow except that's not how things were architected and sometimes the operations performed 'now' are necessary for subsequent calls to work cleanly so we can't always return when processing evalnow :(
+	} else {
+		print "/* eval */ ";
+	}
   if($formulize_altered_form_handle) {
     print " alert('The Form Handle was changed for uniqueness, or because some characters, such as punctuation, are not allowed in the database table names or PHP variables.');\n";
   }

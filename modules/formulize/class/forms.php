@@ -58,6 +58,7 @@ class formulizeForm extends FormulizeObject {
 			// gather element ids for this form
 			$encryptedElements = array();
 			$elementTypesWithData = array();
+			$elementTypesAreSystemElements = array();
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
 			$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=".intval($formq[0]['id_form'])." $displayFilter ORDER BY ele_order ASC");
@@ -66,9 +67,13 @@ class formulizeForm extends FormulizeObject {
 					// instantiate element object for this element, and check if it has data. Only once per type, to avoid duplication, keep it as fast as possible.
 					$elementObject = $element_handler->get($value['ele_id']);
 					$elementTypesWithData[$value['ele_type']] = $elementObject->hasData ? true : false;
+					$elementTypesAreSystemElements[$value['ele_type']] = $elementObject->isSystemElement ? true : false;
 				}
 				if($elementTypesWithData[$value['ele_type']]) {
 					$elementsWithData[$value['ele_id']] = $value['ele_id'];
+				}
+				if($elementTypesAreSystemElements[$value['ele_type']]) {
+					$systemElements[$value['ele_id']] = $value['ele_id'];
 				}
 				$elements[$value['ele_id']] = $value['ele_id'];
 				$elementCaptions[$value['ele_id']] = $value['ele_caption'];
@@ -130,6 +135,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
 		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
+		$this->initVar("systemElements", XOBJ_DTYPE_ARRAY, serialize($systemElements));
 		$this->initVar("elementCaptions", XOBJ_DTYPE_ARRAY, serialize($elementCaptions));
 		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
 		$this->initVar("elementHandles", XOBJ_DTYPE_ARRAY, serialize($elementHandles));
@@ -997,6 +1003,15 @@ class formulizeFormsHandler {
 					}
 				}
 
+				// if entries_are_users is set, add the system elements to the form for user account fields
+				if($formObject->getVar('entries_are_users')) {
+					if(!$this->createUserAccountElements($formObject)) {
+						throw new Exception("Could not create user account elements for form $id_form");
+					}
+				} else {
+					$this->removeUserAccountElements($formObject);
+				}
+
 				$procedures = array(
 					'on_before_save',
 					'on_after_save',
@@ -1015,6 +1030,147 @@ class formulizeFormsHandler {
 				}
 
 				return $id_form;
+	}
+
+	/**
+	 * Get the user account element types, based on the classes defined for them
+	 * @return array An array of element types for the user account elements
+	 */
+	function getUserAccountElementTypes() {
+		static $userAccountElementTypes = array();
+		if(empty($userAccountElementTypes)) {
+			$userAccountClassFiles = glob(XOOPS_ROOT_PATH . "/modules/formulize/class/userAccount*Element.php");
+			foreach($userAccountClassFiles as $classFile) {
+				$className = str_replace(array(XOOPS_ROOT_PATH . "/modules/formulize/class/", "Element.php"), "", $classFile);
+				$userAccountElementTypes[] = $className;
+			}
+			$order = array(
+				'FirstName',
+				'LastName',
+				'Username',
+				'Password',
+				'Email',
+				'Phone',
+				'2FA',
+				'Timezone'
+			);
+			// ensure the order is correct
+			$orderedTypes = array();
+			foreach($order as $type) {
+				if(in_array('userAccount'.$type, $userAccountElementTypes)) {
+					$orderedTypes[] = 'userAccount'.$type;
+				}
+			}
+			$userAccountElementTypes = $orderedTypes;
+		}
+		return $userAccountElementTypes;
+	}
+
+	/**
+	 * Remove user account system elements and related pages from the form
+	 * @param object formObject - The object representation of the form we're working with.
+	 * @return boolean Returns true if the elements were removed or did not exist, false if there was an error removing them.
+	 */
+	function removeUserAccountElements($formObject) {
+		// get the element ids of the user account elements
+		// remove from any screen pages of screens on this form where they exist
+		// delete the elements themselves
+		$userAccountElementTypes = $this->getUserAccountElementTypes();
+		$userAccountElementIds = array();
+		foreach($userAccountElementTypes as $type) {
+			$handle = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
+			if(in_array($handle, $formObject->getVar('elementHandles'))) {
+				if($elementObject = _getElementObject($handle)) {
+					$userAccountElementIds[] = $elementObject->getVar('ele_id');
+				}
+			}
+		}
+		if(!empty($userAccountElementIds)) {
+			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			$screenHandler->removeElementsFromScreens($userAccountElementIds, removeEmptyPages: true);
+			// now delete the elements themselves, has to be done directly because system elements are ignored by normal deletion method
+			global $xoopsDB;
+			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id IN (".implode(",", $userAccountElementIds).") AND id_form = ".intval($formObject->getVar('fid'));
+			$xoopsDB->queryF($sql);
+		}
+	}
+
+	/**
+	 * Add user account system elements to the form, if they do not already exist
+	 * Create the User Account page on the default form screen if necessary first
+	 * Add user account elements to that page
+	 * @param object formObject - The object representation of the form we're working with.
+	 * @return boolean Returns true if the elements exist or were created, subordinate functions and methods will throw an exception if there was an error.
+	 */
+	function createUserAccountElements($formObject) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$userAccountElementTypes = $this->getUserAccountElementTypes();
+		$userAccountElementTypes = array_reverse($userAccountElementTypes); // add in reverse order so they appear in the right order on the page
+		$screenIdsAndPagesForAdding = array();
+		foreach($userAccountElementTypes as $type) {
+			$handle = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
+			// if user account elements are not yet in the form, add them, and add to a newly created User Account page
+			if(!in_array($handle, $formObject->getVar('elementHandles'))) {
+				if($defaultFormSid = $formObject->getVar('defaultform') AND empty($screenIdsAndPagesForAdding)) {
+					$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+					if($screenObject = $screenHandler->get($defaultFormSid)) {
+						// get the page metadata, page numbers numbered from 1
+						list($pages, $pageTitles, $pageConditions) = $screenHandler->traverseScreenPages($screenObject);
+						$userAccountPageNumber = null;
+						foreach($pageTitles as $pageNumber => $pageTitle) {
+							if(strstr($pageTitle, ']'._formulize_USER_ACCOUNT_EN.'[') !== false) {
+								$userAccountPageNumber = $pageNumber;
+								break;
+							}
+						}
+						if(!$userAccountPageNumber) {
+							$newPages = $screenObject->getVar('pages');
+							$newTitles = $screenObject->getVar('pagetitles');
+							$newConditions = $screenObject->getVar('conditions');
+							$newPages[] = array(); // add a new empty page at the end
+							$newTitles[] = '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]';
+							$newConditions[] = array();
+							$screenObject->setVar('pages', serialize($newPages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+							$screenObject->setVar('pagetitles', serialize($newTitles));
+							$screenObject->setVar('conditions', serialize($newConditions));
+							$insertResult = $screenHandler->insert($screenObject, force: true);
+							if($insertResult == false) {
+								throw new Exception("Could not add User Account page to the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
+							}
+							$userAccountPageNumber = count($newPages); // new page is at the end
+						}
+						$userAccountPageOrdinal = $userAccountPageNumber - 1; // convert to zero-based ordinal
+						$screenIdsAndPagesForAdding = array(
+							$defaultFormSid => array($userAccountPageOrdinal)
+						);
+					}
+				}
+				$elementObjectProperties = array(
+					'ele_caption' => constant("_formulize_".strtoupper($type)),
+					'ele_type' => $type,
+					'ele_handle' => $handle,
+					'ele_private' => 1,
+					'fid' => $formObject->getVar('fid'),
+					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid'))
+				);
+				$dataType = 'varchar(255)';
+				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding, dataType: $dataType);
+			}
+		}
+		if(!empty($screenIdsAndPagesForAdding)) {
+			// we added at least one element, so reorder the elements within the new page, since they were created in reverse order to give them the proper order in the form (each going to the top, so last is on very top, but within the page they were added one at a time as they went so need to reverse them within the page now)
+			$screenObject = $screenHandler->get($defaultFormSid); // re-get the object so it will have the latest data
+			$pages = $screenObject->getVar('pages');
+			$elementsOnPage = $pages[$userAccountPageOrdinal];
+			$elementsOnPage = array_reverse($elementsOnPage);
+			$pages[$userAccountPageOrdinal] = $elementsOnPage;
+			$screenObject->setVar('pages', serialize($pages));
+			$insertResult = $screenHandler->insert($screenObject, force: true);
+			if($insertResult == false) {
+				throw new Exception("Could not reorder elements on User Account page of the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info	@formulize.org for assistance.");
+			}
+		}
+		return true;
 	}
 
 	/**
