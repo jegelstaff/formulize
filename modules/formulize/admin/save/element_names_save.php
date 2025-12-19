@@ -58,9 +58,6 @@ if($_POST['formulize_admin_key'] == "new") {
   $original_handle = $element->getVar('ele_handle');
 }
 
-if($element->isSystemElement) {
-	exit();
-}
 if(isset($_POST['orderpref'])) {
 	$element->setVar('ele_order', figureOutOrder($_POST['orderpref'], $element->getVar('ele_order'), $fid));
 }
@@ -77,6 +74,17 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 }
 
 $isNew = $_POST['formulize_admin_key'] == "new" ? true : false;
+
+if(!$isNew
+	AND ((
+		$element->getVar('ele_colhead')
+		AND $element->getVar('ele_colhead') != $processedValues['elements']['ele_colhead']
+	) OR (
+		$element->getVar('ele_caption') != $processedValues['elements']['ele_caption']
+	))) {
+	$_POST['reload_names_page'] = 1;
+}
+
 foreach ($processedValues['elements'] as $property => $element_handle_name) {
 	$element->setVar($property, $element_handle_name);
 }
@@ -89,7 +97,7 @@ if(!$ele_id = $element_handler->insert($element)) {
 }
 
 $finalHandle = $element->getVar('ele_handle');
-if($finalHandle != $processedValues['elements']['ele_handle']) {
+if($element->isSystemElement == false AND  $finalHandle != $processedValues['elements']['ele_handle']) {
 	$_POST['reload_names_page'] = 1;
 }
 

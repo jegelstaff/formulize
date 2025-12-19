@@ -586,6 +586,9 @@ function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNo
 	$result = true;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	if($element = _getElementObject($elementIdentifier) AND $form = $form_handler->get($fid)) {
+		if($element->isSystemElement) {
+			return true; // ignore system elements
+		}
 		$elementId = $element->getVar('ele_id');
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$criteria_object = new CriteriaCompo(new Criteria('type','multiPage'));
@@ -599,17 +602,21 @@ function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNo
 			$candidateScreensForNewPages = array();
 		  ksort($pages);
 			foreach($pages as $i=>$page) {
-				// element is in this page already, stop looking, element has already been managed on screens
-				if(in_array($elementId, $page)) {
-					return false;
-				}
-				foreach($form->getVar('elements') as $ele_id) {
-					if($ele_id != $elementId AND !in_array($ele_id, $page)) {
-						continue 2; // go to next page
+				// are we dealing with a regular page with element ids?
+				$firstItem = $page[array_key_first($page)];
+				if(is_numeric($firstItem)) {
+					// element is in this page already, stop looking, element has already been managed on screens
+					if(in_array($elementId, $page)) {
+						return false;
 					}
+					foreach($form->getVar('elements') as $ele_id) {
+						if($ele_id != $elementId AND !in_array($ele_id, $page) AND !in_array($ele_id, $form->getVar('systemElements'))) {
+							continue 2; // go to next page
+						}
+					}
+					// page did contain all the elements (except for this one), so this page is a candidate for adding the element to
+					$candidatePages[$sid][] = $i;
 				}
-				// page did contain all the elements (except for this one), so this page is a candidate for adding the element to
-				$candidatePages[$sid][] = $i;
 			}
 			if(!isset($candidatePages[$sid])) {
 				$candidateScreensForNewPages[$sid] = ($i+1);
@@ -646,7 +653,7 @@ function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNo
 				$screenObject->setVar('conditions', serialize($conditions));
 				$insertResult = $screen_handler->insert($screenObject, force: true);
 				if($insertResult == false) {
-					print "Error: could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.";
+					throw new Exception("Could not add the new element to the screen \"".$screenObject->getVar('title')."\" (id: $sid). Please contact info@formulize.org for assistance.");
 					$result = false;
 				}
 			}

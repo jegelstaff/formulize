@@ -58,7 +58,7 @@ foreach($processedValues['elements'] as $property=>$values) {
   }
 }
 
-// retrieve all the elements that belong to this form
+// retrieve all the elements that belong to this form, except anonPasscodes because they are hidden and not shown on the form_elements admin page
 $criteria = new Criteria('ele_type', 'anonPasscode', '!=');
 $elements = $element_handler->getObjects($criteria,$fid);
 

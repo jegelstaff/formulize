@@ -443,6 +443,10 @@ class formulizeHandler {
 	 * @return bool Returns true if valid. If $return param is true, returns false if not valid, or throws the exception.
 	 */
 	public static function validateElementType(&$elementType, $requestedCategory = null, $return = false) {
+		if(substr($elementType, 0, 11) == 'userAccount') {
+			// userAccount elements are valid (not discoverable for MCP, but valid for upsert)
+			return true;
+		}
 		list($elementTypes, $mcpElementDescriptions, $mcpSingleTypeDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {
@@ -600,30 +604,32 @@ class formulizeHandler {
 		// handle the add/remove of element from screens/pages
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		foreach($screenIdsAndPagesForAdding as $screenId=>$pageOrdinals) {
-			$screenObject = $screen_handler->get($screenId);
-			$pages = $screenObject->getVar('pages');
-			foreach($pageOrdinals as $pageOrdinal) {
-				$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
-			}
-			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-			$insertResult = $screen_handler->insert($screenObject, force: true);
-			if($insertResult == false) {
-				throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+			if($screenObject = $screen_handler->get($screenId)) {
+				$pages = $screenObject->getVar('pages');
+				foreach($pageOrdinals as $pageOrdinal) {
+					$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
+				}
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$insertResult = $screen_handler->insert($screenObject, force: true);
+				if($insertResult == false) {
+					throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				}
 			}
 		}
 		foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinal) {
-			$screenObject = $screen_handler->get($screenId);
-			$pages = $screenObject->getVar('pages');
-			foreach($pageOrdinals as $pageOrdinal) {
-				$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
-				if($key !== false) {
-					unset($pages[$pageOrdinal][$key]);
+			if($screenObject = $screen_handler->get($screenId)) {
+				$pages = $screenObject->getVar('pages');
+				foreach($pageOrdinals as $pageOrdinal) {
+					$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
+					if($key !== false) {
+						unset($pages[$pageOrdinal][$key]);
+					}
 				}
-			}
-			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-			$insertResult = $screen_handler->insert($screenObject, force: true);
-			if($insertResult == false) {
-				throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$insertResult = $screen_handler->insert($screenObject, force: true);
+				if($insertResult == false) {
+					throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				}
 			}
 		}
 
