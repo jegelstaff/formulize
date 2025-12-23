@@ -109,7 +109,7 @@ $adminPage['mailStatus'] = $mailStatus;
 $adminPage['groupIds'] = $groupIds;
 $adminPage['groupNames'] = $groupNames;
 $adminPage['groupListSize'] = count((array) $groupNames) < 25 ? count((array) $groupNames) : 25;
-$adminPage['template'] = "db:admin/mailusers.html";
+$adminPage['home_tabs'] = getHomeTabs('mailusers');
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

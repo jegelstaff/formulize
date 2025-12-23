@@ -139,7 +139,7 @@ if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
 }
 
 $adminPage['groups'] = $groupList;
-$adminPage['template'] = "db:admin/managepermissions.html";
+$adminPage['home_tabs'] = getHomeTabs('managepermissions');
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
