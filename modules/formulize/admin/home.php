@@ -53,7 +53,7 @@ if((!is_array($apps) OR count($apps) == 1) AND (!is_array($apps[1]['content']['f
 
 $adminPage['showBigFormButton'] = $showBigFormButton;
 $adminPage['apps'] = $apps;
-$adminPage['template'] = "db:admin/home.html";
+$adminPage['home_tabs'] = getHomeTabs('home');
 $adminPage['pagetitle'] = "Home";
 $adminPage['needsave'] = true;
 
