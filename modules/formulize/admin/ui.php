@@ -72,6 +72,93 @@ if (!isset($xoopsTpl)) {
 // sets up $formulizeNeedsDBPatch boolean
 include_once "op.php";
 
+/**
+ * Get the home tabs configuration
+ * @param string $activePage The currently active page/tab identifier
+ * @return array Array of tab configurations
+ */
+function getHomeTabs($activePage = 'home') {
+    $tabs = array();
+
+    $tabs[1] = array(
+        'name' => 'Apps',
+        'url' => 'ui.php?page=home',
+        'template' => 'db:admin/home.html',
+        'active' => ($activePage == 'home')
+    );
+
+    $tabs[2] = array(
+        'name' => 'Users',
+        'url' => 'ui.php?page=users',
+        'template' => 'db:admin/users.html',
+        'active' => ($activePage == 'users')
+    );
+
+    $tabs[3] = array(
+        'name' => 'Groups',
+        'url' => 'ui.php?page=groups',
+        'template' => 'db:admin/groups.html',
+        'active' => ($activePage == 'groups')
+    );
+
+    $tabs[4] = array(
+        'name' => 'API Keys',
+        'url' => 'ui.php?page=managekeys',
+        'template' => 'db:admin/managekeys.html',
+        'active' => ($activePage == 'managekeys')
+    );
+
+    $tabs[5] = array(
+        'name' => 'Email Users',
+        'url' => 'ui.php?page=mailusers',
+        'template' => 'db:admin/mailusers.html',
+        'active' => ($activePage == 'mailusers')
+    );
+
+    $tabs[6] = array(
+        'name' => 'Import/Export',
+        'url' => 'ui.php?page=config-sync',
+        'template' => 'db:admin/config-sync.html',
+        'active' => ($activePage == 'config-sync')
+    );
+
+    $tabs[7] = array(
+        'name' => 'Synchronize',
+        'url' => 'ui.php?page=synchronize',
+        'template' => 'db:admin/synchronize.html',
+        'active' => ($activePage == 'synchronize')
+    );
+
+    $tabs[8] = array(
+        'name' => 'Copy Perms',
+        'url' => 'ui.php?page=managepermissions',
+        'template' => 'db:admin/managepermissions.html',
+        'active' => ($activePage == 'managepermissions')
+    );
+
+    $tabs[9] = array(
+        'name' => 'Tokens',
+        'url' => 'ui.php?page=managetokens',
+        'template' => 'db:admin/managetokens.html',
+        'active' => ($activePage == 'managetokens')
+    );
+
+    $tabs[10] = array(
+        'name' => 'Log Viewer',
+        'url' => 'ui.php?page=logviewer',
+        'template' => 'db:admin/logviewer.html',
+        'active' => ($activePage == 'logviewer')
+    );
+
+    $tabs[11] = array(
+        'name' => 'Preferences',
+        'url' => XOOPS_URL . '/modules/system/admin.php?fct=preferences&op=showmod&mod=' . getFormulizeModId(),
+        'active' => false
+    );
+
+    return $tabs;
+}
+
 // make the primary relationship if it doesn't exist already
 if(primaryRelationshipExists() === false AND !$formulizeNeedsDBPatch) {
 	if($error = createPrimaryRelationship()) {

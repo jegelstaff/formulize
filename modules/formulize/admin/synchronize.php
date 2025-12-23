@@ -124,7 +124,7 @@ else {
 }
 
 $adminPage['sync'] = $sync;
-$adminPage['template'] = "db:admin/synchronize.html";
+$adminPage['home_tabs'] = getHomeTabs('synchronize');
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

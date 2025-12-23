@@ -48,7 +48,7 @@ $breadcrumbtrail[2]['text'] = "Import/Export Forms and Apps";
 $configSync = new FormulizeConfigSync('/config');
 $diff = $configSync->compareConfigurations();
 
-$adminPage['template'] = "db:admin/config-sync.html";
+$adminPage['home_tabs'] = getHomeTabs('config-sync');
 $adminPage['success'] = [];
 $adminPage['failure'] = [];
 
