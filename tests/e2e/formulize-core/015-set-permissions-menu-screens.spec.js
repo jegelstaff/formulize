@@ -317,7 +317,7 @@ test.describe('Set columns and elements for screens', () => {
 	})
 
 	test('Set Preferences for Rewrite Rules', async ({ page }) => {
-		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+		await page.getByRole('link', { name: 'Preferences' }).click();
 		await page.locator('#formulizeRewriteRulesEnabled-13').check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
