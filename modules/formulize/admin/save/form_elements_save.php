@@ -58,9 +58,8 @@ foreach($processedValues['elements'] as $property=>$values) {
   }
 }
 
-// retrieve all the elements that belong to this form, except anonPasscodes because they are hidden and not shown on the form_elements admin page
-$criteria = new Criteria('ele_type', 'anonPasscode', '!=');
-$elements = $element_handler->getObjects($criteria,$fid);
+// retrieve all the elements that belong to this form
+$elements = $element_handler->getObjects(null,$fid);
 
 // get the new order of the elements...
 $newOrder = explode("drawer-2[]=", str_replace("&", "", $_POST['elementorder']));
@@ -74,33 +73,50 @@ if(count((array) $elements) != count((array) $newOrder)) {
 
 // modify elements
 $oldOrderNumber = 1;
+$orderChanged = false;
 foreach($elements as $element) {
-  $ele_id = $element->getVar('ele_id');
 
-  // reset elements to deault
-  $element->setVar('ele_required',0);
-  $element->setVar('ele_private',0);
-  $newOrderNumber = array_search($oldOrderNumber,$newOrder);
+	$thisElementOrderChanged = false;
+	$newOrderNumber = array_search($oldOrderNumber,$newOrder);
   $element->setVar('ele_order',$newOrderNumber);
-  if($oldOrderNumber != $newOrderNumber) {
-    $_POST['reload_elements'] = 1; // need to reload since the drawer numbers will be out of sequence now
-  }
-  $oldOrderNumber++;
-
-  // apply settings submitted by user
-  foreach($processedElements[$ele_id] as $property=>$value) {
-    $element->setVar($property,$value);
-  }
-
-	// if there was no display property sent, and there was no custom flag sent, then blank the display settings
-	if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
-		$element->setVar('ele_display',0);
+	if($oldOrderNumber != $newOrderNumber) {
+		$thisElementOrderChanged = true;
+		$orderChanged = true;
 	}
+	$oldOrderNumber++;
 
-  // presist changes
-  if(!$element_handler->insert($element)) {
-    print "Error: could not save the form elements properly: ".$xoopsDB->error();
-  }
+	// for system type elements, we only handle order changes, no other properties are presently exposed
+	if($element->isSystemElement) {
+		if($thisElementOrderChanged) {
+			if(!$element_handler->insert($element)) {
+				print "Error: could not save the form elements properly: ".$xoopsDB->error();
+			}
+		}
+
+	// for normal elements, handle all properties
+	} else {
+
+		$ele_id = $element->getVar('ele_id');
+
+		// reset elements to deault
+		$element->setVar('ele_required',0);
+		$element->setVar('ele_private',0);
+
+		// apply settings submitted by user
+		foreach($processedElements[$ele_id] as $property=>$value) {
+			$element->setVar($property,$value);
+		}
+
+		// if there was no display property sent, and there was no custom flag sent, then blank the display settings
+		if(!isset($processedElements[$ele_id]['ele_display']) AND !isset($_POST['customDisplayFlag'][$ele_id])) {
+			$element->setVar('ele_display',0);
+		}
+
+		// presist changes
+		if(!$element_handler->insert($element)) {
+			print "Error: could not save the form elements properly: ".$xoopsDB->error();
+		}
+	}
 }
 
 // handle any operations
@@ -257,6 +273,6 @@ if($_POST['cloneelement']) {
 	}
 }
 
-if($_POST['reload_elements']) {
+if($_POST['reload_elements'] OR $orderChanged) {
   print "/* eval */ reloadWithScrollPosition();";
 }

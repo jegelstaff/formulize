@@ -1045,6 +1045,7 @@ class formulizeFormsHandler {
 				$userAccountElementTypes[] = $className;
 			}
 			$order = array(
+				'Uid',
 				'FirstName',
 				'LastName',
 				'Username',
@@ -1077,18 +1078,35 @@ class formulizeFormsHandler {
 		// delete the elements themselves
 		$userAccountElementTypes = $this->getUserAccountElementTypes();
 		$userAccountElementIds = array();
+		$userAccountUidElementObjects = array();
+		$userAccountHandles = array();
 		foreach($userAccountElementTypes as $type) {
-			$handle = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
-			if(in_array($handle, $formObject->getVar('elementHandles'))) {
-				if($elementObject = _getElementObject($handle)) {
-					$userAccountElementIds[] = $elementObject->getVar('ele_id');
+			$userAccountHandles[] = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
+		}
+		// do a substr match, in case something went wonky and there are multiple instances of the user account elements
+		foreach($formObject->getVar('elementHandles') as $handle) {
+			foreach($userAccountHandles as $i => $candidateHandle) {
+				if(substr($handle, 0, strlen($candidateHandle)) == $candidateHandle) {
+					if($elementObject = _getElementObject($handle)) {
+						$userAccountElementIds[] = $elementObject->getVar('ele_id');
+						if(strstr($handle, 'formulize_user_account_uid') !== false) {
+							$userAccountUidElementObjects[] = $elementObject;
+						}
+						unset($userAccountHandles[$i]); // remove from list so we don't keep checking for it
+						break;
+					}
 				}
 			}
 		}
 		if(!empty($userAccountElementIds)) {
 			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 			$screenHandler->removeElementsFromScreens($userAccountElementIds, removeEmptyPages: true);
-			// now delete the elements themselves, has to be done directly because system elements are ignored by normal deletion method
+			if(!empty($userAccountUidElementObjects)) {
+				foreach($userAccountUidElementObjects as $userAccountUidElementObject) {
+					$this->deleteElementField($userAccountUidElementObject);
+				}
+			}
+			// now delete the elements themselves
 			global $xoopsDB;
 			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id IN (".implode(",", $userAccountElementIds).") AND id_form = ".intval($formObject->getVar('fid'));
 			$xoopsDB->queryF($sql);
@@ -1127,9 +1145,9 @@ class formulizeFormsHandler {
 							$newPages = $screenObject->getVar('pages');
 							$newTitles = $screenObject->getVar('pagetitles');
 							$newConditions = $screenObject->getVar('conditions');
-							$newPages[] = array(); // add a new empty page at the end
-							$newTitles[] = '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]';
-							$newConditions[] = array();
+							array_unshift($newPages, array()); // add a new empty page at the beginning
+							array_unshift($newTitles, '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]');
+							array_unshift($newConditions, array());
 							$screenObject->setVar('pages', serialize($newPages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
 							$screenObject->setVar('pagetitles', serialize($newTitles));
 							$screenObject->setVar('conditions', serialize($newConditions));
@@ -1137,7 +1155,7 @@ class formulizeFormsHandler {
 							if($insertResult == false) {
 								throw new Exception("Could not add User Account page to the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
 							}
-							$userAccountPageNumber = count($newPages); // new page is at the end
+							$userAccountPageNumber = 1;
 						}
 						$userAccountPageOrdinal = $userAccountPageNumber - 1; // convert to zero-based ordinal
 						$screenIdsAndPagesForAdding = array(
@@ -1150,11 +1168,16 @@ class formulizeFormsHandler {
 					'ele_type' => $type,
 					'ele_handle' => $handle,
 					'ele_private' => 1,
+					'ele_required' => 1,
 					'fid' => $formObject->getVar('fid'),
-					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid'))
+					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
+					'ele_display' => ",".XOOPS_GROUP_USERS.","
 				);
-				$dataType = 'varchar(255)';
-				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding, dataType: $dataType);
+				if($type == 'userAccountUid') {
+					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.","; // only admins can see the user id element
+					$elementObjectProperties['ele_required'] = 0; // not required, since it's not managed by user input
+				}
+				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding);
 			}
 		}
 		if(!empty($screenIdsAndPagesForAdding)) {

@@ -45,5 +45,74 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 		return new formulizeUserAccountPasswordElement();
 	}
 
+	/**
+	 * Set up and validate a set of element properties
+	 * Focuses on the non ele_value properties that are common to all element types
+	 * The ele_value options are handled in the child class, since they are element-type specific
+	 * @param array $properties The properties to set on the element object
+	 * @return array The processed properties that are ready to set on the element object
+	 */
+	public function setupAndValidateElementProperties($properties) {
+
+		$properties = parent::setupAndValidateElementProperties($properties);
+		$properties['ele_desc']	= _formulize_USERACCOUNT_PWREPEATDESC;
+		return $properties;
+	}
+
+	// this method renders the element for display in a form
+	// the caption has been pre-prepared and passed in separately from the element object
+	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
+	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
+	// $caption is the prepared caption for the element
+	// $markupName is what we have to call the rendered element in HTML
+	// $isDisabled flags whether the element is disabled or not so we know how to render it
+	// $element is the element object
+	// $entry_id is the ID number of the entry where this particular element comes from
+	// $screen is the screen object that is in effect, if any (may be null)
+	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+		if($isDisabled) {
+			$form_ele = new XoopsFormLabel(
+				$caption,
+				""
+			);
+		} else {
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$form_ele = new XoopsFormPassword(
+				'',
+				$markupName,
+				(isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30),	//	box width
+				(isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),	//	max width
+				$ele_value
+			);
+			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
+			$form_ele2 = new XoopsFormPassword(
+				'',
+				'pw_two',
+				(isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30),	//	box width
+				(isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),	//	max width
+				$ele_value
+			);
+			$form_ele2->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
+			$tray = new XoopsFormElementTray('', '<br>');
+			$tray->addElement($form_ele);
+			$tray->addElement($form_ele2);
+			$form_ele = new XoopsFormLabel(
+				$caption,
+				trans($tray->render()),
+				$markupName
+			);
+		}
+		return $form_ele;
+	}
+
+	// this method returns any custom validation code (javascript) that should figure out how to validate this element
+	// 'myform' is a name enforced by convention that refers to the form where this element resides
+	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	function generateValidationCode($caption, $markupName, $element, $entry_id) {
+		$validationCode = array();
+		$validationCode[] = "if((myform.{$markupName}.value !='' || myform.pw_two.value !='') && myform.{$markupName}.value != myform.pw_two.value) {\n alert('Your passwords do not match. Please try again.'); \n myform.{$markupName}.focus();\n return false;\n }";
+		return $validationCode;
+	}
 
 }
