@@ -8302,7 +8302,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$URLAddOn .= htmlspecialchars_decode($currentPageTitle)."/";
 			}
 		}
-		$code = "window.history.replaceState(null, '', ".json_encode($initialURL.$URLAddOn).");
+		$code = "window.history.replaceState(null, '', ".json_encode(trans($initialURL.$URLAddOn)).");
 		jQuery(window).load(function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());

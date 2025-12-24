@@ -1524,6 +1524,7 @@ div.formulize_autocomplete {
 		.col2 input[type="number"],
 		.col2 input[type="date"],
 		.col2 input[type="time"],
+		.col2 input[type="password"],
     .col2 textarea {
         min-width: 700px;
     }

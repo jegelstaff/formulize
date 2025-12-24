@@ -29,20 +29,22 @@
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
 
-class formulizeUserAccountFirstNameElement extends formulizeUserAccountElement {
+class formulizeUserAccountUidElement extends formulizeUserAccountElement {
 
     function __construct() {
 			parent::__construct();
-      $this->name = "User Account First Name";
-    }
+      $this->name = "User Account UID";
+			$this->overrideDataType = "MEDIUMINT(8) UNSIGNED";
+			$this->hasData = true;
+		}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountElementHandler {
+class formulizeUserAccountUidElementHandler extends formulizeUserAccountElementHandler {
 
 	function create() {
-		return new formulizeUserAccountFirstNameElement();
+		return new formulizeUserAccountUidElement();
 	}
 
 	// this method renders the element for display in a form
@@ -56,35 +58,8 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		if($isDisabled) {
-			$form_ele = new XoopsFormLabel(
-				$caption,
-				$ele_value
-			);
-		} else {
-			$config_handler = xoops_gethandler('config');
-			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$form_ele = new XoopsFormText(
-				$caption,
-				$markupName,
-				(isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30),	//	box width
-				(isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),	//	max width
-				$ele_value,	//	value
-				false,		// autocomplete in browser
-				'text'		// numbers only
-			);
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-		}
-		return $form_ele;
-	}
-
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-	function generateValidationCode($caption, $markupName, $element, $entry_id) {
-		$validationCode = array();
-		// Todo - add error message to language files
-		$validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter \"'.$caption.'\".'); \n myform.{$markupName}.focus();\n return false;\n }";
+		$formElement = new xoopsFormLabel($caption, $ele_value);
+		return $formElement;
 	}
 
 }
