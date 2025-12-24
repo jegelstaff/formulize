@@ -106,14 +106,31 @@ switch($op) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
     if(is_object($elementObject)) {
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-      $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-      $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
-      if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
-      } else {
-        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
-      }
+			if($elementObject->getVar('ele_type') == 'userAccountEmail' OR $elementObject->getVar('ele_type') == 'userAccountUsername') {
+				$threshold = $entry == 'new' ? 0 : 1;
+				$keyField = $elementObject->getVar('ele_type') == 'userAccountEmail' ? 'email' : 'login_name';
+				global $xoopsDB;
+				$sql = "SELECT COUNT(*) AS count FROM ".$xoopsDB->prefix("users")." WHERE $keyField = '".formulize_db_escape($value)."'";
+				if($res = $xoopsDB->query($sql)) {
+					$row = $xoopsDB->fetchArray($res);
+					if($row['count'] > $threshold) {
+						print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+					} else {
+						print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+					}
+				} else {
+					print json_encode(array('val'=>'invalidsql', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				}
+			} else {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+				$entry_id = $data_handler->findFirstEntryWithValue($element, $value);
+				if(is_numeric($entry_id) AND $entry_id != $entry) {
+					print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				} else {
+					print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				}
+			}
     } else {
       print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }
