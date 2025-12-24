@@ -43,9 +43,7 @@ if(!$ele_id = intval($_GET['ele_id'])) { // on new element saves, new ele_id can
   }
 }
 $element = $element_handler->get($ele_id);
-if($element->isSystemElement) {
-	exit();
-}
+
 $ele_type = $element->getVar('ele_type');
 if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 	$element_handler = xoops_getmodulehandler($ele_type.'Element','formulize');

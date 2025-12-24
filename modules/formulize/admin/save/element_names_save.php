@@ -97,7 +97,7 @@ if(!$ele_id = $element_handler->insert($element)) {
 }
 
 $finalHandle = $element->getVar('ele_handle');
-if($element->isSystemElement == false AND  $finalHandle != $processedValues['elements']['ele_handle']) {
+if($element->isSystemElement == false AND $finalHandle != $processedValues['elements']['ele_handle']) {
 	$_POST['reload_names_page'] = 1;
 }
 

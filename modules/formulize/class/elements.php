@@ -943,42 +943,39 @@ class formulizeElementsHandler {
 		}
 	}
 
-	function delete($element, $force = false){
-		if($element->isSystemElement) {
-			return false;
-		}
-		$elementType = $element->getVar('ele_type');
+	function delete($elementObject, $force = false){
+		$elementType = $elementObject->getVar('ele_type');
 		if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/".$elementType."Element.php")) {
 			$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
 		} else {
 			$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
 		}
-		if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all') === false) {
-			print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($element->getVar('ele_id')))." failed";
+		if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($elementObject, entryScope: 'all') === false) {
+			print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." failed";
 		}
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
+		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$elementObject->getVar("ele_id")."";
 		if( false != $force ){
 			$result1 = $this->db->queryF($sql);
 		}else{
 			$result1 = $this->db->query($sql);
 		}
-		$result2 = deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
-		if($element->hasData) {
-			if(!$result3 = $form_handler->deleteElementField($element->getVar('ele_id'))) {
+		$result2 = deleteElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'));
+		if($elementObject->hasData) {
+			if(!$result3 = $form_handler->deleteElementField($elementObject->getVar('ele_id'))) {
 				print "Error: could not drop field from data table";
 			}
     }
 		$result4 = true;
-		if($formObject = $form_handler->get($element->getVar('fid'))) {
-			if($element->getVar('ele_id') == $formObject->getVar('pi')) {
+		if($formObject = $form_handler->get($elementObject->getVar('fid'))) {
+			if($elementObject->getVar('ele_id') == $formObject->getVar('pi')) {
 				$formObject->setVar('pi', 0);
 				$result4 = $form_handler->insert($formObject);
 			}
 		}
 
 		$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-		$screenHandler->removeElementsFromScreens($element->getVar('ele_id'));
+		$screenHandler->removeElementsFromScreens($elementObject->getVar('ele_id'));
 
 		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}

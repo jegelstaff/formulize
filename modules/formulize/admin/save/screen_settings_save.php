@@ -155,15 +155,18 @@ foreach($_POST as $key=>$value) {
         $passcode_handler->updateExpiry($id, $value);
     }
 }
+
+if($screens['anonNeedsPasscode'] == 0) {
+	$passcode_handler->removePasscodeElement($fid);
+}
 if($_POST['add_existing_passcode']) {
-    $passcode_handler->copyPasscodeToScreen($_POST['existing_passcode'], $sid);
-    $reloadNow = true;
+		$passcode_handler->copyPasscodeToScreen($_POST['existing_passcode'], $sid);
+		$reloadNow = true;
 }
 if($_POST['make_new_passcode']) {
-    $passcode_handler->insert($_POST['new_passcode'], $_POST['new_notes'], $sid);
-    $reloadNow = true;
+		$passcode_handler->insert($_POST['new_passcode'], $_POST['new_notes'], $sid);
+		$reloadNow = true;
 }
-
 
 if($isNew) {
 

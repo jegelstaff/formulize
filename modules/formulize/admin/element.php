@@ -318,7 +318,7 @@ $adminPage['tabs'][$tabindex]['name'] = _AM_ELE_NAMEANDSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
 $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 
-if(!$elementObject OR $elementObject->isSystemElement == false) {
+if(!$elementObject OR $elementObject->isSystemElement == false OR $ele_type == 'userAccountPhone') {
 	$adminPage['tabs'][++$tabindex]['name'] = "Options";
 	$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
 	if (count((array) $customValues)>0) {
@@ -343,7 +343,7 @@ if ($ele_id == "new") {
 }
 
 
-if ($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
+if ($elementObject->isSystemElement == false AND ($advanced['datatypeui'] OR $advanced['ele_encrypt_show'])) {
     $adminPage['tabs'][++$tabindex]['name'] = "Advanced";
     $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_advanced.html";
     $adminPage['tabs'][$tabindex]['content'] = $advanced + $common + $advancedCustomValues;
