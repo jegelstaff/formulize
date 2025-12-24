@@ -35,7 +35,7 @@ class formulizeUserAccountElement extends formulizeElement {
         $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
         $this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
-        $this->alwaysValidateInputs = false; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         $this->isSystemElement = true;
         parent::__construct();
     }
@@ -79,30 +79,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		// $element is the element object
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
     // $entry_id is the ID of the entry being loaded
-	function loadValue($element, $value, $entry_id) {
-    }
-
-    // this method renders the element for display in a form
-    // the caption has been pre-prepared and passed in separately from the element object
-    // if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-    // $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-    // $caption is the prepared caption for the element
-    // $markupName is what we have to call the rendered element in HTML
-    // $isDisabled flags whether the element is disabled or not so we know how to render it
-    // $element is the element object
-    // $entry_id is the ID number of the entry where this particular element comes from
-    // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-			$caption = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
-			$form_ele = new XoopsFormText(
-				$caption,
-				'formulize_user_account_'.$caption,
-				255,	//	box width
-				255,	//	max width
-				'',	//	value
-				false, // autocomplete in browser
-				'text' // numbers only or text
-			);
+		function loadValue($element, $value, $entry_id) {
     }
 
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -118,9 +95,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-        if($value) {
-            return isset($_SESSION['formulize_passCode_'.$value]) ? $_SESSION['formulize_passCode_'.$value] : "{WRITEASNULL}";
-        }
+      return $value;
     }
 
     // this method will handle any final actions that have to happen after data has been saved
@@ -138,7 +113,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value; // we're not making any modifications for this element type
+      return $value; // we're not making any modifications for this element type
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -149,18 +124,18 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        return $value;
-    }
+    return $value;
+  }
 
-    // this method will format a dataset value for display on screen when a list of entries is prepared
-    // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
-    // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = false; // make urls clickable
-        $this->striphtml = true; // remove html tags as a security precaution
-        $this->length = 255; // truncate to a maximum of 100 characters, and append ... on the end
+	// this method will format a dataset value for display on screen when a list of entries is prepared
+	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
+	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		$this->clickable = false; // make urls clickable
+		$this->striphtml = true; // remove html tags as a security precaution
+		$this->length = 255; // truncate to a maximum of 100 characters, and append ... on the end
 
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
-    }
+		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+	}
 
 }
