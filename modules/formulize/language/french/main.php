@@ -650,8 +650,11 @@ define("_formulize_NEGATIVEFILTER", "Pas : ");
 define("_formulize_NEWENTRY", "nouvelle entrée");
 define("_formulize_ENTRY", "entrée");
 
+define("_formulize_REQUIRED_UNIQUE", "Le champ '%s' exige une valeur unique. Entrer une valeur différente.");
+
 define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
 define("_formulize_USER_ACCOUNT_EN", "User Account");
+define("_formulize_USERACCOUNTUID", "ID de l'utilisateur");
 define("_formulize_USERACCOUNTFIRSTNAME", "Prenom");
 define("_formulize_USERACCOUNTLASTNAME", "Nom de famille");
 define("_formulize_USERACCOUNTEMAIL", "Adresse e-mail");
@@ -660,5 +663,9 @@ define("_formulize_USERACCOUNTPASSWORD", "Mot de passe");
 define("_formulize_USERACCOUNTTIMEZONE", "Fuseau horaire");
 define("_formulize_USERACCOUNTPHONE", "Numéro de téléphone");
 define("_formulize_USERACCOUNT2FA", "Paramètres d'authentification à deux facteurs");
+define("_formulize_USERACCOUNT_2FAOPTION_EMAIL", "Envoyez un code par email");
+define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Envoyez un code par SMS");
+define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Utilisez une application d'authentification");
+define("_formulize_USERACCOUNT_PWREPEATDESC", "Saisissez le mot de passe deux fois pour confirmation");
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
