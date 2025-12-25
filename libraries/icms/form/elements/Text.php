@@ -59,7 +59,7 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @param	int		$size	    Size
 	 * @param	int		$maxlength	Maximum length of text
 	 * @param	string  $value      Initial text
-	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
+	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser.
 	 * @param	mixed	$type	Either 'text', 'number', or 'time'.
 	 */
 	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text') {
@@ -130,7 +130,7 @@ class icms_form_elements_Text extends icms_form_Element {
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
 			. "' aria-describedby='" . $this->getName() . "-help-text"
-			. "' value='" . $this->getValue() . "'" . $this->getExtra()
+			. "' value='" . $this->getValue() . "'" . $this->getExtra() . " " . ($this->autoComplete ? "" : "autocomplete='off' ")
 			. " />";
 	}
 }

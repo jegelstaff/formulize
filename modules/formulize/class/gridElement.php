@@ -311,13 +311,6 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 		return renderGrid($element, $entry_id, $prevEntry, $screen);
 	}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
-	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
-		return;
-	}
-
 	// this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
 	// You can return {WRITEASNULL} to cause a null value to be saved in the database
 	// $value is what the user submitted

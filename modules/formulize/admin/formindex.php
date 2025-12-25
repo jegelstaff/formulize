@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize';
-    $checkThisField = 'ele_dynamicdefault_source';
+    $checkThisTable = 'formulize_id';
+    $checkThisField = 'entries_are_users';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -513,6 +513,8 @@ function patch40() {
         $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
         $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
 				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
+				$sql['add_entries_are_users'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users` tinyint(1) NOT NULL default 0";
+				$sql['add_entries_are_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_groups` tinyint(1) NOT NULL default 0";
 				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
 				$sql['form_title'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `desc_form` `form_title` varchar(255) NOT NULL default ''";
@@ -665,7 +667,9 @@ function patch40() {
 										print "Element required already renamed. result: OK<br>";
 								} elseif($key === "add_dynamicdefault_source" OR $key === "add_dynamicdefault_conditions") {
 										print "Dynamic defaults already added. result: OK<br>";
-                }else {
+                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_groups") {
+										print "Entries-are-users/groups options already added. result: OK<br>";
+								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {

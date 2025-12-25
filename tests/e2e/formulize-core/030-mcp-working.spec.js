@@ -18,7 +18,7 @@ test.describe('Check that tools/list is responding', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+		await page.getByRole('link', { name: 'Preferences' }).click();
   	await page.locator('#formulizeMCPServerEnabled-15').check();
 		await page.locator('#formulizeLoggingOnOff-9').check();
   	await page.getByRole('button', { name: 'Save your changes' }).click();
