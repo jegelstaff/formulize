@@ -133,6 +133,60 @@
 				<div class="description">
 					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
 				</div>
+
+				<!-- User Mapping for Existing Entries -->
+				<{if $content.show_user_mapping_ui AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
+				<div id="user_mapping_container" style="margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TITLE}></h4>
+					<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_QUESTION}></p>
+
+					<div class="form-radios">
+						<label for="user_mapping_yes_no-0">
+							<input type="radio" id="user_mapping_yes_no-0" name="user_mapping_yes_no" value="0" checked />
+							<{$smarty.const._AM_NO}>
+						</label>
+					</div>
+					<div class="form-radios">
+						<label for="user_mapping_yes_no-1">
+							<input type="radio" id="user_mapping_yes_no-1" name="user_mapping_yes_no" value="1" />
+							<{$smarty.const._AM_YES}>
+						</label>
+					</div>
+
+					<div id="user_mapping_details" style="display: none; margin-top: 15px;">
+						<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_EXPLAIN}></p>
+
+						<div style="display: flex; gap: 30px; margin-top: 10px;">
+							<div style="display: flex; flex-direction: column;">
+								<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_LABEL}></label>
+								<select name="user_mapping_element" id="user_mapping_element" style="width: auto;">
+									<option value=""><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_SELECT}></option>
+									<{foreach from=$content.elementheadings item=element}>
+									<option value="<{$element.ele_id}>"><{$element.text}></option>
+									<{/foreach}>
+								</select>
+							</div>
+							<div style="display: flex; flex-direction: column;">
+								<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_CONTAINS_LABEL}></label>
+								<label for="user_mapping_type-login_name" style="margin-bottom: 3px;">
+									<input type="radio" id="user_mapping_type-login_name" name="user_mapping_type" value="login_name" />
+									<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_USERNAME}>
+								</label>
+								<label for="user_mapping_type-email" style="margin-bottom: 3px;">
+									<input type="radio" id="user_mapping_type-email" name="user_mapping_type" value="email" />
+									<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_EMAIL}>
+								</label>
+								<label for="user_mapping_type-uid">
+									<input type="radio" id="user_mapping_type-uid" name="user_mapping_type" value="uid" />
+									<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_UID}>
+								</label>
+							</div>
+						</div>
+
+						<p style="margin-top: 10px;"><em><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_SYNC_NOTE}></em></p>
+					</div>
+				</div>
+				<{/if}>
 			</fieldset>
 		</div>
 
@@ -164,11 +218,16 @@
 		$("#entries_are_groups-<{$content.entries_are_groups}>").attr('checked', 'checked');
 
 		// Initialize visibility based on current values
-		if (<{$content.entries_are_users}> == 1) {
+		if (parseInt("<{$content.entries_are_users}>") == 1) {
 			$("#entries_are_groups_container").hide();
 		}
-		if (<{$content.entries_are_groups}> == 1) {
+		if (parseInt("<{$content.entries_are_groups}>") == 1) {
 			$("#entries_are_users_container").hide();
+		}
+
+		// Initialize user mapping container visibility based on entries_are_users
+		if (parseInt("<{$content.entries_are_users}>") != 1) {
+			$("#user_mapping_container").hide();
 		}
 
 		// Mutual exclusivity: if one is set to Yes, set the other to No and hide it
@@ -176,8 +235,10 @@
 			if ($(this).val() == "1" && $(this).is(':checked')) {
 				$("#entries_are_groups-0").attr('checked', 'checked');
 				$("#entries_are_groups_container").slideUp();
+				$("#user_mapping_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_groups_container").slideDown();
+				$("#user_mapping_container").slideUp();
 			}
 		});
 
@@ -185,8 +246,18 @@
 			if ($(this).val() == "1" && $(this).is(':checked')) {
 				$("#entries_are_users-0").attr('checked', 'checked');
 				$("#entries_are_users_container").slideUp();
+				$("#user_mapping_container").slideUp();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_users_container").slideDown();
+			}
+		});
+
+		// User mapping yes/no toggle
+		$("input[name='user_mapping_yes_no']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#user_mapping_details").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#user_mapping_details").slideUp();
 			}
 		});
 		</script>

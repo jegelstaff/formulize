@@ -1197,6 +1197,69 @@ class formulizeFormsHandler {
 	}
 
 	/**
+	 * Associate entries in a form with user accounts
+	 * @param int|string|object formIdentifier - The object representation of the form we're working with, or form handle or form id
+	 * @param int|string|object elementIdentifier - The element id, handle or object of the element in the form that contains the values that correspond to user accounts. Metadata fields can be passed in.
+	 * @param string userField - The field in the user table that the element corresponds with. Must be one of login_name, email, or uid
+	 * @return boolean Returns true if the association was made, false if the parameters were invalid or there were no values found in the form. Throws exception if there was an error during processing.
+	 */
+	function associateExistingUsersWithFormEntries($formIdentifier, $elementIdentifier, $userField='uid') {
+
+		// validate the form
+		if(!is_a($formIdentifier, 'formulizeForm')) {
+			$formObject = $this->get($formIdentifier);
+			if(!$formObject) {
+				return false;
+			}
+		} else {
+			$formObject = $formIdentifier;
+		}
+		// validate that the form has a userAccountUid element
+		if(!in_array('formulize_user_account_uid_'.$formObject->getVar('fid'), $formObject->getVar('elementHandles'))) {
+			return false;
+		}
+		// validate that the userAccountUid element has no values yet
+		$dataHandler = new formulizeDataHandler($formObject->getVar('fid'));
+		$existingAssociatedUids = $dataHandler->findAllEntriesWithValue('formulize_user_account_uid_'.$formObject->getVar('fid'), 0, operator: '>');
+		if(!empty($existingAssociatedUids)) {
+			return false;
+		}
+		// validate the user field
+		if(!in_array($userField, ['login_name', 'email', 'uid'])) {
+			return false;
+		}
+		// validate the element, either a metadata field, or get the element handle from the object
+		if(in_array($elementIdentifier, $dataHandler->metadataFields)) {
+			$elementHandle = $elementIdentifier;
+		} elseif($elementObject = _getElementObject($elementIdentifier)) {
+			$elementHandle = $elementObject->getVar('ele_handle');
+		} else {
+			return false;
+		}
+		// get all the values for the element, and look up users and record their uid in the userAccountUid element in the form
+		if($values = $dataHandler->findAllValuesForField($elementHandle)) {
+			$member_handler = xoops_gethandler('member');
+			foreach($values as $entryId => $value) {
+				$criteria = new Criteria($userField, $value);
+				if($userObjects = $member_handler->getUsers($criteria)
+					AND is_array($userObjects)
+					AND count($userObjects) == 1
+				) {
+					$userObject = array_shift($userObjects);
+					$userId = $userObject->getVar('uid');
+					if(!$dataHandler->writeEntry($entryId, array(
+						'formulize_user_account_uid_'.$formObject->getVar('fid') => $userId
+					), forceUpdate: true)) {
+						throw new Exception("Could not associate entry $entryId with user account $userId in form ".$formObject->getVar('form_handle'));
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Check if a form's Singular or Plural values have changed, and rename any screens and menu links involved if their titles match exactly the changed name
 	 * @param object formObject - The object representation of the form we're working with. Will include the new names as the singular and plural.
 	 * @param array originalFormNames - An array with three keys, singular, plural, form_handle, which contain the old names that potentially need replacing

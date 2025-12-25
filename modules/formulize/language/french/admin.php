@@ -104,6 +104,16 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS","Ce formulaire représente des util
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN","Pour chaque entrée de ce formulaire, un compte utilisateur sera créé dans Formulize.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS","Ce formulaire représente des groupes");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN","Pour chaque entrée de ce formulaire, un groupe sera créé dans Formulize.");
+define("_AM_SETTINGS_FORM_USER_MAPPING_TITLE","Associer les entrées existantes aux utilisateurs existants");
+define("_AM_SETTINGS_FORM_USER_MAPPING_QUESTION","Vous avez des entrées existantes dans ce formulaire. Souhaitez-vous associer ces entrées à des comptes utilisateurs existants?");
+define("_AM_SETTINGS_FORM_USER_MAPPING_EXPLAIN","Pour associer les entrées existantes aux utilisateurs existants, l'un des éléments de ce formulaire doit contenir les noms d'utilisateur, les adresses e-mail ou les numéros d'identification des utilisateurs existants.");
+define("_AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_LABEL","Cet élément:");
+define("_AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_SELECT","-- Sélectionnez un élément --");
+define("_AM_SETTINGS_FORM_USER_MAPPING_CONTAINS_LABEL","Contient:");
+define("_AM_SETTINGS_FORM_USER_MAPPING_TYPE_USERNAME","Noms d'utilisateur");
+define("_AM_SETTINGS_FORM_USER_MAPPING_TYPE_EMAIL","Adresses e-mail");
+define("_AM_SETTINGS_FORM_USER_MAPPING_TYPE_UID","Numéros d'identification");
+define("_AM_SETTINGS_FORM_USER_MAPPING_SYNC_NOTE","Une synchronisation unique des utilisateurs et des entrées de ce formulaire sera effectuée lorsque vous enregistrerez vos modifications.");
 define("_AM_SETTINGS_FORM_SHOWING_LIST","Quand la liste des entrées s'affiche pour ce formulaire, quels éléments souhaitez vous afficher par défaut?");
 define("_AM_SETTINGS_FORM_APP_PART","De quel regroupement ce formulaire fait-il parti?");
 define("_AM_SETTINGS_FORM_APPNEW","Créer un nouveau regroupement dont ce formulaire fera parti?");

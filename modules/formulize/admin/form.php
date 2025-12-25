@@ -591,6 +591,26 @@ $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_groups'] = $entries_are_groups;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
+
+// Check if we should show the user mapping UI
+// Default to true, and only set to false if conditions indicate we shouldn't show it
+$settings['show_user_mapping_ui'] = true;
+if($fid != "new" && $entries_are_users == 1) {
+	// The user account uid element has the handle formulize_user_account_uid_X where X is the form id
+	$userAccountUidHandle = 'formulize_user_account_uid_' . $fid;
+
+	// Single query to check: total entries, and max value in the user account uid field
+	$checkSql = "SELECT COUNT(*) as total_entries, MAX(`" . $userAccountUidHandle . "`) as max_uid FROM " . $xoopsDB->prefix("formulize_" . $form_handle);
+	$checkResult = $xoopsDB->query($checkSql);
+	$checkRow = $xoopsDB->fetchArray($checkResult);
+	$totalEntries = intval($checkRow['total_entries']);
+	$maxUid = intval($checkRow['max_uid']);
+
+	// Hide UI if there are no entries, OR if entries are already associated with users
+	if($totalEntries == 0 || $maxUid > 0) {
+		$settings['show_user_mapping_ui'] = false;
+	}
+}
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
     $settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;
