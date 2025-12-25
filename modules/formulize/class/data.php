@@ -280,14 +280,18 @@ class formulizeDataHandler {
 	function entryExists($id) {
 		static $cachedEntryExists = array();
 		if(!isset($cachedEntryExists[$this->fid][$id])) {
-			global $xoopsDB;
-      $form_handler = xoops_getmodulehandler('forms', 'formulize');
-      $formObject = $form_handler->get($this->fid);
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
-			$res = $xoopsDB->query($sql);
-			$row = $xoopsDB->fetchRow($res);
-			if($row[0] > 0) {
-				$cachedEntryExists[$this->fid][$id] = true;
+			if($id AND $id != 'new') {
+				global $xoopsDB;
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$formObject = $form_handler->get($this->fid);
+				$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
+				$res = $xoopsDB->query($sql);
+				$row = $xoopsDB->fetchRow($res);
+				if($row[0] > 0) {
+					$cachedEntryExists[$this->fid][$id] = true;
+				} else {
+					$cachedEntryExists[$this->fid][$id] = false;
+				}
 			} else {
 				$cachedEntryExists[$this->fid][$id] = false;
 			}
