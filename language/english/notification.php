@@ -76,7 +76,9 @@ define ('_NOT_BOOKMARK_NOTIFYDSC', 'Keep track of this item without receiving an
 define ('_NOT_NOTIFYMETHOD', 'Notification Method: When you monitor e.g. a forum, how would you like to receive notifications of updates?');
 define ('_NOT_METHOD_EMAIL', 'Email (use address in my profile)');
 define ('_NOT_METHOD_PM', 'Private Message');
+define ('_NOT_METHOD_SMS', 'Texting (SMS - use phone number in my profile)');
 define ('_NOT_METHOD_DISABLE', 'Temporarily Disable');
+define ('_NOT_SMS', 'SMS');
 
 define ('_NOT_NOTIFYMODE', 'Default Notification Mode');
 define ('_NOT_MODE_SENDALWAYS', 'Notify me of all selected updates');
@@ -84,4 +86,3 @@ define ('_NOT_MODE_SENDONCE', 'Notify me only once');
 define ('_NOT_MODE_SENDONCEPERLOGIN', 'Notify me once then disable until I log in again');
 
 define ('_NOT_NOTHINGTODELETE', 'There is nothing to delete.');
-?>

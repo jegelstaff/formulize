@@ -32,7 +32,7 @@ function validateCode($code, $uid=false) {
     if(!$uid AND !$xoopsUser) {
         exit('No known user to check 2FA code for!');
     }
-    $uid = $uid ? $uid : $xoopsUser->getVar('uid'); 
+    $uid = $uid ? $uid : $xoopsUser->getVar('uid');
     //$sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
     $sql = 'SELECT method, code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
     $res = $xoopsDB->query($sql);
@@ -89,58 +89,60 @@ function sendCode($method=null, $uid=false, $phone=null) {
     if(!$uid AND !$xoopsUser) {
         exit('No known user to send 2FA code to!');
     }
-    $uid = $uid ? $uid : $xoopsUser->getVar('uid'); 
-    
+    $uid = $uid ? $uid : $xoopsUser->getVar('uid');
+
     $profile_handler = xoops_getmodulehandler('profile', 'profile');
 	$profile = $profile_handler->get($uid);
     if(!$method) {
         $method = intval($profile->getVar('2famethod'));
     }
-    
+
     $code = generateCode($method, $uid);
-    
+
     switch($method) {
         case TFA_EMAIL:
             $member_handler = xoops_gethandler('member');
-			$userObject = $member_handler->getUser($uid);
+						$userObject = $member_handler->getUser($uid);
             $email = $userObject->getVar('email');
             $xoopsMailer = new icms_messaging_Handler();
             $xoopsMailer->useMail();
             if(!$email AND $xoopsUser AND isset($_GET['email']) AND filter_var($_GET['email'], FILTER_VALIDATE_EMAIL)) {
                 $xoopsMailer->setToEmails($_GET['email']);
             } else {
-                $xoopsMailer->setToUsers($userObject);    
+                $xoopsMailer->setToUsers($userObject);
             }
-			$xoopsMailer->setTemplate('2fa.tpl');
-			$xoopsMailer->assign('SITENAME', $icmsConfig['sitename']);
-			$xoopsMailer->assign('ADMINMAIL', $icmsConfig['adminmail']);
-			$xoopsMailer->assign('SITEURL', ICMS_URL . '/');
-			$xoopsMailer->assign('IP', $_SERVER['REMOTE_ADDR']);
-			$xoopsMailer->assign('CODE', $code);
-	        $xoopsMailer->setFromEmail($icmsConfig['adminmail']);
-	        $xoopsMailer->setFromName($icmsConfig['sitename']);
-	        $xoopsMailer->setSubject(sprintf(_US_EMAIL_SUBJECT, $code));
-			if (!$xoopsMailer->send()) {
-			    return $xoopsMailer->getErrors();
-			}
-			return false; // no errors
+						$xoopsMailer->setTemplate('2fa.tpl');
+						$xoopsMailer->assign('SITENAME', $icmsConfig['sitename']);
+						$xoopsMailer->assign('ADMINMAIL', $icmsConfig['adminmail']);
+						$xoopsMailer->assign('SITEURL', ICMS_URL . '/');
+						$xoopsMailer->assign('IP', $_SERVER['REMOTE_ADDR']);
+						$xoopsMailer->assign('CODE', $code);
+						$xoopsMailer->setFromEmail($icmsConfig['adminmail']);
+						$xoopsMailer->setFromName($icmsConfig['sitename']);
+						$xoopsMailer->setSubject(sprintf(_US_EMAIL_SUBJECT, $code));
+						if (!$xoopsMailer->send()) {
+								return $xoopsMailer->getErrors();
+						}
+						return false; // no errors
             break;
         case TFA_SMS:
             $phone = $phone ? $phone : $profile->getVar('2faphone');
-			include "sendSMS.php"; // file in the include/2fa folder, which must contain a function of the same name, that sends SMS messages using your provider, and returns any errors
-			$body = sprintf(_US_SMS_TEXT, $code, trans($icmsConfig['sitename']), $_SERVER['REMOTE_ADDR'], $icmsConfig['adminmail']);
-			return sendSMS($body, $phone);
+						// Use SMS handler directly
+						require_once ICMS_ROOT_PATH . '/libraries/icms/messaging/SmsHandler.php';
+						$smsHandler = new icms_messaging_SmsHandler();
+						$body = sprintf(_US_SMS_TEXT, $code, trans($icmsConfig['sitename']), $_SERVER['REMOTE_ADDR'], $icmsConfig['adminmail']);
+						return $smsHandler->send($phone, $body);
             break;
         case TFA_APP:
-			$instructions = '';
-			if($code) { // code only set if a new secret was created, ie: we're initializing with user
-				$member_handler = xoops_gethandler('member');
-				$userObject = $member_handler->getUser($uid);
-				$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
-				$qr = '<img src="'.$tfa->getQRCodeImageAsDataUri($userObject->getVar('login_name'), $code).'">';
-				$secret = chunk_split($code, 4, ' ');
-				$instructions = _US_SCAN_THIS_CODE.' <br>'.$qr.'<br><br>'._US_ENTER_THIS_MANUALLY.'<br>'.$secret.'<br><br>'._US_ONCE_DONE_ENTER_CODE;
-			}
+						$instructions = '';
+						if($code) { // code only set if a new secret was created, ie: we're initializing with user
+							$member_handler = xoops_gethandler('member');
+							$userObject = $member_handler->getUser($uid);
+							$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
+							$qr = '<img src="'.$tfa->getQRCodeImageAsDataUri($userObject->getVar('login_name'), $code).'">';
+							$secret = chunk_split($code, 4, ' ');
+							$instructions = _US_SCAN_THIS_CODE.' <br>'.$qr.'<br><br>'._US_ENTER_THIS_MANUALLY.'<br>'.$secret.'<br><br>'._US_ONCE_DONE_ENTER_CODE;
+						}
             return $instructions; // when passed back to confirmation dialog, we use it to generate the QR code, etc
     }
 }
@@ -149,7 +151,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
 // will default to email if the user must use 2FA but they don't have a method set
 function user2FAMethod($user=null) {
 
-    // check if 2FA is on    
+    // check if 2FA is on
     $config_handler = icms::handler('icms_config');
 	$criteria = new Criteria('conf_name', 'auth_2fa');
 	if($auth_2fa = $config_handler->getConfigs($criteria)) {
@@ -159,7 +161,7 @@ function user2FAMethod($user=null) {
     if($auth_2fa == false) {
         return false;
     }
-   
+
     // if 2FA is on, return the user's method if any, or email if they have no method but are in a group that must use 2FA
 	if(!$user) {
 		global $xoopsUser;
@@ -219,16 +221,16 @@ function tfaLoginJS($id) {
 				}
 			],
 			open: function() {
-				jQuery(this).css('overflow-y', 'auto !important'); 
-			}					
+				jQuery(this).css('overflow-y', 'auto !important');
+			}
 		});
-		
+
 		jQuery('#tfadialog-$id').keypress(function(e) {
 			if (e.keyCode == jQuery.ui.keyCode.ENTER) {
 				close2FADialog(tfadialog$counter, '$id');
 			}
 		});
-		
+
 		jQuery('#".$id." form').on('submit', function(event) {
 			var tfacode = jQuery('#tfacode').val();
 			if(!tfacode) {
@@ -252,7 +254,7 @@ function tfaLoginJS($id) {
 			}
 			return true;
 		});
-        
+
         tfalostpassdialog$counter = jQuery('#tfalostpassdialog-$id').dialog({
 			autoOpen: false,
 			modal: true,
@@ -271,29 +273,29 @@ function tfaLoginJS($id) {
 				}
 			],
 			open: function() {
-				jQuery(this).css('overflow-y', 'auto !important'); 
-			}					
+				jQuery(this).css('overflow-y', 'auto !important');
+			}
 		});
-        
+
         jQuery('#tfalostpassdialog-$id').keypress(function(e) {
 			if (e.keyCode == jQuery.ui.keyCode.ENTER) {
 				close2FALostPassDialog(tfalostpassdialog$counter, '$id');
 			}
 		});
-        
+
         jQuery('#lostpass').click(function() {
             event.preventDefault();
             tfalostpassdialog$counter.html('<center>"._US_USERNAME_OR_EMAIL."<input type=\"text\" id=\"dialog-tfalostaccount\" value=\"\"></center>');
             tfalostpassdialog$counter.dialog('open');
         });
-        
+
 	});
 	</script>
 	";
-	
+
 	if($counter == 1) {
 		$js .= "<script type=\"text/javascript\">
-		
+
 		function close2FADialog(dialog, id) {
 			var code = jQuery('#dialog-tfacode').val();
 			var remember = jQuery('#dialog-tfaremember').is(':checked');
@@ -311,7 +313,7 @@ function tfaLoginJS($id) {
 				jQuery('#'+id+' form').submit();
 			}
 		}
-        
+
         function close2FALostPassDialog(dialog, id) {
             var account = jQuery('#dialog-tfalostaccount').val();
             if(account) {
@@ -321,13 +323,13 @@ function tfaLoginJS($id) {
 				dialog.html('<center>".$workingMessageGif."</center>');
             }
 		}
-        
+
 		</script>
 		";
 	}
-	
+
 	return $js;
-	
+
 }
 
 function getDeviceFingerprint() {
