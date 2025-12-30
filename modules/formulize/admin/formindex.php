@@ -1752,14 +1752,42 @@ function patch40() {
 					}
 				}
 
+        // Update profile module notify_method field to include SMS option
+        include_once ICMS_ROOT_PATH . '/include/notification_constants.php';
+        $profile_field_handler = icms_getModuleHandler('field', 'profile', 'profile');
+        if ($profile_field_handler) {
+            $criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
+            $notify_fields = $profile_field_handler->getObjects($criteria);
+            if (count($notify_fields) > 0) {
+                $notify_field = $notify_fields[0];
+                // Get current options and check if SMS already exists
+                $current_options = unserialize($notify_field->getVar('field_options', 'n'));
+                if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])) {
+										require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
+										if(defined('_NOT_METHOD_SMS')) {
+											// Add SMS option
+											$updated_options = array(
+													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
+													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
+													XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
+													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE
+											);
+											$notify_field->setVar('field_options', serialize($updated_options));
+											$profile_field_handler->insert($notify_field);
+										}
+                }
+            }
+        }
+
         // Check for legacy SMS credentials that need migration
-        if (checkLegacySmsCredentials()) {
+        // Only show migration message if new config doesn't exist AND legacy credentials are present
+        if (!defined('SMS_ACCOUNT_SID') && checkLegacySmsCredentials()) {
             print "<script>
                 alert('IMPORTANT: SMS Provider Migration Required\\n\\n' +
                       'Your system has legacy SMS credentials in the sendSMS.php file.\\n\\n' +
                       'You need to migrate these credentials to your trust folder.\\n\\n' +
                       'For detailed instructions, see:\\n' +
-                      XOOPS_URL + '/libraries/icms/messaging/sms/README.md\\n\\n' +
+                      '". XOOPS_URL . "/libraries/icms/messaging/sms/README.html\\n\\n' +
                       'Required constants:\\n' +
                       '- SMS_ACCOUNT_SID\\n' +
                       '- SMS_AUTH_TOKEN\\n' +

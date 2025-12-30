@@ -28,7 +28,7 @@ define ('_NOT_DISABLE', 'd&eacute;sactiv&eacute;e');
 define ('_NOT_CHANGE', 'Changer');
 define ('_NOT_NOACCESS', "Vous n'avez pas la permission d'acc&eacute;der &agrave; cette page.");
 
-// Choix options 
+// Choix options
 define ('_NOT_ENABLE', 'Actif');
 define ('_NOT_NOTIFICATION', 'Notification');
 define ('_NOT_CONFIG_ENABLED', 'Notification activ&eacute;e');
@@ -62,10 +62,9 @@ define ('_NOT_NOTIFYMETHOD', 'M&eacute;thode de notification : Lorsque vous cont
 define ('_NOT_METHOD_EMAIL', "Email (utiliser l'adresse de mon profil)");
 define ('_NOT_METHOD_PM', 'Message priv&eacute;');
 define ('_NOT_METHOD_DISABLE', 'Temporairement d&eacute;sactiv&eacute;');
+define ('_NOT_METHOD_SMS', 'Texte (SMS - utiliser le num&eacute;ro de t&eacute;l&eacute;phone dans mon profil)');
 define ('_NOT_NOTIFYMODE', 'Mode de notification par d&eacute;faut');
 define ('_NOT_MODE_SENDALWAYS', "M'avertir pour toutes les mises &agrave; jour s&eacute;lectionn&eacute;es");
 define ('_NOT_MODE_SENDONCE', 'Me pr&eacute;venir une seule fois');
 define ('_NOT_MODE_SENDONCEPERLOGIN', "Me pr&eacute;venir une fois et alors d&eacute;sactiver jusqu'&agrave; ce que je me connecte &agrave; nouveau");
 define ('_NOT_NOTHINGTODELETE', 'Il n\'y a rien &agrave; supprimer !');
-
-?>

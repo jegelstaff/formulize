@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Provider System - Formulize Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 30px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+        pre {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: #333;
+        }
+        ul, ol {
+            padding-left: 25px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        strong {
+            color: #2c3e50;
+        }
+        .architecture {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            white-space: pre;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 12px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SMS Provider System</h1>
+
+        <p>This directory contains SMS provider implementations for the Formulize notification system.</p>
+
+        <h2>Architecture</h2>
+
+        <p>The SMS handler uses a <strong>factory pattern</strong> to load provider-specific implementations:</p>
+
+        <div class="architecture">SmsHandler (factory)
+    └─> ProviderInterface (contract)
+            ├─> TwilioProvider (default)
+            ├─> NexmoProvider (example)
+            └─> YourCustomProvider (add your own!)</div>
+
+        <h2>Using Built-in Providers</h2>
+
+        <h3>Twilio (Default)</h3>
+
+        <p>Add to your trust folder configuration:</p>
+
+        <pre><code>define('SMS_ACCOUNT_SID', 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+define('SMS_AUTH_TOKEN', 'your_auth_token');
+define('SMS_FROM_NUMBER', '+15551234567');</code></pre>
+
+        <p>No need to specify <code>SMS_PROVIDER</code> - Twilio is the default.</p>
+
+        <h3>Vonage/Nexmo</h3>
+
+        <p>Add to your trust folder configuration:</p>
+
+        <pre><code>define('SMS_PROVIDER', 'Nexmo');
+define('SMS_ACCOUNT_SID', 'your_api_key');
+define('SMS_AUTH_TOKEN', 'your_api_secret');
+define('SMS_FROM_NUMBER', 'YourBrand');  // Can be alphanumeric sender ID</code></pre>
+
+        <h2>Creating Your Own Provider</h2>
+
+        <p>To add support for a new SMS service (e.g., AWS SNS, MessageBird, etc.):</p>
+
+        <h3>Step 1: Create Provider Class</h3>
+
+        <p>Create a new file: <code>YourServiceProvider.php</code></p>
+
+        <pre><code>&lt;?php
+defined("ICMS_ROOT_PATH") or die("ImpressCMS root path not defined");
+
+require_once ICMS_ROOT_PATH . '/libraries/icms/messaging/sms/ProviderInterface.php';
+
+class icms_messaging_sms_YourServiceProvider implements icms_messaging_sms_ProviderInterface {
+
+    private $apiKey;
+    private $apiSecret;
+    private $fromNumber;
+    private $errors = array();
+
+    public function __construct() {
+        // Load credentials from constants
+        $this->apiKey = defined('SMS_ACCOUNT_SID') ? SMS_ACCOUNT_SID : '';
+        $this->apiSecret = defined('SMS_AUTH_TOKEN') ? SMS_AUTH_TOKEN : '';
+        $this->fromNumber = defined('SMS_FROM_NUMBER') ? SMS_FROM_NUMBER : '';
+    }
+
+    public function send($phone, $message) {
+        // Validate configuration
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return "SMS not configured - missing credentials";
+        }
+
+        // Your API implementation here
+        // ...
+
+        // Return false on success, error string on failure
+        return false;
+    }
+
+    public function getErrors() {
+        return $this->errors;
+    }
+}</code></pre>
+
+        <h3>Step 2: Configure Trust Folder</h3>
+
+        <p>Add to your trust folder:</p>
+
+        <pre><code>define('SMS_PROVIDER', 'YourService');  // Matches filename: YourServiceProvider.php
+define('SMS_ACCOUNT_SID', 'your_api_key');
+define('SMS_AUTH_TOKEN', 'your_api_secret');
+define('SMS_FROM_NUMBER', 'your_from_number');</code></pre>
+
+        <h3>Step 3: Test</h3>
+
+        <div class="success">
+            <strong>The factory will automatically load your provider. No other code changes needed!</strong>
+        </div>
+
+        <h2>Configuration Constants Reference</h2>
+
+        <h3>Required Constants</h3>
+
+        <ul>
+            <li><strong><code>SMS_ACCOUNT_SID</code></strong> - Account identifier, API key, or username</li>
+            <li><strong><code>SMS_AUTH_TOKEN</code></strong> - Auth token, API secret, or password</li>
+            <li><strong><code>SMS_FROM_NUMBER</code></strong> - Sender phone number or sender ID</li>
+        </ul>
+
+        <h3>Optional Constants</h3>
+
+        <ul>
+            <li><strong><code>SMS_PROVIDER</code></strong> - Provider name (defaults to <code>'Twilio'</code>)
+                <ul>
+                    <li>Must match provider filename without "Provider.php"</li>
+                    <li>Examples: <code>'Twilio'</code>, <code>'Nexmo'</code>, <code>'YourService'</code></li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>Provider Interface</h2>
+
+        <p>All providers must implement these methods:</p>
+
+        <pre><code>interface icms_messaging_sms_ProviderInterface {
+    /**
+     * Send SMS message
+     *
+     * @param string $phone Destination phone number
+     * @param string $message Message body
+     * @return string|false Error message on failure, false on success
+     */
+    public function send($phone, $message);
+
+    /**
+     * Get error messages
+     *
+     * @return array Array of error messages
+     */
+    public function getErrors();
+}</code></pre>
+
+        <h2>Phone Number Formatting</h2>
+
+        <p>Each provider handles phone number normalization differently:</p>
+
+        <ul>
+            <li><strong>Twilio</strong>: E.164 format (+1XXXXXXXXXX)</li>
+            <li><strong>Nexmo/Vonage</strong>: Can accept various formats</li>
+            <li><strong>Your provider</strong>: Implement <code>normalizePhone()</code> as needed</li>
+        </ul>
+
+        <p><strong>Example:</strong></p>
+
+        <pre><code>protected function normalizePhone($phone) {
+    // Strip non-numeric
+    $clean = preg_replace("/[^0-9]/", '', $phone);
+
+    // Add country code
+    if (strlen($clean) == 10) {
+        $clean = "1" . $clean;
+    }
+
+    return "+" . $clean;  // E.164 format
+}</code></pre>
+
+        <h2>Error Handling</h2>
+
+        <p>Providers should return:</p>
+
+        <ul>
+            <li><strong><code>false</code></strong> on success</li>
+            <li><strong>Error string</strong> on failure</li>
+        </ul>
+
+        <p>The error will be displayed to the user or logged.</p>
+
+        <h2>Testing Your Provider</h2>
+
+        <ol>
+            <li>Set up trust folder constants</li>
+            <li>Test via 2FA system (login with SMS option)</li>
+            <li>Test via notification system (set user notification preference to SMS)</li>
+        </ol>
+
+        <h2>Available Providers</h2>
+
+        <ul>
+            <li><strong>TwilioProvider</strong> - Twilio SMS service (default)</li>
+            <li><strong>NexmoProvider</strong> - Vonage/Nexmo SMS service (example)</li>
+        </ul>
+
+        <h2>Support</h2>
+
+        <p>For questions or issues, see:</p>
+        <ul>
+            <li><a href="https://www.formulize.org/developers/" target="_blank">Formulize Developer Docs</a></li>
+            <li>Create issue on GitHub</li>
+        </ul>
+    </div>
+</body>
+</html>
