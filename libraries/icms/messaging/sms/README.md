@@ -21,15 +21,9 @@ SmsHandler (factory)
 Add to your trust folder configuration:
 
 ```php
-// Option 1: Generic naming (recommended)
 define('SMS_ACCOUNT_SID', 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
 define('SMS_AUTH_TOKEN', 'your_auth_token');
 define('SMS_FROM_NUMBER', '+15551234567');
-
-// Option 2: Twilio-specific naming (backward compatibility)
-define('TWILIO_ACCOUNT_SID', 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
-define('TWILIO_AUTH_TOKEN', 'your_auth_token');
-define('TWILIO_FROM_NUMBER', '+15551234567');
 ```
 
 No need to specify `SMS_PROVIDER` - Twilio is the default.

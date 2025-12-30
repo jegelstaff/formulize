@@ -1752,6 +1752,21 @@ function patch40() {
 					}
 				}
 
+        // Check for legacy SMS credentials that need migration
+        if (checkLegacySmsCredentials()) {
+            print "<script>
+                alert('IMPORTANT: SMS Provider Migration Required\\n\\n' +
+                      'Your system has legacy SMS credentials in the sendSMS.php file.\\n\\n' +
+                      'You need to migrate these credentials to your trust folder.\\n\\n' +
+                      'For detailed instructions, see:\\n' +
+                      XOOPS_URL + '/libraries/icms/messaging/sms/README.md\\n\\n' +
+                      'Required constants:\\n' +
+                      '- SMS_ACCOUNT_SID\\n' +
+                      '- SMS_AUTH_TOKEN\\n' +
+                      '- SMS_FROM_NUMBER');
+            </script>";
+        }
+
         print "DB updates completed.  result: OK";
     	}
 }
@@ -2031,6 +2046,46 @@ function codeInNeedOfConversion() {
 		}
 	}
 	return false;
+}
+
+/**
+ * Check for legacy SMS credentials in sendSMS.php that need migration
+ *
+ * Reads the include/2fa/sendSMS.php file and checks if any Twilio credentials
+ * are defined (non-empty strings). This indicates the user has legacy credentials
+ * that should be migrated to the trust folder.
+ *
+ * @return bool True if legacy credentials found, false otherwise
+ */
+function checkLegacySmsCredentials() {
+	$sendSmsFile = XOOPS_ROOT_PATH . '/include/2fa/sendSMS.php';
+
+	// If file doesn't exist, no legacy credentials to migrate
+	if (!file_exists($sendSmsFile)) {
+		return false;
+	}
+
+	// Read the file contents
+	$contents = file_get_contents($sendSmsFile);
+
+	// Look for the three credential variables with non-empty values
+	// Pattern matches: $id = "something"; where something is not empty
+	$patterns = array(
+		'/\$id\s*=\s*"([^"]+)";/',      // $id = "something";
+		'/\$token\s*=\s*"([^"]+)";/',   // $token = "something";
+		'/\$from\s*=\s*"([^"]+)";/'     // $from = "something";
+	);
+
+	foreach ($patterns as $pattern) {
+		if (preg_match($pattern, $contents, $matches)) {
+			// Check if the captured value is not empty
+			if (!empty(trim($matches[1]))) {
+				return true;  // Found a non-empty credential
+			}
+		}
+	}
+
+	return false;  // No non-empty credentials found
 }
 
 if (!defined('_FORMULIZE_UI_PHP_INCLUDED')) {

@@ -69,14 +69,11 @@ class icms_messaging_sms_TwilioProvider implements icms_messaging_sms_ProviderIn
 	 */
 	public function __construct() {
 		// Try generic SMS_* constants first, fall back to TWILIO_* for backward compatibility
-		$this->accountSid = defined('SMS_ACCOUNT_SID') ? SMS_ACCOUNT_SID :
-		                    (defined('TWILIO_ACCOUNT_SID') ? TWILIO_ACCOUNT_SID : '');
+		$this->accountSid = defined('SMS_ACCOUNT_SID') ? SMS_ACCOUNT_SID : '';
 
-		$this->authToken = defined('SMS_AUTH_TOKEN') ? SMS_AUTH_TOKEN :
-		                   (defined('TWILIO_AUTH_TOKEN') ? TWILIO_AUTH_TOKEN : '');
+		$this->authToken = defined('SMS_AUTH_TOKEN') ? SMS_AUTH_TOKEN : '';
 
-		$this->fromNumber = defined('SMS_FROM_NUMBER') ? SMS_FROM_NUMBER :
-		                    (defined('TWILIO_FROM_NUMBER') ? TWILIO_FROM_NUMBER : '');
+		$this->fromNumber = defined('SMS_FROM_NUMBER') ? SMS_FROM_NUMBER : '';
 
 		if (!empty($this->accountSid)) {
 			$this->apiUrl = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json";
