@@ -26,6 +26,12 @@ class icms_messaging_Handler {
 	 */
 	private $multimailer;
 
+	/**
+	 * reference to a {@link icms_messaging_SmsHandler}
+	 * @var		icms_messaging_SmsHandler
+	 */
+	private $smsHandler;
+
 	// sender email address
 	private $fromEmail;
 
@@ -40,6 +46,9 @@ class icms_messaging_Handler {
 
 	// array of email addresses
 	private $toEmails;
+
+	// array of phone numbers
+	private $toPhones;
 
 	// custom headers
 	private $headers;
@@ -60,6 +69,8 @@ class icms_messaging_Handler {
 
 	private $isPM;
 
+	private $isSMS;
+
 	private $assignedTags;
 
 	private $template;
@@ -77,6 +88,13 @@ class icms_messaging_Handler {
 		} else {
 			$this->multimailer = new icms_messaging_Handler();
 		}
+		// Initialize SMS handler
+		if (file_exists(ICMS_ROOT_PATH . '/libraries/icms/messaging/SmsHandler.php')) {
+			require_once ICMS_ROOT_PATH . '/libraries/icms/messaging/SmsHandler.php';
+			if (class_exists('icms_messaging_SmsHandler')) {
+				$this->smsHandler = new icms_messaging_SmsHandler();
+			}
+		}
 		$this->reset();
 	}
 
@@ -88,6 +106,7 @@ class icms_messaging_Handler {
 		$this->priority = '';
 		$this->toUsers = array();
 		$this->toEmails = array();
+		$this->toPhones = array();
 		$this->headers = array();
 		$this->subject = "";
 		$this->body = "";
@@ -95,6 +114,7 @@ class icms_messaging_Handler {
 		$this->success = array();
 		$this->isMail = false;
 		$this->isPM = false;
+		$this->isSMS = false;
 		$this->assignedTags = array();
 		$this->template = "";
 		$this->templatedir = "";
@@ -142,13 +162,17 @@ class icms_messaging_Handler {
 	public function useMail() {
 		$this->isMail = true;
 	}
-    
-    public function isHTML() {
-        $this->multimailer->isHTML();
-    }
+
+	public function isHTML() {
+			$this->multimailer->isHTML();
+	}
 
 	public function usePM() {
 		$this->isPM = true;
+	}
+
+	public function useSMS() {
+		$this->isSMS = true;
 	}
 
 	public function send($debug = false) {
@@ -168,7 +192,7 @@ class icms_messaging_Handler {
 			}
             if(filesize($path) > 0) {
                 $this->setBody(fread($fd, filesize($path)));
-            } 
+            }
 		}
 
 		// for sending mail only
@@ -224,6 +248,19 @@ class icms_messaging_Handler {
 			}
 		}
 
+		// send SMS to specified phone numbers, if any
+		foreach ($this->toPhones as $phone) {
+			if (!$this->sendSMS($phone, $this->subject, $this->body)) {
+				if ($debug) {
+					$this->errors[] = sprintf("Failed to send SMS to %s", $phone);
+				}
+			} else {
+				if ($debug) {
+					$this->success[] = sprintf("SMS sent to %s", $phone);
+				}
+			}
+		}
+
 		// send message to specified users, if any
 
 		// NOTE: we don't send to LIST of recipients, because the tags
@@ -261,6 +298,29 @@ class icms_messaging_Handler {
 					}
 				}
 			}
+			// send SMS
+			if ($this->isSMS) {
+				// Get phone from profile
+				$profile_handler = xoops_getmodulehandler('profile', 'profile');
+				$profile = $profile_handler->get($user->getVar('uid'));
+				$phone = $profile->getVar('2faphone');
+
+				if (empty($phone)) {
+					if ($debug) {
+						$this->errors[] = sprintf("User %s has no phone number for SMS", $user->getVar("uname"));
+					}
+				} else {
+					if (!$this->sendSMS($phone, $subject, $text)) {
+						if ($debug) {
+							$this->errors[] = sprintf("Failed to send SMS to %s", $user->getVar("uname"));
+						}
+					} else {
+						if ($debug) {
+							$this->success[] = sprintf("SMS sent to %s", $user->getVar("uname"));
+						}
+					}
+				}
+			}
 			flush();
 		}
 		if (count($this->errors) > 0) {
@@ -277,6 +337,25 @@ class icms_messaging_Handler {
 		$pm->setVar("msg_text", $body);
 		$pm->setVar("to_userid", $uid);
 		if (!$pm_handler->insert($pm)) {
+			return false;
+		}
+		return true;
+	}
+
+	public function sendSMS($phone, $subject, $body) {
+		if (!$this->smsHandler) {
+			$this->errors[] = "SMS handler not initialized";
+			return false;
+		}
+
+		// Combine subject and body for SMS (SMS doesn't have subject line)
+		$message = $subject . ": " . $body;
+
+		// Send via SMS handler
+		$error = $this->smsHandler->send($phone, $message);
+
+		if ($error) {
+			$this->errors[] = $error;
 			return false;
 		}
 		return true;
@@ -327,7 +406,7 @@ class icms_messaging_Handler {
         ) {
         $this->multimailer->addAttachment($path, $name, $encoding, $type, $disposition);
     }
-    
+
 	public function getErrors($ashtml = true) {
 		if (!$ashtml) {
 			return $this->errors;
@@ -386,6 +465,19 @@ class icms_messaging_Handler {
 		} else {
 			foreach ($email as $e) {
 				$this->setToEmails($e);
+			}
+		}
+	}
+
+	public function setToPhones($phone) {
+		if (!is_array($phone)) {
+			// Basic validation - just check it's not empty
+			if (!empty(trim($phone))) {
+				array_push($this->toPhones, trim($phone));
+			}
+		} else {
+			foreach ($phone as $p) {
+				$this->setToPhones($p);
 			}
 		}
 	}

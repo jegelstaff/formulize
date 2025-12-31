@@ -1752,6 +1752,49 @@ function patch40() {
 					}
 				}
 
+        // Update profile module notify_method field to include SMS option
+        include_once ICMS_ROOT_PATH . '/include/notification_constants.php';
+        $profile_field_handler = icms_getModuleHandler('field', 'profile', 'profile');
+        if ($profile_field_handler) {
+            $criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
+            $notify_fields = $profile_field_handler->getObjects($criteria);
+            if (count($notify_fields) > 0) {
+                $notify_field = $notify_fields[0];
+                // Get current options and check if SMS already exists
+                $current_options = unserialize($notify_field->getVar('field_options', 'n'));
+                if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])) {
+										require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
+										if(defined('_NOT_METHOD_SMS')) {
+											// Add SMS option
+											$updated_options = array(
+													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE,
+													XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
+													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
+													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS
+											);
+											$notify_field->setVar('field_options', serialize($updated_options));
+											$profile_field_handler->insert($notify_field);
+										}
+                }
+            }
+        }
+
+        // Check for legacy SMS credentials that need migration
+        // Only show migration message if new config doesn't exist AND legacy credentials are present
+        if (!defined('SMS_ACCOUNT_SID') && checkLegacySmsCredentials()) {
+            print "<script>
+                alert('IMPORTANT: SMS Provider Migration Required\\n\\n' +
+                      'Your system has legacy SMS credentials in the sendSMS.php file.\\n\\n' +
+                      'You need to migrate these credentials to your trust folder.\\n\\n' +
+                      'For detailed instructions, see:\\n' +
+                      '". XOOPS_URL . "/libraries/icms/messaging/sms/README.html\\n\\n' +
+                      'Required constants:\\n' +
+                      '- SMS_ACCOUNT_SID\\n' +
+                      '- SMS_AUTH_TOKEN\\n' +
+                      '- SMS_FROM_NUMBER');
+            </script>";
+        }
+
         print "DB updates completed.  result: OK";
     	}
 }
@@ -2031,6 +2074,46 @@ function codeInNeedOfConversion() {
 		}
 	}
 	return false;
+}
+
+/**
+ * Check for legacy SMS credentials in sendSMS.php that need migration
+ *
+ * Reads the include/2fa/sendSMS.php file and checks if any Twilio credentials
+ * are defined (non-empty strings). This indicates the user has legacy credentials
+ * that should be migrated to the trust folder.
+ *
+ * @return bool True if legacy credentials found, false otherwise
+ */
+function checkLegacySmsCredentials() {
+	$sendSmsFile = XOOPS_ROOT_PATH . '/include/2fa/sendSMS.php';
+
+	// If file doesn't exist, no legacy credentials to migrate
+	if (!file_exists($sendSmsFile)) {
+		return false;
+	}
+
+	// Read the file contents
+	$contents = file_get_contents($sendSmsFile);
+
+	// Look for the three credential variables with non-empty values
+	// Pattern matches: $id = "something"; where something is not empty
+	$patterns = array(
+		'/\$id\s*=\s*"([^"]+)";/',      // $id = "something";
+		'/\$token\s*=\s*"([^"]+)";/',   // $token = "something";
+		'/\$from\s*=\s*"([^"]+)";/'     // $from = "something";
+	);
+
+	foreach ($patterns as $pattern) {
+		if (preg_match($pattern, $contents, $matches)) {
+			// Check if the captured value is not empty
+			if (!empty(trim($matches[1]))) {
+				return true;  // Found a non-empty credential
+			}
+		}
+	}
+
+	return false;  // No non-empty credentials found
 }
 
 if (!defined('_FORMULIZE_UI_PHP_INCLUDED')) {

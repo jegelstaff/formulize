@@ -348,7 +348,7 @@ switch ($op) {
 		icms_loadLanguageFile('core', 'notification');
 		include_once ICMS_ROOT_PATH . '/include/notification_constants.php';
 		$notify_method_select = new icms_form_elements_Select(_NOT_NOTIFYMETHOD, 'notify_method', icms::$user->getVar('notify_method'));
-		$notify_method_select->addOptionArray(array(XOOPS_NOTIFICATION_METHOD_DISABLE=>_NOT_METHOD_DISABLE, XOOPS_NOTIFICATION_METHOD_PM=>_NOT_METHOD_PM, XOOPS_NOTIFICATION_METHOD_EMAIL=>_NOT_METHOD_EMAIL));
+		$notify_method_select->addOptionArray(array(XOOPS_NOTIFICATION_METHOD_DISABLE=>_NOT_METHOD_DISABLE, XOOPS_NOTIFICATION_METHOD_PM=>_NOT_METHOD_PM, XOOPS_NOTIFICATION_METHOD_EMAIL=>_NOT_METHOD_EMAIL, XOOPS_NOTIFICATION_METHOD_SMS=>_NOT_METHOD_SMS));
 		$notify_mode_select = new icms_form_elements_Select(_NOT_NOTIFYMODE, 'notify_mode', icms::$user->getVar('notify_mode'));
 		$notify_mode_select->addOptionArray(array(XOOPS_NOTIFICATION_MODE_SENDALWAYS=>_NOT_MODE_SENDALWAYS, XOOPS_NOTIFICATION_MODE_SENDONCETHENDELETE=>_NOT_MODE_SENDONCE, XOOPS_NOTIFICATION_MODE_SENDONCETHENWAIT=>_NOT_MODE_SENDONCEPERLOGIN));
 		$bio_tarea = new icms_form_elements_Textarea(_US_EXTRAINFO, 'bio', icms::$user->getVar('bio', 'E'));

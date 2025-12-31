@@ -81,6 +81,13 @@ class icms_data_notification_Object extends icms_core_Object {
 				}
 				break;
 
+			case XOOPS_NOTIFICATION_METHOD_SMS:
+				$xoopsMailer->useSMS();
+				foreach ($tags as $k=>$v) {
+					$xoopsMailer->assign($k, preg_replace("/&amp;/i", '&', $v));
+				}
+				break;
+
 			default:
 				return true; // report error in user's profile??
 				break;
