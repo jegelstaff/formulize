@@ -25,7 +25,7 @@ switch ($op) {
 		if (!icms::$security->check()) {
 			redirect_header(ICMS_URL."/modules/".basename(dirname(__FILE__)), 3, _NOPERM."<br />".implode('<br />', icms::$security->getErrors()));
 		}
-		
+
 		$uid = 0;
 		if (!empty($_POST['uid'])) $uid = (int)$_POST['uid'];
 		if (empty($uid) || (icms::$user->getVar('uid') != $uid && !icms::$user->isAdmin())) redirect_header(ICMS_URL, 3, _MD_PROFILE_NOEDITRIGHT);
@@ -35,7 +35,7 @@ switch ($op) {
 		$email = isset($_POST['email']) ? trim($_POST['email']) : '';
 		$pass = isset($_POST['password']) ? icms_core_DataFilter::stripSlashesGPC($_POST['password']) : '';
 		$vpass = isset($_POST['vpass']) ? icms_core_DataFilter::stripSlashesGPC($_POST['vpass']) : '';
-        
+
 		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 		$profile_handler = xoops_getmodulehandler('profile', 'profile');
 		$profile = $profile_handler->get($uid);
@@ -124,7 +124,7 @@ switch ($op) {
 					}
 					else {
 						$value = $fields[$i]->getValueForSave((isset($_REQUEST[$fieldname]) ? $_REQUEST[$fieldname] : ""), $profile->getVar($fieldname, 'n'));
-						
+
 						// ADDED BY JULIAN EGELSTAFF MAR 4 2021 TO HANDLE 2FA FEATURES
 						/* if user is in a group that must use 2fa and they have not selected a 2fa option, force them onto email
 						 * if user has selected phone, there must be a phone number, otherwise default to email */
@@ -138,7 +138,7 @@ switch ($op) {
 							$phoneNumber = $_REQUEST['2faphone'];
 							if($value == TFA_OFF AND array_intersect($edituserGroups, $auth_2fa_groups)
 							   OR ($value == TFA_SMS AND !$phoneNumber)) {
-								$value = TFA_EMAIL; 
+								$value = TFA_EMAIL;
 							}
 							if($value != TFA_APP) { // if the value is not app, then remove any app codes stored in DB
 								global $xoopsDB;
@@ -146,7 +146,7 @@ switch ($op) {
 								$xoopsDB->queryF($sql);
 							}
 						}
-						
+
 						$profile->setVar($fieldname, $value);
 					}
 				}
@@ -177,7 +177,7 @@ switch ($op) {
 			$profile_handler->insert($profile);
 			unset($_SESSION['xoopsUserTheme']);
 			redirect_header(ICMS_URL.'/modules/profile/edituser.php', 2,$update_message);
-		}		
+		}
 		break;
 	case 'delete':
 		if (!icms::$user || $icmsConfigUser['self_delete'] != 1) redirect_header(ICMS_URL, 3, _MD_PROFILE_NOPERMISS);
@@ -339,7 +339,7 @@ switch ($op) {
 		if ($uid != icms::$user->getVar('uid') && !icms::$user->isAdmin()) redirect_header(ICMS_URL, 3, _NOPERM);
 		$form = getUserForm($thisUser);
 		$form->display();
-		
+
 		// JS for handling 2FA -- added Mar 4 2021 by Julian Egelstaff
 		$config_handler = icms::handler('icms_config');
 		$criteria = new Criteria('conf_name', 'auth_2fa');
@@ -404,10 +404,10 @@ switch ($op) {
 						}
 					],
 					open: function() {
-						jQuery(this).css('overflow-y', 'auto !important'); 
-					}					
+						jQuery(this).css('overflow-y', 'auto !important');
+					}
 				});
-				
+
 				jQuery('#tfadialog').keypress(function(e) {
 					if (e.keyCode == jQuery.ui.keyCode.ENTER) {
 						var code = jQuery('#dialog-tfacode').val();
@@ -419,7 +419,7 @@ switch ($op) {
 						}
 					}
 				});
-				
+
 				jQuery('#userinfo').on('submit', function() {
 					var tfamethod = jQuery('#2famethod').val();
 					var tfaphone = jQuery('#2faphone').val();
@@ -427,18 +427,18 @@ switch ($op) {
                     var password = jQuery('#password').val();
                     var vpass = jQuery('#vpass').val();
 					var tfaphone = tfaphone.replace(/\D/g,'');
-                    var email = jQuery('#email').val();
-					
+                    var email = jQuery('#email').length > 0 ? jQuery('#email').val() : false;
+
 					if(password && vpass && password != vpass) {
 						alert(\""._US_PASSWORDS_DONT_MATCH."\");
 						return false;
 					}
-					
+
 					if(!tfacode && (
                         tfamethod != ".$method." ||
                         (tfamethod == ".TFA_SMS." && tfaphone != '".$phoneNumber."') ||
-                        (tfamethod == ".TFA_EMAIL." && email != '".$email."') ||
-                        (tfamethod == ".TFA_OFF." && email != '".$email."') ||
+                        (tfamethod == ".TFA_EMAIL." && email !== false && email != '".$email."') ||
+                        (tfamethod == ".TFA_OFF." && email !== false && email != '".$email."') ||
                         (password && vpass)
                         )) {
 						methodToUse = tfamethod ? tfamethod : ".$pwChangeMethod.";
@@ -452,7 +452,7 @@ switch ($op) {
 			</script>
 			";
 		}
-		
+
 		break;
 }
 

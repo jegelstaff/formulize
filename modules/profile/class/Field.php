@@ -43,7 +43,7 @@ class mod_profile_Field extends icms_ipf_Object {
 		$this->quickInitVar('exportable', XOBJ_DTYPE_INT, false);
 		$this->quickInitVar('step_id', XOBJ_DTYPE_INT, false);
 		$this->quickInitVar('system', XOBJ_DTYPE_INT, false, false, false, 0);
-		
+
 		$this->hideFieldFromForm(array('field_valuetype', 'system'));
 
 		$this->setControl('url', array('name' => 'image', 'nourl' => true));
@@ -74,7 +74,11 @@ class mod_profile_Field extends icms_ipf_Object {
 		$name = $this->getVar('field_name', 'e');
 		$options = unserialize($this->getVar('field_options', 'n'));
 		if ($this->getVar('field_type') != "image" && is_array($options)) {
-			asort($options);
+			if($this->getVar('field_name') == 'notify_method') {
+				ksort($options);
+			} else {
+				asort($options);
+			}
 
 			foreach(array_keys($options) as $key){
 				$optval = defined($options[$key]) ? constant($options[$key]) : $options[$key];
@@ -346,10 +350,10 @@ class mod_profile_Field extends icms_ipf_Object {
 		$profile_handler = icms_getModuleHandler('profile', basename(dirname(dirname(__FILE__))), 'profile');
 		return $profile_handler->getUserVars();
 	}
-	
+
 	/**
 	 * get show icon for table display
-	 * 
+	 *
 	 * @return str html code for image
 	 */
 	public function getShow() {
@@ -415,4 +419,3 @@ class mod_profile_Field extends icms_ipf_Object {
 		return $control->render();
 	}
 }
-?>

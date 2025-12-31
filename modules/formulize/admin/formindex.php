@@ -1767,10 +1767,10 @@ function patch40() {
 										if(defined('_NOT_METHOD_SMS')) {
 											// Add SMS option
 											$updated_options = array(
-													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
-													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
+													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE,
 													XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
-													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE
+													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
+													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS
 											);
 											$notify_field->setVar('field_options', serialize($updated_options));
 											$profile_field_handler->insert($notify_field);
