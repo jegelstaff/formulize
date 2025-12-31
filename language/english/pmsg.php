@@ -43,4 +43,8 @@ define("_PM_PLZREG","Please register first to send private messages!");
 define("_PM_ONLINE", "Online");
 
 define("_PM_MESSAGEPOSTED_EMAILSUBJ","[%s] Private Message Notification");
+
+// Delete confirmation messages
+define("_PM_DELETE_CONFIRM_SINGLE", "Are you sure you want to delete this message?");
+define("_PM_DELETE_CONFIRM_MULTIPLE", "Are you sure you want to delete the selected message(s)?");
 ?>

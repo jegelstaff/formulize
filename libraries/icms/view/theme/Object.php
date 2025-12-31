@@ -170,6 +170,7 @@ class icms_view_theme_Object {
 	        	'xoops_userid' => icms::$user->getVar('uid'),
 	        	'xoops_uname' => icms::$user->getVar('uname'),
 	        	'xoops_isadmin' => icms::$user->isAdmin(),
+	        	'show_inbox_link' => (icms::$user->getVar('notify_method') == 1),
 				)
 			);
 		} else {
@@ -177,7 +178,8 @@ class icms_view_theme_Object {
 				array('icms_isuser' => false,
 					'icms_isadmin' => false,
 					'xoops_isuser' => false,
-					'xoops_isadmin' => false
+					'xoops_isadmin' => false,
+					'show_inbox_link' => false
 				)
 			);
 		}

@@ -46,6 +46,18 @@ if(is_object($xoopsTpl) AND $icmsConfig['startpage'] == 'formulize') {
 	$xoopsTpl->assign('logo_url', $logoURL);
 }
 
+// Check for unread private messages (for inbox link indicator)
+$unread_pm_count = 0;
+if (is_object($xoopsUser) && $xoopsUser->getVar('notify_method') == 1) {
+	$pm_handler = icms::handler('icms_data_privmessage');
+	$criteria = new icms_db_criteria_Compo(new icms_db_criteria_Item('to_userid', $xoopsUser->getVar('uid')));
+	$criteria->add(new icms_db_criteria_Item('read_msg', 0));
+	$unread_pm_count = $pm_handler->getCount($criteria);
+}
+if (is_object($xoopsTpl)) {
+	$xoopsTpl->assign('unread_pm_count', $unread_pm_count);
+}
+
 /** Set the constant XOOPS_FOOTER_INCLUDED to 1 - this file has been included */
 define("XOOPS_FOOTER_INCLUDED", 1);
 

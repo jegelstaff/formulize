@@ -1,3 +1,3 @@
-{ENTRYUSERNAME} has deleted an entry from the {FORMNAME}.
+{ENTRYUSERNAME} has deleted an entry from {FORMPLURAL}.
 
 The ID number of this entry was {ENTRYID}.

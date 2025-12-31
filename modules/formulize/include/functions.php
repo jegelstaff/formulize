@@ -2971,6 +2971,8 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
             $extra_tags['ENTRYUSERNAME'] = _FORM_ANON_USER;
         }
         $extra_tags['FORMNAME'] = trans($formObjs[$fid]->getVar('title'));
+				$extra_tags['FORMPLURAL'] = trans($formObjs[$fid]->getPlural());
+				$extra_tags['FORMSINGULAR'] = trans($formObjs[$fid]->getSingular());
         // determine if this is the profile form and if so, construct the URL for the notification differently
         // so the user goes to the userinfo.php page instead of the form page
         $config_handler =& xoops_gethandler('config');
@@ -3084,17 +3086,17 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
     switch ($event) {
         case("new_entry"):
             $template = $overrideTemplate ? $overrideTemplate : 'form_newentry.tpl';
-            $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_NEWENTRY_MAILSUB;
+            $subject = $overrideSubject ? $overrideSubject : sprintf(_MI_formulize_NOTIFY_NEWENTRY_MAILSUB, $tags['FORMSINGULAR']);
             break;
 
         case("update_entry"):
             $template = $overrideTemplate ? $overrideTemplate : 'form_upentry.tpl';
-            $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_UPENTRY_MAILSUB;
+            $subject = $overrideSubject ? $overrideSubject : sprintf(_MI_formulize_NOTIFY_UPENTRY_MAILSUB, $tags['FORMSINGULAR']);
             break;
 
         case("delete_entry"):
             $template = $overrideTemplate ? $overrideTemplate : 'form_delentry.tpl';
-            $subject = $overrideSubject ? $overrideSubject : _MI_formulize_NOTIFY_DELENTRY_MAILSUB;
+            $subject = $overrideSubject ? $overrideSubject : sprintf(_MI_formulize_NOTIFY_DELENTRY_MAILSUB, $tags['FORMSINGULAR']);
             break;
 
         default:

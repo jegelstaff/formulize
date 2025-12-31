@@ -30,6 +30,7 @@ time, mark, audio, video {
   --text-color: #323C47;
   --background-color: #F5F6F8;
 	--light-border-color: #C2CFE0;
+	--alert-color: #e74c3c;
 }
 
 body {
@@ -3671,3 +3672,179 @@ span.page-navigation-total {
 
 #session-timeout-warning p {
   margin: 1em; }
+
+/* Inbox link with unread message indicator */
+.inbox-link {
+  position: relative;
+  display: inline-block;
+}
+
+.inbox-link__icon {
+  color: inherit;
+}
+
+.inbox-link__icon--unread {
+  color: var(--button-color);
+}
+
+.inbox-link__badge {
+  position: absolute;
+  top: -0.5em;
+	right: 0;
+  color: var(--alert-color);
+  font-weight: bold;
+  font-size: 1.2em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Modifier for badge positioning in table context */
+.inbox-link__badge--table {
+  top: 0.65em;
+  right: 1.8em;
+}
+
+/* Private message breadcrumbs */
+.pm-breadcrumbs {
+  margin-bottom: 1rem;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.pm-breadcrumbs a {
+  color: var(--button-color);
+  text-decoration: none;
+}
+
+.pm-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+/* Private message navigation */
+.pm-navigation {
+  text-align: right;
+}
+
+/* Inbox table styling */
+.pm-table-title {
+  text-align: center;
+}
+
+.pm-table-header {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.pm-message-row {
+  text-align: left;
+}
+
+.pm-checkbox {
+  vertical-align: middle;
+  width: 2%;
+}
+
+.pm-status {
+  vertical-align: middle;
+  width: 5%;
+}
+
+.pm-status-unread {
+  position: relative;
+}
+
+.pm-date {
+  vertical-align: middle;
+  width: 20%;
+}
+
+.pm-subject {
+  vertical-align: middle;
+}
+
+.pm-no-messages {
+  text-align: left;
+}
+
+.pm-table-footer {
+  text-align: left;
+}
+
+/* Mobile responsive inbox table */
+@media (max-width: 550px) {
+  /* Keep title row visible, no border */
+  #prvmsg table tr:first-child {
+    display: block;
+    border: none;
+    padding: 0;
+  }
+
+  #prvmsg table tr:first-child th {
+    border: none;
+  }
+
+  /* Hide column header row (second row with checkbox/date/subject labels) */
+  #prvmsg table tr:nth-child(2) {
+    display: none;
+  }
+
+  /* Make message rows stack vertically with clear separation */
+  #prvmsg table tr {
+    display: block;
+    border-bottom: 2px solid var(--light-border-color);
+    padding: 0.5rem 0;
+  }
+
+  /* Hide table cells but keep their content */
+  #prvmsg table td {
+    display: block;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    width: 100% !important;
+  }
+
+  /* Checkbox - keep inline with content */
+  #prvmsg table td:first-child {
+    display: inline-block;
+    width: auto !important;
+    vertical-align: top;
+    padding-right: 0.5rem;
+  }
+
+  /* Status indicator - inline with checkbox */
+  #prvmsg table td:nth-child(2) {
+    display: inline-block;
+    width: auto !important;
+    vertical-align: top;
+    padding-right: 0.5rem;
+  }
+
+  /* Date - block, smaller text */
+  #prvmsg table td:nth-child(3) {
+    font-size: 0.85em;
+    color: #666;
+    padding-left: 2.5rem;
+  }
+
+  /* Subject - block, prominent */
+  #prvmsg table td:nth-child(4) {
+    font-weight: 500;
+    padding-left: 2.5rem;
+  }
+
+  /* Footer row */
+  #prvmsg table tr.foot td {
+    display: block;
+    padding: 1rem 0.5rem;
+  }
+
+  /* Private message navigation - mobile */
+  .pm-nav-separator {
+    display: none;
+  }
+
+  .pm-nav-item {
+    display: block;
+    padding: 0.25rem 0;
+  }
+}
