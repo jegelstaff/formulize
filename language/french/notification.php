@@ -60,7 +60,7 @@ define ('_NOT_BOOKMARK_NOTIFYDSC', "Conserver la trace de cet article sans recev
 //profil de l'utilisateur
 define ('_NOT_NOTIFYMETHOD', 'M&eacute;thode de notification : Lorsque vous contr&ocirc;lerez par exemple un forum, comment voulez-vous recevoir les notifications de mises &agrave; jour ?');
 define ('_NOT_METHOD_EMAIL', "Email (utiliser l'adresse de mon profil)");
-define ('_NOT_METHOD_PM', 'Message priv&eacute;');
+define ('_NOT_METHOD_PM', 'Message priv&eacute; (envoy&eacute; &agrave; ma boite de r&eacute;ception sur ce site)');
 define ('_NOT_METHOD_DISABLE', 'Temporairement d&eacute;sactiv&eacute;');
 define ('_NOT_METHOD_SMS', 'Texte (utiliser le num&eacute;ro de t&eacute;l&eacute;phone dans mon profil)');
 define ('_NOT_NOTIFYMODE', 'Mode de notification par d&eacute;faut');
