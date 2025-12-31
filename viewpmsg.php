@@ -1,7 +1,7 @@
 <?php
 /**
  * View and manage your private messages
- * 
+ *
  * @copyright	http://www.impresscms.org/ The ImpressCMS Project
  * @license		http://www.gnu.org/licenses/old-licenses/gpl-2.0.html GNU General Public License (GPL)
  * @package		core
@@ -10,6 +10,7 @@
  */
 $xoopsOption['pagetype'] = 'pmsg';
 include_once 'mainfile.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
 $module_handler = icms::handler('icms_module');
 $messenger_module = $module_handler->getByDirname('messenger');
 if ($messenger_module && $messenger_module->getVar('isactive')) {
@@ -42,19 +43,16 @@ if (!is_object(icms::$user)) {
 	$criteria = new icms_db_criteria_Item('to_userid', (int) (icms::$user->getVar('uid')));
 	$criteria->setOrder('DESC');
 	$pm_arr =& $pm_handler->getObjects($criteria);
-	echo "<h4 style='text-align:center;'>" . _PM_PRIVATEMESSAGE
-	. "</h4><br /><a href='userinfo.php?uid=". (int) (icms::$user->getVar('uid')) . "'>"
-	. _PM_PROFILE ."</a>&nbsp;<span style='font-weight:bold;'>&raquo;&raquo;</span>&nbsp;" . _PM_INBOX . "<br /><br />";
 	echo "<form id='prvmsg' method='post' action='viewpmsg.php'>";
 	echo "<table border='0' cellspacing='1' cellpadding='4' width='100%' class='outer'>\n";
-	echo "<tr align='center' valign='middle'><th>"
+	echo "<tr><th colspan='4' align='center'><h1>" . _PM_PRIVATEMESSAGE . "</h1></th></tr>\n";
+	echo "<tr align='left' valign='middle'><th>"
 	. "<input name='allbox' id='allbox' onclick='xoopsCheckAll(\"prvmsg\", \"allbox\");'"
-	. "type='checkbox' value='Check All' /></th><th>"
-	. "<img src='images/download.gif' alt='' /></th><th>&nbsp;</th><th>"
-	. _PM_FROM . "</th><th>" . _PM_SUBJECT . "</th><th align='center'>" . _PM_DATE . "</th></tr>\n";
+	. "type='checkbox' value='Check All' /></th><th>&nbsp;</th><th>"
+	. _PM_DATE . "</th><th>" . _PM_SUBJECT . "</th></tr>\n";
 	$total_messages = count($pm_arr);
 	if ($total_messages == 0) {
-		echo "<tr><td class='even' colspan='6' align='center'>" . _PM_YOUDONTHAVE . "</td></tr>";
+		echo "<tr><td class='even' colspan='4' align='left'>" . _PM_YOUDONTHAVE . "</td></tr>";
 		$display = 0;
 	} else {
 		$display = 1;
@@ -62,44 +60,32 @@ if (!is_object(icms::$user)) {
 
 	for ($i = 0; $i < $total_messages; $i++) {
 		$class = ($i % 2 == 0) ? 'even' : 'odd';
-		echo "<tr align='" . _GLOBAL_LEFT . "' class='$class'>"
-		. "<td style='vertical-align: top; width: 2%; text-align: center;'><input type='checkbox' id='message_" 
+		echo "<tr align='left' class='$class'>"
+		. "<td style='vertical-align: middle; width: 2%;'><input type='checkbox' id='message_"
 		. $pm_arr[$i]->getVar('msg_id') . "' name='msg_id[]' value='" . $pm_arr[$i]->getVar('msg_id') . "' /></td>\n";
 		if ($pm_arr[$i]->getVar('read_msg') == 1) {
-			echo "<td style='vertical-align: top; width: 5%; text-align: center;'>&nbsp;</td>\n";
+			echo "<td style='vertical-align: middle; width: 5%;'>&nbsp;</td>\n";
 		} else {
-			echo "<td style='vertical-align: top; width: 5%; text-align: center;'>"
-			. "<img src='images/read.gif' alt='" . _PM_NOTREAD . "' /></td>\n";
+			echo "<td style='vertical-align: middle; width: 5%; position: relative;'>"
+			. "<i class='fas fa-envelope inbox-link__icon inbox-link__icon--unread'></i>"
+			. "<span class='inbox-link__badge inbox-link__badge--table'>●</span></td>\n";
 		}
-		echo "<td style='vertical-align: top; width: 5%; text-align: center;'>"
-		. "<img src='images/subject/" . $pm_arr[$i]->getVar('msg_image', 'E') . "' alt='' /></td>\n";
-		$postername = icms_member_user_Object::getUnameFromId($pm_arr[$i]->getVar('from_userid'));
-		echo "<td style='vertical-align: middle; width: 10%; text-align: center;'>";
-		// no need to show deleted users
-		if ($postername) {
-			echo "<a href='userinfo.php?uid=". (int) ($pm_arr[$i]->getVar('from_userid')) . "'>" . $postername . "</a>";
-		} else {
-			echo $icmsConfig['anonymous'];
-		}
-		echo "</td>\n";
-		echo "<td valign='middle'><a href='readpmsg.php?start="
+		$msg_time = $pm_arr[$i]->getVar('msg_time');
+		$user_offset = formulize_getUserUTCOffsetSecs(icms::$user, $msg_time);
+		$adjusted_time = $msg_time + $user_offset;
+		echo "<td style='vertical-align: middle; width: 20%;'>"
+		. formatTimestamp($adjusted_time, format: 'm') . "</td>";
+		echo "<td style='vertical-align: middle;'><a href='readpmsg.php?start="
 		. (int) (($total_messages-$i-1)) . "&amp;total_messages="
-		. (int) $total_messages . "'>" . $pm_arr[$i]->getVar('subject') . "</a></td>";
-		echo "<td style='vertical-align: middle; width: 20%; text-align: center;'>"
-		. formatTimestamp($pm_arr[$i]->getVar('msg_time')) . "</td></tr>";
+		. (int) $total_messages . "'>" . $pm_arr[$i]->getVar('subject') . "</a></td></tr>";
 	}
 
 	if ($display == 1) {
-		echo "<tr class='foot' align='" . _GLOBAL_LEFT . "'><td colspan='6' align='" . _GLOBAL_LEFT
-		. "'><input type='button' class='formButton' onclick='javascript:openWithSelfMain(\""
-		. ICMS_URL . "/pmlite.php?send=1\",\"pmlite\",800,680);' value='"
-		. _PM_SEND . "' />&nbsp;<input type='submit' class='formButton' name='delete_messages' value='"
+		echo "<tr class='foot' align='left'><td colspan='4' align='left'>"
+		. "<input type='submit' class='formButton' name='delete_messages' value='"
 		. _PM_DELETE . "' />" . icms::$security->getTokenHTML() . "</td></tr></table></form>";
 	} else {
-		echo "<tr class='bg2' align='" . _GLOBAL_LEFT . "'><td colspan='6' align='" . _GLOBAL_LEFT
-		. "'><input type='button' class='formButton' onclick='javascript:openWithSelfMain(\""
-		. ICMS_URL . "/pmlite.php?send=1\",\"pmlite\",800,680);' value='"
-		. _PM_SEND . "' /></td></tr></table></form>";
+		echo "</table></form>";
 	}
 	include 'footer.php';
 }

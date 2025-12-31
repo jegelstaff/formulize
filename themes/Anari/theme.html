@@ -147,6 +147,15 @@ if($xoopsUser) {
                   <a class="user-actions__link" href="<{if isset($modifyScreenUrl) && $modifyScreenUrl}><{$modifyScreenUrl}><{else}><{$icms_url}>/modules/formulize/admin/ui.php<{/if}>" title="admin">Admin</a>
                   <{/if}>
                   <{if $xoops_isuser}>
+                  <{if $show_inbox_link}>
+                  <a class="user-actions__link inbox-link" href="<{$icms_url}>/viewpmsg.php" title="Inbox<{if $unread_pm_count > 0}> (<{$unread_pm_count}> unread)<{/if}>">
+                      <{if $unread_pm_count > 0}>
+                      <i class="fas fa-envelope inbox-link__icon inbox-link__icon--unread"></i><span class="inbox-link__badge">●</span>
+                      <{else}>
+                      <i class="fas fa-envelope inbox-link__icon"></i>
+                      <{/if}>
+                  </a>
+                  <{/if}>
                   <a class="user-actions__link" href="<{$icms_url}>/edituser.php" title="Edit Account">Edit Account</a>
                   <a class="user-actions__link" href="<{$icms_url}>/user.php?op=logout" title="Logout">Logout</a>
                   <{elseif !isset($openMenuClass) OR !$openMenuClass }>
