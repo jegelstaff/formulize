@@ -1127,7 +1127,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 			// must check the options for uitext before adding to the element -- aug 25, 2007
 			foreach($options as $okey=>$ovalue) {
-				$options[$okey] = formulize_swapUIText($ovalue, $element->getVar('ele_uitext'));
+				$options[$okey] = formulize_handleRandomAndDateText(formulize_swapUIText($ovalue, $element->getVar('ele_uitext')));
 			}
 			$form_ele1->addOptionArray($options);
 			$GLOBALS['formulize_lastRenderedElementOptions'] = $options;
@@ -1800,7 +1800,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				return printSmart(trans($myts->htmlSpecialChars($value)), $textWidth);
 			}
 		} elseif($element->getVar('ele_uitextshow')) {
-			$value = formulize_swapUIText($value, $element->getVar('ele_uitext'));
+			$value = formulize_handleRandomAndDateText(formulize_swapUIText($value, $element->getVar('ele_uitext')));
 		}
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}

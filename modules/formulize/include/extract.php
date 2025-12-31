@@ -149,13 +149,15 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 			}
 		}
 
-		// handle any uitext, which could co-occur with OTHER values and/or just regular values
+		// handle any uitext, and random: and date: sets which could co-occur with OTHER values and/or just regular values
 		if(!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle])
-			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])
-			AND $elementObject->getVar('ele_uitextshow')) {
-				$uitext = $elementObject->getVar('ele_uitext');
+			AND !isset($GLOBALS['formulize_useForeignKeysInDataset']['all'])) {
+				$uitext = $elementObject->getVar('ele_uitextshow') ? $elementObject->getVar('ele_uitext') : '';
 				foreach($values as $i=>$value) {
-					$values[$i] = formulize_swapUIText($value, $uitext);
+					if($uitext) {
+						$values[$i] = formulize_swapUIText($value, $uitext);
+					}
+					$values[$i] = formulize_handleRandomAndDateText($values[$i]);
 				}
 		}
 

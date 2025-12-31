@@ -92,11 +92,11 @@ class formulizeElementRenderer{
 			$ele_caption = $htmlCaption;
 		}
 
-		$ele_caption = $this->formulize_replaceCurlyBracketVariables($ele_caption, $entry_id, $id_form, $renderedElementMarkupName);
+		$ele_caption = $this->formulize_replaceReferencesAndVariables($ele_caption, $entry_id, $id_form, $renderedElementMarkupName);
 
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
-		$helpText = $ele_desc != "" ? $this->formulize_replaceCurlyBracketVariables($myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)), $entry_id, $id_form, $renderedElementMarkupName) : "";
+		$helpText = $ele_desc != "" ? $this->formulize_replaceReferencesAndVariables($myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)), $entry_id, $id_form, $renderedElementMarkupName) : "";
 
 		// determine the entry owner
 		if($entry_id != "new") {
@@ -120,7 +120,7 @@ class formulizeElementRenderer{
 
 			case 'ib':
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
-				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
+				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
@@ -133,14 +133,14 @@ class formulizeElementRenderer{
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
-						$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName); // in case PHP code generated some { } references
+						$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName); // in case PHP code generated some { } references
 					}
 				}
 				$form_ele = $ele_value; // an array, item 0 is the contents of the break, item 1 is the class of the table cell (for when the form is table rendered)
 				break;
 
 			case 'areamodif':
-				$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
+				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
@@ -153,7 +153,7 @@ class formulizeElementRenderer{
 						$ele_value[0] = _formulize_ERROR_IN_LEFTRIGHT;
 					} else {
 						$ele_value[0] = $value; // value is supposed to be the thing set in the eval'd code
-						$ele_value[0] = $this->formulize_replaceCurlyBracketVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName); // just in case PHP might have added { } refs
+						$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName); // just in case PHP might have added { } refs
 					}
 				}
 				$form_ele = new XoopsFormLabel(
@@ -239,6 +239,20 @@ class formulizeElementRenderer{
 		}
 		$form_ele_new->setClass($form_ele->getClass());
 		return $form_ele_new;
+	}
+
+	/**
+	 * Replace curly bracket variable references, and also random: and date: sets
+	 * @param string $text Text to perform replacements on
+	 * @param int $entry_id Entry ID to get values from
+	 * @param int $id_form Form ID to get values from
+	 * @param string $renderedElementMarkupName Name of the rendered element markup, if any
+	 * @return string Text with replacements made
+	 */
+	function formulize_replaceReferencesAndVariables($text, $entry_id, $id_form, $renderedElementMarkupName='') {
+		$text = $this->formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName);
+		$text = formulize_handleRandomAndDateText($text);
+		return $text;
 	}
 
   // replace { } terms with element handle values from the current entry, if any exist

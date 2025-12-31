@@ -158,13 +158,16 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 	 * @return    string
 	 */
 	public function render() {
-        static $absoluteCheckboxCounter = 1;
+    static $absoluteCheckboxCounter = array();
 		$ele_name = $this->getName();
 		$element_id = $ele_name;
 		$ele_name_plain = str_replace('[]', '', $ele_name);
 		if (1 == preg_match("/de_(\d+)_(?:new|\d+)_(\d+)/", $ele_name, $matches))
-			$element_id = "f".$matches[1]."-"."e".$matches[2];	// extract form_id and elemen_id, ignoring record id
-		$ret = "<div id='checkbox-group-".$element_id."_checkbox-num_".$absoluteCheckboxCounter."' class='grouped checkbox-group-".$element_id."'>";
+		$element_id = "f".$matches[1]."-"."e".$matches[2];	// extract form_id and elemen_id, ignoring record id
+		if(!isset($absoluteCheckboxCounter[$element_id])) {
+			$absoluteCheckboxCounter[$element_id] = 1;
+		}
+		$ret = "<div id='checkbox-group-".$element_id."_checkbox-num_".$absoluteCheckboxCounter[$element_id]."' class='grouped checkbox-group-".$element_id."'>";
 		$ele_value = $this->getValue();
 		$ele_options = $this->getOptions();
 		$ele_extra = $this->getExtra();
@@ -185,7 +188,7 @@ class icms_form_elements_Checkbox extends icms_form_Element {
 			$ret .= "<div class='icms_checkboxoption'><input type='checkbox' id='checkemall' class='checkemall' /><label for='checkemall'>"._CHECKALL."</label></div>";
 		}
 		$ret .= "</div>";
-        $absoluteCheckboxCounter++;
+    $absoluteCheckboxCounter[$element_id]++;
 		return $ret;
 	}
 }

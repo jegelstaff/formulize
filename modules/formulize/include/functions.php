@@ -2361,14 +2361,14 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 
 		$elementRenderer = new formulizeElementRenderer($elementObject);
 		$renderedElementMarkupName = "de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id');
-		$textboxValue = $elementRenderer->formulize_replaceCurlyBracketVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName);
+		$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName);
 
     if (strstr($textboxValue, "\$default")) { // php default value
 				$textboxValue = removeOpeningPHPTag($textboxValue);
 			  $default = '';
         eval(stripslashes($textboxValue));
         $textboxValue = $default;
-				$textboxValue = $elementRenderer->formulize_replaceCurlyBracketVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName); // in case PHP code generated some { } references
+				$textboxValue = $elementRenderer->formulize_replaceReferencesAndVariables($textboxValue, $entry_id, $form_id, $renderedElementMarkupName); // in case PHP code generated some { } references
     }
 
 	  $foundTerms = array();
@@ -4529,7 +4529,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             $selected = "";
             $labeloption = $useValue ? $option_value : $option;
             $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
-            $labeloption = formulize_swapUIText($labeloption, $ele_uitext);
+            $labeloption = formulize_handleRandomAndDateText(formulize_swapUIText($labeloption, $ele_uitext));
 						if($labeloption === '') {
 							continue;
 						}
@@ -4603,6 +4603,35 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
     }
 
     return $filter;
+}
+
+/**
+ * Sort out [random:text/text/text] sets and also possibly nested [date:formatstring/timestamp] within a passed in string
+ * If timestamp is not present use current time
+ * @param string $text
+ * @return string The string with a random text chosen, and a date formatted according to the string
+ */
+function formulize_handleRandomAndDateText($text) {
+		// first handle random text
+		// choose only one of the options within the [random:...] tag
+		if (preg_match_all('/\[random:([^\]]+)\]/', $text, $randomMatches)) {
+				foreach ($randomMatches[0] as $index => $fullMatch) {
+						$options = explode('/', $randomMatches[1][$index]);
+						$chosenOption = $options[array_rand($options)];
+						$text = str_replace($fullMatch, $chosenOption, $text);
+				}
+		}
+		// next handle date text
+		if (preg_match_all('/\[date:([^\]]+)\]/', $text, $dateMatches)) {
+				foreach ($dateMatches[0] as $index => $fullMatch) {
+						$dateParts = explode('/', $dateMatches[1][$index]);
+						$formatString = isset($dateParts[0]) ? $dateParts[0] : 'Y-m-d';
+						$timestamp = isset($dateParts[1]) ? intval($dateParts[1]) : time() + formulize_getUserUTCOffsetSecs();
+						$formattedDate = date($formatString, $timestamp);
+						$text = str_replace($fullMatch, $formattedDate, $text);
+				}
+		}
+		return $text;
 }
 
 
@@ -7604,7 +7633,7 @@ function export_prepColumns($columns,$include_metadata=0) {
                         $superHeaderAssigned = true;
                     }
                     $header = substr($explodedColumnHeader, 0, 7) == "{OTHER|" ? _formulize_OPT_OTHER : $explodedColumnHeader;
-                    $header = formulize_swapUIText($header, unserialize($colMeta['ele_uitext']));
+                    $header = formulize_handleRandomAndDateText(formulize_swapUIText($header, unserialize($colMeta['ele_uitext'])));
                     $headers[] = $header;
                     $explodedColumns[$thiscol][$explodedColumnHeader] = $exportOptions['indicators'];
                 }

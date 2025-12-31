@@ -135,7 +135,7 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	$cellsWhenHeadingAtSide = '';
 	$elementRenderer = new formulizeElementRenderer($elementObject);
 	foreach($colcaps as $thiscap) {
-		$thiscap = trim($elementRenderer->formulize_replaceCurlyBracketVariables($thiscap, $entry_id, $elementObject->getVar('id_form')));
+		$thiscap = trim($elementRenderer->formulize_replaceReferencesAndVariables($thiscap, $entry_id, $elementObject->getVar('id_form')));
 		if($headingAtSide) {
 			$needToDrawCellsWhenHeadingAtSide = preg_replace('/[\s]+/mu', '', $thiscap) != '' ? true : $needToDrawCellsWhenHeadingAtSide;
 			$cellsWhenHeadingAtSide .= "<td class=head>$thiscap</td>\n";
@@ -164,7 +164,7 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 	$ele_index = 0;
 	foreach($rowcaps as $thiscap) {
 		// convert any { } terms in the cap
-		$thiscap = trim($elementRenderer->formulize_replaceCurlyBracketVariables($thiscap, $entry_id, $elementObject->getVar('id_form')));
+		$thiscap = trim($elementRenderer->formulize_replaceReferencesAndVariables($thiscap, $entry_id, $elementObject->getVar('id_form')));
 		if($orientation == "horizontal" AND $class=="even") {
 			$class = "odd";
 		} elseif($orientation == "horizontal") {

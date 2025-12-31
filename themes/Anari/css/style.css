@@ -983,6 +983,7 @@ input[type=checkbox] {
 div.form-row input[type=checkbox],
 div.form-row input[type=radio] {
 	margin-bottom: 0.3em;
+	margin-right: 0.6em;
 }
 
 table.formulize-subform-table {

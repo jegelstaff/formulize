@@ -545,7 +545,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 							$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 						}
 					}else{
-						$form_ele1->addOption($o['key'], $o['value']);
+						$form_ele1->addOption($o['key'], formulize_handleRandomAndDateText($o['value']));
 						if(in_array($o['key'], $selected)) {
 							$disabledOutputText[] = $o['value'];
 						}
@@ -577,7 +577,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 						}
 												$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = _formulize_OPT_OTHER;
 					}else{
-						$t->addOption($oKey, $oValue);
+						$t->addOption($oKey, formulize_handleRandomAndDateText($oValue));
 						if(in_array($oKey, $selected)) {
 							$disabledOutputText[] = $oValue;
 						}
