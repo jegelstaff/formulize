@@ -78,7 +78,6 @@ define ('_NOT_METHOD_EMAIL', 'Email (use address in my profile)');
 define ('_NOT_METHOD_PM', 'Private Message');
 define ('_NOT_METHOD_SMS', 'Texting (use phone number in my profile)');
 define ('_NOT_METHOD_DISABLE', 'Temporarily Disable');
-define ('_NOT_SMS', 'SMS');
 
 define ('_NOT_NOTIFYMODE', 'Default Notification Mode');
 define ('_NOT_MODE_SENDALWAYS', 'Notify me of all selected updates');
