@@ -19,21 +19,20 @@ define("_MI_formulize_ADMENU1","Menu");
 // notifications
 define("_MI_formulize_NOTIFY_FORM", "Form Notifications");
 define("_MI_formulize_NOTIFY_FORM_DESC", "Notifications related to the current form");
-define("_MI_formulize_NOTIFY_NEWENTRY", "New Entry in a Form");
+define("_MI_formulize_NOTIFY_NEWENTRY", "New %s");
 define("_MI_formulize_NOTIFY_NEWENTRY_CAP", "Notify me when someone makes a new entry in this form");
 define("_MI_formulize_NOTIFY_NEWENTRY_DESC", "A notification option that alerts users when new entries are made in a form");
-define("_MI_formulize_NOTIFY_NEWENTRY_MAILSUB", "New Entry in a Form");
+define("_MI_formulize_NOTIFY_NEWENTRY_MAILSUB", "New %s");
 
-define("_MI_formulize_NOTIFY_UPENTRY", "Updated Entry in a Form");
+define("_MI_formulize_NOTIFY_UPENTRY", "Updated %s");
 define("_MI_formulize_NOTIFY_UPENTRY_CAP", "Notify me when someone updates an entry in this form");
 define("_MI_formulize_NOTIFY_UPENTRY_DESC", "A notification option that alerts users when entries are updated in a form");
-define("_MI_formulize_NOTIFY_UPENTRY_MAILSUB", "Updated Entry in a Form");
+define("_MI_formulize_NOTIFY_UPENTRY_MAILSUB", "Updated %s");
 
-define("_MI_formulize_NOTIFY_DELENTRY", "Entry deleted from a Form");
+define("_MI_formulize_NOTIFY_DELENTRY", "%s deleted");
 define("_MI_formulize_NOTIFY_DELENTRY_CAP", "Notify me when someone deletes an entry from this form");
 define("_MI_formulize_NOTIFY_DELENTRY_DESC", "A notification option that alerts users when entries are deleted from a form");
-define("_MI_formulize_NOTIFY_DELENTRY_MAILSUB", "Entry deleted from a Form");
-
+define("_MI_formulize_NOTIFY_DELENTRY_MAILSUB", "%s deleted");
 
 //	preferences
 define("_MI_formulize_PREFHEADSTART", "</span><h1>");

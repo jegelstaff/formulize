@@ -194,7 +194,7 @@ function formulize_notify($event, $extra_tags, $fid, $uids_to_notify, $mid, $omi
 						break;
 		}
 
-		$GLOBALS['formulize_notificationSubjectOverride'] = $subject == "" ? $not_config['event'][$evid]['mail_subject'] : trans($subject);
+		$GLOBALS['formulize_notificationSubjectOverride'] = $subject == "" ? sprintf($not_config['event'][$evid]['mail_subject'], $extra_tags['FORMSINGULAR']) : trans($subject);
 		$GLOBALS['formulize_notificationTemplateOverride'] = $template == "" ? $not_config['event'][$evid]['mail_template'] : $template;
 		// loop through the variables and do replacements in the subject, if any
 		$newSubject = $GLOBALS['formulize_notificationSubjectOverride'];
