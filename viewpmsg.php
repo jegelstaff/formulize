@@ -45,14 +45,14 @@ if (!is_object(icms::$user)) {
 	$pm_arr =& $pm_handler->getObjects($criteria);
 	echo "<form id='prvmsg' method='post' action='viewpmsg.php'>";
 	echo "<table border='0' cellspacing='1' cellpadding='4' width='100%' class='outer'>\n";
-	echo "<tr><th colspan='4' align='center'><h1>" . _PM_PRIVATEMESSAGE . "</h1></th></tr>\n";
-	echo "<tr align='left' valign='middle'><th>"
+	echo "<tr><th colspan='4' class='pm-table-title'><h1>" . _PM_PRIVATEMESSAGE . "</h1></th></tr>\n";
+	echo "<tr class='pm-table-header'><th>"
 	. "<input name='allbox' id='allbox' onclick='xoopsCheckAll(\"prvmsg\", \"allbox\");'"
 	. "type='checkbox' value='Check All' /></th><th>&nbsp;</th><th>"
 	. _PM_DATE . "</th><th>" . _PM_SUBJECT . "</th></tr>\n";
 	$total_messages = count($pm_arr);
 	if ($total_messages == 0) {
-		echo "<tr><td class='even' colspan='4' align='left'>" . _PM_YOUDONTHAVE . "</td></tr>";
+		echo "<tr><td class='even pm-no-messages' colspan='4'>" . _PM_YOUDONTHAVE . "</td></tr>";
 		$display = 0;
 	} else {
 		$display = 1;
@@ -60,30 +60,30 @@ if (!is_object(icms::$user)) {
 
 	for ($i = 0; $i < $total_messages; $i++) {
 		$class = ($i % 2 == 0) ? 'even' : 'odd';
-		echo "<tr align='left' class='$class'>"
-		. "<td style='vertical-align: middle; width: 2%;'><input type='checkbox' id='message_"
+		echo "<tr class='pm-message-row $class'>"
+		. "<td class='pm-checkbox'><input type='checkbox' id='message_"
 		. $pm_arr[$i]->getVar('msg_id') . "' name='msg_id[]' value='" . $pm_arr[$i]->getVar('msg_id') . "' /></td>\n";
 		if ($pm_arr[$i]->getVar('read_msg') == 1) {
-			echo "<td style='vertical-align: middle; width: 5%;'>&nbsp;</td>\n";
+			echo "<td class='pm-status'>&nbsp;</td>\n";
 		} else {
-			echo "<td style='vertical-align: middle; width: 5%; position: relative;'>"
+			echo "<td class='pm-status pm-status-unread'>"
 			. "<i class='fas fa-envelope inbox-link__icon inbox-link__icon--unread'></i>"
 			. "<span class='inbox-link__badge inbox-link__badge--table'>●</span></td>\n";
 		}
 		$msg_time = $pm_arr[$i]->getVar('msg_time');
 		$user_offset = formulize_getUserUTCOffsetSecs(icms::$user, $msg_time);
 		$adjusted_time = $msg_time + $user_offset;
-		echo "<td style='vertical-align: middle; width: 20%;'>"
+		echo "<td class='pm-date'>"
 		. formatTimestamp($adjusted_time, format: 'm') . "</td>";
-		echo "<td style='vertical-align: middle;'><a href='readpmsg.php?start="
+		echo "<td class='pm-subject'><a href='readpmsg.php?start="
 		. (int) (($total_messages-$i-1)) . "&amp;total_messages="
 		. (int) $total_messages . "'>" . $pm_arr[$i]->getVar('subject') . "</a></td></tr>";
 	}
 
 	if ($display == 1) {
-		echo "<tr class='foot' align='left'><td colspan='4' align='left'>"
+		echo "<tr class='foot pm-table-footer'><td colspan='4'>"
 		. "<input type='submit' class='formButton' name='delete_messages' value='"
-		. _PM_DELETE . "' />" . icms::$security->getTokenHTML() . "</td></tr></table></form>";
+		. _PM_DELETE . "' onclick='return confirm(\""._PM_DELETE_CONFIRM_MULTIPLE."\");' />" . icms::$security->getTokenHTML() . "</td></tr></table></form>";
 	} else {
 		echo "</table></form>";
 	}

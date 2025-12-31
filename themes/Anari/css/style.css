@@ -3704,6 +3704,72 @@ span.page-navigation-total {
   right: 1.8em;
 }
 
+/* Private message breadcrumbs */
+.pm-breadcrumbs {
+  margin-bottom: 1rem;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.pm-breadcrumbs a {
+  color: var(--button-color);
+  text-decoration: none;
+}
+
+.pm-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+/* Private message navigation */
+.pm-navigation {
+  text-align: right;
+}
+
+/* Inbox table styling */
+.pm-table-title {
+  text-align: center;
+}
+
+.pm-table-header {
+  text-align: left;
+  vertical-align: middle;
+}
+
+.pm-message-row {
+  text-align: left;
+}
+
+.pm-checkbox {
+  vertical-align: middle;
+  width: 2%;
+}
+
+.pm-status {
+  vertical-align: middle;
+  width: 5%;
+}
+
+.pm-status-unread {
+  position: relative;
+}
+
+.pm-date {
+  vertical-align: middle;
+  width: 20%;
+}
+
+.pm-subject {
+  vertical-align: middle;
+}
+
+.pm-no-messages {
+  text-align: left;
+}
+
+.pm-table-footer {
+  text-align: left;
+}
+
 /* Mobile responsive inbox table */
 @media (max-width: 550px) {
   /* Keep title row visible, no border */
@@ -3770,5 +3836,15 @@ span.page-navigation-total {
   #prvmsg table tr.foot td {
     display: block;
     padding: 1rem 0.5rem;
+  }
+
+  /* Private message navigation - mobile */
+  .pm-nav-separator {
+    display: none;
+  }
+
+  .pm-nav-item {
+    display: block;
+    padding: 0.25rem 0;
   }
 }

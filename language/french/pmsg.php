@@ -41,5 +41,9 @@ define("_PM_DELETE","Effacer");
 define("_PM_REPLY", "R&eacute;pondre");
 define("_PM_PLZREG","Merci de vous enregistrer en premier pour envoyer des messages priv&eacute;s!");
 define("_PM_ONLINE", "En ligne");
-define("_PM_MESSAGEPOSTED_EMAILSUBJ","[%s] Notification de message privé");
+define("_PM_MESSAGEPOSTED_EMAILSUBJ","[%s] Notification de message privï¿½");
+
+// Messages de confirmation de suppression
+define("_PM_DELETE_CONFIRM_SINGLE", "&Ecirc;tes-vous s&ucirc;r de vouloir supprimer ce message?");
+define("_PM_DELETE_CONFIRM_MULTIPLE", "&Ecirc;tes-vous s&ucirc;r de vouloir supprimer le(s) message(s) s&eacute;lectionn&eacute;(s)?");
 ?>
