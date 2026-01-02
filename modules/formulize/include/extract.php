@@ -2215,20 +2215,17 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 					if (!$primary_entry_id) {
 						continue;
 					} // datasets can contain empty values for subforms, etc, when no entries exist. We must not process phantom non-existent entries.
+					// want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
+					$resetDerivedValueFlag = false;
+					if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
+						unset($GLOBALS['formulize_forceDerivedValueUpdate']);
+						$resetDerivedValueFlag = true;
+					}
 					$dataToWrite = array();
 					foreach ($metadata[$formHandle] as $formulaNumber => $thisMetaData) {
 						$fridForName = $relationship_id == -1 ? 'primary' : $relationship_id;
 						$functionName = "derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName. "_" . $form_id . "_" . $formulaNumber;
-						// want to turn off the derived value update flag for the actual processing of a value, since the function might have a getData call in it!!
-						$resetDerivedValueFlag = false;
-						if (isset($GLOBALS['formulize_forceDerivedValueUpdate'])) {
-							unset($GLOBALS['formulize_forceDerivedValueUpdate']);
-							$resetDerivedValueFlag = true;
-						}
 						$derivedValue = $functionName($entry, $form_id, $primary_entry_id, $relationship_id);
-						if ($resetDerivedValueFlag) {
-							$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
-						}
 						// if the new value is the same as the previous one, then skip updating and saving
 						if ($derivedValue !== $entry[$formHandle][$primary_entry_id][$thisMetaData['handle']]) {
 							$dataToWrite[$thisMetaData['handle']] = $derivedValue;
@@ -2244,6 +2241,9 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 							// false for no proxy user, true to force the update even on get requests, false is do not update the metadata (modification user)
 							$data_handler->writeEntry($primary_entry_id, $dataToWrite, false, true, false);
 						}
+					}
+					if ($resetDerivedValueFlag) {
+						$GLOBALS['formulize_forceDerivedValueUpdate'] = true;
 					}
 				}
 			}
