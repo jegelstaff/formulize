@@ -193,6 +193,7 @@ class formulizeElementRenderer{
 			// put in cue if element has data we should be handling on save
 			$elementCue = "";
 			if(substr($renderedElementMarkupName, 0, 9) != "desubform"
+				AND $this->_ele->getVar('ele_type') != "derived"
 				AND !$isDisabled
 				AND !$wasDisabled
 				AND $customElementHasData) {
