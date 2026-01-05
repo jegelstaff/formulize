@@ -4612,16 +4612,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
  * @return string The string with a random text chosen, and a date formatted according to the string
  */
 function formulize_handleRandomAndDateText($text) {
-		// first handle random text
-		// choose only one of the options within the [random:...] tag
-		if (preg_match_all('/\[random:([^\]]+)\]/', $text, $randomMatches)) {
-				foreach ($randomMatches[0] as $index => $fullMatch) {
-						$options = explode('/', $randomMatches[1][$index]);
-						$chosenOption = $options[array_rand($options)];
-						$text = str_replace($fullMatch, $chosenOption, $text);
-				}
-		}
-		// next handle date text
+		// first handle date text (innermost tags first to avoid regex conflicts with nested tags)
 		if (preg_match_all('/\[date:([^\]]+)\]/', $text, $dateMatches)) {
 				foreach ($dateMatches[0] as $index => $fullMatch) {
 						$dateParts = explode('/', $dateMatches[1][$index]);
@@ -4629,6 +4620,15 @@ function formulize_handleRandomAndDateText($text) {
 						$timestamp = isset($dateParts[1]) ? intval($dateParts[1]) : time() + formulize_getUserUTCOffsetSecs();
 						$formattedDate = date($formatString, $timestamp);
 						$text = str_replace($fullMatch, $formattedDate, $text);
+				}
+		}
+		// next handle random text (after date tags have been resolved)
+		// choose only one of the options within the [random:...] tag
+		if (preg_match_all('/\[random:([^\]]+)\]/', $text, $randomMatches)) {
+				foreach ($randomMatches[0] as $index => $fullMatch) {
+						$options = explode('/', $randomMatches[1][$index]);
+						$chosenOption = $options[array_rand($options)];
+						$text = str_replace($fullMatch, $chosenOption, $text);
 				}
 		}
 		return $text;
