@@ -1080,6 +1080,14 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                                     $row_value = 2;
                             }
                             break;
+
+														case "text":
+															$textElementHandler = xoops_getmodulehandler('textElement', 'formulize');
+															$row_value = $textElementHandler->prepareDataForSaving($row_value, $textElementHandler->get($element['ele_handle']));
+															break;
+														case "textarea":
+															$row_value = trim($row_value);
+															break;
                         }
 
                         // record the values for inserting as part of this record
