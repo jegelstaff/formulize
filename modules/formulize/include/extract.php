@@ -1783,6 +1783,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 									$search_column = convertElementIdsToElementHandles($sourceMeta[1], $sourceMeta[0]);
 									$search_column = "CONCAT_WS('', source.`" . implode("`, source.`", $search_column) . "`)";
 								}
+								$operator = 'LIKE';
+								$quotes = "'";
+								$likebits = "%";
 							} else {
 								$search_column = "source.`" . $sourceMeta[1] . "`";
 							}
