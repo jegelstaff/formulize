@@ -218,7 +218,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                     print "<form name='controls' method='post'>
                         <input type='hidden' name='ventry' value=''>
                         <input type='hidden' name='overridescreen' value=''>
-                        <input type='hidden' name='loadreport' value=''>";
+                        <input type='hidden' name='loadreport' value=''>
+						<input type='hidden' name='formulize_scrollx' value=''>
+						<input type='hidden' name='formulize_scrolly' value=''>";
                     $xoopsTpl->display("file:".$template_filename);
                     print "</form>";
                     // pretty hacky! include the js for lists, so that the viewEntryLink etc will work
