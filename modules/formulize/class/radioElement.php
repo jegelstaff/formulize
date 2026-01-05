@@ -283,7 +283,8 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 							$disabledOutputText = _formulize_OPT_OTHER.$other;
 						}
 					}else{
-						$form_ele1->addOption($oKey, formulize_handleRandomAndDateText($oValue));
+						$oValue = formulize_handleRandomAndDateText($oValue);
+						$form_ele1->addOption($oKey, $oValue);
 						if($oKey == $selected) {
 							$disabledOutputText = $oValue;
 						}
@@ -314,7 +315,8 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 						}
 						$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = _formulize_OPT_OTHER;
 					}else{
-						$t->addOption($oKey, formulize_handleRandomAndDateText($oValue));
+						$oValue = formulize_handleRandomAndDateText($oValue);
+						$t->addOption($oKey, $oValue);
 						if($oKey == $selected) {
 							$disabledOutputText = $oValue;
 						}
