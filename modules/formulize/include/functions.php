@@ -4729,14 +4729,14 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     if (!isset($cachedResults[$frid][$fid][$savedView])) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
 
-// preload searches from current context
+		// preload searches from current context
 		$searches = array();
-        foreach ($_POST as $k=>$v) {
-            if (substr($k, 0, 7) == "search_" AND $v != "") {
-                $thiscol = substr($k, 7);
+		foreach ($_POST as $k=>$v) {
+				if (substr($k, 0, 7) == "search_" AND $v != "") {
+						$thiscol = substr($k, 7);
 						$searches[$thiscol] = $v;
-            }
-        }
+				}
+		}
         $settings = array();
         // load the saved view requested, and get everything ready for calling gatherDataSet
         // pubfilters are ignored, not relevant for just getting calculations
@@ -6346,7 +6346,7 @@ function parseUserAndToday($term, $element=null) {
 	}
  	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
 		$number = substr(trim($term, "{}"), 5);
-		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+intval($number), date("Y")));
+		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+intval($number), date("Y")) + formulize_getUserUTCOffsetSecs());
 	}
   return $term;
 }
