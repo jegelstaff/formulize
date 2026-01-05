@@ -4729,17 +4729,19 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
     if (!isset($cachedResults[$frid][$fid][$savedView])) {
         include_once XOOPS_ROOT_PATH . "/modules/formulize/include/entriesdisplay.php";
 
+// preload searches from current context
+		$searches = array();
         foreach ($_POST as $k=>$v) {
-            if (substr($k, 0, 7) == "search_") {
-                unset($_POST[$k]);
+            if (substr($k, 0, 7) == "search_" AND $v != "") {
+                $thiscol = substr($k, 7);
+						$searches[$thiscol] = $v;
             }
         }
-
         $settings = array();
         // load the saved view requested, and get everything ready for calling gatherDataSet
         // pubfilters are ignored, not relevant for just getting calculations
         // the way this is all parsed may not be entirely right! reading in view and parsing cols, searches, etc, should be standardized in functions, this repeats some code from entriesdisplay.php that should be refactored!
-        list($_POST['currentview'], $_POST['oldcols'], $_POST['asearch'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters, $entriesPerPage) = loadReport($savedView, $fid, $frid);
+        list($_POST['currentview'], $_POST['oldcols'], $_POST['calc_cols'], $_POST['calc_calcs'], $_POST['calc_blanks'], $_POST['calc_grouping'], $_POST['sort'], $_POST['order'], $_POST['hlist'], $_POST['hcalc'], $_POST['lockcontrols'], $quicksearches, $settings['global_search'], $pubfilters, $entriesPerPage) = loadReport($savedView, $fid, $frid);
         // must check for this and set it here, inside this section, where we know for sure that $_POST['lockcontrols'] has been set based on the database value for the saved view, and not anything else sent from the user!!!  Otherwise the user might be injecting a greater scope for themselves than they should have!
         $currentViewCanExpand = $_POST['lockcontrols'] ? false : true;
         // explode quicksearches into the search_ values
@@ -4752,12 +4754,6 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
                 if (strstr($colsforsearches[$i], "hiddencolumn_")) {
                     unset($colsforsearches[$i]); // remove columns that were added to the column list just so we would know the name of the hidden searches
                 }
-            }
-        }
-        foreach ($_POST as $k=>$v) {
-            if (substr($k, 0, 7) == "search_" AND $v != "") {
-                $thiscol = substr($k, 7);
-                $searches[$thiscol] = $v;
             }
         }
         global $xoopsUser;
