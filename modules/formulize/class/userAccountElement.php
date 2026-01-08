@@ -1,7 +1,4 @@
 <?php
-
-#Grab this file from Modules > Formulize > Class
-
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
 ##                    Copyright (c) 2011 Freeform Solutions                  ##
@@ -29,49 +26,24 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// THIS FILE SHOWS ALL THE METHODS THAT CAN BE PART OF CUSTOM ELEMENT TYPES IN FORMULIZE
-// TO SEE THIS ELEMENT IN ACTION, RENAME THE FILE TO dummyElement.php
-// There is a corresponding admin template for this element type in the templates/admin folder
-
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 
-class formulizeEmailElement extends formulizeElement {
-
-		public static $category = "textboxes";
+class formulizeUserAccountElement extends formulizeElement {
 
     function __construct() {
-        $this->name = "Email Address";
-        $this->hasData = true; // set to false if this is a non-data element, like the subform or the grid
+        $this->name = "User Account Settings Base Element";
+        $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
         $this->needsDataType = false; // set to false if you're going force a specific datatype for this element using the overrideDataType
-        $this->overrideDataType = "varchar(255)"; // use this to set a datatype for the database if you need the element to always have one (like 'date').  set needsDataType to false if you use this.
-        $this->adminCanMakeRequired = true; // set to true if the webmaster should be able to toggle this element as required/not required
+        $this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
+        $this->isSystemElement = true;
         parent::__construct();
     }
-
-	/**
-	 * Static function to provide the mcp server with the schema for the properties that can be used with the create_form_element and update_form_element tools
-	 * Concerned with the properties for the ele_value property of the element object
-	 * Follows the convention of properties used publically (MCP, Public API, etc).
-	 * @param bool|int $update True if this is being called as part of building the properties for Updating, as opposed to properties for Creating. Default is false (Creating).
-	 * @return string The schema for the properties that can be used with the create_form_element and update_form_element tools
-	 */
-	public static function mcpElementPropertiesDescriptionAndExamples($update = false) {
-		$config_handler = xoops_gethandler('config');
-		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-		return
-"**Element:** Email Address (email)
-**Description:** A single line box for entering an email address. The address is checked for validity, to prevent non-email addresses from being saved.
-**Properties:**
-- none. Email Address elements have no properties. They are always simply an empty text box for entering an email address.
-**Examples:**
-- A phone number element requires no properties: { }";
-	}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeEmailElementHandler extends formulizeElementsHandler {
+class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 
     var $db;
     var $clickable; // used in formatDataForList
@@ -82,27 +54,8 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
         $this->db =& $db;
     }
 
-		/**
-	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
-	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
-	 * properties are the contents of the ele_value property on the object
-	 * @param array $properties The properties to validate
-	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
-	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
-	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
-	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		return [
-			'ele_value' => $ele_value
-		];
-	}
-
-		public function getDefaultEleValue() {
-			return [];
-		}
-
     function create() {
-        return new formulizeEmailElement();
+        return new formulizeUserAccountElement();
     }
 
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -110,8 +63,6 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
-
-
     }
 
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -121,7 +72,6 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
-
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -129,61 +79,23 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
 		// $element is the element object
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
     // $entry_id is the ID of the entry being loaded
-	function loadValue($element, $value, $entry_id) {
-        $ele_value = $value;
-        return $ele_value;
-    }
-
-    // this method renders the element for display in a form
-    // the caption has been pre-prepared and passed in separately from the element object
-    // if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-    // $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-    // $caption is the prepared caption for the element
-    // $markupName is what we have to call the rendered element in HTML
-    // $isDisabled flags whether the element is disabled or not so we know how to render it
-    // $element is the element object
-    // $entry_id is the ID number of the entry where this particular element comes from
-    // $screen is the screen object that is in effect, if any (may be null)
-    function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-			  $ele_value = (is_array($ele_value) AND count($ele_value) == 0) ? "" : $ele_value; // default ele_value for new entries, will be an empty array, so just make a string in that case, otherwise, go with loaded value (ie: existing value in DB)
-        if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $ele_value);
-        } else {
-            $formElement = new xoopsFormText($caption, $markupName, 20, 255, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
-        }
-        return $formElement;
+		function loadValue($element, $value, $entry_id) {
     }
 
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
     // 'myform' is a name enforced by convention that refers to the form where this element resides
     // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
-        $ele_required = $element->getVar('ele_required');
-        $validationCode = array();
-
-        if($ele_required){
-          // Todo - add error message to language files
-          $validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter an email address.'); \n myform.{$markupName}.focus();\n return false;\n }";
-        }
-
-        $validationCode[] =
-        "if(myform.{$markupName}.value != '' && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,63})+$/.test(myform.{$markupName}.value) == false){
-          alert('The email address you have entered is not valid.');
-          myform.{$markupName}.focus();
-          return false;
-        }";
-
-        return $validationCode;
     }
 
     // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-        return formulize_db_escape($value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+      return $value;
     }
 
     // this method will handle any final actions that have to happen after data has been saved
@@ -201,7 +113,7 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value; // we're not making any modifications for this element type
+      return $value; // we're not making any modifications for this element type
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -212,20 +124,18 @@ class formulizeEmailElementHandler extends formulizeElementsHandler {
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        return $value;
-    }
+    return $value;
+  }
 
-    // this method will format a dataset value for display on screen when a list of entries is prepared
-    // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
-    // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
-        $this->clickable = true; // make urls clickable
-        $this->striphtml = false; // remove html tags as a security precaution
-        $this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-        if($value){
-          $value = '<a href="mailto:'.$value.'">'.$value.'</a>';
-        }
-        return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
-    }
+	// this method will format a dataset value for display on screen when a list of entries is prepared
+	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
+	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		$this->clickable = false; // make urls clickable
+		$this->striphtml = true; // remove html tags as a security precaution
+		$this->length = 255; // truncate to a maximum of 100 characters, and append ... on the end
+
+		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+	}
 
 }
