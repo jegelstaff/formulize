@@ -215,6 +215,11 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
 
         if($isDisabled) {
             $renderedValue = $form_slider_value->render();
+						$config_handler = xoops_gethandler('config');
+    				$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+						if(trim(strip_tags($renderedValue)) == 0 AND $formulizeConfig['show_empty_elements_when_read_only'] == false) {
+							$renderedValue = "";
+						}
             $form_ele = new XoopsFormLabel($caption, "$renderedValue");
         } else {
             $renderedSlider = $form_slider->render();

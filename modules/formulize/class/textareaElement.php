@@ -130,7 +130,7 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 				);
 			}
 		} else {
-			$form_ele = new XoopsFormLabel ($caption, str_replace("\n", "<br>", undoAllHTMLChars($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], ENT_QUOTES)), $markupName);	// nmc 2007.03.24 - added
+			$form_ele = new XoopsFormLabel ($caption, formulize_text_to_hyperlink(str_replace("\n", "<br>", undoAllHTMLChars($ele_value[ELE_VALUE_TEXTAREA_DEFAULTVALUE], ENT_QUOTES))), $markupName);	// nmc 2007.03.24 - added
 		}
 		return $form_ele;
 	}
