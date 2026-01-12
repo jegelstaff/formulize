@@ -1435,7 +1435,18 @@ private function validateFilter($filter, $andOr = 'AND') {
 				// Prepare the value for database storage
 				// Handle array values by converting strings to single value arrays, looping through each item, and concatenating results back into string if required for the given element type
 				// There is a great deal of validation and correction that can and should be done here, similar to when import operation is done, to convert a value that makes sense in that context, into the proper format for storage, ie: turn strings into foreign key ids, check that values are actually options for the given checkbox series or dropdown list, etc.
-				$values = is_array($value) ? $value : array($value);
+				$elementObject = _getElementObject($elementHandle);
+				if($elementObject->canHaveMultipleValues) {
+					if(!is_array($value)) {
+						throw new FormulizeMCPException('Element '.$elementHandle.' requires values to be provided as an array', 'invalid_data');
+					}
+					$values = $value;
+				} else {
+					if(is_array($value)) {
+						throw new FormulizeMCPException('Element '.$elementHandle.' does not accept multiple values. Use a string as the value.', 'invalid_data');
+					}
+					$values = array($value);
+				}
 				$preparedValues = array();
 				foreach($values as $thisValue) {
 					$preparedValue = prepareLiteralTextForDB($elementHandle, $thisValue);
@@ -1451,7 +1462,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 
 				// If multiple values, need to put together the string in the right format for the element
 				} else {
-					$elementObject = _getElementObject($elementHandle);
+
 					if($elementObject->isLinked) {
 						// Linked elements use comma-separated values
 						$value = ",".implode(',', $preparedValues).",";
