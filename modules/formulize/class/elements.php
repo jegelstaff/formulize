@@ -823,6 +823,31 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Get default values for an element object
+	 * Instantiate the handler for the element type if one exists, and get the default value from the getDefaultValue method
+	 * The type handler method must be called because different types of elements have different ways of defining defaults
+	 * This method is simply necessary for cases where the generic element handler has been invoked, instead of a type handler, and we don't want to make the user do the work below each time they need a default value
+	 * @param int|string|object $elementIdentifier The element object or id or handle to get the default value for
+	 * @param int $entry_id The entry id to get the default value for
+	 * @return mixed The default value for the element, or false if none can be determined
+	 * @throws Exception If the element object cannot be retrieved
+	 */
+	function getDefaultValue($elementIdentifier, $entry_id = 'new') {
+		if(!$elementObject = _getElementObject($elementIdentifier)) {
+			throw new Exception("Invalid element object passed to getDefaultValue");
+		}
+		$ele_type = $elementObject->getVar('ele_type');
+		if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$ele_type.'Element.php')) {
+			require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$ele_type.'Element.php';
+			$typeHandler = xoops_getmodulehandler($ele_type.'Element', 'formulize');
+			if(method_exists($typeHandler, 'getDefaultValue')) {
+				return $typeHandler->getDefaultValue($elementObject, $entry_id);
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Initialize an element handle based on the caption, or element id if no caption
 	 * @param object $element The element object to initialize the handle for
 	 * @return string The initialized element handle, or existing handle if there is one
