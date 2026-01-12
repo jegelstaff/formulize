@@ -833,18 +833,23 @@ class formulizeElementsHandler {
 	 * @throws Exception If the element object cannot be retrieved
 	 */
 	function getDefaultValue($elementIdentifier, $entry_id = 'new') {
-		if(!$elementObject = _getElementObject($elementIdentifier)) {
-			throw new Exception("Invalid element object passed to getDefaultValue");
-		}
-		$ele_type = $elementObject->getVar('ele_type');
-		if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$ele_type.'Element.php')) {
-			require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$ele_type.'Element.php';
-			$typeHandler = xoops_getmodulehandler($ele_type.'Element', 'formulize');
-			if(method_exists($typeHandler, 'getDefaultValue')) {
-				return $typeHandler->getDefaultValue($elementObject, $entry_id);
-			}
-		}
-		return false;
+    if(!$elementObject = _getElementObject($elementIdentifier)) {
+      throw new Exception("Invalid element object passed to getDefaultValue");
+    }
+    $ele_type = $elementObject->getVar('ele_type');
+    if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$ele_type.'Element.php')) {
+      require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$ele_type.'Element.php';
+      $typeHandler = xoops_getmodulehandler($ele_type.'Element', 'formulize');
+      // Check if the method is declared in the child class specifically
+      if(method_exists($typeHandler, 'getDefaultValue')) {
+        $reflection = new ReflectionMethod($typeHandler, 'getDefaultValue');
+        // Check if declaring class is NOT the parent class
+        if($reflection->getDeclaringClass()->getName() !== 'formulizeElementsHandler') {
+          return $typeHandler->getDefaultValue($elementObject, $entry_id);
+        }
+      }
+    }
+    return false;
 	}
 
 	/**

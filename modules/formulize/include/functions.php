@@ -7770,9 +7770,8 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
     $defaultTextToWrite = "";
 		$ele_type = $thisDefaultEle->getVar('ele_type');
 		$elementTypeHandler = xoops_getmodulehandler($ele_type."Element", "formulize");
-		if(method_exists($elementTypeHandler, 'getDefaultValue')) {
-			$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
-		}
+		$defaultTextToWrite = $elementTypeHandler->getDefaultValue($thisDefaultEle, $target_entry);
+
 		// if there's no value, or it's an existing entry and the default matches the DB
     if($defaultTextToWrite === ""
 			OR $defaultTextToWrite === false
