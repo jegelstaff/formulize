@@ -1816,7 +1816,7 @@ private function validateFilter($filter, $andOr = 'AND') {
 		$creationDataElementProperties = [
 			'handle' => [
 				'type' => 'string',
-				'description' => 'Optional. This does not need to be specified, as the system will determine it automatically from the caption. This is the internal name, used in the database and in API calls. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system.'
+				'description' => 'This is the internal name, used in the database and in API calls. This is optional and does not normally need to be specified, as the system will determine it automatically from the form title and element caption. If the user specifically requests a handle, use this to force the handle to be a certain value. The system may still modify it for uniqueness, so check the tool result to see the actual handle used in by system. Maximum length is 64 characters.'
 			]
 		];
 
