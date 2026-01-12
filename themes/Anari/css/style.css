@@ -3340,6 +3340,10 @@ div.scrollbox table.outer {
 }
 #formulize-list-of-entries-footer > div:first-of-type {
 	margin-top: 1.6em;
+	gap: 2em;
+}
+#formulize-list-of-entries-footer > div:first-of-type:has(> #formulize_saveButton) {
+		margin-top: 0.8em;
 }
 
 @media (max-width: 450px) {
@@ -3636,9 +3640,6 @@ input#toggleRepeatData:checked::before {
 input#toggleRepeatData:focus-visible {
   outline:2px solid black;
   outline-offset: 2px
-}
-span.page-navigation-total {
-	margin-right: 2em;
 }
 
 #session-timeout-warning {

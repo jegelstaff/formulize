@@ -2,7 +2,7 @@
 
 print "
         <div id='formulize-list-of-entries-footer'>
-            <div>$numberOfEntries $toggleRepeatData</div><div>$pageNavControls</div>
+            <div>$saveButton $numberOfEntries $toggleRepeatData</div><div>$pageNavControls</div>
         </div>
     </div>
 </div>

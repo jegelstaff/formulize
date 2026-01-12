@@ -3937,13 +3937,15 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	if($screen AND $type == "bottom" AND
 		count((array) $screen->getVar('decolumns')) > 0 AND
 		!$screen->getVar('dedisplay') AND
-		$GLOBALS['formulize_displayElement_LOE_Used'] AND
-		!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'saveButton') AND
+		$GLOBALS['formulize_displayElement_LOE_Used']) {
+		if(!strstr(getTemplateToRender('toptemplate', $screenOrScreenType), 'saveButton') AND
 		!strstr(getTemplateToRender('bottomtemplate', $screenOrScreenType), 'saveButton') AND
 		!strstr(getTemplateToRender('openlisttemplate', $screenOrScreenType), 'saveButton') AND
-		!strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'saveButton')
-		) {
-		print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
+		!strstr(getTemplateToRender('closelisttemplate', $screenOrScreenType), 'saveButton')) {
+			print "<div id=\"floating-list-of-entries-save-button\" class=\"\"><p>$saveButton</p></div>\n";
+		}
+	}	else {
+		$saveButton = "";
 	}
 
 	$publishedFilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
@@ -4485,22 +4487,13 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 // THIS FUNCTION CALCULATES THE NUMBER OF PAGES AND DRAWS HTML FOR NAVIGATING THEM
 function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
 
-    // setup default navigation - and in Anari theme, put in a hack to extend the height of the scrollbox if necessary -- need to rebuild markup for list so this kind of thing is not necessary!
+    // setup default navigation
     $pageNav = "";
 
     if(isset($_POST['hlist']) AND $_POST['hlist']) {
 		// return no navigation controls if the list is hidden.
 		return array("","","");
 	}
-
-    global $xoopsConfig;
-    if($xoopsConfig['theme_set']=='Anari') {
-        $pageNav = "<script type='text/javascript'>
-    jQuery(document).ready(function() {
-        jQuery('.scrollbox').css('height','100%');
-    });
-</script>";
-    }
 
 	$numberPerPage = is_object($screen) ? $screen->getVar('entriesperpage') : 10;
  	$numberPerPage = (isset($_POST['formulize_entriesPerPage']) AND intval($_POST['formulize_entriesPerPage']) > 0) ? intval($_POST['formulize_entriesPerPage']) : $numberPerPage;
