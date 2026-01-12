@@ -139,12 +139,13 @@ trait tools {
 							'description' => 'Required. An array of data to use for the entry or entries. Each item in the array is the data for one entry.',
 							'items' => [
 								'type' => 'object',
-								'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes.',
+								'description' => 'Required. Data to save as key-value pairs. Keys must be valid element handles from the form. Use get_form_details to find valid handles and data types. This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes. Elements that allow multiple selections, such as checkboxes and autocomplete lists configured to allow more than one value, store data as an array of values.',
 								'additionalProperties' => true
 							],
 							'examples' => [
 								'[{"book_title": "The Wind in the Willows", "book_author": "Kenneth Grahame", "book_publication_date": "1908-10-08"}]',
-								'[{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"},{"first_name": "Jane", "last_name": "Smith", "birth_date": "1975-11-23"}]'
+								'[{"first_name": "John", "last_name": "Doe", "birth_date": "1969-05-09"},{"first_name": "Jane", "last_name": "Smith", "birth_date": "1975-11-23"}]',
+								'[{"order_date": "2023-05-09", "product_selection_checkbox": ["123","456","789"], "total_amount": "150.75"}]'
 							]
 						],
 						'relationship_id' => [
@@ -1432,11 +1433,33 @@ private function validateFilter($filter, $andOr = 'AND') {
 				}
 
 				// Prepare the value for database storage
-				$preparedValue = prepareLiteralTextForDB($elementHandle, $value);
-				if($preparedValue AND $preparedValue !== $value) {
-					$value = $preparedValue;
+				// Handle array values by converting strings to single value arrays, looping through each item, and concatenating results back into string if required for the given element type
+				// There is a great deal of validation and correction that can and should be done here, similar to when import operation is done, to convert a value that makes sense in that context, into the proper format for storage, ie: turn strings into foreign key ids, check that values are actually options for the given checkbox series or dropdown list, etc.
+				$values = is_array($value) ? $value : array($value);
+				$preparedValues = array();
+				foreach($values as $thisValue) {
+					$preparedValue = prepareLiteralTextForDB($elementHandle, $thisValue);
+					if($preparedValue AND $preparedValue !== $thisValue) {
+						$thisValue = $preparedValue;
+					}
+					$preparedValues[] = $thisValue;
 				}
 
+				// If value wasn't array in the first place, just grab the one and only thing that was prepared
+				if(!is_array($value)) {
+					$value = $preparedValues[0];
+
+				// If multiple values, need to put together the string in the right format for the element
+				} else {
+					$elementObject = _getElementObject($elementHandle);
+					if($elementObject->isLinked) {
+						// Linked elements use comma-separated values
+						$value = ",".implode(',', $preparedValues).",";
+					} else {
+						// all others are prefixed with special marker: *=+*:
+						$value = "*=+*:" . implode("*=+*:", $preparedValues);
+					}
+				}
 				$preparedData[$preparedDataKey][$elementHandle] = $value;
 			}
 
