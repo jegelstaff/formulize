@@ -278,7 +278,14 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 			);
 			$form_ele->setExtra("class='numbers-only-textbox'");
 		} else {
-			if(is_numeric($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) {
+			$value = "";
+			$config_handler = xoops_gethandler('config');
+    	$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			if(is_numeric($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE])
+				AND (
+					$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]
+					OR $formulizeConfig['show_empty_elements_when_read_only'] == true
+				)) {
 				$value = formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle'));
 			}
 			$form_ele = new XoopsFormLabel ($caption, $value, $markupName);

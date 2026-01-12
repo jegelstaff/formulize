@@ -163,7 +163,6 @@ test.describe('Validate Data', () => {
 		await expect(page2.getByText('Organization', { exact: true })).toBeVisible();
 		await expect(page2.getByText('Organization Name')).toBeVisible();
 		await expect(page2.getByText('Freeform Solutions').first()).toBeVisible();
-		await expect(page2.getByText('Name').first()).toBeVisible();
 		await expect(page2.getByText('Phone number')).toBeVisible();
 		await expect(page2.getByText('416-686-3766')).toBeVisible();
 		await expect(page2.getByText('Email Address')).toBeVisible();

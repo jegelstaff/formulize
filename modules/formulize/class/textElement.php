@@ -299,6 +299,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$form_ele->setExtra("class='numbers-only-textbox'");
 			}
 		} else {
+			$value = $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE];
 			if(is_numeric($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) AND $ele_value[ELE_VALUE_TEXT_DEFAULTVALUE]) {
 				$value = formulize_numberFormat($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE], $element->getVar('ele_handle'));
 			}
