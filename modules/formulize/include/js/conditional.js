@@ -93,9 +93,10 @@ function callCheckCondition(name, callHistory = []) {
 								deferredCalls.push(handle+'[]');
 							}
 						}
-						conditionalCheckInProgress = conditionalCheckInProgress - 1;
+						conditionalCheckInProgress = conditionalCheckInProgress > 0 ? conditionalCheckInProgress - 1 : 0;
 					}
 				} catch (e) {
+					conditionalCheckInProgress = 0;
 					return false;
 				}
 			}
