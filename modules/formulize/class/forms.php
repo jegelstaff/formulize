@@ -1446,28 +1446,26 @@ class formulizeFormsHandler {
 		if(!$element = _getElementObject($element)) {
 			return false;
 		}
-        if($element->hasData) {
-		global $xoopsDB;
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($element->getVar('id_form'),false,true);
-		$dataType = $dataType ? $dataType : "text";
-		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
-		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
-            print $xoopsDB->error().'<br>';
-			return false;
-		}
-		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldMissing($element, revisionsTable: true)) {
-			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+    if($element->hasData) {
+			global $xoopsDB;
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($element->getVar('id_form'),false,true);
+			$dataType = $dataType ? $dataType : "text";
+			$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
+			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
 			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
-				print "Error: could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle');
-				return false;
+				throw new Exception($xoopsDB->error());
 			}
-		}
-		return true;
-        } else {
-            return false;
-        }
+			if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldMissing($element, revisionsTable: true)) {
+				$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " ADD `" . $element->getVar('ele_handle') . "` $dataType NULL default NULL";
+				if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
+					throw new Exception("Could not add element ".$element->getVar('ele_handle')." to the revisions table for form ". $formObject->getVar('form_handle'));
+				}
+			}
+			return true;
+    } else {
+      return false;
+    }
 	}
 
 	// update the field name in the datatable.  $element can be an id or an object.
