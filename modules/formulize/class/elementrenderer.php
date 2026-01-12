@@ -123,7 +123,8 @@ class formulizeElementRenderer{
 				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
-					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
+					$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
+					$entry = $entryData[0];
 					$creation_datetime = getValue($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
 					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
@@ -143,7 +144,8 @@ class formulizeElementRenderer{
 				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
-					$entry = $this->formulize_getCachedEntryData($id_form, $entry_id);
+					$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
+					$entry = $entryData[0];
 					$creation_datetime = getValue($entry, "creation_datetime");
 					$entryData = $entry; // alternate variable name for backwards compatibility
 					$ele_value[0] = removeOpeningPHPTag($ele_value[0]);
@@ -259,7 +261,8 @@ class formulizeElementRenderer{
   // replace { } terms with element handle values from the current entry, if any exist
 	function formulize_replaceCurlyBracketVariables($text, $entry_id, $id_form, $renderedElementMarkupName='') {
 		if(strstr($text, "}") AND strstr($text, "{")) {
-			$entryData = $this->formulize_getCachedEntryData($id_form, $entry_id);
+			$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
+			$entry = $entryData[0];
       $element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$bracketPos = 0;
 			$start = true; // flag used to force the loop to execute, even if the 0th position has the {
@@ -272,7 +275,7 @@ class formulizeElementRenderer{
 					if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term])) {
 						$replacementTerm = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry_id][$term];
 					} else {
-           	$replacementTerm = getValue($entryData, $term, localEntryId: $entry_id);
+           	$replacementTerm = getValue($entry, $term, localEntryId: $entry_id);
 					}
 					// get the uitext value if necessary
 					$replacementTerm = formulize_swapUIText($replacementTerm, $elementObject->getVar('ele_uitext'));
@@ -289,18 +292,6 @@ class formulizeElementRenderer{
 			}
 		}
 		return $text;
-	}
-
-	// gather an entry when required...this should really be abstracted out to the data handler class, which also needs a proper getter in a handler of its own, so we don't keep creating new instances of the data handler and it can store the cached info about entries that we want it to.
-	function formulize_getCachedEntryData($id_form, $entry_id) {
-		static $cachedEntryData = array();
-		if(!is_numeric($entry_id) OR $entry_id < 1) {
-            return array();
-		}
-		if(!isset($cachedEntryData[$id_form][$entry_id])) {
-			$cachedEntryData[$id_form][$entry_id] = gatherDataset($id_form, filter: $entry_id, frid: 0);
-		}
-		return $cachedEntryData[$id_form][$entry_id][0];
 	}
 
 	function formulize_disableElement($element, $type) {
