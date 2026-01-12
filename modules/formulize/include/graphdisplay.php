@@ -31,8 +31,10 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include_once '../../../mainfile.php';
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
+if (!defined("XOOPS_MAINFILE_INCLUDED")) {
+    require_once realpath(dirname(__FILE__) . "/../../../mainfile.php");
+}
+require_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
 function displayGraph($type, $data, $dataElements=array(), $yElements=array(), $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showTooltips = 'all', $smoothedLine = false, $showCursor = true) {
 
@@ -154,6 +156,7 @@ function displayGraph($type, $data, $dataElements=array(), $yElements=array(), $
 
 			<!-- Chart code -->
 			<script>
+
 			am5.ready(function() {
 
 				// https://www.amcharts.com/docs/v5/getting-started/#Root_element
