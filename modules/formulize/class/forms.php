@@ -1170,7 +1170,7 @@ class formulizeFormsHandler {
 		foreach($formObject->getVar('elements') as $elementId) {
 			$elementObject = _getElementObject($elementId);
 			$elementType = $elementObject->getVar('ele_type');
-			if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/elements/".$elementType."Element.php")) {
+			if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/".$elementType."Element.php")) {
 				$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
 			} else {
 				$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
