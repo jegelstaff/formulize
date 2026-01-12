@@ -610,7 +610,7 @@ function displayGraph($type, $data, $dataElements=array(), $yElements=array(), $
 			});
 
 			series.slices.template.setAll({
-				tooltipText: "{valuePercentTotal.formatNumber('0.00')}% (n={value})"
+				tooltipText: "{category}: {valuePercentTotal.formatNumber('0.00')}% (n={value})"
 			});
 
 			series.states.create("hidden", {
