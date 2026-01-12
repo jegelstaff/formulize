@@ -5778,7 +5778,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 				// if we didn't jump the gun and set the comparison value already above...
 				if (!$conditionsFilterComparisonValue) {
-						if ($targetElementEleValue[1]) { // if the target allows multiple selections...
+						if ($targetElementObject->canHaveMultipleValues) {
 								$conditionsFilterComparisonValue = " CONCAT('$origlikebits,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE ".$subQueryWhereClause."),',$origlikebits') ";
 						// for existing entries, or new entries with no dynamic reference, or new entries with an asynch value set
 						} elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
