@@ -66,6 +66,8 @@ if ($_GET['fid'] != "new") {
     $send_digests = $formObject->getVar('send_digests');
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
+		$entries_are_users = $formObject->getVar('entries_are_users');
+		$entries_are_groups = $formObject->getVar('entries_are_groups');
 
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
@@ -82,7 +84,6 @@ if ($_GET['fid'] != "new") {
     $i = 1;
 		$elementsInRelationshipLinks = getElementsInRelationshipLinks($elementObjects);
     foreach($elementObjects as $thisElement) {
-        if($thisElement->isSystemElement) { continue; }
         $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
         $colhead = trans(strip_tags($thisElement->getVar('ele_colhead')));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
@@ -124,6 +125,7 @@ if ($_GET['fid'] != "new") {
             $converttext = "";
             $linktype = "";
         }
+				$elements[$i]['content']['isSystemElement'] = $thisElement->isSystemElement;
         $elements[$i]['content']['converttext'] = $converttext;
         $elements[$i]['content']['linktype'] = $linktype;
         $elements[$i]['content']['ele_type'] = $cleanType;
@@ -465,6 +467,8 @@ if ($_GET['fid'] != "new") {
 		$send_digests = 0;
 		$defaultpi = 0;
 		$pioptions = array();
+		$entries_are_users = 0;
+		$entries_are_groups = 0;
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -584,7 +588,29 @@ $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
+$settings['entries_are_users'] = $entries_are_users;
+$settings['entries_are_groups'] = $entries_are_groups;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
+
+// Check if we should show the user mapping UI
+// Default to true, and only set to false if conditions indicate we shouldn't show it
+$settings['show_user_mapping_ui'] = true;
+if($fid != "new" && $entries_are_users == 1) {
+	// The user account uid element has the handle formulize_user_account_uid_X where X is the form id
+	$userAccountUidHandle = 'formulize_user_account_uid_' . $fid;
+
+	// Single query to check: total entries, and max value in the user account uid field
+	$checkSql = "SELECT COUNT(*) as total_entries, MAX(`" . $userAccountUidHandle . "`) as max_uid FROM " . $xoopsDB->prefix("formulize_" . $form_handle);
+	$checkResult = $xoopsDB->query($checkSql);
+	$checkRow = $xoopsDB->fetchArray($checkResult);
+	$totalEntries = intval($checkRow['total_entries']);
+	$maxUid = intval($checkRow['max_uid']);
+
+	// Hide UI if there are no entries, OR if entries are already associated with users
+	if($totalEntries == 0 || $maxUid > 0) {
+		$settings['show_user_mapping_ui'] = false;
+	}
+}
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
     $settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;

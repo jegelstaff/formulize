@@ -93,7 +93,7 @@ test.describe('Installation of Formulize', () => {
 	test('Enable Formulize Logging', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.goto('/modules/formulize/admin');
-		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+		await page.getByRole('link', { name: 'Preferences' }).click();
 		await page.locator('#formulizeLoggingOnOff-9').check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
