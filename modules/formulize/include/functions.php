@@ -4606,7 +4606,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 }
 
 /**
- * Sort out [random:text/text/text] sets and also possibly nested [date:formatstring/timestamp] within a passed in string
+ * Sort out [random:text/text/text] sets and also possibly nested [date:formatstring/date-as-string] within a passed in string
  * If timestamp is not present use current time
  * @param string $text
  * @return string The string with a random text chosen, and a date formatted according to the string
@@ -4617,7 +4617,7 @@ function formulize_handleRandomAndDateText($text) {
 				foreach ($dateMatches[0] as $index => $fullMatch) {
 						$dateParts = explode('/', $dateMatches[1][$index]);
 						$formatString = isset($dateParts[0]) ? $dateParts[0] : 'Y-m-d';
-						$timestamp = isset($dateParts[1]) ? intval($dateParts[1]) : time() + formulize_getUserUTCOffsetSecs();
+						$timestamp = (isset($dateParts[1]) ? strtotime($dateParts[1]) : time()) + formulize_getUserUTCOffsetSecs();
 						$formattedDate = date($formatString, $timestamp);
 						$text = str_replace($fullMatch, $formattedDate, $text);
 				}
