@@ -4283,6 +4283,10 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             case "radio":
                 $options = $ele_value;
                 break;
+						case "provinceList":
+								$provinceListHandler = xoops_getmodulehandler("provinceListElement", "formulize");
+								$options = array_flip($provinceListHandler->getProvinceList()); // values we want in the filter need to be the array keys!
+								break;
             default:
                 $options = array();
         }
