@@ -4338,16 +4338,25 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                 $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
                 // remove any dynamic filters pointing to form elements since we're rendering without entry context
 								if(isset($ele_value[5]) AND is_array($ele_value[5]) AND isset($ele_value[5][2]) AND is_array($ele_value[5][2])) {
+									$removedAtLeastOneCondition = false;
 									foreach($ele_value[5][2] as $i=>$conditionTerm) {
 											if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
 													$termToCheck = substr($conditionTerm, 1, -1);
 													if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
+															$removedAtLeastOneCondition = true;
 															unset($ele_value[5][0][$i]);
 															unset($ele_value[5][1][$i]);
 															unset($ele_value[5][2][$i]);
 															unset($ele_value[5][3][$i]);
 													}
 											}
+									}
+									if($removedAtLeastOneCondition) {
+										// reindex the arrays, as other code expects everything to start at zero and be sequential
+										$ele_value[5][0] = array_values($ele_value[5][0]);
+										$ele_value[5][1] = array_values($ele_value[5][1]);
+										$ele_value[5][2] = array_values($ele_value[5][2]);
+										$ele_value[5][3] = array_values($ele_value[5][3]);
 									}
 								}
                 list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
