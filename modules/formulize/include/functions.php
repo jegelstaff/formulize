@@ -5665,10 +5665,20 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
 		}
 
-		// *** OPTION 1: THE TARGET ELEMENT IS A LINKED FIELD, NON-SNAPSHOT...
+		// *** OPTION 1: FILTER TERM IS {BLANK}
+    if ($filterTerms[$filterId]=="{BLANK}") {
+      $conditionsFilterComparisonValue = 'NULL';
+      $filterTerms[$filterId]="";
+      if($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE') {
+        $filterOps[$filterId] = 'IS NOT';
+      } else {
+        $filterOps[$filterId] = 'IS';
+      }
+
+		// *** OPTION 2: THE TARGET ELEMENT IS A LINKED FIELD, NON-SNAPSHOT...
 		// ie: left side is linked to something else
 		// check for whether the source element is a linked element, and if so, figure out the entry id of the record in the source of that linked selectbox which matches the filter term instead
-		if (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
+    } elseif (!isMetaDataField($filterElementIds[$filterId]) AND $targetElementObject->isLinked AND !$targetElementEleValue['snapshot']) {
 				$targetElementEleValueProperties = explode("#*=:*", $targetElementEleValue[2]); // split them up to get the properties of the linked selectbox that the source element is pointing at
 				$targetSourceFid = $targetElementEleValueProperties[0]; // get the Fid that the source element is point at (the source of the source)
 				$targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
@@ -5680,7 +5690,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						$overrideReturnedOp = '!=';
 				}
 
-				// OPTION 1A: IF THE FILTER TERM IS DYNAMIC, FIGURE OUT THE DB AND LITERAL VALUES FOR THAT ELEMENT IN THE CURRENT ENTRY/CONTEXT
+				// OPTION 2A: IF THE FILTER TERM IS DYNAMIC, FIGURE OUT THE DB AND LITERAL VALUES FOR THAT ELEMENT IN THE CURRENT ENTRY/CONTEXT
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 						$quotes = '';
 						if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
@@ -5761,7 +5771,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						// then neuter these, so they don't screw up the building of the query...note the use of origlikebits so that the higher level part of the query retains that logic if the user asked for it
 						$likebits = "";
 
-				// OPTION 1B: THE TERM IS NOT A DYNAMIC REFERENCE TO AN ELEMENT...
+				// OPTION 2B: THE TERM IS NOT A DYNAMIC REFERENCE TO AN ELEMENT...
 				} else {
 						$filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
 						$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
@@ -5802,18 +5812,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						$conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
 				}
 		}
-
-		// *** OPTION 2: FILTER TERM IS {BLANK}
-		// Could override the determination related to linked target elements above??
-    if ($filterTerms[$filterId]=="{BLANK}") {
-      $conditionsFilterComparisonValue = 'NULL';
-      $filterTerms[$filterId]="";
-      if($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE') {
-        $filterOps[$filterId] = 'IS NOT';
-      } else {
-        $filterOps[$filterId] = 'IS';
-      }
-    }
 
 		$plainLiteralValue = "";
 		$literalToDBValue = "";
