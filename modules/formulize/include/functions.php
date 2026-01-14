@@ -5905,7 +5905,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 		// *** OPTION 4: IF WE HAVEN'T SET IT ALREADY, FIGURE OUT THE COMPARISON VALUE (POSSIBLY BASED ON THE PLAIN LITERAL AND LITERAL-TO-DB DETERMINATIONS ABOVE)
     if ($conditionsFilterComparisonValue === NULL) {
-        $ele_type = $filterElementObject->getVar('ele_type');
         // messy... if it's a checkbox, do a much more complex comparison value.
         // comparison values are prepended with "handle op" and wrapped in ( ), later in the _appendToCondition function
         // so we can build this odd comparison value that repeats the "handle op" part internally, to catch all the cases for checkboxes. Ugh.
