@@ -2579,7 +2579,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         // linking based on a shared value.  in the case of one to one forms assumption is that the shared value does not appear more than once in either form's field (otherwise this will be a defacto one to many link)
         // else we're looking at a classic "shared value" which is really a linked selectbox
         $startEleValue = $startElement->getVar('ele_value');
-        $startEleValueParts = strstr($startEleValue[2], "#*=:*") ? explode("#*=:*", $startEleValue[2]) : array();
+				$startEleValueParts = (is_string($startEleValue[2]) AND strstr($startEleValue[2], "#*=:*")) ? explode("#*=:*", $startEleValue[2]) : array();
         // option 2, start form is the linked selectbox that points to the form in question
         if (count((array) $startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
             // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
