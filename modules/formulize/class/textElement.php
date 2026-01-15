@@ -288,7 +288,8 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 				$ele_value[ELE_VALUE_TEXT_MAXCHARS],	//	max width
 				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
 				false,					// autocomplete in browser
-				($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] ? 'number' : 'text')		// numbers only
+				($ele_value[ELE_VALUE_TEXT_NUMBERSONLY] ? 'number' : 'text'),		// numbers only
+				$ele_value[ELE_VALUE_TEXT_DECIMALS]	// decimals
 			);
 			//if placeholder value is set
 			if($ele_value[ELE_VALUE_TEXT_DEFAULTVALUE_AS_PLACEHOLDER]) {

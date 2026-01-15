@@ -47,11 +47,11 @@ class XoopsFormText extends icms_form_elements_Text
 	 * @param	string  $value      Initial text
  	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
 	 * @param	string	$type	Whether to treat it as a number or time when rendering
-
+	 * @param	int		$decimals	Number of decimal places (only used if $type is 'number')
 	 */
-	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text')
+	function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text', $decimals = 0)
 	{
-		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete, $type);
+		parent::__construct($caption, $name, $size, $maxlength, $value, $autocomplete, $type, $decimals);
 		//$this->_deprecated = icms_core_Debug::setDeprecated('icms_form_elements_Text', sprintf(_CORE_REMOVE_IN_VERSION, '1.4'));
 	}
 }

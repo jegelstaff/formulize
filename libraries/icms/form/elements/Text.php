@@ -52,6 +52,12 @@ class icms_form_elements_Text extends icms_form_Element {
 	public $type = 'text';
 
 	/**
+	 * Number of decimal places (only used if type is 'number')
+	 * @var		int
+	 */
+	private $_decimals = 0;
+
+	/**
 	 * Constructor
 	 *
 	 * @param	string	$caption	Caption
@@ -61,8 +67,9 @@ class icms_form_elements_Text extends icms_form_Element {
 	 * @param	string  $value      Initial text
 	 * @param	bool	$autocomplete	Whether to use autocomplete functionality in browser. Seems to have no effect in render method.
 	 * @param	mixed	$type	Either 'text', 'number', or 'time'.
+	 * @param	int		$decimals	Number of decimal places (only used if $type is 'number')
 	 */
-	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text') {
+	public function __construct($caption, $name, $size, $maxlength, $value = '', $autocomplete = false, $type = 'text', $decimals = 0) {
 		$this->setCaption($caption);
 		$this->setName($name);
 		$this->_size = (int) $size;
@@ -70,6 +77,7 @@ class icms_form_elements_Text extends icms_form_Element {
 		$this->setValue($value);
 		$this->autocomplete = !empty($autocomplete);
 		$this->type = ($type === true ? 'number' : $type); // legacy, used to be boolean for number
+		$this->_decimals = $decimals;
 	}
 
 	/**
@@ -125,12 +133,22 @@ class icms_form_elements_Text extends icms_form_Element {
 	 */
 	public function render() {
 		$type = $this->getType();
+		$step = "";
+		if($type == 'number' AND $this->_decimals > 0) {
+			// ensure default value has the correct number of decimal places, with zeros to fill in the right number if necessary
+			// and set the step increment accordingly
+			if($this->getValue() OR $this->getValue() === 0 OR $this->getValue() === 0.0) {
+				$this->setValue(number_format((float)$this->getValue(), $this->_decimals, '.', '')); // HTML spec says to use dot as decimal separator for the value attribute regardless of locale
+			}
+			$step = " step='0." . ($this->_decimals > 1 ? str_repeat('0', $this->_decimals - 1) : '') . "1'";
+		}
 		return "<input type='$type' name='" . $this->getName()
 			. "' id='" . $this->getName()
 			. "' size='" . $this->getSize()
 			. "' maxlength='" . $this->getMaxlength()
 			. "' aria-describedby='" . $this->getName() . "-help-text"
 			. "' value='" . $this->getValue() . "'" . $this->getExtra()
+			. $step
 			. " />";
 	}
 }

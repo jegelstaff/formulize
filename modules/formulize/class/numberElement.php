@@ -274,7 +274,8 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 				$ele_value[ELE_VALUE_TEXT_MAXCHARS],	//	max width
 				$ele_value[ELE_VALUE_TEXT_DEFAULTVALUE],	//	value
 				false,					// autocomplete in browser
-				'number'		// numbers only
+				'number', // numbers only flag
+				$ele_value[ELE_VALUE_TEXT_DECIMALS]		// number of decimal places
 			);
 			$form_ele->setExtra("class='numbers-only-textbox'");
 		} else {
