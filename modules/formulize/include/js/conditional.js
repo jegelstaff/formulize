@@ -48,10 +48,14 @@ function callCheckCondition(name, callHistory = []) {
 		}
 		const deferredCalls = [];
 		jQuery.each(arguments, function(index, responseData) {
-			if(Array.isArray(responseData) === false || 0 in responseData === false) { return false; }
+			if(Array.isArray(responseData) === false || 0 in responseData === false) {
+				conditionalCheckInProgress = 0;
+				return false;
+			}
 			try {
 				var result = JSON.parse(responseData[0]);
 			} catch (e) {
+				conditionalCheckInProgress = 0;
 				return false;
 			}
 			if(result) {
@@ -144,8 +148,11 @@ function checkCondition(relevantElementSet, elementValuesForURL, oneToOne) {
 	var oneToOneAdded = false;
 	var elementIds = '';
 	var elementIdsSep = '';
+	var incrementCount = 0; // Track how many we increment
+
 	for(k in relevantElementSet) {
 		conditionalCheckInProgress = conditionalCheckInProgress + 1;
+		incrementCount++; // Track increments
 		var markupHandle = relevantElementSet[k];
 		partsArray = markupHandle.split('_');
 		elementIds = elementIds + elementIdsSep + partsArray[3];
@@ -157,7 +164,11 @@ function checkCondition(relevantElementSet, elementValuesForURL, oneToOne) {
 		}
 		elementIdsSep = ',';
 	}
-	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+FORMULIZE.SCREEN_ID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+"&frid="+FORMULIZE.FRID+elementValuesForURL);
+	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+FORMULIZE.SCREEN_ID+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+"&frid="+FORMULIZE.FRID+elementValuesForURL)
+		.fail(function() {
+			// Network error - decrement the counter
+			conditionalCheckInProgress = Math.max(0, conditionalCheckInProgress - incrementCount);
+		});
 }
 
 /**
