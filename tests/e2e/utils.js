@@ -391,7 +391,8 @@ export async function waitForAdminPageReady(page) {
 }
 
 /**
- * Waits for a conditional element to be removed and recreated
+ * Waits for a conditional element to appear or be updated after a trigger action
+ * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
  * @param {string} className - The class name of the conditional element (without the dot)
  * @param {Function} triggerAction - An async function that triggers the conditional behavior
@@ -401,25 +402,67 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 	// The child element has a reliable class
 	const childSelector = `.formulize-label-${handle}`;
 
-	// Get the parent of that child
-	const parent = page.locator(childSelector).locator('..');
+	// Check if child exists
+	const childCount = await page.locator(childSelector).count();
 
-	const initialHTML = await parent.innerHTML();
+	let initialHTML = '';
+
+	if (childCount > 0) {
+		// Get the parent of that child
+		const parent = page.locator(childSelector).locator('..');
+		initialHTML = await parent.innerHTML();
+	}
 
 	await triggerAction();
 
 	// Wait for the parent's content to change
 	await page.waitForFunction(
 		({ handle, initialHTML }) => {
-			const child = document.querySelector(`.formulize-label-${handle}`);
-			const parent = child ? child.parentElement : null;
-			return parent && parent.innerHTML !== initialHTML;
+			// Check if child exists
+			if(initialHTML == '') {
+				return document.querySelector(`.formulize-label-${handle}`) !== null;
+			} else {
+				const child = document.querySelector(`.formulize-label-${handle}`);
+				const parent = child ? child.parentElement : null;
+				return parent && parent.innerHTML !== initialHTML;
+			}
 		},
 		{ handle, initialHTML }
 	);
 
 	// Wait for the child to fade in
 	await expect(page.locator(childSelector)).toHaveCSS('opacity', '1');
+
+	// Wait for conditionalCheckInProgress to be stable at 0
+	// Because we might have cascading deferred conditional checks :(
+	await page.waitForFunction(() => {
+		// Store the stable check start time on window object
+		if (!window._stableCheckStart) {
+			window._stableCheckStart = null;
+		}
+
+		const isReady = typeof window.conditionalCheckInProgress === 'undefined' ||
+		                window.conditionalCheckInProgress === 0;
+
+		if (isReady) {
+			// Start/continue the stability timer
+			if (!window._stableCheckStart) {
+				window._stableCheckStart = Date.now();
+			}
+			// Check if it's been stable for 300ms
+			return Date.now() - window._stableCheckStart > 300;
+		} else {
+			// Reset the timer if it goes back to busy
+			window._stableCheckStart = null;
+			return false;
+		}
+	}, {}, { timeout: 30000 });
+
+	// Clean up the marker
+	await page.evaluate(() => delete window._stableCheckStart);
+
+	await page.waitForLoadState('networkidle');
+
 }
 
 /**
