@@ -374,22 +374,29 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
                                             }
                                         }
                                     } elseif(!($ele_value['snapshot'] AND $ele_value[16])) {
-                                        // Single option
-                                        list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
-                                        if (!in_array($cell_value, $all_valid_options)) {
-                                            foreach ($all_valid_options as $thisoption) {
-                                                if (trim($cell_value) == stripslashes(trim(trans($thisoption)))) { // stripslashes is necessary only because the data contains slashes in the database (which it should not, so this should be removed when that is fixed)
-                                                    break 2;
-                                                }
-                                            }
-                                            $errors[] = "<li>line " . $rowCount .
-                                                ", column " . $importSet[3][$link] .
-                                                ",<br> <b>found</b>: " . $cell_value .
-                                                ", <b>was expecting</b>: " . stripslashes(implode(", ", $all_valid_options)) . "</li>";
-                                        }
+
+																			// Single option
+																			list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
+																			$errorFoundValidOptions = false;
+																			if(intval($cell_value)>0 AND !in_array($cell_value, $all_valid_options_ids)) {
+																				$errorFoundValidOptions = $all_valid_options_ids;
+																			} elseif(!in_array($cell_value, $all_valid_options)) {
+																				foreach ($all_valid_options as $thisoption) {
+																					if (trim($cell_value) == stripslashes(trim(trans($thisoption)))) { // stripslashes is necessary only because the data contains slashes in the database (which it should not, so this should be removed when that is fixed)
+																						break 2;
+																					}
+																				}
+																				$errorFoundValidOptions = $all_valid_options;
+																			}
+																			if($errorFoundValidOptions) {
+																				$errors[] = "<li>line " . $rowCount .
+																						", column " . $importSet[3][$link] .
+																						",<br> <b>found</b>: " . $cell_value .
+																						", <b>was expecting</b>: " . stripslashes(implode(", ", $errorFoundValidOptions)) . "</li>";
+																			}
+
                                     }
-                                } elseif (!strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000))
-                                {
+                                } elseif (!strstr($cell_value, ",") AND (!is_numeric($cell_value) OR $cell_value < 10000000)) {
                                     // Not-Linked element
                                     $ele_value = unserialize($element["ele_value"]);
 
@@ -838,6 +845,8 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                                     if($ele_value['snapshot']) {
                                         $row_value = $row_value; // take the validated item the user has put into the box
                                         break;
+																		} elseif(intval($row_value)>0 AND in_array($row_value, $all_valid_options_ids)) {
+																				$ele_id = $row_value;
                                     } elseif ($optionIndex = array_search($row_value, $all_valid_options)) {
                                         $ele_id = $all_valid_options_ids[$optionIndex];
                                     } else {
