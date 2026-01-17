@@ -632,6 +632,18 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
                                 }
                             }
                             break;
+
+														case "provinceList":
+														case "provinceRadio":
+															$provinceElementHandler = xoops_getmodulehandler('provinceListElement', 'formulize');
+															$provinces = $provinceElementHandler->getProvinceList();
+															if(!in_array($cell_value, $provinces)) {
+																$errors[] = "<li>line " . $rowCount .
+																	", column " . $importSet[3][$link] .
+																	",<br> <b>found</b>: " . $cell_value .
+																	", <b>was expecting: { ".implode(", ", $provinces)." }</b></li>";
+															}
+															break;
                         }
                     }
                 }
@@ -1096,6 +1108,13 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 															break;
 														case "textarea":
 															$row_value = trim($row_value);
+															break;
+
+														case "provinceList":
+														case "provinceRadio":
+															$provinceElementHandler = xoops_getmodulehandler('provinceListElement', 'formulize');
+															$provinces = $provinceElementHandler->getProvinceList();
+															$row_value = array_search($row_value, $provinces);
 															break;
                         }
 
