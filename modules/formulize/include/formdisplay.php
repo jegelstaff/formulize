@@ -1605,7 +1605,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				$oneToOneMetaData = array();
 		}
 	if(!is_array($formulize_elementScreenIds)) {
-		$formulize_elementScreenIds = array();
+			$formulize_elementScreenIds = array();
 	}
 		if(count((array) $GLOBALS['formulize_renderedElementHasConditions'])>0) {
 			$governingElements1 = compileGoverningElementsForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
