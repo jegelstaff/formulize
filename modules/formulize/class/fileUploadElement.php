@@ -539,7 +539,23 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 							$width = $imageInfo[0];
 							$height = $imageInfo[1];
 						}
-						if(($width * $height * 4 * 1.8) > ini_get('memory_limit')) {
+						$memory_limit = ini_get('memory_limit');
+						if ($memory_limit == -1 || $memory_limit === '-1') {
+							// Unlimited memory, skip the check
+							$memory_limit = PHP_INT_MAX;
+						} elseif (preg_match('/^(\d+)([KMG]?)$/i', $memory_limit, $matches)) {
+							$memory_limit = (int)$matches[1];
+							$suffix = strtoupper($matches[2]);
+							if ($suffix == 'G') {
+								$memory_limit *= 1024 * 1024 * 1024;
+							} elseif ($suffix == 'M') {
+								$memory_limit *= 1024 * 1024;
+							} elseif ($suffix == 'K') {
+								$memory_limit *= 1024;
+							}
+							// No suffix means bytes, no conversion needed
+						}
+						if(($width * $height * 4 * 1.8) > $memory_limit) {
 							return ["success" => false, "result" => _formulize_COULD_NOT_GENERATE_THUMBNAIL . ' (' . _formulize_IMAGE_TOO_LARGE . ')'];
 						}
 						$image = null;
@@ -677,6 +693,7 @@ function displayFileImageLink($entryOrDataset, $elementHandle, $dataSetKey=null,
  */
 function fileNameHasImageExtension($displayName) {
     if(!$displayName) { return false; }
+		if(strstr($displayName, _formulize_COULD_NOT_GENERATE_THUMBNAIL)) { return true; }
     $dotPos = strrpos($displayName, '.');
     $fileExtension = substr($displayName, $dotPos);
     $imageTypes = array('.gif', '.jpg', '.png', '.jpeg', '.webp');
