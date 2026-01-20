@@ -450,7 +450,7 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 				window._stableCheckStart = Date.now();
 			}
 			// Check if it's been stable for 300ms
-			return Date.now() - window._stableCheckStart > 300;
+			return Date.now() - window._stableCheckStart > 1000;
 		} else {
 			// Reset the timer if it goes back to busy
 			window._stableCheckStart = null;
