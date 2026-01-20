@@ -404,6 +404,8 @@ function catalogConditionalElement($renderedElementMarkupName, $governingElement
 				}
 			} catch (Exception $e) {
 				// Screen ID could not be retrieved, element will use default global screen ID
+				// This is a graceful degradation - we catch the generic Exception since we don't know
+				// what specific exceptions getVar might throw, and falling back to the global screen ID is safe
 			}
 		}
 	}
