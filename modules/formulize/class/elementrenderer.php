@@ -120,7 +120,7 @@ class formulizeElementRenderer{
 
 			case 'ib':
 				if(trim($ele_value[0]) == "") { $ele_value[0] = $ele_caption; }
-				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName, $screen, $screen);
+				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName, $screen);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
@@ -141,7 +141,7 @@ class formulizeElementRenderer{
 				break;
 
 			case 'areamodif':
-				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName, $screen, $screen);
+				$ele_value[0] = $this->formulize_replaceReferencesAndVariables($ele_value[0], $entry_id, $id_form, $renderedElementMarkupName, $screen);
 				if(strstr($ele_value[0], "\$value=") OR strstr($ele_value[0], "\$value =")) {
 					$form_id = $id_form;
 					$entryData = gatherDataset($id_form, filter: $entry_id, frid: 0);
