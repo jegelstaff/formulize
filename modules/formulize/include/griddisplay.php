@@ -257,7 +257,7 @@ function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrO
 	$gridDisplayConditions = $gridElementObject->getVar('ele_filtersettings');
 	// setup validation javascript with conditional structure, if the containing grid has display conditions
 	if(isset($gridDisplayConditions[0]) AND is_array($gridDisplayConditions[0]) AND count($gridDisplayConditions[0]) > 0 ) {
-		catalogConditionalElement($elementInGridMarkupName, array_unique($gridDisplayConditions[0]));
+		catalogConditionalElement($elementInGridMarkupName, array_unique($gridDisplayConditions[0]), $screen);
 		makePlaceholderForConditionalElement($elementInGridObject, $entry_id, $prevEntry, $screen); // don't actually put the placeholder into the form being compiled, because the containing grid is all we need. Just need to do book keeping for JS.
 		removeFromConditionalCatalogue($elementInGridMarkupName); // only need to be in for generating the JS, otherwise, we don't want them here so that they don't add unnecessary complexity to the conditional event processing JS, since it's their container that matters for events.
 	// or setup validation JS from the object we just rendered
@@ -275,7 +275,7 @@ function catalogueGridElement($elementId, $entry_id, $containingGridElementIdOrO
 	// catalogue the containing grid as conditional, if this element has disabled conditions, so that the grid will re-render if the disabled conditions for this element change
 	$elementInGridDisabledConditions = $elementInGridObject->getVar('ele_disabledconditions');
 	if(isset($elementInGridDisabledConditions[0]) AND is_array($elementInGridDisabledConditions[0]) AND count($elementInGridDisabledConditions[0]) > 0 ) {
-		catalogConditionalElement($containerElementMarkupName, array_unique($elementInGridDisabledConditions[0]));
+		catalogConditionalElement($containerElementMarkupName, array_unique($elementInGridDisabledConditions[0]), $screen);
 	}
 }
 

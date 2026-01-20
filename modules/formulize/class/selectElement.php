@@ -761,7 +761,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$pgroupsfilter = prepareLinkedElementGroupFilter($sourceFid, $ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS], $ele_value[ELE_VALUE_SELECT_LINK_USERSGROUPS], $ele_value[ELE_VALUE_SELECT_LINK_ALLGROUPS], $ele_value[ELE_VALUE_SELECT_LINK_USEONLYUSERSENTRIES]);
 
 			list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $sourceFid, $entry_id, $owner, $formObject, "t1");
-			catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $formObject);
+			catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $formObject, $screen);
 
 			// if there is a restriction in effect, then add some SQL to reject options that have already been selected ??
 			$restrictSQL = "";
@@ -839,7 +839,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 						$dbValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')];
 					} else {
 						list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
-						catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject);
+						catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject, $screen);
 						$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
 						$sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
 						if($res = $xoopsDB->query($sql)) {
@@ -1076,7 +1076,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 						if(isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) AND is_numeric($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
 							if($optionsLimitByElement_ElementObject = $this->get($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
 								list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
-								catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject);
+								catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject, $screen);
 								$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
 								$sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
 								if($res = $xoopsDB->query($sql)) {

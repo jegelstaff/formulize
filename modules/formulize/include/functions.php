@@ -5286,9 +5286,10 @@ function removeNotApplicableRequireds($type, $req=0) {
  * @param string $renderedElementMarkupName The markup handle for the element that would be dependent on a change in the dynamic filter value, ie: de_FID_ENTRYID_ELEMENTID
  * @param array $conditions A standard array of filter conditions, four keys, for element op term all/oom, and each is itself and array of the items (match based on key to get a set)
  * @param int|string|object $sourceForm A form id, form handle, or form object, representing the form in which any { } terms should be found
+ * @param object $screen Optional. The screen object that is in effect, if any (may be null)
  * @return boolean Returns false if the inputs are not valid conditions or not a valid source form, returns true otherwise.
  */
-function catalogDynamicFilterConditionElements($renderedElementMarkupName, $conditions, $sourceForm) {
+function catalogDynamicFilterConditionElements($renderedElementMarkupName, $conditions, $sourceForm, $screen = null) {
 	// validate conditions
 	if(!is_array($conditions) OR !isset($conditions[2])) {
 		return false;
@@ -5319,7 +5320,7 @@ function catalogDynamicFilterConditionElements($renderedElementMarkupName, $cond
 		}
 	}
 	if($elementHandles) {
-		catalogConditionalElement($renderedElementMarkupName, $elementHandles);
+		catalogConditionalElement($renderedElementMarkupName, $elementHandles, $screen);
 	}
 	return true;
 }
