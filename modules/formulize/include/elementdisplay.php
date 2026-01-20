@@ -39,6 +39,7 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementrenderer.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 $GLOBALS['formulize_renderedElementHasConditions'] = array();
+$GLOBALS['formulize_elementScreenIds'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
 // $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
@@ -102,7 +103,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	$single_result = getSingle($form_id, $user_id, $groups);
 	$groupEntryWithUpdateRights = ($single_result['flag'] == "group" AND $update_own_entry AND $entry == $single_result['entry']) ? true : false;
 
-	list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($element, $entry, $groups, $noSave, $renderedElementMarkupName, $subformCreateEntry);
+	list($allowed, $isDisabled) = elementIsAllowedForUserInEntry($element, $entry, $groups, $noSave, $renderedElementMarkupName, $subformCreateEntry, $screen);
 
 	if($allowed) {
 
@@ -252,7 +253,7 @@ EOF;
  * @param boolean $subformCreateEntry. Optional. A flag to indicate if we're creating elements for fake new subform entries or not. Such elements never have conditions attached to them.
  * @return array Returns an array of booleans, first is whether the element is allowed for the user, second is whether the element is disabled.
  */
-function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = array(), $noSave = false, $renderedElementMarkupName = null, $subformCreateEntry = false) {
+function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = array(), $noSave = false, $renderedElementMarkupName = null, $subformCreateEntry = false, $screen = null) {
 
 	if($_SERVER['SCRIPT_NAME'] == '/modules/formulize/admin/fakeform.php') {
 		return array(true, false);
@@ -321,7 +322,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 					$governingElements[] = $dynamicDefaultTermElementObject->getVar('ele_handle');
 				}
 			}
-			catalogConditionalElement($renderedElementMarkupName, array_unique($governingElements));
+			catalogConditionalElement($renderedElementMarkupName, array_unique($governingElements), $screen);
 		}
 	}
 
@@ -329,7 +330,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	if($allowed AND isset($elementFilterSettings[0]) AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		if(!$subformCreateEntry) {
-			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]));
+			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]), $screen);
 		}
 		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject);
 	}
@@ -347,7 +348,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 				// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
 				// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
 				if($entry_id != 'new' AND !$subformCreateEntry) {
-					catalogConditionalElement($renderedElementMarkupName, array_unique($disabledConditions[0]));
+					catalogConditionalElement($renderedElementMarkupName, array_unique($disabledConditions[0]), $screen);
 				}
 			}
 		}
@@ -379,9 +380,10 @@ function overrideSeparatorToLineBreak($elementObject) {
  *
  * @param string $renderedElementMarkupName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
  * @param array $governingElements An array of element handles, of the elements which control the conditions that apply to the rendered element
+ * @param object $screen Optional. The screen in which the element is being rendered. Used to track which screen conditional elements belong to.
  * @return Nothing
  */
-function catalogConditionalElement($renderedElementMarkupName, $governingElements) {
+function catalogConditionalElement($renderedElementMarkupName, $governingElements, $screen = null) {
 	$bufferingStatus = ob_get_status();
 	if($bufferingStatus['name'] != 'Closure::__invoke') {
 		if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
@@ -392,6 +394,10 @@ function catalogConditionalElement($renderedElementMarkupName, $governingElement
 					$GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName][] = $governingElement;
 				}
 			}
+		}
+		// Store the screen ID for this conditional element
+		if($screen && is_object($screen)) {
+			$GLOBALS['formulize_elementScreenIds'][$renderedElementMarkupName] = $screen->getVar('sid');
 		}
 	}
 }
