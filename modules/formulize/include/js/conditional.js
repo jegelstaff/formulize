@@ -161,7 +161,7 @@ function checkCondition(relevantElementSet, elementValuesForURL, oneToOne) {
 		entryId = partsArray[2]; // assuming all the same!
 		fid = partsArray[1]; // assuming all the same!
 		// Use element-specific screen ID if available
-		if(typeof elementScreenIds[markupHandle] !== 'undefined' && elementScreenIds[markupHandle]) {
+		if(typeof elementScreenIds[markupHandle] !== 'undefined' && elementScreenIds[markupHandle] !== null) {
 			screenIdToUse = elementScreenIds[markupHandle];
 		}
 		if(oneToOne && oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {

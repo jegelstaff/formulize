@@ -397,7 +397,10 @@ function catalogConditionalElement($renderedElementMarkupName, $governingElement
 		}
 		// Store the screen ID for this conditional element
 		if($screen && is_object($screen)) {
-			$GLOBALS['formulize_elementScreenIds'][$renderedElementMarkupName] = $screen->getVar('sid');
+			$screenId = $screen->getVar('sid');
+			if($screenId !== null && $screenId !== false) {
+				$GLOBALS['formulize_elementScreenIds'][$renderedElementMarkupName] = $screenId;
+			}
 		}
 	}
 }
