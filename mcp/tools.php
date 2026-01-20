@@ -190,7 +190,7 @@ trait tools {
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values.If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values. If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset. If a filtered dataset is still too large, try using form_relationship_id 0, which will exclude data from related forms and only include data from the requested form_id. This may not be as useful, but in some cases it will reduce the size of the dataset significantly.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
@@ -281,6 +281,10 @@ Examples:
 							'type' => 'array',
 							'items' => ['type' => 'string'],
 							'description' => 'Optional. Specific element handles to include in results. If omitted, all elements are returned.'
+						],
+						'relationship_id' => [
+							'type' => 'integer',
+							'description' => 'Optional. The relationship context used to include other forms and their data. Formulize forms are connected through relationships that are part of the configuration settings of the system. The default value is -1 which will include all related forms. Setting 0 will include only data from the specific form id requested. Use a specific id to include only the forms in that relationship. Use 0 if the tool returns too much data.'
 						]
 					],
 					'required' => ['form_id']
@@ -968,7 +972,7 @@ Examples:
 	 * - 'limitSize': Optional. The number of records to return. Defaults to 100. Set to null for no limit.
 	 * - 'sortField': Optional. The element handle to sort the dataset by. If not specified, no sorting will be applied.
 	 * - 'sortOrder': Optional. The sort direction, either 'ASC' or 'DESC'. Defaults to 'ASC'.
-	 * - 'form_relationship_id': Optional. The ID of the relationship to use for gathering data. Defaults to -1 for the Primary Relationship which includes all connected forms.
+	 * - 'relationship_id': Optional. The ID of the relationship to use for gathering data. Defaults to -1 for the Primary Relationship which includes all connected forms.
 	 * @return array An associative array containing the gathered dataset, total count, scope used, current view requested, current view actual, authenticated user details, and parameters used.
 	 */
 	private function get_entries_from_form($arguments)
@@ -984,9 +988,14 @@ Examples:
 		$sortField = $arguments['sortField'] ?? 'entry_id';
 		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
 		$elements = $arguments['elements'] ?? array();
+		$relationship_id = intval($arguments['relationship_id'] ?? -1);
+
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 		if(!$form_id OR $form_id < 0) {
-			throw new FormulizeMCPException('Form not found. Form ID must be a positive integer', 'form_not_found');
+			throw new FormulizeMCPException('Invalid form ID. Form ID must be a positive integer', 'form_not_found');
+		} elseif(!$formObject = $form_handler->get($form_id)) {
+			throw new FormulizeMCPException('Invalid form ID. No form exists with ID '.$form_id, 'form_not_found');
 		}
 
 		// Build scope based on authenticated user and their permissions
@@ -1003,13 +1012,40 @@ Examples:
 				throw new FormulizeMCPException('Invalid element handle for sortField: '.$sortField, 'unknown_element');
 			}
 		}
+		// if a specific relationship requested and it's not valid, throw error
+		// validRelationship will be the relationship object, or boolean true if relationship_id is 0 (no relationships) - or boolean false if not 0 and form is not in relationship
+		$validRelationship = $relationship_id !== 0 ? $this->validateRelationshipId($relationship_id, $form_id) : true;
+		if(!$validRelationship) {
+			if($relationship_id > 0) {
+				throw new FormulizeMCPException('Form is not part of the relationship.  relationship_id: '.$relationship_id, 'invalid_data', context: ['valid_relationship_ids_for_form' => $this->getValidRelationshipIds($form_id) ]);
+			} else {
+				$relationship_id = 0; // instead of primary relationship (-1), use 0 to indicate no relationships, since the form is not in any relationship
+			}
+		}
 		list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
 		$elements = $this->validateElementHandles($elements);
 
 		// cleanup $filter into old style filter string, if necessary
 		// supports {BLANK} value for searching for blank values
 		// if filter is an array, then force AND between multiple filters since the array is a series of nested searches with their own booleans between
-		$filter = $this->validateFilter($filter, $andOr);
+		if(is_object($validRelationship)) {
+			$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+			$linksByForm = $relationship_handler->getLinksGroupedByForm($validRelationship, $form_id);
+			$form_ids = array();
+			foreach($linksByForm as $links) {
+				foreach($links as $thisLink) {
+					if(!in_array($thisLink['form1'], $form_ids)) {
+						$form_ids[] = $thisLink['form1'];
+					}
+					if(!in_array($thisLink['form2'], $form_ids)) {
+						$form_ids[] = $thisLink['form2'];
+					}
+				}
+			}
+		} else {
+			$form_ids = array($form_id);
+		}
+		$filter = $this->validateFilter($filter, $form_ids, $andOr);
 		$andOr = is_array($filter) ? 'AND' : $andOr;
 
 		// Call Formulize's gatherDataset function with all parameters
@@ -1023,7 +1059,7 @@ Examples:
 			$limitSize,
 			$sortField,
 			$sortOrder,
-			-1 // always use primary relationship (all connections)
+			$relationship_id
 		);
 
 		return [
@@ -1039,7 +1075,7 @@ Examples:
 				'limitSize' => $limitSize,
 				'sortField' => $sortField,
 				'sortOrder' => $sortOrder,
-				'form_relationship_id' => -1
+				'relationship_id' => $relationship_id
 			]
 		];
 
@@ -1048,10 +1084,11 @@ Examples:
 /**
  * Convert MCP filter array into old style filter string for compatibility with gatherDataset
  * @param mixed $filter - an array of filters to use, each one is an array with three keys: element, value, operator
+ * @param array $form_ids - array of the form ids valid for this filter (based on the relationship being queried)
  * @param string $andOr - the boolean operator to use between multiple filters, if there are multiple filters. Defaults to 'AND'.
  * @return mixed - a string or array suitable for passing to gatherDataset
  */
-private function validateFilter($filter, $andOr = 'AND') {
+private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	// Handle simple entry ID lookup
 	if (is_numeric($filter)) {
 		return intval($filter);
@@ -1077,6 +1114,12 @@ private function validateFilter($filter, $andOr = 'AND') {
 	$filterStringParts = array();
 	$blankSearches = array();
 	foreach($filter as $thisFilter) {
+		$elementObject = _getElementObject($thisFilter['element']);
+		if(!$elementObject) {
+			throw new FormulizeMCPException('Invalid element handle in filter: '.$thisFilter['element'], 'unknown_element');
+		} elseif(!in_array($elementObject->getVar('fid'), $form_ids)) {
+			throw new FormulizeMCPException('Element handle not part of this dataset: '.$thisFilter['element'], 'invalid_data');
+		}
 		// similar to formulize_parseSearchesIntoFilter but that is tuned to dealing with searches entered through UI which aren't in array format already
 		// this will not quite work perfectly if there are multiple blank searches on different elements
 		// search for email = {BLANK} AND phone = {BLANK} would actually need a third level of nesting in final output, since the structure for just the blank portion should be:
@@ -1148,6 +1191,30 @@ private function validateFilter($filter, $andOr = 'AND') {
 		return $validatedHandles;
 	}
 
+	/**
+	 * Validate relationship ID
+	 * Lookup to see if the relationship ID exists and includes the form_id
+	 * @param int $relationshipId - the relationship ID to validate
+	 * @param int $formId - the form ID to check against
+	 * @return mixed - the relationship object if valid, or false if not valid
+	 */
+	private function validateRelationshipId($relationshipId, $formId) {
+		$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
+		return isset($validRelationships[$relationshipId]) ? $validRelationships[$relationshipId] : false;
+	}
+
+	/**
+	 * Get a list of relationship IDs valid for a given form
+	 * @param int $formId - the form ID to check against
+	 * @return mixed - an array of valid relationship IDs
+	 */
+	private function getValidRelationshipIds($formId) {
+		$relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$validRelationships = $relationship_handler->getFrameworksByForm($formId, includePrimaryRelationship: true);
+		ksort($validRelationships);
+		return array_keys($validRelationships);
+	}
 
 	/**
 	 * Validate and sanitize limit parameters

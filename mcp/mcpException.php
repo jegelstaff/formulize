@@ -21,7 +21,7 @@ class FormulizeMCPException extends Exception
 		'missing_uri' => 400,
 		'invalid_uri' => 400,
 		'resource_read_error' => 422,
-		'unknown_element' => 404,
+		'unknown_element' => 200,
 		'unknown_tool' => 404,
 		'invalid_arguments' => 400, // bad request
 		'invalid_data' => 200, // good request, internal problems, ie: wrong handle, etc

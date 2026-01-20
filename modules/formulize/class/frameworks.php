@@ -225,7 +225,7 @@ class formulizeFrameworkLink extends XoopsObject {
         $elements = array();
 
         // initialize the class that can read the ele_value field
-        $formulize_mgr =& xoops_getmodulehandler('elements');
+        $element_handler = xoops_getmodulehandler('elements');
 
         // get a list of all the linked select boxes since we need to know if any fields in these two forms are the source for any links
         $resgetlinksq = $xoopsDB->query("SELECT id_form, ele_caption, ele_id, ele_handle FROM " . $xoopsDB->prefix("formulize") . " WHERE (ele_type=\"selectLinked\" OR ele_type=\"listboxLinked\" OR ele_type=\"autocompleteLinked\" OR ele_type=\"checkboxLinked\") AND ele_value LIKE '%#*=:*%' AND (id_form = ".intval($this->getVar('form1'))." OR id_form = ".intval($this->getVar('form2')).") ORDER BY id_form");
@@ -235,7 +235,7 @@ class formulizeFrameworkLink extends XoopsObject {
             $target_ele_ids[] = $rowlinksq[2];
 
             // returns an object containing all the details about the form
-            $elements =& $formulize_mgr->getObjects(id_form: $rowlinksq[0]);
+            $elements = $element_handler->getObjects(id_form: $rowlinksq[0]);
 
             // search for the elements where the link exists
             foreach ($elements as $e) {
@@ -444,19 +444,17 @@ class formulizeFrameworksHandler {
 
 	function getFrameworksByForm($fid, $includePrimaryRelationship=false) {
 		static $cachedResults = array();
-		if(isset($cachedResults[$fid])) { return $cachedResults[$fid]; }
+		$fid = intval($fid);
+		$includePrimaryRelationship = intval($includePrimaryRelationship);
+		if(isset($cachedResults[$fid][$includePrimaryRelationship])) { return $cachedResults[$fid][$includePrimaryRelationship]; }
 		$ret = array();
 		$includePrimaryRelationship = $includePrimaryRelationship ? "" : "fl_frame_id > 0 AND";
-		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links")." WHERE $includePrimaryRelationship (fl_form1_id=".intval($fid).' OR fl_form2_id='.intval($fid).') ORDER BY fl_frame_id ASC';
-
+		$sql = 'SELECT DISTINCT(fl_frame_id) FROM '.$this->db->prefix("formulize_framework_links")." WHERE $includePrimaryRelationship (fl_form1_id=".$fid.' OR fl_form2_id='.$fid.') ORDER BY fl_frame_id ASC';
 		$result = $this->db->query($sql);
-
 		while( $myrow = $this->db->fetchArray($result) ){
-			$framework = new formulizeFramework($myrow['fl_frame_id']);
-			$ret[$framework->getVar('frid')] =& $framework;
-			unset($framework);
+			$ret[$myrow['fl_frame_id']] = new formulizeFramework($myrow['fl_frame_id']);
 		}
-		$cachedResults[$fid] = $ret;
+		$cachedResults[$fid][$includePrimaryRelationship] = $ret;
 		return $ret;
 	}
 
