@@ -1943,13 +1943,13 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			$singularCategoryName = ucwords($categoryNames[$category]['singular']);
 			$categoryCreationBaseDescriptions = "";
 			$categoryUpdateBaseDescriptions = "";
-			if(count($types) > 1) {
-				$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
-				$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
-			} elseif(method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
+			if(count($types) > 1 AND method_exists('formulizeHandler', 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category))) {
 				$staticMethodName = 'mcpElementPropertiesBaseDescriptionAndExamplesFor'.ucfirst($category);
 				$categoryCreationBaseDescriptions = formulizeHandler::$staticMethodName(update: false);
 				$categoryUpdateBaseDescriptions = formulizeHandler::$staticMethodName(update: true);
+			} elseif(count($types) > 1) {
+				$categoryCreationBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
+				$categoryUpdateBaseDescriptions = "$pluralCategoryName $basePropertyDescriptions";
 			}
 			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\n$categoryCreationBaseDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
 			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$categoryUpdateBaseDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
