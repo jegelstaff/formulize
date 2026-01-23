@@ -1227,8 +1227,17 @@ class formulizeDataHandler {
 			return false;
 		}
 		global $xoopsDB;
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($this->fid);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($this->fid);
+		// Checkboxes require text datatype. If the radio button was set to a numeric type,
+		// we need to change the datatype to text BEFORE converting, otherwise the checkbox
+		// string values (with *=+*: prefix) will be truncated to 0 when saved.
+		if($element->hasNumericDataType()) {
+			$elementHandle = $element->getVar('ele_handle');
+			if(!$form_handler->updateField($element, $elementHandle, "text")) {
+				return false;
+			}
+		}
 		// need to add *=+*: to the front of all the options
 		$sql = "UPDATE ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " SET `".$element->getVar('ele_handle')."` = CONCAT(\"*=+*:\", `".$element->getVar('ele_handle')."`)";
 		if(!$res = $xoopsDB->queryF($sql)) {
