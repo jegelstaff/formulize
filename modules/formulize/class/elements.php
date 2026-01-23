@@ -1072,6 +1072,7 @@ class formulizeElementsHandler {
 		if($this->clickable) {
 			$value = formulize_text_to_hyperlink($value);
 		}
+		$value = formulize_handleRandomAndDateText($value);
 		return $value;
 	}
 

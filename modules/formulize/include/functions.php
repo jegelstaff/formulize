@@ -4626,24 +4626,26 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
  * @return string The string with a random text chosen, and a date formatted according to the string
  */
 function formulize_handleRandomAndDateText($text) {
-		// first handle date text (innermost tags first to avoid regex conflicts with nested tags)
-		if (preg_match_all('/\[date:([^\]]+)\]/', $text, $dateMatches)) {
-				foreach ($dateMatches[0] as $index => $fullMatch) {
-						$dateParts = explode('/', $dateMatches[1][$index]);
-						$formatString = isset($dateParts[0]) ? $dateParts[0] : 'Y-m-d';
-						$timestamp = (isset($dateParts[1]) ? strtotime($dateParts[1]) : time()) + formulize_getUserUTCOffsetSecs();
-						$formattedDate = date($formatString, $timestamp);
-						$text = str_replace($fullMatch, $formattedDate, $text);
-				}
-		}
-		// next handle random text (after date tags have been resolved)
-		// choose only one of the options within the [random:...] tag
-		if (preg_match_all('/\[random:([^\]]+)\]/', $text, $randomMatches)) {
-				foreach ($randomMatches[0] as $index => $fullMatch) {
-						$options = explode('/', $randomMatches[1][$index]);
-						$chosenOption = $options[array_rand($options)];
-						$text = str_replace($fullMatch, $chosenOption, $text);
-				}
+		if(is_string($text) AND (strstr($text, '[random:') !== false OR strstr($text, '[date:') !== false)) {
+			// first handle date text (innermost tags first to avoid regex conflicts with nested tags)
+			if (preg_match_all('/\[date:([^\]]+)\]/', $text, $dateMatches)) {
+					foreach ($dateMatches[0] as $index => $fullMatch) {
+							$dateParts = explode('/', $dateMatches[1][$index]);
+							$formatString = isset($dateParts[0]) ? $dateParts[0] : 'Y-m-d';
+							$timestamp = (isset($dateParts[1]) ? strtotime($dateParts[1]) : time()) + formulize_getUserUTCOffsetSecs();
+							$formattedDate = date($formatString, $timestamp);
+							$text = str_replace($fullMatch, $formattedDate, $text);
+					}
+			}
+			// next handle random text (after date tags have been resolved)
+			// choose only one of the options within the [random:...] tag
+			if (preg_match_all('/\[random:([^\]]+)\]/', $text, $randomMatches)) {
+					foreach ($randomMatches[0] as $index => $fullMatch) {
+							$options = explode('/', $randomMatches[1][$index]);
+							$chosenOption = $options[array_rand($options)];
+							$text = str_replace($fullMatch, $chosenOption, $text);
+					}
+			}
 		}
 		return $text;
 }
