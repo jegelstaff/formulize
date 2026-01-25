@@ -28,7 +28,7 @@ define("_AM_FRAME_AVAILFORMS1", "Formulaire un :");
 define("_AM_FRAME_AVAILFORMS2", "Formulaire deux :");
 define("_AM_FRAME_CHOOSE", "Choix d'un Framework");
 define("_AM_FRAME_COMMON_VALUES", "Valeurs communes dans: ");
-define("_AM_FRAME_COMMON_WARNING", "<b>IMPORTANT NOTE:</b> Frameworks that use the 'common value' setting are still experimental.  Not all framework features are supported for frameworks that use this setting.  Currently, this setting is only recognized by the getData function, so you can get results from queries on this framework.  However, unified display of forms, subforms, and using displayForm to present all columns in the entire framework, are not currently supported.");
+define("_AM_FRAME_COMMON_WARNING", "<b>IMPORTANT NOTE:</b> Frameworks that use the 'common value' setting are still experimental.  Not all framework features are supported for frameworks that use this setting.  Currently, this setting is only recognized by the gatherDataset function, so you can get results from queries on this framework.  However, unified display of forms, subforms, and using displayForm to present all columns in the entire framework, are not currently supported.");
 define("_AM_FRAME_COMMONLINK", "Valeur commune à 2 éléments [sélectionnez les]");
 define("_AM_FRAME_DELETE", "Effacer un Framework existant :");
 define("_AM_FRAME_DELFORM", "Enlever");

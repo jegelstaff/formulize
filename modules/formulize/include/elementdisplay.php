@@ -410,14 +410,14 @@ function removeFromConditionalCatalogue($renderedElementMarkupName) {
 /**
  *
  */
-function checkElementConditions($elementFilterSettings, $form_id, $entry, $elementObject) {
+function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject) {
 	// need to check if there's a condition on this element that is met or not
 	static $cachedEntries = array();
-	if($entry != "new") {
-		if(!isset($cachedEntries[$form_id][$entry])) {
-			$cachedEntries[$form_id][$entry] = getData("", $form_id, $entry, cacheKey: 'bypass'.microtime(true));
+	if($entry_id != "new") {
+		if(!isset($cachedEntries[$form_id][$entry_id])) {
+			$cachedEntries[$form_id][$entry_id] = gatherDataset($form_id, filter: $entry_id, frid: 0, bypassCache: true);
 		}
-		$entryData = $cachedEntries[$form_id][$entry];
+		$entryData = $cachedEntries[$form_id][$entry_id];
 	}
 
 	$filterElements = $elementFilterSettings[0];
@@ -439,8 +439,8 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry, $eleme
 	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
 	$evaluationCondition = "if(";
 
-	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
-	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry,$entryData);
+	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
+	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
 
 	if($evaluationConditionAND === false OR $evaluationConditionOR === false) {
 		exit("Fatal Formulize Error: form element ".$elementObject->getVar('ele_id')." is misconfigured. Please notify the webmaster.");

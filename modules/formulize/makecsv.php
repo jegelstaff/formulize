@@ -181,7 +181,7 @@ showHandles,optional,a flag to trigger showing element handles as the second lin
 fields,optional,the element handle or id number of the elements you want to display in the spreadsheet (comma separated list)
 excludeFields,optional,the element handle of elements that you do not want displayed in the spreadsheet (comma separated list)
 handle=searchterm,optional,use the handle for a field to specify a search term for the field - search terms are case insensitive and support partial matches and support greater-than/less-than for numbers (ie: >1969)
-filter,optional,a filter string compatible with the getData function - details in this document:
+filter,optional,a filter string compatible with the gatherDataset function - details in this document:
 ,,http://formulize.org/formulize/Using_Formulize-Pageworks_to_Make_Custom_Applications.pdf
 frid,optional,the id number of the form relationship that you are querying
 andor,optional,if a filter is specified then this determines if multiple filter terms are joined by AND or OR - default is AND
