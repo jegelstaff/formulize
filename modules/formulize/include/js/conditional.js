@@ -102,19 +102,20 @@ function callCheckCondition(name, callHistory = []) {
 									window['formulize_conditionalElementUpdate'+partsArray[3]]();
 								}
 							}
-							// Update stored HTML and trigger deferred calls only when rendering
-							if(data != '{NOCHANGE}') {
-								assignConditionalHTML(handle, data);
-								// now check if this element has a value, and governed elements, in which case we need to defer a call to check the goverened elements' conditions
-								if(typeof governedElements[handle] !== 'undefined' && callHistory.indexOf(handle) === -1 && elementHasValue(handle)) {
-									deferredCalls.push(handle);
-								}
-								if(typeof governedElements[handle+'[]'] !== 'undefined' && callHistory.indexOf(handle+'[]') === -1 && elementHasValue(handle+'[]')) {
-									deferredCalls.push(handle+'[]');
-								}
-							}
+							// Update stored HTML when rendering
+							assignConditionalHTML(handle, data);
 						} else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
 							ShowHideTableRow(handle,false,1000,true);
+						}
+						// Check for deferred calls regardless of rendering - dependent elements need to react to changes
+						if(data != '{NOCHANGE}') {
+							// now check if this element has a value, and governed elements, in which case we need to defer a call to check the governed elements' conditions
+							if(typeof governedElements[handle] !== 'undefined' && callHistory.indexOf(handle) === -1 && elementHasValue(handle)) {
+								deferredCalls.push(handle);
+							}
+							if(typeof governedElements[handle+'[]'] !== 'undefined' && callHistory.indexOf(handle+'[]') === -1 && elementHasValue(handle+'[]')) {
+								deferredCalls.push(handle+'[]');
+							}
 						}
 						conditionalCheckInProgress = conditionalCheckInProgress > 0 ? conditionalCheckInProgress - 1 : 0;
 					}
