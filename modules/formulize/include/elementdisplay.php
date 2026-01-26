@@ -405,8 +405,12 @@ function catalogConditionalElement($renderedElementMarkupName, $governingElement
 		}
 		// Store whether this is a simple display condition (show/hide only) vs dynamic content condition
 		// Simple display conditions should not re-render if already visible, even if markup changes
-		if($isSimpleDisplayCondition) {
-			$GLOBALS['formulize_elementIsSimpleDisplayCondition'][$renderedElementMarkupName] = true;
+		// If already set to false (dynamic content), keep it false since element has complex conditions
+		if(!isset($GLOBALS['formulize_elementIsSimpleDisplayCondition'][$renderedElementMarkupName])) {
+			$GLOBALS['formulize_elementIsSimpleDisplayCondition'][$renderedElementMarkupName] = $isSimpleDisplayCondition;
+		} elseif($GLOBALS['formulize_elementIsSimpleDisplayCondition'][$renderedElementMarkupName] === true && $isSimpleDisplayCondition === false) {
+			// If previously marked as simple but now has dynamic content condition, mark as dynamic
+			$GLOBALS['formulize_elementIsSimpleDisplayCondition'][$renderedElementMarkupName] = false;
 		}
 	}
 }
