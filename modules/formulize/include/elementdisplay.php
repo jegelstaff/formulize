@@ -382,6 +382,7 @@ function overrideSeparatorToLineBreak($elementObject) {
  * @param string $renderedElementMarkupName The markup handle for the element, ie: de_FID_ENTRYID_ELEMENTID
  * @param array $governingElements An array of element handles, of the elements which control the conditions that apply to the rendered element
  * @param object $screen Optional. The screen in which the element is being rendered. Used to track which screen conditional elements belong to.
+ * @param bool $isSimpleDisplayCondition Optional. Whether this is a simple display condition (show/hide only) vs dynamic content condition. Simple display conditions will not re-render if already visible. Defaults to false (dynamic content).
  * @return Nothing
  */
 function catalogConditionalElement($renderedElementMarkupName, $governingElements, $screen = null, $isSimpleDisplayCondition = false) {
