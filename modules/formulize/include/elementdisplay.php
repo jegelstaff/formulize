@@ -40,6 +40,7 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 $GLOBALS['formulize_renderedElementHasConditions'] = array();
 $GLOBALS['formulize_elementScreenIds'] = array();
+$GLOBALS['formulize_elementIsSimpleDisplayCondition'] = array();
 
 // $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
 // $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
@@ -330,7 +331,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	if($allowed AND isset($elementFilterSettings[0]) AND is_array($elementFilterSettings[0]) AND count((array) $elementFilterSettings[0]) > 0 AND (!$noSave OR $entry_id != 'new')) {
 		// cache the filterElements for this element, so we can build the right stuff with them later in javascript, to make dynamically appearing elements
 		if(!$subformCreateEntry) {
-			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]), $screen);
+			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]), $screen, true);
 		}
 		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject);
 	}
@@ -383,7 +384,7 @@ function overrideSeparatorToLineBreak($elementObject) {
  * @param object $screen Optional. The screen in which the element is being rendered. Used to track which screen conditional elements belong to.
  * @return Nothing
  */
-function catalogConditionalElement($renderedElementMarkupName, $governingElements, $screen = null) {
+function catalogConditionalElement($renderedElementMarkupName, $governingElements, $screen = null, $isSimpleDisplayCondition = false) {
 	$bufferingStatus = ob_get_status();
 	if($bufferingStatus['name'] != 'Closure::__invoke') {
 		if(!isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
@@ -401,6 +402,11 @@ function catalogConditionalElement($renderedElementMarkupName, $governingElement
 			if($screenId !== null && $screenId !== false) {
 				$GLOBALS['formulize_elementScreenIds'][$renderedElementMarkupName] = $screenId;
 			}
+		}
+		// Store whether this is a simple display condition (show/hide only) vs dynamic content condition
+		// Simple display conditions should not re-render if already visible, even if markup changes
+		if($isSimpleDisplayCondition) {
+			$GLOBALS['formulize_elementIsSimpleDisplayCondition'][$renderedElementMarkupName] = true;
 		}
 	}
 }

@@ -1595,6 +1595,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		global $formulize_oneToOneElements;
 		global $formulize_oneToOneMetaData;
 		global $formulize_elementScreenIds;
+		global $formulize_elementIsSimpleDisplayCondition;
 		if(!is_array($formulize_governingElements)) {
 				$formulize_governingElements = array();
 		}
@@ -1607,6 +1608,9 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(!is_array($formulize_elementScreenIds)) {
 				$formulize_elementScreenIds = array();
 		}
+		if(!is_array($formulize_elementIsSimpleDisplayCondition)) {
+				$formulize_elementIsSimpleDisplayCondition = array();
+		}
 		if(count((array) $GLOBALS['formulize_renderedElementHasConditions'])>0) {
 			$governingElements1 = compileGoverningElementsForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
 			foreach($governingElements1 as $key=>$value) {
@@ -1618,6 +1622,14 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 				foreach($GLOBALS['formulize_elementScreenIds'] as $elementHandle => $screenId) {
 					if(!isset($formulize_elementScreenIds[$elementHandle])) {
 						$formulize_elementScreenIds[$elementHandle] = $screenId;
+					}
+				}
+			}
+			// Merge in any simple display condition flags that were set when cataloging conditional elements
+			if(isset($GLOBALS['formulize_elementIsSimpleDisplayCondition']) && is_array($GLOBALS['formulize_elementIsSimpleDisplayCondition'])) {
+				foreach($GLOBALS['formulize_elementIsSimpleDisplayCondition'] as $elementHandle => $isSimple) {
+					if(!isset($formulize_elementIsSimpleDisplayCondition[$elementHandle])) {
+						$formulize_elementIsSimpleDisplayCondition[$elementHandle] = $isSimple;
 					}
 				}
 			}
@@ -1666,7 +1678,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// if there are elements we need to pay attention to, draw the necessary javascript code
 		// unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
-			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds);
+			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds, $formulize_elementIsSimpleDisplayCondition);
 		}
 
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
@@ -3220,7 +3232,7 @@ function markupNameAttr($renderedMarkupName) {
 // PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
 // conditionalElements is array of the elements (DOM ids, ie: de_fid_entryId_elementId) of the elements that have conditions.
 // governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed
-function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false) {
+function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false, $elementIsSimpleDisplayCondition=false) {
 
     $initCode = "
 jQuery(document).ready(function() {
@@ -3239,6 +3251,10 @@ jQuery(document).ready(function() {
 				// Initialize elementScreenIds array for this governed element
 				if($elementScreenIds && isset($elementScreenIds[$thisGovernedElement])) {
 					$initCode .= "elementScreenIds['".$thisGovernedElement."'] = ".$elementScreenIds[$thisGovernedElement].";\n";
+				}
+				// Initialize elementIsSimpleDisplayCondition array for this governed element
+				if($elementIsSimpleDisplayCondition && isset($elementIsSimpleDisplayCondition[$thisGovernedElement])) {
+					$initCode .= "elementIsSimpleDisplayCondition['".$thisGovernedElement."'] = true;\n";
 				}
 				$relevantElementArray[$thisGovernedElement] = true;
 			}

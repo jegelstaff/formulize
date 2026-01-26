@@ -4,6 +4,7 @@ var governedElements = new Array();
 var relevantElements = new Array();
 var oneToOneElements = new Array();
 var elementScreenIds = new Array();
+var elementIsSimpleDisplayCondition = new Array();
 
 var conditionalCheckInProgress = 0;
 var currentlyProcessingHandles = {};
@@ -68,7 +69,22 @@ function callCheckCondition(name, callHistory = []) {
 						if(typeof data === 'string') {
 							data = data.trim();
 						}
-						if(data && data != '{NOCHANGE}' && (conditionalHTMLHasChanged(handle, data) || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
+						// Determine if we should render based on element type
+						var isSimpleDisplayCondition = (typeof elementIsSimpleDisplayCondition[handle] !== 'undefined' && elementIsSimpleDisplayCondition[handle]);
+						var elementCurrentlyHidden = (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none');
+						var shouldRender = false;
+						
+						if(data && data != '{NOCHANGE}') {
+							if(isSimpleDisplayCondition) {
+								// For simple display conditions: only render if element is currently hidden
+								shouldRender = elementCurrentlyHidden;
+							} else {
+								// For dynamic content conditions: render if HTML changed or element is hidden
+								shouldRender = conditionalHTMLHasChanged(handle, data) || elementCurrentlyHidden;
+							}
+						}
+						
+						if(shouldRender) {
 							jQuery('#formulize-'+handle).empty();
 							jQuery('#formulize-'+handle).append(data);
 							// unless it is a hidden element, show the table row...
