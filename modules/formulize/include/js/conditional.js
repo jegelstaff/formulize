@@ -80,8 +80,8 @@ function callCheckCondition(name, callHistory = []) {
 								// Don't render if already visible to preserve user's work
 								shouldRender = elementCurrentlyHidden;
 							} else {
-								// For dynamic content conditions: render if HTML changed or element is hidden
-								shouldRender = conditionalHTMLHasChanged(handle, data) || elementCurrentlyHidden;
+								// For dynamic content conditions: render if element is hidden or HTML changed
+								shouldRender = elementCurrentlyHidden || conditionalHTMLHasChanged(handle, data);
 							}
 						}
 						
