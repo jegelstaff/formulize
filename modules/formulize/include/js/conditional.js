@@ -73,14 +73,18 @@ function callCheckCondition(name, callHistory = []) {
 						var isSimpleDisplayCondition = (typeof elementIsSimpleDisplayCondition[handle] !== 'undefined' && elementIsSimpleDisplayCondition[handle]);
 						var elementCurrentlyHidden = (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none');
 						var shouldRender = false;
+						var shouldUpdateConditionalHTML = false;
 						
 						if(data && data != '{NOCHANGE}') {
 							if(isSimpleDisplayCondition) {
 								// For simple display conditions: only render if element is currently hidden
+								// Don't update conditional HTML if already visible to preserve user's work
 								shouldRender = elementCurrentlyHidden;
+								shouldUpdateConditionalHTML = elementCurrentlyHidden;
 							} else {
 								// For dynamic content conditions: render if HTML changed or element is hidden
 								shouldRender = conditionalHTMLHasChanged(handle, data) || elementCurrentlyHidden;
+								shouldUpdateConditionalHTML = true;
 							}
 						}
 						
@@ -105,7 +109,9 @@ function callCheckCondition(name, callHistory = []) {
 							ShowHideTableRow(handle,false,1000,true);
 						}
 						if(data != '{NOCHANGE}') {
-							assignConditionalHTML(handle, data);
+							if(shouldUpdateConditionalHTML) {
+								assignConditionalHTML(handle, data);
+							}
 							// now check if this element has a value, and governed elements, in which case we need to defer a call to check the goverened elements' conditions
 							if(typeof governedElements[handle] !== 'undefined' && callHistory.indexOf(handle) === -1 && elementHasValue(handle)) {
 								deferredCalls.push(handle);
