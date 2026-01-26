@@ -450,7 +450,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			$sourceFormObject = $form_handler->get($sourceFid);
 
 			list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($element_ele_value[5], $sourceFid, $entry_id, $owner, $formObject, "t1");
-			catalogDynamicFilterConditionElements($markupName, $element_ele_value[5], $formObject);
+			catalogDynamicFilterConditionElements($markupName, $element_ele_value[5], $formObject, $screen);
 
 			// setup the sort order based on ele_value[12], which is an element id number
 			$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";

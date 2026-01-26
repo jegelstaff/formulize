@@ -1594,6 +1594,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		global $formulize_governingElements;
 		global $formulize_oneToOneElements;
 		global $formulize_oneToOneMetaData;
+		global $formulize_elementScreenIds;
 		if(!is_array($formulize_governingElements)) {
 				$formulize_governingElements = array();
 		}
@@ -1603,12 +1604,23 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		if(!isset($oneToOneMetaData) OR !is_array($oneToOneMetaData)) {
 				$oneToOneMetaData = array();
 		}
+		if(!is_array($formulize_elementScreenIds)) {
+				$formulize_elementScreenIds = array();
+		}
 		if(count((array) $GLOBALS['formulize_renderedElementHasConditions'])>0) {
 			$governingElements1 = compileGoverningElementsForConditionalElements($GLOBALS['formulize_renderedElementHasConditions'], $entries, $sub_entries);
 			foreach($governingElements1 as $key=>$value) {
 					$oneToOneElements[$key]	= false; // meant to be $formulize_oneToOneElements?? -- but missnaming and non-assignment doesn't have a logical effect since it's not setting an affirmative value?
 			}
 			$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements1);
+			// Merge in any screen IDs that were set when cataloging conditional elements
+			if(isset($GLOBALS['formulize_elementScreenIds']) && is_array($GLOBALS['formulize_elementScreenIds'])) {
+				foreach($GLOBALS['formulize_elementScreenIds'] as $elementHandle => $screenId) {
+					if(!isset($formulize_elementScreenIds[$elementHandle])) {
+						$formulize_elementScreenIds[$elementHandle] = $screenId;
+					}
+				}
+			}
 		}
 		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
 		if(count((array) $fids)>1) {
@@ -1654,7 +1666,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// if there are elements we need to pay attention to, draw the necessary javascript code
 		// unless we're doing an embedded 'elements only form' -- unless we're doing that for displaying a subform entry specifically as its own thing (as part of a modal for example (and only example right now))
 		if(count((array) $formulize_governingElements)> 0 AND (!$formElementsOnly OR (isset($formulize_displayingSubform) AND $formulize_displayingSubform == true))) {
-			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData);
+			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds);
 		}
 
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
@@ -3208,7 +3220,7 @@ function markupNameAttr($renderedMarkupName) {
 // PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
 // conditionalElements is array of the elements (DOM ids, ie: de_fid_entryId_elementId) of the elements that have conditions.
 // governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed
-function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false) {
+function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false) {
 
     $initCode = "
 jQuery(document).ready(function() {
@@ -3224,6 +3236,10 @@ jQuery(document).ready(function() {
 			if(!isset($relevantElementArray[$thisGovernedElement])) {
 				$initCode .= "relevantElements['".$thisGovernedElement."'] = new Array();\n";
 				$initCode .= "oneToOneElements['".$thisGovernedElement."'] = new Array();\n";
+				// Initialize elementScreenIds array for this governed element
+				if($elementScreenIds && isset($elementScreenIds[$thisGovernedElement])) {
+					$initCode .= "elementScreenIds['".$thisGovernedElement."'] = ".$elementScreenIds[$thisGovernedElement].";\n";
+				}
 				$relevantElementArray[$thisGovernedElement] = true;
 			}
 			$initCode .= "relevantElements['".$thisGovernedElement."'][$topKey] = '".$thisGoverningElement."';\n";
