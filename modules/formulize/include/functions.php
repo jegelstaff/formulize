@@ -5680,12 +5680,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 		// *** OPTION 1: FILTER TERM IS {BLANK}
     if ($filterTerms[$filterId]=="{BLANK}") {
-      $conditionsFilterComparisonValue = 'NULL';
+      // {BLANK} means: check for null or empty values
       $filterTerms[$filterId]="";
       if($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE') {
-        $filterOps[$filterId] = 'IS NOT';
+        // NOT BLANK: field != '' AND field IS NOT NULL
+        $conditionsFilterComparisonValue = "'' AND `".$filterElementObject->getVar('ele_handle')."` IS NOT NULL";
+        $filterOps[$filterId] = '!=';
       } else {
-        $filterOps[$filterId] = 'IS';
+        // IS BLANK: field = '' OR field IS NULL
+        $conditionsFilterComparisonValue = "'' OR `".$filterElementObject->getVar('ele_handle')."` IS NULL";
+        $filterOps[$filterId] = '=';
       }
       // Return early to avoid processing the empty filter term further
       return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
