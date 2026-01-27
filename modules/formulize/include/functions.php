@@ -5687,6 +5687,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
       } else {
         $filterOps[$filterId] = 'IS';
       }
+      // Return early to avoid processing the empty filter term further
+      return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 
 		// *** OPTION 2: THE TARGET ELEMENT IS A LINKED FIELD, NON-SNAPSHOT...
 		// ie: left side is linked to something else
