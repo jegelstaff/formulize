@@ -1617,22 +1617,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 					$oneToOneElements[$key]	= false; // meant to be $formulize_oneToOneElements?? -- but missnaming and non-assignment doesn't have a logical effect since it's not setting an affirmative value?
 			}
 			$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements1);
-			// Merge in any screen IDs that were set when cataloging conditional elements
-			if(isset($GLOBALS['formulize_elementScreenIds']) && is_array($GLOBALS['formulize_elementScreenIds'])) {
-				foreach($GLOBALS['formulize_elementScreenIds'] as $elementHandle => $screenId) {
-					if(!isset($formulize_elementScreenIds[$elementHandle])) {
-						$formulize_elementScreenIds[$elementHandle] = $screenId;
-					}
-				}
-			}
-			// Merge in any simple display condition flags that were set when cataloging conditional elements
-			if(isset($GLOBALS['formulize_elementIsSimpleDisplayCondition']) && is_array($GLOBALS['formulize_elementIsSimpleDisplayCondition'])) {
-				foreach($GLOBALS['formulize_elementIsSimpleDisplayCondition'] as $elementHandle => $isSimple) {
-					if(!isset($formulize_elementIsSimpleDisplayCondition[$elementHandle])) {
-						$formulize_elementIsSimpleDisplayCondition[$elementHandle] = $isSimple;
-					}
-				}
-			}
 		}
 		// add in any onetoone elements that we need to deal with at the same time (in case their joining key value changes on the fly)
 		if(count((array) $fids)>1) {
