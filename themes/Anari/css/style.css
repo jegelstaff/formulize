@@ -1848,6 +1848,22 @@ output[id^=rangeValue] {
     height: 460px;
   }
 }
+@media (max-width: 450px) {
+	/* Disable clicking/tapping on the track */
+	input[type=range] {
+			pointer-events: none;
+	}
+
+	/* Enable clicking/tapping on the thumb */
+	input[type=range]::-webkit-slider-thumb {
+			pointer-events: auto;
+	}
+
+	input[type=range]::-moz-range-thumb {
+			pointer-events: auto;
+	}
+}
+
 @media print {
   .rangeslider {
     visibility: hidden;
