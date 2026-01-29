@@ -614,6 +614,7 @@ define("_AM_formulizeMENUSTYLE","Style de MyMenu");
 define("_MI_formulize_DELIMETER_BR","Ligne de separation");
 define("_MI_formulize_DELIMETER_CUSTOM","HTML customisé");
 define("_MI_formulize_DELIMETER_SPACE","Espace blanc");
+define("_MI_formulize_DELIMETER_SPACE_NUMSPACES","Nombre d'espaces");
 define("_formulize_CAPTION_GT", "Les légendes ne peuvent contenir de signe > . ces derniers ont été enlevés.");
 define("_formulize_CAPTION_LT", "Les légendes ne peuvent contenir de signe < . ces derniers ont été enlevés.");
 define("_formulize_CAPTION_MATCH", "La légende que vous avez saisie et déjà utilisée. un '2' a été suffixé à cette dernière.");

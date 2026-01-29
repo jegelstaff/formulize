@@ -400,6 +400,7 @@ define("_AM_ELE_DELIM_CHOICE",'Delimiter between each option');
 if(!defined("_MI_formulize_DELIMETER_SPACE")) { define("_MI_formulize_DELIMETER_SPACE","White space"); }
 if(!defined("_MI_formulize_DELIMETER_BR")) { define("_MI_formulize_DELIMETER_BR","Line break"); }
 define("_MI_formulize_DELIMETER_CUSTOM","Custom HTML");
+define("_MI_formulize_DELIMETER_SPACE_NUMSPACES","Number of spaces");
 
 //added to handle the formlink part of the selectbox element -- jwe 7/29/04
 define("_AM_ELE_FORMLINK", "Options linked from another form");

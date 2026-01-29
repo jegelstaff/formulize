@@ -6,22 +6,23 @@
       </div>
       <div class="form-radios">
         <label for="space"><input type="radio" id="space" name="element_delimit" value="space"/><{$smarty.const._MI_formulize_DELIMETER_SPACE}></label>
+				&mdash; <{$smarty.const._MI_formulize_DELIMETER_SPACE_NUMSPACES}> <label for="numspaces"><input type="number" id="numspaces" name="element_delimit_space_numspaces" size="1" maxlength="1" max="9" min="1" value="<{$content.ele_delimit_space_numspaces_value}>"/></label>
       </div>
       <div class="form-radios">
 	      <label for="custom" style="display:inline">
         <input type="radio" id="custom" name="element_delimit" value="custom"/><{$smarty.const._MI_formulize_DELIMETER_CUSTOM}></label>
-  	    <input type="text" id="element-delim_custom" name="element_delim_custom" value="<{$content.ele_delim_custom_value}>" size="25" maxlength="255"/>
+  	    &mdash; <input type="text" id="element-delim_custom" name="element_delim_custom" value="<{$content.ele_delim_custom_value}>" size="25" maxlength="255"/>
       </div>
     </fieldset>
   </div>
-  
+
   <script type='text/javascript'>
 $("#element-delimit-custom").click(function () {
   $("#element-delim_custom").focus();
 });
 
 $("#element-delim_custom").click(function () {
-  $("#custom").attr("checked", "checked"); 
+  $("#custom").attr("checked", "checked");
 });
 
 

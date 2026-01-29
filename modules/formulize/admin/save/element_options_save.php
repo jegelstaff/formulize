@@ -67,6 +67,12 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
 if($_POST['element_delimit']) {
   if($_POST['element_delimit'] == "custom") {
     $processedValues['elements']['ele_delim'] = $_POST['element_delim_custom'];
+	} elseif($_POST['element_delimit'] == "space") {
+		$numSpaces = intval($_POST['element_delimit_space_numspaces']);
+		if($numSpaces <= 0) {
+			$numSpaces = 5; // default to 5 spaces if invalid
+		}
+		$processedValues['elements']['ele_delim'] = str_repeat("&nbsp;", $numSpaces);
   } else {
     $processedValues['elements']['ele_delim'] = $_POST['element_delimit'];
   }

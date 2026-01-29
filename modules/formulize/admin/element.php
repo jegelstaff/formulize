@@ -87,9 +87,15 @@ if ($_GET['ele_id'] != "new") {
     $ele_use_default_when_blank = intval($elementObject->getVar('ele_use_default_when_blank'));
     $ele_delim = $elementObject->getVar('ele_delim');
 		$ele_delim_custom_value = '';
+		$ele_delim_space_numspaces_value = 5;
     if ($ele_delim != "br" AND $ele_delim != "space" AND $ele_delim != "") {
-        $ele_delim_custom_value = $ele_delim;
-        $ele_delim = "custom";
+				if (preg_match('/^(&nbsp;)+$/', html_entity_decode($ele_delim))) {
+        	$ele_delim_space_numspaces_value = substr_count(html_entity_decode($ele_delim), '&nbsp;');
+					$ele_delim = "space";
+				} else {
+        	$ele_delim_custom_value = $ele_delim;
+        	$ele_delim = "custom";
+				}
     }
     $elementName = $colhead ? printSmart($colhead,30) : printSmart($caption,30);
     $names['ele_caption'] = $caption;
@@ -179,6 +185,7 @@ if ($_GET['ele_id'] != "new") {
 	}
 	$ele_value = array();
 	$ele_delim = "br";
+	$ele_delim_space_numspaces_value = 5;
 	$ele_uitext = "";
 	$ele_uitextshow = 0;
 	$ele_use_default_when_blank = 0;
@@ -265,6 +272,7 @@ $common['uid'] = $xoopsUser->getVar('uid');
 $options = array();
 $options['ele_delim'] = $ele_delim;
 $options['ele_delim_custom_value'] = $ele_delim_custom_value;
+$options['ele_delimit_space_numspaces_value'] = $ele_delim_space_numspaces_value;
 $options['ele_uitext'] = $ele_uitext;
 $options['ele_uitextshow'] = $ele_uitextshow;
 $options['typetemplate'] = "db:admin/element_type_".$ele_type.".html";
