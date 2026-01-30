@@ -4,6 +4,7 @@ var governedElements = new Array();
 var relevantElements = new Array();
 var oneToOneElements = new Array();
 var elementScreenIds = new Array();
+var elementIsSimpleDisplayCondition = new Array();
 
 var conditionalCheckInProgress = 0;
 var currentlyProcessingHandles = {};
@@ -68,7 +69,23 @@ function callCheckCondition(name, callHistory = []) {
 						if(typeof data === 'string') {
 							data = data.trim();
 						}
-						if(data && data != '{NOCHANGE}' && (conditionalHTMLHasChanged(handle, data) || (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none'))) {
+						// Determine if we should render based on element type
+						var isSimpleDisplayCondition = (typeof elementIsSimpleDisplayCondition[handle] !== 'undefined' && elementIsSimpleDisplayCondition[handle]);
+						var elementCurrentlyHidden = (window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display == 'none');
+						var shouldRender = false;
+						
+						if(data && data != '{NOCHANGE}') {
+							if(isSimpleDisplayCondition) {
+								// For simple display conditions: only render if element is currently hidden
+								// Don't render if already visible to preserve user's work
+								shouldRender = elementCurrentlyHidden;
+							} else {
+								// For dynamic content conditions: render if element is hidden or HTML changed
+								shouldRender = elementCurrentlyHidden || conditionalHTMLHasChanged(handle, data);
+							}
+						}
+						
+						if(shouldRender) {
 							jQuery('#formulize-'+handle).empty();
 							jQuery('#formulize-'+handle).append(data);
 							// unless it is a hidden element, show the table row...
@@ -85,12 +102,14 @@ function callCheckCondition(name, callHistory = []) {
 									window['formulize_conditionalElementUpdate'+partsArray[3]]();
 								}
 							}
+							// Update stored HTML when rendering
+							assignConditionalHTML(handle, data);
 						} else if( !data && window.document.getElementById('formulize-'+handle) !== null && window.document.getElementById('formulize-'+handle).style.display != 'none') {
 							ShowHideTableRow(handle,false,1000,true);
 						}
+						// Check for deferred calls regardless of rendering - dependent elements need to react to changes
 						if(data != '{NOCHANGE}') {
-							assignConditionalHTML(handle, data);
-							// now check if this element has a value, and governed elements, in which case we need to defer a call to check the goverened elements' conditions
+							// now check if this element has a value, and governed elements, in which case we need to defer a call to check the governed elements' conditions
 							if(typeof governedElements[handle] !== 'undefined' && callHistory.indexOf(handle) === -1 && elementHasValue(handle)) {
 								deferredCalls.push(handle);
 							}
