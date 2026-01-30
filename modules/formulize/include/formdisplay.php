@@ -3238,7 +3238,7 @@ jQuery(document).ready(function() {
 				}
 				// Initialize elementIsSimpleDisplayCondition array for this governed element
 				if($elementIsSimpleDisplayCondition && isset($elementIsSimpleDisplayCondition[$thisGovernedElement])) {
-					$initCode .= "elementIsSimpleDisplayCondition['".$thisGovernedElement."'] = true;\n";
+					$initCode .= "elementIsSimpleDisplayCondition['".$thisGovernedElement."'] = ".($elementIsSimpleDisplayCondition[$thisGovernedElement] ? 'true' : 'false').";\n";
 				}
 				$relevantElementArray[$thisGovernedElement] = true;
 			}
