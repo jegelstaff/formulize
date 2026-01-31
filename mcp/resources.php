@@ -350,8 +350,9 @@ trait resources {
 		while ($row = $this->db->fetchArray($result)) {
 			$formId = $row['id_form'];
 			if(security_check($formId)) {
+				// element list not included to reduce context usage
 				// add element identifiers to the $row, not all element data because that would be too much when listing all forms
-				$row['elements'] = $this->metadataFields();
+				/*$row['elements'] = $this->metadataFields();
 				$sql = "SELECT ele_handle as element_handle, ele_id as element_id, ele_required, ele_type, ele_display FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 				if($elementsResult = $this->db->query($sql)) {
 					while($elementRow = $this->db->fetchArray($elementsResult)) {
@@ -366,10 +367,18 @@ trait resources {
 					}
 				}
 				$row['element_count'] = count($row['elements']);
+				*/
+
+				$sql = "SELECT count(ele_handle) FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId);
+				if($elementsResult = $this->db->query($sql)) {
+					$elementCountRow = $this->db->fetchRow($elementsResult);
+					$row['element_count'] = $elementCountRow[0];
+				}
+
 				$formTitle = trans($row['form_title']);
 				$row['form_title'] = $formTitle; // Use the translated title for display
 				$row['database_table_name'] = $this->db->prefix('formulize_'.$row['database_table_name']);
-				$forms[] = $row + $this->form_connections_list($formId) + $this->screens_list($formId, simple: true);
+				$forms[] = $row + $this->form_connections_list($formId); // + $this->screens_list($formId, simple: true); // screens_list not included to reduce context usage
 				$formTitles[] = $formTitle;
 			}
 		}
