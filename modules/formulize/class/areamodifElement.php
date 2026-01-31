@@ -46,6 +46,36 @@ class formulizeAreamodifElement extends formulizeElement {
 		$this->hasMultipleOptions = false;
 		parent::__construct();
 	}
+
+	// write code to a file
+	public function setVar($key, $value, $not_gpc = false) {
+		if($key == 'ele_value') {
+			$valueToWrite = is_array($value) ? $value : unserialize($value);
+			if(strstr((string)$valueToWrite[0], "\$value")) {
+				$filename = 'areamodif_'.$this->getVar('ele_handle').'.php';
+				formulize_writeCodeToFile($filename, $valueToWrite[0]);
+				$valueToWrite[0] = '';
+				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
+			}
+		}
+		parent::setVar($key, $value, $not_gpc);
+	}
+
+	// read code from a file
+	public function getVar($key, $format = 's') {
+		$format = $key == "ele_value" ? "f" : $format;
+		$value = parent::getVar($key, $format);
+		if($key == 'ele_value' AND is_array($value)) {
+			$filename = 'areamodif_'.$this->getVar('ele_handle').'.php';
+			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+			$fileValue = "";
+			if(file_exists($filePath)) {
+				$fileValue = strval(file_get_contents($filePath));
+			}
+			$value[0] = $fileValue ? $fileValue : ((is_array($value) AND isset($value[0])) ? $value[0] : '');
+		}
+		return $value;
+	}
 }
 
 #[AllowDynamicProperties]
