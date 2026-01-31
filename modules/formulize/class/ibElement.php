@@ -51,11 +51,15 @@ class formulizeIbElement extends formulizeElement {
 	public function setVar($key, $value, $not_gpc = false) {
 		if($key == 'ele_value') {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
-			if(strstr((string)$valueToWrite[0], "\$value")) {
-				$filename = 'ib_'.$this->getVar('ele_handle').'.php';
+			$filename = 'ib_'.$this->getVar('ele_handle').'.php';
+			// check if the value is a code block, and if so write to file instead of assigning to property of object
+			if(strstr((string)$valueToWrite[0], "\$value=") OR strstr((string)$valueToWrite[0], "\$value =")) {
 				formulize_writeCodeToFile($filename, $valueToWrite[0]);
 				$valueToWrite[0] = '';
 				$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
+			// delete the file if it exists but the value no longer contains code
+			} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
+				unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
 			}
 		}
 		parent::setVar($key, $value, $not_gpc);
