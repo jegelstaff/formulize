@@ -2,7 +2,7 @@
 
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2012 Freeform Solutions                  ##
+##                    Copyright (c) 2024 Formulize                           ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -27,644 +27,854 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions						 		 	 ##
+##  Author of this file: Formulize      						 		 	 ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pData.class.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pDraw.class.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/libraries/pChart/class/pImage.class.php";
-
-/**
- * IMPORTANT: Implemented User Cases:
- * 1. bar graph "count":
- * 		a. counting # of male and females in a class:
- * 			displayGraph("Bar", form_id_of_class, "", gender, gender, "count", $graphOptions);
- * 		b. counting # of mayors for a city
- * 			displayGraph("Bar", form_id_of_class, relation_id, city, mayor, "count", $graphOptions);
- * 2. bar graph "unique-count":
- * 		same as above, but with a slight twist:
- * 		a. in gender example, since there are only two distinct gender, then output would be bar with length 1 and 1
- * 		b. in mayors example, the mayors with same name would only be counted once
- * 3. bar graph "display":
- * 		a. display country with it's population
- * 			displayGraph("Bar", form_id_of_class, "", country, population, "display", $graphOptions);
- * 4. bar graph "sum":
- * 		a. display country with it's poplution
- * 			displayGraph("Bar", country_form, province_relation, country, province_population, "sum", $graphOptions);
- */
-
-
- /**
-  * Instruction of the parameter "graphOptions"
-  * "graphOptions" should be an array of key value pairs. Here is a list of valid keys:
-  * 1. width:
-  * 	Set the width of the bar graph in px.
-  * 2. height:
-  * 	Set the height of the bar graph in px.
-  * 3. orientation:
-  * 	Set the graph orientation. The value for this key should be either "horizontal" or "vertical".
-  * 4. backgroundcolor:
-  * 	Set the background color of the bar graph. The value for this key should be another array of key value pair, contain the three values of
-  * 	R, G and B. For example, "backgroundcolor" => array("R" => 0, "G" => 0 , "B" => 0) indicates setting the background color of the graph to black.
-  * 5. barcolor:
-  * 	Set the color for the bars. The value for this key should be another array of key value pair, contain the three values of
-  * 	R, G and B.
-  *
-  */
-
-/**
- * Main entrance of displayGraph API
- * @param $graphType type of the graph to be displayed with input data
- * @param $fid the id of the form where the data is coming from
- * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
- * @param $labelElement the field in the form to be used as label
- * @param $dataElement the field in the form to be used as data to graph
- * @param $operation the operation to be used to draw graphs
- * @param $graphOptions the graph parameters passed in by user!
- */
-function displayGraph($graphType, $fid, $frid, $labelElement, $dataElement, $operation, $graphOptions) {
-	list($dataPoints, $dataElement, $labelElement) = gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $operation);
-	switch ($graphType) {
-		case "Bar" :
-			displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions);
-			break;
-		case "Radar" :
-			displayRadarGraph($dataPoints, $labelElement, $dataElement, $graphOptions);
-			break;
-		case "Line" :
-			displayLineGraph($dataPoints, $labelElement, $dataElement, $graphOptions);
-			break;
-		default :
-			echo "Sorry, the graph type \"$graphType\" is not supported at the moment!";
-			break;
-	}
+if (!defined("XOOPS_MAINFILE_INCLUDED")) {
+    require_once realpath(dirname(__FILE__) . "/../../../mainfile.php");
 }
+require_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 
-/**
- * Helper method to query the database and process data for display in a graph.
- * @param $fid the id of the form where the data is coming from
- * @param $frid the id of the relation(relating fid's form to another form) $frid == fid if no relation is specified
- * @param $labelElement the field in the form to be used as label
- * @param $dataElement the field in the form to be used as data to graph
- * @param $operation the operation to be used on raw data
- */
-function gatherGraphData($fid, $frid, $filter, $labelElement, $dataElement, $operation) {
+function displayGraph($type, $data, $dataElements=array(), $yElements=array(), $xAxisType='time', $timeElement = null, $timeUnit='day', $timeFormat='M j', $timeUnitCount=1, $labels=null, $minValue=null, $maxValue=null, $showTooltips = 'all', $smoothedLine = false, $showCursor = true) {
 
-	$frid = (is_numeric($frid) AND $frid != 0) ? $frid : 0;
-	$dbData = gatherDataset($fid, filter: $filter, frid: $frid);
+	$jsTimeFormat = convertPHPTimeFormatToJSTimeFormat($timeFormat);
+	$xAxisStart = 0;
 
-	if (!is_array($dataElement)) {
-		$dataElement = array($dataElement);
-	}
-	if (!is_array($labelElement)) {
-		$labelElement = array($labelElement);
-	}
-
-	$completeDataRawValue = array();
-	$completeLabelRawValue = array();
-	$dataPoints = array();
-	foreach ($dbData as $entry) {
-		// mayor - OR array of mayors if there's more than one in the dataset, depending on the one-to-may in a relationship
-		foreach($dataElement as $thisDataElement) {
-			$dataRawValue = getValue($entry, $thisDataElement);
-		}
-		// city_name;
-		foreach($labelElement as $thisLabelElement) {
-			$labelRawValue = getValue($entry, $thisLabelElement);
-		}
-		if (!is_array($dataRawValue) && $dataRawValue) {
-			$dataRawValue = array($dataRawValue);
-		}
-		if (!is_array($labelRawValue)) {
-			$labelRawValue = array($labelRawValue);
-		}
-		$completeDataRawValue[] = $dataRawValue;
-		$completeLabelRawValue[] = $labelRawValue;
-
-		// futureworx data, would end up looking like this:
-		/*
-		$completeLabelRawValue[0] = 'Presentation'; // I think actually, in this case we would end up with a 5 instead of Presentation, because the value of the field is 5, and the value seems to be what they're packing up...but we want the caption...hmmm
-		$completeDataRawValue[0] = 5;
-		$completeLabelRawValue[1] = 'Teamwork';
-		$completeDataRawValue[1] = 3;
-		*/
-		// this needs to be modified so that....see comment at the end...
-		foreach ($labelRawValue as $thisLabelValue) {
-			if ($dataPoints[$thisLabelValue]) {
-				$dataPoints[$thisLabelValue] = array_merge($dataPoints[$thisLabelValue], $dataRawValue);
-			} else {
-				$dataPoints[$thisLabelValue] = $dataRawValue;
+	switch (strtolower($type)) {
+		case 'line':
+			$lineType = $smoothedLine ? 'SmoothedXLineSeries' : 'LineSeries';
+			$x = 1;
+			$dataSet = array();
+			$xAxisType = ($xAxisType == 'time' AND $timeElement) ? 'time' : 'ordinal';
+			$nextExpectedTime = null;
+			$nextActualTime = null;
+			$firstTime = null;
+			$lastTime = null;
+			foreach($data as $i=>$dataPoint) {
+				$time = $xAxisType == 'time' ? display($dataPoint, $timeElement) : null;
+				$millisecondTimestamp = 0;
+				$readableTime = null;
+				if($time) {
+					$millisecondTimestamp = strtotime($time)*1000;
+					$readableTime = date($timeFormat, strtotime($time));
+					// if this point follows a gap, treat it as a bullet
+					$showBullet = ($nextExpectedTime AND $readableTime != $nextExpectedTime) ? 'showBullets: true, ' : '';
+					$nextExpectedTime = date($timeFormat, strtotime($time." +$timeUnitCount $timeUnit"));
+					$nextActualTime = isset($data[$i+1]) ? date($timeFormat, strtotime(display($data[$i+1], $timeElement))) : '';
+					// if this point is the start of a consecutive series, don't treat it as a bullet
+					if($showBullet AND $nextExpectedTime == $nextActualTime) {
+						$showBullet = '';
+					}
+					$firstTime = !$firstTime ? $millisecondTimestamp : $firstTime;
+					$lastTime = $millisecondTimestamp;
+				}
+				$dataValues = array();
+				foreach($dataElements as $dataElement) {
+					$dataValues[] = "$dataElement: ".display($dataPoint, $dataElement);
+				}
+				$dataSet[] = "{x: $x, ".$showBullet.implode(", ", $dataValues).", time: '$readableTime', millisecondTimestamp: $millisecondTimestamp}";
+				$x++;
 			}
-		}
-		// output would be:
-		/*
-		$dataPoints['presentation'] = 5;
-		$dataPoints['teamwork'] = 3;
-		*/
-	}
+			$dataSet = "[".implode(',', $dataSet)."]";
 
-	// Oct 29 Update for column heading for graphs:
-	$elementHandler = xoops_getmodulehandler('elements', 'formulize');
-	$elementObject = $elementHandler->get($labelElement);
-	$labelElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
-	$elementObject = $elementHandler->get($dataElement);
-	$dataElement = $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : printSmart($elementObject->getVar('ele_caption'));
-	// end of Update
+			// set the zoom level, applied to xAxis and scollbar
+			if($xAxisType == 'time') {
+				$millisecondDuration = $lastTime - $firstTime;
+				switch($timeUnit) {
+					case "millisecond": // default to 100 milliseconds (10th of a second)
+						$xAxisStart = 1 - (100 / $millisecondDuration);
+						break;
+					case "second": // default to 10 seconds
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000));
+						break;
+					case "minute": // default to 10 minutes
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000 / 60));
+						break;
+					case "hour": // default to 10 hours
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000 / 60 / 60));
+						break;
+					case "day": // default to 14 days
+						$xAxisStart = 1 - (14 / ($millisecondDuration / 1000 / 60 / 60 / 24));
+						break;
+					case "week": // default to 12 weeks
+						$xAxisStart = 1 - (12 / ($millisecondDuration / 1000 / 60 / 60 / 24 / 7));
+						break;
+					case "month": // default to 12 months
+						$xAxisStart = 1 - (12 / ($millisecondDuration / 1000 / 60 / 60 / 24 / 30));
+						break;
+					case "year": // default to 10 years
+						$xAxisStart = 1 - (10 / ($millisecondDuration / 1000 / 60 / 60 / 24 / 365));
+						break;
+				}
+			} else {
+				// default to 30 items
+				$xAxisStart = 1 - (30 / count($data));
+			}
+			$xAxisStart = $xAxisStart > 1 ? 1 : $xAxisStart;
+			$xAxisStart = $xAxisStart < 0 ? 0 : $xAxisStart;
 
-	switch($operation) {
-		case "count" :
-			// count the values in each label of the array
-			foreach(array_keys($dataPoints) as $key){
-				if(!empty($dataPoints[$key])){
-					$dataPoints[$key] = count((array) $dataPoints[$key]);
-				} else {
-					$dataPoints[$key] = 0;
+			$minMaxYAxes = array();
+			if($minValue !== null) {
+				$minMaxYAxes[] = "min: $minValue";
+			}
+			if($maxValue !== null) {
+				$minMaxYAxes[] = "max: $maxValue";
+			}
+			$minMaxYAxes = implode(",", $minMaxYAxes);
+			$minMaxYAxes .= $minMaxYAxes ? ",\n" : "";
+
+			if($labels) {
+				$labels = is_array($labels) ? $labels : array($labels);
+			}
+			$drawLines = array();
+			if(is_array($labels)) {
+				foreach($labels as $label) {
+					$start = $label['value'] ? $label['value'] : 0;
+					$label = $label['label'] ? $label['label'] : '';
+					$drawLines[] = "drawLine(".$start.", \"".$label."\");";
 				}
 			}
-			if($labelElement == $dataElement){
-				$dataElement = "count of " . $labelElement;
-			} else {
-				$dataElement = "count of " . $dataElement;
+			$drawLines = implode("\n", $drawLines);
+
+			$showTooltips = $showTooltips === 'all' ? '' : ($showTooltips ? "maxTooltipDistance: 0," : false);
+
+			?>
+
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/locales/en_CA.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/fonts/notosans-sc.js"></script>
+
+			<style>
+			#chartdiv {
+			width: 100%;
+			height: 500px;
 			}
-			break;
-		case "sum" :
-		case "display":
-			// TODO: Check this!
-			foreach ($dataPoints as $thisLabel => $theseValues) {
-				$dataPoints[$thisLabel] = array_sum($theseValues);
-			}
-			$dataElement = (($operation == "display") ? "number of " : "sum of ") . $dataElement;
-			break;
-		case "count-unique" :
-			foreach ($dataPoints as $thisLabel => $theseValues) {
-				$dataPoints[$thisLabel] = count((array) array_unique($theseValues));
-			}
-			if($dataElement == $labelElement){
-				$dataElement = "count of unique " . $labelElement;
-			} else {
-				$dataElement = "count of unique " . $dataElement;
-			}
-			break;
-		default :
-			echo "Sorry, the operation \"$operation\" for Bar graph is not supported at the moment!";
-			return;
-	}
+			</style>
 
-    return array($dataPoints, $dataElement, $labelElement);
-}
+			<!-- Chart code -->
+			<script>
 
+			am5.ready(function() {
 
-/**
- * Helper method to draw bar graph
- * parameters have same meaning as displayGraph's parameters
- */
-function displayBarGraph($dataPoints, $labelElement, $dataElement, $graphOptions) {
+				// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+				var root = am5.Root.new("chartdiv");
+				root.utc = true;
 
-	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
-	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
+				// Set themes
+				// https://www.amcharts.com/docs/v5/concepts/themes/
+				root.setThemes([
+					am5themes_Animated.new(root)
+				]);
 
-	// process the graph options
-	// these defaults will be used, unless overwritten by values from the $graphOptions array
-	$sizeMultiplier = sizeof(array_keys($dataPoints));
-	$BAR_THICKNESS = 40;
-	$IMAGE_WIDTH = 600;
-	$IMAGE_DEFAULT_WIDTH = $IMAGE_WIDTH;
+				// Create chart
+				// https://www.amcharts.com/docs/v5/charts/xy-chart/
+				var chart = root.container.children.push(am5xy.XYChart.new(root, {
+					panX: true,
+					panY: true,
+					wheelX: "panX",
+					wheelY: "zoomX",
+					pinchZoomX: true,
+					<?php if($showTooltips) { print $showTooltips; } ?>
+					paddingLeft: 0
+				}));
 
-	if( $sizeMultiplier > 1){
-		$IMAGE_HEIGHT = $BAR_THICKNESS * $sizeMultiplier/0.5;
-	}else{
-		$IMAGE_HEIGHT = $BAR_THICKNESS * 4;
-	}
+				<?php
+				if($showCursor) { ?>
+				// Add cursor
+				// https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
+				var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {
+					behavior: "none"
+				}));
+				cursor.lineY.set("visible", false);
+				<?php
+				} ?>
 
-	$IMAGE_DEFAULT_HEIGHT = $IMAGE_HEIGHT;
-	$IMAGE_ORIENTATION = "vertical";
-	$BACKGROUND_R = 141;
-	$BACKGROUND_G = 189;
-	$BACKGROUND_B = 225;
-	$BARCOLOR_R = 143;
-	$BARCOLOR_G = 190;
-	$BARCOLOR_B = 88;
+				// Create axes
+				// https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+				var xAxis = chart.xAxes.push(
+					<?php
+					switch($xAxisType) {
+					case 'time': ?>
+					am5xy.DateAxis.new(root, {
+						start: <?php print $xAxisStart; ?>,
+						baseInterval: {
+							timeUnit: "<?php print $timeUnit; ?>",
+							count: <?php print $timeUnitCount; ?>
+						},
+						<?php if($showTooltips !== false) { print "
+						tooltipDateFormat: \"$jsTimeFormat\",
+						tooltip: am5.Tooltip.new(root, {}),
+						"; } ?>
+						renderer: am5xy.AxisRendererX.new(root, {})
 
-	if (sizeof($graphOptions) > 0) {
-		foreach ($graphOptions as $graphoption => $value) {
-
-			switch($graphoption) {
-				case "width" :
-					$IMAGE_WIDTH = $value;
+					})
+					<?php
 					break;
-				case "height" :
-					$IMAGE_HEIGHT = $value;
-					break;
-				case "orientation" :
-					$IMAGE_ORIENTATION = $value;
-					if($IMAGE_ORIENTATION == "horizontal"){
-						if($IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
-							$IMAGE_HEIGHT = 500;
-						}else{
-							if($IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
-								$IMAGE_WIDTH = $BAR_THICKNESS * $sizeMultiplier / 0.5;
-							}
-						}
+					case 'ordinal':
+					default: ?>
+					am5xy.ValueAxis.new(root, {
+						renderer: am5xy.AxisRendererX.new(root, {}),
+						<?php if($showTooltips !== false) { print "
+						tooltip: am5.Tooltip.new(root, {})
+						"; } ?>
+					})
+					<?php
+					} ?>
+				);
+
+				var yAxis = chart.yAxes.push(
+					am5xy.ValueAxis.new(root, {
+						<?php print $minMaxYAxes; ?>
+						renderer: am5xy.AxisRendererY.new(root, {})
+					})
+				);
+
+			// Set data
+			data = <?php print $dataSet; ?>;
+
+			<?php
+
+			$yElements = is_array($yElements) ? $yElements : array($yElements);
+
+			foreach($yElements as $title=>$yElement) {
+
+				?>
+
+				var fillOpacity = 0.2;
+
+				// Add series
+				// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+				var series = chart.series.push(am5xy.<?php print $lineType; ?>.new(root, {
+					name: "<?php print $title; ?>",
+					connect: false,
+					xAxis: xAxis,
+					yAxis: yAxis,
+					valueYField: "<?php print $yElement['data']; ?>",
+					valueXField: "<?php print $xAxisType == 'time' ? 'millisecondTimestamp' : 'x'; ?>",
+					legendValueText: "<?php print str_replace("\n", '\n', $yElement['labelText']); ?>",
+					<?php if($showTooltips !== false) { print "
+					tooltip: am5.Tooltip.new(root, {
+						labelText: \"".str_replace("\n", '\n', $yElement['labelText'])."\"
+					})
+					"; } ?>
+				}));
+
+				series.strokes.template.setAll({
+					strokeWidth: 2
+				});
+
+				series.filledRanges = [];
+
+				<?php if(!empty($yElement['highlightAbove'])) {
+					$highlightAbove = is_array($yElement['highlightAbove']) ? $yElement['highlightAbove'] : array($yElement['highlightAbove']);
+					foreach($highlightAbove as $thisHighlightAbove) {
+						print "highlightData(series, $thisHighlightAbove);\n";
 					}
-					break;
-				case "backgroundcolor" :
-					// print_r($value);
-					foreach ($value as $RGB => $colorvalue) {
-						switch($RGB) {
-							case "R" :
-								$BACKGROUND_R = $colorvalue;
-								break;
-							case "G" :
-								$BACKGROUND_G = $colorvalue;
-								break;
-							case "B" :
-								$BACKGROUND_B = $colorvalue;
-								break;
-							default :
-								echo "Please follow the correct format of backgroundcolor.";
-								break;
-						}
+				} ?>
+
+				series.bullets.push(function(root, series, dataItem) {
+					if (dataItem.dataContext.showBullets == true) {
+						return am5.Bullet.new(root, {
+							sprite: am5.Circle.new(root, {
+								radius: 4,
+								fill: series.get("fill")
+							})
+						});
 					}
+				});
 
-					break;
-				case "barcolor" :
-					// print_r($value);
-					foreach ($value as $RGB => $colorvalue) {
-						switch($RGB) {
-							case "R" :
-								$BARCOLOR_R = $colorvalue;
-								break;
-							case "G" :
-								$BARCOLOR_G = $colorvalue;
-								break;
-							case "B" :
-								$BARCOLOR_B = $colorvalue;
-								break;
-							default :
-								echo "Please follow the correct format of backgroundcolor.";
-								break;
-						}
+				series.data.setAll(data);
+				series.appear(1000);
+
+				<?php
+			}
+			?>
+
+			// Add scrollbar
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/scrollbars/
+			chart.set("scrollbarX", am5.Scrollbar.new(root, {
+				start: <?php print $xAxisStart; ?>,
+				orientation: "horizontal"
+			}));
+
+			function drawLine(value, label) {
+				var seriesRangeDataItem = yAxis.makeDataItem({ value: value, endValue: value });
+				var seriesRange = series.createAxisRange(seriesRangeDataItem);
+				seriesRangeDataItem.get("grid").setAll({
+					strokeOpacity: 1,
+					visible: true,
+					stroke: am5.color(0x000000),
+					strokeDasharray: [2, 2]
+				});
+				seriesRangeDataItem.get("label").setAll({
+					location:0,
+					visible:true,
+					text: label,
+					inside:true,
+					centerX:0,
+					centerY:am5.p100,
+				});
+			}
+
+			function highlightData(series, value) {
+
+				var rangeDataItem = yAxis.makeDataItem({
+					value: value,
+				});
+				yAxis.onPrivate("max", (max) => {
+   				rangeDataItem.set("endValue", max * 2);
+				});
+
+				series.filledRanges.push(series.createAxisRange(rangeDataItem));
+				series.filledRanges[series.filledRanges.length-1].fills.template.setAll({
+					fillOpacity: fillOpacity,
+					visible: true
+				});
+
+				fillOpacity = fillOpacity + 0.1;
+
+			}
+
+			<?php print $drawLines; ?>
+
+			<?php if(userHasMobileClient() == false) { ?>
+			// Add legend
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/legend-xy-series/
+			var legend = chart.rightAxesContainer.children.push(am5.Legend.new(root, {
+				width: 200,
+				height: am5.percent(100),
+				paddingLeft: 15,
+				clickTarget: "none"
+			}));
+
+			// When legend item container is hovered, dim all the series except the hovered one
+			legend.itemContainers.template.events.on("pointerover", function(e) {
+				var itemContainer = e.target;
+
+				// As series list is data of a legend, dataContext is series
+				var series = itemContainer.dataItem.dataContext;
+
+				chart.series.each(function(chartSeries) {
+					if (chartSeries != series) {
+						chartSeries.strokes.template.setAll({
+							strokeOpacity: 0.15,
+							stroke: am5.color(0x000000)
+						});
+						chartSeries.filledRanges.forEach((range) => {
+							range.fills.template.setAll({
+								visible: false,
+							})
+						});
 					}
+				})
+			})
 
-					break;
-				default :
-					echo "Sorry, the graph option \"$graphoption\" for Bar graph is not supported at the moment!<br>";
-					break;
+			// When legend item container is unhovered, make all series as they are
+			legend.itemContainers.template.events.on("pointerout", function(e) {
+				var itemContainer = e.target;
+				var series = itemContainer.dataItem.dataContext;
+
+				chart.series.each(function(chartSeries) {
+					chartSeries.strokes.template.setAll({
+						strokeOpacity: 1,
+						stroke: chartSeries.get("fill")
+					});
+					chartSeries.filledRanges.forEach((range) => {
+						range.fills.template.setAll({
+							visible: true
+						})
+					});
+				});
+			})
+
+			legend.itemContainers.template.set("width", am5.p100);
+			legend.valueLabels.template.setAll({
+				width: am5.p100,
+				textAlign: "right"
+			});
+
+			// It's is important to set legend data after all the events are set on template, otherwise events won't be copied
+			legend.data.setAll(chart.series.values);
+
+			<?php } // end of if the user has a mobile client ?>
+
+			chart.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML
+			 // need ID to somehow be specific to this image, so we can have multiple on the page at once! Tricky because some code can be repeated or must be, but others we would want to keep as functions? -->
+			<div id="chartdiv"></div>
+
+			<?php
+			break;
+
+		case 'radar':
+
+			?>
+
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/locales/en_CA.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/fonts/notosans-sc.js"></script>
+
+			<style>
+			#chartdiv {
+			width: 100%;
+			height: 500px;
 			}
-		}
-	}
+			</style>
 
-	// reset width/height of the image in case the label is too long
-	if( (strlen($labelElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "vertical"){
-		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
-			$IMAGE_HEIGHT = strlen($labelElement)*5;
-		}else{
-			$labelElement = substr($labelElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
-		}
-	}elseif((strlen($dataElement)*4.5 >= $IMAGE_HEIGHT) AND $IMAGE_ORIENTATION == "horizontal"){
-		if( $IMAGE_HEIGHT == $IMAGE_DEFAULT_HEIGHT ){
-			$IMAGE_HEIGHT = strlen($dataElement)*5;
-		}else{
-			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
-		}
-	}elseif((strlen($labelElement)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "horizontal"){
-		if( $IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
-			$IMAGE_WIDTH = strlen($labelElement)*5;
-		}else{
-			$labelElement = substr($labelElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
-		}
-	}elseif((strlen($dataElement)*4.5 >= $IMAGE_WIDTH) AND $IMAGE_ORIENTATION == "vertical"){
-		if( $IMAGE_WIDTH == $IMAGE_DEFAULT_WIDTH){
-			$IMAGE_WIDTH = strlen($dataElement)*5;
-		}else{
-			$dataElement = substr($dataElement, 0, $IMAGE_HEIGHT/4.5-3)."...";
-		}
-	}
+			<!-- Chart code -->
+			<script>
+			am5.ready(function() {
 
-	// Code straightly copied from pChart documentation to draw the graph
-	$myData = new pData();
-	$myData -> addPoints(array_values($dataPoints), $dataElement);
-	$myData -> setAxisName(0, $dataElement);
-	$myData -> addPoints(array_keys($dataPoints), $labelElement);
-	$myData -> setSerieDescription($labelElement, $labelElement);
-	$myData -> setAbscissa($labelElement);
-	$myData -> setAbscissaName($labelElement);
-	// $myData -> setAxisDisplay(0, AXIS_FORMAT_CUSTOM, "YAxisFormat");
+			// Create root element
+			// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+			var root = am5.Root.new("chartdiv");
 
-	/* Create the pChart object */
-		$chartImage = new pImage($IMAGE_WIDTH, $IMAGE_HEIGHT, $myData);
-		$chartImage->drawGradientArea(0, 0, $IMAGE_WIDTH, $IMAGE_HEIGHT, DIRECTION_VERTICAL, array("StartR"=>$BACKGROUND_R, "StartG"=>$BACKGROUND_G, "StartB"=>$BACKGROUND_B, "EndR"=>$BACKGROUND_R, "EndG"=>$BACKGROUND_G, "EndB"=>$BACKGROUND_B, "Alpha"=>100));
-		$chartImage->drawGradientArea(0,0,500,500,DIRECTION_HORIZONTAL,array("StartR"=>240,"StartG"=>240,"StartB"=>240,"EndR"=>180,"EndG"=>180,"EndB"=>180,"Alpha"=>30));
-		$chartImage->setFontProperties(array("FontName"=>"modules/formulize/libraries/pChart/fonts/arial.ttf", "FontSize"=>8));
 
-	$paddingtoLeft = $IMAGE_WIDTH * 0.15;
-	$paddingtoTop = $IMAGE_HEIGHT * 0.2;
-	if( $paddingtoTop > 50){
-		$paddingtoTop = 50;
-	}
+			// Set themes
+			// https://www.amcharts.com/docs/v5/concepts/themes/
+			root.setThemes([
+				am5themes_Animated.new(root)
+			]);
 
-	/* Draw the chart scale */
-		$chartImage->setGraphArea($paddingtoLeft, $paddingtoTop, $IMAGE_WIDTH * 0.90, $IMAGE_HEIGHT * 0.88);
 
-	if($IMAGE_ORIENTATION == "vertical"){
-			$chartImage->drawScale(array("CycleBackground"=>TRUE, "DrawSubTicks"=>TRUE, "GridR"=>0, "GridG"=>0, "GridB"=>0, "GridAlpha"=>10, "Pos"=>SCALE_POS_TOPBOTTOM, "Mode"=>SCALE_MODE_ADDALL_START0, "Decimal"=>0, "MinDivHeight"=>50));
-	}else{
-			$chartImage->drawScale(array("CycleBackground"=>TRUE, "DrawSubTicks"=>TRUE, "GridR"=>0, "GridG"=>0, "GridB"=>0, "GridAlpha"=>10, "Mode"=>SCALE_MODE_ADDALL_START0, "Decimal"=>0, "MinDivHeight"=>50));
-	}
+			// Create chart
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/
+			var chart = root.container.children.push(am5radar.RadarChart.new(root, {
+				panX: false,
+				panY: false,
+				wheelX: false,
+				wheelY: false,
+			}));
 
-	/* Turn on shadow computing */
-		$chartImage->setShadow(TRUE, array("X"=>1, "Y"=>1, "R"=>0, "G"=>0, "B"=>0, "Alpha"=>10));
+			// Add cursor
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Cursor
+			var cursor = chart.set("cursor", am5radar.RadarCursor.new(root, {
+				behavior: "zoomX"
+			}));
+			cursor.lineY.set("visible", false);
 
-	$Palette = array("0"=>array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100));
+			// Create axes and their renderers
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Adding_axes
+			var xRenderer = am5radar.AxisRendererCircular.new(root, {});
+			xRenderer.labels.template.setAll({
+				radius: 10
+			});
 
-	for($i = 1 ; $i < $sizeMultiplier ; $i++){
-		$Palette[$i] = array("R"=>$BARCOLOR_R,"G"=>$BARCOLOR_G,"B"=>$BARCOLOR_B,"Alpha"=>100);
-	}
+			var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+				maxDeviation: 0,
+				categoryField: "country",
+				renderer: xRenderer,
+				tooltip: am5.Tooltip.new(root, {})
+			}));
 
-	$myPicture->drawBarChart(array("OverrideColors"=>$Palette));
+			var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+				renderer: am5radar.AxisRendererRadial.new(root, {})
+			}));
 
-	/* Draw the chart */
-		$chartImage->drawBarChart(array("DisplayPos"=>LABEL_POS_INSIDE, "DisplayValues"=>TRUE, "Rounded"=>TRUE, "Surrounding"=>30, "OverrideColors"=>$Palette));
-		// save the chart as an image
-		$chartImage->render(XOOPS_ROOT_PATH.$graphFileName);
-	}
-	return outputChartFile($graphFileName, $graphOptions);
-}
 
-function YAxisFormat($Value) {
-	if (round($Value) == $Value) {
-		return round($Value);
-	}
-		return "";
-	}
+			// Create series
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Adding_series
+			var series = chart.series.push(am5radar.RadarLineSeries.new(root, {
+				name: "Series",
+				xAxis: xAxis,
+				yAxis: yAxis,
+				valueYField: "litres",
+				categoryXField: "country",
+				tooltip:am5.Tooltip.new(root, {
+					labelText:"{valueY}"
+				})
+			}));
 
-/**
- * Helper method to draw radar graph
- * parameters have same meaning as displayGraph's parameters
- */
-function displayRadarGraph($dataPoints, $labelElement, $dataElement, $graphOptions) {
-	include_once XOOPS_ROOT_PATH."/modules/formulize/libraries/pChart/class/pRadar.class.php";
-	$graphOptions = setDefaultRadarGraphOptions($graphOptions);
-	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
-	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
+			series.strokes.template.setAll({
+				strokeWidth: 2
+			});
 
-		// create the graph data object and add data
-		$graphData = new pData();
-		// if the first item in the array is not an array, then there is only one array of data points
-		if (!is_array(array_slice($dataPoints, 0, 1))) {
-			$graphData->addPoints($dataPoints, "DataPoints");
-			$graphData->setPalette("DataPoints", $graphOptions["plotcolor"]);
-		} else {
-			// support multiple sets of data
-			foreach ($dataPoints as $key=>$value) {
-				$graphData->addPoints($value, $key);
-				if (isset($graphOptions["plotcolor"][$key]))
-					$graphData->setPalette($key, $graphOptions["plotcolor"][$key]);
+			series.bullets.push(function () {
+				return am5.Bullet.new(root, {
+					sprite: am5.Circle.new(root, {
+						radius: 5,
+						fill: series.get("fill")
+					})
+				});
+			});
+
+
+			// Set data
+			// https://www.amcharts.com/docs/v5/charts/radar-chart/#Setting_data
+			var data = [{
+				"country": "Lithuania",
+				"litres": 501
+			}, {
+				"country": "Czechia",
+				"litres": 301
+			}, {
+				"country": "Ireland",
+				"litres": 266
+			}, {
+				"country": "Germany",
+				"litres": 165
+			}, {
+				"country": "Australia",
+				"litres": 139
+			}, {
+				"country": "Austria",
+				"litres": 336
+			}, {
+				"country": "UK",
+				"litres": 290
+			}, {
+				"country": "Belgium",
+				"litres": 325
+			}, {
+				"country": "The Netherlands",
+				"litres": 40
+			}];
+			series.data.setAll(data);
+			xAxis.data.setAll(data);
+
+
+			// Animate chart and series in
+			// https://www.amcharts.com/docs/v5/concepts/animations/#Initial_animation
+			series.appear(1000);
+			chart.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML -->
+			<div id="chartdiv"></div>
+
+
+			<?php
+			break;
+
+		case "pie":
+			?>
+			<!-- Styles -->
+			<style>
+			#chartdiv {
+				width: 100%;
+				height: 500px;
 			}
-		}
+			</style>
 
-		// set graph labels
-		$graphData->addPoints($labelElement, "Labels");
-		$graphData->setAbscissa("Labels");
+			<!-- Resources -->
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
-		// create an image to hold the chart
-		$chartImage = new pImage($graphOptions["width"], $graphOptions["height"], $graphData);
-		// subtract 1 from width and height so that border can be drawn...
-		//$chartImage->drawFilledRectangle(0, 0, $graphOptions["width"] - 1, $graphOptions["height"] - 1, $graphOptions["background"]);
+			<!-- Chart code -->
+			<script>
+			am5.ready(function() {
 
-		// set the default font
-		$chartImage->setFontProperties(array("FontName"=>XOOPS_ROOT_PATH."/modules/formulize/libraries/pChart/fonts/".$graphOptions["FontName"].".ttf",
-			"FontSize"=>$graphOptions["FontSize"],
-			"R"=>$graphOptions["FontRGB"]["R"], "G"=>$graphOptions["FontRGB"]["G"], "B"=>$graphOptions["FontRGB"]["B"]));
+			// Create root element
+			// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+			var root = am5.Root.new("chartdiv");
 
-		// create the pRadar object
-		$theChart = new pRadar();
+			// Set themes
+			// https://www.amcharts.com/docs/v5/concepts/themes/
+			root.setThemes([
+				am5themes_Animated.new(root)
+			]);
 
-		// draw the chart
-		$chartImage->setGraphArea(0 + $graphOptions["padding"], 0 + $graphOptions["padding"],
-			$graphOptions["width"] - (2 * $graphOptions["padding"]), $graphOptions["height"] - (2 * $graphOptions["padding"]));
-		$theChart->drawRadar($chartImage, $graphData, $graphOptions);
+			// Create chart
+			// https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/
+			var chart = root.container.children.push(
+				am5percent.PieChart.new(root, {
+					endAngle: 270
+				})
+			);
 
-		// legend
-		// For Legend parameter details, see: http://wiki.pchart.net/doc.doc.draw.legend.html
-		if (isset($graphOptions["Legend"]))
-			$chartImage->drawLegend($graphOptions["Legend"]["x"], $graphOptions["Legend"]["y"], $graphOptions["Legend"]);
+			// Create series
+			// https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Series
+			var series = chart.series.push(
+				am5percent.PieSeries.new(root, {
+					valueField: "value",
+					categoryField: "category",
+					endAngle: 270
+				})
+			);
 
-		// title
-		if (isset($graphOptions['titlefont']))
-			$chartImage->setFontProperties($graphOptions['titlefont']);
-		if (isset($graphOptions['title'])) {
-			if (!isset($graphOptions['titleX']))
-				$graphOptions['titleX'] = 0;
-			if (!isset($graphOptions['titleY']))
-				$graphOptions['titleY'] = 0;
-	 		$chartImage->drawText($graphOptions['titleX'], $graphOptions['titleY'], $graphOptions['title']);
-		}
+			series.labels.template.setAll({
+				text: "{category}"
+			});
 
-		// save the chart as an image
-		$chartImage->render(XOOPS_ROOT_PATH.$graphFileName);
-	}
-	return outputChartFile($graphFileName, $graphOptions);
-}
+			series.slices.template.setAll({
+				tooltipText: "{category}: {valuePercentTotal.formatNumber('0.00')}% (n={value})"
+			});
 
-/**
- * Helper method that ensures default options are set for the radar graph. Not a public API.
- */
-function setDefaultRadarGraphOptions($graphOptions) {
-	// set default values for graph options (if the options are not set)
-	// width         : (pixels) width of the image
-	// height        : (pixels) height of the image
-	// padding       : (pixels) padding between each side of the chart and the image (default 0)
-	// background    : (array) RGB color array
-	// plotcolor     : (array) RGB color array
-	// For complete Radar graph style options, see: http://wiki.pchart.net/doc.draw.radar.html
+			series.states.create("hidden", {
+				endAngle: -90
+			});
 
-	if (!isset($graphOptions["width"]))
-		$graphOptions["width"] = 600;
-	if (!isset($graphOptions["height"]))
-		$graphOptions["height"] = 600;
-	if (!isset($graphOptions["plotcolor"]) and !isset($graphOptions["plotcolor"]["B"]))
-		$graphOptions["plotcolor"] = array("R"=>150, "G"=>150, "B"=>150, "Alpha"=>50);
-	if (!isset($graphOptions["FontSize"]) or $graphOptions["FontSize"] < 4)
-		$graphOptions["FontSize"] = 8;
-	if (!isset($graphOptions["FontName"]))
-		$graphOptions["FontName"] = "arial";
-	if (!isset($graphOptions["FontRGB"]) and !isset($graphOptions["FontRGB"]["B"]))
-		$graphOptions["FontRGB"] = array("R"=>0, "G"=>0, "B"=>0, "Alpha"=>100);
-	// padding (pixels) adds space between the edges of the image and the chart (like css padding)
-	if (!isset($graphOptions["padding"]) or $graphOptions["padding"] < 0)
-		$graphOptions["padding"] = 0;
-	if (!isset($graphOptions["BackgroundGradient"]) and !is_array($graphOptions["BackgroundGradient"]))
-		$graphOptions["BackgroundGradient"] = array("StartR"=>255, "StartG"=>255, "StartB"=>255, "StartAlpha"=>100,
-			"EndR"=>207, "EndG"=>227, "EndB"=>125, "EndAlpha"=>100);
-	if (!isset($graphOptions["DrawPoly"]))
-		$graphOptions["DrawPoly"] = True;
-	if (!isset($graphOptions["WriteValues"]))
-		$graphOptions["WriteValues"] = True;
-	if (!isset($graphOptions["WriteLabels"]))
-		$graphOptions["WriteLabels"] = True;
-	if (!isset($graphOptions["SkipLabels"]))
-		$graphOptions["SkipLabels"] = 1;
-	if (!isset($graphOptions["DrawAxisValues"]))
-		$graphOptions["DrawAxisValues"] = True;
-	if (!isset($graphOptions["ValueFontSize"]))
-		$graphOptions["ValueFontSize"] = 8;
-	if (!isset($graphOptions["Layout"]))
-		$graphOptions["Layout"] = RADAR_LAYOUT_CIRCLE;
-	if (!isset($graphOptions["LabelPos"]))
-		$graphOptions["LabelPos"] = RADAR_LABELS_HORIZONTAL;
+			// Set data
+			// https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Setting_data
+			series.data.setAll([<?php
 
-	return $graphOptions;
-}
-
-
-/**
- * Helper method to draw line graph
- * parameters have same meaning as displayGraph's parameters
- */
-function displayLineGraph($dataPoints, $labelElement, $dataElement, $graphOptions) {
-	$graphOptions = setDefaultLineGraphOptions($graphOptions);
-
-	$graphFileName = uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions);
-	if (!file_exists(XOOPS_ROOT_PATH.$graphFileName)) {
-		// create the graph data object and add data
-		$graphData = new pData();
-		// if the first item in the array is not an array, then there is only one array of data points
-		if (!is_array(array_slice($dataPoints, 0, 1))) {
-			$graphData->addPoints($dataPoints, "DataPoints");
-			if (isset($graphOptions["plotcolor"]))
-				$graphData->setPalette("DataPoints", $graphOptions["plotcolor"]);
-			if (isset($graphOptions["dashed"]))
-				$graphData->setSerieTicks("DataPoints", $graphOptions["dashed"]);
-			if (isset($graphOptions["thickness"]))
-				$graphData->setSerieWeight("DataPoints", $graphOptions["thickness"]);
-		} else {
-			// support multiple sets of data
-			foreach ($dataPoints as $key=>$value) {
-				$graphData->addPoints($value, $key);
-				if (isset($graphOptions["plotcolor"][$key]))
-					$graphData->setPalette($key, $graphOptions["plotcolor"][$key]);
-				if (isset($graphOptions["dashed"][$key]))
-					$graphData->setSerieTicks($key, $graphOptions["dashed"][$key]);
-				if (isset($graphOptions["thickness"][$key]))
-					$graphData->setSerieWeight($key, $graphOptions["thickness"][$key]);
+			foreach($data as $i=>$dataPoint) {
+				print $i ? ", " : "";
+				print "{
+				category: ".$dataPoint['category'].",
+				value: ".$dataPoint['value']."
+			}";
 			}
+
+			?>]);
+
+			series.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML -->
+			<div id="chartdiv"></div>
+
+			<?php
+			break;
+
+		case "bar":
+			?>
+			<!-- Styles -->
+			<style>
+			#chartdiv {
+				width: 100%;
+				height: 500px;
+			}
+			</style>
+
+			<!-- Resources -->
+			<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+			<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+			<!-- Chart code -->
+			<script>
+			am5.ready(function() {
+
+			// Create root element
+			// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+			var root = am5.Root.new("chartdiv");
+
+			// Set themes
+			// https://www.amcharts.com/docs/v5/concepts/themes/
+			root.setThemes([
+				am5themes_Animated.new(root)
+			]);
+
+			// Create chart
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/
+			var chart = root.container.children.push(am5xy.XYChart.new(root, {
+				/*panX: true,
+				panY: true,
+				wheelX: "panX",
+				wheelY: "zoomX",
+				pinchZoomX: true,
+				paddingLeft:0,
+				paddingRight:1*/
+				panX: false,
+				panY: false,
+				wheelX: "none",
+				wheelY: "none",
+				paddingBottom: 50,
+				paddingTop: 40,
+				paddingLeft:0,
+				paddingRight:0
+			}));
+
+			// Add cursor
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
+			var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
+			cursor.lineY.set("visible", false);
+
+
+			// Create axes
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+			var xRenderer = am5xy.AxisRendererX.new(root, {
+				minGridDistance: 30,
+				minorGridEnabled: true
+			});
+
+			xRenderer.grid.template.setAll({
+				location: 1
+			})
+
+			var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+				maxDeviation: 0.3,
+				categoryField: "category",
+				renderer: xRenderer,
+			}));
+
+			xAxis.get("renderer").labels.template.adapters.add("text", function(text, target) {
+				return ''
+			});
+
+			var yRenderer = am5xy.AxisRendererY.new(root, {
+				strokeOpacity: 0.1
+			})
+
+			var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+				maxDeviation: 0.3,
+				min: 0,
+				renderer: yRenderer
+			}));
+
+			// Create series
+			// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+			var series = chart.series.push(
+				am5xy.ColumnSeries.new(root, {
+					name: "Series 1",
+					xAxis: xAxis,
+					yAxis: yAxis,
+					valueYField: "value",
+					maskBullets: false,
+					sequencedInterpolation: true,
+					calculateAggregates: true,
+					categoryXField: "category",
+					tooltip: am5.Tooltip.new(root, {
+						labelText: "{category}: {value}"
+					})
+				})
+			);
+
+			series.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
+			series.columns.template.adapters.add("fill", function (fill, target) {
+				return chart.get("colors").getIndex(series.columns.indexOf(target));
+			});
+
+			series.columns.template.adapters.add("stroke", function (stroke, target) {
+				return chart.get("colors").getIndex(series.columns.indexOf(target));
+			});
+
+			// Set data
+			var data = [<?php
+
+			foreach($data as $i=>$dataPoint) {
+				print $i ? ", " : "";
+				print "{
+				category: ".$dataPoint['category'].",
+				value: ".$dataPoint['value'].",
+				icon: { src: \"".$dataPoint['icon']."\" }
+			}";
+			}
+
+			?>];
+
+			/* bullet animations */
+			var currentlyHovered;
+
+			series.columns.template.events.on("pointerover", function (e) {
+				handleHover(e.target.dataItem);
+			});
+
+			series.columns.template.events.on("pointerout", function (e) {
+				handleOut();
+			});
+
+			function handleHover(dataItem) {
+				if (dataItem && currentlyHovered != dataItem) {
+					handleOut();
+					currentlyHovered = dataItem;
+					var bullet = dataItem.bullets[0];
+					bullet.animate({
+						key: "locationY",
+						to: 1,
+						duration: 1200,
+						easing: am5.ease.out(am5.ease.cubic)
+					});
+				}
+			}
+
+			function handleOut() {
+				if (currentlyHovered) {
+					var bullet = currentlyHovered.bullets[0];
+					bullet.animate({
+						key: "locationY",
+						to: 0,
+						duration: 1200,
+						easing: am5.ease.out(am5.ease.cubic)
+					});
+				}
+			}
+
+			var circleTemplate = am5.Template.new({});
+
+			series.bullets.push(function (root, series, dataItem) {
+				var bulletContainer = am5.Container.new(root, {});
+
+				// only containers can be masked, so we add image to another container
+				var imageContainer = bulletContainer.children.push(
+					am5.Container.new(root, {})
+				);
+
+				var image = imageContainer.children.push(
+					am5.Picture.new(root, {
+						templateField: "icon",
+						centerX: am5.p50,
+						centerY: -4,
+						cornerRadius: 5,
+						width: 100,
+					})
+				);
+
+				return am5.Bullet.new(root, {
+					locationY: 0,
+					sprite: bulletContainer
+				});
+			});
+
+
+			xAxis.data.setAll(data);
+			series.data.setAll(data);
+
+			/* bullet animations */
+			var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {}));
+			cursor.lineX.set("visible", false);
+			cursor.lineY.set("visible", false);
+
+			cursor.events.on("cursormoved", function () {
+				var dataItem = series.get("tooltip").dataItem;
+				if (dataItem) {
+					handleHover(dataItem);
+				} else {
+					handleOut();
+				}
+			});
+
+			// Make stuff animate on load
+			// https://www.amcharts.com/docs/v5/concepts/animations/
+			series.appear(1000);
+			chart.appear(1000, 100);
+
+			}); // end am5.ready()
+			</script>
+
+			<!-- HTML -->
+			<div id="chartdiv"></div>
+
+			<?php
+			break;
+
 		}
+}
 
-		// set graph labels
-		$graphData->addPoints($labelElement, "Labels");
-		$graphData->setAbscissa("Labels");
-
-		// create an image to hold the chart
-		$chartImage = new pImage($graphOptions["width"], $graphOptions["height"], $graphData);
-
-		if (isset($graphOptions["pre_draw_hook"]) and function_exists($graphOptions["pre_draw_hook"])) {
-			// allow drawing on the image before the chart is drawn
-			$graphOptions["pre_draw_hook"]($chartImage, $graphOptions);
-		}
-
-		// subtract 1 from width and height so that border can be drawn...
-		//$chartImage->drawFilledRectangle(0, 0, $graphOptions["width"] - 1, $graphOptions["height"] - 1, $graphOptions["background"]);
-
-		// set the default font
-		$chartImage->setFontProperties(array("FontName"=>XOOPS_ROOT_PATH."/modules/formulize/libraries/pChart/fonts/".$graphOptions["FontName"].".ttf",
-			"FontSize"=>$graphOptions["FontSize"],
-			"R"=>$graphOptions["FontRGB"]["R"], "G"=>$graphOptions["FontRGB"]["G"], "B"=>$graphOptions["FontRGB"]["B"]));
-
-		// draw the chart
-		$chartImage->setGraphArea(0 + $graphOptions["padding"], 0 + $graphOptions["padding"],
-			$graphOptions["width"] - $graphOptions["padding"], $graphOptions["height"] - $graphOptions["padding"]);
-	 	$chartImage->drawScale($graphOptions);
-	 	if (isset($graphOptions["spline"]) and $graphOptions["spline"])
-		 	$chartImage->drawSplineChart($graphOptions);
-		else
-	 		$chartImage->drawLineChart($graphOptions);
-
-		// legend. For parameter details, see: http://wiki.pchart.net/doc.doc.draw.legend.html
-		if (isset($graphOptions["Legend"]))
-			$chartImage->drawLegend($graphOptions["Legend"]["x"], $graphOptions["Legend"]["y"], $graphOptions["Legend"]);
-
-		// title
-		if (isset($graphOptions['titlefont']))
-			$chartImage->setFontProperties($graphOptions['titlefont']);
-		if (isset($graphOptions['title'])) {
-			if (!isset($graphOptions['titleX']))
-				$graphOptions['titleX'] = 0;
-			if (!isset($graphOptions['titleY']))
-				$graphOptions['titleY'] = 0;
-	 		$chartImage->drawText($graphOptions['titleX'], $graphOptions['titleY'], $graphOptions['title']);
-		}
-
-		if (isset($graphOptions["post_draw_hook"]) and function_exists($graphOptions["post_draw_hook"])) {
-			// allow drawing on the image after the chart is drawn
-			$graphOptions["post_draw_hook"]($chartImage, $graphOptions);
-		}
-
-		// save the chart as an image
-		$chartImage->render(XOOPS_ROOT_PATH.$graphFileName);
+function convertPHPTimeFormatToJSTimeFormat($formatString) {
+	$replacements = array(
+		'M' => 'MMM',
+		'j' => 'd',
+		// needs to be completed!!!
+	);
+	foreach($replacements as $php=>$js) {
+		$formatString = str_replace($php, $js, $formatString);
 	}
-	return outputChartFile($graphFileName, $graphOptions);
+	return $formatString;
 }
-
-/**
- * Helper method that ensures default options are set for the line graph. Not a public API.
- */
-function setDefaultLineGraphOptions($graphOptions) {
-	// set default values for graph options (if the options are not set)
-	// width         : (pixels) width of the image
-	// height        : (pixels) height of the image
-	// padding       : (pixels) padding between each side of the chart and the image (default 0)
-	// For complete line graph style options, see: pDraw.class.php or http://wiki.pchart.net/doc.chart.drawlinechart.html
-
-	if (!isset($graphOptions["width"]))
-		$graphOptions["width"] = 600;
-	if (!isset($graphOptions["height"]))
-		$graphOptions["height"] = 600;
-	if (!isset($graphOptions["padding"]))
-		$graphOptions["padding"] = 0;
-
-	if (!isset($graphOptions["FontRGB"]) and !isset($graphOptions["FontRGB"]["B"]))
-		$graphOptions["FontRGB"] = array("R"=>0, "G"=>0, "B"=>0, "Alpha"=>100);
-	if (!isset($graphOptions["DrawSubTicks"]))
-		$graphOptions["DrawSubTicks"] = false;
-	if (!isset($graphOptions["DisplayValues"]))
-		$graphOptions["DisplayValues"] = true;
-	if (!isset($graphOptions["DisplayColor"]))
-		$graphOptions["DisplayColor"] = DISPLAY_AUTO;
-
-	return $graphOptions;
-}
-
-/**
- * Generate a unique filename for each graph
- */
-function uniqueGraphFileName($dataPoints, $labelElement, $dataElement, $graphOptions) {
-	// TODO: make some kind of cron job clear up or some kind of caches, update graph only when needed!
-	// many charts will use the same options, so use data points and options to determine a unique filename
-	return "/modules/formulize/images/graphs/".
-		md5(SDATA_DB_SALT.var_export($dataPoints, true).var_export($graphOptions, true)).".png";
-}
-
-function outputChartFile($graphFileName, $graphOptions) {
-	if (isset($graphOptions['return_filename']) and $graphOptions['return_filename']) {
-		// simply return the filename as a string
-		return $graphFileName;
-	} else {
-		// output an image tag
-		echo "<img src='{$graphFileName}' />";
-	}
-}
-
-function initializeZeros($keys) {
-	foreach ($keys as $key) {
-		$rtn[$key] = 0;
-	}
-	return $rtn;
-}
-
-// This function is for testing purpose only
-function echoBR() {
-	echo "<br \>";
-}
-?>
