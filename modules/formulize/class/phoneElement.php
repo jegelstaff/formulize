@@ -184,28 +184,11 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     // You can return {WRITEASNULL} to cause a null value to be saved in the database
     // $value is what the user submitted
     // $element is the element object
-	// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
+		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
     // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
-        $formatPos = 0;
-        $valuePos = 0;
-        $ele_value = $element->getVar('ele_value');
-        $format = $ele_value['format'];
-        $value = preg_replace ('/[^0-9]+/', '', $value);
-        $number = '';
-        while($formatPos < strlen($format)) {
-            $formatChar = substr($format, $formatPos, 1);
-            $formatPos++;
-            if($formatChar != 'X') {
-                $number .= $formatChar;
-            } else {
-                $valueChar = substr($value, $valuePos, 1);
-                $valuePos++;
-                $number .= $valueChar;
-            }
-        }
-
-        return trim($number);
+			$ele_value = $element->getVar('ele_value');
+			return formatPhoneNumber($value, $ele_value['format']);
     }
 
     // this method will handle any final actions that have to happen after data has been saved
@@ -249,3 +232,23 @@ class formulizePhoneElementHandler extends formulizeElementsHandler {
     }
 
 }
+
+function formatPhoneNumber($number, $format = 'XXX-XXX-XXXX') {
+	$formatPos = 0;
+	$numberPos = 0;
+	$formattedNumber = '';
+	$number = preg_replace ('/[^0-9]+/', '', $number);
+	while($formatPos < strlen($format)) {
+		$formatChar = substr($format, $formatPos, 1);
+		$formatPos++;
+		if($formatChar != 'X') {
+			$formattedNumber .= $formatChar;
+		} else {
+			$numberChar = substr($number, $numberPos, 1);
+			$numberPos++;
+			$formattedNumber .= $numberChar;
+		}
+	}
+	return trim($formattedNumber);
+}
+
