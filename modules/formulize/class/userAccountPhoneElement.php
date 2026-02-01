@@ -28,6 +28,7 @@
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/phoneElement.php";
 
 class formulizeUserAccountPhoneElement extends formulizeUserAccountElement {
 
@@ -65,6 +66,18 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
     $element->setVar('ele_value', $ele_value);
   }
 
+	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
+	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
+	// $element is the element object
+	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+	// $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+		$value = parent::loadValue($element, $value, $entry_id);
+		$ele_value = $element->getVar('ele_value');
+		$ele_value['number'] = formatPhoneNumber($value, ((isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX'));
+		return $ele_value;
+  }
+
 	// this method renders the element for display in a form
 	// the caption has been pre-prepared and passed in separately from the element object
 	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
@@ -79,7 +92,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		if($isDisabled) {
 			$formElement = new xoopsFormLabel($caption, $ele_value['number']);
 		} else {
-			$ele_value['format'] = $ele_value['format'] ? $ele_value['format'] : 'XXX-XXX-XXXX';
+			$ele_value['format'] = (isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX';
 			$formElement = new xoopsFormText($caption, $markupName, 15, 255, $ele_value['number']); // caption, markup name, size, maxlength, default value, according to the xoops form class
 			$formElement->setExtra('placeholder="'.$ele_value['format'].'"');
 			$formElement->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
