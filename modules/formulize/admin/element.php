@@ -269,7 +269,7 @@ $common['type'] = $ele_type;
 $common['typeIsSelect'] = anySelectElementType($ele_type);
 $common['uid'] = $xoopsUser->getVar('uid');
 $common['isSystemElement'] = $elementObject ? $elementObject->isSystemElement : false;
-$common['isUserAccountElement'] = ($elementObject AND substr($elementObject->getVar('ele_type'), 0, 11) == 'userAccount' AND $elementObject->isSystemElement) ? true : false;
+$common['isUserAccountElement'] = $elementObject ? $elementObject->isUserAccountElement : false;
 
 $options = array();
 $options['ele_delim'] = $ele_delim;

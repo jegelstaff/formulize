@@ -2228,11 +2228,13 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 		return array();
 	}
 
-	$ele_value = $element->getVar('ele_value');
-	// if there is no previous entry data to load, then just return the default ele_value
-	if(empty($prevEntry)) {
-		return $ele_value;
-	}
+	// check for previously entered data, unless it's a user account element, which loads its own data differently directly from user table
+	if(!$element->isUserAccountElement) {
+		$ele_value = $element->getVar('ele_value');
+		// if there is no previous entry data to load, then just return the default ele_value
+		if(empty($prevEntry)) {
+			return $ele_value;
+		}
 
 	// get the value of this element for this entry as stored in the DB, if any
 	$value = "";
