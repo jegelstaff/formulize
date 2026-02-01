@@ -2223,6 +2223,9 @@ function validationJSFromDisembodiedElementRender($elementObject, $entry_id, $pr
 	// get the validation code for this element, wrap it in a check for the table row being visible, and assign that to the global array that contains validation javascript that we need to add to the form
 	$jsValidationRenderer = new formulizeElementRenderer($elementObject);
 	if($jsValidiationCodeElement = $jsValidationRenderer->constructElement($renderedElementMarkupName, $ele_value, $entry_id, false, $screen, true)) { // last flag is "validation only" so the rendered knows things won't actually be output
+		if($elementObject->getVar('ele_required')) {
+			$jsValidiationCodeElement->setRequired();
+		}
 		if(is_object($jsValidiationCodeElement) AND $js = $jsValidiationCodeElement->renderValidationJS()) {
 			return array($js, $jsValidiationCodeElement->getName());
 		}
