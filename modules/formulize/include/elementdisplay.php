@@ -562,8 +562,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
             }
         }
 
-		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]])) {
-			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$filterElements[$i]];
+		$entryKey = is_numeric($entry) ? intval($entry) : $entry;
+		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey]) AND array_key_exists($filterElements[$i], $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey])) {
+			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey][$filterElements[$i]];
 		} elseif($entry == "new") {
 			$elementObject = $element_handler->get($filterElements[$i]);
 			if(is_object($elementObject)) {
