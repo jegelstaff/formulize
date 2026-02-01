@@ -34,6 +34,7 @@ class formulizeUserAccountUsernameElement extends formulizeUserAccountFirstNameE
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Username";
+			$this->userProperty = "login_name";
 		}
 
 }
