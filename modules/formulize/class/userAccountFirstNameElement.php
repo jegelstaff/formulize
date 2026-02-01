@@ -34,6 +34,7 @@ class formulizeUserAccountFirstNameElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
       $this->name = "User Account First Name";
+			$this->userProperty = "uname";
     }
 
 }
@@ -43,6 +44,24 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 
 	function create() {
 		return new formulizeUserAccountFirstNameElement();
+	}
+
+	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
+	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
+	// $element is the element object
+	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+	// $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+		$value = parent::loadValue($element, $value, $entry_id);
+		$nameParts = explode(" ", trim($value));
+		$elementTypeName = strtolower(str_ireplace(['formulizeUserAccount', 'ElementHandler'], "", static::class));
+		if($elementTypeName != 'lastname') {
+			$value = $nameParts[0];
+		} else {
+			unset($nameParts[0]);
+			$value = implode(" ", $nameParts);
+		}
+		return $value;
 	}
 
 	// this method renders the element for display in a form

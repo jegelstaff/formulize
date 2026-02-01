@@ -34,6 +34,7 @@ class formulizeUserAccountEmailElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Email Address";
+			$this->userProperty = "email";
     }
 
 }

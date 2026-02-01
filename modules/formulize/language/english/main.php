@@ -823,6 +823,8 @@ define("_formulize_USERACCOUNTFIRSTNAME", "First Name");
 define("_formulize_USERACCOUNTLASTNAME", "Last Name");
 define("_formulize_USERACCOUNTEMAIL", "Email Address");
 define("_formulize_USERACCOUNTUSERNAME", "Username");
+define("_formulize_USERACCOUNTPASSWORD_CREATE", "Create a ");
+define("_formulize_USERACCOUNTPASSWORD_UPDATE", "Change ");
 define("_formulize_USERACCOUNTPASSWORD", "Password");
 define("_formulize_USERACCOUNTTIMEZONE", "Timezone");
 define("_formulize_USERACCOUNTPHONE", "Phone Number");

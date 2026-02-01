@@ -98,7 +98,7 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 			$tray->addElement($form_ele);
 			$tray->addElement($form_ele2);
 			$form_ele = new XoopsFormLabel(
-				$caption,
+				($entry_id == 'new' ? _formulize_USERACCOUNTPASSWORD_CREATE : _formulize_USERACCOUNTPASSWORD_UPDATE). strtolower(" $caption"),
 				trans($tray->render()),
 				$markupName
 			);
