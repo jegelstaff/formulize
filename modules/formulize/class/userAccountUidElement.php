@@ -36,6 +36,7 @@ class formulizeUserAccountUidElement extends formulizeUserAccountElement {
       $this->name = "User Account UID";
 			$this->overrideDataType = "MEDIUMINT(8) UNSIGNED";
 			$this->hasData = true;
+			$this->userProperty = "uid";
 		}
 
 }

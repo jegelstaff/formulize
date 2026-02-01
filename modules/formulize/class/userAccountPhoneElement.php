@@ -35,6 +35,7 @@ class formulizeUserAccountPhoneElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
       $this->name = "User Account Phone Number";
+			$this->userProperty = "2faphone";
 		}
 
 }
@@ -76,7 +77,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		$ele_value = $element->getVar('ele_value');
 		$ele_value['number'] = formatPhoneNumber($value, ((isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX'));
 		return $ele_value;
-  }
+	}
 
 	// this method renders the element for display in a form
 	// the caption has been pre-prepared and passed in separately from the element object
@@ -109,6 +110,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		$validationCode = array();
 		// validate for length of numbers
 		$numberOfXs = substr_count($ele_value['format'], 'X');
+		$validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter a phone number.'); \n myform.{$markupName}.focus();\n return false;\n }";
 		$validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs && myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length > 0) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
 		return $validationCode;
 	}
