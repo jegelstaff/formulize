@@ -89,6 +89,7 @@ if($formObject->getVar('entries_are_users')
 	AND isset($_POST['user_mapping_type'])
 	AND $_POST['user_mapping_type'] != ''
 ) {
+	$formObject = $oldEntriesAreUsers === 0 ? $form_handler->get($fid, refreshCache: true) : $formObject; // reload form object to ensure we have the user account element available
 	if($form_handler->associateExistingUsersWithFormEntries($formObject, $_POST['user_mapping_element'], $_POST['user_mapping_type'])) {
 		$_POST['reload_settings'] = 1; // force a reload of the settings page to remove the user mapping UI
 	}

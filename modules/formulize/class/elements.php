@@ -51,6 +51,7 @@ class formulizeElement extends FormulizeObject {
 	var $canHaveMultipleValues;
 	var $hasMultipleOptions;
 	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be primarily managed by the system
+	var $isUserAccountElement; // set to true in user account element classes
 	public static $category = 'misc'; // the category this element belongs to - textboxes, selectors, lists, layout, misc, subforms
 
 	function __construct(){
@@ -690,6 +691,7 @@ class formulizeElementsHandler {
     function _setElementProperties($element) {
 			$element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
 			$element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
+			$element->isUserAccountElement = (substr($element->getVar('ele_type'), 0, 11) == 'userAccount' AND $element->isSystemElement) ? true : false;
 			$element->setVar('fid', $element->getVar('id_form'));
 			if(method_exists($element, 'setCanHaveMultipleValues')) {
 				$element->canHaveMultipleValues = $element->setCanHaveMultipleValues();
