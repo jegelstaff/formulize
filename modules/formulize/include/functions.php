@@ -1968,7 +1968,8 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 			$value = $dataHandler->findAllEntriesWithValue($sourceHandleOfElement, $value, operator: $operator);
 			$value = (is_array($value) AND count($value) == 1) ? $value[0] : $value;
 		} elseif($value != "{BLANK}") {
-			$value = checkUITextForValue($value, $elementObject, $partialMatch);
+			$foundValue = checkUITextForValue($value, $elementObject, $partialMatch);
+			$value = ($value === "" AND $foundValue === false) ? "" : $foundValue; // if a "blank" was searched for, and nothing found, we still want to be searching for the blank, not boolean false
 		}
 
 		// if the generic checks above returned an array, we'll stick with that
