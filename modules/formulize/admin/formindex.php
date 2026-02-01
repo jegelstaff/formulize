@@ -1769,27 +1769,29 @@ function patch40() {
         include_once ICMS_ROOT_PATH . '/include/notification_constants.php';
         $profile_field_handler = icms_getModuleHandler('field', 'profile', 'profile');
         if ($profile_field_handler) {
-            $criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
-            $notify_fields = $profile_field_handler->getObjects($criteria);
-            if (count($notify_fields) > 0) {
-                $notify_field = $notify_fields[0];
-                // Get current options and check if SMS already exists
-                $current_options = unserialize($notify_field->getVar('field_options', 'n'));
-                if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])) {
-										require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
-										if(defined('_NOT_METHOD_SMS')) {
-											// Add SMS option
-											$updated_options = array(
-													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE,
-													XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
-													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
-													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS
-											);
-											$notify_field->setVar('field_options', serialize($updated_options));
-											$profile_field_handler->insert($notify_field);
-										}
-                }
-            }
+					$criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
+					$notify_fields = $profile_field_handler->getObjects($criteria);
+					if (count($notify_fields) > 0) {
+						$notify_field = $notify_fields[0];
+						// Get current options and check if SMS already exists
+						$current_options = unserialize($notify_field->getVar('field_options', 'n'));
+						require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
+						if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_PM] != _NOT_METHOD_PM
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_DISABLE] != _NOT_METHOD_DISABLE
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_EMAIL] != _NOT_METHOD_EMAIL
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_SMS] != _NOT_METHOD_SMS
+							) {
+							$updated_options = array(
+								XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
+								XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
+								XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
+								XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE
+							);
+							$notify_field->setVar('field_options', serialize($updated_options));
+							$profile_field_handler->insert($notify_field);
+						}
+					}
         }
 
         // Check for legacy SMS credentials that need migration

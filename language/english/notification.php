@@ -74,9 +74,9 @@ define ('_NOT_BOOKMARK_NOTIFYDSC', 'Keep track of this item without receiving an
 // FIXME: These should be reworded a little...
 
 define ('_NOT_NOTIFYMETHOD', 'Notification Method: When you monitor e.g. a forum, how would you like to receive notifications of updates?');
-define ('_NOT_METHOD_EMAIL', 'Email (use address in my profile)');
-define ('_NOT_METHOD_PM', 'Private Message (sent to my inbox in this website)');
-define ('_NOT_METHOD_SMS', 'Texting (use phone number in my profile)');
+define ('_NOT_METHOD_EMAIL', 'Email');
+define ('_NOT_METHOD_PM', 'Direct Message in this website');
+define ('_NOT_METHOD_SMS', 'Texting');
 define ('_NOT_METHOD_DISABLE', 'Temporarily Disable');
 
 define ('_NOT_NOTIFYMODE', 'Default Notification Mode');
