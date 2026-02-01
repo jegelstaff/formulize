@@ -34,6 +34,7 @@ class formulizeUserAccountTimezoneElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
       $this->name = "User Account Timezone";
+			$this->userProperty = "timezone_offset";
 		}
 
 }
@@ -57,31 +58,15 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		$options = array(
-			0 => 'UTC',
-			-5 => 'Eastern',
-			-6 => 'Central',
-			-7 => 'Mountain',
-			-8 => 'Pacific'
+			'0' => 'UTC',
+			'-3.5' => 'Newfoundland',
+			'-4' => 'Atlantic',
+			'-5' => 'Eastern',
+			'-6' => 'Central',
+			'-7' => 'Mountain',
+			'-8' => 'Pacific'
 		);
-		$disabled = ($isDisabled) ? 'disabled="disabled"' : '';
-		$form_ele = new XoopsFormElementTray('', '<br>');
-		foreach($options as $oKey=>$oValue) {
-			$t = new XoopsFormRadio(
-				'',
-				$markupName,
-				$ele_value
-			);
-			$t->addOption($oKey, $oValue);
-			$t->setExtra("onchange=\"javascript:formulizechanged=1;\" $disabled");
-			$form_ele->addElement($t);
-			unset($t);
-		}
-		$form_ele = new XoopsFormLabel(
-			$caption,
-			trans($form_ele->render()),
-			$markupName
-		);
-		return $form_ele;
+		return $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
 	}
 
 }
