@@ -1053,7 +1053,8 @@ class formulizeFormsHandler {
 				'Email',
 				'Phone',
 				'2FA',
-				'Timezone'
+				'NotificationMethod',
+				'Timezone',
 			);
 			// ensure the order is correct
 			$orderedTypes = array();
@@ -1214,6 +1215,7 @@ class formulizeFormsHandler {
 		} else {
 			$formObject = $formIdentifier;
 		}
+
 		// validate that the form has a userAccountUid element
 		if(!in_array('formulize_user_account_uid_'.$formObject->getVar('fid'), $formObject->getVar('elementHandles'))) {
 			return false;
