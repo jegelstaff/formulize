@@ -30,6 +30,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeUserAccountElement extends formulizeElement {
 
+		var $userProperty = null; // the user property that this element represents, ie: 'uid', 'email', 'name', etc. Overridden in child classes.
+
     function __construct() {
         $this->name = "User Account Settings Base Element";
         $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
@@ -62,7 +64,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
-	function adminPrepare($element) {
+		function adminPrepare($element) {
     }
 
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -71,7 +73,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
-	function adminSave($element, $ele_value = array(), $advancedTab = false) {
+		function adminSave($element, $ele_value = array(), $advancedTab = false) {
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -80,6 +82,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
     // $entry_id is the ID of the entry being loaded
 		function loadValue($element, $value, $entry_id) {
+			$value = null;
+			$member_handler = xoops_gethandler('member');
+			$dataHandler = new formulizeDataHandler($element->getVar('fid'));
+			if($element->userProperty AND $user = $member_handler->getUser($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
+				if(!$value = $user->getVar($element->userProperty)) {
+					$profile_handler = xoops_getmodulehandler('profile', 'profile');
+					$profile = $profile_handler->get($user->getVar('uid'));
+					$value = $profile->getVar($element->userProperty);
+				}
+			}
+			return $value;
     }
 
     // this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -136,6 +149,29 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$this->length = 255; // truncate to a maximum of 100 characters, and append ... on the end
 
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+	}
+
+	// utility function to render radio buttons for this user account element types
+	function renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled) {
+		$disabled = ($isDisabled) ? 'disabled="disabled"' : '';
+		$form_ele = new XoopsFormElementTray('', '<br>');
+		foreach($options as $oKey=>$oValue) {
+			$t = new XoopsFormRadio(
+				'',
+				$markupName,
+				$ele_value
+			);
+			$t->addOption($oKey, $oValue);
+			$t->setExtra("onchange=\"javascript:formulizechanged=1;\" $disabled");
+			$form_ele->addElement($t);
+			unset($t);
+		}
+		$form_ele = new XoopsFormLabel(
+			$caption,
+			$form_ele->render(),
+			$markupName
+		);
+		return $form_ele;
 	}
 
 }

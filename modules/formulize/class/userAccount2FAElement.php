@@ -34,6 +34,7 @@ class formulizeUserAccount2FAElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Two-Factor Authentication Settings";
+			$this->userProperty = "2famethod";
     }
 
 }
@@ -63,25 +64,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			_formulize_USERACCOUNT_2FAOPTION_SMS,
 			_formulize_USERACCOUNT_2FAOPTION_AUTHAPP
 		);
-		$disabled = ($isDisabled) ? 'disabled="disabled"' : '';
-		$form_ele = new XoopsFormElementTray('', '<br>');
-		foreach($options as $oKey=>$oValue) {
-			$t = new XoopsFormRadio(
-				'',
-				$markupName,
-				$ele_value
-			);
-			$t->addOption($oKey, $oValue);
-			$t->setExtra("onchange=\"javascript:formulizechanged=1;\" $disabled");
-			$form_ele->addElement($t);
-			unset($t);
-		}
-		$form_ele = new XoopsFormLabel(
-			$caption,
-			trans($form_ele->render()),
-			$markupName
-		);
-		return $form_ele;
+		return $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
 	}
 
 }

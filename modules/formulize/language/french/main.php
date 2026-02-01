@@ -659,6 +659,8 @@ define("_formulize_USERACCOUNTFIRSTNAME", "Prenom");
 define("_formulize_USERACCOUNTLASTNAME", "Nom de famille");
 define("_formulize_USERACCOUNTEMAIL", "Adresse e-mail");
 define("_formulize_USERACCOUNTUSERNAME", "Nom d'utilisateur");
+define("_formulize_USERACCOUNTPASSWORD_CREATE", "Créer un ");
+define("_formulize_USERACCOUNTPASSWORD_UPDATE", "Changer le ");
 define("_formulize_USERACCOUNTPASSWORD", "Mot de passe");
 define("_formulize_USERACCOUNTTIMEZONE", "Fuseau horaire");
 define("_formulize_USERACCOUNTPHONE", "Numéro de téléphone");
