@@ -37,9 +37,9 @@
     <!-- CSS -->
     <{php}>
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
-    $cssPath = '<{if isset($icms_rtl) AND $icms_rtl}>rtl/<{/if}>css/style.css';
-    $cssVersion = formulize_get_file_version('/themes/Anari/' . ($this->_tpl_vars['icms_rtl'] ?? false ? 'rtl/' : '') . 'css/style.css');
-    echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . ($this->_tpl_vars['icms_rtl'] ?? false ? 'rtl/' : '') . 'css/style.css?v=' . $cssVersion . '" />';
+    $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
+    $cssVersion = formulize_get_file_version('/themes/Anari/' . $rtlPath . 'css/style.css');
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
     <{/php}>
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
@@ -188,7 +188,6 @@ if($xoopsUser) {
 
 
   <{php}>
-  require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
   $jsVersion = formulize_get_file_version('/themes/Anari/js/script.js');
   echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
   <{/php}>
