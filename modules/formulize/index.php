@@ -55,14 +55,14 @@ if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
 include_once XOOPS_ROOT_PATH.'/header.php';
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 global $xoTheme;
 if($xoTheme) {
 
     $cssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
+		$jsVersion = formulize_get_file_version('/modules/formulize/libraries/formulize.js');
     $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$cssVersion);
-    $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
+    $xoTheme->addScript("/modules/formulize/libraries/formulize.js?v=".$jsVersion);
 }
 include 'initialize.php';
 

@@ -8,7 +8,6 @@ while(ob_get_level()) {
 }
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
 $fid = intval($_GET['fid']);
 
@@ -84,7 +83,7 @@ foreach($elementObjects as $elementObject) {
 	} elseif($form_ele !== false) {
 		$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
 		$fakeForm->addElement($form_ele, $req);
-		unset($form_ele); 
+		unset($form_ele);
 	}
 }
 

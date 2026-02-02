@@ -2277,7 +2277,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
             if($js) { // only need to include this code once!
                 $js = "";
             } else {
-                $js = "<script type='text/javascript'>
+                                $js = "<script type='text/javascript'>
                 if (typeof jQuery == 'undefined') {
                         var head = document.getElementsByTagName('head')[0];
                         script = document.createElement('script');
@@ -3305,13 +3305,14 @@ $output
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
 function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null) {
 
-	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js'></script>";
+	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
+	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
 
 	global $formulizeRemoveEntryIdentifier;
 	if($formulizeRemoveEntryIdentifier) {
 		print "<script>$formulizeRemoveEntryIdentifier</script>";
 	}
-?>
+	?>
 <script type='text/javascript'>
 
 if (typeof jQuery == 'undefined') {

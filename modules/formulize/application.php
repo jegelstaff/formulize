@@ -40,7 +40,6 @@ global $xoopsDB;
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $application_handler = xoops_getmodulehandler('applications', 'formulize');

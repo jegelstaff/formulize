@@ -3194,8 +3194,9 @@ function removeTags(html) {
         print $output;
     }
 
+    $autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
     print "</script>
-		<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js'></script>
+		<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>
 		";
     $drawnJavascript = true;
 }
@@ -3287,8 +3288,9 @@ function _drawJavascriptForConditionalElements($initCode) {
 	static $codeIncluded = false;
 
 	if(!$codeIncluded) {
+			$conditionalJsVersion = formulize_get_file_version('/modules/formulize/include/js/conditional.js');
 			$code = "
-				<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js'></script>\n
+				<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js?v=".$conditionalJsVersion."'></script>\n
 				<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>\n
 			";
 			$codeIncluded = true;

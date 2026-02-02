@@ -153,8 +153,10 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         global $xoTheme;
         if($xoTheme) {
-            $xoTheme->addStylesheet(self::FORMULIZE_CSS_FILE);
-            $xoTheme->addScript(self::FORMULIZE_JS_FILE);
+            $cssVersion = formulize_get_file_version(self::FORMULIZE_CSS_FILE);
+            $jsVersion = formulize_get_file_version(self::FORMULIZE_JS_FILE);
+            $xoTheme->addStylesheet(self::FORMULIZE_CSS_FILE . "?v=" . $cssVersion);
+            $xoTheme->addScript(self::FORMULIZE_JS_FILE . "?v=" . $jsVersion);
         }
 
         $custom_code_filename = $this->custom_code_filename($screen);
