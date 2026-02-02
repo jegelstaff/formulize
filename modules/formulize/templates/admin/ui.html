@@ -2,15 +2,19 @@
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
 $jsVersion = formulize_get_file_version('/modules/formulize/templates/js/formulize-admin.js');
 $cssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize-admin.css');
+$jsOrganizeVersion = formulize_get_file_version('/modules/formulize/templates/js/formulize-admin-organize-forms.js');
+$jsRelationshipsVersion = formulize_get_file_version('/modules/formulize/templates/js/formulize-admin-relationships.js');
 $this->assign('js_version', $jsVersion);
 $this->assign('css_version', $cssVersion);
+$this->assign('js_organize_version', $jsOrganizeVersion);
+$this->assign('js_relationships_version', $jsRelationshipsVersion);
 <{/php}>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/jquery/jquery-ui-1.8.2.custom.min.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/codemirror/codemirror-compressed.js"></script>
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin.js?v=<{$js_version}>"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-organize-forms.js"></script>
-<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-relationships.js"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-organize-forms.js?v=<{$js_organize_version}>"></script>
+<script type="text/javascript" src="<{$xoops_url}>/modules/formulize/templates/js/formulize-admin-relationships.js?v=<{$js_relationships_version}>"></script>
 
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/libraries/jquery/css/start/jquery-ui-1.8.2.custom.css">
 <link rel="stylesheet" type="text/css" href="<{$xoops_url}>/modules/formulize/templates/css/formulize-admin.css?v=<{$css_version}>">
