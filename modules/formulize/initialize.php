@@ -306,7 +306,7 @@ if (!$rendered AND $uid) {
 
 if (is_object($xoopsTpl)) {
 	// use whatever title was set already during rendering, which should be more accurate/descriptive
-	if($xoopsTpl->get_template_vars('xoops_pagetitle') != '' AND $xoopsTpl->get_template_vars('xoops_pagetitle') != $xoopsModule->getVar('name')) {
+	if($xoopsTpl->get_template_vars('xoops_pagetitle') != '' AND (!is_object($xoopsModule) OR $xoopsTpl->get_template_vars('xoops_pagetitle') != $xoopsModule->getVar('name'))) {
 		$xoopsTpl->assign('icms_pagetitle', $xoopsTpl->get_template_vars('xoops_pagetitle'));
 	// else set the page title based on the form being viewed
 	} elseif(is_object($formObject)) {
