@@ -91,12 +91,8 @@ if(count($allAppData)==0 AND !$xoopsUser) {
 	exit();
 }
 
-// retrieve the xoops_version info
-$module_handler = xoops_gethandler('module');
-$formulizeModule = $module_handler->getByDirname("formulize");
-$metadata = $formulizeModule->getInfo();
-
-$xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$metadata['version']);
+$cssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
+$xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$cssVersion);
 
 $xoopsTpl->assign("allAppData", $allAppData);
 

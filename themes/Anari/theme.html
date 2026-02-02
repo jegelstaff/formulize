@@ -35,7 +35,12 @@
     <link rel="icon" type="image/png" href="<{$icms_imageurl}>icons/icon.png" />
 
     <!-- CSS -->
-    <link rel="stylesheet" type="text/css" media="all" href="<{$icms_imageurl}><{if isset($icms_rtl) AND $icms_rtl}>rtl/<{/if}>css/style.css?v=1.9" />
+    <{php}>
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
+    $cssVersion = formulize_get_file_version('/themes/Anari/' . $rtlPath . 'css/style.css');
+    echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
+    <{/php}>
 
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
@@ -182,7 +187,10 @@ if($xoopsUser) {
   </div>
 
 
-  <script src="<{$icms_imageurl}>js/script.js"></script>
+  <{php}>
+  $jsVersion = formulize_get_file_version('/themes/Anari/js/script.js');
+  echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
+  <{/php}>
 
   <script type='text/javascript'>
     jQuery(document).ready(function() {

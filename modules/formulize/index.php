@@ -59,13 +59,10 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/common.php';
 global $xoTheme;
 if($xoTheme) {
 
-    // retrieve the xoops_version info
-    $module_handler = xoops_gethandler('module');
-    $formulizeModule = $module_handler->getByDirname("formulize");
-    $metadata = $formulizeModule->getInfo();
-
-    $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$metadata['version']);
-    $xoTheme->addScript("/modules/formulize/libraries/formulize.js");
+    $cssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
+		$jsVersion = formulize_get_file_version('/modules/formulize/libraries/formulize.js');
+    $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$cssVersion);
+    $xoTheme->addScript("/modules/formulize/libraries/formulize.js?v=".$jsVersion);
 }
 include 'initialize.php';
 

@@ -67,9 +67,10 @@ print "<HTML>
 print "<HEAD>";
 
 if (!$formulizeConfig['printviewStylesheets']) {
+    $formulizeCssVersion = formulize_get_file_version('/modules/formulize/templates/css/formulize.css');
     print "
-		<link rel='stylesheet' type='text/css' media='all' href='".getcss($xoopsConfig['theme_set'])."'>
-		<link rel='stylesheet' type='text/css' media='all' href='".XOOPS_URL."/modules/formulize/templates/css/formulize.css'>
+		<link rel='stylesheet' type='text/css' media='all' href='".xoops_getcss($xoopsConfig['theme_set'])."'>
+		<link rel='stylesheet' type='text/css' media='all' href='".XOOPS_URL."/modules/formulize/templates/css/formulize.css?v=".$formulizeCssVersion."'>
 ";
 
     // figure out if this is XOOPS or ICMS
