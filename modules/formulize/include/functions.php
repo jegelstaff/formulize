@@ -8952,3 +8952,17 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 		$xoopsTpl->assign('xoops_pagetitle', $entryDescriptor);
 	}
 }
+
+/**
+ * Get file modification time for cache-busting CSS and JS resources
+ * 
+ * @param string $relativeFilePath Path relative to XOOPS_ROOT_PATH (e.g., '/themes/Anari/css/style.css')
+ * @return string File modification timestamp, or empty string if file doesn't exist
+ */
+function formulize_get_file_version($relativeFilePath) {
+	$fullPath = XOOPS_ROOT_PATH . $relativeFilePath;
+	if (file_exists($fullPath)) {
+		return filemtime($fullPath);
+	}
+	return '';
+}
