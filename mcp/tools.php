@@ -204,6 +204,11 @@ Examples:
 							'type' => 'integer',
 							'description' => 'Required. The ID of the form to query. Use list_forms tool to find form IDs.'
 						],
+						'elements' => [
+							'type' => 'array',
+							'items' => ['type' => 'string'],
+							'description' => 'Required. The specific element handles to include in results. Only include the elements you need, to minimize the amount of data returned. Get valid handles from get_form_details tool.'
+						],
 						'filter' => [
 							'oneOf' => [
 								[
@@ -277,17 +282,12 @@ Examples:
 							'enum' => ['ASC', 'DESC'],
 							'description' => 'Sort direction. Default: ASC (ascending)'
 						],
-						'elements' => [
-							'type' => 'array',
-							'items' => ['type' => 'string'],
-							'description' => 'Optional. Specific element handles to include in results. If omitted, all elements are returned.'
-						],
 						'relationship_id' => [
 							'type' => 'integer',
 							'description' => 'Optional. The relationship context used to include other forms and their data. Formulize forms are connected through relationships that are part of the configuration settings of the system. The default value is -1 which will include all related forms. Setting 0 will include only data from the specific form id requested. Use a specific id to include only the forms in that relationship. Use 0 if the tool returns too much data.'
 						]
 					],
-					'required' => ['form_id']
+					'required' => ['form_id', 'elements']
 				]
 			],
 			'prepare_database_values_for_human_readability' => [
@@ -1354,7 +1354,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 * List the screens - tool version of the resource
 	 */
 	private function list_screens() {
-		return $this->screens_list();
+		return $this->screens_list(simple: true);
 	}
 
 	/**

@@ -408,7 +408,7 @@ trait resources {
 			);
 		}
 		// Get form details
-		$formSql = "SELECT * FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
+		$formSql = "SELECT `id_form`, `form_title`, `form_handle`, `pi` FROM " . $this->db->prefix('formulize_id') . " WHERE id_form = " . intval($formId);
 		$formResult = $this->db->query($formSql);
 		$formData = $this->db->fetchArray($formResult);
 		// rename pi to principal_identifying_element for clarity
@@ -423,7 +423,7 @@ trait resources {
 		}
 
 		// Get form elements
-		$elementsSql = "SELECT * FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
+		$elementsSql = "SELECT `ele_id`, `ele_type`, `ele_caption`, `ele_handle`, `ele_required`, `ele_value`, `ele_uitext`, `ele_display` FROM " . $this->db->prefix('formulize') . " WHERE id_form = " . intval($formId) . " ORDER BY ele_order";
 		$elementsResult = $this->db->query($elementsSql);
 
 		$serializedFields = FormulizeObject::serializedDBFields();
@@ -437,8 +437,10 @@ trait resources {
 					AND array_intersect($this->userGroups, explode(",", $row['ele_display']))
 				)) {
 				if(isset($serializedFields['formulize'])) {
-					foreach($serializedFields['formulize'] as $field) {
-						$row[$field] = unserialize($row[$field]);
+					foreach($row as $field=>$value) {
+						if(in_array($field, $serializedFields['formulize'])) {
+							$row[$field] = unserialize($value);
+						}
 					}
 				}
 				$additionalFields = [
@@ -463,7 +465,7 @@ trait resources {
 			'elements' => $elements,
 			'element_count' => count($elements),
 		]
-		+ $this->screens_list($formId)
+		+ $this->screens_list($formId, simple: true)
 		+ $this->form_connections_list($formId);
 
 	}
@@ -873,7 +875,7 @@ trait resources {
 		$serializedFields = FormulizeObject::serializedDBFields();
 		$screens = [];
 		while($row = $this->db->fetchArray($res)) {
-			if(security_check($row['fid'])) {
+			if($formId == $row['fid'] OR security_check($row['fid'])) { // already did security check for formId above
 				if($simple) {
 					$screens[] = [
 						'screen_id' => $row['sid'],
