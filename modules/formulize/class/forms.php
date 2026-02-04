@@ -1058,6 +1058,7 @@ class formulizeFormsHandler {
 				'2FA',
 				'NotificationMethod',
 				'Timezone',
+				'GroupMembership',
 			);
 			// ensure the order is correct
 			$orderedTypes = array();
