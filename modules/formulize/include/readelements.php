@@ -249,6 +249,8 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					}
 				}
 
+				$oldPiValue = null;
+				$writtenEntryId = null;
         if(substr($currentEntry, 0 , 3) == "new") {
             // handle entries in the form that are new. if there is more than one new entry, they will be listed as new1, new2, new3, etc
 			$subformElementId = 0;
@@ -269,7 +271,17 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 									/*if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entry_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
 										$creation_user = $userIdsForUserAccountElements[$elementFid][$currentEntry];
 									}*/
-					if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
+										// capture old PI value for entries_are_groups forms before update
+										// TODO ensure forms with entries_are_groups always have a PI set!!
+										if ($formulize_formObject->getVar('entries_are_groups')
+											AND $piElementId = $formulize_formObject->getVar('pi')
+											AND $piElement = $element_handler->get($piElementId)
+										) {
+											$dataHandler = new formulizeDataHandler($elementFid);
+											$oldPiValue = $dataHandler->getElementValueInEntry($currentEntry, $piElementId);
+										}
+
+										if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
                         if(isset($formulize_subformBlankCues[$elementFid])) {
                             $GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
                         }
@@ -301,7 +313,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             // TODO: should this use $uid or a proxy user setting?
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
                 $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
-				if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
+								if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
                     $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
                     if(!isset($formulize_allWrittenFids[$elementFid])) {
                         $formulize_allWrittenFids[$elementFid] = $elementFid;
@@ -312,6 +324,10 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                 }
             }
         }
+		    // create entry-specific groups if this form has entries_are_groups enabled
+				if ($formulize_formObject->getVar('entries_are_groups') AND $writtenEntryId) {
+						formulizeHandler::syncEntryGroups($elementFid, $writtenEntryId, $oldPiValue);
+				}
     }
 }
 

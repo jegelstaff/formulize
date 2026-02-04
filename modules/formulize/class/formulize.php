@@ -433,6 +433,9 @@ class formulizeHandler {
 		$newMapping = array();
 
 		// Process all categories uniformly
+		$fid = $formObject->getVar('fid');
+		global $xoopsDB;
+
 		foreach ($categoriesToProcess as $key => $categoryName) {
 			$expectedGroupName = $newGroupPrefix . $categoryName;
 			$expectedDescription = 'Template group for ' . $newPluralName . ' - ' . $categoryName;
@@ -445,6 +448,29 @@ class formulizeHandler {
 					continue; // Group was deleted externally, skip
 				}
 				$needsSave = ($groupObject->getVar('name') !== $expectedGroupName);
+
+				// Check if category name changed - if so, update all entry groups too
+				$oldCategoryName = isset($existingMapping[$key]) ? $existingMapping[$key] : null;
+				if ($oldCategoryName !== null && $oldCategoryName !== $categoryName) {
+					// Category was renamed, update all entry groups for this form with the old suffix
+					// Entry group names follow format: "{PI value} - {Category name}"
+					$oldNameSuffix = " - " . $oldCategoryName;
+					$newNameSuffix = " - " . $categoryName;
+					$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') .
+						   " WHERE form_id = " . intval($fid) . " AND entry_id IS NOT NULL" .
+						   " AND name LIKE '%" . formulize_db_escape($oldNameSuffix) . "'";
+					$result = $xoopsDB->query($sql);
+					while ($row = $xoopsDB->fetchArray($result)) {
+						$entryGroup = $group_handler->get($row['groupid']);
+						if ($entryGroup) {
+							// Extract PI value by removing the old suffix from the group name
+							$piValue = substr($row['name'], 0, -strlen($oldNameSuffix));
+							$entryGroup->setVar('name', $piValue . $newNameSuffix);
+							$entryGroup->setVar('description', $categoryName . ' group for ' . $piValue);
+							$group_handler->insert($entryGroup);
+						}
+					}
+				}
 
 			// New category - create a new group
 			} else if (strpos($key, 'new_') === 0) {
@@ -470,6 +496,94 @@ class formulizeHandler {
 		// Save the updated mapping to the form object
 		$formObject->setVar('group_categories', $newMapping);
 		$form_handler->insert($formObject);
+	}
+
+	/**
+	 * Creates or updates groups for a specific entry in a form with entries_are_groups enabled.
+	 * Groups are named: "{PI value} - {Category Name}" (e.g., "Baskets - All Users", "Baskets - Managers")
+	 *
+	 * @param int $fid The form ID
+	 * @param int $entryId The entry ID
+	 * @param string|null $oldPiValue The old PI value (for updates, to check if rename needed). Null for new entries.
+	 * @return bool True if groups were created/updated, false if form doesn't use entries_are_groups
+	 */
+	public static function syncEntryGroups($fid, $entryId, $oldPiValue = null) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Cannot synch groups with entry for entries_are_group form. Form with ID $fid does not exist.");
+		}
+
+		// Check if this form uses entries_are_groups
+		if (!$formObject || !$formObject->getVar('entries_are_groups')) {
+			return false;
+		}
+
+		// Get the group categories from the form
+		$groupCategories = $formObject->getVar('group_categories');
+		if (!is_array($groupCategories) || empty($groupCategories)) {
+			return false;
+		}
+
+		// Get the PI element for this form
+		$piElementId = $formObject->getVar('pi');
+		if (!$piElementId OR !$piElementObject = _getElementObject($piElementId)) {
+			return false;
+		}
+
+		// Get the current PI value from the entry
+		$data_handler = new formulizeDataHandler($fid);
+		if(!$piValue = $data_handler->getElementValueInEntry($entryId, $piElementId)) {
+			return false; // Can't create groups without a PI value
+		}
+
+		$group_handler = xoops_gethandler('group');
+
+		// Check if groups already exist for this entry
+		global $xoopsDB;
+		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') .
+			   " WHERE form_id = " . intval($fid) . " AND entry_id = " . intval($entryId);
+		$result = $xoopsDB->query($sql);
+		$existingGroups = array();
+		while ($row = $xoopsDB->fetchArray($result)) {
+			$existingGroups[$row['groupid']] = $row['name'];
+		}
+
+		// For each category, create or update the group
+		foreach ($groupCategories as $templateGroupId => $categoryName) {
+			$expectedGroupName = $piValue . " - " . $categoryName;
+			$expectedDescription = $categoryName . ' group for ' . $piValue;
+
+			// Check if we already have a group for this entry+category
+			$existingGroupId = null;
+			foreach ($existingGroups as $gid => $gname) {
+				// Match by the category suffix (after " - ")
+				if (preg_match('/ - ' . preg_quote($categoryName, '/') . '$/', $gname)) {
+					$existingGroupId = $gid;
+					break;
+				}
+			}
+
+			// Update existing group if name changed (PI value changed)
+			if ($existingGroupId AND $existingGroups[$existingGroupId] !== $expectedGroupName) {
+				$groupObject = $group_handler->get($existingGroupId);
+				$groupObject->setVar('name', $expectedGroupName);
+				$groupObject->setVar('description', $expectedDescription);
+				$group_handler->insert($groupObject);
+
+			// Create new group
+			} elseif(!$existingGroupId) {
+				$newGroup = $group_handler->create();
+				$newGroup->setVar('name', $expectedGroupName);
+				$newGroup->setVar('description', $expectedDescription);
+				$newGroup->setVar('group_type', 'User');
+				$newGroup->setVar('is_group_template', 0); // Not a template, it's an entry group
+				$newGroup->setVar('form_id', $fid);
+				$newGroup->setVar('entry_id', $entryId);
+				$group_handler->insert($newGroup);
+			}
+		}
+
+		return true;
 	}
 
 	/**
