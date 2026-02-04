@@ -34,6 +34,7 @@ class formulizeUserAccountPasswordElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Password";
+			$this->userProperty = "pass";
 		}
 
 }
