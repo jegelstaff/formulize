@@ -197,7 +197,11 @@ if ($screen) {
 				'screen_id' => $screen->getVar('sid')
 			));
 
-			if($screen->getVar('type') == "listOfEntries" AND ((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform']))) { // OLD OPTIONS DEPRECATED NOW. Form itself specifically requested, so force it to load here instead of a list
+			// list screen...
+			if($screen->getVar('type') == "listOfEntries") {
+
+				// OLD OPTIONS DEPRECATED NOW. Form itself specifically requested, so force it to load here instead of a list
+				if((isset($_GET['iform']) AND $_GET['iform'] == "e") OR isset($_GET['showform'])) {
 					if($screen->getVar('frid')) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 							displayForm($screen->getVar('frid'), "", $screen->getVar('fid'), "", "{NOBUTTON}");
@@ -205,10 +209,19 @@ if ($screen) {
 							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 							displayForm($screen->getVar('fid'), "", "", "", "{NOBUTTON}");
 					}
+
+				// normal list rendering
+				} else {
+					$screen_handler->render($screen, $entry, $loadThisView);
+				}
+
+			// calendar screen...
 			} elseif($screen->getVar('type') == 'calendar') {
 					$screen_handler->render($screen);
+
+			// all other types (form, multiPage form, template, etc)... loading up a specific entry
 			} else {
-					$screen_handler->render($screen, $entry, $loadThisView);
+					$screen_handler->render($screen, $entry);
 			}
     } else {
         $_SESSION['formulize_passcodeFailed'] = true;

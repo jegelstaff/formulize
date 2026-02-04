@@ -131,7 +131,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
 
-    function render($screen, $entry_id, $settings = "") {
+    function render($screen, $entry_id, $settings = array()) {
 
         if(!security_check($screen->getVar('fid'), $entry_id)) {
 					if(!$done_dest = $screen->getVar('donedest')) {

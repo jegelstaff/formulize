@@ -2294,7 +2294,7 @@ function formulize_formatDateTime($dt) {
 function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_entries = array(), $screen = null, $forceWrite = false) {
     // only write the settings one time (might have multiple forms being rendered)
     static $formulize_settingsWritten = 0;
-    if($formulize_settingsWritten AND !$forceWrite) {
+    if(($formulize_settingsWritten AND !$forceWrite) OR !is_array($settings)) {
         return $form;
     }
     $formulize_settingsWritten = 1;
