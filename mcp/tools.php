@@ -190,7 +190,7 @@ trait tools {
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values. If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset. If a filtered dataset is still too large, try using form_relationship_id 0, which will exclude data from related forms and only include data from the requested form_id. This may not be as useful, but in some cases it will reduce the size of the dataset significantly.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values. If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
@@ -207,7 +207,7 @@ Examples:
 						'elements' => [
 							'type' => 'array',
 							'items' => ['type' => 'string'],
-							'description' => 'Required. An array of element handles to include in results. Get valid handles from the get_form_details tool. Only include the elements you need, to minimize the amount of data returned. You do not need to specify metadata elements, like entry_id and creation_datetime because metadata is always included in the results. If a relationship_id is set, elements from connected forms can be included.'
+							'description' => 'Required. An array of element handles to include in results. Get valid handles from the get_form_details tool. Only include the elements you need, to minimize the amount of data returned. You do not need to specify metadata elements, like entry_id and creation_datetime because metadata is always included in the results. Elements from connected forms can be included, if the \'relationship_id\' property is set to -1.'
 						],
 						'filter' => [
 							'oneOf' => [
@@ -218,7 +218,7 @@ Examples:
 								[
 									'type' => 'array',
 									'description' =>
-'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Multiple conditions are combined using and_or parameter.
+'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Multiple conditions are combined using and_or parameter. Linked elements can be searched with readable values, you do _not_ have to use foreign keys. Use the special value "{BLANK}" (without quotes) to filter for non-blank values. You can filter by elements in connected forms, if the \'relationship_id\' property is set to -1.
 Examples:
 - [ { "element": "age", "operator": "=", "value": "18" } ]
 - [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]',
@@ -236,7 +236,7 @@ Examples:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer.'
+												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Linked elements can be filtered using readable values, you do _not_ have to use foreign keys. Use the special value "{BLANK}" (without quotes) to filter for non-blank values.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
@@ -284,7 +284,7 @@ Examples:
 						],
 						'relationship_id' => [
 							'type' => 'integer',
-							'description' => 'Optional. Defaults to 0 which means only data from the requested form is included. Can be set to -1 to include data from the requested form and all forms connected to it. Can be set to a specific relationship id to include only the forms in that relationship. The default, 0, should be used to avoid overloading the context, unless it is specifically necessary to gather a set of data from multiple forms at once.'
+							'description' => 'Optional. Defaults to 0 which means only data from the requested form is included. Can be set to -1 to include data from the requested form and all forms connected to it, but this is only required if the \'elements\' property or the \'filter\' property reference elements from connected forms.'
 						]
 					],
 					'required' => ['form_id', 'elements']
