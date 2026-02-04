@@ -87,23 +87,31 @@ class icms_member_group_Handler extends icms_core_ObjectHandler {
 		}
 		if ($group->isNew()) {
 			$groupid = icms::$xoopsDB->genId('group_groupid_seq');
-			$sql = sprintf("INSERT INTO %s (groupid, name, description, group_type, is_group_template)
-				VALUES ('%u', %s, %s, %s, '%u')",
+			$form_id_sql = ($form_id === null || $form_id === '') ? 'NULL' : intval($form_id);
+			$entry_id_sql = ($entry_id === null || $entry_id === '') ? 'NULL' : intval($entry_id);
+			$sql = sprintf("INSERT INTO %s (groupid, name, description, group_type, is_group_template, form_id, entry_id)
+				VALUES ('%u', %s, %s, %s, '%u', %s, %s)",
 				icms::$xoopsDB->prefix('groups'),
 				(int) $groupid,
 				icms::$xoopsDB->quoteString($name),
 				icms::$xoopsDB->quoteString($description),
 				icms::$xoopsDB->quoteString($group_type),
-				(int) $is_group_template
+				(int) $is_group_template,
+				$form_id_sql,
+				$entry_id_sql
 			);
 		} else {
+			$form_id_sql = ($form_id === null || $form_id === '') ? 'NULL' : intval($form_id);
+			$entry_id_sql = ($entry_id === null || $entry_id === '') ? 'NULL' : intval($entry_id);
 			$sql = sprintf(
-				"UPDATE %s SET name = %s, description = %s, group_type = %s, is_group_template = '%u' WHERE groupid = '%u'",
+				"UPDATE %s SET name = %s, description = %s, group_type = %s, is_group_template = '%u', form_id = %s, entry_id = %s WHERE groupid = '%u'",
 				icms::$xoopsDB->prefix('groups'),
 				icms::$xoopsDB->quoteString($name),
 				icms::$xoopsDB->quoteString($description),
 				icms::$xoopsDB->quoteString($group_type),
 				(int) $is_group_template,
+				$form_id_sql,
+				$entry_id_sql,
 				(int) $groupid
 			);
 		}

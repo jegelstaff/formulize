@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_id';
-    $checkThisField = 'group_categories';
+    $checkThisTable = 'groups';
+    $checkThisField = 'entry_id';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -524,6 +524,9 @@ function patch40() {
 				$sql['add_usechangeowner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usechangeowner` varchar(255) NOT NULL default ''";
 				$sql['add_is_group_template'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `is_group_template` tinyint(1) NOT NULL default 0";
 				$sql['add_group_categories'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `group_categories` text NULL";
+				$sql['add_form_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `form_id` int(5) unsigned NULL default NULL";
+				$sql['add_entry_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `entry_id` int(10) unsigned NULL default NULL";
+				$sql['add_form_entry_index'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD INDEX `form_entry` (`form_id`, `entry_id`)";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -678,6 +681,10 @@ function patch40() {
 										print "is_group_template field already added to groups table. result: OK<br>";
 								} elseif($key === "add_group_categories") {
 									print "group_categories field already added to formulize_id table. result: OK<br>";
+								} elseif($key === "add_form_id" OR $key === "add_entry_id") {
+									print "Entry tracking fields already added to groups table. result: OK<br>";
+								} elseif($key === "add_form_entry_index") {
+									print "Entry index already added to groups table. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
