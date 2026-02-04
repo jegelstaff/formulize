@@ -206,14 +206,30 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					$userObject = $member_handler->getUser($entryUserId);
 					$profile = $profile_handler->get($userObject->getVar('uid'));
 				} else {
+global $xoopsConfig;
 					$userObject = $member_handler->createUser();
 					$profile = $profile_handler->create();
+$userObject->setVar('user_avatar', 'blank.gif');
+					$userObject->setVar('theme', $xoopsConfig['theme_set']);
+					$userObject->setVar('level', 1);
 				}
 				foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
 					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.$userAccountElementType.'_'.$formId)) {
 						$elementId = $accountElement->getVar('element_id');
 						$userProperty = $accountElement->userProperty;
 						$value = $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId];
+						if($userProperty == 'pass') {
+							if($value === '') {
+								continue; // don't change password if no value entered
+							}
+							global $icmsConfigUser;
+            	$icmspass = new icms_core_Password();
+            	$salt = $icmspass->createSalt();
+            	$enc_type = $icmsConfigUser['enc_type'];
+            	$value = $icmspass->encryptPass($value, $salt, $enc_type);
+  	          $userObject->setVar('salt', $salt);
+    	        $userObject->setVar('enc_type', $enc_type);
+						}
 						if(substr($userProperty, 0, 8) == 'profile:') {
 							$property = substr($userProperty, 8);
 							$profile->setVar($property, $value);
