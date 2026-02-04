@@ -1902,6 +1902,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 }
 
 // add the proxy list to a form
+// TODO unless it's a new entry in a form where entries are users and the user should be owner!!
 function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entry_id="") {
 
 	if($entry_id AND $entry_id != 'new') {

@@ -35,6 +35,7 @@
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
 
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
@@ -1135,6 +1136,16 @@ class formulizeElementsHandler {
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		return $value;
+	}
+
+	/**
+	 * Process user account data through the base userAccountElement handler class
+	 * @param int $formId The id of the form the element is in
+	 * @param int $entryId The id of the entry that was submitted
+	 * @return int|bool the user id or false on failure
+	 */
+	static public function processUserAccountSubmission($formId, $entryId) {
+		return formulizeUserAccountElementHandler::processUserAccountSubmission($formId, $entryId);
 	}
 }
 
