@@ -207,7 +207,7 @@ Examples:
 						'elements' => [
 							'type' => 'array',
 							'items' => ['type' => 'string'],
-							'description' => 'Required. An array of element handles to include in results. Only include the elements you need, to minimize the amount of data returned. If a relationship_id is set, elements from connected forms can be included. Get valid handles from the get_form_details tool.'
+							'description' => 'Required. An array of element handles to include in results. Get valid handles from the get_form_details tool. Only include the elements you need, to minimize the amount of data returned. You do not need to specify metadata elements, like entry_id and creation_datetime because metadata is always included in the results. If a relationship_id is set, elements from connected forms can be included.'
 						],
 						'filter' => [
 							'oneOf' => [
