@@ -59,6 +59,9 @@ class formulizeUserAccountNotificationMethodElementHandler extends formulizeUser
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+		if($ele_value === null OR $ele_value === false) {
+			$ele_value = XOOPS_NOTIFICATION_METHOD_EMAIL;
+		}
 		$options = array(
 			XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
 			XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
