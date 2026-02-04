@@ -207,7 +207,7 @@ Examples:
 						'elements' => [
 							'type' => 'array',
 							'items' => ['type' => 'string'],
-							'description' => 'Required. The specific element handles to include in results. Only include the elements you need, to minimize the amount of data returned. Get valid handles from get_form_details tool.'
+							'description' => 'Required. An array of element handles to include in results. Only include the elements you need, to minimize the amount of data returned. If a relationship_id is set, elements from connected forms can be included. Get valid handles from the get_form_details tool.'
 						],
 						'filter' => [
 							'oneOf' => [
@@ -227,7 +227,7 @@ Examples:
 										'properties' => [
 											'element' => [
 												'type' => 'string',
-												'description' => 'Element handle to filter on (get from get_form_details)'
+												'description' => 'Element handle to filter on (get from get_form_details). If a relationship_id is set, elements from connected forms can be used.'
 											],
 											'operator' => [
 												'type' => 'string',
@@ -284,7 +284,7 @@ Examples:
 						],
 						'relationship_id' => [
 							'type' => 'integer',
-							'description' => 'Optional. The relationship context used to include other forms and their data. Formulize forms are connected through relationships that are part of the configuration settings of the system. The default value is -1 which will include all related forms. Setting 0 will include only data from the specific form id requested. Use a specific id to include only the forms in that relationship. Use 0 if the tool returns too much data.'
+							'description' => 'Optional. Defaults to 0 which means only data from the requested form is included. Can be set to -1 to include data from the requested form and all forms connected to it. Can be set to a specific relationship id to include only the forms in that relationship. The default, 0, should be used to avoid overloading the context, unless it is specifically necessary to gather a set of data from multiple forms at once.'
 						]
 					],
 					'required' => ['form_id', 'elements']
@@ -988,7 +988,7 @@ Examples:
 		$sortField = $arguments['sortField'] ?? 'entry_id';
 		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
 		$elements = $arguments['elements'] ?? array();
-		$relationship_id = intval($arguments['relationship_id'] ?? -1);
+		$relationship_id = intval($arguments['relationship_id'] ?? 0);
 
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
@@ -996,6 +996,14 @@ Examples:
 			throw new FormulizeMCPException('Invalid form ID. Form ID must be a positive integer', 'form_not_found');
 		} elseif(!$formObject = $form_handler->get($form_id)) {
 			throw new FormulizeMCPException('Invalid form ID. No form exists with ID '.$form_id, 'form_not_found');
+		}
+
+		if(!is_array($elements)) {
+			throw new FormulizeMCPException('Elements parameter must be an array of element handles', 'invalid_data');
+		}
+		$elements = $this->validateElementHandles($elements);
+		if(empty($elements)) {
+			throw new FormulizeMCPException('At least one element must be specified in the elements parameter', 'invalid_data');
 		}
 
 		// Build scope based on authenticated user and their permissions
@@ -1023,7 +1031,6 @@ Examples:
 			}
 		}
 		list($limitStart, $limitSize) = $this->validateLimitParameters($limitStart, $limitSize);
-		$elements = $this->validateElementHandles($elements);
 
 		// cleanup $filter into old style filter string, if necessary
 		// supports {BLANK} value for searching for blank values
@@ -1182,10 +1189,12 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			if (!is_string($handle)) {
 				throw new FormulizeMCPException('Element handle must be a string', 'invalid_data');
 			}
-			if(!$elementObject = $element_handler->get($handle) AND !in_array($handle, $dataHandler->metadataFields)) {
-				throw new FormulizeMCPException('Invalid element handle: ' . $handle, 'invalid_data');
+			if($handle !== '') {
+				if(!$elementObject = $element_handler->get($handle) AND !in_array($handle, $dataHandler->metadataFields)) {
+					throw new FormulizeMCPException('Invalid element handle: ' . $handle, 'invalid_data');
+				}
+				$validatedHandles[$elementObject->getVar('fid')][] = $handle;
 			}
-			$validatedHandles[$elementObject->getVar('fid')][] = $handle;
 		}
 
 		return $validatedHandles;

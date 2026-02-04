@@ -570,7 +570,6 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	// establish the join type and all that
 
 	$joinText = "";
-	$linkSelect = "";
 	$exportOverrideQueries = array();
 
 	$limitClause = "";
@@ -697,7 +696,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				if (($joinHandles[$linkselfids[$id]] and $joinHandles[$linktargetids[$id]]) or ($linkselfids[$id] == '' and $linktargetids[$id] == '')) {
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
 					$linkSelectIndex[$linkedFid] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
-					$linkSelect .= ", f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
+					$linkSelect .= ", ".$linkSelectIndex[$linkedFid];
 					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
 					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
@@ -854,9 +853,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		$selectClause = "";
-		$sqlFilterElements = array();
 		$sqlFilterElementsIndex = array();
 		if ($filterElements) {
+			$sqlFilterElementsIndex['main'] = array();
 			foreach ($filterElements as $passedForm => $passedElements) {
 				if ($passedForm == $fid) {
 					$formAlias = "main";
@@ -877,18 +876,27 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 		// SETUP THE MAIN SELECT STATEMENT
 		// update any linked form select statements to use only the fields that have been requested
+		// linkSelect is a long string of all fields for all linked forms
+		// linkSelectIndex is an array of linked form select statements for individual linked forms, keyed by linked form id
 		if ($linkSelect) {
-			foreach ($sqlFilterElementsIndex as $key => $fields) {
-				if ($key == 'main') {
-					continue;
+			// replace the * in the select with the requested fields, if any
+			// remove any linked form select statements for which no fields have been requested
+			if(!empty($sqlFilterElementsIndex)) {
+				$newLinkSelect = "";
+				foreach(array_keys($linkSelectIndex) as $key) {
+					$keys = array_keys($linkformids, $key);
+					$target = "f" . $keys[0] . ".*";
+					if(isset($sqlFilterElementsIndex[$key])) {
+						$linkSelectIndex[$key] = str_replace($target, implode(",", $sqlFilterElementsIndex[$key]), $linkSelectIndex[$key]);
+						$newLinkSelect .= ", " . $linkSelectIndex[$key];
+					} else {
+						$linkSelectIndex[$key] = str_replace($target, "f" . $keys[0] . ".entry_id AS f" . $keys[0] . "_entry_id", $linkSelectIndex[$key]); // at least select the entry id
+					}
 				}
-				$keys = array_keys($linkformids, $key);
-				$target = "f" . $keys[0] . ".*";
-				$linkSelect = str_replace($target, implode(",", $fields), $linkSelect);
-				$linkSelectIndex[$key] = str_replace($target, implode(",", $fields), $linkSelectIndex[$key]);
+				$linkSelect = $newLinkSelect;
 			}
 		}
-		$mainSelectFields = (isset($sqlFilterElementsIndex['main']) AND $sqlFilterElementsIndex['main'])  ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
+		$mainSelectFields = isset($sqlFilterElementsIndex['main']) ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
 		$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime $ownerGroupsSortSelect";
 		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
 		$firstTimeGetAllMainFields = "$mainSelectFields , ";
@@ -1021,7 +1029,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
                     LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
                     LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
                     INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
-				if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
+										if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
 					$start = true;
 					foreach ($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
 						if (!$start) {
@@ -1314,7 +1322,6 @@ function processGetDataResults($resultData)
 	$entryIdIndex = array(); // set to the entry ids once we're in the loops
 	foreach ($queryRes as $queryResIndex => $thisRes) {
 		// loop through the found data and create the dataset array in "getData" format
-		$prevFieldNotMeta = true;
 		while ($masterQueryArray = $xoopsDB->fetchRow($thisRes)) {
 			formulize_benchmark("starting record");
 			$creatorAllowsEmailViewing = null;
@@ -1365,20 +1372,17 @@ function processGetDataResults($resultData)
 						}
 						// dealing with a new metadata field
 						// We account for a mainform entry appearing multiple times in the list, because when there are multiple entries in a subform, and SQL returns one row per subform,  we need to not change the main form and internal record until we pass to a new mainform entry
-						if ($prevFieldNotMeta) { // only do once for each form, metadata fields are processed first before all regular fields (and fyi mainforms before other forms)
-							// if this is a different main form entry than the last one we did...
-							if ($prevMainId != $entryIdIndex['main']) {
-								$writtenMains[$prevMainId] = true;
-								if (isset($writtenMains[$entryIdIndex['main']])) {
-									$masterIndexer = $masterQueryArrayIndex[$entryIdIndex['main']]; // use the master index value for this main entry id if we've already logged it
-								} else {
-									$masterIndexer = count((array) $masterResults); // use the next available number for the master indexer
-									$masterQueryArrayIndex[$entryIdIndex['main']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
-								}
-								$prevMainId = $entryIdIndex['main']; // if the current form is a main, then store it's ID for use later when we're on a new record
+						// if this is a different main form entry than the last one we did...
+						if ($prevMainId != $entryIdIndex['main']) {
+							$writtenMains[$prevMainId] = true;
+							if (isset($writtenMains[$entryIdIndex['main']])) {
+								$masterIndexer = $masterQueryArrayIndex[$entryIdIndex['main']]; // use the master index value for this main entry id if we've already logged it
+							} else {
+								$masterIndexer = count((array) $masterResults); // use the next available number for the master indexer
+								$masterQueryArrayIndex[$entryIdIndex['main']] = $masterIndexer; // log it so we can reuse it for this entry when it comes up in another query
 							}
+							$prevMainId = $entryIdIndex['main']; // if the current form is a main, then store it's ID for use later when we're on a new record
 						}
-						$prevFieldNotMeta = false;
 						if ($field == "main_creation_uid" or $field == "main_mod_uid" or $field == "main_creation_datetime" or $field == "main_mod_datetime" or $field == "main_entry_id") {
 							$elementHandle = $fieldNameParts[1] . "_" . $fieldNameParts[2];
 						}
@@ -1387,7 +1391,6 @@ function processGetDataResults($resultData)
 					}
 				} elseif (!strstr($field, "main_email") and !strstr($field, "main_user_viewemail")) {
 					// dealing with a regular element field
-					$prevFieldNotMeta = true;
 					if(formulize_getElementMetaData($field, isHandle: true)) {
 						$elementHandle = $field;
 					} else {
