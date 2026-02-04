@@ -35,7 +35,7 @@ class formulizeUserAccountPhoneElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
       $this->name = "User Account Phone Number";
-			$this->userProperty = "2faphone";
+			$this->userProperty = "profile:2faphone"; // 2FA phone is stored in user profile, not base user object :/
 		}
 
 }
