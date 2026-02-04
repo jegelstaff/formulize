@@ -34,7 +34,7 @@ class formulizeUserAccount2FAElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Two-Factor Authentication Settings";
-			$this->userProperty = "2famethod";
+			$this->userProperty = "profile:2famethod"; // 2FA method is stored in user profile, not base user object :/
     }
 
 }

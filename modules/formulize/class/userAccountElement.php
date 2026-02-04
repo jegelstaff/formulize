@@ -86,10 +86,13 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$member_handler = xoops_gethandler('member');
 			$dataHandler = new formulizeDataHandler($element->getVar('fid'));
 			if($element->userProperty AND $user = $member_handler->getUser($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
-				if(!$value = $user->getVar($element->userProperty)) {
+				if(substr($element->userProperty, 0, 8) == 'profile:') {
 					$profile_handler = xoops_getmodulehandler('profile', 'profile');
 					$profile = $profile_handler->get($user->getVar('uid'));
-					$value = $profile->getVar($element->userProperty);
+					$property = substr($element->userProperty, 8);
+					$value = $profile->getVar($property);
+				} else {
+					$value = $user->getVar($element->userProperty);
 				}
 			}
 			return $value;
@@ -172,6 +175,63 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			$markupName
 		);
 		return $form_ele;
+	}
+
+	/**
+	 * Process user account data that was submitted in POST
+	 * Will only run once, caching the user id for future calls
+	 * @param int $formId The id of the form the element is in
+	 * @param int $entryId The id of the entry that was submitted
+	 * @return int|bool the user id or false on failure
+	 */
+	static public function processUserAccountSubmission($formId, $entryId) {
+		if(!security_check($formId, $entryId)) {
+			throw new Exception("You do not have permission to access this entry");
+		}
+		global $xoopsUser;
+		if(!formulizePermHandler::user_can_edit_entry($formId, $xoopsUser->getVar('uid'), $entryId)) {
+			throw new Exception("You do not have permission to edit this entry");
+		}
+		static $results = array();
+		$cacheKey = $formId.'-'.$entryId;
+		if(!isset($results[$cacheKey])) {
+			$results[$cacheKey] = false;
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($formObject = $form_handler->get($formId) AND $formObject->getVar('entries_are_users')) {
+				$data_handler = new formulizeDataHandler($formId);
+				$member_handler = xoops_gethandler('member');
+				$profile_handler = xoops_getmodulehandler('profile', 'profile');
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				if($entryUserId = intval($data_handler->getElementValueInEntry($entryId, 'formulize_user_account_uid_'.$formId))) {
+					$userObject = $member_handler->getUser($entryUserId);
+					$profile = $profile_handler->get($userObject->getVar('uid'));
+				} else {
+					$userObject = $member_handler->createUser();
+					$profile = $profile_handler->create();
+				}
+				foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
+					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.$userAccountElementType.'_'.$formId)) {
+						$elementId = $accountElement->getVar('element_id');
+						$userProperty = $accountElement->userProperty;
+						$value = $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId];
+						if(substr($userProperty, 0, 8) == 'profile:') {
+							$property = substr($userProperty, 8);
+							$profile->setVar($property, $value);
+						} else {
+							$userObject->setVar($userProperty, $value);
+						}
+					}
+				}
+				if($userId = $member_handler->insertUser($userObject)) {
+					if(!$entryUserId) {
+						$profile->setVar('profileid', $userId);
+					}
+					$profile_handler->insert($profile);
+					$results[$cacheKey] = $userId;
+				}
+			}
+		}
+		return $results[$cacheKey];
 	}
 
 }
