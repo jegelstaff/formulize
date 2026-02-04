@@ -249,6 +249,12 @@ $userObject->setVar('user_avatar', 'blank.gif');
 					}
 					$profile_handler->insert($profile);
 					$results[$cacheKey] = $userId;
+					$groupIds = array(XOOPS_GROUP_USERS);
+					foreach($groupIds as $groupId) {
+						if(!in_array($groupId, $userObject->getGroups())) {
+							$member_handler->addUserToGroup($groupId, $userId);
+						}
+					}
 				}
 			}
 		}
