@@ -91,7 +91,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					$profile = $profile_handler->get($user->getVar('uid'));
 					$property = substr($element->userProperty, 8);
 					$value = $profile->getVar($property);
-				} else {
+				} elseif($element->userProperty != 'pass') { // don't show password, UI just used for entering new password
 					$value = $user->getVar($element->userProperty);
 				}
 			}
