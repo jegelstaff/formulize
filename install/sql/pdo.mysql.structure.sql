@@ -231,6 +231,7 @@ CREATE TABLE groups (
   name varchar(50) NOT NULL default '',
   description text NOT NULL,
   group_type varchar(10) NOT NULL default '',
+  is_group_template tinyint(1) NOT NULL default 0,
   PRIMARY KEY  (groupid),
   KEY group_type (group_type)
 );
