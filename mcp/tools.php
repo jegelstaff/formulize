@@ -190,7 +190,7 @@ trait tools {
 			'get_entries_from_form' => [
 				'name' => 'get_entries_from_form',
 						'description' =>
-'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. Filtering for non-blank values with the "{BLANK}" search term can be useful, or searching for numbers greater than zero, ie: use search terms that will exclude irrelevant values. If you really want to get all entries, use the limitSize parameter with a null value, but be cautious as this may return a very large dataset.
+'Retrieve entries from a form with optional filtering, sorting, and pagination. Supports both simple entry ID lookup and complex multi-condition filtering. Returns data in a structured format suitable for analysis or display. It is strongly recommended to use filtering to limit the results you get back, so that it doesn\'t return too many entries at once. You can filter by multiple elements at once, and you should when possible, to reduce the size of the dataset amd exclude irrelevant entries. You can filter for non-blank values with the "{BLANK}" search term.
 
 Examples:
 - Get specific entry: {"form_id": 5, "filter": 526}
@@ -218,10 +218,16 @@ Examples:
 								[
 									'type' => 'array',
 									'description' =>
-'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Multiple conditions are combined using and_or parameter. Linked elements can be searched with readable values, you do _not_ have to use foreign keys. Use the special value "{BLANK}" (without quotes) to filter for non-blank values. You can filter by elements in connected forms, if the \'relationship_id\' property is set to -1.
-Examples:
+'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Use multiple conditions when appropriate, to filter by multiple elements at once and narrow down the dataset returned. Multiple conditions are combined using \'and_or\' property. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for non-blank values. You can filter by elements in connected forms, if the \'relationship_id\' property is set to -1.
+Correct examples for regular elements:
 - [ { "element": "age", "operator": "=", "value": "18" } ]
-- [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]',
+- [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]
+Incorrect example (don\'t use foreign key values with linked elements):
+- [ { "element": "related_products", "operator": "LIKE", "value": "123" } ]
+- [ { "element": "assigned_department", "operator": "=", "value": "19" } ]
+Correct example for linked elements:
+- [ { "element": "related_products", "operator": "LIKE", "value": "Gadget Pro" } ]
+- [ { "element": "assigned_department", "operator": "=", "value": "Customer Support" } ]',
 									'items' => [
 										'type' => 'object',
 										'properties' => [
@@ -236,7 +242,7 @@ Examples:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Linked elements can be filtered using readable values, you do _not_ have to use foreign keys. Use the special value "{BLANK}" (without quotes) to filter for non-blank values.'
+												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for non-blank values.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
@@ -253,11 +259,11 @@ Examples:
 							'oneOf' => [
 							  [
 									'type' => 'integer',
-									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets, depending on filter conditions).'
 								],
 				        [
 									'type' => 'null',
-									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets).'
+									'description' => 'Maximum number of entries to return. Default: 100. Use null for no limit (caution: may return large datasets, depending on filter conditions).'
 								]
 							]
 						],
@@ -265,7 +271,7 @@ Examples:
 							'oneOf' => [
 							  [
 									'type' => 'integer',
-									'description' => 'Starting offset for pagination. Use with limitSize for paging through large datasets.'
+									'description' => 'Starting offset for pagination. Default is 0, ie: first record in the dataset. Use with limitSize for paging through large datasets.'
 								],
 				        [
 									'type' => 'null',
@@ -292,7 +298,7 @@ Examples:
 			],
 			'prepare_database_values_for_human_readability' => [
 				'name' => 'prepare_database_values_for_human_readability',
-				'description' => 'Convert database values to human-readable format. Essential for linked elements (foreign keys), checkboxes, and select lists where raw database values are IDs or codes rather than display text.',
+				'description' => 'Convert database values to human-readable format. Useful for linked elements (foreign keys), checkboxes, and select lists where raw database values are IDs or codes rather than display text.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
