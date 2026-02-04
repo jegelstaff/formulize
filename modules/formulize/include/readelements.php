@@ -266,9 +266,9 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 			foreach($creation_users as $creation_user) {
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
 									// if form entries are user accounts, and the user account is supposed to be owner of the entry, then override the creation_user
-									if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entry_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
+									/*if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entry_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
 										$creation_user = $userIdsForUserAccountElements[$elementFid][$currentEntry];
-									}
+									}*/
 					if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
                         if(isset($formulize_subformBlankCues[$elementFid])) {
                             $GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
