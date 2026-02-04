@@ -984,7 +984,7 @@ Examples:
 		$filter = $arguments['filter'] ?? '';
 		$andOr = $arguments['andOr'] ?? 'AND';
 		$limitStart = $arguments['limitStart'] ?? 0;
-		$limitSize = $arguments['limitSize'] ?? 100;
+		$limitSize = ((isset($arguments['limitSize']) && is_numeric($arguments['limitSize'])) || $arguments['limitSize'] === null) ? $arguments['limitSize'] : 100;
 		$sortField = $arguments['sortField'] ?? 'entry_id';
 		$sortOrder = ($arguments['sortOrder'] ?? 'ASC') == 'DESC' ? 'DESC' : 'ASC';
 		$elements = $arguments['elements'] ?? array();
@@ -1231,7 +1231,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 	 */
 	private function validateLimitParameters($limitStart, $limitSize)
 	{
-		$validatedLimitStart = null;
+		$validatedLimitStart = 0; // Default
 		$validatedLimitSize = 100; // Default
 
 		if ($limitStart !== null) {
@@ -1254,6 +1254,8 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				throw new FormulizeMCPException('limitSize cannot exceed 10000 records', 'invalid_data');
 			}
 			$validatedLimitSize = $limitSizeInt;
+		} else {
+			$validatedLimitSize = null; // No limit!
 		}
 
 		return [$validatedLimitStart, $validatedLimitSize];
