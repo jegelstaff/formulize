@@ -213,6 +213,7 @@ $userObject->setVar('user_avatar', 'blank.gif');
 					$userObject->setVar('theme', $xoopsConfig['theme_set']);
 					$userObject->setVar('level', 1);
 				}
+				$unameParts = array();
 				foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
 					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.$userAccountElementType.'_'.$formId)) {
 						$elementId = $accountElement->getVar('element_id');
@@ -234,6 +235,10 @@ $userObject->setVar('user_avatar', 'blank.gif');
 							$property = substr($userProperty, 8);
 							$profile->setVar($property, $value);
 						} else {
+							if($userProperty == 'uname') {
+								$unameParts[] = $value;
+								$value = implode(' ', $unameParts);
+							}
 							$userObject->setVar($userProperty, $value);
 						}
 					}
