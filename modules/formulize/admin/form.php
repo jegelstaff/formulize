@@ -69,6 +69,21 @@ if ($_GET['fid'] != "new") {
 		$entries_are_users = $formObject->getVar('entries_are_users');
 		$entries_are_groups = $formObject->getVar('entries_are_groups');
 
+		// Load group categories from stored mapping on the form object
+		// This is an array of groupid => categoryName for existing categories
+		$group_categories = array();
+		if ($entries_are_groups) {
+			$storedMapping = $formObject->getVar('group_categories');
+			if (is_array($storedMapping)) {
+				foreach ($storedMapping as $groupid => $categoryName) {
+					// Skip "All Users" since it's always displayed as a fixed base category
+					if ($categoryName !== _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS) {
+						$group_categories[$groupid] = $categoryName;
+					}
+				}
+			}
+		}
+
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
 
@@ -469,6 +484,7 @@ if ($_GET['fid'] != "new") {
 		$pioptions = array();
 		$entries_are_users = 0;
 		$entries_are_groups = 0;
+		$group_categories = array();
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -590,6 +606,7 @@ $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_groups'] = $entries_are_groups;
+$settings['group_categories'] = $group_categories;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
 
 // Check if we should show the user mapping UI
