@@ -206,17 +206,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					$userObject = $member_handler->getUser($entryUserId);
 					$profile = $profile_handler->get($userObject->getVar('uid'));
 				} else {
-global $xoopsConfig;
+					global $xoopsConfig;
 					$userObject = $member_handler->createUser();
 					$profile = $profile_handler->create();
-$userObject->setVar('user_avatar', 'blank.gif');
+					$userObject->setVar('user_avatar', 'blank.gif');
 					$userObject->setVar('theme', $xoopsConfig['theme_set']);
 					$userObject->setVar('level', 1);
 				}
 				$unameParts = array();
 				foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
-					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.$userAccountElementType.'_'.$formId)) {
-						$elementId = $accountElement->getVar('element_id');
+					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId)) {
+						$elementId = $accountElement->getVar('ele_id');
 						$userProperty = $accountElement->userProperty;
 						$value = $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId];
 						if($userProperty == 'pass') {
@@ -243,7 +243,8 @@ $userObject->setVar('user_avatar', 'blank.gif');
 						}
 					}
 				}
-				if($userId = $member_handler->insertUser($userObject)) {
+				if($member_handler->insertUser($userObject)) {
+					$userId = $userObject->getVar('uid');
 					if(!$entryUserId) {
 						$profile->setVar('profileid', $userId);
 					}
