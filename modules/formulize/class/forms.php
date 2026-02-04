@@ -1146,6 +1146,7 @@ class formulizeFormsHandler {
 							$newPages = $screenObject->getVar('pages');
 							$newTitles = $screenObject->getVar('pagetitles');
 							$newConditions = $screenObject->getVar('conditions');
+							$newConditions = is_array($newConditions) ? $newConditions : array(array());
 							array_unshift($newPages, array()); // add a new empty page at the beginning
 							array_unshift($newTitles, '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]');
 							array_unshift($newConditions, array());
