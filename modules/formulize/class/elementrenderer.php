@@ -197,7 +197,7 @@ class formulizeElementRenderer{
 
 		// if element is object, with data, not disabled, let's get it ready for rendering
 		// by rendering everything now, and sticking it in a clean "label" element
-		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
+		if(is_object($form_ele) AND !$isDisabled AND ($this->_ele->hasData OR $this->_ele->isUserAccountElement)) {
 
 			// put in cue if element has data we should be handling on save
 			$elementCue = "";
