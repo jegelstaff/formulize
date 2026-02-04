@@ -210,6 +210,40 @@
 				<div class="description">
 					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN}></p>
 				</div>
+
+				<!-- Group Categories Configuration -->
+				<div id="group_categories_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_TITLE}></h4>
+
+					<!-- Base category - always present, not editable -->
+					<div style="margin-top: 15px;">
+						<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+							<input type="text" value="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS}>" style="flex: 1; max-width: 300px; background: #e9e9e9; color: #666;" disabled />
+						</div>
+					</div>
+
+					<div id="group_categories_list">
+						<!-- Additional categories will be listed here -->
+						<!-- For existing categories, the key ($groupid) is the group ID in the database -->
+						<!-- For new categories added via JS, the key will be "new_X" where X is a counter -->
+						<{if $content.group_categories|is_array}>
+						<{foreach from=$content.group_categories item=category key=groupid}>
+						<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+							<input type="text" name="group_categories[<{$groupid}>]" value="<{$category}>" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />
+							<button type="button" class="remove-category-btn" style="padding: 4px 8px; cursor: pointer;" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">&times;</button>
+						</div>
+						<{/foreach}>
+						<{/if}>
+					</div>
+
+					<div style="margin-top: 15px;">
+						<button type="button" id="add_group_category_btn" style="padding: 6px 12px; cursor: pointer;">
+							<img src="../images/filenew2.png" style="vertical-align: middle; margin-right: 5px;" alt="" /><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_ADD}>
+						</button>
+					</div>
+
+					<p style="margin-top: 15px;"><em><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_NOTE}></em></p>
+				</div>
 			</fieldset>
 		</div>
 
@@ -224,6 +258,7 @@
 		}
 		if (parseInt("<{$content.entries_are_groups}>") == 1) {
 			$("#entries_are_users_container").hide();
+			$("#group_categories_container").show();
 		}
 
 		// Initialize user mapping container visibility based on entries_are_users
@@ -236,6 +271,7 @@
 			if ($(this).val() == "1" && $(this).is(':checked')) {
 				$("#entries_are_groups-0").attr('checked', 'checked');
 				$("#entries_are_groups_container").slideUp();
+				$("#group_categories_container").slideUp();
 				$("#user_mapping_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_groups_container").slideDown();
@@ -248,8 +284,10 @@
 				$("#entries_are_users-0").attr('checked', 'checked');
 				$("#entries_are_users_container").slideUp();
 				$("#user_mapping_container").slideUp();
+				$("#group_categories_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_users_container").slideDown();
+				$("#group_categories_container").slideUp();
 			}
 		});
 
@@ -260,6 +298,26 @@
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#user_mapping_details").slideUp();
 			}
+		});
+
+		// Group categories management
+		// Counter for new categories (keys will be "new_0", "new_1", etc.)
+		var newCategoryCounter = 0;
+		$("#add_group_category_btn").click(function() {
+			var newKey = 'new_' + newCategoryCounter;
+			newCategoryCounter++;
+			var newCategoryHtml = '<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
+				'<input type="text" name="group_categories[' + newKey + ']" value="" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />' +
+				'<button type="button" class="remove-category-btn" style="padding: 4px 8px; cursor: pointer;" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">&times;</button>' +
+				'</div>';
+			$("#group_categories_list").append(newCategoryHtml);
+			// Focus on the new input
+			$("#group_categories_list .group-category-item:last-child input").focus();
+		});
+
+		// Remove category button handler (using delegation for dynamically added elements)
+		$("#group_categories_list").on("click", ".remove-category-btn", function() {
+			$(this).closest(".group-category-item").remove();
 		});
 		</script>
 

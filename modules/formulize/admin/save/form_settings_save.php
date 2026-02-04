@@ -77,7 +77,23 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
 
 $applicationIds = (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0);
 $groupsCanEdit = (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN);
-$formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds);
+
+// Build group categories array if entries_are_groups is being used
+$groupCategories = null;
+$newGroupCategoriesCreated = false;
+if (isset($processedValues['forms']['entries_are_groups'])) {
+	// Pass categories if entries_are_groups is being set (even if to 0, so we can clean up groups)
+	$groupCategories = (isset($_POST['group_categories']) && is_array($_POST['group_categories'])) ? $_POST['group_categories'] : array();
+	// Check if any new categories are being created (keys starting with "new_")
+	foreach ($groupCategories as $key => $value) {
+		if (is_string($key) && strpos($key, 'new_') === 0 && trim($value) !== '') {
+			$newGroupCategoriesCreated = true;
+			break;
+		}
+	}
+}
+
+$formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds, $groupCategories);
 $fid = $formObject->getVar('fid');
 
 // Process user mapping if switching to entries_are_users and user chose to map existing entries
@@ -133,6 +149,7 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
 	OR ($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0)
 	OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)
 	OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged
+	OR $newGroupCategoriesCreated
 	OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
 
   if(!in_array($_POST['application_url_id'], $applicationIds)) {

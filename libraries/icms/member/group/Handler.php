@@ -87,21 +87,23 @@ class icms_member_group_Handler extends icms_core_ObjectHandler {
 		}
 		if ($group->isNew()) {
 			$groupid = icms::$xoopsDB->genId('group_groupid_seq');
-			$sql = sprintf("INSERT INTO %s (groupid, name, description, group_type)
-				VALUES ('%u', %s, %s, %s)",
+			$sql = sprintf("INSERT INTO %s (groupid, name, description, group_type, is_group_template)
+				VALUES ('%u', %s, %s, %s, '%u')",
 				icms::$xoopsDB->prefix('groups'),
 				(int) $groupid,
 				icms::$xoopsDB->quoteString($name),
 				icms::$xoopsDB->quoteString($description),
-				icms::$xoopsDB->quoteString($group_type)
+				icms::$xoopsDB->quoteString($group_type),
+				(int) $is_group_template
 			);
 		} else {
 			$sql = sprintf(
-				"UPDATE %s SET name = %s, description = %s, group_type = %s WHERE groupid = '%u'",
+				"UPDATE %s SET name = %s, description = %s, group_type = %s, is_group_template = '%u' WHERE groupid = '%u'",
 				icms::$xoopsDB->prefix('groups'),
 				icms::$xoopsDB->quoteString($name),
 				icms::$xoopsDB->quoteString($description),
 				icms::$xoopsDB->quoteString($group_type),
+				(int) $is_group_template,
 				(int) $groupid
 			);
 		}

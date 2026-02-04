@@ -293,10 +293,11 @@ class formulizeHandler {
 	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
 	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form (only used when creating a new form)
 	 * @param array|null $applicationIds An array of existing application ids to assign this form to. Set to null to skip application assignment.  Default is array(0) to assign to the default application.
+	 * @param array|null $groupCategories An array of category names for template groups (used when entries_are_groups is enabled). Set to null to skip group category management. "All Users" is always included as a base category.
 	 * @throws Exception if there are any problems creating or updating the form
 	 * @return object returns the form object
 	 */
-	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array(), $applicationIds = array(0)) {
+	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array(), $applicationIds = array(0), $groupCategories = null) {
 
 		$form_handler = xoops_getModuleHandler('forms', 'formulize');
 		$application_handler = xoops_getmodulehandler('applications','formulize');
@@ -365,7 +366,110 @@ class formulizeHandler {
 		if(self::assignFormToApplications($formObject, $applicationIds) == false) {
 			throw new Exception("Could not assign the form to applications properly.");
 		}
+
+		// Handle group categories for entries_are_groups feature
+		if ($groupCategories !== null) {
+			self::syncTemplateGroupsForForm($formObject, $groupCategories, $formIsNew ? null : $originalFormNames['plural']);
+		}
+
 		return $formObject;
+	}
+
+	/**
+	 * Synchronizes template groups for a form that has entries_are_groups enabled.
+	 * Creates, renames, or updates template groups based on the desired categories.
+	 *
+	 * The $groupCategories parameter is an associative array where:
+	 * - Numeric keys are existing group IDs (the category may have been renamed)
+	 * - String keys starting with "new_" are new categories that need groups created
+	 *
+	 * IMPORTANT: Groups are NEVER deleted by this function. When the feature is turned off
+	 * or categories are removed, the groups are retained to preserve any configuration.
+	 *
+	 * @param object $formObject The form object
+	 * @param array $groupCategories Associative array: groupid => categoryName for existing, "new_X" => categoryName for new
+	 * @param string|null $oldPluralName The old plural name of the form (for renaming groups). Null for new forms.
+	 */
+	public static function syncTemplateGroupsForForm($formObject, $groupCategories, $oldPluralName = null) {
+		$group_handler = xoops_gethandler('group');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$newPluralName = $formObject->getPlural();
+		$newGroupPrefix = $newPluralName . " - ";
+
+		// If entries_are_groups is disabled, just return without touching groups
+		// This preserves the group configuration in case the feature is re-enabled
+		if (!$formObject->getVar('entries_are_groups')) {
+			return;
+		}
+
+		// Get existing group_categories mapping from the form object (groupid => category name)
+		$existingMapping = $formObject->getVar('group_categories');
+		if (!is_array($existingMapping)) {
+			$existingMapping = array();
+		}
+
+		// "All Users" is always included as a base category
+		$allUsersLabel = defined('_AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS') ? _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS : 'All Users';
+
+		// Build the complete list of categories to process, including "All Users"
+		// For "All Users", check if it already exists in the mapping, otherwise mark as new
+		$allUsersGroupId = array_search($allUsersLabel, $existingMapping);
+		$categoriesToProcess = array();
+		if ($allUsersGroupId !== false) {
+			$categoriesToProcess[$allUsersGroupId] = $allUsersLabel;
+		} else {
+			$categoriesToProcess['new_allUsers'] = $allUsersLabel;
+		}
+
+		// Add the submitted categories (filtering out empty names and duplicates of "All Users")
+		foreach ($groupCategories as $key => $categoryName) {
+			$categoryName = trim($categoryName);
+			if ($categoryName !== '' && $categoryName !== $allUsersLabel) {
+				$categoriesToProcess[$key] = $categoryName;
+			}
+		}
+
+		// Build the new mapping: groupid => category name
+		$newMapping = array();
+
+		// Process all categories uniformly
+		foreach ($categoriesToProcess as $key => $categoryName) {
+			$expectedGroupName = $newGroupPrefix . $categoryName;
+			$expectedDescription = 'Template group for ' . $newPluralName . ' - ' . $categoryName;
+			$needsSave = true;
+
+			// Existing group ID - get the group
+			if (is_numeric($key)) {
+				$groupObject = $group_handler->get(intval($key));
+				if (!$groupObject) {
+					continue; // Group was deleted externally, skip
+				}
+				$needsSave = ($groupObject->getVar('name') !== $expectedGroupName);
+
+			// New category - create a new group
+			} else if (strpos($key, 'new_') === 0) {
+				$groupObject = $group_handler->create();
+				$groupObject->setVar('group_type', 'User');
+				$groupObject->setVar('is_group_template', 1);
+
+			// Unknown key format, skip
+			} else {
+				continue;
+			}
+
+			// Update and save if needed
+			if ($needsSave) {
+				$groupObject->setVar('name', $expectedGroupName);
+				$groupObject->setVar('description', $expectedDescription);
+				$group_handler->insert($groupObject);
+			}
+
+			$newMapping[$groupObject->getVar('groupid')] = $categoryName;
+		}
+
+		// Save the updated mapping to the form object
+		$formObject->setVar('group_categories', $newMapping);
+		$form_handler->insert($formObject);
 	}
 
 	/**

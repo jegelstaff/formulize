@@ -101,7 +101,7 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_id';
-    $checkThisField = 'entries_are_users';
+    $checkThisField = 'group_categories';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -522,6 +522,8 @@ function patch40() {
 				$sql['add_dynamicdefault_source'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_source` smallint(5) unsigned NULL default 0";
 				$sql['add_dynamicdefault_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_conditions` text NULL";
 				$sql['add_usechangeowner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usechangeowner` varchar(255) NOT NULL default ''";
+				$sql['add_is_group_template'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `is_group_template` tinyint(1) NOT NULL default 0";
+				$sql['add_group_categories'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `group_categories` text NULL";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -672,6 +674,10 @@ function patch40() {
 										print "Change owner option for list screens already added. result: OK<br>";
                 } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_groups") {
 										print "Entries-are-users/groups options already added. result: OK<br>";
+								} elseif($key === "add_is_group_template") {
+										print "is_group_template field already added to groups table. result: OK<br>";
+								} elseif($key === "add_group_categories") {
+									print "group_categories field already added to formulize_id table. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
