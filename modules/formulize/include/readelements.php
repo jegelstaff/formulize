@@ -148,6 +148,7 @@ foreach($_POST as $k=>$v) {
 		// prep them all for writing
 		$elementMetaData = explode("_", $k);
     $elementObject = $element_handler->get($elementMetaData[3]);
+		// WHAT ABOUT MCP?? NEED TO HAVE TOOLS FOR MANAGING USERS. AND MCP CANNOT ALTER THE UID VALUE OF AN ENTRY!
 		if($elementObject->isUserAccountElement) {
 			if($userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]] = formulizeElementsHandler::processUserAccountSubmission($elementMetaData[1], $elementMetaData[2])) {
 				if($userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
@@ -324,6 +325,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                 }
             }
         }
+				// WHAT ABOUT MCP?? OR OTHER SITUATIONS. IF AN ENTRIES-ARE-GROUPS RECORD IS CREATED/UPDATED, WE NEED TO DO THE SYNC AT THAT POINT TOO, NOT JUST HERE IN THE WEB APP LOGIC
 		    // create entry-specific groups if this form has entries_are_groups enabled
 				if ($formulize_formObject->getVar('entries_are_groups') AND $writtenEntryId) {
 						formulizeHandler::syncEntryGroups($elementFid, $writtenEntryId, $oldPiValue);
