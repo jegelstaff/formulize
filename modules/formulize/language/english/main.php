@@ -830,6 +830,7 @@ define("_formulize_USERACCOUNTTIMEZONE", "Timezone");
 define("_formulize_USERACCOUNTPHONE", "Phone Number");
 define("_formulize_USERACCOUNTNOTIFICATIONMETHOD", "Notification Method");
 define("_formulize_USERACCOUNT2FA", "Two-Factor Authentication Settings");
+define("_formulize_USERACCOUNTGROUPMEMBERSHIP", "Group Membership");
 define("_formulize_USERACCOUNT_2FAOPTION_EMAIL", "Email a code");
 define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Text a code");
 define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Use an authenticator app");

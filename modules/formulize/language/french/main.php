@@ -666,6 +666,7 @@ define("_formulize_USERACCOUNTTIMEZONE", "Fuseau horaire");
 define("_formulize_USERACCOUNTPHONE", "Numéro de téléphone");
 define("_formulize_USERACCOUNTNOTIFICATIONMETHOD", "Méthode de notification");
 define("_formulize_USERACCOUNT2FA", "Paramètres d'authentification à deux facteurs");
+define("_formulize_USERACCOUNTGROUPMEMBERSHIP", "Appartenance au groupe");
 define("_formulize_USERACCOUNT_2FAOPTION_EMAIL", "Envoyez un code par email");
 define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Envoyez un code par SMS");
 define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Utilisez une application d'authentification");
