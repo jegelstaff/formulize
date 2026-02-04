@@ -150,7 +150,7 @@ foreach($_POST as $k=>$v) {
     $elementObject = $element_handler->get($elementMetaData[3]);
 		if($elementObject->isUserAccountElement) {
 			if($userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]] = formulizeElementsHandler::processUserAccountSubmission($elementMetaData[1], $elementMetaData[2])) {
-				if($elementMetaData[2] == 'new' AND	$userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
+				if($userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
 					$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$userAccountUidElement->getVar('ele_id')] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
 				}
 			}
