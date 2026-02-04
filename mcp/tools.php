@@ -1001,7 +1001,7 @@ Examples:
 		if(!is_array($elements)) {
 			throw new FormulizeMCPException('Elements parameter must be an array of element handles', 'invalid_data');
 		}
-		$elements = $this->validateElementHandles($elements);
+		$elements = $this->validateElementHandles($elements, $form_id);
 		if(empty($elements)) {
 			throw new FormulizeMCPException('At least one element must be specified in the elements parameter', 'invalid_data');
 		}
@@ -1173,9 +1173,10 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 /**
  * Validate element handles array, and gives back an array ready for use in gatherDataset
  * @param array elementHandles - an array of candidate element handles
+ * @param int form_id - the form ID for use with any metadata fields
  * @return array a multidimensional array, outer keys are form ids, each one has as a value an array of the valid element handles that are part of that form
  */
-	private function validateElementHandles($elementHandles)
+	private function validateElementHandles($elementHandles, $form_id)
 	{
 		if (!is_array($elementHandles)) {
 			return [];
@@ -1193,7 +1194,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				if(!$elementObject = $element_handler->get($handle) AND !in_array($handle, $dataHandler->metadataFields)) {
 					throw new FormulizeMCPException('Invalid element handle: ' . $handle, 'invalid_data');
 				}
-				$validatedHandles[$elementObject->getVar('fid')][] = $handle;
+				$validatedHandles[($elementObject ? $elementObject->getVar('fid') : $form_id)][] = $handle;
 			}
 		}
 
