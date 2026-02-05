@@ -1841,7 +1841,7 @@ function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand =
 // THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.
 // $lang is optional and will force the translation to be in a certain language
 function trans($string, $lang = null) {
-    if (function_exists('easiestml')) {
+    if (is_string($string) AND !is_numeric($string) AND function_exists('easiestml')) {
         global $easiestml_lang;
         $easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
         $original_easiestml_lang = $easiestml_lang;
@@ -8955,7 +8955,7 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 
 /**
  * Get file modification time for cache-busting CSS and JS resources
- * 
+ *
  * @param string $relativeFilePath Path relative to XOOPS_ROOT_PATH (e.g., '/themes/Anari/css/style.css')
  * @return int File modification timestamp, or 0 if file doesn't exist
  */

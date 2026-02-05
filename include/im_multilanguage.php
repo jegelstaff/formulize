@@ -119,6 +119,9 @@ if (! preg_match('?' . preg_quote(ICMS_ROOT_PATH, '?') . '(/common/)?', $_SERVER
  * @return string $s	The (translated?) string
  */
 function easiestml($s) {
+	if(!is_string($s) OR is_numeric($s)) {
+		return $s;
+	}
 	global $easiestml_lang, $icmsConfigMultilang;
 
 	// all mode for debug (allowed to system admin only)
