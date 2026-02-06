@@ -691,4 +691,25 @@ test.describe('New donation inside Donor record', () => {
 	})
 })
 
+test.describe('Cloning entries', () => {
+	test('Clone Persian Necklace', async ({ page }) => {
+		await login(page, 'ahstaff', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await page.locator('input[name="search_artifacts_short_name"]').fill('Persian');
+		await page.getByRole('link', { name: 'Short name' }).click();
+		await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
+  	await page.locator('[id^=delete_').first().check();
+		await expect(page.getByText('Clone selected')).toBeVisible();
+		await page.getByRole('button', { name: 'Clone selected' }).click();
+		await page.locator('#formulize_clone_dialog_overlay').waitFor();
+		await page.locator('.clone_form_checkbox').first().check();
+		await page.getByRole('button', { name: 'Clone' }).click();
+		await expect(page.getByText('1 to 2 of 2.')).toBeVisible();
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		await expect(page.getByText('1 to 3 of 3.')).toBeVisible();
+	})
+})
+
 
