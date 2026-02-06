@@ -2731,8 +2731,12 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
         foreach ($lsbpairs as $source=>$lsb) {
             $sourceElement = $element_handler->get($source);
-            $lsbElement = $element_handler->get($lsb);
-            $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+            if($lsbElement = $element_handler->get($lsb)) {
+								if (!isset($dataHandlers[$lsbElement->getVar('id_form')])) {
+									$dataHandlers[$lsbElement->getVar('id_form')] = new formulizeDataHandler($lsbElement->getVar('id_form'));
+								}
+								$dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+						}
         }
     }
     foreach($entryMap[$originalFid] as $clonedMainformEntries) {
