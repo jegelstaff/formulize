@@ -161,6 +161,12 @@
   height: 36px;
   width: 185px !important; }
 
+.formulize_button.formulize_button_dialog {
+  text-indent: 0;
+  width: auto !important;
+  padding: 0 15px;
+  cursor: pointer; }
+
 #prev {
   background: #008CC4 url("../../images/prev.png") no-repeat 10px;
   text-indent: 40px;

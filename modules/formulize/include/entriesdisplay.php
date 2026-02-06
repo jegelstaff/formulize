@@ -163,10 +163,15 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	// check for cloning request and if present then clone entries
 	if(isset($_POST['cloneconfirmed']) AND $_POST['cloneconfirmed'] AND $formulize_LOESecurityPassed AND $add_own_entry) {
+		$clone_forms = array();
+		if(isset($_POST['clone_forms']) AND $_POST['clone_forms'] != '') {
+			$clone_forms = array_map('intval', explode(',', $_POST['clone_forms']));
+			$clone_forms = array_combine($clone_forms, $clone_forms);
+		}
 		foreach($_POST as $k=>$v) {
 			if(substr($k, 0, 7) == "delete_" AND $v != "") {
 				$thisentry = substr($k, 7);
-				cloneEntry($thisentry, $frid, $fid, $_POST['cloneconfirmed']); // cloneconfirmed is the number of copies required
+				cloneEntry($thisentry, $frid, $fid, $_POST['cloneconfirmed'], null, "new", $clone_forms); // cloneconfirmed is the number of copies required
 			}
 		}
 	}
@@ -966,6 +971,17 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$sort = isset($_POST['sort']) ? strip_tags($_POST['sort']) : null;
 	$order = isset($_POST['order']) ? strip_tags($_POST['order']) : null;
  	list($data, $regeneratePageNumbers, $filterToCompare, $flatScope) = formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0));
+
+	// determine which form IDs are in the dataset, for use by clone UI and other features
+	// we can just look at the first entry, since all entries in the dataset will have the same fids (or should!!)
+	$GLOBALS['formulize_LOErendering_fidsInUse'] = array();
+	if(isset($data) AND !empty($data)) {
+		if($firstEntry = reset($data)) {
+			$firstEntryIds = getEntryIds($firstEntry, fidAsKeys: true);
+			$GLOBALS['formulize_LOErendering_fidsInUse'] = array_keys($firstEntryIds);
+		}
+	}
+
 	//formulize_benchmark("after gathering dataset/before generating calcs");
 
 	// perform calculations on the data if any requested...
@@ -1583,6 +1599,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=\"hidden\" name=\"overridescreen\" id=\"overridescreen\" value=\"\"></input>\n";
 	print "<input type=hidden name=delconfirmed id=delconfirmed value=\"\"></input>\n";
 	print "<input type=hidden name=cloneconfirmed id=cloneconfirmed value=\"\"></input>\n";
+	print "<input type=hidden name=clone_forms id=clone_forms value=\"\"></input>\n";
 	print "<input type=hidden name=xport id=xport value=\"\"></input>\n";
 	print "<input type=hidden name=xport_cust id=xport_cust value=\"\"></input>\n";
 	print "<input type=hidden name=loadreport id=loadreport value=\"\"></input>\n";
@@ -3478,16 +3495,97 @@ function confirmDel() {
 }
 
 function confirmClone() {
-	var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
-	if(parseInt(clonenumber) > 0) {
-		window.document.controls.cloneconfirmed.value = clonenumber;
-		window.document.controls.ventry.value = '';
-		window.document.controls.forcequery.value = 1;
-		showLoading();
-		return true;
+<?php
+	$cloneFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
+	if(count($cloneFids) <= 1) {
+		// Only one form in use, no need to ask which forms to clone
+		?>
+		var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
+		if(parseInt(clonenumber) > 0) {
+			window.document.controls.cloneconfirmed.value = clonenumber;
+			window.document.controls.clone_forms.value = "<?php print implode(',', $cloneFids); ?>";
+			window.document.controls.ventry.value = '';
+			window.document.controls.forcequery.value = 1;
+			showLoading();
+			return true;
+		} else {
+			return false;
+		}
+		<?php
 	} else {
+		// Multiple forms - show a dialog for selecting which forms to clone
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$cloneFormOptions = array();
+		foreach($cloneFids as $thisFid) {
+			$thisFormObject = $form_handler->get($thisFid);
+			if($thisFormObject) {
+				$cloneFormOptions[$thisFid] = $thisFormObject->getVar('form_title');
+			}
+		}
+		?>
+		// Remove any existing clone dialog
+		var existingDialog = document.getElementById('formulize_clone_dialog_overlay');
+		if(existingDialog) {
+			existingDialog.parentNode.removeChild(existingDialog);
+		}
+
+		// Build the dialog overlay
+		var overlay = document.createElement('div');
+		overlay.id = 'formulize_clone_dialog_overlay';
+		overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+
+		var dialog = document.createElement('div');
+		dialog.style.cssText = 'background:#fff;border:1px solid #999;padding:20px;border-radius:5px;min-width:300px;max-width:500px;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
+
+		var html = '<h3 style="margin-top:0;"><?php print _formulize_DE_CLONE_SELECT_FORMS; ?></h3>';
+		<?php
+		foreach($cloneFormOptions as $optionFid => $optionTitle) {
+			$escapedTitle = addslashes(htmlspecialchars($optionTitle, ENT_QUOTES));
+			print "html += '<div style=\"margin:8px 0;\"><label><input type=\"checkbox\" class=\"clone_form_checkbox\" value=\"{$optionFid}\"> {$escapedTitle}</label></div>';\n";
+		}
+		?>
+		html += '<div style="margin-top:15px;"><label><?php print _formulize_DE_CLONE_NUM_COPIES; ?> <input type="text" id="clone_num_copies" value="1" size="3" style="width:50px;"></label></div>';
+		html += '<div style="margin-top:15px;text-align:center;">';
+		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CLONE_CANCEL_BUTTON; ?>" onclick="document.getElementById(\'formulize_clone_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_clone_dialog_overlay\'));" style="margin-right:10px;">';
+		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CLONE_CONFIRM_BUTTON; ?>" onclick="executeClone();">';
+		html += '</div>';
+
+		dialog.innerHTML = html;
+		overlay.appendChild(dialog);
+		document.body.appendChild(overlay);
 		return false;
+		<?php
 	}
+?>
+}
+
+function executeClone() {
+	var checkboxes = document.getElementsByClassName('clone_form_checkbox');
+	var selectedForms = [];
+	for(var i = 0; i < checkboxes.length; i++) {
+		if(checkboxes[i].checked) {
+			selectedForms.push(checkboxes[i].value);
+		}
+	}
+	if(selectedForms.length == 0) {
+		alert("Please select at least one form to clone.");
+		return;
+	}
+	var clonenumber = document.getElementById('clone_num_copies').value;
+	if(!(parseInt(clonenumber) > 0)) {
+		alert("<?php print _formulize_DE_CLONE_PROMPT; ?>");
+		return;
+	}
+	// Remove the dialog
+	var overlay = document.getElementById('formulize_clone_dialog_overlay');
+	if(overlay) {
+		overlay.parentNode.removeChild(overlay);
+	}
+	window.document.controls.cloneconfirmed.value = clonenumber;
+	window.document.controls.clone_forms.value = selectedForms.join(',');
+	window.document.controls.ventry.value = '';
+	window.document.controls.forcequery.value = 1;
+	showLoading();
 }
 
 
