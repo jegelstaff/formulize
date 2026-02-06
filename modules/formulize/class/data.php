@@ -988,9 +988,22 @@ class formulizeDataHandler {
 			$element_values = $values;
 		}
 
+		global $loopCounter;
+		if(is_int($loopCounter) AND $loopCounter > 5) {
+			print "element values: ";
+			var_dump($element_values);
+			print "\n<br>\n<br>";
+		}
+
     // if it is a "new" entry, set default values
 		if(!is_numeric($entry_id) AND $entry_id == "new") {
 			$element_values = addDefaultValuesToDataToWrite($element_values, $this->fid);
+		}
+
+		if(is_int($loopCounter) AND $loopCounter > 5) {
+			print "element values after adding default values: ";
+			var_dump($element_values);
+			print "\n<br>\n<br>";
 		}
 
 		// remove legacy {WRITEASNULL} values that may have been set in the $element_values (by prepDataForWrite and related functions/methods)
@@ -1011,9 +1024,17 @@ class formulizeDataHandler {
     $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
 
 		// don't write things that are unchanged from their current state in the database
+		global $loopCounter;
 		foreach($element_values as $evHandle=>$thisElementValue) {
 			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
 			$thisElementValue = correctStringIntFloatTypes($thisElementValue);
+			if($loopCounter > 5 AND ($evHandle == 'artifacts_height' OR $evHandle == 'artifacts_width' OR $evHandle == 'artifacts_depth')) {
+				print "checking whether to write element $evHandle with value: ";
+				var_dump($thisElementValue);
+				print "\n<br> against existing value of: ";
+				var_dump($existing_values[$evHandle]);
+				print "\n<br>\n<br>";
+			}
 			if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
 				unset($element_values[$evHandle]);
 			}
@@ -1023,6 +1044,15 @@ class formulizeDataHandler {
     if (0 == count((array) $element_values)) {
       return null;
     }
+
+		global $loopCounter;
+		if(is_int($loopCounter) AND $loopCounter > 5) {
+			print "element values is not empty! Current values to write: ";
+			var_dump($element_values);
+			//print "\n<br>existing values are: ";
+			//var_dump($existing_values);
+			print "\n<br>\n<br>";
+		}
 
 		// escape field names and values before writing to database
 		$aes_password = getAESPassword();

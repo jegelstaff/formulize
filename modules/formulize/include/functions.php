@@ -7765,6 +7765,12 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$elementDynamicDefaultSource = $thisDefaultEle->getVar('ele_dynamicdefault_source');
 		$elementDynamicDefaultConditions = $thisDefaultEle->getVar('ele_dynamicdefault_conditions');
 		if($elementDynamicDefaultSource AND $elementDynamicDefaultConditions) {
+
+			global $loopCounter;
+			if($loopCounter > 5) {
+				print "Getting dynamic default for :".$thisDefaultEle->getVar('ele_handle')."\n<br>";
+			}
+
 			// for new entries, if there's data we're about to write to the DB, put it into the asynchronous global values, so that the dynamic default calculation can use them even though they're not in DB yet
 			if($target_entry === 'new' AND !empty($dataToBeWritten)) {
 				$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'] = array();
@@ -7816,6 +7822,10 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry] = $defaultTextToWrite;
     $defaultValueMap[$key] = $defaultTextToWrite;
   }
+	global $loopCounter;
+	if($loopCounter > 5) {
+		print "Default values gathered for h w d: ".$defaultValueMap['artifacts_height']." ".$defaultValueMap['artifacts_width']." ".$defaultValueMap['artifacts_depth']."\n<br>";
+	}
   return $defaultValueMap;
 }
 
