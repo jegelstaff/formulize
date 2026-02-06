@@ -1,4 +1,4 @@
-const { test, expect } = require('../test-fixtures');
+const { test, expect } = require('@playwright/test');
 import { login } from '../utils';
 
 test.describe('Validate Data', () => {

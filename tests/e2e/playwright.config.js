@@ -26,7 +26,7 @@ module.exports = defineConfig({
 	maxFailures: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: process.env.GITHUB_ACTIONS ?
-		[['list'], ['github'], ['html', { outputFolder: './test-report' }]] : [['list'], ['html', { outputFolder: './test-report' }]],
+		[['list'], ['github'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js']] : [['list'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js']],
 	/* Adjust the timeout for slow tests */
 	timeout: 120000,
   retries: 0,
