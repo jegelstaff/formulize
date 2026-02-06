@@ -2720,7 +2720,7 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
                 if (!isset($dataHandlers[$fid])) {
                     $dataHandlers[$fid] = new formulizeDataHandler($fid);
                 }
-                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback, $targetEntry);
+                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback, $targetEntry, $copy_counter);
                 $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($clonedEntryId, $fid), $clonedEntryId);
                 $entryMap[$fid][$thisentry][] = $clonedEntryId;
             }
