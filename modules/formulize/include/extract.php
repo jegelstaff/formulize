@@ -2792,7 +2792,7 @@ function internalRecordIds($entry, $formIdOrHandle = "", $datasetKey = null, $fi
 /**
  * Retrieve the entry ids of entries included in a dataset returned from gatherDataset
  * @param array entry - The entry as found in a dataset returned from the gatherDataset function. The entry may include records from multiple forms, based on the connections between forms in the relationship that was used to gether the dataset. Can also be the entire dataset returned from gatherDataset. In this case the datasetKey param must be used to indicate which entry you are working with.
- * @param int|string formIdOrHandle - Optional. The id of the form of the form in the dataset that you want to get the entry ids for. If omitted, entry ids for all entries in all forms are returned in a multidimensional array. A form handle can be used instead of an id, but it is better to use an id if possible (minor reduction in queries in the database)
+ * @param int|string formIdOrHandle - Optional. The id or handle of the form of the form in the dataset that you want to get the entry ids for. If omitted, entry ids for all entries in all forms are returned in a multidimensional array.
  * @param int datasetKey - Optional. Only necessary if an entire dataset is passed as the entry, in which case this value is the key of the entry in the dataset to use, starting with 0 for the first entry.
  * @param boolean fidAsKeys - Optional. A flag to indicate if the form id should be used as the key of the top level of the returned array. Default is false, in which case the form handle is used.
  * @return array Returns an array of the underlying entry ids of the individual records that are involved in this entry in the dataset. If formIdOrHandle was specified, will simply be an array of the entry ids in that form. If formIdOrHandle was not specified, an array of arrays will be returned, one for each form. The keys representing each form will be the form handles, or form ids if fidAsKeys was set to true.
@@ -2817,9 +2817,7 @@ function getEntryIds($entry, $formIdOrHandle = "", $datasetKey = null, $fidAsKey
 				$formObject = $form_handler->get($formHandle);
 				$key = $formObject->getVar('fid');
 			}
-			if(is_array($entry[$formHandle])) {
-				$entryIds[$key] = array_keys($entry[$formHandle]);
-			}
+			$entryIds[$key] = is_array($entry[$formHandle]) ? array_keys($entry[$formHandle]) : array();
 		}
 	} else {
 		$formHandle = getFormHandleFromFormId($formIdOrHandle); // may or may not be a form handle, so we'll just cover our bases...
