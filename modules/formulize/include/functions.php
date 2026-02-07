@@ -5648,6 +5648,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     $likebits = "";
     $origlikebits = "";
 		$overrideReturnedOp = "";
+		$curlyBracketINNeedsSingleQuotes = false; // used to track whether we need to add single quotes back in around the terms in an IN statement, because we had to strip them out to get through the escaping process without mangling them
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
         if(!strstr(trim($filterTerms[$filterId]), '%')) {
             $likebits = "%";
@@ -5661,8 +5662,12 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				foreach($filterTermParts as $i=>$ftp) {
 					$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
 				}
+				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+					$curlyBracketINNeedsSingleQuotes = true;
+				} else {
 				// use @#.&%$ to stand in for single quote, because the filter term is escaped below, and we need to add single quotes back in later so they aren't mangled by the escaping
-				$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
+					$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
+				}
 				$overrideReturnedOp = "IN";
     } else {
         $quotes = is_numeric($filterTerms[$filterId]) ? "" : "'";
@@ -5860,7 +5865,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 					$curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
 					if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
 							$dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
-							$literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
+							$literalToDBValueLookups = array($literalToDBValue);
+							// if we're doing IN on a multi value linked element, ugh, then we need to concatenate together the linked values
+							if($overrideReturnedOp == 'IN' AND substr($literalToDBValue,0,1) == "," AND substr($literalToDBValue,-1)==",") {
+								$literalToDBValueLookups = explode(",", trim($literalToDBValue, ","));
+							}
+							$lookupResults = array();
+							foreach($literalToDBValueLookups as $thisValueToLookup) {
+								$lookupResults[] = $dataHandler->getElementValueInEntry($thisValueToLookup, $filterElementIds[$filterId]);
+							}
+							$literalToDBValue = count($lookupResults) > 1 ? implode("','", array_map('formulize_db_escape', $lookupResults)) : $lookupResults[0];
 					}
 				}
 
@@ -5957,7 +5971,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     }
 
 		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
-		$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
+		if($curlyBracketINNeedsSingleQuotes) {
+			$conditionsFilterComparisonValue = "(".str_replace("\',\'","','",$conditionsFilterComparisonValue).")";
+		} else {
+			$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
+		}
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 
 }
