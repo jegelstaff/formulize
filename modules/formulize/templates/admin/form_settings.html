@@ -12,6 +12,7 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
 <input type="hidden" name="application_url_id" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
+<input type="hidden" class="entries-are-users-conditions-conditionsdelete" name="conditionsdelete" value="">
 
 
 		<div class="form-item required">
@@ -134,6 +135,15 @@
 				<div class="description">
 					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
 				</div>
+
+				<!-- User Creation Conditions -->
+				<{if $content.entries_are_users_conditions_ui}>
+				<div id="entries_are_users_conditions_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE}></h4>
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC}></p>
+					<{$content.entries_are_users_conditions_ui}>
+				</div>
+				<{/if}>
 
 				<!-- User Mapping for Existing Entries -->
 				<{if $content.show_user_mapping_ui AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
@@ -264,6 +274,9 @@
 		// Initialize user mapping container visibility based on entries_are_users
 		if (parseInt("<{$content.entries_are_users}>") != 1) {
 			$("#user_mapping_container").hide();
+			$("#entries_are_users_conditions_container").hide();
+		} else {
+			$("#entries_are_users_conditions_container").show();
 		}
 
 		// Mutual exclusivity: if one is set to Yes, set the other to No and hide it
@@ -273,9 +286,11 @@
 				$("#entries_are_groups_container").slideUp();
 				$("#group_categories_container").slideUp();
 				$("#user_mapping_container").slideDown();
+				$("#entries_are_users_conditions_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_groups_container").slideDown();
 				$("#user_mapping_container").slideUp();
+				$("#entries_are_users_conditions_container").slideUp();
 			}
 		});
 
@@ -284,6 +299,7 @@
 				$("#entries_are_users-0").attr('checked', 'checked');
 				$("#entries_are_users_container").slideUp();
 				$("#user_mapping_container").slideUp();
+				$("#entries_are_users_conditions_container").slideUp();
 				$("#group_categories_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_users_container").slideDown();
@@ -465,6 +481,21 @@
 	});
 	$('input[name=pi_new_caption]').change(function() {
 		$('input[name=pi_new_yes_no][value=yes]').attr('checked', true);
+	});
+
+	// Handle add condition button for entries_are_users_conditions (only for existing forms)
+	$("div#entries_are_users_conditions_container input[name=addcon]").click(function () {
+		$("#reload_settings").val(1);
+		$(".savebutton").click();
+		return false;
+	});
+
+	// Handle delete condition link for entries_are_users_conditions
+	$("div#entries_are_users_conditions_container a.conditionsdelete").click(function () {
+		$(".entries-are-users-conditions-conditionsdelete").val($(this).attr('target'));
+		$("#reload_settings").val(1);
+		$(".savebutton").click();
+		return false;
 	});
 
 </script>
