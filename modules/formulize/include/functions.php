@@ -7766,11 +7766,6 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$elementDynamicDefaultConditions = $thisDefaultEle->getVar('ele_dynamicdefault_conditions');
 		if($elementDynamicDefaultSource AND $elementDynamicDefaultConditions) {
 
-			global $loopCounter;
-			if($loopCounter > 5) {
-				print "Getting dynamic default for :".$thisDefaultEle->getVar('ele_handle')."\n<br>";
-			}
-
 			// for new entries, if there's data we're about to write to the DB, put it into the asynchronous global values, so that the dynamic default calculation can use them even though they're not in DB yet
 			if($target_entry === 'new' AND !empty($dataToBeWritten)) {
 				$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'] = array();
@@ -7822,11 +7817,8 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry] = $defaultTextToWrite;
     $defaultValueMap[$key] = $defaultTextToWrite;
   }
-	global $loopCounter;
-	if($loopCounter > 5) {
-		print "Default values gathered for h w d: ".$defaultValueMap['artifacts_height']." ".$defaultValueMap['artifacts_width']." ".$defaultValueMap['artifacts_depth']."\n<br>";
-	}
-  return $defaultValueMap;
+
+	return $defaultValueMap;
 }
 
 // this function figures out if there is a viewentryscreen that we should be showing based on the current state
@@ -8733,8 +8725,9 @@ function isMCPServerEnabled() {
  * @param string $elementHandle - optional element handle, used to look up data type information so we can ensure the correct number of decimal places
  * @return mixed returns the value, with the correct type based on its contents. If value is not a string, int or float, returns whatever we got passed in
  */
-function correctStringIntFloatTypes($value, $elementHandle = '') {
+function correctStringIntFloatTypes($value) { //, $elementHandle = '') {
 	if(is_numeric($value)) {
+		/*
 		// try to determine by element data type in the DB first
 		if($elementObject = _getElementObject($elementHandle)) {
 			$dataTypeInfo = $elementObject->getDataTypeInformation();
@@ -8743,9 +8736,9 @@ function correctStringIntFloatTypes($value, $elementHandle = '') {
 			} else {
 				$value = intval($value);
 			}
-		} else {
-			$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
-		}
+		} else {*/
+			$value = (is_float($value) OR strstr(strval($value), '.')) ? floatval($value) : intval($value);
+		//}
 	}
 	return $value;
 }
