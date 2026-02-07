@@ -42,10 +42,12 @@ if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->create();
 	$fid = 0;
 	$oldEntriesAreUsers = null;
+	$oldEntriesAreGroups = null;
 } else {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
 	$oldEntriesAreUsers = $formObject->getVar('entries_are_users');
+	$oldEntriesAreGroups = $formObject->getVar('entries_are_groups');
 }
 $processedValues['forms']['fid'] = $fid;
 
@@ -109,6 +111,14 @@ if($formObject->getVar('entries_are_users')
 	if($form_handler->associateExistingUsersWithFormEntries($formObject, $_POST['user_mapping_element'], $_POST['user_mapping_type'])) {
 		$_POST['reload_settings'] = 1; // force a reload of the settings page to remove the user mapping UI
 	}
+}
+
+// Process group association when entries_are_groups is first enabled and form has a principal identifier
+// This runs automatically without user interaction, only when the setting is first turned on
+if($formObject->getVar('entries_are_groups')
+	AND $oldEntriesAreGroups === 0
+	AND $formObject->getVar('pi')) {
+	$form_handler->associateExistingGroupsWithFormEntries($formObject);
 }
 
 // check if form handle changed
