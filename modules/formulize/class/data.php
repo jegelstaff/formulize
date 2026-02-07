@@ -182,12 +182,10 @@ class formulizeDataHandler {
 		}
 		$data = $xoopsDB->fetchArray($res);
 
-		if($formObject->getVar('pi')) {
-			$element_handler = xoops_getmodulehandler('elements', 'formulize');
-			$piElementObject = $element_handler->get($formObject->getVar('pi'));
-			if($piElementObject->getVar('ele_type') == 'text') {
-				$data[$piElementObject->getVar('ele_handle')] = $data[$piElementObject->getVar('ele_handle')] . " (copy " . ($entryCounter+1) . ")";
-			}
+		if($formObject->getVar('pi')
+		AND $piElementObject = _getElementObject($formObject->getVar('pi'))
+		AND $piElementObject->getVar('ele_type') == 'text') {
+			$data[$piElementObject->getVar('ele_handle')] = $data[$piElementObject->getVar('ele_handle')] . " (copy " . ($entryCounter+1) . ")";
 		}
 
 		if (function_exists($callback)) {
