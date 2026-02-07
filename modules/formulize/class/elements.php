@@ -693,8 +693,9 @@ class formulizeElementsHandler {
 
     function _setElementProperties($element) {
 			$element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
+			$element->isSystemElement = is_bool($element->isSystemElement) ? $element->isSystemElement : false;
+			$element->isUserAccountElement = is_bool($element->isUserAccountElement) ? $element->isUserAccountElement : false;
 			$element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
-			$element->isUserAccountElement = (substr($element->getVar('ele_type'), 0, 11) == 'userAccount' AND $element->isSystemElement) ? true : false;
 			$element->setVar('fid', $element->getVar('id_form'));
 			if(method_exists($element, 'setCanHaveMultipleValues')) {
 				$element->canHaveMultipleValues = $element->setCanHaveMultipleValues();

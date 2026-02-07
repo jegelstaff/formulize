@@ -128,7 +128,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
            AND !isset($lockedEntries[$form_id][$entry])
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-           AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+           AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
            AND !$userHasPermissionToIgnoreEntryLock) {
@@ -186,7 +186,7 @@ EOF;
 		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
             AND !isset($lockedEntries[$form_id][$entry])
             AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-            AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+            AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
             AND !strstr(getCurrentURL(),"printview.php")) {
 
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {

@@ -87,12 +87,6 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 		$validationCode = array();
-		$ele_value = $element->getVar('ele_value');
-		$eltname = $markupName;
-		$eltcaption = $caption;
-		$eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, strip_tags(htmlspecialchars_decode($eltcaption, ENT_QUOTES)));
-		$eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-		$validationCode[] = "\nif ( window.document.getElementsByName('{$eltname}[]').length == 0 ) {\n window.alert(\"{$eltmsg}\");\n myform.{$eltname}_user.focus();\n return false;\n }\n";
 		return $validationCode;
 	}
 
