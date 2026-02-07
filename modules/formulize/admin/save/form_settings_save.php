@@ -80,6 +80,12 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
 $applicationIds = (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0);
 $groupsCanEdit = (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN);
 
+// Parse entries_are_users_conditions filter settings
+list($parsedEntriesAreUsersConditions, $entriesAreUsersConditionsChanged) = parseSubmittedConditions('entriesareusersconditions');
+if ($parsedEntriesAreUsersConditions) {
+	$processedValues['forms']['entries_are_users_conditions'] = $parsedEntriesAreUsersConditions;
+}
+
 // Build group categories array if entries_are_groups is being used
 $groupCategories = null;
 $newGroupCategoriesCreated = false;

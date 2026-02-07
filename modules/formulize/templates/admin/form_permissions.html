@@ -453,7 +453,7 @@ $("[name=order]").change(function () {
 	formulize_reload();
 });
 
-$("[name=addcon]").click(function () {
+$(".groupselectionbox [name=addcon]").click(function () {
 	formulize_reload();
 });
 
@@ -469,7 +469,7 @@ $("[name=submitted_user]").keypress(function(e) {
     }
 });
 
-$(".conditionsdelete").click(function () {
+$(".groupselectionbox a.conditionsdelete").click(function () {
 	$("[name=conditionsdelete]").val($(this).attr('target'));
 	formulize_reload();
 	return false;

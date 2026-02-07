@@ -5132,12 +5132,12 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 /**
  * Used to handle filter conditions being saved in the admin UI
  * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param string $delete_key - Optional. The key in POST for a delete signal sent from the admin UI. Defaults to conditionsdelete, which is what the permission editing UI sends by default. Comments from AI: The value of this key will have the format of filterkey_x_y where x is the key in the array of conditions that we want to delete, and y is an optional value that can be used to isolate which conditions to delete if there are multiple sets of conditions being handled on the same page (such as in the permissions editing, where there are multiple groups each with their own set of conditions).  So for example, if we only want to delete conditions for group id 3, then y would be 3, and we would set $conditionsDeletePartsKeyOneMustMatch to 3 as well, so that only delete signals with a value that has 3 in the y position will be acted on.
  * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
  * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
  * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
  */
-function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
+function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete', $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
 	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
 		return "";
