@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'groups';
-    $checkThisField = 'entry_id';
+    $checkThisTable = 'formulize_id';
+    $checkThisField = 'entries_are_users_conditions';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -514,6 +514,7 @@ function patch40() {
         $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
 				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
 				$sql['add_entries_are_users'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users` tinyint(1) NOT NULL default 0";
+				$sql['add_entries_are_users_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_conditions` text NULL";
 				$sql['add_entries_are_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_groups` tinyint(1) NOT NULL default 0";
 				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
@@ -675,7 +676,7 @@ function patch40() {
 										print "Dynamic defaults already added. result: OK<br>";
 								} elseif($key === "add_usechangeowner") {
 										print "Change owner option for list screens already added. result: OK<br>";
-                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_groups") {
+                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_users_conditions" OR $key === "add_entries_are_groups") {
 										print "Entries-are-users/groups options already added. result: OK<br>";
 								} elseif($key === "add_is_group_template") {
 										print "is_group_template field already added to groups table. result: OK<br>";
