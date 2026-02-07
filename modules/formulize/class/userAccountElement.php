@@ -243,60 +243,53 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 						}
 					}
 				}
+				// update base user object
 				if($member_handler->insertUser($userObject)) {
 					$userId = $userObject->getVar('uid');
+					$results[$cacheKey] = $userId;
+
+					// update profile object associated with user
 					if(!$entryUserId) {
 						$profile->setVar('profileid', $userId);
 					}
 					$profile_handler->insert($profile);
-					$results[$cacheKey] = $userId;
 
-					// Handle group membership if the GroupMembership element exists
+					// update user's group memberships based on the groups selected in the Group Membership element, if it exists.  If the element doesn't exist, then we won't make any changes to group memberships (since submitted and current group ids will be identical -- except for the enforcement of registered users and anonymous user group memberships/exclusions, see below).
+					$currentGroupIds = $member_handler->getGroupsByUser($userId);
+					$submittedGroupIds = $currentGroupIds; // default to their current groups in case we can't find a submission
 					if($groupMembershipElement = $element_handler->get('formulize_user_account_groupmembership_'.$formId)) {
 						$groupMembershipElementId = $groupMembershipElement->getVar('ele_id');
-						$submittedGroups = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId] : array();
-						if(!is_array($submittedGroups)) {
-							$submittedGroups = array($submittedGroups);
+						$submittedGroupIds = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId] : array();
+						if(!is_array($submittedGroupIds)) {
+							$submittedGroupIds = array($submittedGroupIds);
 						}
-						// Parse group IDs from the submitted values (format: "ID - Name")
-						require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
-
-						// this is the canonical list, but what's submitted right now is the ordinal of the selected options, starting with 0!!!!
-						list($groupOptionList, $groupUITextList) = formulizeUserAccountGroupMembershipElementHandler::getAvailableGroupsForOptions();
-
-						$newGroupIds = array();
-						$ordinalCounter = 0;
-						foreach(array_keys($groupOptionList) as $groupId) {
-							if(in_array($ordinalCounter, $submittedGroups)) {
-								$newGroupIds[] = $groupId;
-							}
-							$ordinalCounter++;
-						}
-
-						// Always ensure user is in Registered Users group
-						if(!in_array(XOOPS_GROUP_USERS, $newGroupIds)) {
-							$newGroupIds[] = XOOPS_GROUP_USERS;
-						}
-						// Get current groups and sync
-						$currentGroupIds = $userObject->getGroups();
-						// Add to new groups
-						foreach($newGroupIds as $groupId) {
-							if(!in_array($groupId, $currentGroupIds)) {
-								$member_handler->addUserToGroup($groupId, $userId);
+					}
+					// Always ensure user is in Registered Users group and not in the anonymous users group
+					if(!in_array(XOOPS_GROUP_USERS, $submittedGroupIds)) {
+						$submittedGroupIds[] = XOOPS_GROUP_USERS;
+					}
+					$anonGroupKey = array_search(XOOPS_GROUP_ANONYMOUS, $submittedGroupIds);
+					if($anonGroupKey !== false) {
+						unset($submittedGroupIds[$anonGroupKey]);
+					}
+					// only webmasters can assign to the webmasters group
+					$webmastersGroupKey = array_search(XOOPS_GROUP_ADMIN, $submittedGroupIds);
+					if($webmastersGroupKey !== false AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+						unset($submittedGroupIds[$webmastersGroupKey]);
+					}
+					// Add/remove from appropriate groups
+					$validGroupIds = array_keys($member_handler->getGroups());
+					foreach($submittedGroupIds as $groupId) {
+						if(!in_array($groupId, $currentGroupIds) AND in_array($groupId, $validGroupIds)) {
+							if($member_handler->addUserToGroup($groupId, $userId) == false) {
+								throw new Exception("Failed to add user to group ID $groupId");
 							}
 						}
-						// Remove from groups no longer selected (except system groups like Anonymous)
-						foreach($currentGroupIds as $groupId) {
-							if(!in_array($groupId, $newGroupIds) && $groupId != XOOPS_GROUP_ANONYMOUS) {
-								$member_handler->removeUsersFromGroup($groupId, array($userId));
-							}
-						}
-					} else {
-						// No GroupMembership element, just ensure user is in Registered Users group
-						$groupIds = array(XOOPS_GROUP_USERS);
-						foreach($groupIds as $groupId) {
-							if(!in_array($groupId, $userObject->getGroups())) {
-								$member_handler->addUserToGroup($groupId, $userId);
+					}
+					foreach($currentGroupIds as $groupId) {
+						if(!in_array($groupId, $submittedGroupIds)) {
+							if($member_handler->removeUsersFromGroup($groupId, array($userId)) == false) {
+								throw new Exception("Failed to remove user from group ID $groupId");
 							}
 						}
 					}
