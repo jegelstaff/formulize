@@ -1132,45 +1132,56 @@ class formulizeFormsHandler {
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$userAccountElementTypes = $this->getUserAccountElementTypes();
 		$userAccountElementTypes = array_reverse($userAccountElementTypes); // add in reverse order so they appear in the right order on the page
+
+		// Determine if we have a default screen and find/create the User Account page
+		$defaultFormSid = $formObject->getVar('defaultform');
+		$screenObject = null;
+		$userAccountPageNumber = null;
+		$userAccountPageOrdinal = null;
+
+		if($defaultFormSid) {
+			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			if($screenObject = $screenHandler->get($defaultFormSid)) {
+				// get the page metadata, page numbers numbered from 1
+				list($pages, $pageTitles, $pageConditions) = $screenHandler->traverseScreenPages($screenObject);
+				foreach($pageTitles as $pageNumber => $pageTitle) {
+					if(strstr($pageTitle, ']'._formulize_USER_ACCOUNT_EN.'[') !== false) {
+						$userAccountPageNumber = $pageNumber;
+						$userAccountPageOrdinal = $userAccountPageNumber - 1; // convert to zero-based ordinal
+						break;
+					}
+				}
+			}
+		}
+
 		$screenIdsAndPagesForAdding = array();
 		foreach($userAccountElementTypes as $type) {
 			$handle = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
 			// if user account elements are not yet in the form, add them, and add to a newly created User Account page
 			if(!in_array($handle, $formObject->getVar('elementHandles'))) {
-				if($defaultFormSid = $formObject->getVar('defaultform') AND empty($screenIdsAndPagesForAdding)) {
-					$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-					if($screenObject = $screenHandler->get($defaultFormSid)) {
-						// get the page metadata, page numbers numbered from 1
-						list($pages, $pageTitles, $pageConditions) = $screenHandler->traverseScreenPages($screenObject);
-						$userAccountPageNumber = null;
-						foreach($pageTitles as $pageNumber => $pageTitle) {
-							if(strstr($pageTitle, ']'._formulize_USER_ACCOUNT_EN.'[') !== false) {
-								$userAccountPageNumber = $pageNumber;
-								break;
-							}
-						}
-						if(!$userAccountPageNumber) {
-							$newPages = $screenObject->getVar('pages');
-							$newTitles = $screenObject->getVar('pagetitles');
-							$newConditions = $screenObject->getVar('conditions');
-							$newConditions = is_array($newConditions) ? $newConditions : array(array());
-							array_unshift($newPages, array()); // add a new empty page at the beginning
-							array_unshift($newTitles, '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]');
-							array_unshift($newConditions, array());
-							$screenObject->setVar('pages', serialize($newPages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-							$screenObject->setVar('pagetitles', serialize($newTitles));
-							$screenObject->setVar('conditions', serialize($newConditions));
-							$insertResult = $screenHandler->insert($screenObject, force: true);
-							if($insertResult == false) {
-								throw new Exception("Could not add User Account page to the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
-							}
-							$userAccountPageNumber = 1;
-						}
-						$userAccountPageOrdinal = $userAccountPageNumber - 1; // convert to zero-based ordinal
-						$screenIdsAndPagesForAdding = array(
-							$defaultFormSid => array($userAccountPageOrdinal)
-						);
+				// Create User Account page if it doesn't exist yet and this is the first element being added
+				if($screenObject && !$userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
+					$newPages = $screenObject->getVar('pages');
+					$newTitles = $screenObject->getVar('pagetitles');
+					$newConditions = $screenObject->getVar('conditions');
+					$newConditions = is_array($newConditions) ? $newConditions : array(array());
+					$formConditions = $formObject->getVar('entries_are_users_conditions');
+					// Ensure conditions have proper structure (4 arrays for element, operator, term, match type)
+					$conditionsForNewPage = ($formConditions && is_array($formConditions))
+						? $formConditions
+						: array(0 => array(), 1 => array(), 2 => array(), 3 => array());
+					array_unshift($newPages, array()); // add a new empty page at the beginning
+					array_unshift($newTitles, '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]');
+					array_unshift($newConditions, $conditionsForNewPage);
+					$screenObject->setVar('pages', serialize($newPages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+					$screenObject->setVar('pagetitles', serialize($newTitles));
+					$screenObject->setVar('conditions', serialize($newConditions));
+					$insertResult = $screenHandler->insert($screenObject, force: true);
+					if($insertResult == false) {
+						throw new Exception("Could not add User Account page to the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
 					}
+					$userAccountPageNumber = 1;
+					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
 				}
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
@@ -1185,6 +1196,11 @@ class formulizeFormsHandler {
 				if($type == 'userAccountUid') {
 					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.","; // only admins can see the user id element
 					$elementObjectProperties['ele_required'] = 0; // not required, since it's not managed by user input
+				}
+				if($userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
+					$screenIdsAndPagesForAdding = array(
+						$defaultFormSid => array($userAccountPageOrdinal)
+					);
 				}
 				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding);
 			}
@@ -1201,7 +1217,66 @@ class formulizeFormsHandler {
 			if($insertResult == false) {
 				throw new Exception("Could not reorder elements on User Account page of the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info	@formulize.org for assistance.");
 			}
+		} elseif($userAccountPageNumber && $screenObject) {
+			$formConditions = $formObject->getVar('entries_are_users_conditions');
+			$currentConditions = $screenObject->getVar('conditions');
+			$currentConditions = is_array($currentConditions) ? $currentConditions : array();
+
+			// Get existing conditions for this page, or initialize empty structure
+			$pageConditions = isset($currentConditions[$userAccountPageOrdinal]) && is_array($currentConditions[$userAccountPageOrdinal])
+				? $currentConditions[$userAccountPageOrdinal]
+				: array(0 => array(), 1 => array(), 2 => array(), 3 => array());
+
+			// Merge form conditions into page conditions, avoiding duplicates
+			if($formConditions && is_array($formConditions)) {
+				// Ensure form conditions have all 4 arrays
+				$formConditions = array_pad($formConditions, 4, array());
+
+				// Iterate through each condition in form conditions
+				if(isset($formConditions[0]) && is_array($formConditions[0])) {
+					$conditionCount = count($formConditions[0]);
+
+					for($i = 0; $i < $conditionCount; $i++) {
+						$element = $formConditions[0][$i] ?? null;
+						$operator = $formConditions[1][$i] ?? null;
+						$term = $formConditions[2][$i] ?? null;
+						$matchType = $formConditions[3][$i] ?? null;
+
+						// Check if this condition already exists in page conditions
+						$conditionExists = false;
+						if(isset($pageConditions[0]) && is_array($pageConditions[0])) {
+							$pageConditionCount = count($pageConditions[0]);
+
+							for($j = 0; $j < $pageConditionCount; $j++) {
+								if(($pageConditions[0][$j] ?? null) == $element &&
+								   ($pageConditions[1][$j] ?? null) == $operator &&
+								   ($pageConditions[2][$j] ?? null) == $term &&
+								   ($pageConditions[3][$j] ?? null) == $matchType) {
+									$conditionExists = true;
+									break;
+								}
+							}
+						}
+
+						// If condition doesn't exist, add it
+						if(!$conditionExists) {
+							$pageConditions[0][] = $element;
+							$pageConditions[1][] = $operator;
+							$pageConditions[2][] = $term;
+							$pageConditions[3][] = $matchType;
+						}
+					}
+				}
+			}
+
+			$currentConditions[$userAccountPageOrdinal] = $pageConditions;
+			$screenObject->setVar('conditions', serialize($currentConditions));
+			$insertResult = $screenHandler->insert($screenObject, force: true);
+			if($insertResult == false) {
+				throw new Exception("Could not update conditions on User Account page of the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
+			}
 		}
+
 		return true;
 	}
 
