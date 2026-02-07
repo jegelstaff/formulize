@@ -8730,11 +8730,22 @@ function isMCPServerEnabled() {
 /**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  * @param mixed value - the value we're working with
+ * @param string $elementHandle - optional element handle, used to look up data type information so we can ensure the correct number of decimal places
  * @return mixed returns the value, with the correct type based on its contents. If value is not a string, int or float, returns whatever we got passed in
  */
-function correctStringIntFloatTypes($value) {
+function correctStringIntFloatTypes($value, $elementHandle = '') {
 	if(is_numeric($value)) {
-		$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
+		// try to determine by element data type in the DB first
+		if($elementObject = _getElementObject($elementHandle)) {
+			$dataTypeInfo = $elementObject->getDataTypeInformation();
+			if($dataTypeInfo['dataType'] == 'decimal') {
+				$value = floatval($value);
+			} else {
+				$value = intval($value);
+			}
+		} else {
+			$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
+		}
 	}
 	return $value;
 }

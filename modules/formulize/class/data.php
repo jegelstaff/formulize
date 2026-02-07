@@ -1027,7 +1027,7 @@ class formulizeDataHandler {
 		global $loopCounter;
 		foreach($element_values as $evHandle=>$thisElementValue) {
 			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
-			$thisElementValue = correctStringIntFloatTypes($thisElementValue);
+			$thisElementValue = correctStringIntFloatTypes($thisElementValue, $evHandle);
 			if($loopCounter > 5 AND ($evHandle == 'artifacts_height' OR $evHandle == 'artifacts_width' OR $evHandle == 'artifacts_depth')) {
 				print "checking whether to write element $evHandle with value: ";
 				var_dump($thisElementValue);
