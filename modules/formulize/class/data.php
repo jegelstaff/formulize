@@ -1011,7 +1011,7 @@ class formulizeDataHandler {
 		// don't write things that are unchanged from their current state in the database
 		foreach($element_values as $evHandle=>$thisElementValue) {
 			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
-			$thisElementValue = correctStringIntFloatTypes($thisElementValue); //, $evHandle);
+			$thisElementValue = correctStringIntFloatTypes($thisElementValue);
 			if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
 				unset($element_values[$evHandle]);
 			}

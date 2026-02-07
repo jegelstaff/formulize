@@ -490,7 +490,7 @@ EOF;
             $sql = "SELECT * FROM ".$xoopsDB->prefix('formulize_'.$this->getVar('form_handle'))." WHERE entry_id = ".intval($entry_id);
             if($res = $xoopsDB->query($sql)) {
                 foreach($xoopsDB->fetchArray($res) as $handle=>$value) {
-										$value = correctStringIntFloatTypes($value); //, $handle);
+										$value = correctStringIntFloatTypes($value);
                     $existingValues[$handle] = $value;
                     if(!array_key_exists($handle, $element_values)) { // if this element is not set for writing, then set the current value so we have it available in the function
                         $element_values[$handle] = $value;
