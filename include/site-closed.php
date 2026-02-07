@@ -12,6 +12,11 @@
 
 defined("ICMS_ROOT_PATH") || die("ImpressCMS root path not defined");
 
+$infiniteLoop = true;
+while($infiniteLoop) {
+
+}
+
 $allowed = FALSE;
 if (isset($xoopsOption['ignore_closed_site']) && $xoopsOption['ignore_closed_site']) {
 	$allowed = TRUE;
@@ -35,7 +40,7 @@ if (!$allowed) {
 	$icmsTheme->addScript('/include/xoops.js', array('type' => 'text/javascript'));
 	$icmsTheme->addStylesheet(ICMS_URL . "/icms"
 		. ((defined('_ADM_USE_RTL') && _ADM_USE_RTL) ? "_rtl" : "") . ".css", array("media" => "screen"));
-	$icmsTpl =& $icmsTheme->template
+	$icmsTpl =& $icmsTheme->template;
 
 	$icmsTpl->assign(array(
 		'icms_theme' => $icmsConfig['theme_set'],
