@@ -1,4 +1,4 @@
-const { test, expect } = require('../test-fixtures');
+const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
 import { login } from '../utils';
 
