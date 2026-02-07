@@ -34,8 +34,9 @@ function containerPathToRepoPath(containerPath) {
 
 class PhpErrorReporter {
   onTestEnd(test, result) {
-    if (result.status === result.expectedStatus) {
-      return;
+
+    if (result.status === 'passed' || result.status === 'skipped') {
+      return; // Only check for PHP errors if the test ended badly
     }
 
     try {
