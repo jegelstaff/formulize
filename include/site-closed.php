@@ -12,11 +12,6 @@
 
 defined("ICMS_ROOT_PATH") || die("ImpressCMS root path not defined");
 
-$infiniteLoop = true;
-while($infiniteLoop) {
-
-}
-
 $allowed = FALSE;
 if (isset($xoopsOption['ignore_closed_site']) && $xoopsOption['ignore_closed_site']) {
 	$allowed = TRUE;
