@@ -224,6 +224,9 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         $settings['ventry'] = $entry;
     }
 
+	// check if user does not have view private elements permission, and if all elements on the page are flagged as private, in which case, skip the page
+	$userCanViewPrivateElements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid);
+
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
@@ -231,34 +234,22 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	if(is_array($conditions) AND !empty($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
 		while(!$conditionsMet AND $currentPage > 0) {
-			if(isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
-				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
-					if($prevPageThisScreen <= $currentPage) {
-						$currentPage++;
-					} else {
-						$currentPage--;
-					}
-					$pagesSkipped = true;
+			$conditionsMet = ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$currentPage], $fid)) ? true : false;
+			if($conditionsMet AND isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
+				$conditionsMet = pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid);
+			}
+			if(!$conditionsMet) {
+				if($prevPageThisScreen <= $currentPage) {
+					$currentPage++;
 				} else {
-					$conditionsMet = true;
+					$currentPage--;
 				}
-			} else {
-				// no conditions on the current page
-				$conditionsMet = true;
+				$pagesSkipped = true;
 			}
 		}
 	}
-
-    if(!$currentPage) {
-        $currentPage = $thanksPage;
-    }
-
-	if($currentPage > 1) {
-	  $previousPage = $currentPage-1; // previous page numerically
-	} else {
-	  $previousPage = "none";
-	}
-
+	$currentPage = !$currentPage ? $thanksPage : $currentPage;
+	$previousPage = $currentPage > 1 ? $currentPage-1 : "none";
 	$nextPage = $currentPage+1;
 
 	// done destination used in the multipage boilerplate included below
@@ -397,7 +388,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			$templatePageTitles = array();
 			unset($templateVariables['pageTitles'][0]);
 			foreach($templateVariables['pageTitles'] as $i=>$title) {
-					if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid)) {
+					if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid) AND ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$i], $fid))) {
 							$templatePageTitles[$i] = $title;
 					}
 			}
@@ -517,4 +508,16 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, 
 	}
 	$pageSelectionList[$cacheKey] .= "</select>";
 	return $pageSelectionList[$cacheKey];
+}
+
+function isPageAllPrivateElements($pageElements, $fid) {
+	if(is_array($pageElements) AND !empty($pageElements)) {
+		global $xoopsDB;
+		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form=".intval($fid)." AND ele_private=1 AND ele_id IN (".implode(",",array_filter($pageElements, 'is_numeric')).")";
+		$result = $xoopsDB->query($sql);
+		if($xoopsDB->getRowsNum($result) == count($pageElements)) {
+			return true;
+		}
+	}
+	return false;
 }

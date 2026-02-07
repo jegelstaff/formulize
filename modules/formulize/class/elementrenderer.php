@@ -205,7 +205,7 @@ class formulizeElementRenderer{
 				AND $this->_ele->getVar('ele_type') != "derived"
 				AND !$isDisabled
 				AND !$wasDisabled
-				AND $customElementHasData) {
+				AND ($customElementHasData OR $this->_ele->isUserAccountElement)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($renderedElementMarkupName,"de_")."\" name=\"decue_".trim($renderedElementMarkupName,"de_")."\" value=1>\n";
 			}
 
