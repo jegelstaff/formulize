@@ -50,24 +50,14 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	// Override loadValue since we're not reading from a user property
 	// Group membership data comes from the groups_users_link table
 	function loadValue($element, $value, $entry_id) {
-		global $xoopsDB;
 		$member_handler = xoops_gethandler('member');
 		$dataHandler = new formulizeDataHandler($element->getVar('fid'));
-
-		// Get the user ID from the entry's uid element
-		$userId = intval($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')));
-		if(!$userId) {
-			return array(); // No user associated yet, return empty array
+		$userIdElementHandle = 'formulize_user_account_uid_'.$element->getVar('fid');
+		if(!$userId = intval($dataHandler->getElementValueInEntry($entry_id, $userIdElementHandle))
+		OR !$userObject = $member_handler->getUser($userId)) {
+			return array(); // No user associated yet, or id is invalid, return empty array
 		}
-
-		// Get the user's current group memberships
-		$userObject = $member_handler->getUser($userId);
-		if(!$userObject) {
-			return array();
-		}
-
-		// Return the array of group IDs the user belongs to
-		return $userObject->getGroups();
+		return $member_handler->getGroupsByUser($userId);
 	}
 
 	// this method renders the element for display in a form
@@ -81,30 +71,15 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-
-		// Build the group list from the groups table, excluding template groups
-		// Format: "GroupID - GroupName" as the option text
-		list($groupOptionList, $groupUITextList) = self::getAvailableGroupsForOptions();
-
-		// Use the existing autocomplete element to render the group selection UI
+		// Setup an autocomplete element to render the group selection UI, and render that
 		$autocompleteHandler = xoops_getmodulehandler('autocompleteElement', 'formulize');
 		$autocompleteElement = $autocompleteHandler->create();
 		$autocomplete_ele_value = $autocompleteHandler->getDefaultEleValue();
 		$autocomplete_ele_value[ELE_VALUE_SELECT_MULTIPLE] = 1; // Allow multiple group selections
+		list($autocomplete_ele_value[ELE_VALUE_SELECT_OPTIONS], $groupUITextList) = self::getAvailableGroupsForOptions($ele_value);
 		$autocompleteElement->setVar('ele_uitext', $groupUITextList);
-
-		// Mark currently selected groups (from ele_value which was set by loadValue)
-		$selectedGroupIds = is_array($ele_value) ? $ele_value : array();
-		foreach($selectedGroupIds as $selectedGroupId) {
-			if(isset($groupOptionList[$selectedGroupId])) {
-				$groupOptionList[$selectedGroupId] = 1; // Mark as selected
-			}
-		}
-		$autocomplete_ele_value[ELE_VALUE_SELECT_OPTIONS] = $groupOptionList;
-
-		// Render the autocomplete element
-		$form_ele = $autocompleteHandler->render($autocomplete_ele_value, $caption, $markupName, $isDisabled, $autocompleteElement, $entry_id, $screen, $owner);
-		return $form_ele;
+		$autocompleteElement->useOptionsAsValues = true; // will use group ids as the values in the HTML markup, and then we can just save those values directly without having to do extra work to figure out which options were selected based on their ordinal position in the list, which would introduce race conditions too!
+		return $autocompleteHandler->render($autocomplete_ele_value, $caption, $markupName, $isDisabled, $autocompleteElement, $entry_id, $screen, $owner);
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element
@@ -122,62 +97,29 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	}
 
 	/**
-	 * Get all available groups that are not template groups, formatted for autocomplete options
-	 * Format: "GroupID - GroupName" as the key, 0 as value (for ele_value format)
+	 * Get all available groups that are not template groups
+	 * Exclude registered users group since it is always enforced on users when data is saved
+	 * @param array $currentlySelectedGroupIds Optional array of group IDs that should be marked as selected in the options list
 	 * @return array Option strings as keys, 0 as values
 	 */
-	static function getAvailableGroupsForOptions() {
-		global $xoopsDB;
+	static function getAvailableGroupsForOptions($currentlySelectedGroupIds = []) {
+		global $xoopsDB, $xoopsUser;
 		$groupOptionList = array();
 		$groupUITextList = array();
-
-		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') . " WHERE is_group_template = 0 ORDER BY name";
+		$webmasterGroupExclusion = "";
+		if(!in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+			$webmasterGroupExclusion = " AND groupid != ".XOOPS_GROUP_ADMIN;
+		}
+		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') . " WHERE is_group_template = 0 AND groupid != ".XOOPS_GROUP_USERS." AND groupid != ".XOOPS_GROUP_ANONYMOUS." $webmasterGroupExclusion ORDER BY name";
 		$result = $xoopsDB->query($sql);
 		if($result) {
+			$currentlySelectedGroupIds = is_array($currentlySelectedGroupIds) ? $currentlySelectedGroupIds : [];
 			while($row = $xoopsDB->fetchArray($result)) {
-				// Format: "ID - Name" so we can parse the ID when saving
-				$label = $row['groupid'] . ' - ' . $row['name'];
-				$groupUITextList[$row['groupid']] = $label;
-				$groupOptionList[$row['groupid']] = 0; // 0 means not selected by default
+				$groupUITextList[$row['groupid']] = $row['name'];
+				$groupOptionList[$row['groupid']] = in_array($row['groupid'], $currentlySelectedGroupIds) ? 1 : 0; // Mark as selected if in currently selected group IDs
 			}
 		}
-
 		return array($groupOptionList, $groupUITextList);
-	}
-
-	/**
-	 * Get a map of group IDs to group names
-	 * @return array Group ID => Group Name
-	 */
-	function getGroupIdToNameMap() {
-		global $xoopsDB;
-		static $map = null;
-
-		if($map === null) {
-			$map = array();
-			$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') . " WHERE is_group_template = 0";
-			$result = $xoopsDB->query($sql);
-			if($result) {
-				while($row = $xoopsDB->fetchArray($result)) {
-					$map[$row['groupid']] = $row['name'];
-				}
-			}
-		}
-
-		return $map;
-	}
-
-	/**
-	 * Parse a group option string to extract the group ID
-	 * @param string $optionString Format: "GroupID - GroupName"
-	 * @return int|false The group ID or false if parsing failed
-	 */
-	static function parseGroupIdFromOption($optionString) {
-		$parts = explode(' - ', $optionString, 2);
-		if(count($parts) >= 1 && is_numeric($parts[0])) {
-			return intval($parts[0]);
-		}
-		return false;
 	}
 
 }
