@@ -178,6 +178,8 @@ define("_AM_SETTINGS_FORM_PI_NEW_YES","Yes. Use the caption: ");
 define("_AM_SETTINGS_FORM_PI_DESC","The principal identifer is the thing that you use to tell the entries apart, usually a name or id number, etc.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS","This form represents users");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN","For each entry in this form, a user account will be created in Formulize.");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE","Conditions for Creating User Accounts");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC","Only create user accounts when entries meet these conditions:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS","This form represents groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN","For each entry in this form, a group will be created in Formulize.");
 define("_AM_SETTINGS_FORM_GROUP_CATEGORIES_TITLE","User Categories for each entry in this form");
