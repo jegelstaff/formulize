@@ -53,6 +53,7 @@ class formulizeElement extends FormulizeObject {
 	var $hasMultipleOptions;
 	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be primarily managed by the system
 	var $isUserAccountElement; // set to true in user account element classes
+	var $useOptionsAsValues; // only applicable to non-linked, non-user select list elements. Set to true if the options for this element should also be used as the values saved to the database.  Default is false, in which case the values used in the HTML markup will be the ordinal position of the option in the list. The list is then recreated on submission so the right value can be retrieved based on ordinal position.
 	public static $category = 'misc'; // the category this element belongs to - textboxes, selectors, lists, layout, misc, subforms
 
 	function __construct(){
@@ -88,6 +89,7 @@ class formulizeElement extends FormulizeObject {
     $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_dynamicdefault_source", XOBJ_DTYPE_INT);
 		$this->initVar('ele_dynamicdefault_conditions', XOBJ_DTYPE_ARRAY);
+		$this->useOptionsAsValues = false;
 	}
 
 	/**
