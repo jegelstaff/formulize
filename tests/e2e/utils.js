@@ -217,7 +217,7 @@ export async function login(page, username, password = '12345') {
 /**
  * Formulize Saving validation
  */
-export async function saveFormulizeForm(page, timeout = 120000) {
+export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120000) {
 	// Wait for the formulize page token
   await page.locator('div#formulizeform').click();
 	await waitForFormulizeFormToken(page);
@@ -228,7 +228,7 @@ export async function saveFormulizeForm(page, timeout = 120000) {
              window.getComputedStyle(element).display === 'flex' &&
              window.getComputedStyle(element).opacity === '1';
     }),
-    page.getByRole('button', { name: 'Save' }).click()
+    page.getByRole('button', { name: buttonText }).click()
   ]);
 	// await saving animation dissapear
   await page.waitForFunction(() => {

@@ -168,7 +168,7 @@ class formulizeDataHandler {
 	}
 
 	// this function makes a copy of an entry in one form
-	function cloneEntry($entry_id, $callback = null, $targetEntry = "new") {
+	function cloneEntry($entry_id, $callback = null, $targetEntry = "new", $entryCounter = 0) {
 		if(!is_numeric($entry_id)) {
 			return false;
 		}
@@ -181,6 +181,12 @@ class formulizeDataHandler {
 			return false;
 		}
 		$data = $xoopsDB->fetchArray($res);
+
+		if($formObject->getVar('pi')
+		AND $piElementObject = _getElementObject($formObject->getVar('pi'))
+		AND $piElementObject->getVar('ele_type') == 'text') {
+			$data[$piElementObject->getVar('ele_handle')] = $data[$piElementObject->getVar('ele_handle')] . " (copy " . ($entryCounter+1) . ")";
+		}
 
 		if (function_exists($callback)) {
 			$data = $callback($data);

@@ -2666,7 +2666,8 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 // note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
 // entries in single-entry forms are never cloned
 // $entryOrFilter is the entry id number, or can be a filter string or array!
-function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
+// $clone_forms is an array of form ids that should be cloned.	if empty, entries from all forms will be cloned.
+function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new", $clone_forms = array()) {
 
     global $xoopsDB, $xoopsUser;
 
@@ -2685,14 +2686,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
         $lsbindexer = 0;
         foreach ($links as $link) {
             // not a common value link, and not a uid link (key is 0 for uid links)
-            if (!$link->getVar('common') AND $link->getVar('key1') AND $link->getVar('relationship') > 1) {
-            // 2 is one to many
-            // 3 is many to one
-            if ($link->getVar('relationship') == 2) { // key1 is the textbox, key2 is the lsb
-              $lsbpairs[$link->getVar('key1')] = $link->getVar('key2');
-            } else { // key 1 is the lsb and key 2 is the textbox
-              $lsbpairs[$link->getVar('key2')] = $link->getVar('key1');
-            }
+            if (!$link->getVar('common') AND $link->getVar('key1') AND $link->getVar('relationship') > 1 AND (empty($clone_forms) OR isset($clone_forms[$link->getVar('form1')]) OR isset($clone_forms[$link->getVar('form2')]))) {
+							// 2 is one to many
+							// 3 is many to one
+							if ($link->getVar('relationship') == 2) { // key1 is the textbox, key2 is the lsb
+								$lsbpairs[] = array('source' => $link->getVar('key1'), 'lsb' => $link->getVar('key2'));
+							} else { // key 1 is the lsb and key 2 is the textbox
+								$lsbpairs[] = array('lsb' => $link->getVar('key1'), 'source' => $link->getVar('key2'));
+							}
             }
         }
     }
@@ -2700,10 +2701,10 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
     foreach($entries_data as $entry_data) {
         $ids = getEntryIds($entry_data, fidAsKeys: true);
         foreach ($ids as $fid=>$entryids) {
-            foreach ($entryids as $id) {
-                $entries_to_clone[$fid][] = $id;
-            }
-        }
+					if(empty($clone_forms) OR isset($clone_forms[$fid])) {
+						$entries_to_clone[$fid] = $entryids;
+					}
+				}
     }
 
     $dataHandlers = array();
@@ -2719,7 +2720,7 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
                 if (!isset($dataHandlers[$fid])) {
                     $dataHandlers[$fid] = new formulizeDataHandler($fid);
                 }
-                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback, $targetEntry);
+                $clonedEntryId = $dataHandlers[$fid]->cloneEntry($thisentry, $callback, $targetEntry, $copy_counter);
                 $dataHandlers[$fid]->setEntryOwnerGroups(getEntryOwner($clonedEntryId, $fid), $clonedEntryId);
                 $entryMap[$fid][$thisentry][] = $clonedEntryId;
             }
@@ -2727,17 +2728,29 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
     }
 
     // all entries have been made.  Now we need to fix up any linked selectboxes
+    // only reassign LSBpairs when both forms involved in the pair were cloned
     if(count($entryMap) > 0 ) {
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
-        foreach ($lsbpairs as $source=>$lsb) {
-            $sourceElement = $element_handler->get($source);
-            $lsbElement = $element_handler->get($lsb);
-            $dataHandlers[$lsbElement->getVar('id_form')]->reassignLSB($sourceElement->getVar('id_form'), $lsbElement, $entryMap);
+        foreach ($lsbpairs as $lsbpair) {
+            if($sourceElement = $element_handler->get($lsbpair['source']) AND $lsbElement = $element_handler->get($lsbpair['lsb'])) {
+                $sourceFid = $sourceElement->getVar('id_form');
+                $lsbFid = $lsbElement->getVar('id_form');
+                // only reassign if both forms in the pair were cloned
+                if(!isset($entryMap[$sourceFid]) OR !isset($entryMap[$lsbFid])) {
+                    continue;
+                }
+								if (!isset($dataHandlers[$lsbFid])) {
+									$dataHandlers[$lsbFid] = new formulizeDataHandler($lsbFid);
+								}
+								$dataHandlers[$lsbFid]->reassignLSB($sourceFid, $lsbElement, $entryMap);
+						}
         }
     }
-    foreach($entryMap[$originalFid] as $clonedMainformEntries) {
-        foreach($clonedMainformEntries as $clonedMainformEntryId) {
-            formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
+    if(isset($entryMap[$originalFid])) {
+        foreach($entryMap[$originalFid] as $clonedMainformEntries) {
+            foreach($clonedMainformEntries as $clonedMainformEntryId) {
+                formulize_updateDerivedValues($clonedMainformEntryId, $originalFid, $originalFrid);
+            }
         }
     }
 
@@ -7752,6 +7765,7 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$elementDynamicDefaultSource = $thisDefaultEle->getVar('ele_dynamicdefault_source');
 		$elementDynamicDefaultConditions = $thisDefaultEle->getVar('ele_dynamicdefault_conditions');
 		if($elementDynamicDefaultSource AND $elementDynamicDefaultConditions) {
+
 			// for new entries, if there's data we're about to write to the DB, put it into the asynchronous global values, so that the dynamic default calculation can use them even though they're not in DB yet
 			if($target_entry === 'new' AND !empty($dataToBeWritten)) {
 				$GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat']['new'] = array();
@@ -7803,7 +7817,8 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 		$cachedDefaults[$thisDefaultEle->getVar('ele_id')][$target_entry] = $defaultTextToWrite;
     $defaultValueMap[$key] = $defaultTextToWrite;
   }
-  return $defaultValueMap;
+
+	return $defaultValueMap;
 }
 
 // this function figures out if there is a viewentryscreen that we should be showing based on the current state
@@ -8711,7 +8726,7 @@ function isMCPServerEnabled() {
  */
 function correctStringIntFloatTypes($value) {
 	if(is_numeric($value)) {
-		$value = strstr(strval($value), '.') ? floatval($value) : intval($value);
+		$value = (is_float($value) OR strstr(strval($value), '.')) ? floatval($value) : intval($value);
 	}
 	return $value;
 }
