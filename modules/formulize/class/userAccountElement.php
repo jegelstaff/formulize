@@ -39,6 +39,7 @@ class formulizeUserAccountElement extends formulizeElement {
         $this->adminCanMakeRequired = false; // set to true if the webmaster should be able to toggle this element as required/not required
         $this->alwaysValidateInputs = true; // set to true if you want your custom validation function to always be run.  This will override any required setting that the webmaster might have set, so the recommendation is to set adminCanMakeRequired to false when this is set to true.
         $this->isSystemElement = true;
+				$this->isUserAccountElement = true;
         parent::__construct();
     }
 
@@ -277,9 +278,18 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					if($webmastersGroupKey !== false AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 						unset($submittedGroupIds[$webmastersGroupKey]);
 					}
+					// conversely, if the target user is a webmaster, make sure they stay in the webmasters group, if a non-webmaster is submitting groups
+					if(in_array(XOOPS_GROUP_ADMIN, $currentGroupIds)
+					AND !in_array(XOOPS_GROUP_ADMIN, $submittedGroupIds)
+				  AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+						$submittedGroupIds[] = XOOPS_GROUP_ADMIN;
+					}
 					// Add/remove from appropriate groups
-					$validGroupIds = array_keys($member_handler->getGroups());
-					foreach($submittedGroupIds as $groupId) {
+					$validGroupIds = array_keys($member_handler->getGroups(id_as_key: true));
+					foreach($submittedGroupIds as $i=>$groupId) {
+						// make sure everything is an integer
+						$groupId = intval($groupId);
+						$submittedGroupIds[$i] = $groupId;
 						if(!in_array($groupId, $currentGroupIds) AND in_array($groupId, $validGroupIds)) {
 							if($member_handler->addUserToGroup($groupId, $userId) == false) {
 								throw new Exception("Failed to add user to group ID $groupId");

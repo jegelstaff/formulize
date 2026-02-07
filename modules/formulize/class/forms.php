@@ -1174,10 +1174,10 @@ class formulizeFormsHandler {
 					'ele_type' => $type,
 					'ele_handle' => $handle,
 					'ele_private' => 1,
-					'ele_required' => 1,
+					'ele_required' => $type == 'GroupMembership' ? 0 : 1,
 					'fid' => $formObject->getVar('fid'),
 					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
-					'ele_display' => ",".XOOPS_GROUP_USERS.","
+					'ele_display' => 1
 				);
 				if($type == 'userAccountUid') {
 					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.","; // only admins can see the user id element
