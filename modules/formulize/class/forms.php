@@ -1267,6 +1267,128 @@ class formulizeFormsHandler {
 	}
 
 	/**
+	 * Associate existing groups with form entries based on the principal identifier value matching group names
+	 * This method runs automatically when entries_are_groups is enabled and a principal identifier is set
+	 * Groups are always named "PI - Category", with "All Users" being the default category
+	 * If a group exists with just the PI name, it will be renamed to "PI - All Users"
+	 * Missing groups will be created automatically
+	 * @param int|string|object formIdentifier - The object representation of the form we're working with, or form handle or form id
+	 * @return boolean Returns true if the association was made, false if the form is invalid or has no principal identifier
+	 */
+	function associateExistingGroupsWithFormEntries($formIdentifier) {
+		// validate the form
+		if(!is_a($formIdentifier, 'formulizeForm')) {
+			$formObject = $this->get($formIdentifier);
+			if(!$formObject) {
+				return false;
+			}
+		} else {
+			$formObject = $formIdentifier;
+		}
+
+		// Check if entries_are_groups is enabled
+		if(!$formObject->getVar('entries_are_groups')) {
+			return false;
+		}
+
+		// Check if there's a principal identifier
+		$principalIdentifierElementId = $formObject->getVar('pi');
+		if(!$principalIdentifierElementId) {
+			return false;
+		}
+
+		// Get the principal identifier element handle
+		$elementObject = _getElementObject($principalIdentifierElementId);
+		if(!$elementObject) {
+			return false;
+		}
+		$piHandle = $elementObject->getVar('ele_handle');
+
+		// Get all entries and their principal identifier values
+		$dataHandler = new formulizeDataHandler($formObject->getVar('fid'));
+		$values = $dataHandler->findAllValuesForField($piHandle);
+		if(!$values) {
+			return false;
+		}
+
+		// Get group categories for this form - "All Users" is always included
+		$groupCategories = $formObject->getVar('group_categories');
+		if(!is_array($groupCategories)) {
+			$groupCategories = array();
+		}
+
+		// Ensure "All Users" is in the categories list
+		$allUsersLabel = defined('_AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS') ? _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS : 'All Users';
+		if(!in_array($allUsersLabel, $groupCategories)) {
+			array_unshift($groupCategories, $allUsersLabel); // Add as first category
+		}
+
+		$member_handler = xoops_gethandler('member');
+		$group_handler = xoops_gethandler('group');
+
+		// Process each entry
+		foreach($values as $entryId => $principalIdentifierValue) {
+			if(empty($principalIdentifierValue)) {
+				continue;
+			}
+
+			// Track whether we've already handled "All Users" group (via renaming or direct processing)
+			$allUsersGroupId = null;
+
+			// First, check if there's a group with just the PI name (old format)
+			// If so, rename it to "PI - All Users" and associate it with this entry
+			$criteria = new Criteria('name', $principalIdentifierValue);
+			$groupObjects = $member_handler->getGroups($criteria);
+			if($groupObjects && is_array($groupObjects) && count($groupObjects) == 1) {
+				$groupObject = array_shift($groupObjects);
+				$allUsersGroupId = $groupObject->getVar('groupid');
+				$newName = $principalIdentifierValue . " - " . $allUsersLabel;
+				$groupObject->setVar('name', $newName);
+				$groupObject->setVar('description', $allUsersLabel . ' group for ' . $principalIdentifierValue);
+				$groupObject->setVar('form_id', $formObject->getVar('fid'));
+				$groupObject->setVar('entry_id', $entryId);
+				if(!$group_handler->insert($groupObject)) {
+					throw new Exception("Could not associate renamed group $allUsersGroupId with entry $entryId in form " . $formObject->getVar('form_handle'));
+				}
+			}
+
+			// Now process all categories (including "All Users")
+			foreach($groupCategories as $categoryName) {
+				if(empty($categoryName)) {
+					continue;
+				}
+
+				// Skip "All Users" if we already renamed and associated it above
+				if($categoryName === $allUsersLabel && $allUsersGroupId !== null) {
+					continue;
+				}
+
+				$groupName = $principalIdentifierValue . " - " . $categoryName;
+
+				// Check if group exists
+				$criteria = new Criteria('name', $groupName);
+				$groupObjects = $member_handler->getGroups($criteria);
+
+				if($groupObjects && is_array($groupObjects) && count($groupObjects) == 1) {
+					$groupObject = array_shift($groupObjects);
+				} else {
+					$groupObject = $group_handler->create();
+					$groupObject->setVar('name', $groupName);
+				}
+				$groupObject->setVar('form_id', $formObject->getVar('fid'));
+				$groupObject->setVar('entry_id', $entryId);
+				$groupObject->setVar('description', $categoryName . ' group for ' . $principalIdentifierValue);
+				$groupObject->setVar('group_type', 'User');
+				if(!$group_handler->insert($groupObject)) {
+					throw new Exception("Could not associate group '" . $groupName . "' with entry $entryId in form " . $formObject->getVar('form_handle'));
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Check if a form's Singular or Plural values have changed, and rename any screens and menu links involved if their titles match exactly the changed name
 	 * @param object formObject - The object representation of the form we're working with. Will include the new names as the singular and plural.
 	 * @param array originalFormNames - An array with three keys, singular, plural, form_handle, which contain the old names that potentially need replacing
