@@ -12,6 +12,7 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
 <input type="hidden" name="application_url_id" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
+<input type="hidden" class="entries-are-users-conditions-conditionsdelete" name="conditionsdelete" value="">
 
 
 		<div class="form-item required">
@@ -113,6 +114,229 @@
 				</div>
              </fieldset>
 		</div>
+
+		<!-- Entries Represent Users -->
+		<!-- TODO add option for entry_user_is_owner!! -->
+		<div class="form-item" id="entries_are_users_container">
+			<fieldset>
+				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS}></label></legend>
+				<div class="form-radios">
+					<label for="entries_are_users-0">
+						<input type="radio" id="entries_are_users-0" name="forms-entries_are_users" value="0" />
+						<{$smarty.const._AM_NO}>
+					</label>
+				</div>
+				<div class="form-radios">
+					<label for="entries_are_users-1">
+						<input type="radio" id="entries_are_users-1" name="forms-entries_are_users" value="1" />
+						<{$smarty.const._AM_YES}>
+					</label>
+				</div>
+				<div class="description">
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
+				</div>
+
+				<!-- User Creation Conditions -->
+				<{if $content.entries_are_users_conditions_ui}>
+				<div id="entries_are_users_conditions_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE}></h4>
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC}></p>
+					<{$content.entries_are_users_conditions_ui}>
+				</div>
+				<{/if}>
+
+				<!-- User Mapping for Existing Entries -->
+				<{if $content.show_user_mapping_ui AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
+				<div id="user_mapping_container" style="margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TITLE}></h4>
+					<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_QUESTION}></p>
+
+					<div class="form-radios">
+						<label for="user_mapping_yes_no-0">
+							<input type="radio" id="user_mapping_yes_no-0" name="user_mapping_yes_no" value="0" checked />
+							<{$smarty.const._AM_NO}>
+						</label>
+					</div>
+					<div class="form-radios">
+						<label for="user_mapping_yes_no-1">
+							<input type="radio" id="user_mapping_yes_no-1" name="user_mapping_yes_no" value="1" />
+							<{$smarty.const._AM_YES}>
+						</label>
+					</div>
+
+					<div id="user_mapping_details" style="display: none; margin-top: 15px;">
+						<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_EXPLAIN}></p>
+
+						<div style="display: flex; gap: 30px; margin-top: 10px;">
+							<div style="display: flex; flex-direction: column;">
+								<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_LABEL}></label>
+								<select name="user_mapping_element" id="user_mapping_element" style="width: auto;">
+									<option value=""><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_SELECT}></option>
+									<{foreach from=$content.elementheadings item=element}>
+									<option value="<{$element.ele_id}>"><{$element.text}></option>
+									<{/foreach}>
+								</select>
+							</div>
+							<div style="display: flex; flex-direction: column;">
+								<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_CONTAINS_LABEL}></label>
+								<label for="user_mapping_type-login_name" style="margin-bottom: 3px;">
+									<input type="radio" id="user_mapping_type-login_name" name="user_mapping_type" value="login_name" />
+									<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_USERNAME}>
+								</label>
+								<label for="user_mapping_type-email" style="margin-bottom: 3px;">
+									<input type="radio" id="user_mapping_type-email" name="user_mapping_type" value="email" />
+									<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_EMAIL}>
+								</label>
+								<label for="user_mapping_type-uid">
+									<input type="radio" id="user_mapping_type-uid" name="user_mapping_type" value="uid" />
+									<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_UID}>
+								</label>
+							</div>
+						</div>
+
+						<p style="margin-top: 10px;"><em><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_SYNC_NOTE}></em></p>
+					</div>
+				</div>
+				<{/if}>
+			</fieldset>
+		</div>
+
+		<!-- Entries Represent Groups -->
+		<div class="form-item" id="entries_are_groups_container">
+			<fieldset>
+				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS}></label></legend>
+				<div class="form-radios">
+					<label for="entries_are_groups-0">
+						<input type="radio" id="entries_are_groups-0" name="forms-entries_are_groups" value="0" />
+						<{$smarty.const._AM_NO}>
+					</label>
+				</div>
+				<div class="form-radios">
+					<label for="entries_are_groups-1">
+						<input type="radio" id="entries_are_groups-1" name="forms-entries_are_groups" value="1" />
+						<{$smarty.const._AM_YES}>
+					</label>
+				</div>
+				<div class="description">
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN}></p>
+				</div>
+
+				<!-- Group Categories Configuration -->
+				<div id="group_categories_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_TITLE}></h4>
+
+					<!-- Base category - always present, not editable -->
+					<div style="margin-top: 15px;">
+						<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+							<input type="text" value="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS}>" style="flex: 1; max-width: 300px; background: #e9e9e9; color: #666;" disabled />
+						</div>
+					</div>
+
+					<div id="group_categories_list">
+						<!-- Additional categories will be listed here -->
+						<!-- For existing categories, the key ($groupid) is the group ID in the database -->
+						<!-- For new categories added via JS, the key will be "new_X" where X is a counter -->
+						<{if $content.group_categories|is_array}>
+						<{foreach from=$content.group_categories item=category key=groupid}>
+						<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+							<input type="text" name="group_categories[<{$groupid}>]" value="<{$category}>" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />
+							<button type="button" class="remove-category-btn" style="padding: 4px 8px; cursor: pointer;" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">&times;</button>
+						</div>
+						<{/foreach}>
+						<{/if}>
+					</div>
+
+					<div style="margin-top: 15px;">
+						<button type="button" id="add_group_category_btn" style="padding: 6px 12px; cursor: pointer;">
+							<img src="../images/filenew2.png" style="vertical-align: middle; margin-right: 5px;" alt="" /><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_ADD}>
+						</button>
+					</div>
+
+					<p style="margin-top: 15px;"><em><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_NOTE}></em></p>
+				</div>
+			</fieldset>
+		</div>
+
+		<script>
+		// Initialize checked state
+		$("#entries_are_users-<{$content.entries_are_users}>").attr('checked', 'checked');
+		$("#entries_are_groups-<{$content.entries_are_groups}>").attr('checked', 'checked');
+
+		// Initialize visibility based on current values
+		if (parseInt("<{$content.entries_are_users}>") == 1) {
+			$("#entries_are_groups_container").hide();
+		}
+		if (parseInt("<{$content.entries_are_groups}>") == 1) {
+			$("#entries_are_users_container").hide();
+			$("#group_categories_container").show();
+		}
+
+		// Initialize user mapping container visibility based on entries_are_users
+		if (parseInt("<{$content.entries_are_users}>") != 1) {
+			$("#user_mapping_container").hide();
+			$("#entries_are_users_conditions_container").hide();
+		} else {
+			$("#entries_are_users_conditions_container").show();
+		}
+
+		// Mutual exclusivity: if one is set to Yes, set the other to No and hide it
+		$("input[name='forms-entries_are_users']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#entries_are_groups-0").attr('checked', 'checked');
+				$("#entries_are_groups_container").slideUp();
+				$("#group_categories_container").slideUp();
+				$("#user_mapping_container").slideDown();
+				$("#entries_are_users_conditions_container").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#entries_are_groups_container").slideDown();
+				$("#user_mapping_container").slideUp();
+				$("#entries_are_users_conditions_container").slideUp();
+			}
+		});
+
+		$("input[name='forms-entries_are_groups']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#entries_are_users-0").attr('checked', 'checked');
+				$("#entries_are_users_container").slideUp();
+				$("#user_mapping_container").slideUp();
+				$("#entries_are_users_conditions_container").slideUp();
+				$("#group_categories_container").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#entries_are_users_container").slideDown();
+				$("#group_categories_container").slideUp();
+			}
+		});
+
+		// User mapping yes/no toggle
+		$("input[name='user_mapping_yes_no']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#user_mapping_details").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#user_mapping_details").slideUp();
+			}
+		});
+
+		// Group categories management
+		// Counter for new categories (keys will be "new_0", "new_1", etc.)
+		var newCategoryCounter = 0;
+		$("#add_group_category_btn").click(function() {
+			var newKey = 'new_' + newCategoryCounter;
+			newCategoryCounter++;
+			var newCategoryHtml = '<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
+				'<input type="text" name="group_categories[' + newKey + ']" value="" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />' +
+				'<button type="button" class="remove-category-btn" style="padding: 4px 8px; cursor: pointer;" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">&times;</button>' +
+				'</div>';
+			$("#group_categories_list").append(newCategoryHtml);
+			// Focus on the new input
+			$("#group_categories_list .group-category-item:last-child input").focus();
+		});
+
+		// Remove category button handler (using delegation for dynamically added elements)
+		$("#group_categories_list").on("click", ".remove-category-btn", function() {
+			$(this).closest(".group-category-item").remove();
+		});
+		</script>
+
 			<div class="form-item">
 				<fieldset>
 					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
@@ -142,6 +366,7 @@
 					</div>
 				</fieldset>
 			</div>
+
 
 	<{/if}>
 
@@ -256,6 +481,21 @@
 	});
 	$('input[name=pi_new_caption]').change(function() {
 		$('input[name=pi_new_yes_no][value=yes]').attr('checked', true);
+	});
+
+	// Handle add condition button for entries_are_users_conditions (only for existing forms)
+	$("div#entries_are_users_conditions_container input[name=addcon]").click(function () {
+		$("#reload_settings").val(1);
+		$(".savebutton").click();
+		return false;
+	});
+
+	// Handle delete condition link for entries_are_users_conditions
+	$("div#entries_are_users_conditions_container a.conditionsdelete").click(function () {
+		$(".entries-are-users-conditions-conditionsdelete").val($(this).attr('target'));
+		$("#reload_settings").val(1);
+		$(".savebutton").click();
+		return false;
 	});
 
 </script>

@@ -209,13 +209,39 @@ class formulizePassCodeHandler {
         $element->setVar('ele_encrypt', 0);
         $element->setVar('ele_handle', 'anon_passcode_'.$fid);
         $element->setVar('ele_caption', 'Anonymous User Passcode');
-        $element->setVar('ele_forcehidden', 0);
         $elementId = $element_handler->insert($element);
         // pass id so element object gets recreated inside other method, and then it will pick up all the properties from the custom class
         if(!$insertResult = $form_handler->insertElementField($elementId, $element->overrideDataType)) {
-			exit("Error: could not add the new element to the data table in the database.");
-		}
+					exit("Error: could not add the new element to the data table in the database.");
+				}
     }
+
+		/**
+		 * Remove a passcode element, if there are no passcodes stored in it already
+		 * @param mixed $formIdentifier Either a formulizeForm object, or the form ID or form handle
+		 * @return boolean True if the passcode element was removed, false if it was not or the input was not valid
+		 */
+		function removePasscodeElement($formIdentifier) {
+			if(!is_a($formIdentifier, 'formulizeForm')) {
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				if(!$formObject = $form_handler->get($formIdentifier)) {
+					return false;
+				}
+			} else {
+				$formObject = $formIdentifier;
+			}
+			global $xoopsDB;
+			$sql = 'SELECT entry_id FROM '.$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')).' WHERE anon_passcode_'.$formObject->getVar('fid').' IS NOT NULL AND anon_passcode_'.$formObject->getVar('fid').' != ""';
+			if($res = $xoopsDB->query($sql)
+				AND $xoopsDB->getRowsNum($res) == 0
+				AND $elementObject = _getElementObject('anon_passcode_'. $formObject->getVar('fid'))
+			) {
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				return $element_handler->delete($elementObject);
+			} else {
+				return false;
+			}
+		}
 
     function updateExpiry($id, $expiry) {
         global $xoopsDB;

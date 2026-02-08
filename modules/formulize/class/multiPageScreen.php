@@ -479,6 +479,60 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		return array($pages, $pageTitles);
 	}
 
+	/**
+	 * Remove a given element or elements from multipage screens
+	 * @param mixed $elementIdOrIds - either a single element id, or an array of element ids to remove from multipage screens
+	 * @param boolean $removeEmptyPages - Optional. Whether to remove pages that become empty after removing the elements. Defaults to false.
+	 * @return void
+	 */
+	function removeElementsFromScreens($elementIdOrIds, $removeEmptyPages = false) {
+		if(!is_array($elementIdOrIds)) {
+			$elementIdOrIds = array($elementIdOrIds);
+		}
+		$sql = "SELECT `sid`, `pages`, `pagetitles`, `conditions` FROM ".$this->db->prefix('formulize_screen_multipage')." WHERE `pages` LIKE '%".implode("%' OR `pages` LIKE '%", $elementIdOrIds)."%'";
+		if($result = $this->db->query($sql)) {
+			while($array = $this->db->fetchArray($result)) {
+				$pages = unserialize($array['pages']);
+				$pagetitles = unserialize($array['pagetitles']);
+				$pageconditions = unserialize($array['conditions']);
+				$changed = false;
+				foreach($pages as $pageIndex=>$pageElements) {
+					$pageChanged = false;
+					$firstItem = $pageElements[array_key_first($pageElements)];
+					if(is_numeric($firstItem)) {
+						foreach($elementIdOrIds as $elementId) {
+							if(($key = array_search($elementId, $pageElements)) !== false) {
+								unset($pages[$pageIndex][$key]);
+								$pageChanged = true;
+							}
+						}
+					}
+					if($pageChanged) {
+						if(count($pages[$pageIndex]) == 0 AND $removeEmptyPages) {
+							unset($pages[$pageIndex]);
+							unset($pagetitles[$pageIndex]);
+							unset($pageconditions[$pageIndex]);
+							$pages = array_values($pages); // reindex the array
+							$pagetitles = array_values($pagetitles); // reindex the array
+							$pageconditions = array_values($pageconditions); // reindex the array
+						} else {
+							$pages[$pageIndex] = array_values($pages[$pageIndex]); // reindex the array
+						}
+						$changed = true;
+					}
+				}
+				if($changed) {
+					$sql = "UPDATE ".$this->db->prefix('formulize_screen_multipage')."
+						SET `pages` = ".$this->db->quoteString(serialize($pages)).",
+						`pagetitles` = ".$this->db->quoteString(serialize($pagetitles)).",
+						`conditions` = ".$this->db->quoteString(serialize($pageconditions))."
+						WHERE `sid` = ".$array['sid'];
+					$this->db->queryF($sql);
+				}
+			}
+		}
+	}
+
     // THIS METHOD CLONES A MULTIPAGE SCREEN
     function cloneScreen($sid) {
 
@@ -779,10 +833,14 @@ function generateElementInfoForScreenPage($itemsForPage, $fid, $frid) {
     $options = multiPageScreen_addToOptionsList($fid, $frid);
     $elements = array();
     $pageItemTypeTitle = "Elements displayed on this page:"; // default, historically the only option
+		$wasNumericItems = false;
     foreach($itemsForPage as $thisPageItem) {
         // default is for the elements that make up the page to be a series of element ids
         if(is_numeric($thisPageItem)) {
+					if(isset($options[$thisPageItem])) {
             $elements[] = $options[$thisPageItem];
+						$wasNumericItems = true;
+					}
         // alternatively, it could be a string of PHP code
         } elseif($thisPageItem == "PHP") {
             $pageItemTypeTitle = "This page uses custom code to display content.";
@@ -800,5 +858,14 @@ function generateElementInfoForScreenPage($itemsForPage, $fid, $frid) {
             $elements[] = printSmart($pageFormObject->getVar('title').": ".$pageScreenObject->getVar('title'), 200);
         }
     }
+		if(count($elements) > 0 AND $wasNumericItems) {
+			// sort the elements according to their position in the options list
+			$optionsForSorting = array_values($options);
+			usort($elements, function($a, $b) use ($optionsForSorting) {
+				$posA = array_search($a, $optionsForSorting);
+				$posB = array_search($b, $optionsForSorting);
+				return $posA - $posB;
+			} );
+		}
     return array($pageItemTypeTitle, $elements);
 }

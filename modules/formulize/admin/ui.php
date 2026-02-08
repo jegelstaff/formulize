@@ -72,6 +72,93 @@ if (!isset($xoopsTpl)) {
 // sets up $formulizeNeedsDBPatch boolean
 include_once "op.php";
 
+/**
+ * Get the home tabs configuration
+ * @param string $activePage The currently active page/tab identifier
+ * @return array Array of tab configurations
+ */
+function getHomeTabs($activePage = 'home') {
+    $tabs = array();
+
+    $tabs[1] = array(
+        'name' => 'Apps',
+        'url' => 'ui.php?page=home',
+        'template' => 'db:admin/home.html',
+        'active' => ($activePage == 'home')
+    );
+
+    $tabs[2] = array(
+        'name' => 'Users',
+        'url' => 'ui.php?page=users',
+        'template' => 'db:admin/users.html',
+        'active' => ($activePage == 'users')
+    );
+
+    $tabs[3] = array(
+        'name' => 'Groups',
+        'url' => 'ui.php?page=groups',
+        'template' => 'db:admin/groups.html',
+        'active' => ($activePage == 'groups')
+    );
+
+    $tabs[4] = array(
+        'name' => 'API Keys',
+        'url' => 'ui.php?page=managekeys',
+        'template' => 'db:admin/managekeys.html',
+        'active' => ($activePage == 'managekeys')
+    );
+
+    $tabs[5] = array(
+        'name' => 'Email Users',
+        'url' => 'ui.php?page=mailusers',
+        'template' => 'db:admin/mailusers.html',
+        'active' => ($activePage == 'mailusers')
+    );
+
+    $tabs[6] = array(
+        'name' => 'Import/Export',
+        'url' => 'ui.php?page=config-sync',
+        'template' => 'db:admin/config_sync.html',
+        'active' => ($activePage == 'config-sync')
+    );
+
+    $tabs[7] = array(
+        'name' => 'Synchronize',
+        'url' => 'ui.php?page=synchronize',
+        'template' => 'db:admin/synchronize.html',
+        'active' => ($activePage == 'synchronize')
+    );
+
+    $tabs[8] = array(
+        'name' => 'Copy Perms',
+        'url' => 'ui.php?page=managepermissions',
+        'template' => 'db:admin/managepermissions.html',
+        'active' => ($activePage == 'managepermissions')
+    );
+
+    $tabs[9] = array(
+        'name' => 'Tokens',
+        'url' => 'ui.php?page=managetokens',
+        'template' => 'db:admin/managetokens.html',
+        'active' => ($activePage == 'managetokens')
+    );
+
+    $tabs[10] = array(
+        'name' => 'Log Viewer',
+        'url' => 'ui.php?page=logviewer',
+        'template' => 'db:admin/logviewer.html',
+        'active' => ($activePage == 'logviewer')
+    );
+
+    $tabs[11] = array(
+        'name' => 'Preferences',
+        'url' => XOOPS_URL . '/modules/system/admin.php?fct=preferences&op=showmod&mod=' . getFormulizeModId(),
+        'active' => false
+    );
+
+    return $tabs;
+}
+
 // make the primary relationship if it doesn't exist already
 if(primaryRelationshipExists() === false AND !$formulizeNeedsDBPatch) {
 	if($error = createPrimaryRelationship()) {
@@ -104,57 +191,16 @@ if(isset($_POST['seedtemplates']) AND $_POST['seedtemplates'] AND isset($_GET['s
 
 // create the contents that we want to display for the currently selected page
 // the included php files create the values for $adminPage that are used for this page
+
 $adminPage = array();
 $adminPage['show_user_view'] = ''; // will be set for screens when preparing their admin page, so user can jump to the actual screen to see it in action
-$active_page = isset($_GET['page']) ? $_GET['page'] : "home";
-switch($active_page) {
-    case "application":
-        include "application.php";
-        break;
-    case "form":
-        include "form.php";
-        break;
-    case "screen":
-        include "screen.php";
-        break;
-    case "relationship":
-        include "relationship.php";
-        break;
-    case "element":
-        include "element.php";
-        break;
-    case "advanced-calculation":
-        include "advanced_calculation.php";
-        break;
-    case "synchronize":
-        include "synchronize.php";
-        break;
-    case "sync-import":
-        include "sync_import.php";
-        break;
-    case "managekeys":
-        include "managekeys.php";
-        break;
-    case "managetokens":
-        include "managetokens.php";
-        break;
-    case "mailusers":
-        include "mailusers.php";
-        break;
-    case "managepermissions":
-        include "managepermissions.php";
-        break;
-		case "config-sync":
-				include "config-sync.php";
-				break;
-    case "logviewer":
-        include "logviewer.php";
-        break;
-    default:
-    case "home":
-        include "home.php";
-        break;
+
+// include the active page file based on the 'page' parameter in the URL
+$active_page = str_replace("-", "_", isset($_GET['page']) ? $_GET['page'] : "home").'.php';
+if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/".$active_page)) {
+	$active_page = "home.php";
 }
+include $active_page;
 
 $adminPage['logo'] = "/modules/formulize/images/formulize-logo.png";
 

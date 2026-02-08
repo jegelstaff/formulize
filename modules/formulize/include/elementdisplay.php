@@ -74,7 +74,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		$element = overrideSeparatorToLineBreak($element);
 	}
 
-    $form_id = $element->getVar('id_form');
+  $form_id = $element->getVar('id_form');
 
 	$deprefix = $noSave ? "denosave_" : "de_";
 	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
@@ -128,7 +128,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
            AND !isset($lockedEntries[$form_id][$entry])
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-           AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+           AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
            AND !$userHasPermissionToIgnoreEntryLock) {
@@ -169,7 +169,7 @@ EOF;
 				$customTypeObject = $customTypeHandler->create();
 		    $typesWithData[$ele_type] = $customTypeObject->hasData ? true : false;
 			}
-	    if($typesWithData[$ele_type]) {
+	    if($typesWithData[$ele_type] OR $element->isUserAccountElement) {
 				$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 			}
 		}
@@ -186,7 +186,7 @@ EOF;
 		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
             AND !isset($lockedEntries[$form_id][$entry])
             AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-            AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+            AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
             AND !strstr(getCurrentURL(),"printview.php")) {
 
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {

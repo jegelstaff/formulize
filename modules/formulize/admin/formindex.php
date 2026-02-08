@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize';
-    $checkThisField = 'ele_dynamicdefault_source';
+    $checkThisTable = 'formulize_id';
+    $checkThisField = 'entries_are_users_conditions';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -513,12 +513,20 @@ function patch40() {
         $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
         $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
 				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
+				$sql['add_entries_are_users'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users` tinyint(1) NOT NULL default 0";
+				$sql['add_entries_are_users_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_conditions` text NULL";
+				$sql['add_entries_are_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_groups` tinyint(1) NOT NULL default 0";
 				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
 				$sql['form_title'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `desc_form` `form_title` varchar(255) NOT NULL default ''";
 				$sql['ele_required'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " CHANGE `ele_req` `ele_required` tinyint(1) NOT NULL default 0";
 				$sql['add_dynamicdefault_source'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_source` smallint(5) unsigned NULL default 0";
 				$sql['add_dynamicdefault_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_conditions` text NULL";
+				$sql['add_is_group_template'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `is_group_template` tinyint(1) NOT NULL default 0";
+				$sql['add_group_categories'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `group_categories` text NULL";
+				$sql['add_form_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `form_id` int(5) unsigned NULL default NULL";
+				$sql['add_entry_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `entry_id` int(10) unsigned NULL default NULL";
+				$sql['add_form_entry_index'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD INDEX `form_entry` (`form_id`, `entry_id`)";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -665,7 +673,17 @@ function patch40() {
 										print "Element required already renamed. result: OK<br>";
 								} elseif($key === "add_dynamicdefault_source" OR $key === "add_dynamicdefault_conditions") {
 										print "Dynamic defaults already added. result: OK<br>";
-                }else {
+                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_users_conditions" OR $key === "add_entries_are_groups") {
+										print "Entries-are-users/groups options already added. result: OK<br>";
+								} elseif($key === "add_is_group_template") {
+										print "is_group_template field already added to groups table. result: OK<br>";
+								} elseif($key === "add_group_categories") {
+									print "group_categories field already added to formulize_id table. result: OK<br>";
+								} elseif($key === "add_form_id" OR $key === "add_entry_id") {
+									print "Entry tracking fields already added to groups table. result: OK<br>";
+								} elseif($key === "add_form_entry_index") {
+									print "Entry index already added to groups table. result: OK<br>";
+								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
             } elseif($key === "on_delete") {
@@ -1756,27 +1774,29 @@ function patch40() {
         include_once ICMS_ROOT_PATH . '/include/notification_constants.php';
         $profile_field_handler = icms_getModuleHandler('field', 'profile', 'profile');
         if ($profile_field_handler) {
-            $criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
-            $notify_fields = $profile_field_handler->getObjects($criteria);
-            if (count($notify_fields) > 0) {
-                $notify_field = $notify_fields[0];
-                // Get current options and check if SMS already exists
-                $current_options = unserialize($notify_field->getVar('field_options', 'n'));
-                if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])) {
-										require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
-										if(defined('_NOT_METHOD_SMS')) {
-											// Add SMS option
-											$updated_options = array(
-													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE,
-													XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
-													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
-													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS
-											);
-											$notify_field->setVar('field_options', serialize($updated_options));
-											$profile_field_handler->insert($notify_field);
-										}
-                }
-            }
+					$criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
+					$notify_fields = $profile_field_handler->getObjects($criteria);
+					if (count($notify_fields) > 0) {
+						$notify_field = $notify_fields[0];
+						// Get current options and check if SMS already exists
+						$current_options = unserialize($notify_field->getVar('field_options', 'n'));
+						require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
+						if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_PM] != _NOT_METHOD_PM
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_DISABLE] != _NOT_METHOD_DISABLE
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_EMAIL] != _NOT_METHOD_EMAIL
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_SMS] != _NOT_METHOD_SMS
+							) {
+							$updated_options = array(
+								XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
+								XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
+								XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
+								XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE
+							);
+							$notify_field->setVar('field_options', serialize($updated_options));
+							$profile_field_handler->insert($notify_field);
+						}
+					}
         }
 
         // Check for legacy SMS credentials that need migration
