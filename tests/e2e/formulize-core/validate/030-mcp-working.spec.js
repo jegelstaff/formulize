@@ -7,7 +7,7 @@ test.describe('Check that tools/list is responding', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Manage API keys' }).click();
+		await page.getByRole('link', { name: 'API Keys' }).click();
 		await page.getByRole('textbox').fill('admin');
 		await page.getByRole('button', { name: 'Search' }).click();
 		await page.getByRole('radio', { name: 'admin' }).check();
@@ -24,7 +24,7 @@ test.describe('Check that tools/list is responding', () => {
   	await page.getByRole('button', { name: 'Save your changes' }).click();
 		await expect(page.getByText('Create an API Key — Go to the')).toBeVisible();
   	await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
-		await page.getByRole('link', { name: 'Manage API keys' }).click();
+		await page.getByRole('link', { name: 'API keys' }).click();
 		const apiKey = await page.locator('td[id=key-1]').innerText();
     await page.goto('/mcp/test.html');
    	await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
