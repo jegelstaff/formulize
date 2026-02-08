@@ -318,7 +318,7 @@ $adminPage['tabs'][$tabindex]['name'] = _AM_ELE_NAMEANDSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
 $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 
-if(!$elementObject OR $elementObject->isSystemElement == false OR $ele_type == 'userAccountPhone') {
+if(!$elementObject OR $elementObject->isSystemElement == false OR $ele_type == 'userAccountPhone' OR $ele_type == 'userAccountFirstName' OR $ele_type == 'userAccountLastName' OR $ele_type == 'userAccountUsername' OR $ele_type == 'userAccountEmail') {
 	$adminPage['tabs'][++$tabindex]['name'] = "Options";
 	$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
 	if (count((array) $customValues)>0) {
