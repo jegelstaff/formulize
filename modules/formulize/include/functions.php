@@ -6371,6 +6371,7 @@ function parseUserAndToday($term, $element=null) {
 
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     $term = str_replace('{USER_ID}', $uid, $term);
+		$term = str_replace('{USERID}', $uid, $term);
     if (strstr($term, "{USER}")) {
         $name = 0;
 		if($xoopsUser) {
