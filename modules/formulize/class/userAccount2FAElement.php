@@ -62,7 +62,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			_NONE,
 			_formulize_USERACCOUNT_2FAOPTION_EMAIL,
 			_formulize_USERACCOUNT_2FAOPTION_SMS,
-			_formulize_USERACCOUNT_2FAOPTION_AUTHAPP
+			//_formulize_USERACCOUNT_2FAOPTION_AUTHAPP
 		);
 		return $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
 	}
