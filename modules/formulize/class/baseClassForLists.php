@@ -76,6 +76,8 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 					$delimiter = "br";
 					break;
 				case 'space':
+					$delimiter = str_repeat("&nbsp;", 5);
+					break;
 				default:
 					$delimiter = $properties['delimiter'];
 			}
