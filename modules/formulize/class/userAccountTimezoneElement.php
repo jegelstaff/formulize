@@ -58,7 +58,7 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		$options = array(
-			'0' => 'UTC',
+			'0' => 'GMT',
 			'-3.5' => 'Newfoundland',
 			'-4' => 'Atlantic',
 			'-5' => 'Eastern',
@@ -66,6 +66,10 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 			'-7' => 'Mountain',
 			'-8' => 'Pacific'
 		);
+		if($ele_value === null) {
+			global $xoopsConfig;
+			$ele_value = $xoopsConfig['default_TZ'];
+		}
 		return $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
 	}
 
