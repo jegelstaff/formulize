@@ -57,9 +57,11 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 		$elementTypeName = strtolower(str_ireplace(['formulizeUserAccount', 'ElementHandler'], "", static::class));
 		if($elementTypeName != 'lastname') {
 			$value = $nameParts[0];
-		} else {
+		} elseif(count($nameParts) > 1) {
 			unset($nameParts[0]);
 			$value = implode(" ", $nameParts);
+		} else {
+			$value = $nameParts[0];
 		}
 		return $value;
 	}
