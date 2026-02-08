@@ -52,9 +52,10 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 	// when dealing with new elements, $element might be FALSE
 	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 	function adminPrepare($element) {
+		$parentValues = parent::adminPrepare($element);
 		$ele_value = $element ? $element->getVar('ele_value') : array();
 		$format = $ele_value['format'] ? $ele_value['format'] : 'XXX-XXX-XXXX';
-		return array('format'=>$format);
+		return array_merge($parentValues, array('format'=>$format));
 	}
 
 	// this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
