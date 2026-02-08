@@ -75,7 +75,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 	function loadValue($element, $value, $entry_id) {
 		$value = parent::loadValue($element, $value, $entry_id);
 		$ele_value = $element->getVar('ele_value');
-		$ele_value['number'] = formatPhoneNumber($value, ((isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX'));
+		$ele_value['number'] = $value ? formatPhoneNumber($value, ((isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX')) : '';
 		return $ele_value;
 	}
 
@@ -105,14 +105,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 	// 'myform' is a name enforced by convention that refers to the form where this element resides
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
-		$ele_value = $element->getVar('ele_value');
-		$ele_value['format'] = $ele_value['format'] ? $ele_value['format'] : 'XXX-XXX-XXXX';
-		$validationCode = array();
-		// validate for length of numbers
-		$numberOfXs = substr_count($ele_value['format'], 'X');
-		$validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter a phone number.'); \n myform.{$markupName}.focus();\n return false;\n }";
-		$validationCode[] = "if(myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length != $numberOfXs && myform.{$markupName}.value.replace(/[^0-9]/g,\"\").length > 0) {\n alert('Please enter a phone number with $numberOfXs digits, ie: ".$ele_value['format']."'); \n myform.{$markupName}.focus();\n return false;\n }";
-		return $validationCode;
+		return formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id);
 	}
 
 }
