@@ -46,7 +46,7 @@ class icms_member_user_Object extends icms_core_Object {
 		$this->initVar('uid', XOBJ_DTYPE_INT, null, false);
 		$this->initVar('name', XOBJ_DTYPE_TXTBOX, null, false, 60);
 		$this->initVar('uname', XOBJ_DTYPE_TXTBOX, null, true, 255);
-		$this->initVar('email', XOBJ_DTYPE_TXTBOX, null, true, 60);
+		$this->initVar('email', XOBJ_DTYPE_TXTBOX, null, false, 60);
 		$this->initVar('url', XOBJ_DTYPE_TXTBOX, null, false, 255);
 		$this->initVar('user_avatar', XOBJ_DTYPE_TXTBOX, null, false, 30);
 		$this->initVar('user_regdate', XOBJ_DTYPE_INT, null, false);

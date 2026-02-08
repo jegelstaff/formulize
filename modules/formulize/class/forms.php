@@ -1183,12 +1183,13 @@ class formulizeFormsHandler {
 					$userAccountPageNumber = 1;
 					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
 				}
+				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail');
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
 					'ele_type' => $type,
 					'ele_handle' => $handle,
 					'ele_private' => 1,
-					'ele_required' => $type == 'GroupMembership' ? 0 : 1,
+					'ele_required' => in_array($type, $notRequiredTypes) ? 0 : 1,
 					'fid' => $formObject->getVar('fid'),
 					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
 					'ele_display' => 1
