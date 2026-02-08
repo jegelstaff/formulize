@@ -1824,6 +1824,18 @@ function patch40() {
             </script>";
         }
 
+        // Strip non-numeric characters from phone numbers stored in profile_profile.2faphone
+        // This is safe to run multiple times since already-clean values won't be affected
+        if(in_array(strtolower($xoopsDB->prefix("profile_profile")), $existingTables)) {
+            $sql = "UPDATE ".$xoopsDB->prefix("profile_profile")." SET `2faphone` = REGEXP_REPLACE(`2faphone`, '[^0-9]', '') WHERE `2faphone` IS NOT NULL AND `2faphone` != '' AND `2faphone` REGEXP '[^0-9]'";
+            if($res = $xoopsDB->queryF($sql)) {
+                $affected = $xoopsDB->getAffectedRows();
+                if($affected > 0) {
+                    print "Cleaned non-numeric characters from $affected phone number(s) in profile table. result: OK<br>";
+                }
+            }
+        }
+
         print "DB updates completed.  result: OK";
     	}
 }
