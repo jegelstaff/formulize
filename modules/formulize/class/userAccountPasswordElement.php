@@ -94,13 +94,24 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 				(isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),	//	max width
 				$ele_value
 			);
+
 			$form_ele2->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 			$tray = new XoopsFormElementTray('', '<br>');
 			$tray->addElement($form_ele);
 			$tray->addElement($form_ele2);
+			$renderedTray = trans($tray->render());
+
+			$userExists = false;
+			$hideRequiredAsteriskJS = "";
+			if($entry_id != 'new') {
+				$dataHandler = new formulizeDataHandler($element->getVar('fid'));
+				$userExists = $dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')) ? true : false;
+				$hideRequiredAsteriskJS = $userExists ? "<script>jQuery(window).load(function() { var reqSpan = document.querySelector('label[for=\"{$markupName}\"] span');\n if(reqSpan) { reqSpan.style.display = 'none'; } });</script>" : "";
+			}
+
 			$form_ele = new XoopsFormLabel(
-				($entry_id == 'new' ? _formulize_USERACCOUNTPASSWORD_CREATE : _formulize_USERACCOUNTPASSWORD_UPDATE). strtolower(" $caption"),
-				trans($tray->render()),
+				($userExists ? _formulize_USERACCOUNTPASSWORD_UPDATE : _formulize_USERACCOUNTPASSWORD_CREATE). strtolower(" $caption"),
+				$renderedTray.$hideRequiredAsteriskJS,
 				$markupName
 			);
 		}
@@ -111,8 +122,19 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 	// 'myform' is a name enforced by convention that refers to the form where this element resides
 	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
+		if($entry_id == 'new') {
+			$entryUserId = 0;
+		} else {
+			$fid = $element->getVar('fid');
+			$data_handler = new formulizeDataHandler($fid);
+			$entryUserId = intval($data_handler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$fid));
+		}
 		$validationCode = array();
-		$validationCode[] = "if((myform.{$markupName}.value !='' || myform.pw_two.value !='') && myform.{$markupName}.value != myform.pw_two.value) {\n alert('Your passwords do not match. Please try again.'); \n myform.{$markupName}.focus();\n return false;\n }";
+		if($entryUserId == 0) {
+			// if the user is creating a new entry, then we want to make sure they enter a password
+			$validationCode[] = "if(myform.{$markupName}.value == '') {\n alert('Please enter a password for the account.'); \n myform.{$markupName}.focus();\n return false;\n }";
+		}
+		$validationCode[] = "if((myform.{$markupName}.value !='' || myform.pw_two.value !='') && myform.{$markupName}.value != myform.pw_two.value) {\n alert('The passwords do not match. Please try again.'); \n myform.{$markupName}.focus();\n return false;\n }";
 		return $validationCode;
 	}
 
