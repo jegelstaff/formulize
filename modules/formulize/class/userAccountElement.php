@@ -66,6 +66,32 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // when dealing with new elements, $element might be FALSE
     // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
 		function adminPrepare($element) {
+			$ele_value = $element ? $element->getVar('ele_value') : array();
+			$defaultValueSource = isset($ele_value['defaultValueSource']) ? $ele_value['defaultValueSource'] : '';
+
+			// Build list of non-userAccount elements in the same form for the dropdown
+			$nonUserAccountElements = array();
+			if($element) {
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$formObject = $form_handler->get($element->getVar('fid'));
+				$elementTypes = $formObject->getVar('elementTypes');
+				$elementCaptions = $formObject->getVar('elementCaptions');
+				foreach($elementTypes as $elementId => $type) {
+					if(substr($type, 0, 11) !== 'userAccount') {
+						$nonUserAccountElements[$elementId] = strip_tags($elementCaptions[$elementId]);
+					}
+				}
+			}
+
+			// Derive label from element name, e.g. "User Account First Name" -> "first name"
+			$elementObject = $this->create();
+			$fieldLabel = strtolower(str_replace('User Account ', '', $elementObject->name));
+
+			return array(
+				'defaultValueSource' => $defaultValueSource,
+				'nonUserAccountElements' => $nonUserAccountElements,
+				'defaultValueFieldLabel' => $fieldLabel,
+			);
     }
 
     // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
@@ -75,6 +101,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
     // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
 		function adminSave($element, $ele_value = array(), $advancedTab = false) {
+			$element->setVar('ele_value', $ele_value);
     }
 
     // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
@@ -94,6 +121,13 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					$value = $profile->getVar($property);
 				} elseif($element->userProperty != 'pass') { // don't show password, UI just used for entering new password
 					$value = $user->getVar($element->userProperty);
+				}
+			}
+			// If no user exists yet and a default value source is configured, use the source element's value from the current entry
+			if($value === null AND is_numeric($entry_id)) {
+				$ele_value = $element->getVar('ele_value');
+				if(isset($ele_value['defaultValueSource']) AND $ele_value['defaultValueSource']) {
+					$value = $dataHandler->getElementValueInEntry($entry_id, intval($ele_value['defaultValueSource']));
 				}
 			}
 			return $value;

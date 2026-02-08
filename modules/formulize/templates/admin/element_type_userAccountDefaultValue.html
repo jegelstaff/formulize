@@ -1,0 +1,12 @@
+<fieldset>
+  <legend>Default Value Source</legend>
+  <div class="form-item">
+    <select id="elements-ele_value[defaultValueSource]" name="elements-ele_value[defaultValueSource]">
+      <option value="">None - default is blank</option>
+      <{foreach from=$content.nonUserAccountElements key=eleId item=eleCaption}>
+        <option value="<{$eleId}>"<{if $content.defaultValueSource == $eleId}> selected="selected"<{/if}>><{$eleCaption}></option>
+      <{/foreach}>
+    </select>
+  </div>
+</fieldset>
+<div class="description">When accounts are created, use this element as the default value for <{$content.defaultValueFieldLabel}></div>
