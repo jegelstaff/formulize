@@ -108,6 +108,33 @@ if (isset($processedValues['forms']['entries_are_groups'])) {
 $formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds, $groupCategories);
 $fid = $formObject->getVar('fid');
 
+// Update the group membership element's help text to indicate which default groups are enforced
+if($formObject->getVar('entries_are_users')) {
+	$groupMembershipHandle = 'formulize_user_account_groupmembership_'.$fid;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$groupMembershipElement = $element_handler->get($groupMembershipHandle);
+	if($groupMembershipElement) {
+		if(!empty($defaultGroups)) {
+			$member_handler = xoops_gethandler('member');
+			$groupNames = array();
+			foreach($defaultGroups as $groupId) {
+				$groupObject = $member_handler->getGroup(intval($groupId));
+				if($groupObject) {
+					$groupNames[] = $groupObject->getVar('name');
+				}
+			}
+			if(!empty($groupNames)) {
+				$groupMembershipElement->setVar('ele_desc', 'Users in the '.$formObject->getVar('form_title').' form will always be members of these groups: '.implode(', ', $groupNames));
+			} else {
+				$groupMembershipElement->setVar('ele_desc', '');
+			}
+		} else {
+			$groupMembershipElement->setVar('ele_desc', '');
+		}
+		$element_handler->insert($groupMembershipElement);
+	}
+}
+
 // Process user mapping if switching to entries_are_users and user chose to map existing entries
 if($formObject->getVar('entries_are_users')
 	AND isset($_POST['user_mapping_yes_no'])
