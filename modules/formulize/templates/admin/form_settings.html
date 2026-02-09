@@ -145,6 +145,15 @@
 				</div>
 				<{/if}>
 
+				<!-- Default Group Membership -->
+				<{if $content.entries_are_users_default_groups_ui}>
+				<div id="entries_are_users_default_groups_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE}></h4>
+					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC}></p>
+					<{$content.entries_are_users_default_groups_ui}>
+				</div>
+				<{/if}>
+
 				<!-- User Mapping for Existing Entries -->
 				<{if $content.show_user_mapping_ui AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
 				<div id="user_mapping_container" style="margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
@@ -275,8 +284,10 @@
 		if (parseInt("<{$content.entries_are_users}>") != 1) {
 			$("#user_mapping_container").hide();
 			$("#entries_are_users_conditions_container").hide();
+			$("#entries_are_users_default_groups_container").hide();
 		} else {
 			$("#entries_are_users_conditions_container").show();
+			$("#entries_are_users_default_groups_container").show();
 		}
 
 		// Mutual exclusivity: if one is set to Yes, set the other to No and hide it
@@ -287,10 +298,12 @@
 				$("#group_categories_container").slideUp();
 				$("#user_mapping_container").slideDown();
 				$("#entries_are_users_conditions_container").slideDown();
+				$("#entries_are_users_default_groups_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_groups_container").slideDown();
 				$("#user_mapping_container").slideUp();
 				$("#entries_are_users_conditions_container").slideUp();
+				$("#entries_are_users_default_groups_container").slideUp();
 			}
 		});
 
@@ -300,6 +313,7 @@
 				$("#entries_are_users_container").slideUp();
 				$("#user_mapping_container").slideUp();
 				$("#entries_are_users_conditions_container").slideUp();
+				$("#entries_are_users_default_groups_container").slideUp();
 				$("#group_categories_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_users_container").slideDown();
