@@ -2363,7 +2363,7 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
                         script = document.createElement('script');
                         script.id = 'jQuery';
                         script.type = 'text/javascript';
-                        script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
+                        script.src = '".XOOPS_URL."/libraries/jquery/jquery.js';
                         head.appendChild(script);
                 }
                 $().click(function() {
@@ -3400,7 +3400,7 @@ if (typeof jQuery == 'undefined') {
 	script = document.createElement('script');
 	script.id = 'jQuery';
 	script.type = 'text/javascript';
-	script.src = '<?php print XOOPS_URL; ?>/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
+	script.src = '<?php print XOOPS_URL; ?>/libraries/jquery/jquery.js';
 	head.appendChild(script);
 }
 
