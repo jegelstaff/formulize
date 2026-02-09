@@ -43,7 +43,7 @@ if (typeof jQuery == 'undefined') {
     script = document.createElement('script');
     script.id = 'jQuery';
     script.type = 'text/javascript';
-    script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
+    script.src = '".XOOPS_URL."/libraries/jquery/jquery.js';
     head.appendChild(script);
 }
 if (typeof jQuery.ui == 'undefined') {
@@ -5193,6 +5193,22 @@ function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete',
 	}
 
 	return array($returnValues, $reloadFlag);
+}
+
+// this function renders the default groups selection UI for entries-are-users forms
+// uses the same group list as the userAccountGroupMembership element type
+function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	if(!is_array($currentlySelectedGroupIds)) {
+		$currentlySelectedGroupIds = array();
+	}
+	$formElementObject = $groupMembershipHandler->render($currentlySelectedGroupIds, '', 'entries_are_users_default_groups', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
 }
 
 // this function gets the password for the encryption/decryption process

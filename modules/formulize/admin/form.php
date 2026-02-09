@@ -69,6 +69,8 @@ if ($_GET['fid'] != "new") {
 		$entries_are_users = $formObject->getVar('entries_are_users');
 		$entries_are_users_conditions = $formObject->getVar('entries_are_users_conditions');
 		$entries_are_users_conditions_ui = formulize_createFilterUI($entries_are_users_conditions, "entriesareusersconditions", $fid, "form-1");
+		$entries_are_users_default_groups = $formObject->getVar('entries_are_users_default_groups');
+		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI($entries_are_users_default_groups);
 		$entries_are_groups = $formObject->getVar('entries_are_groups');
 
 		// Load group categories from stored mapping on the form object
@@ -486,6 +488,7 @@ if ($_GET['fid'] != "new") {
 		$pioptions = array();
 		$entries_are_users = 0;
 		$entries_are_users_conditions_ui = ""; // Don't show conditions UI for new forms - no elements exist yet
+		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI(array());
 		$entries_are_groups = 0;
 		$group_categories = array();
     if ($_GET['aid']) {
@@ -609,6 +612,7 @@ $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
+$settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
 $settings['entries_are_groups'] = $entries_are_groups;
 $settings['group_categories'] = $group_categories;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for

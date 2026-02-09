@@ -180,6 +180,8 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS","This form represents users");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN","For each entry in this form, a user account will be created in Formulize.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE","Conditions for Creating User Accounts");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC","Only create user accounts when entries meet these conditions:");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE","Default Group Membership");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC","User accounts created from entries in this form will always be added to these groups:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS","This form represents groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN","For each entry in this form, a group will be created in Formulize.");
 define("_AM_SETTINGS_FORM_GROUP_CATEGORIES_TITLE","User Categories for each entry in this form");

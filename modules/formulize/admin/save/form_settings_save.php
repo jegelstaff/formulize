@@ -86,6 +86,10 @@ if ($parsedEntriesAreUsersConditions) {
 	$processedValues['forms']['entries_are_users_conditions'] = $parsedEntriesAreUsersConditions;
 }
 
+// Parse entries_are_users_default_groups from the autocomplete element (no forms- prefix in markup name)
+$defaultGroups = isset($_POST['entries_are_users_default_groups']) && is_array($_POST['entries_are_users_default_groups']) ? $_POST['entries_are_users_default_groups'] : array();
+$processedValues['forms']['entries_are_users_default_groups'] = $defaultGroups;
+
 // Build group categories array if entries_are_groups is being used
 $groupCategories = null;
 $newGroupCategoriesCreated = false;
