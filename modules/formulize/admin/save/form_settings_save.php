@@ -124,7 +124,7 @@ if($formObject->getVar('entries_are_users')) {
 				}
 			}
 			if(!empty($groupNames)) {
-				$groupMembershipElement->setVar('ele_desc', 'Users in the '.$formObject->getVar('form_title').' form will always be members of these groups: '.implode(', ', $groupNames));
+				$groupMembershipElement->setVar('ele_desc', sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC, $formObject->getVar('form_title'), implode(', ', $groupNames)));
 			} else {
 				$groupMembershipElement->setVar('ele_desc', '');
 			}
