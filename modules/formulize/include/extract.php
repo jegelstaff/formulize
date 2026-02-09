@@ -1099,51 +1099,133 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 	}
 
 	$joinHandles = formulize_getJoinHandles(array(0 => $linkselfids, 1 => $linktargetids));
+	$newJoinText = "";
+
+	// set some values to use for figuring out the comparison of things in a sec...
+	$mainBoxProperties = array('', '');
+	$targetBoxProperties = array('', '');
+	if ($main_ele_value = formulize_isLinkedElement($linkselfids[$linkOrdinal])) {
+		$mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
+	}
+	if ($target_ele_value = formulize_isLinkedElement($linktargetids[$linkOrdinal])) {
+		$targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
+	}
 
 	if ($linkcommonvalue[$linkOrdinal]) { // common value
-		$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "`";
-	} elseif ($linktargetids[$linkOrdinal]) { // linked element
-		// set some values to use for figuring out the comparison of things in a sec...
-		$mainBoxProperties = array('', '');
-		$targetBoxProperties = array('', '');
-		if ($main_ele_value = formulize_isLinkedElement($linkselfids[$linkOrdinal])) {
-			$mainBoxProperties = explode("#*=:*", $main_ele_value[2]);
+
+		// detect common value with a linked element, and determine if...
+		// regular link situation where it's pointing to the other element in the connection -- in this case, pass on to normal linked scenario below
+		// or coiuld be the "two-step" case, where it's point to an intermediary. ie: A is common with B, but B is linked to C which is linked to A, so we have to do a subquery to get the value from C to compare to A, rather than just comparing A and B directly
+		// In two step case, we have to construct an alternate subquery to use to get the value, since the entry_id needs to match the intermediary, not the element in the connection
+
+		// not actually common value, target element is a link
+		if($target_ele_value AND !$main_ele_value) {
+			// potentially needs a subquery to an intermediate form... might return nothing
+			$newJoinText = makeJoinTextIfFormLinksToIntermediary($target_ele_value, $joinHandles[$linktargetids[$linkOrdinal]], $joinHandles[$linkselfids[$linkOrdinal]], $subAlias, $mainAlias);
+
+		// not actually common value, main element is a link
+		} elseif($main_ele_value AND !$target_ele_value) {
+			// potentially needs a subquery to an intermediate form... might return nothing
+			$newJoinText = makeJoinTextIfFormLinksToIntermediary($main_ele_value, $joinHandles[$linkselfids[$linkOrdinal]], $joinHandles[$linktargetids[$linkOrdinal]], $mainAlias, $subAlias);
+
+		// neither are links, regular common value
+		// OR both are links, pointing to the same source
+		// so it's a regular common value
+		} elseif((!$main_ele_value AND !$target_ele_value) OR ($main_ele_value AND $target_ele_value AND $targetBoxProperties[1] == $mainBoxProperties[1])) {
+			$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`=$subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "`";
+
+		// something bad happened
+		} else {
+			throw new Exception("Common value relationship is between linked elements that don't point to same source. Main element: " . $joinHandles[$linkselfids[$linkOrdinal]] . ". Target element: " . $joinHandles[$linktargetids[$linkOrdinal]]);
 		}
-		if ($target_ele_value = formulize_isLinkedElement($linktargetids[$linkOrdinal])) {
-			$targetBoxProperties = explode("#*=:*", $target_ele_value[2]);
-		}
+
+	}
+
+	// linked element pair, or common value that is actually a link because one side is a link that is possibly/probably pointing at the other side
+	if ((!$linkcommonvalue[$linkOrdinal] AND $linktargetids[$linkOrdinal]) OR ($linkcommonvalue[$linkOrdinal] AND !$newJoinText)) {
+
 		// if the target is the link, or they're both links and the target is pointing to the main
 		if (($target_ele_value and !$main_ele_value)
-			or ($target_ele_value and $main_ele_value and $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])
+			OR ($target_ele_value and $main_ele_value and $targetBoxProperties[1] == $joinHandles[$linkselfids[$linkOrdinal]])
 		) {
-		    $metaData = formulize_getElementMetaData($joinHandles[$linktargetids[$linkOrdinal]], isHandle: true);
-			if ($target_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked') {
-				// multiple values allowed
-				$newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` LIKE CONCAT('%,',$mainAlias.entry_id,',%')";
-			} else {
-				// single value only
-				$newJoinText = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "` = $mainAlias.entry_id";
+			$field = " $subAlias.`" . $joinHandles[$linktargetids[$linkOrdinal]] . "`";
+			$op = "=";
+			$term = "$mainAlias.`entry_id`";
+			if(multipleValuesAllowedForElement($joinHandles[$linktargetids[$linkOrdinal]])) {
+				$op = " LIKE ";
+				$term = "CONCAT('%,',".$term.",',%')";
 			}
-			// if the main is the link, or they're both links and the main is pointing to the target
+
+		// if the main is the link, or they're both links and the main is pointing to the target
 		} elseif (($main_ele_value and !$target_ele_value)
-			or ($main_ele_value and $target_ele_value and $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])
+			OR ($main_ele_value and $target_ele_value and $mainBoxProperties[1] == $joinHandles[$linktargetids[$linkOrdinal]])
 		) {
-		    $metaData = formulize_getElementMetaData($joinHandles[$linkselfids[$linkOrdinal]], isHandle: true);
-			if ($main_ele_value[1] OR $metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked') {
-				// multiple values allowed
-				$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` LIKE CONCAT('%,',$subAlias.entry_id,',%')";
-			} else {
-				// single value only
-				$newJoinText = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "` = $subAlias.entry_id";
+			$field = " $mainAlias.`" . $joinHandles[$linkselfids[$linkOrdinal]] . "`";
+			$op = "=";
+			$term = "$subAlias.`entry_id`";
+			if(multipleValuesAllowedForElement($joinHandles[$linkselfids[$linkOrdinal]])) {
+				$op = " LIKE ";
+				$term = "CONCAT('%,',".$term.",',%')";
 			}
+
+		// something bad happened
 		} else {
-			exit("Fatal Formulize Error: could not determine nature of linkage between linked selectbox(es). Main element: " . $joinHandles[$linkselfids[$linkOrdinal]] . ". Target element: " . $joinHandles[$linktargetids[$linkOrdinal]]);
+			throw new Exception("Could not determine nature of linkage between linked elements. Main element: " . $joinHandles[$linkselfids[$linkOrdinal]] . ". Target element: " . $joinHandles[$linktargetids[$linkOrdinal]]);
 		}
-	} else { // join by uid
+
+		// put together the terms we've determined
+		$newJoinText = " $field $op $term ";
+
+	// not common value, not a link, must be join by uid?
+	} elseif(!$linkcommonvalue[$linkOrdinal]) {
 		$newJoinText = " $mainAlias.creation_uid=$subAlias.creation_uid";
 	}
 
 	return $newJoinText;
+}
+
+/**
+ * This function checks if a linked element is pointing to an intermediary that is a single value link ultimately pointing to the other element in the connection.
+ * If so, it generates the appropriate left side term for the join SQL
+ * @param string $ele_value The ele_value property of the linked element
+ * @param string $linkSideElementHandle The handle of the element on the side of the connection that we're checking for a link to an intermediary
+ * @param string $otherSideElementHandle The handle of the other element in the connection (with the entry id field that we need to ultimately compare to)
+ * @param string $entryIdAlias The alias to use for the entry_id field being compared to the subquery
+ * @return string The left side term for the join SQL, or an empty string if there isn't a link to an intermediary
+ */
+function makeJoinTextIfFormLinksToIntermediary($ele_value, $linkSideElementHandle, $otherSideElementHandle, $subQueryAlias,$entryIdAlias) {
+	$subquery = "";
+	$linkEleValueParts = explode("#*=:*", $ele_value[2]);
+	if($linkEleValueParts[1] != $otherSideElementHandle) { // not pointing directly at other element in connection, so check if it's pointing at an intermediary that is a single value link ultimately pointing to the other element in the connection
+		$twoStepEleValue = formulize_isLinkedElement($linkEleValueParts[1]);
+		$metaData = formulize_getElementMetaData($linkEleValueParts[1], isHandle: true);
+		if($twoStepEleValue AND $metaData['ele_type'] != 'checkboxLinked' AND !$twoStepEleValue[1]) { // it's linked to a linked element, that is not a multiselect (have to check key 1 - select element multiple values allowed - last after checking checkbox type, so we know we're looking at a selectbox type)
+			$twoStepEleValueParts = explode("#*=:*", $twoStepEleValue[2]);
+			if($otherSideElementObject = _getElementObject($otherSideElementHandle) AND $twoStepEleValueParts[0] == $otherSideElementObject->getVar('fid')) { // it's a two step link, that points back to the other form
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$intermediaryFormObject = $form_handler->get($linkEleValueParts[0]);
+				static $subqueryCounter = 0;
+				$subqueryCounter++;
+				$subquery = " (SELECT commonTwoStepSourceForm$subqueryCounter.`" . $linkEleValueParts[1] . "` FROM " . DBPRE . "formulize_" . $intermediaryFormObject->getVar('form_handle') . " as commonTwoStepSourceForm$subqueryCounter WHERE commonTwoStepSourceForm$subqueryCounter.`entry_id` = $subQueryAlias.`" . $linkSideElementHandle . "`) = $entryIdAlias.`entry_id` ";
+			}
+		}
+	}
+	return $subquery;
+}
+
+/**
+ * Determine if multiple values are allowed for an element
+ * Crude! Only meant for use in the arcane parts of the extraction layer where things are heavily optimized to use cached metadata under controlled circumstances
+ * @param string|int $elementHandleOrId The handle or id of the element to check
+ * @return bool True if multiple values are allowed, false otherwise
+ */
+function multipleValuesAllowedForElement($elementHandleOrId) {
+	$metaData = formulize_getElementMetaData($elementHandleOrId, !is_numeric($elementHandleOrId));
+	$ele_value = unserialize($metaData['ele_value']);
+	if ($metaData['ele_type'] == 'checkbox' OR $metaData['ele_type'] == 'checkboxLinked' OR (is_array($ele_value) AND isset($ele_value[1]) AND $ele_value[1])) {
+		return true;
+	}
+	return false;
 }
 
 // this function checks a filter and returns the single entry id being isolated, if one is involved in the filter
