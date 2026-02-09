@@ -167,7 +167,7 @@ define('_WEEK', '1 week');
 define('_MONTH', '1 month');
 
 define("_DATESTRING","Y-m-d G:i:s");
-define("_MEDIUMDATESTRING","D M j, g:ia");
+define("_MEDIUMDATESTRING","D M j, Y - g:ia");
 define("_SHORTDATESTRING","Y-m-d"); // ALTERED BY FREEFORM SOLUTIONS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS DATE FORMATS
 define("_SHORTTIMESTRING","g:ia");
 /*
