@@ -321,6 +321,15 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				  AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 						$submittedGroupIds[] = XOOPS_GROUP_ADMIN;
 					}
+					// Ensure user is always in the default groups specified in the form settings
+					$defaultGroups = $formObject->getVar('entries_are_users_default_groups');
+					if(is_array($defaultGroups)) {
+						foreach($defaultGroups as $defaultGroupId) {
+							if(!in_array(intval($defaultGroupId), $submittedGroupIds)) {
+								$submittedGroupIds[] = intval($defaultGroupId);
+							}
+						}
+					}
 					// Add/remove from appropriate groups
 					$validGroupIds = array_keys($member_handler->getGroups(id_as_key: true));
 					foreach($submittedGroupIds as $i=>$groupId) {
