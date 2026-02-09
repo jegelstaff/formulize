@@ -223,9 +223,9 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
-		if (strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value)) OR strtoupper($value) == "YES") {
+		if (($value AND strstr(strtoupper(_formulize_TEMP_QYES), strtoupper($value))) OR strtoupper($value) == "YES") {
 			$value = 1;
-		} elseif (strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value)) OR strtoupper($value) == "NO") {
+		} elseif (($value AND strstr(strtoupper(_formulize_TEMP_QNO), strtoupper($value))) OR strtoupper($value) == "NO") {
 			$value = 2;
 		} elseif(!is_numeric($value)) {
 			$value = "";
