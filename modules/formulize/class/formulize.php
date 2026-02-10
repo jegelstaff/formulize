@@ -496,6 +496,14 @@ class formulizeHandler {
 		// Save the updated mapping to the form object
 		$formObject->setVar('group_categories', $newMapping);
 		$form_handler->insert($formObject);
+
+		// Sync entry groups for all existing entries to handle new categories, renames, etc.
+		$formHandle = $formObject->getVar('form_handle');
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_" . $formHandle);
+		$result = $xoopsDB->query($sql);
+		while ($row = $xoopsDB->fetchArray($result)) {
+			self::syncEntryGroups($fid, intval($row['entry_id']));
+		}
 	}
 
 	/**
