@@ -595,6 +595,110 @@ class formulizeHandler {
 	}
 
 	/**
+	 * Get structured metadata about all template groups and how they relate to a given form.
+	 * Scans the form and all forms connected via frameworks for linked elements that
+	 * point to entries-are-groups forms, then maps those links to the template group categories.
+	 *
+	 * Authored by Claude Code and Julian Egelstaff - Feb 2026
+	 *
+	 * @param int $fid The form ID to analyze relationships from
+	 * @return array Keyed by group ID, each entry contains:
+	 *   'categoryName'   => string - The category name (e.g., "All Users", "Managers")
+	 *   'formSingular'   => string - Singular name of the entries-are-groups form
+	 *   'formPlural'     => string - Plural name of the entries-are-groups form
+	 *   'eagFormId'      => int    - The form ID of the entries-are-groups form
+	 *   'linkedElements' => array  - Each entry: ['caption' => string, 'formName' => string]
+	 *                                formName is empty string if element is in the current form ($fid)
+	 */
+	public static function getTemplateGroupMetadataForForm($fid) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
+
+		$fid = intval($fid);
+		if (!$fid) {
+			return array();
+		}
+
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		$formObject = $form_handler->get($fid);
+		if (!$formObject) {
+			return array();
+		}
+
+		// 1. Collect all form IDs to scan: current form + related forms
+		$formsToScan = array($fid => $formObject->getPlural());
+		$frameworks_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$primaryRelationship = new formulizeFramework(-1);
+		$allLinks = $frameworks_handler->getLinksGroupedByForm($primaryRelationship, $fid);
+		foreach ($allLinks as $linkedFid => $fidLinks) {
+			foreach ($fidLinks as $link) {
+				$form1 = intval($link['form1']);
+				$form2 = intval($link['form2']);
+				if (!isset($formsToScan[$form1]) AND $linkFormObject = $form_handler->get($form1)) {
+					$formsToScan[$form1] = $linkFormObject->getPlural();
+				}
+				if (!isset($formsToScan[$form2]) AND $linkFormObject = $form_handler->get($form2)) {
+					$formsToScan[$form2] = $linkFormObject->getPlural();
+				}
+			}
+		}
+
+		// 2. For each form, find elements that link to other forms
+		// Build map: target_form_id => [{caption, formName}]
+		$linkedFormElements = array();
+		foreach ($formsToScan as $scanFid => $scanFormName) {
+			$scanElements = $element_handler->getObjects(null, $scanFid);
+			if (is_array($scanElements)) {
+				foreach ($scanElements as $el) {
+					$sourceInfo = getSourceFormAndElementForLinkedElement($el);
+					if ($sourceInfo) {
+						$targetFid = $sourceInfo[0];
+						$caption = strip_tags($el->getVar('ele_caption'));
+						$entry = array('caption' => $caption);
+						// Include formName only if the element is NOT in the current form
+						$entry['formName'] = ($scanFid == $fid) ? '' : $scanFormName;
+						$linkedFormElements[$targetFid][] = $entry;
+					}
+				}
+			}
+		}
+
+		// 3. Find all forms with entries_are_groups enabled and build metadata from their group_categories
+		// Template groups don't have form_id set — the link is via the form's group_categories mapping
+		$metadata = array();
+		$eagSql = "SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_groups = 1";
+		$eagResult = $xoopsDB->query($eagSql);
+		while ($eagRow = $xoopsDB->fetchArray($eagResult)) {
+			$eagFormId = intval($eagRow['id_form']);
+			$eagFormObject = $form_handler->get($eagFormId);
+			if (!$eagFormObject) { continue; }
+
+			$tgCategories = $eagFormObject->getVar('group_categories');
+			if (!is_array($tgCategories) || empty($tgCategories)) { continue; }
+
+			$formSingular = $eagFormObject->getSingular();
+			$formPlural = $eagFormObject->getPlural();
+
+			foreach ($tgCategories as $tgGroupId => $categoryName) {
+				if (!$categoryName) { continue; }
+
+				$metadata[intval($tgGroupId)] = array(
+					'categoryName' => $categoryName,
+					'formSingular' => $formSingular,
+					'formPlural' => $formPlural,
+					'eagFormId' => $eagFormId,
+					'linkedElements' => isset($linkedFormElements[$eagFormId]) ? $linkedFormElements[$eagFormId] : array()
+				);
+			}
+		}
+
+		return $metadata;
+	}
+
+	/**
 	 * Assigns a form to one or more applications, optionally creating a new application, and optionally creating menu links for the form in the applications
 	 * @param object $formObject The form object to assign to applications
 	 * @param array $applicationIds An array of existing application ids to assign this form to
