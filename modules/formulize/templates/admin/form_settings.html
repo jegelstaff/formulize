@@ -13,6 +13,7 @@
 <input type="hidden" name="application_url_id" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
 <input type="hidden" class="entries-are-users-conditions-conditionsdelete" name="conditionsdelete" value="">
+<input type="hidden" id="per_group_conditionsdelete" name="per_group_conditionsdelete" value="">
 
 
 		<div class="form-item required">
@@ -151,8 +152,18 @@
 						<div class="default-group-item" data-groupid="<{$group.id}>" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">
 							<span style="font-weight: bold;"><{$group.name}></span>
 							<span>&mdash;</span>
+							<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" style="font-size: 0.85em; font-weight: normal;"><{if $group.hasConditions}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_HIDE}><{else}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{/if}></a>
+							<span>&mdash;</span>
 							<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
 							<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
+							<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: <{if $group.hasConditions}>block<{else}>none<{/if}>; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">
+								<p style="margin-top: 0; font-size: 0.85em; font-style: italic; color: #666;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC}></p>
+								<{if $content.per_group_conditions_ui[$group.id]}>
+								<{$content.per_group_conditions_ui[$group.id]}>
+								<{else}>
+								<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>
+								<{/if}>
+							</div>
 						</div>
 						<{/if}>
 						<{/foreach}>
@@ -166,9 +177,19 @@
 							<div class="default-group-item template-group-in-cluster" data-groupid="<{$group.id}>" style="margin-bottom: 4px;">
 								<span style="font-weight: bold;"><{$group.name}></span>
 								<span>&mdash;</span>
+								<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" style="font-size: 0.85em; font-weight: normal;"><{if $group.hasConditions}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_HIDE}><{else}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{/if}></a>
+								<span>&mdash;</span>
 								<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
 								<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
 								<input type="hidden" name="entries_are_users_default_groups_form_map[<{$group.id}>]" value="<{$eagFormId}>" />
+								<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: <{if $group.hasConditions}>block<{else}>none<{/if}>; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">
+									<p style="margin-top: 0; font-size: 0.85em; font-style: italic; color: #666;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC}></p>
+									<{if $content.per_group_conditions_ui[$group.id]}>
+									<{$content.per_group_conditions_ui[$group.id]}>
+									<{else}>
+									<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>
+									<{/if}>
+								</div>
 							</div>
 							<{/if}>
 							<{/foreach}>
@@ -415,15 +436,22 @@
 		var templateGroupMetadata = <{$content.template_group_metadata_json}>;
 
 		var removeLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}>";
+		var conditionsShowLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}>";
+		var conditionsHideLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_HIDE}>";
 
 		// Helper: build group item HTML for a template group inside a cluster
 		function buildTemplateGroupItemHtml(groupId, groupName, eagFormId) {
 			return '<div class="default-group-item template-group-in-cluster" data-groupid="' + groupId + '" style="margin-bottom: 4px;">' +
 				'<span style="font-weight: bold;">' + groupName + '</span>' +
 				' <span>&mdash;</span> ' +
+				'<a href="#" class="toggle-group-conditions-btn" data-groupid="' + groupId + '" style="font-size: 0.85em; font-weight: normal;">' + conditionsShowLabel + '</a>' +
+				' <span>&mdash;</span> ' +
 				'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
 				'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
 				'<input type="hidden" name="entries_are_users_default_groups_form_map[' + groupId + ']" value="' + eagFormId + '" />' +
+				'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">' +
+				'<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>' +
+				'</div>' +
 				'</div>';
 		}
 
@@ -554,8 +582,13 @@
 						var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">' +
 							'<span style="font-weight: bold;">' + groupName + '</span>' +
 							' <span>&mdash;</span> ' +
+							'<a href="#" class="toggle-group-conditions-btn" data-groupid="' + groupId + '" style="font-size: 0.85em; font-weight: normal;">' + conditionsShowLabel + '</a>' +
+							' <span>&mdash;</span> ' +
 							'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
 							'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
+							'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">' +
+							'<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>' +
+							'</div>' +
 							'</div>';
 						$("#default_groups_selected_list").append(itemHtml);
 					}
@@ -582,6 +615,35 @@
 					updateClusterDescription($cluster);
 				}
 			}
+		});
+
+		// Toggle per-group conditions panel visibility
+		$(".toggle-group-conditions-btn").live("click", function(e) {
+			e.preventDefault();
+			var $link = $(this);
+			var $panel = $link.closest(".default-group-item").find(".per-group-conditions-panel");
+			if ($panel.is(':visible')) {
+				$panel.slideUp();
+				$link.text(conditionsShowLabel);
+			} else {
+				$panel.slideDown();
+				$link.text(conditionsHideLabel);
+			}
+		});
+
+		// Handle add condition button for per-group conditions (save+reload pattern)
+		$(".per-group-conditions-panel input[name=addcon]").live("click", function() {
+			$("#reload_settings").val(1);
+			$(".savebutton").click();
+			return false;
+		});
+
+		// Handle delete condition link for per-group conditions
+		$(".per-group-conditions-panel a.conditionsdelete").live("click", function() {
+			$("#per_group_conditionsdelete").val($(this).attr('target'));
+			$("#reload_settings").val(1);
+			$(".savebutton").click();
+			return false;
 		});
 		</script>
 

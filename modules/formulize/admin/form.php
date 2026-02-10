@@ -68,17 +68,26 @@ if ($_GET['fid'] != "new") {
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
 		$entries_are_users = $formObject->getVar('entries_are_users');
-		$entries_are_users_conditions = $formObject->getVar('entries_are_users_conditions');
+		$entries_are_users_conditions_all = $formObject->getVar('entries_are_users_conditions');
+		if (!is_array($entries_are_users_conditions_all)) {
+			$entries_are_users_conditions_all = array();
+		}
+		$entries_are_users_conditions = isset($entries_are_users_conditions_all[0]) ? $entries_are_users_conditions_all[0] : null;
 		$entries_are_users_conditions_ui = formulize_createFilterUI($entries_are_users_conditions, "entriesareusersconditions", $fid, "form-1");
 		$entries_are_users_default_groups = $formObject->getVar('entries_are_users_default_groups');
 		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI($entries_are_users_default_groups);
 		$entries_are_users_default_groups_selected = array();
+		$per_group_conditions_ui = array();
 		if (is_array($entries_are_users_default_groups) && !empty($entries_are_users_default_groups)) {
 			$group_handler = xoops_gethandler('group');
 			foreach ($entries_are_users_default_groups as $gid) {
-				$groupObj = $group_handler->get(intval($gid));
+				$gid = intval($gid);
+				$groupObj = $group_handler->get($gid);
 				if ($groupObj) {
-					$entries_are_users_default_groups_selected[] = array('id' => intval($gid), 'name' => $groupObj->getVar('name'));
+					$groupConditions = isset($entries_are_users_conditions_all[$gid]) ? $entries_are_users_conditions_all[$gid] : null;
+					$hasGroupConditions = !empty($groupConditions);
+					$entries_are_users_default_groups_selected[] = array('id' => $gid, 'name' => $groupObj->getVar('name'), 'hasConditions' => $hasGroupConditions);
+					$per_group_conditions_ui[$gid] = formulize_createFilterUI($groupConditions, "eaugroup_".$gid, $fid, "form-1");
 				}
 			}
 		}
@@ -715,6 +724,7 @@ $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
 $settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
 $settings['entries_are_users_default_groups_selected'] = $entries_are_users_default_groups_selected;
+$settings['per_group_conditions_ui'] = $per_group_conditions_ui;
 $settings['template_group_clusters'] = $template_group_clusters;
 $settings['template_group_metadata_json'] = json_encode($template_group_metadata);
 $settings['entries_are_groups'] = $entries_are_groups;
