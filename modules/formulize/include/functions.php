@@ -5201,6 +5201,11 @@ function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
 	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
 	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
 	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = false; // we want to show all groups, even if they are template groups
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // we'll just have a single selection and override the behaviour of a selection/click in the admin UI
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
 	if(!is_array($currentlySelectedGroupIds)) {
 		$currentlySelectedGroupIds = array();
 	}

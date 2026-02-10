@@ -32,9 +32,12 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/autocompleteElement.php
 
 class formulizeUserAccountGroupMembershipElement extends formulizeUserAccountElement {
 
+		var $excludeTemplateGroups; // whether to exclude template groups from the list, or include all groups. Default is to exclude template groups since they are not meant to be assigned to users.
+
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Group Membership";
+			$this->excludeTemplateGroups = true; // default to excluding template groups since they are not meant to be assigned to users, but this can be overridden by setting this property to false
 			// Note: no userProperty defined because group membership is stored in groups_users_link table, not on the user object
 		}
 
@@ -57,7 +60,7 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		OR !$userObject = $member_handler->getUser($userId)) {
 			return array(); // No user associated yet, or id is invalid, return empty array
 		}
-		return $member_handler->getGroupsByUser($userId);
+		return array(ELE_VALUE_SELECT_OPTIONS => $member_handler->getGroupsByUser($userId), ELE_VALUE_SELECT_MULTIPLE => 1); // unusual use of ELE_VALUE_SELECT_OPTIONS to store the selected group ids, but we will always gather the full set below in the render method and need a way of knowing which are selected
 	}
 
 	// this method renders the element for display in a form
@@ -75,8 +78,8 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		$autocompleteHandler = xoops_getmodulehandler('autocompleteElement', 'formulize');
 		$autocompleteElement = $autocompleteHandler->create();
 		$autocomplete_ele_value = $autocompleteHandler->getDefaultEleValue();
-		$autocomplete_ele_value[ELE_VALUE_SELECT_MULTIPLE] = 1; // Allow multiple group selections
-		list($autocomplete_ele_value[ELE_VALUE_SELECT_OPTIONS], $groupUITextList) = self::getAvailableGroupsForOptions($ele_value);
+		$autocomplete_ele_value[ELE_VALUE_SELECT_MULTIPLE] = $ele_value[ELE_VALUE_SELECT_MULTIPLE];
+		list($autocomplete_ele_value[ELE_VALUE_SELECT_OPTIONS], $groupUITextList) = self::getAvailableGroupsForOptions($ele_value[ELE_VALUE_SELECT_OPTIONS], $element->excludeTemplateGroups);
 		$autocompleteElement->setVar('ele_uitext', $groupUITextList);
 		$autocompleteElement->useOptionsAsValues = true; // will use group ids as the values in the HTML markup, and then we can just save those values directly without having to do extra work to figure out which options were selected based on their ordinal position in the list, which would introduce race conditions too!
 		return $autocompleteHandler->render($autocomplete_ele_value, $caption, $markupName, $isDisabled, $autocompleteElement, $entry_id, $screen, $owner);
@@ -94,17 +97,22 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	 * Get all available groups that are not template groups
 	 * Exclude registered users group since it is always enforced on users when data is saved
 	 * @param array $currentlySelectedGroupIds Optional array of group IDs that should be marked as selected in the options list
+	 * @param bool $excludeTemplateGroups Optional flag to exclude template groups (default is true, which excludes template groups)
 	 * @return array Option strings as keys, 0 as values
 	 */
-	static function getAvailableGroupsForOptions($currentlySelectedGroupIds = []) {
+	static function getAvailableGroupsForOptions($currentlySelectedGroupIds = [], $excludeTemplateGroups = true) {
 		global $xoopsDB, $xoopsUser;
 		$groupOptionList = array();
 		$groupUITextList = array();
 		$webmasterGroupExclusion = "";
+		$templateGroupExclusion = "";
 		if(!in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 			$webmasterGroupExclusion = " AND groupid != ".XOOPS_GROUP_ADMIN;
 		}
-		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') . " WHERE is_group_template = 0 AND groupid != ".XOOPS_GROUP_USERS." AND groupid != ".XOOPS_GROUP_ANONYMOUS." $webmasterGroupExclusion ORDER BY name";
+		if($excludeTemplateGroups) {
+			$templateGroupExclusion = " AND is_group_template = 0 ";
+		}
+		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') . " WHERE groupid != ".XOOPS_GROUP_USERS." AND groupid != ".XOOPS_GROUP_ANONYMOUS." $webmasterGroupExclusion $templateGroupExclusion ORDER BY name";
 		$result = $xoopsDB->query($sql);
 		if($result) {
 			$currentlySelectedGroupIds = is_array($currentlySelectedGroupIds) ? $currentlySelectedGroupIds : [];
