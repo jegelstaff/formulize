@@ -80,14 +80,38 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
 $applicationIds = (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0);
 $groupsCanEdit = (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN);
 
-// Parse entries_are_users_conditions filter settings
-list($parsedEntriesAreUsersConditions, $entriesAreUsersConditionsChanged) = parseSubmittedConditions('entriesareusersconditions');
-if ($parsedEntriesAreUsersConditions) {
-	$processedValues['forms']['entries_are_users_conditions'] = $parsedEntriesAreUsersConditions;
+// Parse entries_are_users_default_groups from the autocomplete element (no forms- prefix in markup name)
+// Must parse this BEFORE conditions so we know which groups to parse conditions for
+$defaultGroups = isset($_POST['entries_are_users_default_groups']) && is_array($_POST['entries_are_users_default_groups']) ? $_POST['entries_are_users_default_groups'] : array();
+
+// Parse entries_are_users_conditions as a multidimensional array
+// Key 0 = base conditions, key {group_id} = per-group conditions
+$allConditions = array();
+$entriesAreUsersConditionsChanged = false;
+
+// Parse base conditions (key 0)
+list($parsedBaseConditions, $baseConditionsChanged) = parseSubmittedConditions('entriesareusersconditions');
+if ($parsedBaseConditions) {
+	$allConditions[0] = $parsedBaseConditions;
+}
+if ($baseConditionsChanged) {
+	$entriesAreUsersConditionsChanged = true;
 }
 
-// Parse entries_are_users_default_groups from the autocomplete element (no forms- prefix in markup name)
-$defaultGroups = isset($_POST['entries_are_users_default_groups']) && is_array($_POST['entries_are_users_default_groups']) ? $_POST['entries_are_users_default_groups'] : array();
+// Parse per-group conditions
+foreach ($defaultGroups as $gid) {
+	$gid = intval($gid);
+	$filterKey = "eaugroup_".$gid;
+	list($parsedGroupConditions, $groupConditionsChanged) = parseSubmittedConditions($filterKey, 'per_group_conditionsdelete', 2, $gid);
+	if ($parsedGroupConditions) {
+		$allConditions[$gid] = $parsedGroupConditions;
+	}
+	if ($groupConditionsChanged) {
+		$entriesAreUsersConditionsChanged = true;
+	}
+}
+
+$processedValues['forms']['entries_are_users_conditions'] = $allConditions;
 $processedValues['forms']['entries_are_users_default_groups'] = $defaultGroups;
 
 // Parse element link selections for template groups
@@ -132,13 +156,19 @@ if($formObject->getVar('entries_are_users')) {
 			$member_handler = xoops_gethandler('member');
 			$templateGroupMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
 			$groupDescriptions = array();
-			// Collect template group categories keyed by element, so categories sharing an element are combined
-			// Structure: $templateByElement[ele_id] = ['categories' => [...], 'formSingular' => ..., 'caption' => ...]
+			// Collect template group categories keyed by element.
+			// Within each element, separate unconditional categories from conditional ones,
+			// so they can be combined into a single natural-language description per element.
+			// Structure: $templateByElement[ele_id] = ['unconditional' => [...], 'conditional' => [condDesc => [...]], 'formSingular' => ..., 'caption' => ...]
 			$templateByElement = array();
 			foreach($defaultGroups as $groupId) {
 				$groupId = intval($groupId);
 				if(isset($sanitizedLinks[$groupId]) && isset($templateGroupMetadata[$groupId])) {
 					$meta = $templateGroupMetadata[$groupId];
+					$conditionDesc = '';
+					if(isset($allConditions[$groupId]) && !empty($allConditions[$groupId])) {
+						$conditionDesc = formulize_describeConditions($allConditions[$groupId], $element_handler);
+					}
 					foreach($meta['linkedElements'] as $linkedElement) {
 						if(in_array(intval($linkedElement['ele_id']), $sanitizedLinks[$groupId])) {
 							$eleId = intval($linkedElement['ele_id']);
@@ -148,33 +178,80 @@ if($formObject->getVar('entries_are_users')) {
 									$caption = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM, $caption, $linkedElement['formName']);
 								}
 								$templateByElement[$eleId] = array(
-									'categories' => array(),
+									'unconditional' => array(),
+									'conditional' => array(),
 									'formSingular' => $meta['formSingular'],
 									'caption' => $caption
 								);
 							}
-							$templateByElement[$eleId]['categories'][] = $meta['categoryName'];
+							if($conditionDesc) {
+								$templateByElement[$eleId]['conditional'][$conditionDesc][] = $meta['categoryName'];
+							} else {
+								$templateByElement[$eleId]['unconditional'][] = $meta['categoryName'];
+							}
 						}
 					}
 				} else {
-					// Regular group - use literal name
+					// Regular group - use literal name, with condition qualifier if applicable
 					$groupObject = $member_handler->getGroup($groupId);
 					if($groupObject) {
-						$groupDescriptions[] = $groupObject->getVar('name');
+						$desc = $groupObject->getVar('name');
+						if(isset($allConditions[$groupId]) && !empty($allConditions[$groupId])) {
+							$conditionDesc = formulize_describeConditions($allConditions[$groupId], $element_handler);
+							if($conditionDesc) {
+								$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $conditionDesc);
+							}
+						}
+						$groupDescriptions[] = $desc;
 					}
 				}
 			}
 			// Build descriptions for template groups, one bullet per element
 			foreach($templateByElement as $eleData) {
-				$categories = array_unique($eleData['categories']);
-				$count = count($categories);
-				if($count > 1) {
-					$last = array_pop($categories);
-					$categoryList = implode(', ', $categories) . ' and ' . $last;
-					$groupDescriptions[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL, $categoryList, $eleData['formSingular'], $eleData['caption']);
+				$uncond = array_unique($eleData['unconditional']);
+				$cond = $eleData['conditional'];
+				if(!empty($uncond)) {
+					// Start with the unconditional categories
+					$desc = sprintf(
+						count($uncond) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE,
+						formulize_listWithAnd($uncond),
+						$eleData['formSingular'],
+						$eleData['caption']
+					);
+					// Append any conditional categories
+					foreach($cond as $condDesc => $cats) {
+						$cats = array_unique($cats);
+						$desc .= sprintf(
+							count($cats) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND,
+							formulize_listWithAnd($cats),
+							$condDesc
+						);
+					}
 				} else {
-					$groupDescriptions[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE, $categories[0], $eleData['formSingular'], $eleData['caption']);
+					// All categories are conditional - lead with the first conditional group
+					$first = true;
+					$desc = '';
+					foreach($cond as $condDesc => $cats) {
+						$cats = array_unique($cats);
+						if($first) {
+							$desc = sprintf(
+								count($cats) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE,
+								formulize_listWithAnd($cats),
+								$eleData['formSingular'],
+								$eleData['caption']
+							);
+							$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $condDesc);
+							$first = false;
+						} else {
+							$desc .= sprintf(
+								count($cats) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND,
+								formulize_listWithAnd($cats),
+								$condDesc
+							);
+						}
+					}
 				}
+				$groupDescriptions[] = $desc;
 			}
 			if(!empty($groupDescriptions)) {
 				$descList = count($groupDescriptions) > 1 ? '</p><ul class="form-help-text"><li>' . implode('</li><li>', $groupDescriptions) . '</li></ul><p>' : $groupDescriptions[0];

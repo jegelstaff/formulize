@@ -321,12 +321,31 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				  AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
 						$submittedGroupIds[] = XOOPS_GROUP_ADMIN;
 					}
-					// Ensure user is always in the default groups specified in the form settings
+					// Ensure user is in the default groups specified in the form settings,
+					// subject to per-group conditions and template group resolution
 					$defaultGroups = $formObject->getVar('entries_are_users_default_groups');
-					if(is_array($defaultGroups)) {
+					if(is_array($defaultGroups) && !empty($defaultGroups)) {
+						$allConditions = $formObject->getVar('entries_are_users_conditions');
+						if(!is_array($allConditions)) {
+							$allConditions = array();
+						}
+						$elementLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
+						if(!is_array($elementLinks)) {
+							$elementLinks = array();
+						}
 						foreach($defaultGroups as $defaultGroupId) {
-							if(!in_array(intval($defaultGroupId), $submittedGroupIds)) {
-								$submittedGroupIds[] = intval($defaultGroupId);
+							$defaultGroupId = intval($defaultGroupId);
+							// Check per-group conditions if any exist
+							if(isset($allConditions[$defaultGroupId]) && !empty($allConditions[$defaultGroupId])) {
+								$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
+								if(!$conditionsMet) {
+									continue; // conditions not met, skip this group
+								}
+							}
+							// Resolve template groups to the actual entry group
+							$resolvedGroupId = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler);
+							if($resolvedGroupId && !in_array($resolvedGroupId, $submittedGroupIds)) {
+								$submittedGroupIds[] = $resolvedGroupId;
 							}
 						}
 					}
@@ -353,6 +372,97 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			}
 		}
 		return $results[$cacheKey];
+	}
+
+	/**
+	 * Resolve a default group ID to the actual group the user should be added to.
+	 * For regular groups, returns the group ID as-is.
+	 * For template groups, uses element_links to find which entry in the entries_are_groups
+	 * form is referenced by the current entry, then looks up the actual group for that
+	 * entry + category combination.
+	 *
+	 * @param int $defaultGroupId The default group ID (may be a template group)
+	 * @param int $formId The entries_are_users form ID
+	 * @param int $entryId The current entry being processed
+	 * @param array $elementLinks The entries_are_users_default_groups_element_links from form settings
+	 * @param object $data_handler The data handler for the form
+	 * @return int|false The resolved group ID, or false if resolution failed
+	 */
+	static private function resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler) {
+		global $xoopsDB;
+		// Check if this is a template group
+		$sql = "SELECT is_group_template, form_id FROM " . $xoopsDB->prefix('groups') . " WHERE groupid = " . intval($defaultGroupId);
+		$result = $xoopsDB->query($sql);
+		$groupRow = $xoopsDB->fetchArray($result);
+		if(!$groupRow) {
+			return false;
+		}
+		// Regular group — use as-is
+		if(!$groupRow['is_group_template']) {
+			return $defaultGroupId;
+		}
+		// Template group — resolve to the actual entry group
+		// Template groups store form_id (the entries_are_groups form) but not entry_id
+		$eagFormId = intval($groupRow['form_id']);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$eagFormObject = $form_handler->get($eagFormId);
+		if(!$eagFormObject) {
+			return false;
+		}
+		$groupCategories = $eagFormObject->getVar('group_categories');
+		if(!is_array($groupCategories) || !isset($groupCategories[$defaultGroupId])) {
+			return false;
+		}
+		$categoryName = $groupCategories[$defaultGroupId];
+
+		// Get the element links for this template group — these are element IDs in the entries_are_users
+		// form (or related forms) that link to the entries_are_groups form
+		if(!isset($elementLinks[$defaultGroupId]) || !is_array($elementLinks[$defaultGroupId]) || empty($elementLinks[$defaultGroupId])) {
+			return false; // no element links configured, can't resolve
+		}
+		$linkedElementIds = $elementLinks[$defaultGroupId];
+
+		// Use gatherDataset with frid=-1 (primary relationship) to get data across related forms,
+		// so we can read linked element values even if the element is in a different form
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$entryData = gatherDataset($formId, filter: $entryId, frid: -1, bypassCache: true);
+
+		foreach($linkedElementIds as $linkedEleId) {
+			$linkedEleId = intval($linkedEleId);
+			$linkedElement = $element_handler->get($linkedEleId);
+			if(!$linkedElement) {
+				continue;
+			}
+			$linkedHandle = $linkedElement->getVar('ele_handle');
+			// Get the value from the gathered dataset (works across related forms)
+			if(!isset($entryData[0]) || !$entryData[0]) {
+				continue;
+			}
+			$linkedValue = getValue($entryData[0], $linkedHandle, raw: true);
+			if(!$linkedValue) {
+				continue;
+			}
+			// The linked value is the entry_id in the entries_are_groups form
+			// For multi-value linked elements (comma-separated), handle each
+			$linkedEntryIds = is_array($linkedValue) ? $linkedValue : explode(',', trim($linkedValue, ','));
+			foreach($linkedEntryIds as $eagEntryId) {
+				$eagEntryId = intval($eagEntryId);
+				if(!$eagEntryId) {
+					continue;
+				}
+				// Look up the actual group for this entry + category
+				$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+					   " WHERE form_id = " . intval($eagFormId) .
+					   " AND entry_id = " . intval($eagEntryId) .
+					   " AND is_group_template = 0" .
+					   " AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+				$result = $xoopsDB->query($sql);
+				if($row = $xoopsDB->fetchArray($result)) {
+					return intval($row['groupid']);
+				}
+			}
+		}
+		return false; // could not resolve
 	}
 
 }
