@@ -90,6 +90,20 @@ if ($parsedEntriesAreUsersConditions) {
 $defaultGroups = isset($_POST['entries_are_users_default_groups']) && is_array($_POST['entries_are_users_default_groups']) ? $_POST['entries_are_users_default_groups'] : array();
 $processedValues['forms']['entries_are_users_default_groups'] = $defaultGroups;
 
+// Parse element link selections for template groups
+// Checkboxes are keyed by eagFormId in the POST; form_map maps each groupId to its eagFormId
+$elementLinksByForm = isset($_POST['entries_are_users_default_groups_element_links']) && is_array($_POST['entries_are_users_default_groups_element_links']) ? $_POST['entries_are_users_default_groups_element_links'] : array();
+$formMap = isset($_POST['entries_are_users_default_groups_form_map']) && is_array($_POST['entries_are_users_default_groups_form_map']) ? $_POST['entries_are_users_default_groups_form_map'] : array();
+$sanitizedLinks = array();
+foreach ($formMap as $groupId => $eagFormId) {
+	$groupId = intval($groupId);
+	$eagFormId = intval($eagFormId);
+	if (isset($elementLinksByForm[$eagFormId]) && is_array($elementLinksByForm[$eagFormId])) {
+		$sanitizedLinks[$groupId] = array_map('intval', $elementLinksByForm[$eagFormId]);
+	}
+}
+$processedValues['forms']['entries_are_users_default_groups_element_links'] = $sanitizedLinks;
+
 // Build group categories array if entries_are_groups is being used
 $groupCategories = null;
 $newGroupCategoriesCreated = false;

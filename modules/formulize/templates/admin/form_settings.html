@@ -144,18 +144,61 @@
 					<{$content.entries_are_users_default_groups_ui}>
 					<div id="default_groups_selected_list" style="margin-top: 10px;">
 						<{if $content.entries_are_users_default_groups_selected|is_array}>
+
+						<{* Render regular (non-template) groups as standalone items *}>
 						<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
+						<{if !$group.isTemplate}>
 						<div class="default-group-item" data-groupid="<{$group.id}>" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">
-							<div style="display: flex; align-items: center; gap: 10px;">
-								<span style="flex: 1; font-weight: bold;"><{$group.name}></span>
+							<span style="font-weight: bold;"><{$group.name}></span>
+							<span>&mdash;</span>
+							<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
+							<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
+						</div>
+						<{/if}>
+						<{/foreach}>
+
+						<{* Render template group clusters *}>
+						<{if $content.template_group_clusters|is_array}>
+						<{foreach from=$content.template_group_clusters key=eagFormId item=cluster}>
+						<div class="template-group-cluster" data-eagformid="<{$eagFormId}>" style="margin-bottom: 5px; padding: 8px; background: #e9e9e9; border-radius: 3px;">
+							<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
+							<{if $group.isTemplate && $group.eagFormId == $eagFormId}>
+							<div class="default-group-item template-group-in-cluster" data-groupid="<{$group.id}>" style="margin-bottom: 4px;">
+								<span style="font-weight: bold;"><{$group.name}></span>
+								<span>&mdash;</span>
+								<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
 								<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
-								<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>
+								<input type="hidden" name="entries_are_users_default_groups_form_map[<{$group.id}>]" value="<{$eagFormId}>" />
 							</div>
-							<{if $group.description}>
-							<div style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 2px;"><{$group.description}></div>
+							<{/if}>
+							<{/foreach}>
+							<{if $cluster.description}>
+							<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 4px;"><{$cluster.description}></div>
+							<{/if}>
+							<{if $cluster.elementsByForm|is_array && $cluster.elementsByForm|@count}>
+							<table class="template-group-cluster-checkboxes" style="margin-top: 4px; font-size: 0.9em; border: none; border-collapse: collapse;">
+								<{foreach from=$cluster.elementsByForm item=formGroup}>
+								<tr>
+									<td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;"><{$formGroup.formName}>:</td>
+									<td style="vertical-align: top; padding: 4px 0; border: none;">
+										<{foreach from=$formGroup.elements item=linkedEl}>
+										<label style="display: block;">
+											<input type="checkbox" name="entries_are_users_default_groups_element_links[<{$eagFormId}>][]"
+												value="<{$linkedEl.ele_id}>"
+												class="template-group-element-checkbox"
+												<{if $linkedEl.selected}>checked="checked"<{/if}> />
+											<{$linkedEl.caption}>
+										</label>
+										<{/foreach}>
+									</td>
+								</tr>
+								<{/foreach}>
+							</table>
 							<{/if}>
 						</div>
 						<{/foreach}>
+						<{/if}>
+
 						<{/if}>
 					</div>
 				</div>
@@ -368,8 +411,98 @@
 			$(this).closest(".group-category-item").remove();
 		});
 
-		// Template group metadata for explanatory descriptions
+		// Template group metadata for element checkboxes and descriptions
 		var templateGroupMetadata = <{$content.template_group_metadata_json}>;
+
+		var removeLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}>";
+
+		// Helper: build group item HTML for a template group inside a cluster
+		function buildTemplateGroupItemHtml(groupId, groupName, eagFormId) {
+			return '<div class="default-group-item template-group-in-cluster" data-groupid="' + groupId + '" style="margin-bottom: 4px;">' +
+				'<span style="font-weight: bold;">' + groupName + '</span>' +
+				' <span>&mdash;</span> ' +
+				'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
+				'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
+				'<input type="hidden" name="entries_are_users_default_groups_form_map[' + groupId + ']" value="' + eagFormId + '" />' +
+				'</div>';
+		}
+
+		// Language constant templates for cluster descriptions
+		var templateDescPattern = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC}>";
+		var templateDescFallbackPattern = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK}>";
+
+		// Helper: build description text from a list of category names and metadata
+		function buildClusterDescription(categoryNames, meta) {
+			var catList = categoryNames.join(', ');
+			if (meta.hasLinkedElements) {
+				return templateDescPattern.replace('%s', catList).replace('%s', meta.formSingular);
+			} else {
+				return templateDescFallbackPattern.replace('%s', catList).replace('%s', meta.formPlural);
+			}
+		}
+
+		// Helper: update the description text for a cluster based on current groups in it
+		function updateClusterDescription($cluster) {
+			// Collect category names from all template groups in this cluster
+			var categoryNames = [];
+			var firstMeta = null;
+			$cluster.find('.template-group-in-cluster').each(function() {
+				var gid = String($(this).data('groupid'));
+				var meta = templateGroupMetadata[gid];
+				if (meta) {
+					categoryNames.push(meta.categoryName);
+					if (!firstMeta) {
+						firstMeta = meta;
+					}
+				}
+			});
+			if (categoryNames.length > 0 && firstMeta) {
+				var desc = buildClusterDescription(categoryNames, firstMeta);
+				var $descEl = $cluster.find('.template-group-cluster-description');
+				if ($descEl.length) {
+					$descEl.text(desc);
+				} else {
+					// Description element doesn't exist yet, create it before the checkboxes table
+					var $cbs = $cluster.find('.template-group-cluster-checkboxes');
+					var descHtml = '<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 4px;">' + desc + '</div>';
+					if ($cbs.length) {
+						$cbs.before(descHtml);
+					} else {
+						$cluster.append(descHtml);
+					}
+				}
+			}
+		}
+
+		// Helper: build a new cluster container with checkboxes grouped by form
+		function buildClusterHtml(eagFormId, meta, firstGroupId, firstGroupName) {
+			var html = '<div class="template-group-cluster" data-eagformid="' + eagFormId + '" style="margin-bottom: 5px; padding: 8px; background: #e9e9e9; border-radius: 3px;">';
+			html += buildTemplateGroupItemHtml(firstGroupId, firstGroupName, eagFormId);
+			var desc = buildClusterDescription([meta.categoryName], meta);
+			html += '<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 4px;">' + desc + '</div>';
+			if (meta.elementsByForm && meta.elementsByForm.length > 0) {
+				html += '<table class="template-group-cluster-checkboxes" style="margin-top: 4px; font-size: 0.9em; border: none; border-collapse: collapse;">';
+				for (var f = 0; f < meta.elementsByForm.length; f++) {
+					var fg = meta.elementsByForm[f];
+					html += '<tr><td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;">' + fg.formName + ':</td>';
+					html += '<td style="vertical-align: top; padding: 4px 0; border: none;">';
+					for (var i = 0; i < fg.elements.length; i++) {
+						var le = fg.elements[i];
+						html += '<label style="display: block;">' +
+							'<input type="checkbox" name="entries_are_users_default_groups_element_links[' + eagFormId + '][]"' +
+							' value="' + le.ele_id + '"' +
+							' class="template-group-element-checkbox"' +
+							' checked="checked" />' +
+							' ' + le.caption +
+							'</label>';
+					}
+					html += '</td></tr>';
+				}
+				html += '</table>';
+			}
+			html += '</div>';
+			return html;
+		}
 
 		// Override the default groups autocomplete select behaviour
 		// Instead of setting the textbox value, add the selected group to a list below
@@ -378,6 +511,10 @@
 			$("#entries_are_users_default_groups").remove();
 			var $ac = $("#entries_are_users_default_groups_user");
 			if ($ac.length && $ac.data("autocomplete")) {
+				// Prevent hover from selecting/changing the textbox value
+				$ac.autocomplete("option", "focus", function(event, ui) {
+					event.preventDefault();
+				});
 				$ac.autocomplete("option", "select", function(event, ui) {
 					event.preventDefault();
 					if (ui.item.value == "none") {
@@ -391,21 +528,37 @@
 						$ac.val("");
 						return;
 					}
-					// Build description HTML if this is a template group
-					var descriptionHtml = '';
-					if (templateGroupMetadata[groupId] && templateGroupMetadata[groupId].description) {
-						descriptionHtml = '<div style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 2px;">' + templateGroupMetadata[groupId].description + '</div>';
+					var meta = templateGroupMetadata[groupId];
+					if (meta) {
+						// Template group — add to existing cluster or create new one
+						var eagFormId = meta.eagFormId;
+						var $existingCluster = $(".template-group-cluster[data-eagformid='" + eagFormId + "']");
+						if ($existingCluster.length > 0) {
+							// Add group item before the description/checkboxes section
+							var $desc = $existingCluster.find(".template-group-cluster-description");
+							var $cbs = $existingCluster.find(".template-group-cluster-checkboxes");
+							var $insertBefore = $desc.length ? $desc : ($cbs.length ? $cbs : null);
+							if ($insertBefore) {
+								$insertBefore.before(buildTemplateGroupItemHtml(groupId, groupName, eagFormId));
+							} else {
+								$existingCluster.append(buildTemplateGroupItemHtml(groupId, groupName, eagFormId));
+							}
+							// Update the description to include the new category name
+							updateClusterDescription($existingCluster);
+						} else {
+							// Create a new cluster
+							$("#default_groups_selected_list").append(buildClusterHtml(eagFormId, meta, groupId, groupName));
+						}
+					} else {
+						// Regular group — add as standalone item
+						var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">' +
+							'<span style="font-weight: bold;">' + groupName + '</span>' +
+							' <span>&mdash;</span> ' +
+							'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
+							'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
+							'</div>';
+						$("#default_groups_selected_list").append(itemHtml);
 					}
-					// Add to the list
-					var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">' +
-						'<div style="display: flex; align-items: center; gap: 10px;">' +
-						'<span style="flex: 1; font-weight: bold;">' + groupName + '</span>' +
-						'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
-						'<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>' +
-						'</div>' +
-						descriptionHtml +
-						'</div>';
-					$("#default_groups_selected_list").append(itemHtml);
 					$ac.val("");
 				});
 				// Also override the blur to just clear the box without setting the hidden value
@@ -415,9 +568,20 @@
 			}
 		});
 
-		// Remove default group from list
-		$(".remove-default-group-btn").live("click", function() {
-			$(this).closest(".default-group-item").remove();
+		// Remove default group from list — if it's the last group in a cluster, remove the whole cluster
+		$(".remove-default-group-btn").live("click", function(e) {
+			e.preventDefault();
+			var $item = $(this).closest(".default-group-item");
+			var $cluster = $item.closest(".template-group-cluster");
+			$item.remove();
+			if ($cluster.length > 0) {
+				if ($cluster.find(".template-group-in-cluster").length == 0) {
+					$cluster.remove();
+				} else {
+					// Update description to reflect remaining categories
+					updateClusterDescription($cluster);
+				}
+			}
 		});
 		</script>
 
@@ -513,16 +677,25 @@
 		}
 		});
 
-	$(".savebutton").click(function() {
-		if($("[name=forms-form_title]").val() == "") {
-			alert("Forms must have a name!");
-			$("[name=forms-form_title]").focus();
-		}
+	function validateCustom() {
 		if ($("[name=forms-form_handle]").val() == "") {
 			fillHandle();
 		}
-
-	});
+		// Validate that each template group cluster has at least one element checkbox selected
+		var templateGroupValid = true;
+		$(".template-group-cluster").each(function() {
+			var $checkboxes = $(this).find(".template-group-element-checkbox");
+			if ($checkboxes.length > 0 && $checkboxes.filter(":checked").length == 0) {
+				templateGroupValid = false;
+				return false; // break out of each loop
+			}
+		});
+		if (!templateGroupValid) {
+			alert("<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_VALIDATION}>");
+			return false;
+		}
+		return true;
+	}
 	function fillHandle(){
 		var str=$("[name=forms-form_title]").val();
 		if ("<{$content.fid}>" == "new") {

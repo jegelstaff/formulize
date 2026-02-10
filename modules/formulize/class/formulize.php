@@ -647,7 +647,7 @@ class formulizeHandler {
 		}
 
 		// 2. For each form, find elements that link to other forms
-		// Build map: target_form_id => [{caption, formName}]
+		// Build map: target_form_id => [{ele_id, caption, formName}]
 		$linkedFormElements = array();
 		foreach ($formsToScan as $scanFid => $scanFormName) {
 			$scanElements = $element_handler->getObjects(null, $scanFid);
@@ -657,7 +657,10 @@ class formulizeHandler {
 					if ($sourceInfo) {
 						$targetFid = $sourceInfo[0];
 						$caption = strip_tags($el->getVar('ele_caption'));
-						$entry = array('caption' => $caption);
+						$entry = array(
+							'ele_id' => intval($el->getVar('ele_id')),
+							'caption' => $caption
+						);
 						// Include formName only if the element is NOT in the current form
 						$entry['formName'] = ($scanFid == $fid) ? '' : $scanFormName;
 						$linkedFormElements[$targetFid][] = $entry;

@@ -82,35 +82,94 @@ if ($_GET['fid'] != "new") {
 				}
 			}
 		}
-		// Build template group metadata for explanatory descriptions in the UI
+		// Build template group metadata for the UI (checkboxes and JS)
 		$template_group_metadata = array();
 		$tgRawMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
 		foreach ($tgRawMetadata as $tgGroupId => $tgInfo) {
-			if (!empty($tgInfo['linkedElements'])) {
-				$elementRefs = array();
-				foreach ($tgInfo['linkedElements'] as $linkedEl) {
-					if ($linkedEl['formName']) {
-						$elementRefs[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_REF_IN_FORM, $linkedEl['caption'], $linkedEl['formName']);
-					} else {
-						$elementRefs[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_REF, $linkedEl['caption']);
-					}
+			// Group linked elements by formName for display with headings
+			// Replace empty formName (current form) with the actual form name
+			// Format all as "The [plural] form"
+			$elementsByForm = array();
+			foreach ($tgInfo['linkedElements'] as $le) {
+				$rawName = $le['formName'] ? $le['formName'] : $plural;
+				$formLabel = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_FORM_LABEL, $rawName);
+				if (!isset($elementsByForm[$formLabel])) {
+					$elementsByForm[$formLabel] = array('formName' => $formLabel, 'elements' => array());
 				}
-				$description = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC, $tgInfo['categoryName'], strtolower($tgInfo['formSingular']), implode(' or ', $elementRefs));
-			} else {
-				$description = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK, $tgInfo['categoryName'], strtolower($tgInfo['formPlural']));
+				$elementsByForm[$formLabel]['elements'][] = $le;
 			}
-			$template_group_metadata[$tgGroupId] = array('description' => $description);
+			$template_group_metadata[$tgGroupId] = array(
+				'categoryName' => $tgInfo['categoryName'],
+				'formSingular' => strtolower($tgInfo['formSingular']),
+				'formPlural' => strtolower($tgInfo['formPlural']),
+				'hasLinkedElements' => !empty($tgInfo['linkedElements']),
+				'linkedElements' => $tgInfo['linkedElements'],
+				'elementsByForm' => array_values($elementsByForm),
+				'eagFormId' => $tgInfo['eagFormId']
+			);
 		}
 
-		// Add description to pre-populated selected groups
+		// Get saved element link selections
+		$savedElementLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
+		if (!is_array($savedElementLinks)) {
+			$savedElementLinks = array();
+		}
+
+		// Mark each selected group as template or regular, and build clusters for template groups
+		$template_group_clusters = array();
 		foreach ($entries_are_users_default_groups_selected as &$selectedGroup) {
-			if (isset($template_group_metadata[$selectedGroup['id']])) {
-				$selectedGroup['description'] = $template_group_metadata[$selectedGroup['id']]['description'];
+			$gid = $selectedGroup['id'];
+			if (isset($template_group_metadata[$gid])) {
+				$meta = $template_group_metadata[$gid];
+				$eagFormId = $meta['eagFormId'];
+				$selectedGroup['eagFormId'] = $eagFormId;
+				$selectedGroup['isTemplate'] = true;
+
+				if (!isset($template_group_clusters[$eagFormId])) {
+					// First group from this entries-are-groups form — initialize cluster
+					$groupSavedLinks = isset($savedElementLinks[$gid]) ? $savedElementLinks[$gid] : array();
+					// Group linked elements by formName for display with headings
+					$elementsByForm = array();
+					foreach ($meta['linkedElements'] as $le) {
+						$le['selected'] = in_array($le['ele_id'], $groupSavedLinks);
+						$rawName = $le['formName'] ? $le['formName'] : $plural;
+						$formLabel = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_FORM_LABEL, $rawName);
+						if (!isset($elementsByForm[$formLabel])) {
+							$elementsByForm[$formLabel] = array('formName' => $formLabel, 'elements' => array());
+						}
+						$elementsByForm[$formLabel]['elements'][] = $le;
+					}
+					$elementsByForm = array_values($elementsByForm);
+					$template_group_clusters[$eagFormId] = array(
+						'eagFormId' => $eagFormId,
+						'categoryNames' => array($meta['categoryName']),
+						'formSingular' => $meta['formSingular'],
+						'formPlural' => $meta['formPlural'],
+						'hasLinkedElements' => $meta['hasLinkedElements'],
+						'elementsByForm' => $elementsByForm,
+						'description' => '', // built below after all groups are processed
+					);
+				} else {
+					$template_group_clusters[$eagFormId]['categoryNames'][] = $meta['categoryName'];
+				}
 			} else {
-				$selectedGroup['description'] = '';
+				$selectedGroup['eagFormId'] = 0;
+				$selectedGroup['isTemplate'] = false;
 			}
 		}
 		unset($selectedGroup);
+
+		// Build description strings for each cluster from all collected categoryNames
+		foreach ($template_group_clusters as $eagFormId => &$cluster) {
+			$catNames = $cluster['categoryNames'];
+			$catList = implode(', ', $catNames);
+			if ($cluster['hasLinkedElements']) {
+				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC, $catList, $cluster['formSingular']);
+			} else {
+				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK, $catList, $cluster['formPlural']);
+			}
+		}
+		unset($cluster);
 
 		$entries_are_groups = $formObject->getVar('entries_are_groups');
 
@@ -656,6 +715,7 @@ $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
 $settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
 $settings['entries_are_users_default_groups_selected'] = $entries_are_users_default_groups_selected;
+$settings['template_group_clusters'] = $template_group_clusters;
 $settings['template_group_metadata_json'] = json_encode($template_group_metadata);
 $settings['entries_are_groups'] = $entries_are_groups;
 $settings['group_categories'] = $group_categories;

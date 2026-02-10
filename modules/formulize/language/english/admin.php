@@ -183,10 +183,12 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC","By default, every 
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE","Group Membership");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC","User accounts created from entries in this form will always be added to these groups:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC","Users in the %s form will always be members of these groups: %s");
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC","The user will be assigned to the %s group for the %s selected in %s.");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC","Assign to the %s group based on the %s selected in:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK","The user will be assigned to the %s group for whichever %s are associated with their entry.");
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_REF",'the "%s" element');
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_REF_IN_FORM",'the "%s" element in the %s form');
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM","%s (in %s form)");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_FORM_LABEL","The %s form");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_VALIDATION","Each template group must have at least one element selected.");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE","remove");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS","This form represents groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN","For each entry in this form, a group will be created in Formulize.");
 define("_AM_SETTINGS_FORM_GROUP_CATEGORIES_TITLE","User Categories for each entry in this form");
