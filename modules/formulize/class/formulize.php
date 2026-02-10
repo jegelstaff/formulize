@@ -477,10 +477,17 @@ class formulizeHandler {
 				$groupObject = $group_handler->create();
 				$groupObject->setVar('group_type', 'User');
 				$groupObject->setVar('is_group_template', 1);
+				$groupObject->setVar('form_id', $fid);
 
 			// Unknown key format, skip
 			} else {
 				continue;
+			}
+
+			// Ensure form_id is set on the template group (may be missing on older groups)
+			if ($groupObject->getVar('form_id') != $fid) {
+				$groupObject->setVar('form_id', $fid);
+				$needsSave = true;
 			}
 
 			// Update and save if needed
@@ -670,7 +677,7 @@ class formulizeHandler {
 		}
 
 		// 3. Find all forms with entries_are_groups enabled and build metadata from their group_categories
-		// Template groups don't have form_id set — the link is via the form's group_categories mapping
+		// Template groups have form_id set but not entry_id; the category name link is via the form's group_categories mapping
 		$metadata = array();
 		$eagSql = "SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_groups = 1";
 		$eagResult = $xoopsDB->query($eagSql);
