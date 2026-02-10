@@ -975,11 +975,9 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// determine which form IDs are in the dataset, for use by clone UI and other features
 	// we can just look at the first entry, since all entries in the dataset will have the same fids (or should!!)
 	$GLOBALS['formulize_LOErendering_fidsInUse'] = array();
-	if(isset($data) AND !empty($data)) {
-		if($firstEntry = reset($data)) {
-			$firstEntryIds = getEntryIds($firstEntry, fidAsKeys: true);
-			$GLOBALS['formulize_LOErendering_fidsInUse'] = array_keys($firstEntryIds);
-		}
+	if(isset($data) AND is_array($data) AND !empty($data) AND $firstEntry = reset($data)) {
+		$firstEntryIds = getEntryIds($firstEntry, fidAsKeys: true);
+		$GLOBALS['formulize_LOErendering_fidsInUse'] = array_keys($firstEntryIds);
 	}
 
 	//formulize_benchmark("after gathering dataset/before generating calcs");
@@ -3497,13 +3495,14 @@ function confirmDel() {
 function confirmClone() {
 <?php
 	$cloneFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
-	if(count($cloneFids) <= 1) {
+	if(!is_array($cloneFids) OR count($cloneFids) <= 1) {
 		// Only one form in use, no need to ask which forms to clone
+		$clone_forms_value = is_array($cloneFids) ? $cloneFids[0] : $fid;
 		?>
 		var clonenumber = prompt("<?php print _formulize_DE_CLONE_PROMPT; ?>", "1");
 		if(parseInt(clonenumber) > 0) {
 			window.document.controls.cloneconfirmed.value = clonenumber;
-			window.document.controls.clone_forms.value = "<?php print implode(',', $cloneFids); ?>";
+			window.document.controls.clone_forms.value = "<?php print $clone_forms_value; ?>";
 			window.document.controls.ventry.value = '';
 			window.document.controls.forcequery.value = 1;
 			showLoading();
@@ -3512,7 +3511,7 @@ function confirmClone() {
 			return false;
 		}
 		<?php
-	} else {
+	} elseif(is_array($cloneFids) AND count($cloneFids) > 1) {
 		// Multiple forms - show a dialog for selecting which forms to clone
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$cloneFormOptions = array();
