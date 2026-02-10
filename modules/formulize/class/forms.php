@@ -1171,7 +1171,8 @@ class formulizeFormsHandler {
 					$newTitles = $screenObject->getVar('pagetitles');
 					$newConditions = $screenObject->getVar('conditions');
 					$newConditions = is_array($newConditions) ? $newConditions : array(array());
-					$formConditions = $formObject->getVar('entries_are_users_conditions');
+					$allFormConditions = $formObject->getVar('entries_are_users_conditions');
+					$formConditions = (is_array($allFormConditions) && isset($allFormConditions[0])) ? $allFormConditions[0] : null;
 					// Ensure conditions have proper structure (4 arrays for element, operator, term, match type)
 					$conditionsForNewPage = ($formConditions && is_array($formConditions))
 						? $formConditions
@@ -1225,7 +1226,8 @@ class formulizeFormsHandler {
 				throw new Exception("Could not reorder elements on User Account page of the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info	@formulize.org for assistance.");
 			}
 		} elseif($userAccountPageNumber && $screenObject) {
-			$formConditions = $formObject->getVar('entries_are_users_conditions');
+			$allFormConditions = $formObject->getVar('entries_are_users_conditions');
+			$formConditions = (is_array($allFormConditions) && isset($allFormConditions[0])) ? $allFormConditions[0] : null;
 			$currentConditions = $screenObject->getVar('conditions');
 			$currentConditions = is_array($currentConditions) ? $currentConditions : array();
 
