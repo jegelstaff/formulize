@@ -162,6 +162,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("entries_are_users", XOBJ_DTYPE_INT, $formq[0]['entries_are_users']);
 		$this->initVar("entries_are_users_conditions", XOBJ_DTYPE_ARRAY, $formq[0]['entries_are_users_conditions']);
 		$this->initVar("entries_are_users_default_groups", XOBJ_DTYPE_ARRAY, $formq[0]['entries_are_users_default_groups']);
+		$this->initVar("entries_are_users_default_groups_element_links", XOBJ_DTYPE_ARRAY, $formq[0]['entries_are_users_default_groups_element_links']);
 		$this->initVar("entries_are_groups", XOBJ_DTYPE_INT, $formq[0]['entries_are_groups']);
 		$this->initVar("group_categories", XOBJ_DTYPE_ARRAY, $formq[0]['group_categories']);
     }
@@ -919,7 +920,7 @@ class formulizeFormsHandler {
 					}
 
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_groups`, `group_categories`) VALUES (".
+							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_users_default_groups_element_links`, `entries_are_groups`, `group_categories`) VALUES (".
 							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
@@ -934,6 +935,7 @@ class formulizeFormsHandler {
 							intval($entries_are_users).", ".
 							$this->db->quoteString($entries_are_users_conditions).", ".
 							$this->db->quoteString($entries_are_users_default_groups).", ".
+							$this->db->quoteString($entries_are_users_default_groups_element_links).", ".
 							intval($entries_are_groups).", ".
 							$this->db->quoteString($group_categories).")";
 				} else {
@@ -954,6 +956,7 @@ class formulizeFormsHandler {
 							", `entries_are_users` = ".intval($entries_are_users).
 							", `entries_are_users_conditions` = ".$this->db->quoteString($entries_are_users_conditions).
 							", `entries_are_users_default_groups` = ".$this->db->quoteString($entries_are_users_default_groups).
+							", `entries_are_users_default_groups_element_links` = ".$this->db->quoteString($entries_are_users_default_groups_element_links).
 							", `entries_are_groups` = ".intval($entries_are_groups).
 							", `group_categories` = ".$this->db->quoteString($group_categories).
 							" WHERE id_form = ".intval($id_form);
