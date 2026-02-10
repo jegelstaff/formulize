@@ -48,6 +48,7 @@ if ($aid == 0) {
 $elements = array();
 if ($_GET['fid'] != "new") {
     $fid = intval($_GET['fid']);
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
     $formName = $formObject->getVar('title');
@@ -81,6 +82,36 @@ if ($_GET['fid'] != "new") {
 				}
 			}
 		}
+		// Build template group metadata for explanatory descriptions in the UI
+		$template_group_metadata = array();
+		$tgRawMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
+		foreach ($tgRawMetadata as $tgGroupId => $tgInfo) {
+			if (!empty($tgInfo['linkedElements'])) {
+				$elementRefs = array();
+				foreach ($tgInfo['linkedElements'] as $linkedEl) {
+					if ($linkedEl['formName']) {
+						$elementRefs[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_REF_IN_FORM, $linkedEl['caption'], $linkedEl['formName']);
+					} else {
+						$elementRefs[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_REF, $linkedEl['caption']);
+					}
+				}
+				$description = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC, $tgInfo['categoryName'], strtolower($tgInfo['formSingular']), implode(' or ', $elementRefs));
+			} else {
+				$description = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK, $tgInfo['categoryName'], strtolower($tgInfo['formPlural']));
+			}
+			$template_group_metadata[$tgGroupId] = array('description' => $description);
+		}
+
+		// Add description to pre-populated selected groups
+		foreach ($entries_are_users_default_groups_selected as &$selectedGroup) {
+			if (isset($template_group_metadata[$selectedGroup['id']])) {
+				$selectedGroup['description'] = $template_group_metadata[$selectedGroup['id']]['description'];
+			} else {
+				$selectedGroup['description'] = '';
+			}
+		}
+		unset($selectedGroup);
+
 		$entries_are_groups = $formObject->getVar('entries_are_groups');
 
 		// Load group categories from stored mapping on the form object
@@ -101,7 +132,6 @@ if ($_GET['fid'] != "new") {
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
 
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
 		$elementIdsWithData = $formObject->getVar('elementsWithData');
     $elements = array();
@@ -500,6 +530,7 @@ if ($_GET['fid'] != "new") {
 		$entries_are_users_conditions_ui = ""; // Don't show conditions UI for new forms - no elements exist yet
 		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI(array());
 		$entries_are_users_default_groups_selected = array();
+		$template_group_metadata = array();
 		$entries_are_groups = 0;
 		$group_categories = array();
     if ($_GET['aid']) {
@@ -625,6 +656,7 @@ $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
 $settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
 $settings['entries_are_users_default_groups_selected'] = $entries_are_users_default_groups_selected;
+$settings['template_group_metadata_json'] = json_encode($template_group_metadata);
 $settings['entries_are_groups'] = $entries_are_groups;
 $settings['group_categories'] = $group_categories;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
