@@ -183,6 +183,8 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC","By default, every 
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE","Group Membership");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC","User accounts created from entries in this form will always be added to these groups:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC","Users in the %s form will always be members of these groups: %s");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE",'The %s group for the %s selected in &ldquo;%s&rdquo;');
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL",'The %s groups for the %s selected in &ldquo;%s&rdquo;');
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC","Assign to the %s group based on the %s selected in:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK","The user will be assigned to the %s group for whichever %s are associated with their entry.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM","%s (in %s form)");
