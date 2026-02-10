@@ -145,10 +145,15 @@
 					<div id="default_groups_selected_list" style="margin-top: 10px;">
 						<{if $content.entries_are_users_default_groups_selected|is_array}>
 						<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
-						<div class="default-group-item" data-groupid="<{$group.id}>" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">
-							<span style="flex: 1;"><{$group.name}></span>
-							<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
-							<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>
+						<div class="default-group-item" data-groupid="<{$group.id}>" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">
+							<div style="display: flex; align-items: center; gap: 10px;">
+								<span style="flex: 1; font-weight: bold;"><{$group.name}></span>
+								<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
+								<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>
+							</div>
+							<{if $group.description}>
+							<div style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 2px;"><{$group.description}></div>
+							<{/if}>
 						</div>
 						<{/foreach}>
 						<{/if}>
@@ -363,6 +368,9 @@
 			$(this).closest(".group-category-item").remove();
 		});
 
+		// Template group metadata for explanatory descriptions
+		var templateGroupMetadata = <{$content.template_group_metadata_json}>;
+
 		// Override the default groups autocomplete select behaviour
 		// Instead of setting the textbox value, add the selected group to a list below
 		$(window).load(function() {
@@ -383,11 +391,19 @@
 						$ac.val("");
 						return;
 					}
+					// Build description HTML if this is a template group
+					var descriptionHtml = '';
+					if (templateGroupMetadata[groupId] && templateGroupMetadata[groupId].description) {
+						descriptionHtml = '<div style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 2px;">' + templateGroupMetadata[groupId].description + '</div>';
+					}
 					// Add to the list
-					var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">' +
-						'<span style="flex: 1;">' + groupName + '</span>' +
+					var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">' +
+						'<div style="display: flex; align-items: center; gap: 10px;">' +
+						'<span style="flex: 1; font-weight: bold;">' + groupName + '</span>' +
 						'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
 						'<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>' +
+						'</div>' +
+						descriptionHtml +
 						'</div>';
 					$("#default_groups_selected_list").append(itemHtml);
 					$ac.val("");

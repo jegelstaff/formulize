@@ -461,6 +461,7 @@ class formulizeFrameworksHandler {
 	/**
 	 * Get the links in a relationship, and return them in an ordered array, grouped by form
 	 * @param object relationship The relationship we're getting links from
+	 * @param int fid If specified, only return links where this form is either form1 or form2. If not specified, return all links in the relationship.
 	 * @return array An array of the links in the form, ordered by form, normalized into one to many and one to one for each form (many to one switched around)
 	 */
 	function getLinksGroupedByForm($relationship, $fid=null) {
