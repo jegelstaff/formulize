@@ -332,6 +332,12 @@ $(document).ready(function() {
 				$('.admin-ui').fadeTo(1, 1)
       }
     });
+    if (requiredok && typeof validateCustom === "function") {
+      requiredok = validateCustom();
+      if (!requiredok) {
+        $('.admin-ui').fadeTo(1, 1);
+      }
+    }
     return requiredok;
   }
 
