@@ -136,21 +136,34 @@
 					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
 				</div>
 
-				<!-- User Creation Conditions -->
-				<{if $content.entries_are_users_conditions_ui}>
-				<div id="entries_are_users_conditions_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
-					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE}></h4>
-					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC}></p>
-					<{$content.entries_are_users_conditions_ui}>
-				</div>
-				<{/if}>
-
 				<!-- Group Membership -->
 				<{if $content.entries_are_users_default_groups_ui}>
 				<div id="entries_are_users_default_groups_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
 					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE}></h4>
 					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC}></p>
 					<{$content.entries_are_users_default_groups_ui}>
+					<div id="default_groups_selected_list" style="margin-top: 10px;">
+						<{if $content.entries_are_users_default_groups_selected|is_array}>
+						<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
+						<div class="default-group-item" data-groupid="<{$group.id}>" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">
+							<span style="flex: 1;"><{$group.name}></span>
+							<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
+							<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>
+						</div>
+						<{/foreach}>
+						<{/if}>
+					</div>
+				</div>
+				<{/if}>
+
+				<!-- User Creation Conditions -->
+				<{if $content.entries_are_users_conditions_ui}>
+				<div id="entries_are_users_conditions_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE}></h4>
+					<{$content.entries_are_users_conditions_ui}>
+					<div class="description">
+						<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC}></p>
+					</div>
 				</div>
 				<{/if}>
 
@@ -346,8 +359,49 @@
 		});
 
 		// Remove category button handler (using delegation for dynamically added elements)
-		$("#group_categories_list").on("click", ".remove-category-btn", function() {
+		$(".remove-category-btn").live("click", function() {
 			$(this).closest(".group-category-item").remove();
+		});
+
+		// Override the default groups autocomplete select behaviour
+		// Instead of setting the textbox value, add the selected group to a list below
+		$(window).load(function() {
+			// Remove the original single-value hidden input so it doesn't conflict with the array inputs
+			$("#entries_are_users_default_groups").remove();
+			var $ac = $("#entries_are_users_default_groups_user");
+			if ($ac.length && $ac.data("autocomplete")) {
+				$ac.autocomplete("option", "select", function(event, ui) {
+					event.preventDefault();
+					if (ui.item.value == "none") {
+						$ac.val("");
+						return;
+					}
+					var groupId = ui.item.value;
+					var groupName = ui.item.label;
+					// Check if this group is already in the list
+					if ($("#default_groups_selected_list .default-group-item[data-groupid='" + groupId + "']").length > 0) {
+						$ac.val("");
+						return;
+					}
+					// Add to the list
+					var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; padding: 4px 8px; background: #e9e9e9; border-radius: 3px;">' +
+						'<span style="flex: 1;">' + groupName + '</span>' +
+						'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
+						'<button type="button" class="remove-default-group-btn" style="padding: 2px 6px; cursor: pointer; border: none; background: none; font-size: 14px;" title="Remove">&times;</button>' +
+						'</div>';
+					$("#default_groups_selected_list").append(itemHtml);
+					$ac.val("");
+				});
+				// Also override the blur to just clear the box without setting the hidden value
+				$ac.unbind("blur").blur(function() {
+					$ac.val("");
+				});
+			}
+		});
+
+		// Remove default group from list
+		$(".remove-default-group-btn").live("click", function() {
+			$(this).closest(".default-group-item").remove();
 		});
 		</script>
 
