@@ -1559,6 +1559,16 @@ div.formulize_autocomplete {
   clear: both;
 }
 
+ul.form-help-text {
+		padding-left: 1.2em;
+		margin-top: -0.5em;
+		padding-top: 0;
+		margin-bottom: 0;
+		padding-bottom: 0;
+		list-style: disc;
+		list-style-position: outside;
+}
+
 @media print {
   .form-heading,
 .form-label,

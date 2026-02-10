@@ -130,15 +130,55 @@ if($formObject->getVar('entries_are_users')) {
 	if($groupMembershipElement) {
 		if(!empty($defaultGroups)) {
 			$member_handler = xoops_gethandler('member');
-			$groupNames = array();
+			$templateGroupMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
+			$groupDescriptions = array();
+			// Collect template group categories keyed by element, so categories sharing an element are combined
+			// Structure: $templateByElement[ele_id] = ['categories' => [...], 'formSingular' => ..., 'caption' => ...]
+			$templateByElement = array();
 			foreach($defaultGroups as $groupId) {
-				$groupObject = $member_handler->getGroup(intval($groupId));
-				if($groupObject) {
-					$groupNames[] = $groupObject->getVar('name');
+				$groupId = intval($groupId);
+				if(isset($sanitizedLinks[$groupId]) && isset($templateGroupMetadata[$groupId])) {
+					$meta = $templateGroupMetadata[$groupId];
+					foreach($meta['linkedElements'] as $linkedElement) {
+						if(in_array(intval($linkedElement['ele_id']), $sanitizedLinks[$groupId])) {
+							$eleId = intval($linkedElement['ele_id']);
+							if(!isset($templateByElement[$eleId])) {
+								$caption = $linkedElement['caption'];
+								if(!empty($linkedElement['formName'])) {
+									$caption = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM, $caption, $linkedElement['formName']);
+								}
+								$templateByElement[$eleId] = array(
+									'categories' => array(),
+									'formSingular' => $meta['formSingular'],
+									'caption' => $caption
+								);
+							}
+							$templateByElement[$eleId]['categories'][] = $meta['categoryName'];
+						}
+					}
+				} else {
+					// Regular group - use literal name
+					$groupObject = $member_handler->getGroup($groupId);
+					if($groupObject) {
+						$groupDescriptions[] = $groupObject->getVar('name');
+					}
 				}
 			}
-			if(!empty($groupNames)) {
-				$groupMembershipElement->setVar('ele_desc', sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC, $formObject->getVar('form_title'), implode(', ', $groupNames)));
+			// Build descriptions for template groups, one bullet per element
+			foreach($templateByElement as $eleData) {
+				$categories = array_unique($eleData['categories']);
+				$count = count($categories);
+				if($count > 1) {
+					$last = array_pop($categories);
+					$categoryList = implode(', ', $categories) . ' and ' . $last;
+					$groupDescriptions[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL, $categoryList, $eleData['formSingular'], $eleData['caption']);
+				} else {
+					$groupDescriptions[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE, $categories[0], $eleData['formSingular'], $eleData['caption']);
+				}
+			}
+			if(!empty($groupDescriptions)) {
+				$descList = count($groupDescriptions) > 1 ? '</p><ul class="form-help-text"><li>' . implode('</li><li>', $groupDescriptions) . '</li></ul><p>' : $groupDescriptions[0];
+				$groupMembershipElement->setVar('ele_desc', sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC, $formObject->getVar('form_title'), $descList));
 			} else {
 				$groupMembershipElement->setVar('ele_desc', '');
 			}
