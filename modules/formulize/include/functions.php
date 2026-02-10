@@ -43,7 +43,7 @@ if (typeof jQuery == 'undefined') {
     script = document.createElement('script');
     script.id = 'jQuery';
     script.type = 'text/javascript';
-    script.src = '".XOOPS_URL."/libraries/jquery/jquery.js';
+    script.src = '".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js';
     head.appendChild(script);
 }
 if (typeof jQuery.ui == 'undefined') {

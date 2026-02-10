@@ -51,7 +51,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<head>";
     print "<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />\n";
     print "<title>" . _formulize_DE_EXPORT . "</title>\n";
-    print "<script type='text/javascript' src='".XOOPS_URL."/libraries/jquery/jquery.js'></script>\n";
+    print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/libraries/jquery/jquery-1.4.2.min.js'></script>\n";
     ?>
     <script type='text/javascript'>
         jQuery(window).load(function() {
