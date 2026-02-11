@@ -290,4 +290,151 @@ class formulizePermHandler {
 		}
 		return $foundGids;
 	}
+
+	/**
+	 * Get all entry-specific group IDs that correspond to a given template group.
+	 * These are the groups created for individual entries that share the same
+	 * category name suffix as the template group.
+	 *
+	 * @param int $templateGroupId The template group ID
+	 * @return array Array of entry group IDs (may be empty)
+	 */
+	static function getAllEntryGroupsForTemplateGroup($templateGroupId) {
+		global $xoopsDB;
+		$templateGroupId = intval($templateGroupId);
+
+		// Get template group info
+		$sql = "SELECT is_group_template, form_id FROM " . $xoopsDB->prefix('groups') .
+			   " WHERE groupid = " . $templateGroupId;
+		$result = $xoopsDB->query($sql);
+		$row = $xoopsDB->fetchArray($result);
+		if (!$row || !$row['is_group_template']) {
+			return array();
+		}
+		$eagFormId = intval($row['form_id']);
+
+		// Get the category name for this template group
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$eagFormObject = $form_handler->get($eagFormId);
+		if (!$eagFormObject) {
+			return array();
+		}
+		$groupCategories = $eagFormObject->getVar('group_categories');
+		if (!is_array($groupCategories) || !isset($groupCategories[$templateGroupId])) {
+			return array();
+		}
+		$categoryName = $groupCategories[$templateGroupId];
+
+		// Find all entry-specific groups with the same category suffix
+		$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+			   " WHERE form_id = " . $eagFormId .
+			   " AND is_group_template = 0" .
+			   " AND entry_id > 0" .
+			   " AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+		$result = $xoopsDB->query($sql);
+		$groups = array();
+		while ($groupRow = $xoopsDB->fetchArray($result)) {
+			$groups[] = intval($groupRow['groupid']);
+		}
+		return $groups;
+	}
+
+	/**
+	 * Copy form permissions and per-group filters from one group to another.
+	 * Used to propagate template group permissions to entry groups.
+	 * Clears existing permissions/filters for the target group before copying.
+	 *
+	 * @param int $sourceGroupId The group to copy FROM (template group)
+	 * @param int $targetGroupId The group to copy TO (entry group)
+	 * @param int|null $modid The Formulize module ID. If null, auto-detected.
+	 * @return bool True on success
+	 */
+	/**
+	 * Copy all group settings from one group to another: permissions, filters, and groupscope.
+	 * Groupscope targets are resolved using an optional mapping, so that relative references
+	 * between groups (e.g., template group A scoping template group B) are translated to
+	 * corresponding targets (e.g., entry group A scoping entry group B).
+	 *
+	 * @param int $sourceGroupId The group to copy FROM
+	 * @param int $targetGroupId The group to copy TO
+	 * @param array $groupIdMapping Maps source-side group IDs to target-side group IDs for
+	 *   groupscope resolution. When a groupscope target matches a key in this map, the
+	 *   corresponding value is used instead. Targets not in the map are copied as-is.
+	 * @param int|null $modid The Formulize module ID. If null, auto-detected.
+	 * @return bool True on success
+	 */
+	static function copyAllGroupSettings($sourceGroupId, $targetGroupId, $groupIdMapping = array(), $modid = null) {
+		if (!$modid) {
+			$modid = getFormulizeModId();
+		}
+		$sourceGroupId = intval($sourceGroupId);
+		$targetGroupId = intval($targetGroupId);
+		if (!$sourceGroupId || !$targetGroupId) {
+			return false;
+		}
+
+		// Copy permissions and filters
+		self::copyGroupPermissions($sourceGroupId, $targetGroupId, $modid);
+
+		// Copy groupscope settings with relative mapping across all forms
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$forms = $form_handler->getAllForms();
+		foreach ($forms as $thisForm) {
+			$thisFid = $thisForm->getVar('id_form');
+			$permHandler = new formulizePermHandler($thisFid);
+			$scopeGroupIds = $permHandler->getGroupScopeGroupIds($sourceGroupId);
+			if (is_array($scopeGroupIds) && count($scopeGroupIds) > 0) {
+				$resolvedScopeGroups = array();
+				foreach ($scopeGroupIds as $scopeGid) {
+					if (isset($groupIdMapping[$scopeGid])) {
+						$resolvedScopeGroups[] = $groupIdMapping[$scopeGid];
+					} else {
+						$resolvedScopeGroups[] = $scopeGid;
+					}
+				}
+				$permHandler->setGroupScopeGroups($targetGroupId, $resolvedScopeGroups);
+			}
+		}
+
+		return true;
+	}
+
+	static function copyGroupPermissions($sourceGroupId, $targetGroupId, $modid = null) {
+		if (!$modid) {
+			$modid = getFormulizeModId();
+		}
+		$sourceGroupId = intval($sourceGroupId);
+		$targetGroupId = intval($targetGroupId);
+		if (!$sourceGroupId || !$targetGroupId) {
+			return false;
+		}
+
+		global $xoopsDB;
+
+		// Delete existing permissions for target group and copy from source
+		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("group_permission") .
+			" WHERE gperm_groupid = $targetGroupId AND gperm_modid = $modid");
+
+		$sql = "INSERT INTO " . $xoopsDB->prefix("group_permission") .
+			" (gperm_groupid, gperm_itemid, gperm_modid, gperm_name) " .
+			"SELECT $targetGroupId, gperm_itemid, gperm_modid, gperm_name " .
+			"FROM " . $xoopsDB->prefix("group_permission") .
+			" WHERE gperm_groupid = $sourceGroupId AND gperm_modid = $modid";
+		if (!$xoopsDB->queryF($sql)) {
+			return false;
+		}
+
+		// Delete existing filters for target group and copy from source
+		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("formulize_group_filters") .
+			" WHERE groupid = $targetGroupId");
+
+		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_group_filters") .
+			" (fid, groupid, filter) " .
+			"SELECT fid, $targetGroupId, filter " .
+			"FROM " . $xoopsDB->prefix("formulize_group_filters") .
+			" WHERE groupid = $sourceGroupId";
+		$xoopsDB->queryF($sql); // OK if no rows to copy
+
+		return true;
+	}
 }
