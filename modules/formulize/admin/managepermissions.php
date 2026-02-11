@@ -25,111 +25,56 @@ foreach($groupList as $id=>$groupName) {
 $sourceGroupId = intval($_POST['managepermissions-source']);
 $allOrFormulizeOnly = $_POST['formulize-or-all'] == 'formulize-perms' ? 'formulize' : 'all';
 
-// NEED TO MAKE THIS RERUNNABLE WITHOUT DAMAGING ANYTHING
-// NEED TO ADD MENU PERMISSIONS TO THIS!
+// TODO: ADD MENU PERMISSIONS TO THIS!
 // AND LIST OF ENTRIES CUSTOMACTIONS FIELD
 // AND SAVED VIEWS PUBGROUPS FIELD
 
 if($sourceGroupId AND count($targetGroupIds)>0 AND $allOrFormulizeOnly) {
 
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+
+    $modidForCopy = ($allOrFormulizeOnly == 'formulize') ? getFormulizeModId() : null;
+
     foreach($targetGroupIds as $targetGroupId) {
 
-        $allOrFormulizeFilter = $allOrFormulizeOnly == 'formulize' ? ' AND gperm_modid = '.getFormulizeModId() : '';
-
-        // copy permission table data from source to targets
-        $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission"). " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`)
-        SELECT $targetGroupId, gperm_itemid, gperm_modid, gperm_name FROM ".$xoopsDB->prefix("group_permission")." WHERE gperm_groupid = $sourceGroupId $allOrFormulizeFilter";
-        if(!$res = $xoopsDB->query($sql)) {
-            print "<p>Error: could not replicate permissions for Group Number $targetGroupId, which was supposed to be copied from Group Number $sourceGroupId</p>";
+        // Build name-based group ID mapping for groupscope resolution.
+        // This process works for groups named "Glenwood Counsellors" but not "Counsellors Glenwood".
+        // ie: Common grouping identifier comes first, then the type of users within that grouping.
+        $groupIdMapping = array();
+        foreach($groupList as $gid => $gname) {
+            if($gid == $sourceGroupId) {
+                $groupIdMapping[$gid] = $targetGroupId;
+            } else {
+                $commonFrontPart = commonFrontPart($targetGroupId, $sourceGroupId);
+                $uncommonFrontPart = uncommonPart($targetGroupId, $sourceGroupId);
+                $commonMiddlePart = commonMiddlePart($targetGroupId, $sourceGroupId, $gid);
+                $uncommonEndPart = uncommonPart($gid, $sourceGroupId);
+                $commonEndPart = commonEndPart($gid, $sourceGroupId);
+                $candidateGroupName = $commonFrontPart.$uncommonFrontPart.$commonMiddlePart.$uncommonEndPart.$commonEndPart;
+                $candidateGroupId = array_search($candidateGroupName, $groupList);
+                if($candidateGroupId) {
+                    $groupIdMapping[$gid] = $candidateGroupId;
+                }
+            }
         }
 
-        // copy per group visibility filters from source to targets
-        $sql = "INSERT INTO ".$xoopsDB->prefix("formulize_group_filters")." (`fid`, `groupid`, `filter`)
-        SELECT fid, $targetGroupId, filter FROM ".$xoopsDB->prefix("formulize_group_filters")." WHERE groupid = $sourceGroupId";
-        if(!$res = $xoopsDB->query($sql)) {
-            print "<p>Error: could not set the group filters for Group Number $targetGroupId, which were supposed to be copied from Group Number $sourceGroupId</p>";
+        // Copy permissions, filters, and groupscope (with name-based mapping)
+        if(!formulizePermHandler::copyGroupPermissions($sourceGroupId, $targetGroupId, $modidForCopy, $groupIdMapping)) {
+            print "<p>Error: could not replicate permissions for Group Number $targetGroupId, which was supposed to be copied from Group Number $sourceGroupId</p>";
         }
 
     }
 
-    // get all the forms, since we have to check for various settings in each form that might reference groups
+    // Synchronize element display/disabled/filter settings from source group to targets
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $forms = $form_handler->getAllForms(true); // true causes all elements, even ones that show for no groups, to be included in the element list properties of the form objects
+    $groupMap = array($sourceGroupId => $targetGroupIds);
 
     foreach($forms as $thisForm) {
-        // assign any per group groupscope settings, but we have to determine the corresponding groups first if possible!
-        $formulize_permHandler = new formulizePermHandler($thisForm->getVar('id_form'));
-        $currentGroups = $formulize_permHandler->getGroupScopeGroupIds($sourceGroupId);
-        if(is_array($currentGroups)) {
-            foreach($targetGroupIds as $targetGroupId) {
-                $scopeGroups = array();
-                foreach($currentGroups as $thisGroupId) {
-                    if($thisGroupId == $sourceGroupId) {
-                        $candidateGroupId = $targetGroupId;
-                    } else {
-                        // This process works for groups named Glenwood Counsellors, but not Counsellors Glenwood.
-                        // ie: Common grouping identifier comes first, then the type of users within that grouping
-                        // This could work the other way too, if we bothered to detect what was common between target and source, either the beginning or the end, and then acted accordingly, but since no sites I know of follow the backwards convention, haven't bothered. This was enough trouble! Argh.
-                        $commonFrontPart = commonFrontPart($targetGroupId, $sourceGroupId);
-                        $uncommonFrontPart = uncommonPart($targetGroupId, $sourceGroupId);
-                        $commonMiddlePart = commonMiddlePart($targetGroupId, $sourceGroupId, $thisGroupId);
-                        $uncommonEndPart = uncommonPart($thisGroupId, $sourceGroupId);
-                        $commonEndPart = commonEndPart($thisGroupId,$sourceGroupId);
-                        $candidateGroupName = $commonFrontPart.$uncommonFrontPart.$commonMiddlePart.$uncommonEndPart.$commonEndPart;
-                        $candidateGroupId = array_search($candidateGroupName, $groupList);
-                    }
-                    $scopeGroups[] = $candidateGroupId ? $candidateGroupId : $thisGroupId;
-                }
-                if(!$formulize_permHandler->setGroupScopeGroups($targetGroupId, $scopeGroups)) {
-                    print "<p>Error: could not assign groupscope groups for Group Number $targetGroupId</p>";
-                }
-            }
-        }
-
         foreach($thisForm->getVar('elements') as $elementId) {
             $element = $element_handler->get($elementId);
-            $ele_display = $element->getVar('ele_display');
-            $ele_disabled = $element->getVar('ele_disabled');
-            $ele_type = $element->getVar('ele_type');
-            if(anySelectElementType($ele_type)) {
-							$ele_value = $element->getVar('ele_value');
-							$filterGroups = explode(",", $ele_value[3]); // ele_value[3] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
-            }
-            if($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
-                $ele_value = $element->getVar('ele_value');
-                $filterGroups = explode(",", $ele_value['formlink_scope']); // ele_value['formlink_scope'] does not have leading and trailing commas, so we have to convert to an array to search it easily, otherwise matching the first and last items in the string is problematic
-            }
-            $writeElement = false;
-            foreach($targetGroupIds as $targetGroupId) {
-                // match any display or disabled settings that might apply to only certain groups
-                if(strstr($ele_display, ",$sourceGroupId,")) {
-                    $writeElement = true;
-                    $ele_display .= "$targetGroupId,";
-                }
-                if(strstr($ele_disabled, ",$sourceGroupId,")) {
-                    $writeElement = true;
-                    $ele_disabled .= "$targetGroupId,";
-                }
-                // check ele_value[3] data, which is the group filter for the sources for linked select boxes
-                if(anySelectElementType($ele_type) OR $ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
-                    if(in_array($sourceGroupId, $filterGroups)) {
-                        $writeElement = true;
-                        $filterGroups[] = $targetGroupId;
-                    }
-                }
-            }
-            if($writeElement) {
-                if($ele_type == anySelectElementType($ele_type)) {
-                    $ele_value[3] = implode(",", $filterGroups);
-                    $element->setVar('ele_value', $ele_value);
-                }
-                if($ele_type == "checkbox" OR $ele_type == "checkboxLinked") {
-                    $ele_value['formlink_scope'] = implode(",", $filterGroups);
-                    $element->setVar('ele_value', $ele_value);
-                }
-                $element->setVar('ele_display', $ele_display);
-                $element->setVar('ele_disabled', $ele_disabled);
+            if(formulizePermHandler::synchronizeGroupReferencesInElement($element, $groupMap)) {
                 if(!$element_handler->insert($element)) {
                     print "<p>Error: could not update element '".$element->getVar('ele_caption')."' with new group settings!</p>";
                 }

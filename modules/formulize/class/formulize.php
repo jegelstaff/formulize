@@ -637,7 +637,6 @@ class formulizeHandler {
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
 
-		$modid = getFormulizeModId();
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 
@@ -653,7 +652,7 @@ class formulizeHandler {
 			if (!in_array($entryGroupId, $newGroupIds)) {
 				continue;
 			}
-			formulizePermHandler::copyAllGroupSettings($templateGroupId, $entryGroupId, $templateToEntryGroupMap, $modid);
+			formulizePermHandler::copyGroupPermissions($templateGroupId, $entryGroupId, null, $templateToEntryGroupMap);
 		}
 
 		// b) Synchronize element display/disabled/filter settings across all elements
@@ -678,9 +677,8 @@ class formulizeHandler {
 
 	/**
 	 * Synchronize template group references in a single element's settings.
-	 * For each group-based setting (ele_display, ele_disabled, ele_value[3], ele_value['formlink_scope']):
-	 *   - If a template group IS present, ensure all its entry groups are also present
-	 *   - If a template group is NOT present, ensure none of its entry groups are present
+	 * Builds a map of all template groups to their entry groups (cached per request),
+	 * then delegates to formulizePermHandler::synchronizeGroupReferencesInElement().
 	 *
 	 * Call this before saving an element to keep entry groups in sync with template groups.
 	 *
@@ -727,95 +725,8 @@ class formulizeHandler {
 			return false;
 		}
 
-		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
-
-		$ele_display = $element->getVar('ele_display');
-		$ele_disabled = $element->getVar('ele_disabled');
-		$ele_type = $element->getVar('ele_type');
-		$ele_value = $element->getVar('ele_value');
-		$modified = false;
-
-		// Synchronize a comma-delimited group string like ",5,12,15,"
-		// Returns the updated string and whether it changed
-		$syncCommaDelimited = function($value) use ($templateGroupMap) {
-			if (!is_string($value) || $value === "1" || $value === "0" || $value === "") {
-				return array($value, false);
-			}
-			$changed = false;
-			foreach ($templateGroupMap as $templateGroupId => $entryGroupIds) {
-				$templatePresent = strstr($value, ",$templateGroupId,") !== false;
-				foreach ($entryGroupIds as $entryGroupId) {
-					$entryPresent = strstr($value, ",$entryGroupId,") !== false;
-					if ($templatePresent && !$entryPresent) {
-						$value .= "$entryGroupId,";
-						$changed = true;
-					} elseif (!$templatePresent && $entryPresent) {
-						$value = str_replace(",$entryGroupId,", ",", $value);
-						$changed = true;
-					}
-				}
-			}
-			return array($value, $changed);
-		};
-
-		// Synchronize a plain comma-separated list like "5,12,15"
-		$syncCommaSeparated = function($value) use ($templateGroupMap) {
-			if (!is_string($value) || $value === "") {
-				return array($value, false);
-			}
-			$groups = explode(",", $value);
-			$changed = false;
-			foreach ($templateGroupMap as $templateGroupId => $entryGroupIds) {
-				$templatePresent = in_array($templateGroupId, $groups);
-				foreach ($entryGroupIds as $entryGroupId) {
-					$entryPresent = in_array($entryGroupId, $groups);
-					if ($templatePresent && !$entryPresent) {
-						$groups[] = $entryGroupId;
-						$changed = true;
-					} elseif (!$templatePresent && $entryPresent) {
-						$groups = array_values(array_diff($groups, array($entryGroupId)));
-						$changed = true;
-					}
-				}
-			}
-			return array(implode(",", $groups), $changed);
-		};
-
-		// Sync ele_display
-		list($newDisplay, $displayChanged) = $syncCommaDelimited($ele_display);
-		if ($displayChanged) {
-			$element->setVar('ele_display', $newDisplay);
-			$modified = true;
-		}
-
-		// Sync ele_disabled
-		list($newDisabled, $disabledChanged) = $syncCommaDelimited($ele_disabled);
-		if ($disabledChanged) {
-			$element->setVar('ele_disabled', $newDisabled);
-			$modified = true;
-		}
-
-		// Sync ele_value[3] for select-type elements
-		if (anySelectElementType($ele_type) && isset($ele_value[3])) {
-			list($newFilterGroups, $filterChanged) = $syncCommaSeparated($ele_value[3]);
-			if ($filterChanged) {
-				$ele_value[3] = $newFilterGroups;
-				$element->setVar('ele_value', $ele_value);
-				$modified = true;
-			}
-		}
-
-		// Sync ele_value['formlink_scope'] for checkbox elements
-		if (($ele_type == "checkbox" || $ele_type == "checkboxLinked") && isset($ele_value['formlink_scope'])) {
-			list($newScope, $scopeChanged) = $syncCommaSeparated($ele_value['formlink_scope']);
-			if ($scopeChanged) {
-				$ele_value['formlink_scope'] = $newScope;
-				$element->setVar('ele_value', $ele_value);
-				$modified = true;
-			}
-		}
-
-		return $modified;
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+		return formulizePermHandler::synchronizeGroupReferencesInElement($element, $templateGroupMap);
 	}
 
 	/**
