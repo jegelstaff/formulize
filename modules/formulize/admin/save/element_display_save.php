@@ -116,10 +116,6 @@ if (is_array($multipageFormScreens)) {
 }
 $screen_handler->addElementToScreenPagesFromUI($element, $multipageFormScreens, $legacyFormScreens);
 
-// Synchronize template group references: ensure entry groups mirror template groups
-include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
-formulizeHandler::synchronizeTemplateGroupReferencesInElement($element);
-
 if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the display settings for element: ".$xoopsDB->error();
 }
