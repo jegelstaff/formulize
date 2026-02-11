@@ -292,54 +292,6 @@ class formulizePermHandler {
 	}
 
 	/**
-	 * Get all entry-specific group IDs that correspond to a given template group.
-	 * These are the groups created for individual entries that share the same
-	 * category name suffix as the template group.
-	 *
-	 * @param int $templateGroupId The template group ID
-	 * @return array Array of entry group IDs (may be empty)
-	 */
-	static function getAllEntryGroupsForTemplateGroup($templateGroupId) {
-		global $xoopsDB;
-		$templateGroupId = intval($templateGroupId);
-
-		// Get template group info
-		$sql = "SELECT is_group_template, form_id FROM " . $xoopsDB->prefix('groups') .
-			   " WHERE groupid = " . $templateGroupId;
-		$result = $xoopsDB->query($sql);
-		$row = $xoopsDB->fetchArray($result);
-		if (!$row || !$row['is_group_template']) {
-			return array();
-		}
-		$eagFormId = intval($row['form_id']);
-
-		// Get the category name for this template group
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$eagFormObject = $form_handler->get($eagFormId);
-		if (!$eagFormObject) {
-			return array();
-		}
-		$groupCategories = $eagFormObject->getVar('group_categories');
-		if (!is_array($groupCategories) || !isset($groupCategories[$templateGroupId])) {
-			return array();
-		}
-		$categoryName = $groupCategories[$templateGroupId];
-
-		// Find all entry-specific groups with the same category suffix
-		$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
-			   " WHERE form_id = " . $eagFormId .
-			   " AND is_group_template = 0" .
-			   " AND entry_id > 0" .
-			   " AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
-		$result = $xoopsDB->query($sql);
-		$groups = array();
-		while ($groupRow = $xoopsDB->fetchArray($result)) {
-			$groups[] = intval($groupRow['groupid']);
-		}
-		return $groups;
-	}
-
-	/**
 	 * Copy group permissions, per-group filters, and groupscope from one group to another.
 	 * If $modid is specified, only permissions for that module are copied; otherwise all.
 	 * Groupscope targets are resolved using an optional mapping, so that relative references
