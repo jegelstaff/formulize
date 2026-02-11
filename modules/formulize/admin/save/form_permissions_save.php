@@ -202,7 +202,7 @@ if (count($templateGroupIds) > 0) {
       }
 
       // Copy all settings from template group to this entry group, using the entry's mapping
-      formulizePermHandler::copyAllGroupSettings($tgid, $entryGroupId, $processedEntries[$entryId], $formulize_module_id);
+      formulizePermHandler::copyGroupPermissions($tgid, $entryGroupId, null, $processedEntries[$entryId]);
     }
   }
 }
