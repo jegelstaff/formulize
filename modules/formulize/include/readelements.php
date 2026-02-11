@@ -63,7 +63,11 @@ if(!defined("XOOPS_ROOT_PATH")) {
 include_once XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-global $xoopsConfig;
+global $xoopsConfig, $xoopsUser;
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+$uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
+
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
@@ -88,11 +92,6 @@ if(!isset($mid)) {
 }
 
 if(!$myts) { $myts = MyTextSanitizer::getInstance(); }
-
-global $xoopsUser;
-$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
-$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-$uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
 
 if(!isset($element_handler) OR !$element_handler) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -216,8 +215,7 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 
 	$formulize_formObject = $form_handler->get($elementFid);
-    // TODO: should the one-entry-per-group permission be checked in the permissions handler instead?
-	$oneEntryPerGroupForm = ($formulize_formObject->getVar('single') == "group");
+	$oneEntryPerGroupForm = (resolveEffectiveSingle($formulize_formObject->getVar('single'), $groups) == "group");
 
     // for every entry in the form...
     foreach($entryData as $currentEntry => $values) {

@@ -143,6 +143,21 @@ if (isset($processedValues['forms']['entries_are_groups'])) {
 	}
 }
 
+// Parse per-group singleentry array from POST
+// save.php auto-serializes arrays, but we need a proper PHP array for setVar() with XOBJ_DTYPE_ARRAY
+$singleentryPerGroup = isset($_POST['forms-single']) && is_array($_POST['forms-single']) ? $_POST['forms-single'] : array(2 => 'off');
+$sanitizedSingle = array();
+foreach ($singleentryPerGroup as $gid => $value) {
+	$gid = intval($gid);
+	if (in_array($value, array('user', 'group', 'off'))) {
+		$sanitizedSingle[$gid] = $value;
+	}
+}
+if (empty($sanitizedSingle)) {
+	$sanitizedSingle = array(2 => 'off');
+}
+$processedValues['forms']['single'] = $sanitizedSingle;
+
 $formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds, $groupCategories);
 $fid = $formObject->getVar('fid');
 

@@ -83,22 +83,19 @@ class formulizeForm extends FormulizeObject {
 				if($value['ele_encrypt']) {
 					$encryptedElements[$value['ele_id']] = $value['ele_handle'];
 				}
+			}
 
-				// propertly format the single value
-				switch($formq[0]['singleentry']) {
-					case "group":
-						$single = "group";
-						break;
-					case "on":
-						$single = "user";
-						break;
-					case "off":
-					case "":
-						$single = "off";
-						break;
-					default:
-						$single = "";
-						break;
+			// format the single value as a per-group array
+			$singleRaw = $formq[0]['singleentry'];
+			$single = (strpos($singleRaw, 'a:') === 0) ? unserialize($singleRaw) : array(2 => $singleRaw);
+
+			foreach ($single as $gid => $val) {
+				if ($val == "on" OR $val == "user") {
+					$single[$gid] = "user";
+				} elseif ($val == "group") {
+					$single[$gid] = "group";
+				} else {
+					$single[$gid] = "off";
 				}
 			}
 
@@ -132,7 +129,7 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
 		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], false, 255);
-		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
+		$this->initVar("single", XOBJ_DTYPE_ARRAY, serialize($single));
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
 		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
 		$this->initVar("systemElements", XOBJ_DTYPE_ARRAY, serialize($systemElements));
@@ -889,21 +886,6 @@ class formulizeFormsHandler {
 					${$k} = $v;
 				}
 
-				$singleToWrite = "";
-				switch($single) {
-					case('user'):
-						$singleToWrite = "on";
-						break;
-					case('off'):
-					case(''):
-						$singleToWrite = "";
-						break;
-					default:
-					case('group'):
-						$singleToWrite = "group";
-						break;
-				}
-
 				if($formObject->isNew() || empty($id_form)) {
 
 					// some basic safetynets for new forms
@@ -925,7 +907,7 @@ class formulizeFormsHandler {
 							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
-							$this->db->quoteString($singleToWrite).", ".
+							$this->db->quoteString($single).", ".
 							$this->db->quoteString($tableform).", ".
 							$this->db->quoteString($menutext).", ".
 							$this->db->quoteString($form_handle).", ".
@@ -945,7 +927,7 @@ class formulizeFormsHandler {
 							" `form_title` = ".$this->db->quoteString($form_title).
 							", `singular` = ".$this->db->quoteString($singular).
 							", `plural` = ".$this->db->quoteString($plural).
-							", `singleentry` = ".$this->db->quoteString($singleToWrite).
+							", `singleentry` = ".$this->db->quoteString($single).
 							", `headerlist` = ".$this->db->quoteString($headerlist).
 							", `defaultform` = ".intval($defaultform).
 							", `defaultlist` = ".intval($defaultlist).

@@ -355,7 +355,11 @@ class formulizeHandler {
 			$gperm_handler->addRight('view_form', $fid, XOOPS_GROUP_ADMIN, getFormulizeModId());
 			// add menu links for the new form in the selected applications, for the groups that have admin rights (usually just webmasters, so basic interface works when you are buiding systems)
 			if(!empty($applicationIds) AND !empty($groupIdsThatCanEditForm)) {
-				$menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
+				$singleArray = $formObject->getVar('single');
+				$hasMultiEntry = is_array($singleArray)
+					? (bool)array_filter($singleArray, function($v){ return $v == 'off'; })
+					: ($singleArray == 'off');
+				$menuLinkText = $hasMultiEntry ? $formObject->getPlural() : $formObject->getSingular();
 				$menuitems = "null::" . formulize_db_escape($menuLinkText) . "::fid=$fid::::".implode(',',$groupIdsThatCanEditForm)."::null";
 				foreach($applicationIds as $appid) {
 					$application_handler->insertMenuLink($appid, $menuitems);

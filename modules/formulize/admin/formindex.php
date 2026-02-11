@@ -101,9 +101,9 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_id';
-    $checkThisField = 'entries_are_users_user_is_owner';
-    $checkThisProperty = '';
-    $checkPropertyForValue = '';
+    $checkThisField = 'singleentry';
+    $checkThisProperty = 'Type';
+    $checkPropertyForValue = 'text';
 
     /*
     * ====================================== */
@@ -531,6 +531,7 @@ function patch40() {
 				$sql['add_form_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `form_id` int(5) unsigned NULL default NULL";
 				$sql['add_entry_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `entry_id` int(10) unsigned NULL default NULL";
 				$sql['add_form_entry_index'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD INDEX `form_entry` (`form_id`, `entry_id`)";
+				$sql['singleentry_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `singleentry` `singleentry` text NULL";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -689,6 +690,8 @@ function patch40() {
 									print "Entry tracking fields already added to groups table. result: OK<br>";
 								} elseif($key === "add_form_entry_index") {
 									print "Entry index already added to groups table. result: OK<br>";
+								} elseif($key === "singleentry_to_text") {
+									print "singleentry column already converted to text. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
@@ -728,6 +731,31 @@ function patch40() {
 							}
 						}
         }
+
+				// migrate singleentry values from scalar to per-group array (keyed by Registered Users group 2)
+				$migrateSingleSql = "SELECT id_form, singleentry FROM ".$xoopsDB->prefix("formulize_id");
+				if($migrateRes = $xoopsDB->query($migrateSingleSql)) {
+					while($migrateRow = $xoopsDB->fetchArray($migrateRes)) {
+						$existing = $migrateRow['singleentry'];
+						// skip if already a serialized array
+						if(substr($existing, 0, 2) === 'a:') continue;
+						switch($existing) {
+							case 'on':
+							case 'user':
+								$value = 'user';
+								break;
+							case 'group':
+								$value = 'group';
+								break;
+							default:
+								$value = 'off';
+								break;
+						}
+						$serialized = serialize(array(2 => $value));
+						$xoopsDB->queryF("UPDATE ".$xoopsDB->prefix("formulize_id")." SET singleentry=".$xoopsDB->quoteString($serialized)." WHERE id_form=".intval($migrateRow['id_form']));
+					}
+					print "Migrated singleentry values to per-group format. result: OK<br>";
+				}
 
 				// linked checkbox data was not being stored with same , , before/after as linked selectedboxes have. As of F8, make sure there's none of that left in DB.
 				$sql = 'SELECT f.form_handle, e.ele_handle FROM '.$xoopsDB->prefix('formulize').' AS e

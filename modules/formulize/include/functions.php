@@ -448,9 +448,9 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid);
                 // if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
                 if (!$view_groupscope) {
-                    global $xoopsDB;
-                    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$form_id");
-                    if ($smq[0]['singleentry'] == "group") {
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    $checkFormObject = $form_handler->get($form_id);
+                    if ($checkFormObject AND resolveEffectiveSingle($checkFormObject->getVar('single'), $groups) == "group") {
                         $view_groupscope = true;
                     }
                 }
@@ -2024,6 +2024,41 @@ function getElementValue($entry, $element_id, $fid) {
 }
 
 
+// Resolve a per-group singleentry array to a scalar value for a given set of groups.
+// Registered Users (group 2) is the base default. Any other group's setting overrides it.
+// Conflicts among non-base groups: least restrictive wins.
+// Restrictiveness: "group" (most) > "user" > "off" (least)
+// $singleArray: per-group array (groupId => value) or legacy scalar string
+// $userGroups: the user's group IDs
+// returns: "user", "group", or "off"
+function resolveEffectiveSingle($singleArray, $userGroups) {
+	if (!is_array($singleArray)) {
+		// Legacy scalar — return as-is after normalization
+		if ($singleArray == "on") return "user";
+		if ($singleArray == "group") return "group";
+		if ($singleArray == "user") return "user";
+		return "off";
+	}
+	// Base value from Registered Users (group 2)
+	$base = isset($singleArray[2]) ? $singleArray[2] : "off";
+	// Collect values from non-base groups the user belongs to
+	// Restrictiveness: "group"=3, "user"=2, "off"=1 — least restrictive wins among overrides
+	$priority = array("group" => 3, "user" => 2, "off" => 1);
+	$overrideValue = null;
+	$overridePriority = 999; // start high, look for lowest (least restrictive)
+	foreach ($singleArray as $gid => $value) {
+		if ($gid == 2) continue; // skip base
+		if (in_array(intval($gid), $userGroups) AND isset($priority[$value])) {
+			$p = $priority[$value];
+			if ($overrideValue === null OR $p < $overridePriority) {
+				$overrideValue = $value;
+				$overridePriority = $p;
+			}
+		}
+	}
+	return ($overrideValue !== null) ? $overrideValue : $base;
+}
+
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
 function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
 		if(!$member_handler) {
@@ -2035,21 +2070,22 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
 		if(!$mid) {
 			$mid = getFormulizeModId();
 		}
-    global $xoopsDB, $xoopsUser;
-    // determine single/multi status
-    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
-    if ($smq[0]['singleentry'] == "on" OR $smq[0]['singleentry'] == "group") {
-        // find the entry that applies
-        $single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
+    global $xoopsUser;
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
+
+    if ($effectiveSingle == "user" OR $effectiveSingle == "group") {
+        $single['flag'] = $effectiveSingle == "user" ? 1 : "group";
         // if we're looking for a regular single, find first entry for this user
-        if ($smq[0]['singleentry'] == "on") {
+        if ($effectiveSingle == "user") {
             if (!$xoopsUser) {
                 $single['entry'] = ""; // don't set an entry for anons. they should not share the same entry in a single entry form, since user zero is actually lots of different people. cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
             } else {
                 $data_handler = new formulizeDataHandler($fid);
                 $single['entry'] = $data_handler->getFirstEntryForUsers($uid);
             }
-        } elseif ($smq[0]['singleentry'] == "group") {
+        } elseif ($effectiveSingle == "group") {
             // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
             $formulize_permHandler = new formulizePermHandler($fid);
             $intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
@@ -2059,8 +2095,6 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
             }
             $data_handler = new formulizeDataHandler($fid);
             $single['entry'] = $data_handler->getFirstEntryForGroups($intersect_groups);
-        } else {
-            exit("Error: invalid value found for singleentry for form $fid");
         }
     } else {
         $single['flag'] = 0;
@@ -2709,11 +2743,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 
     $dataHandlers = array();
     $entryMap = array();
+		global $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
         foreach ($entries_to_clone as $fid=>$entries) {
             // never clone an entry in a form that is a single-entry form
             $thisform = new formulizeForm($fid);
-            if ($thisform->getVar('single') != "off") {
+
+            if (resolveEffectiveSingle($thisform->getVar('single'), $groups) != "off") {
                 continue;
             }
             foreach ($entries as $thisentry) {
@@ -5248,6 +5285,23 @@ function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
 		$currentlySelectedGroupIds = array();
 	}
 	$formElementObject = $groupMembershipHandler->render($currentlySelectedGroupIds, '', 'entries_are_users_default_groups', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
+}
+
+// Render a group autocomplete for adding groups to the per-group singleentry setting
+function formulize_renderSingleentryGroupsUI() {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = true; // template groups are not relevant for singleentry settings
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0;
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	$formElementObject = $groupMembershipHandler->render(array(), '', 'singleentry_add_group', false, $groupMembershipElement, false, null, null);
 	if(is_object($formElementObject)) {
 		return $formElementObject->render();
 	}
@@ -8768,7 +8822,7 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 		global $xoopsUser;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 		$gperm_handler = xoops_gethandler('groupperm');
-		$singleEntry = $formObject->getVar('single');
+		$singleEntry = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 		if (($singleEntry != 'group' AND $singleEntry != 'user' AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
 			OR $gperm_handler->checkRight("view_globalscope", $formObject->getVar('fid'), $groups, getFormulizeModId()) // users with global scope see the list
 			OR ($singleEntry != 'group' AND $gperm_handler->checkRight("view_groupscope", $formObject->getVar('fid'), $groups, getFormulizeModId())) // users with groupscope see the list, unless it's a one-entry-per-group form
