@@ -110,6 +110,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
     // removing the entry value is the critical thing, so a new entry is displayed
     $overrideMulti = 0;
     $removeEntryValue = false;
+		global $xoopsUser;
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
     if(count((array) $pages) == 1 AND $screen) {
         $reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
@@ -118,14 +120,16 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         // if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($screen->getVar('fid'));
-        if($formObject->getVar('single')=="off" AND $reloadblank) {
+        global $xoopsUser;
+        $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
+        if($effectiveSingle=="off" AND $reloadblank) {
             $removeEntryValue = true;
             $overrideMulti = 0;
-        } elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
+        } elseif($effectiveSingle=="off" AND !$reloadblank) {
             $overrideMulti = 1;
-        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
+        } elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND $reloadblank) {
             $overrideMulti = 1;
-        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
+        } elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND !$reloadblank) {
             $overrideMulti = 0;
         } else {
             $overrideMulti = 0;
@@ -145,11 +149,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 	$thankstext = $thankstext ? $thankstext : _formulize_DMULTI_THANKS;
 	$introtext = $introtext ? $introtext : "";
-
-	global $xoopsUser;
-
 	$mid = getFormulizeModId();
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');

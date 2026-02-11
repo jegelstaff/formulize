@@ -114,7 +114,8 @@ if (!$aid) {
 if ($form_id != "new") {
     $formObject = $form_handler->get($form_id);
     $formName = $formObject->getVar('title');
-    $singleentry = $formObject->getVar('single');
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+    $singleentry = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 }
 
 $elements = array();
