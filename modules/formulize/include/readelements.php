@@ -533,6 +533,117 @@ if($frid) {
 	}
 }
 
+// Re-evaluate conditional default group memberships for entries_are_users forms.
+// This covers two scenarios:
+// 1. The entries_are_users form itself was saved (e.g., without user account
+//    elements in the submission), and changing a field value may affect per-group
+//    conditions or template group resolution via element_links.
+// 2. A connected form was saved, and that form contains elements referenced in
+//    the EAU form's element_links for template group resolution. On-before-save,
+//    on-after-save, or derived value updates may all affect the linked values,
+//    so we re-evaluate whenever any entry is saved in a form that contains
+//    element_link elements, without checking which specific elements were modified.
+if(!empty($formulize_allWrittenEntryIds)) {
+	// Build a unified list of EAU form entries needing group membership re-evaluation
+	$eauEntriesToReevaluate = array(); // eauFormId => array(entryId => true)
+
+	global $xoopsDB;
+	$eauFormsResult = $xoopsDB->query("SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_users = 1");
+	if($eauFormsResult) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
+		$frameworks_handler = new formulizeFrameworksHandler($xoopsDB);
+
+		while($eauRow = $xoopsDB->fetchArray($eauFormsResult)) {
+			$eauFormId = intval($eauRow['id_form']);
+			$eauFormObject = $form_handler->get($eauFormId);
+			if(!$eauFormObject) {
+				continue;
+			}
+
+			// If the EAU form itself was written to, and processUserAccountSubmission
+			// didn't run for those entries, add them for re-evaluation
+			if(isset($formulize_allWrittenEntryIds[$eauFormId])) {
+				foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
+					if(!isset($userIdsForUserAccountElements[$eauFormId][$writtenEntryId])) {
+						$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
+					}
+				}
+			}
+
+			// If the EAU form has element_links for template group resolution,
+			// check if any form containing those linked elements was written to
+			$elementLinks = $eauFormObject->getVar('entries_are_users_default_groups_element_links');
+			if(!is_array($elementLinks) || empty($elementLinks)) {
+				continue;
+			}
+			// Find which forms contain the linked elements
+			$linkedElementForms = array(); // form ID => true
+			foreach($elementLinks as $gid => $eleIds) {
+				if(!is_array($eleIds)) {
+					continue;
+				}
+				foreach($eleIds as $eleId) {
+					$linkedElement = $element_handler->get(intval($eleId));
+					if($linkedElement) {
+						$linkedElementForms[intval($linkedElement->getVar('id_form'))] = true;
+					}
+				}
+			}
+			// For each form that has linked elements and was written to,
+			// find connected EAU entries
+			foreach(array_keys($linkedElementForms) as $linkedFid) {
+				if(!isset($formulize_allWrittenEntryIds[$linkedFid])) {
+					continue;
+				}
+				if($linkedFid == $eauFormId) {
+					// Element is in the EAU form itself — add all written entries
+					foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
+						$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
+					}
+					continue;
+				}
+				// Element is in a connected form — find the framework connecting them
+				$frameworks = $frameworks_handler->getFrameworksByForm($linkedFid);
+				$targetFrid = null;
+				foreach($frameworks as $framework) {
+					$frameworkLinks = $framework->getVar('links');
+					foreach($frameworkLinks as $link) {
+						if(($link->getVar('form1') == $linkedFid && $link->getVar('form2') == $eauFormId) ||
+						   ($link->getVar('form2') == $linkedFid && $link->getVar('form1') == $eauFormId)) {
+							$targetFrid = $framework->getVar('frid');
+							break 2;
+						}
+					}
+				}
+				if(!$targetFrid) {
+					continue; // no framework connecting these forms
+				}
+				// Find connected EAU entries for each written entry in the linked form
+				foreach($formulize_allWrittenEntryIds[$linkedFid] as $writtenEntryId) {
+					$linkedResult = checkForLinks($targetFrid, array($linkedFid), $linkedFid, array($linkedFid => array($writtenEntryId)));
+					if(isset($linkedResult['entries'][$eauFormId])) {
+						foreach($linkedResult['entries'][$eauFormId] as $eauEntryId) {
+							$eauEntriesToReevaluate[$eauFormId][$eauEntryId] = true;
+						}
+					}
+					if(isset($linkedResult['sub_entries'][$eauFormId])) {
+						foreach($linkedResult['sub_entries'][$eauFormId] as $eauEntryId) {
+							$eauEntriesToReevaluate[$eauFormId][$eauEntryId] = true;
+						}
+					}
+				}
+			}
+		}
+
+		// Process all collected EAU entries
+		foreach($eauEntriesToReevaluate as $eauFormId => $entryIds) {
+			foreach(array_keys($entryIds) as $eauEntryId) {
+				formulizeElementsHandler::reevaluateDefaultGroupMemberships($eauFormId, $eauEntryId);
+			}
+		}
+	}
+}
+
 // send notifications
 foreach($notEntriesList as $notEvent=>$notDetails) {
 	foreach($notDetails as $notFid=>$notEntries) {
