@@ -465,6 +465,183 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		return false; // could not resolve
 	}
 
+	/**
+	 * Re-evaluate conditional default group memberships for an entries_are_users entry.
+	 * This is called when a save occurs that could affect per-group conditions or template
+	 * group resolution, but processUserAccountSubmission did not run (e.g., the user account
+	 * elements were not in the form submission, or the save was in a connected form).
+	 *
+	 * Only operates when:
+	 * - The form has entries_are_users enabled
+	 * - A user is already associated with the entry
+	 * - Base conditions (key 0) are met (or no base conditions exist)
+	 * - The form has default groups with per-group conditions
+	 *
+	 * For conditional default groups:
+	 * - If conditions pass: adds user to the resolved group
+	 * - If conditions fail: removes user from the resolved group (and any template family groups)
+	 *
+	 * @param int $formId The entries_are_users form ID
+	 * @param int $entryId The entry ID to re-evaluate
+	 * @return bool True if re-evaluation was performed, false if skipped
+	 */
+	static public function reevaluateDefaultGroupMemberships($formId, $entryId) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($formId);
+		if(!$formObject || !$formObject->getVar('entries_are_users')) {
+			return false;
+		}
+
+		$defaultGroups = $formObject->getVar('entries_are_users_default_groups');
+		if(!is_array($defaultGroups) || empty($defaultGroups)) {
+			return false;
+		}
+
+		// Check if a user is already associated with this entry
+		$data_handler = new formulizeDataHandler($formId);
+		$userId = intval($data_handler->getElementValueInEntry($entryId, 'formulize_user_account_uid_'.$formId));
+		if(!$userId) {
+			return false; // no user associated, nothing to re-evaluate
+		}
+
+		$allConditions = $formObject->getVar('entries_are_users_conditions');
+		if(!is_array($allConditions)) {
+			$allConditions = array();
+		}
+
+		$elementLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
+		if(!is_array($elementLinks)) {
+			$elementLinks = array();
+		}
+
+		// Check if there's anything to re-evaluate: either conditional groups, or
+		// template groups with element_links (whose resolved group may have changed)
+		$hasWorkToDo = false;
+		foreach($defaultGroups as $gid) {
+			$gid = intval($gid);
+			if(isset($allConditions[$gid]) && !empty($allConditions[$gid])) {
+				$hasWorkToDo = true;
+				break;
+			}
+			if(isset($elementLinks[$gid]) && is_array($elementLinks[$gid]) && !empty($elementLinks[$gid])) {
+				$hasWorkToDo = true;
+				break;
+			}
+		}
+		if(!$hasWorkToDo) {
+			return false;
+		}
+
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/elementdisplay.php';
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
+
+		// Check base conditions (key 0) — if they exist and aren't met, skip
+		if(isset($allConditions[0]) && !empty($allConditions[0])) {
+			$baseConditionsMet = checkElementConditions($allConditions[0], $formId, $entryId, null, -1);
+			if(!$baseConditionsMet) {
+				return false; // base conditions not met
+			}
+		}
+
+		$member_handler = xoops_gethandler('member');
+		$currentGroupIds = $member_handler->getGroupsByUser($userId);
+
+		foreach($defaultGroups as $defaultGroupId) {
+			$defaultGroupId = intval($defaultGroupId);
+			$hasConditions = isset($allConditions[$defaultGroupId]) && !empty($allConditions[$defaultGroupId]);
+			$hasLinks = isset($elementLinks[$defaultGroupId]) && is_array($elementLinks[$defaultGroupId]) && !empty($elementLinks[$defaultGroupId]);
+
+			// Skip groups that have neither conditions nor element_links to re-evaluate
+			if(!$hasConditions && !$hasLinks) {
+				continue;
+			}
+
+			// Check per-group conditions if any exist; default to true (unconditional)
+			$conditionsMet = true;
+			if($hasConditions) {
+				$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
+			}
+
+			$resolvedGroupId = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler);
+
+			if($conditionsMet && $resolvedGroupId) {
+				// Conditions met (or unconditional): add to the resolved group,
+				// and remove from any other groups in the same template family
+				// (handles the case where the resolved group changed)
+				$templateFamilyGroups = self::getAllGroupsForTemplateCategory($defaultGroupId);
+				foreach($templateFamilyGroups as $familyGroupId) {
+					if($familyGroupId != $resolvedGroupId && in_array($familyGroupId, $currentGroupIds)) {
+						$member_handler->removeUsersFromGroup($familyGroupId, array($userId));
+						$currentGroupIds = array_values(array_diff($currentGroupIds, array($familyGroupId)));
+					}
+				}
+				if(!in_array($resolvedGroupId, $currentGroupIds)) {
+					$member_handler->addUserToGroup($resolvedGroupId, $userId);
+					$currentGroupIds[] = $resolvedGroupId;
+				}
+			} elseif(!$conditionsMet) {
+				// Conditions not met: remove from the resolved group and any template family groups
+				$groupsToRemove = array();
+				if($resolvedGroupId) {
+					$groupsToRemove[] = $resolvedGroupId;
+				}
+				$templateFamilyGroups = self::getAllGroupsForTemplateCategory($defaultGroupId);
+				$groupsToRemove = array_unique(array_merge($groupsToRemove, $templateFamilyGroups));
+				foreach($groupsToRemove as $removeGroupId) {
+					if(in_array($removeGroupId, $currentGroupIds)) {
+						$member_handler->removeUsersFromGroup($removeGroupId, array($userId));
+						$currentGroupIds = array_values(array_diff($currentGroupIds, array($removeGroupId)));
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get all entry-specific groups that belong to the same template family as the given template group.
+	 * These are groups created for individual entries in an entries_are_groups form, sharing the same
+	 * category name suffix. Returns empty array if the group is not a template group.
+	 *
+	 * @param int $templateGroupId The template group ID
+	 * @return array Array of group IDs in the same template family
+	 */
+	static private function getAllGroupsForTemplateCategory($templateGroupId) {
+		global $xoopsDB;
+		$sql = "SELECT is_group_template, form_id FROM " . $xoopsDB->prefix('groups') . " WHERE groupid = " . intval($templateGroupId);
+		$result = $xoopsDB->query($sql);
+		$row = $xoopsDB->fetchArray($result);
+		if(!$row || !$row['is_group_template']) {
+			return array(); // not a template group, no family to find
+		}
+		$eagFormId = intval($row['form_id']);
+
+		// Get the category name for this template group
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$eagFormObject = $form_handler->get($eagFormId);
+		if(!$eagFormObject) {
+			return array();
+		}
+		$groupCategories = $eagFormObject->getVar('group_categories');
+		if(!is_array($groupCategories) || !isset($groupCategories[$templateGroupId])) {
+			return array();
+		}
+		$categoryName = $groupCategories[$templateGroupId];
+
+		// Find all entry-specific groups with the same category suffix
+		$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+			   " WHERE form_id = " . intval($eagFormId) .
+			   " AND is_group_template = 0" .
+			   " AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+		$result = $xoopsDB->query($sql);
+		$groups = array();
+		while($groupRow = $xoopsDB->fetchArray($result)) {
+			$groups[] = intval($groupRow['groupid']);
+		}
+		return $groups;
+	}
+
 }
 
 // Standalone function for generating the shared email/phone validation code.
