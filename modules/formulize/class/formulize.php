@@ -567,7 +567,9 @@ class formulizeHandler {
 			$existingGroups[$row['groupid']] = $row['name'];
 		}
 
-		// For each category, create or update the group
+		// For each category, create or update the group, and build a map for permission copying
+		$templateToEntryGroupMap = array();
+		$newGroupIds = array();
 		foreach ($groupCategories as $templateGroupId => $categoryName) {
 			$expectedGroupName = $piValue . " - " . $categoryName;
 			$expectedDescription = $categoryName . ' group for ' . $piValue;
@@ -588,6 +590,7 @@ class formulizeHandler {
 				$groupObject->setVar('name', $expectedGroupName);
 				$groupObject->setVar('description', $expectedDescription);
 				$group_handler->insert($groupObject);
+				$templateToEntryGroupMap[$templateGroupId] = $existingGroupId;
 
 			// Create new group
 			} elseif(!$existingGroupId) {
@@ -599,10 +602,220 @@ class formulizeHandler {
 				$newGroup->setVar('form_id', $fid);
 				$newGroup->setVar('entry_id', $entryId);
 				$group_handler->insert($newGroup);
+				$newGroupId = $newGroup->getVar('groupid');
+				$templateToEntryGroupMap[$templateGroupId] = $newGroupId;
+				$newGroupIds[] = $newGroupId;
+
+			} else {
+				// Existing group, no name change needed
+				$templateToEntryGroupMap[$templateGroupId] = $existingGroupId;
 			}
 		}
 
+		// Copy all template group settings to newly created entry groups
+		if (count($newGroupIds) > 0) {
+			self::copyAllTemplateSettingsToEntryGroups($fid, $templateToEntryGroupMap, $newGroupIds);
+		}
+
 		return true;
+	}
+
+	/**
+	 * Copy all template group settings to the corresponding entry groups for a specific entry.
+	 * This includes: form permissions, per-group filters, groupscope settings (with relative
+	 * mapping between template and entry groups), and element display/disabled/filter settings.
+	 *
+	 * @param int $fid The entries_are_groups form ID
+	 * @param array $templateToEntryGroupMap Maps templateGroupId => entryGroupId for this entry
+	 * @param array $newGroupIds Array of entry group IDs that were newly created (only these get settings copied)
+	 */
+	public static function copyAllTemplateSettingsToEntryGroups($fid, $templateToEntryGroupMap, $newGroupIds = array()) {
+		if (empty($templateToEntryGroupMap)) {
+			return;
+		}
+
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
+
+		$modid = getFormulizeModId();
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		// If no specific new group IDs provided, treat all as new
+		if (empty($newGroupIds)) {
+			$newGroupIds = array_values($templateToEntryGroupMap);
+		}
+
+		// a) Copy permissions, filters, and groupscope for each new entry group
+		// The templateToEntryGroupMap serves as the groupscope mapping, translating
+		// template group references to corresponding entry group references
+		foreach ($templateToEntryGroupMap as $templateGroupId => $entryGroupId) {
+			if (!in_array($entryGroupId, $newGroupIds)) {
+				continue;
+			}
+			formulizePermHandler::copyAllGroupSettings($templateGroupId, $entryGroupId, $templateToEntryGroupMap, $modid);
+		}
+
+		// b) Synchronize element display/disabled/filter settings across all elements
+		// Uses the same logic as individual element saves - ensures entry groups mirror template groups
+		$allForms = $form_handler->getAllForms(true);
+		foreach ($allForms as $thisForm) {
+			$elementIds = $thisForm->getVar('elements');
+			if (!is_array($elementIds)) {
+				continue;
+			}
+			foreach ($elementIds as $elementId) {
+				$element = $element_handler->get($elementId);
+				if (!is_object($element)) {
+					continue;
+				}
+				if (self::synchronizeTemplateGroupReferencesInElement($element)) {
+					$element_handler->insert($element);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Synchronize template group references in a single element's settings.
+	 * For each group-based setting (ele_display, ele_disabled, ele_value[3], ele_value['formlink_scope']):
+	 *   - If a template group IS present, ensure all its entry groups are also present
+	 *   - If a template group is NOT present, ensure none of its entry groups are present
+	 *
+	 * Call this before saving an element to keep entry groups in sync with template groups.
+	 *
+	 * @param object $element The element object (modified in place via setVar)
+	 * @return bool True if the element was modified
+	 */
+	public static function synchronizeTemplateGroupReferencesInElement($element) {
+		static $templateGroupMap = null; // templateGroupId => [entryGroupId, ...]
+
+		// Build the map once per request
+		if ($templateGroupMap === null) {
+			$templateGroupMap = array();
+
+			global $xoopsDB;
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+
+			// Find all entries_are_groups forms
+			$sql = "SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_groups = 1";
+			$result = $xoopsDB->query($sql);
+			while ($row = $xoopsDB->fetchArray($result)) {
+				$eagFormId = intval($row['id_form']);
+				$eagForm = $form_handler->get($eagFormId);
+				if (!$eagForm) continue;
+				$groupCategories = $eagForm->getVar('group_categories');
+				if (!is_array($groupCategories)) continue;
+
+				foreach ($groupCategories as $templateGroupId => $categoryName) {
+					// Get all entry groups for this template group
+					$egSql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+						" WHERE form_id = " . $eagFormId .
+						" AND is_group_template = 0 AND entry_id > 0" .
+						" AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+					$egResult = $xoopsDB->query($egSql);
+					$entryGroups = array();
+					while ($egRow = $xoopsDB->fetchArray($egResult)) {
+						$entryGroups[] = intval($egRow['groupid']);
+					}
+					$templateGroupMap[intval($templateGroupId)] = $entryGroups;
+				}
+			}
+		}
+
+		if (empty($templateGroupMap)) {
+			return false;
+		}
+
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
+
+		$ele_display = $element->getVar('ele_display');
+		$ele_disabled = $element->getVar('ele_disabled');
+		$ele_type = $element->getVar('ele_type');
+		$ele_value = $element->getVar('ele_value');
+		$modified = false;
+
+		// Synchronize a comma-delimited group string like ",5,12,15,"
+		// Returns the updated string and whether it changed
+		$syncCommaDelimited = function($value) use ($templateGroupMap) {
+			if (!is_string($value) || $value === "1" || $value === "0" || $value === "") {
+				return array($value, false);
+			}
+			$changed = false;
+			foreach ($templateGroupMap as $templateGroupId => $entryGroupIds) {
+				$templatePresent = strstr($value, ",$templateGroupId,") !== false;
+				foreach ($entryGroupIds as $entryGroupId) {
+					$entryPresent = strstr($value, ",$entryGroupId,") !== false;
+					if ($templatePresent && !$entryPresent) {
+						$value .= "$entryGroupId,";
+						$changed = true;
+					} elseif (!$templatePresent && $entryPresent) {
+						$value = str_replace(",$entryGroupId,", ",", $value);
+						$changed = true;
+					}
+				}
+			}
+			return array($value, $changed);
+		};
+
+		// Synchronize a plain comma-separated list like "5,12,15"
+		$syncCommaSeparated = function($value) use ($templateGroupMap) {
+			if (!is_string($value) || $value === "") {
+				return array($value, false);
+			}
+			$groups = explode(",", $value);
+			$changed = false;
+			foreach ($templateGroupMap as $templateGroupId => $entryGroupIds) {
+				$templatePresent = in_array($templateGroupId, $groups);
+				foreach ($entryGroupIds as $entryGroupId) {
+					$entryPresent = in_array($entryGroupId, $groups);
+					if ($templatePresent && !$entryPresent) {
+						$groups[] = $entryGroupId;
+						$changed = true;
+					} elseif (!$templatePresent && $entryPresent) {
+						$groups = array_values(array_diff($groups, array($entryGroupId)));
+						$changed = true;
+					}
+				}
+			}
+			return array(implode(",", $groups), $changed);
+		};
+
+		// Sync ele_display
+		list($newDisplay, $displayChanged) = $syncCommaDelimited($ele_display);
+		if ($displayChanged) {
+			$element->setVar('ele_display', $newDisplay);
+			$modified = true;
+		}
+
+		// Sync ele_disabled
+		list($newDisabled, $disabledChanged) = $syncCommaDelimited($ele_disabled);
+		if ($disabledChanged) {
+			$element->setVar('ele_disabled', $newDisabled);
+			$modified = true;
+		}
+
+		// Sync ele_value[3] for select-type elements
+		if (anySelectElementType($ele_type) && isset($ele_value[3])) {
+			list($newFilterGroups, $filterChanged) = $syncCommaSeparated($ele_value[3]);
+			if ($filterChanged) {
+				$ele_value[3] = $newFilterGroups;
+				$element->setVar('ele_value', $ele_value);
+				$modified = true;
+			}
+		}
+
+		// Sync ele_value['formlink_scope'] for checkbox elements
+		if (($ele_type == "checkbox" || $ele_type == "checkboxLinked") && isset($ele_value['formlink_scope'])) {
+			list($newScope, $scopeChanged) = $syncCommaSeparated($ele_value['formlink_scope']);
+			if ($scopeChanged) {
+				$ele_value['formlink_scope'] = $newScope;
+				$element->setVar('ele_value', $ele_value);
+				$modified = true;
+			}
+		}
+
+		return $modified;
 	}
 
 	/**
