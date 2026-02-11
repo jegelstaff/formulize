@@ -35,6 +35,7 @@
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
 
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
@@ -50,7 +51,9 @@ class formulizeElement extends FormulizeObject {
 	var $alwaysValidateInputs;
 	var $canHaveMultipleValues;
 	var $hasMultipleOptions;
-	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be uneditable, uncreatable, undeletable by anyone. It is maintained in code.
+	var $isSystemElement; // only set to true in custom element class, if you want an element to exist in the form but be primarily managed by the system
+	var $isUserAccountElement; // set to true in user account element classes
+	var $useOptionsAsValues; // only applicable to non-linked, non-user select list elements. Set to true if the options for this element should also be used as the values saved to the database.  Default is false, in which case the values used in the HTML markup will be the ordinal position of the option in the list. The list is then recreated on submission so the right value can be retrieved based on ordinal position.
 	public static $category = 'misc'; // the category this element belongs to - textboxes, selectors, lists, layout, misc, subforms
 
 	function __construct(){
@@ -86,6 +89,7 @@ class formulizeElement extends FormulizeObject {
     $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_dynamicdefault_source", XOBJ_DTYPE_INT);
 		$this->initVar('ele_dynamicdefault_conditions', XOBJ_DTYPE_ARRAY);
+		$this->useOptionsAsValues = false;
 	}
 
 	/**
@@ -689,6 +693,8 @@ class formulizeElementsHandler {
 
     function _setElementProperties($element) {
 			$element->isLinked = is_bool($element->isLinked) ? $element->isLinked : false;
+			$element->isSystemElement = is_bool($element->isSystemElement) ? $element->isSystemElement : false;
+			$element->isUserAccountElement = is_bool($element->isUserAccountElement) ? $element->isUserAccountElement : false;
 			$element->hasMultipleOptions = is_bool($element->hasMultipleOptions) ? $element->hasMultipleOptions : false;
 			$element->setVar('fid', $element->getVar('id_form'));
 			if(method_exists($element, 'setCanHaveMultipleValues')) {
@@ -943,39 +949,39 @@ class formulizeElementsHandler {
 		}
 	}
 
-	function delete($element, $force = false){
-		if($element->isSystemElement) {
-			return false;
-		}
-		$elementType = $element->getVar('ele_type');
+	function delete($elementObject, $force = false){
+		$elementType = $elementObject->getVar('ele_type');
 		if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/".$elementType."Element.php")) {
 			$typeElementHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
 		} else {
 			$typeElementHandler = xoops_getmodulehandler('elements', 'formulize');
 		}
-		if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($element, entryScope: 'all') === false) {
-			print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($element->getVar('ele_id')))." failed";
+		if($result0 = $typeElementHandler->deleteAssociatedDataAndResources($elementObject, entryScope: 'all') === false) {
+			print "Error: pre-delete processing for element ".htmlspecialchars(strip_tags($elementObject->getVar('ele_id')))." failed";
 		}
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$element->getVar("ele_id")."";
+		$sql = "DELETE FROM ".formulize_TABLE." WHERE ele_id=".$elementObject->getVar("ele_id")."";
 		if( false != $force ){
 			$result1 = $this->db->queryF($sql);
 		}else{
 			$result1 = $this->db->query($sql);
 		}
-		$result2 = deleteElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'));
-		if($element->hasData) {
-			if(!$result3 = $form_handler->deleteElementField($element->getVar('ele_id'))) {
+		$result2 = deleteElementConnectionsInRelationships($elementObject->getVar('fid'), $elementObject->getVar('ele_id'));
+		if($elementObject->hasData) {
+			if(!$result3 = $form_handler->deleteElementField($elementObject->getVar('ele_id'))) {
 				print "Error: could not drop field from data table";
 			}
     }
 		$result4 = true;
-		if($formObject = $form_handler->get($element->getVar('fid'))) {
-			if($element->getVar('ele_id') == $formObject->getVar('pi')) {
+		if($formObject = $form_handler->get($elementObject->getVar('fid'))) {
+			if($elementObject->getVar('ele_id') == $formObject->getVar('pi')) {
 				$formObject->setVar('pi', 0);
 				$result4 = $form_handler->insert($formObject);
 			}
 		}
+
+		$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+		$screenHandler->removeElementsFromScreens($elementObject->getVar('ele_id'));
 
 		return ($result0 AND $result1 AND $result2 AND $result3 AND $result4) ? true : false;
 	}
@@ -1134,6 +1140,30 @@ class formulizeElementsHandler {
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
 		return $value;
 	}
+
+	/**
+	 * Process user account data through the base userAccountElement handler class
+	 * @param int $formId The id of the form the element is in
+	 * @param int $entryId The id of the entry that was submitted
+	 * @return int|bool the user id or false on failure
+	 */
+	static public function processUserAccountSubmission($formId, $entryId) {
+		return formulizeUserAccountElementHandler::processUserAccountSubmission($formId, $entryId);
+	}
+
+	/**
+	 * Evaluate an entry regarding the default group memberships for users that may be impacted by the data in the entry
+	 * Some group memberships are conditional, based on the data in the entry, and this method will evaluate those conditions and add or remove group memberships accordingly
+	 * The form associated with the groups might be a different one, the form associated with the user might be a different one. Everything is worked out in the method.
+	 * Processed through the base userAccountElement handler class
+	 * @param int $formId The id of the form the element is in
+	 * @param int $entryId The id of the entry that was submitted
+	 * @return int|bool the user id or false on failure
+	 */
+	static public function reevaluateDefaultGroupMemberships($formId, $entryId) {
+		return formulizeUserAccountElementHandler::reevaluateDefaultGroupMemberships($formId, $entryId);
+	}
+
 }
 
 function optionIsValidForElement($option, $elementHandleOrId) {

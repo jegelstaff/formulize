@@ -74,7 +74,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		$element = overrideSeparatorToLineBreak($element);
 	}
 
-    $form_id = $element->getVar('id_form');
+  $form_id = $element->getVar('id_form');
 
 	$deprefix = $noSave ? "denosave_" : "de_";
 	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
@@ -128,7 +128,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
            AND !isset($lockedEntries[$form_id][$entry])
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-           AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+           AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
            AND !$userHasPermissionToIgnoreEntryLock) {
@@ -169,7 +169,7 @@ EOF;
 				$customTypeObject = $customTypeHandler->create();
 		    $typesWithData[$ele_type] = $customTypeObject->hasData ? true : false;
 			}
-	    if($typesWithData[$ele_type]) {
+	    if($typesWithData[$ele_type] OR $element->isUserAccountElement) {
 				$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 			}
 		}
@@ -186,7 +186,7 @@ EOF;
 		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
             AND !isset($lockedEntries[$form_id][$entry])
             AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-            AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+            AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
             AND !strstr(getCurrentURL(),"printview.php")) {
 
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
@@ -428,16 +428,24 @@ function removeFromConditionalCatalogue($renderedElementMarkupName) {
 }
 
 /**
- *
+ * Check if filter conditions are met for a given entry.
+ * Used for element display conditions, and also for evaluating per-group conditions for entries_are_users default groups.
+ * @param array $elementFilterSettings The filter settings array [elements[], ops[], terms[], types[]]
+ * @param int $form_id The form ID
+ * @param int|string $entry_id The entry ID or "new"
+ * @param object|null $elementObject The element object (optional, used for error messages)
+ * @param int $frid The form relationship ID. 0 = no relationship, -1 = primary relationship. Default 0.
+ * @return int 1 if conditions are met, 0 if not
  */
-function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject) {
+function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0) {
 	// need to check if there's a condition on this element that is met or not
 	static $cachedEntries = array();
 	if($entry_id != "new") {
-		if(!isset($cachedEntries[$form_id][$entry_id])) {
-			$cachedEntries[$form_id][$entry_id] = gatherDataset($form_id, filter: $entry_id, frid: 0, bypassCache: true);
+		$cacheKey = $form_id.'_'.$entry_id.'_'.$frid;
+		if(!isset($cachedEntries[$cacheKey])) {
+			$cachedEntries[$cacheKey] = gatherDataset($form_id, filter: $entry_id, frid: $frid, bypassCache: true);
 		}
-		$entryData = $cachedEntries[$form_id][$entry_id];
+		$entryData = $cachedEntries[$cacheKey];
 	}
 
 	$filterElements = $elementFilterSettings[0];
@@ -463,7 +471,8 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $el
 	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
 
 	if($evaluationConditionAND === false OR $evaluationConditionOR === false) {
-		exit("Fatal Formulize Error: form element ".$elementObject->getVar('ele_id')." is misconfigured. Please notify the webmaster.");
+		$errorContext = $elementObject ? "form element ".$elementObject->getVar('ele_id') : "a condition filter for form ".$form_id;
+		exit("Fatal Formulize Error: ".$errorContext." is misconfigured. Please notify the webmaster.");
 	}
 
 	$evaluationCondition .= $evaluationConditionAND;

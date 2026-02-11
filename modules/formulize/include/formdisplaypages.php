@@ -110,6 +110,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
     // removing the entry value is the critical thing, so a new entry is displayed
     $overrideMulti = 0;
     $removeEntryValue = false;
+		global $xoopsUser;
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
     if(count((array) $pages) == 1 AND $screen) {
         $reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
@@ -118,14 +120,16 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         // if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
         $formObject = $form_handler->get($screen->getVar('fid'));
-        if($formObject->getVar('single')=="off" AND $reloadblank) {
+        global $xoopsUser;
+        $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
+        if($effectiveSingle=="off" AND $reloadblank) {
             $removeEntryValue = true;
             $overrideMulti = 0;
-        } elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
+        } elseif($effectiveSingle=="off" AND !$reloadblank) {
             $overrideMulti = 1;
-        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
+        } elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND $reloadblank) {
             $overrideMulti = 1;
-        } elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
+        } elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND !$reloadblank) {
             $overrideMulti = 0;
         } else {
             $overrideMulti = 0;
@@ -145,11 +149,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 	$thankstext = $thankstext ? $thankstext : _formulize_DMULTI_THANKS;
 	$introtext = $introtext ? $introtext : "";
-
-	global $xoopsUser;
-
 	$mid = getFormulizeModId();
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 	$gperm_handler =& xoops_gethandler('groupperm');
 	$member_handler =& xoops_gethandler('member');
@@ -224,6 +224,9 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         $settings['ventry'] = $entry;
     }
 
+	// check if user does not have view private elements permission, and if all elements on the page are flagged as private, in which case, skip the page
+	$userCanViewPrivateElements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid);
+
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
 	// conditions only checked once there is an entry!
@@ -231,34 +234,22 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	if(is_array($conditions) AND !empty($conditions) AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))) {
 		$conditionsMet = false;
 		while(!$conditionsMet AND $currentPage > 0) {
-			if(isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
-				if(pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid) == false) {
-					if($prevPageThisScreen <= $currentPage) {
-						$currentPage++;
-					} else {
-						$currentPage--;
-					}
-					$pagesSkipped = true;
+			$conditionsMet = ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$currentPage], $fid)) ? true : false;
+			if($conditionsMet AND isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
+				$conditionsMet = pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid);
+			}
+			if(!$conditionsMet) {
+				if($prevPageThisScreen <= $currentPage) {
+					$currentPage++;
 				} else {
-					$conditionsMet = true;
+					$currentPage--;
 				}
-			} else {
-				// no conditions on the current page
-				$conditionsMet = true;
+				$pagesSkipped = true;
 			}
 		}
 	}
-
-    if(!$currentPage) {
-        $currentPage = $thanksPage;
-    }
-
-	if($currentPage > 1) {
-	  $previousPage = $currentPage-1; // previous page numerically
-	} else {
-	  $previousPage = "none";
-	}
-
+	$currentPage = !$currentPage ? $thanksPage : $currentPage;
+	$previousPage = $currentPage > 1 ? $currentPage-1 : "none";
 	$nextPage = $currentPage+1;
 
 	// done destination used in the multipage boilerplate included below
@@ -397,7 +388,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			$templatePageTitles = array();
 			unset($templateVariables['pageTitles'][0]);
 			foreach($templateVariables['pageTitles'] as $i=>$title) {
-					if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid)) {
+					if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid) AND ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$i], $fid))) {
 							$templatePageTitles[$i] = $title;
 					}
 			}
@@ -517,4 +508,16 @@ function pageSelectionList($currentPage, $countPages, $pageTitles, $aboveBelow, 
 	}
 	$pageSelectionList[$cacheKey] .= "</select>";
 	return $pageSelectionList[$cacheKey];
+}
+
+function isPageAllPrivateElements($pageElements, $fid) {
+	if(is_array($pageElements) AND !empty($pageElements)) {
+		global $xoopsDB;
+		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form=".intval($fid)." AND ele_private=1 AND ele_id IN (".implode(",",array_filter($pageElements, 'is_numeric')).")";
+		$result = $xoopsDB->query($sql);
+		if($xoopsDB->getRowsNum($result) == count($pageElements)) {
+			return true;
+		}
+	}
+	return false;
 }

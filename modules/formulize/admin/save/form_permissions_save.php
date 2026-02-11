@@ -142,6 +142,10 @@ if(count((array) $filterSettings)>0) {
   $form_handler->setPerGroupFilters($filterSettings, $form_id);
 }
 
+// Propagate permissions, filters, and groupscope from template groups to their entry groups
+// This runs after all permission data has been saved, so the source data is up to date
+formulizeHandler::propagateTemplateGroupPermissions($group_list);
+
 if($_POST['reload'] OR $_POST['loadthislist']) {
   print "/* eval */ window.document.getElementById('form-".intval($_POST['form_number'])."').submit();";
 }

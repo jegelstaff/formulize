@@ -231,8 +231,12 @@ CREATE TABLE groups (
   name varchar(50) NOT NULL default '',
   description text NOT NULL,
   group_type varchar(10) NOT NULL default '',
+  is_group_template tinyint(1) NOT NULL default 0,
+  form_id int(5) unsigned NULL default NULL,
+  entry_id int(10) unsigned NULL default NULL,
   PRIMARY KEY  (groupid),
-  KEY group_type (group_type)
+  KEY group_type (group_type),
+  KEY form_entry (form_id, entry_id)
 );
 # --------------------------------------------------------
 

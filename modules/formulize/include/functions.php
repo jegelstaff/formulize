@@ -448,9 +448,9 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid);
                 // if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
                 if (!$view_groupscope) {
-                    global $xoopsDB;
-                    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$form_id");
-                    if ($smq[0]['singleentry'] == "group") {
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    $checkFormObject = $form_handler->get($form_id);
+                    if ($checkFormObject AND resolveEffectiveSingle($checkFormObject->getVar('single'), $groups) == "group") {
                         $view_groupscope = true;
                     }
                 }
@@ -2024,6 +2024,41 @@ function getElementValue($entry, $element_id, $fid) {
 }
 
 
+// Resolve a per-group singleentry array to a scalar value for a given set of groups.
+// Registered Users (group 2) is the base default. Any other group's setting overrides it.
+// Conflicts among non-base groups: least restrictive wins.
+// Restrictiveness: "group" (most) > "user" > "off" (least)
+// $singleArray: per-group array (groupId => value) or legacy scalar string
+// $userGroups: the user's group IDs
+// returns: "user", "group", or "off"
+function resolveEffectiveSingle($singleArray, $userGroups) {
+	if (!is_array($singleArray)) {
+		// Legacy scalar — return as-is after normalization
+		if ($singleArray == "on") return "user";
+		if ($singleArray == "group") return "group";
+		if ($singleArray == "user") return "user";
+		return "off";
+	}
+	// Base value from Registered Users (group 2)
+	$base = isset($singleArray[2]) ? $singleArray[2] : "off";
+	// Collect values from non-base groups the user belongs to
+	// Restrictiveness: "group"=3, "user"=2, "off"=1 — least restrictive wins among overrides
+	$priority = array("group" => 3, "user" => 2, "off" => 1);
+	$overrideValue = null;
+	$overridePriority = 999; // start high, look for lowest (least restrictive)
+	foreach ($singleArray as $gid => $value) {
+		if ($gid == 2) continue; // skip base
+		if (in_array(intval($gid), $userGroups) AND isset($priority[$value])) {
+			$p = $priority[$value];
+			if ($overrideValue === null OR $p < $overridePriority) {
+				$overrideValue = $value;
+				$overridePriority = $p;
+			}
+		}
+	}
+	return ($overrideValue !== null) ? $overrideValue : $base;
+}
+
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
 function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
 		if(!$member_handler) {
@@ -2035,21 +2070,22 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
 		if(!$mid) {
 			$mid = getFormulizeModId();
 		}
-    global $xoopsDB, $xoopsUser;
-    // determine single/multi status
-    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
-    if ($smq[0]['singleentry'] == "on" OR $smq[0]['singleentry'] == "group") {
-        // find the entry that applies
-        $single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
+    global $xoopsUser;
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
+
+    if ($effectiveSingle == "user" OR $effectiveSingle == "group") {
+        $single['flag'] = $effectiveSingle == "user" ? 1 : "group";
         // if we're looking for a regular single, find first entry for this user
-        if ($smq[0]['singleentry'] == "on") {
+        if ($effectiveSingle == "user") {
             if (!$xoopsUser) {
                 $single['entry'] = ""; // don't set an entry for anons. they should not share the same entry in a single entry form, since user zero is actually lots of different people. cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
             } else {
                 $data_handler = new formulizeDataHandler($fid);
                 $single['entry'] = $data_handler->getFirstEntryForUsers($uid);
             }
-        } elseif ($smq[0]['singleentry'] == "group") {
+        } elseif ($effectiveSingle == "group") {
             // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
             $formulize_permHandler = new formulizePermHandler($fid);
             $intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
@@ -2059,8 +2095,6 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
             }
             $data_handler = new formulizeDataHandler($fid);
             $single['entry'] = $data_handler->getFirstEntryForGroups($intersect_groups);
-        } else {
-            exit("Error: invalid value found for singleentry for form $fid");
         }
     } else {
         $single['flag'] = 0;
@@ -2709,11 +2743,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 
     $dataHandlers = array();
     $entryMap = array();
+		global $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
         foreach ($entries_to_clone as $fid=>$entries) {
             // never clone an entry in a form that is a single-entry form
             $thisform = new formulizeForm($fid);
-            if ($thisform->getVar('single') != "off") {
+
+            if (resolveEffectiveSingle($thisform->getVar('single'), $groups) != "off") {
                 continue;
             }
             foreach ($entries as $thisentry) {
@@ -5132,12 +5169,12 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 /**
  * Used to handle filter conditions being saved in the admin UI
  * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param string $delete_key - Optional. The key in POST for a delete signal sent from the admin UI. Defaults to conditionsdelete, which is what the permission editing UI sends by default. Comments from AI: The value of this key will have the format of filterkey_x_y where x is the key in the array of conditions that we want to delete, and y is an optional value that can be used to isolate which conditions to delete if there are multiple sets of conditions being handled on the same page (such as in the permissions editing, where there are multiple groups each with their own set of conditions).  So for example, if we only want to delete conditions for group id 3, then y would be 3, and we would set $conditionsDeletePartsKeyOneMustMatch to 3 as well, so that only delete signals with a value that has 3 in the y position will be acted on.
  * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
  * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
  * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
  */
-function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
+function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete', $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
 	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
 		return "";
@@ -5193,6 +5230,82 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
 	}
 
 	return array($returnValues, $reloadFlag);
+}
+
+// This function takes a parsed condition array and returns a human-readable description.
+// Condition structure: [0] = element IDs/handles, [1] = operators, [2] = terms/values, [3] = types
+// $element_handler is optional; if provided, element IDs will be resolved to captions.
+function formulize_describeConditions($conditions, $element_handler = null) {
+	if(!is_array($conditions) || empty($conditions) || !isset($conditions[0])) {
+		return '';
+	}
+	$parts = array();
+	$elements = $conditions[0];
+	$ops = isset($conditions[1]) ? $conditions[1] : array();
+	$terms = isset($conditions[2]) ? $conditions[2] : array();
+	foreach($elements as $i => $eleIdOrHandle) {
+		$elementLabel = $eleIdOrHandle;
+		if($element_handler) {
+			$elementObject = $element_handler->get($eleIdOrHandle);
+			if($elementObject) {
+				$elementLabel = strip_tags($elementObject->getVar('ele_caption'));
+			}
+		}
+		$op = isset($ops[$i]) ? $ops[$i] : '=';
+		$term = isset($terms[$i]) ? $terms[$i] : '';
+		$parts[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITION_ITEM, $elementLabel, $op, $term);
+	}
+	return implode(' and ', $parts);
+}
+
+// Formats an array of strings as a natural-language list with commas and "and".
+// eg: ['A'] => 'A', ['A','B'] => 'A and B', ['A','B','C'] => 'A, B, and C'
+function formulize_listWithAnd($items) {
+	$items = array_values($items);
+	$count = count($items);
+	if($count == 0) { return ''; }
+	if($count == 1) { return $items[0]; }
+	if($count == 2) { return $items[0] . ' and ' . $items[1]; }
+	$last = array_pop($items);
+	return implode(', ', $items) . ', and ' . $last;
+}
+
+// this function renders the default groups selection UI for entries-are-users forms
+// uses the same group list as the userAccountGroupMembership element type
+function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = false; // we want to show all groups, even if they are template groups
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // we'll just have a single selection and override the behaviour of a selection/click in the admin UI
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	if(!is_array($currentlySelectedGroupIds)) {
+		$currentlySelectedGroupIds = array();
+	}
+	$formElementObject = $groupMembershipHandler->render($currentlySelectedGroupIds, '', 'entries_are_users_default_groups', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
+}
+
+// Render a group autocomplete for adding groups to the per-group singleentry setting
+function formulize_renderSingleentryGroupsUI() {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = true; // template groups are not relevant for singleentry settings
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0;
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	$formElementObject = $groupMembershipHandler->render(array(), '', 'singleentry_add_group', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
 }
 
 // this function gets the password for the encryption/decryption process
@@ -8380,7 +8493,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$URLAddOn .= htmlspecialchars_decode($currentPageTitle)."/";
 			}
 		}
-		$code = "window.history.replaceState(null, '', ".json_encode($initialURL.$URLAddOn).");
+		$code = "window.history.replaceState(null, '', ".json_encode(trans($initialURL.$URLAddOn)).");
 		jQuery(window).load(function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());
@@ -8709,7 +8822,7 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 		global $xoopsUser;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 		$gperm_handler = xoops_gethandler('groupperm');
-		$singleEntry = $formObject->getVar('single');
+		$singleEntry = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 		if (($singleEntry != 'group' AND $singleEntry != 'user' AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
 			OR $gperm_handler->checkRight("view_globalscope", $formObject->getVar('fid'), $groups, getFormulizeModId()) // users with global scope see the list
 			OR ($singleEntry != 'group' AND $gperm_handler->checkRight("view_groupscope", $formObject->getVar('fid'), $groups, getFormulizeModId())) // users with groupscope see the list, unless it's a one-entry-per-group form

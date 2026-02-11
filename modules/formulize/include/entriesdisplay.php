@@ -1360,8 +1360,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
       $procedureResults = $procedureResults['text'];
 	}
 
-	// get single/multi entry status of this form...
-	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
+	// get single/multi entry status of this form, resolved for current user's groups
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$deFormObject = $form_handler->get($fid);
+	$effectiveSingle = resolveEffectiveSingle($deFormObject->getVar('single'), $groups);
 
 	// flatten columns array and convert handles to ids so that we can send them to the change columns popup
 	// Since 4.0 columns and columnhandles are identical...this is a cleanup job for later
@@ -1406,7 +1408,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$screenButtonText['saveButton'] = _formulize_SAVE;
 	$screenButtonText['globalQuickSearch'] = _formulize_GLOBAL_SEARCH;
     if(!$lockcontrols) {
-        $screenButtonText['addButton'] = $singleMulti[0]['singleentry'] == "" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
+        $screenButtonText['addButton'] = $effectiveSingle == "off" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
         $screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
         $screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
     }
@@ -1474,7 +1476,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$atLeastOneActionButton = false;
     $atLeastOneActionButtonNotChangeCols = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 0-14 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
             if($onActionButtonCounter > 0) {
@@ -1486,7 +1488,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 
     // make a ... button available for opening up extra actions beyond change cols
     if($atLeastOneActionButtonNotChangeCols) {
-        $buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
+        $buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
     }
 
 	if($hlist) { // if we're on the calc side, then the export button should be the export calcs one
@@ -1505,7 +1507,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$buttonCodeArray['autoLoadedView'] = $loadview ? $loadviewname : '';
 	$buttonCodeArray['lockControls'] = $lockcontrols;
 	$buttonCodeArray['actionButtonHeading'] = $atLeastOneActionButton ? _formulize_DE_ACTIONS : "";
-	if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
+	if($add_own_entry AND $effectiveSingle == "off" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
 		$buttonCodeArray['addProxyButton'] = '';
 	} elseif($add_own_entry AND $proxy AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addProxyButton'])) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
 		$buttonCodeArray['addMultiButton'] = '';
@@ -4385,7 +4387,7 @@ function gatherHiddenValues($handle) {
 }
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
   static $importExportCleanupDone = false;
 	if($buttonText) {
 		$buttonText = trans($buttonText);
@@ -4431,7 +4433,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				}
 				break;
 			case "addButton":
-				$addNewParam = $doNotForceSingle ? "" : "'single'"; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
+				$addNewParam = ($effectiveSingle == "off") ? "'single'" : ""; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew($addNewParam);\"></input>";
 				break;
 			case "addMultiButton":

@@ -60,10 +60,14 @@ if(!defined("XOOPS_ROOT_PATH")) {
     }
 }
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 include_once XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-global $xoopsConfig;
+global $xoopsConfig, $xoopsUser;
+$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
+$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+$uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
+
 // load the formulize language constants if they haven't been loaded already
 if ( file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php") ) {
     include_once XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/main.php";
@@ -89,17 +93,13 @@ if(!isset($mid)) {
 
 if(!$myts) { $myts = MyTextSanitizer::getInstance(); }
 
-global $xoopsUser;
-$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
-$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-$uid = isset($GLOBALS['userprofile_uid']) ? $GLOBALS['userprofile_uid'] : $uid; // if the userprofile form is in play and a new user has been set, then use that uid
-
 if(!isset($element_handler) OR !$element_handler) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 }
 
 $formulize_elementData = array(); // this array has multiple dimensions, in this order:  form id, entry id, element id.  "new" means a nea entry.  Multiple new entries will be recorded as new1, new2, etc
 $formulize_subformBlankCues = array();
+$userIdsForUserAccountElements = array();
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
 
@@ -131,7 +131,7 @@ foreach($_POST as $k=>$v) {
 		$subformMetaDataParts = explode("x",substr($subformElementKeyParts[0], 9)); // the blank counter, and the subform element id number will be separated by an x, at the end of the first part of the key in POST, ie: desubform9x231
 		$blankSubformCounter = $subformMetaDataParts[0];
 		$blankSubformElementId = $subformMetaDataParts[1];
-        $v = prepDataForWrite($elementObject, $v, "new", $blankSubformCounter);
+    $v = prepDataForWrite($elementObject, $v, "new", $blankSubformCounter);
 		if(($v === "" OR $v === "{WRITEASNULL}") AND $elementMetaData[2] == "new") { continue; } // don't store blank values for new entries, we don't want to write those (if desubform is used only for blank defaults, then it will always be "new" but we'll keep this as is for now, can't hurt)
 		$formulize_elementData[$elementMetaData[1]][$elementMetaData[2].$blankSubformCounter."x".$blankSubformElementId][$elementMetaData[3]] = $v;
 		if(!isset($formulize_subformBlankCues[$elementMetaData[1]])) {
@@ -146,12 +146,21 @@ foreach($_POST as $k=>$v) {
 		// store values according to form, entry and element ID
 		// prep them all for writing
 		$elementMetaData = explode("_", $k);
-      $elementObject = $element_handler->get($elementMetaData[3]);
-		if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
-      $v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
-			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
-		} elseif(is_numeric($elementMetaData[1]) AND $elementObject->getVar('ele_type') != 'anonPasscode') {
-			$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
+    $elementObject = $element_handler->get($elementMetaData[3]);
+		// WHAT ABOUT MCP?? NEED TO HAVE TOOLS FOR MANAGING USERS. AND MCP CANNOT ALTER THE UID VALUE OF AN ENTRY!
+		if($elementObject->isUserAccountElement) {
+			if($userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]] = formulizeElementsHandler::processUserAccountSubmission($elementMetaData[1], $elementMetaData[2])) {
+				if($userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
+					$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$userAccountUidElement->getVar('ele_id')] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
+				}
+			}
+		} else {
+			if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
+				$v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
+				$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = $v;
+			} elseif(is_numeric($elementMetaData[1]) AND $elementObject->isSystemElement == false) {
+				$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$elementMetaData[3]] = "{WRITEASNULL}"; // no value returned for this element that was included (cue was found) so we write it as blank to the db
+			}
 		}
 
 	}
@@ -206,8 +215,7 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 
 	$formulize_formObject = $form_handler->get($elementFid);
-    // TODO: should the one-entry-per-group permission be checked in the permissions handler instead?
-	$oneEntryPerGroupForm = ($formulize_formObject->getVar('single') == "group");
+	$oneEntryPerGroupForm = (resolveEffectiveSingle($formulize_formObject->getVar('single'), $groups) == "group");
 
     // for every entry in the form...
     foreach($entryData as $currentEntry => $values) {
@@ -240,6 +248,8 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 					}
 				}
 
+				$oldPiValue = null;
+				$writtenEntryId = null;
         if(substr($currentEntry, 0 , 3) == "new") {
             // handle entries in the form that are new. if there is more than one new entry, they will be listed as new1, new2, new3, etc
 			$subformElementId = 0;
@@ -256,7 +266,21 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             }
 			foreach($creation_users as $creation_user) {
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
-					if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
+									// if form entries are user accounts, and the user account is supposed to be owner of the entry, then override the creation_user
+									if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
+										$creation_user = $userIdsForUserAccountElements[$elementFid][$currentEntry];
+									}
+										// capture old PI value for entries_are_groups forms before update
+										// TODO ensure forms with entries_are_groups always have a PI set!!
+										if ($formulize_formObject->getVar('entries_are_groups')
+											AND $piElementId = $formulize_formObject->getVar('pi')
+											AND $piElement = $element_handler->get($piElementId)
+										) {
+											$dataHandler = new formulizeDataHandler($elementFid);
+											$oldPiValue = $dataHandler->getElementValueInEntry($currentEntry, $piElementId);
+										}
+
+										if($writtenEntryId = formulize_writeEntry($values, $currentEntry, "", $creation_user, "", false)) { // last false causes setting ownership data to be skipped...it's more efficient for readelements to package up all the ownership info and write it all at once below.
                         if(isset($formulize_subformBlankCues[$elementFid])) {
                             $GLOBALS['formulize_subformCreateEntry'][$elementFid][] = $writtenEntryId;
                         }
@@ -288,7 +312,11 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             // TODO: should this use $uid or a proxy user setting?
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
                 $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
-				if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
+								if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
+									$dataHandler = new formulizeDataHandler($elementFid);
+									$dataHandler->setEntryOwnerGroups($userIdsForUserAccountElements[$elementFid][$currentEntry], $currentEntry);
+								}
+								if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
                     $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
                     if(!isset($formulize_allWrittenFids[$elementFid])) {
                         $formulize_allWrittenFids[$elementFid] = $elementFid;
@@ -299,6 +327,11 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                 }
             }
         }
+				// WHAT ABOUT MCP?? OR OTHER SITUATIONS. IF AN ENTRIES-ARE-GROUPS RECORD IS CREATED/UPDATED, WE NEED TO DO THE SYNC AT THAT POINT TOO, NOT JUST HERE IN THE WEB APP LOGIC
+		    // create entry-specific groups if this form has entries_are_groups enabled
+				if ($formulize_formObject->getVar('entries_are_groups') AND $writtenEntryId) {
+						formulizeHandler::syncEntryGroups($elementFid, $writtenEntryId, $oldPiValue);
+				}
     }
 }
 
@@ -497,6 +530,117 @@ if($frid) {
 		if(array_search("derived", $formObject->getVar('elementTypes'))) {
 			foreach($formulize_allWrittenEntryIds[$thisFid] as $thisEntry) {
 				formulize_updateDerivedValues($thisEntry, $thisFid);
+			}
+		}
+	}
+}
+
+// Re-evaluate conditional default group memberships for entries_are_users forms.
+// This covers two scenarios:
+// 1. The entries_are_users form itself was saved (e.g., without user account
+//    elements in the submission), and changing a field value may affect per-group
+//    conditions or template group resolution via element_links.
+// 2. A connected form was saved, and that form contains elements referenced in
+//    the EAU form's element_links for template group resolution. On-before-save,
+//    on-after-save, or derived value updates may all affect the linked values,
+//    so we re-evaluate whenever any entry is saved in a form that contains
+//    element_link elements, without checking which specific elements were modified.
+if(!empty($formulize_allWrittenEntryIds)) {
+	// Build a unified list of EAU form entries needing group membership re-evaluation
+	$eauEntriesToReevaluate = array(); // eauFormId => array(entryId => true)
+
+	global $xoopsDB;
+	$eauFormsResult = $xoopsDB->query("SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_users = 1");
+	if($eauFormsResult) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
+		$frameworks_handler = new formulizeFrameworksHandler($xoopsDB);
+
+		while($eauRow = $xoopsDB->fetchArray($eauFormsResult)) {
+			$eauFormId = intval($eauRow['id_form']);
+			$eauFormObject = $form_handler->get($eauFormId);
+			if(!$eauFormObject) {
+				continue;
+			}
+
+			// If the EAU form itself was written to, and processUserAccountSubmission
+			// didn't run for those entries, add them for re-evaluation
+			if(isset($formulize_allWrittenEntryIds[$eauFormId])) {
+				foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
+					if(!isset($userIdsForUserAccountElements[$eauFormId][$writtenEntryId])) {
+						$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
+					}
+				}
+			}
+
+			// If the EAU form has element_links for template group resolution,
+			// check if any form containing those linked elements was written to
+			$elementLinks = $eauFormObject->getVar('entries_are_users_default_groups_element_links');
+			if(!is_array($elementLinks) || empty($elementLinks)) {
+				continue;
+			}
+			// Find which forms contain the linked elements
+			$linkedElementForms = array(); // form ID => true
+			foreach($elementLinks as $gid => $eleIds) {
+				if(!is_array($eleIds)) {
+					continue;
+				}
+				foreach($eleIds as $eleId) {
+					$linkedElement = $element_handler->get(intval($eleId));
+					if($linkedElement) {
+						$linkedElementForms[intval($linkedElement->getVar('id_form'))] = true;
+					}
+				}
+			}
+			// For each form that has linked elements and was written to,
+			// find connected EAU entries
+			foreach(array_keys($linkedElementForms) as $linkedFid) {
+				if(!isset($formulize_allWrittenEntryIds[$linkedFid])) {
+					continue;
+				}
+				if($linkedFid == $eauFormId) {
+					// Element is in the EAU form itself — add all written entries
+					foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
+						$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
+					}
+					continue;
+				}
+				// Element is in a connected form — find the framework connecting them
+				$frameworks = $frameworks_handler->getFrameworksByForm($linkedFid);
+				$targetFrid = null;
+				foreach($frameworks as $framework) {
+					$frameworkLinks = $framework->getVar('links');
+					foreach($frameworkLinks as $link) {
+						if(($link->getVar('form1') == $linkedFid && $link->getVar('form2') == $eauFormId) ||
+						   ($link->getVar('form2') == $linkedFid && $link->getVar('form1') == $eauFormId)) {
+							$targetFrid = $framework->getVar('frid');
+							break 2;
+						}
+					}
+				}
+				if(!$targetFrid) {
+					continue; // no framework connecting these forms
+				}
+				// Find connected EAU entries for each written entry in the linked form
+				foreach($formulize_allWrittenEntryIds[$linkedFid] as $writtenEntryId) {
+					$linkedResult = checkForLinks($targetFrid, array($linkedFid), $linkedFid, array($linkedFid => array($writtenEntryId)));
+					if(isset($linkedResult['entries'][$eauFormId])) {
+						foreach($linkedResult['entries'][$eauFormId] as $eauEntryId) {
+							$eauEntriesToReevaluate[$eauFormId][$eauEntryId] = true;
+						}
+					}
+					if(isset($linkedResult['sub_entries'][$eauFormId])) {
+						foreach($linkedResult['sub_entries'][$eauFormId] as $eauEntryId) {
+							$eauEntriesToReevaluate[$eauFormId][$eauEntryId] = true;
+						}
+					}
+				}
+			}
+		}
+
+		// Process all collected EAU entries
+		foreach($eauEntriesToReevaluate as $eauFormId => $entryIds) {
+			foreach(array_keys($entryIds) as $eauEntryId) {
+				formulizeElementsHandler::reevaluateDefaultGroupMemberships($eauFormId, $eauEntryId);
 			}
 		}
 	}
