@@ -385,6 +385,7 @@ CREATE TABLE formulize_id (
   entries_are_users_conditions text,
   entries_are_users_default_groups text,
   entries_are_users_default_groups_element_links text,
+  entries_are_users_user_is_owner tinyint(1) NOT NULL default 0,
   entries_are_groups tinyint(1) NOT NULL default 0,
   group_categories text,
   PRIMARY KEY  (`id_form`)

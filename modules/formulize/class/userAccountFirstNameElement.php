@@ -77,6 +77,9 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+		if(is_array($ele_value)) {
+			$ele_value = "";
+		}
 		if($isDisabled) {
 			$form_ele = new XoopsFormLabel(
 				$caption,
