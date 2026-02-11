@@ -124,4 +124,149 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		return array($groupOptionList, $groupUITextList);
 	}
 
+	/**
+	 * Update the group membership element's help text (ele_desc) to indicate which default groups are enforced.
+	 * Reads all necessary data from the form object: default groups, conditions, and element links.
+	 * Called from upsertFormSchemaAndResources so that any change to form settings triggers the update.
+	 *
+	 * @param object $formObject The form object with entries_are_users settings
+	 */
+	static function updateGroupMembershipDescription($formObject) {
+		$fid = $formObject->getVar('fid');
+		$groupMembershipHandle = 'formulize_user_account_groupmembership_' . $fid;
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$groupMembershipElement = $element_handler->get($groupMembershipHandle);
+		if (!$groupMembershipElement) {
+			return;
+		}
+
+		// Ensure helper functions are available
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
+
+		$defaultGroups = $formObject->getVar('entries_are_users_default_groups');
+		$allConditions = $formObject->getVar('entries_are_users_conditions');
+		$sanitizedLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
+
+		if (!is_array($defaultGroups)) {
+			$defaultGroups = array();
+		}
+		if (!is_array($allConditions)) {
+			$allConditions = array();
+		}
+		if (!is_array($sanitizedLinks)) {
+			$sanitizedLinks = array();
+		}
+
+		if (empty($defaultGroups)) {
+			$groupMembershipElement->setVar('ele_desc', '');
+			$element_handler->insert($groupMembershipElement);
+			return;
+		}
+
+		$member_handler = xoops_gethandler('member');
+		$templateGroupMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
+		$groupDescriptions = array();
+		// Collect template group categories keyed by element.
+		// Within each element, separate unconditional categories from conditional ones,
+		// so they can be combined into a single natural-language description per element.
+		$templateByElement = array();
+		foreach ($defaultGroups as $groupId) {
+			$groupId = intval($groupId);
+			if (isset($sanitizedLinks[$groupId]) && isset($templateGroupMetadata[$groupId])) {
+				$meta = $templateGroupMetadata[$groupId];
+				$conditionDesc = '';
+				if (isset($allConditions[$groupId]) && !empty($allConditions[$groupId])) {
+					$conditionDesc = formulize_describeConditions($allConditions[$groupId], $element_handler);
+				}
+				foreach ($meta['linkedElements'] as $linkedElement) {
+					if (in_array(intval($linkedElement['ele_id']), $sanitizedLinks[$groupId])) {
+						$eleId = intval($linkedElement['ele_id']);
+						if (!isset($templateByElement[$eleId])) {
+							$caption = $linkedElement['caption'];
+							if (!empty($linkedElement['formName'])) {
+								$caption = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM, $caption, $linkedElement['formName']);
+							}
+							$templateByElement[$eleId] = array(
+								'unconditional' => array(),
+								'conditional' => array(),
+								'formSingular' => $meta['formSingular'],
+								'caption' => $caption
+							);
+						}
+						if ($conditionDesc) {
+							$templateByElement[$eleId]['conditional'][$conditionDesc][] = $meta['categoryName'];
+						} else {
+							$templateByElement[$eleId]['unconditional'][] = $meta['categoryName'];
+						}
+					}
+				}
+			} else {
+				// Regular group - use literal name, with condition qualifier if applicable
+				$groupObject = $member_handler->getGroup($groupId);
+				if ($groupObject) {
+					$desc = $groupObject->getVar('name');
+					if (isset($allConditions[$groupId]) && !empty($allConditions[$groupId])) {
+						$conditionDesc = formulize_describeConditions($allConditions[$groupId], $element_handler);
+						if ($conditionDesc) {
+							$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $conditionDesc);
+						}
+					}
+					$groupDescriptions[] = $desc;
+				}
+			}
+		}
+		// Build descriptions for template groups, one bullet per element
+		foreach ($templateByElement as $eleData) {
+			$uncond = array_unique($eleData['unconditional']);
+			$cond = $eleData['conditional'];
+			if (!empty($uncond)) {
+				$desc = sprintf(
+					count($uncond) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE,
+					formulize_listWithAnd($uncond),
+					$eleData['formSingular'],
+					$eleData['caption']
+				);
+				foreach ($cond as $condDesc => $cats) {
+					$cats = array_unique($cats);
+					$desc .= sprintf(
+						count($cats) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND,
+						formulize_listWithAnd($cats),
+						$condDesc
+					);
+				}
+			} else {
+				$first = true;
+				$desc = '';
+				foreach ($cond as $condDesc => $cats) {
+					$cats = array_unique($cats);
+					if ($first) {
+						$desc = sprintf(
+							count($cats) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE,
+							formulize_listWithAnd($cats),
+							$eleData['formSingular'],
+							$eleData['caption']
+						);
+						$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $condDesc);
+						$first = false;
+					} else {
+						$desc .= sprintf(
+							count($cats) > 1 ? _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND_PLURAL : _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL_AND,
+							formulize_listWithAnd($cats),
+							$condDesc
+						);
+					}
+				}
+			}
+			$groupDescriptions[] = $desc;
+		}
+		if (!empty($groupDescriptions)) {
+			$descList = count($groupDescriptions) > 1 ? '</p><ul class="form-help-text"><li>' . implode('</li><li>', $groupDescriptions) . '</li></ul><p>' : $groupDescriptions[0];
+			$groupMembershipElement->setVar('ele_desc', sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC, $formObject->getVar('form_title'), $descList));
+		} else {
+			$groupMembershipElement->setVar('ele_desc', '');
+		}
+		$element_handler->insert($groupMembershipElement);
+	}
+
 }

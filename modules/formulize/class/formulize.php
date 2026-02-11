@@ -376,6 +376,12 @@ class formulizeHandler {
 			self::syncTemplateGroupsForForm($formObject, $groupCategories, $formIsNew ? null : $originalFormNames['plural']);
 		}
 
+		// Update the group membership element description if entries_are_users is active
+		if ($formObject->getVar('entries_are_users')) {
+			include_once XOOPS_ROOT_PATH . '/modules/formulize/class/userAccountGroupMembershipElement.php';
+			formulizeUserAccountGroupMembershipElementHandler::updateGroupMembershipDescription($formObject);
+		}
+
 		return $formObject;
 	}
 
@@ -514,6 +520,99 @@ class formulizeHandler {
 		$result = $xoopsDB->query($sql);
 		while ($row = $xoopsDB->fetchArray($result)) {
 			self::syncEntryGroups($fid, intval($row['entry_id']));
+		}
+	}
+
+	/**
+	 * Builds a mapping of templateGroupId => entryGroupId for a specific entry.
+	 * Matches entry groups to template groups by category name suffix in the group name.
+	 *
+	 * @param int $fid The entries_are_groups form ID
+	 * @param int $entryId The entry ID
+	 * @param array $groupCategories Associative array: templateGroupId => categoryName
+	 * @return array Map of templateGroupId => entryGroupId
+	 */
+	public static function buildTemplateToEntryGroupMap($fid, $entryId, $groupCategories) {
+		global $xoopsDB;
+		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') .
+			" WHERE form_id = " . intval($fid) . " AND entry_id = " . intval($entryId) .
+			" AND is_group_template = 0";
+		$result = $xoopsDB->query($sql);
+		$entryMap = array();
+		while ($row = $xoopsDB->fetchArray($result)) {
+			foreach ($groupCategories as $catTemplateGroupId => $catName) {
+				if (preg_match('/ - ' . preg_quote($catName, '/') . '$/', $row['name'])) {
+					$entryMap[$catTemplateGroupId] = intval($row['groupid']);
+					break;
+				}
+			}
+		}
+		return $entryMap;
+	}
+
+	/**
+	 * Propagate permissions, filters, and groupscope from template groups to all their entry groups.
+	 * Identifies which of the given group IDs are template groups, then copies their settings
+	 * to every corresponding entry group, with proper groupscope mapping per entry.
+	 *
+	 * @param array $groupIds Array of group IDs to check for template groups
+	 */
+	public static function propagateTemplateGroupPermissions($groupIds) {
+		if (empty($groupIds)) {
+			return;
+		}
+
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+
+		// Find which of the given groups are template groups
+		$templateGroupIds = array();
+		$sql = "SELECT groupid, form_id FROM " . $xoopsDB->prefix('groups') .
+			" WHERE is_group_template = 1 AND groupid IN (" . implode(',', array_map('intval', $groupIds)) . ")";
+		$result = $xoopsDB->query($sql);
+		while ($row = $xoopsDB->fetchArray($result)) {
+			$templateGroupIds[intval($row['groupid'])] = intval($row['form_id']);
+		}
+
+		if (empty($templateGroupIds)) {
+			return;
+		}
+
+		// Get the group_categories for each entries_are_groups form involved
+		$eagFormCategories = array();
+		foreach ($templateGroupIds as $tgid => $eagFormId) {
+			if (!isset($eagFormCategories[$eagFormId])) {
+				$eagFormObject = $form_handler->get($eagFormId);
+				$eagFormCategories[$eagFormId] = $eagFormObject ? $eagFormObject->getVar('group_categories') : array();
+			}
+		}
+
+		// For each template group, propagate to all its entry groups
+		foreach ($templateGroupIds as $tgid => $eagFormId) {
+			$entryGroupIds = formulizePermHandler::getAllEntryGroupsForTemplateGroup($tgid);
+			if (empty($entryGroupIds)) {
+				continue;
+			}
+
+			$categories = isset($eagFormCategories[$eagFormId]) ? $eagFormCategories[$eagFormId] : array();
+			$processedEntries = array();
+			foreach ($entryGroupIds as $entryGroupId) {
+				// Get the entry_id for this entry group
+				$egInfoSQL = "SELECT entry_id FROM " . $xoopsDB->prefix('groups') . " WHERE groupid = " . intval($entryGroupId);
+				$egInfoResult = $xoopsDB->query($egInfoSQL);
+				$egInfoRow = $xoopsDB->fetchArray($egInfoResult);
+				if (!$egInfoRow) continue;
+				$entryId = intval($egInfoRow['entry_id']);
+
+				// Build the template->entry map for this entry (once per entry)
+				if (!isset($processedEntries[$entryId])) {
+					$processedEntries[$entryId] = self::buildTemplateToEntryGroupMap(intval($eagFormId), $entryId, $categories);
+				}
+
+				// Copy all settings from template group to this entry group, using the entry's mapping
+				formulizePermHandler::copyGroupPermissions($tgid, $entryGroupId, null, $processedEntries[$entryId]);
+			}
 		}
 	}
 
@@ -1075,6 +1174,8 @@ class formulizeHandler {
 		foreach($elementObjectProperties as $property=>$value) {
 			$elementObject->setVar($property, $value);
 		}
+		// Synchronize template group references: ensure entry groups mirror template groups
+		self::synchronizeTemplateGroupReferencesInElement($elementObject);
 		if($element_handler->insert($elementObject) == false) {
 			// most likely a DB error?
 			throw new Exception('Could not create/update element. '.$xoopsDB->error());
