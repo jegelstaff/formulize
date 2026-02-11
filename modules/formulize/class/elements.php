@@ -1150,6 +1150,20 @@ class formulizeElementsHandler {
 	static public function processUserAccountSubmission($formId, $entryId) {
 		return formulizeUserAccountElementHandler::processUserAccountSubmission($formId, $entryId);
 	}
+
+	/**
+	 * Evaluate an entry regarding the default group memberships for users that may be impacted by the data in the entry
+	 * Some group memberships are conditional, based on the data in the entry, and this method will evaluate those conditions and add or remove group memberships accordingly
+	 * The form associated with the groups might be a different one, the form associated with the user might be a different one. Everything is worked out in the method.
+	 * Processed through the base userAccountElement handler class
+	 * @param int $formId The id of the form the element is in
+	 * @param int $entryId The id of the entry that was submitted
+	 * @return int|bool the user id or false on failure
+	 */
+	static public function reevaluateDefaultGroupMemberships($formId, $entryId) {
+		return formulizeUserAccountElementHandler::reevaluateDefaultGroupMemberships($formId, $entryId);
+	}
+
 }
 
 function optionIsValidForElement($option, $elementHandleOrId) {
