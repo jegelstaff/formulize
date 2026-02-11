@@ -101,7 +101,7 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_id';
-    $checkThisField = 'entries_are_users_default_groups_element_links';
+    $checkThisField = 'entries_are_users_user_is_owner';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -537,6 +537,7 @@ function patch40() {
 				$sql['add_entries_are_users_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_conditions` text NULL";
 				$sql['add_entries_are_users_default_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_default_groups` text NULL";
 				$sql['add_entries_are_users_default_groups_element_links'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_default_groups_element_links` text NULL";
+				$sql['add_entries_are_users_user_is_owner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_user_is_owner` tinyint(1) NOT NULL default 0";
 				$sql['add_entries_are_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_groups` tinyint(1) NOT NULL default 0";
 				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
@@ -707,7 +708,7 @@ function patch40() {
 										print "Number of entries / toggle repeat data options for list screens already added. result: OK<br>";
                 } elseif($key === "add_map_show_view_entry_link") {
                     print "show_view_entry_link already added to map screens. result: OK<br>";
-                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_groups" OR $key === "add_entries_are_users_conditions" OR $key === "add_entries_are_users_default_groups" OR $key === "add_entries_are_users_default_groups_element_links") {
+                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_groups" OR $key === "add_entries_are_users_conditions" OR $key === "add_entries_are_users_default_groups" OR $key === "add_entries_are_users_default_groups_element_links" OR $key === "add_entries_are_users_user_is_owner") {
 										print "Entries-are-users/groups options already added. result: OK<br>";
 								} elseif($key === "add_is_group_template") {
 										print "is_group_template field already added to groups table. result: OK<br>";
