@@ -518,8 +518,64 @@ class formulizeHandler {
 	}
 
 	/**
+	 * Finds an existing unassociated group by trying multiple name patterns.
+	 * Used by syncEntryGroups to adopt pre-existing groups instead of creating duplicates.
+	 *
+	 * For the "All Users" category, tries these names in order:
+	 *   1. "{PI} - All Users"  2. "{PI} All Users"  3. "{PI} - Users"  4. "{PI} Users"  5. "{PI}" (legacy)
+	 * For other categories, tries:
+	 *   1. "{PI} - {Category}"  2. "{PI} {Category}"
+	 *
+	 * Only matches groups where entry_id is NULL or 0 (not already assigned to an entry).
+	 *
+	 * @param string $piValue The principal identifier value for the entry
+	 * @param string $categoryName The category name to search for
+	 * @return int|null The group ID if found, null otherwise
+	 */
+	private static function findUnassociatedGroupByName($piValue, $categoryName) {
+		global $xoopsDB;
+		$allUsersLabel = defined('_AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS')
+			? _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS : 'All Users';
+		$isAllUsers = ($categoryName === $allUsersLabel);
+
+		// Build list of candidate names to try, in priority order
+		$candidateNames = array();
+		$candidateNames[] = $piValue . " - " . $categoryName; // standard format
+		$candidateNames[] = $piValue . " " . $categoryName;   // space connector
+		if ($isAllUsers) {
+			$candidateNames[] = $piValue . " - Users";         // alternate suffix
+			$candidateNames[] = $piValue . " Users";           // alternate suffix, space connector
+			$candidateNames[] = $piValue;                      // legacy: PI value only
+		}
+
+		// Try each candidate name, return the first match
+		foreach ($candidateNames as $name) {
+			$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+				   " WHERE name = " . $xoopsDB->quoteString($name) .
+				   " AND (entry_id IS NULL OR entry_id = 0)";
+			$result = $xoopsDB->query($sql);
+			if ($result) {
+				$row = $xoopsDB->fetchArray($result);
+				if ($row) {
+					// Verify there's only one match (avoid ambiguity)
+					$secondRow = $xoopsDB->fetchArray($result);
+					if (!$secondRow) {
+						return intval($row['groupid']);
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Creates or updates groups for a specific entry in a form with entries_are_groups enabled.
 	 * Groups are named: "{PI value} - {Category Name}" (e.g., "Baskets - All Users", "Baskets - Managers")
+	 *
+	 * When no group is found by form_id + entry_id, attempts to find an existing unassociated group
+	 * by name before creating a new one. This handles the case where the feature is first turned on
+	 * and pre-existing groups should be adopted rather than duplicated.
 	 *
 	 * @param int $fid The form ID
 	 * @param int $entryId The entry ID
@@ -592,19 +648,35 @@ class formulizeHandler {
 				$group_handler->insert($groupObject);
 				$templateToEntryGroupMap[$templateGroupId] = $existingGroupId;
 
-			// Create new group
+			// No group found by form_id+entry_id — try to adopt an existing group by name
 			} elseif(!$existingGroupId) {
-				$newGroup = $group_handler->create();
-				$newGroup->setVar('name', $expectedGroupName);
-				$newGroup->setVar('description', $expectedDescription);
-				$newGroup->setVar('group_type', 'User');
-				$newGroup->setVar('is_group_template', 0); // Not a template, it's an entry group
-				$newGroup->setVar('form_id', $fid);
-				$newGroup->setVar('entry_id', $entryId);
-				$group_handler->insert($newGroup);
-				$newGroupId = $newGroup->getVar('groupid');
-				$templateToEntryGroupMap[$templateGroupId] = $newGroupId;
-				$newGroupIds[] = $newGroupId;
+				$adoptedGroupId = self::findUnassociatedGroupByName($piValue, $categoryName);
+				if ($adoptedGroupId) {
+					// Adopt the existing group: update it to be a proper entry group
+					$groupObject = $group_handler->get($adoptedGroupId);
+					$groupObject->setVar('name', $expectedGroupName);
+					$groupObject->setVar('description', $expectedDescription);
+					$groupObject->setVar('group_type', 'User');
+					$groupObject->setVar('is_group_template', 0);
+					$groupObject->setVar('form_id', $fid);
+					$groupObject->setVar('entry_id', $entryId);
+					$group_handler->insert($groupObject);
+					$templateToEntryGroupMap[$templateGroupId] = $adoptedGroupId;
+					$newGroupIds[] = $adoptedGroupId;
+				} else {
+					// No existing group found at all — create a brand new one
+					$newGroup = $group_handler->create();
+					$newGroup->setVar('name', $expectedGroupName);
+					$newGroup->setVar('description', $expectedDescription);
+					$newGroup->setVar('group_type', 'User');
+					$newGroup->setVar('is_group_template', 0);
+					$newGroup->setVar('form_id', $fid);
+					$newGroup->setVar('entry_id', $entryId);
+					$group_handler->insert($newGroup);
+					$newGroupId = $newGroup->getVar('groupid');
+					$templateToEntryGroupMap[$templateGroupId] = $newGroupId;
+					$newGroupIds[] = $newGroupId;
+				}
 
 			} else {
 				// Existing group, no name change needed
