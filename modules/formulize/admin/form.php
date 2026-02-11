@@ -54,7 +54,22 @@ if ($_GET['fid'] != "new") {
     $formName = $formObject->getVar('title');
 		$singular = $formObject->getVar('singular');
 		$plural = $formObject->getVar('plural');
-    $singleentry = $formObject->getVar('single') ? $formObject->getVar('single') : 'off';
+    $singleentry = $formObject->getVar('single');
+    if (!is_array($singleentry)) {
+        $singleentry = array(2 => ($singleentry ?: 'off'));
+    }
+    $member_handler_se = xoops_gethandler('member');
+    $singleentry_groups = array();
+    foreach ($singleentry as $gid => $value) {
+        $groupObj = $member_handler_se->getGroup(intval($gid));
+        if ($groupObj) {
+            $singleentry_groups[] = array(
+                'id' => intval($gid),
+                'name' => $groupObj->getVar('name'),
+                'value' => $value
+            );
+        }
+    }
     $tableform = $formObject->getVar('tableform');
     $headerlist = $formObject->getVar('headerlist');
     $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
@@ -586,7 +601,10 @@ if ($_GET['fid'] != "new") {
     $formName = "";
 		$singular = "";
 		$plural = "";
-    $singleentry = "off"; // need to send a default for this
+    $singleentry = array(2 => "off"); // need to send a default for this
+    $member_handler_se = xoops_gethandler('member');
+    $regGroupObj = $member_handler_se->getGroup(XOOPS_GROUP_USERS);
+    $singleentry_groups = array(array('id' => 2, 'name' => $regGroupObj ? $regGroupObj->getVar('name') : 'Registered Users', 'value' => 'off'));
     $defaultform = 0;
     $defaultlist = 0;
     $menutext = _AM_APP_USETITLE;
@@ -716,6 +734,8 @@ foreach($legacyFormScreens as $screen) {
 
 $settings = array();
 $settings['singleentry'] = $singleentry;
+$settings['singleentry_groups'] = $singleentry_groups;
+$settings['singleentry_group_autocomplete_ui'] = formulize_renderSingleentryGroupsUI();
 $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
 $settings['send_digests'] = $send_digests;

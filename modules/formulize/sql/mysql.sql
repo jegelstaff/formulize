@@ -369,7 +369,7 @@ CREATE TABLE formulize_id (
   form_title varchar(255) NOT NULL default '',
 	singular varchar(255) NULL default '',
 	plural varchar(255) NULL default '',
-  singleentry varchar(5) default NULL,
+  singleentry text NULL,
   headerlist text,
   tableform varchar(255) default NULL,
   lockedform tinyint(1) NULL default NULL,
