@@ -207,10 +207,10 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 				}
 				if($fid) {
 					$menulinkFormObject = $form_handler->get($fid);
-					$singleEntry = $menulinkFormObject->getVar('single');
+					$singleEntry = resolveEffectiveSingle($menulinkFormObject->getVar('single'), $groups);
 					$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 					$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
-					if((!$singleEntry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleEntry != "group")) {
+					if(($singleEntry == "off" AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleEntry != "group")) {
 						$menuLinkScreenId = $menulinkFormObject->getVar('defaultlist');
 					} else {
 						$menuLinkScreenId = $menulinkFormObject->getVar('defaultform');
