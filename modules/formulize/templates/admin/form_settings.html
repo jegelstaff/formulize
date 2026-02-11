@@ -117,7 +117,6 @@
 		</div>
 
 		<!-- Entries Represent Users -->
-		<!-- TODO add option for entry_user_is_owner!! -->
 		<div class="form-item" id="entries_are_users_container">
 			<fieldset>
 				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS}></label></legend>
@@ -135,6 +134,26 @@
 				</div>
 				<div class="description">
 					<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN}></p>
+				</div>
+
+				<!-- User Is Owner -->
+				<div id="entries_are_users_user_is_owner_container" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+					<h4 style="margin-top: 0;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER}></h4>
+					<div class="form-radios">
+						<label for="entries_are_users_user_is_owner-0">
+							<input type="radio" id="entries_are_users_user_is_owner-0" name="forms-entries_are_users_user_is_owner" value="0" />
+							<{$smarty.const._AM_NO}>
+						</label>
+					</div>
+					<div class="form-radios">
+						<label for="entries_are_users_user_is_owner-1">
+							<input type="radio" id="entries_are_users_user_is_owner-1" name="forms-entries_are_users_user_is_owner" value="1" />
+							<{$smarty.const._AM_YES}>
+						</label>
+					</div>
+					<div class="description">
+						<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER_EXPLAIN}></p>
+					</div>
 				</div>
 
 				<!-- Group Membership -->
@@ -351,6 +370,7 @@
 		<script>
 		// Initialize checked state
 		$("#entries_are_users-<{$content.entries_are_users}>").attr('checked', 'checked');
+		$("#entries_are_users_user_is_owner-<{$content.entries_are_users_user_is_owner|default:0}>").attr('checked', 'checked');
 		$("#entries_are_groups-<{$content.entries_are_groups}>").attr('checked', 'checked');
 
 		// Initialize visibility based on current values
@@ -365,9 +385,11 @@
 		// Initialize user mapping container visibility based on entries_are_users
 		if (parseInt("<{$content.entries_are_users}>") != 1) {
 			$("#user_mapping_container").hide();
+			$("#entries_are_users_user_is_owner_container").hide();
 			$("#entries_are_users_conditions_container").hide();
 			$("#entries_are_users_default_groups_container").hide();
 		} else {
+			$("#entries_are_users_user_is_owner_container").show();
 			$("#entries_are_users_conditions_container").show();
 			$("#entries_are_users_default_groups_container").show();
 		}
@@ -379,11 +401,13 @@
 				$("#entries_are_groups_container").slideUp();
 				$("#group_categories_container").slideUp();
 				$("#user_mapping_container").slideDown();
+				$("#entries_are_users_user_is_owner_container").slideDown();
 				$("#entries_are_users_conditions_container").slideDown();
 				$("#entries_are_users_default_groups_container").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#entries_are_groups_container").slideDown();
 				$("#user_mapping_container").slideUp();
+				$("#entries_are_users_user_is_owner_container").slideUp();
 				$("#entries_are_users_conditions_container").slideUp();
 				$("#entries_are_users_default_groups_container").slideUp();
 			}
@@ -394,6 +418,7 @@
 				$("#entries_are_users-0").attr('checked', 'checked');
 				$("#entries_are_users_container").slideUp();
 				$("#user_mapping_container").slideUp();
+				$("#entries_are_users_user_is_owner_container").slideUp();
 				$("#entries_are_users_conditions_container").slideUp();
 				$("#entries_are_users_default_groups_container").slideUp();
 				$("#group_categories_container").slideDown();

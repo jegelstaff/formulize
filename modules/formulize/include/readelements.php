@@ -269,9 +269,9 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 			foreach($creation_users as $creation_user) {
                 if (formulizePermHandler::user_can_edit_entry($elementFid, $creation_user, $currentEntry)) {
 									// if form entries are user accounts, and the user account is supposed to be owner of the entry, then override the creation_user
-									/*if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entry_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
+									if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
 										$creation_user = $userIdsForUserAccountElements[$elementFid][$currentEntry];
-									}*/
+									}
 										// capture old PI value for entries_are_groups forms before update
 										// TODO ensure forms with entries_are_groups always have a PI set!!
 										if ($formulize_formObject->getVar('entries_are_groups')
@@ -314,6 +314,10 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             // TODO: should this use $uid or a proxy user setting?
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
                 $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
+								if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
+									$dataHandler = new formulizeDataHandler($elementFid);
+									$dataHandler->setEntryOwnerGroups($userIdsForUserAccountElements[$elementFid][$currentEntry], $currentEntry);
+								}
 								if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
                     $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
                     if(!isset($formulize_allWrittenFids[$elementFid])) {

@@ -68,6 +68,7 @@ if ($_GET['fid'] != "new") {
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
 		$entries_are_users = $formObject->getVar('entries_are_users');
+		$entries_are_users_user_is_owner = $formObject->getVar('entries_are_users_user_is_owner');
 		$entries_are_users_conditions_all = $formObject->getVar('entries_are_users_conditions');
 		if (!is_array($entries_are_users_conditions_all)) {
 			$entries_are_users_conditions_all = array();
@@ -595,6 +596,7 @@ if ($_GET['fid'] != "new") {
 		$defaultpi = 0;
 		$pioptions = array();
 		$entries_are_users = 0;
+		$entries_are_users_user_is_owner = 0;
 		$entries_are_users_conditions_ui = ""; // Don't show conditions UI for new forms - no elements exist yet
 		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI(array());
 		$entries_are_users_default_groups_selected = array();
@@ -721,6 +723,7 @@ $settings['store_revisions'] = $store_revisions;
 $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 $settings['entries_are_users'] = $entries_are_users;
+$settings['entries_are_users_user_is_owner'] = $entries_are_users_user_is_owner;
 $settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
 $settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
 $settings['entries_are_users_default_groups_selected'] = $entries_are_users_default_groups_selected;
