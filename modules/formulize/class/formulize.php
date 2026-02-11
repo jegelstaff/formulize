@@ -590,7 +590,7 @@ class formulizeHandler {
 
 		// For each template group, propagate to all its entry groups
 		foreach ($templateGroupIds as $tgid => $eagFormId) {
-			$entryGroupIds = formulizePermHandler::getAllEntryGroupsForTemplateGroup($tgid);
+			$entryGroupIds = self::getTemplateToEntryGroupMap($tgid);
 			if (empty($entryGroupIds)) {
 				continue;
 			}
@@ -839,7 +839,8 @@ class formulizeHandler {
 				if (!is_object($element)) {
 					continue;
 				}
-				if (self::synchronizeTemplateGroupReferencesInElement($element)) {
+				$templateGroupMap = self::getTemplateToEntryGroupMap();
+				if (!empty($templateGroupMap) && formulizePermHandler::synchronizeGroupReferencesInElement($element, $templateGroupMap)) {
 					$element_handler->insert($element);
 				}
 			}
@@ -847,19 +848,23 @@ class formulizeHandler {
 	}
 
 	/**
-	 * Synchronize template group references in a single element's settings.
-	 * Builds a map of all template groups to their entry groups (cached per request),
-	 * then delegates to formulizePermHandler::synchronizeGroupReferencesInElement().
+	 * Builds a map of all template groups to their entry groups across all entries_are_groups forms.
+	 * Result is cached per request via a static variable.
 	 *
-	 * Call this before saving an element to keep entry groups in sync with template groups.
-	 *
-	 * @param object $element The element object (modified in place via setVar)
-	 * @return bool True if the element was modified
+	 * @return array Map of templateGroupId => [entryGroupId1, entryGroupId2, ...]
 	 */
-	public static function synchronizeTemplateGroupReferencesInElement($element) {
-		static $templateGroupMap = null; // templateGroupId => [entryGroupId, ...]
+	/**
+	 * Get a map of template group IDs to their corresponding entry group IDs.
+	 * Results are cached for the duration of the request.
+	 *
+	 * @param int|null $templateGroupId Optional. If provided, returns just the entry group IDs
+	 *        for that specific template group (array of ints). If null, returns the full map
+	 *        (templateGroupId => array of entry group IDs).
+	 * @return array Either the full map or a single template group's entry group IDs
+	 */
+	public static function getTemplateToEntryGroupMap($templateGroupId = null) {
+		static $templateGroupMap = null;
 
-		// Build the map once per request
 		if ($templateGroupMap === null) {
 			$templateGroupMap = array();
 
@@ -876,8 +881,7 @@ class formulizeHandler {
 				$groupCategories = $eagForm->getVar('group_categories');
 				if (!is_array($groupCategories)) continue;
 
-				foreach ($groupCategories as $templateGroupId => $categoryName) {
-					// Get all entry groups for this template group
+				foreach ($groupCategories as $tgId => $categoryName) {
 					$egSql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
 						" WHERE form_id = " . $eagFormId .
 						" AND is_group_template = 0 AND entry_id > 0" .
@@ -887,17 +891,17 @@ class formulizeHandler {
 					while ($egRow = $xoopsDB->fetchArray($egResult)) {
 						$entryGroups[] = intval($egRow['groupid']);
 					}
-					$templateGroupMap[intval($templateGroupId)] = $entryGroups;
+					$templateGroupMap[intval($tgId)] = $entryGroups;
 				}
 			}
 		}
 
-		if (empty($templateGroupMap)) {
-			return false;
+		if ($templateGroupId !== null) {
+			$templateGroupId = intval($templateGroupId);
+			return isset($templateGroupMap[$templateGroupId]) ? $templateGroupMap[$templateGroupId] : array();
 		}
 
-		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
-		return formulizePermHandler::synchronizeGroupReferencesInElement($element, $templateGroupMap);
+		return $templateGroupMap;
 	}
 
 	/**
@@ -1175,7 +1179,11 @@ class formulizeHandler {
 			$elementObject->setVar($property, $value);
 		}
 		// Synchronize template group references: ensure entry groups mirror template groups
-		self::synchronizeTemplateGroupReferencesInElement($elementObject);
+		$templateGroupMap = self::getTemplateToEntryGroupMap();
+		if (!empty($templateGroupMap)) {
+			include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+			formulizePermHandler::synchronizeGroupReferencesInElement($elementObject, $templateGroupMap);
+		}
 		if($element_handler->insert($elementObject) == false) {
 			// most likely a DB error?
 			throw new Exception('Could not create/update element. '.$xoopsDB->error());
