@@ -296,14 +296,6 @@ if($formObject->getVar('entries_are_users')
 	}
 }
 
-// Process group association when entries_are_groups is first enabled and form has a principal identifier
-// This runs automatically without user interaction, only when the setting is first turned on
-if($formObject->getVar('entries_are_groups')
-	AND $oldEntriesAreGroups === 0
-	AND $formObject->getVar('pi')) {
-	$form_handler->associateExistingGroupsWithFormEntries($formObject);
-}
-
 // check if form handle changed
 $formulize_altered_form_handle = $processedValues['forms']['form_handle'] != $formObject->getVar('form_handle') ? true : false;
 // check if singular or plural changed
