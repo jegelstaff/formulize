@@ -1170,7 +1170,7 @@ function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue,
 
 		// something bad happened
 		} else {
-			throw new Exception("Could not determine nature of linkage between linked elements. Main element: " . $joinHandles[$linkselfids[$linkOrdinal]] . ". Target element: " . $joinHandles[$linktargetids[$linkOrdinal]]);
+			throw new Exception("Could not determine nature of linkage between linked elements. Main element: " . $joinHandles[$linkselfids[$linkOrdinal]] . ". Target element: " . $joinHandles[$linktargetids[$linkOrdinal]]. ". Are either linked elements and do they have a source element set?");
 		}
 
 		// put together the terms we've determined
