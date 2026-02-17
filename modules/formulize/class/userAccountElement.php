@@ -343,9 +343,12 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 								}
 							}
 							// Resolve template groups to the actual entry group
-							$resolvedGroupId = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler);
-							if($resolvedGroupId && !in_array($resolvedGroupId, $submittedGroupIds)) {
-								$submittedGroupIds[] = $resolvedGroupId;
+							if($resolvedGroupIds = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler)) {
+								foreach($resolvedGroupIds as $resolvedGroupId) {
+									if($resolvedGroupId && !in_array($resolvedGroupId, $submittedGroupIds)) {
+										$submittedGroupIds[] = $resolvedGroupId;
+									}
+								}
 							}
 						}
 					}
@@ -375,7 +378,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	}
 
 	/**
-	 * Resolve a default group ID to the actual group the user should be added to.
+	 * Resolve a default group ID to the actual group(s) the user should be added to.
 	 * For regular groups, returns the group ID as-is.
 	 * For template groups, uses element_links to find which entry in the entries_are_groups
 	 * form is referenced by the current entry, then looks up the actual group for that
@@ -386,7 +389,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * @param int $entryId The current entry being processed
 	 * @param array $elementLinks The entries_are_users_default_groups_element_links from form settings
 	 * @param object $data_handler The data handler for the form
-	 * @return int|false The resolved group ID, or false if resolution failed
+	 * @return array The resolved group IDs, or an empty array if resolution failed
 	 */
 	static private function resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler) {
 		global $xoopsDB;
@@ -395,11 +398,11 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$result = $xoopsDB->query($sql);
 		$groupRow = $xoopsDB->fetchArray($result);
 		if(!$groupRow) {
-			return false;
+			return array();
 		}
 		// Regular group — use as-is
 		if(!$groupRow['is_group_template']) {
-			return $defaultGroupId;
+			return array($defaultGroupId);
 		}
 		// Template group — resolve to the actual entry group
 		// Template groups store form_id (the entries_are_groups form) but not entry_id
@@ -407,18 +410,18 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$eagFormObject = $form_handler->get($eagFormId);
 		if(!$eagFormObject) {
-			return false;
+			return array();
 		}
 		$groupCategories = $eagFormObject->getVar('group_categories');
 		if(!is_array($groupCategories) || !isset($groupCategories[$defaultGroupId])) {
-			return false;
+			return array();
 		}
 		$categoryName = $groupCategories[$defaultGroupId];
 
 		// Get the element links for this template group — these are element IDs in the entries_are_users
 		// form (or related forms) that link to the entries_are_groups form
 		if(!isset($elementLinks[$defaultGroupId]) || !is_array($elementLinks[$defaultGroupId]) || empty($elementLinks[$defaultGroupId])) {
-			return false; // no element links configured, can't resolve
+			return array(); // no element links configured, can't resolve
 		}
 		$linkedElementIds = $elementLinks[$defaultGroupId];
 
@@ -426,6 +429,8 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		// so we can read linked element values even if the element is in a different form
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$entryData = gatherDataset($formId, filter: $entryId, frid: -1, bypassCache: true);
+
+		$resolvedGroupIds = array();
 
 		foreach($linkedElementIds as $linkedEleId) {
 			$linkedEleId = intval($linkedEleId);
@@ -458,11 +463,11 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					   " AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
 				$result = $xoopsDB->query($sql);
 				if($row = $xoopsDB->fetchArray($result)) {
-					return intval($row['groupid']);
+					$resolvedGroupIds[] = intval($row['groupid']);
 				}
 			}
 		}
-		return false; // could not resolve
+		return $resolvedGroupIds;
 	}
 
 	/**
@@ -562,37 +567,40 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
 			}
 
-			$resolvedGroupId = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler);
+			$resolvedGroupIds = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler);
+			foreach($resolvedGroupIds as $resolvedGroupId) {
 
-			if($conditionsMet && $resolvedGroupId) {
-				// Conditions met (or unconditional): add to the resolved group,
-				// and remove from any other groups in the same template family
-				// (handles the case where the resolved group changed)
-				$templateFamilyGroups = self::getAllGroupsForTemplateCategory($defaultGroupId);
-				foreach($templateFamilyGroups as $familyGroupId) {
-					if($familyGroupId != $resolvedGroupId && in_array($familyGroupId, $currentGroupIds)) {
-						$member_handler->removeUsersFromGroup($familyGroupId, array($userId));
-						$currentGroupIds = array_values(array_diff($currentGroupIds, array($familyGroupId)));
+				if($conditionsMet && $resolvedGroupId) {
+					// Conditions met (or unconditional): add to the resolved group,
+					// and remove from any other groups in the same template family
+					// (handles the case where the resolved group changed)
+					$templateFamilyGroups = self::getAllGroupsForTemplateCategory($defaultGroupId);
+					foreach($templateFamilyGroups as $familyGroupId) {
+						if(!in_array($familyGroupId, $resolvedGroupIds) && in_array($familyGroupId, $currentGroupIds)) {
+							$member_handler->removeUsersFromGroup($familyGroupId, array($userId));
+							$currentGroupIds = array_values(array_diff($currentGroupIds, array($familyGroupId)));
+						}
+					}
+					if(!in_array($resolvedGroupId, $currentGroupIds)) {
+						$member_handler->addUserToGroup($resolvedGroupId, $userId);
+						$currentGroupIds[] = $resolvedGroupId;
+					}
+				} elseif(!$conditionsMet) {
+					// Conditions not met: remove from the resolved group and any template family groups
+					$groupsToRemove = array();
+					if($resolvedGroupId) {
+						$groupsToRemove[] = $resolvedGroupId;
+					}
+					$templateFamilyGroups = self::getAllGroupsForTemplateCategory($defaultGroupId);
+					$groupsToRemove = array_unique(array_merge($groupsToRemove, $templateFamilyGroups));
+					foreach($groupsToRemove as $removeGroupId) {
+						if(in_array($removeGroupId, $currentGroupIds)) {
+							$member_handler->removeUsersFromGroup($removeGroupId, array($userId));
+							$currentGroupIds = array_values(array_diff($currentGroupIds, array($removeGroupId)));
+						}
 					}
 				}
-				if(!in_array($resolvedGroupId, $currentGroupIds)) {
-					$member_handler->addUserToGroup($resolvedGroupId, $userId);
-					$currentGroupIds[] = $resolvedGroupId;
-				}
-			} elseif(!$conditionsMet) {
-				// Conditions not met: remove from the resolved group and any template family groups
-				$groupsToRemove = array();
-				if($resolvedGroupId) {
-					$groupsToRemove[] = $resolvedGroupId;
-				}
-				$templateFamilyGroups = self::getAllGroupsForTemplateCategory($defaultGroupId);
-				$groupsToRemove = array_unique(array_merge($groupsToRemove, $templateFamilyGroups));
-				foreach($groupsToRemove as $removeGroupId) {
-					if(in_array($removeGroupId, $currentGroupIds)) {
-						$member_handler->removeUsersFromGroup($removeGroupId, array($userId));
-						$currentGroupIds = array_values(array_diff($currentGroupIds, array($removeGroupId)));
-					}
-				}
+
 			}
 		}
 
