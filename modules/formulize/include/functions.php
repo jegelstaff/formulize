@@ -5232,44 +5232,6 @@ function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete',
 	return array($returnValues, $reloadFlag);
 }
 
-// This function takes a parsed condition array and returns a human-readable description.
-// Condition structure: [0] = element IDs/handles, [1] = operators, [2] = terms/values, [3] = types
-// $element_handler is optional; if provided, element IDs will be resolved to captions.
-function formulize_describeConditions($conditions, $element_handler = null) {
-	if(!is_array($conditions) || empty($conditions) || !isset($conditions[0])) {
-		return '';
-	}
-	$parts = array();
-	$elements = $conditions[0];
-	$ops = isset($conditions[1]) ? $conditions[1] : array();
-	$terms = isset($conditions[2]) ? $conditions[2] : array();
-	foreach($elements as $i => $eleIdOrHandle) {
-		$elementLabel = $eleIdOrHandle;
-		if($element_handler) {
-			$elementObject = $element_handler->get($eleIdOrHandle);
-			if($elementObject) {
-				$elementLabel = strip_tags($elementObject->getVar('ele_caption'));
-			}
-		}
-		$op = isset($ops[$i]) ? $ops[$i] : '=';
-		$term = isset($terms[$i]) ? $terms[$i] : '';
-		$parts[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITION_ITEM, $elementLabel, $op, $term);
-	}
-	return implode(' and ', $parts);
-}
-
-// Formats an array of strings as a natural-language list with commas and "and".
-// eg: ['A'] => 'A', ['A','B'] => 'A and B', ['A','B','C'] => 'A, B, and C'
-function formulize_listWithAnd($items) {
-	$items = array_values($items);
-	$count = count($items);
-	if($count == 0) { return ''; }
-	if($count == 1) { return $items[0]; }
-	if($count == 2) { return $items[0] . ' and ' . $items[1]; }
-	$last = array_pop($items);
-	return implode(', ', $items) . ', and ' . $last;
-}
-
 // this function renders the default groups selection UI for entries-are-users forms
 // uses the same group list as the userAccountGroupMembership element type
 function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
