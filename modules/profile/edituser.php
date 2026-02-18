@@ -145,6 +145,25 @@ switch ($op) {
 								$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($edituser->getVar('uid')).' AND method = '.TFA_APP;
 								$xoopsDB->queryF($sql);
 							}
+
+						// ADDED BY JULIAN EGELSTAFF FEB 17 2026 TO HANDLE TIMEZONE FIELD SAVING OF TEXT VALUE
+						} elseif ($fieldname == 'timezone') {
+							// get the field values of the timezone element, set the text value of the $value as the new $value
+							$options = unserialize($fields[$i]->getVar('field_options', 'n'));
+							$value = $options[$value];
+							// Set legacy timezone_offset to the standard (non-DST) offset for backwards compatibility
+							$tzName = str_replace(' ', '_', $value);
+							$tz = new DateTimeZone($tzName);
+							// Check January and July to find the standard (non-DST) offset
+							$jan = new DateTime('January 15', $tz);
+							$jul = new DateTime('July 15', $tz);
+							if (!$jan->format('I')) {
+								$standardOffset = $tz->getOffset($jan) / 3600;
+							} else {
+								$standardOffset = $tz->getOffset($jul) / 3600;
+							}
+							$edituser->setVar('timezone_offset', round($standardOffset, 1));
+
 						}
 
 						$profile->setVar($fieldname, $value);
