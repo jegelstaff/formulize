@@ -152,17 +152,8 @@ switch ($op) {
 							$options = unserialize($fields[$i]->getVar('field_options', 'n'));
 							$value = $options[$value];
 							// Set legacy timezone_offset to the standard (non-DST) offset for backwards compatibility
-							$tzName = str_replace(' ', '_', $value);
-							$tz = new DateTimeZone($tzName);
-							// Check January and July to find the standard (non-DST) offset
-							$jan = new DateTime('January 15', $tz);
-							$jul = new DateTime('July 15', $tz);
-							if (!$jan->format('I')) {
-								$standardOffset = $tz->getOffset($jan) / 3600;
-							} else {
-								$standardOffset = $tz->getOffset($jul) / 3600;
-							}
-							$edituser->setVar('timezone_offset', round($standardOffset, 1));
+							include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+							$edituser->setVar('timezone_offset', formulize_getStandardTimezoneOffset($value));
 
 						}
 
