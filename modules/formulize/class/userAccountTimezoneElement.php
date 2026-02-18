@@ -34,7 +34,7 @@ class formulizeUserAccountTimezoneElement extends formulizeUserAccountElement {
     function __construct() {
 			parent::__construct();
       $this->name = "User Account Timezone";
-			$this->userProperty = "timezone_offset";
+			$this->userProperty = "profile:timezone";
 		}
 
 }
@@ -44,6 +44,27 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 
 	function create() {
 		return new formulizeUserAccountTimezoneElement();
+	}
+
+	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
+	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
+	// $element is the element object
+	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
+	// $entry_id is the ID of the entry being loaded
+	function loadValue($element, $value, $entry_id) {
+		$value = parent::loadValue($element, $value, $entry_id);
+		if(!$value) {
+			// get the uid for the current entry, if there is one
+			// get that user's timezone_default, if there is one
+			$dataHandler = new formulizeDataHandler($element->getVar('fid'));
+			if($entryUserId = intval($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
+				$member_handler = xoops_gethandler('member');
+				if($userObject = $member_handler->getUser($entryUserId)) {
+					$value = formulize_getIANATimezone($userObject->getVar('timezone_offset'));
+				}
+			}
+		}
+		return $value;
 	}
 
 	// this method renders the element for display in a form
@@ -57,20 +78,20 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		$options = array(
-			'0' => 'GMT',
-			'-3.5' => 'Newfoundland',
-			'-4' => 'Atlantic',
-			'-5' => 'Eastern',
-			'-6' => 'Central',
-			'-7' => 'Mountain',
-			'-8' => 'Pacific'
-		);
-		if($ele_value === null) {
+		$timezones = formulize_getTimezoneList();
+		if(!$ele_value) {
 			global $xoopsConfig;
-			$ele_value = $xoopsConfig['default_TZ'];
+			$ele_value = formulize_getIANATimezone($xoopsConfig['default_TZ']);
 		}
-		return $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
+		$disabled = $isDisabled ? ' disabled="disabled"' : '';
+		$html = '<select name="'.$markupName.'" id="'.$markupName.'" onchange="javascript:formulizechanged=1;"'.$disabled.'>';
+		foreach($timezones as $tz) {
+			$selected = ($tz == $ele_value) ? ' selected="selected"' : '';
+			$html .= '<option value="'.htmlspecialchars($tz, ENT_QUOTES).'"'.$selected.'>'.htmlspecialchars($tz, ENT_QUOTES).'</option>';
+		}
+		$html .= '</select>';
+		$form_ele = new XoopsFormLabel($caption, $html, $markupName);
+		return $form_ele;
 	}
 
 }
