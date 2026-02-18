@@ -9192,24 +9192,50 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 }
 
 /**
- * Generate the list of official IANA timezones and update the profile_field
- * options for the timezone field. Uses PHP's timezone_identifiers_list()
- * so the list stays current with PHP updates.
+ * Get the standard (non-DST) UTC offset in hours for a given timezone name.
+ * Checks January and July to find a non-DST month, covering both hemispheres.
  *
- * @param object $db Database connection object ($xoopsDB or equivalent)
+ * @param string $timezoneName The timezone name, either with spaces (e.g. "America/New York") or underscores (e.g. "America/New_York")
+ * @return float The standard offset in hours (e.g. -5.0 for Eastern, 5.5 for India)
  */
-function formulize_update_timezone_options($db) {
+function formulize_getStandardTimezoneOffset($timezoneName) {
+	$tzName = str_replace(' ', '_', $timezoneName);
+	$tz = new DateTimeZone($tzName);
+	$jan = new DateTime('January 15', $tz);
+	if (!$jan->format('I')) {
+		$standardOffset = $tz->getOffset($jan) / 3600;
+	} else {
+		$jul = new DateTime('July 15', $tz);
+		$standardOffset = $tz->getOffset($jul) / 3600;
+	}
+	return round($standardOffset, 1);
+}
+
+/**
+ * Generate the list of official IANA timezones, sorted alphabetically,
+ * with underscores replaced by spaces for display. Uses PHP's
+ * timezone_identifiers_list() so the list stays current with PHP updates.
+ *
+ * @return array Indexed array of timezone names (e.g. "America/Toronto")
+ */
+function formulize_getTimezoneList() {
 	$timezones = timezone_identifiers_list();
-	// Replace underscores with spaces and sort alphabetically
 	$labels = array();
 	foreach ($timezones as $tz) {
 		$labels[] = str_replace('_', ' ', $tz);
 	}
 	sort($labels);
-	$options = array();
-	foreach ($labels as $i => $label) {
-		$options[$i] = $label;
-	}
+	return array_values($labels);
+}
+
+/**
+ * Update the profile_field options for the timezone field with the full
+ * list of official IANA timezones.
+ *
+ * @param object $db Database connection object ($xoopsDB or equivalent)
+ */
+function formulize_update_timezone_options($db) {
+	$options = formulize_getTimezoneList();
 	$serialized = serialize($options);
 	$sql = "UPDATE " . $db->prefix("profile_field") . " SET field_options = " . $db->quoteString($serialized) . " WHERE field_name = 'timezone'";
 	$db->queryF($sql);

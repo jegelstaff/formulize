@@ -271,6 +271,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 							if($property == '2faphone') {
 								$value = preg_replace('/[^0-9]/', '', $value);
 							}
+							if($property == 'timezone') {
+								// Also set legacy timezone_offset to the standard (non-DST) offset
+								$userObject->setVar('timezone_offset', formulize_getStandardTimezoneOffset($value));
+							}
 							$profile->setVar($property, $value);
 						} else {
 							if($userProperty == 'uname') {
