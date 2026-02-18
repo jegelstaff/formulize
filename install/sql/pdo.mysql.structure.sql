@@ -569,7 +569,7 @@ CREATE TABLE users (
   `rank` smallint(5) unsigned NOT NULL default '0',
   level varchar(3) NOT NULL default '1',
   theme varchar(100) NOT NULL default '',
-  timezone_offset float(3,1) NOT NULL default '0.0',
+  timezone_offset float(4,2) NOT NULL default '0.00',
   last_login int(10) unsigned NOT NULL default '0',
   umode varchar(10) NOT NULL default '',
   uorder tinyint(1) unsigned NOT NULL default '0',

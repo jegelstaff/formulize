@@ -86,6 +86,11 @@ foreach(explode(";\r",str_replace(array("\n","\n\r","\r\n"), "\r", $formulizeSta
 	}
 }
 
+// Populate timezone options in profile_field
+include_once ICMS_ROOT_PATH . "/modules/formulize/include/functions.php";
+global $xoopsDB;
+formulize_update_timezone_options($xoopsDB);
+
 // write a lock file so the install folder is inaccessible (if not deleted automatically)
 file_put_contents(ICMS_ROOT_PATH . '/install.lock', '');
 

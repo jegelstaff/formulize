@@ -1235,6 +1235,96 @@ function patch40() {
             }
         }
 
+        // ADD TIMEZONE OPTION TO PROFILE
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = 'timezone'";
+        if($res = $xoopsDB->queryF($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'select', '1', 'timezone', 'Time Zone', '', '', 0, '255', 10, '', 1, 1, 1, 'a:0:{}', 1, 1, 1)";
+                if($res = $xoopsDB->queryF($sql)) {
+                    $profileId = $xoopsDB->getInsertId();
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 2, 0)";
+                    if(!$res = $xoopsDB->queryF($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, $profileModId, 'profile_edit')";
+                    if(!$res = $xoopsDB->queryF($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `timezone` varchar(255) NULL DEFAULT NULL";
+                    if(!$res = $xoopsDB->queryF($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    // Migrate existing users' timezone_offset to the new timezone field
+                    $offsetToTimezone = array(
+                        '-12' => 'Etc/GMT+12',
+                        '-11' => 'Pacific/Pago Pago',
+                        '-10' => 'Pacific/Honolulu',
+                        '-9.5' => 'Pacific/Marquesas',
+                        '-9' => 'America/Anchorage',
+                        '-8' => 'America/Vancouver',
+                        '-7' => 'America/Edmonton',
+                        '-6' => 'America/Winnipeg',
+                        '-5' => 'America/Toronto',
+                        '-4' => 'America/Halifax',
+                        '-3.5' => 'America/St Johns',
+                        '-3' => 'America/Argentina/Buenos Aires',
+                        '-2' => 'Atlantic/South Georgia',
+                        '-1' => 'Atlantic/Azores',
+                        '0' => 'UTC',
+                        '1' => 'Europe/Paris',
+                        '2' => 'Africa/Cairo',
+                        '3' => 'Europe/Moscow',
+                        '3.5' => 'Asia/Tehran',
+                        '4' => 'Asia/Dubai',
+                        '4.5' => 'Asia/Kabul',
+                        '5' => 'Asia/Karachi',
+                        '5.5' => 'Asia/Kolkata',
+                        '6' => 'Asia/Dhaka',
+                        '6.5' => 'Asia/Yangon',
+                        '7' => 'Asia/Bangkok',
+                        '8' => 'Asia/Shanghai',
+                        '9' => 'Asia/Tokyo',
+                        '9.5' => 'Australia/Darwin',
+                        '10' => 'Australia/Sydney',
+                        '10.5' => 'Australia/Lord Howe',
+                        '11' => 'Pacific/Guadalcanal',
+                        '12' => 'Pacific/Auckland',
+                        '13' => 'Pacific/Apia',
+                        '14' => 'Pacific/Kiritimati',
+                    );
+                    $sql = "SELECT uid, timezone_offset FROM ".$xoopsDB->prefix("users");
+                    if ($usersRes = $xoopsDB->queryF($sql)) {
+                        while ($userRow = $xoopsDB->fetchArray($usersRes)) {
+                            $uid = intval($userRow['uid']);
+                            $offset = strval(floatval($userRow['timezone_offset']));
+                            $tzName = isset($offsetToTimezone[$offset]) ? $offsetToTimezone[$offset] : 'UTC';
+                            $tzNameEscaped = $xoopsDB->quoteString($tzName);
+                            // Check if profile entry exists
+                            $sql2 = "SELECT profileid FROM ".$xoopsDB->prefix("profile_profile")." WHERE profileid = $uid";
+                            if ($profileRes = $xoopsDB->queryF($sql2)) {
+                                if ($xoopsDB->getRowsNum($profileRes) > 0) {
+                                    $sql2 = "UPDATE ".$xoopsDB->prefix("profile_profile")." SET timezone = $tzNameEscaped WHERE profileid = $uid";
+                                } else {
+                                    $sql2 = "INSERT INTO ".$xoopsDB->prefix("profile_profile")." (profileid, timezone) VALUES ($uid, $tzNameEscaped)";
+                                }
+                                $xoopsDB->queryF($sql2);
+                            }
+                        }
+                    }
+                } else {
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                }
+            }
+        }
+        // Ensure timezone_offset column in users table supports two decimal places
+        $sql = "ALTER TABLE ".$xoopsDB->prefix("users")." MODIFY `timezone_offset` float(4,2) NOT NULL DEFAULT '0.00'";
+        $xoopsDB->queryF($sql);
+        // Ensure field_options column can hold the full timezone list
+        $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_field")." MODIFY `field_options` TEXT NOT NULL DEFAULT ''";
+        $xoopsDB->queryF($sql);
+        // Always update timezone options list (keeps in sync with PHP's timezone database)
+        formulize_update_timezone_options($xoopsDB);
+
         // if this is the first time we're adding the saveandleave and printable view options... set the values to the language constants
         if($needToSetSaveAndLeave) {
             $sql = "UPDATE ".$xoopsDB->prefix("formulize_screen_form"). " SET saveandleavebuttontext = '"._formulize_SAVE_AND_LEAVE."'";

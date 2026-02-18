@@ -8128,84 +8128,111 @@ function repairEOGTable($fid) {
     }
 }
 
-// user offset from server tz
-// assume timestamp is based on server timezone!
-// returns seconds
+/**
+ * Get the user's IANA timezone name for a user object or a numeric timezone offset
+ * Note: User profiles store timezones with spaces instead of underscores for readability
+ * Fallback to server timezone for users without a timezone set, and then to UTC if the server timezone is not set. If a numeric offset is provided that doesn't match a known timezone, will also fall back to UTC.
+ * @param object|null $userObjectOrTZOffsetNumber - optional user object to get the timezone for, or a numeric offset. If not provided, will use the global $xoopsUser. If numeric will attempt a standard conversion.
+ * @return string The timezone string
+ */
+function formulize_getIANATimezone($userObjectOrTZOffsetNumber=null) {
+	$tz = $userObjectOrTZOffsetNumber;
+	// if no numeric value passed in, assume user object and try to get their proper timezone
+	if(!is_numeric($tz)) {
+		global $xoopsUser, $xoopsConfig;
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$userObject = is_object($userObjectOrTZOffsetNumber) ? $userObjectOrTZOffsetNumber : $xoopsUser;
+		$uid = $userObject ? $userObject->getVar('uid') : 0;
+		$profileTz = $userObject ? $userObject->getVar('timezone_offset') : "";
+		if ($uid AND $profile = $profile_handler->get($uid)) {
+			$profileTz = str_replace(' ', '_', $profile->getVar('timezone'));
+		}
+		$tz = $profileTz ? $profileTz : ($userObject ? $userObject->getVar('timezone_offset') :  $xoopsConfig['server_TZ']);
+	}
+	// if we have a numeric value, convert it to a timezone name
+	if(is_numeric($tz)) {
+		$tzNames = array(
+			'-12' => 'Etc/GMT+12',
+			'-11' => 'Pacific/Pago Pago',
+			'-10' => 'Pacific/Honolulu',
+			'-9.5' => 'Pacific/Marquesas',
+			'-9' => 'America/Anchorage',
+			'-8' => 'America/Vancouver',
+			'-7' => 'America/Edmonton',
+			'-6' => 'America/Winnipeg',
+			'-5' => 'America/Toronto',
+			'-4' => 'America/Halifax',
+			'-3.5' => 'America/St Johns',
+			'-3' => 'America/Argentina/Buenos Aires',
+			'-2' => 'Atlantic/South Georgia',
+			'-1' => 'Atlantic/Azores',
+			'0' => 'UTC',
+			'1' => 'Europe/Paris',
+			'2' => 'Africa/Cairo',
+			'3' => 'Europe/Moscow',
+			'3.5' => 'Asia/Tehran',
+			'4' => 'Asia/Dubai',
+			'4.5' => 'Asia/Kabul',
+			'5' => 'Asia/Karachi',
+			'5.5' => 'Asia/Kolkata',
+			'6' => 'Asia/Dhaka',
+			'6.5' => 'Asia/Yangon',
+			'7' => 'Asia/Bangkok',
+			'8' => 'Asia/Shanghai',
+			'9' => 'Asia/Tokyo',
+			'9.5' => 'Australia/Darwin',
+			'10' => 'Australia/Sydney',
+			'10.5' => 'Australia/Lord Howe',
+			'11' => 'Pacific/Guadalcanal',
+			'12' => 'Pacific/Auckland',
+			'13' => 'Pacific/Apia',
+			'14' => 'Pacific/Kiritimati',
+		);
+		if(isset($tzNames[$tz])) {
+			return $tzNames[$tz];
+		} else {
+			error_log("Formulize error: unrecognized numeric timezone offset ($tz) for user $uid. Defaulting to UTC.");
+			return 'UTC';
+		}
+	} else {
+		return $tz;
+	}
+}
+
+/**
+ * Get the user offset from the server timezone in seconds, taking into account daylight savings time if applicable.
+ * @param object|null $userObject - optional user object to get the timezone for. If not provided, will use the global $xoopsUser
+ * @param int|null $timestamp - optional timestamp to calculate the offset for. Assumes timestamp provided is accurate based on the server timezone, ie: is a UTC timestamp representing a moment that we care about in the server timezone (this is because string representations of server time may/will have been converted by PHP to UTC through use of strtotime - yuck!). If not provided, will use the current time.
+ * @return int The offset in seconds from the server timezone to the user's timezone, including daylight savings adjustment if applicable
+ */
 function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
-	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
 	global $xoopsConfig, $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
 	$timestamp = $timestamp ? $timestamp : time();
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-	$tzDiff = $userTimeZone - $serverTimeZone;
-	$daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
-	$tzDiff = $tzDiff + $daylightSavingsAdjustment;
-	return $tzDiff * 3600;
+	$userTimeZone = formulize_getIANATimezone($userObject);
+	$serverTimeZone = formulize_getIANATimezone($xoopsConfig['server_TZ']);
+	$timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$xoopsConfig['server_TZ']); // need to construct new timestamp with the tz offset included, and @ sign in front so PHP dateTime will understand it - necessary to correct for prior conversions to UTC that may have been involved in the production of the timestamps from strings with strtotime
+	$dt = new DateTime($timestamp);
+	$dt->setTimezone(new DateTimeZone($serverTimeZone));
+	$serverOffset = $dt->getOffset();
+	$dt->setTimezone(new DateTimeZone($userTimeZone));
+	$userOffset = $dt->getOffset();
+	return $userOffset - $serverOffset;
 }
 
-// get user offset from UTC
-// returns seconds
+/**
+ * Get the user offset from UTC in seconds, taking into account daylight savings time if applicable.
+ * @param object|null $userObject - optional user object to get the timezone for. If not provided, will use the global $xoopsUser
+ * @param int|null $timestamp - optional timestamp to calculate the offset for. If not provided, will use the current time.
+ * @return int The offset in seconds from UTC to the user's timezone, including daylight savings adjustment if applicable for the timestamp used
+ */
 function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
-	global $xoopsConfig, $xoopsUser;
+	global $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
 	$timestamp = $timestamp ? $timestamp : time();
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-	$userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
-	return $userTimeZone * 3600;
-}
-
-// $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
-// timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
-// This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
-// since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
-// we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
-// if timezones are the same, no adjustment
-// if timezones are both in daylight savings at a given time, no adjustment
-// if timezones are neither in daylight savings at a given time, no adjustment
-// if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
-// returns difference in hours
-function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestamp) {
-
-    // timezone name and number equivalents. crude!!
-    // could/should be expanded (or better yet, proper timezones recorded for users!!)
-    // XOOPS does not support two digit decimals for timezones (yet, we could add it)
-    // In Australia, different timezones with the same base offset, have different daylight savings rules :(
-    $tzNames = array(
-        '-8'=>'PST8PDT',
-        '-7'=>'MST7MDT',
-        '-6'=>'CST6CDT',
-        '-5'=>'EST5EDT',
-        '-4'=>'Canada/Atlantic',
-        '-3.5'=>'Canada/Newfoundland',
-        '+0'=>'UTC',
-        '+8'=>'Australia/Perth',
-        '+8.75'=>'Australia/Eucla',
-        '+9.5'=>'Australia/Adelaide',
-        '+10'=>'Australia/Sydney'
-    );
-
-    // need plus or minus on the timezone number, even zero
-    $userTimeZone = floatval($userTimeZone) >= 0 ? strval("+".floatval($userTimeZone)) : strval(floatval($userTimeZone));
-    $compareTimeZone = floatval($compareTimeZone) >= 0 ? strval("+".floatval($compareTimeZone)) : strval(floatval($compareTimeZone));
-
-    $adjustment = 0;
-    if($userTimeZone != $compareTimeZone) {
-        $timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$compareTimeZone); // need to construct new timestamp with the xoops tz offset included, and @ sign in front so PHP dateTime will understand it
-        $dt = new DateTime($timestamp);
-        $dt->setTimezone(new DateTimeZone($tzNames[$compareTimeZone]));
-        $compareDST = $dt->format('I');
-        $dt->setTimezone(new DateTimeZone($tzNames[$userTimeZone]));
-        $userDST = $dt->format('I');
-        if($compareDST AND !$userDST) {
-            $adjustment = -1;
-        } elseif(!$compareDST AND $userDST) {
-            $adjustment = +1;
-        }
-    }
-    return $adjustment;
-
+	$dt = new DateTime('@'.$timestamp);
+	$dt->setTimezone(new DateTimeZone(formulize_getIANATimezone($userObject)));
+	return $dt->getOffset();
 }
 
 /**
@@ -9116,6 +9143,7 @@ function formulize_get_file_version($relativeFilePath) {
 	}
 	return 0;
 }
+
 function getListOfCandidateOwnersForFormEntries($fid) {
 
 	global $xoopsDB, $xoopsUser;
@@ -9161,5 +9189,28 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 	}
 	asort($names);
 	return $names;
+}
 
+/**
+ * Generate the list of official IANA timezones and update the profile_field
+ * options for the timezone field. Uses PHP's timezone_identifiers_list()
+ * so the list stays current with PHP updates.
+ *
+ * @param object $db Database connection object ($xoopsDB or equivalent)
+ */
+function formulize_update_timezone_options($db) {
+	$timezones = timezone_identifiers_list();
+	// Replace underscores with spaces and sort alphabetically
+	$labels = array();
+	foreach ($timezones as $tz) {
+		$labels[] = str_replace('_', ' ', $tz);
+	}
+	sort($labels);
+	$options = array();
+	foreach ($labels as $i => $label) {
+		$options[$i] = $label;
+	}
+	$serialized = serialize($options);
+	$sql = "UPDATE " . $db->prefix("profile_field") . " SET field_options = " . $db->quoteString($serialized) . " WHERE field_name = 'timezone'";
+	$db->queryF($sql);
 }

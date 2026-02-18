@@ -223,7 +223,7 @@ function getUserForm(&$user, $profile = false, $action = false) {
         }
 		$weights[0][] = 0;
     }
-    
+
     // Added by Julian Egelstaff Nov 23 2021
     // if Anari theme, add font size
     global $xoopsConfig;
@@ -283,22 +283,22 @@ function getUserForm(&$user, $profile = false, $action = false) {
     $categories = $profile_cat_handler->getObjects(null, true, false);
 
     foreach (array_keys($fields) as $i) {
-        
-        // Added by Julian Egelstaff Nov 23 2021
-        // do not render fontsize, handled above if the Anari theme is in effect
-        if($fieldname == 'fontsize') {
+
+        // Added by Julian Egelstaff Nov 23 2021, modified Feb 17 2026
+        // do not render fontsize, handled above if the Anari theme is in effect, nor timezone_offset, overriden by our new timezone field
+        if($i == 'fontsize' || $i == 'timezone_offset') {
             continue;
         }
-        
+
         if (in_array($fields[$i]->getVar('fieldid'), $editable_fields)) {
 			if ($fields[$i]->getVar('field_edit') == 1) {
 				$fieldinfo['element'] = $fields[$i]->getEditElement($user, $profile);
 	            $fieldinfo['required'] = $fields[$i]->getVar('field_required');
-	
+
 	            $key = $fields[$i]->getVar('catid');
 	            $elements[$key][] = $fieldinfo;
 	            $weights[$key][] = $fields[$i]->getVar('field_weight');
-	
+
 	            // Image upload
 	            if ($fields[$i]->getVar('field_type') == "image") {
 	                $form->setExtra('enctype="multipart/form-data"');
