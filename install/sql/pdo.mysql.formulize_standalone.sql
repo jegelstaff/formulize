@@ -392,7 +392,8 @@ INSERT INTO `REPLACE_WITH_PREFIX_group_permission` (`gperm_id`, `gperm_groupid`,
 (179, 2, 18, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
 (180, 2, 19, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
 (181, 2, 29, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
-(182, 2, 30, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit');
+(182, 2, 30, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit'),
+(183, 2, 32, REPLACE_WITH_PROFILE_MODULE_ID, 'profile_edit');
 
 
 UPDATE `REPLACE_WITH_PREFIX_block_module_link` SET page_id=0 WHERE block_id=24;
@@ -465,17 +466,21 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_field` (`fieldid`, `catid`, `field_type
 (28, 2, 'email', '1', 'email', 'Email', 'email.gif', '', 1, '255', 5, '', 1, 0, 1, 'a:0:{}', 1, 1, 1),
 (29, 0, 'select', '3', '2famethod', '2-factor authentication method', '', '', 0, '0', 7, '', 1, 1, 1, 'a:4:{i:0;s:8:\"--None--\";i:1;s:14:\"Text me a code\";i:2;s:15:\"Email me a code\";i:3;s:24:\"Use an authenticator app\";}', 1, 1, 1),
 (30, 0, 'textbox', '1', '2faphone', 'Phone Number', '', '', 0, '255', 8, '', 1, 1, 1, 'a:0:{}', 1, 2, 1),
-(31, 0, 'textarea', '2', '2fadevices', 'Devices', '', '', 0, '0', 9, '', 1, 1, 0, 'a:0:{}', 1, 2, 1);
+(31, 0, 'textarea', '2', '2fadevices', 'Devices', '', '', 0, '0', 9, '', 1, 1, 0, 'a:0:{}', 1, 2, 1),
+(32, 0, 'select', '1', 'timezone', 'Time Zone', '', '', 0, '255', 10, '', 1, 1, 1, 'a:0:{}', 1, 1, 1);
 
 ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `2famethod` INT NULL DEFAULT NULL;
 ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `2faphone` VARCHAR(15) NULL DEFAULT NULL;
 ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `2fadevices` TEXT NULL DEFAULT NULL;
+ALTER TABLE `REPLACE_WITH_PREFIX_profile_profile` ADD `timezone` VARCHAR(255) NULL DEFAULT NULL;
+
+ALTER TABLE `REPLACE_WITH_PREFIX_profile_field` MODIFY `field_options` TEXT NOT NULL DEFAULT '';
 
 TRUNCATE `REPLACE_WITH_PREFIX_profile_profile`;
 
-INSERT INTO `REPLACE_WITH_PREFIX_profile_profile` (`profileid`, `newemail`) VALUES
-(1, ''),
-(2, '');
+INSERT INTO `REPLACE_WITH_PREFIX_profile_profile` (`profileid`, `newemail`, `timezone`) VALUES
+(1, '', 'UTC'),
+(2, '', 'UTC');
 
 TRUNCATE `REPLACE_WITH_PREFIX_profile_visibility`;
 
@@ -490,7 +495,8 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_visibility` (`fieldid`, `user_group`, `
 (28, 1, 0),
 (28, 2, 0),
 (29, 1, 0),
-(30, 1, 0);
+(30, 1, 0),
+(32, 2, 0);
 
 
 UPDATE `REPLACE_WITH_PREFIX_users` SET theme='Anari';
