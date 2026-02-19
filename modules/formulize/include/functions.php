@@ -9003,3 +9003,50 @@ function formulize_get_file_version($relativeFilePath) {
 	}
 	return 0;
 }
+function getListOfCandidateOwnersForFormEntries($fid) {
+
+	global $xoopsDB, $xoopsUser;
+	$mid = getFormulizeModId();
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+	$member_handler = xoops_gethandler('member');
+	$gperm_handler = xoops_gethandler('groupperm');
+
+	$add_groups = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
+	// May 5, 2006 -- limit to the user's own groups unless the user has global scope
+	if(!$globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
+		$add_groups = array_intersect($add_groups, $groups);
+	}
+
+	// build the user list based on the membership of the groups identified above
+	$all_add_users = array();
+	foreach($add_groups as $grp) {
+		$add_users = $member_handler->getUsersByGroup($grp); // single query to get all users in the group, instead of multiple queries for each user id if we were getting objects
+		$all_add_users = array_merge((array)$add_users, $all_add_users);
+		unset($add_users);
+	}
+	$unique_users = array_unique($all_add_users);
+
+	// if there is a user 0 that has been found, that's an error, cleanup DB and remove errant user id from the array
+	if(in_array(0,$unique_users)) {
+		$cleanupSQL = "DELETE FROM ".$xoopsDB->prefix('groups_users_link')." WHERE uid=0";
+		$xoopsDB->queryF($cleanupSQL);
+		$unique_users = array_diff($unique_users, array(0));
+	}
+
+	// build the names list based on the user ids retrieved above
+	$names = array();
+	if(!empty($unique_users)) {
+		$uidList = implode(',', array_map('intval', $unique_users));
+		$sql = "SELECT `uid`, `name`, `uname` FROM " . $xoopsDB->prefix("users") . " WHERE uid IN ($uidList)";
+		if($res = $xoopsDB->query($sql)) {
+			while($record = $xoopsDB->fetchArray($res)) {
+				$names[$record['uid']] = $record['name'] ? $record['name'] : $record['uname']; // use the uname if there is no full name
+			}
+		} else {
+			throw new Exception("Error fetching user names for candidate owners: " . $xoopsDB->error());
+		}
+	}
+	asort($names);
+	return $names;
+
+}

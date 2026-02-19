@@ -184,6 +184,7 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usereset` varchar(255) NOT NULL default '',
   `usesave` varchar(255) NOT NULL default '',
   `usedeleteview` varchar(255) NOT NULL default '',
+	`usechangeowner` varchar(255) NOT NULL default '',
   `useheadings` tinyint(1) NOT NULL,
   `usesearch` tinyint(1) NOT NULL,
   `usecheckboxes` tinyint(1) NOT NULL,

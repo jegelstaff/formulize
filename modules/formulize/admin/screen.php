@@ -267,6 +267,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   $buttons['usereset'] = $screen->getVar('usereset');
   $buttons['usesave'] = $screen->getVar('usesave');
   $buttons['usedeleteview'] = $screen->getVar('usedeleteview');
+	$buttons['usechangeowner'] = $screen->getVar('usechangeowner');
 
   // custom button data
   $custom = array();
