@@ -1435,6 +1435,10 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			formulize_benchmark("After Compile Elements.");
 		}	// end of for each 'fidsToRender' ie: the forms that have elements to render
 
+		if(!isset($form) OR !is_object($form)) {
+			throw new Exception("The form cannot be displayed. Does the current user belong to a group with permission to access the form?");
+		}
+
 		// set some ugly state information that we're going to listen for in various places on the next pageload. :(
 		$newHiddenElements = array();
 		foreach($fids as $thisFid) {
@@ -1493,10 +1497,6 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 								}
 						}
 				}
-		}
-
-		if(!is_object($form)) {
-				exit("Error: the form cannot be displayed.  Does the current group have permission to access the form?");
 		}
 
 		if(is_array($settings) AND !$formElementsOnly) {
