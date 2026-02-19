@@ -72,6 +72,7 @@ $screen->setVar('useclearall',$screens['useclearall']);
 $screen->setVar('usereset',$screens['usereset']);
 $screen->setVar('usesave',$screens['usesave']);
 $screen->setVar('usedeleteview',$screens['usedeleteview']);
+$screen->setVar('usechangeowner',$screens['usechangeowner']);
 
 
 if(!$screen_handler->insert($screen)) {
