@@ -2,7 +2,7 @@
 
 print "
 
-$submitButton 
+$submitButton
 
 <div class='card list-of-entries list-of-entries-data'>
     $procedureResults
@@ -20,25 +20,32 @@ $submitButton
         </div>
     </div>
     <div class='card__body'>
-    
+
         <div id='more-action-buttons' class='list-of-entries list-of-entries-controls'>
             <div>
-                $saveViewButton
-                $deleteViewButton
-                $resetViewButton
-            </div>
-            <div>
+								$manageSelectionTitle
                 $selectAllButton
                 $clearSelectButton
+						</div>
+						<div>
+								$manageActionsTitle
                 $cloneButton
                 $deleteButton
+								$changeOwnerButton
             </div>
             <div>
+								$manageOperationsTitle
                 $calcButton
                 $proceduresButton
                 $exportButton
                 $importButton
                 $notifButton
+            </div>
+						<div>
+								$manageViewsTitle
+                $saveViewButton
+                $deleteViewButton
+                $resetViewButton
             </div>
         </div>
 

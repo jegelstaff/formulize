@@ -89,7 +89,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 		OR (isset($_POST['cloneconfirmed']) AND $_POST['cloneconfirmed'])
 		OR (isset($_POST['delviewid_formulize']) AND $_POST['delviewid_formulize'])
 		OR (isset($_POST['saveid_formulize']) AND $_POST['saveid_formulize'])
-		OR (isset($_POST['caid']) AND is_numeric($_POST['caid'])))
+		OR (isset($_POST['caid']) AND is_numeric($_POST['caid']))
+		OR (isset($_POST['changeowner_uid']) AND is_numeric($_POST['changeowner_uid'])))
 		AND !$formulize_LOESecurityPassed) {
 		$module_handler = xoops_gethandler('module');
 		$config_handler = xoops_gethandler('config');
@@ -111,6 +112,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$update_own_reports = $gperm_handler->checkRight("update_own_reports", $fid, $groups, $mid);
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 	$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+	$update_entry_ownership = $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid);
 
 	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 
@@ -158,7 +160,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 
 	/**
-	 * STAGE 3 - CLONE ENTRIES IF REQUESTED
+	 * STAGE 3 - CLONE ENTRIES OR CHANGE OWNER IF REQUESTED
 	 */
 
 	// check for cloning request and if present then clone entries
@@ -169,10 +171,29 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			$clone_forms = array_combine($clone_forms, $clone_forms);
 		}
 		foreach($_POST as $k=>$v) {
-			if(substr($k, 0, 7) == "delete_" AND $v != "") {
-				$thisentry = substr($k, 7);
-				cloneEntry($thisentry, $frid, $fid, $_POST['cloneconfirmed'], null, "new", $clone_forms); // cloneconfirmed is the number of copies required
+			if(substr($k, 0, 7) == "delete_" AND $v != "" AND $thisEntryId = intval(substr($k, 7))) {
+				cloneEntry($thisEntryId, $frid, $fid, $_POST['cloneconfirmed'], null, "new", $clone_forms); // cloneconfirmed is the number of copies required
 			}
+		}
+	}
+
+	// if a change of entry owner was requested, then do so for the selected entries
+	if(isset($_POST['changeowner_uid'])
+		AND $changeownerUid = intval($_POST['changeowner_uid'])
+		AND $changeOwnerUserObject = $member_handler->getUser($changeownerUid)
+		AND $gperm_handler->checkRight("add_own_entry", $fid, $changeOwnerUserObject->getGroups(), $mid)
+		AND $formulize_LOESecurityPassed
+		AND $update_entry_ownership
+	) {
+		$entriesToChangeOwnershipOn = array();
+		foreach($_POST as $k=>$v) {
+			if(substr($k, 0, 7) == "delete_" AND $v != "" AND $thisEntryId = intval(substr($k, 7))) {
+				$entriesToChangeOwnershipOn[] = $thisEntryId;
+			}
+		}
+		if(!empty($entriesToChangeOwnershipOn)) {
+			$dataHandler = new formulizeDataHandler($fid);
+			$dataHandler->setEntryOwnerGroups(array_fill(0, count($entriesToChangeOwnershipOn), $changeownerUid), $entriesToChangeOwnershipOn);
 		}
 	}
 
@@ -1376,6 +1397,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	// need to establish these here because they are used in conditions lower down
 	$add_own_entry = $gperm_handler->checkRight("add_own_entry", $fid, $groups, $mid);
 	$proxy = $gperm_handler->checkRight("add_proxy_entries", $fid, $groups, $mid);
+	$update_entry_ownership = $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid);
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$user_can_delete    = formulizePermHandler::user_can_delete_from_form($fid, $uid);
 	$edit_form = $gperm_handler->checkRight("edit_form", $fid, $groups, $mid);
@@ -1441,7 +1463,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		$screenButtonText['calcButton'] = $screen->getVar('usecalcs');
 		$screenButtonText['proceduresButton'] = $screen->getVar('useadvcalcs');
 		$screenButtonText['exportCalcsButton'] = $screen->getVar('useexportcalcs');
-		// only include clone and delete if the checkboxes are in effect (2 means do not use checkboxes)
+		// only include clone and delete and change owner if the checkboxes are in effect (2 means do not use checkboxes)
 		if($screen->getVar('usecheckboxes') != 2) {
 			$screenButtonText['cloneButton'] = $add_own_entry ? $screen->getVar('useclone') : "";
 			if ($user_can_delete and !$settings['lockcontrols']) {
@@ -1451,6 +1473,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			}
 			$screenButtonText['selectAllButton'] = $screen->getVar('useselectall');
 			$screenButtonText['clearSelectButton'] = $screen->getVar('useclearall');
+			$screenButtonText['changeOwnerButton'] = ($update_entry_ownership AND $screen->getVar('usechangeowner')) ? $screen->getVar('usechangeowner') : "";
 		} else {
 			$screenButtonText['cloneButton'] = "";
 			$screenButtonText['deleteButton'] = "";
@@ -1605,6 +1628,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=saveviewname id=saveviewname value=\"\"></input>\n";
 	print "<input type=hidden name=saveviewoptions id=saveviewoptions value=\"\"></input>\n";
 	print "<input type=hidden name=sv_use_features id=sv_use_features value=\"\"></input>\n";
+	print "<input type=hidden name=changeowner_uid id=changeowner_uid value=\"\"></input>\n";
 
 	// track the previous currentview in case we load a saved view that doesn't include scope, and we need to revert to scope of prior page load
 	print "<input type=hidden name=prev_currentview id=prev_currentview value=\"$currentview\"></input>\n";
@@ -3587,6 +3611,52 @@ function executeClone() {
 	showLoading();
 }
 
+function selectOwner() {
+// Build the dialog overlay
+		// if there are no checkboxes selected on the page with the name prefix delete_ then we can bail
+		if(jQuery("input[name^='delete_']:checked").length == 0) {
+			return false;
+		}
+
+		var overlay = document.createElement('div');
+		overlay.id = 'formulize_changeowner_dialog_overlay';
+		overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+
+		var dialog = document.createElement('div');
+		dialog.style.cssText = 'background:#fff;border:1px solid #999;padding:20px;border-radius:5px;min-width:300px;max-width:500px;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
+
+		var html = '<select id="changeowner_selected_uid" style="width:100%;margin:8px 0;">';
+		<?php
+		print "html += '<option value=\"\">" . _formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER . "</option>';\n";
+		foreach(getListOfCandidateOwnersForFormEntries($fid) as $ownerId => $ownerName) {
+			$escapedName = addslashes(htmlspecialchars($ownerName, ENT_QUOTES));
+			print "html += '<option value=\"{$ownerId}\">{$escapedName}</option>';\n";
+		}
+		print "html += '</select>';\n";
+		?>
+		html += '<div style="margin-top:15px;text-align:center;">';
+		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CHANGEOWNER_CANCEL_BUTTON; ?>" onclick="document.getElementById(\'formulize_changeowner_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_changeowner_dialog_overlay\'));" style="margin-right:10px;">';
+		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CHANGEOWNER_CONFIRM_BUTTON; ?>" onclick="executeChangeOwner();">';
+		html += '</div>';
+
+		dialog.innerHTML = html;
+		overlay.appendChild(dialog);
+		document.body.appendChild(overlay);
+		return false;
+}
+
+function executeChangeOwner() {
+	var selectedUid = document.getElementById('changeowner_selected_uid').value;
+	// Remove the dialog
+	var overlay = document.getElementById('formulize_changeowner_dialog_overlay');
+	if(overlay) {
+		overlay.parentNode.removeChild(overlay);
+	}
+	window.document.controls.changeowner_uid.value = selectedUid;
+	window.document.controls.ventry.value = '';
+	window.document.controls.forcequery.value = 1;
+	showLoading();
+}
 
 function sort_data(col) {
 	if(window.document.controls.sort.value == col) {
@@ -4001,6 +4071,11 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	foreach($buttonCodeArray as $buttonName=>$buttonCode) {
 		${$buttonName} = $buttonCode;
 	}
+	// setup the action button headings
+	$manageViewsTitle = ($selectAllButton OR $clearSelectButton) ? _formulize_MANAGE_VIEWS_TITLE : "";
+	$manageSelectionTitle = ($cloneButton OR $deleteButton OR $changeOwnerButton) ? _formulize_MANAGE_SELECTION_TITLE : "";
+	$manageActionsTitle = ($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton) ? _formulize_MANAGE_ACTIONS_TITLE : "";
+	$manageOperationsTitle = ($saveViewButton OR $deleteViewButton OR $resetViewButton) ? _formulize_MANAGE_OPERATIONS_TITLE : "";
 
 	// setup the view name variables, with true only set for the last loaded view
 	$viewNumber = 1;
@@ -4481,6 +4556,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				break;
 			case "globalQuickSearch":
 				return "<input type=text id=\"formulize_$button\" name=\"global_search\" value='" . $settings['global_search'] . "' onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>";
+				break;
+			case "changeOwnerButton":
+				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=updateowner value='" . $buttonText . "' onclick=\"javascript:selectOwner();\"></input>";
 				break;
 		}
 	} elseif($button == "currentViewList") { // must always set a currentview value in POST even if the list is not visible

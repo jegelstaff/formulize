@@ -1904,87 +1904,49 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 // add the proxy list to a form
 function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entry_id="") {
 
-	global $xoopsDB;
+	if($entry_id AND $entry_id != 'new') {
+		$data_handler = new formulizeDataHandler($fid);
+		list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
+		$entryOwner = $creation_uid;
+		$member_handler = xoops_gethandler('member');
+		if($ownerUserObject = $member_handler->getUser($entryOwner)) {
+			$entryOwnerName = $ownerUserObject->getVar('uname');
+		} else {
+			$entryOwnerName = _FORM_ANON_USER;
+		}
+		$proxylist = new XoopsFormSelect(_AM_SELECT_UPDATE_OWNER, 'updateowner_'.$fid.'_'.$entry_id, 0, 1);
+		$proxylist->addOption('nochange', _AM_SELECT_UPDATE_NOCHANGE.$entryOwnerName);
+	} else {
+		$proxylist = new XoopsFormSelect(_AM_SELECT_PROXY, 'proxyuser', 0, 5, TRUE); // made multi May 3 05
+		$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
+	}
 
-			$add_groups = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
-			// May 5, 2006 -- limit to the user's own groups unless the user has global scope
-			if(!$globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid)) {
-				$add_groups = array_intersect($add_groups, $groups);
-			}
-			$all_add_users = array();
-			foreach($add_groups as $grp) {
-				$add_users = $member_handler->getUsersByGroup($grp);
-				$all_add_users = array_merge((array)$add_users, $all_add_users);
-				unset($add_users);
-			}
+	$proxylist->addOptionArray(getListOfCandidateOwnersForFormEntries($fid));
 
-			$unique_users = array_unique($all_add_users);
-            if(in_array(0,$unique_users)) { // if there is a user 0 that has been found, that's an error, cleanup DB and remove errant user id from the array
-                $cleanupSQL = "DELETE FROM ".$xoopsDB->prefix('groups_users_link')." WHERE uid=0";
-                $xoopsDB->queryF($cleanupSQL);
-                $unique_users = array_diff($unique_users, array(0));
-            }
+	if(!$entry_id) {
+		$proxylist->setValue('noproxy');
+	} else {
+		$proxylist->setValue('nochange');
+	}
 
-			$punames = array();
-			foreach($unique_users as $uid) {
-				$uqueryforrealnames = "SELECT name, uname FROM " . $xoopsDB->prefix("users") . " WHERE uid=$uid";
-				$uresqforrealnames = $xoopsDB->query($uqueryforrealnames);
-				$urowqforrealnames = $xoopsDB->fetchRow($uresqforrealnames);
-				$punames[] = (is_array($urowqforrealnames) AND !empty($urowqforrealnames)) ? ($urowqforrealnames[0] ? $urowqforrealnames[0] : $urowqforrealnames[1]) : ""; // use the uname if there is no full name
-			}
+	$officeUseOnlyShow = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_SHOW." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-show');
+	$officeUseOnlyShow->setClass("no-print");
+	$officeUseOnlyShow->setClass("formulize-office-use-only-toggle");
 
-			// alphabetize the proxy list added 11/2/04
-			array_multisort($punames, $unique_users);
+	$officeUseOnlyHide = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_HIDE." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-hide');
+	$officeUseOnlyHide->setClass("no-print");
+	$officeUseOnlyHide->setClass("formulize-office-use-only-toggle");
+	$officeUseOnlyHide->setClass("formulize-office-use-only-start-hidden");
 
-			if($entry_id AND $entry_id != 'new') {
-                include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-                $data_handler = new formulizeDataHandler($fid);
-                list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
-                $entryOwner = $creation_uid;
-                $member_handler = xoops_gethandler('member');
-                if($ownerUserObject = $member_handler->getUser($entryOwner)) {
-                    $entryOwnerName = $ownerUserObject->getVar('uname');
-                } else {
-                    $entryOwnerName = _FORM_ANON_USER;
-                }
-				$proxylist = new XoopsFormSelect(_AM_SELECT_UPDATE_OWNER, 'updateowner_'.$fid.'_'.$entry_id, 0, 1);
-				$proxylist->addOption('nochange', _AM_SELECT_UPDATE_NOCHANGE.$entryOwnerName);
-			} else {
-				$proxylist = new XoopsFormSelect(_AM_SELECT_PROXY, 'proxyuser', 0, 5, TRUE); // made multi May 3 05
-				$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
-			}
+	$proxylist->setClass("no-print");
+	$proxylist->setClass("formulize-office-use-only-content");
+	$proxylist->setClass("formulize-office-use-only-start-hidden");
+	$proxylist->setExtra(" onchange='javascript:formulizechanged=1' ");
 
-			for($i=0;$i<count((array) $unique_users);$i++)
-			{
-                if($unique_users[$i]) {
-                    $proxylist->addOption($unique_users[$i], $punames[$i]);
-                }
-			}
-
-			if(!$entry_id) {
-				$proxylist->setValue('noproxy');
-			} else {
-				$proxylist->setValue('nochange');
-			}
-
-			$officeUseOnlyShow = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_SHOW." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-show');
-			$officeUseOnlyShow->setClass("no-print");
-			$officeUseOnlyShow->setClass("formulize-office-use-only-toggle");
-
-			$officeUseOnlyHide = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_HIDE." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-hide');
-			$officeUseOnlyHide->setClass("no-print");
-			$officeUseOnlyHide->setClass("formulize-office-use-only-toggle");
-			$officeUseOnlyHide->setClass("formulize-office-use-only-start-hidden");
-
-			$proxylist->setClass("no-print");
-			$proxylist->setClass("formulize-office-use-only-content");
-			$proxylist->setClass("formulize-office-use-only-start-hidden");
-			$proxylist->setExtra(" onchange='javascript:formulizechanged=1' ");
-
-			$form->addElement($officeUseOnlyShow);
-			$form->addElement($officeUseOnlyHide);
-			$form->addElement($proxylist);
-			return $form;
+	$form->addElement($officeUseOnlyShow);
+	$form->addElement($officeUseOnlyHide);
+	$form->addElement($proxylist);
+	return $form;
 }
 
 /**

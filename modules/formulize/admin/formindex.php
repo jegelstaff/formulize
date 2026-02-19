@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize';
-    $checkThisField = 'ele_dynamicdefault_source';
+    $checkThisTable = 'formulize_screen_listofentries';
+    $checkThisField = 'usechangeowner';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -519,6 +519,7 @@ function patch40() {
 				$sql['ele_required'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " CHANGE `ele_req` `ele_required` tinyint(1) NOT NULL default 0";
 				$sql['add_dynamicdefault_source'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_source` smallint(5) unsigned NULL default 0";
 				$sql['add_dynamicdefault_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_conditions` text NULL";
+				$sql['add_usechangeowner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usechangeowner` varchar(255) NOT NULL default ''";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -665,9 +666,17 @@ function patch40() {
 										print "Element required already renamed. result: OK<br>";
 								} elseif($key === "add_dynamicdefault_source" OR $key === "add_dynamicdefault_conditions") {
 										print "Dynamic defaults already added. result: OK<br>";
-                }else {
+								} elseif($key === "add_usechangeowner") {
+										print "Change owner option for list screens already added. result: OK<br>";
+                } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
+						} elseif($key === "add_usechangeowner") {
+							// use change owner option for list screens successfully added, so this one time and one time only, add the Change owner text to screens that have Delete selected text
+							$sql = "UPDATE ".$xoopsDB->prefix("formulize_screen_listofentries")." SET usechangeowner = '"._formulize_DE_CHANGEOWNER."' WHERE usedelete = '"._formulize_DE_DELETESEL."' AND (usechangeowner IS NULL OR usechangeowner = '')";
+							if(!$xoopsDB->queryF($sql)) {
+								print "Error setting initial change owner text based on delete selected text. result: OK<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
+							}
             } elseif($key === "on_delete") {
                 // on delete successfully added, and so this one time and one time only, never in the future (and since on delete was added now, it will never be added again) set the config option for custom button effects to Yes
                 if(!$xoopsDB->queryF("UPDATE ".$xoopsDB->prefix('config')." SET conf_value = 1 WHERE conf_name = 'useOldCustomButtonEffectWriting'")) {
