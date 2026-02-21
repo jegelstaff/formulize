@@ -28,6 +28,7 @@ async function setStandardPermissions(page) {
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Update entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Delete entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('View entries by all other').check();
+	await page.getByRole('group', { name: 'Curators' }).getByLabel('Change the owner/creator of an existing entry').check();
 }
 
 async function setGlobalPermissions(page) {
@@ -49,6 +50,7 @@ async function setGlobalPermissions(page) {
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Update entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('Delete entries made by anyone').check();
 	await page.getByRole('group', { name: 'Curators' }).getByLabel('View entries by all other').check();
+	await page.getByRole('group', { name: 'Curators' }).getByLabel('Change the owner/creator of an existing entry').check();
 	await saveAdminForm(page);
 }
 

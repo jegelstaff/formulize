@@ -380,6 +380,7 @@ define("_formulize_MANAGE_SELECTION_TITLE", "Select entries:");
 define("_formulize_MANAGE_ACTIONS_TITLE", "Alter entries:");
 define("_formulize_MANAGE_OPERATIONS_TITLE", "Actions:");
 define("_formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER", "Choose the new owner for the selected entries");
+define("_formulize_DE_CHANGEOWNER_WHICH_FORMS", "Change ownership for which forms in the dataset?");
 define("_formulize_DE_CHANGEOWNER_CANCEL_BUTTON", "Cancel");
 define("_formulize_DE_CHANGEOWNER_CONFIRM_BUTTON", "Confirm");
 define("_formulize_DE_SEARCH_POP_HELP", "Click here for info about the search terms");

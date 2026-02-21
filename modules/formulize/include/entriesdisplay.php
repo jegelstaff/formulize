@@ -192,6 +192,32 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 			}
 		}
 		if(!empty($entriesToChangeOwnershipOn)) {
+			if(isset($_POST['changeowner_forms']) AND $_POST['changeowner_forms']) {
+				$entriesChanged = array();
+				$fidsToChange = array_filter(explode(",", $_POST['changeowner_forms']), 'intval');
+				$dataHandlers = array();
+				foreach($fidsToChange as $fidToChange) {
+					$entriesChanged[$fidToChange] = array();
+					$dataHandlers[$fidToChange] = new formulizeDataHandler($fidToChange);
+				}
+				foreach($entriesToChangeOwnershipOn as $thisEntryId) {
+					$linkResults = checkForLinks($frid, array($fid), $fid, array($fid=>$entriesToChangeOwnershipOn));
+					foreach(array_unique($linkResults['fids']) as $fidToChange) {
+						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid) {
+							$entriesToChange = array_diff($linkResults['entries'][$fidToChange], $entriesChanged[$fidToChange]);
+							$dataHandlers[$fidToChange]->setEntryOwnerGroups(array_fill(0, count($entriesToChange), $changeownerUid), $entriesToChange);
+							$entriesChanged[$fidToChange] = array_merge($entriesChanged[$fidToChange], $entriesToChange);
+						}
+					}
+					foreach(array_unique($linkResults['sub_fids']) as $fidToChange) {
+						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid) {
+							$entriesToChange = array_diff($linkResults['sub_entries'][$fidToChange], $entriesChanged[$fidToChange]);
+							$dataHandlers[$fidToChange]->setEntryOwnerGroups(array_fill(0, count($entriesToChange), $changeownerUid), $entriesToChange);
+							$entriesChanged[$fidToChange] = array_merge($entriesChanged[$fidToChange], $entriesToChange);
+						}
+					}
+				}
+			}
 			$dataHandler = new formulizeDataHandler($fid);
 			$dataHandler->setEntryOwnerGroups(array_fill(0, count($entriesToChangeOwnershipOn), $changeownerUid), $entriesToChangeOwnershipOn);
 		}
@@ -1404,6 +1430,8 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$module_admin_rights = $gperm_handler->checkRight("module_admin", $mid, $groups, 1);
 
 	// establish text and code for buttons, whether a screen is in effect or not
+	// first 16 must be the action buttons that would appear behind the ... button
+	// change cols must be first action button declared
 	$screenButtonText = array();
 	$screenButtonText['changeColsButton'] = !$lockcontrols ? _formulize_DE_CHANGECOLS : "";
 	$screenButtonText['calcButton'] = !$lockcontrols ? _formulize_DE_CALCS : "";
@@ -1419,10 +1447,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$screenButtonText['resetViewButton'] = !$lockcontrols ? _formulize_DE_RESETVIEW : "";
 	$screenButtonText['saveViewButton'] = !$lockcontrols ? _formulize_DE_SAVE : "";
 	$screenButtonText['deleteViewButton'] = !$lockcontrols ? _formulize_DE_DELETE : "";
+	$screenButtonText['changeOwnerButton'] = (!$lockcontrols AND $update_entry_ownership) ? _formulize_DE_CHANGEOWNER : "";
 
-	// first 15 items must be the action buttons!
+	// first 16 items must be the action buttons! First one must be change cols
 
-    $screenButtonText['procedureResults'] = $procedureResults;
+  $screenButtonText['procedureResults'] = $procedureResults;
 	$screenButtonText['modifyScreenLink'] = ($edit_form AND $screen AND $module_admin_rights) ? _formulize_DE_MODIFYSCREEN : "";
 	$screenButtonText['currentViewList'] = _formulize_DE_CURRENT_VIEW;
 	$screenButtonText['saveButton'] = _formulize_SAVE;
@@ -1479,6 +1508,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 			$screenButtonText['deleteButton'] = "";
 			$screenButtonText['selectAllButton'] = "";
 			$screenButtonText['clearSelectButton'] = "";
+			$screenButtonText['changeOwnerButton'] = "";
 		}
 		// only include the reset, save, deleteview buttons if the current view list is in effect
 		if($screen->getVar('usecurrentviewlist')) {
@@ -1493,24 +1523,26 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	}
 	if($delete_other_reports = $gperm_handler->checkRight("delete_other_reports", $fid, $groups, $mid)) { $pubstart = 10000; }
 	if($screenButtonText['saveButton']) { $screenButtonText['goButton'] = $screenButtonText['saveButton']; } // want this button accessible by two names, essentially, since it serves two purposes semantically/logically
+
+	// determine if we need the ... button, based on the values of the action buttons, which is first 16 items in the screenButtonText array
 	$onActionButtonCounter = 0;
 	$atLeastOneActionButton = false;
-    $atLeastOneActionButtonNotChangeCols = false;
+  $atLeastOneActionButtonNotChangeCols = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
 		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
-		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 14) { // first 0-14 items in the array should be the action buttons only
+		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 15) { // first 0-15 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
-            if($onActionButtonCounter > 0) {
-                $atLeastOneActionButtonNotChangeCols = true;
-            }
+				if($onActionButtonCounter > 0) {
+						$atLeastOneActionButtonNotChangeCols = true;
+				}
 		}
 		$onActionButtonCounter++;
 	}
 
-    // make a ... button available for opening up extra actions beyond change cols
-    if($atLeastOneActionButtonNotChangeCols) {
-        $buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
-    }
+	// make a ... button available for opening up extra actions beyond change cols
+	if($atLeastOneActionButtonNotChangeCols) {
+			$buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
+	}
 
 	if($hlist) { // if we're on the calc side, then the export button should be the export calcs one
 		$buttonCodeArray['exportButton'] = $buttonCodeArray['exportCalcsButton'];
@@ -1629,6 +1661,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	print "<input type=hidden name=saveviewoptions id=saveviewoptions value=\"\"></input>\n";
 	print "<input type=hidden name=sv_use_features id=sv_use_features value=\"\"></input>\n";
 	print "<input type=hidden name=changeowner_uid id=changeowner_uid value=\"\"></input>\n";
+	print "<input type=hidden name=changeowner_forms id=changeowner_forms value=\"\"></input>\n";
 
 	// track the previous currentview in case we load a saved view that doesn't include scope, and we need to revert to scope of prior page load
 	print "<input type=hidden name=prev_currentview id=prev_currentview value=\"$currentview\"></input>\n";
@@ -3517,6 +3550,12 @@ function confirmDel() {
 }
 
 function confirmClone() {
+
+	// if there are no checkboxes selected on the page with the name prefix delete_ then we can bail
+	if(jQuery("input[name^='delete_']:checked").length == 0) {
+		return false;
+	}
+
 <?php
 	$cloneFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
 	if(!is_array($cloneFids) OR count($cloneFids) <= 1) {
@@ -3540,44 +3579,24 @@ function confirmClone() {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$cloneFormOptions = array();
 		foreach($cloneFids as $thisFid) {
-			$thisFormObject = $form_handler->get($thisFid);
-			if($thisFormObject) {
+			if($thisFormObject = $form_handler->get($thisFid)) {
 				$cloneFormOptions[$thisFid] = $thisFormObject->getVar('form_title');
 			}
 		}
-		?>
-		// Remove any existing clone dialog
-		var existingDialog = document.getElementById('formulize_clone_dialog_overlay');
-		if(existingDialog) {
-			existingDialog.parentNode.removeChild(existingDialog);
-		}
-
-		// Build the dialog overlay
-		var overlay = document.createElement('div');
-		overlay.id = 'formulize_clone_dialog_overlay';
-		overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
-
-		var dialog = document.createElement('div');
-		dialog.style.cssText = 'background:#fff;border:1px solid #999;padding:20px;border-radius:5px;min-width:300px;max-width:500px;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
-
-		var html = '<h3 style="margin-top:0;"><?php print _formulize_DE_CLONE_SELECT_FORMS; ?></h3>';
-		<?php
+		$markup = "<h3 style=\"margin-top:0;\">"._formulize_DE_CLONE_SELECT_FORMS."</h3>\n";
+		$markup .= "<div style=\"max-height:200px;overflow:auto;padding:5px;margin-bottom:5px;\">\n";
 		foreach($cloneFormOptions as $optionFid => $optionTitle) {
+			$checked = ($optionFid == $fid) ? "checked=\"checked\"" : "";
 			$escapedTitle = addslashes(htmlspecialchars($optionTitle, ENT_QUOTES));
-			print "html += '<div style=\"margin:8px 0;\"><label><input type=\"checkbox\" class=\"clone_form_checkbox\" value=\"{$optionFid}\"> {$escapedTitle}</label></div>';\n";
+			$markup .= "<div style=\"margin:8px 0;\"><label><input type=\"checkbox\" class=\"clone_form_checkbox\" $checked value=\"$optionFid\"> $escapedTitle</label></div>\n";
 		}
-		?>
-		html += '<div style="margin-top:15px;"><label><?php print _formulize_DE_CLONE_NUM_COPIES; ?> <input type="text" id="clone_num_copies" value="1" size="3" style="width:50px;"></label></div>';
-		html += '<div style="margin-top:15px;text-align:center;">';
-		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CLONE_CANCEL_BUTTON; ?>" onclick="document.getElementById(\'formulize_clone_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_clone_dialog_overlay\'));" style="margin-right:10px;">';
-		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CLONE_CONFIRM_BUTTON; ?>" onclick="executeClone();">';
-		html += '</div>';
-
-		dialog.innerHTML = html;
-		overlay.appendChild(dialog);
-		document.body.appendChild(overlay);
-		return false;
-		<?php
+		$markup .= "</div>\n";
+		$markup .= '<div style="margin-top:15px;"><label>'._formulize_DE_CLONE_NUM_COPIES.'<input type="text" id="clone_num_copies" value="1" size="3" style="width:50px;"></label></div>
+			<div style="margin-top:15px;text-align:center;">
+			<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CLONE_CANCEL_BUTTON.'" onclick="document.getElementById(\'formulize_clone_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_clone_dialog_overlay\'));" style="margin-right:10px;">
+			<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CLONE_CONFIRM_BUTTON.'" onclick="executeClone();">
+			</div>';
+		print plainJSDialog($markup, 'formulize_clone_dialog_overlay');
 	}
 ?>
 }
@@ -3612,47 +3631,53 @@ function executeClone() {
 }
 
 function selectOwner() {
-// Build the dialog overlay
 		// if there are no checkboxes selected on the page with the name prefix delete_ then we can bail
 		if(jQuery("input[name^='delete_']:checked").length == 0) {
 			return false;
 		}
-
-		var overlay = document.createElement('div');
-		overlay.id = 'formulize_changeowner_dialog_overlay';
-		overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
-
-		var dialog = document.createElement('div');
-		dialog.style.cssText = 'background:#fff;border:1px solid #999;padding:20px;border-radius:5px;min-width:300px;max-width:500px;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
-
-		var html = '<select id="changeowner_selected_uid" style="width:100%;margin:8px 0;">';
 		<?php
-		print "html += '<option value=\"\">" . _formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER . "</option>';\n";
+		$markup = "";
+		$ownerFids = $GLOBALS['formulize_LOErendering_fidsInUse'];
+		if(is_array($ownerFids) AND count($ownerFids) > 1) {
+			$markup .= "<h3>"._formulize_DE_CHANGEOWNER_WHICH_FORMS."</h3>
+			<div style=\"max-height:200px;overflow:auto;padding:5px;margin-bottom:5px;\">\n";
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$ownerFormOptions = array();
+			foreach($ownerFids as $thisFid) {
+				if($thisFormObject = $form_handler->get($thisFid)) {
+					$escapedTitle = addslashes(htmlspecialchars($thisFormObject->getVar('form_title'), ENT_QUOTES));
+					$checked = ($thisFid == $fid) ? "checked=\"checked\"" : "";
+					$markup .= "<div style=\"margin:8px 0;\"><label><input name=\"changeowner_form_checkbox[]\" type=\"checkbox\" class=\"changeowner_form_checkbox\" value=\"{$thisFid}\" $checked>$escapedTitle</label></div>\n";
+				}
+			}
+			$markup .= "</div>\n";
+		}
+		$markup .= "<select id=\"changeowner_selected_uid\" style=\"width:100%;margin:8px 0;\">
+			<option value=\"\">"._formulize_DE_CHANGEOWNER_SELECT_NEW_OWNER."</option>
+		";
 		foreach(getListOfCandidateOwnersForFormEntries($fid) as $ownerId => $ownerName) {
 			$escapedName = addslashes(htmlspecialchars($ownerName, ENT_QUOTES));
-			print "html += '<option value=\"{$ownerId}\">{$escapedName}</option>';\n";
+			$markup .= "<option value=\"$ownerId\">$escapedName</option>\n";
 		}
-		print "html += '</select>';\n";
+		$markup .= "</select>\n";
+		$markup .= '<div style="margin-top:15px;text-align:center;">
+		<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CHANGEOWNER_CANCEL_BUTTON.'" onclick="document.getElementById(\'formulize_changeowner_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_changeowner_dialog_overlay\'));" style="margin-right:10px;">
+		<input type="button" class="formulize_button formulize_button_dialog" value="'._formulize_DE_CHANGEOWNER_CONFIRM_BUTTON.'" onclick="executeChangeOwner();">
+		</div>';
+		print plainJSDialog($markup, 'formulize_changeowner_dialog_overlay');
 		?>
-		html += '<div style="margin-top:15px;text-align:center;">';
-		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CHANGEOWNER_CANCEL_BUTTON; ?>" onclick="document.getElementById(\'formulize_changeowner_dialog_overlay\').parentNode.removeChild(document.getElementById(\'formulize_changeowner_dialog_overlay\'));" style="margin-right:10px;">';
-		html += '<input type="button" class="formulize_button formulize_button_dialog" value="<?php print _formulize_DE_CHANGEOWNER_CONFIRM_BUTTON; ?>" onclick="executeChangeOwner();">';
-		html += '</div>';
-
-		dialog.innerHTML = html;
-		overlay.appendChild(dialog);
-		document.body.appendChild(overlay);
-		return false;
 }
 
 function executeChangeOwner() {
 	var selectedUid = document.getElementById('changeowner_selected_uid').value;
+	var selectedForms = Array.from(document.querySelectorAll('input[name="changeowner_form_checkbox[]"]:checked')).map(cb => cb.value);
 	// Remove the dialog
 	var overlay = document.getElementById('formulize_changeowner_dialog_overlay');
 	if(overlay) {
 		overlay.parentNode.removeChild(overlay);
 	}
 	window.document.controls.changeowner_uid.value = selectedUid;
+	window.document.controls.changeowner_forms.value = selectedForms.join(',');
 	window.document.controls.ventry.value = '';
 	window.document.controls.forcequery.value = 1;
 	showLoading();
@@ -3924,6 +3949,56 @@ function floatSaveButton(saveButtonOffset) {
 print checkForChrome();
 print "</script>";
 
+}
+
+/**
+ * Setup a plain JS Dialog, used for cloning entries and changing owner
+ * @param string $markup - HTML to include in the dialog body. Will be split on line breaks so JS can append them into the JS code one by one (JS strings can't have line breaks)
+ * @param string $name - unique name for the dialog (used for the id of the overlay element)
+ * @return string - JavaScript code to create and display the dialog
+ */
+function plainJSDialog($markup, $name) {
+
+	$output = "";
+	// Remove any existing dialog and build the overlay
+	$output .= "
+	var existingDialog = document.getElementById('$name');
+	if(existingDialog) {
+		existingDialog.parentNode.removeChild(existingDialog);
+	}
+	var overlay = document.createElement('div');
+	overlay.id = '$name';
+	overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+	var dialog = document.createElement('div');
+	dialog.style.cssText = 'background:#fff;border:1px solid #999;padding:20px;border-radius:5px;min-width:300px;max-width:500px;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
+	var html = '';
+	";
+	foreach(explode("\n", $markup) as $js) {
+		$output .= "html += '".str_replace("'", "\'", $js)."';\n";
+	}
+	$output .= ";
+	dialog.innerHTML = html;
+	overlay.appendChild(dialog);
+	document.body.appendChild(overlay);
+	var dialogCheckboxes = dialog.querySelectorAll('input[type=\"checkbox\"]');
+	var lastCheckedInDialog = null;
+	for(var dci = 0; dci < dialogCheckboxes.length; dci++) {
+		dialogCheckboxes[dci].addEventListener('click', function(e) {
+			if(lastCheckedInDialog && e.shiftKey) {
+				var allCbs = Array.prototype.slice.call(dialog.querySelectorAll('input[type=\"checkbox\"]'));
+				var start = allCbs.indexOf(this);
+				var end = allCbs.indexOf(lastCheckedInDialog);
+				var newState = lastCheckedInDialog.checked;
+				for(var j = Math.min(start,end); j <= Math.max(start,end); j++) {
+					allCbs[j].checked = newState;
+				}
+			}
+			lastCheckedInDialog = this;
+		});
+	}
+	return false;
+	";
+	return $output;
 }
 
 

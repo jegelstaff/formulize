@@ -371,7 +371,7 @@ test('Test \'Close\' button functionality', async ({ page }) => {
 	await login(page, 'curator1', '12345');
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
-	await expect(page.getByText('Ancient History')).toBeVisible();
+	await expect(page.getByText('Ancient History', { exact: true })).toBeVisible();
 	await page.getByRole('textbox', { name: 'Short Name' }).fill('Testdfgfdg');
 	page.on('dialog', dialog => dialog.accept());
 	await page.getByRole('button', { name: 'Close' }).click();
@@ -407,7 +407,7 @@ test.describe('Data entry for Exhibits', () => {
 			page,
 			'exhibits_artifacts',
 			async () => {
-				await page.getByText('Modern History').click();
+				await page.getByText('Modern History', { exact: true }).click();
 			}
 		);
 		// handle the conditional behaviour that happens when Ancient History is selected
@@ -415,7 +415,7 @@ test.describe('Data entry for Exhibits', () => {
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Ancient History').click()
+			() => page.getByText('Ancient History', { exact: true }).click()
 		);
 		await page.locator('input[type=text]').nth(2).fill('roman');
   	await page.getByText('Roman Coin').click();
@@ -455,7 +455,7 @@ test.describe('Data entry for Exhibits', () => {
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Ancient History').click()
+			() => page.getByText('Ancient History', { exact: true }).click()
 		);
 		await page.locator('input[type=text]').nth(2).fill('roman');
   	await page.getByText('Roman Coin').click();
@@ -485,7 +485,7 @@ test.describe('Data entry for Exhibits', () => {
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Modern History').click()
+			() => page.getByText('Modern History', { exact: true }).click()
 		);
 		await page.locator('input[type=text]').nth(2).fill('flor');
 		await page.getByText('Florentine Book').click();
@@ -717,4 +717,33 @@ test.describe('Cloning entries', () => {
 	})
 })
 
+test.describe('Change entry owner', () => {
+	test('Make Freeform Solutions owned by curator2', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		await expect(page.getByText('Change columns')).toBeVisible();
+		const popupPromise = page.context().waitForEvent('page');
+		await page.getByRole('button', { name: 'Change columns' }).click();
+		const page2 = await popupPromise;
+		await page2.bringToFront();
+		await page2.getByRole('checkbox', { name: 'User who made entry' }).check();
+		await page2.getByRole('button', { name: 'Change columns' }).click();
+		await expect(page.getByText('Curator One')).not.toHaveCount(0);
+		await expect(page.getByText('Curator Two')).not.toBeVisible();
+		await page.locator('input[name="search_donors_name"]').fill('Freeform Solutions');
+		await page.getByRole('link', { name: 'Name' }).click();
+		await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
+  	await page.locator('[id^=delete_]').first().check();
+		await expect(page.getByText('Change owner')).toBeVisible();
+		await page.getByRole('button', { name: 'Change owner' }).click();
+		await page.locator('#formulize_changeowner_dialog_overlay').waitFor();
+		await page.locator('.changeowner_form_checkbox').first().check();
+		await page.locator('select[id=changeowner_selected_uid]').selectOption({ label: 'Curator Two' });
+		await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+		await expect(page.getByText('Curator Two')).toBeVisible();
+		await expect(page.getByText('Curator One')).not.toBeVisible();
+		await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
+	})
+})
 
