@@ -101,9 +101,9 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_id';
-    $checkThisField = 'singleentry';
-    $checkThisProperty = 'Type';
-    $checkPropertyForValue = 'text';
+    $checkThisField = 'parent_perm_fid';
+    $checkThisProperty = false;
+    $checkPropertyForValue = false;
 
     /*
     * ====================================== */
@@ -532,6 +532,7 @@ function patch40() {
 				$sql['add_entry_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `entry_id` int(10) unsigned NULL default NULL";
 				$sql['add_form_entry_index'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD INDEX `form_entry` (`form_id`, `entry_id`)";
 				$sql['singleentry_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `singleentry` `singleentry` text NULL";
+				$sql['add_parent_perm_fid'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `parent_perm_fid` int(5) NOT NULL default 0";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -692,6 +693,8 @@ function patch40() {
 									print "Entry index already added to groups table. result: OK<br>";
 								} elseif($key === "singleentry_to_text") {
 									print "singleentry column already converted to text. result: OK<br>";
+								} elseif($key === "add_parent_perm_fid") {
+									print "parent_perm_fid field already added to formulize_id table. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

@@ -825,6 +825,21 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content']['submitted_user'] = $submitted_user;
     $adminPage['tabs'][$i]['content']['userSelectionList'] = $userSelectionList;
     $adminPage['tabs'][$i]['content']['userperms'] = $userperms;
+
+    // Permission inheritance data
+    $adminPage['tabs'][$i]['content']['parent_perm_fid'] = $formObject->getVar('parent_perm_fid', 'n');
+    $allFormsForInheritance = isset($common['allFormTitles']) ? $common['allFormTitles'] : array();
+    unset($allFormsForInheritance[$fid]);
+    $adminPage['tabs'][$i]['content']['allFormsForInheritance'] = $allFormsForInheritance;
+    $childFormIds = array();
+    $childSql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE parent_perm_fid = " . intval($fid);
+    if ($childRes = $xoopsDB->query($childSql)) {
+        while ($childRow = $xoopsDB->fetchArray($childRes)) {
+            $childFormIds[intval($childRow['id_form'])] = true;
+        }
+    }
+    $adminPage['tabs'][$i]['content']['childFormIds'] = $childFormIds;
+
     $i++;
 
     $adminPage['tabs'][$i]['name'] = "Screens";

@@ -280,6 +280,24 @@ define("_AM_PERMISSIONS_ADVANCED_CHANGEOWNER","Change the owner/creator of an ex
 define("_AM_PERMISSIONS_ADVANCED_ALTER","Alter this form's configuration settings");
 define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Delete this form");
 define("_AM_PERMISSIONS_REVIEW_PERMISSIONS","Review permissions for a user");
+define("_AM_PERMISSIONS_INHERIT_QUESTION","Inherit permissions from another form?");
+define("_AM_PERMISSIONS_INHERIT_NO","No &mdash; manage permissions directly on this form");
+define("_AM_PERMISSIONS_INHERIT_YES","Yes &mdash; copy permissions from another form to this one");
+define("_AM_PERMISSIONS_PARENT_FORM","Parent Form");
+define("_AM_PERMISSIONS_PARENT_FORM_EXPLAIN","This form will use the same permissions as the form you select here.");
+define("_AM_PERMISSIONS_SELECT_A_FORM","-- Select a form --");
+define("_AM_PERMISSIONS_VISIBILITY_FILTERS","Visibility filters");
+define("_AM_PERMISSIONS_VISIBILITY_FILTERS_EXPLAIN","Configure which entries each group can see on this form. These filters are specific to this form and are not inherited from the parent form.");
+define("_AM_PERMISSIONS_SHOW_FOR_USER","Show permissions for the user");
+define("_AM_PERMISSIONS_INHERIT_CHILDREN","Forms that inherit permissions from this form");
+define("_AM_PERMISSIONS_INHERIT_CHILDREN_EXPLAIN","Select the forms that should use the same permissions as this form. Shift-click to select a range.");
+define("_AM_PERMISSIONS_USER_PERMS_FOR","User Permissions for");
+define("_AM_PERMISSIONS_GROUPS_HEADING","Groups");
+define("_AM_PERMISSIONS_MATCH_ALL","Match all of these:");
+define("_AM_PERMISSIONS_MATCH_ONE_OR_MORE","Match one or more of these:");
+define("_AM_PERMISSIONS_ADVANCED_IGNORELOCK","Save entries even when they are locked while being edited elsewhere (saving cancels existing locks)");
+define("_AM_PERMISSIONS_GROUPLIST_NAME_PROMPT","Name of this group list");
+define("_AM_PERMISSIONS_GROUPLIST_CONFIRM_PREFIX","Are you sure you want to delete the group list '");
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
