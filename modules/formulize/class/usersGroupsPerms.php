@@ -315,18 +315,9 @@ class formulizePermHandler {
 
 		global $xoopsDB;
 
-		// Delete existing permissions for target group and copy from source
-		// If $modid is specified, only copy permissions for that module; otherwise copy all
-		$modidFilter = $modid ? " AND gperm_modid = " . intval($modid) : "";
-		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("group_permission") .
-			" WHERE gperm_groupid = $targetGroupId" . $modidFilter);
-
-		$sql = "INSERT INTO " . $xoopsDB->prefix("group_permission") .
-			" (gperm_groupid, gperm_itemid, gperm_modid, gperm_name) " .
-			"SELECT $targetGroupId, gperm_itemid, gperm_modid, gperm_name " .
-			"FROM " . $xoopsDB->prefix("group_permission") .
-			" WHERE gperm_groupid = $sourceGroupId" . $modidFilter;
-		if (!$xoopsDB->queryF($sql)) {
+		// Copy group_permission records using the groupperm handler
+		$gperm_handler = xoops_gethandler('groupperm');
+		if (!$gperm_handler->copyGroupIdRights($sourceGroupId, $targetGroupId, $modid)) {
 			return false;
 		}
 
@@ -360,6 +351,40 @@ class formulizePermHandler {
 				$permHandler->setGroupScopeGroups($targetGroupId, $resolvedScopeGroups);
 			}
 		}
+
+		return true;
+	}
+
+	/**
+	 * Copy all permission records, per-group filters, and groupscope settings from one form to another.
+	 * Replaces all existing permission data for the target form.
+	 *
+	 * @param int $sourceFid The form ID to copy permissions FROM
+	 * @param int $targetFid The form ID to copy permissions TO
+	 * @return bool True on success
+	 */
+	static function copyFormPermissions($sourceFid, $targetFid) {
+		$sourceFid = intval($sourceFid);
+		$targetFid = intval($targetFid);
+		if (!$sourceFid || !$targetFid || $sourceFid === $targetFid) {
+			return false;
+		}
+
+		global $xoopsDB;
+
+		// Copy group_permission records using the groupperm handler
+		$gperm_handler = xoops_gethandler('groupperm');
+		$formulize_module_id = getFormulizeModId();
+		if (!$gperm_handler->copyItemRights($sourceFid, $targetFid, $formulize_module_id)) {
+			throw new Exception("Failed to copy group permissions from form $sourceFid to form $targetFid");
+		}
+
+		// can't copy filters, because they are based on form fields and the fields will be different between the forms.
+
+		// Copy groupscope settings: delete target then insert from source
+		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("formulize_groupscope_settings") . " WHERE fid = $targetFid");
+		$xoopsDB->queryF("INSERT INTO " . $xoopsDB->prefix("formulize_groupscope_settings") . " (groupid, fid, view_groupid) "
+			. "SELECT groupid, $targetFid, view_groupid FROM " . $xoopsDB->prefix("formulize_groupscope_settings") . " WHERE fid = $sourceFid");
 
 		return true;
 	}
