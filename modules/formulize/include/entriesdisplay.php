@@ -203,14 +203,14 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 				foreach($entriesToChangeOwnershipOn as $thisEntryId) {
 					$linkResults = checkForLinks($frid, array($fid), $fid, array($fid=>$entriesToChangeOwnershipOn));
 					foreach(array_unique($linkResults['fids']) as $fidToChange) {
-						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid) {
+						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid AND is_array($linkResults['entries'][$fidToChange]) AND count($linkResults['entries'][$fidToChange]) > 0) {
 							$entriesToChange = array_diff($linkResults['entries'][$fidToChange], $entriesChanged[$fidToChange]);
 							$dataHandlers[$fidToChange]->setEntryOwnerGroups(array_fill(0, count($entriesToChange), $changeownerUid), $entriesToChange);
 							$entriesChanged[$fidToChange] = array_merge($entriesChanged[$fidToChange], $entriesToChange);
 						}
 					}
 					foreach(array_unique($linkResults['sub_fids']) as $fidToChange) {
-						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid) {
+						if(in_array($fidToChange, $fidsToChange) AND $fidToChange != $fid AND is_array($linkResults['sub_entries'][$fidToChange]) AND count($linkResults['sub_entries'][$fidToChange]) > 0) {
 							$entriesToChange = array_diff($linkResults['sub_entries'][$fidToChange], $entriesChanged[$fidToChange]);
 							$dataHandlers[$fidToChange]->setEntryOwnerGroups(array_fill(0, count($entriesToChange), $changeownerUid), $entriesToChange);
 							$entriesChanged[$fidToChange] = array_merge($entriesChanged[$fidToChange], $entriesToChange);
