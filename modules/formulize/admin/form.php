@@ -362,6 +362,7 @@ if ($_GET['fid'] != "new") {
     $member_handler = xoops_gethandler('member');
     $allGroups = $member_handler->getGroups();
     $groups = array();
+		$groupsMinusEntryGroups = array();
     $submitted_user = "";
     if (!isset($selectedGroups)) {
 			$selectedGroups = array();
@@ -384,6 +385,9 @@ if ($_GET['fid'] != "new") {
         $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
         $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
         $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
+				if(intval($thisGroup->getVar('entry_id')) == 0) {
+					$groupsMinusEntryGroups[$thisGroup->getVar('name')] = $groups[$thisGroup->getVar('name')];
+				}
     }
     if ($orderGroups == "alpha") {
         ksort($groups);
@@ -817,7 +821,7 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['name'] = "Permissions";
     $adminPage['tabs'][$i]['template'] = "db:admin/form_permissions.html";
     $adminPage['tabs'][$i]['content'] = $common;
-    $adminPage['tabs'][$i]['content']['groups'] = $groups;
+    $adminPage['tabs'][$i]['content']['groups'] = $groupsMinusEntryGroups;
     $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
     $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
     $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
