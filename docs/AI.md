@@ -18,6 +18,14 @@ You can use AI assistants, like Claude, Copilot, etc, to help you work with Form
 
 The AI can even create forms and elements based on your prompts, or based on documents you upload, or whatever other information you can provide. The AI can connect multiple forms into useful applications, and it can update the configuration of the elements too.
 
+<div id='video-flex-list'>
+		<a href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
+			<img src="/assets/img/formulize-confoo-ai.webp">
+		</a>
+		<p><a href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK"><span class='video-title'>Watch AI make a complete database</span></a><br>
+			A conference management<br>system for Confoo<br><span class='italic'>7 mins</span></p>
+</div>
+
 With AI, instead of having to do all the clicking and organizing yourself, you can just tell the AI what you want, and it will help you create it or find it or update it, and so on. Think of it like having a super fast and overeager intern, who knows everything about your Formulize system.
 
 ### Formulize is ideal for AI
