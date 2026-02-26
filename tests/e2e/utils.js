@@ -216,6 +216,8 @@ export async function login(page, username, password = '12345') {
 
 /**
  * Formulize Saving validation
+ * @param {string} buttonText - The text of the button to click to trigger the save (default 'Save')
+ * @param {number} timeout - Maximum time to wait for the saving process to complete (default 120000ms)
  */
 export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120000) {
 	// Wait for the formulize page token
