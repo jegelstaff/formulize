@@ -12,6 +12,12 @@ redirect_from:
 
 __If you're trying to update an existing Formulize system__, check out the [Updating Formulize page](../deploying_a_website/updating_formulize).
 
+## What you'll need
+
+- a web server with PHP and MariaDB (or MySQL) installed and ready to go
+- a database created in MariaDB (or MySQL)
+- a database user created, with full rights to the database in MariaDB (or MySQL)
+
 ## Quick Start
 
 1. __Get the Formulize files onto your web server.__ We recommend using ```git```. See below. You could also [download the latest release from GitHub](https://github.com/jegelstaff/formulize/zipball/{{ site.github.latest_release.tag_name }}), and transfer the files to your web server however you see fit.
