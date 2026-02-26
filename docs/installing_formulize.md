@@ -12,7 +12,7 @@ If you're setting up a Formulize site for the first time, you will need to follo
 
 2. Create a "trust" folder on the website, preferrably outside the web root (but some server configurations can't read a folder outside the web root). This folder will be used by Formulize to store the database name, and the username and password for accessing the database.
 
-3. Make sure the [folders that need to be writable](../writable_folders) by the server, are writable. Also, make sure that ```mainfile.php``` in the root of the website, is writable by the server.
+3. Get the Formulize files onto your server and into the webroot folder. Make sure the [folders that need to be writable](../writable_folders) by the server, are writable. Also, make sure that ```mainfile.php``` in the root of the website, is writable by the server.
 
 4. In a web browser, browse to the folder where you placed the Formulize files. ie: ```https://mysite.com``` if you put the Formulize files in the root of your website, or ```https://mysite.com/formulize/``` if you put the Formulize files in a subfolder named _formulize_, for example.
 
@@ -82,3 +82,4 @@ If you're setting up a Formulize site for the first time, you will need to follo
 
 	![Installer Page 15](../../images/installer15.png)
 
+19. Now that everything is installed, set 400 permission (read-only, owner-only) on the ```mainfile.php``` and the "trust" folder and its contents. If for whatever reason the web server user is not the owner of those files, make the web server the owner of the files.
