@@ -1,11 +1,7 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) Formulize Project												 ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
+##                    Copyright (c) 2011 Freeform Solutions                  ##
 ###############################################################################
 ##  This program is free software; you can redistribute it and/or modify     ##
 ##  it under the terms of the GNU General Public License as published by     ##
@@ -26,54 +22,45 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Formulize Project  					     									 ##
+##  Author of this file: Freeform Solutions                                  ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-/**
- * Configuration as code synchronization admin screen
- */
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
 
-// Operations may require additional memory and time to perform
-ini_set('memory_limit', '1024M');
-ini_set('max_execution_time', '600');
-ini_set('display_errors', 1);
+class formulizeUserAccountUidElement extends formulizeUserAccountElement {
 
-include_once '../include/formulizeConfigSync.php';
+    function __construct() {
+			parent::__construct();
+      $this->name = "User Account UID";
+			$this->overrideDataType = "MEDIUMINT(8) UNSIGNED";
+			$this->hasData = true;
+			$this->userProperty = "uid";
+		}
 
-$breadcrumbtrail[1]['url'] = "page=home";
-$breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['text'] = "Import/Export Forms and Apps";
+}
 
-$configSync = new FormulizeConfigSync('/config');
-$diff = $configSync->compareConfigurations();
+#[AllowDynamicProperties]
+class formulizeUserAccountUidElementHandler extends formulizeUserAccountElementHandler {
 
-$adminPage['template'] = "db:admin/config-sync.html";
-$adminPage['success'] = [];
-$adminPage['failure'] = [];
-
-if (isset($_POST['action']) && $_POST['action'] == 'export') {
-	icms::$logger->disableLogger();
-	while(ob_get_level()) {
-			ob_end_clean();
+	function create() {
+		return new formulizeUserAccountUidElement();
 	}
-	$export = $configSync->exportConfiguration();
-	header('Content-Type: application/json');
-	header('Content-Disposition: attachment; filename="forms.json"');
-	echo $export;
-	exit();
+
+	// this method renders the element for display in a form
+	// the caption has been pre-prepared and passed in separately from the element object
+	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
+	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
+	// $caption is the prepared caption for the element
+	// $markupName is what we have to call the rendered element in HTML
+	// $isDisabled flags whether the element is disabled or not so we know how to render it
+	// $element is the element object
+	// $entry_id is the ID number of the entry where this particular element comes from
+	// $screen is the screen object that is in effect, if any (may be null)
+	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+		$formElement = new xoopsFormLabel($caption, $ele_value);
+		return $formElement;
+	}
+
 }
-
-
-if (isset($_POST['action']) && $_POST['action'] == 'apply') {
-	$changes = $_POST['handles'] ?? [];
-	$result = $configSync->applyChanges($changes);
-	$adminPage['success'] = $result['success'];
-	$adminPage['failure'] = $result['failure'];
-	// Compare the config again if we've applied changes so the results are up to date
-	$diff = $configSync->compareConfigurations();
-}
-
-$adminPage['changes'] = $diff['changes'];
-$adminPage['log'] = $diff['log'];
-$adminPage['errors'] = $diff['errors'];

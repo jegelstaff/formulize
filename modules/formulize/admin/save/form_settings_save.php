@@ -41,9 +41,13 @@ $newAppObject = false;
 if($_POST['formulize_admin_key'] == "new") {
   $formObject = $form_handler->create();
 	$fid = 0;
+	$oldEntriesAreUsers = null;
+	$oldEntriesAreGroups = null;
 } else {
   $fid = intval($_POST['formulize_admin_key']);
   $formObject = $form_handler->get($fid);
+	$oldEntriesAreUsers = $formObject->getVar('entries_are_users');
+	$oldEntriesAreGroups = $formObject->getVar('entries_are_groups');
 }
 $processedValues['forms']['fid'] = $fid;
 
@@ -75,8 +79,102 @@ $processedValues['forms']['headerlist'] = (isset($_POST['headerlist']) and is_ar
 
 $applicationIds = (isset($_POST['apps']) AND is_array($_POST['apps'])) ? $_POST['apps'] : array(0);
 $groupsCanEdit = (isset($_POST['groups_can_edit']) AND is_array($_POST['groups_can_edit'])) ? $_POST['groups_can_edit'] : array(XOOPS_GROUP_ADMIN);
-$formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds);
+
+// Parse entries_are_users_default_groups from the autocomplete element (no forms- prefix in markup name)
+// Must parse this BEFORE conditions so we know which groups to parse conditions for
+$defaultGroups = isset($_POST['entries_are_users_default_groups']) && is_array($_POST['entries_are_users_default_groups']) ? $_POST['entries_are_users_default_groups'] : array();
+
+// Parse entries_are_users_conditions as a multidimensional array
+// Key 0 = base conditions, key {group_id} = per-group conditions
+$allConditions = array();
+$entriesAreUsersConditionsChanged = false;
+
+// Parse base conditions (key 0)
+list($parsedBaseConditions, $baseConditionsChanged) = parseSubmittedConditions('entriesareusersconditions');
+if ($parsedBaseConditions) {
+	$allConditions[0] = $parsedBaseConditions;
+}
+if ($baseConditionsChanged) {
+	$entriesAreUsersConditionsChanged = true;
+}
+
+// Parse per-group conditions
+foreach ($defaultGroups as $gid) {
+	$gid = intval($gid);
+	$filterKey = "eaugroup_".$gid;
+	list($parsedGroupConditions, $groupConditionsChanged) = parseSubmittedConditions($filterKey, 'per_group_conditionsdelete', 2, $gid);
+	if ($parsedGroupConditions) {
+		$allConditions[$gid] = $parsedGroupConditions;
+	}
+	if ($groupConditionsChanged) {
+		$entriesAreUsersConditionsChanged = true;
+	}
+}
+
+$processedValues['forms']['entries_are_users_conditions'] = $allConditions;
+$processedValues['forms']['entries_are_users_default_groups'] = $defaultGroups;
+
+// Parse element link selections for template groups
+// Checkboxes are keyed by eagFormId in the POST; form_map maps each groupId to its eagFormId
+$elementLinksByForm = isset($_POST['entries_are_users_default_groups_element_links']) && is_array($_POST['entries_are_users_default_groups_element_links']) ? $_POST['entries_are_users_default_groups_element_links'] : array();
+$formMap = isset($_POST['entries_are_users_default_groups_form_map']) && is_array($_POST['entries_are_users_default_groups_form_map']) ? $_POST['entries_are_users_default_groups_form_map'] : array();
+$sanitizedLinks = array();
+foreach ($formMap as $groupId => $eagFormId) {
+	$groupId = intval($groupId);
+	$eagFormId = intval($eagFormId);
+	if (isset($elementLinksByForm[$eagFormId]) && is_array($elementLinksByForm[$eagFormId])) {
+		$sanitizedLinks[$groupId] = array_map('intval', $elementLinksByForm[$eagFormId]);
+	}
+}
+$processedValues['forms']['entries_are_users_default_groups_element_links'] = $sanitizedLinks;
+
+// Build group categories array if entries_are_groups is being used
+$groupCategories = null;
+$newGroupCategoriesCreated = false;
+if (isset($processedValues['forms']['entries_are_groups'])) {
+	// Pass categories if entries_are_groups is being set (even if to 0, so we can clean up groups)
+	$groupCategories = (isset($_POST['group_categories']) && is_array($_POST['group_categories'])) ? $_POST['group_categories'] : array();
+	// Check if any new categories are being created (keys starting with "new_")
+	foreach ($groupCategories as $key => $value) {
+		if (is_string($key) && strpos($key, 'new_') === 0 && trim($value) !== '') {
+			$newGroupCategoriesCreated = true;
+			break;
+		}
+	}
+}
+
+// Parse per-group singleentry array from POST
+// save.php auto-serializes arrays, but we need a proper PHP array for setVar() with XOBJ_DTYPE_ARRAY
+$singleentryPerGroup = isset($_POST['forms-single']) && is_array($_POST['forms-single']) ? $_POST['forms-single'] : array(2 => 'off');
+$sanitizedSingle = array();
+foreach ($singleentryPerGroup as $gid => $value) {
+	$gid = intval($gid);
+	if (in_array($value, array('user', 'group', 'off'))) {
+		$sanitizedSingle[$gid] = $value;
+	}
+}
+if (empty($sanitizedSingle)) {
+	$sanitizedSingle = array(2 => 'off');
+}
+$processedValues['forms']['single'] = $sanitizedSingle;
+
+$formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds, $groupCategories);
 $fid = $formObject->getVar('fid');
+
+// Process user mapping if switching to entries_are_users and user chose to map existing entries
+if($formObject->getVar('entries_are_users')
+	AND isset($_POST['user_mapping_yes_no'])
+	AND $_POST['user_mapping_yes_no'] == '1'
+	AND isset($_POST['user_mapping_element'])
+	AND $_POST['user_mapping_element'] != ''
+	AND isset($_POST['user_mapping_type'])
+	AND $_POST['user_mapping_type'] != ''
+) {
+	$formObject = $oldEntriesAreUsers === 0 ? $form_handler->get($fid, refreshCache: true) : $formObject; // reload form object to ensure we have the user account element available
+	if($form_handler->associateExistingUsersWithFormEntries($formObject, $_POST['user_mapping_element'], $_POST['user_mapping_type'])) {
+		$_POST['reload_settings'] = 1; // force a reload of the settings page to remove the user mapping UI
+	}
+}
 
 // check if form handle changed
 $formulize_altered_form_handle = $processedValues['forms']['form_handle'] != $formObject->getVar('form_handle') ? true : false;
@@ -112,13 +210,23 @@ if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_PO
 }
 
 // if the form name was changed, etc, then force a reload of the page...
-if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1) OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
+if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
+	OR ($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0)
+	OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)
+	OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged
+	OR $newGroupCategoriesCreated
+	OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
+
   if(!in_array($_POST['application_url_id'], $applicationIds)) {
     $appidToUse = count($applicationIds) > 0 ? intval($applicationIds[0]) : 0;
   } else {
     $appidToUse = intval($_POST['application_url_id']);
   }
-  print "/* eval */ ";
+	if(($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0) OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)) {
+		print "/* evalnowandreturn */ ";  // have to abort doing anything else... should probably do this all the time with evalnow except that's not how things were architected and sometimes the operations performed 'now' are necessary for subsequent calls to work cleanly so we can't always return when processing evalnow :(
+	} else {
+		print "/* eval */ ";
+	}
   if($formulize_altered_form_handle) {
     print " alert('The Form Handle was changed for uniqueness, or because some characters, such as punctuation, are not allowed in the database table names or PHP variables.');\n";
   }

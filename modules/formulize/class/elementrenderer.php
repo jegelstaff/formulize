@@ -174,8 +174,15 @@ class formulizeElementRenderer{
 				$form_ele = $elementTypeHandler->render($ele_value, $ele_caption, $renderedElementMarkupName, $isDisabled, $this->_ele, $entry_id, $screen, $owner); // $ele_value as passed in here, $caption, name that we use for the element in the markup, flag for whether it's disabled or not, element object, entry id number that this element belongs to, $screen is the screen object that was passed in, if any
 				// if form_ele is an array, then we want to treat it the same as an "insertbreak" element, ie: it's not a real form element object
 				if(is_object($form_ele)) {
-					if(!$isDisabled AND ($this->_ele->getVar('ele_required') OR $this->_ele->alwaysValidateInputs) AND $this->_ele->hasData) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
-						$form_ele->customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id);
+					if(!$isDisabled
+						AND (
+							$this->_ele->getVar('ele_required')
+							OR $this->_ele->alwaysValidateInputs
+						)
+						AND method_exists($elementTypeHandler, 'generateValidationCode')
+						AND $customValidationCode = $elementTypeHandler->generateValidationCode($ele_caption, $renderedElementMarkupName, $this->_ele, $entry_id)
+					) { // if it's not disabled, and either a declared required element according to the webmaster, or the element type itself always forces validation...
+						$form_ele->customValidationCode = $customValidationCode;
 					}
 					$form_ele->setDescription($helpText);
 					$wasDisabled = $isDisabled; // Ack!! see spaghetti code comments with $wasDisabled elsewhere
@@ -190,7 +197,7 @@ class formulizeElementRenderer{
 
 		// if element is object, with data, not disabled, let's get it ready for rendering
 		// by rendering everything now, and sticking it in a clean "label" element
-		if(is_object($form_ele) AND !$isDisabled AND $this->_ele->hasData) {
+		if(is_object($form_ele) AND !$isDisabled AND ($this->_ele->hasData OR $this->_ele->isUserAccountElement)) {
 
 			// put in cue if element has data we should be handling on save
 			$elementCue = "";
@@ -198,7 +205,7 @@ class formulizeElementRenderer{
 				AND $this->_ele->getVar('ele_type') != "derived"
 				AND !$isDisabled
 				AND !$wasDisabled
-				AND $customElementHasData) {
+				AND ($customElementHasData OR $this->_ele->isUserAccountElement)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($renderedElementMarkupName,"de_")."\" name=\"decue_".trim($renderedElementMarkupName,"de_")."\" value=1>\n";
 			}
 

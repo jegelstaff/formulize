@@ -31,5 +31,8 @@ class icms_member_group_Object extends icms_core_Object {
 		$this->initVar('name', XOBJ_DTYPE_TXTBOX, null, true, 100);
 		$this->initVar('description', XOBJ_DTYPE_TXTAREA, null, false);
 		$this->initVar('group_type', XOBJ_DTYPE_OTHER, null, false);
+		$this->initVar('is_group_template', XOBJ_DTYPE_INT, 0, false);
+		$this->initVar('form_id', XOBJ_DTYPE_INT, null, false);
+		$this->initVar('entry_id', XOBJ_DTYPE_INT, null, false);
 	}
 }

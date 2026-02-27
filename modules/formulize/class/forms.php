@@ -58,6 +58,7 @@ class formulizeForm extends FormulizeObject {
 			// gather element ids for this form
 			$encryptedElements = array();
 			$elementTypesWithData = array();
+			$elementTypesAreSystemElements = array();
 			$element_handler = xoops_getmodulehandler('elements', 'formulize');
 			$displayFilter = $includeAllElements ? "" : "AND ele_display != \"0\"";
 			$elementsq = q("SELECT ele_id, ele_caption, ele_colhead, ele_handle, ele_type, ele_encrypt FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=".intval($formq[0]['id_form'])." $displayFilter ORDER BY ele_order ASC");
@@ -66,9 +67,13 @@ class formulizeForm extends FormulizeObject {
 					// instantiate element object for this element, and check if it has data. Only once per type, to avoid duplication, keep it as fast as possible.
 					$elementObject = $element_handler->get($value['ele_id']);
 					$elementTypesWithData[$value['ele_type']] = $elementObject->hasData ? true : false;
+					$elementTypesAreSystemElements[$value['ele_type']] = $elementObject->isSystemElement ? true : false;
 				}
 				if($elementTypesWithData[$value['ele_type']]) {
 					$elementsWithData[$value['ele_id']] = $value['ele_id'];
+				}
+				if($elementTypesAreSystemElements[$value['ele_type']]) {
+					$systemElements[$value['ele_id']] = $value['ele_id'];
 				}
 				$elements[$value['ele_id']] = $value['ele_id'];
 				$elementCaptions[$value['ele_id']] = $value['ele_caption'];
@@ -78,22 +83,19 @@ class formulizeForm extends FormulizeObject {
 				if($value['ele_encrypt']) {
 					$encryptedElements[$value['ele_id']] = $value['ele_handle'];
 				}
+			}
 
-				// propertly format the single value
-				switch($formq[0]['singleentry']) {
-					case "group":
-						$single = "group";
-						break;
-					case "on":
-						$single = "user";
-						break;
-					case "off":
-					case "":
-						$single = "off";
-						break;
-					default:
-						$single = "";
-						break;
+			// format the single value as a per-group array
+			$singleRaw = $formq[0]['singleentry'];
+			$single = (strpos($singleRaw, 'a:') === 0) ? unserialize($singleRaw) : array(2 => $singleRaw);
+
+			foreach ($single as $gid => $val) {
+				if ($val == "on" OR $val == "user") {
+					$single[$gid] = "user";
+				} elseif ($val == "group") {
+					$single[$gid] = "group";
+				} else {
+					$single[$gid] = "off";
 				}
 			}
 
@@ -127,9 +129,10 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("singular", XOBJ_DTYPE_TXTBOX, $formq[0]['singular'], false, 255);
 		$this->initVar("plural", XOBJ_DTYPE_TXTBOX, $formq[0]['plural'], false, 255);
 		$this->initVar("tableform", XOBJ_DTYPE_TXTBOX, $formq[0]['tableform'], false, 255);
-		$this->initVar("single", XOBJ_DTYPE_TXTBOX, $single, false, 5);
+		$this->initVar("single", XOBJ_DTYPE_ARRAY, serialize($single));
 		$this->initVar("elements", XOBJ_DTYPE_ARRAY, serialize($elements));
 		$this->initVar("elementsWithData", XOBJ_DTYPE_ARRAY, serialize($elementsWithData));
+		$this->initVar("systemElements", XOBJ_DTYPE_ARRAY, serialize($systemElements));
 		$this->initVar("elementCaptions", XOBJ_DTYPE_ARRAY, serialize($elementCaptions));
 		$this->initVar("elementColheads", XOBJ_DTYPE_ARRAY, serialize($elementColheads));
 		$this->initVar("elementHandles", XOBJ_DTYPE_ARRAY, serialize($elementHandles));
@@ -153,6 +156,14 @@ class formulizeForm extends FormulizeObject {
 		$this->initVar("note", XOBJ_DTYPE_TXTAREA, $formq[0]['note']);
 		$this->initVar("send_digests", XOBJ_DTYPE_INT, $formq[0]['send_digests']);
 		$this->initVar("pi", XOBJ_DTYPE_INT, $formq[0]['pi']);
+		$this->initVar("entries_are_users", XOBJ_DTYPE_INT, $formq[0]['entries_are_users']);
+		$this->initVar("entries_are_users_conditions", XOBJ_DTYPE_ARRAY, $formq[0]['entries_are_users_conditions']);
+		$this->initVar("entries_are_users_default_groups", XOBJ_DTYPE_ARRAY, $formq[0]['entries_are_users_default_groups']);
+		$this->initVar("entries_are_users_default_groups_element_links", XOBJ_DTYPE_ARRAY, $formq[0]['entries_are_users_default_groups_element_links']);
+		$this->initVar("entries_are_users_user_is_owner", XOBJ_DTYPE_INT, $formq[0]['entries_are_users_user_is_owner']);
+		$this->initVar("entries_are_groups", XOBJ_DTYPE_INT, $formq[0]['entries_are_groups']);
+		$this->initVar("group_categories", XOBJ_DTYPE_ARRAY, $formq[0]['group_categories']);
+		$this->initVar("parent_perm_fid", XOBJ_DTYPE_INT, $formq[0]['parent_perm_fid']);
     }
 
 	/**
@@ -876,21 +887,6 @@ class formulizeFormsHandler {
 					${$k} = $v;
 				}
 
-				$singleToWrite = "";
-				switch($single) {
-					case('user'):
-						$singleToWrite = "on";
-						break;
-					case('off'):
-					case(''):
-						$singleToWrite = "";
-						break;
-					default:
-					case('group'):
-						$singleToWrite = "group";
-						break;
-				}
-
 				if($formObject->isNew() || empty($id_form)) {
 
 					// some basic safetynets for new forms
@@ -908,24 +904,32 @@ class formulizeFormsHandler {
 					}
 
 					$sql = "INSERT INTO ".$this->db->prefix("formulize_id") . " (`form_title`, `singular`, `plural`, `singleentry`, `tableform`, ".
-							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`) VALUES (".
+							"`menutext`, `form_handle`, `store_revisions`, `note`, `send_digests`, `pi`, `entries_are_users`, `entries_are_users_conditions`, `entries_are_users_default_groups`, `entries_are_users_default_groups_element_links`, `entries_are_users_user_is_owner`, `entries_are_groups`, `group_categories`, `parent_perm_fid`) VALUES (".
 							$this->db->quoteString($form_title).", ".
 							$this->db->quoteString($singular).", ".
 							$this->db->quoteString($plural).", ".
-							$this->db->quoteString($singleToWrite).", ".
+							$this->db->quoteString($single).", ".
 							$this->db->quoteString($tableform).", ".
 							$this->db->quoteString($menutext).", ".
 							$this->db->quoteString($form_handle).", ".
 							intval($store_revisions).", ".
 							$this->db->quoteString($note).", ".
 							intval($send_digests).", ".
-							intval($pi).")";
+							intval($pi).", ".
+							intval($entries_are_users).", ".
+							$this->db->quoteString($entries_are_users_conditions).", ".
+							$this->db->quoteString($entries_are_users_default_groups).", ".
+							$this->db->quoteString($entries_are_users_default_groups_element_links).", ".
+							intval($entries_are_users_user_is_owner).", ".
+							intval($entries_are_groups).", ".
+							$this->db->quoteString($group_categories).", ".
+						intval($parent_perm_fid).")";
 				} else {
 					$sql = "UPDATE ".$this->db->prefix("formulize_id") . " SET".
 							" `form_title` = ".$this->db->quoteString($form_title).
 							", `singular` = ".$this->db->quoteString($singular).
 							", `plural` = ".$this->db->quoteString($plural).
-							", `singleentry` = ".$this->db->quoteString($singleToWrite).
+							", `singleentry` = ".$this->db->quoteString($single).
 							", `headerlist` = ".$this->db->quoteString($headerlist).
 							", `defaultform` = ".intval($defaultform).
 							", `defaultlist` = ".intval($defaultlist).
@@ -935,6 +939,14 @@ class formulizeFormsHandler {
 							", `note` = ".$this->db->quoteString($note).
 							", `send_digests` = ".intval($send_digests).
 							", `pi` = ".intval($pi).
+							", `entries_are_users` = ".intval($entries_are_users).
+							", `entries_are_users_conditions` = ".$this->db->quoteString($entries_are_users_conditions).
+							", `entries_are_users_default_groups` = ".$this->db->quoteString($entries_are_users_default_groups).
+							", `entries_are_users_default_groups_element_links` = ".$this->db->quoteString($entries_are_users_default_groups_element_links).
+							", `entries_are_users_user_is_owner` = ".intval($entries_are_users_user_is_owner).
+							", `entries_are_groups` = ".intval($entries_are_groups).
+							", `group_categories` = ".$this->db->quoteString($group_categories).
+							", `parent_perm_fid` = ".intval($parent_perm_fid).
 							" WHERE id_form = ".intval($id_form);
 				}
 
@@ -991,6 +1003,15 @@ class formulizeFormsHandler {
 					}
 				}
 
+				// if entries_are_users is set, add the system elements to the form for user account fields
+				if($formObject->getVar('entries_are_users')) {
+					if(!$this->createUserAccountElements($formObject)) {
+						throw new Exception("Could not create user account elements for form $id_form");
+					}
+				} else {
+					$this->removeUserAccountElements($formObject);
+				}
+
 				$procedures = array(
 					'on_before_save',
 					'on_after_save',
@@ -1009,6 +1030,315 @@ class formulizeFormsHandler {
 				}
 
 				return $id_form;
+	}
+
+	/**
+	 * Get the user account element types, based on the classes defined for them
+	 * @return array An array of element types for the user account elements
+	 */
+	function getUserAccountElementTypes() {
+		static $userAccountElementTypes = array();
+		if(empty($userAccountElementTypes)) {
+			$userAccountClassFiles = glob(XOOPS_ROOT_PATH . "/modules/formulize/class/userAccount*Element.php");
+			foreach($userAccountClassFiles as $classFile) {
+				$className = str_replace(array(XOOPS_ROOT_PATH . "/modules/formulize/class/", "Element.php"), "", $classFile);
+				$userAccountElementTypes[] = $className;
+			}
+			$order = array(
+				'Uid',
+				'FirstName',
+				'LastName',
+				'Username',
+				'Password',
+				'Email',
+				'Phone',
+				'2FA',
+				'NotificationMethod',
+				'Timezone',
+				'GroupMembership',
+			);
+			// ensure the order is correct
+			$orderedTypes = array();
+			foreach($order as $type) {
+				if(in_array('userAccount'.$type, $userAccountElementTypes)) {
+					$orderedTypes[] = 'userAccount'.$type;
+				}
+			}
+			$userAccountElementTypes = $orderedTypes;
+		}
+		return $userAccountElementTypes;
+	}
+
+	/**
+	 * Remove user account system elements and related pages from the form
+	 * @param object formObject - The object representation of the form we're working with.
+	 * @return boolean Returns true if the elements were removed or did not exist, false if there was an error removing them.
+	 */
+	function removeUserAccountElements($formObject) {
+		// get the element ids of the user account elements
+		// remove from any screen pages of screens on this form where they exist
+		// delete the elements themselves
+		$userAccountElementTypes = $this->getUserAccountElementTypes();
+		$userAccountElementIds = array();
+		$userAccountUidElementObjects = array();
+		$userAccountHandles = array();
+		foreach($userAccountElementTypes as $type) {
+			$userAccountHandles[] = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
+		}
+		// do a substr match, in case something went wonky and there are multiple instances of the user account elements
+		foreach($formObject->getVar('elementHandles') as $handle) {
+			foreach($userAccountHandles as $i => $candidateHandle) {
+				if(substr($handle, 0, strlen($candidateHandle)) == $candidateHandle) {
+					if($elementObject = _getElementObject($handle)) {
+						$userAccountElementIds[] = $elementObject->getVar('ele_id');
+						if(strstr($handle, 'formulize_user_account_uid') !== false) {
+							$userAccountUidElementObjects[] = $elementObject;
+						}
+						unset($userAccountHandles[$i]); // remove from list so we don't keep checking for it
+						break;
+					}
+				}
+			}
+		}
+		if(!empty($userAccountElementIds)) {
+			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			$screenHandler->removeElementsFromScreens($userAccountElementIds, removeEmptyPages: true);
+			if(!empty($userAccountUidElementObjects)) {
+				foreach($userAccountUidElementObjects as $userAccountUidElementObject) {
+					$this->deleteElementField($userAccountUidElementObject);
+				}
+			}
+			// now delete the elements themselves
+			global $xoopsDB;
+			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id IN (".implode(",", $userAccountElementIds).") AND id_form = ".intval($formObject->getVar('fid'));
+			$xoopsDB->queryF($sql);
+		}
+	}
+
+	/**
+	 * Add user account system elements to the form, if they do not already exist
+	 * Create the User Account page on the default form screen if necessary first
+	 * Add user account elements to that page
+	 * @param object formObject - The object representation of the form we're working with.
+	 * @return boolean Returns true if the elements exist or were created, subordinate functions and methods will throw an exception if there was an error.
+	 */
+	function createUserAccountElements($formObject) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$userAccountElementTypes = $this->getUserAccountElementTypes();
+		$userAccountElementTypes = array_reverse($userAccountElementTypes); // add in reverse order so they appear in the right order on the page
+
+		// Determine if we have a default screen and find/create the User Account page
+		$defaultFormSid = $formObject->getVar('defaultform');
+		$screenObject = null;
+		$userAccountPageNumber = null;
+		$userAccountPageOrdinal = null;
+
+		if($defaultFormSid) {
+			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			if($screenObject = $screenHandler->get($defaultFormSid)) {
+				// get the page metadata, page numbers numbered from 1
+				list($pages, $pageTitles, $pageConditions) = $screenHandler->traverseScreenPages($screenObject);
+				foreach($pageTitles as $pageNumber => $pageTitle) {
+					if(strstr($pageTitle, ']'._formulize_USER_ACCOUNT_EN.'[') !== false) {
+						$userAccountPageNumber = $pageNumber;
+						$userAccountPageOrdinal = $userAccountPageNumber - 1; // convert to zero-based ordinal
+						break;
+					}
+				}
+			}
+		}
+
+		$screenIdsAndPagesForAdding = array();
+		foreach($userAccountElementTypes as $type) {
+			$handle = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
+			// if user account elements are not yet in the form, add them, and add to a newly created User Account page
+			if(!in_array($handle, $formObject->getVar('elementHandles'))) {
+				// Create User Account page if it doesn't exist yet and this is the first element being added
+				if($screenObject && !$userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
+					$newPages = $screenObject->getVar('pages');
+					$newTitles = $screenObject->getVar('pagetitles');
+					$newConditions = $screenObject->getVar('conditions');
+					$newConditions = is_array($newConditions) ? $newConditions : array(array());
+					$allFormConditions = $formObject->getVar('entries_are_users_conditions');
+					$formConditions = (is_array($allFormConditions) && isset($allFormConditions[0])) ? $allFormConditions[0] : null;
+					// Ensure conditions have proper structure (4 arrays for element, operator, term, match type)
+					$conditionsForNewPage = ($formConditions && is_array($formConditions))
+						? $formConditions
+						: array(0 => array(), 1 => array(), 2 => array(), 3 => array());
+					array_unshift($newPages, array()); // add a new empty page at the beginning
+					array_unshift($newTitles, '[en]'._formulize_USER_ACCOUNT_EN.'[/en][fr]'._formulize_USER_ACCOUNT_FR.'[/fr]');
+					array_unshift($newConditions, $conditionsForNewPage);
+					$screenObject->setVar('pages', serialize($newPages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+					$screenObject->setVar('pagetitles', serialize($newTitles));
+					$screenObject->setVar('conditions', serialize($newConditions));
+					$insertResult = $screenHandler->insert($screenObject, force: true);
+					if($insertResult == false) {
+						throw new Exception("Could not add User Account page to the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
+					}
+					$userAccountPageNumber = 1;
+					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
+				}
+				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail');
+				$elementObjectProperties = array(
+					'ele_caption' => constant("_formulize_".strtoupper($type)),
+					'ele_type' => $type,
+					'ele_handle' => $handle,
+					'ele_private' => 1,
+					'ele_required' => in_array($type, $notRequiredTypes) ? 0 : 1,
+					'fid' => $formObject->getVar('fid'),
+					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
+					'ele_display' => 1
+				);
+				if($type == 'userAccountUid') {
+					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.","; // only admins can see the user id element
+					$elementObjectProperties['ele_required'] = 0; // not required, since it's not managed by user input
+				}
+				if($userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
+					$screenIdsAndPagesForAdding = array(
+						$defaultFormSid => array($userAccountPageOrdinal)
+					);
+				}
+				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding);
+			}
+		}
+		if(!empty($screenIdsAndPagesForAdding)) {
+			// we added at least one element, so reorder the elements within the new page, since they were created in reverse order to give them the proper order in the form (each going to the top, so last is on very top, but within the page they were added one at a time as they went so need to reverse them within the page now)
+			$screenObject = $screenHandler->get($defaultFormSid); // re-get the object so it will have the latest data
+			$pages = $screenObject->getVar('pages');
+			$elementsOnPage = $pages[$userAccountPageOrdinal];
+			$elementsOnPage = array_reverse($elementsOnPage);
+			$pages[$userAccountPageOrdinal] = $elementsOnPage;
+			$screenObject->setVar('pages', serialize($pages));
+			$insertResult = $screenHandler->insert($screenObject, force: true);
+			if($insertResult == false) {
+				throw new Exception("Could not reorder elements on User Account page of the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info	@formulize.org for assistance.");
+			}
+		} elseif($userAccountPageNumber && $screenObject) {
+			$allFormConditions = $formObject->getVar('entries_are_users_conditions');
+			$formConditions = (is_array($allFormConditions) && isset($allFormConditions[0])) ? $allFormConditions[0] : null;
+			$currentConditions = $screenObject->getVar('conditions');
+			$currentConditions = is_array($currentConditions) ? $currentConditions : array();
+
+			// Get existing conditions for this page, or initialize empty structure
+			$pageConditions = isset($currentConditions[$userAccountPageOrdinal]) && is_array($currentConditions[$userAccountPageOrdinal])
+				? $currentConditions[$userAccountPageOrdinal]
+				: array(0 => array(), 1 => array(), 2 => array(), 3 => array());
+
+			// Merge form conditions into page conditions, avoiding duplicates
+			if($formConditions && is_array($formConditions)) {
+				// Ensure form conditions have all 4 arrays
+				$formConditions = array_pad($formConditions, 4, array());
+
+				// Iterate through each condition in form conditions
+				if(isset($formConditions[0]) && is_array($formConditions[0])) {
+					$conditionCount = count($formConditions[0]);
+
+					for($i = 0; $i < $conditionCount; $i++) {
+						$element = $formConditions[0][$i] ?? null;
+						$operator = $formConditions[1][$i] ?? null;
+						$term = $formConditions[2][$i] ?? null;
+						$matchType = $formConditions[3][$i] ?? null;
+
+						// Check if this condition already exists in page conditions
+						$conditionExists = false;
+						if(isset($pageConditions[0]) && is_array($pageConditions[0])) {
+							$pageConditionCount = count($pageConditions[0]);
+
+							for($j = 0; $j < $pageConditionCount; $j++) {
+								if(($pageConditions[0][$j] ?? null) == $element &&
+								   ($pageConditions[1][$j] ?? null) == $operator &&
+								   ($pageConditions[2][$j] ?? null) == $term &&
+								   ($pageConditions[3][$j] ?? null) == $matchType) {
+									$conditionExists = true;
+									break;
+								}
+							}
+						}
+
+						// If condition doesn't exist, add it
+						if(!$conditionExists) {
+							$pageConditions[0][] = $element;
+							$pageConditions[1][] = $operator;
+							$pageConditions[2][] = $term;
+							$pageConditions[3][] = $matchType;
+						}
+					}
+				}
+			}
+
+			$currentConditions[$userAccountPageOrdinal] = $pageConditions;
+			$screenObject->setVar('conditions', serialize($currentConditions));
+			$insertResult = $screenHandler->insert($screenObject, force: true);
+			if($insertResult == false) {
+				throw new Exception("Could not update conditions on User Account page of the screen \"".$screenObject->getVar('title')."\" (id: $defaultFormSid). Please contact info@formulize.org for assistance.");
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Associate entries in a form with user accounts
+	 * @param int|string|object formIdentifier - The object representation of the form we're working with, or form handle or form id
+	 * @param int|string|object elementIdentifier - The element id, handle or object of the element in the form that contains the values that correspond to user accounts. Metadata fields can be passed in.
+	 * @param string userField - The field in the user table that the element corresponds with. Must be one of login_name, email, or uid
+	 * @return boolean Returns true if the association was made, false if the parameters were invalid or there were no values found in the form. Throws exception if there was an error during processing.
+	 */
+	function associateExistingUsersWithFormEntries($formIdentifier, $elementIdentifier, $userField='uid') {
+
+		// validate the form
+		if(!is_a($formIdentifier, 'formulizeForm')) {
+			$formObject = $this->get($formIdentifier);
+			if(!$formObject) {
+				return false;
+			}
+		} else {
+			$formObject = $formIdentifier;
+		}
+
+		// validate that the form has a userAccountUid element
+		if(!in_array('formulize_user_account_uid_'.$formObject->getVar('fid'), $formObject->getVar('elementHandles'))) {
+			return false;
+		}
+		// validate that the userAccountUid element has no values yet
+		$dataHandler = new formulizeDataHandler($formObject->getVar('fid'));
+		$existingAssociatedUids = $dataHandler->findAllEntriesWithValue('formulize_user_account_uid_'.$formObject->getVar('fid'), 0, operator: '>');
+		if(!empty($existingAssociatedUids)) {
+			return false;
+		}
+		// validate the user field
+		if(!in_array($userField, ['login_name', 'email', 'uid'])) {
+			return false;
+		}
+		// validate the element, either a metadata field, or get the element handle from the object
+		if(in_array($elementIdentifier, $dataHandler->metadataFields)) {
+			$elementHandle = $elementIdentifier;
+		} elseif($elementObject = _getElementObject($elementIdentifier)) {
+			$elementHandle = $elementObject->getVar('ele_handle');
+		} else {
+			return false;
+		}
+		// get all the values for the element, and look up users and record their uid in the userAccountUid element in the form
+		if($values = $dataHandler->findAllValuesForField($elementHandle)) {
+			$member_handler = xoops_gethandler('member');
+			foreach($values as $entryId => $value) {
+				$criteria = new Criteria($userField, $value);
+				if($userObjects = $member_handler->getUsers($criteria)
+					AND is_array($userObjects)
+					AND count($userObjects) == 1
+				) {
+					$userObject = array_shift($userObjects);
+					$userId = $userObject->getVar('uid');
+					if(!$dataHandler->writeEntry($entryId, array(
+						'formulize_user_account_uid_'.$formObject->getVar('fid') => $userId
+					), forceUpdate: true)) {
+						throw new Exception("Could not associate entry $entryId with user account $userId in form ".$formObject->getVar('form_handle'));
+					}
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 	/**

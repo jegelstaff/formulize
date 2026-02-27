@@ -106,14 +106,57 @@ switch($op) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
     if(is_object($elementObject)) {
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-      $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-      $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
-      if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
-      } else {
-        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
-      }
+
+			if($elementObject->getVar('ele_type') == 'userAccountEmail'
+			OR $elementObject->getVar('ele_type') == 'userAccountUsername'
+			OR $elementObject->getVar('ele_type') == 'userAccountPhone') {
+
+				if($elementObject->getVar('ele_type') == 'userAccountUsername') {
+					$keyField = 'uname';
+					$table = "users";
+				}elseif($elementObject->getVar('ele_type') == 'userAccountEmail') {
+					$keyField = 'email';
+					$table = "users";
+				} elseif($elementObject->getVar('ele_type') == 'userAccountPhone') {
+					$value = preg_replace('/[^0-9]/', '', $value);
+					$keyField = '2faphone';
+					$table = "profile_profile";
+				}
+				// For existing entries, exclude the current user's own record from the uniqueness check
+				$excludeClause = '';
+				if($entry != 'new' AND is_numeric($entry)) {
+					$fid = $elementObject->getVar('fid');
+					$data_handler = new formulizeDataHandler($fid);
+					$entryUserId = intval($data_handler->getElementValueInEntry($entry, 'formulize_user_account_uid_'.$fid));
+					if($entryUserId > 0) {
+						$idField = ($table == 'profile_profile') ? 'profileid' : 'uid';
+						$excludeClause = " AND `$idField` != $entryUserId";
+					}
+				}
+				global $xoopsDB;
+				$sql = "SELECT COUNT(*) AS count FROM ".$xoopsDB->prefix($table)." WHERE `$keyField` = '".formulize_db_escape($value)."'".$excludeClause;
+				if($res = $xoopsDB->query($sql)) {
+					$row = $xoopsDB->fetchArray($res);
+					if($row['count'] > 0) {
+						print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+					} else {
+						print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+					}
+				} else {
+					print json_encode(array('val'=>'invalidsql', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				}
+
+			} else {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+				$entry_id = $data_handler->findFirstEntryWithValue($element, $value);
+				if(is_numeric($entry_id) AND $entry_id != $entry) {
+					print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				} else {
+					print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				}
+			}
+
     } else {
       print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }

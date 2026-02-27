@@ -448,9 +448,9 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid);
                 // if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
                 if (!$view_groupscope) {
-                    global $xoopsDB;
-                    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$form_id");
-                    if ($smq[0]['singleentry'] == "group") {
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    $checkFormObject = $form_handler->get($form_id);
+                    if ($checkFormObject AND resolveEffectiveSingle($checkFormObject->getVar('single'), $groups) == "group") {
                         $view_groupscope = true;
                     }
                 }
@@ -2024,6 +2024,41 @@ function getElementValue($entry, $element_id, $fid) {
 }
 
 
+// Resolve a per-group singleentry array to a scalar value for a given set of groups.
+// Registered Users (group 2) is the base default. Any other group's setting overrides it.
+// Conflicts among non-base groups: least restrictive wins.
+// Restrictiveness: "group" (most) > "user" > "off" (least)
+// $singleArray: per-group array (groupId => value) or legacy scalar string
+// $userGroups: the user's group IDs
+// returns: "user", "group", or "off"
+function resolveEffectiveSingle($singleArray, $userGroups) {
+	if (!is_array($singleArray)) {
+		// Legacy scalar — return as-is after normalization
+		if ($singleArray == "on") return "user";
+		if ($singleArray == "group") return "group";
+		if ($singleArray == "user") return "user";
+		return "off";
+	}
+	// Base value from Registered Users (group 2)
+	$base = isset($singleArray[2]) ? $singleArray[2] : "off";
+	// Collect values from non-base groups the user belongs to
+	// Restrictiveness: "group"=3, "user"=2, "off"=1 — least restrictive wins among overrides
+	$priority = array("group" => 3, "user" => 2, "off" => 1);
+	$overrideValue = null;
+	$overridePriority = 999; // start high, look for lowest (least restrictive)
+	foreach ($singleArray as $gid => $value) {
+		if ($gid == 2) continue; // skip base
+		if (in_array(intval($gid), $userGroups) AND isset($priority[$value])) {
+			$p = $priority[$value];
+			if ($overrideValue === null OR $p < $overridePriority) {
+				$overrideValue = $value;
+				$overridePriority = $p;
+			}
+		}
+	}
+	return ($overrideValue !== null) ? $overrideValue : $base;
+}
+
 // this function checks for singleentry status and returns the appropriate entry in the form if there is one
 function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
 		if(!$member_handler) {
@@ -2035,21 +2070,22 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
 		if(!$mid) {
 			$mid = getFormulizeModId();
 		}
-    global $xoopsDB, $xoopsUser;
-    // determine single/multi status
-    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
-    if ($smq[0]['singleentry'] == "on" OR $smq[0]['singleentry'] == "group") {
-        // find the entry that applies
-        $single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
+    global $xoopsUser;
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $formObject = $form_handler->get($fid);
+    $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
+
+    if ($effectiveSingle == "user" OR $effectiveSingle == "group") {
+        $single['flag'] = $effectiveSingle == "user" ? 1 : "group";
         // if we're looking for a regular single, find first entry for this user
-        if ($smq[0]['singleentry'] == "on") {
+        if ($effectiveSingle == "user") {
             if (!$xoopsUser) {
                 $single['entry'] = ""; // don't set an entry for anons. they should not share the same entry in a single entry form, since user zero is actually lots of different people. cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
             } else {
                 $data_handler = new formulizeDataHandler($fid);
                 $single['entry'] = $data_handler->getFirstEntryForUsers($uid);
             }
-        } elseif ($smq[0]['singleentry'] == "group") {
+        } elseif ($effectiveSingle == "group") {
             // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
             $formulize_permHandler = new formulizePermHandler($fid);
             $intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
@@ -2059,8 +2095,6 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
             }
             $data_handler = new formulizeDataHandler($fid);
             $single['entry'] = $data_handler->getFirstEntryForGroups($intersect_groups);
-        } else {
-            exit("Error: invalid value found for singleentry for form $fid");
         }
     } else {
         $single['flag'] = 0;
@@ -2709,11 +2743,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 
     $dataHandlers = array();
     $entryMap = array();
+		global $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
         foreach ($entries_to_clone as $fid=>$entries) {
             // never clone an entry in a form that is a single-entry form
             $thisform = new formulizeForm($fid);
-            if ($thisform->getVar('single') != "off") {
+
+            if (resolveEffectiveSingle($thisform->getVar('single'), $groups) != "off") {
                 continue;
             }
             foreach ($entries as $thisentry) {
@@ -5132,12 +5169,12 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 /**
  * Used to handle filter conditions being saved in the admin UI
  * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param string $delete_key - Optional. The key in POST for a delete signal sent from the admin UI. Defaults to conditionsdelete, which is what the permission editing UI sends by default. Comments from AI: The value of this key will have the format of filterkey_x_y where x is the key in the array of conditions that we want to delete, and y is an optional value that can be used to isolate which conditions to delete if there are multiple sets of conditions being handled on the same page (such as in the permissions editing, where there are multiple groups each with their own set of conditions).  So for example, if we only want to delete conditions for group id 3, then y would be 3, and we would set $conditionsDeletePartsKeyOneMustMatch to 3 as well, so that only delete signals with a value that has 3 in the y position will be acted on.
  * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
  * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
  * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
  */
-function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
+function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete', $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
 	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
 		return "";
@@ -5193,6 +5230,44 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
 	}
 
 	return array($returnValues, $reloadFlag);
+}
+
+// this function renders the default groups selection UI for entries-are-users forms
+// uses the same group list as the userAccountGroupMembership element type
+function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = false; // we want to show all groups, even if they are template groups
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // we'll just have a single selection and override the behaviour of a selection/click in the admin UI
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	if(!is_array($currentlySelectedGroupIds)) {
+		$currentlySelectedGroupIds = array();
+	}
+	$formElementObject = $groupMembershipHandler->render($currentlySelectedGroupIds, '', 'entries_are_users_default_groups', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
+}
+
+// Render a group autocomplete for adding groups to the per-group singleentry setting
+function formulize_renderSingleentryGroupsUI() {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = true; // template groups are not relevant for singleentry settings
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0;
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	$formElementObject = $groupMembershipHandler->render(array(), '', 'singleentry_add_group', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
 }
 
 // this function gets the password for the encryption/decryption process
@@ -8015,84 +8090,111 @@ function repairEOGTable($fid) {
     }
 }
 
-// user offset from server tz
-// assume timestamp is based on server timezone!
-// returns seconds
+/**
+ * Get the user's IANA timezone name for a user object or a numeric timezone offset
+ * Note: User profiles store timezones with spaces instead of underscores for readability
+ * Fallback to server timezone for users without a timezone set, and then to UTC if the server timezone is not set. If a numeric offset is provided that doesn't match a known timezone, will also fall back to UTC.
+ * @param object|null $userObjectOrTZOffsetNumber - optional user object to get the timezone for, or a numeric offset. If not provided, will use the global $xoopsUser. If numeric will attempt a standard conversion.
+ * @return string The timezone string
+ */
+function formulize_getIANATimezone($userObjectOrTZOffsetNumber=null) {
+	$tz = $userObjectOrTZOffsetNumber;
+	// if no numeric value passed in, assume user object and try to get their proper timezone
+	if(!is_numeric($tz)) {
+		global $xoopsUser, $xoopsConfig;
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$userObject = is_object($userObjectOrTZOffsetNumber) ? $userObjectOrTZOffsetNumber : $xoopsUser;
+		$uid = $userObject ? $userObject->getVar('uid') : 0;
+		$profileTz = $userObject ? $userObject->getVar('timezone_offset') : "";
+		if ($uid AND $profile = $profile_handler->get($uid)) {
+			$profileTz = str_replace(' ', '_', $profile->getVar('timezone'));
+		}
+		$tz = $profileTz ? $profileTz : ($userObject ? $userObject->getVar('timezone_offset') :  $xoopsConfig['server_TZ']);
+	}
+	// if we have a numeric value, convert it to a timezone name
+	if(is_numeric($tz)) {
+		$tzNames = array(
+			'-12' => 'Etc/GMT+12',
+			'-11' => 'Pacific/Pago Pago',
+			'-10' => 'Pacific/Honolulu',
+			'-9.5' => 'Pacific/Marquesas',
+			'-9' => 'America/Anchorage',
+			'-8' => 'America/Vancouver',
+			'-7' => 'America/Edmonton',
+			'-6' => 'America/Winnipeg',
+			'-5' => 'America/Toronto',
+			'-4' => 'America/Halifax',
+			'-3.5' => 'America/St Johns',
+			'-3' => 'America/Argentina/Buenos Aires',
+			'-2' => 'Atlantic/South Georgia',
+			'-1' => 'Atlantic/Azores',
+			'0' => 'UTC',
+			'1' => 'Europe/Paris',
+			'2' => 'Africa/Cairo',
+			'3' => 'Europe/Moscow',
+			'3.5' => 'Asia/Tehran',
+			'4' => 'Asia/Dubai',
+			'4.5' => 'Asia/Kabul',
+			'5' => 'Asia/Karachi',
+			'5.5' => 'Asia/Kolkata',
+			'6' => 'Asia/Dhaka',
+			'6.5' => 'Asia/Yangon',
+			'7' => 'Asia/Bangkok',
+			'8' => 'Asia/Shanghai',
+			'9' => 'Asia/Tokyo',
+			'9.5' => 'Australia/Darwin',
+			'10' => 'Australia/Sydney',
+			'10.5' => 'Australia/Lord Howe',
+			'11' => 'Pacific/Guadalcanal',
+			'12' => 'Pacific/Auckland',
+			'13' => 'Pacific/Apia',
+			'14' => 'Pacific/Kiritimati',
+		);
+		if(isset($tzNames[$tz])) {
+			return $tzNames[$tz];
+		} else {
+			error_log("Formulize error: unrecognized numeric timezone offset ($tz) for user $uid. Defaulting to UTC.");
+			return 'UTC';
+		}
+	} else {
+		return $tz;
+	}
+}
+
+/**
+ * Get the user offset from the server timezone in seconds, taking into account daylight savings time if applicable.
+ * @param object|null $userObject - optional user object to get the timezone for. If not provided, will use the global $xoopsUser
+ * @param int|null $timestamp - optional timestamp to calculate the offset for. Assumes timestamp provided is accurate based on the server timezone, ie: is a UTC timestamp representing a moment that we care about in the server timezone (this is because string representations of server time may/will have been converted by PHP to UTC through use of strtotime - yuck!). If not provided, will use the current time.
+ * @return int The offset in seconds from the server timezone to the user's timezone, including daylight savings adjustment if applicable
+ */
 function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
-	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
 	global $xoopsConfig, $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
 	$timestamp = $timestamp ? $timestamp : time();
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-	$tzDiff = $userTimeZone - $serverTimeZone;
-	$daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
-	$tzDiff = $tzDiff + $daylightSavingsAdjustment;
-	return $tzDiff * 3600;
+	$userTimeZone = formulize_getIANATimezone($userObject);
+	$serverTimeZone = formulize_getIANATimezone($xoopsConfig['server_TZ']);
+	$timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$xoopsConfig['server_TZ']); // need to construct new timestamp with the tz offset included, and @ sign in front so PHP dateTime will understand it - necessary to correct for prior conversions to UTC that may have been involved in the production of the timestamps from strings with strtotime
+	$dt = new DateTime($timestamp);
+	$dt->setTimezone(new DateTimeZone($serverTimeZone));
+	$serverOffset = $dt->getOffset();
+	$dt->setTimezone(new DateTimeZone($userTimeZone));
+	$userOffset = $dt->getOffset();
+	return $userOffset - $serverOffset;
 }
 
-// get user offset from UTC
-// returns seconds
+/**
+ * Get the user offset from UTC in seconds, taking into account daylight savings time if applicable.
+ * @param object|null $userObject - optional user object to get the timezone for. If not provided, will use the global $xoopsUser
+ * @param int|null $timestamp - optional timestamp to calculate the offset for. If not provided, will use the current time.
+ * @return int The offset in seconds from UTC to the user's timezone, including daylight savings adjustment if applicable for the timestamp used
+ */
 function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
-	global $xoopsConfig, $xoopsUser;
+	global $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
 	$timestamp = $timestamp ? $timestamp : time();
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-	$userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
-	return $userTimeZone * 3600;
-}
-
-// $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
-// timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
-// This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
-// since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
-// we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
-// if timezones are the same, no adjustment
-// if timezones are both in daylight savings at a given time, no adjustment
-// if timezones are neither in daylight savings at a given time, no adjustment
-// if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
-// returns difference in hours
-function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestamp) {
-
-    // timezone name and number equivalents. crude!!
-    // could/should be expanded (or better yet, proper timezones recorded for users!!)
-    // XOOPS does not support two digit decimals for timezones (yet, we could add it)
-    // In Australia, different timezones with the same base offset, have different daylight savings rules :(
-    $tzNames = array(
-        '-8'=>'PST8PDT',
-        '-7'=>'MST7MDT',
-        '-6'=>'CST6CDT',
-        '-5'=>'EST5EDT',
-        '-4'=>'Canada/Atlantic',
-        '-3.5'=>'Canada/Newfoundland',
-        '+0'=>'UTC',
-        '+8'=>'Australia/Perth',
-        '+8.75'=>'Australia/Eucla',
-        '+9.5'=>'Australia/Adelaide',
-        '+10'=>'Australia/Sydney'
-    );
-
-    // need plus or minus on the timezone number, even zero
-    $userTimeZone = floatval($userTimeZone) >= 0 ? strval("+".floatval($userTimeZone)) : strval(floatval($userTimeZone));
-    $compareTimeZone = floatval($compareTimeZone) >= 0 ? strval("+".floatval($compareTimeZone)) : strval(floatval($compareTimeZone));
-
-    $adjustment = 0;
-    if($userTimeZone != $compareTimeZone) {
-        $timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$compareTimeZone); // need to construct new timestamp with the xoops tz offset included, and @ sign in front so PHP dateTime will understand it
-        $dt = new DateTime($timestamp);
-        $dt->setTimezone(new DateTimeZone($tzNames[$compareTimeZone]));
-        $compareDST = $dt->format('I');
-        $dt->setTimezone(new DateTimeZone($tzNames[$userTimeZone]));
-        $userDST = $dt->format('I');
-        if($compareDST AND !$userDST) {
-            $adjustment = -1;
-        } elseif(!$compareDST AND $userDST) {
-            $adjustment = +1;
-        }
-    }
-    return $adjustment;
-
+	$dt = new DateTime('@'.$timestamp);
+	$dt->setTimezone(new DateTimeZone(formulize_getIANATimezone($userObject)));
+	return $dt->getOffset();
 }
 
 /**
@@ -8380,7 +8482,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$URLAddOn .= htmlspecialchars_decode($currentPageTitle)."/";
 			}
 		}
-		$code = "window.history.replaceState(null, '', ".json_encode($initialURL.$URLAddOn).");
+		$code = "window.history.replaceState(null, '', ".json_encode(trans($initialURL.$URLAddOn)).");
 		jQuery(window).load(function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());
@@ -8709,7 +8811,7 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 		global $xoopsUser;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 		$gperm_handler = xoops_gethandler('groupperm');
-		$singleEntry = $formObject->getVar('single');
+		$singleEntry = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 		if (($singleEntry != 'group' AND $singleEntry != 'user' AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
 			OR $gperm_handler->checkRight("view_globalscope", $formObject->getVar('fid'), $groups, getFormulizeModId()) // users with global scope see the list
 			OR ($singleEntry != 'group' AND $gperm_handler->checkRight("view_groupscope", $formObject->getVar('fid'), $groups, getFormulizeModId())) // users with groupscope see the list, unless it's a one-entry-per-group form
@@ -9003,6 +9105,7 @@ function formulize_get_file_version($relativeFilePath) {
 	}
 	return 0;
 }
+
 function getListOfCandidateOwnersForFormEntries($fid) {
 
 	global $xoopsDB, $xoopsUser;
@@ -9048,5 +9151,54 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 	}
 	asort($names);
 	return $names;
+}
 
+/**
+ * Get the standard (non-DST) UTC offset in hours for a given timezone name.
+ * Checks January and July to find a non-DST month, covering both hemispheres.
+ *
+ * @param string $timezoneName The timezone name, either with spaces (e.g. "America/New York") or underscores (e.g. "America/New_York")
+ * @return float The standard offset in hours (e.g. -5.0 for Eastern, 5.5 for India)
+ */
+function formulize_getStandardTimezoneOffset($timezoneName) {
+	$tzName = str_replace(' ', '_', $timezoneName);
+	$tz = new DateTimeZone($tzName);
+	$jan = new DateTime('January 15', $tz);
+	if (!$jan->format('I')) {
+		$standardOffset = $tz->getOffset($jan) / 3600;
+	} else {
+		$jul = new DateTime('July 15', $tz);
+		$standardOffset = $tz->getOffset($jul) / 3600;
+	}
+	return round($standardOffset, 1);
+}
+
+/**
+ * Generate the list of official IANA timezones, sorted alphabetically,
+ * with underscores replaced by spaces for display. Uses PHP's
+ * timezone_identifiers_list() so the list stays current with PHP updates.
+ *
+ * @return array Indexed array of timezone names (e.g. "America/Toronto")
+ */
+function formulize_getTimezoneList() {
+	$timezones = timezone_identifiers_list();
+	$labels = array();
+	foreach ($timezones as $tz) {
+		$labels[] = str_replace('_', ' ', $tz);
+	}
+	sort($labels);
+	return array_values($labels);
+}
+
+/**
+ * Update the profile_field options for the timezone field with the full
+ * list of official IANA timezones.
+ *
+ * @param object $db Database connection object ($xoopsDB or equivalent)
+ */
+function formulize_update_timezone_options($db) {
+	$options = formulize_getTimezoneList();
+	$serialized = serialize($options);
+	$sql = "UPDATE " . $db->prefix("profile_field") . " SET field_options = " . $db->quoteString($serialized) . " WHERE field_name = 'timezone'";
+	$db->queryF($sql);
 }

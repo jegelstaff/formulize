@@ -49,7 +49,7 @@ if($_POST['usersearch']) {
 }
 
 $adminPage['keys'] = $allKeys;
-$adminPage['template'] = "db:admin/managekeys.html";
+$adminPage['home_tabs'] = getHomeTabs('managekeys');
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

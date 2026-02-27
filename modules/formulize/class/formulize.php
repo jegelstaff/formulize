@@ -293,10 +293,11 @@ class formulizeHandler {
 	 * @param array $formObjectProperties An associative array of properties to set on the form object.  If 'fid' is included and is non-zero, it will update that form.  If 'fid' is not included or is zero, it will create a new form.
 	 * @param array $groupIdsThatCanEditForm An array of group ids that should be given edit permissions on this form (only used when creating a new form)
 	 * @param array|null $applicationIds An array of existing application ids to assign this form to. Set to null to skip application assignment.  Default is array(0) to assign to the default application.
+	 * @param array|null $groupCategories An array of category names for template groups (used when entries_are_groups is enabled). Set to null to skip group category management. "All Users" is always included as a base category.
 	 * @throws Exception if there are any problems creating or updating the form
 	 * @return object returns the form object
 	 */
-	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array(), $applicationIds = array(0)) {
+	public static function upsertFormSchemaAndResources($formObjectProperties = array(), $groupIdsThatCanEditForm = array(), $applicationIds = array(0), $groupCategories = null) {
 
 		$form_handler = xoops_getModuleHandler('forms', 'formulize');
 		$application_handler = xoops_getmodulehandler('applications','formulize');
@@ -354,7 +355,11 @@ class formulizeHandler {
 			$gperm_handler->addRight('view_form', $fid, XOOPS_GROUP_ADMIN, getFormulizeModId());
 			// add menu links for the new form in the selected applications, for the groups that have admin rights (usually just webmasters, so basic interface works when you are buiding systems)
 			if(!empty($applicationIds) AND !empty($groupIdsThatCanEditForm)) {
-				$menuLinkText = ($formObject->getVar('single') == 'user' OR $formObject->getVar('single') == 'group') ? $formObject->getSingular() : $formObject->getPlural();
+				$singleArray = $formObject->getVar('single');
+				$hasMultiEntry = is_array($singleArray)
+					? (bool)array_filter($singleArray, function($v){ return $v == 'off'; })
+					: ($singleArray == 'off');
+				$menuLinkText = $hasMultiEntry ? $formObject->getPlural() : $formObject->getSingular();
 				$menuitems = "null::" . formulize_db_escape($menuLinkText) . "::fid=$fid::::".implode(',',$groupIdsThatCanEditForm)."::null";
 				foreach($applicationIds as $appid) {
 					$application_handler->insertMenuLink($appid, $menuitems);
@@ -365,7 +370,645 @@ class formulizeHandler {
 		if(self::assignFormToApplications($formObject, $applicationIds) == false) {
 			throw new Exception("Could not assign the form to applications properly.");
 		}
+
+		// Handle group categories for entries_are_groups feature
+		if ($groupCategories !== null) {
+			self::syncTemplateGroupsForForm($formObject, $groupCategories, $formIsNew ? null : $originalFormNames['plural']);
+		}
+
+		// Update the group membership element description if entries_are_users is active
+		if ($formObject->getVar('entries_are_users')) {
+			include_once XOOPS_ROOT_PATH . '/modules/formulize/class/userAccountGroupMembershipElement.php';
+			formulizeUserAccountGroupMembershipElementHandler::updateGroupMembershipDescription($formObject);
+		}
+
 		return $formObject;
+	}
+
+	/**
+	 * Synchronizes template groups for a form that has entries_are_groups enabled.
+	 * Creates, renames, or updates template groups based on the desired categories.
+	 *
+	 * The $groupCategories parameter is an associative array where:
+	 * - Numeric keys are existing group IDs (the category may have been renamed)
+	 * - String keys starting with "new_" are new categories that need groups created
+	 *
+	 * IMPORTANT: Groups are NEVER deleted by this function. When the feature is turned off
+	 * or categories are removed, the groups are retained to preserve any configuration.
+	 *
+	 * @param object $formObject The form object
+	 * @param array $groupCategories Associative array: groupid => categoryName for existing, "new_X" => categoryName for new
+	 * @param string|null $oldPluralName The old plural name of the form (for renaming groups). Null for new forms.
+	 */
+	public static function syncTemplateGroupsForForm($formObject, $groupCategories, $oldPluralName = null) {
+		$group_handler = xoops_gethandler('group');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$newPluralName = $formObject->getPlural();
+		$newGroupPrefix = $newPluralName . " - ";
+
+		// If entries_are_groups is disabled, just return without touching groups
+		// This preserves the group configuration in case the feature is re-enabled
+		if (!$formObject->getVar('entries_are_groups')) {
+			return;
+		}
+
+		// Get existing group_categories mapping from the form object (groupid => category name)
+		$existingMapping = $formObject->getVar('group_categories');
+		if (!is_array($existingMapping)) {
+			$existingMapping = array();
+		}
+
+		// "All Users" is always included as a base category
+		$allUsersLabel = defined('_AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS') ? _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS : 'All Users';
+
+		// Build the complete list of categories to process, including "All Users"
+		// For "All Users", check if it already exists in the mapping, otherwise mark as new
+		$allUsersGroupId = array_search($allUsersLabel, $existingMapping);
+		$categoriesToProcess = array();
+		if ($allUsersGroupId !== false) {
+			$categoriesToProcess[$allUsersGroupId] = $allUsersLabel;
+		} else {
+			$categoriesToProcess['new_allUsers'] = $allUsersLabel;
+		}
+
+		// Add the submitted categories (filtering out empty names and duplicates of "All Users")
+		foreach ($groupCategories as $key => $categoryName) {
+			$categoryName = trim($categoryName);
+			if ($categoryName !== '' && $categoryName !== $allUsersLabel) {
+				$categoriesToProcess[$key] = $categoryName;
+			}
+		}
+
+		// Build the new mapping: groupid => category name
+		$newMapping = array();
+
+		// Process all categories uniformly
+		$fid = $formObject->getVar('fid');
+		global $xoopsDB;
+
+		foreach ($categoriesToProcess as $key => $categoryName) {
+			$expectedGroupName = $newGroupPrefix . $categoryName;
+			$expectedDescription = 'Template group for ' . $newPluralName . ' - ' . $categoryName;
+			$needsSave = true;
+
+			// Existing group ID - get the group
+			if (is_numeric($key)) {
+				$groupObject = $group_handler->get(intval($key));
+				if (!$groupObject) {
+					continue; // Group was deleted externally, skip
+				}
+				$needsSave = ($groupObject->getVar('name') !== $expectedGroupName);
+
+				// Check if category name changed - if so, update all entry groups too
+				$oldCategoryName = isset($existingMapping[$key]) ? $existingMapping[$key] : null;
+				if ($oldCategoryName !== null && $oldCategoryName !== $categoryName) {
+					// Category was renamed, update all entry groups for this form with the old suffix
+					// Entry group names follow format: "{PI value} - {Category name}"
+					$oldNameSuffix = " - " . $oldCategoryName;
+					$newNameSuffix = " - " . $categoryName;
+					$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') .
+						   " WHERE form_id = " . intval($fid) . " AND entry_id IS NOT NULL" .
+						   " AND name LIKE '%" . formulize_db_escape($oldNameSuffix) . "'";
+					$result = $xoopsDB->query($sql);
+					while ($row = $xoopsDB->fetchArray($result)) {
+						$entryGroup = $group_handler->get($row['groupid']);
+						if ($entryGroup) {
+							// Extract PI value by removing the old suffix from the group name
+							$piValue = substr($row['name'], 0, -strlen($oldNameSuffix));
+							$entryGroup->setVar('name', $piValue . $newNameSuffix);
+							$entryGroup->setVar('description', $categoryName . ' group for ' . $piValue);
+							$group_handler->insert($entryGroup);
+						}
+					}
+				}
+
+			// New category - create a new group
+			} else if (strpos($key, 'new_') === 0) {
+				$groupObject = $group_handler->create();
+				$groupObject->setVar('group_type', 'User');
+				$groupObject->setVar('is_group_template', 1);
+				$groupObject->setVar('form_id', $fid);
+
+			// Unknown key format, skip
+			} else {
+				continue;
+			}
+
+			// Ensure form_id is set on the template group (may be missing on older groups)
+			if ($groupObject->getVar('form_id') != $fid) {
+				$groupObject->setVar('form_id', $fid);
+				$needsSave = true;
+			}
+
+			// Update and save if needed
+			if ($needsSave) {
+				$groupObject->setVar('name', $expectedGroupName);
+				$groupObject->setVar('description', $expectedDescription);
+				$group_handler->insert($groupObject);
+			}
+
+			$newMapping[$groupObject->getVar('groupid')] = $categoryName;
+		}
+
+		// Save the updated mapping to the form object
+		$formObject->setVar('group_categories', $newMapping);
+		$form_handler->insert($formObject);
+
+		// Sync entry groups for all existing entries to handle new categories, renames, etc.
+		$formHandle = $formObject->getVar('form_handle');
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_" . $formHandle);
+		$result = $xoopsDB->query($sql);
+		while ($row = $xoopsDB->fetchArray($result)) {
+			self::syncEntryGroups($fid, intval($row['entry_id']));
+		}
+	}
+
+	/**
+	 * Builds a mapping of templateGroupId => entryGroupId for a specific entry.
+	 * Matches entry groups to template groups by category name suffix in the group name.
+	 *
+	 * @param int $fid The entries_are_groups form ID
+	 * @param int $entryId The entry ID
+	 * @param array $groupCategories Associative array: templateGroupId => categoryName
+	 * @return array Map of templateGroupId => entryGroupId
+	 */
+	public static function buildTemplateToEntryGroupMap($fid, $entryId, $groupCategories) {
+		global $xoopsDB;
+		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') .
+			" WHERE form_id = " . intval($fid) . " AND entry_id = " . intval($entryId) .
+			" AND is_group_template = 0";
+		$result = $xoopsDB->query($sql);
+		$entryMap = array();
+		while ($row = $xoopsDB->fetchArray($result)) {
+			foreach ($groupCategories as $catTemplateGroupId => $catName) {
+				if (preg_match('/ - ' . preg_quote($catName, '/') . '$/', $row['name'])) {
+					$entryMap[$catTemplateGroupId] = intval($row['groupid']);
+					break;
+				}
+			}
+		}
+		return $entryMap;
+	}
+
+	/**
+	 * Propagate permissions, filters, and groupscope from template groups to all their entry groups.
+	 * Identifies which of the given group IDs are template groups, then copies their settings
+	 * to every corresponding entry group, with proper groupscope mapping per entry.
+	 *
+	 * @param array $groupIds Array of group IDs to check for template groups
+	 */
+	public static function propagateTemplateGroupPermissions($groupIds) {
+		if (empty($groupIds)) {
+			return;
+		}
+
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+
+		// Find which of the given groups are template groups
+		$templateGroupIds = array();
+		$sql = "SELECT groupid, form_id FROM " . $xoopsDB->prefix('groups') .
+			" WHERE is_group_template = 1 AND groupid IN (" . implode(',', array_map('intval', $groupIds)) . ")";
+		$result = $xoopsDB->query($sql);
+		while ($row = $xoopsDB->fetchArray($result)) {
+			$templateGroupIds[intval($row['groupid'])] = intval($row['form_id']);
+		}
+
+		if (empty($templateGroupIds)) {
+			return;
+		}
+
+		// Get the group_categories for each entries_are_groups form involved
+		$eagFormCategories = array();
+		foreach ($templateGroupIds as $tgid => $eagFormId) {
+			if (!isset($eagFormCategories[$eagFormId])) {
+				$eagFormObject = $form_handler->get($eagFormId);
+				$eagFormCategories[$eagFormId] = $eagFormObject ? $eagFormObject->getVar('group_categories') : array();
+			}
+		}
+
+		// For each template group, propagate to all its entry groups
+		foreach ($templateGroupIds as $tgid => $eagFormId) {
+			$entryGroupIds = self::getTemplateToEntryGroupMap($tgid);
+			if (empty($entryGroupIds)) {
+				continue;
+			}
+
+			$categories = isset($eagFormCategories[$eagFormId]) ? $eagFormCategories[$eagFormId] : array();
+			$processedEntries = array();
+			foreach ($entryGroupIds as $entryGroupId) {
+				// Get the entry_id for this entry group
+				$egInfoSQL = "SELECT entry_id FROM " . $xoopsDB->prefix('groups') . " WHERE groupid = " . intval($entryGroupId);
+				$egInfoResult = $xoopsDB->query($egInfoSQL);
+				$egInfoRow = $xoopsDB->fetchArray($egInfoResult);
+				if (!$egInfoRow) continue;
+				$entryId = intval($egInfoRow['entry_id']);
+
+				// Build the template->entry map for this entry (once per entry)
+				if (!isset($processedEntries[$entryId])) {
+					$processedEntries[$entryId] = self::buildTemplateToEntryGroupMap(intval($eagFormId), $entryId, $categories);
+				}
+
+				// Copy all settings from template group to this entry group, using the entry's mapping
+				formulizePermHandler::copyGroupPermissions($tgid, $entryGroupId, null, $processedEntries[$entryId]);
+			}
+		}
+	}
+
+	/**
+	 * Finds an existing unassociated group by trying multiple name patterns.
+	 * Used by syncEntryGroups to adopt pre-existing groups instead of creating duplicates.
+	 *
+	 * For the "All Users" category, tries these names in order:
+	 *   1. "{PI} - All Users"  2. "{PI} All Users"  3. "{PI} - Users"  4. "{PI} Users"  5. "{PI}" (legacy)
+	 * For other categories, tries:
+	 *   1. "{PI} - {Category}"  2. "{PI} {Category}"
+	 *
+	 * Only matches groups where entry_id is NULL or 0 (not already assigned to an entry).
+	 *
+	 * @param string $piValue The principal identifier value for the entry
+	 * @param string $categoryName The category name to search for
+	 * @return int|null The group ID if found, null otherwise
+	 */
+	private static function findUnassociatedGroupByName($piValue, $categoryName) {
+		global $xoopsDB;
+		$allUsersLabel = defined('_AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS')
+			? _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS : 'All Users';
+		$isAllUsers = ($categoryName === $allUsersLabel);
+
+		// Build list of candidate names to try, in priority order
+		$candidateNames = array();
+		$candidateNames[] = $piValue . " - " . $categoryName; // standard format
+		$candidateNames[] = $piValue . " " . $categoryName;   // space connector
+		if ($isAllUsers) {
+			$candidateNames[] = $piValue . " - Users";         // alternate suffix
+			$candidateNames[] = $piValue . " Users";           // alternate suffix, space connector
+			$candidateNames[] = $piValue;                      // legacy: PI value only
+		}
+
+		// Try each candidate name, return the first match
+		foreach ($candidateNames as $name) {
+			$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+				   " WHERE name = " . $xoopsDB->quoteString($name) .
+				   " AND (entry_id IS NULL OR entry_id = 0)";
+			$result = $xoopsDB->query($sql);
+			if ($result) {
+				$row = $xoopsDB->fetchArray($result);
+				if ($row) {
+					// Verify there's only one match (avoid ambiguity)
+					$secondRow = $xoopsDB->fetchArray($result);
+					if (!$secondRow) {
+						return intval($row['groupid']);
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Creates or updates groups for a specific entry in a form with entries_are_groups enabled.
+	 * Groups are named: "{PI value} - {Category Name}" (e.g., "Baskets - All Users", "Baskets - Managers")
+	 *
+	 * When no group is found by form_id + entry_id, attempts to find an existing unassociated group
+	 * by name before creating a new one. This handles the case where the feature is first turned on
+	 * and pre-existing groups should be adopted rather than duplicated.
+	 *
+	 * @param int $fid The form ID
+	 * @param int $entryId The entry ID
+	 * @param string|null $oldPiValue The old PI value (for updates, to check if rename needed). Null for new entries.
+	 * @return bool True if groups were created/updated, false if form doesn't use entries_are_groups
+	 */
+	public static function syncEntryGroups($fid, $entryId, $oldPiValue = null) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($fid)) {
+			throw new Exception("Cannot synch groups with entry for entries_are_group form. Form with ID $fid does not exist.");
+		}
+
+		// Check if this form uses entries_are_groups
+		if (!$formObject || !$formObject->getVar('entries_are_groups')) {
+			return false;
+		}
+
+		// Get the group categories from the form
+		$groupCategories = $formObject->getVar('group_categories');
+		if (!is_array($groupCategories) || empty($groupCategories)) {
+			return false;
+		}
+
+		// Get the PI element for this form
+		$piElementId = $formObject->getVar('pi');
+		if (!$piElementId OR !$piElementObject = _getElementObject($piElementId)) {
+			return false;
+		}
+
+		// Get the current PI value from the entry
+		$data_handler = new formulizeDataHandler($fid);
+		if(!$piValue = $data_handler->getElementValueInEntry($entryId, $piElementId)) {
+			return false; // Can't create groups without a PI value
+		}
+
+		$group_handler = xoops_gethandler('group');
+
+		// Check if groups already exist for this entry
+		global $xoopsDB;
+		$sql = "SELECT groupid, name FROM " . $xoopsDB->prefix('groups') .
+			   " WHERE form_id = " . intval($fid) . " AND entry_id = " . intval($entryId);
+		$result = $xoopsDB->query($sql);
+		$existingGroups = array();
+		while ($row = $xoopsDB->fetchArray($result)) {
+			$existingGroups[$row['groupid']] = $row['name'];
+		}
+
+		// For each category, create or update the group, and build a map for permission copying
+		$templateToEntryGroupMap = array();
+		$newGroupIds = array();
+		foreach ($groupCategories as $templateGroupId => $categoryName) {
+			$expectedGroupName = $piValue . " - " . $categoryName;
+			$expectedDescription = $categoryName . ' group for ' . $piValue;
+
+			// Check if we already have a group for this entry+category
+			$existingGroupId = null;
+			foreach ($existingGroups as $gid => $gname) {
+				// Match by the category suffix (after " - ")
+				if (preg_match('/ - ' . preg_quote($categoryName, '/') . '$/', $gname)) {
+					$existingGroupId = $gid;
+					break;
+				}
+			}
+
+			// Update existing group if name changed (PI value changed)
+			if ($existingGroupId AND $existingGroups[$existingGroupId] !== $expectedGroupName) {
+				$groupObject = $group_handler->get($existingGroupId);
+				$groupObject->setVar('name', $expectedGroupName);
+				$groupObject->setVar('description', $expectedDescription);
+				$group_handler->insert($groupObject);
+				$templateToEntryGroupMap[$templateGroupId] = $existingGroupId;
+
+			// No group found by form_id+entry_id — try to adopt an existing group by name
+			} elseif(!$existingGroupId) {
+				$adoptedGroupId = self::findUnassociatedGroupByName($piValue, $categoryName);
+				if ($adoptedGroupId) {
+					// Adopt the existing group: update it to be a proper entry group
+					$groupObject = $group_handler->get($adoptedGroupId);
+					$groupObject->setVar('name', $expectedGroupName);
+					$groupObject->setVar('description', $expectedDescription);
+					$groupObject->setVar('group_type', 'User');
+					$groupObject->setVar('is_group_template', 0);
+					$groupObject->setVar('form_id', $fid);
+					$groupObject->setVar('entry_id', $entryId);
+					$group_handler->insert($groupObject);
+					$templateToEntryGroupMap[$templateGroupId] = $adoptedGroupId;
+					$newGroupIds[] = $adoptedGroupId;
+				} else {
+					// No existing group found at all — create a brand new one
+					$newGroup = $group_handler->create();
+					$newGroup->setVar('name', $expectedGroupName);
+					$newGroup->setVar('description', $expectedDescription);
+					$newGroup->setVar('group_type', 'User');
+					$newGroup->setVar('is_group_template', 0);
+					$newGroup->setVar('form_id', $fid);
+					$newGroup->setVar('entry_id', $entryId);
+					$group_handler->insert($newGroup);
+					$newGroupId = $newGroup->getVar('groupid');
+					$templateToEntryGroupMap[$templateGroupId] = $newGroupId;
+					$newGroupIds[] = $newGroupId;
+				}
+
+			} else {
+				// Existing group, no name change needed
+				$templateToEntryGroupMap[$templateGroupId] = $existingGroupId;
+			}
+		}
+
+		// Copy all template group settings to newly created entry groups
+		if (count($newGroupIds) > 0) {
+			self::copyAllTemplateSettingsToEntryGroups($fid, $templateToEntryGroupMap, $newGroupIds);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Copy all template group settings to the corresponding entry groups for a specific entry.
+	 * This includes: form permissions, per-group filters, groupscope settings (with relative
+	 * mapping between template and entry groups), and element display/disabled/filter settings.
+	 *
+	 * @param int $fid The entries_are_groups form ID
+	 * @param array $templateToEntryGroupMap Maps templateGroupId => entryGroupId for this entry
+	 * @param array $newGroupIds Array of entry group IDs that were newly created (only these get settings copied)
+	 */
+	public static function copyAllTemplateSettingsToEntryGroups($fid, $templateToEntryGroupMap, $newGroupIds = array()) {
+		if (empty($templateToEntryGroupMap)) {
+			return;
+		}
+
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
+
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		// If no specific new group IDs provided, treat all as new
+		if (empty($newGroupIds)) {
+			$newGroupIds = array_values($templateToEntryGroupMap);
+		}
+
+		// a) Copy permissions, filters, and groupscope for each new entry group
+		// The templateToEntryGroupMap serves as the groupscope mapping, translating
+		// template group references to corresponding entry group references
+		foreach ($templateToEntryGroupMap as $templateGroupId => $entryGroupId) {
+			if (!in_array($entryGroupId, $newGroupIds)) {
+				continue;
+			}
+			formulizePermHandler::copyGroupPermissions($templateGroupId, $entryGroupId, null, $templateToEntryGroupMap);
+		}
+
+		// b) Synchronize element display/disabled/filter settings across all elements
+		// Uses the same logic as individual element saves - ensures entry groups mirror template groups
+		$allForms = $form_handler->getAllForms(true);
+		foreach ($allForms as $thisForm) {
+			$elementIds = $thisForm->getVar('elements');
+			if (!is_array($elementIds)) {
+				continue;
+			}
+			foreach ($elementIds as $elementId) {
+				$element = $element_handler->get($elementId);
+				if (!is_object($element)) {
+					continue;
+				}
+				$templateGroupMap = self::getTemplateToEntryGroupMap();
+				if (!empty($templateGroupMap) && formulizePermHandler::synchronizeGroupReferencesInElement($element, $templateGroupMap)) {
+					$element_handler->insert($element);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Builds a map of all template groups to their entry groups across all entries_are_groups forms.
+	 * Result is cached per request via a static variable.
+	 *
+	 * @return array Map of templateGroupId => [entryGroupId1, entryGroupId2, ...]
+	 */
+	/**
+	 * Get a map of template group IDs to their corresponding entry group IDs.
+	 * Results are cached for the duration of the request.
+	 *
+	 * @param int|null $templateGroupId Optional. If provided, returns just the entry group IDs
+	 *        for that specific template group (array of ints). If null, returns the full map
+	 *        (templateGroupId => array of entry group IDs).
+	 * @return array Either the full map or a single template group's entry group IDs
+	 */
+	public static function getTemplateToEntryGroupMap($templateGroupId = null) {
+		static $templateGroupMap = null;
+
+		if ($templateGroupMap === null) {
+			$templateGroupMap = array();
+
+			global $xoopsDB;
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+
+			// Find all entries_are_groups forms
+			$sql = "SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_groups = 1";
+			$result = $xoopsDB->query($sql);
+			while ($row = $xoopsDB->fetchArray($result)) {
+				$eagFormId = intval($row['id_form']);
+				$eagForm = $form_handler->get($eagFormId);
+				if (!$eagForm) continue;
+				$groupCategories = $eagForm->getVar('group_categories');
+				if (!is_array($groupCategories)) continue;
+
+				foreach ($groupCategories as $tgId => $categoryName) {
+					$egSql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+						" WHERE form_id = " . $eagFormId .
+						" AND is_group_template = 0 AND entry_id > 0" .
+						" AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+					$egResult = $xoopsDB->query($egSql);
+					$entryGroups = array();
+					while ($egRow = $xoopsDB->fetchArray($egResult)) {
+						$entryGroups[] = intval($egRow['groupid']);
+					}
+					$templateGroupMap[intval($tgId)] = $entryGroups;
+				}
+			}
+		}
+
+		if ($templateGroupId !== null) {
+			$templateGroupId = intval($templateGroupId);
+			return isset($templateGroupMap[$templateGroupId]) ? $templateGroupMap[$templateGroupId] : array();
+		}
+
+		return $templateGroupMap;
+	}
+
+	/**
+	 * Get structured metadata about all template groups and how they relate to a given form.
+	 * Scans the form and all forms connected via frameworks for linked elements that
+	 * point to entries-are-groups forms, then maps those links to the template group categories.
+	 *
+	 * Authored by Claude Code and Julian Egelstaff - Feb 2026
+	 *
+	 * @param int $fid The form ID to analyze relationships from
+	 * @return array Keyed by group ID, each entry contains:
+	 *   'categoryName'   => string - The category name (e.g., "All Users", "Managers")
+	 *   'formSingular'   => string - Singular name of the entries-are-groups form
+	 *   'formPlural'     => string - Plural name of the entries-are-groups form
+	 *   'eagFormId'      => int    - The form ID of the entries-are-groups form
+	 *   'linkedElements' => array  - Each entry: ['caption' => string, 'formName' => string]
+	 *                                formName is empty string if element is in the current form ($fid)
+	 */
+	public static function getTemplateGroupMetadataForForm($fid) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
+
+		$fid = intval($fid);
+		if (!$fid) {
+			return array();
+		}
+
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+		$formObject = $form_handler->get($fid);
+		if (!$formObject) {
+			return array();
+		}
+
+		// 1. Collect all form IDs to scan: current form + related forms
+		$formsToScan = array($fid => $formObject->getPlural());
+		$frameworks_handler = xoops_getmodulehandler('frameworks', 'formulize');
+		$primaryRelationship = new formulizeFramework(-1);
+		$allLinks = $frameworks_handler->getLinksGroupedByForm($primaryRelationship, $fid);
+		foreach ($allLinks as $linkedFid => $fidLinks) {
+			foreach ($fidLinks as $link) {
+				$form1 = intval($link['form1']);
+				$form2 = intval($link['form2']);
+				if (!isset($formsToScan[$form1]) AND $linkFormObject = $form_handler->get($form1)) {
+					$formsToScan[$form1] = $linkFormObject->getPlural();
+				}
+				if (!isset($formsToScan[$form2]) AND $linkFormObject = $form_handler->get($form2)) {
+					$formsToScan[$form2] = $linkFormObject->getPlural();
+				}
+			}
+		}
+
+		// 2. For each form, find elements that link to other forms
+		// Build map: target_form_id => [{ele_id, caption, formName}]
+		$linkedFormElements = array();
+		foreach ($formsToScan as $scanFid => $scanFormName) {
+			$scanElements = $element_handler->getObjects(null, $scanFid);
+			if (is_array($scanElements)) {
+				foreach ($scanElements as $el) {
+					$sourceInfo = getSourceFormAndElementForLinkedElement($el);
+					if ($sourceInfo) {
+						$targetFid = $sourceInfo[0];
+						$caption = strip_tags($el->getVar('ele_caption'));
+						$entry = array(
+							'ele_id' => intval($el->getVar('ele_id')),
+							'caption' => $caption
+						);
+						// Include formName only if the element is NOT in the current form
+						$entry['formName'] = ($scanFid == $fid) ? '' : $scanFormName;
+						$linkedFormElements[$targetFid][] = $entry;
+					}
+				}
+			}
+		}
+
+		// 3. Find all forms with entries_are_groups enabled and build metadata from their group_categories
+		// Template groups have form_id set but not entry_id; the category name link is via the form's group_categories mapping
+		$metadata = array();
+		$eagSql = "SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_groups = 1";
+		$eagResult = $xoopsDB->query($eagSql);
+		while ($eagRow = $xoopsDB->fetchArray($eagResult)) {
+			$eagFormId = intval($eagRow['id_form']);
+			$eagFormObject = $form_handler->get($eagFormId);
+			if (!$eagFormObject) { continue; }
+
+			$tgCategories = $eagFormObject->getVar('group_categories');
+			if (!is_array($tgCategories) || empty($tgCategories)) { continue; }
+
+			$formSingular = $eagFormObject->getSingular();
+			$formPlural = $eagFormObject->getPlural();
+
+			foreach ($tgCategories as $tgGroupId => $categoryName) {
+				if (!$categoryName) { continue; }
+
+				$metadata[intval($tgGroupId)] = array(
+					'categoryName' => $categoryName,
+					'formSingular' => $formSingular,
+					'formPlural' => $formPlural,
+					'eagFormId' => $eagFormId,
+					'linkedElements' => isset($linkedFormElements[$eagFormId]) ? $linkedFormElements[$eagFormId] : array()
+				);
+			}
+		}
+
+		return $metadata;
 	}
 
 	/**
@@ -443,6 +1086,10 @@ class formulizeHandler {
 	 * @return bool Returns true if valid. If $return param is true, returns false if not valid, or throws the exception.
 	 */
 	public static function validateElementType(&$elementType, $requestedCategory = null, $return = false) {
+		if(substr($elementType, 0, 11) == 'userAccount') {
+			// userAccount elements are valid (not discoverable for MCP, but valid for upsert)
+			return true;
+		}
 		list($elementTypes, $mcpElementDescriptions, $mcpSingleTypeDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {
@@ -531,6 +1178,12 @@ class formulizeHandler {
 		foreach($elementObjectProperties as $property=>$value) {
 			$elementObject->setVar($property, $value);
 		}
+		// Synchronize template group references: ensure entry groups mirror template groups
+		$templateGroupMap = self::getTemplateToEntryGroupMap();
+		if (!empty($templateGroupMap)) {
+			include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
+			formulizePermHandler::synchronizeGroupReferencesInElement($elementObject, $templateGroupMap);
+		}
 		if($element_handler->insert($elementObject) == false) {
 			// most likely a DB error?
 			throw new Exception('Could not create/update element. '.$xoopsDB->error());
@@ -600,30 +1253,32 @@ class formulizeHandler {
 		// handle the add/remove of element from screens/pages
 		$screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		foreach($screenIdsAndPagesForAdding as $screenId=>$pageOrdinals) {
-			$screenObject = $screen_handler->get($screenId);
-			$pages = $screenObject->getVar('pages');
-			foreach($pageOrdinals as $pageOrdinal) {
-				$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
-			}
-			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-			$insertResult = $screen_handler->insert($screenObject, force: true);
-			if($insertResult == false) {
-				throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+			if($screenObject = $screen_handler->get($screenId)) {
+				$pages = $screenObject->getVar('pages');
+				foreach($pageOrdinals as $pageOrdinal) {
+					$pages[$pageOrdinal][] = $elementObject->getVar('ele_id');
+				}
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$insertResult = $screen_handler->insert($screenObject, force: true);
+				if($insertResult == false) {
+					throw new Exception("Could not add element ".$elementObject->getVar('ele_id')." to the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				}
 			}
 		}
 		foreach($screenIdsAndPagesForRemoving as $screenId=>$pageOrdinal) {
-			$screenObject = $screen_handler->get($screenId);
-			$pages = $screenObject->getVar('pages');
-			foreach($pageOrdinals as $pageOrdinal) {
-				$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
-				if($key !== false) {
-					unset($pages[$pageOrdinal][$key]);
+			if($screenObject = $screen_handler->get($screenId)) {
+				$pages = $screenObject->getVar('pages');
+				foreach($pageOrdinals as $pageOrdinal) {
+					$key = array_search($elementObject->getVar('ele_id'), $pages[$pageOrdinal]);
+					if($key !== false) {
+						unset($pages[$pageOrdinal][$key]);
+					}
 				}
-			}
-			$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
-			$insertResult = $screen_handler->insert($screenObject, force: true);
-			if($insertResult == false) {
-				throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				$screenObject->setVar('pages', serialize($pages)); // serialize ourselves, because screen handler insert method does not pass things through cleanVars, which would serialize for us
+				$insertResult = $screen_handler->insert($screenObject, force: true);
+				if($insertResult == false) {
+					throw new Exception("Could not remove element ".$elementObject->getVar('ele_id')." from the screen \"".$screenObject->getVar('title')."\" (id: $screenId).");
+				}
 			}
 		}
 
