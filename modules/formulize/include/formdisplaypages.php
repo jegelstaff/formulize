@@ -102,6 +102,9 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	// NOTE: pageTitles array must start with key 1, not 0.  Page 1 is the first page of the form
 	$pageTitles = array();
 	if(isset($pages['titles'])) {
+		foreach($pages['titles'] as $key=>$value) {
+			$pages['titles'][$key] = formulize_handleRandomAndDateText($value);
+		}
 		$pageTitles = $pages['titles'];
 		unset($pages['titles']);
 	}
