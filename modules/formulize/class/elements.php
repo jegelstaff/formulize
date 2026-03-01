@@ -1149,14 +1149,25 @@ function optionIsValidForElement($option, $elementHandleOrId) {
  * @return bool
  */
 function anySelectElementType($type) {
+	static $cachedTypes = array();
+	if(isset($cachedTypes[$type])) {
+		return $cachedTypes[$type];
+	}
 	$baseTypes = array("select","autocomplete","listbox");
 	$subTypes = array("","Linked","Users");
 	foreach($baseTypes as $base) {
 		foreach($subTypes as $sub) {
 			if ($type == $base.$sub) {
+				$cachedTypes[$type] = true;
 				return true;
 			}
 		}
+	}
+	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
+		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+		$element = $customTypeHandler->create();
+		$cachedTypes[$type] = is_a($element, 'formulizeSelectElement');
+		return $cachedTypes[$type];
 	}
 	return false;
 }
