@@ -250,3 +250,34 @@ code, pre {
 .italic {
 	font-style: italic;
 }
+.page-pic {
+	 margin: 1em;
+	 max-width: 300px;
+}
+.page-pic p {
+	text-align: center;
+	font-style: italic;
+	margin-top: 0.1em;
+	margin-bottom: 0.5em;
+}
+.small-pic {
+	width: 200px;
+}
+.desktop-title {
+	display: none;
+}
+.mobile-title {
+	display: block;
+}
+@media print, screen and (min-width: 1100px) {
+	.page-pic {
+		float: right;
+		margin-top: 0;
+	}
+	.desktop-title {
+		display: block;
+	}
+	.mobile-title {
+		display: none;
+	}
+}
