@@ -3,23 +3,28 @@ services:
     image: "formulize/php-dev:latest"
     restart: "unless-stopped"
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     volumes:
       - .:/var/www/html/
       - ./trust:/var/www/trust
       - ./docker/php/conf.d/formulize.ini:/usr/local/etc/php/conf.d/formulize.ini
     ports:
-      - '8080:80'
-    links:
-      - mariadb
+      - '127.0.0.1:8080:80'
   mariadb:
     image: "mariadb:lts"
     restart: 'no'
+    healthcheck:
+      test: mariadb -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'select 1' $$MYSQL_DATABASE
+      interval: 1m
+      timeout: 1s
+      retries: 3
+      start_period: 20s
+      start_interval: 5s
     ports:
-      - 3306:3306
-    expose:
-      - "3306"
+      - '127.0.0.1:3306:3306'
     volumes:
+      # If adding seeds, change `healthcheck` to check for the presence of whatever seeds will be adding last.
       - ./docker/mariadb/seed:/docker-entrypoint-initdb.d
       - ./docker/mariadb/conf.d:/etc/mysql/conf.d
       - mariadb_data:/var/lib/mysql
