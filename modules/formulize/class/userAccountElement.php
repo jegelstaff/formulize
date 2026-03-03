@@ -341,7 +341,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 							$defaultGroupId = intval($defaultGroupId);
 							// Check per-group conditions if any exist
 							if(isset($allConditions[$defaultGroupId]) && !empty($allConditions[$defaultGroupId])) {
-								$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
+								$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1, 'processUserAccountSubmission');
 								if(!$conditionsMet) {
 									continue; // conditions not met, skip this group
 								}
@@ -546,7 +546,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 
 		// Check base conditions (key 0) — if they exist and aren't met, skip
 		if(isset($allConditions[0]) && !empty($allConditions[0])) {
-			$baseConditionsMet = checkElementConditions($allConditions[0], $formId, $entryId, null, -1);
+			$baseConditionsMet = checkElementConditions($allConditions[0], $formId, $entryId, null, -1, 'reevaluateDefaultGroupMemberships');
 			if(!$baseConditionsMet) {
 				return false; // base conditions not met
 			}
@@ -568,7 +568,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			// Check per-group conditions if any exist; default to true (unconditional)
 			$conditionsMet = true;
 			if($hasConditions) {
-				$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
+				$conditionsMet = checkElementConditions($allConditions[$defaultGroupId], $formId, $entryId, null, -1, 'reevaluateDefaultGroupMemberships');
 			}
 
 			$resolvedGroupIds = self::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks, $data_handler);

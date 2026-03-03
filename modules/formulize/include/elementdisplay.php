@@ -435,13 +435,14 @@ function removeFromConditionalCatalogue($renderedElementMarkupName) {
  * @param int|string $entry_id The entry ID or "new"
  * @param object|null $elementObject The element object (optional, used for error messages)
  * @param int $frid The form relationship ID. 0 = no relationship, -1 = primary relationship. Default 0.
+ * @param string $bypassCache A string to append to the cache key to bypass cache when needed. If checkElementConditions is being run in a loop and that set of runs should be based off the current state, not a cached state, then the same bypassCache value can be set for that call inside the loop and all instances will run off the current state as of that moment.
  * @return int 1 if conditions are met, 0 if not
  */
-function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0) {
+function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0, $bypassCache = "") {
 	// need to check if there's a condition on this element that is met or not
 	static $cachedEntries = array();
 	if($entry_id != "new") {
-		$cacheKey = $form_id.'_'.$entry_id.'_'.$frid;
+		$cacheKey = $form_id.'_'.$entry_id.'_'.$frid.$bypassCache;
 		if(!isset($cachedEntries[$cacheKey])) {
 			$cachedEntries[$cacheKey] = gatherDataset($form_id, filter: $entry_id, frid: $frid, bypassCache: true);
 		}

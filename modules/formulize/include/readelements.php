@@ -562,13 +562,10 @@ if(!empty($formulize_allWrittenEntryIds)) {
 				continue;
 			}
 
-			// If the EAU form itself was written to, and processUserAccountSubmission
-			// didn't run for those entries, add them for re-evaluation
+			// If the EAU form itself was written to add the entry for re-evaluation ()
 			if(isset($formulize_allWrittenEntryIds[$eauFormId])) {
 				foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
-					if(!isset($userIdsForUserAccountElements[$eauFormId][$writtenEntryId])) {
-						$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
-					}
+					$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
 				}
 			}
 
