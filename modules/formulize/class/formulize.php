@@ -386,6 +386,151 @@ class formulizeHandler {
 	}
 
 	/**
+	 * Check if a given entry is in an entries_are_users form and if so does the entry meet base conditions for user creation, if any?
+	 * @param int $formId The form ID to check
+	 * @param int $entryId The entry ID to check
+	 * @param string $cacheId Optional cache namespace passed through to checkConditionsAgainstAnEntry. Use a distinct value (e.g. 'postWrite') when calling after a write operation, to avoid reusing a cached pre-write snapshot of the entry data.
+	 * @return bool true if the form is entries_are_users and has no conditions, or the entry meets the base conditions. False otherwise.
+	 */
+	static public function entriesAreUsersEntryMeetsBaseConditions($formId, $entryId, $cacheId = "") {
+		$form_handler = xoops_getModuleHandler('forms', 'formulize');
+		$meetsConditions = false;
+		if($formObject = $form_handler->get($formId) AND $formObject->getVar('entries_are_users')) {
+			$meetsConditions = true; // if there are no conditions, then it meets conditions by default
+			$allConditions = $formObject->getVar('entries_are_users_conditions');
+			// Check base conditions (key 0) — if they exist and aren't met, skip
+			if(is_array($allConditions) AND isset($allConditions[0]) AND !empty($allConditions[0])) {
+				$meetsConditions = checkConditionsAgainstAnEntry($allConditions[0], $formId, $entryId, null, -1, $cacheId);
+			}
+		}
+		return $meetsConditions;
+	}
+
+	/**
+	 * Resolve a default group ID to the actual group(s) the user should be added to.
+	 * For regular groups, returns the group ID as-is.
+	 * For template groups, uses element_links to find which entry in the entries_are_groups
+	 * form is referenced by the current entry, then looks up the actual group for that
+	 * entry + category combination.
+	 *
+	 * @param int $defaultGroupId The default group ID (may be a template group)
+	 * @param int $formId The entries_are_users form ID
+	 * @param int $entryId The current entry being processed
+	 * @param array $elementLinks The entries_are_users_default_groups_element_links from form settings
+	 * @return array The resolved group IDs, or an empty array if resolution failed
+	 */
+	static public function resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks) {
+		global $xoopsDB;
+		// Check if this is a template group
+		$sql = "SELECT is_group_template, form_id FROM " . $xoopsDB->prefix('groups') . " WHERE groupid = " . intval($defaultGroupId);
+		$result = $xoopsDB->query($sql);
+		$groupRow = $xoopsDB->fetchArray($result);
+		if(!$groupRow) {
+			return array();
+		}
+		// Regular group — use as-is
+		if(!$groupRow['is_group_template']) {
+			return array($defaultGroupId);
+		}
+		// Template group — resolve to the actual entry group
+		// Template groups store form_id (the entries_are_groups form) but not entry_id
+		$eagFormId = intval($groupRow['form_id']);
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$eagFormObject = $form_handler->get($eagFormId);
+		if(!$eagFormObject) {
+			return array();
+		}
+		$groupCategories = $eagFormObject->getVar('group_categories');
+		if(!is_array($groupCategories) || !isset($groupCategories[$defaultGroupId])) {
+			return array();
+		}
+		$categoryName = $groupCategories[$defaultGroupId];
+
+		// Get the element links for this template group — these are element IDs in the entries_are_users
+		// form (or related forms) that link to the entries_are_groups form
+		if(!isset($elementLinks[$defaultGroupId]) || !is_array($elementLinks[$defaultGroupId]) || empty($elementLinks[$defaultGroupId])) {
+			return array(); // no element links configured, can't resolve
+		}
+		$linkedElementIds = $elementLinks[$defaultGroupId];
+
+		// Use gatherDataset with frid=-1 (primary relationship) to get data across related forms,
+		// so we can read linked element values even if the element is in a different form
+		$resolvedGroupIds = array();
+		$entryData = gatherDataset($formId, filter: $entryId, frid: -1, bypassCache: true); // does this really need to bypass cache if we're doing it after the saving? (should be after derived values too)
+		if(isset($entryData[0]) AND $entryData[0]) {
+			foreach($linkedElementIds as $linkedEleId) {
+				if($linkedElement = _getElementObject($linkedEleId)) {
+					$linkedHandle = $linkedElement->getVar('ele_handle');
+					// Get the value from the gathered dataset (works across related forms)
+					if($linkedValue = getValue($entryData[0], $linkedHandle, raw: true)) {
+						// The linked value is the entry_id in the entries_are_groups form
+						// For multi-value linked elements (comma-separated), handle each
+						$linkedEntryIds = is_array($linkedValue) ? $linkedValue : explode(',', trim($linkedValue, ','));
+						foreach($linkedEntryIds as $eagEntryId) {
+							if($eagEntryId = intval($eagEntryId)) {
+								// Look up the actual group for this entry + category
+								$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+										" WHERE form_id = " . intval($eagFormId) .
+										" AND entry_id = " . intval($eagEntryId) .
+										" AND is_group_template = 0" .
+										" AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+								$result = $xoopsDB->query($sql);
+								if($row = $xoopsDB->fetchArray($result)) {
+									$resolvedGroupIds[] = intval($row['groupid']);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return $resolvedGroupIds;
+	}
+
+	/**
+	 * Get all entry-specific groups that belong to the same template family as the given template group.
+	 * These are groups created for individual entries in an entries_are_groups form, sharing the same
+	 * category name suffix. Returns empty array if the group is not a template group.
+	 *
+	 * @param int $templateGroupId The template group ID
+	 * @return array Array of group IDs in the same template family
+	 */
+	static public function getAllGroupsForTemplateCategory($templateGroupId) {
+		global $xoopsDB;
+		$sql = "SELECT is_group_template, form_id FROM " . $xoopsDB->prefix('groups') . " WHERE groupid = " . intval($templateGroupId);
+		$result = $xoopsDB->query($sql);
+		$row = $xoopsDB->fetchArray($result);
+		if(!$row || !$row['is_group_template']) {
+			return array(); // not a template group, no family to find
+		}
+		$eagFormId = intval($row['form_id']);
+
+		// Get the category name for this template group
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$eagFormObject = $form_handler->get($eagFormId);
+		if(!$eagFormObject) {
+			return array();
+		}
+		$groupCategories = $eagFormObject->getVar('group_categories');
+		if(!is_array($groupCategories) || !isset($groupCategories[$templateGroupId])) {
+			return array();
+		}
+		$categoryName = $groupCategories[$templateGroupId];
+
+		// Find all entry-specific groups with the same category suffix
+		$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+			   " WHERE form_id = " . intval($eagFormId) .
+			   " AND is_group_template = 0" .
+			   " AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+		$result = $xoopsDB->query($sql);
+		$groups = array();
+		while($groupRow = $xoopsDB->fetchArray($result)) {
+			$groups[] = intval($groupRow['groupid']);
+		}
+		return $groups;
+	}
+
+	/**
 	 * Synchronizes template groups for a form that has entries_are_groups enabled.
 	 * Creates, renames, or updates template groups based on the desired categories.
 	 *
