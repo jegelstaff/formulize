@@ -270,4 +270,116 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		return implode(' and ', $groups);
 	}
 
+	/**
+	 * Process the user's group memberships based on the submitted values in the group membership element, if it exists, and based on the default groups specified in form settings, subject to any conditions and template group resolution.
+	 * @param int $userId The ID of the user whose group memberships we are processing
+	 * @param int $formId The ID of the form where the submission is taking place
+	 * @param int $entryId The ID of the entry being submitted/edited
+	 * @throws Exception if processing group memberships fails for any reason
+	 */
+	static public function processUserGroupMemberships($userId, $formId, $entryId) {
+
+		if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId)) {
+			return; // Entry doesn't meet base conditions for representing a user, so we won't attempt to process group memberships since they shouldn't be relevant
+		}
+
+		global $xoopsUser;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$member_handler = xoops_gethandler('member');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if(!$formObject = $form_handler->get($formId)) {
+			throw new Exception("Could not retrieve form object for form ID $formId when trying to process user group memberships.");
+		}
+
+		// update user's group memberships based on the groups selected in the Group Membership element, if it exists.  If the element doesn't exist, then we won't make any changes to group memberships (since submitted and current group ids will be identical -- except for the enforcement of registered users and anonymous user group memberships/exclusions, see below).
+		$currentGroupIds = $member_handler->getGroupsByUser($userId);
+		$submittedGroupIds = $currentGroupIds; // default to their current groups in case we can't find a submission
+		if($groupMembershipElement = $element_handler->get('formulize_user_account_groupmembership_'.$formId)) {
+			$groupMembershipElementId = $groupMembershipElement->getVar('ele_id');
+			$submittedGroupIds = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId] : array();
+			if(!is_array($submittedGroupIds)) {
+				$submittedGroupIds = array($submittedGroupIds);
+			}
+		}
+
+		// Always ensure user is in Registered Users group and not in the anonymous users group
+		if(!in_array(XOOPS_GROUP_USERS, $submittedGroupIds)) {
+			$submittedGroupIds[] = XOOPS_GROUP_USERS;
+		}
+		$anonGroupKey = array_search(XOOPS_GROUP_ANONYMOUS, $submittedGroupIds);
+		if($anonGroupKey !== false) {
+			unset($submittedGroupIds[$anonGroupKey]);
+		}
+
+		// only webmasters can assign to the webmasters group
+		$webmastersGroupKey = array_search(XOOPS_GROUP_ADMIN, $submittedGroupIds);
+		if($webmastersGroupKey !== false AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+			unset($submittedGroupIds[$webmastersGroupKey]);
+		}
+
+		// conversely, if the target user is a webmaster, make sure they stay in the webmasters group, if a non-webmaster is submitting groups
+		if(in_array(XOOPS_GROUP_ADMIN, $currentGroupIds)
+		AND !in_array(XOOPS_GROUP_ADMIN, $submittedGroupIds)
+		AND !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+			$submittedGroupIds[] = XOOPS_GROUP_ADMIN;
+		}
+
+		// Ensure user is in the default groups specified in the form settings,
+		// subject to per-group conditions and template group resolution
+		$defaultGroups = $formObject->getVar('entries_are_users_default_groups');
+		if(is_array($defaultGroups) && !empty($defaultGroups)) {
+			$allConditions = $formObject->getVar('entries_are_users_conditions');
+			if(!is_array($allConditions)) {
+				$allConditions = array();
+			}
+			$elementLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
+			if(!is_array($elementLinks)) {
+				$elementLinks = array();
+			}
+			foreach($defaultGroups as $defaultGroupId) {
+				$defaultGroupId = intval($defaultGroupId);
+				// resolve a template group to entry groups, if necessary (if not a template group, will return the group id as is)
+				$resolvedGroupIds = formulizeHandler::resolveDefaultGroupId($defaultGroupId, $formId, $entryId, $elementLinks);
+				// if there's a family of entry groups associated with a template group, remove all groups in this template family, and then we'll add the right ones in as required
+				if($templateFamilyGroups = formulizeHandler::getAllGroupsForTemplateCategory($defaultGroupId)) {
+					$submittedGroupIds = array_diff($submittedGroupIds, $templateFamilyGroups);
+				}
+				if(isset($allConditions[$defaultGroupId]) && !empty($allConditions[$defaultGroupId])) {
+					$conditionsMet = checkConditionsAgainstAnEntry($allConditions[$defaultGroupId], $formId, $entryId, null, -1);
+					if(!$conditionsMet) {
+						$submittedGroupIds = array_diff($submittedGroupIds, $resolvedGroupIds);
+						continue; // conditions not met, skip this group
+					}
+				}
+				$submittedGroupIds = array_unique(array_merge($submittedGroupIds, $resolvedGroupIds));
+			}
+		}
+
+		// Normalize both arrays to integers for reliable comparison and add/remove operations
+		$submittedGroupIds = array_map('intval', $submittedGroupIds);
+		$currentGroupIds = array_map('intval', $currentGroupIds);
+
+		// if submittedGroups and currentGroups are the same, do nothing
+		if(count($submittedGroupIds) == count($currentGroupIds) && empty(array_diff($submittedGroupIds, $currentGroupIds))) {
+			return;
+		}
+
+		// Add/remove from appropriate groups
+		$validGroupIds = array_keys($member_handler->getGroups(id_as_key: true));
+		foreach($submittedGroupIds as $groupId) {
+			if(!in_array($groupId, $currentGroupIds) AND in_array($groupId, $validGroupIds)) {
+				if($member_handler->addUserToGroup($groupId, $userId) == false) {
+					throw new Exception("Failed to add user to group ID $groupId");
+				}
+			}
+		}
+		foreach($currentGroupIds as $groupId) {
+			if(!in_array($groupId, $submittedGroupIds)) {
+				if($member_handler->removeUsersFromGroup($groupId, array($userId)) == false) {
+					throw new Exception("Failed to remove user from group ID $groupId");
+				}
+			}
+		}
+	}
+
 }
