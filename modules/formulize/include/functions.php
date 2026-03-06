@@ -9292,3 +9292,200 @@ function getSortTitleAndIcon($elementHandle) {
 
 	return [$title, $icon];
 }
+
+/**
+ * Check if conditions are met for a given entry.
+ * Evaluates a standard condition array, which is an array with the following keys: [elements[], ops[], terms[], types[]], where each of those is an array with the same number of items, and each item corresponds to a condition.  So elements[0], ops[0], terms[0], and types[0] together make up the first condition, and so on.
+ * Compares a given entry to the conditions to see if they pass or not.
+ * Used for element display conditions, and also for evaluating per-group conditions for entries_are_users default groups.
+ * @param array $elementFilterSettings The filter settings array [elements[], ops[], terms[], types[]]
+ * @param int $form_id The form ID
+ * @param int|string $entry_id The entry ID or "new"
+ * @param object|null $elementObject The element object (optional, used for error messages)
+ * @param int $frid The form relationship ID. 0 = no relationship, -1 = primary relationship. Default 0.
+ * @param string $cacheId A string to append to the cache key to bypass cache when needed. Normally, the state of the entry is reused from the first time the function is called. If the absolute current state of data should be used, you can specify an arbitrary value for the cache ID and a fresh copy of data will be used. All requests with the same cache ID will reuse the same data as retrieved from the first time that cache ID was used. This is useful inside loops where the previous state of data from the last time this function was called prior to the loop, will not be correct.
+ * @return int 1 if conditions are met, 0 if not
+ */
+function checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0, $cacheId = "") {
+	// need to check if there's a condition on this element that is met or not
+	static $cachedEntries = array();
+	if($entry_id != "new") {
+		$cacheKey = $form_id.'_'.$entry_id.'_'.$frid.$cacheId;
+		if(!isset($cachedEntries[$cacheKey])) {
+			$cachedEntries[$cacheKey] = gatherDataset($form_id, filter: $entry_id, frid: $frid, bypassCache: true);
+		}
+		$entryData = $cachedEntries[$cacheKey];
+	}
+
+	$filterElements = array_map('undoAllHTMLChars', $elementFilterSettings[0]);
+	$filterOps = array_map('undoAllHTMLChars', $elementFilterSettings[1]);
+	$filterTerms = array_map('undoAllHTMLChars', $elementFilterSettings[2]);
+	$filterTypes = array_map('undoAllHTMLChars', $elementFilterSettings[3]);
+
+	// find the filter indexes for 'match all' and 'match one or more'
+	$filterElementsAll = array();
+	$filterElementsOOM = array();
+	for($i=0;$i<count((array) $filterTypes);$i++) {
+		if($filterTypes[$i] == "all") {
+			$filterElementsAll[] = $i;
+		} else {
+			$filterElementsOOM[] = $i;
+		}
+	}
+
+	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
+	$evaluationCondition = "if(";
+
+	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
+	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
+
+	if($evaluationConditionAND === false OR $evaluationConditionOR === false) {
+		$errorContext = $elementObject ? "form element ".$elementObject->getVar('ele_id') : "a condition filter for form ".$form_id;
+		exit("Fatal Formulize Error: ".$errorContext." is misconfigured. Please notify the webmaster.");
+	}
+
+	$evaluationCondition .= $evaluationConditionAND;
+	if( $evaluationConditionOR ) {
+		if( $evaluationConditionAND ) {
+			$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
+		} else {
+			$evaluationCondition .= $evaluationConditionOR;
+		}
+	}
+
+	$evaluationCondition .= ") {\n";
+	$evaluationCondition .= "  \$passedCondition = true;\n";
+	$evaluationCondition .= "}\n";
+
+	$passedCondition = false;
+	eval($evaluationCondition);
+
+	$allowed = 1;
+	if(!$passedCondition) {
+		$allowed = 0;
+	}
+	return $allowed;
+}
+
+function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
+	$evaluationCondition = "";
+
+	// convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
+	// translate yes/no choices for yes/no elements if French is active language
+	global $xoopsConfig;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+	foreach ($filterElements as $key => $element) {
+		if(!isMetaDataField($element)) {
+			// make sure that the filterElements array is using handles, as originally designed and required by code below
+			if($filterElementObject = $element_handler->get($element)) {
+				$filterElements[$key] = $filterElementObject->getVar('ele_handle');
+			} else {
+				return false;
+			}
+			$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
+			if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
+				$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+			}
+			if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
+				$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
+				$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
+			}
+		}
+	}
+
+	for($io=0;$io<count((array) $indexes);$io++) {
+		$i = $indexes[$io];
+		if(!($evaluationCondition == "")) {
+			$evaluationCondition .= " $match ";
+		}
+		switch($filterOps[$i]) {
+			case "=";
+				$thisOp = "==";
+				break;
+			case "NOT";
+				$thisOp = "!=";
+				break;
+			default:
+				$thisOp = $filterOps[$i];
+		}
+		if($filterTerms[$i] === "{BLANK}") {
+			$filterTerms[$i] = "";
+		}
+
+		$filterTerms[$i] = parseUserAndToday($filterTerms[$i]);
+
+		// convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
+		if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
+			$handle_reference = substr($filterTerms[$i],1,-1);
+			if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
+				$filterTerms[$i] = $entry == 'new' ? '' : getValue($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
+			} elseif($entry != 'new') { // comparing to user metadata field, entry is not new
+				// take a wild guess that the reference is to something that should be a uid in the db...
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$elementObject = $element_handler->get($handle_reference);
+				$formObject = $form_handler->get($elementObject->getVar('id_form'));
+				global $xoopsDB;
+				$sql = 'SELECT '.formulize_db_escape($handle_reference).' FROM '.$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')).' WHERE entry_id = '.intval($entry);
+				$res = $xoopsDB->query($sql);
+				$row = $xoopsDB->fetchRow($res);
+				$filterTerms[$i] = $row[0];
+			} else { // comparing to user metadata field, entry is new
+					$filterTerms[$i] = 0;
+			}
+		}
+
+		$entryKey = is_numeric($entry) ? intval($entry) : $entry;
+		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey]) AND array_key_exists($filterElements[$i], $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey])) {
+			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey][$filterElements[$i]];
+		} elseif($entry == "new") {
+			$elementObject = $element_handler->get($filterElements[$i]);
+			if(is_object($elementObject)) {
+				$defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
+				$compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
+			} else {
+				$compValue = "";
+			}
+		} else {
+			$compValue = getValue($entryData[0], $filterElements[$i]);
+		}
+		if(is_array($compValue)) {
+			if($thisOp == "==") {
+				$thisOp = "LIKE";
+			}
+			if($thisOp == "!=") {
+				$thisOp = "NOT LIKE";
+			}
+			$compValue = addslashes(implode(",",$compValue));
+		} else {
+			$compValue = is_string($compValue) ? addslashes($compValue) : $compValue;
+		}
+		$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
+
+		$rawFilterTerms = $filterTerms[$i];
+		$filterTermToUse = addslashes($filterTerms[$i]);
+
+    // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
+		if($thisOp == "LIKE" AND $filterTermToUse != '') {
+			$evaluationCondition .= "stristr('".$compValue."', '".$filterTermToUse."')";
+		} elseif($thisOp == "NOT LIKE" AND $filterTermToUse != '') {
+			$evaluationCondition .= "!stristr('".$compValue."', '".$filterTermToUse."')";
+    } elseif($thisOp == "LIKE") {
+      $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
+    } elseif($thisOp == "NOT LIKE") {
+      $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
+		} elseif($thisOp == "IN") {
+			$cleanTerms = array();
+			foreach(explode(',',$rawFilterTerms) as $ft) {
+				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
+			}
+			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
+		} else {
+			$filterTermToUse = is_numeric($filterTermToUse) ? $filterTermToUse : "'".$filterTermToUse."'";
+			$evaluationCondition .= "$compValueQuoted $thisOp $filterTermToUse";
+		}
+	}
+
+	return $evaluationCondition;
+}
