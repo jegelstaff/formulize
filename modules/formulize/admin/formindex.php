@@ -100,10 +100,10 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen_listofentries';
-    $checkThisField = 'usechangeowner';
-    $checkThisProperty = '';
-    $checkPropertyForValue = '';
+    $checkThisTable = 'formulize_id';
+    $checkThisField = 'parent_perm_fid';
+    $checkThisProperty = false;
+    $checkPropertyForValue = false;
 
     /*
     * ====================================== */
@@ -513,6 +513,12 @@ function patch40() {
         $sql['add_form_top'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `top` varchar(255) NOT NULL default ''";
         $sql['add_form_left'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_application_form_link"). " ADD `left` varchar(255) NOT NULL default ''";
 				$sql['add_pi'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `pi` int(5) NOT NULL default 0";
+				$sql['add_entries_are_users'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users` tinyint(1) NOT NULL default 0";
+				$sql['add_entries_are_users_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_conditions` text NULL";
+				$sql['add_entries_are_users_default_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_default_groups` text NULL";
+				$sql['add_entries_are_users_default_groups_element_links'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_default_groups_element_links` text NULL";
+				$sql['add_entries_are_users_user_is_owner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_users_user_is_owner` tinyint(1) NOT NULL default 0";
+				$sql['add_entries_are_groups'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `entries_are_groups` tinyint(1) NOT NULL default 0";
 				$sql['sv_mainform_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_mainform` `sv_mainform` int(5) default NULL";
 				$sql['sv_formframe_to_int'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_formframe` `sv_formframe` int(5) default NULL";
 				$sql['form_title'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `desc_form` `form_title` varchar(255) NOT NULL default ''";
@@ -520,6 +526,13 @@ function patch40() {
 				$sql['add_dynamicdefault_source'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_source` smallint(5) unsigned NULL default 0";
 				$sql['add_dynamicdefault_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_conditions` text NULL";
 				$sql['add_usechangeowner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usechangeowner` varchar(255) NOT NULL default ''";
+				$sql['add_is_group_template'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `is_group_template` tinyint(1) NOT NULL default 0";
+				$sql['add_group_categories'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `group_categories` text NULL";
+				$sql['add_form_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `form_id` int(5) unsigned NULL default NULL";
+				$sql['add_entry_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `entry_id` int(10) unsigned NULL default NULL";
+				$sql['add_form_entry_index'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD INDEX `form_entry` (`form_id`, `entry_id`)";
+				$sql['singleentry_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `singleentry` `singleentry` text NULL";
+				$sql['add_parent_perm_fid'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `parent_perm_fid` int(5) NOT NULL default 0";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -668,7 +681,21 @@ function patch40() {
 										print "Dynamic defaults already added. result: OK<br>";
 								} elseif($key === "add_usechangeowner") {
 										print "Change owner option for list screens already added. result: OK<br>";
-                } else {
+                } elseif($key === "add_entries_are_users" OR $key === "add_entries_are_users_conditions" OR $key === "add_entries_are_users_default_groups" OR $key === "add_entries_are_users_default_groups_element_links" OR $key === "add_entries_are_users_user_is_owner" OR $key === "add_entries_are_groups") {
+										print "Entries-are-users/groups options already added. result: OK<br>";
+								} elseif($key === "add_is_group_template") {
+										print "is_group_template field already added to groups table. result: OK<br>";
+								} elseif($key === "add_group_categories") {
+									print "group_categories field already added to formulize_id table. result: OK<br>";
+								} elseif($key === "add_form_id" OR $key === "add_entry_id") {
+									print "Entry tracking fields already added to groups table. result: OK<br>";
+								} elseif($key === "add_form_entry_index") {
+									print "Entry index already added to groups table. result: OK<br>";
+								} elseif($key === "singleentry_to_text") {
+									print "singleentry column already converted to text. result: OK<br>";
+								} elseif($key === "add_parent_perm_fid") {
+									print "parent_perm_fid field already added to formulize_id table. result: OK<br>";
+								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
 						} elseif($key === "add_usechangeowner") {
@@ -707,6 +734,31 @@ function patch40() {
 							}
 						}
         }
+
+				// migrate singleentry values from scalar to per-group array (keyed by Registered Users group 2)
+				$migrateSingleSql = "SELECT id_form, singleentry FROM ".$xoopsDB->prefix("formulize_id");
+				if($migrateRes = $xoopsDB->query($migrateSingleSql)) {
+					while($migrateRow = $xoopsDB->fetchArray($migrateRes)) {
+						$existing = $migrateRow['singleentry'];
+						// skip if already a serialized array
+						if(substr($existing, 0, 2) === 'a:') continue;
+						switch($existing) {
+							case 'on':
+							case 'user':
+								$value = 'user';
+								break;
+							case 'group':
+								$value = 'group';
+								break;
+							default:
+								$value = 'off';
+								break;
+						}
+						$serialized = serialize(array(2 => $value));
+						$xoopsDB->queryF("UPDATE ".$xoopsDB->prefix("formulize_id")." SET singleentry=".$xoopsDB->quoteString($serialized)." WHERE id_form=".intval($migrateRow['id_form']));
+					}
+					print "Migrated singleentry values to per-group format. result: OK<br>";
+				}
 
 				// linked checkbox data was not being stored with same , , before/after as linked selectedboxes have. As of F8, make sure there's none of that left in DB.
 				$sql = 'SELECT f.form_handle, e.ele_handle FROM '.$xoopsDB->prefix('formulize').' AS e
@@ -1185,6 +1237,96 @@ function patch40() {
                 }
             }
         }
+
+        // ADD TIMEZONE OPTION TO PROFILE
+        $sql = "SELECT * FROM ".$xoopsDB->prefix("profile_field")." WHERE field_name = 'timezone'";
+        if($res = $xoopsDB->queryF($sql)) {
+            if($xoopsDB->getRowsNum($res)==0) {
+                $sql = "INSERT INTO ".$xoopsDB->prefix("profile_field")." (`catid`, `field_type`, `field_valuetype`, `field_name`, `field_title`, `url`, `field_description`, `field_required`, `field_maxlength`, `field_weight`, `field_default`, `field_notnull`, `field_edit`, `field_show`, `field_options`, `exportable`, `step_id`, `system`) VALUES (0, 'select', '1', 'timezone', 'Time Zone', '', '', 0, '255', 10, '', 1, 1, 1, 'a:0:{}', 1, 1, 1)";
+                if($res = $xoopsDB->queryF($sql)) {
+                    $profileId = $xoopsDB->getInsertId();
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("profile_visibility")." (`fieldid`, `user_group`, `profile_group`) VALUES ($profileId, 2, 0)";
+                    if(!$res = $xoopsDB->queryF($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "INSERT INTO ".$xoopsDB->prefix("group_permission")." (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES (2, $profileId, $profileModId, 'profile_edit')";
+                    if(!$res = $xoopsDB->queryF($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_profile")." ADD `timezone` varchar(255) NULL DEFAULT NULL";
+                    if(!$res = $xoopsDB->queryF($sql)) {
+                        exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                    }
+                    // Migrate existing users' timezone_offset to the new timezone field
+                    $offsetToTimezone = array(
+                        '-12' => 'Etc/GMT+12',
+                        '-11' => 'Pacific/Pago Pago',
+                        '-10' => 'Pacific/Honolulu',
+                        '-9.5' => 'Pacific/Marquesas',
+                        '-9' => 'America/Anchorage',
+                        '-8' => 'America/Vancouver',
+                        '-7' => 'America/Edmonton',
+                        '-6' => 'America/Winnipeg',
+                        '-5' => 'America/Toronto',
+                        '-4' => 'America/Halifax',
+                        '-3.5' => 'America/St Johns',
+                        '-3' => 'America/Argentina/Buenos Aires',
+                        '-2' => 'Atlantic/South Georgia',
+                        '-1' => 'Atlantic/Azores',
+                        '0' => 'UTC',
+                        '1' => 'Europe/Paris',
+                        '2' => 'Africa/Cairo',
+                        '3' => 'Europe/Moscow',
+                        '3.5' => 'Asia/Tehran',
+                        '4' => 'Asia/Dubai',
+                        '4.5' => 'Asia/Kabul',
+                        '5' => 'Asia/Karachi',
+                        '5.5' => 'Asia/Kolkata',
+                        '6' => 'Asia/Dhaka',
+                        '6.5' => 'Asia/Yangon',
+                        '7' => 'Asia/Bangkok',
+                        '8' => 'Asia/Shanghai',
+                        '9' => 'Asia/Tokyo',
+                        '9.5' => 'Australia/Darwin',
+                        '10' => 'Australia/Sydney',
+                        '10.5' => 'Australia/Lord Howe',
+                        '11' => 'Pacific/Guadalcanal',
+                        '12' => 'Pacific/Auckland',
+                        '13' => 'Pacific/Apia',
+                        '14' => 'Pacific/Kiritimati',
+                    );
+                    $sql = "SELECT uid, timezone_offset FROM ".$xoopsDB->prefix("users");
+                    if ($usersRes = $xoopsDB->queryF($sql)) {
+                        while ($userRow = $xoopsDB->fetchArray($usersRes)) {
+                            $uid = intval($userRow['uid']);
+                            $offset = strval(floatval($userRow['timezone_offset']));
+                            $tzName = isset($offsetToTimezone[$offset]) ? $offsetToTimezone[$offset] : 'UTC';
+                            $tzNameEscaped = $xoopsDB->quoteString($tzName);
+                            // Check if profile entry exists
+                            $sql2 = "SELECT profileid FROM ".$xoopsDB->prefix("profile_profile")." WHERE profileid = $uid";
+                            if ($profileRes = $xoopsDB->queryF($sql2)) {
+                                if ($xoopsDB->getRowsNum($profileRes) > 0) {
+                                    $sql2 = "UPDATE ".$xoopsDB->prefix("profile_profile")." SET timezone = $tzNameEscaped WHERE profileid = $uid";
+                                } else {
+                                    $sql2 = "INSERT INTO ".$xoopsDB->prefix("profile_profile")." (profileid, timezone) VALUES ($uid, $tzNameEscaped)";
+                                }
+                                $xoopsDB->queryF($sql2);
+                            }
+                        }
+                    }
+                } else {
+                    exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $sql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
+                }
+            }
+        }
+        // Ensure timezone_offset column in users table supports two decimal places
+        $sql = "ALTER TABLE ".$xoopsDB->prefix("users")." MODIFY `timezone_offset` float(4,2) NOT NULL DEFAULT '0.00'";
+        $xoopsDB->queryF($sql);
+        // Ensure field_options column can hold the full timezone list
+        $sql = "ALTER TABLE ".$xoopsDB->prefix("profile_field")." MODIFY `field_options` TEXT NOT NULL DEFAULT ''";
+        $xoopsDB->queryF($sql);
+        // Always update timezone options list (keeps in sync with PHP's timezone database)
+        formulize_update_timezone_options($xoopsDB);
 
         // if this is the first time we're adding the saveandleave and printable view options... set the values to the language constants
         if($needToSetSaveAndLeave) {
@@ -1765,27 +1907,29 @@ function patch40() {
         include_once ICMS_ROOT_PATH . '/include/notification_constants.php';
         $profile_field_handler = icms_getModuleHandler('field', 'profile', 'profile');
         if ($profile_field_handler) {
-            $criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
-            $notify_fields = $profile_field_handler->getObjects($criteria);
-            if (count($notify_fields) > 0) {
-                $notify_field = $notify_fields[0];
-                // Get current options and check if SMS already exists
-                $current_options = unserialize($notify_field->getVar('field_options', 'n'));
-                if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])) {
-										require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
-										if(defined('_NOT_METHOD_SMS')) {
-											// Add SMS option
-											$updated_options = array(
-													XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE,
-													XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
-													XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
-													XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS
-											);
-											$notify_field->setVar('field_options', serialize($updated_options));
-											$profile_field_handler->insert($notify_field);
-										}
-                }
-            }
+					$criteria = new CriteriaCompo(new Criteria('field_name', 'notify_method'));
+					$notify_fields = $profile_field_handler->getObjects($criteria);
+					if (count($notify_fields) > 0) {
+						$notify_field = $notify_fields[0];
+						// Get current options and check if SMS already exists
+						$current_options = unserialize($notify_field->getVar('field_options', 'n'));
+						require_once ICMS_ROOT_PATH . '/language/' . $xoopsConfig['language'] . '/notification.php';
+						if (!isset($current_options[XOOPS_NOTIFICATION_METHOD_SMS])
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_PM] != _NOT_METHOD_PM
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_DISABLE] != _NOT_METHOD_DISABLE
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_EMAIL] != _NOT_METHOD_EMAIL
+							OR $current_options[XOOPS_NOTIFICATION_METHOD_SMS] != _NOT_METHOD_SMS
+							) {
+							$updated_options = array(
+								XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
+								XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
+								XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
+								XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE
+							);
+							$notify_field->setVar('field_options', serialize($updated_options));
+							$profile_field_handler->insert($notify_field);
+						}
+					}
         }
 
         // Check for legacy SMS credentials that need migration
@@ -1802,6 +1946,18 @@ function patch40() {
                       '- SMS_AUTH_TOKEN\\n' +
                       '- SMS_FROM_NUMBER');
             </script>";
+        }
+
+        // Strip non-numeric characters from phone numbers stored in profile_profile.2faphone
+        // This is safe to run multiple times since already-clean values won't be affected
+        if(in_array(strtolower($xoopsDB->prefix("profile_profile")), $existingTables)) {
+            $sql = "UPDATE ".$xoopsDB->prefix("profile_profile")." SET `2faphone` = REGEXP_REPLACE(`2faphone`, '[^0-9]', '') WHERE `2faphone` IS NOT NULL AND `2faphone` != '' AND `2faphone` REGEXP '[^0-9]'";
+            if($res = $xoopsDB->queryF($sql)) {
+                $affected = $xoopsDB->getAffectedRows();
+                if($affected > 0) {
+                    print "Cleaned non-numeric characters from $affected phone number(s) in profile table. result: OK<br>";
+                }
+            }
         }
 
         print "DB updates completed.  result: OK";

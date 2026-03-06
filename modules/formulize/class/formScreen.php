@@ -240,13 +240,16 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		// if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($screen->getVar('fid'));
-		if($formObject->getVar('single')=="off" AND $reloadblank) {
+		global $xoopsUser;
+		$formScreenGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		$effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $formScreenGroups);
+		if($effectiveSingle=="off" AND $reloadblank) {
 			$overrideMulti = 0;
-		} elseif($formObject->getVar('single')=="off" AND !$reloadblank) {
+		} elseif($effectiveSingle=="off" AND !$reloadblank) {
 			$overrideMulti = 1;
-		} elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND $reloadblank) {
+		} elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND $reloadblank) {
 			$overrideMulti = 1;
-		} elseif(($formObject->getVar('single')=="group" OR $formObject->getVar('single')=="user") AND !$reloadblank) {
+		} elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND !$reloadblank) {
 			$overrideMulti = 0;
 		} else {
 			$overrideMulti = 0;

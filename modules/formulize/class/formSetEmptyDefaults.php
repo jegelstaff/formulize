@@ -15,6 +15,7 @@ $elementCaptions = array();
 $elementColheads = array();
 $elementHandles = array();
 $elementTypes = array();
+$systemElements = array();
 $encryptedElements = array();
 $headerlist = "";
 $defaultform = "";

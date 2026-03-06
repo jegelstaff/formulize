@@ -48,12 +48,28 @@ if ($aid == 0) {
 $elements = array();
 if ($_GET['fid'] != "new") {
     $fid = intval($_GET['fid']);
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($fid);
     $formName = $formObject->getVar('title');
 		$singular = $formObject->getVar('singular');
 		$plural = $formObject->getVar('plural');
-    $singleentry = $formObject->getVar('single') ? $formObject->getVar('single') : 'off';
+    $singleentry = $formObject->getVar('single');
+    if (!is_array($singleentry)) {
+        $singleentry = array(2 => ($singleentry ?: 'off'));
+    }
+    $member_handler_se = xoops_gethandler('member');
+    $singleentry_groups = array();
+    foreach ($singleentry as $gid => $value) {
+        $groupObj = $member_handler_se->getGroup(intval($gid));
+        if ($groupObj) {
+            $singleentry_groups[] = array(
+                'id' => intval($gid),
+                'name' => $groupObj->getVar('name'),
+                'value' => $value
+            );
+        }
+    }
     $tableform = $formObject->getVar('tableform');
     $headerlist = $formObject->getVar('headerlist');
     $headerlistArray = explode("*=+*:",trim($headerlist,"*=+*:"));
@@ -66,11 +82,140 @@ if ($_GET['fid'] != "new") {
     $send_digests = $formObject->getVar('send_digests');
 		$defaultpi = $formObject->getVar('pi');
 		$pioptions = array();
+		$entries_are_users = $formObject->getVar('entries_are_users');
+		$entries_are_users_user_is_owner = $formObject->getVar('entries_are_users_user_is_owner');
+		$entries_are_users_conditions_all = $formObject->getVar('entries_are_users_conditions');
+		if (!is_array($entries_are_users_conditions_all)) {
+			$entries_are_users_conditions_all = array();
+		}
+		$entries_are_users_conditions = isset($entries_are_users_conditions_all[0]) ? $entries_are_users_conditions_all[0] : null;
+		$entries_are_users_conditions_ui = formulize_createFilterUI($entries_are_users_conditions, "entriesareusersconditions", $fid, "form-1");
+		$entries_are_users_default_groups = $formObject->getVar('entries_are_users_default_groups');
+		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI($entries_are_users_default_groups);
+		$entries_are_users_default_groups_selected = array();
+		$per_group_conditions_ui = array();
+		if (is_array($entries_are_users_default_groups) && !empty($entries_are_users_default_groups)) {
+			$group_handler = xoops_gethandler('group');
+			foreach ($entries_are_users_default_groups as $gid) {
+				$gid = intval($gid);
+				$groupObj = $group_handler->get($gid);
+				if ($groupObj) {
+					$groupConditions = isset($entries_are_users_conditions_all[$gid]) ? $entries_are_users_conditions_all[$gid] : null;
+					$hasGroupConditions = !empty($groupConditions);
+					$entries_are_users_default_groups_selected[] = array('id' => $gid, 'name' => $groupObj->getVar('name'), 'hasConditions' => $hasGroupConditions);
+					$per_group_conditions_ui[$gid] = formulize_createFilterUI($groupConditions, "eaugroup_".$gid, $fid, "form-1");
+				}
+			}
+		}
+		// Build template group metadata for the UI (checkboxes and JS)
+		$template_group_metadata = array();
+		$tgRawMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
+		foreach ($tgRawMetadata as $tgGroupId => $tgInfo) {
+			// Group linked elements by formName for display with headings
+			// Replace empty formName (current form) with the actual form name
+			// Format all as "The [plural] form"
+			$elementsByForm = array();
+			foreach ($tgInfo['linkedElements'] as $le) {
+				$rawName = $le['formName'] ? $le['formName'] : $plural;
+				$formLabel = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_FORM_LABEL, $rawName);
+				if (!isset($elementsByForm[$formLabel])) {
+					$elementsByForm[$formLabel] = array('formName' => $formLabel, 'elements' => array());
+				}
+				$elementsByForm[$formLabel]['elements'][] = $le;
+			}
+			$template_group_metadata[$tgGroupId] = array(
+				'categoryName' => $tgInfo['categoryName'],
+				'formSingular' => strtolower($tgInfo['formSingular']),
+				'formPlural' => strtolower($tgInfo['formPlural']),
+				'hasLinkedElements' => !empty($tgInfo['linkedElements']),
+				'linkedElements' => $tgInfo['linkedElements'],
+				'elementsByForm' => array_values($elementsByForm),
+				'eagFormId' => $tgInfo['eagFormId']
+			);
+		}
+
+		// Get saved element link selections
+		$savedElementLinks = $formObject->getVar('entries_are_users_default_groups_element_links');
+		if (!is_array($savedElementLinks)) {
+			$savedElementLinks = array();
+		}
+
+		// Mark each selected group as template or regular, and build clusters for template groups
+		$template_group_clusters = array();
+		foreach ($entries_are_users_default_groups_selected as &$selectedGroup) {
+			$gid = $selectedGroup['id'];
+			if (isset($template_group_metadata[$gid])) {
+				$meta = $template_group_metadata[$gid];
+				$eagFormId = $meta['eagFormId'];
+				$selectedGroup['eagFormId'] = $eagFormId;
+				$selectedGroup['isTemplate'] = true;
+
+				if (!isset($template_group_clusters[$eagFormId])) {
+					// First group from this entries-are-groups form — initialize cluster
+					$groupSavedLinks = isset($savedElementLinks[$gid]) ? $savedElementLinks[$gid] : array();
+					// Group linked elements by formName for display with headings
+					$elementsByForm = array();
+					foreach ($meta['linkedElements'] as $le) {
+						$le['selected'] = in_array($le['ele_id'], $groupSavedLinks);
+						$rawName = $le['formName'] ? $le['formName'] : $plural;
+						$formLabel = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_FORM_LABEL, $rawName);
+						if (!isset($elementsByForm[$formLabel])) {
+							$elementsByForm[$formLabel] = array('formName' => $formLabel, 'elements' => array());
+						}
+						$elementsByForm[$formLabel]['elements'][] = $le;
+					}
+					$elementsByForm = array_values($elementsByForm);
+					$template_group_clusters[$eagFormId] = array(
+						'eagFormId' => $eagFormId,
+						'categoryNames' => array($meta['categoryName']),
+						'formSingular' => $meta['formSingular'],
+						'formPlural' => $meta['formPlural'],
+						'hasLinkedElements' => $meta['hasLinkedElements'],
+						'elementsByForm' => $elementsByForm,
+						'description' => '', // built below after all groups are processed
+					);
+				} else {
+					$template_group_clusters[$eagFormId]['categoryNames'][] = $meta['categoryName'];
+				}
+			} else {
+				$selectedGroup['eagFormId'] = 0;
+				$selectedGroup['isTemplate'] = false;
+			}
+		}
+		unset($selectedGroup);
+
+		// Build description strings for each cluster from all collected categoryNames
+		foreach ($template_group_clusters as $eagFormId => &$cluster) {
+			$catNames = $cluster['categoryNames'];
+			$catList = implode(', ', $catNames);
+			if ($cluster['hasLinkedElements']) {
+				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC, $catList, $cluster['formSingular']);
+			} else {
+				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK, $catList, $cluster['formPlural']);
+			}
+		}
+		unset($cluster);
+
+		$entries_are_groups = $formObject->getVar('entries_are_groups');
+
+		// Load group categories from stored mapping on the form object
+		// This is an array of groupid => categoryName for existing categories
+		$group_categories = array();
+		if ($entries_are_groups) {
+			$storedMapping = $formObject->getVar('group_categories');
+			if (is_array($storedMapping)) {
+				foreach ($storedMapping as $groupid => $categoryName) {
+					// Skip "All Users" since it's always displayed as a fixed base category
+					if ($categoryName !== _AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS) {
+						$group_categories[$groupid] = $categoryName;
+					}
+				}
+			}
+		}
 
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$connections = $framework_handler->formatFrameworksAsRelationships(null, $fid);
 
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObjects = $element_handler->getObjects(null, $fid);
 		$elementIdsWithData = $formObject->getVar('elementsWithData');
     $elements = array();
@@ -82,7 +227,6 @@ if ($_GET['fid'] != "new") {
     $i = 1;
 		$elementsInRelationshipLinks = getElementsInRelationshipLinks($elementObjects);
     foreach($elementObjects as $thisElement) {
-        if($thisElement->isSystemElement) { continue; }
         $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
         $colhead = trans(strip_tags($thisElement->getVar('ele_colhead')));
         $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
@@ -124,6 +268,7 @@ if ($_GET['fid'] != "new") {
             $converttext = "";
             $linktype = "";
         }
+				$elements[$i]['content']['isSystemElement'] = $thisElement->isSystemElement;
         $elements[$i]['content']['converttext'] = $converttext;
         $elements[$i]['content']['linktype'] = $linktype;
         $elements[$i]['content']['ele_type'] = $cleanType;
@@ -217,6 +362,7 @@ if ($_GET['fid'] != "new") {
     $member_handler = xoops_gethandler('member');
     $allGroups = $member_handler->getGroups();
     $groups = array();
+		$groupsMinusEntryGroups = array();
     $submitted_user = "";
     if (!isset($selectedGroups)) {
 			$selectedGroups = array();
@@ -239,6 +385,9 @@ if ($_GET['fid'] != "new") {
         $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
         $groups[$thisGroup->getVar('name')]['name'] = $thisGroup->getVar('name');
         $groups[$thisGroup->getVar('name')]['selected'] = in_array($thisGroup->getVar('groupid'), $selectedGroups) ? " selected" : "";
+				if(intval($thisGroup->getVar('entry_id')) == 0) {
+					$groupsMinusEntryGroups[$thisGroup->getVar('name')] = $groups[$thisGroup->getVar('name')];
+				}
     }
     if ($orderGroups == "alpha") {
         ksort($groups);
@@ -456,7 +605,10 @@ if ($_GET['fid'] != "new") {
     $formName = "";
 		$singular = "";
 		$plural = "";
-    $singleentry = "off"; // need to send a default for this
+    $singleentry = array(2 => "off"); // need to send a default for this
+    $member_handler_se = xoops_gethandler('member');
+    $regGroupObj = $member_handler_se->getGroup(XOOPS_GROUP_USERS);
+    $singleentry_groups = array(array('id' => 2, 'name' => $regGroupObj ? $regGroupObj->getVar('name') : 'Registered Users', 'value' => 'off'));
     $defaultform = 0;
     $defaultlist = 0;
     $menutext = _AM_APP_USETITLE;
@@ -465,6 +617,14 @@ if ($_GET['fid'] != "new") {
 		$send_digests = 0;
 		$defaultpi = 0;
 		$pioptions = array();
+		$entries_are_users = 0;
+		$entries_are_users_user_is_owner = 0;
+		$entries_are_users_conditions_ui = ""; // Don't show conditions UI for new forms - no elements exist yet
+		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI(array());
+		$entries_are_users_default_groups_selected = array();
+		$template_group_metadata = array();
+		$entries_are_groups = 0;
+		$group_categories = array();
     if ($_GET['aid']) {
         $formApplications = array(intval($_GET['aid']));
     }
@@ -578,13 +738,45 @@ foreach($legacyFormScreens as $screen) {
 
 $settings = array();
 $settings['singleentry'] = $singleentry;
+$settings['singleentry_groups'] = $singleentry_groups;
+$settings['singleentry_group_autocomplete_ui'] = formulize_renderSingleentryGroupsUI();
 $settings['menutext'] = $menutext;
 $settings['form_handle'] = $form_handle;
 $settings['send_digests'] = $send_digests;
 $settings['store_revisions'] = $store_revisions;
 $settings['revisionsDisabled'] = formulizeRevisionsForAllFormsIsOn() ? 'disabled="disabled"' : '';
 $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
+$settings['entries_are_users'] = $entries_are_users;
+$settings['entries_are_users_user_is_owner'] = $entries_are_users_user_is_owner;
+$settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
+$settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
+$settings['entries_are_users_default_groups_selected'] = $entries_are_users_default_groups_selected;
+$settings['per_group_conditions_ui'] = $per_group_conditions_ui;
+$settings['template_group_clusters'] = $template_group_clusters;
+$settings['template_group_metadata_json'] = json_encode($template_group_metadata);
+$settings['entries_are_groups'] = $entries_are_groups;
+$settings['group_categories'] = $group_categories;
 $settings['connections'] = $connections[0]['content']; // 0 will be first, ie: primary, relationship. 'content' for that will include all the links, which is what template looks for
+
+// Check if we should show the user mapping UI
+// Default to true, and only set to false if conditions indicate we shouldn't show it
+$settings['show_user_mapping_ui'] = true;
+if($fid != "new" && $entries_are_users == 1) {
+	// The user account uid element has the handle formulize_user_account_uid_X where X is the form id
+	$userAccountUidHandle = 'formulize_user_account_uid_' . $fid;
+
+	// Single query to check: total entries, and max value in the user account uid field
+	$checkSql = "SELECT COUNT(*) as total_entries, MAX(`" . $userAccountUidHandle . "`) as max_uid FROM " . $xoopsDB->prefix("formulize_" . $form_handle);
+	$checkResult = $xoopsDB->query($checkSql);
+	$checkRow = $xoopsDB->fetchArray($checkResult);
+	$totalEntries = intval($checkRow['total_entries']);
+	$maxUid = intval($checkRow['max_uid']);
+
+	// Hide UI if there are no entries, OR if entries are already associated with users
+	if($totalEntries == 0 || $maxUid > 0) {
+		$settings['show_user_mapping_ui'] = false;
+	}
+}
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;
     $settings['groupsCanEditDefaults'] = $groupsCanEditDefaults;
@@ -629,7 +821,7 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['name'] = "Permissions";
     $adminPage['tabs'][$i]['template'] = "db:admin/form_permissions.html";
     $adminPage['tabs'][$i]['content'] = $common;
-    $adminPage['tabs'][$i]['content']['groups'] = $groups;
+    $adminPage['tabs'][$i]['content']['groups'] = $groupsMinusEntryGroups;
     $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
     $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
     $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
@@ -637,6 +829,21 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content']['submitted_user'] = $submitted_user;
     $adminPage['tabs'][$i]['content']['userSelectionList'] = $userSelectionList;
     $adminPage['tabs'][$i]['content']['userperms'] = $userperms;
+
+    // Permission inheritance data
+    $adminPage['tabs'][$i]['content']['parent_perm_fid'] = $formObject->getVar('parent_perm_fid', 'n');
+    $allFormsForInheritance = isset($common['allFormTitles']) ? $common['allFormTitles'] : array();
+    unset($allFormsForInheritance[$fid]);
+    $adminPage['tabs'][$i]['content']['allFormsForInheritance'] = $allFormsForInheritance;
+    $childFormIds = array();
+    $childSql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE parent_perm_fid = " . intval($fid);
+    if ($childRes = $xoopsDB->query($childSql)) {
+        while ($childRow = $xoopsDB->fetchArray($childRes)) {
+            $childFormIds[intval($childRow['id_form'])] = true;
+        }
+    }
+    $adminPage['tabs'][$i]['content']['childFormIds'] = $childFormIds;
+
     $i++;
 
     $adminPage['tabs'][$i]['name'] = "Screens";

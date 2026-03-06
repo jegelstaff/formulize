@@ -764,7 +764,7 @@ define("_formulize_GENERIC_FILTER_MATCH_ALL", "Match all of these:");
 define("_formulize_GENERIC_FILTER_MATCH_ONEORMORE", "Match one or more of these:");
 /* ALTERED - 20100315 - freeform - jeff - stop */
 
-define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value for that question.");
+define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value.");
 
 define("_formulize_NO_MATCH_FOUND", "No match found");
 define("_formulize_NEW_VALUE", "New Value: ");
@@ -815,3 +815,24 @@ define("_formulize_ERRORSENT2", "A webmaster will review the details shortly.");
 
 define("_formulize_NEWENTRY", "New Entry");
 define("_formulize_ENTRY", "Entry");
+
+define("_formulize_USER_ACCOUNT_EN", "User Account");
+define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
+define("_formulize_USERACCOUNTUID", "User ID");
+define("_formulize_USERACCOUNTFIRSTNAME", "First Name");
+define("_formulize_USERACCOUNTLASTNAME", "Last Name");
+define("_formulize_USERACCOUNTEMAIL", "Email Address");
+define("_formulize_USERACCOUNTUSERNAME", "Username");
+define("_formulize_USERACCOUNTPASSWORD_CREATE", "Create a ");
+define("_formulize_USERACCOUNTPASSWORD_UPDATE", "Change ");
+define("_formulize_USERACCOUNTPASSWORD", "Password");
+define("_formulize_USERACCOUNTTIMEZONE", "Timezone");
+define("_formulize_USERACCOUNTPHONE", "Phone Number");
+define("_formulize_USERACCOUNTNOTIFICATIONMETHOD", "Notification Method");
+define("_formulize_USERACCOUNT2FA", "Two-Factor Authentication Settings");
+define("_formulize_USERACCOUNTGROUPMEMBERSHIP", "Group Memberships");
+define("_formulize_USERACCOUNT_2FAOPTION_EMAIL", "Email a code");
+define("_formulize_USERACCOUNT_2FAOPTION_SMS", "Text a code");
+define("_formulize_USERACCOUNT_2FAOPTION_AUTHAPP", "Use an authenticator app");
+define("_formulize_USERACCOUNT_PWREPEATDESC", "Type the password twice for confirmation");
+

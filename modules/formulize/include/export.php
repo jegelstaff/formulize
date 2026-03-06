@@ -82,7 +82,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<body style=\"background: white; margin-top:20px;\"><center>";
     print "<table width=100%><tr><td width=5%></td><td width=90%>";
     print "<form id=\"metachoiceform\" name=\"metachoiceform\" action=\"".getCurrentURL() . "\" method=\"post\">\n";
-    
+
     print "<table class='outer popup'><tr><th>"._formulize_DE_EXPORT_TITLE."</th></tr><tr><td>\n";
 
     if ($_GET['type'] == "update") {
@@ -110,10 +110,10 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
     $excelChecked = $formulizeConfig['downloadDefaultToExcel'] == 1 ? "checked" : "";
     print "<p><label>"._formulize_DB_EXPORT_TO_EXCEL." <input type=\"checkbox\" name=\"excel\" value=\"1\" $excelChecked></input></label></p>\n";
-    
+
     print "<p>"._formulize_DB_EXPORT_NULL_OPTION." <input type=\"text\" name=\"nullOption\" value=\"\"></input></p>\n";
-    
-    
+
+
     print "</div>\n</td></tr></table>";
     print "</form>";
 
