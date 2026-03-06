@@ -60,8 +60,7 @@ if(!defined("XOOPS_ROOT_PATH")) {
     }
 }
 
-include_once XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
-require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 global $xoopsConfig, $xoopsUser;
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS); // for some reason, even though this is set in pageworks index.php file, depending on how/when this file gets executed, it can have no value (in cases where there are pageworks blocks on pageworks pages, for instance?!)
@@ -292,6 +291,11 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                             $formulize_newEntryUsers[$elementFid][] = $creation_user;
                         }
                         $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId;
+                        // If this was a new EAU entry, re-key the userId from 'new' to the real entry id
+                        if(isset($userIdsForUserAccountElements[$elementFid]['new'])) {
+                            $userIdsForUserAccountElements[$elementFid][$writtenEntryId] = $userIdsForUserAccountElements[$elementFid]['new'];
+                            unset($userIdsForUserAccountElements[$elementFid]['new']);
+                        }
                         $formulize_allSubmittedEntryIds[$elementFid][] = $writtenEntryId;
                         $formulize_newSubformBlankElementIds[$elementFid][$writtenEntryId] = $subformElementId;
                         if(!isset($formulize_allWrittenFids[$elementFid])) {
@@ -535,47 +539,37 @@ if($frid) {
 	}
 }
 
-// Re-evaluate conditional default group memberships for entries_are_users forms.
+// Process group memberships for entries_are_users forms.
 // This covers two scenarios:
-// 1. The entries_are_users form itself was saved (e.g., without user account
-//    elements in the submission), and changing a field value may affect per-group
-//    conditions or template group resolution via element_links.
+// 1. The entries_are_users form itself was saved. This includes saves that went
+//    through processUserAccountSubmission (user account elements in the submission) and saves that did not.
 // 2. A connected form was saved, and that form contains elements referenced in
 //    the EAU form's element_links for template group resolution. On-before-save,
 //    on-after-save, or derived value updates may all affect the linked values,
 //    so we re-evaluate whenever any entry is saved in a form that contains
 //    element_link elements, without checking which specific elements were modified.
 if(!empty($formulize_allWrittenEntryIds)) {
-	// Build a unified list of EAU form entries needing group membership re-evaluation
-	$eauEntriesToReevaluate = array(); // eauFormId => array(entryId => true)
-
 	global $xoopsDB;
 	$eauFormsResult = $xoopsDB->query("SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_users = 1");
 	if($eauFormsResult) {
+		// For each EAU form, seed the pending list from any written entries, then find any additionally affected entries via framework traversal
+		$pendingGroupMembershipEntryUpdates = array(); // eauFormId => [entryId, ...]
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
 		$frameworks_handler = new formulizeFrameworksHandler($xoopsDB);
-
 		while($eauRow = $xoopsDB->fetchArray($eauFormsResult)) {
 			$eauFormId = intval($eauRow['id_form']);
+			if(isset($formulize_allWrittenEntryIds[$eauFormId])) {
+				$pendingGroupMembershipEntryUpdates[$eauFormId] = $formulize_allWrittenEntryIds[$eauFormId];
+			}
 			$eauFormObject = $form_handler->get($eauFormId);
 			if(!$eauFormObject) {
 				continue;
 			}
-
-			// If the EAU form itself was written to add the entry for re-evaluation ()
-			if(isset($formulize_allWrittenEntryIds[$eauFormId])) {
-				foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
-					$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
-				}
-			}
-
-			// If the EAU form has element_links for template group resolution,
-			// check if any form containing those linked elements was written to
 			$elementLinks = $eauFormObject->getVar('entries_are_users_default_groups_element_links');
 			if(!is_array($elementLinks) || empty($elementLinks)) {
 				continue;
 			}
-			// Find which forms contain the linked elements
+			// Find which connected forms contain the linked elements and were written to
 			$linkedElementForms = array(); // form ID => true
 			foreach($elementLinks as $gid => $eleIds) {
 				if(!is_array($eleIds)) {
@@ -588,20 +582,11 @@ if(!empty($formulize_allWrittenEntryIds)) {
 					}
 				}
 			}
-			// For each form that has linked elements and was written to,
-			// find connected EAU entries
 			foreach(array_keys($linkedElementForms) as $linkedFid) {
-				if(!isset($formulize_allWrittenEntryIds[$linkedFid])) {
-					continue;
+				if(!isset($formulize_allWrittenEntryIds[$linkedFid]) || $linkedFid == $eauFormId) {
+					continue; // skip if not written to, or if the element is in the EAU form itself (already added above)
 				}
-				if($linkedFid == $eauFormId) {
-					// Element is in the EAU form itself — add all written entries
-					foreach($formulize_allWrittenEntryIds[$eauFormId] as $writtenEntryId) {
-						$eauEntriesToReevaluate[$eauFormId][$writtenEntryId] = true;
-					}
-					continue;
-				}
-				// Element is in a connected form — find the framework connecting them
+				// Find the framework connecting the linked form to the EAU form
 				$frameworks = $frameworks_handler->getFrameworksByForm($linkedFid);
 				$targetFrid = null;
 				foreach($frameworks as $framework) {
@@ -622,22 +607,33 @@ if(!empty($formulize_allWrittenEntryIds)) {
 					$linkedResult = checkForLinks($targetFrid, array($linkedFid), $linkedFid, array($linkedFid => array($writtenEntryId)));
 					if(isset($linkedResult['entries'][$eauFormId])) {
 						foreach($linkedResult['entries'][$eauFormId] as $eauEntryId) {
-							$eauEntriesToReevaluate[$eauFormId][$eauEntryId] = true;
+							$pendingGroupMembershipEntryUpdates[$eauFormId][] = $eauEntryId;
 						}
 					}
 					if(isset($linkedResult['sub_entries'][$eauFormId])) {
 						foreach($linkedResult['sub_entries'][$eauFormId] as $eauEntryId) {
-							$eauEntriesToReevaluate[$eauFormId][$eauEntryId] = true;
+							$pendingGroupMembershipEntryUpdates[$eauFormId][] = $eauEntryId;
 						}
 					}
 				}
 			}
 		}
 
-		// Process all collected EAU entries
-		foreach($eauEntriesToReevaluate as $eauFormId => $entryIds) {
-			foreach(array_keys($entryIds) as $eauEntryId) {
-				formulizeElementsHandler::reevaluateDefaultGroupMemberships($eauFormId, $eauEntryId);
+		// Process all collected EAU entries; use the cached userId where available, otherwise look it up
+		foreach($pendingGroupMembershipEntryUpdates as $eauFormId => $entryIds) {
+			$eauDataHandler = null;
+			foreach(array_unique($entryIds) as $eauEntryId) {
+				if(isset($userIdsForUserAccountElements[$eauFormId]) AND isset($userIdsForUserAccountElements[$eauFormId][$eauEntryId]) && $userIdsForUserAccountElements[$eauFormId][$eauEntryId]) {
+					$userId = $userIdsForUserAccountElements[$eauFormId][$eauEntryId];
+				} else {
+					if(!$eauDataHandler) {
+						$eauDataHandler = new formulizeDataHandler($eauFormId);
+					}
+					$userId = intval($eauDataHandler->getElementValueInEntry($eauEntryId, 'formulize_user_account_uid_'.$eauFormId));
+				}
+				if($userId) {
+					formulizeElementsHandler::processUserGroupMemberships($userId, $eauFormId, $eauEntryId);
+				}
 			}
 		}
 	}
