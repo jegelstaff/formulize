@@ -20,7 +20,7 @@ __$entry__ - A single item in a dataset, generally one entry in the main form of
 __$handle__ - The element handle of the element in the dataset that you want to get the value for.<br>
 __$datasetKey__ - Optional. If an entire dataset is passed in, then the number of the item in the dataset that you want to get ids for, must be specified. Items are numbered sequentially from 0. Generally this is not necessary and not used, because normally individual items within a dataset are passed to this function, see the examples.<br>
 __$localEntryId__ - Optional. If specified, the values included will be limited to the values from this particular underlying entry id in the form that the _handle_ belongs to. By default, all values of the specified _handle_ from all entries that are part of this dataset item will be returned.<br>
-__$raw__ - Optional. A flag to indicate if the raw value from the database should be returned, or whether the database value should be prepped for human readability. Some database values are encoded for the computer to use. By default, values are prepped for readability and returned. If you are gathering data for use in subsequent queries of some kind, you may want or need the raw value from the database.
+__$raw__ - Optional. A flag to indicate if the raw value from the database should be returned, or whether a human-readable version should be prepared and returned. By default, values from the database are prepped for readability. However, sometimes the raw value as stored in the database is more useful. This is especially true when you need the foreign keys stored in linked elements, perhaps for use in future queries you're going to do. Use this flag to retrieve exactly what is stored in the database as-is.
 
 ## Return Values
 
