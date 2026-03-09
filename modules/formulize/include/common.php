@@ -55,6 +55,14 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/screen.php';
 
+// look up the form id and title of every form and create constants of the format {FORM_HANDLE}_FORM_ID with spaces converted to underscores
+global $xoopsDB;
+$result = $xoopsDB->query("SELECT form_handle, id_form FROM ".$xoopsDB->prefix("formulize_id")." WHERE id_form > 0");
+while($row = $xoopsDB->fetchArray($result)) {
+	// create a constant for this form's id, with the format {FORM_HANDLE}_FORM_ID
+	define(str_replace(" ", "_", strtoupper($row['form_handle']))."_FORM_ID", $row['id_form']);
+}
+
 // verify that we're on the required version of PHP
 $module_handler = xoops_gethandler('module');
 $formulizeModule = $module_handler->getByDirname("formulize");
