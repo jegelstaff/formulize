@@ -72,6 +72,11 @@ define("_MI_formulize_NUMBER_SUFFIX_DESC", "For example, if your entire site onl
 define("_MI_formulize_NUMBER_DECIMALSEP", "By default, if decimals are used, what punctuation should separate them from the rest of the number?");
 define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used to separate thousands in numbers?");
 
+define("_MI_formulize_TIME_FORMAT", "Default time display format");
+define("_MI_formulize_TIME_FORMAT_DESC", "Controls how times are displayed in lists and read-only fields. Individual time elements can override this setting. Defaults to 12-hour if not set.");
+define("_MI_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
+define("_MI_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
+
 define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', _MI_formulize_PREFHEADSTART."Form Settings"._MI_formulize_PREFHEADEND."Show empty form elements when displaying them as read-only?");
 define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC', "When form elements are rendered in read-only mode, and there is no value to display, the element is skipped by default and not shown. If you want to show all elements even empty ones when users cannot edit the entry, turn this setting on.");
 

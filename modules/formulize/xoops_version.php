@@ -847,6 +847,15 @@ $modversion['config'][] = array(
 	'default' => ",",
 );
 
+$modversion['config'][] = array(
+	'name' => 'time_format',
+	'title' => '_MI_formulize_TIME_FORMAT',
+	'description' => '_MI_formulize_TIME_FORMAT_DESC',
+	'formtype' => 'select',
+	'valuetype' => 'text',
+	'default' => '12',
+	'options' => array(_MI_formulize_TIME_FORMAT_12 => '12', _MI_formulize_TIME_FORMAT_24 => '24'),
+);
 
 $modversion['config'][] = array(
 	'name' => 'delimeter',

@@ -553,6 +553,12 @@ define("_AM_REORD","New sort");
 define("_AM_SAVE_CHANGES","Save Changes");
 
 define("_formulize_CAPTION_MATCH", "The caption you entered is already in use. A '2' has been appended to it.");
+
+define("_AM_formulize_TIME_DEFAULT_TIME", "Default Time");
+define("_AM_formulize_TIME_DEFAULT_DESC", "Specify the time in 24 hour format, ie: <b>13:25</b><br>Leave blank for no default time. Use {NOW} for the current time, or {NOW+60} for one hour in the future, {NOW-15} for fifteen minutes in the past, etc.<br>You can also use {elementHandle} to reference another element in this form and base the default time on the value saved in that element.");
+define("_AM_formulize_TIME_DISPLAY_FORMAT", "Display Format");
+define("_AM_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
+define("_AM_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
 define("_formulize_CAPTION_QUOTES", "Captions cannot have quotes. They have been removed.");
 define("_formulize_CAPTION_SLASH", "Captions cannot have backslashes. They have been removed.");
 define("_formulize_CAPTION_LT", "Captions cannot have < signs. They have been removed.");

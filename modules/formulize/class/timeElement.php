@@ -105,7 +105,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 	}
 
 	public function getDefaultEleValue() {
-		return [0 => ''];
+		return [0 => '', 1 => ''];
 	}
 
 	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
@@ -115,7 +115,11 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 	function adminPrepare($element) {
 		$dataToSendToTemplate = array();
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
-			// no options for the time element yet, many would be possible, there's lot of config for the jquery plugin
+			$dataToSendToTemplate['effective_time_format'] = $this->getEffectiveTimeFormat($element);
+		} else {
+			$config_handler = xoops_gethandler('config');
+			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+			$dataToSendToTemplate['effective_time_format'] = isset($formulizeConfig['time_format']) ? $formulizeConfig['time_format'] : '12';
 		}
 		return $dataToSendToTemplate;
   }
@@ -173,7 +177,14 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         $ele_value = is_array($ele_value) ? $ele_value[0] : $ele_value;
 				$ele_value = interpretTimeElementValue($ele_value, $entry_id);
         if($isDisabled) {
-            $formElement = new xoopsFormLabel($caption, $this->formatDataForList($ele_value, $element->getVar('ele_handle'), $entry_id));
+            $displayValue = $ele_value;
+            if($this->getEffectiveTimeFormat($element) === '12') {
+                $displayValue = $this->convert24To12HourTime($displayValue);
+            } else {
+							$timeParts = explode(":", $displayValue);
+							$displayValue = $timeParts[0].":".$timeParts[1];
+						}
+            $formElement = new xoopsFormLabel($caption, $this->formatDataForList($displayValue, $element->getVar('ele_handle'), $entry_id));
         } else {
             $formElement = new xoopsFormText($caption, $markupName, 10, 10, $ele_value, type: 'time'); // caption, markup name, size, maxlength, default value, according to the xoops form class
         }
@@ -194,7 +205,6 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 	// $subformBlankCounter is the counter for the subform blank entries, if applicable
 	function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
         // have to convert this to a 24 hour time for saving
-        //$value = $this->convert12To24HourTime($value); // RIGHT NOW THE TIME WIDGET FORCES 24 HOURS ON EVERYONE. THIS IS DONE IN THE JS FILE. SO NO NEED TO CONVERT VALUES.
         if($value == "") { $value = "{WRITEASNULL}"; }
         return $value;
     }
@@ -214,7 +224,15 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // $handle is the element handle for the field that we're retrieving this for
     // $entry_id is the entry id of the entry in the form that we're retrieving this for
     function prepareDataForDataset($value, $handle, $entry_id) {
-        return $value; // we're not making any modifications for this element type
+        if($value === '' || $value === null) return $value;
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        $element = $element_handler->get($handle);
+        if($element && $this->getEffectiveTimeFormat($element) === '12') {
+            return $this->convert24To12HourTime($value);
+        } else {
+					$timeParts = explode(":", $value);
+					return $timeParts[0].":".$timeParts[1];
+				}
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -232,40 +250,53 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // this method will format a dataset value for display on screen when a list of entries is prepared
     // for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
     // Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
-    // For time elements, you don't need handle or entry id to format stuff
+    // For time elements, the value has already been converted to the correct format in prepareDataForDataset
     function formatDataForList($value, $handle="", $entry_id="", $textWidth=100) {
         $this->clickable = false;
         $this->striphtml = false;
         $this->length = 0;
-
-        $timeParts = explode(":", $value);
-        if($timeParts[0]>12) {
-            $value = ($timeParts[0]-12).":".$timeParts[1]."PM";
-        } elseif($timeParts[0]=="00") {
-            $value = "12:".$timeParts[1]."AM";
-        } elseif($timeParts[0]=="12") {
-            $value = "12:".$timeParts[1]."PM";
-        } elseif($value) {
-            $value = ltrim($timeParts[0],"0").":".$timeParts[1]."AM";
-        }
-
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+    }
+
+    function getEffectiveTimeFormat($element) {
+        $ele_value = $element->getVar('ele_value');
+        $elementFormat = isset($ele_value[1]) ? $ele_value[1] : '';
+        if($elementFormat === '12' || $elementFormat === '24') {
+            return $elementFormat;
+        }
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        return isset($formulizeConfig['time_format']) ? $formulizeConfig['time_format'] : '12';
+    }
+
+    function convert24To12HourTime($value) {
+        $timeParts = explode(":", $value);
+        if($timeParts[0] > 12) {
+            $value = ($timeParts[0]-12).":".$timeParts[1]."pm";
+        } elseif($timeParts[0] == "00") {
+            $value = "12:".$timeParts[1]."am";
+        } elseif($timeParts[0] == "12") {
+            $value = "12:".$timeParts[1]."pm";
+        } elseif($value) {
+            $value = ltrim($timeParts[0],"0").":".$timeParts[1]."am";
+        }
+        return $value;
     }
 
     function convert12To24HourTime($value) {
         $value = strtoupper($value);
-        if(!strstr($value, ":") OR (!strstr($value, "AM") AND !strstr($value, "PM"))) {
+        if(!strstr($value, ":") OR (!strstr($value, "am") AND !strstr($value, "pm"))) {
             return $value;
         }
         $timeParts = explode(":", $value);
-        if(strstr($value, "PM") AND $timeParts[0]<12) {
+        if(strstr($value, "pm") AND $timeParts[0]<12) {
             $value = ($timeParts[0]+12).":".$timeParts[1];
-        } elseif(strstr($value, "PM") AND $timeParts[0]==12) {
+        } elseif(strstr($value, "pm") AND $timeParts[0]==12) {
             $value = "12:".$timeParts[1];
         } elseif($timeParts[0]==12) {
             $value = "00:".$timeParts[1];
         } else {
-            $value = str_replace("AM","",$value);
+            $value = str_replace("am","",$value);
         }
         return $value;
     }
