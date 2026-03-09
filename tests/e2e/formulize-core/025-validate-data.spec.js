@@ -85,10 +85,10 @@ test.describe('Validate Data', () => {
 		await expect(page.locator('#celladdress_2_35')).toContainText('History through the AgesAncient WondersPennies from the Past');
 		await expect(page.locator('#celladdress_2_36')).toContainText('Curator OneCurator OneCurator Two');
 		await expect(page.locator('#celladdress_2_37')).toContainText('Modern HistoryAncient HistoryAncient HistoryCoins');
-		await expect(page.locator('#celladdress_2_38')).toContainText('M001 - Roman CoinM002 - Persian necklaceM003 - Chinese SwordM004 - Egyptian ChariotM005 - Babylonian SpoonM006 - Florentine BookM007 - French MusketM008 - Japanese CoinM009 - American BicycleM010 - Polynesian CanoeM011 - Viking Silver ArmbandM001 - Roman CoinM002 - Persian necklaceM003 - Chinese SwordM004 - Egyptian ChariotM005 - Babylonian SpoonM001 - Roman CoinM008 - Japanese Coin');
+		await expect(page.locator('#celladdress_2_38')).toContainText('M001 | Roman CoinM002 | Persian necklaceM003 | Chinese SwordM004 | Egyptian ChariotM005 | Babylonian SpoonM006 | Florentine BookM007 | French MusketM008 | Japanese CoinM009 | American BicycleM010 | Polynesian CanoeM011 | Viking Silver ArmbandM001 | Roman CoinM002 | Persian necklaceM003 | Chinese SwordM004 | Egyptian ChariotM005 | Babylonian SpoonM001 | Roman CoinM008 | Japanese Coin');
 		await expect(page.locator('#celladdress_2_39')).toContainText('Ebanezer Scrooge');
 		await expect(page.locator('#celladdress_2_40')).toContainText('Pennies from the Past');
-		await expect(page.locator('#celladdress_2_41')).toContainText('M001 - Roman Coin');
+		await expect(page.locator('#celladdress_2_41')).toContainText('M001 | Roman Coin');
 		await expect(page.locator('#celladdress_2_42')).toContainText('Disappointing');
 
 	}),
