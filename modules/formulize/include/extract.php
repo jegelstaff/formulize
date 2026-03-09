@@ -248,17 +248,28 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 								$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
 							}
 						} else {
-							$query_columns[] = "`$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
+							$query_columns[] = "`$handle` as `prep_this_$handle`"; // not a link to a link, so we can include the field normally and select whatever its value is
 						}
 					}
 					$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
-						" WHERE entry_id = $value ORDER BY entry_id";
+						" WHERE entry_id = $value";
 					if (!$res = $xoopsDB->query($sql)) {
 						print "Error: could not retrieve the source values for a linked selectbox (for $handle) during data extraction for entry number $entry_id.  SQL:<br>$sql<br>";
 					} else {
-						$row = $xoopsDB->fetchRow($res);
-						if(!empty($row)) {
-							$newValues[] = implode(" - ", $row);
+						$array = $xoopsDB->fetchArray($res);
+						if(!empty($array)) {
+							foreach($array as $k=>$v) {
+								if(substr($k, 0, 10) == "prep_this_") {
+									// this is a normal field, not a link to a link, so prep it based on the handle of the current element
+									$handle = substr($k, 10);
+									$preppedValue = prepValues($v, $handle, $value);
+									$array[$k] = is_array($preppedValue) ? $preppedValue[0] : $preppedValue; // should never be multiple values coming out of the prep, because we're retrieving a single value by query for entry id in the SQL! So array should only ever have one value (or would be a non-array for metadata?)
+								} else {
+									// this is a field that has already been sorted out, so take as is
+									$array[$k] = $v;
+								}
+							}
+							$newValues[] = implode(" | ", $array);
 						}
 					}
 				}
