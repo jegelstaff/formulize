@@ -100,10 +100,10 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen_listofentries';
-    $checkThisField = 'usechangeowner';
-    $checkThisProperty = '';
-    $checkPropertyForValue = '';
+    $checkThisTable = 'formulize_saved_views';
+    $checkThisField = 'sv_sort';
+    $checkThisProperty = 'Type';
+    $checkPropertyForValue = 'text';
 
     /*
     * ====================================== */
@@ -520,6 +520,8 @@ function patch40() {
 				$sql['add_dynamicdefault_source'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_source` smallint(5) unsigned NULL default 0";
 				$sql['add_dynamicdefault_conditions'] = "ALTER TABLE ".$xoopsDB->prefix("formulize"). " ADD `ele_dynamicdefault_conditions` text NULL";
 				$sql['add_usechangeowner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usechangeowner` varchar(255) NOT NULL default ''";
+			$sql['sv_sort_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_sort` `sv_sort` text NULL default NULL";
+			$sql['sv_order_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_order` `sv_order` text NULL default NULL";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
