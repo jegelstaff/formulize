@@ -1674,6 +1674,7 @@ class formulizeFormsHandler {
 
 	function buildPerGroupFilterWhereClause($match,$indexes,$filterSettings,$uid,$formAlias) {
 		$perGroupFilter = "";
+		global $xoopsUser;
 
 		for($io=0;$io<count((array) $indexes);$io++) {
 			$i = $indexes[$io];
@@ -1683,6 +1684,8 @@ class formulizeFormsHandler {
 			$elementObject = _getElementObject($filterSettings[0][$i]);
 			$likeBits = (strstr(strtoupper($filterSettings[1][$i]), "LIKE") AND substr($filterSettings[2][$i], 0, 1) != "%" AND substr($filterSettings[2][$i], -1) != "%") ? "%" : "";
 			$termToUse = str_replace(array("{USER}", "{USER_ID}"), $uid, $filterSettings[2][$i]);
+			// with the user-groups feature, we could expand this to support any handle in the entries-are-users form(s) as well??
+			$termToUse = str_replace("{USER_FULL_NAME}", ($xoopsUser ? $xoopsUser->getVar('uname') : ""), $termToUse);
 			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
 				$number = preg_replace("[^0-9+-]","", $termToUse);
 				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
@@ -1707,6 +1710,9 @@ class formulizeFormsHandler {
 							continue; // in this case, skip the rest, we don't want to set the $perGroupFilter in the normal way below
 					} else {
 							$termToUse = $elementObject ? prepareLiteralTextForDB($elementObject, $termToUse) : $termToUse; // this function call could/should replace most of what is above?? But this is a very special context for constructing the per-group-filter-query, so don't want to mess with it at the moment.
+							if(is_array($termToUse)) {
+								$termToUse = "An impossible string that will never ever occur because nothing is so heartwrenchingly gorgeous!!!!?^%&*$%$@#@!!~~";
+							}
 							$termToUse = (is_numeric($termToUse) AND !strstr(strtoupper($filterSettings[1][$i]), "LIKE")) ? $termToUse : "'$likeBits".formulize_db_escape($termToUse)."$likeBits'";
 					}
 					$filterSettings[1][$i] = ($filterSettings[1][$i] == "NOT") ? "!=" : $filterSettings[1][$i];
