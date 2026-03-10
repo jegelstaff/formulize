@@ -138,9 +138,13 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 	return $row;
 }
 
-// clickableSortLink creates the HTML for the links users can click to control the sort order of a list of entries.
-// $elementHandle is the element that we are creating a link for
-// $clickableContent is the text or markup that will be displayed to the user and will be clickable
+/**
+ * Generate the markup for the clickable sort links in the column headers, including the appropriate sort icon and tooltip text based on the current sort state.
+ * The link will have an onclick handler that calls the sort_data JavaScript function with the element handle and whether the shift key was held (for multi-column sorting).
+ * @param string elementHandle - the handle of the element for the column header we are generating the link for
+ * @param string clickableContent - the text or markup that will be displayed to the user as the clickable thing on screen
+ * @return string The HTML markup for the clickable sort link, including the appropriate sort icon and tooltip text based on the current sort state.
+ */
 function clickableSortLink($elementHandle, $clickableContent) {
 
 	list($title, $icon) = getSortTitleAndIcon($elementHandle);
