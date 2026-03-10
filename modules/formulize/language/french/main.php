@@ -450,6 +450,7 @@ define("_formulize_DE_SETNOT_WHO_LINKCREATOR", "celui qui a créé l'item sélec
 define("_formulize_DE_SETNOT_WHO_ME", "moi");
 define("_formulize_DE_SHOWLIST", "Revenir/entrées");
 define("_formulize_DE_SORTTHISCOL", "Cliquer pour lister les entrées à partir de cette colonne");
+define("_formulize_DE_SHIFTSORT", "Shift+click to add as secondary sort");
 define("_formulize_DE_STANDARD_VIEWS", "FORMAT DE VUE STANDARD:");
 define("_formulize_DE_UPDATEENTRY", "Mettre à jour l’entrée");
 define("_formulize_DE_USETHISSCOPE", "Utilisez ces groupes comme visualisateurs ");

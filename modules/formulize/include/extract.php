@@ -522,22 +522,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$limitStart = intval($limitStart);
 	$limitSize = intval($limitSize);
 
-	// use alternate sorting field specified
-	if ($sortField and !isMetaDataField($sortField)) {
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		if ($sortElementObject = $element_handler->get($sortField)) {
-			if ($sortElementObject->getVar('ele_sort')) {
-				if ($altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'))) {
-					$sortField = $altSortElementObject->getVar('ele_handle');
-				}
-			}
-		} else {
-			$sortField = '';
-		}
-	}
-
-	$sortField = formulize_db_escape($sortField);
-	$sortOrder = formulize_db_escape($sortOrder);
+	// Alternate sort field substitution and SQL escaping are now applied per-field inside the sort loop below.
 
 	if (isset($_GET['debug'])) {
 		$time_start = microtime(true);
@@ -741,64 +726,127 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$ownerGroupsSortSelect = "";
 		$creatorEmailSortSelect = "";
 		if (!$orderByClause and $sortField) {
-			if ($sortField == "creation_uid" or $sortField == "mod_uid" or $sortField == "creation_datetime" or $sortField == "mod_datetime" or $sortField == "revision_id") {
-			} elseif ($sortField == "uid") {
-				$sortField = "creation_uid";
-			} elseif ($sortField == "proxyid") {
-				$sortField = "mod_uid";
-			} elseif ($sortField == "creation_date") {
-				$sortField = "creation_datetime";
-			} elseif ($sortField == "mod_date") {
-				$sortField = "mod_datetime";
-			} elseif ($sortField == "entry_id") {
-				$sortField = "entry_id";
-			} elseif ($sortField == "creator_email") {
-				$sortField = "usertable.email";
-				$creatorEmailSortSelect = ", usertable.email";
-			} elseif ($sortField == "owner_groups") {
-				global $xoopsDB, $ownerGroupSearchClause; // ownerGroupSearchClause set in parsing of filter, which much come first!
-				$groupsTableJoinType = $ownerGroupSearchClause ? "INNER" : "LEFT";
-				$ownerGroupsSortSelect = ", (SELECT GROUP_CONCAT(g.name ORDER BY g.name ASC SEPARATOR '*/-+,')
-				FROM " . $xoopsDB->prefix('formulize_entry_owner_groups') . " AS eog
-				$groupsTableJoinType JOIN " . $xoopsDB->prefix('groups') . " AS g
-				ON eog.groupid = g.groupid
-				INNER JOIN " . $xoopsDB->prefix('group_permission') . " AS p
-				ON eog.groupid = p.gperm_groupid AND eog.fid = p.gperm_itemid
-				WHERE eog.fid=$fid
-				AND eog.entry_id = main.entry_id
-				AND p.gperm_modid = " . getFormulizeModId() . "
-				AND p.gperm_name = 'view_form'
-				$ownerGroupSearchClause
-				GROUP BY eog.entry_id) AS owner_groups_subquery";
-				$sortField = "owner_groups_subquery";
-			} else {
-				$elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...
-				$sortFid = $elementMetaData['id_form'];
-			}
-			if ($sortFid == $fid) {
+			// Support comma-separated multi-sort: "year,price" / "SORT_ASC,SORT_DESC"
+			$sortFields = array_map('trim', explode(',', $sortField));
+			$sortOrders = array_map('trim', explode(',', $sortOrder));
+			$orderByParts = [];
+			// $frameworkSafeOrderByParts holds only parts safe for $entryIdQuery and the temp table INSERT
+			// (i.e. only main-form columns, usertable.email, and owner_groups_subquery — no connected-form aliases)
+			$frameworkSafeOrderByParts = [];
+			// $primarySort* vars capture the first sort field for the framework path after the loop
+			$primarySortField = null;
+			$primarySortOrder = null;
+			$primarySortFid = $fid;
+			$primarySortFidAlias = "main";
+			$primarySortIsOnMain = true;
+			foreach ($sortFields as $sfIndex => $sortField) {
+				// Normalize the per-field order value
+				$sortOrder = isset($sortOrders[$sfIndex]) ? $sortOrders[$sfIndex] : '';
+				$sortOrder = ($sortOrder == "SORT_ASC" or $sortOrder == "ASC" or $sortOrder == "") ? "" : $sortOrder;
+				$sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
+
+				$sortFid = $fid;
+				$sortIsOnMain = true;
 				$sortFidAlias = "main";
-			} else {
-				$sortFidAlias = array_keys($linkformids, $sortFid); // position of this form in the linking relationships is important for identifying which form alias to use
-				$sortFidAlias = "f" . $sortFidAlias[0];
-				$sortIsOnMain = false;
+
+				if ($sortField == "creation_uid" or $sortField == "mod_uid" or $sortField == "creation_datetime" or $sortField == "mod_datetime" or $sortField == "revision_id") {
+				} elseif ($sortField == "uid") {
+					$sortField = "creation_uid";
+				} elseif ($sortField == "proxyid") {
+					$sortField = "mod_uid";
+				} elseif ($sortField == "creation_date") {
+					$sortField = "creation_datetime";
+				} elseif ($sortField == "mod_date") {
+					$sortField = "mod_datetime";
+				} elseif ($sortField == "entry_id") {
+					$sortField = "entry_id";
+				} elseif ($sortField == "creator_email") {
+					$sortField = "usertable.email";
+					$creatorEmailSortSelect = ", usertable.email";
+				} elseif ($sortField == "owner_groups") {
+					global $xoopsDB, $ownerGroupSearchClause; // ownerGroupSearchClause set in parsing of filter, which much come first!
+					$groupsTableJoinType = $ownerGroupSearchClause ? "INNER" : "LEFT";
+					$ownerGroupsSortSelect = ", (SELECT GROUP_CONCAT(g.name ORDER BY g.name ASC SEPARATOR '*/-+,')
+					FROM " . $xoopsDB->prefix('formulize_entry_owner_groups') . " AS eog
+					$groupsTableJoinType JOIN " . $xoopsDB->prefix('groups') . " AS g
+					ON eog.groupid = g.groupid
+					INNER JOIN " . $xoopsDB->prefix('group_permission') . " AS p
+					ON eog.groupid = p.gperm_groupid AND eog.fid = p.gperm_itemid
+					WHERE eog.fid=$fid
+					AND eog.entry_id = main.entry_id
+					AND p.gperm_modid = " . getFormulizeModId() . "
+					AND p.gperm_name = 'view_form'
+					$ownerGroupSearchClause
+					GROUP BY eog.entry_id) AS owner_groups_subquery";
+					$sortField = "owner_groups_subquery";
+				} else {
+					// Check for alternate sort field (e.g., "Full Name" element configured to sort by "Last Name")
+					$element_handler = xoops_getmodulehandler('elements', 'formulize');
+					if ($sortElementObject = $element_handler->get($sortField)) {
+						if ($sortElementObject->getVar('ele_sort')) {
+							if ($altSortElementObject = $element_handler->get($sortElementObject->getVar('ele_sort'))) {
+								$sortField = $altSortElementObject->getVar('ele_handle');
+							}
+						}
+					} else {
+						// Element handle not found — skip this sort field
+						continue;
+					}
+					$elementMetaData = formulize_getElementMetaData($sortField, true); // need to get form that sort field is part of...
+					$sortFid = $elementMetaData['id_form'];
+				}
+
+				$sortField = formulize_db_escape($sortField);
+				$sortOrder = formulize_db_escape($sortOrder);
+
+				if ($sortFid == $fid) {
+					$sortFidAlias = "main";
+				} else {
+					$sortFidAlias = "f" . array_keys($linkformids, $sortFid)[0]; // position of this form in the linking relationships is important for identifying which form alias to use
+					$sortIsOnMain = false;
+				}
+
+				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
+				if ($sortFieldMetaData['ele_encrypt']) {
+					$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '" . getAESPassword() . "')"; // sorts as text, which will screw up number fields
+				} elseif (formulize_isLinkedElement($sortField)) {
+					$ele_value = unserialize($sortFieldMetaData['ele_value']);
+					$boxproperties = explode("#*=:*", $ele_value[2]);
+					$target_fid = $boxproperties[0];
+					$target_element_handle = $boxproperties[1];
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					$targetFormObject = $form_handler->get($target_fid);
+					// note you cannot sort by multi select boxes!
+					$sortFieldFullValue = "(SELECT sourceSortForm.`" . $target_element_handle . "` FROM " . DBPRE . "formulize_" . $targetFormObject->getVar('form_handle') . " as sourceSortForm WHERE sourceSortForm.`entry_id` = " . $sortFidAlias . ".`" . $sortField . "`)";
+				} else {
+					$sortFieldFullValue = ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email") ? $sortField : "$sortFidAlias.`$sortField`";
+				}
+
+				$orderByParts[] = "$sortFieldFullValue $sortOrder";
+				if ($sortIsOnMain) {
+					$frameworkSafeOrderByParts[] = "$sortFieldFullValue $sortOrder";
+				}
+
+				// Capture first sort field vars for the framework path (non-main sort subquery only applies to primary sort)
+				if ($sfIndex === 0) {
+					$primarySortField = $sortField;
+					$primarySortOrder = $sortOrder;
+					$primarySortFid = $sortFid;
+					$primarySortFidAlias = $sortFidAlias;
+					$primarySortIsOnMain = $sortIsOnMain;
+				}
 			}
-			$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
-			if ($sortFieldMetaData['ele_encrypt']) {
-				$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '" . getAESPassword() . "')"; // sorts as text, which will screw up number fields
-			} elseif (formulize_isLinkedElement($sortField)) {
-				$ele_value = unserialize($sortFieldMetaData['ele_value']);
-				$boxproperties = explode("#*=:*", $ele_value[2]);
-				$target_fid = $boxproperties[0];
-				$target_element_handle = $boxproperties[1];
-				$form_handler = xoops_getmodulehandler('forms', 'formulize');
-				$targetFormObject = $form_handler->get($target_fid);
-				// note you cannot sort by multi select boxes!
-				$sortFieldFullValue = "(SELECT sourceSortForm.`" . $target_element_handle . "` FROM " . DBPRE . "formulize_" . $targetFormObject->getVar('form_handle') . " as sourceSortForm WHERE sourceSortForm.`entry_id` = " . $sortFidAlias . ".`" . $sortField . "`)";
-			} else {
-				$sortFieldFullValue = ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email") ? $sortField : "$sortFidAlias.`$sortField`";
+			// Restore primary sort vars for the framework path below (loop vars hold last iteration's values)
+			$sortField = $primarySortField;
+			$sortOrder = $primarySortOrder;
+			$sortFid = $primarySortFid;
+			$sortFidAlias = $primarySortFidAlias;
+			$sortIsOnMain = $primarySortIsOnMain;
+			if ($orderByParts) {
+				$orderByClause = " ORDER BY " . implode(", ", $orderByParts) . " ";
 			}
-			$orderByClause = " ORDER BY $sortFieldFullValue $sortOrder ";
-		} elseif (!$orderByClause) {
+		}
+		if (!$orderByClause) {
 			$orderByClause = "ORDER BY main.entry_id";
 		}
 
@@ -845,7 +893,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
 				$thisOrderByClause = " ORDER BY usethissort $sortOrder ";
 			} else {
-				$thisOrderByClause = $orderByClause;
+				// Primary sort is on main form. Only include parts safe for $entryIdQuery (main form,
+				// usertable, owner_groups_subquery) — connected-form aliases like f0.col are not
+				// in $entryIdQuery's FROM clause and would cause a SQL error.
+				$thisOrderByClause = $frameworkSafeOrderByParts
+					? " ORDER BY " . implode(", ", $frameworkSafeOrderByParts) . " "
+					: " ORDER BY main.entry_id ";
 			}
 			$entryIdQuery .= " $thisOrderByClause $limitClause";
 			$entryIdResult = $xoopsDB->query($entryIdQuery);
@@ -935,7 +988,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
 				$useAsSortSubQuery = " @rownum:=@rownum+1, usethissort, entry_id FROM ( SELECT $useAsSortSubQuery,"; // need to add a counter as the first field, used as the master sorting key
 			} else {
-				$orderByToUse = $orderByClause;
+				// Primary sort is on main form. Only include parts safe for the temp table INSERT
+				// (same constraint as $entryIdQuery: no connected-form aliases).
+				$orderByToUse = $frameworkSafeOrderByParts
+					? " ORDER BY " . implode(", ", $frameworkSafeOrderByParts) . " "
+					: " ORDER BY main.entry_id ";
 				$useAsSortSubQuery = "  @rownum:=@rownum+1 $ownerGroupsSortSelect $creatorEmailSortSelect, "; // need to add a counter as the first field, used as the master sorting key
 			}
 			$oneSideSQLToUse = str_replace(" AS main $userJoinText", " AS main JOIN (SELECT @rownum := 0) as r $userJoinText", $oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key

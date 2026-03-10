@@ -3683,18 +3683,29 @@ function executeChangeOwner() {
 	showLoading();
 }
 
-function sort_data(col) {
-	if(window.document.controls.sort.value == col) {
-		var ord = window.document.controls.order.value;
-		if(ord == 'SORT_DESC') {
-			window.document.controls.order.value = 'SORT_ASC';
-		} else {
-			window.document.controls.order.value = 'SORT_DESC';
-		}
+function sort_data(col, isShift) {
+	var sorts = window.document.controls.sort.value
+				  ? window.document.controls.sort.value.split(',') : [];
+	var orders = window.document.controls.order.value
+				  ? window.document.controls.order.value.split(',') : [];
+
+	var idx = sorts.indexOf(col);
+
+	if (idx !== -1) {
+		// Column is already an active sort field — toggle its direction (same for click and shift+click)
+		orders[idx] = (orders[idx] === 'SORT_DESC') ? 'SORT_ASC' : 'SORT_DESC';
+	} else if (isShift && sorts.length > 0) {
+		// Shift+click on a non-sort column when other sorts exist — add as next sort level
+		sorts.push(col);
+		orders.push('SORT_ASC');
 	} else {
-		window.document.controls.order.value = 'SORT_ASC';
+		// Regular click on a non-sort column, or shift+click when no sorts exist — set as sole sort
+		sorts = [col];
+		orders = ['SORT_ASC'];
 	}
-	window.document.controls.sort.value = col;
+
+	window.document.controls.sort.value = sorts.join(',');
+	window.document.controls.order.value = orders.join(',');
 	window.document.controls.ventry.value = '';
 	showLoading();
 }
@@ -4053,28 +4064,28 @@ function loadReport($id, $fid, $frid) {
 
 //This function loads the Advance view that was set up at the "Data to be displayed" tab
 function loadAdvanceView($fid, $advance_view) {
-	$sort = null;
-	$sortby = null;
+	$sortFields = array();
+	$sortOrders = array();
 	$columns = '';
 	$search = '';
 	if($advance_view){
-			foreach($advance_view as $id=>$arr) {
-		   $columns .= $arr[0].',';
-		   $search .= $arr[1].',';
-		   if($arr[2] == "ASC" OR $arr[2] == 1){
-				$sort = $arr[0];
-				$sortby = "SORT_ASC";
-		   } elseif($arr[2] == "DESC") {
-				$sort = $arr[0];
-				$sortby = "SORT_DESC";
-			 }
+		foreach($advance_view as $id=>$arr) {
+			$columns .= $arr[0].',';
+			$search .= $arr[1].',';
+			if($arr[2] == "ASC" OR $arr[2] == 1){
+				$sortFields[] = $arr[0];
+				$sortOrders[] = "SORT_ASC";
+			} elseif($arr[2] == "DESC") {
+				$sortFields[] = $arr[0];
+				$sortOrders[] = "SORT_DESC";
+			}
 		}
 		//Remove the trailing ','
 		$columns = rtrim($columns, ",");
 		$search = rtrim($search, ",");
 		$to_return[0] = $columns;
-		$to_return[1] = $sort;
-		$to_return[2] = $sortby;
+		$to_return[1] = $sortFields ? implode(',', $sortFields) : null;
+		$to_return[2] = $sortOrders ? implode(',', $sortOrders) : null;
 		$to_return[3] = $search;
 		return $to_return;
 	} else{

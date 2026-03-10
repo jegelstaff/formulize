@@ -52,11 +52,13 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
 $advanceview = array();
 
 foreach($_POST['col-value'] as $index=>$col) {
-    if(isset($_POST['sort-by']) AND str_replace(array('-ASC', '-DESC'), '', $_POST['sort-by']) == $index) {
-    	$sort = strstr($_POST['sort-by'], '-ASC') ? 'ASC' : 'DESC';
+    if (!empty($_POST['sort-by-asc'][$index])) {
+        $sort = 'ASC';
+    } elseif (!empty($_POST['sort-by-desc'][$index])) {
+        $sort = 'DESC';
     } else {
-    	$sort = 0;
-  	}
+        $sort = 0;
+    }
     if(!is_numeric($col) OR intval($col) != 0) {
       $advanceview[] = array($col, $_POST['search-value'][$index], $sort, $_POST['search-type'][$index]);
   }

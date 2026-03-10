@@ -42,16 +42,8 @@
 		</select>
           </td>
 	      <td>
-		<{if $value.sort == 'ASC' OR $value.sort == 1}>
-		  <input type="radio" name="sort-by" id="<{$index}>-ASC" value="<{$index}>-ASC" checked><label for="<{$index}>-ASC">A..Z</label></input>
-		<{else}>
-		  <input type="radio" name="sort-by" id="<{$index}>-ASC" value="<{$index}>-ASC"><label for="<{$index}>-ASC">A..Z</label></input>
-		<{/if}>
-		<{if $value.sort == 'DESC'}>
-			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC" checked><label for="<{$index}>-DESC">Z..A</label></input>
-		<{else}>
-			<input type="radio" name="sort-by" id="<{$index}>-DESC" value="<{$index}>-DESC"><label for="<{$index}>-DESC">Z..A</label></input>
-		<{/if}>
+		<input type="checkbox" name="sort-by-asc[<{$index}>]" id="<{$index}>-ASC"<{if $value.sort == 'ASC' OR $value.sort == 1}> checked<{/if}>><label for="<{$index}>-ASC">A..Z</label></input>
+		<input type="checkbox" name="sort-by-desc[<{$index}>]" id="<{$index}>-DESC"<{if $value.sort == 'DESC'}> checked<{/if}>><label for="<{$index}>-DESC">Z..A</label></input>
 	      </td>
 	      <td class='removeImage'>
 		<img class="removeCol" style="cursor: pointer;" onclick="removeColumn(<{$index}>)" src="../images/editdelete.gif"></img>
@@ -73,7 +65,7 @@
             <select id="search-type-0" name="search-type[0]"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List - select value" value="Filter">Dropdown List - select value</option><option label="Dropdown List - exclude value" value="NegativeFilter">Dropdown List - exclude value</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select>
           </td>
 	      <td>
-				  <input type="radio" name="sort-by" id="0-ASC" value="0-ASC"><label for="0-ASC">A..Z</label></input><input type="radio" name="sort-by" id="0-DESC" value="0-DESC"><label for="0-DESC">Z..A</label></input>
+				  <input type="checkbox" name="sort-by-asc[0]" id="0-ASC"><label for="0-ASC">A..Z</label></input><input type="checkbox" name="sort-by-desc[0]" id="0-DESC"><label for="0-DESC">Z..A</label></input>
 		    </td>
 	      <td></td>
 	    </tr>
@@ -234,7 +226,7 @@
     appendContents1 = '<td><span class="sorthandle">&equiv;</span> <select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></input></td>';
     appendContents25 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option label="Search Box" value="Box">Search Box</option><option label="Dropdown List - select value" value="Filter">Dropdown List - select value</option><option label="Dropdown List - exclude value" value="NegativeFilter">Dropdown List - exclude value</option><option label="Checkboxes" value="MultiFilter">Checkboxes</option><option label="Date Range" value="DateRange">Date Range</option></select></td>';
-    appendContents3 = '<td><input type="radio" name="sort-by" id="'+number+'-ASC" value="'+number+'-ASC"><label for="'+number+'-ASC">A..Z</label></input><input type="radio" name="sort-by" id="'+number+'-DESC" value="'+number+'-DESC"><label for="'+number+'-DESC">Z..A</label></input></td>';
+    appendContents3 = '<td><input type="checkbox" name="sort-by-asc['+number+']" id="'+number+'-ASC"><label for="'+number+'-ASC">A..Z</label></input><input type="checkbox" name="sort-by-desc['+number+']" id="'+number+'-DESC"><label for="'+number+'-DESC">Z..A</label></input></td>';
     $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
     $(".advanceviewcol:last").append(appendContents1);
     $(".advanceviewcol:last").append(appendContents2);
@@ -313,11 +305,9 @@ $(document).ready(function() {
 					$(this).find('input[name^=search-value]').attr('name', 'search-value['+resortCounter+']');
 					$(this).find('select[id^=search-type]').attr('id', 'search-type['+resortCounter+']');
 					$(this).find('select[name^=search-type]').attr('name', 'search-type['+resortCounter+']');
-					$(this).find('input[id$=-ASC]').attr('id', resortCounter+'-ASC');
-					$(this).find('input[id$=-ASC]').attr('value', resortCounter+'-ASC');
+					$(this).find('input[id$=-ASC]').attr('id', resortCounter+'-ASC').attr('name', 'sort-by-asc['+resortCounter+']');
 					$(this).find('label[for$=-ASC]').attr('for', resortCounter+'-ASC');
-					$(this).find('input[id$=-DESC]').attr('id', resortCounter+'-DESC');
-					$(this).find('input[id$=-DESC]').attr('value', resortCounter+'-DESC');
+					$(this).find('input[id$=-DESC]').attr('id', resortCounter+'-DESC').attr('name', 'sort-by-desc['+resortCounter+']');
 					$(this).find('label[for$=-DESC]').attr('for', resortCounter+'-DESC');
 					$(this).find('img.removeCol').attr('onClick', 'removeColumn('+resortCounter+')');
 					resortCounter++;
@@ -325,6 +315,20 @@ $(document).ready(function() {
 			setDisplay('savewarning','block');
 		}
 	});
+});
+
+// Sort checkboxes: checking one direction unchecks the other within the same row
+$('input[id$=-ASC]').live('change', function() {
+	if ($(this).is(':checked')) {
+		var rowId = $(this).attr('id').replace('-ASC', '');
+		$('#' + rowId + '-DESC').removeAttr('checked');
+	}
+});
+$('input[id$=-DESC]').live('change', function() {
+	if ($(this).is(':checked')) {
+		var rowId = $(this).attr('id').replace('-DESC', '');
+		$('#' + rowId + '-ASC').removeAttr('checked');
+	}
 });
 
 </script>
