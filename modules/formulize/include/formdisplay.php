@@ -1532,7 +1532,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			if(strstr(getCurrentURL(), 'modules/formulize/master.php')) {
 				foreach($sub_fids as $subform_id) {
 					if(!isset($GLOBALS['formulizeCatalogueOfRenderedSubforms']) OR !isset($GLOBALS['formulizeCatalogueOfRenderedSubforms']["$frid-$fid-$subform_id"])) {
-						require_once XOOPS_ROOT_PATH . "/modules/formulize/class/subformElement.php";
+						require_once XOOPS_ROOT_PATH . "/modules/formulize/class/subformListingsElement.php";
 						$subUICols = drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry);
 						unset($subLinkUI);
 						if(isset($subUICols['single'])) {
