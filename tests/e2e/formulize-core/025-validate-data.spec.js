@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login } from '../utils';
+import { login, waitForWorkingMessage } from '../utils';
 
 test.describe('Validate Data', () => {
 	test('Check the Romain Coin record is complete', async ({ page }) => {
@@ -222,5 +222,43 @@ test.describe('Validate Data', () => {
 		await expect(page3.getByText('Ancient History, Weapons')).toBeVisible();
 		await expect(page3.getByText('Ancient Wonders')).toBeVisible();
 		await expect(page3.getByText('Heroic and Horrible Hand Weapons')).toBeVisible();
+	});
+	test('Verify Sorting works correctly', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		const popupPromise = page.context().waitForEvent('page');
+		await page.getByRole('button', { name: 'Change columns' }).click();
+		const page3 = await popupPromise;
+		await page3.bringToFront();
+		await page3.getByRole('checkbox', { name: 'ID Number' }).check();
+		await page3.getByRole('checkbox', { name: 'Short name' }).check();
+		await page3.getByRole('button', { name: 'Change columns' }).click();
+		await waitForWorkingMessage(page);
+		await expect(page.locator('#celladdress_2_0')).toContainText('François-Marie Arouet');
+		await expect(page.locator('#celladdress_3_0')).toContainText('Emilie Du Châtelet');
+		await expect(page.locator('#celladdress_4_0')).toContainText('Freeform Solutions');
+		await expect(page.locator('#celladdress_2_3')).toContainText('M001M005M010M012');
+		await expect(page.locator('#celladdress_3_3')).toContainText('M002M006M011M013');
+		await page.getByRole('columnheader', { name: 'Donors: Name' }).getByRole('link').click();
+		await waitForWorkingMessage(page);
+		await expect(page.locator('#celladdress_2_0')).toContainText('Emilie Du Châtelet');
+		await expect(page.locator('#celladdress_3_0')).toContainText('François-Marie Arouet');
+		await expect(page.locator('#celladdress_4_0')).toContainText('Freeform Solutions');
+		await expect(page.locator('#celladdress_2_3')).toContainText('M002M006M011M013');
+		await expect(page.locator('#celladdress_3_3')).toContainText('M001M005M010M012');
+		await page.getByRole('columnheader', { name: 'Artifacts: ID Number' }).getByRole('link').click({ modifiers: ['Shift'] });
+		await waitForWorkingMessage(page);
+		await expect(page.locator('#celladdress_2_0')).toContainText('Emilie Du Châtelet');
+		await expect(page.locator('#celladdress_3_0')).toContainText('François-Marie Arouet');
+		await expect(page.locator('#celladdress_4_0')).toContainText('Freeform Solutions');
+		await expect(page.locator('#celladdress_2_3')).toContainText('M002M006M011M013');
+		await expect(page.locator('#celladdress_3_3')).toContainText('M001M005M010M012');
+		await page.getByRole('columnheader', { name: 'Artifacts: ID Number' }).getByRole('link').click();
+		await expect(page.locator('#celladdress_2_0')).toContainText('Emilie Du Châtelet');
+		await expect(page.locator('#celladdress_3_0')).toContainText('François-Marie Arouet');
+		await expect(page.locator('#celladdress_4_0')).toContainText('Freeform Solutions');
+		await expect(page.locator('#celladdress_2_3')).toContainText('M013M011M006M002');
+		await expect(page.locator('#celladdress_3_3')).toContainText('M012M010M005M001');
 	});
 });
