@@ -271,6 +271,9 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 
     function convert24To12HourTime($value) {
         $timeParts = explode(":", $value);
+				if(!isset($timeParts[1])) {
+					$timeParts[1] = "00";
+				}
         if($timeParts[0] > 12) {
             $value = ($timeParts[0]-12).":".$timeParts[1]."pm";
         } elseif($timeParts[0] == "00") {
@@ -284,11 +287,14 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     }
 
     function convert12To24HourTime($value) {
-        $value = strtoupper($value);
-        if(!strstr($value, ":") OR (!strstr($value, "am") AND !strstr($value, "pm"))) {
+        $value = strtolower($value);
+        if(!strstr($value, "am") AND !strstr($value, "pm")) {
             return $value;
         }
-        $timeParts = explode(":", $value);
+        $timeParts = explode(":", trim($value, 'apm'));
+				if(!isset($timeParts[1])) {
+					$timeParts[1] = "00";
+				}
         if(strstr($value, "pm") AND $timeParts[0]<12) {
             $value = ($timeParts[0]+12).":".$timeParts[1];
         } elseif(strstr($value, "pm") AND $timeParts[0]==12) {
@@ -296,8 +302,8 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         } elseif($timeParts[0]==12) {
             $value = "00:".$timeParts[1];
         } else {
-            $value = str_replace("am","",$value);
-        }
+						$value = str_pad($timeParts[0], 2, "0", STR_PAD_LEFT).":".$timeParts[1];
+				}
         return $value;
     }
 
