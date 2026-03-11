@@ -419,6 +419,22 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 	function afterSavingLogic($value, $element_id, $entry_id) {
 	}
 
+	/**
+	 * Check if a value is valid for this element, based on the element's properties and settings.
+	 * This is used when validating import files, and could be appropriate in other situations.
+	 * Returns the validated value, ready for storage in the database. Or false if the value is not valid for this element.
+	 * This is similar to prepareDataForSaving, but that method takes values submitted through the standard UI
+	 * This method takes any arbitrary value and tries to sort it out as a storable value for this element
+	 * This is also similar to prepareLiteralTextForDB, but that method is for preparing user submitted text values for comparison to the database,
+	 * and so it can handle partial matches and other situations where the submitted value is not intended for storage
+	 * @param mixed $value The value to validate
+	 * @param object $element The element object, which contains the properties and settings to validate against
+ 	 * @return mixed The validated value, or false if the value is not valid for the element
+	 */
+	function validateValueForDB($value, $element) {
+		return $value;
+	}
+
 	// this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
 	// in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
 	// $value is the raw value that has been found in the database

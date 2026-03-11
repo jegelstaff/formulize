@@ -115,10 +115,7 @@ print "<meta http-equiv=\"Content-Type\" content=\"text/html; charset="._CHARSET
 print "<title>" . _formulize_DE_IMPORTDATA . "</title>\n";
 
 print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"" . XOOPS_URL . "/xoops.css\" />\n";
-$themecss = xoops_getcss();
-//$themecss = substr($themecss, 0, -6);
-//$themecss .= ".css";
-print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"$themecss\" />\n";
+print "<link rel=\"stylesheet\" type=\"text/css\" media=\"screen\" href=\"".xoops_getcss()."\" />\n";
 
 print "</head>";
 print "<body style=\"background: white; margin-top:20px;\"><center>";
@@ -129,27 +126,33 @@ print "<table id='import-instructions' class='outer popup'><tr><th colspan=2>" .
 define("IMPORT_WRITE", true);
 define("IMPORT_DEBUG", false);
 
-//define("IMPORT_WRITE", false);
-//define("IMPORT_DEBUG", true);
-
-$errors = array();
-
 // get id of profile form
-$module_handler =& xoops_gethandler('module');
-$formulizeModule =& $module_handler->getByDirname("formulize");
-$formulizeConfig =& $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-$regfid = $formulizeConfig['profileForm'];
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname("formulize");
+$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
 
 // Test if the filename of the temporary uploaded csv is empty
-//$csv_name = @$_POST["csv_name"];
 $csv_name = @$_FILES['csv_name']['tmp_name'];
 if($csv_name != "")
 {
-	//$csv_name = "../import/$csv_name.csv";
 	print "<tr><td class=head><p>" . _formulize_DE_IMPORT_RESULTS . "</p></td><td class=odd>\n";
-	$validateOverride = $_POST['validatedata'] == 0 ? true : false;
-	importCsv(array($_FILES['csv_name']['name'], $csv_name), $regfid, $validateOverride, $_POST['pkColumn']);
-	print "</td></tr>\n";
+	$errors = importCsv();
+	if(empty($errors)) {
+		print "<br><b>Import complete - zero errors</b>
+		<script type=\"text/javascript\">
+		window.opener.document.controls.forcequery.value = 1;
+		window.opener.showLoading();
+		</script>";
+	} else {
+		print "<br><b>Import had the following errors:</b>
+		<ol>";
+		foreach ($errors as $error) {
+			print "<li>$error</li>\n";
+		}
+		print "</ol>";
+	}
+  print "<br><b><a href=\"\" onclick=\"javascript:history.back(-1);return false;\">" . _formulize_DE_IMPORT_BACK . "</a></b></td></tr>\n";
+
 } else {
 
 	// provide a blank template, and a blank update template

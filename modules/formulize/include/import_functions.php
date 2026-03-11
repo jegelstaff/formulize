@@ -38,301 +38,193 @@
 //  [4] (array) column headings to formulize form elements
 //  [8] formulize form handle
 
-function importCsv($csv_name, $regfid, $validateOverride, $pkColumn=false) {
+use Google\Service\AccessContextManager\Expr;
 
-    global $errors;
+function stripLegacyControlPair($value) {
+    static $legacyPair = "\x13\x10"; // chr(19).chr(16)
+		return $value === '' ? $value : str_replace($legacyPair, '', $value);
+}
 
-    $importSet = array();
-    $importSet[] = $csv_name;
+function importCsv() {
 
-    importCsvSetup($importSet, $pkColumn);
+	// INITIAL SETUP AND VALIDATION
+	global $xoopsDB, $xoopsUser;
+	$formHandler = xoops_getmodulehandler('forms', 'formulize');
+	$gperm_handler = xoops_gethandler('groupperm');
+	$errors = array();
 
-		if (IMPORT_DEBUG) {
-				importCsvDebug($importSet);
-		}
+	// open the file, start $csv stream
+	if(!isset($_FILES['csv_name']['tmp_name']) OR !$csv = fopen($_FILES['csv_name']['tmp_name'], "r")) {
+		throw new Exception("No file uploaded found");
+	}
+	if (feof($csv)) {
+    throw new Exception("Uploaded file appears empty");
+  }
 
-		if (importCsvValidate($importSet, $regfid, $validateOverride)) {
-				importCsvProcess($importSet, $regfid, $validateOverride, $pkColumn);
+	// validate the form
+	if(!$fid = isset($_GET['fid']) ? $_GET['fid'] : (isset($_POST['fid']) ? intval($_POST['fid']) : 0)) {
+		throw new Exception("No form specified for import");
+	}
+	if(!$formObject = $formHandler->get($fid)) {
+		throw new Exception("Specified form ($fid) does not exist");
+	}
 
-				echo "<script type=\"text/javascript\">\n";
-				echo "window.opener.document.controls.forcequery.value = 1;\n";
-				echo "window.opener.showLoading();\n";
-				echo "</script>\n";
-		} else {
-				echo "<br><b>csv not imported!</b>";
-				if (!empty($errors)) {
-						echo "<ol>";
-						foreach ($errors as $error) {
-								echo $error;
-						}
-						echo "</ol>";
+	if(!$userHasImportPermission = $gperm_handler->checkRight("import_data", $fid, ($xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS)), getFormulizeModId())) {
+		$errors[] = "You do not have permission to import entries to this form.";
+		return $errors;
+	}
+
+	// DECLARE WHAT WE NEED
+	$elementHandler = xoops_getmodulehandler('elements', 'formulize');
+	$validateData = (isset($_POST['validatedata']) AND $_POST['validatedata']) ? true : false;
+	$pkColumn = (isset($_POST['pkColumn']) AND _getElementObject($_POST['pkColumn'])) ? $_POST['pkColumn'] : _formulize_ENTRY_ID;
+	$pkColumnNumber = null;
+	$columnHeaders = array();
+	$columnElements = array();
+	$columnElementTypes = array();
+	$elementTypeHandlers = array();
+	$metadataColumns = array(
+		'creator' => _formulize_DE_CALC_CREATOR,
+		'createdate' => _formulize_DE_CALC_CREATEDATE,
+		'modifier' => _formulize_DE_CALC_MODIFIER,
+		'moddate' => _formulize_DE_CALC_MODDATE,
+		'username' => _formulize_DE_IMPORT_USERNAME,
+		'fullname' => _formulize_DE_IMPORT_FULLNAME,
+		'password' =>_formulize_DE_IMPORT_PASSWORD,
+		'email' => _formulize_DE_IMPORT_EMAIL,
+		'regcode' => _formulize_DE_IMPORT_REGCODE,
+		'idreqcol' => _formulize_DE_IMPORT_IDREQCOL,
+		'usethisentryid' => _formulize_DE_IMPORT_NEWENTRYID,
+		'entryid' => _formulize_ENTRY_ID,
+		'idreqs' => $pkColumn,
+	);
+	$metadataColumnNumbers = array();
+	$lineNumber = 0;
+
+	// LOOP THROUGH THE FILE ONE LINE AT A TIME
+	while($csvLine = fgetcsv($csv, escape: "\\")) { // TODO: ALTER THE ESCAPE PARAM WHEN PHP 9 CHANGES HOW THIS IS DONE? OR KEEP THIS FOR LEGACY COMPATIBILITY?
+
+		$lineNumber++;
+		$errorCountAtStartOfLine = count($errors);
+
+		// read the header row first, get the name of elements we're dealing with in order
+		// setup metadata info for reference later
+    if(empty($columnHeaders)) {
+			foreach($csvLine as $i => $header) {
+				$header = stripLegacyControlPair($header);
+				$headerElement = null;
+				// lookup non metadata columns to see if they're real elements
+				if(($header == $pkColumn OR !in_array($header, $metadataColumns)) AND !$headerElement = _getElementObject($header)) {
+					$errors[] = "Element specified in header row not found in database: $header";
 				}
+				$columnHeaders[] = $header;
+				$columnElements[] = $headerElement;
+				if($headerElement) {
+					$elementType = $headerElement->getVar('ele_type');
+					$columnElementTypes[] = $elementType;
+					if(!isset($elementTypeHandlers[$elementType])) {
+						$elementTypeHandlers = xoops_getmodulehandler($elementType.'Element', 'formulize');
+					}
+				} else {
+					$columnElementTypes[] = null;
+				}
+				if($header == $pkColumn) {
+					$pkColumnNumber = $i;
+				}
+			}
+			// ******* CAREFUL HERE, BECAUSE WE CAN IGNORE LACK OF PKCOLUMN WHEN DOING NEW ENTRIES... BUT IF WE'RE DOING AN UPDATE IMPORT, THEN THIS IS A PROBLEM... BUT WE DON'T DISTINGUISH BETWEEN UPDATE AND NOT ANYMORE??
+			if(!$pkColumnNumber AND $pkColumn != _formulize_ENTRY_ID) {
+				$errors[] = "Primary key column not found in the uploaded file";
+			}
+			foreach($metadataColumns as $metadataKey => $metadataColumnName) {
+				$metadataColumnNumbers[$metadataKey] = array_search($metadataColumnName, $columnHeaders);
+			}
+			// bail if there are errors in the header row
+			if(count($errors) > 0) {
+				return $errors;
+			}
+			continue; // done with the header row - go to next row in csv
 		}
 
-    echo "<b>** Finished</b><br><br>";
+		// carrying on with non header row...
 
-    echo "<br><br>";
-    echo "<b><a href=\"\" onclick=\"javascript:history.back(-1);return false;\">" . _formulize_DE_IMPORT_BACK . "</a></b></div>";
-}
+		// establish the line identifier for use in error messages -- if the pk column is present and has a value, use that as part of the identifier, otherwise just use the line number
+		$lineIdentifier = "Line $lineNumber";
+		if(isset($csvLine[$pkColumnNumber]) AND $csvLine[$pkColumnNumber]) {
+			$lineIdentifier .= " (".$csvLine[$pkColumnNumber].")";
+		}
 
+		// if the column count doesn't match the header row, skip the line and record an error
+		if(count($csvLine) != count($columnHeaders)) {
+			$errors[] = "$lineIdentifier skipped: column count does not match header row.";
+			continue;
+		}
 
-function importCsvSetup(&$importSet, $pkColumn=false) {
-    global $xoopsDB;
-		$pkColumn = $pkColumn ? $pkColumn : _formulize_ENTRY_ID;
+		// importset 3 is the column headings, which is csvElements array now
+		// importset 4 is fid
+		// importset 5 is some linked element metadata
+		// importset 6 is the mapping of csv columns to form element ordinals based on creation order in the database??
+		// importset 7 is the metadata column numbers, which can be used to pull those metadata values from the csvElements array for each row
+		// importset 8 is the form handle
 
-    // First cell on the first line of the csv file contained the form name.
-    // This is now provided through formulize variable $fid which is now the id,
-    // therefore a lookup is required to go from number to name, instead of the
-    // original name to number.
-    global $fid;
+		// loop through the headers of the row
+		$uid = 0;
+		foreach($columnHeaders as $columnNumber => $csvHeader) {
 
-    // 1. verify that files exist
-    if (!($importSet[1] = fopen($importSet[0][1], "r"))) {
-        exit("<b>STOPPED</b> csv file <i>" . $importSet[0][0] . "</i> not found.");
-    }
+			$cell_value = $csvLine[$columnNumber]; // already validated the line has same number of columns as the header row, so this should be safe
+			$element = $columnElements[$columnNumber];
+			$elementType = $columnElementTypes[$columnNumber];
+			$elementTypeHandler = $elementType ? $elementTypeHandlers[$elementType] : null;
 
-    // 2. get the first row containing form name
-    // 3. get the second row containing column names
-    if (feof($importSet[1])) {
-        exit("<b>STOPPED</b> <i>column names</i> not found.");
-    } else {
-        //$importSet[2] = fgetcsv($importSet[1], 4096);
-        //$importSet[2] = $importSet[2][0];
-        $importSet[2] = getFormTitle($fid);
-        $importSet[3] = fgetcsv($importSet[1], 99999);
-        foreach ($importSet[3] as $id3=>$value3) {
-            $importSet[3][$id3] = str_replace(chr(19).chr(16), "", $value3);
-        }
-    }
+			// WHAT IS UID USED FOR??? SHOULD BE PROXY VALUE FOR CREATING NEW ENTRIES??
+			if($metadataColumnNumbers['creator'] == $columnNumber) {
+				if(!$uid = getUserId($cell_value)) {
+					$errors[] = "$lineIdentifier, column $csvHeader specifies a user that was not found: ".strip_tags(htmlspecialchars($cell_value)).". Should be a user id or username or full name.";
+				}
+			}
 
-    $importSet[4] = $fid;
+			// user wants data validated first
+    	if ($validateData) {
 
-    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-    $formObject = $form_handler->get($fid);
-    $importSet[8] = $formObject->getVar('form_handle');
+					if($cell_value == "" AND $element AND $element->getVar('ele_required')) {
+						$errors[] = "$lineIdentifier, column $csvHeader requires a value, but the cell was blank";
+					}
 
-    // 5. get the form column ids and process linked elements
-    if ($importSet[4]) {
-        $form_elementsq = q("SELECT * FROM " . $xoopsDB->prefix("formulize") .
-            " WHERE id_form='" . $importSet[4] . "'");
-
-        if ($form_elementsq == null) {
-            exit("<br><b>STOPPED</b> formulize form <i>" . $importSet[2] . "</i> elements not found.");
-        } else {
-            $importSet[5] = array($form_elementsq, array());
-
-            $mapped = array();
-
-            $columns = count((array) $importSet[3]);
-            for ($column = 0; $column < $columns; $column++) {
-                $cell = $importSet[3][$column];
-
-            // need to record location of: _formulize_DE_CALC_CREATOR plus five user profile metadata fields, if they are necessary
-            // if we're dealing with a blank template...
-						if ($cell == _formulize_DE_CALC_CREATOR) {
-								$importSet[7]['creator'] = $column;
+					if($cell_value AND $metadataColumnNumbers['idreqs'] == $columnNumber) {
+						$entryId = $pkColumn == _formulize_ENTRY_ID ? $cell_value : getImportEntryIdFromPkColumnValue($cell_value, $element);
+						if(!$entryId) {
+							$errors[] = "$lineIdentifier, Invalid entry identifier specified. No matching entry found for '".strip_tags(htmlspecialchars($cell_value))."'";
+						} elseif(formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $entryId) === false) {
+							$errors[] = "$lineIdentifier, Invalid entry identifier specified. You do not have permission to modify the entry.";
 						}
-						if ($cell == _formulize_DE_IMPORT_USERNAME) {
-								$importSet[7]['username'] = $column;
-						}
-						if ($cell == _formulize_DE_IMPORT_FULLNAME) {
-								$importSet[7]['fullname'] = $column;
-						}
-						if ($cell == _formulize_DE_IMPORT_PASSWORD) {
-								$importSet[7]['password'] = $column;
-						}
-						if ($cell == _formulize_DE_IMPORT_EMAIL) {
-								$importSet[7]['email'] = $column;
-						}
-						if ($cell == _formulize_DE_IMPORT_REGCODE) {
-								$importSet[7]['regcode'] = $column;
-						}
-						if ($cell == _formulize_DE_IMPORT_NEWENTRYID) {
-								// columns with this exact heading will have this entry id used
-								$importSet[7]['usethisentryid'] = $column;
-						}
-						if ($cell == $pkColumn) {
-								$importSet[7]['idreqs'] = $column;
-						}
+					}
 
-            $mapIndex = -1;
+					// validate by element type, ******* move code to methods in objects
+					if($elementTypeHandler) {
+						$validationResult = $elementTypeHandler->validateValueForDB($cell_value, $element);
+					}
 
-            $elements = count((array) $form_elementsq);
-                for ($element = 0; $element < $elements; $element++) {
-                    $caption = $form_elementsq[$element]["ele_caption"];
-                    $colheading = $form_elementsq[$element]["ele_colhead"];
+			}
 
-                    // trans caption added by jwe, June 29 2006, colheading added by jwe July 13, 2006
-                    if ($cell == $caption OR $cell == trans($caption) OR $cell == $colheading OR $cell == trans($colheading)) {
-                        $mapIndex = $element;
+		}
 
-                        // links?
-												$switchEleType = anySelectElementType($form_elementsq[$element]["ele_type"]) ? "select" : $form_elementsq[$element]["ele_type"];
-        								switch ($switchEleType) {
-                            case "select":
-														case "checkbox":
-														case "checkboxLinked":
-                                $ele_value = unserialize($form_elementsq[$element]["ele_value"]);
-                                $options = $ele_value[2];
-
-                                if (!is_array($options)) {
-                                    if (strstr($options, "#*=:*")) {
-                                        $parts = explode("#*=:*", $options);
-
-                                        $sql = "SELECT * FROM " . $xoopsDB->prefix("formulize") .
-                                            " WHERE id_form='" . $parts[0] . "'" .
-                                            " AND ele_handle='" . formulize_db_escape($parts[1]) . "'";
-                                        $form_elementlinkq = q($sql);
-                                        if ($form_elementlinkq == null) {
-                                            exit("<br><b>STOPPED</b> <i>" . "form: " .
-                                            $parts[0] . ", element: " . $parts[1] . "<br>$sql");
-                                        } else {
-                                            //var_dump($form_elementlinkq);
-                                            $importSet[5][1][$column] = array(
-                                            $parts[0], $parts[1], $form_elementlinkq[0]);
-                                        }
-                                    }
-                                }
-                            break;
-                        }
-                        break;
-                    }
-                }
-
-                $mapped[] = $mapIndex;
-            }
-
-            $importSet[6] = $mapped;
-        }
-    }
-}
+		// need to build up data while looping row above, then write data
 
 
-function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
-    if ($validateOverride) {
-        return true;
-    }
-    $elementHandler = xoops_getmodulehandler('elements', 'formulize');
-    global $errors, $xoopsDB, $fid, $xoopsUser;
-
-    $output = "** <b>Validating</b><br><b>From csv file</b>: " . $importSet[0][0] . "<br>" .
-        "<b>Into form</b>: " . $importSet[2] .
-        " (id " . $importSet[4] . ")<br><ol>";
-
-    $links = count((array) $importSet[6]);
-    $GLOBALS['formulize_ignoreColumnsOnImport'] = array();
-    for ($link = 0; $link < $links; $link++) {
-        if ($importSet[6][$link] == -1) {
-            // Created by, Creation date, Modified by, Modification date, plus profile form special columns
-            if (!($importSet[3][$link] == _formulize_DE_CALC_CREATOR
-                || $importSet[3][$link] == _formulize_DE_CALC_CREATEDATE
-                || $importSet[3][$link] == _formulize_DE_CALC_MODIFIER
-                || $importSet[3][$link] == _formulize_DE_CALC_MODDATE
-                || $importSet[3][$link] == _formulize_DE_IMPORT_USERNAME
-                || $importSet[3][$link] == _formulize_DE_IMPORT_FULLNAME
-                || $importSet[3][$link] == _formulize_DE_IMPORT_PASSWORD
-                || $importSet[3][$link] == _formulize_DE_IMPORT_EMAIL
-                || $importSet[3][$link] == _formulize_DE_IMPORT_REGCODE
-                || $importSet[3][$link] == _formulize_DE_IMPORT_IDREQCOL
-                || $importSet[3][$link] == _formulize_DE_IMPORT_NEWENTRYID
-								|| $importSet[3][$link] == _formulize_ENTRY_ID))
-            {
-                print "<p>Warning: column <b>" . $importSet[3][$link] . "</b> was not found in form.</p>";
-                    $GLOBALS['formulize_ignoreColumnsOnImport'][$link] = true;
-            }
-        }
-    }
-
-    $rowCount = 1;
-    $currentFilePosition = ftell($importSet[1]);
-    // a container for any entry id overrides that a user has set in the spreadsheet
-    $useTheseEntryIds = array();
-    while (!feof($importSet[1])) {
-        $row = fgetcsv($importSet[1], 99999);
-
-        if (is_array($row) AND count((array) $row) > 1) {
+		if (is_array($row) AND count((array) $row) > 1) {
             $rowCount++;
-            $links = count((array) $importSet[6]);
-            for ($link = 0; $link < $links; $link++) {
-                if (isset($GLOBALS['formulize_ignoreColumnsOnImport'][$link])) {
-                    continue;
-                }
+            $this_id_req = "";
+            if(isset($importSet[7]['idreqs'])) {
+							if(!$pkColumn OR $pkColumn == _formulize_ENTRY_ID OR (isset($_POST['usePkColumnAsEntryId']) AND $_POST['usePkColumnAsEntryId'])) {
+								$this_id_req = intval($row[$importSet[7]['idreqs']]);
+							} elseif($pkColumn) {
+								$this_id_req = getImportEntryIdFromPkColumnValue($row[$importSet[7]['idreqs']], $importSet[5][0][$importSet[6][$importSet[7]['idreqs']]]);
+							}
+						}
 
-                if ($link == ($link-1)) {
-                    $cell_value = str_replace(chr(19).chr(16), "", $row[$link]);
-                } else {
-                    $cell_value = $row[$link];
-                }
 
-                if (isset($importSet[5][0][$importSet[6][$link]])) { // if this is an element, then extract that element from the array
-                    $element = $importSet[5][0][$importSet[6][$link]];
-                } else {
-                    $element = array();
-                }
+						// VALIDATION STUFF BELOW
 
-                if ($cell_value == "") {
-                    if ($importSet[6][$link] == -1) {
-                        // this is not a found column in the form
-                        // disallow profile metdata fields from being blank
-                        if ($importSet[4] == $regfid) {
-                            if ($link == $importSet[7]['username'] OR $link == $importSet[7]['fullname']  OR $link == $row[$importSet[7]['password']] OR $link == $importSet[7]['email'] OR $link == $importSet[7]['regcode']) {
-                                $errors[] = "<li>line " . $rowCount . ", column " . $importSet[3][$link] . ",<br> <b>Field cannot be blank</b></li>";
-                            }
-                        }
-                    }
-
-                    // need to respect required setting
-                    if (isset($element['ele_required'])) {
-                        if ($element['ele_required']) {
-                            $errors[] = "<li>line " . $rowCount .
-                                ", column " . $importSet[3][$link] .
-                                ",<br> <b>This column requires a value</b> (cell was blank)</li>";
-                        }
-                    }
-                } else {
-                    // check columns not present in form...
-                    if ($importSet[6][$link] == -1) {
-                        if ($importSet[3][$link] == _formulize_DE_CALC_CREATOR) {
-                            $uid = getUserId($cell_value);
-                            if ($uid == 0) {
-                                $errors[] = "<li>line " . $rowCount .
-                                    ", column " . $importSet[3][$link] .
-                                    ",<br> <b>user not found</b>: " . $cell_value . "</li>";
-                            }
-                        }
-
-                        // check validity of account creation stuff
-                        if ($importSet[4] == $regfid) {
-                            include_once XOOPS_ROOT_PATH . "/modules/reg_codes/include/functions.php";
-                            $stop = userCheck($row[$importSet[7]['username']], $row[$importSet[7]['email']], $row[$importSet[7]['password']], $row[$importSet[7]['password']], $row[$importSet[7]['regcode']]);
-                            if ($stop) {
-                                $errors[] = "<li>line " . $rowCount . ",<br> <b>Invalid Registration Data:</b> $stop</li>";
-                            }
-                        }
-
-                        // check validity of entry ids if a special entry_ids column is included
-                        // store the entry ids that are specified, and then we'll check for the existence of any of them after we're done looping
-                        if (isset($importSet[7]['usethisentryid']) AND $link == $importSet[7]['usethisentryid']) {
-                            $useTheseEntryIds[] = $cell_value;
-                        }
-
-												// check validity of the idreqs
-                        if ($link == $importSet[7]['idreqs'] AND $cell_value) {
-													if(formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $cell_value) === false) {
-														$errors[] = "<li>line " . $rowCount . ",<br> <b>Invalid entry identifier specified</b>. You do not have permission to modify the entry.</li>";
-													}
-												}
-
-                    } else {
-
-												// check validity of the idreqs
-												if ($link == $importSet[7]['idreqs'] AND $cell_value) {
-													if($entryId = getImportEntryIdFromPkColumnValue($cell_value, $element)) {
-														if(formulizePermHandler::user_can_edit_entry($fid, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), $entryId) === false) {
-															$errors[] = "<li>line " . $rowCount . ",<br> <b>Invalid entry identifier specified</b>. You do not have permission to modify the entry.</li>";
-														}
-													}
-												}
 
                         // check columns from form
                         $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
@@ -651,161 +543,8 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
         }
     }
 
-    // check validity of any entry ids the user has set
-    if (count((array) $useTheseEntryIds) > 0) {
-        global $xoopsDB;
-        $checkIdsSQL = "SELECT entry_id FROM ".$xoopsDB->prefix("formulize_".$importSet[8]) . " WHERE entry_id IN (".implode(",",$useTheseEntryIds).")";
-        $checkIdsRes = $xoopsDB->query($checkIdsSQL);
-        while ($checkIdsArray = $xoopsDB->fetchArray($checkIdsRes)) {
-            $errors[] = "<li><b>Entry id ".$checkIdsArray['entry_id']." is already in use.</b>  You cannot import new data with an existing entry id.</li>";
-        }
-    }
-
-    fseek($importSet[1], $currentFilePosition);
-    echo $output . "</ol>";
-    return (empty($errors)) ? true : false;
-}
 
 
-function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=false) {
-    global $xoopsDB, $xoopsUser, $xoopsConfig, $myts, $fid;
-    $elementHandler = xoops_getmodulehandler('elements', 'formulize');
-		$gperm_handler = xoops_gethandler('groupperm');
-		$userHasImportPermission = $gperm_handler->checkRight("import_data", $fid, ($xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS)), getFormulizeModId());
-    if (!$myts) {
-        $myts =& MyTextSanitizer::getInstance();
-    }
-
-    echo "<b>** Importing</b><br><br>";
-    $form_uid = "0";
-
-    global $override_import_proxyid;
-    if ( $override_import_proxyid ) {
-        $form_proxyid = $override_import_proxyid;
-    } else {
-        $form_proxyid = $xoopsUser->getVar('uid');
-    }
-
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $form_handler = xoops_getmodulehandler('forms','formulize');
-    $formObject = $form_handler->get($importSet[4]);
-    $data_handler = new formulizeDataHandler($importSet[4]);
-
-    // lock formulize_form -- note that every table we use needs to be locked, so linked selectbox lookups may fail
-    if ($regfid == $importSet[4]) {
-        // only lockup reg codes table if we're dealing with a profile form, in which case we assume reg codes is installed and the table exists
-            $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
-            $xoopsDB->prefix("users") . " WRITE, ".
-            $xoopsDB->prefix("formulize_entry_owner_groups")." WRITE, ".
-            $xoopsDB->prefix("reg_codes") . " WRITE, ".
-            $xoopsDB->prefix("groups_users_link") . " WRITE, ".
-            $xoopsDB->prefix("modules") . " READ, ".
-            $xoopsDB->prefix("config") . " READ, ".
-            $xoopsDB->prefix("formulize") . " READ, ".
-            $xoopsDB->prefix("formulize_id")." READ, ".
-            $xoopsDB->prefix("formulize_saved_views")." READ, ".
-            $xoopsDB->prefix("formulize_group_filters")." READ, ".
-            $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE";
-            // include the revisions table if necessary
-            if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";
-            }
-    } else {
-            $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
-            $xoopsDB->prefix("users") . " READ, ".
-            $xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, ".
-            $xoopsDB->prefix("groups_users_link") . " READ, ".
-            $xoopsDB->prefix("formulize") . " READ, ".
-            $xoopsDB->prefix("formulize_id")." READ, ".
-            $xoopsDB->prefix("formulize_saved_views")." READ, ".
-            $xoopsDB->prefix("formulize_group_filters")." READ, ".
-            $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." WRITE";
-            // include the revisions table if necessary
-            if($formObject->getVar('store_revisions') AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
-                $lockSQL .= ", ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))."_revisions WRITE";
-            }
-    }
-    $xoopsDB->query($lockSQL);
-
-    $rowCount = 1;
-    $other_values = array();
-    $usersMap = array();
-    $entriesMap = array();
-		$newEntriesMap = array();
-    $notEntriesList = array();
-    while (!feof($importSet[1])) {
-        $row = fgetcsv($importSet[1], 99999);
-
-        if (is_array($row) AND count((array) $row) > 1) {
-            $rowCount++;
-            $this_id_req = "";
-            if(isset($importSet[7]['idreqs'])) {
-							if(!$pkColumn OR $pkColumn == _formulize_ENTRY_ID OR (isset($_POST['usePkColumnAsEntryId']) AND $_POST['usePkColumnAsEntryId'])) {
-								$this_id_req = intval($row[$importSet[7]['idreqs']]);
-							} elseif($pkColumn) {
-								$this_id_req = getImportEntryIdFromPkColumnValue($row[$importSet[7]['idreqs']], $importSet[5][0][$importSet[6][$importSet[7]['idreqs']]]);
-							}
-						}
-
-            $links = count((array) $importSet[6]);
-            for ($link = 0; $link < $links; $link++) {
-                if (isset($GLOBALS['formulize_ignoreColumnsOnImport'][$link])) {
-                    continue;
-                }
-                if ($importSet[6][$link] == -1) {
-                    if ($importSet[3][$link] == _formulize_DE_CALC_CREATOR) {
-                        $form_uid = getUserId($row[$link]);
-                    }
-                }
-            }
-
-            // get the current max id_req
-            if (!$this_id_req) {
-                $max_id_reqq = q("SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$importSet[8]));
-                $max_id_req = $max_id_reqq[0]["MAX(entry_id)"] + 1;
-            } else {
-                $max_id_req = $this_id_req;
-                // get the uid and creation date too
-                $member_handler = xoops_gethandler('member');
-                $this_metadata = getMetaData($this_id_req, $member_handler, $importSet[4]); // importSet[4] is id_form (fid)
-                $this_uid = $this_metadata['created_by_uid'];
-                $this_creation_date = $this_metadata['created'];
-            }
-
-            // if this is the registration form, and we're making new entries, then handle the creation of the necessary user account
-            // need to get the five userprofile fields from the form, $importSet[7] contains the keys for them -- email, username, fullname, password, regcode
-            if ($regfid == $importSet[4]) {
-                $up_regcode = $row[$importSet[7]['regcode']];
-                $up_username = $row[$importSet[7]['username']];
-                $up_fullname = $row[$importSet[7]['fullname']];
-                $up_password = $row[$importSet[7]['password']];
-                $up_email = $row[$importSet[7]['email']];
-                $tz = $xoopsConfig['default_TZ'];
-
-                list($newid, $actkey) = createMember(array('regcode'=>'', 'approval'=>false, 'user_viewemail'=>0, 'uname'=>$up_username, 'name'=>$up_fullname, 'email'=>$up_email, 'pass'=>$up_password, 'timezone_offset'=>$tz));
-                processCode($up_regcode, $newid);
-
-                $form_uid = $newid; // put in new user id here
-            }
-
-            $links = count((array) $importSet[6]);
-            $fieldValues = array();
-            $newEntryId = "";
-            for ($link = 0; $link < $links; $link++) {
-                // used as a flag to indicate whether we're dealing with a linked selectbox or not, since if we are, that is the only case where we don't want to do HTML special chars on the value // deprecated in 3.0
-                $all_valid_options = false;
-
-                if ($importSet[6][$link] != -1) {
-                    $element = $importSet[5][0][$importSet[6][$link]];
-
-                    $id_form = $importSet[4];
-
-                    if ($link == ($links-1)) {
-                        // remove some really odd line endings if present, only happens when dealing with legacy outputs of really old/odd systems
-                        $row_value = str_replace(chr(19).chr(16), "", $row[$link]);
-                    } else {
-                        $row_value = $row[$link];
-                    }
 
                     if ($row_value != "") {
                         $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
@@ -1042,7 +781,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 																					} elseif ($hasother) {
 																							$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($item_value)) . "\")";
 																							$element_value .= "*=+*:" . $hasother;
-																					} elseif (!$validateOverride) {
+																					} elseif ($validateData) {
 																							print "ERROR: INVALID TEXT FOUND FOR A CHECKBOX ITEM -- $item_value -- IN ROW:<BR>";
 																							print_r($row);
 																							print "<br><br>";
@@ -1133,6 +872,26 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                 } // end of if this is a valid column
             } // end of looping through $links (columns?)
 
+
+
+
+
+
+
+// ************************
+// writing logic here below.....
+
+
+
+
+
+
+
+
+
+
+
+
             // now that we've recorded all the values, do the actual updating/inserting of this record
 						if(IMPORT_WRITE
 							AND $userHasImportPermission
@@ -1189,9 +948,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
         }
     }
 
-    // unlock tables
-    $xoopsDB->query("UNLOCK TABLES");
-
+		// *** COME BACK AS PART OF VALIDATION??
     // insert all the other values that were recorded
     foreach ($other_values as $other) {
         if (!$result = $xoopsDB->query($other)) {
@@ -1253,7 +1010,6 @@ function getElementOptions($ele_handle, $fid) {
     return $cachedElementOptions[$fid][$ele_handle];
 }
 
-
 function getUserID($stringName) {
     global $xoopsDB, $xoopsUser;
 
@@ -1295,122 +1051,6 @@ function getUserID($stringName) {
     return $xoopsUser->getVar('uid');
 }
 
-
-function formformCaption($ele_caption) {
-    $ele_caption = str_replace("'", "`", $ele_caption);
-    $ele_caption = str_replace("&quot;", "`", $ele_caption);
-    $ele_caption = str_replace("&#039;", "`", $ele_caption);
-    return $ele_caption;
-}
-
-
-function importCsvDebug(& $importSet) {
-    $output = "** <b>Csv</b>: " . $importSet[0][0] . "<br>" .
-        "<b>Form</b>: <i>name</i>: " . $importSet[2] .
-        ", <i>id</i>: " . $importSet[4] . "<br>";
-    $output .= "<table border=\"1\">";
-    $output .= "<tr><td><i>exists</i></td>" .
-        "<td><i>caption</i></td>" .
-        "<td><i>id</i></td>" .
-        "<td><i>type</i></td>" .
-        "<td><i>link</i></td></tr>";
-
-    $links = count((array) $importSet[6]);
-    for ($link = 0; $link < $links; $link++) {
-        $output .= "<tr valign=\"top\">";
-        if ($importSet[6][$link] == -1) {
-            $output .= "<td>" .
-                "N" .
-                "</td><td colspan=\"4\">" .
-                $importSet[3][$link] .
-                "</td>";
-        } else {
-            $element = $importSet[5][0][$importSet[6][$link]];
-            $output .= "<td>" .
-                "Y" .
-                "</td><td>" .
-                $importSet[3][$link] .
-                "</td><td>" .
-                $importSet[6][$link] .
-                "</td><td>" .
-                $element["ele_type"];
-            $output .= "<td>";
-
-            $switchEleType = anySelectElementType($element["ele_type"]) ? "select" : $element["ele_type"];
-        		switch ($switchEleType) {
-                case "select":
-                    $ele_value = unserialize($element["ele_value"]);
-                    $options = $ele_value[2];
-
-                    if (is_array($options)) {
-                        $keys_output = "";
-                        for (reset($options); $key = key($options); next($options)) {
-                            if ($keys_output != "") {
-                                $keys_output .= ", ";
-                            }
-                            $keys_output .= $key;
-                        }
-
-                        $output .= "{ " . $keys_output . " }";
-                    } else {
-                        if ($importSet[5][1][$link]) {
-                            $linkElement = $importSet[5][1][$link];
-
-                            $output .= "form: " . $linkElement[0] .
-                                "<br>element: " . $linkElement[1] .
-                                "<br>type: " . $linkElement[2]['ele_type'];
-                        } else {
-                            $output .= $options;
-                        }
-                    }
-                    break;
-
-                case "checkbox":
-								case "checkboxLinked":
-                    $options = unserialize($element["ele_value"]);
-
-                    if (is_array($options)) {
-                        $keys_output = "";
-                        for (reset($options); $key = key($options); next($options)) {
-                            if ($keys_output != "") {
-                                $keys_output .= ", ";
-                            }
-                            $keys_output .= $key;
-                        }
-
-                        $output .= "{ " . $keys_output . " }";
-                    } else {
-                        $output .= $options;
-                    }
-                    break;
-
-
-                case "radio":
-                    $options = unserialize($element["ele_value"]);
-
-                    if (is_array($options)) {
-                        $keys_output = "";
-                        for (reset($options); $key = key($options); next($options)) {
-                            if ($keys_output != "") {
-                                $keys_output .= ", ";
-                            }
-                            $keys_output .= $key;
-                        }
-
-                        $output .= "{ " . $keys_output . " }";
-                    } else {
-                        $output .= $options;
-                    }
-                    break;
-            }
-
-            $output .= "</td>";
-            $output .= "</tr>";
-        }
-    }
-
-    echo $output . "</table>";
-}
 
 function getImportEntryIdFromPkColumnValue($value, $element) {
 	if($value==="") { return ""; }
