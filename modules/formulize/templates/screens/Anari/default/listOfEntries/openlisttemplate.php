@@ -112,7 +112,7 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 							$cell .= "<a href='' id='lockcolumn_$columnNumber' class='$lockColumnClass' title='"._formulize_DE_FREEZECOLUMN."'></a>\n";
 							$cell .= "<a href='' class='header-info-link' onclick='javascript:showPop(\"".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=$elementHandle\");return false;' title='"._formulize_DE_MOREINFO."'></a>\n";
 						}
-						$cell .= clickableSortLink($elementHandle, printSmart(trans($headingText))); // create the clickable sort text, with icon if applicable
+						$cell .= clickableSortLink($elementHandle, trans($headingText)); // create the clickable sort text, with icon if applicable
 					$cell .= "
 					</div>
 				</th>";
