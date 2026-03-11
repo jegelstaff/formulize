@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
-import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from './config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion } from '../utils';
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
