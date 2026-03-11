@@ -290,4 +290,212 @@ class formulizePermHandler {
 		}
 		return $foundGids;
 	}
+
+	/**
+	 * Copy group permissions, per-group filters, and groupscope from one group to another.
+	 * If $modid is specified, only permissions for that module are copied; otherwise all.
+	 * Groupscope targets are resolved using an optional mapping, so that relative references
+	 * between groups (e.g., template group A scoping template group B) are translated to
+	 * corresponding targets (e.g., entry group A scoping entry group B).
+	 *
+	 * @param int $sourceGroupId The group to copy FROM
+	 * @param int $targetGroupId The group to copy TO
+	 * @param int|null $modid Module ID to restrict permission copying. Null = all modules.
+	 * @param array $groupIdMapping Maps source-side group IDs to target-side group IDs for
+	 *   groupscope resolution. When a groupscope target matches a key in this map, the
+	 *   corresponding value is used instead. Targets not in the map are copied as-is.
+	 * @return bool True on success
+	 */
+	static function copyGroupPermissions($sourceGroupId, $targetGroupId, $modid = null, $groupIdMapping = array()) {
+		$sourceGroupId = intval($sourceGroupId);
+		$targetGroupId = intval($targetGroupId);
+		if (!$sourceGroupId || !$targetGroupId) {
+			return false;
+		}
+
+		global $xoopsDB;
+
+		// Copy group_permission records using the groupperm handler
+		$gperm_handler = xoops_gethandler('groupperm');
+		if (!$gperm_handler->copyGroupIdRights($sourceGroupId, $targetGroupId, $modid)) {
+			return false;
+		}
+
+		// Delete existing filters for target group and copy from source
+		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("formulize_group_filters") .
+			" WHERE groupid = $targetGroupId");
+
+		$sql = "INSERT INTO " . $xoopsDB->prefix("formulize_group_filters") .
+			" (fid, groupid, filter) " .
+			"SELECT fid, $targetGroupId, filter " .
+			"FROM " . $xoopsDB->prefix("formulize_group_filters") .
+			" WHERE groupid = $sourceGroupId";
+		$xoopsDB->queryF($sql); // OK if no rows to copy
+
+		// Copy groupscope settings with relative mapping across all forms
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$forms = $form_handler->getAllForms();
+		foreach ($forms as $thisForm) {
+			$thisFid = $thisForm->getVar('id_form');
+			$permHandler = new formulizePermHandler($thisFid);
+			$scopeGroupIds = $permHandler->getGroupScopeGroupIds($sourceGroupId);
+			if (is_array($scopeGroupIds) && count($scopeGroupIds) > 0) {
+				$resolvedScopeGroups = array();
+				foreach ($scopeGroupIds as $scopeGid) {
+					if (isset($groupIdMapping[$scopeGid])) {
+						$resolvedScopeGroups[] = $groupIdMapping[$scopeGid];
+					} else {
+						$resolvedScopeGroups[] = $scopeGid;
+					}
+				}
+				$permHandler->setGroupScopeGroups($targetGroupId, $resolvedScopeGroups);
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Copy all permission records, per-group filters, and groupscope settings from one form to another.
+	 * Replaces all existing permission data for the target form.
+	 *
+	 * @param int $sourceFid The form ID to copy permissions FROM
+	 * @param int $targetFid The form ID to copy permissions TO
+	 * @return bool True on success
+	 */
+	static function copyFormPermissions($sourceFid, $targetFid) {
+		$sourceFid = intval($sourceFid);
+		$targetFid = intval($targetFid);
+		if (!$sourceFid || !$targetFid || $sourceFid === $targetFid) {
+			return false;
+		}
+
+		global $xoopsDB;
+
+		// Copy group_permission records using the groupperm handler
+		$gperm_handler = xoops_gethandler('groupperm');
+		$formulize_module_id = getFormulizeModId();
+		if (!$gperm_handler->copyItemRights($sourceFid, $targetFid, $formulize_module_id)) {
+			throw new Exception("Failed to copy group permissions from form $sourceFid to form $targetFid");
+		}
+
+		// can't copy filters, because they are based on form fields and the fields will be different between the forms.
+
+		// Copy groupscope settings: delete target then insert from source
+		$xoopsDB->queryF("DELETE FROM " . $xoopsDB->prefix("formulize_groupscope_settings") . " WHERE fid = $targetFid");
+		$xoopsDB->queryF("INSERT INTO " . $xoopsDB->prefix("formulize_groupscope_settings") . " (groupid, fid, view_groupid) "
+			. "SELECT groupid, $targetFid, view_groupid FROM " . $xoopsDB->prefix("formulize_groupscope_settings") . " WHERE fid = $sourceFid");
+
+		return true;
+	}
+
+	/**
+	 * Synchronize group references in a single element's settings using a group map.
+	 * For each group-based setting (ele_display, ele_disabled, ele_value[3], ele_value['formlink_scope']):
+	 *   - If a source group IS present, ensure all its target groups are also present
+	 *   - If a source group is NOT present, ensure none of its target groups are present
+	 *
+	 * This is the general utility for keeping group references in sync. Used by both
+	 * template group synchronization and the copy group permissions admin page.
+	 *
+	 * @param object $element The element object (modified in place via setVar)
+	 * @param array $groupMap Maps source group IDs to arrays of target group IDs.
+	 *   Example: [templateGroupId => [entryGroupId1, entryGroupId2], ...]
+	 *   or: [sourceGroupId => [targetGroupId1, targetGroupId2]]
+	 * @return bool True if the element was modified and needs saving
+	 */
+	static function synchronizeGroupReferencesInElement(&$element, $groupMap) {
+		if (empty($groupMap)) {
+			return false;
+		}
+
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elements.php';
+
+		$ele_display = $element->getVar('ele_display');
+		$ele_disabled = $element->getVar('ele_disabled');
+		$ele_type = $element->getVar('ele_type');
+		$ele_value = $element->getVar('ele_value');
+		$modified = false;
+
+		// Synchronize a comma-delimited group string like ",5,12,15,"
+		$syncCommaDelimited = function($value) use ($groupMap) {
+			if (!is_string($value) || $value === "1" || $value === "0" || $value === "") {
+				return array($value, false);
+			}
+			$changed = false;
+			foreach ($groupMap as $sourceGroupId => $targetGroupIds) {
+				$sourcePresent = strstr($value, ",$sourceGroupId,") !== false;
+				foreach ($targetGroupIds as $targetGroupId) {
+					$targetPresent = strstr($value, ",$targetGroupId,") !== false;
+					if ($sourcePresent && !$targetPresent) {
+						$value .= "$targetGroupId,";
+						$changed = true;
+					} elseif (!$sourcePresent && $targetPresent) {
+						$value = str_replace(",$targetGroupId,", ",", $value);
+						$changed = true;
+					}
+				}
+			}
+			return array($value, $changed);
+		};
+
+		// Synchronize a plain comma-separated list like "5,12,15"
+		$syncCommaSeparated = function($value) use ($groupMap) {
+			if (!is_string($value) || $value === "") {
+				return array($value, false);
+			}
+			$groups = explode(",", $value);
+			$changed = false;
+			foreach ($groupMap as $sourceGroupId => $targetGroupIds) {
+				$sourcePresent = in_array($sourceGroupId, $groups);
+				foreach ($targetGroupIds as $targetGroupId) {
+					$targetPresent = in_array($targetGroupId, $groups);
+					if ($sourcePresent && !$targetPresent) {
+						$groups[] = $targetGroupId;
+						$changed = true;
+					} elseif (!$sourcePresent && $targetPresent) {
+						$groups = array_values(array_diff($groups, array($targetGroupId)));
+						$changed = true;
+					}
+				}
+			}
+			return array(implode(",", $groups), $changed);
+		};
+
+		// Sync ele_display
+		list($newDisplay, $displayChanged) = $syncCommaDelimited($ele_display);
+		if ($displayChanged) {
+			$element->setVar('ele_display', $newDisplay);
+			$modified = true;
+		}
+
+		// Sync ele_disabled
+		list($newDisabled, $disabledChanged) = $syncCommaDelimited($ele_disabled);
+		if ($disabledChanged) {
+			$element->setVar('ele_disabled', $newDisabled);
+			$modified = true;
+		}
+
+		// Sync ele_value[3] for select-type elements
+		if (anySelectElementType($ele_type) && isset($ele_value[3])) {
+			list($newFilterGroups, $filterChanged) = $syncCommaSeparated($ele_value[3]);
+			if ($filterChanged) {
+				$ele_value[3] = $newFilterGroups;
+				$element->setVar('ele_value', $ele_value);
+				$modified = true;
+			}
+		}
+
+		// Sync ele_value['formlink_scope'] for checkbox elements
+		if (($ele_type == "checkbox" || $ele_type == "checkboxLinked") && isset($ele_value['formlink_scope'])) {
+			list($newScope, $scopeChanged) = $syncCommaSeparated($ele_value['formlink_scope']);
+			if ($scopeChanged) {
+				$ele_value['formlink_scope'] = $newScope;
+				$element->setVar('ele_value', $ele_value);
+				$modified = true;
+			}
+		}
+
+		return $modified;
+	}
 }

@@ -2225,3 +2225,13 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 .element-category-content {
 	/*display: none;*/
 }
+
+.formulize_autocomplete {
+	display: inline-block;
+	float: left;
+	margin-right: 0.25em;
+}
+
+.autocomplete-icon {
+	vertical-align: middle;
+}

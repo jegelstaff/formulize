@@ -47,9 +47,6 @@ if(!$ele_id = intval($_GET['ele_id'])) { // on new element saves, new ele_id can
   }
 }
 $element = $element_handler->get($ele_id);
-if($element->isSystemElement) {
-    exit();
-}
 
 $fid = $element->getVar('id_form');
 
@@ -63,38 +60,42 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
-list($parsedFilterSettings, $filterSettingsChanged) = parseSubmittedConditions('elementfilter', 'display-conditionsdelete');
-list($parsedDisabledConditions, $disabledConditionsChanged) = parseSubmittedConditions('disabledconditions', 'disabled-conditionsdelete');
-$_POST['reload_element_pages'] = ($filterSettingsChanged OR $disabledConditionsChanged) ? true : false;
-$element->setVar('ele_filtersettings', $parsedFilterSettings);
-$element->setVar('ele_disabledconditions', $parsedDisabledConditions);
+if($element->isSystemElement == false) {
 
-// check that the checkboxes have no values, and if so, set them to "" in the processedValues array
-if(!isset($_POST['elements-ele_private'])) {
-    $processedValues['elements']['ele_private'] = "";
-}
-foreach($processedValues['elements'] as $property=>$value) {
-  $element->setVar($property, $value);
-}
+	// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
+	list($parsedFilterSettings, $filterSettingsChanged) = parseSubmittedConditions('elementfilter', 'display-conditionsdelete');
+	list($parsedDisabledConditions, $disabledConditionsChanged) = parseSubmittedConditions('disabledconditions', 'disabled-conditionsdelete');
+	$_POST['reload_element_pages'] = ($filterSettingsChanged OR $disabledConditionsChanged) ? true : false;
+	$element->setVar('ele_filtersettings', $parsedFilterSettings);
+	$element->setVar('ele_disabledconditions', $parsedDisabledConditions);
 
-if($_POST['elements_ele_display'][0] == "all") {
-	$display = 1;
-} else if($_POST['elements_ele_display'][0] == "none") {
-	$display = 0;
-} else {
-	$display = "," . implode(",", $_POST['elements_ele_display']) . ",";
-}
-$element->setVar('ele_display', $display);
+	// check that the checkboxes have no values, and if so, set them to "" in the processedValues array
+	if(!isset($_POST['elements-ele_private'])) {
+			$processedValues['elements']['ele_private'] = "";
+	}
+	foreach($processedValues['elements'] as $property=>$value) {
+		$element->setVar($property, $value);
+	}
 
-if($_POST['elements_ele_disabled'][0] == "none") {
-	$disabled = 0;
-} else if($_POST['elements_ele_disabled'][0] == "all"){
-  $disabled = 1;
-} else {
-  $disabled = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
+	if($_POST['elements_ele_display'][0] == "all") {
+		$display = 1;
+	} else if($_POST['elements_ele_display'][0] == "none") {
+		$display = 0;
+	} else {
+		$display = "," . implode(",", $_POST['elements_ele_display']) . ",";
+	}
+	$element->setVar('ele_display', $display);
+
+	if($_POST['elements_ele_disabled'][0] == "none") {
+		$disabled = 0;
+	} else if($_POST['elements_ele_disabled'][0] == "all"){
+		$disabled = 1;
+	} else {
+		$disabled = "," . implode(",", $_POST['elements_ele_disabled']) . ",";
+	}
+	$element->setVar('ele_disabled', $disabled);
+
 }
-$element->setVar('ele_disabled', $disabled);
 
 // Saving element existence in multi-paged screens
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');

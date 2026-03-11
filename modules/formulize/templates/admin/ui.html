@@ -21,6 +21,7 @@ $this->assign('js_relationships_version', $jsRelationshipsVersion);
 
 <script type="text/javascript">
  var pagehasaccordion = new Array();
+ <{php}>print checkForChrome();<{/php}>
 </script>
 
 <!-- jquery for tooltips -->
@@ -82,21 +83,6 @@ $(document).ready(function() {
 
 <div class="admin-ui" style="display: none;">
 
-<{if $adminPage.template == 'db:admin/home.html'}>
-<div style="float: right;">
-	<p style="text-align: right;"><a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>"><img src="../images/kedit.png"> <{$smarty.const._AM_HOME_PREF}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=mailusers"><{$smarty.const._MI_formulize_EMAIL_USERS}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=managekeys"><{$smarty.const._MI_formulize_MANAGE_API_KEYS}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=config-sync"><{$smarty.const._MI_formulize_IMPORT_EXPORT}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=synchronize"><{$smarty.const._MI_formulize_SYNCHRONIZE}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=managepermissions"><{$smarty.const._MI_formulize_COPY_GROUP_PERMS}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=managetokens"><{$smarty.const._MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS}></a></p>
-	<p style="text-align: right;"><a href="ui.php?page=logviewer"><{$smarty.const._MI_formulize_SYSTEM_LOG_VIEWER}></a></p>
-	<!--<p style="text-align: right;"><a href="ui.php?page=manageaccess"><{$smarty.const._MI_formulize_MANAGE_FORM_ACCESS}></a></p>-->
-	<br>
-</div>
-<{/if}>
-
 <{if $opResults}>
 <div id="formulize-patch-panel"><{$opResults}><p><a href='<{$xoops_url}>/modules/formulize/admin/'><{$smarty.const._CLOSE}></a></p></div>
 <{/if}>
@@ -153,8 +139,11 @@ $(document).ready(function() {
 </div><!-- /admin_toolbar -->
 <{/if}>
 
-<{if isset($adminPage.template) AND $adminPage.template}>
-<{include file=$adminPage.template}>
+<{* Home page tabs - plain template rendering left in just in case some page somewhere still does it that way *}>
+<{if isset($adminPage.home_tabs)}>
+	<{include file="db:admin/ui-tabs.html" tabs=$adminPage.home_tabs}>
+<{elseif isset($adminPage.template) AND $adminPage.template}>
+	<{include file=$adminPage.template}>
 <{/if}>
 
 <{if $adminPage.tabs}>
@@ -288,6 +277,9 @@ $(document).ready(function() {
           redirect = data;
         } else if(data.substr(0,13)=="/* evalnow */") {
           eval(data);
+				} else if(data.substr(0,22)=="/* evalnowandreturn */") {
+					eval(data);
+					return; // abort further processing
         } else {
 					let strippedStyles = data.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ""); // remove style tags and content
 					let strippedHTML = strippedStyles.replace(/<\/?[^>]+(>|$)/g, ""); // strip HTML tags
@@ -341,6 +333,12 @@ $(document).ready(function() {
 				$('.admin-ui').fadeTo(1, 1)
       }
     });
+    if (requiredok && typeof validateCustom === "function") {
+      requiredok = validateCustom();
+      if (!requiredok) {
+        $('.admin-ui').fadeTo(1, 1);
+      }
+    }
     return requiredok;
   }
 

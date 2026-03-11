@@ -61,7 +61,7 @@ foreach($tokenHandler->get() as $key) {
 
 $adminPage['groups'] = $groupList;
 $adminPage['keys'] = $allKeys;
-$adminPage['template'] = "db:admin/managetokens.html";
+$adminPage['home_tabs'] = getHomeTabs('managetokens');
 
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";

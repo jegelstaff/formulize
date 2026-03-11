@@ -145,7 +145,7 @@ if($entries && count($entries) > 0) {
     }
 }
 
-$adminPage['template'] = "db:admin/logviewer.html";
+$adminPage['home_tabs'] = getHomeTabs('logviewer');
 
 // Breadcrumb
 $breadcrumbtrail[1]['url'] = "page=home";

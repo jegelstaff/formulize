@@ -369,7 +369,7 @@ CREATE TABLE formulize_id (
   form_title varchar(255) NOT NULL default '',
 	singular varchar(255) NULL default '',
 	plural varchar(255) NULL default '',
-  singleentry varchar(5) default NULL,
+  singleentry text NULL,
   headerlist text,
   tableform varchar(255) default NULL,
   lockedform tinyint(1) NULL default NULL,
@@ -381,6 +381,14 @@ CREATE TABLE formulize_id (
   note text,
   send_digests tinyint(1) NOT NULL default 0,
 	`pi` int(5) NOT NULL default 0,
+  entries_are_users tinyint(1) NOT NULL default 0,
+  entries_are_users_conditions text,
+  entries_are_users_default_groups text,
+  entries_are_users_default_groups_element_links text,
+  entries_are_users_user_is_owner tinyint(1) NOT NULL default 0,
+  entries_are_groups tinyint(1) NOT NULL default 0,
+  group_categories text,
+  parent_perm_fid int(5) NOT NULL default 0,
   PRIMARY KEY  (`id_form`)
 ) ENGINE=InnoDB;
 
