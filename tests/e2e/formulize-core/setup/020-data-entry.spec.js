@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
-import { saveFormulizeForm } from '../utils';
-import { conditionalElementReady } from '../utils';
-import { login } from '../utils';
+import { saveFormulizeForm } from '../../utils';
+import { conditionalElementReady } from '../../utils';
+import { login } from '../../utils';
 
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {

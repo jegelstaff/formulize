@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForWorkingMessage } from '../utils';
+import { login, waitForWorkingMessage } from '../../utils';
 
 test.describe('Validate Data', () => {
 	test('Check the Romain Coin record is complete', async ({ page }) => {

@@ -82,7 +82,7 @@ jobs:
       run: npx playwright install chromium --with-deps
       working-directory: tests/e2e
 
-    - name: Run Playwright tests
+    - name: Run Playwright setup tests (sequential)
       env:
         E2E_TEST_ADMIN_USERNAME: "admin"
         E2E_TEST_ADMIN_PASSWORD: "password"
@@ -91,9 +91,16 @@ jobs:
           echo "Running filtered tests: ${{ inputs.test_filter }}"
           npx playwright test ${{ inputs.test_filter }}
         else
-          echo "Running all tests"
-          npx playwright test
+          npx playwright test formulize-core/setup --workers=1
         fi
+      working-directory: tests/e2e
+
+    - name: Run Playwright validation tests (concurrent)
+      if: ${{ !inputs.test_filter }}
+      env:
+        E2E_TEST_ADMIN_USERNAME: "admin"
+        E2E_TEST_ADMIN_PASSWORD: "password"
+      run: npx playwright test formulize-core/validate --workers=4 --fully-parallel
       working-directory: tests/e2e
 
     - name: Create database dump and collect files
