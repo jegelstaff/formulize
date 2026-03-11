@@ -408,6 +408,7 @@ define("_formulize_DE_CANCELCALCS", "Cancel calculations");
 define("_formulize_DE_SHOWLIST", "Switch to entries");
 define("_formulize_DE_HIDELIST", "Switch to calcs.");
 define("_formulize_DE_SORTTHISCOL", "Click to sort entries by this column");
+define("_formulize_DE_SHIFTSORT", "Shift+click to add as secondary sort");
 define("_formulize_DE_MOREINFO", "Click for more info about this column");
 define("_formulize_DE_MOREINFO_TITLE", "More info about this form element");
 define("_formulize_DE_MOREINFO_QUESTION", "Text for this question as it appears in the form:");

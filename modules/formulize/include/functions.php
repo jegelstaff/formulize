@@ -9050,3 +9050,70 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 	return $names;
 
 }
+
+/**
+ * Gets the aria sort value for the current element handle
+ * @param string elementHandle - handle of the element being checked
+ * @return string Returns the aria sort value
+ */
+function getAriaSort($elementHandle) {
+	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$order = isset($_POST['order']) ? $_POST['order'] : null;
+	$sortList = $sort ? explode(',', $sort) : [];
+	$orderList = $order ? explode(',', $order) : [];
+
+	$sortPos = array_search($elementHandle, $sortList);
+	if ($sortPos !== false) {
+		$sfOrder = isset($orderList[$sortPos]) ? $orderList[$sortPos] : '';
+		if ($sfOrder == 'SORT_ASC' || $sfOrder == '') {
+			return 'ascending';
+		}
+		if ($sfOrder == 'SORT_DESC') {
+			return 'descending';
+		}
+	}
+	return 'none';
+}
+
+/**
+ * Gets the tooltip title and sort icon markup for a column header based on the current sort state and the element handle of the column.
+ * The title will indicate that the column can be sorted, and if there is a primary sort on another column, it will also hint that shift+click can be used to add this column to the sort. The icon will show an up or down arrow if this column is currently sorted, and if there are multiple sorted columns, it will also show a badge with the sort priority (1st, 2nd, 3rd, etc).
+ * @param string elementHandle - the handle of the element for the column header we are generating the title and icon for
+ * @return array Returns an array with two elements: [0] => the tooltip title for the column header, [1] => the HTML markup for the sort icon (which may be an empty string if the column is not currently sorted)
+ */
+function getSortTitleAndIcon($elementHandle) {
+
+	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
+	$order = isset($_POST['order']) ? $_POST['order'] : null;
+	$sortList = $sort ? explode(',', $sort) : [];
+	$orderList = $order ? explode(',', $order) : [];
+
+	// build title: hint at shift+click when there's a primary sort and this column isn't already sorted
+	$title = _formulize_DE_SORTTHISCOL;
+	if ($sort && !in_array($elementHandle, $sortList)) {
+		$title = _formulize_DE_SORTTHISCOL . ' | ' . _formulize_DE_SHIFTSORT;
+	}
+
+	// build icon: direction arrow and priority badge if this column is an active sort column
+	$icon = '';
+	$sortPos = array_search($elementHandle, $sortList);
+	if ($sortPos !== false) {
+		$sfOrder = isset($orderList[$sortPos]) ? $orderList[$sortPos] : '';
+		$iconClass = $sfOrder == "SORT_DESC" ? "fas fa-sort-amount-down" : "fas fa-sort-amount-up";
+		$sortPos = ($sortPos + 1);
+		// append st, nd, rd, th to the sort position number for the badge
+		if ($sortPos == 1) {
+			$sortPos .= '<sup>st</sup>';
+		} elseif ($sortPos == 2) {
+			$sortPos .= '<sup>nd</sup>';
+		} elseif ($sortPos == 3) {
+			$sortPos .= '<sup>rd</sup>';
+		} else {
+			$sortPos .= '<sup>th</sup>';
+		}
+		$badge = count($sortList) > 1 ? "($sortPos)" : "";
+		$icon = "<i class='$iconClass'></i> $badge";
+	}
+
+	return [$title, $icon];
+}

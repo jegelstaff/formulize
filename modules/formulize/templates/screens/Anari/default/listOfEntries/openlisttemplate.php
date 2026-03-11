@@ -138,55 +138,24 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 	return $row;
 }
 
-// clickableSortLink creates the HTML for the links users can click to control the sort order of a list of entries.
-// $elementHandle is the element that we are creating a link for
-// $clickableContent is the text or markup that will be displayed to the user and will be clickable
+/**
+ * Generate the markup for the clickable sort links in the column headers, including the appropriate sort icon and tooltip text based on the current sort state.
+ * The link will have an onclick handler that calls the sort_data JavaScript function with the element handle and whether the shift key was held (for multi-column sorting).
+ * @param string elementHandle - the handle of the element for the column header we are generating the link for
+ * @param string clickableContent - the text or markup that will be displayed to the user as the clickable thing on screen
+ * @return string The HTML markup for the clickable sort link, including the appropriate sort icon and tooltip text based on the current sort state.
+ */
 function clickableSortLink($elementHandle, $clickableContent) {
 
-	// get current sorting element and order
-	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
-	$order = isset($_POST['order']) ? $_POST['order'] : null;
+	list($title, $icon) = getSortTitleAndIcon($elementHandle);
 
-	// setup containers for the clickable item
-	$clickableSortLink = "
-		<div style='padding-right:20px;'>
-			<a style='display:flex;' href='' alt='"._formulize_DE_SORTTHISCOL."' title='"._formulize_DE_SORTTHISCOL."' onclick='javascript:sort_data(\"$elementHandle\");return false;'>
+	return "
+		<div class='sort-link-wrapper'>
+			<a href='' alt='" . htmlspecialchars($title) . "' title='" . htmlspecialchars($title) . "' onclick='javascript:sort_data(\"$elementHandle\", event.shiftKey);return false;'>
 				<div>$clickableContent</div>
-				<div style='min-width:15px; padding-left:5px;' aria-hidden='true'>";
-
-					// if the element is the current sorting element, add an icon to show this
-					if($elementHandle == $sort) {
-						$iconClass = $order == "SORT_DESC" ? "fas fa-sort-amount-down" : "fas fa-sort-amount-up";
-						$clickableSortLink .= "<i class='$iconClass'></i>";
-					}
-
-				// close the markup
-				$clickableSortLink .= "
-				</div>
+				<div class='sort-link-icon' aria-hidden='true'>$icon</div>
 			</a>
 		</div>";
-
-	return $clickableSortLink;
-}
-
-/**
- * Gets the aria sort value for the current element handle
- * @param string elementHandle - handle of the element being checkedAdd commentMore actions
- * @return string Returns the aria sort value
- */
-function getAriaSort($elementHandle) {
-	$sort = isset($_POST['sort']) ? $_POST['sort'] : null;
-	$order = isset($_POST['order']) ? $_POST['order'] : null;
-
-	if ($sort == $elementHandle) {
-		if ($order == 'SORT_ASC') {
-			return 'ascending';
-		}
-		if ($order == 'SORT_DESC') {
-			return 'descending';
-		}
-	}
-	return 'none';
 }
 
 /**

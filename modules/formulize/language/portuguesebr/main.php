@@ -406,6 +406,7 @@ define("_formulize_DE_CANCELCALCS", "Cancelar cálculos");
 define("_formulize_DE_SHOWLIST", "Alternar para entradas");
 define("_formulize_DE_HIDELIST", "Alternar para cálculos");
 define("_formulize_DE_SORTTHISCOL", "Clique para classificar as entradas por esta coluna");
+define("_formulize_DE_SHIFTSORT", "Shift+click to add as secondary sort");
 define("_formulize_DE_MOREINFO", "Clique para obter mais informações sobre esta coluna"); //GibaPhp 3.0
 define("_formulize_DE_MOREINFO_TITLE", "Mais informação sobre esta o elemento deste formulário"); //GibaPhp 3.0
 define("_formulize_DE_MOREINFO_QUESTION", "Texto para esta pergunta como ele aparece no formulário:"); //GibaPhp 3.0

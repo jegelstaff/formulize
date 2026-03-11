@@ -242,6 +242,25 @@ export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120
 }
 
 /**
+ * Wait for Working message to disappear and page to be loaded
+ */
+export async function waitForWorkingMessage(page) {
+	// first, make sure it is visible
+	page.waitForFunction(() => {
+		const element = document.getElementById('workingmessage');
+		return element && window.getComputedStyle(element).display === 'block';
+	}, { timeout: 10000 });
+	// then wait for it to disappear
+	await page.waitForFunction(() => {
+		const element = document.getElementById('workingmessage');
+		return !element || window.getComputedStyle(element).display === 'none';
+	}, { timeout: 120000 });
+	await page.waitForLoadState('networkidle');
+	// Ensure the data submitted error does not occurr
+	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
+}
+
+/**
  * Save changes on admin pages - handles both regular and popup saves
  * @param {*} page
  * @param {*} type
