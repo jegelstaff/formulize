@@ -105,7 +105,8 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 	if($elementObject->isLinked == false) {
 
 		// put the values into an array
-		$values = is_array($value) ? $value : (is_string($value) ? explode('*=+*:', trim($value, '*=+*:')) : array($value));
+		$value = substr($value, 0, 5) == '*=+*:' ? substr($value, 5) : $value; // if the value starts with the special separator for multiple values, then remove that before exploding it into an array (to avoid empty initial values in the array)
+		$values = is_array($value) ? $value : (is_string($value) ? explode('*=+*:', $value) : array($value));
 
 		// if there's OTHER text in the original passed in element value
 		// then replace whichever items in the array have the {OTHER|XX} pattern
