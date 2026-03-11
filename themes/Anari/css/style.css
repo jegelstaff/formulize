@@ -3215,7 +3215,7 @@ input[name='pickdiffgroup'] {
 
 .list-of-entries #formulize_addMultiButton,
 .list-of-entries #formulize_addButton {
-    width: 200px !important;
+    min-width: 200px !important;
 }
 
 
