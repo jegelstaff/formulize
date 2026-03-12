@@ -1006,12 +1006,13 @@ class formulizeDataHandler {
 		// note that array_flip means the map will be using the handles as keys, and so the intersect will exclude any values that are not valid handles for the form.
 		$element_values = array_intersect_key($element_values, array_flip($handleElementMap));
 
-    $clean_element_values = $element_values; // save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
-
 		// don't write things that are unchanged from their current state in the database
+		// and setup an array to save a clean copy of the original values before the escaping for writing to DB, so we can use these later in "on after save"
+    $clean_element_values = array();
 		foreach($element_values as $evHandle=>$thisElementValue) {
-			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
 			$thisElementValue = correctStringIntFloatTypes($thisElementValue);
+			$clean_element_values[$evHandle] = $thisElementValue; // set the clean values to reflect any changes we made to the values for comparison purposes
+			$thisElementValue = $thisElementValue === "{WRITEASNULL}" ? NULL : $thisElementValue;
 			if(array_key_exists($evHandle, $existing_values) AND $existing_values[$evHandle] === $thisElementValue) {
 				unset($element_values[$evHandle]);
 			}
@@ -1040,13 +1041,18 @@ class formulizeDataHandler {
 			// update entry metadata
 			$element_values["`mod_datetime`"]   = "NOW()";
 			$element_values["`mod_uid`"]        = $mod_uid;
+			// setting the mod_datetime in clean_element_values is not possible atm because NOW() gets resolved by the DB, so we would have to lookup the post-write value to get the correct datetime!
+			// if/when we move to declaring the mod-datetime as a UTC value, in PHP, and writing that, then we could do this
+			$clean_element_values['mod_uid'] = $mod_uid;
 		}
 
 		// prepare query to write a new record
 		if ($entry_id == "new") {
 			// set metadata for new record
 			$element_values["`creation_datetime`"]  = "NOW()";
-			$element_values["`creation_uid`"]       = intval($creation_uid);
+			$element_values["`creation_uid`"]       = $creation_uid;
+			// see comment above about mod_datetime, same issue for creation_datetime.
+			$clean_element_values['creation_uid'] = $creation_uid;
 			if($uid==0) {
 				foreach($_SESSION as $sessionVariable=>$value) {
 					if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
