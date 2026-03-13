@@ -440,10 +440,10 @@ function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $el
 		$entryData = $cachedEntries[$form_id][$entry_id];
 	}
 
-	$filterElements = $elementFilterSettings[0];
-	$filterOps = $elementFilterSettings[1];
-	$filterTerms = $elementFilterSettings[2];
-	$filterTypes = $elementFilterSettings[3];
+	$filterElements = array_map('undoAllHTMLChars', $elementFilterSettings[0]);
+	$filterOps = array_map('undoAllHTMLChars', $elementFilterSettings[1]);
+	$filterTerms = array_map('undoAllHTMLChars', $elementFilterSettings[2]);
+	$filterTypes = array_map('undoAllHTMLChars', $elementFilterSettings[3]);
 
 	// find the filter indexes for 'match all' and 'match one or more'
 	$filterElementsAll = array();
