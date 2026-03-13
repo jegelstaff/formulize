@@ -8986,6 +8986,7 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 
 			}
 		}
+		$entryDescriptor = formulize_handleRandomAndDateText($entryDescriptor);
 		$xoopsTpl->assign('xoops_pagetitle', $entryDescriptor);
 	}
 }
