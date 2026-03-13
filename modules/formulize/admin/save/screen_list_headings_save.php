@@ -62,6 +62,8 @@ if($screens['hiddencolumns']=="") {
 }
 
 $screen->setVar('useheadings',(array_key_exists('useheadings',$screens))?$screens['useheadings']:0);
+$screen->setVar('usenumberofentries',(array_key_exists('usenumberofentries',$screens))?$screens['usenumberofentries']:1);
+$screen->setVar('usetogglerepeatdata',(array_key_exists('usetogglerepeatdata',$screens))?$screens['usetogglerepeatdata']:1);
 $screen->setVar('repeatheaders',$screens['repeatheaders']);
 $screen->setVar('usesearchcalcmsgs',$screens['usesearchcalcmsgs']);
 $screen->setVar('usesearch',(array_key_exists('usesearch',$screens))?$screens['usesearch']:0);

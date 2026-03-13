@@ -26,6 +26,26 @@
     </div>
 		<br><hr><br>
     <div class="form-item">
+      <label for="screens-usenumberofentries"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USENUMBEROFENTRIES}></label>
+			<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usenumberofentries" name="screens-usenumberofentries"<{if $content.usenumberofentries eq 1 or $content.usenumberofentries eq ""}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usenumberofentries" name="screens-usenumberofentries"<{if $content.usenumberofentries eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+    </div>
+		<br><hr><br>
+    <div class="form-item">
+      <label for="screens-usetogglerepeatdata"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_USETOGGLEREPEATDATA}></label>
+			<div class="form-radios">
+			  <label for="1"><input type="radio" id="screens-usetogglerepeatdata" name="screens-usetogglerepeatdata"<{if $content.usetogglerepeatdata eq 1 or $content.usetogglerepeatdata eq ""}> checked="checked"<{/if}> value="1"/><{$smarty.const._YES}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="0"><input type="radio" id="screens-usetogglerepeatdata" name="screens-usetogglerepeatdata"<{if $content.usetogglerepeatdata eq 0}> checked="checked"<{/if}> value="0"/><{$smarty.const._NO}></label>
+		  </div>
+    </div>
+		<br><hr><br>
+    <div class="form-item">
       <label for="screens-repeatheaders"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS}></label>
       <input type="text" id="screens-repeatheaders" name="screens-repeatheaders" value="<{$content.repeatheaders}>" size="2" maxlength="2"/>
       <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS}></div>

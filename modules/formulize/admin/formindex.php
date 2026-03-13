@@ -100,10 +100,10 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_saved_views';
-    $checkThisField = 'sv_sort';
-    $checkThisProperty = 'Type';
-    $checkPropertyForValue = 'text';
+    $checkThisTable = 'formulize_screen_listofentries';
+    $checkThisField = 'usenumberofentries';
+    $checkThisProperty = '';
+    $checkPropertyForValue = '';
 
     /*
     * ====================================== */
@@ -522,6 +522,8 @@ function patch40() {
 				$sql['add_usechangeowner'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usechangeowner` varchar(255) NOT NULL default ''";
 			$sql['sv_sort_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_sort` `sv_sort` text NULL default NULL";
 			$sql['sv_order_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_order` `sv_order` text NULL default NULL";
+			$sql['add_usenumberofentries'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usenumberofentries` tinyint(1) NOT NULL default 1";
+			$sql['add_usetogglerepeatdata'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usetogglerepeatdata` tinyint(1) NOT NULL default 1";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -670,6 +672,8 @@ function patch40() {
 										print "Dynamic defaults already added. result: OK<br>";
 								} elseif($key === "add_usechangeowner") {
 										print "Change owner option for list screens already added. result: OK<br>";
+								} elseif($key === "add_usenumberofentries" OR $key === "add_usetogglerepeatdata") {
+										print "Number of entries / toggle repeat data options for list screens already added. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

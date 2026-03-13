@@ -186,6 +186,8 @@ CREATE TABLE `formulize_screen_listofentries` (
   `usedeleteview` varchar(255) NOT NULL default '',
 	`usechangeowner` varchar(255) NOT NULL default '',
   `useheadings` tinyint(1) NOT NULL,
+  `usenumberofentries` tinyint(1) NOT NULL default 1,
+  `usetogglerepeatdata` tinyint(1) NOT NULL default 1,
   `usesearch` tinyint(1) NOT NULL,
   `usecheckboxes` tinyint(1) NOT NULL,
   `useviewentrylinks` tinyint(1) NOT NULL,

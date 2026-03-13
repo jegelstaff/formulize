@@ -756,6 +756,8 @@ define("_AM_FORMULIZE_SCREEN_LOE_USESCROLLBOX", "Should the list of entries be c
 define("_AM_FORMULIZE_SCREEN_LOE_USESEARCHCALCMSGS", "Should the Modify/Cancel/View Entries buttons appear at the top of the list when 'Calculations' are active?");
 define("_AM_FORMULIZE_SCREEN_LOE_USEHEADINGS", "Should headings appear at the top of each column?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_USEHEADINGS", "Without headings at the top of columns, no one will be able to sort the entries in the view.");
+define("_AM_FORMULIZE_SCREEN_LOE_USENUMBEROFENTRIES", "Show the entry count at the bottom of the list (e.g. 'Showing entries 1 to 10 of 55')");
+define("_AM_FORMULIZE_SCREEN_LOE_USETOGGLEREPEATDATA", "Show the 'Hide repeating data' switch?");
 define("_AM_FORMULIZE_SCREEN_LOE_REPEATHEADERS", "If you are using headings, how often should they repeat within the list of entries?");
 define("_AM_FORMULIZE_SCREEN_LOE_DESC_REPEATHEADERS", "Repeating the headings makes it easier for users to know what column they are looking at when they scroll through the list.  Set to '0' to have headings only at the top of the list.");
 define("_AM_FORMULIZE_SCREEN_LOE_ENTRIESPERPAGE", "How many entries should appear on each page of the list?");

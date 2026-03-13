@@ -234,6 +234,8 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // headings data
   $headings = array();
   $headings['useheadings'] = $screen->getVar('useheadings');
+  $headings['usenumberofentries'] = $screen->getVar('usenumberofentries');
+  $headings['usetogglerepeatdata'] = $screen->getVar('usetogglerepeatdata');
   $headings['repeatheaders'] = $screen->getVar('repeatheaders');
   $headings['usesearchcalcmsgs'] = $screen->getVar('usesearchcalcmsgs');
   $headings['usesearch'] = $screen->getVar('usesearch');
