@@ -1559,7 +1559,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$currentViewName = $settings['loadviewname'];
 
 	// variables used in the default template...
-	$buttonCodeArray['title'] = trans($title);
+	$buttonCodeArray['title'] = formulize_handleRandomAndDateText(trans($title));
 	$buttonCodeArray['modifyScreenLink'] = $buttonCodeArray['modifyScreenLink'];
 	$buttonCodeArray['autoLoadedView'] = $loadview ? $loadviewname : '';
 	$buttonCodeArray['lockControls'] = $lockcontrols;
