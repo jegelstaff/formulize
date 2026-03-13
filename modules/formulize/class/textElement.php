@@ -419,6 +419,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 			AND $associatedElementMatchingText = $this->getAssociatedElementMatchingText($value, $ele_value[$this->associatedElementKey], $textWidth)) {
 				return $associatedElementMatchingText;
 		}
+		$value = formulize_handleRandomAndDateText($value);
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
