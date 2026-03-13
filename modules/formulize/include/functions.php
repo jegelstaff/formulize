@@ -8423,7 +8423,7 @@ function determineDoneDestinationFromURL($screen = false) {
 	$alternateURLForSid = $screen ? $screen->getVar('rewriteruleAddress') : false;
 	$doneDestHasSid = $screen ? strstr($done_dest, 'sid='.$screen->getVar('sid')) : false;
 	$doneDestHasSid = $doneDestHasSid ? $doneDestHasSid : ($alternateURLForSid AND strstr($done_dest, $alternateURLForSid));
-	if($screen AND $doneDestHasSid) {
+	if($screen AND ($doneDestHasSid OR strstr($done_dest, 'fid='.$screen->getVar('fid')))) {
 		// if this rewrite address is associated with another screen, go there... (will prefer lists when no entry identifier passed to this function, so almost certainly an alternate screen id will be of a list screen)
 		$doneScreenId = formulize_getSidFromRewriteAddress($alternateURLForSid);
 		if($doneScreenId AND $screen->getVar('sid') != $doneScreenId) {
