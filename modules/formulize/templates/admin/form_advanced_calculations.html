@@ -40,7 +40,7 @@
 
     <fieldset>
 			<legend>Enable / Disable Entry Editing</legend>
-			<p>This special procedure allows for a custom condition to be set to decide whether a user can edit an entry or not. Variables will be available in the code: $entry_id can be used to identify an entry, $user_id for identifying the logged in user, $form_id to indicate the form, and $allow_editing (true or false) to determine if the user can make changes or not. Do not include a return value after the code: the value of $allow_editing will be returned. </p><br />
+			<p>This special procedure allows for a custom condition to be set to decide whether a user can edit an entry or not. Variables will be available in the code: $entry_id can be used to identify an entry, $user_id for identifying the logged in user, $form_id to indicate the form, and $allow_editing (true or false) indicating if the user would by default be able to make changes or not. Do not include a return value in the code, instead modify $allow_editing if necessary. The value of $allow_editing will be returned.</p><br />
 			<textarea id="forms-custom_edit_check" name="forms-custom_edit_check" class="code-textarea canValidate"><{$content.form_object->custom_edit_check|htmlspecialchars}>
 			</textarea><{* closing tag on a new line so the textarea has a blank line at the bottom *}>
 			<a name="elementhandles"></a>
