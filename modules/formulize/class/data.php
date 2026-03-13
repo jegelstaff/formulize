@@ -439,6 +439,9 @@ class formulizeDataHandler {
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
+		if($xoopsDB->getRowsNum($res)==0) {
+			return false;
+		}
 		$row = $xoopsDB->fetchRow($res);
 		return $row[0];
 	}
@@ -463,6 +466,9 @@ class formulizeDataHandler {
         $formObject = $form_handler->get($this->fid);
 		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE 1 $scopeFilter ORDER BY entry_id LIMIT 0,1"; // need where 1 so the AND at start of scopeFilter is syntactically sound
 		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		if($xoopsDB->getRowsNum($res)==0) {
 			return false;
 		}
 		$row = $xoopsDB->fetchRow($res);

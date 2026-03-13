@@ -165,17 +165,17 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	// this emphasizes how we need to standardize a lot of these interfaces with a real class system
 	if(!$entry AND $_POST['entry'.$fid]) {
 		$entry = intval($_POST['entry'.$fid]);
-    } elseif(!$entry AND $_POST['form_'.$fid.'_rendered_entry']) {
-        $entry = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
+  } elseif(!$entry AND $_POST['form_'.$fid.'_rendered_entry']) {
+    $entry = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
 	} elseif(!$entry) { // or check getSingle to see what the real entry is
 		$entry = $single_result['flag'] ? $single_result['entry'] : 0;
 	}
 
 	// formulize_newEntryIds is set when saving data
-	if((!$entry OR $entry == 'new') AND isset($GLOBALS['formulize_newEntryIds'][$fid]) AND !$removeEntryValue) {
+	if((!$entry OR $entry == 'new' OR $entry == 'proxy') AND isset($GLOBALS['formulize_newEntryIds'][$fid]) AND !$removeEntryValue) {
 		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
 	} elseif(!$entry) {
-        $entry = 'new';
+    $entry = 'new';
 	}
 
 	$owner = getEntryOwner($entry, $fid);

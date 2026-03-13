@@ -1904,8 +1904,12 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 // add the proxy list to a form
 function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entry_id="") {
 
+	global $xoopsUser;
+	$data_handler = new formulizeDataHandler($fid);
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$startOfficeUseOnlyHidden = true;
+
 	if($entry_id AND $entry_id != 'new') {
-		$data_handler = new formulizeDataHandler($fid);
 		list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
 		$entryOwner = $creation_uid;
 		$member_handler = xoops_gethandler('member');
@@ -1919,29 +1923,45 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 	} else {
 		$proxylist = new XoopsFormSelect(_AM_SELECT_PROXY, 'proxyuser', 0, 5, TRUE); // made multi May 3 05
 		$proxylist->addOption('noproxy', _formulize_PICKAPROXY);
+		$entryOwner = null;
+		$entryOwnerName = null;
+		// check if this is a single entry form, and if so, if the user has an entry already, in which case we show the proxy list by default since they have to pick someone as the owner when saving the form
+		$formObject = $form_handler->get($fid);
+		if($xoopsUser) {
+			if(($formObject->getVar('single') == "user" AND $data_handler->findFirstEntryForUsers($xoopsUser))
+				OR ($formObject->getVar('single') == "group" AND $data_handler->findFirstEntryForGroups($xoopsUser->getGroups()))) {
+				$startOfficeUseOnlyHidden = false;
+			}
+		}
 	}
 
 	$proxylist->addOptionArray(getListOfCandidateOwnersForFormEntries($fid));
-
 	if(!$entry_id) {
 		$proxylist->setValue('noproxy');
 	} else {
 		$proxylist->setValue('nochange');
 	}
 
+	$proxylist->setClass("no-print");
+	$proxylist->setClass("formulize-office-use-only-content");
+	$proxylist->setExtra(" onchange='javascript:formulizechanged=1' ");
+	if($startOfficeUseOnlyHidden == true) {
+		$proxylist->setClass("formulize-office-use-only-start-hidden");
+	}
+
 	$officeUseOnlyShow = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_SHOW." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-show');
 	$officeUseOnlyShow->setClass("no-print");
 	$officeUseOnlyShow->setClass("formulize-office-use-only-toggle");
+	if($startOfficeUseOnlyHidden == false) {
+		$officeUseOnlyShow->setClass("formulize-office-use-only-start-hidden");
+	}
 
 	$officeUseOnlyHide = new XoopsFormLabel("<input type='button' onclick='officeUseOnlyToggle();' value='"._formulize_HIDE." &#039;"._formulize_OFFICE_USE_ONLY."&#039;' />", "", 'office-use-only-hide');
 	$officeUseOnlyHide->setClass("no-print");
 	$officeUseOnlyHide->setClass("formulize-office-use-only-toggle");
-	$officeUseOnlyHide->setClass("formulize-office-use-only-start-hidden");
-
-	$proxylist->setClass("no-print");
-	$proxylist->setClass("formulize-office-use-only-content");
-	$proxylist->setClass("formulize-office-use-only-start-hidden");
-	$proxylist->setExtra(" onchange='javascript:formulizechanged=1' ");
+	if($startOfficeUseOnlyHidden == true) {
+		$officeUseOnlyHide->setClass("formulize-office-use-only-start-hidden");
+	}
 
 	$form->addElement($officeUseOnlyShow);
 	$form->addElement($officeUseOnlyHide);

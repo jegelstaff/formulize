@@ -372,7 +372,13 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('useviewentrylinks', 1);
 			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
 			// Buttons
-			$defaultListScreen->setVar('useaddupdate', ($formObject->getVar('singular') ? sprintf(_formulize_DE_ADDSINGULAR, $formObject->getVar('singular')) : _formulize_DE_ADDENTRY));
+			// ********* when users-groups is merged in, need to change this to use effectivesingle on the registered users group!!!
+			if($formObject->getVar('single') != 'group' AND $formObject->getVar('single') != 'user') {
+				$addUpdateText = ($formObject->getVar('singular') ? sprintf(_formulize_DE_ADDSINGULAR, $formObject->getVar('singular')) : _formulize_DE_ADDENTRY);
+			} else {
+				$addUpdateText = ($formObject->getVar('singular') ? sprintf(_formulize_DE_UPDATESINGULAR, $formObject->getVar('singular')) : _formulize_DE_UPDATEENTRY);
+			}
+			$defaultListScreen->setVar('useaddupdate', $addUpdateText);
 			$defaultListScreen->setVar('useaddmultiple', ''); // to set default text: ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
 			$defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
 			$defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
