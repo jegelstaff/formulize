@@ -450,6 +450,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 6 - FIGURE OUT WHICH VIEW WE NEED TO LOAD, IF ANY. BESIDES WHAT WE DETERMINE HERE, $_POST['currentview'] COULD CONTAIN A VIEW THAT WE NEED TO LOAD LATER.
 	 */
 
+	// first, figure out if we're on a subsequent page load after the initial loading of a list
+	// currentview is always set in lists, and value is perpetuated through the pageloads afterwards, back and forth to and from forms
+	// If the user first landed on a form, there will be no currentview value yet, so we must then treat this as an initial loading
+	$subsequentPageloadAfterInitialLoading = (isset($_POST['currentview']) AND $_POST['currentview'] != "") ? true : false;
+
 	$currentView = "";
 	if($screen) {
 		$loadview = is_numeric($loadview) ? $loadview : $screen->getVar('defaultview'); // flag the screen default for loading if no specific view has been requested
@@ -465,7 +470,6 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// set currentView to group if they have groupscope permission (overridden below by value sent from form)
 	// override with loadview if that is specified and still set
 
-	$subsequentPageloadAfterInitialLoading = isset($_POST['currentview']) ? true : false;
 	if(isset($loadview) AND $loadview AND ((
 		(!isset($_POST['currentview']) OR !$_POST['currentview'])
 		AND (!isset($_POST['advscope']) OR $_POST['advscope'] == ""))
