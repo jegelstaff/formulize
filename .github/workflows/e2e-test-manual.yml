@@ -1,6 +1,18 @@
 name: Manual E2E Test Suite
 
 on:
+  workflow_call:
+    inputs:
+      ref:
+        description: What to checkout
+        required: true
+        type: string
+      test_filter:
+        default: ''
+        type: string
+      record_video:
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       branch:
@@ -8,19 +20,14 @@ on:
         required: true
         default: 'master'
         type: string
-      skip_docker_build:
-        description: 'Skip Docker rebuild (use existing containers)'
-        required: false
-        default: false
-        type: boolean
       test_filter:
         description: 'Run specific tests (optional - use Playwright test filters)'
-        required: false
         default: ''
         type: string
-
-env:
-  GITHUB_TOKEN: ${{ github.token }}
+      record_video:
+        description: 'Record page video as the tests are run'
+        default: false
+        type: boolean
 
 jobs:
   manual-e2e-test-run:
@@ -30,7 +37,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.branch }}
+        ref: ${{ inputs.ref }}
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -39,53 +46,45 @@ jobs:
         cache: 'npm'
         cache-dependency-path: tests/e2e/package-lock.json
 
-    - name: Create .htaccess file in project root
-      run: |
-        cat > .htaccess << 'EOF'
-        RewriteEngine On
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-l
-        RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]
-        EOF
-
     - name: Set file/directory permissions
       run: |
         chmod 777 trust uploads modules templates_c cache tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
 
-    - name: Stop existing containers (if any)
-      run: |
-        docker compose down --remove-orphans || true
-
     - name: Run Docker Compose up
       run: |
-        if [ "${{ inputs.skip_docker_build }}" == "false" ]; then
-          echo "Building and starting containers..."
-          docker compose up -d --build
-        else
-          echo "Starting existing containers..."
-          docker compose up -d
-        fi
-
-    - name: Wait for MySQL
-      uses: smurfpandey/wait-for-it@main
-      with:
-        host: localhost
-        port: 3306
-        timeout: 60
+        docker compose  -f docker-compose.yaml -f <(cat <<EOF
+        services:
+          mariadb:
+            volumes:
+              - /dev/shm/db:/var/lib/mysql
+        EOF
+        ) up -d
 
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e
 
+    - name: Get Used Playwright version
+      id: playwright-version
+      run: |
+        node -e "console.log('x=' + JSON.parse(require('fs').readFileSync('package-lock.json', 'utf8')).packages['node_modules/@playwright/test'].version);" >> $GITHUB_OUTPUT
+      working-directory: tests/e2e
+
+    - name: Get Playwright browser from cache
+      id: cache-playwright
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.x }}
+
     - name: Install Playwright Browsers
+      if: ${{ steps.cache-playwright.outputs.cache-hit != 'true' }}
       run: npx playwright install chromium --with-deps
       working-directory: tests/e2e
 
     - name: Run Playwright setup tests (sequential)
       env:
-        E2E_TEST_ADMIN_USERNAME: "admin"
-        E2E_TEST_ADMIN_PASSWORD: "password"
+        E2E_TEST_VIDEO: ${{ case(inputs.record_video, 'on', 'off') }}
       run: |
         if [ -n "${{ inputs.test_filter }}" ]; then
           echo "Running filtered tests: ${{ inputs.test_filter }}"
@@ -98,8 +97,7 @@ jobs:
     - name: Run Playwright validation tests (concurrent)
       if: ${{ !inputs.test_filter }}
       env:
-        E2E_TEST_ADMIN_USERNAME: "admin"
-        E2E_TEST_ADMIN_PASSWORD: "password"
+        E2E_TEST_VIDEO: ${{ case(inputs.record_video, 'on', 'off') }}
       run: npx playwright test formulize-core/validate --workers=4 --fully-parallel
       working-directory: tests/e2e
 
