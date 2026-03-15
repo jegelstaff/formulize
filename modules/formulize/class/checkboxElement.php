@@ -606,7 +606,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 		}
 
 		if($isDisabled) {
-			$renderedElement = implode(", ", $disabledOutputText);
+			$renderedElement = implode("<br>", $disabledOutputText);
 		} else {
 			$renderedElement = $form_ele1->render();
 		}
