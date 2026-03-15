@@ -97,6 +97,7 @@ class formulizeElementRenderer{
 		// ele_desc added June 6 2006 -- jwe
 		$ele_desc = $this->_ele->getVar('ele_desc', "f"); // the f causes no stupid reformatting by the ICMS core to take place
 		$helpText = $ele_desc != "" ? $this->formulize_replaceReferencesAndVariables($myts->makeClickable(html_entity_decode($ele_desc,ENT_QUOTES)), $entry_id, $id_form, $renderedElementMarkupName, $screen) : "";
+		$helpText = $this->evalPHPStrings($helpText);
 
 		// determine the entry owner
 		if($entry_id != "new") {
@@ -423,6 +424,25 @@ class formulizeElementRenderer{
 		$prevUI->addOptionArray($previousOptions);
 		$prevUI->setExtra($javascript);
 		return $prevUI;
+	}
+
+	/**
+	 * Look for <?php ?> in a string and eval the PHP code within it
+	 * @param $string - the string we're resolving
+	 * @return string - the resolved string
+	 */
+	function evalPHPStrings($string) {
+		if(strstr($string, "<?php") !== false AND strstr($string, "?>")) {
+			$phpCode = substr($string, strpos($string, "<?php")+5, strpos($string, "?>") - strpos($string, "<?php") - 5);
+			$evalResult = eval($phpCode);
+			if($evalResult === false) {
+				$evalResult = "There is an error in your PHP code";
+			}
+			$string = str_replace("<?php".$phpCode."?>", $evalResult, $string);
+		} else {
+			return $string;
+		}
+		return $string;
 	}
 
 }
