@@ -298,6 +298,11 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+		$firstChar = substr($value, 0, 1);
+		$operators = array("=", "!", ">", "<");
+		if(!in_array($firstChar, $operators)) {
+			$value = date('Y-m-d', strtotime($value));
+		}
 		return $value;
 	}
 

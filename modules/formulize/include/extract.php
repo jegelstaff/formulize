@@ -1825,6 +1825,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				$formFieldFilterMap['creator_email'] = true;
 				$newWhereClause = "usertable.email" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
 				$mappedForm = $fid;
+			} elseif($ifParts[0] == "creation_datetime" OR $ifParts[0] == "mod_datetime") {
+				$likeOperators = array('LIKE', 'NOT LIKE');
+				if(in_array($operator, $likeOperators)) {
+					$value = date('Y-m-d', strtotime($value)); // in case user typed a readable date, switch it to the canonical DB format
+				}
 			} elseif ($ifParts[0] == "owner_groups") {
 				// insert a subquery only if there's a search on the field. Don't want to add expensive joins, etc, to every query
 				// search term is picked up at the end of building the result set if necessary, when there's a single query to generate the group names for this field
