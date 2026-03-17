@@ -2239,7 +2239,8 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 	// get the value of this element for this entry as stored in the DB, if any
 	$value = "";
 	$handle = $element->getVar('ele_handle');
-	$key = array_search($handle, $prevEntry['handles'], true); // strict search to avoid problems comparing numbers to numbers plus text, ie: "1669" and "1669_copy"
+	$handle = is_numeric($handle) ? intval($handle) : $handle; // if the handle is numeric, make sure it's an integer, otherwise we can have problems with searching for the handle in the prevEntry array, because of things like "1669" and "1669_copy" being confused with each other
+	$key = array_search($handle, $prevEntry['handles'], true); // true means strict type matching search, which works because we've forced numeric handles to be numbers
 	if($key !== false) {
 		$value = $prevEntry['values'][$key];
 	}
