@@ -72,20 +72,6 @@ class formulizeSubformFullFormElementHandler extends formulizeSubformListingsEle
 		return new formulizeSubformFullFormElement();
 	}
 
-	/**
-	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
-	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
-	 * properties are the contents of the ele_value property on the object
-	 * @param array $properties The properties to validate
-	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
-	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
-	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
-	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		// subform has no stated public properties yet!
-		return ['ele_value' => array() ];
-	}
-
 	public function getDefaultEleValue() {
 		$ele_value = parent::getDefaultEleValue();
 		$ele_value[3] = 0; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2- edit entries, and open new entries, in a modal, 3 - edit entries by modal (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
