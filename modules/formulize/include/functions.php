@@ -8195,7 +8195,8 @@ function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
 	$timestamp = $timestamp ? $timestamp : time();
 	$userTimeZone = formulize_getIANATimezone($userObject);
 	$serverTimeZone = formulize_getIANATimezone($xoopsConfig['server_TZ']);
-	$timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$xoopsConfig['server_TZ']); // need to construct new timestamp with the tz offset included, and @ sign in front so PHP dateTime will understand it - necessary to correct for prior conversions to UTC that may have been involved in the production of the timestamps from strings with strtotime
+	$serverTZPlusMinus = intval($xoopsConfig['server_TZ']) >= 0 ? "+" : "-";
+	$timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$serverTZPlusMinus.intval($xoopsConfig['server_TZ'])); // need to construct new timestamp with the tz offset included, and @ sign in front so PHP dateTime will understand it - necessary to correct for prior conversions to UTC that may have been involved in the production of the timestamps from strings with strtotime
 	$dt = new DateTime($timestamp);
 	$dt->setTimezone(new DateTimeZone($serverTimeZone));
 	$serverOffset = $dt->getOffset();
