@@ -290,6 +290,16 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 						}
 					}
 				}
+
+				// login name cannot be empty, set to email if available, or timestamp to attempt to guarantee uniqueness
+				if($userObject->getVar('login_name') == '') {
+					$altLoginName = $userObject->getVar('email');
+					if(!$altLoginName) {
+						$altLoginName = microtime(true);
+					}
+					$userObject->setVar('login_name', $altLoginName);
+				}
+
 				// update base user object
 				// and update profile record (extensions of user object metadata, used for 2FA and timezone)
 				if($member_handler->insertUser($userObject)) {
