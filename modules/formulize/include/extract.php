@@ -720,7 +720,19 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
 					if (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
-						$existsJoinText .= $newexistsJoinText . $newJoinText;
+						// If this linked form is entries_are_users and any filter references its EAU table aliases,
+						// inject those joins inside the EXISTS subquery (before the WHERE).
+						$existsEauJoins = "";
+						if (isset($eauLinkedJoinTextIndex[$linkedFid])) {
+							$linkedFilterContent = implode(' ', $oneSideFilters[$linkedFid]);
+							$eauAlias = "f$formAliasId";
+							if (strpos($linkedFilterContent, "eau_usertable_{$eauAlias}") !== false ||
+								strpos($linkedFilterContent, "eau_profile_{$eauAlias}") !== false) {
+								$existsEauJoins = $eauLinkedJoinTextIndex[$linkedFid];
+							}
+						}
+						$existsOpener = ($existsJoinText ? " $andor " : "") . " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId $existsEauJoins WHERE ";
+						$existsJoinText .= $existsOpener . $newJoinText;
 						foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
 							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
 							$existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
@@ -891,7 +903,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// DO A PRELIMINARY QUERY TO COUNT THE NUMBER OF RESULTS IN THE DATASET, INDEPENDENT OF WHAT WE WILL QUERY TO GET THE ACTUAL DATA
 		$revisionTableYesNo = (!$frid and isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
 		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main ";
-		$countMasterResults .= "$userJoinText $eauAllJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
+		// Only include the main-form EAU join when the COUNT WHERE clause actually references those aliases.
+		// Linked-form EAU joins (eau_usertable_f0, etc.) are never valid here since linked tables are not in scope.
+		$countWhereContent = $mainFormWhereClause . $scopeFilter . $otherPerGroupFilterWhereClause;
+		$eauCountJoinText = (strpos($countWhereContent, 'eau_usertable_main') !== false || strpos($countWhereContent, 'eau_profile_main') !== false) ? $eauMainJoinText : "";
+		$countMasterResults .= "$userJoinText $eauCountJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
 		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 		if (isset($GLOBALS['formulize_getCountForPageNumbers'])) {
