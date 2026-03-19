@@ -1109,30 +1109,38 @@ class formulizeElementsHandler {
         return false;
     }
 
-    // determine if the element is displayed for the specified user
-    function isElementVisibleForUser($elementIdOrObject, $userIdOrObject=0) {
-        if(is_object($elementIdOrObject)) {
-            $elementObject = $elementIdOrObject;
-        } else {
-            $elementObject = $this->get($elementIdOrObject);
-        }
-        $ele_display = $elementObject->getVar('ele_display');
-        if($ele_display == 1) {
-			return true;
-		} elseif(!is_numeric($ele_display)) {
-            if(is_object($userIdOrObject)) {
-                $userObject = $userIdOrObject;
-            } elseif($userIdOrObject) {
-                $memberHandler = xoops_gethandler('member');
-                $userObject = $memberHandler->getUser($userIdOrObject);
-            }
-            $groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-            $display_groups = explode(",", $ele_display);
-            if(array_intersect($groups, $display_groups)) {
-                return true;
+    /**
+		 * Determine if the element is displayed for the specified user
+		 * @param int|string|object $elementIdentifier - The element id, handle, or object to check
+		 * @param int|object $userIdOrObject - Optional. The user id or user object to validate the element for. If not specified, the active xoopsUser will be used instead.
+		 * @return bool Returns true if the user can see the element, false otherwise. Throws exception if the specified element or user does not exist.
+		 */
+    function isElementVisibleForUser($elementIdentifier, $userIdOrObject=0) {
+			if(!$elementObject = _getElementObject($elementIdentifier)) {
+				throw new Exception("Invalid element identifier passed to isElementVisibleForUser");
 			}
-		}
-        return false;
+      $ele_display = $elementObject->getVar('ele_display');
+      if($ele_display == 1) {
+				return true;
+			}	elseif(!is_numeric($ele_display)) {
+				if(is_object($userIdOrObject)) {
+						$userObject = $userIdOrObject;
+				} elseif($userIdOrObject) {
+						$memberHandler = xoops_gethandler('member');
+						if(!$userObject = $memberHandler->getUser($userIdOrObject)) {
+							throw new Exception("Could not retrieve user object for id ".$userIdOrObject." when checking element display settings.");
+						}
+				} else {
+					global $xoopsUser;
+					$userObject = $xoopsUser;
+				}
+				$groups = $userObject ? $userObject->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+				$display_groups = explode(",", $ele_display);
+				if(array_intersect($groups, $display_groups)) {
+					return true;
+				}
+			}
+      return false;
     }
 
 	// overridden in child classes

@@ -828,15 +828,15 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		$headingDescriptions = array();
 		$headerq = q("SELECT ele_caption, ele_colhead, ele_desc, ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id IN (" . implode(", ", $customElements). ") ORDER BY ele_order");
 		foreach($headerq as $thisHeaderResult) {
-            if($element_handler->isElementVisibleForUser($thisHeaderResult['ele_id'], $xoopsUser)) {
-			$elementsToDraw[] = $thisHeaderResult['ele_id'];
-			$headingDescriptions[]  = $thisHeaderResult['ele_desc'] ? $thisHeaderResult['ele_desc'] : "";
-			if($captionsForHeadings) {
-				$headersToDraw[] = $thisHeaderResult['ele_caption'];
-			} else {
-				$headersToDraw[] = $thisHeaderResult['ele_colhead'] ? $thisHeaderResult['ele_colhead'] : $thisHeaderResult['ele_caption'];
+      if($element_handler->isElementVisibleForUser($thisHeaderResult['ele_id'])) {
+				$elementsToDraw[] = $thisHeaderResult['ele_id'];
+				$headingDescriptions[]  = $thisHeaderResult['ele_desc'] ? $thisHeaderResult['ele_desc'] : "";
+				if($captionsForHeadings) {
+					$headersToDraw[] = $thisHeaderResult['ele_caption'];
+				} else {
+					$headersToDraw[] = $thisHeaderResult['ele_colhead'] ? $thisHeaderResult['ele_colhead'] : $thisHeaderResult['ele_caption'];
+				}
 			}
-		}
 		}
 	} else {
 		$subHeaderList = getHeaderList($subform_id);
