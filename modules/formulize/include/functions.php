@@ -6678,7 +6678,42 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
+        // Add user account elements if this is an entries_are_users form, excluding password and non-visible elements
+        $userAccountElementIds = $formObject->getVar('userAccountElements');
+        if(is_array($userAccountElementIds) && count($userAccountElementIds) > 0) {
+            $elementCaptions = $formObject->getVar('elementCaptions');
+            $elementColheads = $formObject->getVar('elementColheads');
+            $elementHandles  = $formObject->getVar('elementHandles');
+            $elementTypes    = $formObject->getVar('elementTypes');
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            global $xoopsUser;
+            $userAccountColsToAdd = array();
+            foreach($userAccountElementIds as $eleId) {
+                if($elementTypes[$eleId] == 'userAccountPassword') { continue; }
+                if(!$element_handler->isElementVisibleForUser($eleId)) { continue; }
+                $userAccountColsToAdd[] = array(
+                    'ele_id'      => $eleId,
+                    'ele_caption' => $elementCaptions[$eleId],
+                    'ele_colhead' => $elementColheads[$eleId],
+                    'ele_handle'  => $elementHandles[$eleId],
+                );
+            }
+            // Remove any user account handles already in $columns (UID has hasData=true so it appears there)
+            $columns = array_values(array_filter($columns, function($col) {
+                return strpos($col['ele_handle'], 'formulize_user_account_') !== 0;
+            }));
+            // Merge and sort by position in the form's canonical element order
+            $columns = array_merge($userAccountColsToAdd, $columns);
+            $elementIdOrder = array_keys($formObject->getVar('elements'));
+            usort($columns, function($a, $b) use ($elementIdOrder) {
+                $posA = array_search($a['ele_id'], $elementIdOrder);
+                $posB = array_search($b['ele_id'], $elementIdOrder);
+                if($posA === false) { $posA = PHP_INT_MAX; }
+                if($posB === false) { $posB = PHP_INT_MAX; }
+                return $posA - $posB;
+            });
+        }
+				if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
