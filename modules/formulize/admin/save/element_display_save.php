@@ -60,7 +60,7 @@ if(!$gperm_handler->checkRight("edit_form", $fid, $groups, $mid)) {
   return;
 }
 
-if($element->isSystemElement == false) {
+if($element->isSystemElement == false OR $element->isUserAccountElement == true) {
 
 	// do not need to serialize this when assigning, since the elements class calls cleanvars from the xoopsobject on all properties prior to insertion, and that intelligently serializes properties that have been declared as arrays
 	list($parsedFilterSettings, $filterSettingsChanged) = parseSubmittedConditions('elementfilter', 'display-conditionsdelete');

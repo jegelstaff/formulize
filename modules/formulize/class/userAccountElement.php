@@ -258,7 +258,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId)) {
 						$elementId = $accountElement->getVar('ele_id');
 						$userProperty = $accountElement->userProperty;
-						$value = $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId];
+						$value = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$elementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId] : '';
 						if($userProperty == 'pass') {
 							if($value === '') {
 								continue; // don't change password if no value entered
