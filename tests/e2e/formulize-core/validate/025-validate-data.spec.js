@@ -220,8 +220,7 @@ test.describe('Validate Data', () => {
 		await expect(page3.getByText('CE').nth(1)).toBeVisible();
 		await expect(page3.getByText('1993-08-10')).toBeVisible();
 		await expect(page3.getByText('7')).toBeVisible();
-		await expect(page3.getByText('Ancient History')).toBeVisible();
-		await expect(page3.getByText('Weapons')).toBeVisible();
+		await expect(page3.getByText('Ancient HistoryWeapons')).toBeVisible();
 		await expect(page3.getByText('Ancient Wonders')).toBeVisible();
 		await expect(page3.getByText('Heroic and Horrible Hand Weapons')).toBeVisible();
 	});
