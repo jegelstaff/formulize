@@ -18,6 +18,22 @@ on:
         required: false
         default: ''
         type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: 'What to checkout'
+        required: true
+        type: string
+      skip_docker_build:
+        description: 'Skip Docker rebuild (use existing containers)'
+        required: false
+        default: false
+        type: boolean
+      test_filter:
+        description: 'Run specific tests (optional - use Playwright test filters)'
+        required: false
+        default: ''
+        type: string
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
@@ -30,7 +46,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: ${{ inputs.branch }}
+        ref: ${{ inputs.branch || inputs.ref }}
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -38,16 +54,6 @@ jobs:
         node-version: 20
         cache: 'npm'
         cache-dependency-path: tests/e2e/package-lock.json
-
-    - name: Create .htaccess file in project root
-      run: |
-        cat > .htaccess << 'EOF'
-        RewriteEngine On
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-l
-        RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [L]
-        EOF
 
     - name: Set file/directory permissions
       run: |
@@ -67,13 +73,6 @@ jobs:
           docker compose up -d
         fi
 
-    - name: Wait for MySQL
-      uses: smurfpandey/wait-for-it@main
-      with:
-        host: localhost
-        port: 3306
-        timeout: 60
-
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e
@@ -83,9 +82,6 @@ jobs:
       working-directory: tests/e2e
 
     - name: Run Playwright setup tests (sequential)
-      env:
-        E2E_TEST_ADMIN_USERNAME: "admin"
-        E2E_TEST_ADMIN_PASSWORD: "password"
       run: |
         if [ -n "${{ inputs.test_filter }}" ]; then
           echo "Running filtered tests: ${{ inputs.test_filter }}"
@@ -97,9 +93,6 @@ jobs:
 
     - name: Run Playwright validation tests (concurrent)
       if: ${{ !inputs.test_filter }}
-      env:
-        E2E_TEST_ADMIN_USERNAME: "admin"
-        E2E_TEST_ADMIN_PASSWORD: "password"
       run: npx playwright test formulize-core/validate --workers=4 --fully-parallel
       working-directory: tests/e2e
 
