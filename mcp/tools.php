@@ -22,7 +22,7 @@ trait tools {
 			],
 			'list_forms' => [
 				'name' => 'list_forms',
-				'description' => 'List all forms in this Formulize instance',
+				'description' => 'List all forms in this Formulize instance. Formulize uses forms as the basic building blocks for data collection and management. Each form is an entity in the application. Get a list of forms with this tool. The list of forms includes the IDs of the forms which are required by other tools. This is a good tool to use early on, to get a list of the forms that are available and then use the get_form_details tool to get more detailed information about a specific form that you need to work with.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
@@ -30,7 +30,7 @@ trait tools {
 			],
 			'list_applications' => [
 				'name' => 'list_applications',
-				'description' => "List all the applications and the forms that are part of each one.",
+				'description' => "List all the applications and the forms that are part of each one. This tool provides an overview of the organizational structure of the forms within the system, helping to understand how forms are grouped together for different purposes. The same form can exist in multiple applications.",
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => (object)[]
