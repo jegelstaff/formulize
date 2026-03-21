@@ -14,6 +14,11 @@ RewriteRule ^(.*)$ /modules/formulize/index.php?formulizeRewriteRuleAddress=$1 [
   const webrootPath = path.join(__dirname, '../../');
   const htaccessPath = path.join(webrootPath, '.htaccess');
 
-  fs.writeFileSync(htaccessPath, htaccessContent.trim());
-  console.log('.htaccess file created at:', htaccessPath);
+  try {
+    fs.writeFileSync(htaccessPath, htaccessContent.trim());
+    console.log('.htaccess file created successfully at:', htaccessPath);
+  } catch (error) {
+    console.error('.htaccess file creation failed at:', htaccessPath);
+    console.error(error);
+  }
 };

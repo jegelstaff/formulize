@@ -39,7 +39,7 @@ module.exports = defineConfig({
     trace: 'retain-on-failure',
 
 		/* Video */
-		video: 'on',
+		video: 'retain-on-failure',
 
 		/* Ignore HTTPS errors */
 		ignoreHTTPSErrors: true,
