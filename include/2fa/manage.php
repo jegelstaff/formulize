@@ -23,12 +23,85 @@ define('TFA_EMAIL', 2);
 define('TFA_SMS', 1);
 define('TFA_APP', 3);
 
+function tfa_formatPhone($phone) {
+	// TODO: handle international numbers, extensions, etc. For now just handle basic US 10-digit format and optional leading 1, and format as ###-###-#### or +1-###-###-#### for readability in the UI, but store only digits in the DB for matching and sending
+	// possibly take cue from user's timezone?
+	$d = preg_replace('/[^0-9]/', '', $phone);
+	if(strlen($d) == 10) {
+		return substr($d, 0, 3) . '-' . substr($d, 3, 3) . '-' . substr($d, 6);
+	} elseif(strlen($d) == 11 && $d[0] == '1') {
+		return '+1-' . substr($d, 1, 3) . '-' . substr($d, 4, 3) . '-' . substr($d, 7);
+	}
+	return $d;
+}
+
+/**
+ * Build the instruction + code-entry HTML shown inside a 2FA dialog panel.
+ * Handles all scenarios: turn_off, change_pass, twophase_confirm, turn_on.
+ * The caller is responsible for appending any hidden token inputs after this string.
+ *
+ * @param string      $scenario       'turn_off'|'change_pass'|'twophase_confirm'|'turn_on'
+ * @param string      $method         'app'|'texts'|'email'
+ * @param string|null $contactDisplay Formatted, already-HTML-escaped contact address (null for app)
+ * @param string      $codebox        HTML for the code input, e.g. "<br><br>Code: <input ...>"
+ * @param bool        $error          If true, prepend a bold red invalid-code banner
+ */
+function tfa_buildDialogMessage($scenario, $method, $contactDisplay, $codebox, $error = false) {
+	switch($scenario) {
+		case 'turn_off':
+			$msg = ($method == 'app') ? _US_TO_TURN_OFF_APP    : sprintf(_US_TO_TURN_OFF,     $contactDisplay);
+			break;
+		case 'change_pass':
+			$msg = ($method == 'app') ? _US_TO_CHANGE_PASS_APP : sprintf(_US_TO_CHANGE_PASS,  $contactDisplay);
+			break;
+		case 'twophase_confirm':
+			$msg = ($method == 'app') ? _US_TO_CONFIRM_CHANGE_APP : sprintf(_US_TO_CONFIRM_CHANGE, $contactDisplay);
+			break;
+		case 'turn_on':
+			$msg = ($method == 'texts') ? sprintf(_US_TURN_ON_PHONE, $contactDisplay) : sprintf(_US_TURN_ON_EMAIL, $contactDisplay);
+			break;
+		default:
+			$msg = '';
+	}
+	$msg .= $codebox;
+	if($error) {
+		$msg = "<span style='color:red;font-weight:bold;'>" . _US_2FA_INVALID_CODE . "</span><br><br>" . $msg;
+	}
+	return $msg;
+}
+
+function tfaDialogButtonStyles($buttonIds) {
+	$ids = (array)$buttonIds;
+	$selectors     = '#' . implode(', #', $ids);
+	$textSelectors = '#' . implode(' .ui-button-text, #', $ids) . ' .ui-button-text';
+	return "<style>
+$selectors {
+	background: var(--button-color, #0d7bbf) !important;
+	color: white !important;
+	font-weight: 600 !important;
+	font-size: 0.9rem !important;
+	line-height: 1.3 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 10px !important;
+	min-width: 200px !important;
+	box-shadow: 0px 4px 10px 0px rgba(16, 156, 241, 0.24) !important;
+	height: auto !important;
+	width: auto !important;
+}
+$textSelectors {
+	padding: 12px 30px !important;
+	line-height: 1.3 !important;
+}
+</style>";
+}
+
 function validateCode($code, $uid=false) {
     // check if the user has a code on file
     // if not and we ignore when DB is empty, return true
     // Otherwise, need the right code
     // clear code for this user, unless the user is using app method, then we must keep it for next time
-    global $xoopsUser, $xoopsDB;
+    global $xoopsUser, $xoopsDB, $icmsConfig;
     if(!$uid AND !$xoopsUser) {
         exit('No known user to check 2FA code for!');
     }
@@ -84,7 +157,7 @@ function generateCode($method, $uid) {
 }
 
 // returns any errors so they can be displayed
-function sendCode($method=null, $uid=false, $phone=null) {
+function sendCode($method=null, $uid=false, $phone_override=null, $email_override=null) {
     global $xoopsUser, $icmsConfig;
     if(!$uid AND !$xoopsUser) {
         exit('No known user to send 2FA code to!');
@@ -106,7 +179,13 @@ function sendCode($method=null, $uid=false, $phone=null) {
             $email = $userObject->getVar('email');
             $xoopsMailer = new icms_messaging_Handler();
             $xoopsMailer->useMail();
-            if(!$email AND $xoopsUser AND isset($_GET['email']) AND filter_var($_GET['email'], FILTER_VALIDATE_EMAIL)) {
+            if($email_override) {
+							if(filter_var($email_override, FILTER_VALIDATE_EMAIL)) {
+                $xoopsMailer->setToEmails($email_override);
+							} else {
+								throw new Exception('Invalid email address provided for 2FA code: ' . htmlspecialchars($email_override));
+							}
+            } elseif(!$email AND $xoopsUser AND isset($_GET['email']) AND filter_var($_GET['email'], FILTER_VALIDATE_EMAIL)) {
                 $xoopsMailer->setToEmails($_GET['email']);
             } else {
                 $xoopsMailer->setToUsers($userObject);
@@ -126,7 +205,7 @@ function sendCode($method=null, $uid=false, $phone=null) {
 						return false; // no errors
             break;
         case TFA_SMS:
-            $phone = $phone ? $phone : $profile->getVar('2faphone');
+            $phone = $phone_override ? $phone_override : $profile->getVar('2faphone');
 						// Use SMS handler directly
 						require_once ICMS_ROOT_PATH . '/libraries/icms/messaging/SmsHandler.php';
 						$smsHandler = new icms_messaging_SmsHandler();
@@ -199,7 +278,9 @@ function tfaLoginJS($id) {
 	$counter++;
 	$js = "
 	<div id='tfadialog-$id'><center>".$workingMessageGif."</center></div>
-    <div id='tfalostpassdialog-$id'><center>".$workingMessageGif."</center></div>
+    <div id='tfalostpassdialog-$id'><center>".$workingMessageGif."</center></div>"
+	. tfaDialogButtonStyles(array("tfa-login-ok-$counter", "tfa-login-cancel-$counter", "tfa-lostpass-ok-$counter", "tfa-lostpass-cancel-$counter")) .
+	"
 	<script type='text/javascript'>
 	var tfadialog$counter;
 	jQuery('document').ready(function() {
@@ -222,6 +303,10 @@ function tfaLoginJS($id) {
 			],
 			open: function() {
 				jQuery(this).css('overflow-y', 'auto !important');
+				jQuery(this).closest('.ui-dialog').css('opacity', 0);
+				var btns = jQuery(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button');
+				btns.eq(0).attr('id', 'tfa-login-ok-$counter');
+				btns.eq(1).attr('id', 'tfa-login-cancel-$counter');
 			}
 		});
 
@@ -243,6 +328,7 @@ function tfaLoginJS($id) {
 						if(data) {
 							tfadialog$counter.html(data);
 							tfadialog$counter.dialog('open');
+							tfadialog$counter.closest('.ui-dialog').fadeTo(300, 1, function() { jQuery('#dialog-tfacode').focus(); });
 						} else {
 							jQuery('input[name=\"tfacode\"]').each(function() {
 								jQuery(this).val('050969');
@@ -262,18 +348,22 @@ function tfaLoginJS($id) {
 			width: '40%',
 			position: { my: 'center center', at: 'center center', of: window },
 			buttons: [
+				{ text: 'OK', icon: 'ui-icon-check', click: function() {
+						close2FALostPassDialog(jQuery(this), '$id');
+					}
+				},
 				{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
 						jQuery( this ).dialog( 'close' );
 						jQuery( this ).html('<center>".$workingMessageGif."</center>');
-					}
-				},
-				{ text: 'OK', icon: 'ui-icon-check', click: function() {
-						close2FALostPassDialog(jQuery(this), '$id');
 					}
 				}
 			],
 			open: function() {
 				jQuery(this).css('overflow-y', 'auto !important');
+				jQuery(this).closest('.ui-dialog').css('opacity', 0);
+				var btns = jQuery(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button');
+				btns.eq(0).attr('id', 'tfa-lostpass-ok-$counter');
+				btns.eq(1).attr('id', 'tfa-lostpass-cancel-$counter');
 			}
 		});
 
@@ -287,6 +377,7 @@ function tfaLoginJS($id) {
             event.preventDefault();
             tfalostpassdialog$counter.html('<center>"._US_USERNAME_OR_EMAIL."<input type=\"text\" id=\"dialog-tfalostaccount\" value=\"\"></center>');
             tfalostpassdialog$counter.dialog('open');
+            tfalostpassdialog$counter.closest('.ui-dialog').fadeTo(300, 1, function() { jQuery('#dialog-tfalostaccount').focus(); });
         });
 
 	});
@@ -298,18 +389,14 @@ function tfaLoginJS($id) {
 
 		function close2FADialog(dialog, id) {
 			var code = jQuery('#dialog-tfacode').val();
+			var token = jQuery('.tfa-login-token', dialog).val();
 			var remember = jQuery('#dialog-tfaremember').is(':checked');
 			dialog.dialog( 'close' );
 			dialog.html('<center>".$workingMessageGif."</center>');
 			if(code) {
-				jQuery('input[name=\"tfacode\"]').each(function() {
-					jQuery(this).val(code);
-				});
-				jQuery('input[name=\"tfaremember\"]').each(function() {
-					if(remember) {
-						jQuery(this).val(1);
-					}
-				});
+				jQuery('input[name=\"tfacode\"]').val(code);
+				if(remember) { jQuery('input[name=\"tfaremember\"]').val(1); }
+				if(token) { jQuery('input[name=\"tfa_login_token\"]').val(token); }
 				jQuery('#'+id+' form').submit();
 			}
 		}

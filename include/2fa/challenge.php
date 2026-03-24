@@ -25,16 +25,23 @@ if($user AND
     switch($method) {
         case TFA_SMS:
             $message = sendCode(TFA_SMS, $user->getVar('uid')); // will return errors
+            $profile_handler = xoops_getmodulehandler('profile', 'profile');
+            $profile = $profile_handler->get($user->getVar('uid'));
+            $loginTokenContact = preg_replace('/[^0-9]/', '', $profile->getVar('2faphone'));
             $method = 'texts';
             break;
         case TFA_APP:
             $message = '';
+            $loginTokenContact = 'authenticator-app';
             $method = 'app';
             break;
         default:
             $message = sendCode(TFA_EMAIL, $user->getVar('uid')); // will return errors
+            $loginTokenContact = $user->getVar('email');
             $method = 'email';
     }
+    $loginToken = icms::$security->createToken(300, $loginTokenContact);
     $message = $message ? $message : _US_ENTER_CODE.$method.".$codebox";
-    print "<center>$message</center>";
+    $tokenInput = "<input type='hidden' class='tfa-login-token' value='" . htmlspecialchars($loginToken, ENT_QUOTES) . "'>";
+    print "<center>$message</center>" . $tokenInput;
 }

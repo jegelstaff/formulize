@@ -48,6 +48,12 @@ class formulizeUserAccountElement extends formulizeElement {
 #[AllowDynamicProperties]
 class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 
+    // Set to true by processUserAccountSubmission() when 2FA validation fails so that
+    // the element renderer can auto-reopen the dialog on the next page render.
+    static public $tfaValidationError = false;
+    // POST values stored when 2FA validation fails so loadValue() can restore them.
+    static public $submittedValues = null;
+
     var $db;
     var $clickable; // used in formatDataForList
     var $striphtml; // used in formatDataForList
@@ -111,6 +117,16 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
     // $entry_id is the ID of the entry being loaded
 		function loadValue($element, $value, $entry_id) {
 			$value = null;
+			// If 2FA validation failed on the previous submit, restore the submitted values
+			// so the user does not have to retype their changes after entering a new code.
+			if(self::$tfaValidationError && self::$submittedValues !== null && $element->userProperty != 'pass') {
+				$fid = $element->getVar('fid');
+				$eleId = $element->getVar('ele_id');
+				$postKey = 'de_' . $fid . '_' . $entry_id . '_' . $eleId;
+				if(isset(self::$submittedValues[$postKey])) {
+					return self::$submittedValues[$postKey];
+				}
+			}
 			$member_handler = xoops_gethandler('member');
 			$dataHandler = new formulizeDataHandler($element->getVar('fid'));
 			if($element->userProperty AND $user = $member_handler->getUser($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
@@ -253,9 +269,20 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					$userObject->setVar('theme', $xoopsConfig['theme_set']);
 					$userObject->setVar('level', 1);
 				}
+				include_once XOOPS_ROOT_PATH . '/include/2fa/manage.php';
+				// Track original values before the loop modifies them, for 2FA change detection
+				$old2faMethod = $entryUserId ? intval($profile->getVar('2famethod')) : 0;
+				$old2faPhone  = $entryUserId ? preg_replace('/[^0-9]/', '', $profile->getVar('2faphone') ?? '') : '';
+				$oldEmail     = $entryUserId ? $userObject->getVar('email') : '';
+				$rawSubmitted2faMethod = null; // null = 2FA element not present in this form
+				$passwordChanged = false;
+				$cleanupAppSecret = false;
+				$pendingProfileVars = array();
+				$pendingUserVars = array();
+
 				$unameParts = array();
 				foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
-					if($userAccountElementType != 'Uid' AND $accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId)) {
+					if($userAccountElementType != 'userAccountUid' AND $accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId)) {
 						$elementId = $accountElement->getVar('ele_id');
 						$userProperty = $accountElement->userProperty;
 						$value = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$elementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId] : '';
@@ -263,33 +290,142 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 							if($value === '') {
 								continue; // don't change password if no value entered
 							}
+							$passwordChanged = true;
 							global $icmsConfigUser;
             	$icmspass = new icms_core_Password();
             	$salt = $icmspass->createSalt();
             	$enc_type = $icmsConfigUser['enc_type'];
             	$value = $icmspass->encryptPass($value, $salt, $enc_type);
-  	          $userObject->setVar('salt', $salt);
-    	        $userObject->setVar('enc_type', $enc_type);
+  	          $pendingUserVars['salt'] = $salt;
+    	        $pendingUserVars['enc_type'] = $enc_type;
 						}
 						if(substr($userProperty, 0, 8) == 'profile:') {
 							$property = substr($userProperty, 8);
 							if($property == '2faphone') {
 								$value = preg_replace('/[^0-9]/', '', $value);
 							}
+							if($property == '2famethod') {
+								$rawSubmitted2faMethod = intval($value);
+								if($entryUserId) {
+									// Group enforcement: users in required-2FA groups cannot opt out
+									$edituserGroups = $userObject->getGroups();
+									$criteria_2fagroups = new Criteria('conf_name', 'auth_2fa_groups');
+									$auth_2fa_groups_cfg = icms::handler('icms_config')->getConfigs($criteria_2fagroups);
+									$auth_2fa_groups = ($auth_2fa_groups_cfg) ? $auth_2fa_groups_cfg[0]->getConfValueForOutput() : array();
+									// Get submitted phone to check SMS-without-phone case
+									$phoneEleForCheck = $element_handler->get('formulize_user_account_phone_'.$formId);
+									$submittedPhoneForCheck = '';
+									if($phoneEleForCheck) {
+										$phoneEleIdForCheck = $phoneEleForCheck->getVar('ele_id');
+										$submittedPhoneForCheck = preg_replace('/[^0-9]/', '', isset($_POST['de_'.$formId.'_'.$entryId.'_'.$phoneEleIdForCheck]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$phoneEleIdForCheck] : '');
+									}
+									if(($value == TFA_OFF && array_intersect($edituserGroups, (array)$auth_2fa_groups))
+									   || ($value == TFA_SMS && !$submittedPhoneForCheck)) {
+										$value = TFA_EMAIL;
+									}
+									// Defer TFA_APP secret cleanup until after validation so validateCode() can still verify it
+									if($old2faMethod == TFA_APP AND $value != TFA_APP) {
+										$cleanupAppSecret = true;
+									}
+								}
+							}
 							if($property == 'timezone') {
 								// Also set legacy timezone_offset to the standard (non-DST) offset
-								$userObject->setVar('timezone_offset', formulize_getStandardTimezoneOffset($value));
+								$pendingUserVars['timezone_offset'] = formulize_getStandardTimezoneOffset($value);
 							}
-							$profile->setVar($property, $value);
+							$pendingProfileVars[$property] = $value;
 						} else {
 							if($userProperty == 'uname') {
 								$unameParts[] = $value;
 								$value = implode(' ', $unameParts);
 							}
-							$userObject->setVar($userProperty, $value);
+							$pendingUserVars[$userProperty] = $value;
 						}
 					}
 				}
+
+				// 2FA code validation: require proof of identity when the current user changes their own
+				// 2FA method, phone number, email address (for email/off methods), or password
+				if($entryUserId && $xoopsUser && intval($entryUserId) == intval($xoopsUser->getVar('uid'))) {
+					$criteria_2fa_sv = new Criteria('conf_name', 'auth_2fa');
+					$is2faOn = false;
+					if($auth_2fa_sv = icms::handler('icms_config')->getConfigs($criteria_2fa_sv)) {
+						$is2faOn = $auth_2fa_sv[0]->getConfValueForOutput();
+					}
+					if($is2faOn) {
+						self::$submittedValues = $_POST;
+						$newEmail  = isset($pendingUserVars['email']) ? $pendingUserVars['email'] : $userObject->getVar('email');
+						$newPhone  = isset($pendingProfileVars['2faphone']) ? $pendingProfileVars['2faphone'] : $profile->getVar('2faphone');
+						$effectiveNewMethod = $rawSubmitted2faMethod !== null ? $rawSubmitted2faMethod : $old2faMethod;
+						$needsValidation = (
+							($rawSubmitted2faMethod != $old2faMethod) ||
+							(($old2faMethod == TFA_SMS || $effectiveNewMethod == TFA_SMS) && $newPhone != $old2faPhone) ||
+							(($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF || $effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF) && $oldEmail && $newEmail != $oldEmail) ||
+							$passwordChanged
+						);
+						if($needsValidation) {
+							// Two-phase required in three cases:
+							// 1. Method unchanged = email, email is changing.
+							// 2. Method unchanged = SMS, phone is changing.
+							// 3. Method was active and is changing to a different active method.
+							$contactChanging = (
+								($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_EMAIL && $oldEmail && $newEmail != $oldEmail) ||
+								($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
+								($rawSubmitted2faMethod !== null && $old2faMethod != TFA_OFF && $rawSubmitted2faMethod != TFA_OFF && $rawSubmitted2faMethod != $old2faMethod)
+							);
+							if($contactChanging) {
+								$step1Token = isset($_POST['formulize_tfa_step1token']) ? trim($_POST['formulize_tfa_step1token']) : '';
+								// Token name is the new contact — mismatch with submitted contact fails glob lookup
+								if($rawSubmitted2faMethod == TFA_APP) {
+									$newContactId = 'authenticator-app';
+								} elseif($rawSubmitted2faMethod == TFA_SMS) {
+									$newContactId = $newPhone;
+								} else {
+									$newContactId = $newEmail;
+								}
+								if(!icms::$security->validateToken($step1Token, true, $newContactId)) {
+									self::$tfaValidationError = true;
+									return false;
+								}
+							} else {
+								// Single-phase: validate confirm token bound to the contact confirm.php sent the code to.
+								// confirm.php sends based on the NEW method: to new phone if switching TO SMS,
+								// to stored phone if turning OFF from SMS, to 'authenticator-app' if new or old
+								// method is APP (for APP→OFF), to stored email otherwise.
+								if($rawSubmitted2faMethod == TFA_APP ||
+								   ($rawSubmitted2faMethod == TFA_OFF && $old2faMethod == TFA_APP)) {
+									$storedContactId = 'authenticator-app';
+								} elseif($rawSubmitted2faMethod == TFA_SMS) {
+									$storedContactId = $newPhone; // code sent to new/submitted phone
+								} elseif($rawSubmitted2faMethod == TFA_OFF && $old2faMethod == TFA_SMS) {
+									$storedContactId = $old2faPhone; // code sent to stored phone
+								} else {
+									$storedContactId = $oldEmail;
+								}
+								$confirmToken = isset($_POST['tfa_confirm_token']) ? trim($_POST['tfa_confirm_token']) : '';
+								if(!icms::$security->validateToken($confirmToken, true, $storedContactId)) {
+									self::$tfaValidationError = true;
+									return false;
+								}
+							}
+							$submittedCode = isset($_POST['formulize_tfa_code']) ? trim($_POST['formulize_tfa_code']) : '';
+							if(!validateCode($submittedCode, intval($entryUserId))) {
+								self::$tfaValidationError = true;
+								return false;
+							}
+							// Validation passed -- now safe to delete the app secret if switching away from app
+							if($cleanupAppSecret) {
+								global $xoopsDB;
+								$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($userObject->getVar('uid')).' AND method = '.TFA_APP;
+								$xoopsDB->queryF($sql);
+							}
+						}
+					}
+				}
+
+				// Apply all pending changes now that validation has passed (or was not required)
+				foreach($pendingProfileVars as $k => $v) { $profile->setVar($k, $v); }
+				foreach($pendingUserVars as $k => $v) { $userObject->setVar($k, $v); }
 
 				// login name cannot be empty, set to email if available, or timestamp to attempt to guarantee uniqueness
 				if($userObject->getVar('login_name') == '') {

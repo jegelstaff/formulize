@@ -44,13 +44,66 @@ switch ($op) {
 		$auth_2fa = $config_handler->getConfigs($criteria);
 		$auth_2fa = $auth_2fa[0];
 		$auth_2fa = $auth_2fa->getConfValueForOutput();
-		if($auth_2fa AND $uid == icms::$user->getVar('uid') AND
-		   (intval($_POST['2famethod']) != intval($profile->getVar('2famethod'))
-			OR ($_POST['2famethod'] == 1 AND $_POST['2faphone'] != $profile->getVar('2faphone'))
-            OR ($pass AND $vpass)
-            )
-		   AND validateCode($_POST['tfacode']) == false ) {
-			redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication Code");
+		$oldMethod2fa_sp  = intval($profile->getVar('2famethod'));
+		$oldPhone2fa_sp   = preg_replace('/[^0-9]/', '', $profile->getVar('2faphone') ?? '');
+		$newMethod2fa_sp  = intval(isset($_POST['2famethod']) ? $_POST['2famethod'] : 0);
+		$newPhone2fa_sp   = preg_replace('/[^0-9]/', '', isset($_POST['2faphone']) ? $_POST['2faphone'] : '');
+		$oldEmail2fa_sp   = icms::$user->getVar('email');
+		$newEmail2fa_sp   = isset($_POST['email']) ? trim($_POST['email']) : $oldEmail2fa_sp;
+		if($auth_2fa AND $uid == icms::$user->getVar('uid') AND (
+			($newMethod2fa_sp != $oldMethod2fa_sp) ||
+			(($oldMethod2fa_sp == TFA_SMS || $newMethod2fa_sp == TFA_SMS) && $newPhone2fa_sp != $oldPhone2fa_sp) ||
+			(($oldMethod2fa_sp == TFA_EMAIL || $oldMethod2fa_sp == TFA_OFF || $newMethod2fa_sp == TFA_EMAIL || $newMethod2fa_sp == TFA_OFF) && $oldEmail2fa_sp && $newEmail2fa_sp != $oldEmail2fa_sp) ||
+			($pass AND $vpass)
+		)) {
+			// Validate confirm token — bound to the contact confirm.php actually sent the code to,
+			// which depends on the NEW method (mirrors userAccountElement.php single-phase logic).
+			if($newMethod2fa_sp == TFA_APP || ($newMethod2fa_sp == TFA_OFF && $oldMethod2fa_sp == TFA_APP)) {
+				$storedContactId2fa = 'authenticator-app';
+			} elseif($newMethod2fa_sp == TFA_SMS) {
+				$storedContactId2fa = $newPhone2fa_sp; // code sent to submitted phone
+			} elseif($newMethod2fa_sp == TFA_OFF && $oldMethod2fa_sp == TFA_SMS) {
+				$storedContactId2fa = $oldPhone2fa_sp; // code sent to stored phone
+			} else {
+				$storedContactId2fa = $oldEmail2fa_sp;
+			}
+			$confirmToken2fa = isset($_POST['tfa_confirm_token']) ? trim($_POST['tfa_confirm_token']) : '';
+			if(!icms::$security->validateToken($confirmToken2fa, true, $storedContactId2fa)) {
+				redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication");
+			}
+			if(validateCode($_POST['tfacode']) == false) {
+				redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication Code");
+			}
+		}
+		// Two-phase check: when an existing contact point is being replaced, a step-1 token
+		// (minted after validating the old contact) is also required.
+		if($auth_2fa AND $uid == icms::$user->getVar('uid')) {
+			$savedPhone2fa    = preg_replace('/[^0-9]/', '', $profile->getVar('2faphone') ?? '');
+			$submittedPhone2fa = preg_replace('/[^0-9]/', '', isset($_POST['2faphone']) ? $_POST['2faphone'] : '');
+			$submittedMethod2fa = intval(isset($_POST['2famethod']) ? $_POST['2famethod'] : 0);
+			$storedEmail2fa    = icms::$user->getVar('email'); // current user — uid already verified equal
+			$submittedEmail2fa = isset($_POST['email']) ? trim($_POST['email']) : $storedEmail2fa;
+			$savedMethod2fa    = intval($profile->getVar('2famethod'));
+			$phoneChanging2fa  = ($submittedMethod2fa == TFA_SMS && $savedMethod2fa == TFA_SMS && $savedPhone2fa != '' && $submittedPhone2fa != $savedPhone2fa);
+			$emailChanging2fa  = ($submittedMethod2fa == TFA_EMAIL && $savedMethod2fa == TFA_EMAIL && $storedEmail2fa != '' && $submittedEmail2fa != $storedEmail2fa);
+			$methodChanging2fa = ($savedMethod2fa != TFA_OFF && $submittedMethod2fa != TFA_OFF && $submittedMethod2fa != $savedMethod2fa);
+			if($phoneChanging2fa || $emailChanging2fa || $methodChanging2fa) {
+				$step1Token = isset($_POST['tfa_step1token']) ? trim($_POST['tfa_step1token']) : '';
+				if($methodChanging2fa) {
+					if($submittedMethod2fa == TFA_APP) {
+						$newContactId2fa = 'authenticator-app';
+					} elseif($submittedMethod2fa == TFA_SMS) {
+						$newContactId2fa = $submittedPhone2fa;
+					} else {
+						$newContactId2fa = $submittedEmail2fa;
+					}
+				} else {
+					$newContactId2fa = ($phoneChanging2fa) ? $submittedPhone2fa : $submittedEmail2fa;
+				}
+				if(!icms::$security->validateToken($step1Token, true, $newContactId2fa)) {
+					redirect_header(ICMS_URL."/modules/profile/edituser.php", 3, "Invalid Two-factor Authentication (step 1)");
+				}
+			}
 		}
 
 		icms_loadLanguageFile('core', 'user');
@@ -386,10 +439,37 @@ switch ($op) {
 					jQuery('#2famethod option[value=0]').remove();";
 				}
 				// change submit button id to something else so the submit event and button id do not conflict!
+				$emailEncoded = urlencode($email);
 				print "
 				jQuery('#userinfo').append('<input type=\"hidden\" id=\"tfacode\" name=\"tfacode\" value=\"\">');
+				jQuery('#userinfo').append('<input type=\"hidden\" id=\"tfa-step1token\" name=\"tfa_step1token\" value=\"\">');
+				jQuery('#userinfo').append('<input type=\"hidden\" id=\"tfa-confirm-token\" name=\"tfa_confirm_token\" value=\"\">');
 				jQuery('input#submit').attr('id','submitx');
 				jQuery('input#submitx').attr('name','submitx');
+
+				function edituser_tfa_doStep1Ajax(\$dlg) {
+					var code = jQuery('#dialog-tfacode', \$dlg).val();
+					if(!code) return;
+					\$dlg.html('<center>".$workingMessageGif."</center>');
+					jQuery.get(
+						'".XOOPS_URL."/include/2fa/validate_step1.php',
+						{
+							code:       code,
+							new_method: \$dlg.data('tfa-new-method'),
+							new_phone:  \$dlg.data('tfa-new-phone'),
+							new_email:  \$dlg.data('tfa-new-email')
+						},
+						function(response) {
+							\$dlg.html(response);
+							var step1Token = jQuery('.tfa-step1token', \$dlg).val();
+							if(step1Token) {
+								\$dlg.data('tfa-phase', 2);
+								jQuery('#tfa-step1token').val(step1Token);
+							}
+						}
+					);
+				}
+
 				tfadialog = jQuery('#tfadialog').dialog({
 					autoOpen: false,
 					modal: true,
@@ -397,19 +477,28 @@ switch ($op) {
 					width: 'auto',
 					position: { my: 'center center', at: 'center center', of: window },
 					buttons: [
-                        { text: 'OK', icon: 'ui-icon-check', click: function() {
-								var code = jQuery('#dialog-tfacode').val();
-								jQuery( this ).dialog( 'close' );
-								jQuery( this ).html('<center>".$workingMessageGif."</center>');
-								if(code) {
-									jQuery('#tfacode').val(code);
-									jQuery('#userinfo').submit();
+						{ text: 'OK', icon: 'ui-icon-check', click: function() {
+								var \$dlg = jQuery(this);
+								if(\$dlg.data('tfa-phase') == 1) {
+									edituser_tfa_doStep1Ajax(\$dlg);
+								} else {
+									var code = jQuery('#dialog-tfacode').val();
+									\$dlg.dialog('close');
+									\$dlg.html('<center>".$workingMessageGif."</center>');
+									\$dlg.data('tfa-phase', 0);
+									if(code) {
+										jQuery('#tfacode').val(code);
+										jQuery('#userinfo').submit();
+									}
 								}
 							}
 						},
 						{ text: 'Cancel', icon: 'ui-icon-close', click: function() {
-								jQuery( this ).dialog( 'close' );
-								jQuery( this ).html('<center>".$workingMessageGif."</center>');
+								jQuery(this).dialog('close');
+								jQuery(this).html('<center>".$workingMessageGif."</center>');
+								jQuery(this).data('tfa-phase', 0);
+								jQuery('#tfa-step1token').val('');
+								jQuery('#tfa-confirm-token').val('');
 							}
 						}
 					],
@@ -420,39 +509,61 @@ switch ($op) {
 
 				jQuery('#tfadialog').keypress(function(e) {
 					if (e.keyCode == jQuery.ui.keyCode.ENTER) {
-						var code = jQuery('#dialog-tfacode').val();
-						tfadialog.dialog( 'close' );
-						tfadialog.html('<center>".$workingMessageGif."</center>');
-						if(code) {
-							jQuery('#tfacode').val(code);
-							jQuery('#userinfo').submit();
+						var \$dlg = jQuery(this);
+						if(\$dlg.data('tfa-phase') == 1) {
+							edituser_tfa_doStep1Ajax(\$dlg);
+						} else {
+							var code = jQuery('#dialog-tfacode').val();
+							tfadialog.dialog('close');
+							tfadialog.html('<center>".$workingMessageGif."</center>');
+							tfadialog.data('tfa-phase', 0);
+							if(code) {
+								jQuery('#tfacode').val(code);
+								jQuery('#userinfo').submit();
+							}
 						}
 					}
 				});
 
 				jQuery('#userinfo').on('submit', function() {
 					var tfamethod = jQuery('#2famethod').val();
-					var tfaphone = jQuery('#2faphone').val();
-					var tfacode = jQuery('#tfacode').val();
-                    var password = jQuery('#password').val();
-                    var vpass = jQuery('#vpass').val();
-					var tfaphone = tfaphone.replace(/\D/g,'');
-                    var email = jQuery('#email').length > 0 ? jQuery('#email').val() : false;
+					var tfaphone  = jQuery('#2faphone').val().replace(/\D/g, '');
+					var tfacode   = jQuery('#tfacode').val();
+					var password  = jQuery('#password').val();
+					var vpass     = jQuery('#vpass').val();
+					var email     = jQuery('#email').length > 0 ? jQuery('#email').val() : false;
 
 					if(password && vpass && password != vpass) {
 						alert(\""._US_PASSWORDS_DONT_MATCH."\");
 						return false;
 					}
 
+					var tfa_needsTwoPhase = (
+						(".$method." == ".TFA_SMS." && parseInt(tfamethod) == ".TFA_SMS." && tfaphone != '".$phoneNumber."' && '".$phoneNumber."' != '') ||
+						((parseInt(tfamethod) == ".TFA_EMAIL." || parseInt(tfamethod) == ".TFA_OFF.") && email !== false && email != '".$email."' && '".$email."' != '')
+					);
+
 					if(!tfacode && (
-                        tfamethod != ".$method." ||
-                        (tfamethod == ".TFA_SMS." && tfaphone != '".$phoneNumber."') ||
-                        (tfamethod == ".TFA_EMAIL." && email !== false && email != '".$email."') ||
-                        (tfamethod == ".TFA_OFF." && email !== false && email != '".$email."') ||
-                        (password && vpass)
-                        )) {
-						methodToUse = tfamethod ? tfamethod : ".$pwChangeMethod.";
-						tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+methodToUse+'&phone='+tfaphone+'&email='+email+'&selectedMethod='+tfamethod);
+						tfamethod != ".$method." ||
+						(tfamethod == ".TFA_SMS." && tfaphone != '".$phoneNumber."') ||
+						(tfamethod == ".TFA_EMAIL." && email !== false && email != '".$email."') ||
+						(tfamethod == ".TFA_OFF." && email !== false && email != '".$email."') ||
+						(password && vpass)
+						)) {
+						if(tfa_needsTwoPhase) {
+							tfadialog.data('tfa-phase', 1);
+							tfadialog.data('tfa-new-method', tfamethod);
+							tfadialog.data('tfa-new-phone', tfaphone);
+							tfadialog.data('tfa-new-email', email || '');
+							tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method=".$method."&phone=".urlencode($phoneNumber)."&selectedMethod=".$method."&email=".$emailEncoded."&twophase=1');
+						} else {
+							tfadialog.data('tfa-phase', 0);
+							methodToUse = tfamethod ? tfamethod : ".$pwChangeMethod.";
+							tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+methodToUse+'&phone='+tfaphone+'&email='+(email||'')+'&selectedMethod='+tfamethod, function() {
+							var ct = jQuery('.tfa-confirm-token', tfadialog).val();
+							if(ct) { jQuery('#tfa-confirm-token').val(ct); }
+						});
+						}
 						tfadialog.dialog('open');
 						return false;
 					}
