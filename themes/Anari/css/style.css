@@ -3886,3 +3886,37 @@ input#toggleRepeatData:focus-visible {
     padding: 0.25rem 0;
   }
 }
+
+.formulize-map-filter-form {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.formulize-map-screen {
+    position: relative;
+    z-index: 0;
+    margin-top: 1em;
+}
+
+.formulize-map-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 20px;
+    margin-top: 1em;
+    margin-bottom: 12px;
+}
+
+.formulize-map-filter-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.formulize-map-filter-heading {
+    margin-bottom: 4px;
+}
+
+.formulize-map-filters input[type="text"],
+.formulize-map-filters select {
+    min-width: 120px;
+}

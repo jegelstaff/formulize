@@ -402,6 +402,22 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_screen_map")), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_map") . " (
+                `sid` int(11) NOT NULL,
+                `lat_element` varchar(255) DEFAULT NULL,
+                `lng_element` varchar(255) DEFAULT NULL,
+                `label_element` varchar(255) DEFAULT NULL,
+                `description_element` varchar(255) DEFAULT NULL,
+                `popup_screen` int(11) DEFAULT NULL,
+                `viewentryscreen` varchar(255) DEFAULT NULL,
+                `columns` text DEFAULT NULL,
+                `fundamental_filters` text DEFAULT NULL,
+                `filter_button_text` varchar(255) DEFAULT NULL,
+                PRIMARY KEY (`sid`)
+              ) ENGINE=InnoDB;";
+        }
+
 				// if the registered users group does not have module_admin permission, then remove all edit_form permissions they might have from time immemorial
 				$gperm_handler = xoops_gethandler('groupperm');
 				if($gperm_handler->checkRight("module_admin", getFormulizeModId(), XOOPS_GROUP_USERS, 1) === false) {

@@ -2313,6 +2313,10 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 	$calview = isset($settings['calview']) ? $settings['calview'] : null;
 	$calfrid = isset($settings['calfrid']) ? $settings['calfrid'] : null;
 	$calfid = isset($settings['calfid']) ? $settings['calfid'] : null;
+	// used for maps...
+	$map_lat  = isset($settings['map_lat'])  ? floatval($settings['map_lat'])  : null;
+	$map_lng  = isset($settings['map_lng'])  ? floatval($settings['map_lng'])  : null;
+	$map_zoom = isset($settings['map_zoom']) ? intval($settings['map_zoom'])   : null;
 	// plus there's the calhidden key that is handled below
 	// plus there's the page number on the LOE screen that is handled below...
 	// plus there's the multipage prev and current page
@@ -2348,6 +2352,11 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		$newHiddenElements[] = new XoopsFormHidden ('calview', $calview);
 		$newHiddenElements[] = new XoopsFormHidden ('calfrid', $calfrid);
 		$newHiddenElements[] = new XoopsFormHidden ('calfid', $calfid);
+		if ($map_lat !== null) {
+			$newHiddenElements[] = new XoopsFormHidden ('map_lat',  $map_lat);
+			$newHiddenElements[] = new XoopsFormHidden ('map_lng',  $map_lng);
+			$newHiddenElements[] = new XoopsFormHidden ('map_zoom', $map_zoom);
+		}
 		foreach($settings['calhidden'] as $chname=>$chvalue) {
 			$newHiddenElements[] = new XoopsFormHidden ($chname, $chvalue);
 		}
@@ -2410,6 +2419,11 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		print "<input type=hidden name=calview value='" . $calview . "'>";
 		print "<input type=hidden name=calfrid value='" . $calfrid . "'>";
 		print "<input type=hidden name=calfid value='" . $calfid . "'>";
+		if ($map_lat !== null) {
+			print "<input type=hidden name=map_lat value='" . $map_lat . "'>";
+			print "<input type=hidden name=map_lng value='" . $map_lng . "'>";
+			print "<input type=hidden name=map_zoom value='" . $map_zoom . "'>";
+		}
 		foreach($settings['calhidden'] as $chname=>$chvalue) {
 			print "<input type=hidden name=$chname value='" . $chvalue . "'>";
 		}

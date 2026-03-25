@@ -93,6 +93,8 @@ if ($screen_id == "new") {
         $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
     } else if ($settings['type'] == 'calendar') {
         $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
+    } else if ($settings['type'] == 'map') {
+        $screen_handler = xoops_getmodulehandler('mapScreen', 'formulize');
     }
     $screen = $screen_handler->get($screen_id);
 
@@ -523,6 +525,64 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
     $templates['variabletemplatehelp'] = $listTemplateHelp;
 }
 
+if ($screen_id != "new" && $settings['type'] == 'map') {
+    $screen = $screen_handler->get($screen_id);
+    $form_id = $screen->getVar('fid');
+
+    // element options for lat/lng/label/description dropdowns
+    $selectedFramework = $screen->getVar('frid');
+    include XOOPS_ROOT_PATH.'/modules/formulize/admin/generateTemplateElementHandleHelp.php';
+
+    // column options for filters (same as advanceview options in list of entries)
+    $mapSettings = array();
+    $mapSettings['elementoptions'] = $elementOptions;
+    $mapSettings['columnoptions'] = array(0 => _AM_ELE_SELECT_NONE) + array(
+        'creation_uid'      => _formulize_DE_CREATED,
+        'mod_uid'           => _formulize_DE_LASTMOD,
+        'creation_datetime' => _formulize_DE_CALC_CREATEDATE,
+        'mod_datetime'      => _formulize_DE_CALC_MODDATE,
+        'creator_email'     => _formulize_DE_CALC_CREATOR_EMAIL,
+        'owner_groups'      => _formulize_DE_CALC_OWNERGROUPS,
+    ) + $elementOptions;
+    $mapSettings['columnsearchtypeoptions'] = array('Box' => 'Search Box', 'Filter' => 'Dropdown List - select value', 'NegativeFilter' => 'Dropdown List - exclude value', 'MultiFilter' => 'Checkboxes', 'DateRange' => 'Date Range');
+
+    // build columns array for the template
+    $cols = $screen->getVar('columns');
+    $columnsSelected = array();
+    $colIndex = 0;
+    foreach ((array) $cols as $arr) {
+        $columnsSelected[$colIndex]['column']     = isset($arr[0]) ? $arr[0] : '';
+        $columnsSelected[$colIndex]['text']       = isset($arr[1]) ? $arr[1] : '';
+        $columnsSelected[$colIndex]['searchtype'] = isset($arr[2]) ? $arr[2] : 'Box';
+        $colIndex++;
+    }
+    $mapSettings['columns'] = $columnsSelected;
+
+    // screen values
+    $mapSettings['lat_element']         = $screen->getVar('lat_element');
+    $mapSettings['lng_element']         = $screen->getVar('lng_element');
+    $mapSettings['label_element']       = $screen->getVar('label_element');
+    $mapSettings['description_element'] = $screen->getVar('description_element');
+    $mapSettings['viewentryscreen']     = $screen->getVar('viewentryscreen');
+    $mapSettings['filter_button_text']  = $screen->getVar('filter_button_text');
+
+    // view entry screen options
+    $mapSettings['viewentryscreenoptions'] = generateViewEntryScreenOptions($screen->getVar('frid'), $form_id);
+
+    // fundamental filters UI
+    $mapSettings['fundamentalfilters'] = formulize_createFilterUI($screen->getVar('fundamental_filters'), "fundamentalfilters", $form_id, "form-3", $screen->getVar('frid'));
+
+    $mapSettings['fid']  = $form_id;
+    $mapSettings['frid'] = $screen->getVar('frid');
+    $mapSettings['sid']  = $screen_id;
+
+    $templates['selectedTheme'] = $screen->getVar('theme');
+    $templates['toptemplate']    = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+    $templates['maptemplate']    = str_replace("&", "&amp;", $screen->getTemplate('maptemplate', $screen->getVar('theme')));
+    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['maptemplate'] OR $templates['bottomtemplate']);
+}
+
 $templates['themes'] = icms_view_theme_Factory::getThemesList();
 global $xoopsConfig;
 $themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
@@ -661,6 +721,20 @@ if ($screen_id != "new" && $settings['type'] == 'calendar') {
     $adminPage['tabs'][] = array(
         'name'      => _AM_CAL_SCREEN_TEMPLATES,
         'template'  => "db:admin/screen_calendar_templates.html",
+        'content'   => $templates + $common
+    );
+}
+
+if ($screen_id != "new" && $settings['type'] == 'map') {
+    $adminPage['tabs'][] = array(
+        'name'      => 'Map Options',
+        'template'  => "db:admin/screen_map.html",
+        'content'   => $mapSettings + $common
+    );
+
+    $adminPage['tabs'][] = array(
+        'name'      => _AM_FORM_SCREEN_TEMPLATES,
+        'template'  => "db:admin/screen_map_templates.html",
         'content'   => $templates + $common
     );
 }
