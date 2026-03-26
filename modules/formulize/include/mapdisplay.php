@@ -91,9 +91,15 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         if (!$handle OR !is_string($handle)) {
             continue;
         }
+			if(empty($_POST)) {
+				if($searchTerm = isset($col[1]) ? $col[1] : '') {
+					$searches[$handle] = $searchTerm;
+				}
+			} else {
         $postKey = 'search_' . $handle;
         if (isset($_POST[$postKey]) AND $_POST[$postKey] !== '') {
             $searches[$handle] = $_POST[$postKey];
+				}
         }
     }
 
