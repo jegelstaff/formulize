@@ -209,7 +209,7 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
                     $input = formulize_buildQSFilter($handle, $current_val);
                     break;
                 case 'NegativeFilter':
-                    $input = formulize_buildQSFilter($handle, $current_val, false, true);
+                    $input = formulize_buildQSFilter($handle, $current_val, negativeFilter: true);
                     break;
                 case 'MultiFilter':
                     $input = formulize_buildQSFilterMulti($handle, $current_val);
