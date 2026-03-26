@@ -86,8 +86,6 @@ class formulize_themeForm extends XoopsThemeForm {
         if($screen) {
 					$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
 					$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
-					global $xoopsTpl;
-					$xoopsTpl->assign('modifyScreenUrl', $url);
 					$this->modifyScreenLink = "<a href='".$url."'>Configure this Screen</a>";
         }
     }

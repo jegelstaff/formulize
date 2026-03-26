@@ -239,11 +239,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                 }
             }
 
-
-            // determine proper admin link
-            $firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
-            $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
-            $xoopsTpl->assign('modifyScreenUrl', $url);
         } else {
             echo "<p>Error: specified screen template does not exist.</p>";
         }

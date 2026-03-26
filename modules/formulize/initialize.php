@@ -160,6 +160,10 @@ if (!$loadThisView) {
 
 if ($screen) {
 
+		$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
+		$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
+		$xoopsTpl->assign('modifyScreenUrl', $url);
+
 		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
