@@ -244,6 +244,44 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
     // $renderedMap is just the map markup; JS is output directly as page infrastructure
     $renderedMap = '<div id="' . htmlspecialchars($map_id, ENT_QUOTES) . '" style="height:600px;width:100%;"></div>' . "\n";
 
+    // --- Resolve tile layer URL, attribution, and maxZoom from screen settings ---
+    $tileset = $screen ? (string)$screen->getVar('tileset') : '';
+    if ($tileset === '') { $tileset = 'osm'; }
+    $tilePresets = array(
+        'osm'  => array(
+            'url'         => 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            'attribution' => '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            'maxZoom'     => 19,
+        ),
+        'topo' => array(
+            'url'         => 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+            'attribution' => 'Kartendaten: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende, SRTM | Kartendarstellung: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)',
+            'maxZoom'     => 17,
+        ),
+        'esri' => array(
+            'url'         => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            'attribution' => 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+            'maxZoom'     => 19,
+        ),
+    );
+    if ($tileset === 'custom' && $screen) {
+        $tileUrl = (string)$screen->getVar('tileset_url', 'n');
+        $tileKey = (string)$screen->getVar('tileset_key', 'n');
+        if ($tileKey !== '') {
+            $tileUrl = str_replace('{key}', $tileKey, $tileUrl);
+        }
+        $tileAttribution = (string)$screen->getVar('tileset_attribution', 'n');
+        $tileMaxZoom = 19;
+    } elseif (isset($tilePresets[$tileset])) {
+        $tileUrl         = $tilePresets[$tileset]['url'];
+        $tileAttribution = $tilePresets[$tileset]['attribution'];
+        $tileMaxZoom     = $tilePresets[$tileset]['maxZoom'];
+    } else {
+        $tileUrl         = $tilePresets['osm']['url'];
+        $tileAttribution = $tilePresets['osm']['attribution'];
+        $tileMaxZoom     = 19;
+    }
+
     // --- 13. Screen title and filter button text ---
     $title = $screen ? $screen->getVar('title') : '';
     $filter_button_text = $screen ? htmlspecialchars((string) $screen->getVar('filter_button_text'), ENT_QUOTES) : '';
@@ -288,9 +326,9 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
     echo '  var savedZoom = ' . $js_saved_zoom . ';' . "\n";
     echo '  window.addEventListener("formulize_pageShown", function() {' . "\n";
     echo '    var map = L.map(' . json_encode($map_id) . ');' . "\n";
-    echo '    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {' . "\n";
-    echo '      attribution: \'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors\',' . "\n";
-    echo '      maxZoom: 19' . "\n";
+    echo '    L.tileLayer(' . json_encode($tileUrl) . ', {' . "\n";
+    echo '      attribution: ' . json_encode($tileAttribution) . ',' . "\n";
+    echo '      maxZoom: ' . intval($tileMaxZoom) . "\n";
     echo '    }).addTo(map);' . "\n";
     echo '    var bounds = L.latLngBounds();' . "\n";
     echo '    for (var i = 0; i < entries.length; i++) {' . "\n";

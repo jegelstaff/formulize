@@ -55,6 +55,10 @@ $screen->setVar('label_element', isset($_POST['screens-label_element']) ? $_POST
 $screen->setVar('description_element', isset($_POST['screens-description_element']) ? $_POST['screens-description_element'] : '');
 $screen->setVar('viewentryscreen', isset($_POST['screens-viewentryscreen']) ? $_POST['screens-viewentryscreen'] : '');
 $screen->setVar('filter_button_text', isset($_POST['screens-filter_button_text']) ? $_POST['screens-filter_button_text'] : '');
+$screen->setVar('tileset', isset($_POST['screens-tileset']) ? $_POST['screens-tileset'] : 'osm');
+$screen->setVar('tileset_url', isset($_POST['screens-tileset_url']) ? $_POST['screens-tileset_url'] : '');
+$screen->setVar('tileset_key', isset($_POST['screens-tileset_key']) ? $_POST['screens-tileset_key'] : '');
+$screen->setVar('tileset_attribution', isset($_POST['screens-tileset_attribution']) ? $_POST['screens-tileset_attribution'] : '');
 $screen->setVar('columns', serialize($columns));
 
 list($parsedFundamentalFilters, $_POST['reload_map_screen_page']) = parseSubmittedConditions('fundamentalfilters', 'ffdelete');

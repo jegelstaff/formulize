@@ -135,6 +135,39 @@
     </div>
   </fieldset>
 
+  <fieldset>
+    <legend><{$smarty.const._AM_MAP_TILES_LEGEND}></legend>
+    <div class="form-item">
+      <label for="screens-tileset"><{$smarty.const._AM_MAP_TILESET_LABEL}></label>
+      <select id="screens-tileset" name="screens-tileset" size="1">
+        <option value="osm" <{if $content.tileset == 'osm' OR !$content.tileset}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_OSM}></option>
+        <option value="topo" <{if $content.tileset == 'topo'}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_TOPO}></option>
+        <option value="esri" <{if $content.tileset == 'esri'}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_ESRI}></option>
+        <option value="custom" <{if $content.tileset == 'custom'}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_CUSTOM}></option>
+      </select>
+    </div>
+    <div id="map-custom-tile-fields" style="<{if $content.tileset != 'custom'}>display:none;<{/if}>">
+      <br>
+      <div class="form-item">
+        <label for="screens-tileset_url"><{$smarty.const._AM_MAP_TILESET_URL_LABEL}></label>
+        <input type="text" id="screens-tileset_url" name="screens-tileset_url" style="width:100%" value="<{$content.tileset_url}>">
+        <div class="description"><{$smarty.const._AM_MAP_TILESET_URL_DESC}></div>
+      </div>
+      <br>
+      <div class="form-item">
+        <label for="screens-tileset_key"><{$smarty.const._AM_MAP_TILESET_KEY_LABEL}></label>
+        <input type="text" id="screens-tileset_key" name="screens-tileset_key" value="<{$content.tileset_key}>">
+        <div class="description"><{$smarty.const._AM_MAP_TILESET_KEY_DESC}></div>
+      </div>
+      <br>
+      <div class="form-item">
+        <label for="screens-tileset_attribution"><{$smarty.const._AM_MAP_TILESET_ATTRIBUTION_LABEL}></label>
+        <input type="text" id="screens-tileset_attribution" name="screens-tileset_attribution" style="width:100%" value="<{$content.tileset_attribution}>">
+        <div class="description"><{$smarty.const._AM_MAP_TILESET_ATTRIBUTION_DESC}></div>
+      </div>
+    </div>
+  </fieldset>
+
 </div>
 
 </form>
@@ -181,6 +214,14 @@
     $(".advanceviewcol[name='" + number + "']").remove();
     setDisplay('savewarning', 'block');
   }
+
+  $("#screens-tileset").change(function() {
+    if ($(this).val() === 'custom') {
+      $("#map-custom-tile-fields").show();
+    } else {
+      $("#map-custom-tile-fields").hide();
+    }
+  });
 
   $("div#fundamentalfilters > input[name=addcon]").click(function () {
     $("[name=reload_map_screen_page]").val(1);

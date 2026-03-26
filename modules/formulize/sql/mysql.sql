@@ -469,6 +469,10 @@ CREATE TABLE `formulize_screen_map` (
   `columns` text DEFAULT NULL,
   `fundamental_filters` text DEFAULT NULL,
   `filter_button_text` varchar(255) DEFAULT NULL,
+  `tileset` varchar(50) DEFAULT 'osm',
+  `tileset_url` text DEFAULT NULL,
+  `tileset_key` varchar(255) DEFAULT NULL,
+  `tileset_attribution` text DEFAULT NULL,
   PRIMARY KEY (`sid`)
 ) ENGINE=InnoDB;
 

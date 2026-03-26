@@ -52,6 +52,10 @@ class formulizeMapScreen extends formulizeScreen {
         $this->initVar("columns", XOBJ_DTYPE_ARRAY);
         $this->initVar("fundamental_filters", XOBJ_DTYPE_ARRAY);
         $this->initVar("filter_button_text", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("tileset", XOBJ_DTYPE_TXTBOX, 'osm', false, 50);
+        $this->initVar("tileset_url", XOBJ_DTYPE_TXTBOX, NULL, false, 1000);
+        $this->initVar("tileset_key", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
+        $this->initVar("tileset_attribution", XOBJ_DTYPE_TXTBOX, NULL, false, 1000);
     }
 }
 
@@ -82,7 +86,7 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
         }
         $screen->assignVar('sid', $sid);
         if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, lat_element, lng_element, label_element, description_element, viewentryscreen, columns, fundamental_filters, filter_button_text) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %s)",
+            $sql = sprintf("INSERT INTO %s (sid, lat_element, lng_element, label_element, description_element, viewentryscreen, columns, fundamental_filters, filter_button_text, tileset, tileset_url, tileset_key, tileset_attribution) VALUES (%u, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 $this->db->prefix('formulize_screen_map'),
                 $screen->getVar('sid'),
                 $this->db->quoteString($screen->getVar('lat_element')),
@@ -92,10 +96,14 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('viewentryscreen')),
                 $this->db->quoteString(serialize($screen->getVar('columns'))),
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))),
-                $this->db->quoteString($screen->getVar('filter_button_text'))
+                $this->db->quoteString($screen->getVar('filter_button_text')),
+                $this->db->quoteString($screen->getVar('tileset', 'n')),
+                $this->db->quoteString($screen->getVar('tileset_url', 'n')),
+                $this->db->quoteString($screen->getVar('tileset_key', 'n')),
+                $this->db->quoteString($screen->getVar('tileset_attribution', 'n'))
             );
         } else {
-            $sql = sprintf("UPDATE %s SET lat_element = %s, lng_element = %s, label_element = %s, description_element = %s, viewentryscreen = %s, columns = %s, fundamental_filters = %s, filter_button_text = %s WHERE sid = %u",
+            $sql = sprintf("UPDATE %s SET lat_element = %s, lng_element = %s, label_element = %s, description_element = %s, viewentryscreen = %s, columns = %s, fundamental_filters = %s, filter_button_text = %s, tileset = %s, tileset_url = %s, tileset_key = %s, tileset_attribution = %s WHERE sid = %u",
                 $this->db->prefix('formulize_screen_map'),
                 $this->db->quoteString($screen->getVar('lat_element')),
                 $this->db->quoteString($screen->getVar('lng_element')),
@@ -105,6 +113,10 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString(serialize($screen->getVar('columns'))),
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))),
                 $this->db->quoteString($screen->getVar('filter_button_text')),
+                $this->db->quoteString($screen->getVar('tileset', 'n')),
+                $this->db->quoteString($screen->getVar('tileset_url', 'n')),
+                $this->db->quoteString($screen->getVar('tileset_key', 'n')),
+                $this->db->quoteString($screen->getVar('tileset_attribution', 'n')),
                 $screen->getVar('sid')
             );
         }

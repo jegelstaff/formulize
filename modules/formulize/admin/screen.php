@@ -563,8 +563,12 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
     $mapSettings['lng_element']         = $screen->getVar('lng_element');
     $mapSettings['label_element']       = $screen->getVar('label_element');
     $mapSettings['description_element'] = $screen->getVar('description_element');
-    $mapSettings['viewentryscreen']     = $screen->getVar('viewentryscreen');
-    $mapSettings['filter_button_text']  = $screen->getVar('filter_button_text');
+    $mapSettings['viewentryscreen']       = $screen->getVar('viewentryscreen');
+    $mapSettings['filter_button_text']   = $screen->getVar('filter_button_text');
+    $mapSettings['tileset']              = $screen->getVar('tileset');
+    $mapSettings['tileset_url']          = $screen->getVar('tileset_url');
+    $mapSettings['tileset_key']          = $screen->getVar('tileset_key');
+    $mapSettings['tileset_attribution']  = $screen->getVar('tileset_attribution');
 
     // view entry screen options
     $mapSettings['viewentryscreenoptions'] = generateViewEntryScreenOptions($screen->getVar('frid'), $form_id);
