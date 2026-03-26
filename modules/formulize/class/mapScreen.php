@@ -167,13 +167,10 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
         }
     }
 
-    function render($screen, $entry) {
+    function render($screen) {
         $previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
-        $formframe = $screen->getVar('frid') ? $screen->getVar('frid') : $screen->getVar('fid');
-        $mainform = $screen->getVar('frid') ? $screen->getVar('fid') : "";
-        include_once XOOPS_ROOT_PATH . "/modules/formulize/include/mapdisplay.php";
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
-        displayMap($formframe, $mainform, $screen);
+        displayMap(screen: $screen);
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 }

@@ -219,8 +219,8 @@ if ($screen) {
 					$screen_handler->render($screen, $entry, $loadThisView);
 				}
 
-			// calendar screen...
-			} elseif($screen->getVar('type') == 'calendar') {
+			// calendar screen... or map screen...
+			} elseif($screen->getVar('type') == 'calendar' OR $screen->getVar('type') == 'map') {
 					$screen_handler->render($screen);
 
 			// all other types (form, multiPage form, template, etc)... loading up a specific entry

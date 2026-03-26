@@ -40,19 +40,18 @@ function formulize_screenMapTemplate($screen, $type, $vars) {
 /**
  * Display form entries as interactive markers on a Leaflet.js map.
  *
- * @param int|string $frid  Framework ID (or form ID if no framework)
- * @param int|string $fid   Form ID (empty string if no framework)
+ * @param int|string $frid  Form Relationship ID
+ * @param int|string $fid   Form ID
  * @param formulizeMapScreen|null $screen  Map screen object with settings
  */
-function displayMap($frid, $fid, $screen = null) {
-    global $xoopsDB;
+function displayMap($frid = 0, $fid = 0, $screen = null) {
 
-    // --- 1. Resolve fid from screen if not passed directly ---
+		// --- 1. Resolve fid and frid from screen if not passed directly ---
     if (!$fid AND $screen) {
         $fid = $screen->getVar('fid');
     }
     if (!$frid AND $screen) {
-        $frid = $screen->getVar('frid') ? $screen->getVar('frid') : $fid;
+        $frid = $screen->getVar('frid') ? $screen->getVar('frid') : -1;
     }
 
     // --- 2. Get screen settings ---
