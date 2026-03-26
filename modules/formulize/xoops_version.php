@@ -279,6 +279,16 @@ $modversion['table_metadata'] = array(
             )
         )
     ),
+		"formulize_screen_map" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
     "formulize_entry_owner_groups" => array(),
     "formulize_application_form_link" => array(
         "fields" => array(),
