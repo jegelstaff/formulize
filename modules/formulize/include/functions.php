@@ -7855,7 +7855,7 @@ function determineViewEntryScreen($screen, $fid) {
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             if($formObject = $form_handler->get($fid)) {
-                return $formObject->defaultform;
+                return $formObject->getVar('defaultform');
             }
         }
     }
@@ -7867,7 +7867,7 @@ function determineViewEntryScreen($screen, $fid) {
         } else {
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             if($formObject = $form_handler->get($fid)) {
-                return $formObject->defaultform;
+                return $formObject->getVar('defaultform');
             }
         }
     }

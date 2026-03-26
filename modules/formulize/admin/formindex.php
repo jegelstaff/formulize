@@ -1879,8 +1879,8 @@ NEWVERSION;
                     if(!$ves OR $ves === 'none') {
                         $form_handler = xoops_getmodulehandler('forms', 'formulize');
                         $formObject = $form_handler->get($screen->getVar('fid'));
-                        if($formObject->defaultform AND isset($formToMultipageMap[$formObject->defaultform])) {
-                            $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->defaultform]);
+                        if($formObject->getVar('defaultform') AND isset($formToMultipageMap[$formObject->getVar('defaultform')])) {
+                            $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->getVar('defaultform')]);
                             $tryInsert = true;
                         }
                     } elseif(isset($formToMultipageMap[$ves])) {
