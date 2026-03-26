@@ -265,7 +265,11 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
     ));
     echo '</form>' . "\n";
     formulize_screenMapTemplate($screen, 'map',    array('renderedMap' => $renderedMap));
-    formulize_screenMapTemplate($screen, 'bottom', array());
+    formulize_screenMapTemplate($screen, 'bottom', array(
+				'title'              => $title,
+        'filters'            => $filters,
+        'filter_button_text' => $filter_button_text,
+		));
     echo '<script>' . "\n";
     echo '(function() {' . "\n";
     echo '  var form = document.querySelector(".formulize-map-filter-form");' . "\n";
