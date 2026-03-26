@@ -168,11 +168,8 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
 
         // Build popup HTML: label heading, optional description paragraph, optional View Entry link
         $popup_html = '<h3>' . htmlspecialchars($label, ENT_QUOTES) . '</h3>';
-        if ($description_element) {
-            $desc = strip_tags((string) getValue($entry, $description_element));
-            if ($desc !== '') {
+        if ($description_element AND $desc = displayPara($entry, $description_element)) {
                 $popup_html .= '<p>' . nl2br(htmlspecialchars($desc, ENT_QUOTES)) . '</p>';
-            }
         }
         if ($viewentryscreen AND is_numeric($viewentryscreen) AND intval($viewentryscreen) > 0) {
             $popup_html .= '<p><a class="formulize-map-view-entry" href="#" onclick="formulizeMapViewEntry(' . intval($entry_id) . '); return false;">View Entry</a></p>';
