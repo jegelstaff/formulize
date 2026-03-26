@@ -86,22 +86,22 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
 
     // --- 4. Parse user-submitted search values from POST ---
     $searches = array();
-    foreach ($columns as $col) {
-        $handle = isset($col[0]) ? $col[0] : '';
-        if (!$handle OR !is_string($handle)) {
-            continue;
-        }
+		foreach ($columns as $col) {
+			$handle = isset($col[0]) ? $col[0] : '';
+			if (!$handle OR !is_string($handle)) {
+				continue;
+			}
 			if(empty($_POST)) {
 				if($searchTerm = isset($col[1]) ? $col[1] : '') {
 					$searches[$handle] = $searchTerm;
 				}
 			} else {
-        $postKey = 'search_' . $handle;
-        if (isset($_POST[$postKey]) AND $_POST[$postKey] !== '') {
-            $searches[$handle] = $_POST[$postKey];
+				$postKey = 'search_' . $handle;
+				if (isset($_POST[$postKey]) AND $_POST[$postKey] !== '') {
+					$searches[$handle] = $_POST[$postKey];
 				}
-        }
-    }
+			}
+		}
 
     // --- 5. Build settings array to carry map state through the view-entry round trip ---
     // writeHiddenSettings() will embed these as hidden fields in the view entry form so they
@@ -116,7 +116,7 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         $settings['search_' . $handle] = $value;
     }
 
-    // --- 2b. Jump to view entry screen if user clicked "View Entry" in a popup ---
+    // --- 6. Jump to view entry screen if user clicked "View Entry" in a popup ---
     if (isset($_POST['ventry']) AND intval($_POST['ventry']) > 0) {
         $ventry = intval($_POST['ventry']);
         if ($viewentryscreen AND is_numeric($viewentryscreen) AND intval($viewentryscreen) > 0) {
@@ -135,7 +135,7 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         return;
     }
 
-    // --- 5. Build filter from searches, then merge with fundamental_filters ---
+    // --- 7. Build filter from searches, then merge with fundamental_filters ---
     $filter = formulize_parseSearchesIntoFilter($searches);
     if ($screen) {
         $fundamental_filters = $screen->getVar('fundamental_filters');
@@ -144,10 +144,10 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         }
     }
 
-    // --- 6. Fetch entries using gatherDataset (frid:0 = main form only, no relationships) ---
+    // --- 8. Fetch entries using gatherDataset (frid:0 = main form only, no relationships) ---
     $data = gatherDataset($fid, filter: $filter, frid: 0);
 
-    // --- 7. Build entry data for map (server-side, as JSON) ---
+    // --- 9. Build entry data for map (server-side, as JSON) ---
     $map_entries = array();
     foreach ($data as $entry) {
         if (!is_array($entry)) {
@@ -169,10 +169,10 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         // Build popup HTML: label heading, optional description paragraph, optional View Entry link
         $popup_html = '<h3>' . htmlspecialchars($label, ENT_QUOTES) . '</h3>';
         if ($description_element AND $desc = displayPara($entry, $description_element)) {
-                $popup_html .= '<p>' . nl2br(htmlspecialchars($desc, ENT_QUOTES)) . '</p>';
+          $popup_html .= '<p>' . nl2br(htmlspecialchars($desc, ENT_QUOTES)) . '</p>';
         }
         if ($viewentryscreen AND is_numeric($viewentryscreen) AND intval($viewentryscreen) > 0) {
-            $popup_html .= '<p><a class="formulize-map-view-entry" href="#" onclick="formulizeMapViewEntry(' . intval($entry_id) . '); return false;">View Entry</a></p>';
+          $popup_html .= '<p><a class="formulize-map-view-entry" href="#" onclick="formulizeMapViewEntry(' . intval($entry_id) . '); return false;">View Entry</a></p>';
         }
 
         $map_entries[] = array(
@@ -184,7 +184,7 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         );
     }
 
-    // --- 8. Build $filters array: heading (htmlspecialchars'd) => input markup ---
+    // --- 10. Build $filters array: heading (htmlspecialchars'd) => input markup ---
     $filters = array();
     if (!empty($columns)) {
         $handles = array();
@@ -226,14 +226,14 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
         }
     }
 
-    // --- 9. Prepare form action URL and saved map state for the template ---
+    // --- 11. Prepare form action URL and saved map state for the template ---
     $current_url = htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES);
 
-    // --- 10. Build $renderedMap string (map container + JS only) ---
+    // --- 12. Build page infrastructure and the $renderedMap string
+
     // Leaflet assets are output directly below, outside $renderedMap, so they are
-    // siblings of the map wrapper div rather than nested inside it.  Having <link>
-    // and <script src> inside a block div causes browsers to recompute that div's
-    // layout, producing an incorrect offsetWidth when Leaflet reads it at init time.
+    // siblings of the map wrapper div rather than nested inside it.
+
     $map_id       = 'formulize-map-' . intval($fid) . '-' . ($screen ? intval($screen->getVar('sid')) : '0');
     $entries_json = json_encode(array_values($map_entries));
     $js_saved_lat  = ($saved_map_lat  !== null) ? $saved_map_lat  : 'null';
@@ -244,11 +244,11 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
     // $renderedMap is just the map markup; JS is output directly as page infrastructure
     $renderedMap = '<div id="' . htmlspecialchars($map_id, ENT_QUOTES) . '" style="height:600px;width:100%;"></div>' . "\n";
 
-    // --- 11. Screen title and filter button text ---
+    // --- 13. Screen title and filter button text ---
     $title = $screen ? $screen->getVar('title') : '';
     $filter_button_text = $screen ? htmlspecialchars((string) $screen->getVar('filter_button_text'), ENT_QUOTES) : '';
 
-    // --- 12. Render: Leaflet assets, then form wrapper around toptemplate, then map template ---
+    // --- 14. Render: Leaflet assets, then form wrapper around toptemplate, then map template ---
     // The form is always output (even with no filters) so that hidden map state fields
     // (lat/lng/zoom) are always available for restoring position after navigating to an entry.
     echo '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">' . "\n";
