@@ -3917,8 +3917,11 @@ jQuery(window).load(function() {
 	<?php
 	// set the scroll position when first loading
 	if(isset($_POST['formulize_scrollx']) OR isset($_POST['formulize_scrolly'])) {
-		print "jQuery('#formulize-list-of-entries').scrollTop(".intval($_POST['formulize_scrollx']).");
-		jQuery('#formulize-list-of-entries').scrollLeft(".intval($_POST['formulize_scrolly']).");";
+		print "
+		window.addEventListener('formulize_pageShown', function () {
+      jQuery('#formulize-list-of-entries').scrollTop(".intval($_POST['formulize_scrollx']).");
+			jQuery('#formulize-list-of-entries').scrollLeft(".intval($_POST['formulize_scrolly']).");
+    });";
 	}
 
 	?>
