@@ -2315,6 +2315,9 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 	$map_lat  = isset($settings['map_lat'])  ? floatval($settings['map_lat'])  : null;
 	$map_lng  = isset($settings['map_lng'])  ? floatval($settings['map_lng'])  : null;
 	$map_zoom = isset($settings['map_zoom']) ? intval($settings['map_zoom'])   : null;
+	// scroll position, to restore when returning from entry view to list
+	$formulize_scrollx = isset($settings['formulize_scrollx']) ? intval($settings['formulize_scrollx']) : 0;
+	$formulize_scrolly = isset($settings['formulize_scrolly']) ? intval($settings['formulize_scrolly']) : 0;
 	// plus there's the calhidden key that is handled below
 	// plus there's the page number on the LOE screen that is handled below...
 	// plus there's the multipage prev and current page
@@ -2387,6 +2390,8 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		}
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken());
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage']));
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrollx', $formulize_scrollx);
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrolly', $formulize_scrolly);
 		foreach($newHiddenElements as $nhe) {
 			$form->addElement($nhe);
 			unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
@@ -2454,6 +2459,8 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
         }
         print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
 				print "<input type='hidden' name='formulize_entriesPerPage' value='".intval($_POST['formulize_entriesPerPage'])."'>";
+		print "<input type='hidden' name='formulize_scrollx' value='" . $formulize_scrollx . "'>";
+		print "<input type='hidden' name='formulize_scrolly' value='" . $formulize_scrolly . "'>";
 	}
 }
 

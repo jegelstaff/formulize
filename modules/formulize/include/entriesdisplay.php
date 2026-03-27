@@ -862,6 +862,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$settings['sort'] = isset($_POST['sort']) ? $_POST['sort'] : null;
 	$settings['order'] = isset($_POST['order']) ? $_POST['order'] : null;
 
+	// save scroll position so it can be restored when returning from an entry view
+	$settings['formulize_scrollx'] = isset($_POST['formulize_scrollx']) ? intval($_POST['formulize_scrollx']) : null;
+	$settings['formulize_scrolly'] = isset($_POST['formulize_scrolly']) ? intval($_POST['formulize_scrolly']) : null;
+
 	//get all submitted search text
 	$searches = array();
 	foreach($_POST as $k=>$v) {
@@ -3792,6 +3796,8 @@ function change_view(formObj, pickgroups, endstandard) {
 }
 
 function addNew(flag) {
+	window.document.controls.formulize_scrollx.value = jQuery('#formulize-list-of-entries').scrollTop();
+	window.document.controls.formulize_scrolly.value = jQuery('#formulize-list-of-entries').scrollLeft();
 	if(flag=='proxy') {
 		window.document.controls.ventry.value = 'proxy';
 	} else if(flag=='single') {
@@ -3803,6 +3809,8 @@ function addNew(flag) {
 }
 
 function goDetails(viewentry, screen) {
+	window.document.controls.formulize_scrollx.value = jQuery('#formulize-list-of-entries').scrollTop();
+	window.document.controls.formulize_scrolly.value = jQuery('#formulize-list-of-entries').scrollLeft();
 	window.document.controls.ventry.value = viewentry;
 	if(screen>0) {
 		window.document.controls.overridescreen.value = screen;
@@ -3875,8 +3883,8 @@ jQuery(window).load(function() {
 
 function showLoading() {
 
-	window.document.controls.formulize_scrollx.value = jQuery(window).scrollTop();
-	window.document.controls.formulize_scrolly.value = jQuery(window).scrollLeft();
+	window.document.controls.formulize_scrollx.value = jQuery('#formulize-list-of-entries').scrollTop();
+	window.document.controls.formulize_scrolly.value = jQuery('#formulize-list-of-entries').scrollLeft();
 	<?php
 		if($useWorking) {
 			print "window.document.getElementById('listofentries').style.opacity = 0.5;\n";
@@ -3909,8 +3917,11 @@ jQuery(window).load(function() {
 	<?php
 	// set the scroll position when first loading
 	if(isset($_POST['formulize_scrollx']) OR isset($_POST['formulize_scrolly'])) {
-		print "jQuery(window).scrollTop(".intval($_POST['formulize_scrollx']).");
-		jQuery(window).scrollLeft(".intval($_POST['formulize_scrolly']).");";
+		print "
+		window.addEventListener('formulize_pageShown', function () {
+      jQuery('#formulize-list-of-entries').scrollTop(".intval($_POST['formulize_scrollx']).");
+			jQuery('#formulize-list-of-entries').scrollLeft(".intval($_POST['formulize_scrolly']).");
+    });";
 	}
 
 	?>
