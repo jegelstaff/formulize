@@ -1,11 +1,7 @@
 <?php
 ###############################################################################
-##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2007 Freeform Solutions                  ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
+##     Formulize - configurable data management, reporting, and workflows    ##
+##                Copyright (c) 2026 The Formulize Project                   ##
 ###############################################################################
 ##  This program is free software; you can redistribute it and/or modify     ##
 ##  it under the terms of the GNU General Public License as published by     ##
@@ -26,8 +22,8 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions                                  ##
-##  Project: Formulize                                                       ##
+##  Author of this file: The Formulize Project                               ##
+##  URL: http://www.formulize.org                                            ##
 ###############################################################################
 
 if (!defined("XOOPS_ROOT_PATH")) {

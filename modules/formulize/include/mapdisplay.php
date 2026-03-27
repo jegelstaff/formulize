@@ -1,20 +1,29 @@
 <?php
 ###############################################################################
-##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2007 Freeform Solutions                  ##
+##     Formulize - configurable data management, reporting, and workflows    ##
+##                Copyright (c) 2026 The Formulize Project                   ##
 ###############################################################################
 ##  This program is free software; you can redistribute it and/or modify     ##
 ##  it under the terms of the GNU General Public License as published by     ##
 ##  the Free Software Foundation; either version 2 of the License, or        ##
 ##  (at your option) any later version.                                      ##
 ##                                                                           ##
+##  You may not change or alter any portion of this comment or credits       ##
+##  of supporting developers from this source code or any supporting         ##
+##  source code which is considered copyrighted (c) material of the          ##
+##  original comment or credit authors.                                      ##
+##                                                                           ##
 ##  This program is distributed in the hope that it will be useful,          ##
 ##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
 ##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
 ##  GNU General Public License for more details.                             ##
+##                                                                           ##
+##  You should have received a copy of the GNU General Public License        ##
+##  along with this program; if not, write to the Free Software              ##
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions                                  ##
-##  Project: Formulize                                                       ##
+##  Author of this file: The Formulize Project                               ##
+##  URL: http://www.formulize.org                                            ##
 ###############################################################################
 
 if (!defined("XOOPS_ROOT_PATH")) {
@@ -289,80 +298,91 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
     // --- 14. Render: Leaflet assets, then form wrapper around toptemplate, then map template ---
     // The form is always output (even with no filters) so that hidden map state fields
     // (lat/lng/zoom) are always available for restoring position after navigating to an entry.
-    echo '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">' . "\n";
-    echo '<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>' . "\n";
-    echo '<form method="post" action="' . $current_url . '" class="formulize-map-filter-form">' . "\n";
-    echo '<input type="hidden" name="map_lat"  class="formulize-map-lat"  value="' . ($saved_map_lat  !== null ? $saved_map_lat  : '') . '">' . "\n";
-    echo '<input type="hidden" name="map_lng"  class="formulize-map-lng"  value="' . ($saved_map_lng  !== null ? $saved_map_lng  : '') . '">' . "\n";
-    echo '<input type="hidden" name="map_zoom" class="formulize-map-zoom" value="' . ($saved_map_zoom !== null ? $saved_map_zoom : '') . '">' . "\n";
-    echo '<input type="hidden" name="ventry"   class="formulize-map-ventry" value="">' . "\n";
+    $lat_val             = $saved_map_lat  !== null ? $saved_map_lat  : '';
+    $lng_val             = $saved_map_lng  !== null ? $saved_map_lng  : '';
+    $zoom_val            = $saved_map_zoom !== null ? $saved_map_zoom : '';
+    $js_map_id           = json_encode($map_id);
+    $js_tile_url         = json_encode($tileUrl);
+    $js_tile_attribution = json_encode($tileAttribution);
+    $js_tile_max_zoom    = intval($tileMaxZoom);
+    echo <<<HTML
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+<form method="post" action="$current_url" class="formulize-map-filter-form">
+<input type="hidden" name="map_lat"  class="formulize-map-lat"  value="$lat_val">
+<input type="hidden" name="map_lng"  class="formulize-map-lng"  value="$lng_val">
+<input type="hidden" name="map_zoom" class="formulize-map-zoom" value="$zoom_val">
+<input type="hidden" name="ventry"   class="formulize-map-ventry" value="">
+HTML;
     formulize_screenMapTemplate($screen, 'top', array(
         'title'              => $title,
         'filters'            => $filters,
         'filter_button_text' => $filter_button_text,
     ));
-    echo '</form>' . "\n";
-    formulize_screenMapTemplate($screen, 'map',    array('renderedMap' => $renderedMap));
+    echo "</form>\n";
+    formulize_screenMapTemplate($screen, 'map', array('renderedMap' => $renderedMap));
     formulize_screenMapTemplate($screen, 'bottom', array(
-				'title'              => $title,
+        'title'              => $title,
         'filters'            => $filters,
         'filter_button_text' => $filter_button_text,
-		));
-    echo '<script>' . "\n";
-    echo '(function() {' . "\n";
-    echo '  var form = document.querySelector(".formulize-map-filter-form");' . "\n";
-    echo '  if (form) {' . "\n";
-    echo '    var selects = form.querySelectorAll("select");' . "\n";
-    echo '    for (var i = 0; i < selects.length; i++) {' . "\n";
-    echo '      selects[i].addEventListener("change", function() { form.submit(); });' . "\n";
-    echo '    }' . "\n";
-    echo '  }' . "\n";
-    echo '})();' . "\n";
-    echo 'var ' . $js_var_name . ' = ' . $entries_json . ';' . "\n";
-    echo '(function() {' . "\n";
-    echo '  var entries = ' . $js_var_name . ';' . "\n";
-    echo '  var savedLat  = ' . $js_saved_lat  . ';' . "\n";
-    echo '  var savedLng  = ' . $js_saved_lng  . ';' . "\n";
-    echo '  var savedZoom = ' . $js_saved_zoom . ';' . "\n";
-    echo '  window.addEventListener("formulize_pageShown", function() {' . "\n";
-    echo '    var map = L.map(' . json_encode($map_id) . ');' . "\n";
-    echo '    L.tileLayer(' . json_encode($tileUrl) . ', {' . "\n";
-    echo '      attribution: ' . json_encode($tileAttribution) . ',' . "\n";
-    echo '      maxZoom: ' . intval($tileMaxZoom) . "\n";
-    echo '    }).addTo(map);' . "\n";
-    echo '    var bounds = L.latLngBounds();' . "\n";
-    echo '    for (var i = 0; i < entries.length; i++) {' . "\n";
-    echo '      var e = entries[i];' . "\n";
-    echo '      var marker = L.marker([e.lat, e.lng], {title: e.label});' . "\n";
-    echo '      marker.bindPopup(e.popup_html);' . "\n";
-    echo '      marker.addTo(map);' . "\n";
-    echo '      bounds.extend([e.lat, e.lng]);' . "\n";
-    echo '    }' . "\n";
-    echo '    if (savedLat !== null && savedZoom !== null) {' . "\n";
-    echo '      map.setView([savedLat, savedLng], savedZoom);' . "\n";
-    echo '    } else if (bounds.isValid()) {' . "\n";
-    echo '      map.fitBounds(bounds, {padding: [40, 40], maxZoom: 14});' . "\n";
-    echo '    } else {' . "\n";
-    echo '      map.setView([0, 0], 2);' . "\n";
-    echo '    }' . "\n";
-    echo '    map.on("moveend zoomend", function() {' . "\n";
-    echo '      var c = map.getCenter();' . "\n";
-    echo '      var z = map.getZoom();' . "\n";
-    echo '      var form = document.querySelector(".formulize-map-filter-form");' . "\n";
-    echo '      if (form) {' . "\n";
-    echo '        form.querySelector(".formulize-map-lat").value  = c.lat;' . "\n";
-    echo '        form.querySelector(".formulize-map-lng").value  = c.lng;' . "\n";
-    echo '        form.querySelector(".formulize-map-zoom").value = z;' . "\n";
-    echo '      }' . "\n";
-    echo '    });' . "\n";
-    echo '  });' . "\n";
-    echo '})();' . "\n";
-    echo 'function formulizeMapViewEntry(entry_id) {' . "\n";
-    echo '  var form = document.querySelector(".formulize-map-filter-form");' . "\n";
-    echo '  if (form) {' . "\n";
-    echo '    form.querySelector(".formulize-map-ventry").value = entry_id;' . "\n";
-    echo '    form.submit();' . "\n";
-    echo '  }' . "\n";
-    echo '}' . "\n";
-    echo '</script>' . "\n";
+    ));
+    echo <<<JS
+<script>
+(function() {
+  var form = document.querySelector(".formulize-map-filter-form");
+  if (form) {
+    var selects = form.querySelectorAll("select");
+    for (var i = 0; i < selects.length; i++) {
+      selects[i].addEventListener("change", function() { form.submit(); });
+    }
+  }
+})();
+var $js_var_name = $entries_json;
+(function() {
+  var entries = $js_var_name;
+  var savedLat  = $js_saved_lat;
+  var savedLng  = $js_saved_lng;
+  var savedZoom = $js_saved_zoom;
+  window.addEventListener("formulize_pageShown", function() {
+    var map = L.map($js_map_id);
+    L.tileLayer($js_tile_url, {
+      attribution: $js_tile_attribution,
+      maxZoom: $js_tile_max_zoom
+    }).addTo(map);
+    var bounds = L.latLngBounds();
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var marker = L.marker([e.lat, e.lng], {title: e.label});
+      marker.bindPopup(e.popup_html);
+      marker.addTo(map);
+      bounds.extend([e.lat, e.lng]);
+    }
+    if (savedLat !== null && savedZoom !== null) {
+      map.setView([savedLat, savedLng], savedZoom);
+    } else if (bounds.isValid()) {
+      map.fitBounds(bounds, {padding: [40, 40], maxZoom: 14});
+    } else {
+      map.setView([0, 0], 2);
+    }
+    map.on("moveend zoomend", function() {
+      var c = map.getCenter();
+      var z = map.getZoom();
+      var form = document.querySelector(".formulize-map-filter-form");
+      if (form) {
+        form.querySelector(".formulize-map-lat").value  = c.lat;
+        form.querySelector(".formulize-map-lng").value  = c.lng;
+        form.querySelector(".formulize-map-zoom").value = z;
+      }
+    });
+  });
+})();
+function formulizeMapViewEntry(entry_id) {
+  var form = document.querySelector(".formulize-map-filter-form");
+  if (form) {
+    form.querySelector(".formulize-map-ventry").value = entry_id;
+    form.submit();
+  }
+}
+</script>
+JS;
 }
