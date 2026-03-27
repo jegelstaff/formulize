@@ -4562,8 +4562,6 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
         $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
 				$link = "<a href='".$url."'>" . $buttonText . "</a>";
-				global $xoopsTpl;
-				$xoopsTpl->assign('modifyScreenUrl', $url);
 				return $link;
 				break;
 			case "changeColsButton":

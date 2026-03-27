@@ -160,6 +160,10 @@ if (!$loadThisView) {
 
 if ($screen) {
 
+		$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
+		$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
+		$xoopsTpl->assign('modifyScreenUrl', $url);
+
 		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -215,8 +219,8 @@ if ($screen) {
 					$screen_handler->render($screen, $entry, $loadThisView);
 				}
 
-			// calendar screen...
-			} elseif($screen->getVar('type') == 'calendar') {
+			// calendar screen... or map screen...
+			} elseif($screen->getVar('type') == 'calendar' OR $screen->getVar('type') == 'map') {
 					$screen_handler->render($screen);
 
 			// all other types (form, multiPage form, template, etc)... loading up a specific entry

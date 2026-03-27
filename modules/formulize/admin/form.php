@@ -567,6 +567,13 @@ foreach($calendarScreens as $screen) {
     $screens['calendar'][$i]['title'] = $screen->getVar('title');
     $i++;
 }
+$mapScreens = $screen_handler->getObjects(new Criteria('type','map'),$fid);
+$i=1;
+foreach($mapScreens as $screen) {
+    $screens['map'][$i]['sid'] = $screen->getVar('sid');
+    $screens['map'][$i]['title'] = $screen->getVar('title');
+    $i++;
+}
 $criteria_object = new Criteria('type','form');
 $legacyFormScreens = $screen_handler->getObjects($criteria_object,$fid);
 $i = 1;

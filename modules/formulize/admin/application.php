@@ -126,7 +126,7 @@ foreach($formObjects as $thisForm) {
 $relationships = $framework_handler->formatFrameworksAsRelationships($allRelationships);
 
 $all_screens = array();
-$screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries");
+$screen_types = array("form" => "Single Page", "multiPage" => "Multi-page", "listOfEntries" => "List of Entries", "map" => "Map");
 $screen_sort = $_GET['sort'];
 $screen_sort_order = $_GET['order'];
 $screen_page = intval($_GET['nav']);

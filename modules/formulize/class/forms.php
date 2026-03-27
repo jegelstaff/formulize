@@ -576,12 +576,12 @@ EOF;
     // returns only the parent screen, not the full screen object, since default might be a legacy form screen or a multipage screen
     public function default_form_screen() {
         $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-        return $screen_handler->get($this->defaultform);
+        return $screen_handler->get($this->getVar('defaultform'));
     }
 
     public function default_list_screen() {
         $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-        return $screen_handler->get($this->defaultlist);
+        return $screen_handler->get($this->getVar('defaultlist'));
     }
 
     public function entry_count() {

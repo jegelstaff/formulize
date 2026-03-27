@@ -1,0 +1,239 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we're inserting/updating on *}>
+
+<form id="form-<{$number}>" class="formulize-admin-form">
+<{$securitytoken}>
+<input type="hidden" name="formulize_admin_handler" value="screen_map">
+<input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+<input type="hidden" class="ffdelete" name="ffdelete" value="">
+<input type="hidden" name="reload_map_screen_page" value="">
+
+<div class="panel-content content">
+
+  <fieldset>
+    <legend><{$smarty.const._AM_MAP_ELEMENTS_LEGEND}></legend>
+    <div class="form-item">
+      <label for="screens-lat_element"><{$smarty.const._AM_MAP_LAT_ELEMENT_LABEL}></label>
+      <select id="screens-lat_element" name="screens-lat_element" size="1">
+        <option value=""><{$smarty.const._AM_MAP_SELECT_DEFAULT}></option>
+        <{html_options options=$content.elementoptions selected=$content.lat_element}>
+      </select>
+      <div class="description"><{$smarty.const._AM_MAP_LAT_ELEMENT_DESC}></div>
+    </div>
+    <br>
+    <div class="form-item">
+      <label for="screens-lng_element"><{$smarty.const._AM_MAP_LNG_ELEMENT_LABEL}></label>
+      <select id="screens-lng_element" name="screens-lng_element" size="1">
+        <option value=""><{$smarty.const._AM_MAP_SELECT_DEFAULT}></option>
+        <{html_options options=$content.elementoptions selected=$content.lng_element}>
+      </select>
+      <div class="description"><{$smarty.const._AM_MAP_LNG_ELEMENT_DESC}></div>
+    </div>
+    <br>
+    <div class="form-item">
+      <label for="screens-label_element"><{$smarty.const._AM_MAP_LABEL_ELEMENT_LABEL}></label>
+      <select id="screens-label_element" name="screens-label_element" size="1">
+        <option value=""><{$smarty.const._AM_MAP_SELECT_DEFAULT}></option>
+        <{html_options options=$content.elementoptions selected=$content.label_element}>
+      </select>
+      <div class="description"><{$smarty.const._AM_MAP_LABEL_ELEMENT_DESC}></div>
+    </div>
+    <br>
+    <div class="form-item">
+      <label for="screens-description_element"><{$smarty.const._AM_MAP_DESC_ELEMENT_LABEL}></label>
+      <select id="screens-description_element" name="screens-description_element" size="1">
+        <option value=""><{$smarty.const._AM_MAP_NONE_DEFAULT}></option>
+        <{html_options options=$content.elementoptions selected=$content.description_element}>
+      </select>
+      <div class="description"><{$smarty.const._AM_MAP_DESC_ELEMENT_DESC}></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend><{$smarty.const._AM_MAP_FILTERS_LEGEND}></legend>
+    <p><{$smarty.const._AM_MAP_FILTERS_INTRO}></p>
+    <p><input type="button" class="formButton" name="addColumn" value="<{$smarty.const._AM_MAP_ADD_FILTER_COLUMN}>"></p>
+    <br/>
+    <table class="advanceview" style="border:none">
+      <tr>
+        <td><label><{$smarty.const._AM_MAP_COLUMN_HEADING}></label></td>
+        <td><label><{$smarty.const._AM_MAP_DEFAULT_SEARCH_TERM_HEADING}></label></td>
+        <td><label><{$smarty.const._AM_MAP_FILTER_TYPE_HEADING}></label></td>
+        <td></td>
+      </tr>
+      <{if $content.columns|is_array AND $content.columns|@count > 0}>
+        <{foreach from=$content.columns key=index item=value}>
+          <tr class="advanceviewcol" name="<{$index}>">
+            <td><span class='sorthandle'>&equiv;</span>
+              <select id="cols-<{$index}>" name="col-value[<{$index}>]" size="1">
+                <{html_options options=$content.columnoptions selected=$value.column}>
+              </select>
+            </td>
+            <td>
+              <input type="text" name="search-value[<{$index}>]" value="<{$value.text}>">
+            </td>
+            <td>
+              <select id="search-type-<{$index}>" name="search-type[<{$index}>]" size="1">
+                <{html_options options=$content.columnsearchtypeoptions selected=$value.searchtype}>
+              </select>
+            </td>
+            <td class='removeImage'>
+              <img class="removeCol" style="cursor: pointer;" onclick="removeColumn(<{$index}>)" src="../images/editdelete.gif">
+            </td>
+          </tr>
+        <{/foreach}>
+        <input type="hidden" id="numberOfRows" name="rows" value=<{if $content.columns|is_array}><{$content.columns|@count}><{/if}>>
+      <{else}>
+        <tr class="advanceviewcol" name="0">
+          <td><span class='sorthandle'>&equiv;</span>
+            <select id="cols-0" name="col-value[0]" size="1">
+              <{html_options options=$content.columnoptions}>
+            </select>
+          </td>
+          <td>
+            <input type="text" name="search-value[0]">
+          </td>
+          <td>
+            <select id="search-type-0" name="search-type[0]"><option value="Box"><{$smarty.const._AM_MAP_SEARCH_TYPE_BOX}></option><option value="Filter"><{$smarty.const._AM_MAP_SEARCH_TYPE_FILTER}></option><option value="NegativeFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_NEG_FILTER}></option><option value="MultiFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_MULTI}></option><option value="DateRange"><{$smarty.const._AM_MAP_SEARCH_TYPE_DATE}></option></select>
+          </td>
+          <td></td>
+        </tr>
+        <input type="hidden" id="numberOfRows" name="rows" value=0>
+      <{/if}>
+    </table>
+
+    <div class="form-item clear-both">
+      <br><hr>
+      <h3><{$smarty.const._AM_MAP_FUNDAMENTAL_FILTERS_HEADING}></h3>
+      <div id='fundamentalfilters'>
+        <br>
+        <{$content.fundamentalfilters}>
+      </div>
+      <div class='description'><{$smarty.const._AM_MAP_FUNDAMENTAL_FILTERS_DESC}></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend><{$smarty.const._AM_MAP_ENTRY_SCREEN_LEGEND}></legend>
+    <div class="form-item">
+      <label for="screens-viewentryscreen"><{$smarty.const._AM_MAP_VIEW_ENTRY_SCREEN_LABEL}></label>
+      <select id="screens-viewentryscreen" name="screens-viewentryscreen" size="1">
+        <{html_options options=$content.viewentryscreenoptions selected=$content.viewentryscreen}>
+      </select>
+      <div class="description"><{$smarty.const._AM_MAP_VIEW_ENTRY_SCREEN_DESC}></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend><{$smarty.const._AM_MAP_FILTER_BUTTON_LEGEND}></legend>
+    <div class="form-item">
+      <label for="screens-filter_button_text"><{$smarty.const._AM_MAP_FILTER_BUTTON_TEXT}></label>
+      <input type="text" id="screens-filter_button_text" name="screens-filter_button_text" value="<{$content.filter_button_text}>">
+      <div class="description"><{$smarty.const._AM_MAP_FILTER_BUTTON_TEXT_DESC}></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend><{$smarty.const._AM_MAP_TILES_LEGEND}></legend>
+    <div class="form-item">
+      <label for="screens-tileset"><{$smarty.const._AM_MAP_TILESET_LABEL}></label>
+      <select id="screens-tileset" name="screens-tileset" size="1">
+        <option value="osm" <{if $content.tileset == 'osm' OR !$content.tileset}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_OSM}></option>
+        <option value="topo" <{if $content.tileset == 'topo'}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_TOPO}></option>
+        <option value="esri" <{if $content.tileset == 'esri'}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_ESRI}></option>
+        <option value="custom" <{if $content.tileset == 'custom'}>selected<{/if}>><{$smarty.const._AM_MAP_TILESET_CUSTOM}></option>
+      </select>
+    </div>
+    <div id="map-custom-tile-fields" style="<{if $content.tileset != 'custom'}>display:none;<{/if}>">
+      <br>
+      <div class="form-item">
+        <label for="screens-tileset_url"><{$smarty.const._AM_MAP_TILESET_URL_LABEL}></label>
+        <input type="text" id="screens-tileset_url" name="screens-tileset_url" style="width:100%" value="<{$content.tileset_url}>">
+        <div class="description"><{$smarty.const._AM_MAP_TILESET_URL_DESC}></div>
+      </div>
+      <br>
+      <div class="form-item">
+        <label for="screens-tileset_key"><{$smarty.const._AM_MAP_TILESET_KEY_LABEL}></label>
+        <input type="text" id="screens-tileset_key" name="screens-tileset_key" value="<{$content.tileset_key}>">
+        <div class="description"><{$smarty.const._AM_MAP_TILESET_KEY_DESC}></div>
+      </div>
+      <br>
+      <div class="form-item">
+        <label for="screens-tileset_attribution"><{$smarty.const._AM_MAP_TILESET_ATTRIBUTION_LABEL}></label>
+        <input type="text" id="screens-tileset_attribution" name="screens-tileset_attribution" style="width:100%" value="<{$content.tileset_attribution}>">
+        <div class="description"><{$smarty.const._AM_MAP_TILESET_ATTRIBUTION_DESC}></div>
+      </div>
+    </div>
+  </fieldset>
+
+</div>
+
+</form>
+
+<script type="text/javascript">
+
+  function getMapColumns(number) {
+    <{foreach from=$content.columnoptions key=index item=value}>
+      $("#cols-"+number).append($('<option>', {
+        value: "<{$index}>" }).text("<{$value|replace:'"':'\"'}>"));
+    <{/foreach}>
+  }
+
+  function addAdvanceViewRow(number) {
+    appendContents1 = '<td><span class="sorthandle">&equiv;</span> <select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
+    appendContents2 = '<td><input type="text" name="search-value['+number+']"></td>';
+    appendContents3 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option value="Box"><{$smarty.const._AM_MAP_SEARCH_TYPE_BOX}></option><option value="Filter"><{$smarty.const._AM_MAP_SEARCH_TYPE_FILTER}></option><option value="NegativeFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_NEG_FILTER}></option><option value="MultiFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_MULTI}></option><option value="DateRange"><{$smarty.const._AM_MAP_SEARCH_TYPE_DATE}></option></select></td>';
+    $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
+    $(".advanceviewcol:last").append(appendContents1);
+    $(".advanceviewcol:last").append(appendContents2);
+    $(".advanceviewcol:last").append(appendContents3);
+    $(".advanceviewcol:last").append("<td class='removeImage'></td>");
+  }
+
+  $("[name=addColumn]").click(function() {
+    number = $(".advanceviewcol:last").attr('name');
+    number = parseInt(number) + 1;
+    addAdvanceViewRow(number);
+
+    appendContents5 = '<img class="removeCol" style="cursor: pointer;" onclick="removeColumn('+number+')" src="../images/editdelete.gif">';
+    $(".removeImage:last").append(appendContents5);
+
+    getMapColumns(number);
+
+    rows = $("#numberOfRows").val();
+    rows = parseInt(rows) + 1;
+    $("#numberOfRows").val(rows);
+
+    $("[name=addColumn]").blur();
+    setDisplay('savewarning', 'block');
+  });
+
+  function removeColumn(number) {
+    $(".advanceviewcol[name='" + number + "']").remove();
+    setDisplay('savewarning', 'block');
+  }
+
+  $("#screens-tileset").change(function() {
+    if ($(this).val() === 'custom') {
+      $("#map-custom-tile-fields").show();
+    } else {
+      $("#map-custom-tile-fields").hide();
+    }
+  });
+
+  $("div#fundamentalfilters > input[name=addcon]").click(function () {
+    $("[name=reload_map_screen_page]").val(1);
+    $(".savebutton").click();
+    return false;
+  });
+
+  $("div#fundamentalfilters > a.conditionsdelete").click(function () {
+    $(".ffdelete").val($(this).attr('target'));
+    $("[name=reload_map_screen_page]").val(1);
+    $(".savebutton").click();
+    return false;
+  });
+
+</script>

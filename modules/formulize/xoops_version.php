@@ -67,6 +67,7 @@ $modversion['tables'] = array(
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
   "formulize_screen_calendar",
+  "formulize_screen_map",
 	"formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -102,6 +103,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_screen_listofentries",
 	"formulize_screen_template",
     "formulize_screen_calendar",
+    "formulize_screen_map",
     "formulize_entry_owner_groups",
 	"formulize_application_form_link",
 	"formulize_applications",
@@ -268,6 +270,16 @@ $modversion['table_metadata'] = array(
         )
     ),
     "formulize_screen_template" => array(
+        "fields" => array(),
+        "joins" => array(
+            array(
+                "join_table" => "formulize_screen",
+                "join_field" => array("sid", "sid"),
+                "field" => "title"
+            )
+        )
+    ),
+		"formulize_screen_map" => array(
         "fields" => array(),
         "joins" => array(
             array(
@@ -682,6 +694,12 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/element_options_delimiter_choice.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_map.html',
+    'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_map_templates.html',
     'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_calendar_data_sections.html',

@@ -62,6 +62,8 @@ if($screens['type'] == 'multiPage') {
     $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
 } else if($screens['type'] == 'calendar') {
     $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
+} else if($screens['type'] == 'map') {
+    $screen_handler = xoops_getmodulehandler('mapScreen', 'formulize');
 }
 
 global $xoopsConfig;
@@ -93,6 +95,11 @@ if($isNew) {
       $screen->setVar('frid', -1);
       $screen->setVar('caltype', 'month');
       $screen->setVar('datasets', serialize(array()));  // need to serialize things that have the array datatype, when they are manually generated here by us!
+  } else if($screens['type'] == 'map') {
+      $screen->setVar('frid', -1);
+      $screen->setVar('columns', serialize(array()));
+      $screen->setVar('fundamental_filters', serialize(array()));
+      $screen->setVar('filter_button_text', _AM_MAP_FILTER_BUTTON_DEFAULT);
   }
 } else {
   $screen = $screen_handler->get($sid);

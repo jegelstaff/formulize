@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_screen_listofentries';
-    $checkThisField = 'usenumberofentries';
+    $checkThisTable = 'formulize_screen_map';
+    $checkThisField = '';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -399,6 +399,26 @@ function patch40() {
                 `datasets` text DEFAULT NULL,
                 PRIMARY KEY (`calendar_id`),
                 INDEX i_sid (`sid`)
+              ) ENGINE=InnoDB;";
+        }
+
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_screen_map")), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_screen_map") . " (
+                `sid` int(11) NOT NULL,
+                `lat_element` varchar(255) DEFAULT NULL,
+                `lng_element` varchar(255) DEFAULT NULL,
+                `label_element` varchar(255) DEFAULT NULL,
+                `description_element` varchar(255) DEFAULT NULL,
+                `popup_screen` int(11) DEFAULT NULL,
+                `viewentryscreen` varchar(255) DEFAULT NULL,
+                `columns` text DEFAULT NULL,
+                `fundamental_filters` text DEFAULT NULL,
+                `filter_button_text` varchar(255) DEFAULT NULL,
+								`tileset` varchar(50) DEFAULT 'osm',
+								`tileset_url` text DEFAULT NULL,
+								`tileset_key` varchar(255) DEFAULT NULL,
+								`tileset_attribution` text DEFAULT NULL,
+                PRIMARY KEY (`sid`)
               ) ENGINE=InnoDB;";
         }
 
@@ -1863,8 +1883,8 @@ NEWVERSION;
                     if(!$ves OR $ves === 'none') {
                         $form_handler = xoops_getmodulehandler('forms', 'formulize');
                         $formObject = $form_handler->get($screen->getVar('fid'));
-                        if($formObject->defaultform AND isset($formToMultipageMap[$formObject->defaultform])) {
-                            $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->defaultform]);
+                        if($formObject->getVar('defaultform') AND isset($formToMultipageMap[$formObject->getVar('defaultform')])) {
+                            $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->getVar('defaultform')]);
                             $tryInsert = true;
                         }
                     } elseif(isset($formToMultipageMap[$ves])) {

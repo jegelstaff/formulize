@@ -73,6 +73,8 @@ if($screens['type'] == 'multiPage') {
   $screen_handler = xoops_getmodulehandler('calendarScreen', 'formulize');
 } else if($screens['type'] == 'template') {
   $screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+} else if($screens['type'] == 'map') {
+  $screen_handler = xoops_getmodulehandler('mapScreen', 'formulize');
 }
 
 if ("new" != $sid) {
