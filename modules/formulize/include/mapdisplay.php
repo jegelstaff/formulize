@@ -135,6 +135,8 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
                 $viewEntryScreen_handler = xoops_getmodulehandler($viewEntryScreenObject->getVar('type') . 'Screen', 'formulize');
                 $displayScreen = $viewEntryScreen_handler->get($viewEntryScreenObject->getVar('sid'));
                 $viewEntryScreen_handler->render($displayScreen, $ventry, $settings);
+								global $renderedFormulizeScreen;
+								$renderedFormulizeScreen = $displayScreen;
                 return;
             }
         }

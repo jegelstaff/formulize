@@ -160,10 +160,6 @@ if (!$loadThisView) {
 
 if ($screen) {
 
-		$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
-		$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
-		$xoopsTpl->assign('modifyScreenUrl', $url);
-
 		$renderedFormulizeScreen = $screen;
     // this will only be included once, but we need to do it after the fid and frid for the current page load have been determined!!
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
@@ -332,6 +328,9 @@ if (is_object($xoopsTpl)) {
 		$xoopsTpl->assign('icms_pagetitle', (isset($_POST['ventry']) AND $_POST['ventry']) ? $formObject->getSingular() . " : $entryText" : $formObject->getPlural());
 	}
 	if ($renderedFormulizeScreen) {
+		$firstAppId = formulize_getFirstApplicationForForm($renderedFormulizeScreen->getVar('fid'));
+		$url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$renderedFormulizeScreen->getVar('sid')."&fid=".$renderedFormulizeScreen->getVar('fid')."&aid=".intval($firstAppId);
+		$xoopsTpl->assign('modifyScreenUrl', $url);
 		$xoopsTpl->assign('formulize_screen_id', $renderedFormulizeScreen->getVar('sid'));
 	}
 	$xoopsTpl->assign('formulize_customCodeForApplications', (isset($GLOBALS['formulize_customCodeForApplications']) ? $formulize_customCodeForApplications : ''));
