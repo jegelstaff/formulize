@@ -112,6 +112,12 @@ if(!$ele_id = $element_handler->insert($element)) {
   print "Error: could not save the options for element: ".$xoopsDB->error();
 }
 
+if (!empty($_POST['apply_default_to_empty'])) {
+  if ($element->hasData) {
+    applyDefaultToEmptyEntries($element);
+  }
+}
+
 if($_POST['reload_option_page'] OR (isset($ele_value['optionsLimitByElement']) AND $ele_value['optionsLimitByElement'] != $processedValues['elements']['ele_value']['optionsLimitByElement'])) {
   print "/* evalnow */ if(redirect=='') { redirect = 'reloadWithScrollPosition();'; }";
 }
