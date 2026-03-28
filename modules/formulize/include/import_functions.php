@@ -378,7 +378,7 @@ function importCsvValidate(&$importSet, $regfid, $validateOverride=false) {
 																			// Single option
 																			list($all_valid_options, $all_valid_options_ids) = getElementOptions($linkElement[2]['ele_handle'], $linkElement[2]['id_form']);
 																			$errorFoundValidOptions = false;
-																			if(intval($cell_value)>0 AND !in_array($cell_value, $all_valid_options_ids)) {
+																			if(is_numeric($cell_value) AND intval($cell_value)>0 AND !in_array($cell_value, $all_valid_options_ids)) {
 																				$errorFoundValidOptions = $all_valid_options_ids;
 																			} elseif(!in_array($cell_value, $all_valid_options)) {
 																				foreach ($all_valid_options as $thisoption) {
@@ -857,7 +857,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                                     if($ele_value['snapshot']) {
                                         $row_value = $row_value; // take the validated item the user has put into the box
                                         break;
-																		} elseif(intval($row_value)>0 AND in_array($row_value, $all_valid_options_ids)) {
+																		} elseif(is_numeric($row_value) AND intval($row_value)>0 AND in_array($row_value, $all_valid_options_ids)) {
 																				$ele_id = $row_value;
                                     } elseif ($optionIndex = array_search($row_value, $all_valid_options)) {
                                         $ele_id = $all_valid_options_ids[$optionIndex];
