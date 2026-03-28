@@ -829,7 +829,7 @@ class formulizeElementsHandler {
 	 * This method is simply necessary for cases where the generic element handler has been invoked, instead of a type handler, and we don't want to make the user do the work below each time they need a default value
 	 * @param int|string|object $elementIdentifier The element object or id or handle to get the default value for
 	 * @param int $entry_id The entry id to get the default value for
-	 * @return mixed The default value for the element, or false if none can be determined
+	 * @return mixed The default value for the element, or false if none can be determined. The value is the database value, not necessarily human readable.
 	 * @throws Exception If the element object cannot be retrieved
 	 */
 	function getDefaultValue($elementIdentifier, $entry_id = 'new') {

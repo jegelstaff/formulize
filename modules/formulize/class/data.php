@@ -1451,3 +1451,45 @@ function addDefaultValuesToDataToWrite($values, $fid) {
 	}
 	return $values;
 }
+
+/**
+ * For each existing entry in a form that has no value for the given element, compute and write
+ * the element's default value. Called from the admin UI when saving element options.
+ * Uses direct SQL (not writeEntry) to avoid triggering hooks and to preserve entry metadata.
+ *
+ * @param object $element - The element object to apply defaults for
+ * @return int Number of entries updated
+ */
+function applyDefaultToEmptyEntries($element) {
+	global $xoopsDB;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$formObject = $form_handler->get($element->getVar('id_form'));
+	$formHandle = $formObject->getVar('form_handle');
+	$eleHandle = $element->getVar('ele_handle');
+	$table = $xoopsDB->prefix("formulize_$formHandle");
+
+	// If the column doesn't exist yet (brand-new element), all entries are candidates
+	if ($form_handler->elementFieldMissing($element)) {
+		$sql = "SELECT `entry_id` FROM `$table`";
+	} else {
+		$sql = "SELECT `entry_id` FROM `$table` WHERE `$eleHandle` IS NULL OR `$eleHandle` = ''";
+	}
+	if(!$result = $xoopsDB->query($sql)) {
+		return 0;
+	}
+
+	$updated = 0;
+	while ($row = $xoopsDB->fetchArray($result)) {
+		$entry_id = $row['entry_id'];
+		$defaultValue = $element_handler->getDefaultValue($element, $entry_id);
+		if ($defaultValue !== false AND $defaultValue !== null AND $defaultValue !== '') {
+			$escapedValue = is_numeric($defaultValue) ? $defaultValue : $xoopsDB->quoteString($defaultValue);
+			$updateSql = "UPDATE `$table` SET `$eleHandle` = $escapedValue WHERE `entry_id` = " . intval($entry_id);
+			if ($xoopsDB->query($updateSql)) {
+				$updated++;
+			}
+		}
+	}
+	return $updated;
+}

@@ -5,7 +5,12 @@
 		</div>
 
 		<{if $content.type != "select" AND $content.type != "selectLinked" AND $content.type != "selectUsers"}>
-			<{include file="db:admin/element_multiple_onoff.html"}>
+			<div class="form-item">
+				<fieldset>
+					<legend>Are multiple selections allowed?</legend>
+					<{include file="db:admin/element_multiple_onoff.html"}>
+				</fieldset>
+			</div>
 		<{/if}>
 
 		<{if $content.type == "autocomplete" OR $content.type == "autocompleteLinked"}>

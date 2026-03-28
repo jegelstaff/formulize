@@ -8,6 +8,7 @@
 		<fieldset>
 			<legend><{$smarty.const._AM_ELE_DEFAULT}></legend>
 			<input type="text" id="elements-ele_value[2]" name="elements-ele_value[2]" size="3" value="<{$content.ele_value[2]|htmlspecialchars}>" />
+			<{include file="db:admin/element_apply_default_to_empty.html"}>
 		</fieldset>
 	</div>
 	<div class="form-item">

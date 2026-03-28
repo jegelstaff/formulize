@@ -290,6 +290,25 @@ if(!isset($ele_value['snapshot'])) {
 
 $options['ele_value'] = $ele_value;
 
+// count existing entries with no value for this element, so the UI can offer to backfill defaults
+$options['apply_default_empty_count'] = 0;
+$elementHasData = ($ele_id != 'new') ? $elementObject->hasData : ($customTypeHandler && $customTypeHandler->create()->hasData);
+if ($elementHasData) {
+	global $xoopsDB;
+	$countTable = $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle'));
+	if ($ele_id != 'new') {
+		// existing element: count only entries where this column is empty
+		$eleHandleForCount = $elementObject->getVar('ele_handle');
+		$countSql = "SELECT COUNT(*) FROM `$countTable` WHERE `$eleHandleForCount` IS NULL OR `$eleHandleForCount` = ''";
+	} else {
+		// new element: all existing entries will have no value for the new column
+		$countSql = "SELECT COUNT(*) FROM `$countTable`";
+	}
+	if ($countResult = $xoopsDB->query($countSql)) {
+		list($options['apply_default_empty_count']) = $xoopsDB->fetchRow($countResult);
+	}
+}
+
 // if this is a custom element, then get any additional values that we need to send to the template
 $customValues = array();
 $advancedCustomValues = array();
