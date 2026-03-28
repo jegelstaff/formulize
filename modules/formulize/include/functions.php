@@ -2407,24 +2407,41 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
         if (strtolower($thisTerm) == "sequence") {
 					$replacementValue = "{SEQUENCE}";
         }
-        if (!$xoopsUser AND !$replacementValue) {
-            $replacementValue = "";
-        } elseif (!$replacementValue) {
-            if (strtolower($thisTerm) == "mail") {
-                $thisTerm = "email";
+        if (!$replacementValue) {
+            global $xoopsDB;
+            // For existing entries resolve tokens against the entry owner; fall back to current user; empty string if neither
+            $userForTokens = null;
+            if ($entry_id && $entry_id !== 'new') {
+                $ownerUid = getEntryOwner($entry_id, $form_id);
+                if ($ownerUid) {
+                    $member_handler = xoops_gethandler('member');
+                    $ownerUser = $member_handler->getUser($ownerUid);
+                    if ($ownerUser) {
+                        $userForTokens = $ownerUser;
+                    }
+                }
             }
-            $replacementValue = $xoopsUser->getVar(strtolower($thisTerm));
-            if ($replacementValue == "") {
-                // need to get the profile module if XOOPS 2.3 is in effect and has that module installed
-                global $xoopsDB;
-                $sql = "SELECT isactive FROM ".$xoopsDB->prefix("modules")." WHERE dirname='profile'";
-                if ($res = $xoopsDB->query($sql)) {
-                    $array = $xoopsDB->fetchArray($res);
-                    if ($array['isactive']==1) {
-                        // this line will cause an abort of the page load if it fails, so must check for existence and active status of the module first!
-                        $profile_handler = xoops_getmodulehandler('profile', 'profile');
-                        $profile = $profile_handler->get($xoopsUser->getVar('uid'));
-                        $replacementValue = $profile->getVar(strtolower($thisTerm));
+            if (!$userForTokens) {
+                $userForTokens = $xoopsUser;
+            }
+            if (!$userForTokens) {
+                $replacementValue = "";
+            } else {
+                if (strtolower($thisTerm) == "mail") {
+                    $thisTerm = "email";
+                }
+                $replacementValue = $userForTokens->getVar(strtolower($thisTerm));
+                if ($replacementValue == "") {
+                    // need to get the profile module if XOOPS 2.3 is in effect and has that module installed
+                    $sql = "SELECT isactive FROM ".$xoopsDB->prefix("modules")." WHERE dirname='profile'";
+                    if ($res = $xoopsDB->query($sql)) {
+                        $array = $xoopsDB->fetchArray($res);
+                        if ($array['isactive']==1) {
+                            // this line will cause an abort of the page load if it fails, so must check for existence and active status of the module first!
+                            $profile_handler = xoops_getmodulehandler('profile', 'profile');
+                            $profile = $profile_handler->get($userForTokens->getVar('uid'));
+                            $replacementValue = $profile->getVar(strtolower($thisTerm));
+                        }
                     }
                 }
             }
