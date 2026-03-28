@@ -10,15 +10,6 @@
 
 <{include file=$content.typetemplate}>
 
-<{if $content.apply_default_empty_count > 0}>
-<div style="margin-top: 15px; padding: 10px; border-top: 1px solid #ccc;">
-  <label>
-    <input type="checkbox" name="apply_default_to_empty" value="1">
-    Apply this default value to <{$content.apply_default_empty_count}> existing <{if $content.apply_default_empty_count == 1}>entry<{else}>entries<{/if}> that currently have no value for this element
-  </label>
-</div>
-<{/if}>
-
 </form>
 
 </div> <!--// end content -->

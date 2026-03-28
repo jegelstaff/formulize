@@ -54,6 +54,7 @@
 					<option value=<{$default_entry_id}><{if in_array($default_entry_id, $content.optionDefaultSelectionDefaults)}> selected<{/if}>><{$default_value}></option>
 				<{/foreach}>
 			</select>
+			<{include file="db:admin/element_apply_default_to_empty.html"}>
 		</fieldset>
 	</div>
 
