@@ -1463,35 +1463,32 @@ function addDefaultValuesToDataToWrite($values, $fid) {
 function applyDefaultToEmptyEntries($element) {
 	global $xoopsDB;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$formObject = $form_handler->get($element->getVar('id_form'));
 	$formHandle = $formObject->getVar('form_handle');
 	$eleHandle = $element->getVar('ele_handle');
-	$ele_type = $element->getVar('ele_type');
 	$table = $xoopsDB->prefix("formulize_$formHandle");
 
-	// Get entry_ids where this column is NULL or empty
-	$sql = "SELECT `entry_id` FROM `$table` WHERE `$eleHandle` IS NULL OR `$eleHandle` = ''";
-	$result = $xoopsDB->query($sql);
-	if (!$result) return 0;
-
-	// Load the element type handler for getDefaultValue()
-	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/{$ele_type}Element.php")) {
-		$typeHandler = xoops_getmodulehandler($ele_type.'Element', 'formulize');
+	// If the column doesn't exist yet (brand-new element), all entries are candidates
+	if ($form_handler->elementFieldMissing($element)) {
+		$sql = "SELECT `entry_id` FROM `$table`";
 	} else {
-		$typeHandler = xoops_getmodulehandler('elements', 'formulize');
+		$sql = "SELECT `entry_id` FROM `$table` WHERE `$eleHandle` IS NULL OR `$eleHandle` = ''";
+	}
+	if(!$result = $xoopsDB->query($sql)) {
+		return 0;
 	}
 
 	$updated = 0;
 	while ($row = $xoopsDB->fetchArray($result)) {
 		$entry_id = $row['entry_id'];
-		$defaultValue = $typeHandler->getDefaultValue($element, $entry_id);
-		if ($defaultValue === false || $defaultValue === null || $defaultValue === '') {
-			continue;
-		}
-		$escapedValue = $xoopsDB->quoteString($defaultValue);
-		$updateSql = "UPDATE `$table` SET `$eleHandle` = $escapedValue WHERE `entry_id` = " . intval($entry_id);
-		if ($xoopsDB->query($updateSql)) {
-			$updated++;
+		$defaultValue = $element_handler->getDefaultValue($element, $entry_id);
+		if ($defaultValue !== false AND $defaultValue !== null AND $defaultValue !== '') {
+			$escapedValue = is_numeric($defaultValue) ? $defaultValue : $xoopsDB->quoteString($defaultValue);
+			$updateSql = "UPDATE `$table` SET `$eleHandle` = $escapedValue WHERE `entry_id` = " . intval($entry_id);
+			if ($xoopsDB->query($updateSql)) {
+				$updated++;
+			}
 		}
 	}
 	return $updated;
