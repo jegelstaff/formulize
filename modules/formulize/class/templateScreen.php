@@ -271,7 +271,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 							$form_relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
 							$formRelationship = $form_relationship_handler->get($screen->getVar('frid'));
 							$formIds = $formRelationship->getVar('fids');
-						} else {
+						}
+						if(!$screen->getVar('frid') OR !in_array($screen->getVar('fid'), $formIds)) {
 							$formIds = array($screen->getVar('fid'));
 						}
 						$form_handler = xoops_getmodulehandler('forms', 'formulize');
