@@ -3228,7 +3228,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 
 				if($countGroups > 1) {
 						$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
-						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
+						$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)),150);
 
 						$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='count-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMENTRIES."</b><center></td><td class='count-unique' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_NUMUNIQUE."</b><center></td></tr>\n";
 
@@ -3239,7 +3239,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 										if($thisGroupSetting === "none") { continue; }
 										$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
 										$groupText = formulize_handleRandomAndDateText(formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext'])));
-										$output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
+										$output .= "<tr><td>".printSmart(trans($groupText),150)."</td><td class='count-total' style='text-align: right;'>".$rawResult['count']."</td><td class='count-unique' style='text-align: right;'>".$rawResult['countunique']."</td></tr>";
 										$totalCount += $rawResult['count'];
 										$totalUnique += $rawResult['countunique'];
 								}
@@ -3261,7 +3261,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 				if($countGroups > 1) {
 
 					$theseGroupSettings = explode("!@^%*", $groupingSettings[$elementId][$calc]);
-					$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)));
+					$firstGroupSettingText = printSmart(trans(getCalcHandleText($theseGroupSettings[0], true)),150);
 
 					$output .= "<table style='width: auto;'><tr><th>$firstGroupSettingText</th><td class='sum-total' style='padding-left: 2em;'><center><b>"._formulize_DE_CALC_SUM."</b><center></td></tr>\n";
 					$totalSum = 0;
@@ -3270,7 +3270,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 									if($thisGroupSetting === "none") { continue; }
 									$elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
 									$groupText = formulize_handleRandomAndDateText(formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext'])));
-									$output .= "<tr><td>".printSmart(trans($groupText))."</td><td class='sum-total' style='text-align: right;'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>";
+									$output .= "<tr><td>".printSmart(trans($groupText),150)."</td><td class='sum-total' style='text-align: right;'>".formulize_numberFormat($rawResult['sum'],$handle)."</td></tr>";
 									$totalSum += $rawResult['sum'];
 							}
 					}
@@ -3302,7 +3302,7 @@ function printResults($masterResults, $blankSettings, $groupingSettings, $groupi
 			  $start2 = false;
 			  $elementMetaData = formulize_getElementMetaData($thisGroupSetting, false);
 			  $groupText = formulize_handleRandomAndDateText(formulize_swapUIText($groupingValues[$elementId][$calc][$group][$id], unserialize($elementMetaData['ele_uitext'])));
-			  $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true))) . ": " . printSmart(trans($groupText)) . "\n";
+			  $output .= printSmart(trans(getCalcHandleText($thisGroupSetting, true)),150) . ": " . printSmart(trans($groupText),150) . "\n";
 			}
 			$output .= "</b></p>\n";
 		  //}
