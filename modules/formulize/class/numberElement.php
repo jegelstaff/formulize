@@ -89,16 +89,12 @@ class formulizeNumberElement extends formulizeTextElement {
 	 */
 	public function getDefaultDataType($defaultType = 'int') {
 		$ele_value = $this->getVar('ele_value');
-		if(isset($ele_value[ELE_VALUE_TEXT_DECIMALS]) AND $ele_value[ELE_VALUE_TEXT_DECIMALS] > 0) {
-			if($datadecimals = intval($ele_value[ELE_VALUE_TEXT_DECIMALS])) {
-				if($datadecimals > 20) {
-					$datadecimals = 20;
-				}
-			} else {
-				$datadecimals = 2;
-			}
-			$datadigits = $datadecimals < 10 ? 11 : $datadecimals + 1; // digits must be larger than the decimal value, but a minimum of 11
-			return "decimal($datadigits,$datadecimals)";
+		if(isset($ele_value[ELE_VALUE_TEXT_DECIMALS])
+			AND $ele_value[ELE_VALUE_TEXT_DECIMALS] > 0
+			AND $datadecimals = intval($ele_value[ELE_VALUE_TEXT_DECIMALS])
+		) {
+			$datadecimals = $datadecimals > 30 ? 30 : $datadecimals; // mysql only allows up to 30 decimals in a decimal field
+			return "decimal(65,$datadecimals)";
 		} else {
 			return 'int(10)';
 		}
