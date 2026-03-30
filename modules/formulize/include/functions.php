@@ -2399,7 +2399,9 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
             if (!$number) {
                 $number = 0;
             }
-            $replacementValue = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+						$timestamp = mktime(date("G"), date("i"), date("s"), date("m") , date("d")+intval($number), date("Y"));
+						$offset = formulize_getUserUTCOffsetSecs(timestamp: $timestamp);
+						$replacementValue = date("Y-m-d", $timestamp + $offset);
         }
         if (strtolower($thisTerm) == "id") {
             $replacementValue = "{ID}";
@@ -2459,7 +2461,7 @@ function getDateElementDefault($default_hint, $entry_id = false) {
 			return time() + $offset;
     } elseif(preg_replace("/[^A-Z{}]/", "", $default_hint) === "{TODAY}") {
 			$number = str_replace('+', '', preg_replace("/[^0-9+-]/", "", $default_hint));
-			$seedTime = mktime(date("H"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
+			$seedTime = mktime(date("G"), date("i"), date("s"), date("m"), (date("d") + intval($number)), date("Y")); // will be based on UTC
 			$offset = formulize_getUserUTCOffsetSecs(timestamp: $seedTime); // user offset from UTC
 			return $seedTime + $offset;
     } elseif(substr($default_hint, 0, 1) == '{' AND substr($default_hint, -1) == '}') {
@@ -6413,7 +6415,9 @@ function parseUserAndToday($term, $element=null) {
 	}
  	if (substr(trim($term,"{}"), 0, 5) == "TODAY") {
 		$number = substr(trim($term, "{}"), 5);
-		$term = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+intval($number), date("Y")) + formulize_getUserUTCOffsetSecs());
+		$timestamp = mktime(date("G"), date("i"), date("s"), date("m") , date("d")+intval($number), date("Y"));
+		$offset = formulize_getUserUTCOffsetSecs(timestamp: $timestamp);
+		$term = date("Y-m-d", $timestamp + $offset);
 	}
   return $term;
 }

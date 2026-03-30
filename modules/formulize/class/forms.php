@@ -1688,7 +1688,9 @@ class formulizeFormsHandler {
 			$termToUse = str_replace("{USER_FULL_NAME}", ($xoopsUser ? $xoopsUser->getVar('uname') : ""), $termToUse);
 			if (preg_replace("[^A-Z{}]","", $termToUse) === "{TODAY}") {
 				$number = preg_replace("[^0-9+-]","", $termToUse);
-				$termToUse = date("Y-m-d",mktime(0, 0, 0, date("m") , date("d")+$number, date("Y")));
+				$timestamp = mktime(date("G"), date("i"), date("s"), date("m") , date("d")+intval($number), date("Y"));
+				$offset = formulize_getUserUTCOffsetSecs(timestamp: $timestamp);
+				$termToUse = date("Y-m-d", $timestamp + $offset);
 			}
 			if($termToUse == "{BLANK}") {
 					$secondOp = $filterSettings[1][$i] == "=" ? " IS " : " IS NOT ";
