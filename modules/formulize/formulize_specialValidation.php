@@ -54,85 +54,8 @@ $value = strip_tags(htmlspecialchars($_GET['value']));
 // get element object
 // get the code specified
 
-// hard coded to validate rooms for dara for now
-if($element_id==88) {
-    $specialValidationColor = 'red'; // will be specifiable by the user as part of the UI
-    $specialValidationCode = '
-
-    // get the whole set of data for this section, based on relationship 1, which is the one the section records typically use in the standard forms
-    // course component form is number 4
-    $data = gatherDataset(4, filter: $entry_id, frid: 1);
-    $entry = $data[0];
-
-    // for each of the day/time combinations, check for other day/times using the same room
-    $year = getValue($entry, "ro_module_year");
-    $days = getValue($entry, "section_times_day");
-    $days = is_array($days) ? $days : array($days);
-    $starts = getValue($entry, "section_times_start_time");
-    $starts = is_array($starts) ? $starts : array($starts);
-    $ends = getValue($entry, "section_times_end_time");
-    $ends = is_array($ends) ? $ends : array($ends);
-    $semester = getValue($entry, "ro_module_semester");
-    $totalConflictText = "";
-    foreach($days as $i=>$day) {
-        $start = $starts[$i];
-        $end = $ends[$i];
-        $startTimeParts = explode(":",$start);
-        $startTime = mktime($startTimeParts[0],$startTimeParts[1],$startTimeParts[2]);
-        $endTimeParts = explode(":",$end);
-        $endTime = mktime($endTimeParts[0],$endTimeParts[1],$endTimeParts[2]);
-
-        // check for conflicts for every instructor for this time
-        $conflictSections = array();
-        $room = $value;
-        if($room) {
-            $targetEnd = date("H:i:s",$endTime);
-            $targetStart = date("H:i:s", $startTime);
-            $dayCodes = array("Monday"=>"M","Tuesday"=>"T","Wednesday"=>"W","Thursday"=>"R","Friday"=>"F","Saturday"=>"Sat","Sunday"=>"Sun");
-			$baseFilter = "sections_practica_room/**/$room/**/=][section_times_start_time/**/$targetEnd/**/<][section_times_end_time/**/$targetStart/**/>][section_times_day/**/".$dayCodes[$day]."/**/=][entry_id/**/$entry_id/**/!=][ro_module_year/**/$year/**/=][ro_module_course_active/**/1/**/=";
-            if($semester == "Fall-Winter - Y") {
-                $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
-            } elseif($semester == "Fall - F") {
-                $semFilter = "ro_module_semester/**/Fall - F/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
-            } elseif($semester == "Winter/Spring - S") {
-                $semFilter = "ro_module_semester/**/Winter/Spring - S/**/=][ro_module_semester/**/Fall-Winter - Y/**/=";
-            } elseif($semester == "Summer - Y") {
-                $semFilter = "ro_module_semester/**/Summer (May, June) - F/**/=][ro_module_semester/**/Summer (July, August) - S/**/=][ro_module_semester/**/Summer - Y/**/=";
-            } elseif($semester == "Summer (May, June) - F") {
-                $semFilter = "ro_module_semester/**/Summer (May, June) - F/**/=][ro_module_semester/**/Summer - Y/**/=";
-            } elseif($semester == "Summer (July, August) - S") {
-                $semFilter = "ro_module_semester/**/Summer (July, August) - S/**/=][ro_module_semester/**/Summer - Y/**/=";
-            }
-            $filter[0][0] = "AND";
-            $filter[0][1] = $baseFilter;
-            $filter[1][0] = "OR";
-            $filter[1][1] = $semFilter;
-            $conflicts = gatherDataset(4, filter: $filter, frid: 7);
-            foreach($conflicts as $conflict) {
-                $conflictCode = getValue($conflict, "sections_practica_course_code");
-                $conflictCode = substr($conflictCode,12,strpos($conflictCode," ",12)-12);
-                $conflictSections[] = $conflictCode."-".getValue($conflict,"sections_section_number");
-            }
-        }
-        if(count((array) $conflictSections)>0) {
-            $conflictText = "".implode(", ",$conflictSections);
-        } else {
-            $conflictText = "";
-        }
-        if($conflictText) {
-            if($totalConflictText) {
-                $totalConflictText .= ", ".$conflictText;
-            } else {
-                $totalConflictText = "Conflicts with: ".$conflictText;
-            }
-        }
-    }
-    return $totalConflictText;
-    ';
-} else {
-    $specialValidationColor = "";
-    $specialValidationCode = "";
-}
+$specialValidationColor = "";
+$specialValidationCode = "";
 
 if($specialValidationCode) {
     $value = eval($specialValidationCode);
