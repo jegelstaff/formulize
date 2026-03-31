@@ -120,7 +120,7 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 			throw new Exception("Invalid direction passed to convert dependencies: ".$direction.".	Must be 'import' or 'export'.");
 			return $value; // might have exited with the exception, but we'll send this back anyway just in case
 		}
-		if(strstr($value, "#*=:*")) {
+		if(is_string($value) AND strstr($value, "#*=:*")) {
 			// formId#*=:*elementHandle is the format canonical format in DB
 			$linkedMetaDataParts = explode("#*=:*", $value);
 			if(count($linkedMetaDataParts) == 2) {
