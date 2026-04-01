@@ -95,7 +95,6 @@ class FormulizeConfigSync
 	{
 		$filepath = XOOPS_ROOT_PATH . '/modules/formulize' . $this->configPath . '/' . $filename;
 		if (!file_exists($filepath)) {
-			$this->errorLog[] = "Warning: Configuration file not found: {$filepath}";
 			return [];
 		}
 

@@ -26,29 +26,30 @@
 	<{/if}>
 
 	<div class="config-changes">
+		<div class="sticky-controls">
 		<{if count($adminPage.changes) == 0}>
 			<p class="info">No changes detected.</p>
 		<{else}>
-			<div class="sticky-controls">
-				<div class="control-group">
-					<h3>Select Config and Apply</h3>
-					<div class="toggle-buttons">
-						<button type="button" class="toggle-btn" data-operation="create">Toggle All Creates</button>
-						<button type="button" class="toggle-btn" data-operation="update">Toggle All Updates</button>
-						<button type="button" class="toggle-btn" data-operation="delete">Toggle All Deletes</button>
-						<button type="button" class="action-btn apply-btn" id="apply-config-btn">Apply Selected Config to DB</button>
-					</div>
-				</div>
-				<div class="control-group">
-					<h3>Export Current Configuration</h3>
-					<div class="action-buttons">
-						<form name="export" method="post" style="display: inline;">
-							<input type="hidden" name="action" value="export">
-							<button type="submit" class="action-btn export-btn">Export Entire DB to Config</button>
-						</form>
-					</div>
+			<div class="control-group">
+				<h3>Select Config and Apply</h3>
+				<div class="toggle-buttons">
+					<button type="button" class="toggle-btn" data-operation="create">Toggle All Creates</button>
+					<button type="button" class="toggle-btn" data-operation="update">Toggle All Updates</button>
+					<button type="button" class="toggle-btn" data-operation="delete">Toggle All Deletes</button>
+					<button type="button" class="action-btn apply-btn" id="apply-config-btn">Apply Selected Config to DB</button>
 				</div>
 			</div>
+		<{/if}>
+			<div class="control-group">
+				<h3>Export Current Configuration</h3>
+				<div class="action-buttons">
+					<form name="export" method="post" style="display: inline;">
+						<input type="hidden" name="action" value="export">
+						<button type="submit" class="action-btn export-btn">Export Entire DB to Config</button>
+					</form>
+				</div>
+			</div>
+		</div>
 			<form name="apply" method="post" id="apply-form">
 				<input type="hidden" name="action" value="apply">
 				<table class="changes-table">
@@ -118,7 +119,6 @@
 					</tbody>
 				</table>
 			</form>
-		<{/if}>
 	</div>
 
 </div>
