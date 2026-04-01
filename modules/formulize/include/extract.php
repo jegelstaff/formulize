@@ -182,9 +182,10 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$elementObject = $element_handler->get($handle);
+	$elementObjectEleValue = $elementObject->getVar('ele_value');
 
-	// is a linked element...
-	if($elementObject->isLinked) {
+	// is a linked element... and not a snapshot element...
+	if($elementObject->isLinked AND (!isset($elementObjectEleValue['snapshot']) OR $elementObjectEleValue['snapshot'] == false)) {
 
 		// get array of foreign keys
 		// if we're not keeping foreign keys in the dataset, then convert them to readable values
@@ -278,8 +279,9 @@ function convertForeignKeysToReadableValues($value, $handle, $entry_id) {
 			$values = $newValues;
 		}
 
-	// non linked value passed in by mistake? split on standard separator and return array
+	// non linked value passed in... probably a "snapshot" element. Split on standard separator and return array.
 	} else {
+		$value = substr($value, 0, 5) == "*=+*:" ? substr($value, 5) : $value; // if the value starts with the standard separator, remove that before splitting, otherwise we'll end up with an empty first value in the array
 		$values = explode("*=+*:", $value);
 	}
 
