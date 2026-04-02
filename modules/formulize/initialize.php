@@ -251,10 +251,11 @@ if (!$rendered AND $uid) {
 			));
 
         $formObject = $form_handler->get($fid);
-				$single = resolveEffectiveSingle($formObject->getVar('single'), $groups); // 'user' means one entry per user, 'group' means one entry per group. 'off' or blank means multiple entries per user.
+				$singleEntryMetadata = getSingle($fid, $uid); // returns array with flag and entry as keys
+				$single = $singleEntryMetadata['flag'];
         $defaultFormScreen = $formObject->getVar('defaultform');
         $defaultListScreen = $formObject->getVar('defaultlist');
-        if ((((!$single OR $single == 'off') AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $single != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
+        if (((!$single AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $single != "group")) AND !$entry AND (!isset($_GET['iform']) OR $_GET['iform'] != "e") AND !isset($_GET['showform'])) { // if it's multientry and there's a xoopsUser, or the user has globalscope, or the user has groupscope and it's not a one-per-group form, and after all that, no entry has been requested, then show the list (note that anonymous users default to the form view...to provide them lists of their own entries....well you can't, but groupscope and globalscope will show them all entries by anons or by everyone) ..... unless there is an override in the URL that is meant to force the form itself to display .... iform is "interactive form", devised by Feratech.
             if ($defaultListScreen AND !$formulize_masterUIOverride) {
                 $basescreenObject = $screen_handler->get($defaultListScreen);
                 $finalscreen_handler = xoops_getmodulehandler($basescreenObject->getVar('type').'Screen', 'formulize');

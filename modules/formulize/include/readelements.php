@@ -214,7 +214,6 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 
 	$formulize_formObject = $form_handler->get($elementFid);
-	$oneEntryPerGroupForm = (resolveEffectiveSingle($formulize_formObject->getVar('single'), $groups) == "group");
 
     // for every entry in the form...
     foreach($entryData as $currentEntry => $values) {

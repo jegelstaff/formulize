@@ -2031,13 +2031,17 @@ function getElementValue($entry, $element_id, $fid) {
 // $singleArray: per-group array (groupId => value) or legacy scalar string
 // $userGroups: the user's group IDs
 // returns: "user", "group", or "off"
-function resolveEffectiveSingle($singleArray, $userGroups) {
+function resolveEffectiveSingle($singleArray, $userGroups=null) {
 	if (!is_array($singleArray)) {
 		// Legacy scalar — return as-is after normalization
 		if ($singleArray == "on") return "user";
 		if ($singleArray == "group") return "group";
 		if ($singleArray == "user") return "user";
 		return "off";
+	}
+	if($userGroups === null) {
+		global $xoopsUser;
+		$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 	}
 	// Base value from Registered Users (group 2)
 	$base = isset($singleArray[2]) ? $singleArray[2] : "off";
@@ -2059,8 +2063,18 @@ function resolveEffectiveSingle($singleArray, $userGroups) {
 	return ($overrideValue !== null) ? $overrideValue : $base;
 }
 
-// this function checks for singleentry status and returns the appropriate entry in the form if there is one
-function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
+/**
+ * Check for singleentry status and returns the appropriate entry in the form if there is one
+ * Or return false if there is no single entry that applies to this user for this form
+ * @param int fid - the form id
+ * @param int uid - the user id for whom we are checking single entry status
+ * @param array groups - optional, deprecated and not necessary to pass in any longer. The groups of the user for whom we are checking single entry status. If not passed in, the groups of the uid that is passed in will be used.
+ * @param object member_handler - optional, deprecated and not necessary to pass in any longer. The member handler object, in case the calling code already has it and wants to avoid instantiating a new one. If not passed in, a new one will be instantiated.
+ * @param object gperm_handler - optional, deprecated and not necessary to pass in any longer. The group permissions handler object, in case the calling code already has it and wants to avoid instantiating a new one. If not passed in, a new one will be instantiated.`
+ * @param int mid - optional, deprecated and not necessary to pass in any longer. The Formulize module id for the permissions checks, in case the calling code already has it and wants to avoid getting it again.
+ * @return array Returns an array with two keys, flag and entry. Flag is either 0 for no single entry, 1 for single entry by user, or "group" for single entry by group. Entry is the entry id of the single entry that applies to this user for this form, or blank if there is no such entry or if the active user is anonymous (since in that case we don't want to show them the same single entry as another anon user had).
+ */
+function getSingle($fid, $uid, $groups=null, $member_handler=null, $gperm_handler=null, $mid=null) {
 		if(!$member_handler) {
 			$member_handler = xoops_gethandler('member');
 		}
@@ -2070,35 +2084,53 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
 		if(!$mid) {
 			$mid = getFormulizeModId();
 		}
-    global $xoopsUser;
+		if($groups === null) {
+			$groups = array(XOOPS_GROUP_ANONYMOUS);
+			if($uid) {
+				$member_handler = xoops_gethandler('member');
+				if($userObject = $member_handler->getUser($uid)) {
+					$groups = $userObject->getGroups();
+				}
+			}
+		}
+
+		global $xoopsUser;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$data_handler = new formulizeDataHandler($fid);
     $formObject = $form_handler->get($fid);
     $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
 
-    if ($effectiveSingle == "user" OR $effectiveSingle == "group") {
-        $single['flag'] = $effectiveSingle == "user" ? 1 : "group";
-        // if we're looking for a regular single, find first entry for this user
-        if ($effectiveSingle == "user") {
-            if (!$xoopsUser) {
-                $single['entry'] = ""; // don't set an entry for anons. they should not share the same entry in a single entry form, since user zero is actually lots of different people. cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
-            } else {
-                $data_handler = new formulizeDataHandler($fid);
-                $single['entry'] = $data_handler->getFirstEntryForUsers($uid);
-            }
-        } elseif ($effectiveSingle == "group") {
-            // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
-            $formulize_permHandler = new formulizePermHandler($fid);
-            $intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
-            if ($intersect_groups === false) {
-                $groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-                $intersect_groups = array_intersect($groups, $groupsWithAccess);
-            }
-            $data_handler = new formulizeDataHandler($fid);
-            $single['entry'] = $data_handler->getFirstEntryForGroups($intersect_groups);
-        }
-    } else {
-        $single['flag'] = 0;
+		// default, not single, no entry
+		// try to find the entry if applicable
+		$single = array(
+			'flag'=> ($effectiveSingle == "user" ? 1 : ($effectiveSingle == "group" ? "group" : 0)),
+			'entry' => ""
+		);
+
+		// get the candidate entries for the user, probably just one, but could be more than one in some cases
+		$foundEntries = array();
+		if (!$xoopsUser AND $effectiveSingle == "user") {
+			$foundEntries = $data_handler->findAllEntriesForUsers($uid);
+		} elseif($effectiveSingle == "group") {
+			// get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
+			$formulize_permHandler = new formulizePermHandler($fid);
+			$intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
+			if ($intersect_groups === false) {
+					$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+					$intersect_groups = array_intersect($groups, $groupsWithAccess);
+			}
+			$foundEntries = $data_handler->findAllEntriesForGroups($intersect_groups);
     }
+
+		// if user has one entry in a single entry form, we declare that entry
+		// if there's more than one entry found, then we can't declare an entry, and the system should treat this as a multi entry situation for this user
+		$count = count($foundEntries);
+		if($count == 1) {
+			$single['entry'] = $foundEntries[0];
+		} if($count > 1) {
+			$single['flag'] = 0;
+		}
+
     return $single;
 }
 
@@ -8869,8 +8901,9 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 		global $xoopsUser;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 		$gperm_handler = xoops_gethandler('groupperm');
-		$singleEntry = resolveEffectiveSingle($formObject->getVar('single'), $groups);
-		if (($singleEntry != 'group' AND $singleEntry != 'user' AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
+		$singleEntryMetadata = getSingle($formObject->getVar('fid'), ($xoopsUser ? $xoopsUser->getVar('uid') : 0)); // returns array with flag and entry as keys
+		$singleEntry = $singleEntryMetadata['flag'];
+		if ((!$singleEntry AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
 			OR $gperm_handler->checkRight("view_globalscope", $formObject->getVar('fid'), $groups, getFormulizeModId()) // users with global scope see the list
 			OR ($singleEntry != 'group' AND $gperm_handler->checkRight("view_groupscope", $formObject->getVar('fid'), $groups, getFormulizeModId())) // users with groupscope see the list, unless it's a one-entry-per-group form
 		) {

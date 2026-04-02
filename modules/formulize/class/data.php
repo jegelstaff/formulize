@@ -390,14 +390,12 @@ class formulizeDataHandler {
 
 	// this function finds all entries created by a given user in the form
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
-    function findAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
-        return $this->getAllEntriesForUsers($uids, $scope_uids, $scope_group_ids);
-    }
+	function findAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
+		return $this->getAllEntriesForUsers($uids, $scope_uids, $scope_group_ids);
+	}
 	function getAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
 		if(!is_array($uids)) {
-			$sentID = $uids;
-			$uids = array();
-			$uids[0] = $sentID;
+			$uids = array($uids);
 		}
 		global $xoopsDB;
         $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -423,21 +421,38 @@ class formulizeDataHandler {
 	}
 
 	// this function finds the first entry for a given user in the form
-    function findFirstEntryForGroups($group_ids) {
-        return $this->getFirstEntryForGroups($group_ids);
-    }
+	function findFirstEntryForGroups($group_ids) {
+		return $this->getEntriesForGroups($group_ids, findFirst: true);
+	}
+	function findAllEntriesForGroups($group_ids) {
+		return $this->getEntriesForGroups($group_ids, findAll: true);
+	}
 	function getFirstEntryForGroups($group_ids) {
+		return $this->findFirstEntryForGroups($group_ids);
+	}
+	function getEntriesForGroups($group_ids, $findFirst=false, $findAll=false) {
 		if(!is_array($group_ids)) {
 			$group_ids = array(0=>intval($group_ids));
+		}
+
+		$limit = "LIMIT 0,1";
+		if($findAll) {
+			$limit = "";
 		}
 
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT t1.entry_id FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",array_filter($group_ids, 'is_numeric')).") ORDER BY t1.entry_id LIMIT 0,1";
-		global $xoopsUser;
+		$sql = "SELECT DISTINCT(t1.entry_id) FROM ". $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " as t1, ". $xoopsDB->prefix("formulize_entry_owner_groups") ." as t2 WHERE t1.entry_id = t2.entry_id AND t2.fid=".$this->fid." AND t2.groupid IN (".implode(",",array_filter($group_ids, 'is_numeric')).") ORDER BY t1.entry_id ASC $limit";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
+		}
+		if($findAll) {
+			$entries = array();
+			while($row = $xoopsDB->fetchRow($res)) {
+				$entries[] = $row[0];
+			}
+			return $entries;
 		}
 		if($xoopsDB->getRowsNum($res)==0) {
 			return false;

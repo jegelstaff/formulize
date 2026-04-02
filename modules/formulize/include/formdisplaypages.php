@@ -117,26 +117,26 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
     if(count((array) $pages) == 1 AND $screen) {
-        $reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
-        // figure out the form's properties...
-        // if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
-        // if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
-        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-        $formObject = $form_handler->get($screen->getVar('fid'));
-        global $xoopsUser;
-        $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
-        if($effectiveSingle=="off" AND $reloadblank) {
-            $removeEntryValue = true;
-            $overrideMulti = 0;
-        } elseif($effectiveSingle=="off" AND !$reloadblank) {
-            $overrideMulti = 1;
-        } elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND $reloadblank) {
-            $overrideMulti = 1;
-        } elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND !$reloadblank) {
-            $overrideMulti = 0;
-        } else {
-            $overrideMulti = 0;
-        }
+			$reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
+			// figure out the form's properties...
+			// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
+			// if it's one entry per user, and we have requested reload blank, then override multi is 1, otherwise 0
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($screen->getVar('fid'));
+			global $xoopsUser;
+			$singleEntryMetadata = getSingle($formObject->getVar('fid'), ($xoopsUser ? $xoopsUser->getVar('uid') : 0)); // returns array with flag and entry as keys
+			if(!$singleEntryMetadata['flag'] AND $reloadblank) {
+				$removeEntryValue = true;
+				$overrideMulti = 0;
+			} elseif(!$singleEntryMetadata['flag'] AND !$reloadblank) {
+				$overrideMulti = 1;
+			} elseif($singleEntryMetadata['flag'] AND $reloadblank) {
+				$overrideMulti = 1;
+			} elseif($singleEntryMetadata['flag'] AND !$reloadblank) {
+				$overrideMulti = 0;
+			} else {
+				$overrideMulti = 0;
+			}
     }
 
 	if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
