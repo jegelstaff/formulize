@@ -241,15 +241,14 @@ class formulizeFormScreenHandler extends formulizeScreenHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($screen->getVar('fid'));
 		global $xoopsUser;
-		$formScreenGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-		$effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $formScreenGroups);
-		if($effectiveSingle=="off" AND $reloadblank) {
+		$singleEntryMetadata = getSingle($formObject->getVar('fid'), ($xoopsUser ? $xoopsUser->getVar('uid') : 0)); // returns array with flag and entry as keys
+		if(!$singleEntryMetadata['flag'] AND $reloadblank) {
 			$overrideMulti = 0;
-		} elseif($effectiveSingle=="off" AND !$reloadblank) {
+		} elseif(!$singleEntryMetadata['flag'] AND !$reloadblank) {
 			$overrideMulti = 1;
-		} elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND $reloadblank) {
+		} elseif($singleEntryMetadata['flag'] AND $reloadblank) {
 			$overrideMulti = 1;
-		} elseif(($effectiveSingle=="group" OR $effectiveSingle=="user") AND !$reloadblank) {
+		} elseif($singleEntryMetadata['flag'] AND !$reloadblank) {
 			$overrideMulti = 0;
 		} else {
 			$overrideMulti = 0;
