@@ -77,7 +77,8 @@ class FormulizeConfigSync
 			$this->db = new \PDO(
 				'mysql:host=' . XOOPS_DB_HOST . ';dbname=' . XOOPS_DB_NAME,
 				XOOPS_DB_USER,
-				XOOPS_DB_PASS
+				XOOPS_DB_PASS,
+				XOOPS_DB_OPTIONS,
 			);
 			$this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 			$this->db->query("SET NAMES utf8mb4");
