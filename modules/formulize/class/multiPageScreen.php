@@ -761,10 +761,9 @@ function pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid) 
             $finalFilter = $filter;
             }
         }
-    $masterBoolean = "AND";
 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-    $data = getData($frid, $fid, $finalFilter, $masterBoolean, "", "", "", "", "", false, 0, false, "", false, true);
+    $data = getData($frid, $fid, $finalFilter, resultOnly: true);
     return $data;
 }
 

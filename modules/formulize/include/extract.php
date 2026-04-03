@@ -676,17 +676,32 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 				$formAliasId = array_search($linkedFid, $linkformids);
 
-				// ignore recursive connections if...
+				// IGNORE recursive connections if...
 				// 1. they are not 'parent' connections
-				// or 2. we are looking for a single entry in the main form, and it is not the same as an entry we just submitted
+				// OR 2. we are looking for a single entry in the main form, but it is not the same as an entry we just submitted
+				// OR 3. we are looking for a single entry in the main form, that is not the parent entry in the recursive relationship
+				// OR 4. we are looking for a single entry in the main form, that is the parent entry but it has no children in the recursive relationship
 				// THIS MEANS WE CANNOT HAVE RECURSIVE ONE-TO-ONE CONNECTIONS!
 				// Probably for the best? would there be some kind of silly looping going on there?
-				$singleEntryFilterValue = formulize_filterHasSingleEntry($filter);
-				if ($linkedFid == $fid and (
-					!$linkisparent[$id]
-					or (!isset($_POST['ventry']) and $singleEntryFilterValue)
-					or (isset($_POST['ventry']) and $singleEntryFilterValue and $_POST['ventry'] != $singleEntryFilterValue)
-				)) {
+				if ($linkedFid == $fid
+					AND (
+						!$linkisparent[$id]
+						OR (
+							$singleEntryFilterValue = formulize_filterHasSingleEntry($filter)
+							AND (
+								!isset($_POST['ventry'])
+								OR $_POST['ventry'] != $singleEntryFilterValue
+								OR (
+									$_POST['ventry'] == $singleEntryFilterValue
+									AND (
+										entryIsParentInRecursiveRelationship($singleEntryFilterValue, $linkselfids[$id]) == false
+										OR entryHasChildrenInRecursiveRelationship($singleEntryFilterValue, $linkselfids[$id]) == false
+									)
+								)
+							)
+						)
+					)
+				) {
 					//print "Ignoring $linkedFid when fid is $fid and linkisparent: ".$linkisparent[$id].' - ventry: '.$_POST['ventry']." - filter: $filter<br>";
 					continue;
 				}
@@ -1299,6 +1314,23 @@ function multipleValuesAllowedForElement($elementHandleOrId) {
 	return false;
 }
 
+function entryHasChildrenInRecursiveRelationship($entry_id, $linkedElementId) {
+	$linkedElementObject = _getElementObject($linkedElementId);
+	$dataHandler = new formulizeDataHandler($linkedElementObject->getVar('fid'));
+	$children = $dataHandler->findAllEntriesWithValue($linkedElementId, $entry_id);
+	return !empty($children);
+}
+
+// check if the entry has a value in the specified linked element id
+// if it does, then that means it is not the parent (source) entry in the dataset
+// parent entries would have the source values and not the target values
+// This is only used in the context of recursive relationships
+function entryIsParentInRecursiveRelationship($entry_id, $sourceElementId) {
+	$sourceElementObject = _getElementObject($sourceElementId);
+	$dataHandler = new formulizeDataHandler($sourceElementObject->getVar('fid'));
+	return $dataHandler->elementHasValueInEntry($entry_id, $sourceElementId);
+}
+
 // this function checks a filter and returns the single entry id being isolated, if one is involved in the filter
 function formulize_filterHasSingleEntry($filter)
 {
@@ -1362,7 +1394,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly = false)
 		if (count((array) $linklist1) > 0) {
 			foreach ($linklist1 as $theselinks) {
 				if ($theselinks['fl_key1'] != 0) {
-					if (isset($foundLinks[$theselinks['fl_key1']][$theselinks['fl_key2']])) {
+					if (isset($foundLinks[$theselinks['fl_key1']][$theselinks['fl_key2']]) OR isset($foundLinks[$theselinks['fl_key2']][$theselinks['fl_key1']])) {
 						continue;
 					}
 					$handleforlink = $theselinks['fl_key1'] == -1 ? 'entry_id' : formulize_getElementHandleFromID($theselinks['fl_key1']);
@@ -1398,7 +1430,7 @@ function formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly = false)
 		if (count((array) $linklist2) > 0) {
 			foreach ($linklist2 as $theselinks) {
 				if ($theselinks['fl_key2'] != 0) {
-					if (isset($foundLinks[$theselinks['fl_key2']][$theselinks['fl_key1']])) {
+					if (isset($foundLinks[$theselinks['fl_key1']][$theselinks['fl_key2']]) OR isset($foundLinks[$theselinks['fl_key2']][$theselinks['fl_key1']])) {
 						continue;
 					}
 					$handleforlink = $theselinks['fl_key2'] == -1 ? 'entry_id' : formulize_getElementHandleFromID($theselinks['fl_key2']);
