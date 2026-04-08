@@ -91,9 +91,7 @@ $entriesAreUsersConditionsChanged = false;
 
 // Parse base conditions (key 0)
 list($parsedBaseConditions, $baseConditionsChanged) = parseSubmittedConditions('entriesareusersconditions');
-if ($parsedBaseConditions) {
-	$allConditions[0] = $parsedBaseConditions;
-}
+$allConditions[0] = $parsedBaseConditions ? $parsedBaseConditions : array();
 if ($baseConditionsChanged) {
 	$entriesAreUsersConditionsChanged = true;
 }
@@ -109,6 +107,11 @@ foreach ($defaultGroups as $gid) {
 	if ($groupConditionsChanged) {
 		$entriesAreUsersConditionsChanged = true;
 	}
+}
+
+// if there are no base conditions and no per-group conditions, then set to an empty array to avoid confusion
+if(count($allConditions) == 1 AND isset($allConditions[0]) AND empty($allConditions[0])) {
+	$allConditions = array();
 }
 
 $processedValues['forms']['entries_are_users_conditions'] = $allConditions;
