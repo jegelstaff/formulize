@@ -2237,18 +2237,19 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 			return $ele_value;
 		}
 
-	// get the value of this element for this entry as stored in the DB, if any
-	$value = "";
-	$handle = $element->getVar('ele_handle');
-	$handle = is_numeric($handle) ? intval($handle) : $handle; // if the handle is numeric, make sure it's an integer, otherwise we can have problems with searching for the handle in the prevEntry array, because of things like "1669" and "1669_copy" being confused with each other
-	$key = array_search($handle, $prevEntry['handles'], true); // true means strict type matching search, which works because we've forced numeric handles to be numbers
-	if($key !== false) {
-		$value = $prevEntry['values'][$key];
-	}
-	// If the value is blank, and this is a new entry, or the element is required or the element has the use-defaults-when-blank option on
-	// then do not load in saved value over top of ele_value, just return the default instead
-	if(($value === "" OR $value === null) AND ($entry_id == 'new' OR $element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
-		return $ele_value;
+		// get the value of this element for this entry as stored in the DB, if any
+		$value = "";
+		$handle = $element->getVar('ele_handle');
+		$handle = is_numeric($handle) ? intval($handle) : $handle; // if the handle is numeric, make sure it's an integer, otherwise we can have problems with searching for the handle in the prevEntry array, because of things like "1669" and "1669_copy" being confused with each other
+		$key = array_search($handle, $prevEntry['handles'], true); // true means strict type matching search, which works because we've forced numeric handles to be numbers
+		if($key !== false) {
+			$value = $prevEntry['values'][$key];
+		}
+		// If the value is blank, and this is a new entry, or the element is required or the element has the use-defaults-when-blank option on
+		// then do not load in saved value over top of ele_value, just return the default instead
+		if(($value === "" OR $value === null) AND ($entry_id == 'new' OR $element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
+			return $ele_value;
+		}
 	}
 
 	// based on element type, swap in the value for this element in this entry...
