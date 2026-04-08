@@ -9373,7 +9373,7 @@ function getSortTitleAndIcon($elementHandle) {
  * @param object|null $elementObject The element object (optional, used for error messages)
  * @param int $frid The form relationship ID. 0 = no relationship, -1 = primary relationship. Default 0.
  * @param string $cacheId A string to append to the cache key to bypass cache when needed. Normally, the state of the entry is reused from the first time the function is called. If the absolute current state of data should be used, you can specify an arbitrary value for the cache ID and a fresh copy of data will be used. All requests with the same cache ID will reuse the same data as retrieved from the first time that cache ID was used. This is useful inside loops where the previous state of data from the last time this function was called prior to the loop, will not be correct.
- * @return int 1 if conditions are met, 0 if not
+ * @return int 1 if conditions are met, 0 if not. If there are no conditions, returns 1.
  */
 function checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0, $cacheId = "") {
 	// need to check if there's a condition on this element that is met or not
@@ -9384,6 +9384,10 @@ function checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_
 			$cachedEntries[$cacheKey] = gatherDataset($form_id, filter: $entry_id, frid: $frid, bypassCache: true);
 		}
 		$entryData = $cachedEntries[$cacheKey];
+	}
+
+	if(empty($elementFilterSettings) OR !is_array($elementFilterSettings) OR count((array)$elementFilterSettings) != 4) {
+		return 1;
 	}
 
 	$filterElements = array_map('undoAllHTMLChars', $elementFilterSettings[0]);
