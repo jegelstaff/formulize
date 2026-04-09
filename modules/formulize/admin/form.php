@@ -89,7 +89,7 @@ if ($_GET['fid'] != "new") {
 			$entries_are_users_conditions_all = array();
 		}
 		$entries_are_users_conditions = isset($entries_are_users_conditions_all[0]) ? $entries_are_users_conditions_all[0] : null;
-		$entries_are_users_conditions_ui = formulize_createFilterUI($entries_are_users_conditions, "entriesareusersconditions", $fid, "form-1");
+		$entries_are_users_conditions_ui = formulize_createFilterUI($entries_are_users_conditions, "entriesareusersconditions", $fid, "form-1", -1);
 		$entries_are_users_default_groups = $formObject->getVar('entries_are_users_default_groups');
 		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI($entries_are_users_default_groups);
 		$entries_are_users_default_groups_selected = array();
@@ -103,7 +103,7 @@ if ($_GET['fid'] != "new") {
 					$groupConditions = isset($entries_are_users_conditions_all[$gid]) ? $entries_are_users_conditions_all[$gid] : null;
 					$hasGroupConditions = !empty($groupConditions);
 					$entries_are_users_default_groups_selected[] = array('id' => $gid, 'name' => $groupObj->getVar('name'), 'hasConditions' => $hasGroupConditions);
-					$per_group_conditions_ui[$gid] = formulize_createFilterUI($groupConditions, "eaugroup_".$gid, $fid, "form-1");
+					$per_group_conditions_ui[$gid] = formulize_createFilterUI($groupConditions, "eaugroup_".$gid, $fid, "form-1", -1);
 				}
 			}
 		}
