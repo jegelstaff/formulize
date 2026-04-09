@@ -586,7 +586,7 @@ if(!empty($formulize_allWrittenEntryIds)) {
 					continue; // skip if not written to, or if the element is in the EAU form itself (already added above)
 				}
 				// Find the framework connecting the linked form to the EAU form
-				$frameworks = $frameworks_handler->getFrameworksByForm($linkedFid);
+				$frameworks = $frameworks_handler->getFrameworksByForm($linkedFid, includePrimaryRelationship: true);
 				$targetFrid = null;
 				foreach($frameworks as $framework) {
 					$frameworkLinks = $framework->getVar('links');

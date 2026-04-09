@@ -458,22 +458,52 @@ class formulizeHandler {
 		$resolvedGroupIds = array();
 		$entryData = gatherDataset($formId, filter: $entryId, frid: -1, bypassCache: true); // does this really need to bypass cache if we're doing it after the saving? (should be after derived values too)
 		if(isset($entryData[0]) AND $entryData[0]) {
+			$formObject = $form_handler->get($formId);
+			$allConditions = $formObject->getVar('entries_are_users_conditions');
 			foreach($linkedElementIds as $linkedEleId) {
 				if($linkedElement = _getElementObject($linkedEleId)) {
 					$linkedHandle = $linkedElement->getVar('ele_handle');
 					// Get the value from the gathered dataset (works across related forms)
+					// The linked value is the entry_id in the entries_are_groups form
 					if($linkedValue = getValue($entryData[0], $linkedHandle, raw: true)) {
-						// The linked value is the entry_id in the entries_are_groups form
-						// For multi-value linked elements (comma-separated), handle each
-						$linkedEntryIds = is_array($linkedValue) ? $linkedValue : explode(',', trim($linkedValue, ','));
-						foreach($linkedEntryIds as $eagEntryId) {
+						$linkSourceEntryIds = getEntryIds($entryData[0], $linkedElement->getVar('fid'));
+
+						// multiple values
+						if(is_array($linkedValue)){
+							$linkedEntryIds = $linkedValue;
+
+						// single value, that might explode into multiple if it has commas
+						// source entry id is the same for each potential value
+						} else {
+							$linkedEntryIds = explode(',', trim($linkedValue, ','));
+							$linkSourceEntryIds = array_fill(0, count($linkedEntryIds), $linkSourceEntryIds[0]);
+						}
+						foreach($linkedEntryIds as $i=>$eagEntryId) {
 							if($eagEntryId = intval($eagEntryId)) {
+								// if there are conditions, that are on this specific form, which is not the main form, then we need to verify that we meet them (and only them)
+								if(is_array($allConditions) AND isset($allConditions[$defaultGroupId]) AND !empty($allConditions[$defaultGroupId])) {
+									$conditionsOnThisForm = array();
+									foreach($allConditions[$defaultGroupId][0] as $x=>$conditionElement) {
+										if($conditionElementObject = _getElementObject($conditionElement)
+											AND $conditionElementObject->getVar('fid') != $formId
+											AND $conditionElementObject->getVar('fid') == $linkedElement->getVar('fid')) {
+											$conditionsOnThisForm[0][] = $conditionElement;
+											$conditionsOnThisForm[1][] = $allConditions[$defaultGroupId][1][$x];
+											$conditionsOnThisForm[2][] = $allConditions[$defaultGroupId][2][$x];
+											$conditionsOnThisForm[3][] = $allConditions[$defaultGroupId][3][$x];
+										}
+									}
+									if(!empty($conditionsOnThisForm)
+										AND checkConditionsAgainstAnEntry($conditionsOnThisForm, $conditionElementObject->getVar('fid'), $linkSourceEntryIds[$i]) == false) {
+										continue; // this entry doesn't meet the conditions, skip to the next one
+									}
+								}
 								// Look up the actual group for this entry + category
 								$sql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
-										" WHERE form_id = " . intval($eagFormId) .
-										" AND entry_id = " . intval($eagEntryId) .
-										" AND is_group_template = 0" .
-										" AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
+									" WHERE form_id = " . intval($eagFormId) .
+									" AND entry_id = " . intval($eagEntryId) .
+									" AND is_group_template = 0" .
+									" AND name LIKE '%" . formulize_db_escape(" - " . $categoryName) . "'";
 								$result = $xoopsDB->query($sql);
 								if($row = $xoopsDB->fetchArray($result)) {
 									$resolvedGroupIds[] = intval($row['groupid']);
