@@ -42,6 +42,41 @@ jobs:
           cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Try bundle install again
         run: bundle install --gemfile=/home/runner/work/formulize/formulize/docs/Gemfile
+      - name: Fetch roadmap data from GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE="https://api.github.com/repos/jegelstaff/formulize"
+          DATADIR="/home/runner/work/formulize/formulize/docs/_data"
+          ISSUE_FIELDS='{number: .number, title: .title, body: .body, html_url: .html_url}'
+
+          api_get() {
+            curl -sf \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "$1"
+          }
+
+          # Milestone API numbers: 8.2=8, 8.3=12, 9.0=7, 9.1=10
+          for MS_NUM in 8 12 7 10; do
+            api_get "$BASE/milestones/$MS_NUM" > "/tmp/ms_${MS_NUM}.json"
+            api_get "$BASE/issues?labels=Marquee+Feature&milestone=${MS_NUM}&state=open&per_page=50" \
+              | jq "[.[] | $ISSUE_FIELDS]" > "/tmp/open_${MS_NUM}.json"
+            api_get "$BASE/issues?labels=Marquee+Feature&milestone=${MS_NUM}&state=closed&per_page=50" \
+              | jq "[.[] | $ISSUE_FIELDS]" > "/tmp/done_${MS_NUM}.json"
+          done
+
+          jq -n \
+            --slurpfile ms8   /tmp/ms_8.json   --slurpfile open8   /tmp/open_8.json   --slurpfile done8   /tmp/done_8.json \
+            --slurpfile ms12  /tmp/ms_12.json  --slurpfile open12  /tmp/open_12.json  --slurpfile done12  /tmp/done_12.json \
+            --slurpfile ms7   /tmp/ms_7.json   --slurpfile open7   /tmp/open_7.json   --slurpfile done7   /tmp/done_7.json \
+            --slurpfile ms10  /tmp/ms_10.json  --slurpfile open10  /tmp/open_10.json  --slurpfile done10  /tmp/done_10.json \
+            '[
+              {key: "v82",  version: "8.2", milestone: $ms8[0],  open: $open8[0],  done: $done8[0]},
+              {key: "v83",  version: "8.3", milestone: $ms12[0], open: $open12[0], done: $done12[0]},
+              {key: "v90",  version: "9.0", milestone: $ms7[0],  open: $open7[0],  done: $done7[0]},
+              {key: "v91",  version: "9.1", milestone: $ms10[0], open: $open10[0], done: $done10[0]}
+            ]' > "$DATADIR/roadmap_issues.json"
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
