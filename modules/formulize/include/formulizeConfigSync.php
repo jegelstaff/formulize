@@ -328,7 +328,7 @@ class FormulizeConfigSync
 			}
 			$normalizedJSONValue = $this->normalizeValue($value);
 			$normalizedDBValue = $this->normalizeValue($dbObject[$field]);
-			if ($normalizedJSONValue !== $normalizedDBValue) {
+			if ($normalizedJSONValue !== $normalizedDBValue AND $normalizedJSONValue != false AND $normalizedDBValue != false) {
 				$differences[$field] = [
 					'config_value' => json_encode($normalizedJSONValue),
 					'db_value' => json_encode($normalizedDBValue)
@@ -355,34 +355,41 @@ class FormulizeConfigSync
 		$dbElement = $this->elementHandler->convertDependenciesForExport($dbElement);
 
 		foreach ($configElement as $field => $value) {
-			$eleValueDiff = [];
 			// ele_value fields are processed differently because they are serialized
 			if ($field === 'ele_value') {
+				$eleValueDiff = [];
 				$dbEleValue = (is_string($dbElement['ele_value']) AND $dbElement['ele_value'] !== "") ? unserialize($dbElement['ele_value']) : [];
 				foreach ($value as $key => $val) {
-					if (is_array($dbEleValue) AND (!array_key_exists($key, $dbEleValue) || $val !== $dbEleValue[$key])) {
+					$normalizedJSONValue = $this->normalizeValue($val);
+					$normalizedDBValue = array_key_exists($key, $dbEleValue) ? $this->normalizeValue($dbEleValue[$key]) : null;
+					if (is_array($dbEleValue) AND (!array_key_exists($key, $dbEleValue) || $normalizedJSONValue !== $normalizedDBValue) AND $normalizedJSONValue != false AND $normalizedDBValue != false) {
+						$db_value = array_key_exists($key, $dbEleValue) ? $dbEleValue[$key] : null;
 						$readableKey = array_flip($this->elementValueProcessor->elementMapping[$configElement['ele_type']])[$key] ?? $key;
 						$eleValueDiff[$readableKey] = [
 							'config_value' => json_encode($val),
-							'db_value' => json_encode($dbEleValue[$key]) ?? null
+							'db_value' => json_encode($db_value) ?? null
 						];
 					}
 				}
 				if (!empty($eleValueDiff)) {
 					$differences['ele_value'] = $eleValueDiff;
 				}
-			} elseif(!array_key_exists($field, $dbElement) || $this->normalizeValue($value) !== $this->normalizeValue($dbElement[$field])) {
-				$db_value = $dbElement[$field];
-				if(is_string($dbElement[$field]) AND $dbElement[$field] !== "") {
-					$unserialized = unserialize($dbElement[$field]);
-					if($unserialized !== false AND is_array($unserialized)) {
-						$db_value = $unserialized;
+			} else {
+				$normalizedJSONValue = $this->normalizeValue($value);
+				$normalizedDBValue = array_key_exists($field, $dbElement) ? $this->normalizeValue($dbElement[$field]) : null;
+				if((!array_key_exists($field, $dbElement) || $normalizedJSONValue !== $normalizedDBValue) AND $normalizedJSONValue != false AND $normalizedDBValue != false) {
+					$db_value = array_key_exists($field, $dbElement) ? $dbElement[$field] : null;
+					if(is_string($dbElement[$field]) AND $dbElement[$field] !== "") {
+						$unserialized = unserialize($dbElement[$field]);
+						if($unserialized !== false AND is_array($unserialized)) {
+							$db_value = $unserialized;
+						}
 					}
+					$differences[$field] = [
+						'config_value' => json_encode($value),
+						'db_value' => json_encode($db_value) ?? null
+					];
 				}
-				$differences[$field] = [
-					'config_value' => json_encode($value),
-					'db_value' => json_encode($db_value) ?? null
-				];
 			}
 		}
 
@@ -979,27 +986,49 @@ class FormulizeConfigSync
 	private function normalizeValue($value)
 	{
 		if(is_string($value)) {
-			$unserialized = unserialize($value);
-			if($unserialized !== false AND is_array($unserialized)) {
-				ksort($unserialized);
-				return empty($unserialized) ? null : $unserialized;
+			if($value == "b:0;") {
+				$value = false;
+			} else {
+				$unserialized = unserialize($value);
+				while($unserialized !== false) {
+					$value = $unserialized;
+
+					// if it's a string, try to unserialize it again, and we'll go with the result (unless it's false)
+					if(is_string($value)) {
+						if($value == "b:0;") {
+							$value = false;
+							$unserialized = false;
+						}	else {
+							$unserialized = unserialize($value);
+						}
+
+					// unserialize led to a non-string value, so we stop and use that value
+					} else {
+						$unserialized = false;
+					}
+				}
 			}
-			return $value === "" ? null : $value;
 		}
 		if (is_array($value)) {
 			if(!empty($value)) {
 				ksort($value);
 				return $value;
 			}
-			return null;
+			$value = null;
 		}
 		if (is_bool($value)) {
-			return (int) $value;
+			$value = intval($value);
 		}
-		if(is_null($value)) {
-			return null;
+		if(is_int($value) OR is_float($value)) {
+			return $value;
 		}
-		return (string) $value;
+		if(is_numeric($value)) {
+			return $value + 0; // Convert numeric strings to their appropriate numeric type
+		}
+		if(is_string($value)) {
+			return $value === "" ? null : $value;
+		}
+		return $value; // will handle null, and... nothing else?
 	}
 
 	/**
