@@ -6,7 +6,7 @@ title: Roadmap
 
 # Formulize Roadmap
 
-The master branch of Formulize is always stable and ready to install. Features completed for an upcoming release are available immediately — you don't have to wait for a formal release to get new capabilities.
+*The master branch of Formulize is always stable and ready to install.* Features completed for an upcoming release are available immediately — you don't have to wait for a formal release to get new capabilities.
 
 ---
 
@@ -24,18 +24,16 @@ The master branch of Formulize is always stable and ready to install. Features c
 {% endif %}
 
 {% if release.done and release.done.size > 0 %}
-### Already available on the master branch
-
-These marquee features are complete and ready to use right now:
+### Features available now on the master branch
 
 {% for issue in release.done %}
 - **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 30 }}{% endif %}
 {% endfor %}
 
+### Features still under development
 {% endif %}
 
 {% if release.open and release.open.size > 0 %}
-### Coming in version {{ release.version }}
 
 {% for issue in release.open %}
 - **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 30 }}{% endif %}
@@ -51,4 +49,4 @@ These marquee features are complete and ready to use right now:
 
 {% endfor %}
 
-*This roadmap is generated from GitHub issues at each site build. [View all milestones on GitHub](https://github.com/jegelstaff/formulize/milestones) for the full picture, or [join the discussion](https://github.com/jegelstaff/formulize/discussions) to share feedback on priorities.*
+*This roadmap is generated from the [GitHub issues](https://github.com/jegelstaff/formulize/issues) for Formulize. [View all milestones on GitHub](https://github.com/jegelstaff/formulize/milestones) for the full picture, or [join the discussion](https://github.com/jegelstaff/formulize/discussions) to share feedback on priorities.*

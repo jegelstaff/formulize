@@ -11,9 +11,8 @@ env:
 jobs:
   e2e-test-run:
     if: |
-      (contains(github.event.push.head_commit.message, '[SKIP TEST]')
-      || contains(github.event.push.head_commit.message, '[SKIP TESTS]'))
-      == false
+      !contains(join(github.event.commits.*.message, ' '), '[SKIP TEST]')
+      && !contains(join(github.event.commits.*.message, ' '), '[SKIP TESTS]')
     uses: ./.github/workflows/e2e-test-manual.yml
     with:
       ref: ${{ github.sha }}
