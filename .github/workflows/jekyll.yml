@@ -48,7 +48,6 @@ jobs:
         run: |
           BASE="https://api.github.com/repos/jegelstaff/formulize"
           DATADIR="/home/runner/work/formulize/formulize/docs/_data"
-          ISSUE_FIELDS='{number: .number, title: .title, body: .body, html_url: .html_url}'
 
           api_get() {
             curl -sf \
@@ -60,10 +59,38 @@ jobs:
           # Milestone API numbers: 8.2=8, 8.3=12, 9.0=7, 9.1=10
           for MS_NUM in 8 12 7 10; do
             api_get "$BASE/milestones/$MS_NUM" > "/tmp/ms_${MS_NUM}.json"
+
+            # GitHub's /issues endpoint returns both issues and PRs; save raw for both states
             api_get "$BASE/issues?labels=Marquee+Feature&milestone=${MS_NUM}&state=open&per_page=50" \
-              | jq "[.[] | $ISSUE_FIELDS]" > "/tmp/open_${MS_NUM}.json"
+              > "/tmp/raw_open_${MS_NUM}.json"
             api_get "$BASE/issues?labels=Marquee+Feature&milestone=${MS_NUM}&state=closed&per_page=50" \
-              | jq "[.[] | $ISSUE_FIELDS]" > "/tmp/done_${MS_NUM}.json"
+              > "/tmp/raw_done_${MS_NUM}.json"
+
+            # Collect issue numbers (items without a pull_request field) across both states
+            jq -s '
+              (.[0] + .[1]) |
+              [.[] | select(has("pull_request") | not) | .number]
+            ' "/tmp/raw_open_${MS_NUM}.json" "/tmp/raw_done_${MS_NUM}.json" \
+              > "/tmp/issue_nums_${MS_NUM}.json"
+
+            # Build open/done arrays: keep issues and PRs not linked to a collected issue.
+            # A PR is considered linked if its body references a collected issue number
+            # via a closing keyword (closes/fixes/resolves #N).
+            for STATE in open done; do
+              jq --slurpfile issue_nums "/tmp/issue_nums_${MS_NUM}.json" '
+                [.[] |
+                  select(
+                    (has("pull_request") | not) or
+                    (
+                      (.body // "") |
+                      [scan("(?i)(?:closes?|fixes?|resolves?)\\s+#([0-9]+)") | .[0] | tonumber] |
+                      (map(select(. as $ref | ($issue_nums[0] | index($ref)) != null)) | length == 0)
+                    )
+                  ) |
+                  {number: .number, title: .title, body: .body, html_url: .html_url}
+                ]
+              ' "/tmp/raw_${STATE}_${MS_NUM}.json" > "/tmp/${STATE}_${MS_NUM}.json"
+            done
           done
 
           jq -n \
