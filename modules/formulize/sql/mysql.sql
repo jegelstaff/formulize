@@ -473,6 +473,7 @@ CREATE TABLE `formulize_screen_map` (
   `tileset_url` text DEFAULT NULL,
   `tileset_key` varchar(255) DEFAULT NULL,
   `tileset_attribution` text DEFAULT NULL,
+  `show_view_entry_link` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`sid`)
 ) ENGINE=InnoDB;
 

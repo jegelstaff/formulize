@@ -62,6 +62,7 @@ $screen->setVar('lng_element', isset($_POST['screens-lng_element']) ? $_POST['sc
 $screen->setVar('label_element', isset($_POST['screens-label_element']) ? $_POST['screens-label_element'] : '');
 $screen->setVar('description_element', isset($_POST['screens-description_element']) ? $_POST['screens-description_element'] : '');
 $screen->setVar('viewentryscreen', isset($_POST['screens-viewentryscreen']) ? $_POST['screens-viewentryscreen'] : '');
+$screen->setVar('show_view_entry_link', (isset($_POST['screens-show_view_entry_link']) AND intval($_POST['screens-show_view_entry_link']) === 0) ? 0 : 1);
 $screen->setVar('filter_button_text', isset($_POST['screens-filter_button_text']) ? $_POST['screens-filter_button_text'] : '');
 $screen->setVar('tileset', isset($_POST['screens-tileset']) ? $_POST['screens-tileset'] : 'osm');
 $screen->setVar('tileset_url', isset($_POST['screens-tileset_url']) ? $_POST['screens-tileset_url'] : '');

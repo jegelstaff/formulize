@@ -535,7 +535,7 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
 
     // column options for filters (same as advanceview options in list of entries)
     $mapSettings = array();
-    $mapSettings['elementoptions'] = $elementOptions;
+    $mapSettings['elementoptions'] = $elementOptionsById;
     $mapSettings['columnoptions'] = array(0 => _AM_ELE_SELECT_NONE) + array(
         'creation_uid'      => _formulize_DE_CREATED,
         'mod_uid'           => _formulize_DE_LASTMOD,
@@ -564,6 +564,7 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
     $mapSettings['label_element']       = $screen->getVar('label_element');
     $mapSettings['description_element'] = $screen->getVar('description_element');
     $mapSettings['viewentryscreen']       = $screen->getVar('viewentryscreen');
+    $mapSettings['show_view_entry_link']  = $screen->getVar('show_view_entry_link');
     $mapSettings['filter_button_text']   = $screen->getVar('filter_button_text');
     $mapSettings['tileset']              = $screen->getVar('tileset');
     $mapSettings['tileset_url']          = $screen->getVar('tileset_url');

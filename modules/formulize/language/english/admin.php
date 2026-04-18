@@ -174,6 +174,8 @@ define("_AM_MAP_FUNDAMENTAL_FILTERS_DESC","These filters are always applied and 
 define("_AM_MAP_ENTRY_SCREEN_LEGEND","Entry Screen");
 define("_AM_MAP_VIEW_ENTRY_SCREEN_LABEL","View Entry Screen");
 define("_AM_MAP_VIEW_ENTRY_SCREEN_DESC","When a user clicks &quot;View Entry&quot; in a popup, this screen is used to display the entry. Leave blank to hide the View Entry link.");
+define("_AM_MAP_SHOW_VIEW_ENTRY_LINK_LABEL","Show 'View Entry' link in popups");
+define("_AM_MAP_SHOW_VIEW_ENTRY_LINK_DESC","When checked, a 'View Entry' link is displayed in the map popup for each entry. Requires a View Entry Screen to be configured above.");
 define("_AM_MAP_FILTER_BUTTON_LEGEND","Filter Button");
 define("_AM_MAP_FILTER_BUTTON_TEXT","Filter button text");
 define("_AM_MAP_FILTER_BUTTON_TEXT_DESC","Label for the filter submit button. Leave blank to hide the button.");

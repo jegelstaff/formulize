@@ -101,7 +101,7 @@ function patch40() {
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
     $checkThisTable = 'formulize_screen_map';
-    $checkThisField = '';
+    $checkThisField = 'show_view_entry_link';
     $checkThisProperty = '';
     $checkPropertyForValue = '';
 
@@ -544,6 +544,7 @@ function patch40() {
 			$sql['sv_order_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_saved_views"). " CHANGE `sv_order` `sv_order` text NULL default NULL";
 			$sql['add_usenumberofentries'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usenumberofentries` tinyint(1) NOT NULL default 1";
 			$sql['add_usetogglerepeatdata'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_listofentries"). " ADD `usetogglerepeatdata` tinyint(1) NOT NULL default 1";
+        $sql['add_map_show_view_entry_link'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_screen_map") . " ADD `show_view_entry_link` tinyint(1) NOT NULL DEFAULT 1";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -694,6 +695,8 @@ function patch40() {
 										print "Change owner option for list screens already added. result: OK<br>";
 								} elseif($key === "add_usenumberofentries" OR $key === "add_usetogglerepeatdata") {
 										print "Number of entries / toggle repeat data options for list screens already added. result: OK<br>";
+                } elseif($key === "add_map_show_view_entry_link") {
+                    print "show_view_entry_link already added to map screens. result: OK<br>";
                 } else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }

@@ -18,6 +18,7 @@
   $allFidObjs = array();
   $elementOptionsFid = array();
   $elementOptions = array();
+  $elementOptionsById = array();
   $listTemplateHelp = array();
   $class = "odd";
   foreach($allFids as $thisFid) {
@@ -35,6 +36,7 @@
 			// Base on only fids linked to mainform in relationship...
 			if(in_array($thisFid, $allLinkedFids)) {
 				$elementOptions[$thisFidHandles[$zz]] = (isset($allFidsToUse) OR $selectedFramework) ? printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125) : printSmart(trans(strip_tags($elementHeading)), 40);
+				$elementOptionsById[$thisFidElement] = $elementOptions[$thisFidHandles[$zz]];
 				$class = $class == "even" ? "odd" : "even";
 				$listTemplateHelp[$thisFidObj->title][] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$zz]."</nobr></td></tr>";
 			}

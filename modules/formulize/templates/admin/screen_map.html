@@ -124,6 +124,13 @@
       </select>
       <div class="description"><{$smarty.const._AM_MAP_VIEW_ENTRY_SCREEN_DESC}></div>
     </div>
+    <br>
+    <div class="form-item">
+      <label><{$smarty.const._AM_MAP_SHOW_VIEW_ENTRY_LINK_LABEL}></label>
+      <p><label for="show_view_entry_link_yes"><input id="show_view_entry_link_yes" type="radio" name="screens-show_view_entry_link" value="1"<{if $content.show_view_entry_link}> checked<{/if}>> Yes</label></p>
+      <p><label for="show_view_entry_link_no"><input id="show_view_entry_link_no" type="radio" name="screens-show_view_entry_link" value="0"<{if !$content.show_view_entry_link}> checked<{/if}>> No</label></p>
+      <div class="description"><{$smarty.const._AM_MAP_SHOW_VIEW_ENTRY_LINK_DESC}></div>
+    </div>
   </fieldset>
 
   <fieldset>
