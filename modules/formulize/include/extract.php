@@ -657,7 +657,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$perGroupFiltersPerForms[$fid] = $perGroupFilter;
 			if ($frid) {
 				foreach ($linkformids as $id => $thisLinkFid) {
-					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f" . array_search($thisLinkFid, $linkformids));
+					$perGroupFiltersPerForms[$thisLinkFid] = $form_handler->getPerGroupFilterWhereClause($thisLinkFid, "f" . $id);
 				}
 			}
 		}
@@ -674,7 +674,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$joinText = ""; // not "new" variables persist (with .= operator)
 			foreach ($linkformids as $id => $linkedFid) {
 
-				$formAliasId = array_search($linkedFid, $linkformids);
+				$formAliasId = $id;
 
 				// IGNORE recursive connections if...
 				// 1. they are not 'parent' connections
@@ -709,8 +709,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 				if (($joinHandles[$linkselfids[$id]] and $joinHandles[$linktargetids[$id]]) or ($linkselfids[$id] == '' and $linktargetids[$id] == '')) {
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-					$linkSelectIndex[$linkedFid] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
-					$linkSelect .= ", ".$linkSelectIndex[$linkedFid];
+					$linkSelectIndex[$formAliasId] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
+					$linkSelect .= ", ".$linkSelectIndex[$formAliasId];
 					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
 					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
@@ -950,7 +950,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					if ($passedForm == $fid) {
 						$sqlFilterElementsIndex['main'][] = $fieldSelect;
 					} else {
-						$sqlFilterElementsIndex[$passedForm][] = $fieldSelect;
+						$sqlFilterElementsIndex[$formAlias][] = $fieldSelect;
 					}
 				}
 			}
@@ -959,20 +959,19 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// SETUP THE MAIN SELECT STATEMENT
 		// update any linked form select statements to use only the fields that have been requested
 		// linkSelect is a long string of all fields for all linked forms
-		// linkSelectIndex is an array of linked form select statements for individual linked forms, keyed by linked form id
+		// linkSelectIndex is an array of linked form select statements for individual linked forms, keyed by linked form ordinal in the metadata arrays (ie, 0, 1, etc, based on order)
 		if ($linkSelect) {
 			// replace the * in the select with the requested fields, if any
 			// remove any linked form select statements for which no fields have been requested
 			if(!empty($sqlFilterElementsIndex)) {
 				$newLinkSelect = "";
-				foreach(array_keys($linkSelectIndex) as $key) {
-					$keys = array_keys($linkformids, $key);
-					$target = "f" . $keys[0] . ".*";
-					if(isset($sqlFilterElementsIndex[$key])) {
-						$linkSelectIndex[$key] = str_replace($target, implode(",", $sqlFilterElementsIndex[$key]), $linkSelectIndex[$key]);
-						$newLinkSelect .= ", " . $linkSelectIndex[$key];
+				foreach($linkSelectIndex as $ordinal => $linkSelectPart) {
+					$target = "f" . $ordinal . ".*";
+					if(isset($sqlFilterElementsIndex["f".$ordinal])) {
+						$linkSelectIndex[$ordinal] = str_replace($target, implode(",", $sqlFilterElementsIndex["f".$ordinal]), $linkSelectPart);
+						$newLinkSelect .= ", " . $linkSelectPart;
 					} else {
-						$linkSelectIndex[$key] = str_replace($target, "f" . $keys[0] . ".entry_id AS f" . $keys[0] . "_entry_id", $linkSelectIndex[$key]); // at least select the entry id
+						$linkSelectIndex[$ordinal] = str_replace($target, "f" . $ordinal . ".entry_id AS f" . $ordinal . "_entry_id", $linkSelectPart); // at least select the entry id
 					}
 				}
 				$linkSelect = $newLinkSelect;
@@ -1109,7 +1108,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				}
 				$linkedFormObject = $form_handler->get($thisLinkFid);
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
-					. $linkSelectIndex[$thisLinkFid] .
+					. $linkSelectIndex[$linkId] .
 					", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
 					. DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
                     LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
@@ -1170,7 +1169,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 } // end of dataExtraction function
 
 // generate the actual blah = blah SQL for joining tables in a relationship
-// linkOrdinal is which item in the metadata arrays we are concerned with, ie: which link, numbered from 0, and based on the way they come out of the db in the gatherLinkMetadata operation - easiest to do array_search in linkformids to find the ordinal for the non-main form you're concerned about. Problem is if there is more than one link between the same pair of forms??
+// linkOrdinal is which item in the metadata arrays we are concerned with, ie: which link, numbered from 0, and based on the way they come out of the db in the gatherLinkMetadata operation
 // $linkcommonvalue, $linkselfids, $linktargetids are the standard metadata coming out of the gatherLinkMetadata function
 // tableAliases is optional and can be used to insert your own table aliases into the SQL, rather than use the extraction layer defaults (which are main and f0, f1, f2 for the different linked forms) - use keys 0 for mainform alias, and 1 for subform alias
 function formulize_generateJoinSQL($linkOrdinal, $formAliasId, $linkcommonvalue, $linkselfids, $linktargetids, $tableAliases = false)
@@ -2129,6 +2128,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		// parse the fundamental filters
 		// apply to the whereClause
 		// apply relevant terms to the oneSideFilters
+		// FUNDAMENTAL PROBLEM HERE IF THERE ARE FUNDAMENTAL FILTERS ON A LINKED FORM THAT IS LINKED MULTIPLE TIMES IN THE RELATIONSHIP TO THE MAIN FORM
+		// THAT WILL NOT WORK!! RELATIONSHIP WOULD NEED TO BE CONSTRUCTED WITH ONLY A SINGLE LINK SO THERE IS A SINGLE ALIAS FOR THE LINKED FORM.
 		$aliasMap = array($fid => 'main');
 		foreach ($linkfids as $id => $linkfid) {
 			$aliasMap[$linkfid] = 'f' . array_search($linkfid, $linkfids);
@@ -2189,7 +2190,7 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 		 print_r($formFieldFilterMap);
 		 print "<br>Mappedform: $mappedForm<br>";
 		 print "<br>fid: $fid";*/
-	$elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids);
+	$elementPrefix = $mappedForm == $fid ? "main" : "f" . array_search($mappedForm, $linkfids); // can be multiple instances of a prefix for the same form!! Then what?!
 
 	// check if its encrypted or not, and setup the proper field reference
 	$queryElementMetaData = formulize_getElementMetaData($ifPartsZero, true);
