@@ -259,7 +259,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                     // if we accept all files, or this is a type that we don't have records for (at least it matched literal extension), or some of the mime type info is in agreement (if the extension type is a mismatch, maybe the browser type can redeem things?)
                     if(!$allowedExtensions
                         OR !$extensionMimeType
-                        OR $extensionMimeType == $deducedMimeType
+                        OR in_array($deducedMimeType, $extensionMimeType)
                         OR $browserMimeType == $deducedMimeType) {
                         $fileExtensionOK = true;
                     }
@@ -478,7 +478,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 
     // this method will write the extension and mimeType to a list for later review
     function logMissingMimeType($extension, $mimeType, $map) {
-        if(!isset($map[$extension]) OR $map[$extension] != $mimeType) {
+        if(!isset($map[$extension]) OR !in_array($mimeType, $map[$extension])) {
             $missingList = file(XOOPS_ROOT_PATH.'/uploads/missingMimeTypes.txt');
             $line = "$extension,$mimeType\n";
             if(!is_array($missingList) OR !in_array($line,$missingList)) {
