@@ -120,72 +120,61 @@ function getFormFramework($formframe, $mainform=0) {
 /**
  * Get the title of a form
  *
- * Retrieves the title of a form by its ID
- *
- * @param int $fid The form ID
- * @return string The form title or empty string if not found
+ * @param int $formIdentifier The form ID or handle
+ * @return string The form title. getFormObject will throw exception if identifier is invalid.
  */
-function getFormTitle($fid) {
-	if($formObject = getFormObject($fid)) {
-		return html_entity_decode($formObject->getVar('title'));
-	} else {
-		return "";
-	}
+function getFormTitle($formIdentifier) {
+	$formObject = getFormObject($formIdentifier);
+	return html_entity_decode($formObject->getVar('form_title'));
 }
 
 /**
  * Get the form handle of a form
  *
- * Retrieves the form handle of a form by its ID
- *
- * @param int $fid The form ID
- * @return string The form handle or empty string if not found
+ * @param int $formIdentifier The form ID or handle
+ * @return string The form handle. getFormObject will throw exception if identifier is invalid.
  */
-function getFormHandle($fid) {
-	if($formObject = getFormObject($fid)) {
-		return html_entity_decode($formObject->getVar('form_handle'));
-	} else {
-		return "";
-	}
+function getFormHandle($formIdentifier) {
+	$formObject = getFormObject($formIdentifier);
+	return html_entity_decode($formObject->getVar('form_handle'));
 }
 
 /**
- * Get a form object based on ID
+ * Get a form object based on ID or handle
  *
- * Retrieves a form object by its ID
- *
- * @param int $fid The form ID
- * @return object|bool The form object or false if not found
+ * @param int $formIdentifier The form ID or handle.
+ * @return object The form object
+ * @throws exception if the identifier is invalid
  */
-function getFormObject($fid) {
+function getFormObject($formIdentifier) {
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	if($formObject = $form_handler->get($fid)) {
+	if($formObject = $form_handler->get($formIdentifier)) {
 		return $formObject;
-	} else {
-		error_log("Formulize error: could not retrieve form object with form id $fid");
-		return false;
 	}
+	throw new Exception("Could not retrieve form object with identifier $formIdentifier");
 }
 
 /**
- * Gather user names from specified groups
+ * Gather user names from specified groups. Used in the generation of user lists for user list elements.
  *
  * Returns a list of user full names for all users in specified groups.
  *
- * @param array $groups Array of group IDs to consider
- * @param string $nametype Either 'uname' or 'name' for the name type to return
- * @param bool $requireAllGroups If true, only users who are members of ALL specified groups
- * @param mixed $filter Optional filter for user profile form
- * @param bool $limitByUsersGroups Flag to limit to user's own groups
- * @param array $declaredUsersGroups Array of groups that the declared user is a member of
+ * @param array $groups Array of group IDs to consider. Usually the active user's groups, but could be an arbitrary list.
+ * @param string $nametype Either 'uname' or 'name' for the name type to return. 'name' is deprecated.
+ * @param bool $requireAllGroups If true, only names of users who are members of ALL specified groups
+ * @param mixed $filter Optional filter for user profile form. Deprecated.
+ * @param bool $limitByUsersGroups Flag to limit the names returned to users who have a group in common with the active user
+ * @param array $declaredUsersGroups Array of groups that the 'declared' user is a member of. The 'declared' user is the active user(?). This seems to always be true.
  * @return array Associative array of user names indexed by UID
  */
-function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false, $limitByUsersGroups=false, $declaredUsersGroups=array()) {
-    if ($groups == $declaredUsersGroups) {
+function gatherNames($groups, $nametype='uname', $requireAllGroups=false, $filter=false, $limitByUsersGroups=false, $declaredUsersGroups=array()) {
+
+		// this will always, or almost always be true?? And so limitByUsersGroups will be overriden to false almost always?
+		if ($groups == $declaredUsersGroups) {
         $limitByUsersGroups = false;
     }
-    global $xoopsDB;
-    $member_handler =& xoops_gethandler('member');
+
+    $member_handler = xoops_gethandler('member');
     $all_users = array();
     $all_users_limited = array();
     $usersByGroup = array();
@@ -275,12 +264,8 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
  * Returns the full URL of the current page, including query string, etc. Caches the first
  * instance found. Resets cache if a rewriteruleAddress is specified
  *
- *
- * @param string $rewriteruleAddress
- * Optional rewrite rule address to use instead of REQUEST_URI. Intended to see the current URL in
- * cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
- * @return string
- * The current URL
+ * @param string $rewriteruleAddress Optional rewrite rule address to use instead of REQUEST_URI. Intended to see the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
+ * @return string The current URL
  */
 function getCurrentURL($rewriteruleAddress='') {
     static $url = "";
@@ -299,8 +284,8 @@ function getCurrentURL($rewriteruleAddress='') {
  *
  * Returns a comma-separated list of group names from a comma-separated list of group IDs
  *
- * @param string $list Comma-separated string of group IDs
- * @param bool $obeyMemberOnlyFlag Flag to obey member-only restriction
+ * @param string $list Comma-separated string of group IDs. The first item in the list can be 'onlymembergroups' to force this function to use only groups the active user is a member of.
+ * @param bool $obeyMemberOnlyFlag Flag to allow ignoring the 'onlymembergroups' flag in the $list param if it is present
  * @return string Comma-separated list of group names
  */
 function groupNameList($list, $obeyMemberOnlyFlag = true) {
@@ -333,40 +318,53 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
 /**
  * Get the owner of a saved view
  *
- * Returns the user ID of the owner of a given saved view. Only checks based on
- * 2.0 saved view format, not 1.6 or earlier format.
+ * Returns the user ID of the owner of a given saved view.
+ * Only checks based on 2.0 saved view format, not 1.6 or earlier format.
  *
- * @param int $vid
- * The saved view ID
- * @return int|bool
- * The owner's user ID or false if not found
+ * @param int $vid The saved view ID
+ * @return int|bool The owner's user ID or false if not found
  */
 function getSavedViewOwner($vid) {
-    static $cachedOwners = array();
-    $vid = intval($vid);
-    if (!isset($cachedOwners[$vid])) {
-        global $xoopsDB;
-        $sql = "SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = $vid";
-        $result = $xoopsDB->query($sql);
-        $array = $xoopsDB->fetchArray($result);
-        $cachedOwners[$vid] = intval($array['sv_owner_uid']) > 0 ? intval($array['sv_owner_uid']) : false; // record "false" if sql failed
-    }
-    return $cachedOwners[$vid];
+	static $cachedOwners = array();
+	$vid = intval($vid);
+	if (!isset($cachedOwners[$vid])) {
+		global $xoopsDB;
+		$sql = "SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = $vid";
+		$result = $xoopsDB->query($sql);
+		$array = $xoopsDB->fetchArray($result);
+		$cachedOwners[$vid] = intval($array['sv_owner_uid']) > 0 ? intval($array['sv_owner_uid']) : false; // record "false" if sql failed
+	}
+	return $cachedOwners[$vid];
 }
 
 /**
  * Get available reports for a user
  *
  * Returns an array of reports the user is allowed to see, both saved and published
+ * Views are associated with the form and relationship parameters that were in effect when they were saved.
+ * This could/should be adjusted to allow any saved view to be available at any time, since element handles are globally the same
+ * and the Primary Relationship means all connected forms are generally available.
+ * Perhaps if Primary Relationship is active then all views are allowed?
+ *
+ * This restriction exists because originally each relationship (back when they were called frameworks) had
+ * its own handles for elements, so views for a different relationship (framework) would not work if
+ * the parameter was different. But that's not true anymore.
  *
  * @param int $uid The user ID
- * @param array $groups The user's groups
+ * @param array $groups The user's groups. Deprecated. Overridden by gathering groups based on the specified user id.
  * @param int $fid The form ID
- * @param string $frid The framework ID (optional, defaults to "0")
+ * @param string $frid The relationship ID (optional, defaults to 0, for no relationship)
  * @return array Array containing saved and published reports
  */
-function availReports($uid, $groups, $fid, $frid="0") {
+function availReports($uid, $groups, $fid, $frid=0) {
     global $xoopsDB;
+
+		// set the groups based on the user id
+		$member_handler = xoops_gethandler('member');
+		$groups = array(XOOPS_GROUP_ANONYMOUS);
+		if($uid AND $userObject = $member_handler->getUser($uid)) {
+			$groups = $userObject->getGroups();
+		}
 
     // get new saved reports
 		if($frid == -1) {
@@ -437,7 +435,10 @@ function availReports($uid, $groups, $fid, $frid="0") {
 /**
  * Perform security check for a form and entry
  *
- * Checks if a user has permission to access a specific form and entry
+ * Checks if a user has permission to access a specific form and entry.
+ * Defaults to the current user if none specified. Typical usage is to
+ * only provide the form id, and entry id if checking for a specific entry.
+ * All other parameters will be determined from current context.
  *
  * @param int $form_id The form ID
  * @param string $entry_id The entry ID (optional)
@@ -610,16 +611,20 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
  * Get group scope groups for a form, for a given user
  *
  * Retrieves the groups that have access to a specific form based on permissions.
- * Use the specific groupscope groups if specified, otherwise, use view_form
- * permission and the overlap with the user's groups, to determine the groups
- * that form the groupscope
+ * Use the specific groupscope groups if specified in the permissions for the form,
+ * otherwise, use view_form permission and the overlap with the user's groups, to
+ * determine the groups that form the groupscope.
  *
- * @param int $fid
- * The form ID
- * @param array $groups
- * User's groups (optional)
- * @return array
- * Array of group IDs that have access to the form
+ * ie: if managers group has specifically groupscope over a staff group, use the staff group
+ * Otherwise: use the groups that the user is a member of, that have view_form perm on the form
+ *
+ * Note: if the user does not have view_groupscope permission, an empty array is returned.
+ * Use of this function OUGHT to be done in conjunction with checking if the user has
+ * view_globalscope permission on the form!
+ *
+ * @param int $fid The form ID
+ * @param array $groups User's groups (optional). Will be determined from the active user's groups if not specified.
+ * @return array Array of group IDs that have access to the form, based on the user having groupscope permission.
  */
 function getGroupScopeGroups($fid, $groups=array()) {
     if(!is_array($groups) OR count($groups)==0) {
@@ -643,22 +648,23 @@ function getGroupScopeGroups($fid, $groups=array()) {
 /**
  * Get the Formulize module ID
  *
- * Specifically get formulize, since if called from within a block, the
- * xoopsModule module ID will not be formulize's id.
+ * Specifically get formulize, since if $xoopsModule is called from within a block, the
+ * xoopsModule module ID will not (may not?) be formulize's id.
  *
  * @return int The Formulize module ID
  */
 function getFormulizeModId() {
   global $xoopsDB;
-    static $mid = "";
-    if (!$mid) {
-        $res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
-        if ($res4) {
-            while ($row = $xoopsDB->fetchRow($res4))
-                $mid = intval($row[0]);
-        }
-    }
-    return $mid;
+	static $mid = "";
+	if (!$mid) {
+		$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
+		if ($res4) {
+			while ($row = $xoopsDB->fetchRow($res4)) {
+				$mid = intval($row[0]);
+			}
+		}
+	}
+	return $mid;
 }
 
 
@@ -666,17 +672,21 @@ function getFormulizeModId() {
  * Execute a database query
  *
  * Executes an SQL query and returns the results as an array. Borrowed from the
- * extraction layer, but modified to use the XOOPS DB class.
+ * extraction layer (extract.php), but modified to use the XOOPS DB class.
+ *
+ * Somewhat inefficient, if the result would then be looped again after
+ * being returned from this function. Better to do loop through the query
+ * result one time only, especially if large!
  *
  * @param string $query The SQL query to execute
  * @param string $keyfield Optional field to use as array keys
  * @param bool $keyfieldOnly Optional. If true, only return the keyfield values.
- * Sets the key of the result array to be one of the fields in the query. Useful
+ * Sets the key of the result array to be the value of a certain field in the query. Useful
  * if you want to use isset with a value to determine the presence of something
  * in the result set, instead of searching the array.
  * @return array
- * A multidimensioned array where the first index is the row of the result and
- * the second index is the field name in that row.
+ * A multidimensioned array where the first index is the row of the result (keyed by the keyfield if specified)
+ * and the second index is the field name in that row.
  */
 function q($query, $keyfield="", $keyfieldOnly = false) {
     global $xoopsDB;
@@ -720,12 +730,12 @@ function printSmart($value, $chars=35) {
 /**
  * Truncate a string to a maximum length
  *
- * Truncates a string to a maximum number of characters
+ * Truncates a string to a maximum number of characters.
+ * Multibyte character aware.
  *
  * @param string $string The string to truncate
  * @param int $maxlen Maximum number of characters
- * @return string
- * Truncated string with ellipsis if needed
+ * @return string Truncated string with ellipsis if needed
  */
 function cutString($string, $maxlen) {
     if(function_exists('mb_strlen')) {
@@ -977,7 +987,7 @@ function convertHeadersToIds($headers, $fid) {
 		$ele_ids = array();
     foreach ($headers as $cap) {
         $cap = addslashes($cap);
-        $ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND ele_caption='" . str_replace("`", "'", $cap) . "'"); // assume only one match, even though that is not enforced!  Ignores colheads since no use of this function should ever be passing colheads to it (only used for legacy purposes).
+        $ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=".intval($fid)." AND ele_caption='" . formulize_db_escape(str_replace("`", "'", $cap)) . "'"); // assume only one match, even though that is not enforced!  Ignores colheads since no use of this function should ever be passing colheads to it (only used for legacy purposes).
         $ele_ids[] = $ele_id[0]['ele_id'];
     }
     return $ele_ids;
@@ -1029,75 +1039,67 @@ function allowedForms() {
  * Remove entries from the Other table, and delete associated resources when an
  * entry is deleted from a form
  *
- * @param int $id_req
- * The entry ID to delete
- * @param int $fid
- * The form ID from which the entry is being deleted
+ * @param int $id_req The entry ID to delete
+ * @param int $fid The form ID from which the entry is being deleted
  * @throws Error if an operation fails
+ * @throws Exception if the form id is invalid
  */
-function deleteMaintenance($id_req, $fid) {
+function deleteMaintenance($entry_id, $fid) {
 	global $xoopsDB;
+	$entry_id = intval($entry_id);
 	// remove entries in the formulize_other table
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$formObject = $form_handler->get($fid);
-	$sql3 = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id IN (" . implode(",", $formObject->getVar('elements')) . ")"; //limit to id_reqs where the element is from the right form, since the new id_reqs (entry_ids) can be repeated across forms
-	if (!$result3 = $xoopsDB->query($sql3)) {
-		throw new Error("Failed to delete 'Other' text for entry $id_req");
-	}
-	if(!$resourcesDeleteResult = $form_handler->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: $id_req)) {
-		throw new Error("Failed to delete associated resources for entry $id_req in form $fid");
+	if($formObject = $form_handler->get($fid)) {
+		$sql3 = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req=$entry_id AND ele_id IN (" . implode(",", $formObject->getVar('elements')) . ")"; //limit to id_reqs where the element is from the right form, since the new id_reqs (entry_ids) can be repeated across forms
+		if (!$result3 = $xoopsDB->query($sql3)) {
+			throw new Error("Failed to delete 'Other' text for entry $entry_id");
+		}
+		if(!$resourcesDeleteResult = $form_handler->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: $entry_id)) {
+			throw new Error("Failed to delete associated resources for entry $entry_id in form $fid");
+		}
+	} else {
+		throw new Exception("Invalid form id passed to deleteMaintenance");
 	}
 }
-
 
 /**
  * Delete a specific entry from a form
  *
- * @param int $id_req
- * The entry ID to delete
- * @param int $fid
- * The form ID from which to delete the entry
+ * @param int $entry_id The entry ID to delete
+ * @param int $fid The form ID from which to delete the entry
  */
-function deleteIdReq($id_req, $fid) {
-    $data_handler = new formulizeDataHandler($fid);
-    if (!$deleteResult = $data_handler->deleteEntries($id_req)) {
-        exit("<br />Error deleting entry $id_req from the database for form $fid<br />");
-		}
-    deleteMaintenance($id_req, $fid);
+function deleteIdReq($entry_id, $fid) {
+	$data_handler = new formulizeDataHandler($fid);
+	if (!$deleteResult = $data_handler->deleteEntries($entry_id)) {
+		throw new Exception("Could not delete entry ".intval($entry_id)." from the database for form ".intval($fid));
+	}
+	deleteMaintenance($entry_id, $fid);
 }
 
 
 /**
- * Delete entries from a form or framework
+ * Deletes an entry and related entries in relationships, if unified delete setting is turned on in the relationship
  *
- * Deletes an entry and related entries in frameworks or linked forms.
- * Handlers and MID to be passed in when frameworks are used.
- * owner and owner_groups to be passed in when available (if called from a
- * function where they have already been determined
- *
- * @param int $id_req
- * The entry ID to delete
- * @param int $frid
- * The framework ID (optional)
- * @param int $fid
- * The form ID
- * @param array $excludeFids
- * Forms to exclude from deletion (optional)
+ * @param int $entry_id The entry ID to delete
+ * @param int $frid The relationship ID (optional)
+ * @param int $fid The form ID (NOT optional)
+ * @param array $excludeFids Forms to exclude from deletion (optional)
  */
-function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
+function deleteEntry($entry_id, $frid, $fid, $excludeFids=array()) {
 
-    global $xoopsDB;
     $deletedEntries = array();
+		$entry_id = intval($entry_id);
+		$fid = intval($fid);
+		$frid = intval($frid);
 
-    if(!$id_req OR !$fid) {
-        error_log("Formulize error: deletion requested without required parameters: entry id - ".$id_req.". form id - ".$fid.".");
-        return false;
+    if(!$entry_id OR !$fid) {
+      throw new Exception("Deletion requested without required parameters: entry id - ".$entry_id.". form id - ".$fid.".");
     }
 
     if ($frid) {
         // if a framework is passed, then delete all sub entry items found in a unified display relationship with the base entry, in addition to the base entry itself.
         $fids[0] = $fid;
-        $entries[$fid][0] = $id_req;
+        $entries[$fid][0] = $entry_id;
 
         // check for entries in forms with a relationship to this one, where the unified_delete setting is enabled
         $unified_display = false;
@@ -1126,86 +1128,66 @@ function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
             }
         }
     } else {
-        deleteIdReq($id_req, $fid);
-        $deletedEntries[$fid][] = $id_req;
+        deleteIdReq($entry_id, $fid);
+        $deletedEntries[$fid][] = $entry_id;
     } // end of if frid
 
     // do notifications
     foreach ($deletedEntries as $thisfid=>$entries) {
-        sendNotifications($thisfid, "delete_entry", $entries);
+      sendNotifications($thisfid, "delete_entry", $entries);
     }
 }
 
 
 /**
- * Get the owner of an entry
+ * Get the owner id of a specified entry.
  *
- * Returns the user ID of the owner of a specific entry
- *
- * @param int $entry
- * The entry ID
- * @param int $fid
- * The form ID
- * @return int
- * The owner's user ID
+ * @param int $entry_id The entry ID
+ * @param int $fid The form ID
+ * @return int The owner's user ID
  */
-function getEntryOwner($entry, $fid) {
+function getEntryOwner($entry_id, $fid) {
     static $entryOwners = array();
-    $entry = intval($entry);
-    if (isset($entryOwners[$entry][$fid])) {
-        return $entryOwners[$entry][$fid];
+    $entry_id = intval($entry_id);
+    if (isset($entryOwners[$entry_id][$fid])) {
+        return $entryOwners[$entry_id][$fid];
     } else {
         $data_handler = new formulizeDataHandler($fid);
-        list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
-        $entryOwners[$entry][$fid] = $creation_uid;
+        list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
+        $entryOwners[$entry_id][$fid] = $creation_uid;
     }
-    return $entryOwners[$entry][$fid];
+    return $entryOwners[$entry_id][$fid];
 }
 
-
 /**
- * Create a UID filter for SQL queries
+ * Create a string for a SQL query where clause, to filter on 'uid'
  *
- * Creates a SQL filter string for user IDs
- *
- * @param array|int $users
- * Array of user IDs or single user ID
- * @return string
- * SQL filter string
+ * @param array|int $users Array of user IDs or single user ID
+ * @return string SQL where string to use, ie: "uid=1 OR uid=2"
  */
 function makeUidFilter($users) {
-    if (is_array($users)) {
-        if (count((array) $users) > 1) {
-            return "uid=" . implode(" OR uid=", $users);
-        } else {
-            return "uid=" . intval($users[0]);
-        }
-    } else {
-        return "uid=" . intval($users);
-    }
+	if (is_array($users)) {
+		if (count((array) $users) > 1) {
+			return "uid=" . implode(" OR uid=", array_filter($users, 'is_numeric'));
+		} else {
+			return "uid=" . intval($users[0]);
+		}
+	} else {
+		return "uid=" . intval($users);
+	}
 }
 
-
 /**
- * Check for linking relationships in forms and frameworks
+ * Finds all linked forms and entries based on relationship settings.
+ * Linked forms are the ones that are one hop away in the relationship connections.
  *
- * Finds all linked forms and entries based on framework relationships
- *
- * @param int $frid
- * Framework ID
- * @param array $fids
- * Array of form IDs
- * @param int $fid
- * Main form ID
- * @param array|null $entries
- * Entry data (optional). If NULL, will only return the linked forms
- * @param bool $unified_display
- * Flag to control whether only unified display relationships are returned or all
- * relationships.
- * @param bool $unified_delete
- * Flag to control unified delete relationships
- * @return array
- * Array containing linked forms and entries
+ * @param int $frid Relationship ID
+ * @param array $fids Array of form IDs
+ * @param int $fid Main form ID. Forms "one hop" away from the mainform in the relationship will be returned.
+ * @param array|null $entries Entry data (optional). If NULL, will only return the linked forms. If present, must be an array, keyed by form ids, with values being an array of entries in that form. Typically just the main form and one mainform entry, because we then add to it inside this function.
+ * @param bool $unified_display Flag to control whether only forms in unified display connections with the mainform are included, or all forms
+ * @param bool $unified_delete Flag to control whether only forms in unified delete connections with the mainform are included, or all forms
+ * @return array Array containing linked forms and entries. There are four potential keys: fids, entries, sub_fids, and sub_entries. The entries and sub_entries arrays have form ids as the top level key and values are arrays of entries in that form which are connected to the mainform in the relationship.
  */
 function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false, $unified_delete=false)
 {
@@ -1496,7 +1478,8 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
 }
 
 /**
- * Creates an export file on the server and returns a filename
+ * Creates an export file on the server and returns a filename. Used only for blank templates for adding new entries, or update templates to get a set of existing values for updating.
+ * The Export Entries button uses a different process entirely.
  *
  * @param array $headers
  * The list of column headings in use
@@ -1504,7 +1487,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
  * The list of handles in the $data to use to get all the data for display,
  * must be in synch with headers
  * @param array $data
- * The full dataset that is being prepped
+ * The full dataset that is being prepped, as gathered from gatherDataset
  * @param string $fdchoice
  * Is either comma or calcs (calcs for when calcs are to be exported) - or
  * custom, in which case custdel needs to contain the delimiter
@@ -1707,12 +1690,10 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
 }
 
 /**
- * Prepare cell data for spreadsheet export
+ * Processes data for exporting into a cell in a csv
  *
- * Processes cell data for exporting to spreadsheet formats
- *
- * @param mixed $column Column identifier/data
- * @param mixed $entry Entry data to process
+ * @param mixed $column the element ID or handle for the column
+ * @param mixed $entry Entry data to process, a single item from a dataset array, as returned from gatherDataset.
  * @return mixed Processed cell data ready for export
  */
 function prepareCellForSpreadsheetExport($column, $entry) {
@@ -1772,8 +1753,7 @@ function quoteCellContentsForSpreadsheetExport($data_to_write) {
  * This is controlled in the Formulize preferences, and relates to getting strings and
  * numbers to be read and formatted cleanly by Excel or Google Sheets.
  *
- * @return string
- * The intro character to use, if any
+ * @return string The intro character to use, if any
  */
 function getExportIntroChar() {
 	static $exportIntroChar = null;
@@ -1801,12 +1781,16 @@ function getExportIntroChar() {
 }
 
 /**
- * Draw in secondary data rows (unique to AOHC)
+ * Draw in secondary data rows - Experimental!
+ * Requires uncommenting experimental code in prepareCellForSpreadsheetExport
+ * The idea is to show multiple values for a field in a given record, in separate rows, which defeats the purpose of the spreadsheet having rows that identify unique records, but may be more readable in some situations??
  *
- * @param string $csvfile
- * @param array $cols
- * @param string $fd
- * @param array $secondaryData
+ * At present, will be called and will return the csvfile string unchanged.
+ *
+ * @param string $csvfile - the entire string of the csv as prepared to this point
+ * @param array $cols - the columns that make up the row
+ * @param string $fd - the field delimiter being used in the csv
+ * @param array $secondaryData - an array of the data to write keyed by column, and then in arrays of values for that column
  *
  * @return string
  */
@@ -1844,28 +1828,30 @@ function prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData) {
  * Get metadata for an entry
  *
  * Returns metadata summarizing details about an entry including creation and
- * update information. useOldCode is used to trigger the pre-3.0 logic only when
- * the patching process is taking place.  After that, new process should kick in
- * since new data structure is available.
+ * update information. Provides readable names, not user ids.
  *
- * @param int $entry The entry ID
- * @param object $member_handler Member handler object
- * @param string $fid Form ID (optional)
- * @param bool $useOldCode Flag to use legacy code path (optional, defaults to
- * false)
- * @return array
- * Metadata about the entry including creator, updater, creation and update dates
+ * Use the data handler getEntryMeta method to get raw data including user ids.
+ *
+ * useOldCode is used to trigger the pre-3.0 logic only when the patching process
+ * is taking place.  After that, new process should kick in since new data structure is available.
+ * All data used to be in one table for all forms!! :(
+ *
+ * @param int $entry_id The entry ID
+ * @param object $member_handler Member handler object (optional)
+ * @param string $fid Form ID (NOT optional)
+ * @param bool $useOldCode Flag to use legacy code path (optional, defaults to false)
+ * @return array Metadata about the entry, with keys 'created', 'last_update', 'created_by', 'last_update_by'. Returns readable names, not user id numbers.
  */
-function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
+function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false) {
     if (!$member_handler) {
         $member_handler =& xoops_gethandler('member');
     }
 
     if ($useOldCode) {
         global $xoopsDB;
-        $meta = q("SELECT uid, date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry AND date > 0 ORDER BY date DESC LIMIT 0,1");
-        $meta_proxyid = q("SELECT proxyid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry AND proxyid != uid ORDER BY date DESC LIMIT 0,1");
-        $meta_creation_date = q("SELECT creation_date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry AND creation_date > 0 ORDER BY creation_date ASC LIMIT 0,1");
+        $meta = q("SELECT uid, date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry_id AND date > 0 ORDER BY date DESC LIMIT 0,1");
+        $meta_proxyid = q("SELECT proxyid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry_id AND proxyid != uid ORDER BY date DESC LIMIT 0,1");
+        $meta_creation_date = q("SELECT creation_date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry_id AND creation_date > 0 ORDER BY creation_date ASC LIMIT 0,1");
         $meta_to_return['last_update'] = $meta[0]['date'];
         if ($meta_creation_date[0]['creation_date']) {
             $meta_to_return['created'] = $meta_creation_date[0]['creation_date'];
@@ -1902,7 +1888,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
         // use new class in all cases, except where we're specifically asking for old logic, which is only necessary during the initial patching process for 3.0
         $data_handler = new formulizeDataHandler($fid);
         $meta_to_return = array();
-        list($meta_to_return['created'], $meta_to_return['last_update'], $meta_to_return['created_by_uid'], $meta_to_return['last_update_by_uid']) = $data_handler->getEntryMeta($entry);
+        list($meta_to_return['created'], $meta_to_return['last_update'], $meta_to_return['created_by_uid'], $meta_to_return['last_update_by_uid']) = $data_handler->getEntryMeta($entry_id);
         if ($meta_to_return['created'] == 0) { // not sure if the new date format will ever evaluate to 0, but just in case
             $meta_to_return['created'] = "???";
         }
@@ -1923,7 +1909,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
 }
 
 /**
- * Get the complete set of columns that are in a form or framework
+ * Get the complete set of columns that are in a form or relationship
  *
  * the returned array contains one DB query result for each form
  * ie:  $cols[form1] = all columns in that form, $cols[form2] = all columns in
@@ -3001,7 +2987,6 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             $all_groups = array_intersect($groups, $groupsWithAccess);
         }
         $all_users = "";
-        $uq = makeUidFilter($all_users);
     } else {
         $all_users = array(0=>$owner);
         $all_groups = "";
