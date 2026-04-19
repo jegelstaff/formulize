@@ -66,46 +66,55 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 
 /**
- * Get form framework information
+ * Deduce form and form relationship from legacy formframe/mainform params.
  *
- * Retrieves the form ID and framework ID for a given form/frame combination
+ * Some of the oldest parts of the internal API originally required a relationship
+ * (formerly called a framework) to be specified. Later we allowed specifying a form
+ * only instead of requiring a relationship. But this was accomplished by making the
+ * semantics of the parameters flexible, which is terrible design. This function was
+ * intended to make it easy to tease out what the form id and relationship id
+ * should be, based on these old, flexible parameters.
  *
- * @param mixed $formframe The form frame identifier (can be numeric ID or name)
- * @param int $mainform The main form ID (optional, defaults to 0)
- * @return array Array containing [form_id, framework_id]
+ * The idea was to make it "easier" for API users, so the only variables they had to
+ * specify were the first one(s) no matter how they were using the API . The only
+ * defense of this approach is that it predated named parameters in PHP.
+ *
+ * @param mixed $formframe The relationship ID, or name. Unless mainform is not specified, in which case this is the form ID, or handle, or title(!). Use IDs or handles!
+ * @param int $mainform If formframe is referencing a relationship, then this is the form ID, or handle or title(!). Use IDs or handles!
+ * @return array Array containing [form_id, relationship_id]
+ * @throws exception If the passed param(s) are non numeric and cannot be resolved to an ID
  */
 function getFormFramework($formframe, $mainform=0) {
-    static $cachedToReturn = array();
-    global $xoopsDB;
-    if($formframe AND isset($cachedToReturn[$formframe]) AND is_array($cachedToReturn[$formframe]) AND isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
-    if ($mainform) {
-        // a framework
-        if (!is_numeric($mainform)) {
-            exit("Mainform must be numeric, was: '".strip_tags(htmlspecialchars($mainform))."'");
-        }
-        $frid = $formframe;
-        $fid = $mainform;
-        if (!is_numeric($formframe)) {
-            $frameid = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
-            if(!$frid = intval($frameid[0]['frame_id'])) {
-                exit("Cannot identify relationship using this text '".strip_tags(htmlspecialchars($formframe))."'");
-            }
-        }
-    } else {
-        // a form
-        $frid = "";
-        $fid = $formframe;
-        if (!is_numeric($formframe)) { // if it's a title, convert to the id
-            $formid = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_title = '" . formulize_db_escape($formframe) . "'");
-            if(!$fid = intval($formid[0]['id_form'])) {
-                exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($formframe))."'");
-            }
-        }
-    }
-    $to_return[0] = $fid;
-    $to_return[1] = $frid;
-    $cachedToReturn[$formframe][$mainform] = $to_return;
-    return $to_return;
+	static $cachedToReturn = array();
+	global $xoopsDB;
+	if($formframe AND isset($cachedToReturn[$formframe]) AND is_array($cachedToReturn[$formframe]) AND isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
+	if ($mainform) {
+		// a relationship and mainform pair
+		$frid = intval($formframe);
+		$fid = intval($mainform);
+		$formIdentifier = $mainform;
+		if (!$frid) {
+			$frameIDQueryResult = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
+			if(count($frameIDQueryResult) == 0 OR !$frid = intval($frameIDQueryResult[0]['frame_id'])) {
+				throw new Exception("Cannot identify relationship using this text '".strip_tags(htmlspecialchars($formframe))."'");
+			}
+		}
+	} else {
+		// a form by itself
+		$frid = 0;
+		$fid = intval($formframe);
+		$formIdentifier = $formframe;
+	}
+	if (!$fid) { // if the form identifier was a title or handle, convert to the id
+		$formIDQueryResult = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_title = '" . formulize_db_escape($formIdentifier) . "' OR form_handle = '" . formulize_db_escape($formIdentifier) . "'");
+		if(count($formIDQueryResult) == 0 OR !$fid = intval($formIDQueryResult[0]['id_form'])) {
+			throw new Exception("Cannot identify a form using this text '".strip_tags(htmlspecialchars($$formIdentifier))."'");
+		}
+	}
+	$to_return[0] = $fid;
+	$to_return[1] = $frid;
+	$cachedToReturn[$formframe][$mainform] = $to_return;
+	return $to_return;
 }
 
 /**
