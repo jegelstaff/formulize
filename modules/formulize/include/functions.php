@@ -2503,23 +2503,20 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 }
 
 /**
- * Create field list for form elements
+ * Create a list of form elements, for use in the admin UI for form elements.
+ * In various places, you need to show a choice of other form elements, when configuring
+ * an element. For example, when selecting the source for a linked element, etc.
  *
- * This function creates a list of fields for form elements, handling various
- * types of inputs. CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION
- * NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN
- * CREATING OR EDITING CERTAIN FORM ELEMENTS
- *
- * @param mixed $val Value for the field
- * @param bool $textbox Flag for textbox input
- * @param bool|int $limitToForm Flag to limit to specific form
- * @param string $name Name for the field
- * @param string $firstValue First value in the list
- * @param bool $multi_select Flag for multi-select input
- * @param bool $dataElementsOnly Flag to limit to data elements only
- * @return array Field list
+ * @param mixed $val the current selected value, if any
+ * @param bool $textbox Optional. A flag to indicate if this is being done for the "associate with another element" feature of textboxes
+ * @param int $limitToForm Optional. A form ID, which will limit the elements gathered to ones that are part of that form
+ * @param string $name The name in markup for the list being created. The default is 'formlink', but this should be specified in almost all cases.
+ * @param string $firstValue Optional. The text of the first value in the list, such as "Choose an option". Certain defaults are used if nothing is passed.
+ * @param bool $multi_select Optional. Flag for whether the list should support multiple selections or not.
+ * @param bool $dataElementsOnly Optional. Flag to limit to elements that store data only.
+ * @return mixed Returns an array where the first value is the XOOPS form element that has been created, and the second value is the default item in the list. If the textbox flag is on, then this simply returns the XOOPS form element created, not in an array.
  */
-function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false, $dataElementsOnly = false) {
+function createFieldList($val, $textbox=false, $limitToForm=0, $name="", $firstValue="", $multi_select = false, $dataElementsOnly = false) {
 
 		global $xoopsDB;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -2606,22 +2603,15 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
 }
 
 /**
- * Find matching ID request
+ * Find the first entry with a given value for a given element
  *
- * This function finds an ID request that matches a given value.
- * Matches must be exact and returns the id_req that matches the value, or false
- * if nothing found.
- * SEARCHES IN THE ELEMENT'S FORM FOR THE FIRST ID_REQ THAT MATCHES THE VALUE.
- * Used by the new textbox link option to find a matching entry, so that it can
- * be linked in the list of entries screen.
- *
- * @param mixed $element Element identifier
- * @param int $fid Form ID
- * @param mixed $value Value to match
- * @return mixed ID request or false if not found
+ * @param mixed $elementIdentifier Element ID, handle or object that we're checking for the value in
+ * @param int $fid Form ID that we're checking for the value in
+ * @param mixed $value Value that we're looking for
+ * @return mixed The entry ID of the first entry found in the form where the element has the value, or false if no entry is found with that value, or if the element identifier is invalid
  */
-function findMatchingIdReq($element, $fid, $value) {
-    if (!$element = _getElementObject($element)) {
+function findMatchingIdReq($elementIdentifier, $fid, $value) {
+    if (!$element = _getElementObject($elementIdentifier)) {
         return false;
     }
 
@@ -2640,18 +2630,14 @@ function findMatchingIdReq($element, $fid, $value) {
 }
 
 /**
- * Format links in text
+ * Format values for display in lists, with links resolved to clickable anchor tags, if appropriate.
+ * Relies on the underlying formatDataForList method of element type handlers.
  *
- * This function formats links in text, handling both textbox associations and
- * linked selectboxes.
- * It intelligently outputs links if the text should be a link (because of
- * textbox associations, or linked selectboxes)
- *
- * @param string $matchtext Text to format
- * @param string $handle Element handle for the element
- * @param int $textWidth Width for text formatting
- * @param mixed $entryBeingFormatted Entry being formatted
- * @return string Formatted text with links
+ * @param string $matchtext The string that we are preparing for output
+ * @param string $handle The element handle for the element that the value belongs to
+ * @param int $textWidth The max number of characters that should be displayed, after which an elipses will be appended and text cut off
+ * @param int $entryBeingFormatted The entry ID that the value belongs to
+ * @return string Formatted text with links resolved to clickable anchor tags, etc
  */
 function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 
@@ -2683,12 +2669,12 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 }
 
 /**
- * Text to hyperlink
+ * Converts text to include markup for links, if the text contains a URL.
+ * Ensures the markup will open links in a new window, and will shorten the display of the link if it is longer than the specified text width.
  *
- * @param string $text
- * @param integer $textWidth
- * @return string
- *   Hyperlink
+ * @param string $text The text to convert to a hyperlink
+ * @param integer $textWidth The maximum width of the text before it is truncated with an ellipses. Set to 0 for no truncation.
+ * @return string The text with URLs converted to hyperlinks, and truncated if they exceed the specified width. Links will open in a new window.
  */
 function formulize_text_to_hyperlink($text, $textWidth=0) {
     global $myts;
@@ -2711,24 +2697,11 @@ function removeOpeningPHPTag($string) {
 }
 
 /**
- * Interpret the value for a textbox or textarea, return the actual string we
- * should display or should save in the DB
- *
- * @param mixed $elementIdentifier The id number, handle, or object representing
- * the element we're working with
- * @param int|string $entry_id Optional. Defaults to 'new'. The entry id number
- * of the entry that we're working with, or 'new' for new entries not yet saved.
- * Possibly referenced by eval'd code.
- * @param mixed $currentValue Optional. The current value of the element in the
- * entry. More efficient to pass this in if known. If set to the string
- * USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used
- * instead of the current value. This is necessary when determining defaults for
- * newly created subform entries, since they have an entry id in the database
- * already.
- * @return mixed The default value that should be used for this element, or the
- * actual value in the database if this is a specific entry, unless there is no
- * value saved in which case the default from the element settings would be
- * interpretted.
+ * Interpret the value for a textbox or textarea, return the actual string we should display or should save in the DB
+ * @param mixed $elementIdentifier The id number, handle, or object representing the element we're working with
+ * @param int|string $entry_id Optional. Defaults to 'new'. The entry id number of the entry that we're working with, or 'new' for new entries not yet saved. Possibly referenced by eval'd code.
+ * @param mixed $currentValue Optional. The current value of the element in the entry. More efficient to pass this in if known. If set to the string USEDEFAULTVALUEINSTEADOFCURRENTVALUE then the default value will be used instead of the current value. This is necessary when determining defaults for newly created subform entries, since they have an entry id in the database already.
+ * @return mixed The default value that should be used for this element, or the actual value in the database if this is a specific entry, unless there is no value saved in which case the default from the element settings would be interpretted.
  */
 function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentValue = null) {
 
@@ -2837,13 +2810,12 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 }
 
 /**
- * Get default value for date elements
+ * Get default value for date elements, as a UNIX timestamp
+ * The timestamp ought to be in UTC, since that ought to be the default timezone for PHP in Formulize. This is enforced in the mainfile.php.
  *
- * This function retrieves the default value for date form elements.
- *
- * @param string $default_hint Default hint value
- * @param bool|string $entry_id Entry ID or false
- * @return string Default date value
+ * @param string $default_hint The default value for the date element, which may be a specific date, or a special value like {TODAY} or {TODAY+3}, or {other_element_handle}, etc.
+ * @param bool|int $entry_id Entry ID or false
+ * @return int Returns the timestamp of the default value for the datebox
  */
 function getDateElementDefault($default_hint, $entry_id = false) {
     if($default_hint == "0000-00-00") {
