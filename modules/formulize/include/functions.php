@@ -65,82 +65,116 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 
+/**
+ * Deduce form and form relationship from legacy formframe/mainform params.
+ *
+ * Some of the oldest parts of the internal API originally required a relationship
+ * (formerly called a framework) to be specified. Later we allowed specifying a form
+ * only instead of requiring a relationship. But this was accomplished by making the
+ * semantics of the parameters flexible, which is terrible design. This function was
+ * intended to make it easy to tease out what the form id and relationship id
+ * should be, based on these old, flexible parameters.
+ *
+ * The idea was to make it "easier" for API users, so the only variables they had to
+ * specify were the first one(s) no matter how they were using the API . The only
+ * defense of this approach is that it predated named parameters in PHP.
+ *
+ * @param mixed $formframe The relationship ID, or name. Unless mainform is not specified, in which case this is the form ID, or handle, or title(!). Use IDs or handles!
+ * @param int $mainform If formframe is referencing a relationship, then this is the form ID, or handle or title(!). Use IDs or handles!
+ * @return array Array containing [form_id, relationship_id]
+ * @throws exception If the passed param(s) are non numeric and cannot be resolved to an ID
+ */
 function getFormFramework($formframe, $mainform=0) {
-    static $cachedToReturn = array();
-    global $xoopsDB;
-    if($formframe AND isset($cachedToReturn[$formframe]) AND is_array($cachedToReturn[$formframe]) AND isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
-    if ($mainform) {
-        // a framework
-        if (!is_numeric($mainform)) {
-            exit("Mainform must be numeric, was: '".strip_tags(htmlspecialchars($mainform))."'");
-        }
-        $frid = $formframe;
-        $fid = $mainform;
-        if (!is_numeric($formframe)) {
-            $frameid = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
-            if(!$frid = intval($frameid[0]['frame_id'])) {
-                exit("Cannot identify relationship using this text '".strip_tags(htmlspecialchars($formframe))."'");
-            }
-        }
-    } else {
-        // a form
-        $frid = "";
-        $fid = $formframe;
-        if (!is_numeric($formframe)) { // if it's a title, convert to the id
-            $formid = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_title = '" . formulize_db_escape($formframe) . "'");
-            if(!$fid = intval($formid[0]['id_form'])) {
-                exit("Cannot identify mainform using this text '".strip_tags(htmlspecialchars($formframe))."'");
-            }
-        }
-    }
-    $to_return[0] = $fid;
-    $to_return[1] = $frid;
-    $cachedToReturn[$formframe][$mainform] = $to_return;
-    return $to_return;
-}
-
-// get the title of a form
-function getFormTitle($fid) {
-	if($formObject = getFormObject($fid)) {
-		return html_entity_decode($formObject->getVar('title'));
+	static $cachedToReturn = array();
+	global $xoopsDB;
+	if($formframe AND isset($cachedToReturn[$formframe]) AND is_array($cachedToReturn[$formframe]) AND isset($cachedToReturn[$formframe][$mainform])) { return $cachedToReturn[$formframe][$mainform]; }
+	if ($mainform) {
+		// a relationship and mainform pair
+		$frid = intval($formframe);
+		$fid = intval($mainform);
+		$formIdentifier = $mainform;
+		if (!$frid) {
+			$frameIDQueryResult = q("SELECT frame_id FROM " . $xoopsDB->prefix("formulize_frameworks") . " WHERE frame_name='" . formulize_db_escape($formframe) . "'");
+			if(count($frameIDQueryResult) == 0 OR !$frid = intval($frameIDQueryResult[0]['frame_id'])) {
+				throw new Exception("Cannot identify relationship using this text '".strip_tags(htmlspecialchars($formframe))."'");
+			}
+		}
 	} else {
-		return "";
+		// a form by itself
+		$frid = 0;
+		$fid = intval($formframe);
+		$formIdentifier = $formframe;
 	}
+	if (!$fid) { // if the form identifier was a title or handle, convert to the id
+		$formIDQueryResult = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_title = '" . formulize_db_escape($formIdentifier) . "' OR form_handle = '" . formulize_db_escape($formIdentifier) . "'");
+		if(count($formIDQueryResult) == 0 OR !$fid = intval($formIDQueryResult[0]['id_form'])) {
+			throw new Exception("Cannot identify a form using this text '".strip_tags(htmlspecialchars($$formIdentifier))."'");
+		}
+	}
+	$to_return[0] = $fid;
+	$to_return[1] = $frid;
+	$cachedToReturn[$formframe][$mainform] = $to_return;
+	return $to_return;
 }
 
-// get the form_handle of a form
-function getFormHandle($fid) {
-	if($formObject = getFormObject($fid)) {
-		return html_entity_decode($formObject->getVar('form_handle'));
-	} else {
-		return "";
-	}
+/**
+ * Get the title of a form
+ *
+ * @param int $formIdentifier The form ID or handle
+ * @return string The form title. getFormObject will throw exception if identifier is invalid.
+ */
+function getFormTitle($formIdentifier) {
+	$formObject = getFormObject($formIdentifier);
+	return html_entity_decode($formObject->getVar('form_title'));
 }
 
-// get a form object based on id
-function getFormObject($fid) {
+/**
+ * Get the form handle of a form
+ *
+ * @param int $formIdentifier The form ID or handle
+ * @return string The form handle. getFormObject will throw exception if identifier is invalid.
+ */
+function getFormHandle($formIdentifier) {
+	$formObject = getFormObject($formIdentifier);
+	return html_entity_decode($formObject->getVar('form_handle'));
+}
+
+/**
+ * Get a form object based on ID or handle
+ *
+ * @param int $formIdentifier The form ID or handle.
+ * @return object The form object
+ * @throws exception if the identifier is invalid
+ */
+function getFormObject($formIdentifier) {
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	if($formObject = $form_handler->get($fid)) {
+	if($formObject = $form_handler->get($formIdentifier)) {
 		return $formObject;
-	} else {
-		error_log("Formulize error: could not retrieve form object with form id $fid");
-		return false;
 	}
+	throw new Exception("Could not retrieve form object with identifier $formIdentifier");
 }
 
-//this function returns the list of all the user's full names for all the users in the specified group(s)
-// $groups is an array of all the group ids that we should be considering
-// $nametype is either uname or name
-// $requireAllGroups is a 0 or 1, and if it's a 1, then we need to match only users who are members of all the groups specified
-// $filter is the specified filters to run on the profile form, if any
-// $limitByUsersGroups is a flag to indicate if we should be using only the users own groups
-// $declaredUsersGroups is an array of all the groups that the declared user is a member of
-function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false, $limitByUsersGroups=false, $declaredUsersGroups=array()) {
-    if ($groups == $declaredUsersGroups) {
+/**
+ * Gather user names from specified groups. Used in the generation of user lists for user list elements.
+ *
+ * Returns a list of user full names for all users in specified groups.
+ *
+ * @param array $groups Array of group IDs to consider. Usually the active user's groups, but could be an arbitrary list.
+ * @param string $nametype Either 'uname' or 'name' for the name type to return. 'name' is deprecated.
+ * @param bool $requireAllGroups If true, only names of users who are members of ALL specified groups
+ * @param mixed $filter Optional filter for user profile form. Deprecated.
+ * @param bool $limitByUsersGroups Flag to limit the names returned to users who have a group in common with the active user
+ * @param array $declaredUsersGroups Array of groups that the 'declared' user is a member of. The 'declared' user is the active user(?). This seems to always be true.
+ * @return array Associative array of user names indexed by UID
+ */
+function gatherNames($groups, $nametype='uname', $requireAllGroups=false, $filter=false, $limitByUsersGroups=false, $declaredUsersGroups=array()) {
+
+		// this will always, or almost always be true?? And so limitByUsersGroups will be overriden to false almost always?
+		if ($groups == $declaredUsersGroups) {
         $limitByUsersGroups = false;
     }
-    global $xoopsDB;
-    $member_handler =& xoops_gethandler('member');
+
+    $member_handler = xoops_gethandler('member');
     $all_users = array();
     $all_users_limited = array();
     $usersByGroup = array();
@@ -225,9 +259,13 @@ function gatherNames($groups, $nametype, $requireAllGroups=false, $filter=false,
 }
 
 /**
- * Deduce the current URL, including full query string, etc. Caches the first instance found. Resets cache if a rewriteruleAddress is specified
- * @param string $rewriteruleAddress If passed in, this value will be used instead of the URI. Intended to seed the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
- * @return string The current URL, from cache if already determined and no rewriteruleAddress was specified
+ * Deduce the current URL
+ *
+ * Returns the full URL of the current page, including query string, etc. Caches the first
+ * instance found. Resets cache if a rewriteruleAddress is specified
+ *
+ * @param string $rewriteruleAddress Optional rewrite rule address to use instead of REQUEST_URI. Intended to see the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
+ * @return string The current URL
  */
 function getCurrentURL($rewriteruleAddress='') {
     static $url = "";
@@ -241,7 +279,15 @@ function getCurrentURL($rewriteruleAddress='') {
     return $url;
 }
 
-// this function returns a human readable, comma separated list of group names, given a string of comma separated group ids
+/**
+ * Convert group IDs to human-readable names
+ *
+ * Returns a comma-separated list of group names from a comma-separated list of group IDs
+ *
+ * @param string $list Comma-separated string of group IDs. The first item in the list can be 'onlymembergroups' to force this function to use only groups the active user is a member of.
+ * @param bool $obeyMemberOnlyFlag Flag to allow ignoring the 'onlymembergroups' flag in the $list param if it is present
+ * @return string Comma-separated list of group names
+ */
 function groupNameList($list, $obeyMemberOnlyFlag = true) {
     global $xoopsDB;
     $grouplist = explode(",", trim($list, ","));
@@ -269,24 +315,56 @@ function groupNameList($list, $obeyMemberOnlyFlag = true) {
     return $names;
 }
 
-// THIS FUNCTION RETURNS THE OWNER OF A GIVEN SAVED VIEW
-// only checks based on 2.0 saved view format, not 1.6 or earlier format
+/**
+ * Get the owner of a saved view
+ *
+ * Returns the user ID of the owner of a given saved view.
+ * Only checks based on 2.0 saved view format, not 1.6 or earlier format.
+ *
+ * @param int $vid The saved view ID
+ * @return int|bool The owner's user ID or false if not found
+ */
 function getSavedViewOwner($vid) {
-    static $cachedOwners = array();
-    $vid = intval($vid);
-    if (!isset($cachedOwners[$vid])) {
-        global $xoopsDB;
-        $sql = "SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = $vid";
-        $result = $xoopsDB->query($sql);
-        $array = $xoopsDB->fetchArray($result);
-        $cachedOwners[$vid] = intval($array['sv_owner_uid']) > 0 ? intval($array['sv_owner_uid']) : false; // record "false" if sql failed
-    }
-    return $cachedOwners[$vid];
+	static $cachedOwners = array();
+	$vid = intval($vid);
+	if (!isset($cachedOwners[$vid])) {
+		global $xoopsDB;
+		$sql = "SELECT sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = $vid";
+		$result = $xoopsDB->query($sql);
+		$array = $xoopsDB->fetchArray($result);
+		$cachedOwners[$vid] = intval($array['sv_owner_uid']) > 0 ? intval($array['sv_owner_uid']) : false; // record "false" if sql failed
+	}
+	return $cachedOwners[$vid];
 }
 
-// return an array of the reports the user is allowed to see
-function availReports($uid, $groups, $fid, $frid="0") {
+/**
+ * Get available reports for a user
+ *
+ * Returns an array of reports the user is allowed to see, both saved and published
+ * Views are associated with the form and relationship parameters that were in effect when they were saved.
+ * This could/should be adjusted to allow any saved view to be available at any time, since element handles are globally the same
+ * and the Primary Relationship means all connected forms are generally available.
+ * Perhaps if Primary Relationship is active then all views are allowed?
+ *
+ * This restriction exists because originally each relationship (back when they were called frameworks) had
+ * its own handles for elements, so views for a different relationship (framework) would not work if
+ * the parameter was different. But that's not true anymore.
+ *
+ * @param int $uid The user ID
+ * @param array $groups The user's groups. Deprecated. Overridden by gathering groups based on the specified user id.
+ * @param int $fid The form ID
+ * @param string $frid The relationship ID (optional, defaults to 0, for no relationship)
+ * @return array Array containing saved and published reports
+ */
+function availReports($uid, $groups, $fid, $frid=0) {
     global $xoopsDB;
+
+		// set the groups based on the user id
+		$member_handler = xoops_gethandler('member');
+		$groups = array(XOOPS_GROUP_ANONYMOUS);
+		if($uid AND $userObject = $member_handler->getUser($uid)) {
+			$groups = $userObject->getGroups();
+		}
 
     // get new saved reports
 		if($frid == -1) {
@@ -354,7 +432,23 @@ function availReports($uid, $groups, $fid, $frid="0") {
 }
 
 
-// security check to see if a form is allowed for the user:
+/**
+ * Perform security check for a form and entry
+ *
+ * Checks if a user has permission to access a specific form and entry.
+ * Defaults to the current user if none specified. Typical usage is to
+ * only provide the form id, and entry id if checking for a specific entry.
+ * All other parameters will be determined from current context.
+ *
+ * @param int $form_id The form ID
+ * @param string $entry_id The entry ID (optional)
+ * @param int $user_id The user ID (optional)
+ * @param string $owner The entry owner (optional)
+ * @param array $groups The user's groups (optional)
+ * @param int $mid Module ID (optional)
+ * @param object $gperm_handler Group permission handler (optional)
+ * @return bool True if access is granted, false otherwise
+ */
 function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups="", $mid="", $gperm_handler="") {
 
 		static $cachedSecurityChecks = array();
@@ -513,8 +607,25 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
     return true;
 }
 
-// get the groupscope groups for a given form, for a given user
-// use the specific groupscope groups if specified, otherwise, use view_form permission and the overlap with the user's groups, to determine the groups that form the groupscope
+/**
+ * Get group scope groups for a form, for a given user
+ *
+ * Retrieves the groups that have access to a specific form based on permissions.
+ * Use the specific groupscope groups if specified in the permissions for the form,
+ * otherwise, use view_form permission and the overlap with the user's groups, to
+ * determine the groups that form the groupscope.
+ *
+ * ie: if managers group has specifically groupscope over a staff group, use the staff group
+ * Otherwise: use the groups that the user is a member of, that have view_form perm on the form
+ *
+ * Note: if the user does not have view_groupscope permission, an empty array is returned.
+ * Use of this function OUGHT to be done in conjunction with checking if the user has
+ * view_globalscope permission on the form!
+ *
+ * @param int $fid The form ID
+ * @param array $groups User's groups (optional). Will be determined from the active user's groups if not specified.
+ * @return array Array of group IDs that have access to the form, based on the user having groupscope permission.
+ */
 function getGroupScopeGroups($fid, $groups=array()) {
     if(!is_array($groups) OR count($groups)==0) {
         global $xoopsUser;
@@ -534,25 +645,49 @@ function getGroupScopeGroups($fid, $groups=array()) {
     return array();
 }
 
-// GET THE MODULE ID -- specifically get formulize, since if called from within a block, the xoopsModule module ID will not be formulize's id
+/**
+ * Get the Formulize module ID
+ *
+ * Specifically get formulize, since if $xoopsModule is called from within a block, the
+ * xoopsModule module ID will not (may not?) be formulize's id.
+ *
+ * @return int The Formulize module ID
+ */
 function getFormulizeModId() {
   global $xoopsDB;
-    static $mid = "";
-    if (!$mid) {
-        $res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
-        if ($res4) {
-            while ($row = $xoopsDB->fetchRow($res4))
-                $mid = intval($row[0]);
-        }
-    }
-    return $mid;
+	static $mid = "";
+	if (!$mid) {
+		$res4 = $xoopsDB->query("SELECT mid FROM ".$xoopsDB->prefix("modules")." WHERE dirname='formulize'");
+		if ($res4) {
+			while ($row = $xoopsDB->fetchRow($res4)) {
+				$mid = intval($row[0]);
+			}
+		}
+	}
+	return $mid;
 }
 
 
-// RETURNS THE RESULTS OF AN SQL STATEMENT -- ADDED April 25/05
-// returns a multidimensioned array where the first index is the row of the result and the second index is the field name in that row
-// borrowed from the extraction layer, but modified to use the XOOPS DB class
-// KEYFIELD IS OPTIONAL, and sets the key of the result array to be one of the fields in the query.  Useful if you want to use isset with a value to determine the presence of something in the result set, instead of searching the array.
+/**
+ * Execute a database query
+ *
+ * Executes an SQL query and returns the results as an array. Borrowed from the
+ * extraction layer (extract.php), but modified to use the XOOPS DB class.
+ *
+ * Somewhat inefficient, if the result would then be looped again after
+ * being returned from this function. Better to do loop through the query
+ * result one time only, especially if large!
+ *
+ * @param string $query The SQL query to execute
+ * @param string $keyfield Optional field to use as array keys
+ * @param bool $keyfieldOnly Optional. If true, only return the keyfield values.
+ * Sets the key of the result array to be the value of a certain field in the query. Useful
+ * if you want to use isset with a value to determine the presence of something
+ * in the result set, instead of searching the array.
+ * @return array
+ * A multidimensioned array where the first index is the row of the result (keyed by the keyfield if specified)
+ * and the second index is the field name in that row.
+ */
 function q($query, $keyfield="", $keyfieldOnly = false) {
     global $xoopsDB;
     $result = array();
@@ -572,7 +707,15 @@ function q($query, $keyfield="", $keyfieldOnly = false) {
     return $result;
 }
 
-// this function truncates a string to a certain number of characters
+/**
+ * Smartly truncate and format a string for display
+ *
+ * Truncates a string to a specified number of characters and applies formatting
+ *
+ * @param string $value The string to truncate
+ * @param int $chars Maximum number of characters (optional, defaults to 35)
+ * @return string Formatted string
+ */
 function printSmart($value, $chars=35) {
     if($chars AND !strstr(getCurrentURL(), 'master.php?')) {
         if (!is_numeric($value) AND $value == "") {
@@ -584,7 +727,16 @@ function printSmart($value, $chars=35) {
     return $value;
 }
 
-// this function handles cutting up a string and is multibyte aware -- thanks to Fram!
+/**
+ * Truncate a string to a maximum length
+ *
+ * Truncates a string to a maximum number of characters.
+ * Multibyte character aware.
+ *
+ * @param string $string The string to truncate
+ * @param int $maxlen Maximum number of characters
+ * @return string Truncated string with ellipsis if needed
+ */
 function cutString($string, $maxlen) {
     if(function_exists('mb_strlen')) {
         $len = (mb_strlen($string) > $maxlen)
@@ -606,16 +758,27 @@ function cutString($string, $maxlen) {
     }
 }
 
-
-// this function returns the headerlist for a form and gracefully degrades to other inputs if the headerlist itself is not specified.
-// Step 1: primary relationship is set in URL and there's a PI, then use the PI
-// Step 2: if nothing so far, use the defined headerlist for the form (in its admin settings)
-// Step 3: if nothing so far, use the PI
-// Step 4: if nothing so far, use the first three required fields
-// Step 5: if nothing so far, use the first three fields
-// need ids flag will cause the returned array to be IDs instead of header text
-// convertIdsToElementHandles flag will have effect if ids have been returned, and will do one query to get all the element handles that patch the ids selected
-// we do not filter the headerlist for private elements, because the columns in entriesdisplay are filtered for private columns (and display columns) after being gathered.
+/**
+ * Get the header list for a form
+ *
+ * Returns a list of header fields for a form, with fallback logic for missing headers
+ *
+ * @param int $fid The form ID
+ * @param bool $needids If true, return element IDs instead of text
+ * @param bool $convertIdsToElementHandles If true and needids is true, convert
+ * IDs to element handles. flag will have effect if ids have been returned, and
+ * will do one query to get all the element handles that patch the ids selected
+ * @return array Array of header fields
+ *
+ * Step 1: primary relationship is set in URL and there's a PI, then use the PI
+ * Step 2: if nothing so far, use the defined headerlist for the form (in its admin settings)
+ * Step 3: if nothing so far, use the PI
+ * Step 4: if nothing so far, use the first three required fields
+ * Step 5: if nothing so far, use the first three fields
+ *
+ * we do not filter the headerlist for private elements, because the columns in
+ * entriesdisplay are filtered for private columns (and display columns) after being gathered.
+ */
 function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false) {
     global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -808,21 +971,36 @@ function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false)
 }
 
 
-// gets the ele_ids of the headerlist for a form
-// now only used when opening a legacy report from 1.6 or older, or when reading a headerlist that is based on the old non-ID based system
+/**
+ * Convert header names to element IDs
+ *
+ * Converts a list of header names to their corresponding element IDs.
+ * now only used when opening a legacy report from 1.6 or older, or when reading
+ * a headerlist that is based on the old non-ID based system
+ *
+ * @param array $headers Array of header names
+ * @param int $fid The form ID
+ * @return array Array of element IDs
+ */
 function convertHeadersToIds($headers, $fid) {
     global $xoopsDB;
 		$ele_ids = array();
     foreach ($headers as $cap) {
         $cap = addslashes($cap);
-        $ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form='$fid' AND ele_caption='" . str_replace("`", "'", $cap) . "'"); // assume only one match, even though that is not enforced!  Ignores colheads since no use of this function should ever be passing colheads to it (only used for legacy purposes).
+        $ele_id = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=".intval($fid)." AND ele_caption='" . formulize_db_escape(str_replace("`", "'", $cap)) . "'"); // assume only one match, even though that is not enforced!  Ignores colheads since no use of this function should ever be passing colheads to it (only used for legacy purposes).
         $ele_ids[] = $ele_id[0]['ele_id'];
     }
     return $ele_ids;
 }
 
 
-// this function returns the forms the user is allowed to view
+/**
+ * Get allowed forms for a user
+ *
+ * Returns a list of forms the user is allowed to view
+ *
+ * @return array Array of allowed form IDs
+ */
 function allowedForms() {
     global $xoopsUser, $xoopsDB;
 
@@ -858,55 +1036,70 @@ function allowedForms() {
 
 
 /**
- * Remove entries from the Other table, and delete associated resources when an entry is deleted from a form
+ * Remove entries from the Other table, and delete associated resources when an
+ * entry is deleted from a form
+ *
  * @param int $id_req The entry ID to delete
  * @param int $fid The form ID from which the entry is being deleted
  * @throws Error if an operation fails
+ * @throws Exception if the form id is invalid
  */
-function deleteMaintenance($id_req, $fid) {
+function deleteMaintenance($entry_id, $fid) {
 	global $xoopsDB;
+	$entry_id = intval($entry_id);
 	// remove entries in the formulize_other table
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$formObject = $form_handler->get($fid);
-	$sql3 = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$id_req' AND ele_id IN (" . implode(",", $formObject->getVar('elements')) . ")"; //limit to id_reqs where the element is from the right form, since the new id_reqs (entry_ids) can be repeated across forms
-	if (!$result3 = $xoopsDB->query($sql3)) {
-		throw new Error("Failed to delete 'Other' text for entry $id_req");
-	}
-	if(!$resourcesDeleteResult = $form_handler->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: $id_req)) {
-		throw new Error("Failed to delete associated resources for entry $id_req in form $fid");
-	}
-}
-
-
-//THIS FUNCTION ACTUALLY DOES THE DELETING OF A SPECIFIC ID_REQ
-function deleteIdReq($id_req, $fid) {
-    $data_handler = new formulizeDataHandler($fid);
-    if (!$deleteResult = $data_handler->deleteEntries($id_req)) {
-        exit("<br />Error deleting entry $id_req from the database for form $fid<br />");
+	if($formObject = $form_handler->get($fid)) {
+		$sql3 = "DELETE FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req=$entry_id AND ele_id IN (" . implode(",", $formObject->getVar('elements')) . ")"; //limit to id_reqs where the element is from the right form, since the new id_reqs (entry_ids) can be repeated across forms
+		if (!$result3 = $xoopsDB->query($sql3)) {
+			throw new Error("Failed to delete 'Other' text for entry $entry_id");
 		}
-    deleteMaintenance($id_req, $fid);
+		if(!$resourcesDeleteResult = $form_handler->deleteAssociatedDataAndResourcesForAllElements($formObject, entryScope: $entry_id)) {
+			throw new Error("Failed to delete associated resources for entry $entry_id in form $fid");
+		}
+	} else {
+		throw new Exception("Invalid form id passed to deleteMaintenance");
+	}
+}
+
+/**
+ * Delete a specific entry from a form
+ *
+ * @param int $entry_id The entry ID to delete
+ * @param int $fid The form ID from which to delete the entry
+ */
+function deleteIdReq($entry_id, $fid) {
+	$data_handler = new formulizeDataHandler($fid);
+	if (!$deleteResult = $data_handler->deleteEntries($entry_id)) {
+		throw new Exception("Could not delete entry ".intval($entry_id)." from the database for form ".intval($fid));
+	}
+	deleteMaintenance($entry_id, $fid);
 }
 
 
-// THIS FUNCTION DELETES ENTRIES FROM WHEN PASSED AN entry id (ID_REQ)
-// HANDLES FRAMEWORKS TOO -- HANDLERS AND MID TO BE PASSED IN WHEN FRAMEWORKS ARE USED
-// owner and owner_groups to be passed in when available (if called from a function where they have already been determined
-// $fid is required
-// $excludeFids is an array of forms that we do not want to delete from in this case regardless (optional)
-function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
+/**
+ * Deletes an entry and related entries in relationships, if unified delete setting is turned on in the relationship
+ *
+ * @param int $entry_id The entry ID to delete
+ * @param int $frid The relationship ID (optional)
+ * @param int $fid The form ID (NOT optional)
+ * @param array $excludeFids Forms to exclude from deletion (optional)
+ */
+function deleteEntry($entry_id, $frid, $fid, $excludeFids=array()) {
 
-    global $xoopsDB;
     $deletedEntries = array();
+		$entry_id = intval($entry_id);
+		$fid = intval($fid);
+		$frid = intval($frid);
 
-    if(!$id_req OR !$fid) {
-        error_log("Formulize error: deletion requested without required parameters: entry id - ".$id_req.". form id - ".$fid.".");
-        return false;
+    if(!$entry_id OR !$fid) {
+      throw new Exception("Deletion requested without required parameters: entry id - ".$entry_id.". form id - ".$fid.".");
     }
 
     if ($frid) {
         // if a framework is passed, then delete all sub entry items found in a unified display relationship with the base entry, in addition to the base entry itself.
         $fids[0] = $fid;
-        $entries[$fid][0] = $id_req;
+        $entries[$fid][0] = $entry_id;
 
         // check for entries in forms with a relationship to this one, where the unified_delete setting is enabled
         $unified_display = false;
@@ -935,50 +1128,67 @@ function deleteEntry($id_req, $frid, $fid, $excludeFids=array()) {
             }
         }
     } else {
-        deleteIdReq($id_req, $fid);
-        $deletedEntries[$fid][] = $id_req;
+        deleteIdReq($entry_id, $fid);
+        $deletedEntries[$fid][] = $entry_id;
     } // end of if frid
 
     // do notifications
     foreach ($deletedEntries as $thisfid=>$entries) {
-        sendNotifications($thisfid, "delete_entry", $entries);
+      sendNotifications($thisfid, "delete_entry", $entries);
     }
 }
 
 
-// GETS THE ID OF THE USER WHO OWNS AN ENTRY
-function getEntryOwner($entry, $fid) {
+/**
+ * Get the owner id of a specified entry.
+ *
+ * @param int $entry_id The entry ID
+ * @param int $fid The form ID
+ * @return int The owner's user ID
+ */
+function getEntryOwner($entry_id, $fid) {
     static $entryOwners = array();
-    $entry = intval($entry);
-    if (isset($entryOwners[$entry][$fid])) {
-        return $entryOwners[$entry][$fid];
+    $entry_id = intval($entry_id);
+    if (isset($entryOwners[$entry_id][$fid])) {
+        return $entryOwners[$entry_id][$fid];
     } else {
         $data_handler = new formulizeDataHandler($fid);
-        list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry);
-        $entryOwners[$entry][$fid] = $creation_uid;
+        list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
+        $entryOwners[$entry_id][$fid] = $creation_uid;
     }
-    return $entryOwners[$entry][$fid];
+    return $entryOwners[$entry_id][$fid];
 }
 
-
-// THIS FUNCTION MAKES A UID= or UID= FILTER FOR AN sql QUERY
+/**
+ * Create a string for a SQL query where clause, to filter on 'uid'
+ *
+ * @param array|int $users Array of user IDs or single user ID
+ * @return string SQL where string to use, ie: "uid=1 OR uid=2"
+ */
 function makeUidFilter($users) {
-    if (is_array($users)) {
-        if (count((array) $users) > 1) {
-            return "uid=" . implode(" OR uid=", $users);
-        } else {
-            return "uid=" . intval($users[0]);
-        }
-    } else {
-        return "uid=" . intval($users);
-    }
+	if (is_array($users)) {
+		if (count((array) $users) > 1) {
+			return "uid=" . implode(" OR uid=", array_filter($users, 'is_numeric'));
+		} else {
+			return "uid=" . intval($users[0]);
+		}
+	} else {
+		return "uid=" . intval($users);
+	}
 }
 
-
-// FUNCTION HANDLES CHECKING FOR ALL LINKING RELATIONSHIPS FOR THE FORM
-// returns the fids and entries passed to it, plus any others in a framework relationship
-// $entries is optional, and if left out this will only return the linked forms
-// final param is a flag to control whether only unified display relationships are returned or all relationships
+/**
+ * Finds all linked forms and entries based on relationship settings.
+ * Linked forms are the ones that are one hop away in the relationship connections.
+ *
+ * @param int $frid Relationship ID
+ * @param array $fids Array of form IDs
+ * @param int $fid Main form ID. Forms "one hop" away from the mainform in the relationship will be returned.
+ * @param array|null $entries Entry data (optional). If NULL, will only return the linked forms. If present, must be an array, keyed by form ids, with values being an array of entries in that form. Typically just the main form and one mainform entry, because we then add to it inside this function.
+ * @param bool $unified_display Flag to control whether only forms in unified display connections with the mainform are included, or all forms
+ * @param bool $unified_delete Flag to control whether only forms in unified delete connections with the mainform are included, or all forms
+ * @return array Array containing linked forms and entries. There are four potential keys: fids, entries, sub_fids, and sub_entries. The entries and sub_entries arrays have form ids as the top level key and values are arrays of entries in that form which are connected to the mainform in the relationship.
+ */
 function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false, $unified_delete=false)
 {
 
@@ -1267,15 +1477,29 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     return $to_return;
 }
 
-
-// THIS FUNCTION CREATES AN EXPORT FILE ON THE SERVER AND RETURNS THE FILENAME
-// $headers is the list of column headings in use
-// $cols is the list of handles in the $data to use to get all the data for display, must be in synch with headers
-// $data is the full dataset that is being prepped
-// $fdchoice is either comma or calcs (calcs for when calcs are to be exported) - or custom, in which case custdel needs to contain the delimiter
-// $title does not appear to be used
-// $template is a flag indicating whether we are making a template for use updating/uploading data -- blank for a blank template, update for a template with data, blankprofile for the userprofile form, or boolean false otherwise
-// $fid is the form id
+/**
+ * Creates an export file on the server and returns a filename. Used only for blank templates for adding new entries, or update templates to get a set of existing values for updating.
+ * The Export Entries button uses a different process entirely.
+ *
+ * @param array $headers
+ * The list of column headings in use
+ * @param array $cols
+ * The list of handles in the $data to use to get all the data for display,
+ * must be in synch with headers
+ * @param array $data
+ * The full dataset that is being prepped, as gathered from gatherDataset
+ * @param string $fdchoice
+ * Is either comma or calcs (calcs for when calcs are to be exported) - or
+ * custom, in which case custdel needs to contain the delimiter
+ * @param string $custdel
+ * Custom delimiter, used if $fdchoice is custom
+ * @param bool $template
+ * A flag indicating whether we are making a template for use updating/uploading
+ * data -- blank for a blank template, update for a template with data,
+ * blankprofile for the userprofile form, or boolean false otherwise
+ * @param int $fid
+ * The form id
+ */
 function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid) {
 
     global $xoopsDB, $xoopsUser;
@@ -1465,6 +1689,13 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
     return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
 }
 
+/**
+ * Processes data for exporting into a cell in a csv
+ *
+ * @param mixed $column the element ID or handle for the column
+ * @param mixed $entry Entry data to process, a single item from a dataset array, as returned from gatherDataset.
+ * @return mixed Processed cell data ready for export
+ */
 function prepareCellForSpreadsheetExport($column, $entry) {
     static $formDataTypes = array();
     $data_to_write = '';
@@ -1504,7 +1735,8 @@ function prepareCellForSpreadsheetExport($column, $entry) {
 
 /**
  * Wrap a value in quotes for proper inclusion in a csv file
- * @param int|float|string data_to_write The value that is being quoted
+ *
+ * @param int|float|string $data_to_write The value that is being quoted
  * @return string The value properly quoted and escaped for inclusion in the csv
  */
 function quoteCellContentsForSpreadsheetExport($data_to_write) {
@@ -1517,7 +1749,10 @@ function quoteCellContentsForSpreadsheetExport($data_to_write) {
 }
 
 /**
- * Determine what intro character should be used in cells when making csv files. This is controlled in the Formulize preferences, and relates to getting strings and numbers to be read and formatted cleanly by Excel or Google Sheets.
+ * Determine what intro character should be used in cells when making csv files.
+ * This is controlled in the Formulize preferences, and relates to getting strings and
+ * numbers to be read and formatted cleanly by Excel or Google Sheets.
+ *
  * @return string The intro character to use, if any
  */
 function getExportIntroChar() {
@@ -1545,7 +1780,20 @@ function getExportIntroChar() {
 	return $exportIntroChar;
 }
 
-// draw in secondary data rows (unique to AOHC)
+/**
+ * Draw in secondary data rows - Experimental!
+ * Requires uncommenting experimental code in prepareCellForSpreadsheetExport
+ * The idea is to show multiple values for a field in a given record, in separate rows, which defeats the purpose of the spreadsheet having rows that identify unique records, but may be more readable in some situations??
+ *
+ * At present, will be called and will return the csvfile string unchanged.
+ *
+ * @param string $csvfile - the entire string of the csv as prepared to this point
+ * @param array $cols - the columns that make up the row
+ * @param string $fd - the field delimiter being used in the csv
+ * @param array $secondaryData - an array of the data to write keyed by column, and then in arrays of values for that column
+ *
+ * @return string
+ */
 function prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData) {
     $secondaryDataKey = 1;
     while(count((array) $secondaryData)>0) {
@@ -1576,18 +1824,34 @@ function prepExportSecondaryData($csvfile, $cols, $fd, $secondaryData) {
     return $csvfile;
 }
 
-// this function returns the data to summarize the details about the entry you are looking at
-// useOldCode is used to trigger the pre-3.0 logic only when the patching process is taking place.  After that, new process should kick in since new data structure is available.
-function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
+/**
+ * Get metadata for an entry
+ *
+ * Returns metadata summarizing details about an entry including creation and
+ * update information. Provides readable names, not user ids.
+ *
+ * Use the data handler getEntryMeta method to get raw data including user ids.
+ *
+ * useOldCode is used to trigger the pre-3.0 logic only when the patching process
+ * is taking place.  After that, new process should kick in since new data structure is available.
+ * All data used to be in one table for all forms!! :(
+ *
+ * @param int $entry_id The entry ID
+ * @param object $member_handler Member handler object (optional)
+ * @param string $fid Form ID (NOT optional)
+ * @param bool $useOldCode Flag to use legacy code path (optional, defaults to false)
+ * @return array Metadata about the entry, with keys 'created', 'last_update', 'created_by', 'last_update_by'. Returns readable names, not user id numbers.
+ */
+function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false) {
     if (!$member_handler) {
         $member_handler =& xoops_gethandler('member');
     }
 
     if ($useOldCode) {
         global $xoopsDB;
-        $meta = q("SELECT uid, date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry AND date > 0 ORDER BY date DESC LIMIT 0,1");
-        $meta_proxyid = q("SELECT proxyid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry AND proxyid != uid ORDER BY date DESC LIMIT 0,1");
-        $meta_creation_date = q("SELECT creation_date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry AND creation_date > 0 ORDER BY creation_date ASC LIMIT 0,1");
+        $meta = q("SELECT uid, date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry_id AND date > 0 ORDER BY date DESC LIMIT 0,1");
+        $meta_proxyid = q("SELECT proxyid FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry_id AND proxyid != uid ORDER BY date DESC LIMIT 0,1");
+        $meta_creation_date = q("SELECT creation_date FROM " . $xoopsDB->prefix("formulize_form") . " WHERE id_req = $entry_id AND creation_date > 0 ORDER BY creation_date ASC LIMIT 0,1");
         $meta_to_return['last_update'] = $meta[0]['date'];
         if ($meta_creation_date[0]['creation_date']) {
             $meta_to_return['created'] = $meta_creation_date[0]['creation_date'];
@@ -1624,7 +1888,7 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
         // use new class in all cases, except where we're specifically asking for old logic, which is only necessary during the initial patching process for 3.0
         $data_handler = new formulizeDataHandler($fid);
         $meta_to_return = array();
-        list($meta_to_return['created'], $meta_to_return['last_update'], $meta_to_return['created_by_uid'], $meta_to_return['last_update_by_uid']) = $data_handler->getEntryMeta($entry);
+        list($meta_to_return['created'], $meta_to_return['last_update'], $meta_to_return['created_by_uid'], $meta_to_return['last_update_by_uid']) = $data_handler->getEntryMeta($entry_id);
         if ($meta_to_return['created'] == 0) { // not sure if the new date format will ever evaluate to 0, but just in case
             $meta_to_return['created'] = "???";
         }
@@ -1644,31 +1908,41 @@ function getMetaData($entry, $member_handler, $fid="", $useOldCode=false) {
     }
 }
 
-
-// this function returns the complete set of columns that are in a form or framework
-// the returned array contains one DB query result for each form
-// ie:  $cols[form1] = all columns in that form, $cols[form2] = all columns in that form
-// columns are the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned
-// in this case the db fields are ele_id and ele_caption and ele_colhead
-// $fid is required, $frid is optional
-// $groups is the grouplist of the current user.  It is optional.  If present it will limit the columns returned to the ones where display is 1 or the display includes that group
-function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
+/**
+ * Get all the elements form, and optionally related forms in a relationship.
+ * By default, does not include text for display elements.
+ *
+ * @param int $fid The form id we're getting elements for
+ * @param string $frid Optional. The relationship if any that we should use to include related forms
+ * @param array $groups Optional. Optional. An array of group ids that we should use to limit which elements are included (based on their display settings). If not specified, the display settings for the element are not taken into account.
+ * @param bool $includeTextForDisplay Optional. Defaults to false, so 'text for display' elements are not included
+ * @return array And array keyed for form id, where each value is the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption and ele_colhead
+ */
+function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false) {
     global $xoopsUser;
     $gperm_handler = xoops_gethandler('groupperm');
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     $mid = getFormulizeModId();
+		$fid = intval($fid);
+		$frid = intval($frid);
+
+    if (!$frid AND !$fid) {
+      throw new Exception("List of columns requested without specifying a form nor a relationship.");
+    }
 
     // if $groups then build the necessary filter
     // build query for display groups
     $gq = "";
     if (is_array($groups)) {
-        $gq = "AND (ele_display='1'";
-        foreach ($groups as $thisgroup) {
-            $gq .= " OR ele_display LIKE '%,$thisgroup,%'";
-        }
-        $gq .= ")";
+			$gq = "AND (ele_display='1'";
+			foreach ($groups as $i=>$thisgroup) {
+				$groups[$i] = intval($thisgroup);
+				$gq .= " OR ele_display LIKE '%,".intval($thisgroup).",%'";
+			}
+			$gq .= ")";
     } else {
-    // reset groups to be based off user object (and this instantiates it if it weren't present before)
-    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+			// reset groups to be based off user object (and this instantiates it if it weren't present before)
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     }
 
     // if current user does NOT have view_private_elements permission, then set a query to exclude those elements
@@ -1677,26 +1951,19 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
         $pq = "AND ele_private=0";
     }
 
-    if (!$includeBreaks) {
-        $incbreaks = "AND (ele_type != \"ib\" AND ele_type != \"areamodif\")";
-    } else {
-        $incbreaks = "";
+		$incbreaks = "";
+    if (!$includeTextForDisplay) {
+        $incbreaks = "AND (ele_type != 'ib' AND ele_type != 'areamodif')";
     }
-
-    if (!$frid AND !$fid) {
-        exit("Error:  list of columns requested without specifying a form or a framework.");
-    }
-
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 
     // generate the $allcols list
+		// do the passed in fid first, append rest of relationship after if necessary
+		$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
     if ($frid) {
         $fids[0] = $fid;
         $check_results = checkForLinks($frid, $fids, $fid, "");
         $fids = $check_results['fids'];
         $sub_fids = $check_results['sub_fids'];
-				// do the passed in fid first, append rest of relationship after
-				$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
         foreach ($fids as $this_fid) {
 						if($this_fid != $fid) {
 							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
@@ -1707,12 +1974,26 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
 						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
 					}
         }
-    } else {
-			$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
     }
     return $cols;
 }
 
+/**
+ * Get the element properties for a form, direct from the database.
+ * Only used by the getAllColList function.
+ *
+ * @param array $cols An array of columns that we are gathering and going to append to
+ * @param int $fid The form id for which we are getting the columns
+ * @param int $uid The user id for which we should check permission to access the form (probably the current user)
+ * @param array $groups An array of group ids which should be used to check permission to access the form (probably the current user's groups)
+ * @param int $mid The module id for the formulize module
+ * @param object $gperm_handler The group permission handler object
+ * @param string $gq The group query string for filtering elements based on element display settings (ie: which groups the elements are displayed to)
+ * @param string $pq The private query string for filtering elements based on whether they're a private element or not
+ * @param string $incbreaks The query string for including or excluding certain element types
+ *
+ * @return array
+ */
 function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks) {
 	if(!is_array($cols)) { return array(); }
 	if (security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
@@ -1725,25 +2006,31 @@ function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $p
 	return $cols;
 }
 
-// THIS FUNCTION TAKES A ID FROM THE CALCULATIONS RESULT AND RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
-function getCalcHandleText($handle, $forceColhead=true) {
+/**
+ * Get the readable text for an element. Used in generating calculation results.
+ *
+ * @param int|string $elementIdOrMetadataHandle The element id or metadata handle for which to get the text. Can be an element id number, or one of the following strings: entry_id, creation_uid, mod_uid, creation_datetime, mod_datetime, creator_email, owner_groups
+ * @param bool $forceColhead Whether to force the use of the column heading if available, instead of the caption. Default true, which means that if a column heading is available, it will be used. If false, then the caption will be used even if a column heading is available.
+ * @return string The column heading, or caption, or "Could not identify the column name" if an invalid element id or metadata handle was passed in.
+ */
+function getCalcHandleText($elementIdOrMetadataHandle, $forceColhead=true) {
     global $xoopsDB;
-    if ($handle == "entry_id") {
+    if ($elementIdOrMetadataHandle == "entry_id") {
         return _formulize_ENTRY_ID;
-    } elseif ($handle == "creation_uid") {
+    } elseif ($elementIdOrMetadataHandle == "creation_uid") {
         return _formulize_DE_CALC_CREATOR;
-    } elseif ($handle == "mod_uid") {
+    } elseif ($elementIdOrMetadataHandle == "mod_uid") {
         return _formulize_DE_CALC_MODIFIER;
-    } elseif ($handle == "creation_datetime") {
+    } elseif ($elementIdOrMetadataHandle == "creation_datetime") {
         return _formulize_DE_CALC_CREATEDATE;
-    } elseif ($handle == "mod_datetime") {
+    } elseif ($elementIdOrMetadataHandle == "mod_datetime") {
         return _formulize_DE_CALC_MODDATE;
-    } elseif ($handle == "creator_email") {
+    } elseif ($elementIdOrMetadataHandle == "creator_email") {
         return _formulize_DE_CALC_CREATOR_EMAIL;
-		} elseif ($handle == "owner_groups") {
+		} elseif ($elementIdOrMetadataHandle == "owner_groups") {
         return _formulize_DE_CALC_OWNERGROUPS;
-    } elseif (is_numeric($handle)) {
-        $caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = '$handle'");
+    } elseif (is_numeric($elementIdOrMetadataHandle)) {
+        $caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = ".intval($elementIdOrMetadataHandle));
         if ($forceColhead AND $caption[0]['ele_colhead'] != "") {
             return $caption[0]['ele_colhead'];
         } else {
@@ -1756,12 +2043,35 @@ function getCalcHandleText($handle, $forceColhead=true) {
 
 /**
  * Creates a scope variable, suitable for passing to the gatherDataset function
- * Limits the scope created based on the permissions of the user. Requesting 'all' scope on a user without permission to see all entries in the form, results in the highest level of scope the user is permitted on the form.
- * @param string|int currentView - Can be one of the strings: mine, group, or all, signifying "the user's entries," or "their group's entries," or "all entries." Can be a comma separated list of group ids instead, or a single group id, to declare a specific scope based on that particular set of groups. If you pass specific group ids, they will be used as is. If you want specific group ids to be limited to the groups the user is a member of, put the string 'onlymembergroups' as the first item in the comma separated list.
- * @param object|int uidOrObject - The user id or the user object, representing the user for whom the scope is being created. This user's permissions on the form will be taken into account when building the scope. If an invalid user id or object is passed, then the anonymous user, user 0, is assumed.
- * @param int fid - The id number of the form for which the scope is being built
- * @param boolean - currentViewCanExpand - a flag used internally to allow for a scope that is beyond the user's permissions. Used when saved views publish data to a group of users, which those users would not normally see.
- * @return array Returns an array with two values in it. Key zero is the scope which will be an array of group ids or arbitrary SQL to append to a database query. Key one is the value of currentView, which may have changed if 'group' or 'all' was specified and the user did not have that level of permission.
+ * Limits the scope created based on the permissions of the user. Requesting
+ * 'all' scope on a user without permission to see all entries in the form,
+ * results in the highest level of scope the user is permitted on the form.
+ *
+ * @param string|int $currentView
+ * Can be one of the strings: mine, group, or all, signifying "the user's
+ * entries," or "their group's entries," or "all entries." Can be a comma
+ * separated list of group ids instead, or a single group id, to declare a
+ * specific scope based on that particular set of groups. If you pass specific
+ * group ids, they will be used as is. If you want specific group ids to be
+ * limited to the groups the user is a member of, put the string
+ * 'onlymembergroups' as the first item in the comma separated list.
+ * @param object|int $uidOrObject
+ * The user id or the user object, representing the user for whom the scope
+ * is being created. This user's permissions on the form will be taken into
+ * account when building the scope. If an invalid user id or object is passed,
+ * then the anonymous user, user 0, is assumed.
+ * @param int $fid
+ * The id number of the form for which the scope is being built
+ * @param boolean $currentViewCanExpand
+ * A flag used internally to allow for a scope that is beyond the user's
+ * permissions. Used when saved views publish data to a group of users, which
+ * those users would not normally see.
+ * @return array
+ * Returns an array with two values in it. Key zero is the scope, which will be
+ * an array of group ids or arbitrary SQL to append to a database query, or an
+ * empty string if the user has global scope. Key one is the value of currentView,
+ * which may have changed if 'group' or 'all' was specified and the user did not
+ * have that level of permission.
  */
 function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand = false) {
 
@@ -1837,29 +2147,43 @@ function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand =
     return array($scope, $currentView);
 }
 
-// THIS FUNCTION SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS INSTALLED
-// THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS INSTALLED.
-// $lang is optional and will force the translation to be in a certain language
+/**
+ * Strip out language tags and inactive languages from a string.
+ * Depends on the easiestml function, if available. If not, just return the string.
+ *
+ * Language tags look like this: [en]Hello[/en][fr]Bonjour[/fr]
+ *
+ * @param string $string The string being translated.
+ * @param string|null $lang Optional. If present, sets the language we want the string to use. If not present, the current active language will be used.
+ * @return string The original string with all language text and tags removed, other than the active language, or the passed in $lang if there was one.
+ */
 function trans($string, $lang = null) {
-    if (is_string($string) AND !is_numeric($string) AND function_exists('easiestml')) {
-        global $easiestml_lang;
-        $easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
-        $original_easiestml_lang = $easiestml_lang;
-        $easiestml_lang = $lang ? $lang : $easiestml_lang;
-        $string = easiestml($string);
-        $easiestml_lang = $original_easiestml_lang;
-    }
-    return $string;
+	if (is_string($string) AND !is_numeric($string) AND function_exists('easiestml')) {
+		global $easiestml_lang;
+		$easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
+		$original_easiestml_lang = $easiestml_lang;
+		$easiestml_lang = $lang ? $lang : $easiestml_lang;
+		$string = easiestml($string);
+		$easiestml_lang = $original_easiestml_lang;
+	}
+	return $string;
 }
 
+/**
+ * Takes values from a form submission, and prepares them for insertion into the database.
+ * Relies on the prepareDataForSaving method of each element type handler class.
+ *
+ * Some form elements submit values that are different from what should be saved, such as lists that submit the ordinal posiiton of the value chosen, etc
+ *
+ * @param int|string|object $elementIdentifier The element id, handle, or object for the element for which data is being prepared.
+ * @param mixed $value The value submitted from the form to be prepared for saving.
+ * @param int|string|null $entry_id The entry id which the value belongs to, or 'new' if the entry is a new entry, or null if something else (like a blank subform default record)
+ * @param int|null $subformBlankCounter For prepareing subform blank values, this is the instance of the blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
+ * @return mixed The prepared value, ready to be inserted into the database, or false if the element identifier was invalid. The type of the returned value will depend on the element type and the prepareDataForSaving method for that element type.
+ */
+function prepDataForWrite($elementIdentifier, $value, $entry_id=null, $subformBlankCounter=null) {
 
-// THIS FUNCTION MASSAGES DATA RETURNED FROM A FORM SUBMISSION SO IT CAN BE PUT IN THE DATABASE
-// param it takes is the element object ($element), and the passed value from the form ($ele)
-// entry_id is passed if known (but will be "new" for new entries, and default to null for subform blanks)
-// subformblankcounter is passed when we are preparing subform blank values
-function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=null) {
-
-    if(!$element = _getElementObject($element)) {
+    if(!$element = _getElementObject($elementIdentifier)) {
 			return false;
     }
 
@@ -1871,26 +2195,30 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
 
     $ele_type = $element->getVar('ele_type');
 		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-		$value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id, $subformBlankCounter);
+		$value = $customTypeHandler->prepareDataForSaving($value, $element, $entry_id, $subformBlankCounter);
 
     $cachedPreppedValues[$cacheKey] = $value;
 
     return $value;
 }
 
-// this function takes an element id or element object and returns an array of the id of the source form and the id of the element in the source form, where the options are linked form
-// it returns false if the element is not linked to another for source options
-function getLinkedOptionsSourceForm($elementIdOrObject) {
-    if(!$element = _getElementObject($elementIdOrObject)) {
+/**
+ * Returns the id of the source form for a linked element, and the handle of the source element in that form.
+ * Returns false if the element is not a linked element.
+ *
+ * @param int|string|object $elementIdentifier The element id, handle, or object for the element
+ * @return array|false Returns false if the element is not linked to another for source options
+ */
+function getLinkedOptionsSourceForm($elementIdentifier) {
+  if(!$element = _getElementObject($elementIdentifier)) {
 		return false;
 	}
-    if($element->isLinked) {
-        $ele_value = $element->getVar('ele_value');
-        $linkProperties = explode("#*=:*",$ele_value[2]);
-        return array($linkProperties[0], $linkProperties[1]); // id of the source form for the element's options
-    } else {
-        return false;
-    }
+	if($element->isLinked) {
+		$ele_value = $element->getVar('ele_value');
+		$linkProperties = explode("#*=:*",$ele_value[2]);
+		return array($linkProperties[0], $linkProperties[1]); // id of the source form for the element's options
+	}
+  return false;
 }
 
 
@@ -1995,36 +2323,36 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
     return $value;
 }
 
-
-// THIS FUNCTION CONTRIBUTED BY DPICELLA.  Added in Mar 15 2006.
-// Not currently in use due to current version of PHP natively supporting this feature.
-/*
-A shorter function for recognising dates before 1970 and returning a negative number is below. All it does is replaces years before 1970 with  ones 68 years later (1904 becomes 1972), and then offsets the return value by a couple billion seconds. It works back to 1/1/1902, but only on dates that have a century.
-Note that a negative number is stored the same as a really big positive number. 0x80000000 is the number of seconds between 13/12/1901 20:45:54 and 1/1/1970 00:00:00. And 1570448 is the seconds between this date and 1/1/1902 00:00:00, which is 68 years before 1/1/1970.
-*/
-function safestrtotime ($s) {
-    $basetime = 0;
-    if (preg_match ("/19(\d\d)/", $s, $m) && ($m[1] < 70)) {
-        $s = preg_replace ("/19\d\d/", 1900 + $m[1]+68, $s);
-        $basetime = 0x80000000 + 1570448;
-    }
-    return $basetime + strtotime ($s);
+/**
+ * Figures out if the current element has a value for the current entry
+ * Only returns true or false, not the actual value
+ *
+ * @param mixed $entry_id The entry id for which to check the value.
+ * @param int $element_id The element id for which to check the value.
+ * @param int $fid The form id for which to check the value.
+ * @return bool True if the element has a value, false otherwise.
+ */
+function getElementValue($entry_id, $element_id, $fid) {
+	$data_handler = new formulizeDataHandler($fid);
+	if ($data_handler->elementHasValueInEntry($entry_id, $element_id)) {
+		return true;
+	}
+	return false;
 }
 
-
-// FIGURES OUT IF THE CURRENT ELEMENT HAS A VALUE FOR THE CURRENT ENTRY
-// Only returns true or false, not the actual value
-function getElementValue($entry, $element_id, $fid) {
-    $data_handler = new formulizeDataHandler($fid);
-    if (!$data_handler->elementHasValueInEntry($entry, $element_id)) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
-
-// this function checks for singleentry status and returns the appropriate entry in the form if there is one
+/**
+ * checks for singleentry status and returns the appropriate entry in the form
+ * if there is one
+ *
+ * @param mixed $fid
+ * @param mixed $uid
+ * @param mixed $groups
+ * @param mixed $member_handler=null
+ * @param mixed $gperm_handler=null
+ * @param mixed $mid=null
+ *
+ * @return array
+ */
 function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
 		if(!$member_handler) {
 			$member_handler = xoops_gethandler('member');
@@ -2068,36 +2396,54 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
     return $single;
 }
 
-
-// FUNCTION COPIED FROM LIASE 1.26
-// JWE - JUNE 1 2006
+/**
+ * Check for "other" values in $_POST from form elements that support {OTHER|n} syntax, like radio buttons that can have a final "Other" option which users can type in.
+ *
+ * @param string $key The text of an element option, which may or may not contain the {OTHER|n} syntax, where n is the width of the box
+ * @param int $target_element_id The element ID of the element for which we're looking for the potential "Other" value
+ * @param int|string $target_entry_id The entry ID of the entry for which we're looking for the potential "Other" value, or 'new' if this is a new entry that has not yet been saved and assigned an entry ID
+ * @param int $subformBlankCounter The Subform blank counter identifying which of multiple blank subform default entries we are looking for
+ * @return mixed The value found in $_POST, if any, or an empty string. Or false if the $key is not for an {OTHER|n} option.
+ *
+ * FUNCTION COPIED FROM LIASE 1.26
+ * JWE - JUNE 1 2006
+ *
+ */
 function checkOther($key, $target_element_id, $target_entry_id, $subformBlankCounter=null){
-    global $myts;
-    if (!preg_match('/\{OTHER\|+[0-9]+\}/', $key) ){
-        return false;
-    }else{
-        if( !empty($_POST['other'])) {
-            if($subformBlankCounter !== null) {
-                return $_POST['other']['ele_'.$target_element_id.'_new_'.$subformBlankCounter];
-            } elseif($target_entry_id == "new") {
-                return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id.'_0']; // a counter is always added to the end of other values for new entries! This is in case we might make all this smarter to handle multiple new entries in the same elements on the same page later??
-            } else {
-                return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id];
-            }
-        }else{
-            return "";
-        }
-    }
+	global $myts;
+	if (!preg_match('/\{OTHER\|+[0-9]+\}/', $key) ){
+		return false;
+	}
+	if(!empty($_POST['other'])) {
+		if($subformBlankCounter !== null) {
+			return $_POST['other']['ele_'.$target_element_id.'_new_'.$subformBlankCounter];
+		} elseif($target_entry_id == "new") {
+			return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id.'_0']; // a counter is always added to the end of other values for new entries! This is in case we might make all this smarter to handle multiple new entries in the same elements on the same page later??
+		}
+		return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id];
+	}
+	return "";
 }
 
-// THIS FUNCTION TAKES THE 'Other' VALUES USERS MAY HAVE WRITTEN INTO THE FORM, AND SAVES THEM TO THE db IN THEIR OWN TABLE
-// The other values are generated by the prepDataForWrite function, so it has to be called prior to this one
-// ADDED JWE - JUNE 1 2006
+/**
+ * Takes the 'other' values users may have written into the form, and saves them
+ * to the db in their own table
+ * The other values are generated by the prepDataForWrite function, so it has to
+ * be called prior to this one
+ *
+ * @param int $id_req The entry id for which other values are being written
+ * @param int $fid Form ID
+ * @param int|null $subformBlankCounter Subform blank counter indicating which of multiple blank subform default entries we are saving, if applicable.
+ * @return bool|void Success status or void
+ *
+ * ADDED JWE - JUNE 1 2006
+ */
 function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
     global $xoopsDB, $myts;
     if (!$myts){
         $myts =& MyTextSanitizer::getInstance();
     }
+		$id_req = intval($id_req);
 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
     $thisForm = new formulizeForm($fid);
@@ -2148,7 +2494,7 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 
             if ($sql) {
                 if (!$result = $xoopsDB->query($sql)) {
-                    exit("Error writing 'Other' value to the database with this SQL:<br>$sql");
+                  throw new Exception("Could not write 'Other' value to the database with this SQL:<br>$sql");
                 }
             }
             unset($GLOBALS['formulize_other'][$ele_id][$id_req]);
@@ -2156,11 +2502,21 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
     }
 }
 
-
-// THIS FUNCTION CREATES A SERIES OF ARRAYS THAT CONTAIN ALL THE INFORMATION NECESSARY FOR THE LIST OF ELEMENTS THAT GETS DISPLAYED ON THE ADMIN SIDE WHEN CREATING OR EDITING CERTAIN FORM ELEMENTS
-// new use with textboxes triggers a different value to be used -- just the ele_id from the 'formulize' table, which is all that is necessary to uniquely identify the element
-// note that ele_value has different contents for textboxes and selectboxes
-function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $firstValue="", $multi_select = false, $dataElementsOnly = false) {
+/**
+ * Create a list of form elements, for use in the admin UI for form elements.
+ * In various places, you need to show a choice of other form elements, when configuring
+ * an element. For example, when selecting the source for a linked element, etc.
+ *
+ * @param mixed $val the current selected value, if any
+ * @param bool $textbox Optional. A flag to indicate if this is being done for the "associate with another element" feature of textboxes
+ * @param int $limitToForm Optional. A form ID, which will limit the elements gathered to ones that are part of that form
+ * @param string $name The name in markup for the list being created. The default is 'formlink', but this should be specified in almost all cases.
+ * @param string $firstValue Optional. The text of the first value in the list, such as "Choose an option". Certain defaults are used if nothing is passed.
+ * @param bool $multi_select Optional. Flag for whether the list should support multiple selections or not.
+ * @param bool $dataElementsOnly Optional. Flag to limit to elements that store data only.
+ * @return mixed Returns an array where the first value is the XOOPS form element that has been created, and the second value is the default item in the list. If the textbox flag is on, then this simply returns the XOOPS form element created, not in an array.
+ */
+function createFieldList($val, $textbox=false, $limitToForm=0, $name="", $firstValue="", $multi_select = false, $dataElementsOnly = false) {
 
 		global $xoopsDB;
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -2246,13 +2602,16 @@ function createFieldList($val, $textbox=false, $limitToForm=false, $name="", $fi
     }
 }
 
-
-// THIS FUNCTION TAKES AN ELEMENT OBJECT, AND A VALUE AND SEARCHES IN THE ELEMENT'S FORM FOR THE FIRST ID_REQ THAT MATCHES THE VALUE
-// Used by the new textbox link option to find a matching entry, so that it can be linked in the list of entries screen.
-// Matches must be exact!
-// Returns the id_req that matches the value, or false if nothing found
-function findMatchingIdReq($element, $fid, $value) {
-    if (!$element = _getElementObject($element)) {
+/**
+ * Find the first entry with a given value for a given element
+ *
+ * @param mixed $elementIdentifier Element ID, handle or object that we're checking for the value in
+ * @param int $fid Form ID that we're checking for the value in
+ * @param mixed $value Value that we're looking for
+ * @return mixed The entry ID of the first entry found in the form where the element has the value, or false if no entry is found with that value, or if the element identifier is invalid
+ */
+function findMatchingIdReq($elementIdentifier, $fid, $value) {
+    if (!$element = _getElementObject($elementIdentifier)) {
         return false;
     }
 
@@ -2270,10 +2629,16 @@ function findMatchingIdReq($element, $fid, $value) {
     return $cachedValues[$element->getVar('ele_id')][$original_value];
 }
 
-
-// THIS FUNCTION OUTPUTS THE TEXT THAT GOES ON THE SCREEN IN THE LIST OF ENTRIES TABLE
-// It intelligently outputs links if the text should be a link (because of textbox associations, or linked selectboxes)
-// $handle is the element handle for the element
+/**
+ * Format values for display in lists, with links resolved to clickable anchor tags, if appropriate.
+ * Relies on the underlying formatDataForList method of element type handlers.
+ *
+ * @param string $matchtext The string that we are preparing for output
+ * @param string $handle The element handle for the element that the value belongs to
+ * @param int $textWidth The max number of characters that should be displayed, after which an elipses will be appended and text cut off
+ * @param int $entryBeingFormatted The entry ID that the value belongs to
+ * @return string Formatted text with links resolved to clickable anchor tags, etc
+ */
 function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
 
 	if(!$textWidth AND $textWidth !== 0 AND $textWidth !== "0") {
@@ -2303,6 +2668,14 @@ function formatLinks($matchtext, $handle, $textWidth, $entryBeingFormatted) {
   }
 }
 
+/**
+ * Converts text to include markup for links, if the text contains a URL.
+ * Ensures the markup will open links in a new window, and will shorten the display of the link if it is longer than the specified text width.
+ *
+ * @param string $text The text to convert to a hyperlink
+ * @param integer $textWidth The maximum width of the text before it is truncated with an ellipses. Set to 0 for no truncation.
+ * @return string The text with URLs converted to hyperlinks, and truncated if they exceed the specified width. Links will open in a new window.
+ */
 function formulize_text_to_hyperlink($text, $textWidth=0) {
     global $myts;
     $text = $myts->makeClickable(printSmart(trans($text), $textWidth));
@@ -2311,6 +2684,7 @@ function formulize_text_to_hyperlink($text, $textWidth=0) {
 
 /**
  * Strip <?php out of the beginning of a string if it is present (checks the first five chars)
+ *
  * @param string $string The string you want to check and strip from
  * @return string The string, potentially modified with <?php gone if it was found as the first five chars
  */
@@ -2454,7 +2828,14 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
     return $textboxValue;
 }
 
-
+/**
+ * Get default value for date elements, as a UNIX timestamp
+ * The timestamp ought to be in UTC, since that ought to be the default timezone for PHP in Formulize. This is enforced in the mainfile.php.
+ *
+ * @param string $default_hint The default value for the date element, which may be a specific date, or a special value like {TODAY} or {TODAY+3}, or {other_element_handle}, etc.
+ * @param bool|int $entry_id Entry ID or false
+ * @return int Returns the timestamp of the default value for the datebox
+ */
 function getDateElementDefault($default_hint, $entry_id = false) {
     if($default_hint == "0000-00-00") {
 			$offset = formulize_getUserUTCOffsetSecs(); // user offset from UTC
@@ -2480,14 +2861,24 @@ function getDateElementDefault($default_hint, $entry_id = false) {
     return $default_hint ? strtotime($default_hint) : "";
 }
 
-
-// this function returns the entry ids of entries in one form that are linked to another
-// IMPORTANT:  assume $startEntry is valid for the user(security check has already been executed by now)
-// therefore just need to know the allowable uids (scope) in the $targetForm
-// targetForm is a special array containing the keys as specified in the framework, and the target form
-// keys:  fid, keyself, keyother
-// keyself and other are the ele_id from the form table for the elements that need to be matched.
-// SHOULD BE REFACTORED TO BE AWARE OF A FRID SO IT CAN DETERMINE THE CORRECT DIRECTION OF LINKING, AND THEN HANDLE DOUBLE LINKED SELECTBOXES
+/**
+ * Find linked entries between forms
+ *
+ * This function finds linked entries between forms based on relationships.
+ *
+ * @param string $startForm Starting form identifier
+ * @param string $targetForm Target form identifier
+ * @param mixed $startEntry Starting entry
+ * @return array Linked entries
+ *   the entry ids of entries in one form that are linked to another
+ *
+ * IMPORTANT:  assume $startEntry is valid for the user(security check has already been executed by now)
+ * therefore just need to know the allowable uids (scope) in the $targetForm
+ * targetForm is a special array containing the keys as specified in the framework, and the target form
+ * keys:  fid, keyself, keyother
+ * keyself and other are the ele_id from the form table for the elements that need to be matched.
+ * SHOULD BE REFACTORED TO BE AWARE OF A FRID SO IT CAN DETERMINE THE CORRECT DIRECTION OF LINKING, AND THEN HANDLE DOUBLE LINKED SELECTBOXES
+ */
 function findLinkedEntries($startForm, $targetForm, $startEntry) {
 
     $mid = getFormulizeModId();
@@ -2509,7 +2900,6 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             $all_groups = array_intersect($groups, $groupsWithAccess);
         }
         $all_users = "";
-        $uq = makeUidFilter($all_users);
     } else {
         $all_users = array(0=>$owner);
         $all_groups = "";
@@ -2640,6 +3030,18 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
 		}
 }
 
+/**
+ * Find linked entries (internal helper)
+ *
+ * This is an internal helper function for finding linked entries.
+ *
+ * @param string $targetFormKeySelf Target form key
+ * @param int $targetFormFid Target form ID
+ * @param array $valuesToLookFor Values to look for
+ * @param array $all_users All users
+ * @param array $all_groups All groups
+ * @return array Found linked entries
+ */
 function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor, $all_users, $all_groups) {
     $data_handler_target = new formulizeDataHandler($targetFormFid);
     $valuesToLookFor = is_array($valuesToLookFor) ? $valuesToLookFor : array($valuesToLookFor);
@@ -2678,15 +3080,27 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
             }
         }
 
-
-
-// this function takes an entry and makes copies of it
-// can take an entry in a framework and make copies of all relevant entries in all relevant forms
-// note that the same relative linked selectbox relationships are preserved in cloned framework entries, but links based on common values and uids are not modified at all. this might not be desired behaviour in all cases!!!
-// entries in single-entry forms are never cloned
-// $entryOrFilter is the entry id number, or can be a filter string or array!
-// $clone_forms is an array of form ids that should be cloned.	if empty, entries from all forms will be cloned.
-function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new", $clone_forms = array()) {
+/**
+ * Clone form entries
+ *
+ * This function clones form entries with various options.
+ *
+ * can take an entry in a framework and make copies of all relevant entries in
+ * all relevant forms
+ * note that the same relative linked selectbox relationships are preserved in
+ * cloned framework entries, but links based on common values and uids are not
+ * modified at all. this might not be desired behaviour in all cases!!!
+ * entries in single-entry forms are never cloned
+ *
+ * @param int|string|array $entryOrFilter Entry or filter to clone.
+ * @param int $frid Framework ID
+ * @param int $fid Form ID
+ * @param int $copies Number of copies to create
+ * @param callable|null $callback Callback function
+ * @param string $targetEntry Target entry identifier
+ * @return array Cloned entries
+ */
+function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
 
     global $xoopsDB, $xoopsUser;
 
@@ -2777,9 +3191,21 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 }
 
 
-// THIS FUNCTION HANDLES SENDING OF NOTIFICATIONS
-// Does some unconventional stuff to handle custom templates for messages, and sending to everyone in a group, or to the current user (like a confirmation message)
-// $groups is ignored, and should not be specified.  Param exists for historical reasons only.
+/**
+ * Send notifications for form events
+ *
+ * Sends notifications for various form events to subscribed users. Does some
+ * unconventional stuff to handle custom templates for messages, and sending to
+ * everyone in a group, or to the current user (like a confirmation message)
+ *
+ * @param int $fid Form ID
+ * @param string $event Event identifier
+ * @param array $entries Affected entries
+ * @param string $mid Module ID
+ * @param array $groups User groups. ignored, and should not be specified. Param
+ * exists for historical reasons only.
+ * @return void
+ */
 function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 
     // don't send a notification twice, so we store what we have processed already and don't process again
@@ -3092,7 +3518,19 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 }
 
 
-// $template should include .tpl on the end
+    /**
+     * Send notification to email address
+     *
+     * This function sends individual notifications to email addresses.
+     * $template should include .tpl on the end
+     *
+     * @param string $email Recipient email address
+     * @param string $event Event identifier
+     * @param array $tags Notification tags
+     * @param string $overrideSubject Override subject
+     * @param string $overrideTemplate Override template
+     * @return void
+     */
 function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $overrideTemplate="") {
     $module_handler = xoops_gethandler('module');
     $module = $module_handler->get(getFormulizeModId());
@@ -3172,6 +3610,15 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
 }
 
 
+/**
+ * Get users by groups
+ *
+ * This function retrieves users belonging to specified groups.
+ *
+ * @param array $groups Group identifiers
+ * @param string $member_handler Member handler
+ * @return array Users in the specified groups
+ */
 function formulize_getUsersByGroups($groups, $member_handler="") {
     if (!$member_handler) {
         $member_handler = xoops_gethandler('member');
@@ -3190,7 +3637,22 @@ function formulize_getUsersByGroups($groups, $member_handler="") {
 }
 
 
-// this function can be called from within a loop, and will merge uids_conditions with all previously recorded values
+/**
+ * Compile "not users" conditions
+ *
+ * This function compiles conditions for excluding users from selections. can be
+ * called from within a loop, and will merge uids_conditions with all previously
+ * recorded values
+ *
+ * @param array $uids_conditions User IDs and conditions
+ * @param string $thiscon Current condition
+ * @param int $uid User ID
+ * @param object $member_handler Member handler
+ * @param bool $reinitialize Reinitialization flag
+ * @param mixed $entry Entry data
+ * @param int $fid Form ID
+ * @return array Processed conditions
+ */
 function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize, $entry, $fid) {
     static $omit_user = null;
     if ($reinitialize) {
@@ -3275,11 +3737,18 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
 }
 
 /**
- * Subscribe users to an event on a form, so events will trigger for them later (original model of xoops notifications was for users to self-subscribe, so we have to do this for them)
- * @param array $uidsToSubscribe An array of user ids that should be subscribed to the event
- * @param int $fid The form id of the form with the event we're subscribing them to
- * @param string $event The kind of event we're subscribing them to (as specified in xoops_version.php)
- * @return boolean Returns false if invalid data is passed to it, otherwise true
+ * Subscribe UIDs to form events
+ *
+ * Subscribe users to an event on a form, so events will trigger for them later
+ * (original model of xoops notifications was for users to self-subscribe, so we
+ * have to do this for them)
+ * @param array $uidsToSubscribe An array of user ids that should be subscribed
+ * to the event
+ * @param int $fid The form id of the form with the event we're subscribing them
+ * to
+ * @param string $event The kind of event we're subscribing them to (as
+ * specified in xoops_version.php)
+ * @return bool Returns false if invalid data is passed to it, otherwise true
  */
 function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 
@@ -3312,18 +3781,35 @@ function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 }
 
 /**
- * Send notifications, or cache notifications so they can be triggered by a cron job later
+ * Process form notifications
+ *
+ * Send notifications, or cache notifications so they can be triggered by a cron
+ * job later
  * Turn on the preference in the module to use the cron feature
  *
- * @param string $event The kind of event being processed, either 'new_entry' or 'update_entry' or 'delete_entry'. Controls the default subject/template used in the notification.
- * @param array $extra_tags An array of values to swap into the notification where there are { } terms. Keys are the terms, values are what gets swapped in.
- * @param int $fid The form that we're processing the notification about. Can be null if we're not sending a notification about a form, just sending generic mail.
- * @param array $uids_to_notify An array of the user ids that should receive the notification. Can include the value -1 to indicate that mail is being sent to an arbitrary email address, in which case the email address must be set in the global variable $GLOBALS['formulize_notification_email']
- * @param int $mid Optional. The Formulize module ID. Will be determined if not passed in.
- * @param int $omit_user Optional. A flag to indicate if the current session's user should be excluded from the notification (ie: so people aren't notified of things they do themselves)
- * @param string $subject Optional. A subject for the notification message, if something besides the default should be used.
- * @param string $template Optional. The name of the template file, which must be located in modules/formulize/language/english/mail_template (if english is the active language)
- * @return nothing
+ * @param string $event The kind of event being processed, either 'new_entry' or
+ * 'update_entry' or 'delete_entry'. Controls the default subject/template used
+ * in the notification.
+ * @param array $extra_tags An array of values to swap into the notification
+ * where there are { } terms. Keys are the terms, values are what gets swapped in.
+ * @param int $fid The form that we're processing the notification about. Can be
+ * null if we're not sending a notification about a form, just sending generic
+ * mail.
+ * @param array $uids_to_notify An array of the user ids that should receive the
+ * notification. Can include the value -1 to indicate that mail is being sent to
+ * an arbitrary email address, in which case the email address must be set in
+ * the global variable $GLOBALS['formulize_notification_email']
+ * @param int $mid Optional. The Formulize module ID. Will be determined if not
+ * passed in.
+ * @param int $omit_user Optional. A flag to indicate if the current session's
+ * user should be excluded from the notification (ie: so people aren't notified
+ * of things they do themselves)
+ * @param string $subject Optional. A subject for the notification message, if
+ * something besides the default should be used.
+ * @param string $template Optional. The name of the template file, which must
+ * be located in modules/formulize/language/english/mail_template (if english
+ * is the active language)
+ * @return void
  */
 function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid=null, $omit_user=0, $subject="", $template="") {
 
@@ -3372,6 +3858,23 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     }
 }
 
+/**
+ * Process notification write line
+ *
+ * This function processes writing notification lines to files.
+ *
+ * @param string $notFile Notification file
+ * @param string $event Event identifier
+ * @param array $extra_tags Extra notification tags
+ * @param int $fid Form ID
+ * @param int $uid_to_notify User ID to notify
+ * @param string $mid Module ID
+ * @param int $omit_user User ID to omit
+ * @param string $subject Notification subject
+ * @param string $template Notification template
+ * @param string $email Email address
+ * @return void
+ */
 function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, $uid_to_notify, $mid, $omit_user, $subject, $template, $email="") {
     fwrite($notFile,
         serialize(
@@ -3390,7 +3893,14 @@ function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $
     );
 }
 
-// this function attempts to get a lock on the given file resource
+/**
+ * Get file lock
+ *
+ * This function gets a lock on a file resource.
+ *
+ * @param resource $fileResource File resource to lock
+ * @return bool Lock acquisition status
+ */
 function formulize_getLock($fileResource) {
     $ourTurn = false;
     $lockTries = 0;
@@ -3410,13 +3920,17 @@ function formulize_getLock($fileResource) {
 
 
 /**
+ * Get headers for data display
  * Takes a series of columns and gets the headers for them
  * @param array cols - An array of element ids or element handles
- * @param boolean colsIsElementHandles - a flag indicating if the cols array is using ids or handles
- * @param int frid - Optional. The form relationship id in effect, if any. Causes headers to get the form title prefixed to them, on the first column from that form.
- * @return array Returns an array of the headers, corresponding to the order of the cols that were passed in.
+ * @param boolean colsIsElementHandles - a flag indicating if the cols array is
+ * using ids or handles
+ * @param int frid - Optional. The form relationship id in effect, if any.
+ * Causes headers to get the form title prefixed to them, on the first column
+ * from that form.
+ * @return array Returns an array of the headers, corresponding to the order of
+ * the cols that were passed in.
  */
-
 function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
     global $xoopsDB;
 
@@ -3468,7 +3982,17 @@ function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
     return $headers;
 }
 
-// this function returns the handles of form elements based on the requested form and optionally framework id
+/**
+ * Get default columns for a form
+ *
+ * This function retrieves the default columns for displaying form data.
+ *
+ * @param int $fid Form ID
+ * @param string $frid Framework ID
+ * @return array Default columns
+ * returns the handles of form elements based on the requested form and
+ * optionally framework id
+ */
 function getDefaultCols($fid, $frid="") {
 	global $xoopsDB, $xoopsUser;
 
@@ -3518,11 +4042,39 @@ function getDefaultCols($fid, $frid="") {
 
 }
 
-// THIS FUNCTION OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT
-// DEPRECATED. VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.  BETTER TO USE formulize_writeEntry, except in cases where you actually need to only update one field.  In most cases you want to update multiple fields in an entry, so don't use this inside a loop. it will generate more queries than you need
-// prevValue is now completely not required.  lvoverride is only used if you want to pass in a pre-formatted ,1,3,15,17, style string for inserting into a linked selectbox field.
-// linkedTargetHint is used if we are writing to a linked selectbox element, and we have some indication from the UI what the entry is that we're supposed to link to.  This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one entry.
-// THIS IS APPLYING HTMLSPECIALCHARS TO ALL VALUES, REGARDLESS OF ELEMENT TYPE. WILL MAKE SANITIZING STUFF LATER WHEN WE RIP OUT THAT BEHAVIOUR, A LITTLE MORE DIFFICULT BECAUSE POTENTIALLY EVERYTHING HAS SPECIAL CHARS, THOUGH MOST THINGS DON'T.
+/**
+ * Write element value to database
+ *
+ * OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT.
+ *
+ * @deprecated VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.
+ * BETTER TO USE formulize_writeEntry, except in cases where you actually need
+ * to only update one field.  In most cases you want to update multiple fields
+ * in an entry, so don't use this inside a loop. it will generate more queries
+ * than you need
+ *
+ * prevValue is now completely not required.  lvoverride is only used if you
+ * want to pass in a pre-formatted ,1,3,15,17, style string for inserting into
+ * a linked selectbox field.
+ * linkedTargetHint is used if we are writing to a linked selectbox element, and
+ * we have some indication from the UI what the entry is that we're supposed to
+ * link to.  This allows for disambiguation of target values that we might be
+ * trying to link to, that might occur in more than one entry.
+ * THIS IS APPLYING HTMLSPECIALCHARS TO ALL VALUES, REGARDLESS OF ELEMENT TYPE.
+ * WILL MAKE SANITIZING STUFF LATER WHEN WE RIP OUT THAT BEHAVIOUR, A LITTLE
+ * MORE DIFFICULT BECAUSE POTENTIALLY EVERYTHING HAS SPECIAL CHARS, THOUGH MOST
+ * THINGS DON'T
+ *
+ * @param mixed $formframe Form frame identifier
+ * @param mixed $ele Element identifier
+ * @param mixed $entry Entry identifier
+ * @param mixed $value Value to write
+ * @param string $append Append mode
+ * @param mixed $prevValue Previous value
+ * @param bool $lvoverride Override flag
+ * @param string $linkedTargetHint Linked target hint
+ * @return void
+ */
 function writeElementValue($formframe, $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
 
     global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
@@ -3760,13 +4312,17 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
 
 
 /**
- * This function reads all the files in a directory and deletes old ones
+ * Reads all the files in a directory and deletes old ones
  * @param string $dir The directory to look in
- * @param string $filter Optional. A string that the filenames must contain. Non-matching files will be excluded. By default all files are included.
- * @param int $timeWindow Optional. The number of seconds old a file must be to be included. Older files will be deleted. Default is 21600 (6 hours). If 0 then all files are included.
- * @param int $sortingOrder Optional. The sorting order for scandir to use. Same values as the $sorting_order param of the PHP scandir function.
+ * @param string $filter Optional. A string that the filenames must contain.
+ * Non-matching files will be excluded. By default all files are included.
+ * @param int $timeWindow Optional. The number of seconds old a file must be to
+ * be included. Older files will be deleted. Default is 21600 (6 hours). If 0
+ * then all files are included.
+ * @param int $sortingOrder Optional. The sorting order for scandir to use. Same
+ * values as the $sorting_order param of the PHP scandir function.
  * @return array An array of the files found
- **/
+ */
 function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600, $sortingOrder=SCANDIR_SORT_ASCENDING) {
     $currentTime = time();
     $targetTime = $currentTime - $timeWindow;
@@ -3790,14 +4346,26 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600, $sorting
 
 
 
-// THIS FUNCTION TAKES AN ARRAY WHERE THE KEYS ARE ELEMENT IDS AND THE VALUES ARE VALUES, AND IT WRITES THEM ALL TO A SPECIFIED ENTRY OR A NEW ENTRY
-// values should be the correct values that would be passed back by the prepDataForWrite step
-// originally, only $values and $entry were required
-// $proxyUser, if present, is meant to override the current $xoopsUser uid value
-// $action is deprecated
-// $forceUpdate will cause queryF to be used in the data handler, which will allow updates on a get request
-// $writeOwnerInfo causes the entry_owner_groups table to be updated when a new entry is written
-// NOTE: $values takes ID numbers as keys, since that's how the datahandler expects things
+/**
+ * Write form entry to database
+ *
+ * This function writes form entry data to the database with various options.
+ * TAKES AN ARRAY WHERE THE KEYS ARE ELEMENT IDS AND THE VALUES ARE VALUES, AND
+ * IT WRITES THEM ALL TO A SPECIFIED ENTRY OR A NEW ENTRY
+ *
+ * @param array $values Entry values. should be the correct values that would be
+ * passed back by the prepDataForWrite step. takes ID numbers as keys, since
+ * that's how the datahandler expects things
+ * @param string $entry_id Entry ID
+ * @param string $action Action to perform. Deprecated
+ * @param bool $proxyUser Proxy user flag. if present, is meant to override the
+ * current $xoopsUser uid value
+ * @param bool $forceUpdate Force update flag. will cause queryF to be used in
+ * the data handler, which will allow updates on a get request
+ * @param bool $writeOwnerInfo Write owner info flag. causes the entry_owner_groups
+ * table to be updated when a new entry is written
+ * @return mixed Written entry data
+ */
 function formulize_writeEntry($values, $entry_id="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
     if ($entry_id < 1 and "new" != $entry_id) {
         // safety net in case NULL is passed as $entry_id
@@ -3844,11 +4412,25 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
 }
 
 
-// THIS FUNCTION SYNCHS THE VALUES OF ELEMENTS IN SUBFORMS WITH THE VALUES OF ELEMENTS IN MAINFORMS, BASED ON = OPERATORS IN ANY SUBFORM ELEMENT CONDITIONS THAT EXIST IN THE MAINFORM
-// this is so that the value of elements that were set at creation time based on the main form, are kept in synch with the mainform values if the mainform values change
-// frid is the relationship that we're supposed to use to link the mainform and subform
-// can only run once per page load
-// WE ONLY ENFORCE THIS ON { } DYNAMIC REFERENCES TO ELEMENTS. IF WE ENFORCED LITERAL VALUES THEN IN THE CASE OF MULTIPLE SUBFORM ELEMENTS PULLING IN DIFFERENT SUBSETS OF ENTRIES IN THE SUBFORM, THE LAST SUBFORM ELEMENT'S LITERAL VALUES WOULD BE WRITTEN ONTO ALL THE ENTRIES (SO THE OTHER SUBFORM ELEMENTS WOULD END UP WITH NO ENTRIES THAT MATCH THE FILTERS)
+/**
+ * Synchronize existing subform entries
+ *
+ * This function synchronizes existing subform entries with their parent forms.
+ * SYNCHS THE VALUES OF ELEMENTS IN SUBFORMS WITH THE VALUES OF ELEMENTS IN
+ * MAINFORMS, BASED ON = OPERATORS IN ANY SUBFORM ELEMENT CONDITIONS THAT EXIST
+ * IN THE MAINFORM. this is so that the value of elements that were set at
+ * creation time based on the main form, are kept in synch with the mainform
+ * values if the mainform values change. WE ONLY ENFORCE THIS ON { } DYNAMIC
+ * REFERENCES TO ELEMENTS. IF WE ENFORCED LITERAL VALUES THEN IN THE CASE OF
+ * MULTIPLE SUBFORM ELEMENTS PULLING IN DIFFERENT SUBSETS OF ENTRIES IN THE
+ * SUBFORM, THE LAST SUBFORM ELEMENT'S LITERAL VALUES WOULD BE WRITTEN ONTO ALL
+ * THE ENTRIES (SO THE OTHER SUBFORM ELEMENTS WOULD END UP WITH NO ENTRIES THAT
+ * MATCH THE FILTERS)
+ *
+ * @param int $frid Framework ID. the relationship that we're supposed to
+ * use to link the mainform and subform can only run once per page load
+ * @return void
+ */
 function synchExistingSubformEntries($frid) {
     static $hasRun = false;
     if(!$hasRun AND $frid) {
@@ -3913,7 +4495,15 @@ function synchExistingSubformEntries($frid) {
 }
 
 
-// THIS FUNCTION SYNCHS ENTRIES WRITTEN IN BLANK DEFAULTS IN A SUBFORM, WITH THE PARENT FORM.  GETS EXECUTED IN FORMDISPLAY.PHP AND FORMDISPLAYPAGES.PHP AFTER A FORM SUBMISSION
+/**
+ * Synchronize subform blank defaults
+ *
+ * This function synchronizes blank default values for subforms. SYNCHS ENTRIES
+ * WRITTEN IN BLANK DEFAULTS IN A SUBFORM, WITH THE PARENT FORM.  GETS EXECUTED
+ * IN FORMDISPLAY.PHP AND FORMDISPLAYPAGES.PHP AFTER A FORM SUBMISSION
+ *
+ * @return void
+ */
 function synchSubformBlankDefaults() {
     // handle creating linked/common values when default blank entries have been filled in on a subform -- sept 8 2007
     static $ids_to_return = array();
@@ -3981,10 +4571,13 @@ function synchSubformBlankDefaults() {
     return $ids_to_return;
 }
 
-
 /**
- * internal function that retrieves an element object if necessary
- * @param mixed $element The element to retrieve - can be an element ID, handle, or object itself
+ * Get element object (internal helper)
+ *
+ * This is an internal helper function that retrieves element objects.
+ *
+ * @param mixed $element Element identifier. can be an element ID, handle, or
+ * object itself
  * @return formulizeElement|false The element object or false if not found
  */
 function _getElementObject($element) {
@@ -4006,9 +4599,12 @@ function _getElementObject($element) {
 }
 
 /**
+ * Convert element handles to element IDs
+ *
  * Takes an array of element references, and converts any element handles in it to the corresponding ID
  * Inefficient! Should be used sparingly.
- * @param array handles An array of element ids or handles, can be mixed
+ *
+ * @param array $handles An array of element ids or handles, can be mixed
  * @return array Returns the array with any numeric IDs converted to handles, or the passed in value if handles was not an array
  */
 function convertElementHandlesToElementIds($handles) {
@@ -4025,7 +4621,17 @@ function convertElementHandlesToElementIds($handles) {
 	return $handles;
 }
 
-// still in use but could/should be refactored
+/**
+ * Convert element IDs to element handles
+ *
+ * This function converts element IDs to their corresponding element handles.
+ *
+ * @param array $ids Array of element IDs
+ * @param bool|int $fid Form ID
+ * @return array Corresponding element handles
+ *
+ * @todo still in use but could/should be refactored
+ */
 function convertElementIdsToElementHandles($ids, $fid=false) {
     $elementsToFrameworks = false;
     $idsToFrameworks = false;
@@ -4058,11 +4664,28 @@ function convertElementIdsToElementHandles($ids, $fid=false) {
 }
 
 
-// assume handles are unique within a framework (which they are supposed to be!)
-// reverse flag is used only when this is called from the opposite function, which is really just a wrapper for calling this and asking for things the other way around. element handles converted to framework handles
-// This function essentially makes a framework handle/element handle map for the entire framework, and caches it, so once a framework is mapped, we never hit the database again.  Then we just call the function to return the values we are looking for.
-// Ids is a flag that will cause framework handles to be returned when element ids are passed
-// fid is the form id for use when going from element ids to handles
+/**
+ * Convert handles and IDs back and forth
+ *
+ * This function converts between element handles and IDs in both directions.
+ *
+ * assume handles are unique within a framework (which they are supposed to be!)
+ * This function essentially makes a framework handle/element handle map for the
+ * entire framework, and caches it, so once a framework is mapped, we never hit
+ * the database again.  Then we just call the function to return the values we
+ * are looking for.
+ *
+ * @param array $handles Array of element handles
+ * @param int $frid Framework ID
+ * @param bool $reverse Reverse conversion flag. Used only when this is called
+ * from the opposite function, which is really just a wrapper for calling this
+ * and asking for things the other way around. element handles converted to
+ * framework handles
+ * @param bool $ids flag that will cause framework handles to be returned when
+ * element ids are passed
+ * @param bool|int $fid Form ID for use when going from element ids to handles
+ * @return array Converted values
+ */
 function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $fid=false) {
     // reverse means elements to frameworks
     // $ids means return ids from whatever the source is
@@ -4180,14 +4803,34 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 }
 
 
-// THIS FUNCTION ACTUALLY BUILDS THE SELECT FORM ELEMENT AND RETURNS IT AS A STRING
-// Used to create a drop down list that can act as a filter in a user interface
-// The dropdown list is made up of the options for the specified ele_id
-// If the dropdown list is a linked selectbox, the values can be optionally limited by the "limit" params, based on values in another field in each entry that underlies the link
-// ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007
-// name is the name of the form in the DOM, which will be submitted on change. Leave blank to not have the filter submit anything
-// multi is used to determine if the options should be returned as a checkbox series supporting multiple values
-// negativeFilter will make a filter that does the inverse, excludes the selected value (applies NOT to the value)
+/**
+ * Build a Select form element
+ *
+ * Used to create a drop down list that can act as a filter in a user interface.
+ * The dropdown list is made up of the options for the specified ele_id. If the
+ * dropdown list is a linked selectbox, the values can be optionally limited by
+ * the "limit" params, based on values in another field in each entry that
+ * underlies the link
+ * ie: build a filter with the names of all activity entries, but limit it to
+ * activity entries where the date of the activity is 2007.
+ * name is the name of the form in the DOM, which will be submitted on change.
+ * Leave blank to not have the filter submit anything
+ *
+ * @param string $id Unique identifier for the filter
+ * @param string $element_identifier Identifier for the form element
+ * @param string $defaultText Default text for the filter
+ * @param string $formDOMId DOM ID for the form
+ * @param mixed $defaultValue Default value for the filter
+ * @param bool $subfilter Flag for subfilter
+ * @param int $linked_ele_id Linked element ID
+ * @param int $linked_data_id Linked data ID
+ * @param bool $limit Flag to limit results
+ * @param bool $multi Flag for multi-select. used to determine if the options
+ * should be returned as a checkbox series supporting multiple values
+ * @param bool $negativeFilter Flag for negative filtering. will make a filter
+ * that does the inverse, excludes the selected value (applies NOT to the value)
+ * @return string HTML for the filter element
+ */
 function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false) {
 
     static $multiCounter = -1;
@@ -4702,7 +5345,17 @@ function formulize_swapUIText($value, $uitexts=array()) {
     }
     return $value;
 }
-// THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE CORRESPONDING DB VALUE IF THE PASSED VALUE MATCHES A UITEXT
+
+/**
+ * Swap database text values
+ *
+ * This function swaps database text values based on provided UI text mappings.
+ *
+ * @param string $value The value to process
+ * @param array $uitexts Array of UI text mappings
+ * @return string Processed value with database text swapped
+ * RETURNS THE CORRESPONDING DB VALUE IF THE PASSED VALUE MATCHES A UITEXT
+ */
 function formulize_swapDBText($value, $uitexts=array()) {
     if(!is_array($uitexts)) { return $value; }
     $dbtexts = array_flip($uitexts);
@@ -4720,8 +5373,17 @@ function formulize_swapDBText($value, $uitexts=array()) {
 }
 
 
-// formats numbers according to options users have specified
-// decimalOverride is used to provide decimal values if specified format has no decimals (added for use in calculations)
+/**
+ * Format a number value
+ *
+ * This function formats numbers according to options users have specified
+ *
+ * @param mixed $value The value to format
+ * @param string|int $elementIdOrHandle Element ID or handle
+ * @param int $decimalOverride Override for decimal places. used to provide
+ * decimal values if specified format has no decimals (added for use in calculations)
+ * @return string Formatted number string
+ */
 function formulize_numberFormat($value, $elementIdOrHandle, $decimalOverride=0) {
     if (!is_numeric($value)) {
         return $value;
@@ -4742,8 +5404,28 @@ function formulize_numberFormat($value, $elementIdOrHandle, $decimalOverride=0) 
 }
 
 
-// internal function used by formulize_numberFormat to actually do the formatting
-// different element types have different parts of ele_value where the number values are stored, so that's the reason for abstracting this out one level
+/**
+ * Internal number formatting function
+ *
+ * This is an internal helper function for formatting numbers with various
+ * formatting options. used by formulize_numberFormat to actually do the
+ * formatting. different element types have different parts of ele_value where
+ * the number values are stored, so that's the reason for abstracting this out
+ * one level
+ *
+ * @param mixed $value The value to format
+ * @param int $decimalOverride Override for decimal places
+ * @param string $decimals Decimal places setting
+ * @param bool $decSepExists Flag for decimal separator existence
+ * @param string $decsep Decimal separator
+ * @param bool $sepExists Flag for separator existence
+ * @param string $sep Separator
+ * @param bool $prefixExists Flag for prefix existence
+ * @param string $prefix Prefix
+ * @param bool $suffixExists Flag for suffix existence
+ * @param string $suffix Suffix
+ * @return string Formatted number string
+ */
 function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSepExists=false, $decsep="", $sepExists=false, $sep="", $prefixExists=false, $prefix="", $suffixExists=false, $suffix="") {
     $config_handler = xoops_gethandler('config');
     $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
@@ -4773,7 +5455,23 @@ function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSep
 }
 
 
-// NOTE, THIS FUNCTION ASSIGNS IDS INSTEAD OF HANDLES TO RESULT ARRAY.  THIS NEEDS TO BE LOOKED INTO
+/**
+ * Get calculated values for a form
+ *
+ * This function retrieves calculated values for a form based on the given
+ * parameters.
+ *
+ * @param mixed $formframe Form frame identifier
+ * @param int $mainform Main form ID
+ * @param mixed $savedView Saved view identifier
+ * @param string $handle Handle for calculation
+ * @param string $type Type of calculation
+ * @param string $grouping Grouping for calculation
+ * @return array Calculated values
+ *
+ * @todo ASSIGNS IDS INSTEAD OF HANDLES TO RESULT ARRAY.  THIS NEEDS TO BE
+ * LOOKED INTO
+ */
 function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $type="all", $grouping="all") {
     list($fid, $frid) = getFormFramework($formframe, $mainform);
 
@@ -4897,21 +5595,49 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
 }
 
 
-// This function creates the UI and hidden elements for a set of filter options, such as those used to create the per-group-filter options in the permission section, or could be used for selectbox filters or multipage screen "skip logic" settings
-// $filterSettings is the actual filter settings in an array, as retrieved (and unserialized) from the DB
-// $filterName is the unique name to use for this set of elements -- CANNOT HAVE UNDERSCORES IN IT! (breaks delete interpretation)
-// $formWithSourceElements is the ID of the form to use to get the elements from to show in the filter options
-// $formName is the name of the HTML form that this filter UI is being embedded into - ID really, not the name
-// $frid is the form relationship id to be used to gather a set of elements, not just the mainform's elements - optional
-// $defaultTypeIfNoFilterTypeGiven is the value ("all" or "oom") that should be used for the filter type, if no filter type is specified...this happens when old installations are upgraded to the new version that is type-aware for these filters, no filter type will be specified for all the conditions.  Therefore, we have to assume what it should be, and that is potentially different for each place this function is called, since the logic reading these filters for each of those places will have assumed one or the other.
-// $groups is the groups to filter the elements with (only elements visible to those groups).  If no groups, then all elements are returned.
-// filterAllText is the text to use for the "all" option
-// filterConText is the text to use for the "con" option (ie: the radio button that shows there is a filter in effect)
-// $filterButtonText is the text to use for the "add" button for adding a new filter to the list of conditions
-// This function sets up a series of old_$filterName_elements hidden elements to perpetuate the ones that have been set already, and also some new_$filterName_elements that are the new ones users select
-// When other code is handling the saving of this filter information later, it will have to take both the old and the new and munge them together
-/* ALTERED - 20100315 - freeform - jeff/julian - start - commented match all, and
-    added match one or more */
+/**
+ * Create filter UI elements
+ *
+ * Creates the UI and hidden elements for a set of filter options, such as those
+ * used to create the per-group-filter options in the permission section, or
+ * could be used for selectbox filters or multipage screen "skip logic" settings.
+ * sets up a series of old_$filterName_elements hidden elements to perpetuate
+ * the ones that have been set already, and also some new_$filterName_elements
+ * that are the new ones users select. When other code is handling the saving of
+ * this filter information later, it will have to take both the old and the new
+ * and munge them together.
+ *
+ * @param array $filterSettings Filter settings. the actual filter settings in
+ * an array, as retrieved (and unserialized) from the DB
+ * @param string $filterName Name of the filter. the unique name to use for this
+ * set of elements -- CANNOT HAVE UNDERSCORES IN IT! (breaks delete interpretation)
+ * @param object $formWithSourceElements Form with source elements. the ID of
+ * the form to use to get the elements from to show in the filter options
+ * @param string $formName Name of the form. the name of the HTML form that this
+ * filter UI is being embedded into - ID really, not the name
+ * @param int $frid Framework ID. the form relationship id to be used to gather
+ * a set of elements, not just the mainform's elements - optional
+ * @param string $defaultTypeIfNoFilterTypeGiven Default filter type. the value
+ * ("all" or "oom") that should be used for the filter type, if no filter type
+ * is specified...this happens when old installations are upgraded to the new
+ * version that is type-aware for these filters, no filter type will be
+ * specified for all the conditions.  Therefore, we have to assume what it
+ * should be, and that is potentially different for each place this function is
+ * called, since the logic reading these filters for each of those places will
+ * have assumed one or the other.
+ * @param array|bool $groups User groups. the groups to filter the elements with
+ * (only elements visible to those groups).  If no groups, then all elements are
+ * returned.
+ * @param string $filterAllText Text for "all" filter option
+ * @param string $filterConText Text for filter condition. the text to use for
+ * the "con" option (ie: the radio button that shows there is a filter in effect)
+ * @param string $filterButtonText Text for filter button. the text to use for
+ * the "add" button for adding a new filter to the list of conditions
+ * @return string HTML for filter UI
+ *
+ * ALTERED - 20100315 - freeform - jeff/julian - start - commented match all,
+ * and added match one or more
+ */
 function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceElements, $formName, $frid=0, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
     if (!$filterName OR !$formWithSourceElements OR !$formName) {
         return false;
@@ -5014,7 +5740,17 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
     return $conditionui . $addcon->render();
 }
 
-// this function checks the passed in op and returns it only if it matches one of the allowed types of ops (necessary since we cannot sanitize out < and > easily using normal sanitizing functions due to them being angle brackets in HTML)
+/**
+ * Clean filter operation values
+ *
+ * This function cleans and validates filter operation values. checks the passed
+ * in op and returns it only if it matches one of the allowed types of ops
+ * (necessary since we cannot sanitize out < and > easily using normal
+ * sanitizing functions due to them being angle brackets in HTML)
+ *
+ * @param string $op Operation value to clean
+ * @return string Cleaned operation value
+ */
 function formulize_conditionsCleanOps($op) {
  $ops = array();
  $ops['='] = "=";
@@ -5034,6 +5770,20 @@ function formulize_conditionsCleanOps($op) {
 }
 
 
+/**
+ * Create filter UI match elements
+ *
+ * This function creates UI elements for matching filter conditions.
+ *
+ * @param string $newElementName New element name
+ * @param string $formName Form name
+ * @param string $filterName Filter name
+ * @param array $options Filter options
+ * @param string $newOpName New operation name
+ * @param string $newTermName New term name
+ * @param array $conditionlist Condition list
+ * @return string HTML for filter match UI
+ */
 function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$options,$newOpName,$newTermName,$conditionlist) {
     // setup the new element, operator, term boxes
     $new_elementOpTerm = new xoopsFormElementTray('', "&nbsp;&nbsp;");
@@ -5060,6 +5810,22 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
 }
 
 
+/**
+ * Get existing filter settings
+ *
+ * This function retrieves existing filter settings for forms.
+ *
+ * @param array $filterSettings Filter settings
+ * @param string $filterName Filter name
+ * @param object $formWithSourceElements Form with source elements
+ * @param string $formName Form name
+ * @param string $defaultTypeIfNoFilterTypeGiven Default filter type
+ * @param array|bool $groups User groups
+ * @param string $filterAllText Text for "all" filter option
+ * @param string $filterConText Text for filter condition
+ * @param string $filterButtonText Text for filter button
+ * @return array Existing filter settings
+ */
 function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
     if (!$filterName OR !$formWithSourceElements OR !$formName) {
         return false;
@@ -5150,11 +5916,23 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 
 /**
  * Used to handle filter conditions being saved in the admin UI
- * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
- * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
- * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
- * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
+ * @param string $filter_key - The prefix used in the values in POST that we
+ * want to read, ie: if in POST we have displayCondition_elements, and
+ * displayCondition_ops then the key is displayCondition
+ * @param string $delete_key - The key in POST for a delete signal sent from the
+ * admin UI
+ * @param int $deleteTargetKey - Optional. The key we care about for isolating
+ * which conditions to delete, as found in the array created by exploding the
+ * delete_key in POST on the _ character.
+ * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is
+ * meant to isolate only certain conditions to be deleted. The delete key's
+ * value will have _ in it, and exploding on _ gives an array, and the 1 key
+ * (second position) must match this value. Used by the permissions saving to
+ * delete conditions only from the appropriate group's permissions.
+ * @return array Returns an array with two elements. The first is an array of
+ * the elements, ops, terms and types properly organized for saving into the
+ * database. The second is a flag to indicate if a reload is necessary for the
+ * user to see cleanly what has changed.
  */
 function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
@@ -5214,8 +5992,15 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
 	return array($returnValues, $reloadFlag);
 }
 
-// this function gets the password for the encryption/decryption process
-// want to has the db pass since we don't want any SQL logging processes to include the db pass as plaintext
+/**
+ * Get AES password for encryption
+ *
+ * This function retrieves the AES password used for encryption in the system.
+ * want to have the db pass since we don't want any SQL logging processes to
+ * include the db pass as plaintext
+ *
+ * @return string AES password
+ */
 function getAESPassword() {
     $icmsDB = SDATA_DB_PASS;
     $xoopsDB = XOOPS_DB_PASS;
@@ -5224,6 +6009,15 @@ function getAESPassword() {
 }
 
 
+/**
+ * Convert element type to text representation
+ *
+ * This function converts element type identifiers to their text representations.
+ *
+ * @param string $type Element type
+ * @param mixed $ele_value Element value
+ * @return string Text representation of the element type
+ */
 function convertTypeToText($type, $ele_value) {
     switch ($type) {
         case "areamodif":
@@ -5238,11 +6032,18 @@ function convertTypeToText($type, $ele_value) {
     }
 }
 
-/*
+/**
  * Returns the HTML formatted results of the calculation process
  *
+ * This function executes advanced calculations based on the calculation ID.
+ *
+ * @code
  * $results = formulize_runAdvancedCalculation($acid);
  * print $results;
+ * @encode
+ *
+ * @param string $acid Calculation ID
+ * @return mixed Result of the advanced calculation
  */
 function formulize_runAdvancedCalculation( $acid ) {
     $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
@@ -5251,6 +6052,15 @@ function formulize_runAdvancedCalculation( $acid ) {
 }
 
 
+/**
+ * Undo HTML character encoding
+ *
+ * This function reverses HTML character encoding transformations.
+ *
+ * @param string $text Text to process
+ * @param int $quotes Quote handling constant
+ * @return string Text with HTML characters undone
+ */
 function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
     $text = html_entity_decode($text,$quotes);
     while (strstr($text,"&amp;")) {
@@ -5260,11 +6070,26 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
 }
 
 
-// this function takes some code and instead of using eval to deal with it, it writes it to a file, includes it, and then deletes the file
-// this may be faster in some cases than eval, although it is not currently used
-// $execute needs to be set to true, so that the code will be run.  You can pass in multiple snippets of code at different times, and then run them all at once.  The snippets will be remembered between calls.
-// $globals is an array of the names of global variables that you want included in the code
-// $filterNames is an array of global variable names that you want in this scope (the filters from Procedures is what this was intended to support)
+/**
+ * Include and evaluate code
+ *
+ * This function includes and evaluates PHP code with optional execution. takes
+ * some code and instead of using eval to deal with it, it writes it to a file,
+ * includes it, and then deletes the file this may be faster in some cases than
+ * eval, although it is not currently used
+ *
+ * @param string $code PHP code to evaluate
+ * @param bool $execute Flag to execute immediately. needs to be set to true,
+ * so that the code will be run.  You can pass in multiple snippets of code at
+ * different times, and then run them all at once.  The snippets will be
+ * remembered between calls.
+ * @param array $globals Global variables to pass. an array of the names of
+ * global variables that you want included in the code
+ * @param array $filterNames Filter names. an array of global variable names
+ * that you want in this scope (the filters from Procedures is what this was
+ * intended to support)
+ * @return mixed Result of code evaluation
+ */
 function formulize_includeEval($code, $execute=false, $globals=array(), $filterNames=array()) {
     static $codeParts = array();
     $codeParts[] = $code;
@@ -5285,6 +6110,14 @@ function formulize_includeEval($code, $execute=false, $globals=array(), $filterN
 }
 
 
+/**
+ * Add procedure choices to POST data
+ *
+ * This function adds procedure choices to the POST data for form processing.
+ *
+ * @param string $choices List of choices to add
+ * @return void
+ */
 function formulize_addProcedureChoicesToPost($choices) {
     if ($choices AND !strstr($choices,"&amp;")) {
         $choices = strip_tags(htmlspecialchars($choices)); // just in case this wasn't done prior to passing in
@@ -5305,9 +6138,18 @@ function formulize_addProcedureChoicesToPost($choices) {
     }
 }
 
-
-// used in the admin UI
-// returns false if the element cannot be required, otherwise returns the current required setting of the element
+/**
+ * Remove not applicable required fields
+ *
+ * This function removes required field flags for fields that are not applicable.
+ * used in the admin UI
+ *
+ * @param string $type Field type
+ * @param int $req Required flag value
+ * @return int Updated required flag value
+ *   false if the element cannot be required, otherwise returns the current
+ * required setting of the element
+ */
 function removeNotApplicableRequireds($type, $req=0) {
 	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
 		$customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
@@ -5320,12 +6162,23 @@ function removeNotApplicableRequireds($type, $req=0) {
 }
 
 /**
- * Check for { } filter conditions, which are not in GET params, and which are valid element handles for the declared form, and catalogue them as condition triggers for the specified element.
- * @param string $renderedElementMarkupName The markup handle for the element that would be dependent on a change in the dynamic filter value, ie: de_FID_ENTRYID_ELEMENTID
- * @param array $conditions A standard array of filter conditions, four keys, for element op term all/oom, and each is itself and array of the items (match based on key to get a set)
- * @param int|string|object $sourceForm A form id, form handle, or form object, representing the form in which any { } terms should be found
+ * Catalog dynamic filter condition elements
+ *
+ * Check for { } filter conditions, which are not in GET params, and which are
+ * valid element handles for the declared form, and catalogue them as condition
+ * triggers for the specified element.
+ *
+ * @param string $renderedElementMarkupName The markup handle for the element
+ * that would be dependent on a change in the dynamic filter value, ie:
+ * de_FID_ENTRYID_ELEMENTID
+ * @param array $conditions A standard array of filter conditions, four keys,
+ * for element op term all/oom, and each is itself and array of the items (match
+ * based on key to get a set)
+ * @param int|string|object $sourceForm A form id, form handle, or form object,
+ * representing the form in which any { } terms should be found
  * @param object $screen Optional. The screen object that is in effect, if any (may be null)
- * @return boolean Returns false if the inputs are not valid conditions or not a valid source form, returns true otherwise.
+ * @return boolean Returns false if the inputs are not valid conditions or not a
+ * valid source form, returns true otherwise.
  */
 function catalogDynamicFilterConditionElements($renderedElementMarkupName, $conditions, $sourceForm, $screen = null) {
 	// validate conditions
@@ -5364,14 +6217,38 @@ function catalogDynamicFilterConditionElements($renderedElementMarkupName, $cond
 }
 
 /**
- * This function will build a SQL-ready string, based on a data from a standard Formulize Conditions UI, plus parameters like the table it's supposed to look in
- * @param array $conditions - the conditions as specified in the Formulize conditions UI, a multidimensional array, each condition is one element in the array, and each condition is made up of four elements itself: 0 - element id (the left side), 1 - operator, 2 - term (the right side), 3 - condition type (oom or all, 'match one or more' vs 'match all')
- * @param int|array $targetFormId - the id number of the form where things are being looked up. Or an array when doing an extraction query, in which the keys are the form ids and the values are the aliases of the forms in the query being constructed. If an array, the first key-value pair refers to the main form.
- * @param int|string $curlyBracketEntry - the id number of the entry from which curly bracket references to element handles should be resolved, or 'new' if we are working with a new record not saved yet
- * @param int $userComparisonId - is the id that should be used to compare {USER} to when $entry is not "new".  In some cases we may want to pass in the owner of the entry rather than the current user.  When entry is "new" then the current user is always used.
- * @param int|object $curlyBracketForm - either the id or the form object for the form that should be used as the source form for any { } terms, ie: if the term is = {handleX} then this param is the form that handleX would be part of
- * @param string $targetAlias - the alias used in SQL to refer to the table that the conditions should apply to.  This is optional in general, but required if the query you're building for uses an alias!
- * @return array - returns an array with three elements: 0 - the 'match all' SQL suitable for the WHERE clause, 1 - the 'match one or more' SQL suitable for the WHERE clause, 2 - the join clause necessary for including the form that { } references are pointing to
+ * Build a SQL-ready string, based on a data from a standard
+ *
+ * Formulize Conditions UI, plus parameters like the table it's supposed to look
+ * in
+ *
+ * @param array $conditions - the conditions as specified in the Formulize
+ * conditions UI, a multidimensional array, each condition is one element in the
+ * array, and each condition is made up of four elements itself: 0 - element id
+ * (the left side), 1 - operator, 2 - term (the right side), 3 - condition type
+ * (oom or all, 'match one or more' vs 'match all')
+ * @param int|array $targetFormId - the id number of the form where things are
+ * being looked up. Or an array when doing an extraction query, in which the
+ * keys are the form ids and the values are the aliases of the forms in the
+ * query being constructed. If an array, the first key-value pair refers to the
+ * main form.
+ * @param int|string $curlyBracketEntry - the id number of the entry from which
+ * curly bracket references to element handles should be resolved, or 'new' if
+ * we are working with a new record not saved yet
+ * @param int $userComparisonId - is the id that should be used to compare
+ * {USER} to when $entry is not "new".  In some cases we may want to pass in the
+ * owner of the entry rather than the current user.  When entry is "new" then
+ * the current user is always used.
+ * @param int|object $curlyBracketForm - either the id or the form object for
+ * the form that should be used as the source form for any { } terms, ie: if the
+ * term is = {handleX} then this param is the form that handleX would be part of
+ * @param string $targetAlias - the alias used in SQL to refer to the table that
+ * the conditions should apply to.  This is optional in general, but required if
+ * the query you're building for uses an alias!
+ * @return array - returns an array with three elements: 0 - the 'match all' SQL
+ * suitable for the WHERE clause, 1 - the 'match one or more' SQL suitable for
+ * the WHERE clause, 2 - the join clause necessary for including the form that
+ * { } references are pointing to
  */
 function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry=null, $userComparisonId=null, $curlyBracketForm=null, $targetAlias="") {
 
@@ -5596,7 +6473,21 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
     return array($conditionsfilter, $conditionsfilter_oom, $curlyBracketFormFrom);
 }
 
-// append a given value onto a given condition
+/**
+ * Append to condition builder
+ *
+ * This is an internal helper function that appends elements to a condition builder.
+ *
+ * @param string $condition Base condition
+ * @param string $andor Logical operator (AND/OR)
+ * @param bool $needIntroBoolean Flag for introducing boolean
+ * @param string $targetAlias Target alias
+ * @param string $filterElementHandle Filter element handle
+ * @param string $filterOp Filter operator
+ * @param mixed $conditionsFilterComparisonValue Comparison value
+ * @param string $filterTerm Filter term
+ * @return string Updated condition string
+ */
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue, $filterTerm) {
 
     if(!$conditionsFilterComparisonValue
@@ -5654,9 +6545,22 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
     return array($condition, $thiscondition);
 }
 
-// this function takes the info from the above function, and actually builds the parts of the SQL statement by analyzing the current situation
-// $filterOps may be modified by this function
-// $filterTerms may be modified by this function
+/**
+ * Build conditions filter SQL
+ *
+ * This is an internal helper function that builds SQL for conditions filtering.
+ *
+ * @param string $filterId Filter ID
+ * @param array &$filterOps Reference to filter operators
+ * @param array &$filterTerms Reference to filter terms
+ * @param array $filterElementIds Filter element IDs
+ * @param mixed $curlyBracketEntry Curly bracket entry
+ * @param mixed $userComparisonId User comparison ID
+ * @param mixed $curlyBracketForm Curly bracket form
+ * @param object $element_handler Element handler
+ * @param object $form_handler Form handler
+ * @return string SQL query string
+ */
 function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
 
     global $xoopsDB, $nonLinkedCurlyBracketSelfReference;
@@ -6003,7 +6907,13 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 }
 
 
-// this function simply draws in the necessary xhr javascript that is used in forms sometimes, and in lists of entries sometimes
+/**
+ * Draw XHR JavaScript
+ *
+ * This function draws JavaScript for XMLHttpRequest functionality.
+ *
+ * @return void
+ */
 function drawXhrJavascript() {
 global $xoopsUser;
 // added xhr function Jan 5 2010
@@ -6072,15 +6982,30 @@ function formulize_xhr_send(op,params) {
 <?php
 }
 
-// provides the token that is associated witht he entry locking/unlocking for this page load
+/**
+ * Get entry lock security token
+ *
+ * This function retrieves a security token for locking form entries, associated
+ * with the entry locking/unlocking for this page load
+ *
+ * @return string Security token
+ */
 function getEntryLockSecurityToken() {
     static $token;
     $token = $token ? $token : hash('sha256',(uniqid(rand(), true).$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX.$_SERVER['REMOTE_ADDR']));
     return $token;
 }
 
-// this function creates the javascript snippet that will send the kill locks request
-// unload causes it to return the script necessary for in an unload event, which uses a different call (beacon)
+/**
+ * Generate JavaScript for removing entry locks
+ *
+ * This function generates JavaScript code for removing form entry locks. unload
+ * causes it to return the script necessary for in an unload event, which uses
+ * a different call (beacon)
+ *
+ * @param bool $unload Flag for unload event
+ * @return string JavaScript code
+ */
 function formulize_javascriptForRemovingEntryLocks($unload=false) {
     static $cachedJS = array();
     if(count($cachedJS)==0) { // prepare everything only once
@@ -6108,11 +7033,33 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
 
 
 
-// this function takes a value from the database that has gone through prepvalues (so it's ready for a dataset or already part of a dataset), and makes the display HTML for a list of entries
-// we're kind of hacking this...assuming textWidth will be 200 in cases where we don't have it passed in.  With more acrobatics we could get the real text width as specified in the screen, but for columns that are rendered as elements, this is probably an OK compromise
-// deDisplay is a flag to control whether the icon for switching an element to editable mode should be present or not
-// localIds is an array of ids that will match the order of the values in the array...used to get the id for a subform entry that is being displayed in the list
-// $deInstanceCounter is used for addressing editable elements in the list
+/**
+ * Get HTML for list display
+ *
+ * This function generates HTML for displaying list data with various formatting
+ * options. takes a value from the database that has gone through prepvalues
+ * (so it's ready for a dataset or already part of a dataset), and makes the
+ * display HTML for a list of entries. We're kind of hacking this...assuming
+ * textWidth will be 200 in cases where we don't have it passed in.  With more
+ * acrobatics we could get the real text width as specified in the screen, but
+ * for columns that are rendered as elements, this is probably an OK compromise
+ *
+ * @param mixed $value Value to display
+ * @param string $handle Element handle
+ * @param int $entryId Entry ID
+ * @param int $deDisplay flag to control whether the icon for switching an
+ * element to editable mode should be present or not
+ * @param int $textWidth Text width setting
+ * @param array $localIds Local IDs array of ids that will match the order of
+ * the values in the array...used to get the id for a subform entry that is
+ * being displayed in the list
+ * @param int $fid Form ID
+ * @param int $row Row index
+ * @param int $column Column index
+ * @param bool $deInstanceCounter Instance counter flag. used for addressing
+ * editable elements in the list
+ * @return string Formatted HTML string
+ */
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
     $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
     if (!is_array($value)) {
@@ -6181,8 +7128,23 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 }
 
 
-// THIS FUNCTION WILL CALL DISPLAY ELEMENT WITH THE RIGHT PARAMS TO RETURN THE HTML FOR AN ELEMENT THAT WILL NOT SAVE IN FORMULIZE BUT CAN BE USED TO GET THE UI FOR THE ELEMENT ON THE SCREEN
-// MEANT FOR USE IN LIST OF ENTRIES TEMPLATES AND ELSEWHERE THAT THE DEVELOPER MIGHT WANT TO HAVE AN ELEMENT RENDERED CLEANLY FOR PICKING UP THE USER'S SELECTION LATER, BUT THEY DON'T WANT THE ELEMENT ACTUALLY TIED TO THE UNDERLYING ENTRY/VALUE
+/**
+ * Get HTML for a form element
+ *
+ * This function generates HTML for a specific form element with various
+ * options. THIS FUNCTION WILL CALL DISPLAY ELEMENT WITH THE RIGHT PARAMS TO
+ * RETURN THE HTML FOR AN ELEMENT THAT WILL NOT SAVE IN FORMULIZE BUT CAN BE
+ * USED TO GET THE UI FOR THE ELEMENT ON THE SCREEN
+ * MEANT FOR USE IN LIST OF ENTRIES TEMPLATES AND ELSEWHERE THAT THE DEVELOPER
+ * MIGHT WANT TO HAVE AN ELEMENT RENDERED CLEANLY FOR PICKING UP THE USER'S
+ * SELECTION LATER, BUT THEY DON'T WANT THE ELEMENT ACTUALLY TIED TO THE
+ * UNDERLYING ENTRY/VALUE
+ *
+ * @param string $elementHandle Element handle
+ * @param string $nameForHTML HTML name attribute
+ * @param string $entry_id Entry ID
+ * @return string Formatted HTML for the element
+ */
 function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element", $entry_id="new") {
     include_once XOOPS_ROOT_PATH ."/modules/formulize/include/elementdisplay.php";
     // 0 is the element HTML, 1 is the disabled flag
@@ -6196,8 +7158,14 @@ function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element
     }
 }
 
-// Converts linked select boxes from single option only (big int)
-// to a multi-option allowed select box with preceding and trailing commas
+/**
+ * Converts linked select boxes from single option only (big int)
+ * to a multi-option allowed select box with preceding and trailing commas
+ *
+ * @param string $table
+ * @param string $column
+ * @return bool
+ */
 function convertSelectBoxToMulti($table, $column) {
     global $xoopsDB;
 
@@ -6216,8 +7184,16 @@ function convertSelectBoxToMulti($table, $column) {
 }
 
 
-// Converts a linked select box from multi-option allowed (with preceding and trailing
-// commas) to a single option allowed select box with data type bigint.
+/**
+ * Convert a linked select box
+ *
+ * Converts a linked select box from multi-option allowed (with preceding and
+ * trailing commas) to a single option allowed select box with data type bigint.
+ *
+ * @param string $table
+ * @param string $column
+ * @return bool
+ */
 function convertSelectBoxToSingle($table, $column) {
     global $xoopsDB;
 
@@ -6238,11 +7214,20 @@ function convertSelectBoxToSingle($table, $column) {
 }
 
 /**
- * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
- * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out, and just be happy we have an escaped string.
- * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
- * @param mixed value - The value to run through the database quote method (PDO quote currently)
- * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
+ * Database escape
+ *
+ * Fundamentally, this applies the PDO quote method to the string, but then
+ * removes the beginning and ending single quotes!
+ * The thinking at the time was that we have a lot of SQL that already has the
+ * quotes built in, and it would be too much work to refactor them all, so we'll
+ * strip the quotes out, and just be happy we have an escaped string.
+ * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and
+ * it doesn't matter what characters encapsulate the string in the query,
+ * because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
+ * @param mixed value - The value to run through the database quote method (PDO
+ * quote currently)
+ * @return string Returns a string of the passed in value, with characters
+ * escaped according to the rules of the database quote method
  */
 function formulize_db_escape($value) {
   global $xoopsDB;
@@ -6258,6 +7243,7 @@ function formulize_db_escape($value) {
  *
  * Unsupported date formats : S, n, t, L, B, u, e, I, P, Z, c, r
  * Unsupported strftime formats : %U, %W, %C, %g, %r, %R, %T, %X, %c, %D, %F, %x
+ * THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function
  *
  * @param string $dateFormat a date format
  * @return string
@@ -6386,8 +7372,17 @@ function dateFormatToStrftime($dateFormat) {
 
 }
 
-// THIS FUNCTION PARSES OUT THE {USER} AND {TODAY} KEYWORDS INTO THEIR LITERAL VALUES
-// if element is passed in, we will check the element to see if it is a username list, and use the uid instead of name if so -- intended for situations when you're parsing user and was the compare to the id, such as when building filters
+/**
+ * Parse {USER} and {TODAY} keywords into their literal values
+ *
+ * Replaces {USER} with the current user's name or UID and {TODAY} with today's
+ * date
+ *
+ * @param string $term The string containing {USER} and {TODAY} placeholders
+ * @param mixed $element Optional element object or handle for context (used to
+ * determine if UID should be used for user references)
+ * @return string The parsed string with placeholders replaced
+ */
 function parseUserAndToday($term, $element=null) {
 		global $xoopsUser;
 
@@ -6422,13 +7417,27 @@ function parseUserAndToday($term, $element=null) {
   return $term;
 }
 
-// THIS FUNCTION ESTABLISHES LINKS BETWEEN ANY 1-1 LINKED FORMS, ON THE SAME PAGE LOAD IN WHICH DATA WAS SAVED
-// THIS FUNCTION SHOULD BE CALLED AFTER NEW ENTRIES HAVE BEEN SAVED IN A FORM, AND 1-1 LINKS NEED TO BE ESTABLISHED BETWEEN THE ENTRIES IN THAT RELATIONSHIP
-// THIS FUNCTION SHOULD BE CALLED AFTER ANY APPLICABLE SECURITY CHECKS!  SO WE KNOW THE USER IS ALLOWED TO WRITE DATA TO THE POTENTIALLY AFFECTED ENTRIES.
-// $frid is the form relationship id that in which we are trying to establish the links
-// $fid is the form we're checking to see if new entry ids were written or not, and if they were, then we try to write the linked values into the right fields in the corresponding entries
-// returns an array of arrays, that tells all the affected forms and entry ids
-// THIS FUNCTION CAN PICK UP EXISTING ENTRIES AS WELL AS NEW ONES!! BUT IT ONLY WRITES TO THE DB IF THERE IS NO ONE TO ONE CONNECTION ESTABLISHED SO FAR. IT WILL NOT REWRITE EXISTING CONNECTIONS.
+
+/**
+ * Establishes links between 1-1 linked forms
+ *
+ * ESTABLISHES LINKS BETWEEN ANY 1-1 LINKED FORMS, ON THE SAME PAGE LOAD IN
+ * WHICH DATA WAS SAVED. THIS FUNCTION SHOULD BE CALLED AFTER NEW ENTRIES HAVE
+ * BEEN SAVED IN A FORM, AND 1-1 LINKS NEED TO BE ESTABLISHED BETWEEN THE
+ * ENTRIES IN THAT RELATIONSHIP. THIS FUNCTION SHOULD BE CALLED AFTER ANY
+ * APPLICABLE SECURITY CHECKS! SO WE KNOW THE USER IS ALLOWED TO WRITE DATA TO
+ * THE POTENTIALLY AFFECTED ENTRIES.
+ *
+ * THIS FUNCTION CAN PICK UP EXISTING ENTRIES AS WELL AS NEW ONES!! BUT IT ONLY
+ * WRITES TO THE DB IF THERE IS NO ONE TO ONE CONNECTION ESTABLISHED SO FAR. IT
+ * WILL NOT REWRITE EXISTING CONNECTIONS.
+ *
+ * @param int $frid The form relationship ID that in which we are trying to establish the links
+ * @param int $fid The form ID being checked. form we're checking to see if new
+ * entry ids were written or not, and if they were, then we try to write the
+ * linked values into the right fields in the corresponding entries
+ * @return array Array of arrays describing affected forms and entry IDs
+ */
 function formulize_makeOneToOneLinks($frid, $fid) {
     static $oneToOneLinksMade = array();
     $form1EntryIds = array();
@@ -6542,7 +7551,19 @@ function formulize_makeOneToOneLinks($frid, $fid) {
     return $oneToOneLinksMade[$frid][$fid];
 }
 
-// THIS FUNCTION FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
+/**
+ * Find common values between two forms
+ *
+ * Compares values from two forms based on specified keys to find common entries.
+ * FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE
+ * RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
+ *
+ * @param int $form1 The first form ID
+ * @param int $form2 The second form ID
+ * @param string $key1 The key/column to compare in the first form
+ * @param string $key2 The key/column to compare in the second form
+ * @return array Array of common values found between the forms
+ */
 function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 	$commonValueToWrite = "";
 	if(isset($_POST["de_".$form2."_new_".$key2]) AND $_POST["de_".$form2."_new_".$key2] == "{ID}") { // common value is pointing at a textbox that copies the entry ID, so grab the entry ID of the entry just written in the other form
@@ -6565,7 +7586,14 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 	return $commonValueToWrite;
 }
 
-//Function used to check if the given field is within the list of metadata fields.
+/**
+ * Check if a field is a metadata field
+ *
+ * Determines whether a given field is a metadata field in the formulize system.
+ *
+ * @param mixed $field The field to check
+ * @return bool True if the field is a metadata field, false otherwise
+ */
 function isMetaDataField($field){
 		static $dataHandler;
 		if(!$dataHandler) {
@@ -6577,10 +7605,12 @@ function isMetaDataField($field){
     return false;
 }
 
-/*
- * sendSaveLockPrefToTemplate function returns the isSaveLocked preference value. Used to send value to template
+/**
+ * Send Save Lock Preference to Template
  *
- * return isSaveLocked       preference defining whether the functionality of saving is locked or not
+ * Used to send value to template
+ *
+ * @return mixed preference defining whether the functionality of saving is locked or not
  */
 function sendSaveLockPrefToTemplate(){ //$xoopsTpl
     // get preference value
@@ -6592,9 +7622,17 @@ function sendSaveLockPrefToTemplate(){ //$xoopsTpl
     return $formulizeConfig['isSaveLocked'];
 }
 
-// convert variable search terms to their literal values
-// ie: {program} gets changed to the value of $_GET['program'] if that is set
-// returns updated value, or false to kill value, or true to do nothing
+/**
+ * Convert variable search terms to literal values
+ *
+ * Processes variable search terms and converts them to their literal representations.
+ * ie: {program} gets changed to the value of $_GET['program'] if that is set
+ *
+ * @param mixed $v The variable to convert
+ * @param string $requestKeyToUse The request key to use for conversion
+ * @return string|bool The converted literal value. updated value, or false to
+ * kill value, or true to do nothing
+ */
 function convertVariableSearchToLiteral($v, $requestKeyToUse) {
     global $xoopsUser;
     if(isset($_POST[$requestKeyToUse])) {
@@ -6609,8 +7647,18 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
     return true; // do nothing
 }
 
-// This function generates HTML for a smart list of columns to use in the change columns list and elsewhere
-// The idea is to show columns based on their forms, in a way that mimics the links in the active relationships
+/**
+ * Generate a tidy HTML element list
+ *
+ * Generates HTML for a smart list of columns to use in the change columns list
+ * and elsewhere. The idea is to show columns based on their forms, in a way
+ * that mimics the links in the active relationships
+ *
+ * @param int $mainformFid The main form ID
+ * @param array $cols The columns to use
+ * @param array $selectedCols The selected columns (optional)
+ * @return string The generated element list
+ */
 function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 
     $html = "<div>";
@@ -6721,7 +7769,16 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 }
 
 
-// update derived values in the passed in entry
+/**
+ * Update derived values for an entry
+ *
+ * Updates derived values in a form entry based on calculations or formulas.
+ *
+ * @param mixed $entry_id_or_filter The entry ID or filter criteria
+ * @param int $fid The form ID
+ * @param int $frid The framework ID (optional, defaults to 0)
+ * @return void
+ */
 function formulize_updateDerivedValues($entry_id_or_filter, $fid, $frid=0) {
 
     global $formulize_derivedValueBeingUpdated; // record what combination of updates we're doing, and don't retrigger the same one until we're done. This avoids nested calls which can create infinite loops, if for example a before or after save procedure triggers updating derived values in the same form
@@ -6748,7 +7805,16 @@ function formulize_updateDerivedValues($entry_id_or_filter, $fid, $frid=0) {
     unset($formulize_derivedValueBeingUpdated[$arrayKey][$fid][$frid]);
 }
 
-// this function writes the export query generated by getData, to a file for picking up later so we don't have to figure out all the bits and pieces again
+/**
+ * Catch and write export query
+ *
+ * Handles the catching and writing of export queries for a form. Writes the
+ * export query generated by getData, to a file for picking up later so we don't
+ * have to figure out all the bits and pieces again
+ *
+ * @param int $fid The form ID
+ * @return void
+ */
 function formulize_catchAndWriteExportQuery($fid) {
     static $lastExportTime = 0;
     $exportTime = time();
@@ -6772,9 +7838,16 @@ function formulize_catchAndWriteExportQuery($fid) {
     return $exportTime;
 }
 
-// update the revision data for an entry
-// fidOrObject is a form id or a form object for the form we're updating
-// entry_to_return is the entry id of the entry we're currently storing in the revision table
+/**
+ * Update revision data for an entry
+ *
+ * Updates revision data for a form entry, tracking changes and versions.
+ *
+ * @param mixed $fidOrObject The form ID or form object
+ * @param int $entry_to_return Entry id of the entry we're currently storing in the revision table
+ * @param bool $forceUpdate Whether to force the update (optional, defaults to false)
+ * @return void
+ */
 function formulize_updateRevisionData($fidOrObject, $entry_to_return, $forceUpdate = false) {
     $form_handler = xoops_getmodulehandler('forms','formulize');
     if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
@@ -6811,9 +7884,16 @@ function formulize_updateRevisionData($fidOrObject, $entry_to_return, $forceUpda
     }
 }
 
-// get a list of the most recent revision ids for the entries in question
-// fidOrObject is a form id or a form object for the form we're updating
-// $entryIds is an array of entry ids or a single id
+/**
+ * Get current revisions for entries
+ *
+ * Retrieves the current revision data for specified form entries. get a list of
+ * the most recent revision ids for the entries in question
+ *
+ * @param mixed $fidOrObject The form ID or form object
+ * @param array $entryIds An array of entry ids or a single id
+ * @return array The current revisions data
+ */
 function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
     $form_handler = xoops_getmodulehandler('forms','formulize');
     if(!is_object($fidOrObject) AND is_numeric($fidOrObject)) {
@@ -6844,8 +7924,18 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
     return false;
 }
 
-// This function reads filter conditions, and returns the appropriate filter values that should be used to enforce values in newly created entries
-// used for example with subform filters when creating new elements, and fundamental filters on lists of entries
+/**
+ * Get filter values for an entry
+ *
+ * Extracts filter values from subform conditions for a specific entry. Reads
+ * filter conditions, and returns the appropriate filter values that should be
+ * used to enforce values in newly created entries. Used for example with subform
+ * filters when creating new elements, and fundamental filters on lists of entries
+ *
+ * @param array $subformConditions The subform conditions array
+ * @param string|null $curlyBracketEntryid The curly bracket entry ID (optional)
+ * @return array The extracted filter values
+ */
 function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $filterValues = array();
@@ -6890,18 +7980,25 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
 }
 
 /**
- * Check if a given function is available in PHP
+ * Check if a function is available
+ *
+ * Determines whether a specific function is enabled in the system.
+ *
+ * @param string $func The function name to check
+ * @return bool True if the function is enabled, false otherwise
+ *
  * Thanks to Bishop. https://stackoverflow.com/questions/21581560/php-how-to-know-if-server-allows-shell-exec
- * @param string func The name of the function you're checking
- * @return boolean Returns true or false
  */
 function isEnabled($func) {
 	return is_callable($func) && false === stripos(ini_get('disable_functions'), $func);
 }
 
 /**
- * Look for syntax errors in a given snippet of PHP code
- * @param string theCode The code that you're checking
+ * Validate PHP code
+ *
+ * Validates PHP code for syntax errors.
+ *
+ * @param string $theCode The PHP code to validate
  * @return string An empty string if no errors, or details about the error found
  */
 function formulize_validatePHPCode($theCode) {
@@ -6920,9 +8017,20 @@ function formulize_validatePHPCode($theCode) {
 }
 
 
-// return SQL ready for use in special queries for linked element source values
-// t1 is the table where the values are being gathered from
-// t2 is the entry_owner_groups table
+/**
+ * Prepare group filter for linked elements
+ *
+ * Creates a group filter for linked elements based on various selection criteria.
+ * t1 is the table where the values are being gathered from
+ * t2 is the entry_owner_groups table
+ *
+ * @param int $sourceFid The source form ID
+ * @param array $groupSelections The group selections
+ * @param bool $useOnlyUsersGroups Whether to use only user groups
+ * @param bool $userMustBeInAllGroups Whether user must be in all groups
+ * @param bool $useOnlyUsersEntries Whether to use only user entries
+ * @return string The prepared group filter. return SQL ready for use in special queries for linked element source values
+ */
 function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups, $useOnlyUsersEntries) {
 
     global $regcode, $xoopsUser, $xoopsDB;
@@ -6990,9 +8098,20 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
     return $pgroupsfilter;
 }
 
-// include any source entry ids that are selected currently, so current selections are not lost!!
-// setup an OR condition as an alternative to the filter we've determined, just in case the selected value is outside what the filter returns
-// t1 is the form we're gathering entries from
+/**
+ * Prepare safety nets for linked elements
+ *
+ * Creates safety nets for linked elements to prevent unauthorized access.
+ *
+ * @param array $sourceEntryIds The source entry IDs
+ * @return string The prepared safety net clause
+ *
+ * include any source entry ids that are selected currently, so current
+ * selections are not lost!!
+ * setup an OR condition as an alternative to the filter we've determined, just
+ * in case the selected value is outside what the filter returns t1 is the form
+ * we're gathering entries from
+ */
 function prepareLinkedElementSafetyNets($sourceEntryIds) {
     if(count((array) $sourceEntryIds)>0 AND $sourceEntryIds[0]) {
         $sourceEntrySafetyNetStart = "( ";
@@ -7004,7 +8123,17 @@ function prepareLinkedElementSafetyNets($sourceEntryIds) {
     return array($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd);
 }
 
-// t1 is the form we're gathering entries from
+/**
+ * Prepare extra clause for linked elements
+ *
+ * Creates an extra SQL clause for linked elements with group filtering.
+ * t1 is the form we're gathering entries from
+ *
+ * @param string $pgroupsfilter The parent groups filter
+ * @param string $parentFormFrom The parent form from clause
+ * @param string $sourceEntrySafetyNetStart The source entry safety net start
+ * @return string The prepared extra clause
+ */
 function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart) {
     $extra_clause = "";
     if ($pgroupsfilter) {
@@ -7019,7 +8148,15 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
     return $extra_clause;
 }
 
-// this function takes a filter term passed in, and converts it to the actual value from GET or POST
+/**
+ * Convert dynamic filter terms
+ *
+ * Processes dynamic filter terms and converts them to usable filter criteria.
+ * takes a filter term passed in, and converts it to the actual value from GET or POST
+ *
+ * @param string $term The filter term to convert
+ * @return string The converted filter term
+ */
 function convertDynamicFilterTerms($term) {
 
     // check for starting and ending ! ! and put them back at the end if necessary
@@ -7051,15 +8188,19 @@ function convertDynamicFilterTerms($term) {
 }
 
 /**
- * Take what users have typed into a search box, and standardize it into an array of classic search terms.
+ * Take what users have typed into a search box, and standardize it into an
+ * array of classic search terms.
  * Users can type all kinds of things, including "between date1 and date2" and also "X OR Y" etc
  * They can also separate multiple terms with // such as "apples//oranges" which means apples and oranges (which would only match a multi value field)
  * But if they type "ORapples//ORoranges" then that means the same as "apples OR oranges"
- * We take all that stuff and turn it into an array of search terms that can then be parsed into a filter for a getData query, or whatever else we might need
+ * We take all that stuff and turn it into an array of search terms that can
+ * then be parsed into a filter for a getData query, or whatever else we might need
  *
  * @param string $searchString The string we are parsing
- * @param mixed $elementIdentifier An element object, id number, or handle. Represents the element that this search string is searching against.
- * @return array $searchArray An array of all search terms deduced from the string, even if only one.
+ * @param mixed $elementIdentifier An element object, id number, or handle.
+ * Represents the element that this search string is searching against.
+ * @return array $searchArray An array of all search terms deduced from the
+ * string, even if only one.
  */
 function standardizeUserTypedSearchTerms($searchString, $elementIdentifier) {
 
@@ -7125,7 +8266,15 @@ function parseBetweenDatesSyntaxInSearchStrings($searchString) {
 	return $searchString;
 }
 
-// this function takes an array of element handle=>search term pairs, and converts them into a filter string valid for using in a getData call
+/**
+ * Parse searches into a filter string
+ *
+ * Converts an array of element handle => search term pairs into a filter string
+ * valid for use in a getData call.
+ *
+ * @param array $searches Array of element handle => search term pairs
+ * @return string The parsed filter string
+ */
 function formulize_parseSearchesIntoFilter($searches) {
 
     // build the filter out of the searches array
@@ -7353,6 +8502,17 @@ function formulize_parseSearchesIntoFilter($searches) {
 }
 
 
+/**
+ * Perform update export operation
+ *
+ * This is the old export code used for 'update' mode operations.
+ * It processes query data and exports it based on the specified parameters.
+ *
+ * @param array $queryData The query data to export
+ * @param int $frid The framework ID
+ * @param int $fid The form ID
+ * @return void
+ */
 function do_update_export($queryData, $frid, $fid) {
     // this is the old export code, which is used for 'update' mode
     $fdchoice = "update";
@@ -7409,6 +8569,20 @@ function do_update_export($queryData, $frid, $fid) {
 }
 
 
+/**
+ * Export form data
+ *
+ * Exports form data to a CSV file based on the provided parameters.
+ *
+ * @param array $queryData The query data to export
+ * @param int $frid The framework ID
+ * @param int $fid The form ID
+ * @param array $groups The user groups
+ * @param array $columns The columns to export
+ * @param bool $include_metadata Whether to include metadata in the export
+ * @param string $output_filename The output filename (optional)
+ * @return void
+ */
 function export_data($queryData, $frid, $fid, $groups, $columns, $include_metadata, $output_filename="") {
 
     global $xoopsDB;
@@ -7626,6 +8800,16 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     fclose($output_handle);
 }
 
+/**
+ * Prepare columns for export
+ *
+ * This function prepares a list of columns for exporting data, handling metadata
+ * and various column types including standard fields and exported options.
+ *
+ * @param array $columns Array of column identifiers to export
+ * @param int $include_metadata Flag to include metadata (default: 0)
+ * @return array Processed columns ready for export
+ */
 function export_prepColumns($columns,$include_metadata=0) {
 
     // get a list of columns for export
@@ -7729,13 +8913,18 @@ function export_prepColumns($columns,$include_metadata=0) {
     return array($columns,$headers,$explodedColumns,$superHeaders,$handles);
 }
 
-
-
-// this function figures out certain default values for elements in a given entry in a form, and writes them to that entry
-// used for setting values that are supposed to exist by default in newly created subform entries
-// will potentially get back values for elements that already have a value in the database, if the default value based on the given entry would result in a different default than the one that is saved already
-// the intention is for this function to be called after an entry has been written already, so that any dependent defaults would take the "first pass" defaults and other saved values into consideration
-// this double default operation is only performed when saving new subform entries
+/**
+ * Perform second-pass writing of subform entry defaults
+ *
+ * This function handles secondary default value processing for subform entries,
+ * considering dependencies and existing values. It performs a double default
+ * operation for new subform entries.
+ *
+ * @param int $target_fid The target form ID
+ * @param int $target_entry The target entry ID
+ * @param array $excludeHandles Array of element handles to exclude (default: empty array)
+ * @return void
+ */
 function secondPassWritingSubformEntryDefaults($target_fid,$target_entry,$excludeHandles = array()) {
 
   $defaultValueMap = getEntryDefaultsInDBFormat($target_fid, $target_entry, keyByIds: true);
@@ -7755,6 +8944,7 @@ function secondPassWritingSubformEntryDefaults($target_fid,$target_entry,$exclud
  * Gets the default values for all elements in an entry, or just one element, usually for a new entry, but there is a double pass case for subform entries
  * Returns database level values, ie: what the default value would equate to in the database.
  * If a target_entry was specified, and the default value of the element, when considering the other values in that entry already (if the element type is capable of doing so), would be the same as what is already in the database, then no default value is returned for that element
+ *
  * @param int $targetObjectOrFormId - And element object to get the default value for, or a form object or form id to get all the default values for.
  * @param int|string $target_entry - The entry id for which we're getting default values, or 'new' for new entries not yet saved. Only used in cases of element types where the default might depend on the entry. Defaults to 'new'. Only case where this is not 'new' is the second pass at default values when generating new subform entries?? See comment in new subform entry writing code... there is surly a better way to handle that? Properly conditional elements would update in real time before saving in response to the value typed in other elements on screen?
  * @param boolean $keyByIds - a flag to indicate if the resulting array should be keyed by element id. Default is false and array will be keyed by element handles.
@@ -7864,7 +9054,16 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 	return $defaultValueMap;
 }
 
-// this function figures out if there is a viewentryscreen that we should be showing based on the current state
+/**
+ * Determine the view entry screen for a given screen and form
+ *
+ * This function determines which view entry screen should be displayed based on
+ * the current screen state and form configuration.
+ *
+ * @param object $screen The screen object
+ * @param int $fid The form ID
+ * @return int The screen ID to use for viewing entries
+ */
 function determineViewEntryScreen($screen, $fid) {
     if($screen AND is_a($screen, 'formulizeListOfEntriesScreen')) {
         $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -7938,8 +9137,18 @@ function checkForChrome() {
 
 }
 
-// THANKS TO https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
-// AND gimmicklessgpt at gmail dot com found at https://www.php.net/manual/en/function.copy.php#91010
+/**
+ * Recursively copy files and directories
+ *
+ * This function recursively copies all files and directories from a source
+ * location to a destination location.
+ *
+ * @param string $src Source directory path
+ * @param string $dst Destination directory path
+ * @return void
+ *
+ * @see https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
+ */
 function recurse_copy($src,$dst) {
     $dir = opendir($src);
     if(!file_exists($dst)) { @mkdir($dst); }
@@ -7956,7 +9165,15 @@ function recurse_copy($src,$dst) {
     closedir($dir);
 }
 
-// element template is copied to elementtemplate1 and elementtemplate2 on so multipage templates are up to standard
+/**
+ * Update multipage templates for a screen
+ *
+ * This function updates multipage templates by copying the element template to
+ * elementtemplate1 and elementtemplate2 files to ensure multipage templates are up to standard.
+ *
+ * @param object $screen The screen object to update templates for
+ * @return void
+ */
 function updateMultipageTemplates($screen) {
     $path = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".$screen->getVar('sid')."/";
     $fileMappings = array(
@@ -7979,6 +9196,14 @@ function updateMultipageTemplates($screen) {
     }
 }
 
+/**
+ * Check if user agent is a mobile client
+ *
+ * This function determines whether the current user agent string indicates
+ * a mobile device by checking against various mobile device patterns.
+ *
+ * @return bool True if user agent is a mobile client, false otherwise
+ */
 function userHasMobileClient() {
     $useragent=$_SERVER['HTTP_USER_AGENT'];
     if(preg_match('/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i',$useragent)||preg_match('/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i',substr($useragent,0,4))) {
@@ -7987,13 +9212,15 @@ function userHasMobileClient() {
     return false;
 }
 
-// this function reads the go_back values from POST and sets up parent entries in POST, which are used as a flag in key situations.
-// the Go Back form, setup with the legacy form screen submit buttons, normally would include the parent entries
-// however they are missing when a multipage form does a Go Back operation
-// So the list screens check if they need to do this, and call this function if so
-// Multipage screens check for this too, and call this function
-// Essentially, this is a replacement for the Go Back form (in case the parent values that it sets are not present in POST already)
-// This function returns the active entry that should be displayed
+/**
+ * Set up parent form values in POST and return entry ID
+ *
+ * This function handles the setup of parent form values when navigating back
+ * through multipage forms. It processes the go_back_entry values and sets
+ * appropriate POST variables for parent form navigation.
+ *
+ * @return string The active entry ID that should be displayed
+ */
 function setupParentFormValuesInPostAndReturnEntryId() {
     $go_back_entry = strstr($_POST['go_back_entry'], ',') ? explode(',',$_POST['go_back_entry']) : array($_POST['go_back_entry']);
     $lastKey = count($go_back_entry)-1;
@@ -8009,8 +9236,16 @@ function setupParentFormValuesInPostAndReturnEntryId() {
     return $go_back_entry[$lastKey];
 }
 
-// this function takes a form id number and returns an array of the records in the DB where entries were found that did not have ownership info
-// it repairs the ownership info of those entries, based on the current group memberships of the creation uid of the entries
+/**
+ * Repair entry owner groups table for a form
+ *
+ * This function identifies entries in a form that do not have ownership information
+ * in the entry_owner_groups table and repairs this information based on the creator's
+ * current group memberships.
+ *
+ * @param int $fid The form ID
+ * @return void
+ */
 function repairEOGTable($fid) {
     //check to see if there are entries in the form which
     //do not appear in the entry_owner_groups table. If so, it finds the
@@ -8036,9 +9271,16 @@ function repairEOGTable($fid) {
     }
 }
 
-// user offset from server tz
-// assume timestamp is based on server timezone!
-// returns seconds
+/**
+ * Get user timezone offset from server timezone in seconds
+ *
+ * This function calculates the offset between the user's timezone and the server's timezone
+ * in seconds, taking into account daylight savings adjustments for the given timestamp.
+ *
+ * @param object|null $userObject User object (optional, defaults to current user)
+ * @param int|null $timestamp Unix timestamp for the date/time to check (optional, defaults to current time)
+ * @return int Timezone offset difference from server timezone in seconds
+ */
 function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
 	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
 	global $xoopsConfig, $xoopsUser;
@@ -8052,8 +9294,16 @@ function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
 	return $tzDiff * 3600;
 }
 
-// get user offset from UTC
-// returns seconds
+/**
+ * Get user timezone offset from UTC in seconds
+ *
+ * This function calculates the user's timezone offset from UTC in seconds.
+ * It takes into account both the user's timezone offset and daylight savings adjustments.
+ *
+ * @param object|null $userObject User object (optional, defaults to current user)
+ * @param int|null $timestamp Unix timestamp for the date/time to check (optional, defaults to current time)
+ * @return int Timezone offset from UTC in seconds
+ */
 function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
 	global $xoopsConfig, $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
@@ -8064,16 +9314,28 @@ function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
 	return $userTimeZone * 3600;
 }
 
-// $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
-// timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
-// This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
-// since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
-// we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
-// if timezones are the same, no adjustment
-// if timezones are both in daylight savings at a given time, no adjustment
-// if timezones are neither in daylight savings at a given time, no adjustment
-// if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
-// returns difference in hours
+/**
+ * Calculate daylight savings adjustment between timezones
+ *
+ * This function calculates the difference in hours between two timezones based on
+ * whether they are currently in daylight savings time.
+ *
+ * @param float $userTimeZone The user's timezone offset
+ * @param float $compareTimeZone The timezone to compare against
+ * @param int $timestamp Unix timestamp for the date/time to check
+ * @return int The adjustment difference in hours
+ *
+ * $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
+ * timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
+ * This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
+ * since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
+ * we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
+ * if timezones are the same, no adjustment
+ * if timezones are both in daylight savings at a given time, no adjustment
+ * if timezones are neither in daylight savings at a given time, no adjustment
+ * if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
+ * returns difference in hours
+ */
 function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestamp) {
 
     // timezone name and number equivalents. crude!!
@@ -8118,6 +9380,7 @@ function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestam
 
 /**
  * Returns true or false indicating if the forms are part of the relationship and are connected by common value
+ *
  * @param int $frid The ID of the form relationship
  * @param array $fids An array of the two form IDs that we're looking for in the relationship
  * @return boolean Whether the forms are connected by common value in the specified relationship
@@ -8234,6 +9497,7 @@ function formulize_handleHtaccessRewriteRule() {
 
 /**
  * Determine the page ordinal starting from 1, based on the page identifier found in any rewrite rule string
+ *
  * @param mixed screenObjectOrIdentifier The screen object, or an identifier
  * @param string pageIdentifier The page identifier from the clean URL, should be a page title in the screen
  * @return int|false The page number found, or false if none found
@@ -8258,6 +9522,7 @@ function formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObje
 
 /**
  * Determine the entry ID that matches a given rewrite rule entry identifier, for the given screen
+ *
  * @param mixed screenObjectOrIdentifier The screen object, or an identifier
  * @param string entryIdentifier The identifier from the clean URL
  * @return int The entry ID found, or zero if none found
@@ -8286,6 +9551,7 @@ function formulize_getEntryIdFromRewriteruleElement($screenObjectOrIdentifier, $
 
 /**
  * Get the screen id for a given alternate URL address
+ *
  * @param string $address Optional. The alternate URL address to lookup. If none specified, reuse the first one we were passed.
  * @param string $entryIdentifier Optional. An entry identifier gathered from the URL. Could be invalid! Used as a flag to indicate if we should be gathering a list-ish screen or not.
  * @return int|bool Returns the screen ID, or false if there is no match, or nothing to match with.
@@ -8339,6 +9605,7 @@ function formulize_getSidFromRewriteAddress($address="", $entryIdentifier="") {
 
 /**
  * Return the operator found at the start of a string, if any
+ *
  * @param string $string The string we are looking at
  * @return string The operator found. Return empty string if there is no operator. Returns false if the string is not a string.
  */
@@ -8357,6 +9624,7 @@ function extractOperatorFromString($string) {
 
 /**
  * Create a js history api snippet to update the URL if there are rewrite rules in effect
+ *
  * @param object $screen The screen object being displayed
  * @param int|string $entry_id The entry id being displayed, or 'new' when a blank form is displayed yet to be saved
  * @param array $settings Optional. The $settings array if applicable. Used with multipage screens to identify the current page.
@@ -8413,9 +9681,10 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 
 /**
  * Writes code to a file in the modules/formulize/code folder
+ *
  * @param string filename The name of the file we're writing to
  * @param string code The contents to write to the file
- * @return boolean True/False depending how the writing operation went. If code is empty then returns true. If filename is empty, return false
+ * @return bool True/False depending how the writing operation went. If code is empty then returns true. If filename is empty, return false
  */
 function formulize_writeCodeToFile($filename, $code) {
 	if(!$filename) {
@@ -8432,7 +9701,8 @@ function formulize_writeCodeToFile($filename, $code) {
  * Deduce the correct done destination for a screen from the current URL.
  * If the done destination is for this specific screen that we're rendering,
  * switch done destination to the default list for the form if any.
- * @param object screen The screen that we're rendering
+ *
+ * @param object|false $screen The screen that we're rendering
  * @return string The done destination to use
  */
 function determineDoneDestinationFromURL($screen = false) {
@@ -8471,7 +9741,8 @@ function determineDoneDestinationFromURL($screen = false) {
  * Clean up a done destination for a screen, so it does not contain an entry reference.
  * Avoids the user ending up in a loop where the done action takes them back to the same page.
  * Works for standard and clean URLs
- * @param string done_dest The address the user is meant to return to
+ *
+ * @param string $done_dest The address the user is meant to return to
  * @return string The cleaned done destination with entry reference stripped
  */
 function stripEntryFromDoneDestination($done_dest) {
@@ -8506,7 +9777,8 @@ function stripEntryFromDoneDestination($done_dest) {
  * need this conversion applied in order to work.
  * Originally, Formulize stored user data with special characters in the DB. This will change. When it changes, this function is not needed. Until then, it is needed.
  * At the right time, this function will be modified to simply return the strings that are passed to it, without modification.
- * @param string String - the string to be converted
+ *
+ * @param string $string - the string to be converted
  * @return string The string with characters converted to special chars
  */
 function convertStringToUseSpecialCharsToMatchDB($string) {
@@ -8518,6 +9790,7 @@ function convertStringToUseSpecialCharsToMatchDB($string) {
 
 /**
  * Check if the 'revision history on for all forms' preference is set
+ *
  * @return bool Returns true if it is on, and false if it is not
  */
 function formulizeRevisionsForAllFormsIsOn() {
@@ -8530,8 +9803,9 @@ function formulizeRevisionsForAllFormsIsOn() {
 
 /**
  * Check if an element stores multiple values, and return necessary metadata for adapting the search operation if so.
- * @param int|string|object elementIdentifier - either an element id, or handle, or object
- * @param string operator - the operator being used in the search. Only LIKE, NOT LIKE, <=>, = and != trigger this behaviour
+ *
+ * @param int|string|object $elementIdentifier - either an element id, or handle, or object
+ * @param string $operator - the operator being used in the search. Only LIKE, NOT LIKE, <=>, = and != trigger this behaviour
  * @return array|boolean Returns an array of the necessary AND/OR value to use in a search of the multiple values, and the operator to use. Keys are 'andOr' and 'operator'. Returns false if the target element does not have multiple values, or the operator is not suitable for searching multiple values, or if the elementIdentifier is invalid.
  */
 function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $operator) {
@@ -8553,16 +9827,16 @@ function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $oper
 
 /**
  * Create the markup for the page selector used at the bottom of lists of entries, and on subform elements that page paging
- * @param string jsFunctionname - the name of the javascript function to trigger when the user clicks on a page number
- * @param int numberPerPage - the number of entries per page
- * @param int currentPageFirstRecord - the ordinal number of the first record on the current page, ie: 11 if there are five entries per page and the current page is 3
- * @param int firstDisplayPage - the first number that is shown in the pager, if the user is deep into a long series of pages, this won't be 1
- * @param int lastDisplayPage - the last number that is shown in the pager, if the user is in the middle of a long series of pages, this won't be the last page
- * @param int numberOfPages - the total number of pages, will be equal to the readable number of the last page
- * @param string entriesPerPageSelector - the markup for the entries per page selector, only used by lists of entries
+ *
+ * @param string $jsFunctionname - the name of the javascript function to trigger when the user clicks on a page number
+ * @param int $numberPerPage - the number of entries per page
+ * @param int $currentPageFirstRecord - the ordinal number of the first record on the current page, ie: 11 if there are five entries per page and the current page is 3
+ * @param int $firstDisplayPage - the first number that is shown in the pager, if the user is deep into a long series of pages, this won't be 1
+ * @param int $lastDisplayPage - the last number that is shown in the pager, if the user is in the middle of a long series of pages, this won't be the last page
+ * @param int $numberOfPages - the total number of pages, will be equal to the readable number of the last page
+ * @param string $entriesPerPageSelector - the markup for the entries per page selector, only used by lists of entries
  * @return string The markup for the pager
  */
-
 function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentPageFirstRecord, $firstDisplayPage, $lastDisplayPage, $numberOfPages, $entriesPerPageSelector=null) {
 
 	$pageNav = "<div class=\"formulize-page-navigation\">";
@@ -8598,8 +9872,9 @@ function formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $currentP
 
 /**
  * Find the first application for a given form.
- * @param mixed form_id_or_object - the form id number of a formulize form object
- * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ *
+ * @param mixed $form_id_or_object - the form id number of a formulize form object
+ * @param bool $returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
  * @return mixed Returns the ID number of the first application the form belongs to, if any, or the application object if returnObject was true. Returns false if form id or object was invalid, and null if there is no application for the form.
  */
 function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject = false) {
@@ -8622,6 +9897,7 @@ function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject 
 
 /**
  * Find the first application that both forms are part of, or if none, first application for the first form.
+ *
  * @param mixed first_form_id_or_object - the form id number of a formulize form object of the first form
  * @param mixed second_form_id_or_object - the form id number of a formulize form object of the first form
  * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
@@ -8672,6 +9948,7 @@ function formulize_getFirstApplicationForBothForms($first_form_id_or_object, $se
 
 /**
  * Check if two elements are actually linked to each other
+ *
  * @param int|string|object element1Indentifier - element id, handle or object for the first element
  * @param int|string|object element2Indentifier - element id, handle or object for the second element
  * @return boolean Return true or false, depending if the elements are linked to each other or not
@@ -8690,6 +9967,7 @@ function elementsAreLinked($element1Identifier, $element2Identifier) {
 
 /**
  * Find the element handle of the source element for a linked element
+ *
  * @param int|string|object elementIndentifier - element id, handle or object for the element
  * @return string|boolean Return the element handle of the source of the link, or false if the element is not linked
  */
@@ -8715,6 +9993,7 @@ function sourceHandleForElement($element) {
  * Given a form id, this function returns the default screen that applies for the given user.
  * Takes users permission and form settings into account. Users may not have permission to see multiple entries.
  * Forms may not be set to support multiple entries.
+ *
  * @param int|object formID_or_formObject - The form id or object we're checking
  * @return int Returns the screen id if one is found. Returns 0 if no screen found.
  */
@@ -8745,6 +10024,7 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 
 /**
  * Check if MCP Server is enabled in Formulize preferences
+ *
  * @return bool True if MCP server is enabled, false otherwise
  */
 function isMCPServerEnabled() {
@@ -8764,6 +10044,7 @@ function isMCPServerEnabled() {
 
 /**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
+ *
  * @param mixed value - the value we're working with
  * @return mixed returns the value, with the correct type based on its contents. If value is not a string, int or float, returns whatever we got passed in
  */
@@ -8775,7 +10056,9 @@ function correctStringIntFloatTypes($value) {
 }
 
 /**
- * Look in the uitext for an element and see if a value matches, return the DB value that corresponds to the passed in value
+ * Look in the uitext for an element and see if a value matches, return the DB
+ * value that corresponds to the passed in value
+ *
  * @param string $value The value to check
  * @param object $element The element to check against
  * @param bool $partialMatch Whether to allow partial matches
@@ -8824,8 +10107,16 @@ function checkUITextForValue($value, $element, $partialMatch=false) {
 	}
 }
 
-// THIS FUNCTION TAKES A SERIES OF VALUES TYPED IN FORM RADIO BUTTONS, CHECKBOXES OR SELECTBOX OPTIONS, AND CHECKS TO SEE IF THEY WERE ENTERED WITH A UITEXT INDICATOR, AND IF SO, SPLITS THEM INTO THEIR ACTUAL VALUE PLUS THE UI TEXT AND RETURNS BOTH
-// $values should be an array of all the options, so $ele_value for radio and checkboxes, $ele_value[2] for selectboxes
+/**
+ * Extract UI text from form values
+ *
+ * This function takes a series of values typed in form radio buttons, checkboxes or selectbox options,
+ * and checks to see if they were entered with a UI text indicator. If so, it splits them into their
+ * actual value plus the UI text and returns both.
+ *
+ * @param array $values Array of form values (options)
+ * @return array Array with original values and corresponding UI text
+ */
 function formulize_extractUIText($values) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 	// values are the text that was typed in
@@ -8852,6 +10143,7 @@ function formulize_extractUIText($values) {
 
 /**
  * A very legacy operation, matching text a value for an element in an existing entry, and returning an HTML link if a match is found.
+ *
  * @param string $text The text to match against the associated element
  * @param int $associatedElementId The element id of the associated element to match against
  * @param int $textWidth Optional. The maximum width of the text to display in the link. Defaults to 100.
@@ -8888,6 +10180,7 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
 /**
  * Figure out the correct order value for an element based on the order choice made by the user
  * Also moves subsequent elements down if necessary
+ *
  * @param mixed orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
  * @param int|float oldOrder The old order value of the element that is being placed, if any. Not required for new elements going to the bottom. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
  * @param int fid The form id the element belongs to. Required.
@@ -8933,6 +10226,7 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 
 /**
  * Check if a method exists in a class, and that it is not inherited from a parent class
+ *
  * @param string $class The class name
  * @param string $method The method name
  * @return bool Returns true if the method exists in the class and is not inherited, false otherwise
@@ -8945,6 +10239,7 @@ function methodExistsInClass($class, $method) {
 /**
  * Deduce the title of the page being rendered, based on the screen and entry being rendered, and set it in the XOOPS template for passing out to the theme
  * Page title is a semantic aid to the user to read history in browser, and bookmarks, etc. Not necessarily a unique identifier, since multiple form screens would end up with the PI value for the entry as the title of the screen. Titles can be long and internally descriptive for webmasters to tell screens apart, and PI is more meaningful to users, if present.
+ *
  * @param int entryId The entry id being rendered, if any
  * @param object renderedFormulizeScreen The screen object being rendered, if any
  * @param array settings An array of settings for the screen rendering, if any. Used to gather the current page number for multipage screens
@@ -9025,6 +10320,14 @@ function formulize_get_file_version($relativeFilePath) {
 	}
 	return 0;
 }
+
+/**
+ * Get list of candidate owners for form entries
+ *
+ * @param int $fid Form ID.
+ * @param array
+ *   List of names based on user IDs
+ */
 function getListOfCandidateOwnersForFormEntries($fid) {
 
 	global $xoopsDB, $xoopsUser;
@@ -9075,6 +10378,7 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 
 /**
  * Gets the aria sort value for the current element handle
+ *
  * @param string elementHandle - handle of the element being checked
  * @return string Returns the aria sort value
  */
@@ -9098,10 +10402,20 @@ function getAriaSort($elementHandle) {
 }
 
 /**
- * Gets the tooltip title and sort icon markup for a column header based on the current sort state and the element handle of the column.
- * The title will indicate that the column can be sorted, and if there is a primary sort on another column, it will also hint that shift+click can be used to add this column to the sort. The icon will show an up or down arrow if this column is currently sorted, and if there are multiple sorted columns, it will also show a badge with the sort priority (1st, 2nd, 3rd, etc).
- * @param string elementHandle - the handle of the element for the column header we are generating the title and icon for
- * @return array Returns an array with two elements: [0] => the tooltip title for the column header, [1] => the HTML markup for the sort icon (which may be an empty string if the column is not currently sorted)
+ * Gets the tooltip title and sort icon markup for a column header based on the
+ * current sort state and the element handle of the column.
+ *
+ * The title will indicate that the column can be sorted, and if there is a
+ * primary sort on another column, it will also hint that shift+click can be
+ * used to add this column to the sort. The icon will show an up or down arrow
+ * if this column is currently sorted, and if there are multiple sorted columns,
+ * it will also show a badge with the sort priority (1st, 2nd, 3rd, etc).
+ *
+ * @param string elementHandle - the handle of the element for the column header
+ * we are generating the title and icon for
+ * @return array Returns an array with two elements: [0] => the tooltip title
+ * for the column header, [1] => the HTML markup for the sort icon (which may be
+ * an empty string if the column is not currently sorted)
  */
 function getSortTitleAndIcon($elementHandle) {
 
