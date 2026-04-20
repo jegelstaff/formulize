@@ -1909,43 +1909,40 @@ function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false
 }
 
 /**
- * Get the complete set of columns that are in a form or relationship
+ * Get all the elements form, and optionally related forms in a relationship.
+ * By default, does not include text for display elements.
  *
- * the returned array contains one DB query result for each form
- * ie:  $cols[form1] = all columns in that form, $cols[form2] = all columns in
- * that form
- * columns are the raw results from a function q query of the DB, ie: two
- * dimensioned array, first dimension is a counter for the records returned,
- * second dimension is the name of the db field returned
- * in this case the db fields are ele_id and ele_caption and ele_colhead
- *
- * @param int $fid
- * @param string $frid
- * @param array $groups
- * Optional. the grouplist of the current user
- * If present it will limit the columns returned to the ones where display is 1
- * or the display includes that group
- * @param bool $includeBreaks
- *
- * @return array
+ * @param int $fid The form id we're getting elements for
+ * @param string $frid Optional. The relationship if any that we should use to include related forms
+ * @param array $groups Optional. Optional. An array of group ids that we should use to limit which elements are included (based on their display settings). If not specified, the display settings for the element are not taken into account.
+ * @param bool $includeTextForDisplay Optional. Defaults to false, so 'text for display' elements are not included
+ * @return array And array keyed for form id, where each value is the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption and ele_colhead
  */
-function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
+function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false) {
     global $xoopsUser;
     $gperm_handler = xoops_gethandler('groupperm');
+		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     $mid = getFormulizeModId();
+		$fid = intval($fid);
+		$frid = intval($frid);
+
+    if (!$frid AND !$fid) {
+      throw new Exception("List of columns requested without specifying a form nor a relationship.");
+    }
 
     // if $groups then build the necessary filter
     // build query for display groups
     $gq = "";
     if (is_array($groups)) {
-        $gq = "AND (ele_display='1'";
-        foreach ($groups as $thisgroup) {
-            $gq .= " OR ele_display LIKE '%,$thisgroup,%'";
-        }
-        $gq .= ")";
+			$gq = "AND (ele_display='1'";
+			foreach ($groups as $i=>$thisgroup) {
+				$groups[$i] = intval($thisgroup);
+				$gq .= " OR ele_display LIKE '%,".intval($thisgroup).",%'";
+			}
+			$gq .= ")";
     } else {
-    // reset groups to be based off user object (and this instantiates it if it weren't present before)
-    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+			// reset groups to be based off user object (and this instantiates it if it weren't present before)
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     }
 
     // if current user does NOT have view_private_elements permission, then set a query to exclude those elements
@@ -1954,26 +1951,19 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
         $pq = "AND ele_private=0";
     }
 
-    if (!$includeBreaks) {
-        $incbreaks = "AND (ele_type != \"ib\" AND ele_type != \"areamodif\")";
-    } else {
-        $incbreaks = "";
+		$incbreaks = "";
+    if (!$includeTextForDisplay) {
+        $incbreaks = "AND (ele_type != 'ib' AND ele_type != 'areamodif')";
     }
-
-    if (!$frid AND !$fid) {
-        exit("Error:  list of columns requested without specifying a form or a framework.");
-    }
-
-		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 
     // generate the $allcols list
+		// do the passed in fid first, append rest of relationship after if necessary
+		$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
     if ($frid) {
         $fids[0] = $fid;
         $check_results = checkForLinks($frid, $fids, $fid, "");
         $fids = $check_results['fids'];
         $sub_fids = $check_results['sub_fids'];
-				// do the passed in fid first, append rest of relationship after
-				$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
         foreach ($fids as $this_fid) {
 						if($this_fid != $fid) {
 							$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
@@ -1984,24 +1974,23 @@ function getAllColList($fid, $frid="", $groups="", $includeBreaks=false) {
 						$cols = addToColsList($cols, $this_fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
 					}
         }
-    } else {
-			$cols = addToColsList(array(), $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks);
     }
     return $cols;
 }
 
 /**
- * Add to Column lists that are in a form or framework
+ * Get the element properties for a form, direct from the database.
+ * Only used by the getAllColList function.
  *
- * @param array $cols
- * @param int $fid
- * @param int $uid
- * @param string $groups
- * @param int $mid
- * @param string $gperm_handler
- * @param string $gq
- * @param string $pq
- * @param string $incbreaks
+ * @param array $cols An array of columns that we are gathering and going to append to
+ * @param int $fid The form id for which we are getting the columns
+ * @param int $uid The user id for which we should check permission to access the form (probably the current user)
+ * @param array $groups An array of group ids which should be used to check permission to access the form (probably the current user's groups)
+ * @param int $mid The module id for the formulize module
+ * @param object $gperm_handler The group permission handler object
+ * @param string $gq The group query string for filtering elements based on element display settings (ie: which groups the elements are displayed to)
+ * @param string $pq The private query string for filtering elements based on whether they're a private element or not
+ * @param string $incbreaks The query string for including or excluding certain element types
  *
  * @return array
  */
@@ -2018,36 +2007,30 @@ function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $p
 }
 
 /**
- * Check other values for form elements
+ * Get the readable text for an element. Used in generating calculation results.
  *
- * This function checks other values for form elements, particularly handling
- * "other" text box values in forms. TAKES A ID FROM THE CALCULATIONS RESULT AND
- * RETURNS THE TEXT TO PUT ON THE SCREEN THAT CORRESPONDS TO IT
- *
- * @param string $key Key identifier
- * @param int $target_element_id Target element ID
- * @param string $target_entry_id Target entry ID
- * @param mixed $subformBlankCounter Subform blank counter
- * @return mixed Formatted value or false
+ * @param int|string $elementIdOrMetadataHandle The element id or metadata handle for which to get the text. Can be an element id number, or one of the following strings: entry_id, creation_uid, mod_uid, creation_datetime, mod_datetime, creator_email, owner_groups
+ * @param bool $forceColhead Whether to force the use of the column heading if available, instead of the caption. Default true, which means that if a column heading is available, it will be used. If false, then the caption will be used even if a column heading is available.
+ * @return string The column heading, or caption, or "Could not identify the column name" if an invalid element id or metadata handle was passed in.
  */
-function getCalcHandleText($handle, $forceColhead=true) {
+function getCalcHandleText($elementIdOrMetadataHandle, $forceColhead=true) {
     global $xoopsDB;
-    if ($handle == "entry_id") {
+    if ($elementIdOrMetadataHandle == "entry_id") {
         return _formulize_ENTRY_ID;
-    } elseif ($handle == "creation_uid") {
+    } elseif ($elementIdOrMetadataHandle == "creation_uid") {
         return _formulize_DE_CALC_CREATOR;
-    } elseif ($handle == "mod_uid") {
+    } elseif ($elementIdOrMetadataHandle == "mod_uid") {
         return _formulize_DE_CALC_MODIFIER;
-    } elseif ($handle == "creation_datetime") {
+    } elseif ($elementIdOrMetadataHandle == "creation_datetime") {
         return _formulize_DE_CALC_CREATEDATE;
-    } elseif ($handle == "mod_datetime") {
+    } elseif ($elementIdOrMetadataHandle == "mod_datetime") {
         return _formulize_DE_CALC_MODDATE;
-    } elseif ($handle == "creator_email") {
+    } elseif ($elementIdOrMetadataHandle == "creator_email") {
         return _formulize_DE_CALC_CREATOR_EMAIL;
-		} elseif ($handle == "owner_groups") {
+		} elseif ($elementIdOrMetadataHandle == "owner_groups") {
         return _formulize_DE_CALC_OWNERGROUPS;
-    } elseif (is_numeric($handle)) {
-        $caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = '$handle'");
+    } elseif (is_numeric($elementIdOrMetadataHandle)) {
+        $caption = q("SELECT ele_caption, ele_colhead FROM " . $xoopsDB->prefix("formulize"). " WHERE ele_id = ".intval($elementIdOrMetadataHandle));
         if ($forceColhead AND $caption[0]['ele_colhead'] != "") {
             return $caption[0]['ele_colhead'];
         } else {
@@ -2065,7 +2048,7 @@ function getCalcHandleText($handle, $forceColhead=true) {
  * results in the highest level of scope the user is permitted on the form.
  *
  * @param string|int $currentView
- *  Can be one of the strings: mine, group, or all, signifying "the user's
+ * Can be one of the strings: mine, group, or all, signifying "the user's
  * entries," or "their group's entries," or "all entries." Can be a comma
  * separated list of group ids instead, or a single group id, to declare a
  * specific scope based on that particular set of groups. If you pass specific
@@ -2073,21 +2056,22 @@ function getCalcHandleText($handle, $forceColhead=true) {
  * limited to the groups the user is a member of, put the string
  * 'onlymembergroups' as the first item in the comma separated list.
  * @param object|int $uidOrObject
- *  The user id or the user object, representing the user for whom the scope
+ * The user id or the user object, representing the user for whom the scope
  * is being created. This user's permissions on the form will be taken into
  * account when building the scope. If an invalid user id or object is passed,
  * then the anonymous user, user 0, is assumed.
  * @param int $fid
- *  The id number of the form for which the scope is being built
+ * The id number of the form for which the scope is being built
  * @param boolean $currentViewCanExpand
- *  A flag used internally to allow for a scope that is beyond the user's
+ * A flag used internally to allow for a scope that is beyond the user's
  * permissions. Used when saved views publish data to a group of users, which
  * those users would not normally see.
  * @return array
- * Returns an array with two values in it. Key zero is the scope which will be
- * an array of group ids or arbitrary SQL to append to a database query. Key one
- * is the value of currentView, which may have changed if 'group' or 'all' was
- * specified and the user did not have that level of permission.
+ * Returns an array with two values in it. Key zero is the scope, which will be
+ * an array of group ids or arbitrary SQL to append to a database query, or an
+ * empty string if the user has global scope. Key one is the value of currentView,
+ * which may have changed if 'group' or 'all' was specified and the user did not
+ * have that level of permission.
  */
 function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand = false) {
 
@@ -2164,46 +2148,42 @@ function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand =
 }
 
 /**
- * SENDS TEXT THROUGH THE TRANSLATION ROUTINE IF MARCAN'S MULTILANGUAGE HACK IS
- * INSTALLED THIS FUNCTION IS ALSO AWARE OF THE XLANGUAGE MODULE IF THAT IS
- * INSTALLED.
+ * Strip out language tags and inactive languages from a string.
+ * Depends on the easiestml function, if available. If not, just return the string.
  *
- * @param mixed $string
- * @param string|null $lang
- *   Optional and will force the translation to be in a certain language
+ * Language tags look like this: [en]Hello[/en][fr]Bonjour[/fr]
  *
- * @return string
+ * @param string $string The string being translated.
+ * @param string|null $lang Optional. If present, sets the language we want the string to use. If not present, the current active language will be used.
+ * @return string The original string with all language text and tags removed, other than the active language, or the passed in $lang if there was one.
  */
 function trans($string, $lang = null) {
-    if (is_string($string) AND !is_numeric($string) AND function_exists('easiestml')) {
-        global $easiestml_lang;
-        $easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
-        $original_easiestml_lang = $easiestml_lang;
-        $easiestml_lang = $lang ? $lang : $easiestml_lang;
-        $string = easiestml($string);
-        $easiestml_lang = $original_easiestml_lang;
-    }
-    return $string;
+	if (is_string($string) AND !is_numeric($string) AND function_exists('easiestml')) {
+		global $easiestml_lang;
+		$easiestml_lang = isset($_GET['lang']) ? $_GET['lang'] : $easiestml_lang;   // this is required when linked with a Drupal install
+		$original_easiestml_lang = $easiestml_lang;
+		$easiestml_lang = $lang ? $lang : $easiestml_lang;
+		$string = easiestml($string);
+		$easiestml_lang = $original_easiestml_lang;
+	}
+	return $string;
 }
 
 /**
- * MASSAGES DATA RETURNED FROM A FORM SUBMISSION SO IT CAN BE PUT IN THE DATABASE
- * param it takes is the element object ($element), and the passed value from
- * the form ($ele)
+ * Takes values from a form submission, and prepares them for insertion into the database.
+ * Relies on the prepareDataForSaving method of each element type handler class.
  *
- * @param object $element
- * @param mixed $ele
- * @param int|null $entry_id
- *   is passed if known (but will be "new" for new entries, and default to null
- *   for subform blanks)
- * @param int|null $subformBlankCounter
- *   is passed when we are preparing subform blank values
+ * Some form elements submit values that are different from what should be saved, such as lists that submit the ordinal posiiton of the value chosen, etc
  *
- * @return mixed
+ * @param int|string|object $elementIdentifier The element id, handle, or object for the element for which data is being prepared.
+ * @param mixed $value The value submitted from the form to be prepared for saving.
+ * @param int|string|null $entry_id The entry id which the value belongs to, or 'new' if the entry is a new entry, or null if something else (like a blank subform default record)
+ * @param int|null $subformBlankCounter For prepareing subform blank values, this is the instance of the blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
+ * @return mixed The prepared value, ready to be inserted into the database, or false if the element identifier was invalid. The type of the returned value will depend on the element type and the prepareDataForSaving method for that element type.
  */
-function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=null) {
+function prepDataForWrite($elementIdentifier, $value, $entry_id=null, $subformBlankCounter=null) {
 
-    if(!$element = _getElementObject($element)) {
+    if(!$element = _getElementObject($elementIdentifier)) {
 			return false;
     }
 
@@ -2215,7 +2195,7 @@ function prepDataForWrite($element, $ele, $entry_id=null, $subformBlankCounter=n
 
     $ele_type = $element->getVar('ele_type');
 		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
-		$value = $customTypeHandler->prepareDataForSaving($ele, $element, $entry_id, $subformBlankCounter);
+		$value = $customTypeHandler->prepareDataForSaving($value, $element, $entry_id, $subformBlankCounter);
 
     $cachedPreppedValues[$cacheKey] = $value;
 
