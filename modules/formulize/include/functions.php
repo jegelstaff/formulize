@@ -2203,60 +2203,39 @@ function prepDataForWrite($elementIdentifier, $value, $entry_id=null, $subformBl
 }
 
 /**
- * takes an element id or element object and returns an array of the id of the
- * source form and the id of the element in the source form, where the options
- * are linked form
+ * Returns the id of the source form for a linked element, and the handle of the source element in that form.
+ * Returns false if the element is not a linked element.
  *
- * @param int|object $elementIdOrObject
- *
- * @return array|false
- *   returns false if the element is not linked to another for source options
+ * @param int|string|object $elementIdentifier The element id, handle, or object for the element
+ * @return array|false Returns false if the element is not linked to another for source options
  */
-function getLinkedOptionsSourceForm($elementIdOrObject) {
-    if(!$element = _getElementObject($elementIdOrObject)) {
+function getLinkedOptionsSourceForm($elementIdentifier) {
+  if(!$element = _getElementObject($elementIdentifier)) {
 		return false;
 	}
-    if($element->isLinked) {
-        $ele_value = $element->getVar('ele_value');
-        $linkProperties = explode("#*=:*",$ele_value[2]);
-        return array($linkProperties[0], $linkProperties[1]); // id of the source form for the element's options
-    } else {
-        return false;
-    }
+	if($element->isLinked) {
+		$ele_value = $element->getVar('ele_value');
+		$linkProperties = explode("#*=:*",$ele_value[2]);
+		return array($linkProperties[0], $linkProperties[1]); // id of the source form for the element's options
+	}
+  return false;
 }
 
 
 /**
- * This function takes a literal text value (usually typed in by a user) and
- * converts it to a value that is valid for the database, either for storing
- * later or for using in a query to compare with DB values.
+ * This function takes a literal text value (usually typed in by a user) and converts it to a value that is valid for the database, either for storing later or for using in a query to compare with DB values.
  * Serves two purposes at once, could/should be split up.
  * 1. takes curly bracket references and figures them out
- * 2. takes text supplied by user and compares it to valid options for elements
- * and returns the actual DB value to use in a search, if different
- * There is usually no overlap in these use cases, but there are exotic
- * situations where a user might supply a { } reference?
- * It's possible there is no overlap at all, but extensive testing would be
- * required to rule it out.
- * If partialMatch is true, code that called this MUST be prepared for the
- * possibility of an array being returned!!
- *
- * @param int|string|object elementObjectOrIdentifier This is either an element
- * ID number, element handle, or element object of the element for which the
- * text value is being prepared
+ * 2. takes text supplied by user and compares it to valid options for elements and returns the actual DB value to use in a search, if different
+ * There is usually no overlap in these use cases, but there are exotic situations where a user might supply a { } reference?
+ * It's possible there is no overlap at all, but extensive testing would be required to rule it out.
+ * If partialMatch is true, code that called this MUST be prepared for the possibility of an array being returned!!
+ * @param int|string|object elementObjectOrIdentifier This is either an element ID number, element handle, or element object of the element for which the text value is being prepared
  * @param string value The text value that is being prepared
- * @param int curlyBracketEntryId Optional. The entry ID in which any { } element
- * references should be resolved
- * @param int userComparisonId Optional. The user ID of a user that should be
- * returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'.
- * If the curlyBracketEntryId is 'new' then the current user's ID will be used.
- * @param bool partialMatch Optional. If true, then the value will be checked in
- * the method call for multiple matches and an array could be returned.
- * @return string|array|bool The prepared value compatible with data in the
- * databse, or the false if the elementObjectOrIdentifier is not valid, or the
- * search term is deemed invalid by the method call (matches nothing in the DB).
- * Can be an array of values if partialMatch is true, or multiple linked source
- * entries match a single search term.
+ * @param int curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
+ * @param int userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
+ * @param bool partialMatch Optional. If true, then the value will be checked in the method call for multiple matches and an array could be returned.
+ * @return string|array|bool The prepared value compatible with data in the databse, or the false if the elementObjectOrIdentifier is not valid, or the search term is deemed invalid by the method call (matches nothing in the DB). Can be an array of values if partialMatch is true, or multiple linked source entries match a single search term.
  */
 function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null, $partialMatch = false) {
 
@@ -2345,50 +2324,20 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
 }
 
 /**
- * THIS FUNCTION CONTRIBUTED BY DPICELLA.  Added in Mar 15 2006.
- * Not currently in use due to current version of PHP natively supporting this feature.
- *
- * A shorter function for recognising dates before 1970 and returning a negative
- * number is below. All it does is replaces years before 1970 with  ones 68
- * years later (1904 becomes 1972), and then offsets the return value by a
- * couple billion seconds. It works back to 1/1/1902, but only on dates that
- * have a century.
- *
- * Note that a negative number is stored the same as a really big positive
- * number. 0x80000000 is the number of seconds between 13/12/1901 20:45:54 and
- * 1/1/1970 00:00:00. And 1570448 is the seconds between this date and
- * 1/1/1902 00:00:00, which is 68 years before 1/1/1970.
- *
- * @param string $s
- *
- * @return int
- */
-function safestrtotime ($s) {
-    $basetime = 0;
-    if (preg_match ("/19(\d\d)/", $s, $m) && ($m[1] < 70)) {
-        $s = preg_replace ("/19\d\d/", 1900 + $m[1]+68, $s);
-        $basetime = 0x80000000 + 1570448;
-    }
-    return $basetime + strtotime ($s);
-}
-
-/**
- * FIGURES OUT IF THE CURRENT ELEMENT HAS A VALUE FOR THE CURRENT ENTRY
+ * Figures out if the current element has a value for the current entry
  * Only returns true or false, not the actual value
  *
- * @param mixed $entry
- * @param int $element_id
- * @param int $fid
- *
- * @return bool
+ * @param mixed $entry_id The entry id for which to check the value.
+ * @param int $element_id The element id for which to check the value.
+ * @param int $fid The form id for which to check the value.
+ * @return bool True if the element has a value, false otherwise.
  */
-function getElementValue($entry, $element_id, $fid) {
-    $data_handler = new formulizeDataHandler($fid);
-    if (!$data_handler->elementHasValueInEntry($entry, $element_id)) {
-        return false;
-    } else {
-        return true;
-    }
+function getElementValue($entry_id, $element_id, $fid) {
+	$data_handler = new formulizeDataHandler($fid);
+	if ($data_handler->elementHasValueInEntry($entry_id, $element_id)) {
+		return true;
+	}
+	return false;
 }
 
 /**
@@ -2448,52 +2397,44 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
 }
 
 /**
- * Check other values for form elements
+ * Check for "other" values in $_POST from form elements that support {OTHER|n} syntax, like radio buttons that can have a final "Other" option which users can type in.
  *
- * This function checks other values for form elements, particularly handling
- * "other" text box values in forms.
- *
- * @param string $key Key identifier
- * @param int $target_element_id Target element ID
- * @param string $target_entry_id Target entry ID
- * @param mixed $subformBlankCounter Subform blank counter
- * @return mixed Formatted value or false
+ * @param string $key The text of an element option, which may or may not contain the {OTHER|n} syntax, where n is the width of the box
+ * @param int $target_element_id The element ID of the element for which we're looking for the potential "Other" value
+ * @param int|string $target_entry_id The entry ID of the entry for which we're looking for the potential "Other" value, or 'new' if this is a new entry that has not yet been saved and assigned an entry ID
+ * @param int $subformBlankCounter The Subform blank counter identifying which of multiple blank subform default entries we are looking for
+ * @return mixed The value found in $_POST, if any, or an empty string. Or false if the $key is not for an {OTHER|n} option.
  *
  * FUNCTION COPIED FROM LIASE 1.26
  * JWE - JUNE 1 2006
  *
  */
 function checkOther($key, $target_element_id, $target_entry_id, $subformBlankCounter=null){
-    global $myts;
-    if (!preg_match('/\{OTHER\|+[0-9]+\}/', $key) ){
-        return false;
-    }else{
-        if( !empty($_POST['other'])) {
-            if($subformBlankCounter !== null) {
-                return $_POST['other']['ele_'.$target_element_id.'_new_'.$subformBlankCounter];
-            } elseif($target_entry_id == "new") {
-                return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id.'_0']; // a counter is always added to the end of other values for new entries! This is in case we might make all this smarter to handle multiple new entries in the same elements on the same page later??
-            } else {
-                return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id];
-            }
-        }else{
-            return "";
-        }
-    }
+	global $myts;
+	if (!preg_match('/\{OTHER\|+[0-9]+\}/', $key) ){
+		return false;
+	}
+	if(!empty($_POST['other'])) {
+		if($subformBlankCounter !== null) {
+			return $_POST['other']['ele_'.$target_element_id.'_new_'.$subformBlankCounter];
+		} elseif($target_entry_id == "new") {
+			return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id.'_0']; // a counter is always added to the end of other values for new entries! This is in case we might make all this smarter to handle multiple new entries in the same elements on the same page later??
+		}
+		return $_POST['other']['ele_'.$target_element_id.'_'.$target_entry_id];
+	}
+	return "";
 }
 
 /**
- * TAKES THE 'Other' VALUES USERS MAY HAVE WRITTEN INTO THE FORM, AND SAVES THEM
- * TO THE db IN THEIR OWN TABLE
+ * Takes the 'other' values users may have written into the form, and saves them
+ * to the db in their own table
  * The other values are generated by the prepDataForWrite function, so it has to
  * be called prior to this one
  *
- * @param mixed $id_req ID request
- * @param mixed $fid Form ID
- * @param mixed $subformBlankCounter Subform blank counter
- *
- * @return bool|void
- *   Success status or void
+ * @param int $id_req The entry id for which other values are being written
+ * @param int $fid Form ID
+ * @param int|null $subformBlankCounter Subform blank counter indicating which of multiple blank subform default entries we are saving, if applicable.
+ * @return bool|void Success status or void
  *
  * ADDED JWE - JUNE 1 2006
  */
@@ -2502,6 +2443,7 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
     if (!$myts){
         $myts =& MyTextSanitizer::getInstance();
     }
+		$id_req = intval($id_req);
 
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/forms.php";
     $thisForm = new formulizeForm($fid);
@@ -2552,7 +2494,7 @@ function writeOtherValues($id_req, $fid, $subformBlankCounter=null) {
 
             if ($sql) {
                 if (!$result = $xoopsDB->query($sql)) {
-                    exit("Error writing 'Other' value to the database with this SQL:<br>$sql");
+                  throw new Exception("Could not write 'Other' value to the database with this SQL:<br>$sql");
                 }
             }
             unset($GLOBALS['formulize_other'][$ele_id][$id_req]);
