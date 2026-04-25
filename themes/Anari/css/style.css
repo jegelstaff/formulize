@@ -3318,6 +3318,10 @@ input[name='pickdiffgroup'] {
     padding-top: 0;
 }
 
+.formulize-spacer {
+	border: 0px !important;
+}
+
 /* quickSearchFilters lining up right with search boxes */
 .list-of-entries-container table.outer td[id^=celladdress_1_] select {
     position: relative;
