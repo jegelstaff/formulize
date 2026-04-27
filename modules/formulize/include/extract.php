@@ -1160,9 +1160,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$linkedFormObject = $form_handler->get($thisLinkFid);
 				$linkedEauJoin = isset($eauLinkedJoinTextIndex[$thisLinkFid]) ? $eauLinkedJoinTextIndex[$thisLinkFid] : "";
 				$linkedEauSelect = isset($eauLinkedSelectFieldIndex[$thisLinkFid]) ? $eauLinkedSelectFieldIndex[$thisLinkFid] : "";
+				$commaIfNecessary = ($linkedEauJoin and $linkedEauSelect) ? "," : "";
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
-					. $linkSelectIndex[$thisLinkFid] . $linkedEauSelect .
-					", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
+					. $linkSelectIndex[$thisLinkFid] . $linkedEauSelect . $commaIfNecessary .
+					" usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
 					. DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
                     LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid"
 					. $eauMainJoinText
