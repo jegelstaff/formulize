@@ -29,16 +29,22 @@
 		$thisFidCaptions = $thisFidObj->getVar('elementCaptions');
 		$thisFidColheads = $thisFidObj->getVar('elementColheads');
 		$thisFidHandles = $thisFidObj->getVar('elementHandles');
-		foreach($thisFidElements as $zz => $thisFidElement) {
-			$elementHeading = $thisFidColheads[$zz] ? $thisFidColheads[$zz] : $thisFidCaptions[$zz];
-			// Base on all fids in relationship - for passing to custom button logic, so we know all the element options for each form in framework
-			$elementOptionsFid[$thisFid][$thisFidElement] = printSmart(trans(strip_tags($elementHeading)), 75);
+		$thisUserAccountElements = $thisFidObj->getVar('userAccountElements');
+		foreach($thisFidHandles as $elementId => $thisFidElementHandle) {
+			$elementHeading = $thisFidColheads[$elementId] ? $thisFidColheads[$elementId] : $thisFidCaptions[$elementId];
+			// for now, only allow elements with data into elementOptionsFid - user account elements probably need more features added in order to be supported everywhere elementOptionsFid shows up
+			if(isset($thisFidElements[$elementId])) {
+				// Base on all fids in relationship - for passing to custom button logic, so we know all the element options for each form in framework
+				$elementOptionsFid[$thisFid][$elementId] = printSmart(trans(strip_tags($elementHeading)), 75);
+			}
 			// Base on only fids linked to mainform in relationship...
 			if(in_array($thisFid, $allLinkedFids)) {
-				$elementOptions[$thisFidHandles[$zz]] = (isset($allFidsToUse) OR $selectedFramework) ? printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125) : printSmart(trans(strip_tags($elementHeading)), 40);
-				$elementOptionsById[$thisFidElement] = $elementOptions[$thisFidHandles[$zz]];
-				$class = $class == "even" ? "odd" : "even";
-				$listTemplateHelp[$thisFidObj->title][] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidHandles[$zz]."</nobr></td></tr>";
+				if(isset($thisFidElements[$elementId]) OR isset($thisUserAccountElements[$elementId])) { // for the list template help, we want to include user account elements even if they don't have data, since we want to show that they're available as options in the template
+					$elementOptions[$thisFidHandles[$elementId]] = (isset($allFidsToUse) OR $selectedFramework) ? printSmart(trans(strip_tags($thisFidObj->title.': '.$elementHeading)), 125) : printSmart(trans(strip_tags($elementHeading)), 40);
+					$elementOptionsById[$elementId] = $elementOptions[$thisFidHandles[$elementId]];
+					$class = $class == "even" ? "odd" : "even";
+					$listTemplateHelp[$thisFidObj->title][] = "<tr><td class=$class><nobr><b>" . printSmart(trans(strip_tags($elementHeading)), 75) . "</b></nobr></td><td class=$class><nobr>".$thisFidElementHandle."</nobr></td></tr>";
+				}
 			}
 		}
   }

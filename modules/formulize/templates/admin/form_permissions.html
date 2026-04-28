@@ -10,8 +10,60 @@
 <input type="hidden" name="reload" value="">
 <input type="hidden" name="conditionsdelete" value="">
 <input type="hidden" id="permscrollx" name="scrollx" value="">
+<input type="hidden" name="parent_perm_fid" value="<{$content.parent_perm_fid}>">
 
+<div id="perm_regular_wrapper">
 <div class="accordion-box">
+
+	<div class="form-item">
+		<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_INHERIT_QUESTION}></label></legend>
+			<div class="form-radios radio-inline">
+				<label for="perm_mode_regular"><input type="radio" id="perm_mode_regular" name="perm_mode" value="regular"> <{$smarty.const._AM_PERMISSIONS_INHERIT_NO}></label>
+			</div>
+			<div class="form-radios radio-inline">
+				<label for="perm_mode_inherit"><input type="radio" id="perm_mode_inherit" name="perm_mode" value="inherit"> <{$smarty.const._AM_PERMISSIONS_INHERIT_YES}></label>
+			</div>
+		</fieldset>
+	</div>
+
+	<div id="perm_inherit_section" class="form-item" style="<{if !$content.parent_perm_fid}>display:none;<{/if}>">
+		<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_PARENT_FORM}></label></legend>
+			<p><{$smarty.const._AM_PERMISSIONS_PARENT_FORM_EXPLAIN}></p>
+			<select id="parent_perm_fid_select" name="parent_perm_fid_select">
+				<option value="0"><{$smarty.const._AM_PERMISSIONS_SELECT_A_FORM}></option>
+				<{foreach from=$content.allFormsForInheritance key=formId item=formTitle}>
+					<option value="<{$formId}>"<{if $formId == $content.parent_perm_fid}> selected<{/if}>><{$formTitle}></option>
+				<{/foreach}>
+			</select>
+		</fieldset>
+	</div>
+
+	<div id="perm_filters_section" class="form-item" style="<{if !$content.parent_perm_fid}>display:none;<{/if}>">
+		<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_VISIBILITY_FILTERS}></label></legend>
+			<p><{$smarty.const._AM_PERMISSIONS_VISIBILITY_FILTERS_EXPLAIN}></p>
+			<select name="groups[]" id="groups_filter_selector" size=8 multiple>
+				<{foreach from=$content.groups item=group}>
+					<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
+				<{/foreach}>
+			</select>
+			<br /><br />
+			<input type="button" id="showperms_filter" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />
+			<br /><br />
+			<{foreach from=$content.groupperms item=groupperm}>
+				<input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
+				<p><b><{$groupperm.name}></b></p>
+				<input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_filterentries" value=1 <{$groupperm.hasgroupfilter}> <{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED}> id="fs_<{$content.fid}>_<{$groupperm.id}>_filterentries">&nbsp;&nbsp;<label for="fs_<{$content.fid}>_<{$groupperm.id}>_filterentries"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}></label>
+				<div class="groupselectionbox">
+					<{$groupperm.groupfilter}>
+				</div>
+			<{/foreach}>
+		</fieldset>
+	</div>
+
+<div id="perm_direct_top_content" style="<{if $content.parent_perm_fid}>display:none;<{/if}>">
 		<div class="form-item">
 			<fieldset>
                 <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_CHOOSE_GROUPS}></label></legend>
@@ -20,21 +72,21 @@
                         <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
                     <{/foreach}>
                 </select>
-								<br /><br />
-								<input type="button" name="showperms" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />
-								<input type="hidden" name="useselection" value="" />
-								<br /><br />
-								<p class="question"><{$smarty.const._AM_PERMISSIONS_LIST_GROUPS}></p>
-								<div class="form-radios radio-inline">
+							<br /><br />
+							<input type="button" name="showperms" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />
+							<input type="hidden" name="useselection" value="" />
+							<br /><br />
+							<p class="question"><{$smarty.const._AM_PERMISSIONS_LIST_GROUPS}></p>
+							<div class="form-radios radio-inline">
                     <label for="alpha"><input type="radio" id="alpha" name="order" value="alpha"/><{$smarty.const._AM_PERMISSIONS_LIST_ALPHA}></label>
                 </div>
                 <div class="form-radios radio-inline">
                     <label for="creation"><input type="radio" id="creation" name="order" value="creation" checked/><{$smarty.const._AM_PERMISSIONS_LIST_CREATION}></label>
                 </div>
-								<br /><br />
-								<input type="button" name="savegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_SAVE}>">
-								<input type="hidden" name="grouplistname" value="">
-								<input type="hidden" name="grouplistid" value="">
+							<br /><br />
+							<input type="button" name="savegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_SAVE}>">
+							<input type="hidden" name="grouplistname" value="">
+							<input type="hidden" name="grouplistid" value="">
             </fieldset>
 		</div>
 
@@ -46,25 +98,25 @@
                         <option value=<{$grouplist.id}><{$grouplist.selected}>><{$grouplist.name}></option>
                     <{/foreach}>
                 </select>
-								<br /><br />
-								<input type="hidden" name="loadthislist" value="">
-								<input type="button" name="removegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_REMOVE}>">
-								<input type="hidden" name="removelistid" value="">
+							<br /><br />
+							<input type="hidden" name="loadthislist" value="">
+							<input type="button" name="removegrouplist" value="<{$smarty.const._AM_PERMISSIONS_LIST_REMOVE}>">
+							<input type="hidden" name="removelistid" value="">
             </fieldset>
 		</div>
 
 		<div class="form-item">
 			<fieldset>
 			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX}></label></legend>
-							<div class="form-radios radio-inline">
+						<div class="form-radios radio-inline">
                     <label for="same"><input type="radio" id="same" name="same_diff" value="same" /><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_YES}></label>
                 </div>
                 <div class="form-radios radio-inline">
                     <label for="different"><input type="radio" id="different" name="same_diff" value="different" /><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_NO}></label>
                 </div>
-								<div class="description">
-									<p><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN}></p>
-								</div>
+							<div class="description">
+								<p><{$smarty.const._AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN}></p>
+							</div>
 
 	        </fieldset>
 		</div>
@@ -72,7 +124,6 @@
         <div class="form-item">
             <fieldset>
                 <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_REVIEW_PERMISSIONS}></label></legend>
-										<script><{php}>print checkForChrome();<{/php}></script>
                     <script src="<{$xoops_url}>/modules/formulize/include/js/autocomplete.js"></script>
                     <style>
                         div:has(> input#submitted_user_user) {
@@ -92,14 +143,27 @@
                         }
                     </style>
                     <{$content.userSelectionList}>
-                    <input name="show_user_perms" value="Show permissions for the user" type="button">
+                    <input name="show_user_perms" value="<{$smarty.const._AM_PERMISSIONS_SHOW_FOR_USER}>" type="button">
                     <input type="hidden" name="search_by_user" value="" />
             </fieldset>
         </div>
 
-</div>
+	<div class="form-item">
+		<fieldset>
+			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_INHERIT_CHILDREN}></label></legend>
+			<p><{$smarty.const._AM_PERMISSIONS_INHERIT_CHILDREN_EXPLAIN}></p>
+			<div style="max-height:200px;overflow-y:auto;padding:5px;border:1px solid #ccc;margin-top:5px;">
+				<{foreach from=$content.allFormsForInheritance key=formId item=formTitle}>
+					<div style="margin:4px 0;"><label><input type="checkbox" class="inherit_form_checkbox" name="child_perm_fids[]" value="<{$formId}>"<{if $content.childFormIds[$formId]}> checked="checked"<{/if}>> <{$formTitle}></label></div>
+				<{/foreach}>
+			</div>
+		</fieldset>
+	</div>
 
+</div><!-- end perm_direct_top_content -->
+</div><!-- end first accordion-box -->
 
+<div id="perm_group_checkboxes_wrapper" style="<{if $content.parent_perm_fid}>display:none;<{/if}>">
 <div class="accordion-box">
 
 	<{if $content.groupperms|is_array AND $content.groupperms|@count == 0}>
@@ -115,9 +179,9 @@
          <div class="accordion-box" id="user_perms_accordion_box">
              <div class="form-item">
                  <fieldset>
-                     <legend><label class="question">User Permissions for <{$content.submitted_user}></label></legend>
+                     <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_USER_PERMS_FOR}> <{$content.submitted_user}></label></legend>
 
-                     <p><b>Groups</b></p>
+                     <p><b><{$smarty.const._AM_PERMISSIONS_GROUPS_HEADING}></b></p>
                      <div class="permissiongroup">
                          <{foreach from=$content.groupperms item=groupperm}>
                             <p><{$groupperm.name}></p>
@@ -218,9 +282,9 @@
                                  <{foreach from=$content.groups item=group}>
                                      <{if $content.userperms.view_groupscope[$group.id]}>
                                          <li class="user_perms_li"><{$group.name}> <span class="user_groups">
-																						 <{assign var=dashPrinted value=false}>
+																					 <{assign var=dashPrinted value=false}>
                                              <{foreach from=$content.userperms.view_groupscope[$group.id] item=group}>
-																						 		<{if $group != "" && !$dashPrinted}>--<{assign var=dashPrinted value=true}><{/if}>
+																					 		<{if $group != "" && !$dashPrinted}>--<{assign var=dashPrinted value=true}><{/if}>
                                                 <{$group}><{if $dashPrinted}>;<{/if}>
                                              <{/foreach}> </span>
                                          </li>
@@ -233,7 +297,7 @@
                              <p><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS}> </p>
                              <ul>
                                  <{if $content.userperms.view_groupfilter.all}>
-                                     <li class="user_perms_li">Match all of these:</li>
+                                     <li class="user_perms_li"><{$smarty.const._AM_PERMISSIONS_MATCH_ALL}></li>
                                      <ul>
                                          <{foreach from=$content.userperms.view_groupfilter.all key="filter" item="groups"}>
                                             <li class="user_perms_li_li"><{$filter}> <span class="user_groups">-- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}> </span></li>
@@ -242,7 +306,7 @@
                                  <{/if}>
 
                                  <{if $content.userperms.view_groupfilter.oom}>
-                                     <li class="user_perms_li">Match one or more of these:</li>
+                                     <li class="user_perms_li"><{$smarty.const._AM_PERMISSIONS_MATCH_ONE_OR_MORE}></li>
                                      <ul>
                                          <{foreach from=$content.userperms.view_groupfilter.oom key="filter" item="groups"}>
                                              <li class="user_perms_li_li"><{$filter}> <span class="user_groups">-- <{foreach from=$groups item="group"}><{$group}>;<{/foreach}></span></li>
@@ -325,7 +389,7 @@
                             </p>
                         <{/if}>
                         <{if $content.userperms.ignore_editing_lock}>
-                            <p>Save entries even when they are locked while being edited elsewhere (saving cancels existing locks) <span class="user_groups">--
+                            <p><{$smarty.const._AM_PERMISSIONS_ADVANCED_IGNORELOCK}> <span class="user_groups">--
                                 <{foreach from=$content.userperms.ignore_editing_lock item=group}>
                                     <{$group}>;
                                 <{/foreach}> </span>
@@ -400,7 +464,7 @@
                             <input type="checkbox" class="set_notifications_for_others" name="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others" value=1 <{$groupperm.set_notifications_for_others}> id="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others"><{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}></label><br />
                             <input type="checkbox" class="add_proxy_entries" name="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries" value=1 <{$groupperm.add_proxy_entries}> id="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries"><{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}></label><br />
                             <input type="checkbox" class="update_entry_ownership" name="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership" value=1 <{$groupperm.update_entry_ownership}> id="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership"><{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}></label><br />
-                            <input type="checkbox" class="ignore_editing_lock" name="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock" value=1 <{$groupperm.ignore_editing_lock}> id="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock">Save entries even when they are locked while being edited elsewhere (saving cancels existing locks)</label><br />
+                            <input type="checkbox" class="ignore_editing_lock" name="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock" value=1 <{$groupperm.ignore_editing_lock}> id="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock"><{$smarty.const._AM_PERMISSIONS_ADVANCED_IGNORELOCK}></label><br />
                             <input type="checkbox" class="edit_form" name="<{$content.fid}>_<{$groupperm.id}>_edit_form" value=1 <{$groupperm.edit_form}> id="<{$content.fid}>_<{$groupperm.id}>_edit_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_edit_form"><{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}></label><br />
                             <input type="checkbox" class="delete_form" name="<{$content.fid}>_<{$groupperm.id}>_delete_form" value=1 <{$groupperm.delete_form}> id="<{$content.fid}>_<{$groupperm.id}>_delete_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_form"><{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}></label>
                         </div>
@@ -408,7 +472,9 @@
                 </div>
         <{/foreach}>
     <{/if}>
-</div>
+</div><!-- end second accordion-box -->
+</div><!-- end perm_group_checkboxes_wrapper -->
+</div><!-- end perm_regular_wrapper -->
 
 </form>
 
@@ -420,8 +486,63 @@
 $("#<{$content.order}>").attr('checked', true);
 $("#<{$content.samediff}>").attr('checked', true);
 
+// --- Permission inheritance mode ---
+var permInheritMode = (<{$content.parent_perm_fid}> > 0);
+if (permInheritMode) {
+	$("#perm_mode_inherit").attr('checked', 'checked');
+	$("#perm_direct_top_content :input, #perm_group_checkboxes_wrapper :input").attr('disabled', 'disabled');
+} else {
+	$("#perm_mode_regular").attr('checked', 'checked');
+	$("#perm_filters_section :input").attr('disabled', 'disabled');
+}
+
+$("[name=perm_mode]").change(function () {
+	if ($(this).val() === 'inherit') {
+		$("#perm_direct_top_content").hide();
+		$("#perm_group_checkboxes_wrapper").hide();
+		$("#perm_inherit_section").show();
+		$("#perm_filters_section").show();
+		$("#perm_direct_top_content :input, #perm_group_checkboxes_wrapper :input").attr('disabled', 'disabled');
+		$("#perm_filters_section :input").removeAttr('disabled');
+	} else {
+		$("[name=parent_perm_fid]").val(0);
+		$("#perm_inherit_section").hide();
+		$("#perm_filters_section").hide();
+		$("#perm_direct_top_content").show();
+		$("#perm_group_checkboxes_wrapper").show();
+		$("#perm_filters_section :input").attr('disabled', 'disabled');
+		$("#perm_direct_top_content :input, #perm_group_checkboxes_wrapper :input").removeAttr('disabled');
+	}
+});
+
+$("#parent_perm_fid_select").change(function () {
+	$("[name=parent_perm_fid]").val($(this).val());
+});
+
+$("#showperms_filter").click(function () {
+	$("[name=useselection]").val(1);
+	formulize_reload();
+});
+
+// --- Shift-click for child form checkboxes ---
+var lastCheckedInheritForm = null;
+$('.inherit_form_checkbox').live('click', function (e) {
+	if (lastCheckedInheritForm && e.shiftKey) {
+		var checkboxes = $('.inherit_form_checkbox');
+		var start = checkboxes.index(this);
+		var end = checkboxes.index(lastCheckedInheritForm);
+		var newState = lastCheckedInheritForm.checked;
+		checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1).each(function () {
+			this.checked = newState;
+		});
+	}
+	lastCheckedInheritForm = this;
+});
+
+// --- Existing permission UI handlers ---
+
 $("[name=savegrouplist]").click(function () {
-	var grouplistname = prompt("Name of this group list", $("#grouplists option:selected").text());
+	var grouplistname = prompt("<{$smarty.const._AM_PERMISSIONS_GROUPLIST_NAME_PROMPT}>", $("#grouplists option:selected").text());
 	if(grouplistname) {
 		$("[name=grouplistname]").val(grouplistname);
 		$("[name=grouplistid]").val($("#grouplists").val());
@@ -431,7 +552,7 @@ $("[name=savegrouplist]").click(function () {
 });
 
 $("[name=removegrouplist]").click(function () {
-	var answer = confirm("Are you sure you want to delete the group list '"+$("#grouplists option:selected").text()+"'?");
+	var answer = confirm("<{$smarty.const._AM_PERMISSIONS_GROUPLIST_CONFIRM_PREFIX}>"+$("#grouplists option:selected").text()+"'?");
 	if(answer) {
 		$("[name=removelistid]").val($("#grouplists").val());
 		formulize_reload();
@@ -453,7 +574,7 @@ $("[name=order]").change(function () {
 	formulize_reload();
 });
 
-$("[name=addcon]").click(function () {
+$(".groupselectionbox [name=addcon]").click(function () {
 	formulize_reload();
 });
 
@@ -469,7 +590,7 @@ $("[name=submitted_user]").keypress(function(e) {
     }
 });
 
-$(".conditionsdelete").click(function () {
+$(".groupselectionbox a.conditionsdelete").click(function () {
 	$("[name=conditionsdelete]").val($(this).attr('target'));
 	formulize_reload();
 	return false;

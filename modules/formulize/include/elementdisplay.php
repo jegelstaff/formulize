@@ -74,7 +74,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		$element = overrideSeparatorToLineBreak($element);
 	}
 
-    $form_id = $element->getVar('id_form');
+  $form_id = $element->getVar('id_form');
 
 	$deprefix = $noSave ? "denosave_" : "de_";
 	$deprefix = $subformCreateEntry ? "desubform".$subformEntryIndex."x".$subformElementId."_" : $deprefix; // need to pass in an entry index so that all fields in the same element can be collected
@@ -128,7 +128,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
            AND !isset($lockedEntries[$form_id][$entry])
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-           AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+           AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
            AND !$userHasPermissionToIgnoreEntryLock) {
@@ -169,7 +169,7 @@ EOF;
 				$customTypeObject = $customTypeHandler->create();
 		    $typesWithData[$ele_type] = $customTypeObject->hasData ? true : false;
 			}
-	    if($typesWithData[$ele_type]) {
+	    if($typesWithData[$ele_type] OR $element->isUserAccountElement) {
 				$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 			}
 		}
@@ -186,7 +186,7 @@ EOF;
 		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
             AND !isset($lockedEntries[$form_id][$entry])
             AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-            AND $element->hasData AND $element->getVar('ele_type') != 'derived'
+            AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
             AND !strstr(getCurrentURL(),"printview.php")) {
 
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
@@ -333,7 +333,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		if(!$subformCreateEntry) {
 			catalogConditionalElement($renderedElementMarkupName, array_unique($elementFilterSettings[0]), $screen, true);
 		}
-		$allowed = checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject);
+		$allowed = checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_id, $elementObject);
 	}
 
 	$isDisabled = false;
@@ -345,7 +345,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		if($isDisabled) {
 			$disabledConditions = $elementObject->getVar('ele_disabledconditions');
 			if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
-				$isDisabled = checkElementConditions($disabledConditions, $form_id, $entry_id, $elementObject);
+				$isDisabled = checkConditionsAgainstAnEntry($disabledConditions, $form_id, $entry_id, $elementObject);
 				// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
 				// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.
 				if($entry_id != 'new' AND !$subformCreateEntry) {
@@ -426,196 +426,6 @@ function removeFromConditionalCatalogue($renderedElementMarkupName) {
 		unset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName]);
 	}
 }
-
-/**
- *
- */
-function checkElementConditions($elementFilterSettings, $form_id, $entry_id, $elementObject) {
-	// need to check if there's a condition on this element that is met or not
-	static $cachedEntries = array();
-	if($entry_id != "new") {
-		if(!isset($cachedEntries[$form_id][$entry_id])) {
-			$cachedEntries[$form_id][$entry_id] = gatherDataset($form_id, filter: $entry_id, frid: 0, bypassCache: true);
-		}
-		$entryData = $cachedEntries[$form_id][$entry_id];
-	}
-
-	$filterElements = array_map('undoAllHTMLChars', $elementFilterSettings[0]);
-	$filterOps = array_map('undoAllHTMLChars', $elementFilterSettings[1]);
-	$filterTerms = array_map('undoAllHTMLChars', $elementFilterSettings[2]);
-	$filterTypes = array_map('undoAllHTMLChars', $elementFilterSettings[3]);
-
-	// find the filter indexes for 'match all' and 'match one or more'
-	$filterElementsAll = array();
-	$filterElementsOOM = array();
-	for($i=0;$i<count((array) $filterTypes);$i++) {
-		if($filterTypes[$i] == "all") {
-			$filterElementsAll[] = $i;
-		} else {
-			$filterElementsOOM[] = $i;
-		}
-	}
-
-	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
-	$evaluationCondition = "if(";
-
-	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
-	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
-
-	if($evaluationConditionAND === false OR $evaluationConditionOR === false) {
-		exit("Fatal Formulize Error: form element ".$elementObject->getVar('ele_id')." is misconfigured. Please notify the webmaster.");
-	}
-
-	$evaluationCondition .= $evaluationConditionAND;
-	if( $evaluationConditionOR ) {
-		if( $evaluationConditionAND ) {
-			$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
-		} else {
-			$evaluationCondition .= $evaluationConditionOR;
-		}
-	}
-
-	$evaluationCondition .= ") {\n";
-	$evaluationCondition .= "  \$passedCondition = true;\n";
-	$evaluationCondition .= "}\n";
-
-	$passedCondition = false;
-	eval($evaluationCondition);
-
-	$allowed = 1;
-	if(!$passedCondition) {
-		$allowed = 0;
-	}
-	return $allowed;
-}
-
-
-/* ALTERED - 20100316 - freeform - jeff/julian - start */
-// THIS SHOULD BE REFACTORED SO THAT ELEMENT DISPLAY CONDITIONS RUN OFF THE SAME SQL FILTER LOGIC AS EVERY OTHER INSTANCE OF A FILTER
-function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
-    $evaluationCondition = "";
-
-    // convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
-    // translate yes/no choices for yes/no elements if French is active language
-    global $xoopsConfig;
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-
-    foreach ($filterElements as $key => $element) {
-			if(!isMetaDataField($element)) {
-				// make sure that the filterElements array is using handles, as originally designed and required by code below
-				if($filterElementObject = $element_handler->get($element)) {
-					$filterElements[$key] = $filterElementObject->getVar('ele_handle');
-				} else {
-					return false;
-				}
-				$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
-				if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
-					$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
-				}
-				if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
-					$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
-					$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
-				}
-			}
-    }
-
-
-	for($io=0;$io<count((array) $indexes);$io++) {
-		$i = $indexes[$io];
-		if(!($evaluationCondition == "")) {
-			$evaluationCondition .= " $match ";
-		}
-		switch($filterOps[$i]) {
-			case "=";
-				$thisOp = "==";
-				break;
-			case "NOT";
-				$thisOp = "!=";
-				break;
-			default:
-				$thisOp = $filterOps[$i];
-		}
-		if($filterTerms[$i] === "{BLANK}") {
-			$filterTerms[$i] = "";
-		}
-
-        $filterTerms[$i] = parseUserAndToday($filterTerms[$i]);
-
-        // convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
-        if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
-            $handle_reference = substr($filterTerms[$i],1,-1);
-            if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
-                $filterTerms[$i] = $entry == 'new' ? '' : getValue($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
-            } elseif($entry != 'new') { // comparing to user metadata field, entry is not new
-                // take a wild guess that the reference is to something that should be a uid in the db...
-                $element_handler = xoops_getmodulehandler('elements', 'formulize');
-                $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                $elementObject = $element_handler->get($handle_reference);
-                $formObject = $form_handler->get($elementObject->getVar('id_form'));
-                global $xoopsDB;
-                $sql = 'SELECT '.formulize_db_escape($handle_reference).' FROM '.$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')).' WHERE entry_id = '.intval($entry);
-                $res = $xoopsDB->query($sql);
-                $row = $xoopsDB->fetchRow($res);
-                $filterTerms[$i] = $row[0];
-            } else { // comparing to user metadata field, entry is new
-                $filterTerms[$i] = 0;
-            }
-        }
-
-		$entryKey = is_numeric($entry) ? intval($entry) : $entry;
-		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey]) AND array_key_exists($filterElements[$i], $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey])) {
-			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey][$filterElements[$i]];
-		} elseif($entry == "new") {
-			$elementObject = $element_handler->get($filterElements[$i]);
-			if(is_object($elementObject)) {
-				$defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
-				$compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
-			} else {
-				$compValue = "";
-			}
-		} else {
-			$compValue = getValue($entryData[0], $filterElements[$i]);
-		}
-		if(is_array($compValue)) {
-			if($thisOp == "==") {
-				$thisOp = "LIKE";
-			}
-			if($thisOp == "!=") {
-				$thisOp = "NOT LIKE";
-			}
-			$compValue = addslashes(implode(",",$compValue));
-		} else {
-			$compValue = is_string($compValue) ? addslashes($compValue) : $compValue;
-		}
-		$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
-
-		$rawFilterTerms = $filterTerms[$i];
-		$filterTermToUse = addslashes($filterTerms[$i]);
-
-    // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
-		if($thisOp == "LIKE" AND $filterTermToUse != '') {
-			$evaluationCondition .= "stristr('".$compValue."', '".$filterTermToUse."')";
-		} elseif($thisOp == "NOT LIKE" AND $filterTermToUse != '') {
-			$evaluationCondition .= "!stristr('".$compValue."', '".$filterTermToUse."')";
-    } elseif($thisOp == "LIKE") {
-      $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
-    } elseif($thisOp == "NOT LIKE") {
-      $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
-		} elseif($thisOp == "IN") {
-			$cleanTerms = array();
-			foreach(explode(',',$rawFilterTerms) as $ft) {
-				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
-			}
-			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
-		} else {
-			$filterTermToUse = is_numeric($filterTermToUse) ? $filterTermToUse : "'".$filterTermToUse."'";
-			$evaluationCondition .= "$compValueQuoted $thisOp $filterTermToUse";
-		}
-	}
-
-	return $evaluationCondition;
-}
-/* ALTERED - 20100316 - freeform - jeff/julian - stop */
 
 // this function takes an element object, or an element id number or handle (or framework handle with framework id, but that's deprecated)
 function _formulize_returnElement($ele) {

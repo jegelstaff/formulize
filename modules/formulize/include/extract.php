@@ -713,6 +713,20 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$linkSelect .= ", ".$linkSelectIndex[$formAliasId];
 					$joinType = isset($formFieldFilterMap[$linkedFid]) ? "INNER" : "LEFT";
 					$linkedFormObject = $form_handler->get($linkedFid);
+					if($linkedFormObject->getVar('entries_are_users')) {
+						$linkedEauUidColumn = 'formulize_user_account_uid_' . $linkedFid;
+						$eauAlias = "f$formAliasId";
+						$eauLinkedJoinTextIndex[$linkedFid]  = " LEFT JOIN " . DBPRE . "users AS eau_usertable_{$eauAlias} ON {$eauAlias}.`$linkedEauUidColumn` = eau_usertable_{$eauAlias}.uid";
+						$eauLinkedJoinTextIndex[$linkedFid] .= " LEFT JOIN " . DBPRE . "profile_profile AS eau_profile_{$eauAlias} ON eau_usertable_{$eauAlias}.uid = eau_profile_{$eauAlias}.profileid";
+						$eauLinkedSelectFieldIndex[$linkedFid] = ", eau_usertable_{$eauAlias}.uid AS {$eauAlias}_eau_uid"
+							. ", eau_usertable_{$eauAlias}.login_name AS {$eauAlias}_eau_login_name"
+							. ", eau_usertable_{$eauAlias}.email AS {$eauAlias}_eau_email"
+							. ", eau_usertable_{$eauAlias}.uname AS {$eauAlias}_eau_uname"
+							. ", eau_usertable_{$eauAlias}.notify_method AS {$eauAlias}_eau_notify_method"
+							. ", eau_profile_{$eauAlias}.`2faphone` AS {$eauAlias}_eau_2faphone"
+							. ", eau_profile_{$eauAlias}.timezone AS {$eauAlias}_eau_timezone"
+							. ", eau_profile_{$eauAlias}.`2famethod` AS {$eauAlias}_eau_2famethod";
+					}
 					$joinText .= " $joinType JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId ON"; // NOTE: we are aliasing the linked form tables to f$id where $id is the key of the position in the linked form metadata arrays where that form's info is stored
 					$newexistsJoinText = $existsJoinText ? " $andor " : "";
 					$newexistsJoinText .= " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId WHERE "; // set this up also so we have it available for one to many/many to one calculations that require it
@@ -723,7 +737,19 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$joinTextIndex["f" . $formAliasId] = $newJoinText;
 					$joinText .= $newJoinText;
 					if (isset($oneSideFilters[$linkedFid]) AND is_array($oneSideFilters[$linkedFid]) AND count($oneSideFilters[$linkedFid]) > 0) { // only setup the existsJoinText when there is a where clause that applies to this form...otherwise, we don't care, this form is not relevant to the query that the calculations will do (except maybe when the mainform is not the one-side form...but that's another story)
-						$existsJoinText .= $newexistsJoinText . $newJoinText;
+						// If this linked form is entries_are_users and any filter references its EAU table aliases,
+						// inject those joins inside the EXISTS subquery (before the WHERE).
+						$existsEauJoins = "";
+						if (isset($eauLinkedJoinTextIndex[$linkedFid])) {
+							$linkedFilterContent = implode(' ', $oneSideFilters[$linkedFid]);
+							$eauAlias = "f$formAliasId";
+							if (strpos($linkedFilterContent, "eau_usertable_{$eauAlias}") !== false ||
+								strpos($linkedFilterContent, "eau_profile_{$eauAlias}") !== false) {
+								$existsEauJoins = $eauLinkedJoinTextIndex[$linkedFid];
+							}
+						}
+						$existsOpener = ($existsJoinText ? " $andor " : "") . " EXISTS(SELECT 1 FROM " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$formAliasId $existsEauJoins WHERE ";
+						$existsJoinText .= $existsOpener . $newJoinText;
 						foreach ($oneSideFilters[$linkedFid] as $thisOneSideFilter) {
 							$thisLinkedFidPerGroupFilter = isset($perGroupFiltersPerForms[$linkedFid]) ? $perGroupFiltersPerForms[$linkedFid] : "";
 							$existsJoinText .= " AND ( $thisOneSideFilter $thisLinkedFidPerGroupFilter) ";
@@ -737,6 +763,27 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// specify the join info for user table (depending whether there's a query on creator_email or not)
 		$userJoinType = (isset($formFieldFilterMap['creator_email']) AND $formFieldFilterMap['creator_email']) ? "INNER" : "LEFT";
 		$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
+
+		// Build EAU (entries_are_users) join and select variables for the main form
+		$eauMainJoinText = "";
+		$eauMainSelectFields = "";
+		if(!isset($eauLinkedJoinTextIndex)) { $eauLinkedJoinTextIndex = array(); }
+		if(!isset($eauLinkedSelectFieldIndex)) { $eauLinkedSelectFieldIndex = array(); }
+		if($formObject->getVar('entries_are_users')) {
+			$mainEauUidColumn = 'formulize_user_account_uid_' . $fid;
+			$eauMainJoinText  = " LEFT JOIN " . DBPRE . "users AS eau_usertable_main ON main.`$mainEauUidColumn` = eau_usertable_main.uid";
+			$eauMainJoinText .= " LEFT JOIN " . DBPRE . "profile_profile AS eau_profile_main ON eau_usertable_main.uid = eau_profile_main.profileid";
+			$eauMainSelectFields = ", eau_usertable_main.uid AS main_eau_uid"
+				. ", eau_usertable_main.login_name AS main_eau_login_name"
+				. ", eau_usertable_main.email AS main_eau_email"
+				. ", eau_usertable_main.uname AS main_eau_uname"
+				. ", eau_usertable_main.notify_method AS main_eau_notify_method"
+				. ", eau_profile_main.`2faphone` AS main_eau_2faphone"
+				. ", eau_profile_main.timezone AS main_eau_timezone"
+				. ", eau_profile_main.`2famethod` AS main_eau_2famethod";
+		}
+		$eauAllJoinText = $eauMainJoinText . implode("", $eauLinkedJoinTextIndex);
+		$eauAllSelectFields = $eauMainSelectFields . implode("", $eauLinkedSelectFieldIndex);
 
 		// FIGURE OUT THE SORT CLAUSE
 		$sortFid = $fid;
@@ -873,7 +920,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		// DO A PRELIMINARY QUERY TO COUNT THE NUMBER OF RESULTS IN THE DATASET, INDEPENDENT OF WHAT WE WILL QUERY TO GET THE ACTUAL DATA
 		$revisionTableYesNo = (!$frid and isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
 		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main ";
-		$countMasterResults .= "$userJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
+		// Only include the main-form EAU join when the COUNT WHERE clause actually references those aliases.
+		// Linked-form EAU joins (eau_usertable_f0, etc.) are never valid here since linked tables are not in scope.
+		$countWhereContent = $mainFormWhereClause . $scopeFilter . $otherPerGroupFilterWhereClause;
+		$eauCountJoinText = (strpos($countWhereContent, 'eau_usertable_main') !== false || strpos($countWhereContent, 'eau_profile_main') !== false) ? $eauMainJoinText : "";
+		$countMasterResults .= "$userJoinText $eauCountJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
 		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 		if (isset($GLOBALS['formulize_getCountForPageNumbers'])) {
@@ -980,12 +1031,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$mainSelectFields = isset($sqlFilterElementsIndex['main']) ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
 		$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime $ownerGroupsSortSelect";
 		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
-		$firstTimeGetAllMainFields = "$mainSelectFields , ";
+		$firstTimeGetAllMainFields = "$mainSelectFields $eauMainSelectFields , ";
 
 		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
 		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
 		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
-		$oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
+		$oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $eauMainJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
 		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		if (isset($oneSideFilters[$fid]) AND is_array($oneSideFilters[$fid]) AND count($oneSideFilters[$fid]) > 0) {
 			$oneSideSQL .= " AND (";
@@ -998,8 +1049,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 		$oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
-		$restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
-		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
+		$restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
+		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
 		if (count((array) $linkformids) > 1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if (!$sortIsOnMain) {
 				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
@@ -1019,12 +1070,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$masterQuerySQL = "INSERT INTO " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQL ";
 			$masterQuerySQLForExport = "INSERT INTO " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP $masterQuerySQLForExport ";
 		} else {
-			$masterQuerySQL = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQL ";
-			$masterQuerySQLForExport = "SELECT $selectClause, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
+			$masterQuerySQL = "SELECT $selectClause $eauAllSelectFields, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQL ";
+			$masterQuerySQLForExport = "SELECT $selectClause $eauAllSelectFields, usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email $restOfTheSQLForExport ";
 		}
 
 		if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
-			$GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+			$GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
 			$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 			$GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
 			if(isset($GLOBALS['formulize_setBaseQueryForCalcs'])) {
@@ -1107,13 +1158,18 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					continue;
 				}
 				$linkedFormObject = $form_handler->get($thisLinkFid);
+				$linkedEauJoin = isset($eauLinkedJoinTextIndex[$thisLinkFid]) ? $eauLinkedJoinTextIndex[$thisLinkFid] : "";
+				$linkedEauSelect = isset($eauLinkedSelectFieldIndex[$thisLinkFid]) ? $eauLinkedSelectFieldIndex[$thisLinkFid] : "";
+				$commaIfNecessary = ($linkSelectIndex[$linkId] OR $linkedEauSelect) ? "," : "";
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
-					. $linkSelectIndex[$linkId] .
-					", usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
-					. DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
-                    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
-                    LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
-                    INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
+					. $linkSelectIndex[$linkId] . $linkedEauSelect . $commaIfNecessary . "
+					usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email
+					FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
+          LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
+					$eauMainJoinText
+					LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
+					$linkedEauJoin
+					INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
 										if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
 					$start = true;
 					foreach ($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
@@ -1573,6 +1629,33 @@ function processGetDataResults($resultData)
 					} else {
 						continue; // skip metadata fields for non main forms, but we've recorded the curformid and alias above
 					}
+				} elseif (strpos($field, '_eau_') !== false) {
+					// dealing with a user account (entries_are_users) field
+					$eauParts = explode('_eau_', $field, 2);
+					$eauFormAlias = $eauParts[0];
+					$eauProperty  = $eauParts[1];
+					$eauCurFormId = ($eauFormAlias == 'main') ? $fid : $linkformids[intval(substr($eauFormAlias, 1))];
+					if($eauFormAlias == 'main' && isset($writtenMains[$entryIdIndex['main']])) {
+						continue; // skip if this main entry has already been fully written
+					}
+					static $eauPropertyToType = array(
+						'uid'           => 'uid',
+						'login_name'    => 'username',
+						'email'         => 'email',
+						'notify_method' => 'notificationmethod',
+						'2faphone'      => 'phone',
+						'timezone'      => 'timezone',
+						'2famethod'     => '2fa',
+					);
+					if($eauProperty === 'uname') {
+						$unameParts = explode(' ', $value ?? '', 2);
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_firstname_' . $eauCurFormId] = $unameParts[0] ?? '';
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_lastname_'  . $eauCurFormId] = isset($unameParts[1]) ? $unameParts[1] : '';
+					} elseif(isset($eauPropertyToType[$eauProperty])) {
+						$eauHandle = 'formulize_user_account_' . $eauPropertyToType[$eauProperty] . '_' . $eauCurFormId;
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]][$eauHandle] = $value;
+					}
+					continue;
 				} elseif (!strstr($field, "main_email") and !strstr($field, "main_user_viewemail")) {
 					// dealing with a regular element field
 					if(formulize_getElementMetaData($field, isHandle: true)) {
@@ -1888,6 +1971,43 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				$formFieldFilterMap['revision_id'] = true;
 				$newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
 				$mappedForm = $fid;
+
+			} elseif (strpos($ifParts[0], 'formulize_user_account_') === 0) {
+				// USER ACCOUNT ELEMENT SEARCHES: map handle to the actual joined table column
+				// Handle format: formulize_user_account_{type}_{formId}
+				$eauFormId = intval(substr($ifParts[0], strrpos($ifParts[0], '_') + 1));
+				$eauType = substr($ifParts[0], strlen('formulize_user_account_'), strlen($ifParts[0]) - strlen('formulize_user_account_') - strlen('_' . $eauFormId));
+				$mappedForm = $eauFormId;
+				if ($eauFormId == $fid) {
+					$eauAlias = 'main';
+				} else {
+					$eauAlias = false;
+					if (is_array($linkfids)) {
+						$eauIdx = array_search($eauFormId, $linkfids);
+						if ($eauIdx !== false) {
+							$eauAlias = 'f' . $eauIdx;
+						}
+					}
+				}
+				static $eauTypeToSqlColumn = array(
+					'uid'                => array('usertable', 'uid'),
+					'username'           => array('usertable', 'login_name'),
+					'email'              => array('usertable', 'email'),
+					'firstname'          => array('usertable', 'uname'),
+					'lastname'           => array('usertable', 'uname'),
+					'notificationmethod' => array('usertable', 'notify_method'),
+					'phone'              => array('profile', '2faphone'),
+					'timezone'           => array('profile', 'timezone'),
+					'2fa'                => array('profile', '2famethod'),
+				);
+				if ($eauAlias !== false && isset($eauTypeToSqlColumn[$eauType])) {
+					list($eauTable, $eauColumn) = $eauTypeToSqlColumn[$eauType];
+					$eauTableAlias = 'eau_' . $eauTable . '_' . $eauAlias;
+					$eauSqlColumn = $eauTableAlias . '.`' . $eauColumn . '`';
+					$newWhereClause = $eauSqlColumn . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				} else {
+					$newWhereClause = "1"; // unknown type or form, skip filter
+				}
 
 				//THIRD: NON-METADATA QUERIES
 			} else {

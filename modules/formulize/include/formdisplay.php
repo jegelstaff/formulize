@@ -1900,6 +1900,7 @@ function drawGoBackForm($go_back, $currentURL, $settings, $entry, $screen) {
 }
 
 // add the proxy list to a form
+// TODO unless it's a new entry in a form where entries are users and the user should be owner!!
 function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid, $mid, $entry_id="") {
 
 	global $xoopsUser;
@@ -2228,24 +2229,27 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 		return array();
 	}
 
-	$ele_value = $element->getVar('ele_value');
-	// if there is no previous entry data to load, then just return the default ele_value
-	if(empty($prevEntry)) {
-		return $ele_value;
-	}
+	// check for previously entered data, unless it's a user account element, which loads its own data differently directly from user table
+	if(!$element->isUserAccountElement) {
+		$ele_value = $element->getVar('ele_value');
+		// if there is no previous entry data to load, then just return the default ele_value
+		if(empty($prevEntry)) {
+			return $ele_value;
+		}
 
-	// get the value of this element for this entry as stored in the DB, if any
-	$value = "";
-	$handle = $element->getVar('ele_handle');
-	$handle = is_numeric($handle) ? intval($handle) : $handle; // if the handle is numeric, make sure it's an integer, otherwise we can have problems with searching for the handle in the prevEntry array, because of things like "1669" and "1669_copy" being confused with each other
-	$key = array_search($handle, $prevEntry['handles'], true); // true means strict type matching search, which works because we've forced numeric handles to be numbers
-	if($key !== false) {
-		$value = $prevEntry['values'][$key];
-	}
-	// If the value is blank, and this is a new entry, or the element is required or the element has the use-defaults-when-blank option on
-	// then do not load in saved value over top of ele_value, just return the default instead
-	if(($value === "" OR $value === null) AND ($entry_id == 'new' OR $element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
-		return $ele_value;
+		// get the value of this element for this entry as stored in the DB, if any
+		$value = "";
+		$handle = $element->getVar('ele_handle');
+		$handle = is_numeric($handle) ? intval($handle) : $handle; // if the handle is numeric, make sure it's an integer, otherwise we can have problems with searching for the handle in the prevEntry array, because of things like "1669" and "1669_copy" being confused with each other
+		$key = array_search($handle, $prevEntry['handles'], true); // true means strict type matching search, which works because we've forced numeric handles to be numbers
+		if($key !== false) {
+			$value = $prevEntry['values'][$key];
+		}
+		// If the value is blank, and this is a new entry, or the element is required or the element has the use-defaults-when-blank option on
+		// then do not load in saved value over top of ele_value, just return the default instead
+		if(($value === "" OR $value === null) AND ($entry_id == 'new' OR $element->getVar('ele_use_default_when_blank') OR $element->getVar('ele_required'))) {
+			return $ele_value;
+		}
 	}
 
 	// based on element type, swap in the value for this element in this entry...
@@ -3084,14 +3088,6 @@ print "function PrintAllPop() {\n";									// nmc 2007.03.24 - added
 print "		window.document.printview.elements_allowed.value='';\n"; // nmc 2007.03.24 - added
 print "		window.document.printview.submit();\n";					// nmc 2007.03.24 - added
 print "}\n";														// nmc 2007.03.24 - added
-
-// try and catch changes in a datebox element
-print "jQuery(document).ready(function() {
-  jQuery(\"img[title='"._CALENDAR."']\").click(function() {
-	formulizechanged=1;
-  });
-});
-\n";
 
 drawXhrJavascript();
 
