@@ -1,7 +1,6 @@
 const { test, expect } = require('@playwright/test');
-import { saveFormulizeForm } from '../../utils';
-import { conditionalElementReady } from '../../utils';
-import { login } from '../../utils';
+import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
+import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm } from '../../utils';
 
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {
@@ -688,6 +687,37 @@ test.describe('New donation inside Donor record', () => {
 		await page.getByRole('row', { name: 'Candide - first edition' }).getByRole('link').click();
 		await expect(page.getByRole('radio', { name: 'Yes' })).toBeChecked();
 		await expect(page.locator('div.formulize-input-artifacts_donor select option[selected]')).toContainText('François-Marie Arouet');
+	}),
+	test('Verify Add button limitation setting works as expected', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		await page.getByRole('link', { name: 'Admin' }).click();
+		await page.getByRole('link', { name: 'Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
+		await openElementAccordion(page, 'Donated artifacts');
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('[id="elements-ele_value[addButtonLimit]"]').fill('1');
+		await saveAdminForm(page);
+		await page.goto('/');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
+	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
+		await expect(page.getByText('Add new artifact')).not.toBeVisible();
+		await page.getByRole('link', { name: 'Admin' }).click();
+		await page.getByRole('link', { name: 'Museum' }).click();
+	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
+		await openElementAccordion(page, 'Donated artifacts');
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('[id="elements-ele_value[addButtonLimit]"]').fill('0');
+		await saveAdminForm(page);
+		await page.goto('/');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
+	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
+		await expect(page.getByText('Add new artifact')).toBeVisible();
 	})
 })
 

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, waitForAdminPageReady } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -266,6 +266,27 @@ test.describe('Set columns and elements for screens', () => {
   	await page.getByRole('button', { name: 'Add Column' }).click();
   	await page.locator('#cols-2').selectOption('donors_email');
   	await saveAdminForm(page);
+	})
+
+	test('Move element between pages on Donors form screen', async ({ page }) => {
+		await page.locator('div[id^=form-details-box-]').nth(2).getByRole('link', { name: 'Elements' }).click();
+		await openElementAccordion(page, 'Street address');
+		await page.getByRole('link', { name: 'Configure' }).click();
+		await page.getByRole('link', { name: 'Display Settings' }).click();
+		const screensFieldset = page.getByRole('group', {
+			name: 'Form Screens to display this element on',
+		});
+		const checkboxByLabelText = (labelText) =>
+			screensFieldset.locator('li', {
+				has: page.locator('input[type="checkbox"]'),
+			}).locator('label', { hasText: labelText })
+		await checkboxByLabelText('Donated Artifacts').check();
+		await checkboxByLabelText('Profile').uncheck();
+		await saveAdminForm(page);
+		await checkboxByLabelText('Donated Artifacts').uncheck();
+		await checkboxByLabelText('Profile').check();
+		await saveAdminForm(page);
+		await page.getByRole('link', { name: 'Home' }).click();
 	})
 
 	test('Collections form screen', async ({ page }) => {

@@ -108,7 +108,7 @@ if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_PO
 		$formObject->getVar('defaultform') => array(0) // page 0 is the first page
 	);
 	$dataType = 'text';
-	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding, $dataType, pi: true);
+	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding, dataType: $dataType, pi: true);
 }
 
 // if the form name was changed, etc, then force a reload of the page...

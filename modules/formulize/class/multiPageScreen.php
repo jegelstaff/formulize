@@ -302,7 +302,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 									array_push($existing_pages[$page_index], $ele_id);
 								}
 							} else {
-								if (in_array($ele_id, $existing_pages[$page_index])) {
+								if ($page_element == $ele_id AND in_array($ele_id, $existing_pages[$page_index])) {
 									// If this element exists under the page's element array, then remove it
 									unset($existing_pages[$page_index][$ele_index]);
 								}
