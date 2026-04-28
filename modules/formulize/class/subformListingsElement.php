@@ -878,9 +878,14 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
     // if the 'add x entries button' should be hidden or visible
     $hidingAddEntries = false;
-    if ("hideaddentries" == $hideaddentries) {
-        $hidingAddEntries = true;
+		if($hideaddentries == 'hideaddentries'
+			OR (
+				intval($subform_element_object->ele_value["addButtonLimit"])
+				AND count((array) $sub_entries[$subform_id]) >= intval($subform_element_object->ele_value["addButtonLimit"])
+			)) {
+      $hidingAddEntries = true;
     }
+
     $allowed_to_add_entries = false;
     if ("subform" == $hideaddentries OR 1 == $hideaddentries) {
 			// for compatability, accept '1' which is the old value which corresponds to the new use-subform-permissions (saved as "subform")
@@ -1024,10 +1029,6 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 		}
 
 	} elseif(count((array) $sub_entries[$subform_id]) > 0) {
-
-        if(intval($subform_element_object->ele_value["addButtonLimit"]) AND count((array) $sub_entries[$subform_id]) >= intval($subform_element_object->ele_value["addButtonLimit"])) {
-            $hideaddentries = 'hideaddentries';
-        }
 
         $sortClause = " sub.entry_id ";
         $joinClause = "";
