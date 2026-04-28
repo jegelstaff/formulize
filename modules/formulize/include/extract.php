@@ -1162,14 +1162,14 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$linkedEauSelect = isset($eauLinkedSelectFieldIndex[$thisLinkFid]) ? $eauLinkedSelectFieldIndex[$thisLinkFid] : "";
 				$commaIfNecessary = ($linkSelectIndex[$linkId] OR $linkedEauSelect) ? "," : "";
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
-					. $linkSelectIndex[$linkId] . $linkedEauSelect . $commaIfNecessary .
-					" usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email FROM "
-					. DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
-                    LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid"
-					. $eauMainJoinText
-					. $linkedEauJoin . "
-                    LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
-                    INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
+					. $linkSelectIndex[$linkId] . $linkedEauSelect . $commaIfNecessary . "
+					usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email
+					FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
+          LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
+					$eauMainJoinText
+					LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
+					$linkedEauJoin
+					INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
 										if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
 					$start = true;
 					foreach ($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
