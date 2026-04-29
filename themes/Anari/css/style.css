@@ -1118,10 +1118,10 @@ table.formulize-subform-table td {
 .form-row {
   margin: 30px 0;
 }
-.form-row:first-child {
+.form-row:nth-child(1 of .form-row:not([style*="display:none" i]):not([style*="display: none" i])) {
   margin-top: 0;
 }
-.form-row:last-child {
+.form-row:nth-last-child(1 of .form-row:not([style*="display:none" i]):not([style*="display: none" i])) {
   margin-bottom: 0;
 }
 
