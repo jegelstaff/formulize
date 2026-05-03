@@ -4681,6 +4681,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	} else {
 		$flatScope = $scope;
 	}
+	$flatScope = md5($flatScope); // has so it doesn't look like a SQL injection to server security software
 
 	$showcols = explode(",", $settings['oldcols']);
 	if ($settings['global_search']) {
@@ -4695,6 +4696,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 
 	$filter = formulize_parseSearchesIntoFilter($searches);
 	$filterToCompare = is_array($filter) ? serialize($filter) : $filter;
+	$filterToCompare = md5($filterToCompare); // has so it doesn't look like a SQL injection to server security software
 
 	$regeneratePageNumbers = false;
 
