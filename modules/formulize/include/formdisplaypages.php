@@ -355,7 +355,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
 			}
 			$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
-			if($usersCanSave AND $nextPage==$thanksPage) {
+			if($usersCanSave AND pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry, $fid, $frid)) {
 					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
 			} else {
 					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
@@ -456,6 +456,54 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
     formulize_benchmark("End of displayFormPages.");
 } // end of the function!
+
+/**
+ * Determine if the specified page, or the next page that passes conditions for the entry, is the thanks page
+ *
+ * @param int $pageNumber - the page number we are checking
+ * @param int $activePageNumber - the page number that the user is currently on, used to determine if conditions on the pageNumber page could be met by values to be saved by the user on the active page
+ * @param int $thanksPageNumber - the page number of the thanks page
+ * @param array $pages - the elements for each page of the form
+ * @param array $conditions - the conditions for the pages, used to determine if we need to skip any pages
+ * @param int $entry - the entry id, used to determine if conditions are met
+ * @param int $fid - the form id, used to determine if conditions are met
+ * @param int $frid - the form framework id, used to determine if conditions are met
+ * @return bool - true if the specified page or the next page that meets conditions is the thanks page, false otherwise
+ */
+function pageIsThanksPageOrEquivalent($pageNumber, $activePageNumber, $thanksPageNumber, $pages, $conditions, $entry, $fid, $frid) {
+	if($pageNumber > $thanksPageNumber) {
+		throw new Exception("Current page is 'after' the Thanks page, somehow. This should never happen.");
+	}
+	while($pageNumber < $thanksPageNumber) {
+		if(isset($conditions[$pageNumber][0]) AND count((array) $conditions[$pageNumber][0])>0) { // conditions on the current page
+			if(pageMeetsConditions($conditions, $pageNumber, $entry, $fid, $frid) == false) {
+				// page didn't meet the conditions
+				// check if it could possibly still meet the conditions
+				// because one of the conditions is based on a derived value
+				// or is based on an element on the active page
+				// DOES NOT TAKE INTO ACCOUNT VALUES SET IN ON BEFORE SAVE OR ON AFTER SAVE!
+				foreach($conditions[$pageNumber][0] as $elementIdentifier) {
+					if($elementObject = _getElementObject($elementIdentifier)
+						AND (
+							$elementObject->getVar('ele_type') == 'derived'
+							OR (is_array($pages[$activePageNumber]) AND in_array($elementObject->getVar('ele_id'), $pages[$activePageNumber]))
+						)) {
+						break 2; // do not increment and check next page, let's go with this one as the potential next page
+					}
+				}
+				// this page will not be available to the user, so let's carry on to the next page
+				$pageNumber++;
+				continue;
+			}
+		}
+		// the page has no conditions
+		// or the conditions are met
+		// or the conditions are not met but could still be met due to a derived value being referenced in conditions, or an element in the active page being referenced in conditions
+		break;
+	}
+	// whatever page we've landed on, check if it's the thanks page
+	return $pageNumber == $thanksPageNumber ? true : false;
+}
 
 // THIS FUNCTION GENERATES THE MARKUP FOR THE PREVIOUS AND NEXT BUTTONS
 function generatePrevNextButtonMarkup($buttonType, $buttonText, $usersCanSave, $nextPage, $previousPage, $thanksPage) {
