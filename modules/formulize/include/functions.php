@@ -2843,22 +2843,18 @@ function getDateElementDefault($default_hint, $entry_id = false) {
 }
 
 /**
- * Find linked entries between forms
+ * Find the entries linked to a specified entry, in another specified form, based on a join in specified elements.
+ * Only used in the checkForLinks function.
  *
- * This function finds linked entries between forms based on relationships.
+ * @param string $startForm The form id or handle of the main form, the form with the entry that we're looking for links to
+ * @param array $targetForm An array with keys, fid, common, keyself and keyother, representing the form id of the form where we're looking for entries, a flag for whether the connection is "common value" or not (if not it will be a foreign key situation), keyself and keyother are the element ids of the elements in which we check for a join.
+ * @param mixed $startEntry The entry id in the startForm that we are checking for links to
+ * @return array|boolean An array of the entry ids found in the target form, or false if none found
  *
- * @param string $startForm Starting form identifier
- * @param string $targetForm Target form identifier
- * @param mixed $startEntry Starting entry
- * @return array Linked entries
- *   the entry ids of entries in one form that are linked to another
- *
- * IMPORTANT:  assume $startEntry is valid for the user(security check has already been executed by now)
+ * IMPORTANT:  assume $startEntry is valid for the user (security check has already been executed by now)
  * therefore just need to know the allowable uids (scope) in the $targetForm
- * targetForm is a special array containing the keys as specified in the framework, and the target form
- * keys:  fid, keyself, keyother
- * keyself and other are the ele_id from the form table for the elements that need to be matched.
- * SHOULD BE REFACTORED TO BE AWARE OF A FRID SO IT CAN DETERMINE THE CORRECT DIRECTION OF LINKING, AND THEN HANDLE DOUBLE LINKED SELECTBOXES
+ * Could be refactored to be aware of a frid so it can determine the correct direction of linking, and then handle double linked selectboxes, etc
+ * But since it is only used in one function as part of a specific operation, refactoring has poor cost/benefit ratio
  */
 function findLinkedEntries($startForm, $targetForm, $startEntry) {
 
@@ -3016,12 +3012,12 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
  *
  * This is an internal helper function for finding linked entries.
  *
- * @param string $targetFormKeySelf Target form key
- * @param int $targetFormFid Target form ID
- * @param array $valuesToLookFor Values to look for
- * @param array $all_users All users
- * @param array $all_groups All groups
- * @return array Found linked entries
+ * @param string $targetFormKeySelf The element id of the element in the target form that is part of the link
+ * @param int $targetFormFid The form id of the target form
+ * @param array $valuesToLookFor Values to look for (the ones that will form a match that links the entries together)
+ * @param array $all_users An array of users to limit the scope of the search to
+ * @param array $all_groups An array of groups to limit the scope of the search to
+ * @return array|boolean An array of the entries found in the target form, or false if none found
  */
 function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor, $all_users, $all_groups) {
     $data_handler_target = new formulizeDataHandler($targetFormFid);
@@ -3056,10 +3052,10 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
     }
     if (count((array) $totalEntriesToReturn) > 0 ) {
         return $totalEntriesToReturn;
-            } else {
-                return false;
-            }
-        }
+		} else {
+				return false;
+		}
+}
 
 /**
  * Clone form entries
