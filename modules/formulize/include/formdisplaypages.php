@@ -194,7 +194,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
 
-    $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+  $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
 
 	if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
 
@@ -345,6 +345,10 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					$saveAndContinueButtonText['nextButtonText'] = trans(_formulize_DMULTI_NEXT);
 					$saveAndContinueButtonText['printableViewButtonText'] = trans(_formulize_PRINTVIEW);
 					$saveAndContinueButtonText['closeButtonText'] = trans(_formulize_DONE);
+			}
+
+			if(!$usersCanSave AND $saveAndContinueButtonText['leaveButtonText'] == trans(_formulize_SAVE_AND_LEAVE)) {
+				$saveAndContinueButtonText['leaveButtonText'] = trans(_formulize_DONE);
 			}
 
 			if($currentPage != 1) {
