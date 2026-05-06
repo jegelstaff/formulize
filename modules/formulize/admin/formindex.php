@@ -758,7 +758,7 @@ function patch40() {
 					AND ele_value LIKE "%#*=:*%"
 					AND (ele_use_default_when_blank IS NULL OR ele_use_default_when_blank != 1)
 					AND `ele_value` LIKE \'%i:14;s:1:"1"%\'';
-				if(!$res = $xoopsDB->query($sql)) {
+				if(!$res = $xoopsDB->queryF($sql)) {
 					print "Error: could not update legacy linked select elements with 'use default when blank' setting.<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.";
 				}
 
