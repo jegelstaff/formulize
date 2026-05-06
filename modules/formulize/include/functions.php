@@ -759,16 +759,14 @@ function cutString($string, $maxlen) {
 }
 
 /**
- * Get the header list for a form
+ * Get the header list for a form. By default, returns an array of column headers, or captions if no header or an element. Or can return element IDs or handles depending on combination of parameters specified.
  *
- * Returns a list of header fields for a form, with fallback logic for missing headers
- *
- * @param int $fid The form ID
- * @param bool $needids If true, return element IDs instead of text
- * @param bool $convertIdsToElementHandles If true and needids is true, convert
+ * @param int $fid - The form ID
+ * @param bool $needids - If true, return element IDs instead of text
+ * @param bool $convertIdsToElementHandles - If true and needids is true, convert
  * IDs to element handles. flag will have effect if ids have been returned, and
  * will do one query to get all the element handles that patch the ids selected
- * @return array Array of header fields
+ * @return array - Array of header values, either text or element ids or element handles depending on parameters specified
  *
  * Step 1: primary relationship is set in URL and there's a PI, then use the PI
  * Step 2: if nothing so far, use the defined headerlist for the form (in its admin settings)
@@ -776,10 +774,10 @@ function cutString($string, $maxlen) {
  * Step 4: if nothing so far, use the first three required fields
  * Step 5: if nothing so far, use the first three fields
  *
- * we do not filter the headerlist for private elements, because the columns in
+ * We do not filter the headerlist for private elements, because the columns in
  * entriesdisplay are filtered for private columns (and display columns) after being gathered.
  */
-function getHeaderList ($fid, $needids=false, $convertIdsToElementHandles=false) {
+function getHeaderList($fid, $needids=false, $convertIdsToElementHandles=false) {
     global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -3058,24 +3056,20 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
 }
 
 /**
- * Clone form entries
+ * Clone form entries making one or more copies, including all relevant entries in all relevant forms according to the specified relationship, if any
  *
- * This function clones form entries with various options.
+ * Note that the same relative linked selectbox relationships are preserved, ie: if a an Ontario entry and a Toronto entry are cloned, then Toronto-clone will point to Ontario-clone, not back to the original Ontario entry.
+ * If connections between forms are based on common values or uids, they are not modified. This might not be desired behaviour in all cases!!!
  *
- * can take an entry in a framework and make copies of all relevant entries in
- * all relevant forms
- * note that the same relative linked selectbox relationships are preserved in
- * cloned framework entries, but links based on common values and uids are not
- * modified at all. this might not be desired behaviour in all cases!!!
- * entries in single-entry forms are never cloned
+ * Entries in single-entry forms are never cloned
  *
- * @param int|string|array $entryOrFilter Entry or filter to clone.
- * @param int $frid Framework ID
- * @param int $fid Form ID
- * @param int $copies Number of copies to create
- * @param callable|null $callback Callback function
- * @param string $targetEntry Target entry identifier
- * @return array Cloned entries
+ * @param int|string|array $entryOrFilter - a valid filter param for the gatherDataset function. Typically a single entry id, but could be a complex filter string or an array.
+ * @param int $frid - The form relationship ID in the context of which the cloning is happening
+ * @param int $fid - the form ID the "main form" in the relationship, or only form if no relationship. Typically, when entryOrFilter is an entry id, this will be the form that the entry belongs to.
+ * @param int $copies - Number of copies to create. Defaults to 1.
+ * @param callable|null $callback - Optional. Callback function that can be used to modify the data written to the cloned entries. It receives an associative array of the raw data from the database, keyed by element handles and returns the array with modifications if any.
+ * @param string $targetEntry - The entry being written to. Defaults to "new" to create a new entry cloned from the source. But this could be used to overwrite an existing entry also.
+ * @return array An array map of the entries that were cloned. Top level key is the form id, then within that is an array keyed by the original entry id with the value being an array of the cloned entry ids that were created from that original entry, because there could be more than one cloned entry based on each original.
  */
 function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
 
@@ -3169,21 +3163,20 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 
 
 /**
- * Send notifications for form events
+ * Send notifications for form events. Relies on underlying notification apparatus in XOOPS/ICMS.
  *
- * Sends notifications for various form events to subscribed users. Does some
- * unconventional stuff to handle custom templates for messages, and sending to
- * everyone in a group, or to the current user (like a confirmation message)
+ * Users must be subscribed to events in the notification system. The notificaiton process will subscribe people on a
+ * one and done basis if they are not already subscribed.
  *
- * @param int $fid Form ID
- * @param string $event Event identifier
- * @param array $entries Affected entries
- * @param string $mid Module ID
- * @param array $groups User groups. ignored, and should not be specified. Param
- * exists for historical reasons only.
+ * We do some unconventional stuff to handle custom templates for messages, and sending to
+ * everyone in a group, or to the current user, and various other scenarios supported by the Formulize notification UX/UI.
+ *
+ * @param int $fid - The form ID about which the notificaiton is being sent
+ * @param string $event - The type of event, either "new_entry", "update_entry", or "delete_entry"
+ * @param array $entries - An array of entry IDs in the fid that this notification event pertains to
  * @return void
  */
-function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
+function sendNotifications($fid, $event, $entries) {
 
     // don't send a notification twice, so we store what we have processed already and don't process again
     static $processedNotifications = array();
@@ -3232,9 +3225,7 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
         return;
     }
 
-    if (!$mid) {
-        $mid = getFormulizeModId();
-    }
+    $mid = getFormulizeModId();
 
     // 1b. get the complete list of all possible users to notify
     $gperm_handler =& xoops_gethandler('groupperm');
@@ -3253,18 +3244,14 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
     $groups_view = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 
     // start main loop
+		$data_handler = new formulizeDataHandler($fid);
     $notificationTemplateData = array();
     $notificationTemplateRevisionData = array();
     foreach ($entries as $entry) {
 
-	$notificationTemplateData[$entry] = "";
-    $notificationTemplateRevisionData[$entry] = "";
-
-        // user list is potentially different for each entry. ignore anything that was passed in for $groups
-        if (count((array) $groups) == 0) { // if no groups specified as the owner of the current entry, then let's get that from the table
-            $data_handler = new formulizeDataHandler($fid);
-            $groups = $data_handler->getEntryOwnerGroups($entry);
-        }
+				$notificationTemplateData[$entry] = "";
+    		$notificationTemplateRevisionData[$entry] = "";
+        $groups = $data_handler->getEntryOwnerGroups($entry);
 
         // get the uids of all the users who are members of groups that have a specified groupscope that includes a group that is an owner group of the entry
         if (!isset($formulize_permHandler)) {
@@ -3450,9 +3437,6 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
                     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
                     $notificationTemplateData[$entry] = gatherDataset($fid, filter: $entry, frid: 0);
                     // if the revision table is on for the form, then gather the data from the most revent revision for the entry
-                    if(!isset($data_handler)) {
-                        $data_handler = new formulizeDataHandler($fid);
-                    }
                     // get the last revision we flagged (after saving, before updating derived values!)
                     if($event == 'update_entry' AND $revisionEntry = $data_handler->getRevisionForEntry($entry, $GLOBALS['formulize_snapshotRevisions'][$fid][$entry])) {
                         $notificationTemplateRevisionData[$entry] = $revisionEntry;
@@ -3495,19 +3479,18 @@ function sendNotifications($fid, $event, $entries, $mid="", $groups=array()) {
 }
 
 
-    /**
-     * Send notification to email address
-     *
-     * This function sends individual notifications to email addresses.
-     * $template should include .tpl on the end
-     *
-     * @param string $email Recipient email address
-     * @param string $event Event identifier
-     * @param array $tags Notification tags
-     * @param string $overrideSubject Override subject
-     * @param string $overrideTemplate Override template
-     * @return void
-     */
+/**
+ * Sends notifications to email addresses directly. This is required in some cases because although a user might have email as their notification method, some notifications are sent to arbitrary addresses and not to users per se.
+ *
+ * Email is sent using the underlying XOOPS/ICMS mailer, which is a version of phpmailer
+ *
+ * @param string $email - The recipient email address, or email addresses in a comma-separated list
+ * @param string $event - The event identifier, either "new_entry", "update_entry", or "delete_entry"
+ * @param array $tags - An array of variables expressed as key-value pairs, that will get replaced in the notification template. Templates reference variable names (keys) using curly braces and all caps: {ALLCAPS} which will get replaced with the corresponding value. The {ATTACHFILE-filename} variable must have the full path to the file as the value, and then the specified file in the variable name will be attached to the email.
+ * @param string $overrideSubject - Optional. A custom subject to use instead of the default.
+ * @param string $overrideTemplate - Optional. A custom template to use instead of the default.
+ * @return void
+ */
 function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $overrideTemplate="") {
     $module_handler = xoops_gethandler('module');
     $module = $module_handler->get(getFormulizeModId());
@@ -3588,13 +3571,11 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
 
 
 /**
- * Get users by groups
+ * Get a unique list of user ids belonging to specified groups
  *
- * This function retrieves users belonging to specified groups.
- *
- * @param array $groups Group identifiers
- * @param string $member_handler Member handler
- * @return array Users in the specified groups
+ * @param array $groups An array of group ids
+ * @param string $member_handler Optional. The XOOPS Member handler. Saves instantiating it in this function if it is passed in.
+ * @return array An array of the unique user ids that belong to the specified groups
  */
 function formulize_getUsersByGroups($groups, $member_handler="") {
     if (!$member_handler) {
@@ -3615,22 +3596,19 @@ function formulize_getUsersByGroups($groups, $member_handler="") {
 
 
 /**
- * Compile "not users" conditions
- *
- * This function compiles conditions for excluding users from selections. can be
- * called from within a loop, and will merge uids_conditions with all previously
- * recorded values
+ * Create a list of all the user ids that should be notified for a given notification condition.
+ * Merges passed in user ids with the user ids determined by the condition, and returns the merged list.
  *
  * @param array $uids_conditions User IDs and conditions
- * @param string $thiscon Current condition
- * @param int $uid User ID
- * @param object $member_handler Member handler
- * @param bool $reinitialize Reinitialization flag
- * @param mixed $entry Entry data
- * @param int $fid Form ID
+ * @param array $thiscon An array of key-value pairs representing the current notification condition being processed. This is used in determining the type of condition, which indicates how to figure out the user ids we should notify. The keys are field names and values are the values, as found in the database table in the entry for that particular condition (ie: the "notify webmasters when there's a new entry" condition). If there were a proper XOOPS object-based class for notifications, which would be an object, but the notificaiton system is so old, that this is simply an array representing the database record.
+ * @param int $uid - The user ID of the user that triggered the notification, typically the active user.
+ * @param object $member_handler - The XOOPS member handler, passed to save reinstantiating here, which is actually totally unnecessary, but old code, you know?
+ * @param bool $reinitialize - A flag used to indicate whether to start over in determining if the current user is part of the set of user ids to notify. Relevant if this function were being used inside a loop that is working on a different set of conditions than the last time it was called.
+ * @param int $entry_id - The entry ID of the entry that we're notifying about
+ * @param int $fid - The form ID of the form that the entry belongs to
  * @return array Processed conditions
  */
-function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize, $entry, $fid) {
+function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $reinitialize, $entry_id, $fid) {
     static $omit_user = null;
     if ($reinitialize) {
         // need to do this when handling saved conditions, since each time we call this function it's a new "event" that we're dealing with
@@ -3645,13 +3623,13 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
         $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
         unset($uids_temp);
     } elseif ($thiscon['not_cons_creator'] > 0) {
-        $uids_temp = getEntryOwner($entry, $fid);
+        $uids_temp = getEntryOwner($entry_id, $fid);
         $uids_conditions[] = $uids_temp;
         unset($uids_temp);
     } elseif ($thiscon['not_cons_elementuids'] > 0) {
         // get the entry at issue and extract the uids from the specified element
         $data_handler = new formulizeDataHandler($fid);
-        $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementuids']));
+        $value = $data_handler->getElementValueInEntry($entry_id, intval($thiscon['not_cons_elementuids']));
         if ($value) {
             $uids_temp = explode("*=+*:", trim($value,"*=+*:"));
             $uids_conditions = array_merge((array)$uids_temp, $uids_conditions);
@@ -3660,7 +3638,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
     } elseif ($thiscon['not_cons_linkcreator'] > 0) {
         // get the entry at issue and extract the uid(s) of the creator(s) of the items selected in the specified element
         $data_handler = new formulizeDataHandler($fid);
-        $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
+        $value = $data_handler->getElementValueInEntry($entry_id, intval($thiscon['not_cons_linkcreator'])); // get the values in the linked fields
         // the entry ids (in their source form) of the items selected in the linked selectbox, should always be an array of at least one value
         $entry_ids = explode(",", trim($value, ","));
         if (count((array) $entry_ids) > 0) {
@@ -3677,12 +3655,12 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
             }
             unset($uids_temp);
         } else {
-            $uids_conditions = array();
+            $uids_conditions = array(); // BUG?? should this be an array_merge like other cases??
         }
     } elseif ($thiscon['not_cons_elementemail'] > 0) {
         // get the element at issue and extract the e-mail address from it
         $data_handler = new formulizeDataHandler($fid);
-        $value = $data_handler->getElementValueInEntry($entry, intval($thiscon['not_cons_elementemail']));
+        $value = $data_handler->getElementValueInEntry($entry_id, intval($thiscon['not_cons_elementemail']));
         if ($value) {
             // split on commas
             $values = explode(",", $value);
@@ -3714,18 +3692,11 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
 }
 
 /**
- * Subscribe UIDs to form events
- *
- * Subscribe users to an event on a form, so events will trigger for them later
- * (original model of xoops notifications was for users to self-subscribe, so we
- * have to do this for them)
- * @param array $uidsToSubscribe An array of user ids that should be subscribed
- * to the event
- * @param int $fid The form id of the form with the event we're subscribing them
- * to
- * @param string $event The kind of event we're subscribing them to (as
- * specified in xoops_version.php)
- * @return bool Returns false if invalid data is passed to it, otherwise true
+ * Subscribe users to an event on a form, so events will trigger for them later (original model of xoops notifications was for users to self-subscribe, so we have to do this for them)
+ * @param array $uidsToSubscribe An array of user ids that should be subscribed to the event
+ * @param int $fid The form id of the form with the event we're subscribing them to
+ * @param string $event The kind of event we're subscribing them to (as specified in xoops_version.php)
+ * @return boolean Returns false if invalid data is passed to it, otherwise true
  */
 function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 
@@ -3758,34 +3729,17 @@ function subscribeUidsToEvent($uidsToSubscribe, $fid, $event) {
 }
 
 /**
- * Process form notifications
- *
- * Send notifications, or cache notifications so they can be triggered by a cron
- * job later
+ * Send notifications, or cache notifications so they can be triggered by a cron job later
  * Turn on the preference in the module to use the cron feature
  *
- * @param string $event The kind of event being processed, either 'new_entry' or
- * 'update_entry' or 'delete_entry'. Controls the default subject/template used
- * in the notification.
- * @param array $extra_tags An array of values to swap into the notification
- * where there are { } terms. Keys are the terms, values are what gets swapped in.
- * @param int $fid The form that we're processing the notification about. Can be
- * null if we're not sending a notification about a form, just sending generic
- * mail.
- * @param array $uids_to_notify An array of the user ids that should receive the
- * notification. Can include the value -1 to indicate that mail is being sent to
- * an arbitrary email address, in which case the email address must be set in
- * the global variable $GLOBALS['formulize_notification_email']
- * @param int $mid Optional. The Formulize module ID. Will be determined if not
- * passed in.
- * @param int $omit_user Optional. A flag to indicate if the current session's
- * user should be excluded from the notification (ie: so people aren't notified
- * of things they do themselves)
- * @param string $subject Optional. A subject for the notification message, if
- * something besides the default should be used.
- * @param string $template Optional. The name of the template file, which must
- * be located in modules/formulize/language/english/mail_template (if english
- * is the active language)
+ * @param string $event The kind of event being processed, either 'new_entry' or 'update_entry' or 'delete_entry'. Controls the default subject/template used in the notification.
+ * @param array $extra_tags An array of values to swap into the notification where there are { } terms. Keys are the terms, values are what gets swapped in.
+ * @param int $fid The form that we're processing the notification about. Can be null if we're not sending a notification about a form, just sending generic mail.
+ * @param array $uids_to_notify An array of the user ids that should receive the notification. Can include the value -1 to indicate that mail is being sent to an arbitrary email address, in which case the email address must be set in the global variable $GLOBALS['formulize_notification_email']
+ * @param int $mid Optional. The Formulize module ID. Will be determined if not passed in.
+ * @param int $omit_user Optional. A flag to indicate if the current session's user should be excluded from the notification (ie: so people aren't notified of things they do themselves)
+ * @param string $subject Optional. A subject for the notification message, if something besides the default should be used.
+ * @param string $template Optional. The name of the template file, which must be located in modules/formulize/language/english/mail_template (if english is the active language)
  * @return void
  */
 function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notify, $mid=null, $omit_user=0, $subject="", $template="") {
@@ -3836,20 +3790,19 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
 }
 
 /**
- * Process notification write line
+ * Write a set of notification metadata to a line in a file on disk, for later processing (likely by cron job).
+ * The data is serialized and then "19690509" is appended to the end of it, which is a unique string that is presumed to not be found in the data, so that when the file is read back in, it can be exploded on that string to get each line of data, and then each one unserialized to get the original data structure back.
  *
- * This function processes writing notification lines to files.
- *
- * @param string $notFile Notification file
- * @param string $event Event identifier
- * @param array $extra_tags Extra notification tags
- * @param int $fid Form ID
- * @param int $uid_to_notify User ID to notify
- * @param string $mid Module ID
- * @param int $omit_user User ID to omit
- * @param string $subject Notification subject
- * @param string $template Notification template
- * @param string $email Email address
+ * @param resource $notFile - The file resource for the notification file that we're writing to, which should already be open for appending and locked for writing by the calling function
+ * @param string $event - The notification event
+ * @param array $extra_tags - Extra notification tags
+ * @param int $fid - Form ID
+ * @param int $uid_to_notify - User ID to notify
+ * @param string $mid - Module ID
+ * @param int $omit_user - The flag for whether to omit the active user id
+ * @param string $subject - Notification subject, or an empty string if default is being used.
+ * @param string $template - Notification template, or an empty string is default is being used.
+ * @param string $email - A specific email address that the notification should be sent to, or an empty string if the notification is not being sent to an arbitrary email address.
  * @return void
  */
 function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $fid, $uid_to_notify, $mid, $omit_user, $subject, $template, $email="") {
@@ -3871,12 +3824,11 @@ function formulize_processNotificationWriteLine($notFile, $event, $extra_tags, $
 }
 
 /**
- * Get file lock
- *
  * This function gets a lock on a file resource.
  *
- * @param resource $fileResource File resource to lock
- * @return bool Lock acquisition status
+ * @param resource $fileResource - File resource to lock
+ * @return bool - true
+ * @throws Exception if a lock cannot be obtained after 30 tries (which is one minute, since the function sleeps for 2 seconds between tries)
  */
 function formulize_getLock($fileResource) {
     $ourTurn = false;
@@ -3885,7 +3837,7 @@ function formulize_getLock($fileResource) {
         $ourTurn = flock($fileResource, LOCK_EX);
         if(!$ourTurn) {
             if($lockTries == 30) {
-                exit("Formulize fatal error: Could not get a lock on the notifications cache file after one minute.");
+                throw new Exception("Could not get a lock on the notifications cache file after one minute.");
             } else {
                 $lockTries++;
                 sleep(2);
@@ -3897,16 +3849,11 @@ function formulize_getLock($fileResource) {
 
 
 /**
- * Get headers for data display
  * Takes a series of columns and gets the headers for them
- * @param array cols - An array of element ids or element handles
- * @param boolean colsIsElementHandles - a flag indicating if the cols array is
- * using ids or handles
- * @param int frid - Optional. The form relationship id in effect, if any.
- * Causes headers to get the form title prefixed to them, on the first column
- * from that form.
- * @return array Returns an array of the headers, corresponding to the order of
- * the cols that were passed in.
+ * @param array $cols - An array of element ids or element handles
+ * @param boolean $colsIsElementHandles - a flag indicating if the cols array is using ids or handles
+ * @param int $frid - Optional. The form relationship id in effect, if any. Causes headers to get the form title prefixed to them, on the first column from that form.
+ * @return array - Returns an array of the headers, corresponding to the order of the cols that were passed in.
  */
 function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
     global $xoopsDB;
@@ -3960,15 +3907,11 @@ function getHeaders($cols, $colsIsElementHandles = true, $frid = 0) {
 }
 
 /**
- * Get default columns for a form
+ * Retrieve the default columns for displaying form data in a list. Used when no particular columns have been specified by screen settings or by a user.
  *
- * This function retrieves the default columns for displaying form data.
- *
- * @param int $fid Form ID
- * @param string $frid Framework ID
- * @return array Default columns
- * returns the handles of form elements based on the requested form and
- * optionally framework id
+ * @param int $fid - Form ID
+ * @param string $frid - Form relationship ID (determines the connections between the fid and other forms)
+ * @return array - An array of element handles comprising the default columns
  */
 function getDefaultCols($fid, $frid="") {
 	global $xoopsDB, $xoopsUser;
