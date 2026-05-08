@@ -475,9 +475,6 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
  * @return bool - true if the specified page or the next page that meets conditions is the thanks page, false otherwise
  */
 function pageIsThanksPageOrEquivalent($pageNumber, $activePageNumber, $thanksPageNumber, $pages, $conditions, $entry, $fid, $frid) {
-	if($pageNumber > $thanksPageNumber) {
-		throw new Exception("Current page is 'after' the Thanks page, somehow. This should never happen.");
-	}
 	while($pageNumber < $thanksPageNumber) {
 		if(isset($conditions[$pageNumber][0]) AND count((array) $conditions[$pageNumber][0])>0) { // conditions on the current page
 			if(pageMeetsConditions($conditions, $pageNumber, $entry, $fid, $frid) == false) {
