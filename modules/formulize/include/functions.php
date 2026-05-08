@@ -259,13 +259,9 @@ function gatherNames($groups, $nametype='uname', $requireAllGroups=false, $filte
 }
 
 /**
- * Deduce the current URL
- *
- * Returns the full URL of the current page, including query string, etc. Caches the first
- * instance found. Resets cache if a rewriteruleAddress is specified
- *
- * @param string $rewriteruleAddress Optional rewrite rule address to use instead of REQUEST_URI. Intended to see the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
- * @return string The current URL
+ * Deduce the current URL, including full query string, etc. Caches the first instance found. Resets cache if a rewriteruleAddress is specified
+ * @param string $rewriteruleAddress If passed in, this value will be used instead of the URI. Intended to seed the current URL in cases where we need to modify the canonical URL because it is using rewrite rules and pointing to an invalid identifier.
+ * @return string The current URL, from cache if already determined and no rewriteruleAddress was specified
  */
 function getCurrentURL($rewriteruleAddress='') {
     static $url = "";
@@ -1034,8 +1030,7 @@ function allowedForms() {
 
 
 /**
- * Remove entries from the Other table, and delete associated resources when an
- * entry is deleted from a form
+ * Remove entries from the Other table, and delete associated resources when an entry is deleted from a form
  *
  * @param int $id_req The entry ID to delete
  * @param int $fid The form ID from which the entry is being deleted
@@ -2041,35 +2036,12 @@ function getCalcHandleText($elementIdOrMetadataHandle, $forceColhead=true) {
 
 /**
  * Creates a scope variable, suitable for passing to the gatherDataset function
- * Limits the scope created based on the permissions of the user. Requesting
- * 'all' scope on a user without permission to see all entries in the form,
- * results in the highest level of scope the user is permitted on the form.
- *
- * @param string|int $currentView
- * Can be one of the strings: mine, group, or all, signifying "the user's
- * entries," or "their group's entries," or "all entries." Can be a comma
- * separated list of group ids instead, or a single group id, to declare a
- * specific scope based on that particular set of groups. If you pass specific
- * group ids, they will be used as is. If you want specific group ids to be
- * limited to the groups the user is a member of, put the string
- * 'onlymembergroups' as the first item in the comma separated list.
- * @param object|int $uidOrObject
- * The user id or the user object, representing the user for whom the scope
- * is being created. This user's permissions on the form will be taken into
- * account when building the scope. If an invalid user id or object is passed,
- * then the anonymous user, user 0, is assumed.
- * @param int $fid
- * The id number of the form for which the scope is being built
- * @param boolean $currentViewCanExpand
- * A flag used internally to allow for a scope that is beyond the user's
- * permissions. Used when saved views publish data to a group of users, which
- * those users would not normally see.
- * @return array
- * Returns an array with two values in it. Key zero is the scope, which will be
- * an array of group ids or arbitrary SQL to append to a database query, or an
- * empty string if the user has global scope. Key one is the value of currentView,
- * which may have changed if 'group' or 'all' was specified and the user did not
- * have that level of permission.
+ * Limits the scope created based on the permissions of the user. Requesting 'all' scope on a user without permission to see all entries in the form, results in the highest level of scope the user is permitted on the form.
+ * @param string|int $currentView - Can be one of the strings: mine, group, or all, signifying "the user's entries," or "their group's entries," or "all entries." Can be a comma separated list of group ids instead, or a single group id, to declare a specific scope based on that particular set of groups. If you pass specific group ids, they will be used as is. If you want specific group ids to be limited to the groups the user is a member of, put the string 'onlymembergroups' as the first item in the comma separated list.
+ * @param object|int $userIdOrObject - The user id or the user object, representing the user for whom the scope is being created. This user's permissions on the form will be taken into account when building the scope. If an invalid user id or object is passed, then the anonymous user, user 0, is assumed.
+ * @param int $fid - The id number of the form for which the scope is being built
+ * @param boolean $currentViewCanExpand - A flag used internally to allow for a scope that is beyond the user's permissions. Used when saved views publish data to a group of users, which those users would not normally see.
+ * @return array Returns an array with two values in it. Key zero is the scope which will be an array of group ids or arbitrary SQL to append to a database query, or an empty string if the user has global scope. Key one is the value of currentView, which may have changed if 'group' or 'all' was specified and the user did not have that level of permission.
  */
 function buildScope($currentView, $userIdOrObject, $fid, $currentViewCanExpand = false) {
 
@@ -2228,11 +2200,11 @@ function getLinkedOptionsSourceForm($elementIdentifier) {
  * There is usually no overlap in these use cases, but there are exotic situations where a user might supply a { } reference?
  * It's possible there is no overlap at all, but extensive testing would be required to rule it out.
  * If partialMatch is true, code that called this MUST be prepared for the possibility of an array being returned!!
- * @param int|string|object elementObjectOrIdentifier This is either an element ID number, element handle, or element object of the element for which the text value is being prepared
- * @param string value The text value that is being prepared
- * @param int curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
- * @param int userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
- * @param bool partialMatch Optional. If true, then the value will be checked in the method call for multiple matches and an array could be returned.
+ * @param int|string|object $elementObjectOrIdentifier This is either an element ID number, element handle, or element object of the element for which the text value is being prepared
+ * @param string $value The text value that is being prepared
+ * @param int $curlyBracketEntryId Optional. The entry ID in which any { } element references should be resolved
+ * @param int $userComparisonId Optional. The user ID of a user that should be returned if the text value == {USER}, if the curlyBracketEntryId is not 'new'. If the curlyBracketEntryId is 'new' then the current user's ID will be used.
+ * @param bool $partialMatch Optional. If true, then the value will be checked in the method call for multiple matches and an array could be returned.
  * @return string|array|bool The prepared value compatible with data in the databse, or the false if the elementObjectOrIdentifier is not valid, or the search term is deemed invalid by the method call (matches nothing in the DB). Can be an array of values if partialMatch is true, or multiple linked source entries match a single search term.
  */
 function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBracketEntryId = null, $userComparisonId = null, $partialMatch = false) {
