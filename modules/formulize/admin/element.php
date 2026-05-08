@@ -346,7 +346,7 @@ if ($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
 }
 
 $adminPage['pagetitle'] = "Element: ".$elementName;
-$adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type, $ele_value).")";
+$adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type).")";
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";

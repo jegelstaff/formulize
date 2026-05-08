@@ -1914,7 +1914,7 @@ function getMetaData($entry_id, $member_handler=null, $fid="", $useOldCode=false
  * @param string $frid Optional. The relationship if any that we should use to include related forms
  * @param array $groups Optional. Optional. An array of group ids that we should use to limit which elements are included (based on their display settings). If not specified, the display settings for the element are not taken into account.
  * @param bool $includeTextForDisplay Optional. Defaults to false, so 'text for display' elements are not included
- * @return array And array keyed for form id, where each value is the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption and ele_colhead
+ * @return array And array keyed for form id, where each value is the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption, ele_colhead, and ele_handle
  */
 function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false) {
     global $xoopsUser;
@@ -1990,7 +1990,7 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
  * @param string $pq The private query string for filtering elements based on whether they're a private element or not
  * @param string $incbreaks The query string for including or excluding certain element types
  *
- * @return array
+ * @return array The updated $cols array with the columns for the form added in, if the user has permission to access the form. The columns are the raw results from a function q query of the DB, ie: two dimensioned array, first dimension is a counter for the records returned, second dimension is the name of the db field returned, in this case the db fields are ele_id and ele_caption, ele_colhead, and ele_handle
  */
 function addToColsList($cols, $fid, $uid, $groups, $mid, $gperm_handler, $gq, $pq, $incbreaks) {
 	if(!is_array($cols)) { return array(); }
@@ -3963,76 +3963,35 @@ function getDefaultCols($fid, $frid="") {
 }
 
 /**
- * Write element value to database
+ * Write a value to a single element. Smartly handles literal values that need turning into foreign keys. But for the FK handling, this function would server no purpose and could be entirely refactored out.
+ * Applies htmlSpecialChars to all values, regardless of element type! This will make sanitizing stuff later when we rip out that behaviour, a little more difficult because potentially everything has special chars.
  *
- * OVERWRITES OR APPENDS TO A VALUE IN A SPECIFIED FORM ELEMENT.
+ * @deprecated VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME. DOES NOT INVOKE THE ON BEFORE SAVE OR ON AFTER SAVE EVENT. USE formulize_writeEntry INSTEAD, WHICH CAN UPDATE ALL FIELDS IN AN ENTRY AT ONCE, AND INVOKES THE APPROPRIATE EVENTS.
  *
- * @deprecated VERY INEFFICIENT, SINCE IT ONLY UPDATES ONE FIELD AT A TIME.
- * BETTER TO USE formulize_writeEntry, except in cases where you actually need
- * to only update one field.  In most cases you want to update multiple fields
- * in an entry, so don't use this inside a loop. it will generate more queries
- * than you need
- *
- * prevValue is now completely not required.  lvoverride is only used if you
- * want to pass in a pre-formatted ,1,3,15,17, style string for inserting into
- * a linked selectbox field.
- * linkedTargetHint is used if we are writing to a linked selectbox element, and
- * we have some indication from the UI what the entry is that we're supposed to
- * link to.  This allows for disambiguation of target values that we might be
- * trying to link to, that might occur in more than one entry.
- * THIS IS APPLYING HTMLSPECIALCHARS TO ALL VALUES, REGARDLESS OF ELEMENT TYPE.
- * WILL MAKE SANITIZING STUFF LATER WHEN WE RIP OUT THAT BEHAVIOUR, A LITTLE
- * MORE DIFFICULT BECAUSE POTENTIALLY EVERYTHING HAS SPECIAL CHARS, THOUGH MOST
- * THINGS DON'T
- *
- * @param mixed $formframe Form frame identifier
- * @param mixed $ele Element identifier
- * @param mixed $entry Entry identifier
- * @param mixed $value Value to write
- * @param string $append Append mode
- * @param mixed $prevValue Previous value
- * @param bool $lvoverride Override flag
- * @param string $linkedTargetHint Linked target hint
+ * @param mixed $formframe - Deprecated. Not in use, but cannot be removed as the first param.
+ * @param int|string|object $elementIdentifier - Required. The element id, handle or object that we're writing to
+ * @param int|string $entry - Required. The entry Id that we're writing to, or "new" for a new entry that hasn't been saved yet
+ * @param mixed $value - Required. The value to write to the element in the entry
+ * @param string|int $append - Optional. A flag, either "replace", "append", or "remove" which indicates what do to with the value. Defaults to "replace". If the entry is "new" then this can be an integer in which case it indicates the user ID that should own the entry. If not specified then the current active user is used.
+ * @param mixed $prevValue - Deprecated. Has no effect. Kept in because of element ordering in certain calls.
+ * @param bool $lvoverride - Optional. Use if the value you're passing in is a predetermined foreign key, or comma separated string of fks. Note that comma separated strings have preceding and trailing commas. ie: ,1,3,15,17,
+ * @param int $linkedTargetHint - Optional. The entry id that a linked selectbox element should be writing to, if known. This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one source entry.
  * @return void
  */
-function writeElementValue($formframe, $ele, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = "") {
+function writeElementValue($formframe, $elementIdentifier, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = 0) {
 
-    global $xoopsUser, $formulize_mgr, $xoopsDB, $myts;
+    global $xoopsUser, $xoopsDB, $myts;
     if (!is_object($myts)) {
         $myts =& MyTextSanitizer::getInstance();
-    }
-
-    if (!$formulize_mgr) {
-        $formulize_mgr =& xoops_getmodulehandler('elements', 'formulize');
     }
 
     $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     $date = date ("Y-m-d");
 
-    if (is_numeric($ele)) {
-        $element =& $formulize_mgr->get($ele);
-        $element_id = $ele;
-    } else {
-        $framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-        $frameworkObject = $framework_handler->get($formframe);
-        if (is_object($frameworkObject)) {
-            $frameworkElementIds = $frameworkObject->getVar('element_ids');
-            if (isset($frameworkElementIds[$ele])) {
-                $element_id = $frameworkElementIds[$ele];
-                $element =& $formulize_mgr->get($element_id);
-            }
-        }
-        if (!is_object($element)) {
-            // then check the element data handles instead
-            $element =& $formulize_mgr->get($ele);
-        }
-    }
-
-    if (!is_object($element)) {
-        print "<b>Error: could not save the value for element: ".$ele.". Please notify your webmaster, or <a href=\"mailto:info@formulize.org\">info@formulize.org</a> about this error.</b>";
-        return;
-    }
-
+		if(!$element = _getElementObject($elementIdentifier)) {
+			throw new Exception("Could not save the value for element: ".htmlspecialchars(strip_tags((string) $elementIdentifier)).". Element not found.");
+		}
+		$element_id = $element->getVar('ele_id');
     $ele_value = $element->getVar('ele_value');
 
     if (!is_array($value)) { // value can be an array of multiple values -- initially that only worked for linked selectboxes
@@ -4092,7 +4051,7 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
                     $searchForValues[] = $linkedEntryId['entry_id'];
                 }
                 if ($linkedTargetHint) {
-                    $linkedTargetHintInQuery = " AND `entry_id` = $linkedTargetHint";
+                    $linkedTargetHintInQuery = " AND `entry_id` = ".intval($linkedTargetHint);
                 }
             }
         }
@@ -4232,17 +4191,13 @@ function writeElementValue($formframe, $ele, $entry, $value, $append="replace", 
 
 
 /**
- * Reads all the files in a directory and deletes old ones
+ * This function reads all the files in a directory and deletes old ones
  * @param string $dir The directory to look in
- * @param string $filter Optional. A string that the filenames must contain.
- * Non-matching files will be excluded. By default all files are included.
- * @param int $timeWindow Optional. The number of seconds old a file must be to
- * be included. Older files will be deleted. Default is 21600 (6 hours). If 0
- * then all files are included.
- * @param int $sortingOrder Optional. The sorting order for scandir to use. Same
- * values as the $sorting_order param of the PHP scandir function.
+ * @param string $filter Optional. A string that the filenames must contain. Non-matching files will be excluded. By default all files are included.
+ * @param int $timeWindow Optional. The number of seconds old a file must be to be included. Older files will be deleted. Default is 21600 (6 hours). If 0 then all files are included.
+ * @param int $sortingOrder Optional. The sorting order for scandir to use. Same values as the $sorting_order param of the PHP scandir function.
  * @return array An array of the files found
- */
+ **/
 function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600, $sortingOrder=SCANDIR_SORT_ASCENDING) {
     $currentTime = time();
     $targetTime = $currentTime - $timeWindow;
@@ -4264,27 +4219,17 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600, $sorting
     return $foundFiles;
 }
 
-
-
 /**
- * Write form entry to database
+ * Write values to an entry in the database. Calls the writeEntry method in the data handler, and sets ownership of new entries.
  *
- * This function writes form entry data to the database with various options.
- * TAKES AN ARRAY WHERE THE KEYS ARE ELEMENT IDS AND THE VALUES ARE VALUES, AND
- * IT WRITES THEM ALL TO A SPECIFIED ENTRY OR A NEW ENTRY
- *
- * @param array $values Entry values. should be the correct values that would be
- * passed back by the prepDataForWrite step. takes ID numbers as keys, since
- * that's how the datahandler expects things
- * @param string $entry_id Entry ID
- * @param string $action Action to perform. Deprecated
- * @param bool $proxyUser Proxy user flag. if present, is meant to override the
- * current $xoopsUser uid value
- * @param bool $forceUpdate Force update flag. will cause queryF to be used in
- * the data handler, which will allow updates on a get request
- * @param bool $writeOwnerInfo Write owner info flag. causes the entry_owner_groups
- * table to be updated when a new entry is written
- * @return mixed Written entry data
+ * @param array $values - An array of key-value pairs, where the keys are element ids or handles in a single form, and the values are the values to write. The keys must be consistent, either all ids or all handles. The values must be database-ready values. To write values to more than one form you must call this function multiple times.
+ * @param string $entry_id - The entry ID that we're writing to, or "new" for a new entry not yet saved
+ * @param string $action - Deprecated. Do not use. Left in for parameter order
+ * @param bool|int $proxyUser - Optional. False, or a user ID to use as the owner of a new entry.
+ * @param bool $forceUpdate - Optional. A flag to cause the writing to happen on all requests. By default writing only happens on POST requests.
+ * @param bool $writeOwnerInfo - Optional. A flag to indicate that the ownership info should be written for new entries. Defaults to true.
+ * @return int|void Returns the entry ID of the entry that was written, or void if nothing was written which will happen if the values in the database match the passed in values.
+ * @throws Exception if the writing operation failed, or if no element was found corresponding to the first key in the values array.
  */
 function formulize_writeEntry($values, $entry_id="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
     if ($entry_id < 1 and "new" != $entry_id) {
@@ -4319,36 +4264,24 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
             if($result !== null) {
             	throw new Exception("Data could not be written to the database for entry $entry_id in form ". $elementObject->getVar('id_form').".");
             } else {
+							// "return void"
 							// This really clutters up the error logs, because it's quite normal anytime someone doesn't make any changes! But we may want to do something else in this eventuality so we'll keep the 'else' here, at least so it's clear what happens/has happened at this point.
               // error_log('Formulize Notice: Nothing written for entry "'.$entry_id.'" presumably because the passed in values are unchanged from the saved values.');
             }
         }
-    } else {
-        print "<pre>";
-        debug_print_backtrace();
-        print "</pre>";
-        exit("Error: invalid element in the value array: ".key($values).".");
     }
+		throw new Exception("Could not write to the database. No element found with the identifier: ".htmlspecialchars(strip_tags((string) key($values))).".");
 }
 
 
 /**
- * Synchronize existing subform entries
+ * Synchronize existing subform entries with their parent form. Can only run once per page load.
  *
- * This function synchronizes existing subform entries with their parent forms.
- * SYNCHS THE VALUES OF ELEMENTS IN SUBFORMS WITH THE VALUES OF ELEMENTS IN
- * MAINFORMS, BASED ON = OPERATORS IN ANY SUBFORM ELEMENT CONDITIONS THAT EXIST
- * IN THE MAINFORM. this is so that the value of elements that were set at
- * creation time based on the main form, are kept in synch with the mainform
- * values if the mainform values change. WE ONLY ENFORCE THIS ON { } DYNAMIC
- * REFERENCES TO ELEMENTS. IF WE ENFORCED LITERAL VALUES THEN IN THE CASE OF
- * MULTIPLE SUBFORM ELEMENTS PULLING IN DIFFERENT SUBSETS OF ENTRIES IN THE
- * SUBFORM, THE LAST SUBFORM ELEMENT'S LITERAL VALUES WOULD BE WRITTEN ONTO ALL
- * THE ENTRIES (SO THE OTHER SUBFORM ELEMENTS WOULD END UP WITH NO ENTRIES THAT
- * MATCH THE FILTERS)
+ * Synchs values of elements in subforms with the values of elements in mainforms, based on = operators in any subform element conditions that exist in the mainform.
+ * This is so that the value of elements that were set at creation time based on the main form, are kept in synch with the mainform values if the mainform values change.
+ * We only enforce this on { } dynamic references to elements. If we enforced literal values then in the case of multiple subform elements pulling in different subsets of entries in the subform, the last subform element's literal values would be written onto all the entries (so the other subform elements would end up with no entries that match the filters)
  *
- * @param int $frid Framework ID. the relationship that we're supposed to
- * use to link the mainform and subform can only run once per page load
+ * @param int $frid - Form relationship ID. The relationship that we're supposed to use to link the mainform and subform
  * @return void
  */
 function synchExistingSubformEntries($frid) {
@@ -4416,12 +4349,7 @@ function synchExistingSubformEntries($frid) {
 
 
 /**
- * Synchronize subform blank defaults
- *
- * This function synchronizes blank default values for subforms. SYNCHS ENTRIES
- * WRITTEN IN BLANK DEFAULTS IN A SUBFORM, WITH THE PARENT FORM.  GETS EXECUTED
- * IN FORMDISPLAY.PHP AND FORMDISPLAYPAGES.PHP AFTER A FORM SUBMISSION
- *
+ * Synchronize subform-blank entries with their parent entry.
  * @return void
  */
 function synchSubformBlankDefaults() {
@@ -4492,12 +4420,8 @@ function synchSubformBlankDefaults() {
 }
 
 /**
- * Get element object (internal helper)
- *
- * This is an internal helper function that retrieves element objects.
- *
- * @param mixed $element Element identifier. can be an element ID, handle, or
- * object itself
+ * Internal function that retrieves an element object if necessary
+ * @param mixed $element The element to retrieve - can be an element ID, handle, or object itself
  * @return formulizeElement|false The element object or false if not found
  */
 function _getElementObject($element) {
@@ -4519,11 +4443,8 @@ function _getElementObject($element) {
 }
 
 /**
- * Convert element handles to element IDs
- *
  * Takes an array of element references, and converts any element handles in it to the corresponding ID
  * Inefficient! Should be used sparingly.
- *
  * @param array $handles An array of element ids or handles, can be mixed
  * @return array Returns the array with any numeric IDs converted to handles, or the passed in value if handles was not an array
  */
@@ -4546,11 +4467,11 @@ function convertElementHandlesToElementIds($handles) {
  *
  * This function converts element IDs to their corresponding element handles.
  *
- * @param array $ids Array of element IDs
- * @param bool|int $fid Form ID
+ * @param int|array $ids - An array of element IDs to convert, or a single ID.
+ * @param bool|int $fid - Optional. The form ID for the elements. If not provided, the function will attempt to determine it from the first element ID in the ids array.
  * @return array Corresponding element handles
  *
- * @todo still in use but could/should be refactored
+ * @todo still in use but could/should be refactored out
  */
 function convertElementIdsToElementHandles($ids, $fid=false) {
     $elementsToFrameworks = false;
@@ -4576,35 +4497,26 @@ function convertElementIdsToElementHandles($ids, $fid=false) {
         if($fid) {
             return convertAllHandlesAndIds($ids, $frid, $elementsToFrameworks, $idsToFrameworks, $fid);
         } else {
-            exit("Error: cannot get handle for element ".$ids[0].", in 'convertElementIdsToElementHandles' function. There is no such element.");
+						throw new Exception("Cannot get form ID for element ".htmlspecialchars(strip_tags((string) $ids[0])).", in 'convertElementIdsToElementHandles' function. There is no such element.");
         }
-    } else {
-        return $ids;
     }
+		return $ids;
 }
 
 
 /**
- * Convert handles and IDs back and forth
+ * Convert element handles and IDs back and forth in either direction. But in practice, only ever returns handles for a given set of element IDs.
  *
- * This function converts between element handles and IDs in both directions.
+ * This function is needlessly complex because it was written to handle very old conventions since Formulize 2 that no longer apply.
  *
- * assume handles are unique within a framework (which they are supposed to be!)
- * This function essentially makes a framework handle/element handle map for the
- * entire framework, and caches it, so once a framework is mapped, we never hit
- * the database again.  Then we just call the function to return the values we
- * are looking for.
+ * Only called from the convertElementIdsToElementHandles function, and retained because of some efficiency in doing its job, because it caches the map of handles and ids for the given form
  *
- * @param array $handles Array of element handles
- * @param int $frid Framework ID
- * @param bool $reverse Reverse conversion flag. Used only when this is called
- * from the opposite function, which is really just a wrapper for calling this
- * and asking for things the other way around. element handles converted to
- * framework handles
- * @param bool $ids flag that will cause framework handles to be returned when
- * element ids are passed
- * @param bool|int $fid Form ID for use when going from element ids to handles
- * @return array Converted values
+ * @param array $handles Array of element IDs or handles. In practice, is always IDs.
+ * @param int $frid - A form relationship ID, in the context of which we may be getting handles. Can be 0 for no relationship.
+ * @param bool $reverse - Deprecated. Should always be false.
+ * @param bool $ids - Deprecated. Should always be false.
+ * @param bool|int $fid - Required. The form ID of the form with the elements we're working with.
+ * @return array - the converted values
  */
 function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $fid=false) {
     // reverse means elements to frameworks
@@ -4656,6 +4568,7 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
         if ($fid) {
             $idHandleQuery = q("SELECT ele_handle, ele_id FROM ".$xoopsDB->prefix("formulize") . " WHERE id_form=".intval($fid));
         } else {
+						// should never run because fid is required, and this table does not exist any longer!
             $idHandleQuery = q("SELECT t2.ele_handle, t1.fe_handle, t2.ele_id FROM " . $xoopsDB->prefix("formulize_framework_elements") . " as t1, " . $xoopsDB->prefix("formulize") . " as t2 WHERE t1.fe_frame_id='$frid' AND t1.fe_element_id=t2.ele_id");
         }
         foreach ($idHandleQuery as $thisIdRow) {
@@ -4724,32 +4637,23 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 
 
 /**
- * Build a Select form element
+ * Build a dropdown filter that can be used in a form. Normally used to make quick search filters for a list of entries.
  *
- * Used to create a drop down list that can act as a filter in a user interface.
- * The dropdown list is made up of the options for the specified ele_id. If the
- * dropdown list is a linked selectbox, the values can be optionally limited by
- * the "limit" params, based on values in another field in each entry that
- * underlies the link
- * ie: build a filter with the names of all activity entries, but limit it to
- * activity entries where the date of the activity is 2007.
- * name is the name of the form in the DOM, which will be submitted on change.
- * Leave blank to not have the filter submit anything
+ * The options in the filter are determined based on the options for the specified element, or the values stored in all entries in the database if the element does not have defined values (ie: if it's not a radio button series, etc)
  *
- * @param string $id Unique identifier for the filter
- * @param string $element_identifier Identifier for the form element
- * @param string $defaultText Default text for the filter
- * @param string $formDOMId DOM ID for the form
- * @param mixed $defaultValue Default value for the filter
- * @param bool $subfilter Flag for subfilter
- * @param int $linked_ele_id Linked element ID
- * @param int $linked_data_id Linked data ID
- * @param bool $limit Flag to limit results
- * @param bool $multi Flag for multi-select. used to determine if the options
+ * @param string $id - The value of the name attribute in the markup for the filter we're creating. This will be used in POST when the filter value is submitted back to the server
+ * @param string|int|object $element_identifier - The element ID, handle or object that we're making a filter based on
+ * @param string $defaultText - Optional. Any default text that should be used as the first value in a dropdown list, ie: Choose an option
+ * @param string $formDOMId - The id attirbute of a form element in the DOM which should be submitted when the selected value changes (if it is a dropdown filter for example). Or "{listofentries}" if the filter is being created for a standard list of entries, and the list should reload when the selected value changes. Leave blank to have no automatic submission on change.
+ * @param mixed $defaultValue - The value in the filter that should be selected/shown by default
+ * @param bool $subfilter - Experimental. A flag to indicate if the filter is the child of another filter, like a province-city set of filters
+ * @param int $linked_ele_id - Experimental. Only used with subfilters
+ * @param int $linked_data_id - Experimental. Only used with subfilters.
+ * @param bool $limit - Deprecated. Used to be used in cases where the element is a linked selectbox, then the values can be optionally limited based on values in another field in each entry that underlies the link. ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007. See inline code comments for more detail.
+ * @param bool $multi - A flag used to indicate if the filter should be a series of checkboxes for supporting multi value selections. Defaults to false.
  * should be returned as a checkbox series supporting multiple values
- * @param bool $negativeFilter Flag for negative filtering. will make a filter
- * that does the inverse, excludes the selected value (applies NOT to the value)
- * @return string HTML for the filter element
+ * @param bool $negativeFilter - A flag used to indicate if the filter should be a "negative" filter, that selects which values to exclude instead of include.
+ * @return string HTML markup for the filter element, including necessary javascript to submit the form the filter is part of (based on formDOMid)
  */
 function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false) {
 
@@ -4788,6 +4692,10 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeElement')) ? $element_identifier : $element_handler->get($element_identifier);
+
+		if(!$elementObject) {
+			throw new Exception("No element found with the identifier: ".htmlspecialchars(strip_tags((string) $element_identifier)).", in 'buildFilter' function.");
+		}
 
     $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
 
@@ -5250,8 +5158,14 @@ function formulize_handleRandomAndDateText($text) {
 }
 
 
-// THIS FUNCTION TAKES A VALUE AND THE UITEXT FOR THE ELEMENT, AND RETURNS THE UITEXT IN PLACE OF THE "DATA" TEXT
-// also ensures HTML will work
+/**
+ * Takes a value and the uitext for the element, and returns the uitext in place of the "data" text
+ * ie: if an element has 1, 2, 3 in the database, and ui text of "One", "Two", "Three", then passing in 2 would return "Two"
+ *
+ * @param string|array $value The value to swap. If an array is passed, it should have a key called 'value' which will be swapped.
+ * @param array $uitexts Array of UI text mappings, where keys are database values and values are the corresponding UI text to display
+ * @return string|array The value with UI text swapped in place of database value. If an array was passed in, the 'value' key will be swapped, and the rest of the array will be returned unchanged.
+ */
 function formulize_swapUIText($value, $uitexts=array()) {
     $originalValue = $value;
     // if value is an array, it has a key called 'value', which needs to be swapped
@@ -5267,14 +5181,13 @@ function formulize_swapUIText($value, $uitexts=array()) {
 }
 
 /**
- * Swap database text values
+ * Take a ui text value, and the uitext mappings for the element, and return the corresponding database value
+ * ie: if an element has "One", "Two", "Three" as UI text and has 1, 2, 3 in the database, then passing in "Two" would return 2
+ * This is the inverse of the formulize_swapUIText function.
  *
- * This function swaps database text values based on provided UI text mappings.
- *
- * @param string $value The value to process
- * @param array $uitexts Array of UI text mappings
- * @return string Processed value with database text swapped
- * RETURNS THE CORRESPONDING DB VALUE IF THE PASSED VALUE MATCHES A UITEXT
+ * @param string $value - The database value to process, or an array with a key called 'value' which will be processed, and the rest of the array will be returned unchanged
+ * @param array $uitexts - The uitext array for the element, keys are database values and values are the corresponding UI text
+ * @return string|array - The value with database value swapped in place of ui text value. If an array was passed in, the 'value' key will be swapped, and the rest of the array will be returned unchanged.
  */
 function formulize_swapDBText($value, $uitexts=array()) {
     if(!is_array($uitexts)) { return $value; }
@@ -5294,15 +5207,12 @@ function formulize_swapDBText($value, $uitexts=array()) {
 
 
 /**
- * Format a number value
+ * Formats numbers according to options users have specified for an element
  *
- * This function formats numbers according to options users have specified
- *
- * @param mixed $value The value to format
- * @param string|int $elementIdOrHandle Element ID or handle
- * @param int $decimalOverride Override for decimal places. used to provide
- * decimal values if specified format has no decimals (added for use in calculations)
- * @return string Formatted number string
+ * @param mixed $value - The value to format
+ * @param string|int $elementIdOrHandle - Element ID or handle
+ * @param int $decimalOverride - Override for decimal places. used to provide decimal values if specified format has no decimals (added for use in calculations)
+ * @return string - Formatted number string
  */
 function formulize_numberFormat($value, $elementIdOrHandle, $decimalOverride=0) {
     if (!is_numeric($value)) {
@@ -5325,26 +5235,22 @@ function formulize_numberFormat($value, $elementIdOrHandle, $decimalOverride=0) 
 
 
 /**
- * Internal number formatting function
+ * Used by formulize_numberFormat to actually do the formatting. Respects passed in values and falls back to global number configuration.
  *
- * This is an internal helper function for formatting numbers with various
- * formatting options. used by formulize_numberFormat to actually do the
- * formatting. different element types have different parts of ele_value where
- * the number values are stored, so that's the reason for abstracting this out
- * one level
+ * Different element types have different parts of ele_value where the number values are stored, so formulize_numberFormat figures that out and then hands off to this standardized function.
  *
- * @param mixed $value The value to format
- * @param int $decimalOverride Override for decimal places
- * @param string $decimals Decimal places setting
- * @param bool $decSepExists Flag for decimal separator existence
- * @param string $decsep Decimal separator
- * @param bool $sepExists Flag for separator existence
- * @param string $sep Separator
- * @param bool $prefixExists Flag for prefix existence
- * @param string $prefix Prefix
- * @param bool $suffixExists Flag for suffix existence
- * @param string $suffix Suffix
- * @return string Formatted number string
+ * @param mixed $value - The value to format
+ * @param int $decimalOverride - Override for decimal places
+ * @param string $decimals - Decimal places setting
+ * @param bool $decSepExists - Flag for decimal separator existence
+ * @param string $decsep - Decimal separator
+ * @param bool $sepExists - Flag for separator existence
+ * @param string $sep - Separator
+ * @param bool $prefixExists - Flag for prefix existence
+ * @param string $prefix - Prefix
+ * @param bool $suffixExists - Flag for suffix existence
+ * @param string $suffix - Suffix
+ * @return string - Formatted number string
  */
 function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSepExists=false, $decsep="", $sepExists=false, $sep="", $prefixExists=false, $prefix="", $suffixExists=false, $suffix="") {
     $config_handler = xoops_gethandler('config');
@@ -5374,23 +5280,20 @@ function _formulize_numberFormat($value, $decimalOverride, $decimals="", $decSep
     return trans($prefix) . number_format($value, $decimals, trans($decsep), trans($sep)) . trans($suffix);
 }
 
-
 /**
- * Get calculated values for a form
+ * Get the result of a calculation defined in a saved view
  *
- * This function retrieves calculated values for a form based on the given
- * parameters.
+ * @param mixed $formframe - The relationship ID, or name. Unless mainform is not specified, in which case this is the form ID, or handle, or title(!). Use IDs or handles!
+ * @param int $mainform - If formframe is referencing a relationship, then this is the form ID, or handle or title(!). Use IDs or handles!
+ * @param mixed $savedView - The ID number of the saved view (which is completely inaccessible in the Formulize UI)
+ * @param string $handle - Optional. The element handle in the saved view calculations that we want to retrieve, or "all" for all the calculations. Defaults to "all".
+ * @param string $type - Optional. The type of calculation to retrieve from the saved view, or "all" for all types of calculation. Defaults to "all". Types of calculations are: count, sum, avg, min, max, per (for percentage breakdowns).
+ * @param string $grouping - Optional. The grouping value to retrieve from the saved view, or "all" for all calculations regardless of their grouping value. Defaults to "all".
+ * @return array - A structured array with the format: $resultArray[$handle][$calcType][] = ['result' => the raw result, 'readable' => the formatted result, 'grouping' => the grouping value for this calculation] - so multiple arrays would be included for a given calctype if there are different groupings
  *
- * @param mixed $formframe Form frame identifier
- * @param int $mainform Main form ID
- * @param mixed $savedView Saved view identifier
- * @param string $handle Handle for calculation
- * @param string $type Type of calculation
- * @param string $grouping Grouping for calculation
- * @return array Calculated values
- *
- * @todo ASSIGNS IDS INSTEAD OF HANDLES TO RESULT ARRAY.  THIS NEEDS TO BE
- * LOOKED INTO
+ * @todo assigns ids instead of handles to result array.  this needs to be
+ * looked into
+ * @todo rethink the entire use of this and the return value structure!
  */
 function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $type="all", $grouping="all") {
     list($fid, $frid) = getFormFramework($formframe, $mainform);
@@ -5511,12 +5414,12 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
         }
     }
 
-    return $resultArray; // multiple handles requested so return everything
+    return $resultArray;
 }
 
 
 /**
- * Create filter UI elements
+ * Create the standard filter UI used in the administration side of Formulize. Return the markup for the filter UI.
  *
  * Creates the UI and hidden elements for a set of filter options, such as those
  * used to create the per-group-filter options in the permission section, or
@@ -5527,39 +5430,20 @@ function formulize_getCalcs($formframe, $mainform, $savedView, $handle="all", $t
  * this filter information later, it will have to take both the old and the new
  * and munge them together.
  *
- * @param array $filterSettings Filter settings. the actual filter settings in
- * an array, as retrieved (and unserialized) from the DB
- * @param string $filterName Name of the filter. the unique name to use for this
- * set of elements -- CANNOT HAVE UNDERSCORES IN IT! (breaks delete interpretation)
- * @param object $formWithSourceElements Form with source elements. the ID of
- * the form to use to get the elements from to show in the filter options
- * @param string $formName Name of the form. the name of the HTML form that this
- * filter UI is being embedded into - ID really, not the name
- * @param int $frid Framework ID. the form relationship id to be used to gather
- * a set of elements, not just the mainform's elements - optional
- * @param string $defaultTypeIfNoFilterTypeGiven Default filter type. the value
- * ("all" or "oom") that should be used for the filter type, if no filter type
- * is specified...this happens when old installations are upgraded to the new
- * version that is type-aware for these filters, no filter type will be
- * specified for all the conditions.  Therefore, we have to assume what it
- * should be, and that is potentially different for each place this function is
- * called, since the logic reading these filters for each of those places will
- * have assumed one or the other.
- * @param array|bool $groups User groups. the groups to filter the elements with
- * (only elements visible to those groups).  If no groups, then all elements are
- * returned.
- * @param string $filterAllText Text for "all" filter option
- * @param string $filterConText Text for filter condition. the text to use for
- * the "con" option (ie: the radio button that shows there is a filter in effect)
- * @param string $filterButtonText Text for filter button. the text to use for
- * the "add" button for adding a new filter to the list of conditions
+ * @param array $filterSettings - Filter settings. the actual filter settings in an array, as retrieved (and unserialized) from the DB. Filter arrays have four keys: 0 is an array of elements, 1 is an array of operators, 2 is an array of terms, and 3 is an array of types, either all or oom indicating if the filter applies to the AND or OR part of the conditions. (All arrays are keyed in parallel, so element, operator, term and type with the same key belong together as a filter condition)
+ * @param string $filterName - Name of the filter. the unique name to use for this set of elements -- CANNOT HAVE UNDERSCORES IN IT! (breaks delete interpretation)
+ * @param object $formWithSourceElements - The ID of the main form in the active dataset, from which we are getting the possible elements to list in the filter options
+ * @param string $formName - Deprecated. The name of the HTML form that this filter UI is being embedded into. Not used.
+ * @param int $frid - Optional. The form relationship ID of the active database. The formWithSourceElements is the mainform in the relationship. Default to 0 for no relationship. If specified, the elements from all forms linked to the mainform will be used.
+ * @param string $defaultTypeIfNoFilterTypeGiven - Deprecated. Default filter type. The value ("all" or "oom") that should be used for the filter type, if no filter type is specified. Only truly ancient installations would require this setting.
+ * @param array|bool $groups - Optional. The user groups to filter the elements with (only elements visible to those groups). If no groups, then all elements are returned.
+ * @param string $filterAllText - Deprecated.
+ * @param string $filterConText - Deprecated.
+ * @param string $filterButtonText - Optional. Text to use for the "Add another condition" button.
  * @return string HTML for filter UI
- *
- * ALTERED - 20100315 - freeform - jeff/julian - start - commented match all,
- * and added match one or more
  */
 function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceElements, $formName, $frid=0, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
-    if (!$filterName OR !$formWithSourceElements OR !$formName) {
+    if (!$filterName OR !$formWithSourceElements) {
         return false;
     }
 
@@ -5661,9 +5545,9 @@ function formulize_createFilterUI($filterSettings, $filterName, $formWithSourceE
 }
 
 /**
- * Clean filter operation values
+ * Validate and return a filter op value
  *
- * This function cleans and validates filter operation values. checks the passed
+ * This function cleans and validates filter operation values. Checks the passed
  * in op and returns it only if it matches one of the allowed types of ops
  * (necessary since we cannot sanitize out < and > easily using normal
  * sanitizing functions due to them being angle brackets in HTML)
@@ -5691,18 +5575,16 @@ function formulize_conditionsCleanOps($op) {
 
 
 /**
- * Create filter UI match elements
+ * Create the element - operator - term UI that is part of filter conditions.
  *
- * This function creates UI elements for matching filter conditions.
- *
- * @param string $newElementName New element name
- * @param string $formName Form name
- * @param string $filterName Filter name
- * @param array $options Filter options
- * @param string $newOpName New operation name
- * @param string $newTermName New term name
- * @param array $conditionlist Condition list
- * @return string HTML for filter match UI
+ * @param string $newElementName - The markup name for the field selection dropdown
+ * @param string $formName - Deprecated.
+ * @param string $filterName - Deprecated.
+ * @param array $options - The element options to show in the field selection dropdown
+ * @param string $newOpName - The markup name for the operator selection dropdown
+ * @param string $newTermName - The markup name for the term textbox
+ * @param array $conditionlist - Markup for the existing conditions, if any, that should appear before the element - operator - term UI
+ * @return string HTML markup for the element - operator - term UI, including the existing conditions list and the new element, operator and term selection boxes
  */
 function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$options,$newOpName,$newTermName,$conditionlist) {
     // setup the new element, operator, term boxes
@@ -5731,27 +5613,25 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
 
 
 /**
- * Get existing filter settings
+ * Setup an array of existing filter conditions. Used in the admin UI for showing filter conditions when looking up perms for users.
+ * Parallel setup to the formulize_createFilterUI function
  *
- * This function retrieves existing filter settings for forms.
- *
- * @param array $filterSettings Filter settings
- * @param string $filterName Filter name
- * @param object $formWithSourceElements Form with source elements
- * @param string $formName Form name
- * @param string $defaultTypeIfNoFilterTypeGiven Default filter type
- * @param array|bool $groups User groups
- * @param string $filterAllText Text for "all" filter option
- * @param string $filterConText Text for filter condition
- * @param string $filterButtonText Text for filter button
- * @return array Existing filter settings
+ * @param array $filterSettings - Filter settings. the actual filter settings in an array, as retrieved (and unserialized) from the DB. Filter arrays have four keys: 0 is an array of elements, 1 is an array of operators, 2 is an array of terms, and 3 is an array of types, either all or oom indicating if the filter applies to the AND or OR part of the conditions. (All arrays are keyed in parallel, so element, operator, term and type with the same key belong together as a filter condition)
+ * @param string $filterName - Name of the filter. the unique name to use for this set of elements -- CANNOT HAVE UNDERSCORES IN IT! (breaks delete interpretation)
+ * @param object $formWithSourceElements - The ID of the main form in the active dataset, from which we are getting the possible elements to list in the filter options
+ * @param string $formName - Deprecated. The name of the HTML form that this filter UI is being embedded into. Not used.
+ * @param int $frid - Optional. The form relationship ID of the active database. The formWithSourceElements is the mainform in the relationship. Default to 0 for no relationship. If specified, the elements from all forms linked to the mainform will be used.
+ * @param string $defaultTypeIfNoFilterTypeGiven - Deprecated. Default filter type. The value ("all" or "oom") that should be used for the filter type, if no filter type is specified. Only truly ancient installations would require this setting.
+ * @param array|bool $groups - Optional. The user groups to filter the elements with (only elements visible to those groups). If no groups, then all elements are returned.
+ * @param string $filterAllText - Deprecated.
+ * @param string $filterConText - Deprecated.
+ * @param string $filterButtonText - Optional. Text to use for the "Add another condition" button.
+ * @return array The existing filter settings in a readable format
  */
-function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
+function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $frid=0, $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
     if (!$filterName OR !$formWithSourceElements OR !$formName) {
         return false;
     }
-
-		$frid = 0; // not being passed in right now, maybe it could/should be. But for now, we're not messing with a good thing (it works)
 
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$sourceFormObject = $form_handler->get($formWithSourceElements);
@@ -5762,9 +5642,9 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
     // set all the elements that we want to show the user
     $cols = "";
     if ($groups) {
-        $cols = getAllColList($formWithSourceElements, "", $groups);
+        $cols = getAllColList($formWithSourceElements, $frid, $groups);
     } else {
-        $cols = getAllColList($formWithSourceElements);
+        $cols = getAllColList($formWithSourceElements, $frid);
     }
 
     $options = array('creation_uid'=>_formulize_DE_CALC_CREATOR, 'creation_datetime'=>_formulize_DE_CALC_CREATEDATE, 'mod_uid'=>_formulize_DE_CALC_MODIFIER, 'mod_datetime'=>_formulize_DE_CALC_MODDATE);
@@ -5774,9 +5654,9 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
             foreach ($vs as $row=>$values) {
 							$thisFidObj = $form_handler->get($fid);
 							if ($values['ele_colhead'] != "") {
-								$options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_colhead'])), 125) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
+									$options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title)), 25).': '.printSmart(trans(strip_tags($values['ele_colhead'])), 25) : printSmart(trans(strip_tags($values['ele_colhead'])), 40);
 							} else {
-								$options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title.': '.$values['ele_caption'])), 125) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
+									$options[$values['ele_id']] = $frid ? printSmart(trans(strip_tags($thisFidObj->title)), 25).': '.printSmart(trans(strip_tags($values['ele_caption'])), 25) : printSmart(trans(strip_tags($values['ele_caption'])), 40);
 							}
             }
         }
@@ -5836,23 +5716,11 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 
 /**
  * Used to handle filter conditions being saved in the admin UI
- * @param string $filter_key - The prefix used in the values in POST that we
- * want to read, ie: if in POST we have displayCondition_elements, and
- * displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the
- * admin UI
- * @param int $deleteTargetKey - Optional. The key we care about for isolating
- * which conditions to delete, as found in the array created by exploding the
- * delete_key in POST on the _ character.
- * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is
- * meant to isolate only certain conditions to be deleted. The delete key's
- * value will have _ in it, and exploding on _ gives an array, and the 1 key
- * (second position) must match this value. Used by the permissions saving to
- * delete conditions only from the appropriate group's permissions.
- * @return array Returns an array with two elements. The first is an array of
- * the elements, ops, terms and types properly organized for saving into the
- * database. The second is a flag to indicate if a reload is necessary for the
- * user to see cleanly what has changed.
+ * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
+ * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
+ * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
+ * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
  */
 function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
@@ -5916,7 +5784,7 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
  * Get AES password for encryption
  *
  * This function retrieves the AES password used for encryption in the system.
- * want to have the db pass since we don't want any SQL logging processes to
+ * Want to hash the db pass since we don't want any SQL logging processes to
  * include the db pass as plaintext
  *
  * @return string AES password
@@ -5932,13 +5800,10 @@ function getAESPassword() {
 /**
  * Convert element type to text representation
  *
- * This function converts element type identifiers to their text representations.
- *
  * @param string $type Element type
- * @param mixed $ele_value Element value
  * @return string Text representation of the element type
  */
-function convertTypeToText($type, $ele_value) {
+function convertTypeToText($type) {
     switch ($type) {
         case "areamodif":
             return "Text for display (caption and contents)";
@@ -5953,17 +5818,14 @@ function convertTypeToText($type, $ele_value) {
 }
 
 /**
- * Returns the HTML formatted results of the calculation process
+ * Returns the HTML formatted results of a defined Procedure (an "advanced calculation")
  *
- * This function executes advanced calculations based on the calculation ID.
- *
- * @code
+ * Example:
  * $results = formulize_runAdvancedCalculation($acid);
  * print $results;
- * @encode
  *
- * @param string $acid Calculation ID
- * @return mixed Result of the advanced calculation
+ * @param string $acid The advanced calculation ID (ie: a Procedure from the admin UI)
+ * @return mixed The output of the calculation
  */
 function formulize_runAdvancedCalculation( $acid ) {
     $advanced_calculation_handler = xoops_getmodulehandler('advancedCalculation', 'formulize');
@@ -5973,9 +5835,7 @@ function formulize_runAdvancedCalculation( $acid ) {
 
 
 /**
- * Undo HTML character encoding
- *
- * This function reverses HTML character encoding transformations.
+ * Undo HTML character encoding. Handles multiple levels of encoding, such as when & becomes &amp; and then &amp; becomes &amp;amp; and so on
  *
  * @param string $text Text to process
  * @param int $quotes Quote handling constant
@@ -5991,9 +5851,9 @@ function undoAllHTMLChars($text,$quotes=ENT_QUOTES) {
 
 
 /**
- * Include and evaluate code
+ * Include and evaluate code. Not used in Formulize directly, may be used in custom code in some systems, in relation to Procedures most likely. Kept in for backwards compatibility.
  *
- * This function includes and evaluates PHP code with optional execution. takes
+ * This function includes and evaluates PHP code with optional execution. Takes
  * some code and instead of using eval to deal with it, it writes it to a file,
  * includes it, and then deletes the file this may be faster in some cases than
  * eval, although it is not currently used
@@ -6035,7 +5895,7 @@ function formulize_includeEval($code, $execute=false, $globals=array(), $filterN
  *
  * This function adds procedure choices to the POST data for form processing.
  *
- * @param string $choices List of choices to add
+ * @param string $choices - List of choices to add
  * @return void
  */
 function formulize_addProcedureChoicesToPost($choices) {
@@ -6059,16 +5919,11 @@ function formulize_addProcedureChoicesToPost($choices) {
 }
 
 /**
- * Remove not applicable required fields
+ * This function removes required field flags for fields that cannot be made required.
  *
- * This function removes required field flags for fields that are not applicable.
- * used in the admin UI
- *
- * @param string $type Field type
- * @param int $req Required flag value
- * @return int Updated required flag value
- *   false if the element cannot be required, otherwise returns the current
- * required setting of the element
+ * @param string $type - the Formulize element type
+ * @param int $req - a required flag value that will be returned, if the element type can in fact support required fields
+ * @return boolean|int Returns false if the element cannot be made required, otherwise returns $req
  */
 function removeNotApplicableRequireds($type, $req=0) {
 	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$type."Element.php")) {
@@ -6082,23 +5937,12 @@ function removeNotApplicableRequireds($type, $req=0) {
 }
 
 /**
- * Catalog dynamic filter condition elements
- *
- * Check for { } filter conditions, which are not in GET params, and which are
- * valid element handles for the declared form, and catalogue them as condition
- * triggers for the specified element.
- *
- * @param string $renderedElementMarkupName The markup handle for the element
- * that would be dependent on a change in the dynamic filter value, ie:
- * de_FID_ENTRYID_ELEMENTID
- * @param array $conditions A standard array of filter conditions, four keys,
- * for element op term all/oom, and each is itself and array of the items (match
- * based on key to get a set)
- * @param int|string|object $sourceForm A form id, form handle, or form object,
- * representing the form in which any { } terms should be found
+ * Check for { } filter conditions, which are not in GET params, and which are valid element handles for the declared form, and catalogue them as condition triggers for the specified element.
+ * @param string $renderedElementMarkupName The markup handle for the element that would be dependent on a change in the dynamic filter value, ie: de_FID_ENTRYID_ELEMENTID
+ * @param array $conditions A standard array of filter conditions, four keys, for element op term all/oom, and each is itself and array of the items (match based on key to get a set)
+ * @param int|string|object $sourceForm A form id, form handle, or form object, representing the form in which any { } terms should be found
  * @param object $screen Optional. The screen object that is in effect, if any (may be null)
- * @return boolean Returns false if the inputs are not valid conditions or not a
- * valid source form, returns true otherwise.
+ * @return boolean Returns false if the inputs are not valid conditions or not a valid source form, returns true otherwise.
  */
 function catalogDynamicFilterConditionElements($renderedElementMarkupName, $conditions, $sourceForm, $screen = null) {
 	// validate conditions
@@ -6137,38 +5981,15 @@ function catalogDynamicFilterConditionElements($renderedElementMarkupName, $cond
 }
 
 /**
- * Build a SQL-ready string, based on a data from a standard
+ * This function will build a SQL-ready string, based on a data from a standard Formulize Conditions UI
  *
- * Formulize Conditions UI, plus parameters like the table it's supposed to look
- * in
- *
- * @param array $conditions - the conditions as specified in the Formulize
- * conditions UI, a multidimensional array, each condition is one element in the
- * array, and each condition is made up of four elements itself: 0 - element id
- * (the left side), 1 - operator, 2 - term (the right side), 3 - condition type
- * (oom or all, 'match one or more' vs 'match all')
- * @param int|array $targetFormId - the id number of the form where things are
- * being looked up. Or an array when doing an extraction query, in which the
- * keys are the form ids and the values are the aliases of the forms in the
- * query being constructed. If an array, the first key-value pair refers to the
- * main form.
- * @param int|string $curlyBracketEntry - the id number of the entry from which
- * curly bracket references to element handles should be resolved, or 'new' if
- * we are working with a new record not saved yet
- * @param int $userComparisonId - is the id that should be used to compare
- * {USER} to when $entry is not "new".  In some cases we may want to pass in the
- * owner of the entry rather than the current user.  When entry is "new" then
- * the current user is always used.
- * @param int|object $curlyBracketForm - either the id or the form object for
- * the form that should be used as the source form for any { } terms, ie: if the
- * term is = {handleX} then this param is the form that handleX would be part of
- * @param string $targetAlias - the alias used in SQL to refer to the table that
- * the conditions should apply to.  This is optional in general, but required if
- * the query you're building for uses an alias!
- * @return array - returns an array with three elements: 0 - the 'match all' SQL
- * suitable for the WHERE clause, 1 - the 'match one or more' SQL suitable for
- * the WHERE clause, 2 - the join clause necessary for including the form that
- * { } references are pointing to
+ * @param array $conditions - the conditions as specified in the Formulize conditions UI, a multidimensional array, each condition is one element in the array, and each condition is made up of four elements itself: 0 - element id (the left side), 1 - operator, 2 - term (the right side), 3 - condition type (oom or all, 'match one or more' vs 'match all')
+ * @param int|array $targetFormId - the id number of the form where things are being looked up. Or an array when doing an extraction query, in which the keys are the form ids and the values are the aliases of the forms in the query being constructed. If an array, the first key-value pair refers to the main form.
+ * @param int|string $curlyBracketEntry - the id number of the entry from which curly bracket references to element handles should be resolved, or 'new' if we are working with a new record not saved yet
+ * @param int $userComparisonId - is the id that should be used to compare {USER} to when $entry is not "new".  In some cases we may want to pass in the owner of the entry rather than the current user.  When entry is "new" then the current user is always used.
+ * @param int|object $curlyBracketForm - either the id or the form object for the form that should be used as the source form for any { } terms, ie: if the term is = {handleX} then this param is the form that handleX would be part of
+ * @param string $targetAlias - the alias used in SQL to refer to the table that the conditions should apply to.  This is optional in general, but required if the query you're building for uses an alias!
+ * @return array - returns an array with three elements: 0 - the 'match all' SQL suitable for the WHERE clause, 1 - the 'match one or more' SQL suitable for the WHERE clause, 2 - the join clause necessary for including the form that { } references are pointing to
  */
 function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry=null, $userComparisonId=null, $curlyBracketForm=null, $targetAlias="") {
 
@@ -6394,19 +6215,17 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 }
 
 /**
- * Append to condition builder
+ * Append a condition to an existing SQL snippet
  *
- * This is an internal helper function that appends elements to a condition builder.
- *
- * @param string $condition Base condition
- * @param string $andor Logical operator (AND/OR)
- * @param bool $needIntroBoolean Flag for introducing boolean
- * @param string $targetAlias Target alias
- * @param string $filterElementHandle Filter element handle
- * @param string $filterOp Filter operator
- * @param mixed $conditionsFilterComparisonValue Comparison value
- * @param string $filterTerm Filter term
- * @return string Updated condition string
+ * @param string $condition - the existing SQL we are appending to
+ * @param string $andor - The logical operator (AND/OR) that should be used to connect the new condition to the existing one(s)
+ * @param bool $needIntroBoolean - Flag to indicate if when starting a condition from blank, it should be wrapped in "AND ( )" or not
+ * @param string $targetAlias - The table alias that should be used to scope the element handle
+ * @param string $filterElementHandle - The element handle/field name that is used in the condition
+ * @param string $filterOp - The operator that is used in the condition
+ * @param mixed $conditionsFilterComparisonValue - The term, or a more complex string, that is used on the right side of the operator in the condition
+ * @param string $filterTerm - The original filter term, that gave rise to the conditionsFilterComparisonValue. Relevant if it is a { } term that dynamically references another field in the query
+ * @return string The updated condition with the new condition appended appropriately
  */
 function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias, $filterElementHandle, $filterOp, $conditionsFilterComparisonValue, $filterTerm) {
 
@@ -6466,20 +6285,18 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 }
 
 /**
- * Build conditions filter SQL
+ * Convert a filter term to the comparison value that should be used in an actual SQL query. Some filter terms need interpretation because they are dynamic references with { } or they are values that should be looked up in a subquery, etc
  *
- * This is an internal helper function that builds SQL for conditions filtering.
- *
- * @param string $filterId Filter ID
- * @param array &$filterOps Reference to filter operators
- * @param array &$filterTerms Reference to filter terms
- * @param array $filterElementIds Filter element IDs
- * @param mixed $curlyBracketEntry Curly bracket entry
- * @param mixed $userComparisonId User comparison ID
- * @param mixed $curlyBracketForm Curly bracket form
- * @param object $element_handler Element handler
- * @param object $form_handler Form handler
- * @return string SQL query string
+ * @param int $filterId - The key in the set of filter condition metadata that we're working with. Used to retrieve the appropriate value from the filterOps and filterTerms and filterElementIds arrays
+ * @param array $filterOps - The operators for all the conditions being processed. The specific op for the condition we care about can be retrieved with the filterId. The filterOps are passed by reference so we can modify them in this function if necessary.
+ * @param array $filterTerms - The terms for all the conditions being processed. The specific term for the condition we care about can be retrieved with the filterId. The filterTerms are passed by reference so we can modify them in this function if necessary.
+ * @param array $filterElementIds - The element IDs for all the conditions being processed. The specific element ID for the condition we care about can be retrieved with the filterId.
+ * @param int|string $curlyBracketEntry - The entry Id of the entry that any { } references in the term would be referring to, or 'new' if we are working with a new record not saved yet
+ * @param int $userComparisonId - The user ID that should be used to resolve any {USER} references
+ * @param object $curlyBracketForm - The form object for the form that any { } references in the term would be referring to
+ * @param object $element_handler - The XOOPS/ICMS element handler
+ * @param object $form_handler - The XOOPS/ICMS form handler
+ * @return array retturns an array with two elements: 0 - the comparison value that should be used in the SQL query, 1 - any additional join clause that is necessary if the term involves a reference to another form
  */
 function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
 
@@ -6828,10 +6645,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 
 /**
- * Draw XHR JavaScript
- *
- * This function draws JavaScript for XMLHttpRequest functionality.
- *
+ * This function draws JavaScript for XMLHttpRequest functionality. Certain defined Formulize operations will in turn trigger certain js functions when an XMLHttpRequest response of the given kind is returned. See the formulize_xhr_return function for more details on this.
  * @return void
  */
 function drawXhrJavascript() {
@@ -6841,15 +6655,6 @@ global $xoopsUser;
 function initialize_formulize_xhr() {
     if (window.XMLHttpRequest) {
         formulize_xhr = new XMLHttpRequest();
-    } else if (window.ActiveXObject) {
-        try {
-            formuilze_xhr = new ActiveXObject("Msxml2.XMLHTTP");
-        } catch (ex) {
-            try {
-                formulize_xhr = new ActiveXObject("Microsoft.XMLHTTP");
-            } catch (ex) {
-            }
-        }
     }
 }
 
@@ -6903,10 +6708,7 @@ function formulize_xhr_send(op,params) {
 }
 
 /**
- * Get entry lock security token
- *
- * This function retrieves a security token for locking form entries, associated
- * with the entry locking/unlocking for this page load
+ * This function retrieves a security token for locking form entries. We need to refer to the same random token in a few places, so we store it as a static in this function.
  *
  * @return string Security token
  */
@@ -6917,13 +6719,9 @@ function getEntryLockSecurityToken() {
 }
 
 /**
- * Generate JavaScript for removing entry locks
+ * This function generates JavaScript code for removing form entry locks.
  *
- * This function generates JavaScript code for removing form entry locks. unload
- * causes it to return the script necessary for in an unload event, which uses
- * a different call (beacon)
- *
- * @param bool $unload Flag for unload event
+ * @param bool $unload Flag for whether we want the "unload" version of this code, which is raw js that uses the beacon feature, necessary for when the page is unloaded (destroyed), vs the standard jQuery version of the code which can operate while the page is still in existence.
  * @return string JavaScript code
  */
 function formulize_javascriptForRemovingEntryLocks($unload=false) {
@@ -6954,31 +6752,20 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
 
 
 /**
- * Get HTML for list display
- *
  * This function generates HTML for displaying list data with various formatting
- * options. takes a value from the database that has gone through prepvalues
- * (so it's ready for a dataset or already part of a dataset), and makes the
- * display HTML for a list of entries. We're kind of hacking this...assuming
- * textWidth will be 200 in cases where we don't have it passed in.  With more
- * acrobatics we could get the real text width as specified in the screen, but
- * for columns that are rendered as elements, this is probably an OK compromise
+ * options.
  *
- * @param mixed $value Value to display
- * @param string $handle Element handle
- * @param int $entryId Entry ID
- * @param int $deDisplay flag to control whether the icon for switching an
- * element to editable mode should be present or not
- * @param int $textWidth Text width setting
- * @param array $localIds Local IDs array of ids that will match the order of
- * the values in the array...used to get the id for a subform entry that is
- * being displayed in the list
- * @param int $fid Form ID
- * @param int $row Row index
- * @param int $column Column index
- * @param bool $deInstanceCounter Instance counter flag. used for addressing
- * editable elements in the list
- * @return string Formatted HTML string
+ * @param mixed $value - The value to display (already prepared for display to users). Can be an array of multiple values, or a single value.
+ * @param string $handle - The element handle of the element we're displaying the value of
+ * @param int $entryId - The entry ID from which we're displaying the value
+ * @param int $deDisplay - flag to control whether the icon for switching an element to editable mode should be present or not
+ * @param int $textWidth - The number of characters to display of a long value. Default is 200. Set to 0 for all.
+ * @param array|int $localIds - Local entry IDs array, containing the entry IDs that apply to each of the values in the value array (if it is an array), or just a single entry id if value is not an array. This is used for addressing editable elements in the list, since the entry id that applies to a given value may not be the same as the main entry id for the row, due to relationships and subforms.
+ * @param int $fid - The Form ID that the element belongs to.
+ * @param int $row - The row number of the row where this will appear in a list of entries. Used to create the right id attribute for markup so the javascript will work
+ * @param int $column - The column number of the column where this will appear in a list of entries. Used to create the right id attribute for markup so the javascript will work
+ * @param bool $deInstanceCounter - Instance counter, used for identifying the element when deDisplay is on.
+ * @return string HTML string
  */
 function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200, $localIds=array(), $fid=0, $row=0, $column=0, $deInstanceCounter=false) {
     $output = "<div class='main-cell-div' id='cellcontents_".$row."_".$column."'>";
@@ -7032,7 +6819,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
 					$v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
 				}
-				$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId, $fid)), $handle);
+				$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
         $output .= '</span>';
         $counter++;
     }
@@ -7049,16 +6836,9 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 
 
 /**
- * Get HTML for a form element
- *
- * This function generates HTML for a specific form element with various
- * options. THIS FUNCTION WILL CALL DISPLAY ELEMENT WITH THE RIGHT PARAMS TO
- * RETURN THE HTML FOR AN ELEMENT THAT WILL NOT SAVE IN FORMULIZE BUT CAN BE
- * USED TO GET THE UI FOR THE ELEMENT ON THE SCREEN
- * MEANT FOR USE IN LIST OF ENTRIES TEMPLATES AND ELSEWHERE THAT THE DEVELOPER
- * MIGHT WANT TO HAVE AN ELEMENT RENDERED CLEANLY FOR PICKING UP THE USER'S
- * SELECTION LATER, BUT THEY DON'T WANT THE ELEMENT ACTUALLY TIED TO THE
- * UNDERLYING ENTRY/VALUE
+ * This function generates the HTML markup for a specific form element, given the element handle.
+ * The resulting markup can be used on the page however the caller decides, but it will not affect the source entry if the page is saved.
+ * Useful if an element has all the settings/options you need to produce an HTML widget that you want to use, for some other purpose other than rendering a Formulize form.
  *
  * @param string $elementHandle Element handle
  * @param string $nameForHTML HTML name attribute
@@ -7082,9 +6862,9 @@ function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element
  * Converts linked select boxes from single option only (big int)
  * to a multi-option allowed select box with preceding and trailing commas
  *
- * @param string $table
- * @param string $column
- * @return bool
+ * @param string $table - The table name in the database where we should convert values
+ * @param string $column - The element handle (field name) in the table where we should convert values
+ * @return bool - indicating if the operation succeeded or not
  */
 function convertSelectBoxToMulti($table, $column) {
     global $xoopsDB;
@@ -7105,14 +6885,12 @@ function convertSelectBoxToMulti($table, $column) {
 
 
 /**
- * Convert a linked select box
- *
  * Converts a linked select box from multi-option allowed (with preceding and
  * trailing commas) to a single option allowed select box with data type bigint.
  *
- * @param string $table
- * @param string $column
- * @return bool
+ * @param string $table - The table name in the database where we should convert values
+ * @param string $column - The element handle (field name) in the table where we should convert values
+ * @return bool - indicating if the operation succeeded or not
  */
 function convertSelectBoxToSingle($table, $column) {
     global $xoopsDB;
@@ -7134,20 +6912,11 @@ function convertSelectBoxToSingle($table, $column) {
 }
 
 /**
- * Database escape
- *
- * Fundamentally, this applies the PDO quote method to the string, but then
- * removes the beginning and ending single quotes!
- * The thinking at the time was that we have a lot of SQL that already has the
- * quotes built in, and it would be too much work to refactor them all, so we'll
- * strip the quotes out, and just be happy we have an escaped string.
- * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and
- * it doesn't matter what characters encapsulate the string in the query,
- * because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
- * @param mixed value - The value to run through the database quote method (PDO
- * quote currently)
- * @return string Returns a string of the passed in value, with characters
- * escaped according to the rules of the database quote method
+ * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
+ * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out, and just be happy we have an escaped string.
+ * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
+ * @param mixed value - The value to run through the database quote method (PDO quote currently)
+ * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
  */
 function formulize_db_escape($value) {
   global $xoopsDB;
@@ -7155,7 +6924,6 @@ function formulize_db_escape($value) {
   return substr($value, 1,-1);
 }
 
-// THANKS TO baptiste.place@utopiaweb.fr on php.net for this conversion function:
 /**
  * Convert a date format to a strftime format
  *
@@ -7298,10 +7066,9 @@ function dateFormatToStrftime($dateFormat) {
  * Replaces {USER} with the current user's name or UID and {TODAY} with today's
  * date
  *
- * @param string $term The string containing {USER} and {TODAY} placeholders
- * @param mixed $element Optional element object or handle for context (used to
- * determine if UID should be used for user references)
- * @return string The parsed string with placeholders replaced
+ * @param string $term - The string potentially containing {USER} and {TODAY} placeholders
+ * @param mixed $element - Optional element object or handle for context (used to determine if UID should be used for user references)
+ * @return string - The parsed string with placeholders replaced
  */
 function parseUserAndToday($term, $element=null) {
 		global $xoopsUser;
@@ -7337,23 +7104,19 @@ function parseUserAndToday($term, $element=null) {
 
 
 /**
- * Establishes links between 1-1 linked forms
+ * Establishes links between any 1-1 linked forms, on the same page load in
+ * which data was saved. This function should be called after new entries have
+ * been saved in a form, and 1-1 links need to be established between the
+ * entries in that relationship. This function should be called after any
+ * applicable security checks! so we know the user is allowed to write data to
+ * the potentially affected entries.
  *
- * ESTABLISHES LINKS BETWEEN ANY 1-1 LINKED FORMS, ON THE SAME PAGE LOAD IN
- * WHICH DATA WAS SAVED. THIS FUNCTION SHOULD BE CALLED AFTER NEW ENTRIES HAVE
- * BEEN SAVED IN A FORM, AND 1-1 LINKS NEED TO BE ESTABLISHED BETWEEN THE
- * ENTRIES IN THAT RELATIONSHIP. THIS FUNCTION SHOULD BE CALLED AFTER ANY
- * APPLICABLE SECURITY CHECKS! SO WE KNOW THE USER IS ALLOWED TO WRITE DATA TO
- * THE POTENTIALLY AFFECTED ENTRIES.
+ * This function can pick up existing entries as well as new ones!! but it only
+ * writes to the db if there is no one to one connection established so far. It
+ * will not rewrite existing connections.
  *
- * THIS FUNCTION CAN PICK UP EXISTING ENTRIES AS WELL AS NEW ONES!! BUT IT ONLY
- * WRITES TO THE DB IF THERE IS NO ONE TO ONE CONNECTION ESTABLISHED SO FAR. IT
- * WILL NOT REWRITE EXISTING CONNECTIONS.
- *
- * @param int $frid The form relationship ID that in which we are trying to establish the links
- * @param int $fid The form ID being checked. form we're checking to see if new
- * entry ids were written or not, and if they were, then we try to write the
- * linked values into the right fields in the corresponding entries
+ * @param int $frid The form relationship ID in which we are trying to establish the links
+ * @param int $fid The form ID being checked to see if new entry IDs were written or not, and if they were, then we try to write the linked values into the right fields in the corresponding entries
  * @return array Array of arrays describing affected forms and entry IDs
  */
 function formulize_makeOneToOneLinks($frid, $fid) {
@@ -7470,11 +7233,9 @@ function formulize_makeOneToOneLinks($frid, $fid) {
 }
 
 /**
- * Find common values between two forms
- *
  * Compares values from two forms based on specified keys to find common entries.
- * FIGURES OUT THE COMMON VALUE THAT WE SHOULD WRITE WHEN A FORM IN A ONE-TO-ONE
- * RELATIONSHIP IS BEING DISPLAYED AFTER A NEW ENTRY HAS BEEN WRITTEN
+ * Figures out the common value that we should write when a form in a one-to-one
+ * relationship is being displayed after a new entry has been written
  *
  * @param int $form1 The first form ID
  * @param int $form2 The second form ID
@@ -7505,9 +7266,7 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 }
 
 /**
- * Check if a field is a metadata field
- *
- * Determines whether a given field is a metadata field in the formulize system.
+ * Determines whether a given string is a metadata field name
  *
  * @param mixed $field The field to check
  * @return bool True if the field is a metadata field, false otherwise
@@ -7526,11 +7285,9 @@ function isMetaDataField($field){
 /**
  * Send Save Lock Preference to Template
  *
- * Used to send value to template
- *
- * @return mixed preference defining whether the functionality of saving is locked or not
+ * @return mixed A truthy preference defining whether the functionality of saving is locked or not
  */
-function sendSaveLockPrefToTemplate(){ //$xoopsTpl
+function sendSaveLockPrefToTemplate(){
     // get preference value
     $module_handler = xoops_gethandler('module');
     $config_handler = xoops_gethandler('config');
@@ -7541,14 +7298,12 @@ function sendSaveLockPrefToTemplate(){ //$xoopsTpl
 }
 
 /**
- * Convert variable search terms to literal values
- *
  * Processes variable search terms and converts them to their literal representations.
  * ie: {program} gets changed to the value of $_GET['program'] if that is set
  *
  * @param mixed $v The variable to convert
  * @param string $requestKeyToUse The request key to use for conversion
- * @return string|bool The converted literal value. updated value, or false to
+ * @return string|bool The converted literal value, updated value, or false to
  * kill value, or true to do nothing
  */
 function convertVariableSearchToLiteral($v, $requestKeyToUse) {
@@ -7566,16 +7321,14 @@ function convertVariableSearchToLiteral($v, $requestKeyToUse) {
 }
 
 /**
- * Generate a tidy HTML element list
- *
  * Generates HTML for a smart list of columns to use in the change columns list
  * and elsewhere. The idea is to show columns based on their forms, in a way
  * that mimics the links in the active relationships
  *
  * @param int $mainformFid The main form ID
- * @param array $cols The columns to use
- * @param array $selectedCols The selected columns (optional)
- * @return string The generated element list
+ * @param array $cols - An array of column data, as returned from the getAllColList function (keyed by form ID and each value an array of metadata for a given element)
+ * @param array $selectedCols - Optional. An array of the selected column handles
+ * @return string The markup for the element list
  */
 function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 
@@ -7688,13 +7441,13 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
 
 
 /**
- * Update derived values for an entry
+ * Updates derived values in an entry or entries.
  *
- * Updates derived values in a form entry based on calculations or formulas.
+ * Sets a global flag variable to indicate that we're in the middle of updating derived values for a given set of entry IDs and form/relationship, so that if any procedures or functions get triggered which also try to update derived values for the same set of entry IDs and form/relationship, we can avoid retriggering the same updates again and again in an infinite loop. This can happen if for example a before or after save procedure triggers updating derived values in the same form, so we want to make sure we don't retrigger the same updates again when we're already in the middle of doing them.
  *
- * @param mixed $entry_id_or_filter The entry ID or filter criteria
- * @param int $fid The form ID
- * @param int $frid The framework ID (optional, defaults to 0)
+ * @param mixed $entry_id_or_filter The entry ID or filter criteria for isolating the entries to update.
+ * @param int $fid The form ID where the entry exists
+ * @param int $frid The form relationship ID (optional, defaults to 0, no relationship)
  * @return void
  */
 function formulize_updateDerivedValues($entry_id_or_filter, $fid, $frid=0) {
@@ -7724,10 +7477,8 @@ function formulize_updateDerivedValues($entry_id_or_filter, $fid, $frid=0) {
 }
 
 /**
- * Catch and write export query
- *
  * Handles the catching and writing of export queries for a form. Writes the
- * export query generated by getData, to a file for picking up later so we don't
+ * export query generated by gatherDataset, to a file for picking up later so we don't
  * have to figure out all the bits and pieces again
  *
  * @param int $fid The form ID
@@ -7757,13 +7508,11 @@ function formulize_catchAndWriteExportQuery($fid) {
 }
 
 /**
- * Update revision data for an entry
- *
  * Updates revision data for a form entry, tracking changes and versions.
  *
  * @param mixed $fidOrObject The form ID or form object
  * @param int $entry_to_return Entry id of the entry we're currently storing in the revision table
- * @param bool $forceUpdate Whether to force the update (optional, defaults to false)
+ * @param bool $forceUpdate Whether to force the update on non POST requests (optional, defaults to false)
  * @return void
  */
 function formulize_updateRevisionData($fidOrObject, $entry_to_return, $forceUpdate = false) {
@@ -7803,14 +7552,11 @@ function formulize_updateRevisionData($fidOrObject, $entry_to_return, $forceUpda
 }
 
 /**
- * Get current revisions for entries
- *
- * Retrieves the current revision data for specified form entries. get a list of
- * the most recent revision ids for the entries in question
+ * Retrieves the current revision data for specified form entries
  *
  * @param mixed $fidOrObject The form ID or form object
  * @param array $entryIds An array of entry ids or a single id
- * @return array The current revisions data
+ * @return array Array keyed by entry ID, with the value of the most recent revision ID for that entry, or false if revisions are not enabled or an error occurs
  */
 function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
     $form_handler = xoops_getmodulehandler('forms','formulize');
@@ -7820,15 +7566,10 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
         $formObject = $fidOrObject;
     }
     if(!is_array($entryIds)) {
-        $entry = array(intval($entryIds));
-    } else { // sanitize them
-        $newEntryIds = array();
-        foreach($entryIds as $id) {
-            $newEntryIds[] = intval($id);
-        }
-        $entryIds = $newEntryIds;
+        $entryIds = array(intval($entryIds));
     }
-    if(is_object($formObject) AND $formObject->getVar('store_revisions') AND is_numeric($entryIds[0]) AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
+		$entryIds = array_filter($entryIds, 'is_numeric');
+    if(is_object($formObject) AND $formObject->getVar('store_revisions') AND count($entryIds) > 0 AND $form_handler->revisionsTableExists($formObject->getVar('id_form'))) {
         global $xoopsDB;
         $sql = "SELECT max(revision_id) as rev_id, entry_id FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')."_revisions")." WHERE entry_id IN (".implode(",",$entryIds).")";
         if($res = $xoopsDB->query($sql)) {
@@ -7843,16 +7584,14 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
 }
 
 /**
- * Get filter values for an entry
- *
  * Extracts filter values from subform conditions for a specific entry. Reads
  * filter conditions, and returns the appropriate filter values that should be
  * used to enforce values in newly created entries. Used for example with subform
  * filters when creating new elements, and fundamental filters on lists of entries
  *
- * @param array $subformConditions The subform conditions array
- * @param string|null $curlyBracketEntryid The curly bracket entry ID (optional)
- * @return array The extracted filter values
+ * @param array $subformConditions - The conditions array, usually from subform elements but could be elsewhere
+ * @param string|null $curlyBracketEntryid - Optional. The curly bracket entry ID to use when resolving { } terms
+ * @return array The extracted filter values, keyed by form ID then element handle, with the value to filter on.
  */
 function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');

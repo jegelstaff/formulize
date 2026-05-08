@@ -85,7 +85,7 @@ if ($_GET['fid'] != "new") {
         if($thisElement->isSystemElement) { continue; }
         $elementCaption = trans(strip_tags($thisElement->getVar('ele_caption')));
         $colhead = trans(strip_tags($thisElement->getVar('ele_colhead')));
-        $cleanType = convertTypeToText($thisElement->getVar('ele_type'), $thisElement->getVar('ele_value'));
+        $cleanType = convertTypeToText($thisElement->getVar('ele_type'));
         $ele_id = $thisElement->getVar('ele_id');
 				$elements[$i]['content']['hasData'] = 0;
 				if(isset($elementIdsWithData[$ele_id])) {
@@ -290,7 +290,7 @@ if ($_GET['fid'] != "new") {
         $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
         $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
         $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
-        $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, "oom");
+        $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
         $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
         $i++;
         }
