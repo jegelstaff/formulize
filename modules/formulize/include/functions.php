@@ -7609,8 +7609,6 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
 }
 
 /**
- * Check if a function is available
- *
  * Determines whether a specific function is enabled in the system.
  *
  * @param string $func The function name to check
@@ -7623,8 +7621,6 @@ function isEnabled($func) {
 }
 
 /**
- * Validate PHP code
- *
  * Validates PHP code for syntax errors.
  *
  * @param string $theCode The PHP code to validate
@@ -7647,18 +7643,16 @@ function formulize_validatePHPCode($theCode) {
 
 
 /**
- * Prepare group filter for linked elements
- *
- * Creates a group filter for linked elements based on various selection criteria.
+ * Creates SQL for use in special queries for linked element source values
  * t1 is the table where the values are being gathered from
  * t2 is the entry_owner_groups table
  *
- * @param int $sourceFid The source form ID
- * @param array $groupSelections The group selections
- * @param bool $useOnlyUsersGroups Whether to use only user groups
- * @param bool $userMustBeInAllGroups Whether user must be in all groups
- * @param bool $useOnlyUsersEntries Whether to use only user entries
- * @return string The prepared group filter. return SQL ready for use in special queries for linked element source values
+ * @param int $sourceFid - The Form ID of the form that is the source of values
+ * @param string $groupSelections - A comma separated set of group ids that should be used to limit the values retrieved. Can include 'all' in which case all groups are used (or all the user's groups are used if the useOnlyUsersGroups parameter is true)
+ * @param bool $useOnlyUsersGroups - A flag to indicate whether groups should be used only if the active user is a member of them.
+ * @param bool $userMustBeInAllGroups - A flag to indicate if the user must be in all specified groups for values to be included
+ * @param bool $useOnlyUsersEntries - A flag to indicate whether we should only use the user's own entries (created by them)
+ * @return string The prepared group filter. Return SQL ready for use in special queries for linked element source values
  */
 function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyUsersGroups, $userMustBeInAllGroups, $useOnlyUsersEntries) {
 
@@ -7704,7 +7698,7 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
         }
     }
 
-    array_unique($pgroups); // remove duplicate groups from the list
+    $pgroups = array_unique($pgroups); // remove duplicate groups from the list
 
     if($useOnlyUsersEntries) {
         $pgroupsfilter = " t1.creation_uid = ".($xoopsUser ? $xoopsUser->getVar('uid') : 0);
@@ -7728,18 +7722,12 @@ function prepareLinkedElementGroupFilter($sourceFid, $groupSelections, $useOnlyU
 }
 
 /**
- * Prepare safety nets for linked elements
- *
- * Creates safety nets for linked elements to prevent unauthorized access.
+ * Creates safety net SQL for linked elements to ensure that current selections are not lost
+ * Setup an OR condition as an alternative to the filter we've determined, just in case the selected value is outside what the filter returns
+ * t1 is the form we're gathering entries from
  *
  * @param array $sourceEntryIds The source entry IDs
- * @return string The prepared safety net clause
- *
- * include any source entry ids that are selected currently, so current
- * selections are not lost!!
- * setup an OR condition as an alternative to the filter we've determined, just
- * in case the selected value is outside what the filter returns t1 is the form
- * we're gathering entries from
+ * @return array The prepared safety net clause
  */
 function prepareLinkedElementSafetyNets($sourceEntryIds) {
     if(count((array) $sourceEntryIds)>0 AND $sourceEntryIds[0]) {
@@ -7753,15 +7741,13 @@ function prepareLinkedElementSafetyNets($sourceEntryIds) {
 }
 
 /**
- * Prepare extra clause for linked elements
- *
  * Creates an extra SQL clause for linked elements with group filtering.
  * t1 is the form we're gathering entries from
  *
- * @param string $pgroupsfilter The parent groups filter
- * @param string $parentFormFrom The parent form from clause
- * @param string $sourceEntrySafetyNetStart The source entry safety net start
- * @return string The prepared extra clause
+ * @param string $pgroupsfilter - The group filter as prepared by prepareLinkedElementGroupFilter
+ * @param string $parentFormFrom - The parent form from clause
+ * @param string $sourceEntrySafetyNetStart - The start of a safety net bit of SQL necessary if we're preserving source entries. The rest is added later as the SQL is built elsewhere.
+ * @return string The prepared SQL
  */
 function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart) {
     $extra_clause = "";
@@ -7778,10 +7764,8 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
 }
 
 /**
- * Convert dynamic filter terms
- *
  * Processes dynamic filter terms and converts them to usable filter criteria.
- * takes a filter term passed in, and converts it to the actual value from GET or POST
+ * Takes a filter term passed in, and converts it to the actual value from GET or POST
  *
  * @param string $term The filter term to convert
  * @return string The converted filter term
@@ -7817,19 +7801,15 @@ function convertDynamicFilterTerms($term) {
 }
 
 /**
- * Take what users have typed into a search box, and standardize it into an
- * array of classic search terms.
+ * Take what users have typed into a search box, and standardize it into an array of classic search terms.
  * Users can type all kinds of things, including "between date1 and date2" and also "X OR Y" etc
  * They can also separate multiple terms with // such as "apples//oranges" which means apples and oranges (which would only match a multi value field)
  * But if they type "ORapples//ORoranges" then that means the same as "apples OR oranges"
- * We take all that stuff and turn it into an array of search terms that can
- * then be parsed into a filter for a getData query, or whatever else we might need
+ * We take all that stuff and turn it into an array of search terms that can then be parsed into a filter for a getData query, or whatever else we might need
  *
  * @param string $searchString The string we are parsing
- * @param mixed $elementIdentifier An element object, id number, or handle.
- * Represents the element that this search string is searching against.
- * @return array $searchArray An array of all search terms deduced from the
- * string, even if only one.
+ * @param mixed $elementIdentifier An element object, id number, or handle. Represents the element that this search string is searching against.
+ * @return array $searchArray An array of all search terms deduced from the string, even if only one.
  */
 function standardizeUserTypedSearchTerms($searchString, $elementIdentifier) {
 
@@ -7896,13 +7876,10 @@ function parseBetweenDatesSyntaxInSearchStrings($searchString) {
 }
 
 /**
- * Parse searches into a filter string
- *
- * Converts an array of element handle => search term pairs into a filter string
- * valid for use in a getData call.
+ * Converts an array of element handle => search term pairs into a filter string or array valid for use in a gatherDataset call.
  *
  * @param array $searches Array of element handle => search term pairs
- * @return string The parsed filter string
+ * @return mixed The parsed filter string, or an array if it is a complex filter
  */
 function formulize_parseSearchesIntoFilter($searches) {
 
@@ -8132,18 +8109,15 @@ function formulize_parseSearchesIntoFilter($searches) {
 
 
 /**
- * Perform update export operation
- *
  * This is the old export code used for 'update' mode operations.
- * It processes query data and exports it based on the specified parameters.
  *
- * @param array $queryData The query data to export
- * @param int $frid The framework ID
+ * @param array $queryData An array of information from a cached export query (from a cached file), the third line of which we can use as the filter value for the gatherDataset call
+ * @param int $frid The form relationship ID
  * @param int $fid The form ID
  * @return void
  */
 function do_update_export($queryData, $frid, $fid) {
-    // this is the old export code, which is used for 'update' mode
+
     $fdchoice = "update";
 
     $GLOBALS['formulize_doingExport'] = true;
@@ -8199,17 +8173,15 @@ function do_update_export($queryData, $frid, $fid) {
 
 
 /**
- * Export form data
- *
  * Exports form data to a CSV file based on the provided parameters.
  *
- * @param array $queryData The query data to export
- * @param int $frid The framework ID
+ * @param array $queryData An array of information from a cached export query (from a cached file), including potentially the full SQL to use if it's a table form query, or the filter to use for gatherDataset if it's a normal query.
+ * @param int $frid The form relationship ID
  * @param int $fid The form ID
- * @param array $groups The user groups
- * @param array $columns The columns to export
+ * @param array $groups - Deprecated. Not used.
+ * @param array $columns The handles of the elements to include as columns
  * @param bool $include_metadata Whether to include metadata in the export
- * @param string $output_filename The output filename (optional)
+ * @param string $output_filename - Optional. The output filename where the export should be written. If not provided, the export will be output directly to the browser with a standard filename (and probably downloaded depending on browser settings for csv files)
  * @return void
  */
 function export_data($queryData, $frid, $fid, $groups, $columns, $include_metadata, $output_filename="") {
@@ -8430,14 +8402,11 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
 }
 
 /**
- * Prepare columns for export
+ * This function prepares info about columns for exporting data
  *
- * This function prepares a list of columns for exporting data, handling metadata
- * and various column types including standard fields and exported options.
- *
- * @param array $columns Array of column identifiers to export
+ * @param array $columns Array of element handles
  * @param int $include_metadata Flag to include metadata (default: 0)
- * @return array Processed columns ready for export
+ * @return array An array with six items, 0 to 4: $columns,$headers,$explodedColumns,$superHeaders,$handles
  */
 function export_prepColumns($columns,$include_metadata=0) {
 
@@ -8543,14 +8512,12 @@ function export_prepColumns($columns,$include_metadata=0) {
 }
 
 /**
- * Perform second-pass writing of subform entry defaults
+ * This function sets values that are supposed to exist by default in newly created subform entries
+ * The intention is for this function to be called after an entry has been written already, so that any dependent defaults would take the "first pass" defaults and other saved values into consideration
+ * This double default operation is only performed at present when saving new subform entries, not any other kind of entry
  *
- * This function handles secondary default value processing for subform entries,
- * considering dependencies and existing values. It performs a double default
- * operation for new subform entries.
- *
- * @param int $target_fid The target form ID
- * @param int $target_entry The target entry ID
+ * @param int $target_fid The target form ID that we're writing to
+ * @param int $target_entry The target entry ID that we're writing to
  * @param array $excludeHandles Array of element handles to exclude (default: empty array)
  * @return void
  */
@@ -8684,10 +8651,7 @@ function getEntryDefaultsInDBFormat($targetObjectOrFormId, $target_entry = 'new'
 }
 
 /**
- * Determine the view entry screen for a given screen and form
- *
- * This function determines which view entry screen should be displayed based on
- * the current screen state and form configuration.
+ * This function determines which view entry screen should be displayed based on the current screen state and form configuration.
  *
  * @param object $screen The screen object
  * @param int $fid The form ID
@@ -8723,6 +8687,9 @@ function determineViewEntryScreen($screen, $fid) {
     return false;
 }
 
+/**
+ * @return string JavaScript function to check for Chrome browser and set autocomplete attribute to prevent autofill issues
+ */
 function checkForChrome() {
 
 return "
@@ -8767,16 +8734,14 @@ function checkForChrome() {
 }
 
 /**
- * Recursively copy files and directories
- *
- * This function recursively copies all files and directories from a source
- * location to a destination location.
+ * This function recursively copies all files and directories from a source location to a destination location.
  *
  * @param string $src Source directory path
  * @param string $dst Destination directory path
  * @return void
  *
  * @see https://stackoverflow.com/questions/2050859/copy-entire-contents-of-a-directory-to-another-using-php
+ * Also gimmicklessgpt at gmail dot com found at https://www.php.net/manual/en/function.copy.php#91010
  */
 function recurse_copy($src,$dst) {
     $dir = opendir($src);
@@ -8795,10 +8760,7 @@ function recurse_copy($src,$dst) {
 }
 
 /**
- * Update multipage templates for a screen
- *
- * This function updates multipage templates by copying the element template to
- * elementtemplate1 and elementtemplate2 files to ensure multipage templates are up to standard.
+ * This function updates multipage templates by copying the element template to elementtemplate1 and elementtemplate2 files to ensure multipage templates are up to standard.
  *
  * @param object $screen The screen object to update templates for
  * @return void
@@ -8826,10 +8788,7 @@ function updateMultipageTemplates($screen) {
 }
 
 /**
- * Check if user agent is a mobile client
- *
- * This function determines whether the current user agent string indicates
- * a mobile device by checking against various mobile device patterns.
+ * This function determines whether the current user agent string indicates a mobile device by checking against various mobile device patterns.
  *
  * @return bool True if user agent is a mobile client, false otherwise
  */
@@ -8847,6 +8806,13 @@ function userHasMobileClient() {
  * This function handles the setup of parent form values when navigating back
  * through multipage forms. It processes the go_back_entry values and sets
  * appropriate POST variables for parent form navigation.
+ *
+ * This function reads the go_back values from POST and sets up parent entries in POST, which are used as a flag in key situations.
+ * This funky behaviour is a side effect of the minimal controller architecture in Formulize, and the functions like displayEntries handling behaviours themselves.
+ * The Go Back form, which is setup with the legacy form screen submit buttons, normally would include the parent entries however they are missing when a multipage form does a Go Back operation
+ * The list screens check if they need to do this, and call this function if so
+ * Multipage screens check for this too, and call this function
+ * Essentially, this is a replacement for the Go Back form (in case the parent values that it sets are not present in POST already)
  *
  * @return string The active entry ID that should be displayed
  */
@@ -8866,11 +8832,7 @@ function setupParentFormValuesInPostAndReturnEntryId() {
 }
 
 /**
- * Repair entry owner groups table for a form
- *
- * This function identifies entries in a form that do not have ownership information
- * in the entry_owner_groups table and repairs this information based on the creator's
- * current group memberships.
+ * This function identifies entries in a form that do not have ownership information in the entry_owner_groups table and repairs this information based on the creator's current group memberships.
  *
  * @param int $fid The form ID
  * @return void
@@ -8901,14 +8863,11 @@ function repairEOGTable($fid) {
 }
 
 /**
- * Get user timezone offset from server timezone in seconds
- *
- * This function calculates the offset between the user's timezone and the server's timezone
- * in seconds, taking into account daylight savings adjustments for the given timestamp.
+ * Get user timezone offset from server timezone in seconds. Take daylight savings time into account.
  *
  * @param object|null $userObject User object (optional, defaults to current user)
  * @param int|null $timestamp Unix timestamp for the date/time to check (optional, defaults to current time)
- * @return int Timezone offset difference from server timezone in seconds
+ * @return int Timezone offset difference from server timezone in seconds, at the moment the timestamp represents, taking into account daylight savings time adjustments for both the user's timezone and the server's timezone
  */
 function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
 	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
@@ -8924,14 +8883,11 @@ function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
 }
 
 /**
- * Get user timezone offset from UTC in seconds
- *
- * This function calculates the user's timezone offset from UTC in seconds.
- * It takes into account both the user's timezone offset and daylight savings adjustments.
+ * Get user timezone offset from UTC in seconds, taking into account daylight savings
  *
  * @param object|null $userObject User object (optional, defaults to current user)
  * @param int|null $timestamp Unix timestamp for the date/time to check (optional, defaults to current time)
- * @return int Timezone offset from UTC in seconds
+ * @return int Timezone offset from UTC in seconds, at the moment the timestamp represents, taking into account daylight savings time adjustments for the user's timezone
  */
 function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
 	global $xoopsConfig, $xoopsUser;
@@ -8945,9 +8901,6 @@ function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
 
 /**
  * Calculate daylight savings adjustment between timezones
- *
- * This function calculates the difference in hours between two timezones based on
- * whether they are currently in daylight savings time.
  *
  * @param float $userTimeZone The user's timezone offset
  * @param float $compareTimeZone The timezone to compare against
@@ -9127,8 +9080,8 @@ function formulize_handleHtaccessRewriteRule() {
 /**
  * Determine the page ordinal starting from 1, based on the page identifier found in any rewrite rule string
  *
- * @param mixed screenObjectOrIdentifier The screen object, or an identifier
- * @param string pageIdentifier The page identifier from the clean URL, should be a page title in the screen
+ * @param mixed $screenObjectOrIdentifier The screen object, or an identifier
+ * @param string $pageIdentifier The page identifier from the clean URL, should be a page title in the screen
  * @return int|false The page number found, or false if none found
  */
 function formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObjectOrIdentifier, $pageIdentifier) {
@@ -9152,8 +9105,8 @@ function formulize_getCurrentPageNumberFromRewriterulePageIdentifier($screenObje
 /**
  * Determine the entry ID that matches a given rewrite rule entry identifier, for the given screen
  *
- * @param mixed screenObjectOrIdentifier The screen object, or an identifier
- * @param string entryIdentifier The identifier from the clean URL
+ * @param mixed $screenObjectOrIdentifier The screen object, or an identifier
+ * @param string $entryIdentifier The identifier from the clean URL
  * @return int The entry ID found, or zero if none found
  */
 function formulize_getEntryIdFromRewriteruleElement($screenObjectOrIdentifier, $entryIdentifier) {
@@ -9457,7 +9410,7 @@ function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $oper
 /**
  * Create the markup for the page selector used at the bottom of lists of entries, and on subform elements that page paging
  *
- * @param string $jsFunctionname - the name of the javascript function to trigger when the user clicks on a page number
+ * @param string $jsFunctionName - the name of the javascript function to trigger when the user clicks on a page number
  * @param int $numberPerPage - the number of entries per page
  * @param int $currentPageFirstRecord - the ordinal number of the first record on the current page, ie: 11 if there are five entries per page and the current page is 3
  * @param int $firstDisplayPage - the first number that is shown in the pager, if the user is deep into a long series of pages, this won't be 1
@@ -9527,10 +9480,10 @@ function formulize_getFirstApplicationForForm($form_id_or_object, $returnObject 
 /**
  * Find the first application that both forms are part of, or if none, first application for the first form.
  *
- * @param mixed first_form_id_or_object - the form id number of a formulize form object of the first form
- * @param mixed second_form_id_or_object - the form id number of a formulize form object of the first form
- * @param bool returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
- * @return mixed Returns the ID number of the first application that both forms belong to, if any, otherwise the first application the first form belongs to. Returns the application object if returnObject was true. Returns false if form ids or objects were invalid, and null if there is no application for the form.
+ * @param mixed $first_form_id_or_object - the form id number of a formulize form object of the first form
+ * @param mixed $second_form_id_or_object - the form id number of a formulize form object of the first form
+ * @param bool $returnObject - a flag to indicate if the application object should be returned. Default is to return just the ID number of the application.
+ * @return mixed Returns the ID number of the first application that both forms belong to, if any, otherwise the first application the first form belongs to. Returns the application object if $returnObject was true. Returns false if form ids or objects were invalid, and null if there is no application for the form.
  */
 function formulize_getFirstApplicationForBothForms($first_form_id_or_object, $second_form_id_or_object, $returnObject = false) {
 	$applications_handler = xoops_getmodulehandler('applications', 'formulize');
@@ -9578,8 +9531,8 @@ function formulize_getFirstApplicationForBothForms($first_form_id_or_object, $se
 /**
  * Check if two elements are actually linked to each other
  *
- * @param int|string|object element1Indentifier - element id, handle or object for the first element
- * @param int|string|object element2Indentifier - element id, handle or object for the second element
+ * @param int|string|object $element1Identifier - element id, handle or object for the first element
+ * @param int|string|object $element2Identifier - element id, handle or object for the second element
  * @return boolean Return true or false, depending if the elements are linked to each other or not
  */
 function elementsAreLinked($element1Identifier, $element2Identifier) {
@@ -9597,12 +9550,12 @@ function elementsAreLinked($element1Identifier, $element2Identifier) {
 /**
  * Find the element handle of the source element for a linked element
  *
- * @param int|string|object elementIndentifier - element id, handle or object for the element
+ * @param int|string|object $elementIdentifier - element id, handle or object for the element
  * @return string|boolean Return the element handle of the source of the link, or false if the element is not linked
  */
-function sourceHandleForElement($element) {
+function sourceHandleForElement($elementIdentifier) {
 	$sourceHandle = false;
-	if($element = _getElementObject($element)) {
+	if($element = _getElementObject($elementIdentifier)) {
     $ele_value = $element->getVar('ele_value');
 		if(is_array($ele_value)
 			AND isset($ele_value[2])
@@ -9623,7 +9576,7 @@ function sourceHandleForElement($element) {
  * Takes users permission and form settings into account. Users may not have permission to see multiple entries.
  * Forms may not be set to support multiple entries.
  *
- * @param int|object formID_or_formObject - The form id or object we're checking
+ * @param int|object $formID_or_formObject - The form id or object we're checking
  * @return int Returns the screen id if one is found. Returns 0 if no screen found.
  */
 function determineScreenForUserFromFid($formID_or_formObject) {
@@ -9674,7 +9627,7 @@ function isMCPServerEnabled() {
 /**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  *
- * @param mixed value - the value we're working with
+ * @param mixed $value - the value we're working with
  * @return mixed returns the value, with the correct type based on its contents. If value is not a string, int or float, returns whatever we got passed in
  */
 function correctStringIntFloatTypes($value) {
@@ -9737,14 +9690,14 @@ function checkUITextForValue($value, $element, $partialMatch=false) {
 }
 
 /**
- * Extract UI text from form values
+ * Extract UI text from options typed into the admin UI
  *
  * This function takes a series of values typed in form radio buttons, checkboxes or selectbox options,
  * and checks to see if they were entered with a UI text indicator. If so, it splits them into their
  * actual value plus the UI text and returns both.
  *
- * @param array $values Array of form values (options)
- * @return array Array with original values and corresponding UI text
+ * @param array $values Array of typed options
+ * @return array Array with database values and corresponding UI text
  */
 function formulize_extractUIText($values) {
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
@@ -9810,9 +9763,9 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
  * Figure out the correct order value for an element based on the order choice made by the user
  * Also moves subsequent elements down if necessary
  *
- * @param mixed orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
- * @param int|float oldOrder The old order value of the element that is being placed, if any. Not required for new elements going to the bottom. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
- * @param int fid The form id the element belongs to. Required.
+ * @param mixed $orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
+ * @param int|float $oldOrder The old order value of the element that is being placed, if any. Not required for new elements going to the bottom. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
+ * @param int $fid The form id the element belongs to. Required.
  * @return int The order value to use for the element
  * @throws Exception if invalid parameters are passed in
  */
@@ -9869,9 +9822,9 @@ function methodExistsInClass($class, $method) {
  * Deduce the title of the page being rendered, based on the screen and entry being rendered, and set it in the XOOPS template for passing out to the theme
  * Page title is a semantic aid to the user to read history in browser, and bookmarks, etc. Not necessarily a unique identifier, since multiple form screens would end up with the PI value for the entry as the title of the screen. Titles can be long and internally descriptive for webmasters to tell screens apart, and PI is more meaningful to users, if present.
  *
- * @param int entryId The entry id being rendered, if any
- * @param object renderedFormulizeScreen The screen object being rendered, if any
- * @param array settings An array of settings for the screen rendering, if any. Used to gather the current page number for multipage screens
+ * @param int $entryId The entry id being rendered, if any
+ * @param object $renderedFormulizeScreen The screen object being rendered, if any
+ * @param array $settings An array of settings for the screen rendering, if any. Used to gather the current page number for multipage screens
  * @return void assigns the title to the global $xoopsTpl object if possible, returns nothing
  */
 function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = null, $settings = array()) {
@@ -9954,8 +9907,7 @@ function formulize_get_file_version($relativeFilePath) {
  * Get list of candidate owners for form entries
  *
  * @param int $fid Form ID.
- * @param array
- *   List of names based on user IDs
+ * @return array List of names keyed by user id
  */
 function getListOfCandidateOwnersForFormEntries($fid) {
 
@@ -10008,7 +9960,7 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 /**
  * Gets the aria sort value for the current element handle
  *
- * @param string elementHandle - handle of the element being checked
+ * @param string $elementHandle - handle of the element being checked
  * @return string Returns the aria sort value
  */
 function getAriaSort($elementHandle) {
@@ -10040,7 +9992,7 @@ function getAriaSort($elementHandle) {
  * if this column is currently sorted, and if there are multiple sorted columns,
  * it will also show a badge with the sort priority (1st, 2nd, 3rd, etc).
  *
- * @param string elementHandle - the handle of the element for the column header
+ * @param string $elementHandle - the handle of the element for the column header
  * we are generating the title and icon for
  * @return array Returns an array with two elements: [0] => the tooltip title
  * for the column header, [1] => the HTML markup for the sort icon (which may be
