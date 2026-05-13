@@ -147,6 +147,8 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 					exit();
         }
 
+				$settings['ventry'] = detectIfUserIsViewingEntryAndSetVentryInPOST();
+
         $previouslyRenderingScreen = (isset($GLOBALS['formulize_screenCurrentlyRendering']) AND $GLOBALS['formulize_screenCurrentlyRendering']) ? $GLOBALS['formulize_screenCurrentlyRendering'] : null;
 
         // SOME STANDARDS FOR HOW TO HANDLE 'SAVE' AND 'SAVE AND CLOSE' BUTTONS AND THE DONE DEST NEED TO BE DEVISED FOR TEMPLATE SCREENS!!

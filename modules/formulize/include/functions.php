@@ -9140,3 +9140,60 @@ function getSortTitleAndIcon($elementHandle) {
 
 	return [$title, $icon];
 }
+
+/**
+ * Detect critical values in POST and return the entry the user is viewing, if any. Also set the value in the ventry key in POST if applicable.
+ * Extremely relevant when the primary page is not displaying an entry, but the user has moved into an entry. This preserves their place appropriately, especially when coming back from nested subform entries, so the user lands on the prior entry they were viewing instead of going back to a list, for example.
+ * @return int|null The entry ID the user is viewing, or null if there isn't one
+ */
+function detectIfUserIsViewingEntryAndSetVentryInPOST() {
+
+	// default to null - no entry being viewed
+	$settings = array('ventry' => null);
+
+	// if there's parent info from the go_parent form submission, use that
+	if(isset($_POST['parent_entry'])
+		AND isset($_POST['parent_form'])
+		AND isset($_POST['parent_page'])
+		AND isset($_POST['parent_subformElementId'])
+	) {
+		$parentEntries = strstr($_POST['parent_entry'], ',') ? explode(',',$_POST['parent_entry']) : array($_POST['parent_entry']);
+		$lastKey = count($parentEntries)-1;
+		$_POST['ventry'] = $parentEntries[$lastKey];
+		$settings['ventry'] = $_POST['ventry'];
+
+  // otherwise, if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely -- comes from the calreturnform only? (used by multipage forms, but could/should they use the parent stuff instead? Nasty legacy controller issue that shall wait till that is all disentangled)
+	} elseif(isset($_POST['go_back_form'])
+		AND $_POST['go_back_form']
+		AND isset($_POST['go_back_entry'])
+		AND $_POST['go_back_entry']
+		AND (
+			!isset($_POST['ventry']) OR !$_POST['ventry']
+		)
+	) {
+		$_POST['ventry'] = setupParentFormValuesInPostAndReturnEntryId();
+		$settings['ventry'] = $_POST['ventry'];
+
+	// otherwise, use the declared originalVentry if any, that will be the initial entry that we're showing
+	} elseif(isset($_POST['formulize_originalVentry'])
+		AND is_numeric($_POST['formulize_originalVentry'])
+	) {
+		$settings['ventry'] = $_POST['formulize_originalVentry'];
+
+  // otherwise, try the URL ve= parameter if any
+	} else {
+		// if the user has requested a ve in the URL, set it now as if they clicked on a link to go into an entry
+		if((!isset($_POST['ventry']) OR !$_POST['ventry'])
+			AND isset($_GET['ve'])
+		  AND is_numeric($_GET['ve'])
+			AND $_GET['ve'] > 0
+		) {
+			$_POST['ventry'] = $_GET['ve'];
+		}
+		$settings['ventry'] = isset($_POST['ventry']) ? $_POST['ventry'] : null;
+	}
+
+	// return the entry that we found
+	// and we already set it in $_POST as well above, if applicable. Yuck.
+	return $settings['ventry'];
+}
