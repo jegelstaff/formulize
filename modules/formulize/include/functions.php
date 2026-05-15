@@ -108,7 +108,7 @@ function getFormFramework($formframe, $mainform=0) {
 	if (!$fid) { // if the form identifier was a title or handle, convert to the id
 		$formIDQueryResult = q("SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE form_title = '" . formulize_db_escape($formIdentifier) . "' OR form_handle = '" . formulize_db_escape($formIdentifier) . "'");
 		if(count($formIDQueryResult) == 0 OR !$fid = intval($formIDQueryResult[0]['id_form'])) {
-			throw new Exception("Cannot identify a form using this text '".strip_tags(htmlspecialchars($$formIdentifier))."'");
+			throw new Exception("Cannot identify a form using this text '".strip_tags(htmlspecialchars($formIdentifier))."'");
 		}
 	}
 	$to_return[0] = $fid;
@@ -5601,7 +5601,7 @@ function formulize_createFilterUIMatch($newElementName,$formName,$filterName,$op
  * @param string $filterButtonText - Optional. Text to use for the "Add another condition" button.
  * @return array The existing filter settings in a readable format
  */
-function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $defaultTypeIfNoFilterTypeGiven="all", $frid=0, $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
+function getExistingFilter($filterSettings, $filterName, $formWithSourceElements, $formName, $frid=0, $defaultTypeIfNoFilterTypeGiven="all", $groups=false, $filterAllText=_formulize_GENERIC_FILTER_ALL, $filterConText=_formulize_GENERIC_FILTER_CON, $filterButtonText=_formulize_GENERIC_FILTER_ADDBUTTON) {
     if (!$filterName OR !$formWithSourceElements OR !$formName) {
         return false;
     }
