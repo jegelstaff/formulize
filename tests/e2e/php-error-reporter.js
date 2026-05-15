@@ -43,8 +43,8 @@ class PhpErrorReporter {
       const containerName = 'formulize-web-1';
       const logPath = '/var/www/html/logs/formulize_log_active.log';
 
-      const catCommand = `docker exec ${containerName} cat ${logPath}`;
-      const logContent = execSync(catCommand, { encoding: 'utf8', timeout: 10000 });
+      const catCommand = `docker exec ${containerName} tail -n 500 ${logPath}`;
+      const logContent = execSync(catCommand, { encoding: 'utf8', timeout: 10000, maxBuffer: 5 * 1024 * 1024 });
 
       const errorInfo = extractMostRecentError(logContent);
 
