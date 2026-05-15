@@ -160,11 +160,11 @@ function getFormObject($formIdentifier) {
  * Returns a list of user full names for all users in specified groups.
  *
  * @param array $groups Array of group IDs to consider. Usually the active user's groups, but could be an arbitrary list.
- * @param string $nametype Either 'uname' or 'name' for the name type to return. 'name' is deprecated.
- * @param bool $requireAllGroups If true, only names of users who are members of ALL specified groups
+ * @param string $nametype Optional. Either 'uname' or 'name' for the name type to return. 'name' is deprecated.
+ * @param bool $requireAllGroups Optional. If true, only names of users who are members of ALL specified groups
  * @param mixed $filter Optional filter for user profile form. Deprecated.
- * @param bool $limitByUsersGroups Flag to limit the names returned to users who have a group in common with the active user
- * @param array $declaredUsersGroups Array of groups that the 'declared' user is a member of. The 'declared' user is the active user(?). This seems to always be true.
+ * @param bool $limitByUsersGroups Optional. Flag to limit the names returned to users who have a group in common with the active user. Defaults to false, but if the groups passed in are the same as the active user's groups, then this will be set to false regardless of the value passed in, since it would be redundant.
+ * @param array $declaredUsersGroups Optional. Defaults to an empty array. This should be an array of groups that the 'declared' user is a member of. The 'declared' user is the active user(?). This seems to always be true in the contexts where this function is called.
  * @return array Associative array of user names indexed by UID
  */
 function gatherNames($groups, $nametype='uname', $requireAllGroups=false, $filter=false, $limitByUsersGroups=false, $declaredUsersGroups=array()) {
@@ -348,11 +348,11 @@ function getSavedViewOwner($vid) {
  *
  * @param int $uid The user ID
  * @param array $groups The user's groups. Deprecated. Overridden by gathering groups based on the specified user id.
- * @param int $fid The form ID
- * @param string $frid The relationship ID (optional, defaults to 0, for no relationship)
+ * @param int $fid The form ID (has default of 0 only so that $groups can have a default specified)
+ * @param string $frid Optional. The relationship ID. Defaults to 0, for no relationship.
  * @return array Array containing saved and published reports
  */
-function availReports($uid, $groups, $fid, $frid=0) {
+function availReports($uid, $groups=array(), $fid=0, $frid=0) {
     global $xoopsDB;
 
 		// set the groups based on the user id
@@ -3041,9 +3041,10 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
  * @param int $copies - Number of copies to create. Defaults to 1.
  * @param callable|null $callback - Optional. Callback function that can be used to modify the data written to the cloned entries. It receives an associative array of the raw data from the database, keyed by element handles and returns the array with modifications if any.
  * @param string $targetEntry - The entry being written to. Defaults to "new" to create a new entry cloned from the source. But this could be used to overwrite an existing entry also.
+ * @param array $clone_forms - Optional. An array of form IDs to be cloned. If empty, all forms are cloned.
  * @return array An array map of the entries that were cloned. Top level key is the form id, then within that is an array keyed by the original entry id with the value being an array of the cloned entry ids that were created from that original entry, because there could be more than one cloned entry based on each original.
  */
-function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new") {
+function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $targetEntry = "new", $clone_forms = array()) {
 
     global $xoopsDB, $xoopsUser;
 
