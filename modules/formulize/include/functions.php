@@ -4230,39 +4230,41 @@ function formulize_writeEntry($values, $entry_id="new", $action="replace", $prox
     }
 
     // get the form id from the element id of the first value in the values array
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $elementObject = $element_handler->get(key($values));
-    if (is_object($elementObject)) {
-        $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-        if ($result = $data_handler->writeEntry($entry_id, $values, $proxyUser, $forceUpdate)) {
-            if ($entry_id == "new" AND $writeOwnerInfo) {
-                global $xoopsUser;
-                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
-                    $ownerForGroups = $GLOBALS['formulize_overrideProxyUser'];
-                } elseif ($proxyUser) {
-                    $ownerForGroups = $proxyUser;
-                } elseif ($xoopsUser) {
-                    $ownerForGroups = $xoopsUser->getVar('uid');
-                } else {
-                    $ownerForGroups = 0;
-                }
-                $data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
-                if(isset($GLOBALS['formulize_overrideProxyUser'])) {
-                    unset($GLOBALS['formulize_overrideProxyUser']);
-                }
-            }
-            return $result;
-        } else {
-            if($result !== null) {
-            	throw new Exception("Data could not be written to the database for entry $entry_id in form ". $elementObject->getVar('id_form').".");
-            } else {
-							// "return void"
-							// This really clutters up the error logs, because it's quite normal anytime someone doesn't make any changes! But we may want to do something else in this eventuality so we'll keep the 'else' here, at least so it's clear what happens/has happened at this point.
-              // error_log('Formulize Notice: Nothing written for entry "'.$entry_id.'" presumably because the passed in values are unchanged from the saved values.');
-            }
-        }
-    }
-		throw new Exception("Could not write to the database. No element found with the identifier: ".htmlspecialchars(strip_tags((string) key($values))).".");
+		if(!$elementObject = _getElementObject(key($values))) {
+			throw new Exception("Could not write to the database. No element found with the identifier: ".htmlspecialchars(strip_tags((string) key($values))).".");
+		}
+		$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+
+		// writing succesful
+		if ($result = $data_handler->writeEntry($entry_id, $values, $proxyUser, $forceUpdate)) {
+				if ($entry_id == "new" AND $writeOwnerInfo) {
+						global $xoopsUser;
+						if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+								$ownerForGroups = $GLOBALS['formulize_overrideProxyUser'];
+						} elseif ($proxyUser) {
+								$ownerForGroups = $proxyUser;
+						} elseif ($xoopsUser) {
+								$ownerForGroups = $xoopsUser->getVar('uid');
+						} else {
+								$ownerForGroups = 0;
+						}
+						$data_handler->setEntryOwnerGroups($ownerForGroups, $result); // result will be the ID number of the entry that was just written.
+						if(isset($GLOBALS['formulize_overrideProxyUser'])) {
+								unset($GLOBALS['formulize_overrideProxyUser']);
+						}
+				}
+				return $result;
+
+		// writing failed
+		} elseif($result !== null) {
+				throw new Exception("Data could not be written to the database for entry $entry_id in form ". $elementObject->getVar('id_form').". Was the page submited with the GET method?");
+
+		// nothing written
+		} else {
+			// $result is null
+			// nothing written, presumably because the passed in values are unchanged from the saved values
+			// "return void"
+		}
 }
 
 
