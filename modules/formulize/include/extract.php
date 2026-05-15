@@ -68,24 +68,6 @@ function debug_memory($text)
 	}
 }
 
-
-// this is a copy of the regular makeUidFilter function in the functions.php file, but since extract.php must standalone for when it's called by outside sites, we have to make an independently named copy here.
-// This function makes a "uid" filter, not "creation_uid" so it will not work with the formulize data tables.
-function extract_makeUidFilter($users)
-{
-	$start = 1;
-	$uq = '';
-	foreach ($users as $user) {
-		if ($start) {
-			$uq = "uid=$user";
-			$start = 0;
-		} else {
-			$uq .= " OR uid=$user";
-		}
-	}
-	return $uq;
-}
-
 /**
  * Sort out 'Other' values from the database for the given entry, if it has an {OTHER|XX} value in it
  * Apply UI Text if applicable
@@ -134,7 +116,7 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 				AND $listtype = array_key_first($ele_value[2])
 				AND ($listtype === "{USERNAMES}" OR $listtype === "{FULLNAMES}")) {
 
-				$uidFilter = extract_makeUidFilter($values);
+				$uidFilter = makeUidFilter($values);
 				$values = []; // empty it and remake below
 				$listtype = $listtype == "{USERNAMES}" ? 'uname' : 'name';
 				if (strlen($uidFilter) > 4) {   // skip this when $uidFilter = "uid=" becaues the query will fail
