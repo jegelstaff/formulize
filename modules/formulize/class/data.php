@@ -345,13 +345,21 @@ class formulizeDataHandler {
 
 	// this function figures out if a given element has a value in the given entry
 	function elementHasValueInEntry($id, $element_id) {
-		if(!$element = _getElementObject($element_id)) {
+		if(isMetaDataField($element_id)) {
+			$fieldName = $element_id;
+		} elseif($element = _getElementObject($element_id)) {
+			$fieldName = $element->getVar('ele_handle');
+		} else {
+			writeToFormulizeLog(array(
+				'formulize_event'=>'non-fatal-formulize-error',
+				'additional_info'=>'invalid field/element passed to elementHasValueInEntry method'
+			));
 			return false;
 		}
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
+		$sql = "SELECT `". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -366,7 +374,15 @@ class formulizeDataHandler {
 	// this function returns the value of a given element in the given entry
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
 	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_group_ids=array()) {
-		if(!$element = _getElementObject($element_id)) {
+		if(isMetaDataField($element_id)) {
+			$fieldName = $element_id;
+		} elseif($element = _getElementObject($element_id)) {
+			$fieldName = $element->getVar('ele_handle');
+		} else {
+			writeToFormulizeLog(array(
+				'formulize_event'=>'non-fatal-formulize-error',
+				'additional_info'=>'invalid field/element passed to getElementValueInEntry method'
+			));
 			return false;
 		}
 		global $xoopsDB;
@@ -374,12 +390,12 @@ class formulizeDataHandler {
     $formObject = $form_handler->get($this->fid);
 		if(is_array($scope_uids) AND count($scope_uids)>0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
-			$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id) . $scopeFilter;
+			$sql = "SELECT `". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id) . $scopeFilter;
 		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
-			$sql = "SELECT `t1.". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.entry_id = " . intval($id) . $scopeFilter;
+			$sql = "SELECT `t1.". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.entry_id = " . intval($id) . $scopeFilter;
 		} else {
-			$sql = "SELECT `". $element->getVar('ele_handle') . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
+			$sql = "SELECT `". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -483,7 +499,15 @@ class formulizeDataHandler {
 
 	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
 	function findFirstEntryWithValue($element_id, $value, $operator="=", $scope_uids=array(), $desc=false) {
-		if(!$element = _getElementObject($element_id)) {
+		if(isMetaDataField($element_id)) {
+			$fieldName = $element_id;
+		} elseif($element = _getElementObject($element_id)) {
+			$fieldName = $element->getVar('ele_handle');
+		} else {
+			writeToFormulizeLog(array(
+				'formulize_event'=>'non-fatal-formulize-error',
+				'additional_info'=>'invalid field/element passed to findFirstEntryWithValue method'
+			));
 			return false;
 		}
     $likeBits = ($operator == "LIKE" OR $operator == "NOT LIKE") ? "%" : "";
@@ -492,7 +516,7 @@ class formulizeDataHandler {
 		$formObject = $form_handler->get($this->fid);
 		$scopeFilter = $this->_buildScopeFilter($scope_uids);
 		$desc = $desc ? 'DESC' : '';
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` ".formulize_db_escape($operator)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $fieldName . "` ".formulize_db_escape($operator)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -554,7 +578,15 @@ class formulizeDataHandler {
 					$operatorKeyCounter++;
 				}
 
-				if(!$element = _getElementObject($elementIdOrHandle)) {
+				if(isMetaDataField($elementIdOrHandle)) {
+						$fieldName = $elementIdOrHandle;
+				} elseif($element = _getElementObject($elementIdOrHandle)) {
+						$fieldName = $element->getVar('ele_handle');
+				} else {
+						writeToFormulizeLog(array(
+							'formulize_event'=>'non-fatal-formulize-error',
+							'additional_info'=>'invalid field/element passed to findEntryOrEntriesWithAllValues method'
+						));
 						continue;
 				}
 				$quotes = '"';
@@ -581,7 +613,7 @@ class formulizeDataHandler {
 							$quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
 						}
 				}
-				$valuesSQL[] = "`". $element->getVar('ele_handle') . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
+				$valuesSQL[] = "`". $fieldName . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
 		}
 		$sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id $findFirstEntryLimit";
 		if(!$res = $xoopsDB->query($sql)) {
@@ -642,7 +674,15 @@ class formulizeDataHandler {
 	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_group_ids=array(), $operator="=") {
 
-		if(!$element = _getElementObject($element_id)) {
+		if(isMetaDataField($element_id)) {
+			$fieldName = $element_id;
+		} elseif($element = _getElementObject($element_id)) {
+			$fieldName = $element->getVar('ele_handle');
+		} else {
+			writeToFormulizeLog(array(
+				'formulize_event'=>'non-fatal-formulize-error',
+				'additional_info'=>'invalid field/element passed to findAllEntriesWithValue method'
+			));
 			return false;
 		}
 		global $xoopsDB;
@@ -655,12 +695,12 @@ class formulizeDataHandler {
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $fieldName . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
 		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
-			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.`". $element->getVar('ele_handle') . "` $operator $queryValue $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.`". $fieldName . "` $operator $queryValue $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
 		} else {
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $element->getVar('ele_handle') . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $fieldName . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;

@@ -111,6 +111,7 @@ function writeToFormulizeLog($data) {
 		'queue_item_or_items' => (isset($data['queue_item_or_items']) ? $data['queue_item_or_items'] : ''),
 		'destroyed_session_id' => (isset($data['destroyed_session_id']) ? $data['destroyed_session_id'] : ''),
 		'mcp_params' => (isset($data['mcp_params']) ? $data['mcp_params'] : ''),
+		'additional_info' => (isset($data['additional_info']) ? $data['additional_info'] : '')
 	);
 
 	// write the new log entry (to a new file if necessary, active file has generic name, archived files are named with the current date based on server timezone)
