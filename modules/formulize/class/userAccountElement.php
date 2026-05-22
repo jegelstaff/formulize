@@ -409,6 +409,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 								$unameParts[] = $value;
 								$value = implode(' ', $unameParts);
 							}
+							if($userProperty == 'level' && intval($value) != 1
+							   && $entryUserId && $xoopsUser && intval($entryUserId) == intval($xoopsUser->getVar('uid'))) {
+								continue; // safety net: active user cannot disable their own account
+							}
 							$pendingUserVars[$userProperty] = $value;
 						}
 					}
