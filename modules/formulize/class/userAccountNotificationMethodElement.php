@@ -48,6 +48,62 @@ class formulizeUserAccountNotificationMethodElementHandler extends formulizeUser
 		return new formulizeUserAccountNotificationMethodElement();
 	}
 
+	protected function getOptions() {
+		return array(
+			XOOPS_NOTIFICATION_METHOD_EMAIL   => _NOT_METHOD_EMAIL,
+			XOOPS_NOTIFICATION_METHOD_SMS     => _NOT_METHOD_SMS,
+			XOOPS_NOTIFICATION_METHOD_PM      => _NOT_METHOD_PM,
+			XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE,
+		);
+	}
+
+	function prepareDataForDataset($value, $handle, $entry_id) {
+		$options = $this->getOptions();
+		return isset($options[$value]) ? $options[$value] : $value;
+	}
+
+	function prepareLiteralTextForDB($value, $element, $partialMatch = false) {
+		$options = $this->getOptions();
+		$matchingKeys = array();
+		foreach ($options as $key => $label) {
+			$matches = $partialMatch
+				? (stripos($label, $value) !== false)
+				: (strcasecmp($label, $value) === 0);
+			if ($matches) {
+				$matchingKeys[] = $key;
+			}
+		}
+		if (empty($matchingKeys)) {
+			return $value;
+		}
+		return count($matchingKeys) === 1 ? $matchingKeys[0] : $matchingKeys;
+	}
+
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
+		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
+		$options = $this->getOptions();
+
+		$terms = is_array($term) ? $term : array($term);
+		$matchingKeys = array();
+		foreach ($terms as $t) {
+			if (is_numeric($t)) {
+				$k = intval($t);
+				if (array_key_exists($k, $options)) {
+					$matchingKeys[] = $k;
+				}
+			}
+		}
+
+		if (empty($matchingKeys)) {
+			return $isNegative ? '1=1' : '1=0';
+		}
+
+		$safeKeys = implode(',', $matchingKeys);
+		return $isNegative
+			? "{$tableAlias}.`notify_method` NOT IN ($safeKeys)"
+			: "{$tableAlias}.`notify_method` IN ($safeKeys)";
+	}
+
 	// this method renders the element for display in a form
 	// the caption has been pre-prepared and passed in separately from the element object
 	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
@@ -62,13 +118,7 @@ class formulizeUserAccountNotificationMethodElementHandler extends formulizeUser
 		if($ele_value === null OR $ele_value === false) {
 			$ele_value = XOOPS_NOTIFICATION_METHOD_EMAIL;
 		}
-		$options = array(
-			XOOPS_NOTIFICATION_METHOD_EMAIL => _NOT_METHOD_EMAIL,
-			XOOPS_NOTIFICATION_METHOD_SMS => _NOT_METHOD_SMS,
-			XOOPS_NOTIFICATION_METHOD_PM => _NOT_METHOD_PM,
-			XOOPS_NOTIFICATION_METHOD_DISABLE => _NOT_METHOD_DISABLE
-		);
-		return $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
+		return $this->renderUserAccountRadioButtons($this->getOptions(), $ele_value, $caption, $markupName, $isDisabled);
 	}
 
 }

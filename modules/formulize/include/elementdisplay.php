@@ -163,7 +163,7 @@ EOF;
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		static $typesWithData = array();
-		if(($prevEntry OR $profileForm === "new") AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+		if(($prevEntry OR $profileForm === "new" OR $element->isUserAccountElement) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 			if(!isset($typesWithData[$ele_type])) {
 				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
 				$customTypeObject = $customTypeHandler->create();

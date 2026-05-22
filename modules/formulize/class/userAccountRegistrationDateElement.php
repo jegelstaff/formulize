@@ -22,46 +22,54 @@
 ##  along with this program; if not, write to the Free Software              ##
 ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
 ###############################################################################
-##  Author of this file: Freeform Solutions                                  ##
+##  Author of this file: Formulize Incorporated                              ##
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
 
-class formulizeUserAccountUidElement extends formulizeUserAccountElement {
+class formulizeUserAccountRegistrationDateElement extends formulizeUserAccountElement {
 
-    function __construct() {
-			parent::__construct();
-      $this->name = "User Account UID";
-			$this->overrideDataType = "MEDIUMINT(8) UNSIGNED";
-			$this->hasData = true;
-			$this->userProperty = "uid";
-			$this->readOnly = true; // uid is determined from first principles on submission, never written via the user property loop
-		}
+	function __construct() {
+		parent::__construct();
+		$this->name = "User Account Registration Date";
+		$this->userProperty = "user_regdate"; // Unix timestamp in users table
+		$this->adminCanMakeRequired = false;
+		$this->readOnly = true; // system-managed, never overwritten by Formulize
+	}
 
 }
 
 #[AllowDynamicProperties]
-class formulizeUserAccountUidElementHandler extends formulizeUserAccountElementHandler {
+class formulizeUserAccountRegistrationDateElementHandler extends formulizeUserAccountElementHandler {
 
 	function create() {
-		return new formulizeUserAccountUidElement();
+		return new formulizeUserAccountRegistrationDateElement();
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	// Always renders as a read-only label; registration date is system-managed.
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		$formElement = new xoopsFormLabel($caption, $ele_value);
-		return $formElement;
+		$displayValue = $ele_value ? date(_MEDIUMDATESTRING, intval($ele_value) + formulize_getUserUTCOffsetSecs(timestamp: intval($ele_value))) : '';
+		return new XoopsFormLabel($caption, htmlspecialchars($displayValue, ENT_QUOTES), $markupName);
+	}
+
+	function prepareDataForDataset($value, $handle, $entry_id) {
+		return ($value && is_numeric($value)) ? date(_MEDIUMDATESTRING, intval($value) + formulize_getUserUTCOffsetSecs(timestamp: intval($value))) : '';
+	}
+
+	function prepareLiteralTextForDB($value, $element, $partialMatch = false) {
+		return self::prepareDateTimestampForDB($value, $partialMatch);
+	}
+
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
+		$safeTerm = formulize_db_escape($term);
+		$op = trim($operator);
+		if (in_array($op, ['>=', '<=', '>', '<'])) {
+			return "FROM_UNIXTIME({$tableAlias}.`user_regdate`) $op '$safeTerm'";
+		}
+		$isNegative = ($op === '!=' || $op === 'NOT LIKE');
+		return "FROM_UNIXTIME({$tableAlias}.`user_regdate`) " . ($isNegative ? 'NOT LIKE' : 'LIKE') . " '%$safeTerm%'";
 	}
 
 }

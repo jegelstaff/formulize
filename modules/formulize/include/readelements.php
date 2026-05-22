@@ -91,7 +91,7 @@ if(!isset($mid)) {
 }
 
 if(!$myts) { $myts = MyTextSanitizer::getInstance(); }
-
+$form_handler = xoops_getmodulehandler('forms', 'formulize');
 if(!isset($element_handler) OR !$element_handler) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 }
@@ -99,6 +99,8 @@ if(!isset($element_handler) OR !$element_handler) {
 $formulize_elementData = array(); // this array has multiple dimensions, in this order:  form id, entry id, element id.  "new" means a nea entry.  Multiple new entries will be recorded as new1, new2, etc
 $formulize_subformBlankCues = array();
 $userIdsForUserAccountElements = array();
+$newUserTableUserIds = array(); // this is where we will store the new user IDs created from user account elements in the case of a system users table form, because those UIDs are not stored in formulize entry rows like they are for regular EAU forms, but we still need to keep track of them so we can assign them to the correct entries in the case of subforms, and also so we can return them at the end of this process for use in the UI if needed (e.g. to log in as a newly created user right after creating them)
+
 // loop through POST and catalogue everything that we need to do something with
 foreach($_POST as $k=>$v) {
 
@@ -149,8 +151,18 @@ foreach($_POST as $k=>$v) {
 		// WHAT ABOUT MCP?? NEED TO HAVE TOOLS FOR MANAGING USERS. AND MCP CANNOT ALTER THE UID VALUE OF AN ENTRY!
 		if($elementObject->isUserAccountElement) {
 			if($userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]] = formulizeElementsHandler::processUserAccountSubmission($elementMetaData[1], $elementMetaData[2])) {
-				if($userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
-					$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$userAccountUidElement->getVar('ele_id')] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
+				// For the system users table form processUserAccountSubmission has
+				// already written all data directly to the users/profile tables — no formulize
+				// data table exists to update. For regular EAU forms, store the uid so that
+				// formulize_writeEntry can write it to the EAU entry row.
+				$_eau_formObj = $form_handler->get($elementMetaData[1]);
+				if (!($_eau_formObj && $_eau_formObj->isSystemUsersTableForm())) {
+					if($userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
+						$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$userAccountUidElement->getVar('ele_id')] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
+					}
+				} elseif($elementMetaData[2] === 'new') {
+					// Track newly created system user uid so displayForm can reload with their uid after save.
+					$newUserTableUserIds[$elementMetaData[1]] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
 				}
 			}
 		} else {
@@ -181,6 +193,15 @@ if(count((array) $creation_users) == 0) { // no proxy users specified
 // log the new entry ids created
 // log the notification events
 $formulize_newEntryIds = array();
+// For system users forms no Formulize entry is ever written, so populate
+// formulize_newEntryIds and update the POST entry key so displayFormPages can reload with
+// the newly created user's uid rather than a blank new form.
+if(!empty($newUserTableUserIds)) {
+	foreach($newUserTableUserIds as $nutFormId => $nutUserId) {
+		$formulize_newEntryIds[$nutFormId][] = $nutUserId;
+		$_POST['entry' . $nutFormId] = $nutUserId;
+	}
+}
 $formulize_newEntryUsers = array();
 $formulize_allWrittenEntryIds = array();
 $formulize_allSubmittedEntryIds = array();
@@ -208,8 +229,6 @@ if(count((array) $formulize_elementData) > 0 ) { // do security check if it look
 		}
 	}
 }
-
-	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 
 foreach($formulize_elementData as $elementFid=>$entryData) { // for every form we found data for...
 
@@ -634,6 +653,26 @@ if(!empty($formulize_allWrittenEntryIds)) {
 					formulizeElementsHandler::processUserGroupMemberships($userId, $eauFormId, $eauEntryId);
 				}
 			}
+		}
+	}
+}
+
+// Process group memberships for user account form submissions not covered above:
+// (1) System users forms never write Formulize entries, so they are
+//     never in formulize_allWrittenEntryIds.
+// (2) EAU forms where only group memberships were submitted and nothing else changed —
+//     nothing is written to the data table so the entry never appears in formulize_allWrittenEntryIds.
+if(!empty($userIdsForUserAccountElements)) {
+	$_groupMembershipAlreadyProcessed = isset($pendingGroupMembershipEntryUpdates) ? $pendingGroupMembershipEntryUpdates : array();
+	foreach($userIdsForUserAccountElements as $_gmFormId => $_gmEntryUserIds) {
+		foreach($_gmEntryUserIds as $_gmEntryId => $_gmUserId) {
+			if(!$_gmUserId) {
+				continue;
+			}
+			if(isset($_groupMembershipAlreadyProcessed[$_gmFormId]) && in_array($_gmEntryId, $_groupMembershipAlreadyProcessed[$_gmFormId])) {
+				continue;
+			}
+			formulizeElementsHandler::processUserGroupMemberships($_gmUserId, $_gmFormId, $_gmEntryId);
 		}
 	}
 }

@@ -104,8 +104,10 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 			$userExists = false;
 			$hideRequiredAsteriskJS = "";
 			if($entry_id != 'new') {
-				$dataHandler = new formulizeDataHandler($element->getVar('fid'));
-				$userExists = $dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')) ? true : false;
+				$fid = $element->getVar('fid');
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$formObject = $form_handler->get($fid);
+				$userExists = $formObject ? ($formObject->getSystemUserIdFromEntry($entry_id) > 0) : false;
 				$hideRequiredAsteriskJS = $userExists ? "<script>jQuery(window).load(function() { var reqSpan = document.querySelector('label[for=\"{$markupName}\"] span');\n if(reqSpan) { reqSpan.style.display = 'none'; } });</script>" : "";
 			}
 
@@ -126,8 +128,9 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 			$entryUserId = 0;
 		} else {
 			$fid = $element->getVar('fid');
-			$data_handler = new formulizeDataHandler($fid);
-			$entryUserId = intval($data_handler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$fid));
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($fid);
+			$entryUserId = $formObject ? $formObject->getSystemUserIdFromEntry($entry_id) : 0;
 		}
 		$validationCode = array();
 		if($entryUserId == 0) {

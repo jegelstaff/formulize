@@ -693,6 +693,19 @@ table.formulize-grid td.head {
 	padding-bottom: 0.3em;
 }
 
+#listofentries div.main-cell-div ul.main-cell-list > li,
+#listofentries div.formulize-display-element-contents ul.main-cell-list > li {
+	display: list-item;
+	padding-bottom: 0.3em;
+}
+
+#listofentries div.main-cell-div ul.main-cell-list,
+#listofentries div.formulize-display-element-contents ul.main-cell-list {
+	list-style: disc;
+	padding-left: 1.2em;
+	margin: 0;
+}
+
 .formulize-text-for-display p,
 .formulize-text-for-display h1,
 .formulize-text-for-display h2,

@@ -103,6 +103,10 @@ switch($op) {
     $entry = $_GET['param3'];
     $leave = $_GET['param4'];
 
+		if($entry != 'new' AND !is_numeric($entry)) {
+			throw new Exception('Invalid entry ID passed to check_for_unique_value');
+		}
+
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
     if(is_object($elementObject)) {
@@ -124,16 +128,23 @@ switch($op) {
 				}
 				// For existing entries, exclude the current user's own record from the uniqueness check
 				$excludeClause = '';
+				global $xoopsDB;
 				if($entry != 'new' AND is_numeric($entry)) {
 					$fid = $elementObject->getVar('fid');
-					$data_handler = new formulizeDataHandler($fid);
-					$entryUserId = intval($data_handler->getElementValueInEntry($entry, 'formulize_user_account_uid_'.$fid));
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					$isUserTableForm = ($formObject = $form_handler->get($fid) AND $formObject->isSystemUsersTableForm()) ? true : false;
+					if ($isUserTableForm) {
+						// The system users form uses uid as its primary key — entry IS the uid
+						$entryUserId = intval($entry);
+					} else {
+						$data_handler = new formulizeDataHandler($fid);
+						$entryUserId = intval($data_handler->getElementValueInEntry($entry, 'formulize_user_account_uid_'.$fid));
+					}
 					if($entryUserId > 0) {
 						$idField = ($table == 'profile_profile') ? 'profileid' : 'uid';
 						$excludeClause = " AND `$idField` != $entryUserId";
 					}
 				}
-				global $xoopsDB;
 				$sql = "SELECT COUNT(*) AS count FROM ".$xoopsDB->prefix($table)." WHERE `$keyField` = '".formulize_db_escape($value)."'".$excludeClause;
 				if($res = $xoopsDB->query($sql)) {
 					$row = $xoopsDB->fetchArray($res);

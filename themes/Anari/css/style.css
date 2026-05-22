@@ -3087,6 +3087,13 @@ a.de-edit-icon:hover{
     text-shadow: none;
 }
 
+span.formulize-masquerade-help {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 4px;
+}
+
 #formulize-masquerade-block {
 		top: 4em;
 		text-align: center;
@@ -3190,6 +3197,10 @@ a.de-edit-icon:hover{
 }
 .list-of-entries table.outer tr.entry-row td.column0 {
 	border-left: 0;
+}
+.list-of-entries table.outer td.column li {
+	list-style: disc;
+	list-style-position: outside;
 }
 
 .list-of-entries table.outer {

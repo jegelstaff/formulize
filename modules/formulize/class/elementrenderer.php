@@ -52,6 +52,9 @@ class formulizeElementRenderer{
 		if (strstr(getCurrentURL(),"printview.php")) {
 			$isDisabled = true; // disabled all elements if we're on the printable view
 		}
+		if($this->_ele->readOnly) {
+			$isDisabled = true; // code-level read-only override, treated the same as disabled throughout the pipeline
+		}
 		global $xoopsUser, $xoopsModuleConfig, $separ, $myts;
 		$myts = MyTextSanitizer::getInstance();
 

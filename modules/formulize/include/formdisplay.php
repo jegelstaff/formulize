@@ -793,6 +793,18 @@ function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpda
 				return "";
 			}
 
+			// lockedform=2 means a system-managed ad hoc table form (e.g. the system users list).
+			// There is no formulize data table for it, so skip the SQL query.
+			// Its elements are references to fields in an arbitrary table
+			// inside their own loadValue(). Return a non-empty sentinel so the caller's
+			// ($prevEntry OR ...) gate opens and loadValue() is invoked.
+			// To truly complete this and make as robust as possible, we should probably add a generalized "virtual element" class for these kind of field references.
+			if($formObject->isSystemManagedForm()) {
+				$prevEntry = array('handles' => array(), 'values' => array());
+				$cachedEntryValues[$fid][$entryId][$serializedElements] = $prevEntry;
+				return $prevEntry;
+			}
+
 			$encryptedSelect = "";
 			foreach($formEncryptedElements as $thisEncryptedElement) {
 				$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
@@ -2528,7 +2540,7 @@ var formulize_xhr_returned_check_for_unique_value = new Array();
 var FORMULIZE = {
 	XOOPS_URL : \"".XOOPS_URL."\",
 	XOOPS_UID : ".($xoopsUser ? $xoopsUser->getVar('uid') : 0).",
-	SCREEN_ID : ".($screen ? $screen->getVar('sid') : 0).",
+	SCREEN_ID : ".($screen ? intval($screen->getVar('sid')) : 0).",
 	FRID : ".intval($frid)."
 }
 ";

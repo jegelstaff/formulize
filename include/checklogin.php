@@ -57,7 +57,7 @@ if (empty($user) || !is_object($user)) {
 // end of uname&email hack GIJ
 
 if (false != $user) {
-	if (0 == $user->getVar('level')) {
+	if ($user->getVar('level') <= 0) {
 		redirect_header(ICMS_URL . '/index.php', 5, _US_NOACTTPADM);
 		exit();
 	}

@@ -56,8 +56,10 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 		if(!$value) {
 			// get the uid for the current entry, if there is one
 			// get that user's timezone_default, if there is one
-			$dataHandler = new formulizeDataHandler($element->getVar('fid'));
-			if($entryUserId = intval($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
+			$fid = $element->getVar('fid');
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObj = $form_handler->get($fid);
+			if($entryUserId = $formObj ? $formObj->getSystemUserIdFromEntry($entry_id) : 0) {
 				$member_handler = xoops_gethandler('member');
 				if($userObject = $member_handler->getUser($entryUserId)) {
 					$value = formulize_getIANATimezone($userObject->getVar('timezone_offset'));
@@ -92,6 +94,16 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 		$html .= '</select>';
 		$form_ele = new XoopsFormLabel($caption, $html, $markupName);
 		return $form_ele;
+	}
+
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
+		global $xoopsDB;
+		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		return "EXISTS("
+			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
+			. " WHERE pp.profileid = {$tableAlias}.uid"
+			. " AND pp.`timezone`" . $safeTermClause
+			. ")";
 	}
 
 }

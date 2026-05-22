@@ -479,7 +479,9 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
         }
     }
 
-    if (!$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
+    // For ad hoc table forms (Users/Groups management), system_admin permission was already
+    // verified at the page level, so bypass the normal view_form check
+    if ((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) AND !$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
 				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
     }
@@ -1444,7 +1446,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     }
 
     foreach ($many_to_one as $manyToOneFid) {
-        array_unshift($fids, $manyToOneFid['fid']);
+        $fids[] = $manyToOneFid['fid'];
         if (isset($entries[$fid][0])) {
             // for some reason PHP 5 won't let us evaluate this directly
             if ($thisent = $entries[$fid][0]) {
@@ -6948,6 +6950,10 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     }
     $fid = $cachedFormIds[$handle];
     $element_type = $cached_object_type[$handle];
+    $useList = ($countOfValue > 1 && !$deDisplay);
+    if ($useList) {
+        $output .= '<ul class="main-cell-list">';
+    }
     foreach ($value as $valueId=>$v) {
         $elstyle = 'style="text-align: ';
         if (is_numeric($v)) {
@@ -6966,9 +6972,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
 					$v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
 				}
-				$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
-        $output .= '</span>';
+        $tag = $useList ? 'li' : 'span';
+				$output .= '<'.$tag.' '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
+        $output .= '</'.$tag.'>';
         $counter++;
+    }
+    if ($useList) {
+        $output .= '</ul>';
     }
 		// if there were no values, still need to draw the edit icon container if applicable
 		if($counter == 1 AND $deDisplay AND $element_type != 'derived') {
@@ -7502,8 +7512,12 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
             $element_handler = xoops_getmodulehandler('elements', 'formulize');
             global $xoopsUser;
             $userAccountColsToAdd = array();
+            $excludedUaHandles = array(); // UA handles excluded from the column list entirely (e.g. password)
             foreach($userAccountElementIds as $eleId) {
-                if($elementTypes[$eleId] == 'userAccountPassword') { continue; }
+                if($elementTypes[$eleId] == 'userAccountPassword') {
+                    $excludedUaHandles[] = $elementHandles[$eleId]; // track so it's also stripped from $columns below
+                    continue;
+                }
                 if(!$element_handler->isElementVisibleForUser($eleId)) { continue; }
                 $userAccountColsToAdd[] = array(
                     'ele_id'      => $eleId,
@@ -7512,9 +7526,13 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
                     'ele_handle'  => $elementHandles[$eleId],
                 );
             }
-            // Remove any user account handles already in $columns (UID has hasData=true so it appears there)
-            $columns = array_values(array_filter($columns, function($col) {
-                return strpos($col['ele_handle'], 'formulize_user_account_') !== 0;
+            // Remove from $columns any element whose handle already appears in $userAccountColsToAdd,
+            // or in $excludedUaHandles (UA types that should never appear in the list, like password).
+            // This prevents duplicates for both EAU forms (handles may be formulize_user_account_*)
+            // and ad hoc table forms (handles are plain column names like uid, uname, email).
+            $uaHandles = array_merge(array_column($userAccountColsToAdd, 'ele_handle'), $excludedUaHandles);
+            $columns = array_values(array_filter($columns, function($col) use ($uaHandles) {
+                return !in_array($col['ele_handle'], $uaHandles);
             }));
             // Merge and sort by position in the form's canonical element order
             $columns = array_merge($userAccountColsToAdd, $columns);
@@ -7527,7 +7545,7 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
                 return $posA - $posB;
             });
         }
-				if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
+				if($fidCounter == 0 AND $thisFid == $mainformFid AND !$formObject->getVar('tableform')) { // add in metadata columns first time through, but not for ad hoc table forms
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),

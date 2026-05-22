@@ -54,11 +54,12 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	// Group membership data comes from the groups_users_link table
 	function loadValue($element, $value, $entry_id) {
 		$member_handler = xoops_gethandler('member');
-		$dataHandler = new formulizeDataHandler($element->getVar('fid'));
-		$userIdElementHandle = 'formulize_user_account_uid_'.$element->getVar('fid');
-		if(!$userId = intval($dataHandler->getElementValueInEntry($entry_id, $userIdElementHandle))
-		OR !$userObject = $member_handler->getUser($userId)) {
-			return array(); // No user associated yet, or id is invalid, return empty array
+		$fid = $element->getVar('fid');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($fid);
+		$userId = $formObject ? $formObject->getSystemUserIdFromEntry($entry_id) : 0;
+		if(!$userId OR !$userObject = $member_handler->getUser($userId)) {
+			return array(ELE_VALUE_SELECT_OPTIONS => array(), ELE_VALUE_SELECT_MULTIPLE => 1); // No user yet; keep multiselect flag so render() sees the right mode
 		}
 		return array(ELE_VALUE_SELECT_OPTIONS => $member_handler->getGroupsByUser($userId), ELE_VALUE_SELECT_MULTIPLE => 1); // unusual use of ELE_VALUE_SELECT_OPTIONS to store the selected group ids, but we will always gather the full set below in the render method and need a way of knowing which are selected
 	}
@@ -279,10 +280,6 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	 */
 	static public function processUserGroupMemberships($userId, $formId, $entryId) {
 
-		if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId)) {
-			return; // Entry doesn't meet base conditions for representing a user, so we won't attempt to process group memberships since they shouldn't be relevant
-		}
-
 		global $xoopsUser;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$member_handler = xoops_gethandler('member');
@@ -290,16 +287,36 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		if(!$formObject = $form_handler->get($formId)) {
 			throw new Exception("Could not retrieve form object for form ID $formId when trying to process user group memberships.");
 		}
+		$isUserTableForm = $formObject->isSystemUsersTableForm();
+
+		if ($isUserTableForm) {
+			$gperm_handler = xoops_gethandler('groupperm');
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+			if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
+				throw new Exception("You do not have permission to manage system users.");
+			}
+		} else {
+			if (!formulizePermHandler::user_can_edit_entry($formId, $xoopsUser->getVar('uid'), $entryId)) {
+				throw new Exception("You do not have permission to edit this entry");
+			}
+		}
+
+		if(!$isUserTableForm && !formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId)) {
+			return; // Entry doesn't meet base conditions for representing a user, so we won't attempt to process group memberships since they shouldn't be relevant
+		}
 
 		// update user's group memberships based on the groups selected in the Group Membership element, if it exists.  If the element doesn't exist, then we won't make any changes to group memberships (since submitted and current group ids will be identical -- except for the enforcement of registered users and anonymous user group memberships/exclusions, see below).
 		$currentGroupIds = $member_handler->getGroupsByUser($userId);
 		$submittedGroupIds = $currentGroupIds; // default to their current groups in case we can't find a submission
 		if($groupMembershipElement = $element_handler->get('formulize_user_account_groupmembership_'.$formId)) {
 			$groupMembershipElementId = $groupMembershipElement->getVar('ele_id');
-			$submittedGroupIds = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId] : array();
-			if(!is_array($submittedGroupIds)) {
-				$submittedGroupIds = array($submittedGroupIds);
+			if(isset($_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId])) {
+				$submittedGroupIds = $_POST['de_'.$formId.'_'.$entryId.'_'.$groupMembershipElementId];
+				if(!is_array($submittedGroupIds)) {
+					$submittedGroupIds = array($submittedGroupIds);
+				}
 			}
+			// If de_ key is absent, $submittedGroupIds remains $currentGroupIds — element not part of this submission
 		}
 
 		// Always ensure user is in Registered Users group and not in the anonymous users group
@@ -380,6 +397,22 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 				}
 			}
 		}
+	}
+
+	// Build a WHERE clause subquery that searches group membership by group name.
+	// Searches groups the user belongs to (excluding built-in registered-users and anonymous groups).
+	// Used by formulize_tryDelegatedSearchWhere so this element type can handle its own complex subquery.
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main')
+	{
+		global $xoopsDB;
+		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		return "EXISTS("
+			. "SELECT 1 FROM " . $xoopsDB->prefix('groups_users_link') . " AS gul"
+			. " JOIN " . $xoopsDB->prefix('groups') . " AS g ON g.groupid = gul.groupid"
+			. " WHERE gul.uid = {$tableAlias}.uid"
+			. " AND g.name" . $safeTermClause
+			. " AND g.groupid NOT IN (" . XOOPS_GROUP_USERS . "," . XOOPS_GROUP_ANONYMOUS . ")"
+			. ")";
 	}
 
 }

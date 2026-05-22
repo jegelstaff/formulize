@@ -46,6 +46,20 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		return new formulizeUserAccount2FAElement();
 	}
 
+	protected function getOptions() {
+		include_once XOOPS_ROOT_PATH . '/include/2fa/manage.php';
+		return array(
+			TFA_OFF   => _NONE,
+			TFA_EMAIL => _formulize_USERACCOUNT_2FAOPTION_EMAIL,
+			TFA_SMS   => _formulize_USERACCOUNT_2FAOPTION_SMS,
+			TFA_APP   => _formulize_USERACCOUNT_2FAOPTION_AUTHAPP,
+		);
+	}
+
+	function prepareDataForDataset($value, $handle, $entry_id) {
+		$options = $this->getOptions();
+		return isset($options[$value]) ? $options[$value] : $value;
+	}
 
 	// this method renders the element for display in a form
 	// the caption has been pre-prepared and passed in separately from the element object
@@ -71,16 +85,16 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			return false;
 		}
 
-		$options = array(
-			TFA_EMAIL => _formulize_USERACCOUNT_2FAOPTION_EMAIL,
-			TFA_SMS   => _formulize_USERACCOUNT_2FAOPTION_SMS,
-			TFA_APP   => _formulize_USERACCOUNT_2FAOPTION_AUTHAPP
-		);
+		$options = $this->getOptions(); // all 4 options; TFA_OFF is first
 
+		global $xoopsUser;
 		$userMustUse2FA = false;
 		// get the user associated with this entry
-		$data_handler = new formulizeDataHandler($element->getVar('fid'));
-		if($entryUserId = intval($data_handler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
+		$fid = $element->getVar('fid');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObj = $form_handler->get($fid);
+		$entryUserId = $formObj ? $formObj->getSystemUserIdFromEntry($entry_id) : 0;
+		if($entryUserId) {
 			$userMustUse2FA = true;
 			$member_handler = xoops_gethandler('member');
 			if($entryUserObject = $member_handler->getUser($entryUserId)) {
@@ -93,13 +107,25 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				}
 			}
 		}
-		if(!$userMustUse2FA) {
-			$options = array(TFA_OFF => _NONE) + $options;
+		if($userMustUse2FA) {
+			unset($options[TFA_OFF]);
 		}
 
+		// When an admin edits another user's entry, the Authenticator App option must be
+		// disabled: only the account holder can scan the QR code on their own device.
+		// If TFA_APP is already the user's current method, a hidden input placed before
+		// the radio group preserves it on save when the admin leaves it unchanged.
+		// (Browser POST order means an enabled radio selected after it wins, so the admin
+		// can still switch the user away from TFA_APP to another method.)
+		$adminEditingOtherUser = $entryUserId && $xoopsUser && intval($entryUserId) !== intval($xoopsUser->getVar('uid'));
+		$disabledOptions2fa = $adminEditingOtherUser ? array(TFA_APP) : array();
+		$tfaAppHidden = ($adminEditingOtherUser && $ele_value == TFA_APP)
+			? "<input type='hidden' name='" . htmlspecialchars($markupName, ENT_QUOTES) . "' value='" . intval(TFA_APP) . "'>"
+			: '';
+
 		// Use the parent method to render the radio buttons (handles disabled state automatically)
-		$radioFormElement = $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled);
-		$radioHtml = $radioFormElement->render();
+		$radioFormElement = $this->renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled, $disabledOptions2fa);
+		$radioHtml = $tfaAppHidden . $radioFormElement->render();
 
 		// Add the confirmation dialog UI when the element is editable
 		$dialogHtml = '';
@@ -331,8 +357,9 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		}
 
 		$fid = $element->getVar('id_form');
-		$dataHandler = new formulizeDataHandler($fid);
-		$entryUserId = intval($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$fid));
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObj = $form_handler->get($fid);
+		$entryUserId = $formObj ? $formObj->getSystemUserIdFromEntry($entry_id) : 0;
 		if(!$entryUserId || $entryUserId != intval($xoopsUser->getVar('uid'))) {
 			return array(); // admin editing another user, or a brand-new entry
 		}
@@ -409,6 +436,61 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		$js[] = "}";
 
 		return $js;
+	}
+
+	function prepareLiteralTextForDB($value, $element, $partialMatch = false) {
+		$options = $this->getOptions();
+		$matchingKeys = array();
+		foreach ($options as $key => $label) {
+			$matches = $partialMatch
+				? (stripos($label, $value) !== false)
+				: (strcasecmp($label, $value) === 0);
+			if ($matches) {
+				$matchingKeys[] = $key;
+			}
+		}
+		if (empty($matchingKeys)) {
+			return $value;
+		}
+		return count($matchingKeys) === 1 ? $matchingKeys[0] : $matchingKeys;
+	}
+
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
+		global $xoopsDB;
+		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
+		$options = $this->getOptions();
+
+		$terms = is_array($term) ? $term : array($term);
+		$matchingKeys = array();
+		foreach ($terms as $t) {
+			if (is_numeric($t)) {
+				$k = intval($t);
+				if (array_key_exists($k, $options)) {
+					$matchingKeys[] = $k;
+				}
+			}
+		}
+
+		if (empty($matchingKeys)) {
+			return $isNegative ? '1=1' : '1=0';
+		}
+
+		$safeKeys = implode(',', $matchingKeys);
+
+		if ($isNegative) {
+			return "NOT EXISTS("
+				. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
+				. " WHERE pp.profileid = {$tableAlias}.uid"
+				. " AND pp.`2famethod` IN ($safeKeys)"
+				. ")";
+		}
+
+		$nullClause = in_array(0, $matchingKeys) ? " OR pp.`2famethod` IS NULL" : "";
+		return "EXISTS("
+			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
+			. " WHERE pp.profileid = {$tableAlias}.uid"
+			. " AND (pp.`2famethod` IN ($safeKeys)$nullClause)"
+			. ")";
 	}
 
 }

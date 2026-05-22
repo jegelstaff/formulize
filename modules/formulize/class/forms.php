@@ -37,6 +37,8 @@ use rachid\pluralizer\Pluralizer;
 include_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 
+define('FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED', 2);
+
 class formulizeForm extends FormulizeObject {
 
     private array $onDeleteExistingValues;
@@ -72,7 +74,7 @@ class formulizeForm extends FormulizeObject {
 					$elementTypesAreSystemElements[$value['ele_type']] = $elementObject->isSystemElement ? true : false;
 					$elementTypesAreUserAccountElements[$value['ele_type']] = !empty($elementObject->isUserAccountElement) ? true : false;
 				}
-				if($elementTypesWithData[$value['ele_type']]) {
+				if($elementTypesWithData[$value['ele_type']] || intval($formq[0]['lockedform']) === FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED) {
 					$elementsWithData[$value['ele_id']] = $value['ele_id'];
 				}
 				if($elementTypesAreSystemElements[$value['ele_type']]) {
@@ -701,10 +703,48 @@ EOF;
 			return false;
 		}
 
+	public function isSystemManagedForm() {
+		return intval($this->getVar('lockedform')) === FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED;
+	}
+
+	public function isSystemUsersTableForm() {
+		global $xoopsDB;
+		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('users');
+	}
+
+	/**
+	 * Resolve the system user ID associated with a given entry.
+	 *
+	 * For the system users table form, entry_id IS the uid directly.
+	 * For EAU forms, reads the uid from the formulize_user_account_uid_ element.
+	 * Returns false if this form is neither — callers can use this to skip
+	 * user-related processing entirely rather than treating it as "no user yet".
+	 *
+	 * @param int|string $entry_id  The entry ID, or 'new' for unsaved entries.
+	 * @return int|false  The uid, 0 if the entry has no associated user yet,
+	 *                    or false if this form does not represent system users.
+	 */
+	public function getSystemUserIdFromEntry($entry_id) {
+		if ($this->isSystemUsersTableForm()) {
+			return is_numeric($entry_id) ? intval($entry_id) : 0;
+		}
+		if (!$this->getVar('entries_are_users')) {
+			return false;
+		}
+		$fid = intval($this->getVar('fid'));
+		$dataHandler = new formulizeDataHandler($fid);
+		$uid = $dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_' . $fid);
+		return $uid ? intval($uid) : 0;
+	}
+
 }
+
+include_once XOOPS_ROOT_PATH . '/modules/formulize/class/adHocTableFormTrait.php';
 
 #[AllowDynamicProperties]
 class formulizeFormsHandler {
+	use formulizeAdHocTableFormTrait;
+
 	var $db;
 	function __construct(&$db) {
 		$this->db =& $db;
@@ -806,12 +846,19 @@ class formulizeFormsHandler {
 		return $foundForms;
 	}
 
-	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true) {
+	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true, $includeAdHocForms=false) {
 		global $xoopsDB;
-		$formLimitClause = $formIds ? " id_form IN (".implode(",",array_filter($formIds, 'is_numeric')).") " : "";
-		$excludeTableFormsClause = $includeTableForms == false ? " tableform = '' " : "";
-		$excludeTableFormsClause = ($formLimitClause AND $excludeTableFormsClause) ? " AND $excludeTableFormsClause " : $excludeTableFormsClause;
-		$whereClause = ($formLimitClause OR $excludeTableFormsClause) ? " WHERE $formLimitClause $excludeTableFormsClause " : "";
+		$conditions = array();
+		if ($formIds) {
+			$conditions[] = "id_form IN (" . implode(",", array_filter($formIds, 'is_numeric')) . ")";
+		}
+		if ($includeTableForms == false) {
+			$conditions[] = "tableform = ''";
+		}
+		if ($includeAdHocForms == false) {
+			$conditions[] = "(lockedform IS NULL OR lockedform != " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED . ")";
+		}
+		$whereClause = count($conditions) > 0 ? " WHERE " . implode(" AND ", $conditions) : "";
 		$allFidsQuery = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " AS i $whereClause ORDER BY form_title";
 		$allFidsRes = $xoopsDB->query($allFidsQuery);
 		$foundFormObjects = array();
@@ -863,7 +910,7 @@ class formulizeFormsHandler {
 			}
 		} else {
 			// no application specified, so get forms that do not belong to an application
-			$sql = "SELECT id_form, form_title FROM ".$this->db->prefix("formulize_id")." as formtable WHERE NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.form_title";
+			$sql = "SELECT id_form, form_title FROM ".$this->db->prefix("formulize_id")." as formtable WHERE (formtable.lockedform IS NULL OR formtable.lockedform != " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED . ") AND NOT EXISTS(SELECT 1 FROM ".$this->db->prefix("formulize_application_form_link")." as linktable WHERE linktable.fid=formtable.id_form AND linktable.appid > 0) ORDER BY formtable.form_title";
 			if($res = $this->db->query($sql)) {
 				$sortArray = array();
 				while($array = $this->db->fetchArray($res)) {
@@ -1063,6 +1110,10 @@ class formulizeFormsHandler {
 				'NotificationMethod',
 				'Timezone',
 				'GroupMembership',
+				'Status',
+				'RegistrationDate',
+				'LastLogin',
+				'Masquerade',
 			);
 			// ensure the order is correct
 			$orderedTypes = array();
@@ -1185,7 +1236,8 @@ class formulizeFormsHandler {
 					$userAccountPageNumber = 1;
 					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
 				}
-				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail');
+				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail', 'userAccountRegistrationDate', 'userAccountLastLogin', 'userAccountMasquerade');
+				$webmastersOnlyTypes = array('userAccountUid', 'userAccountRegistrationDate', 'userAccountLastLogin');
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
 					'ele_type' => $type,
@@ -1196,9 +1248,9 @@ class formulizeFormsHandler {
 					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
 					'ele_display' => 1
 				);
-				if($type == 'userAccountUid') {
-					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.","; // only admins can see the user id element
-					$elementObjectProperties['ele_required'] = 0; // not required, since it's not managed by user input
+				if(in_array($type, $webmastersOnlyTypes)) {
+					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.",";
+					$elementObjectProperties['ele_required'] = 0;
 				}
 				if($userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
 					$screenIdsAndPagesForAdding = array(

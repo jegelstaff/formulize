@@ -67,6 +67,31 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
         return new formulizeUserAccountElement();
     }
 
+    // Shared helper for Unix timestamp date columns (last_login, user_regdate).
+    // Converts a human-readable date string to a MySQL-comparable datetime string at the
+    // right granularity so that FROM_UNIXTIME(col) LIKE/comparison works naturally:
+    //   "2026"        → "2026"        (LIKE '%2026%' matches any date in 2026)
+    //   "Feb 2026"    → "2026-02"     (LIKE '%2026-02%' matches all of February 2026)
+    //   "Feb 1 2026"  → "2026-02-01"  (comparison operators work against start of that day)
+    // For comparison operators ($partialMatch = false) always returns at least Y-m-d so
+    // MySQL can cast it to a DATETIME correctly.
+    static function prepareDateTimestampForDB($value, $partialMatch) {
+        $value = trim($value);
+        $ts = strtotime($value);
+        if ($ts === false) {
+            return $value;
+        }
+        if ($partialMatch) {
+            if (preg_match('/^\d{4}$/', $value)) {
+                return date('Y', $ts);
+            }
+            if (preg_match('/^[a-zA-Z]+\s+\d{4}$|^\d{1,2}\/\d{4}$|^\d{4}-\d{2}$/', $value)) {
+                return date('Y-m', $ts);
+            }
+        }
+        return date('Y-m-d', $ts);
+    }
+
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
@@ -128,8 +153,10 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				}
 			}
 			$member_handler = xoops_gethandler('member');
-			$dataHandler = new formulizeDataHandler($element->getVar('fid'));
-			if($element->userProperty AND $user = $member_handler->getUser($dataHandler->getElementValueInEntry($entry_id, 'formulize_user_account_uid_'.$element->getVar('fid')))) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($element->getVar('fid'));
+			$userId = $formObject ? $formObject->getSystemUserIdFromEntry($entry_id) : 0;
+			if($element->userProperty AND $user = $member_handler->getUser($userId)) {
 				if(substr($element->userProperty, 0, 8) == 'profile:') {
 					$profile_handler = xoops_getmodulehandler('profile', 'profile');
 					$profile = $profile_handler->get($user->getVar('uid'));
@@ -205,8 +232,28 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
+	static function getTypeRegistry() {
+		return array(
+			'uid'                => array('eleType' => 'userAccountUid',                'column' => 'uid',          'profileColumn' => null),
+			'firstname'          => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
+			'lastname'           => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
+			'username'           => array('eleType' => 'userAccountUsername',           'column' => 'login_name',   'profileColumn' => null),
+			'email'              => array('eleType' => 'userAccountEmail',              'column' => 'email',        'profileColumn' => null),
+			'status'             => array('eleType' => 'userAccountStatus',             'column' => 'level',        'profileColumn' => null),
+			'notificationmethod' => array('eleType' => 'userAccountNotificationMethod', 'column' => 'notify_method','profileColumn' => null),
+			'lastlogin'          => array('eleType' => 'userAccountLastLogin',          'column' => 'last_login',   'profileColumn' => null),
+			'registrationdate'   => array('eleType' => 'userAccountRegistrationDate',   'column' => 'user_regdate', 'profileColumn' => null),
+			'phone'              => array('eleType' => 'userAccountPhone',              'column' => null,           'profileColumn' => '2faphone'),
+			'timezone'           => array('eleType' => 'userAccountTimezone',           'column' => null,           'profileColumn' => 'timezone'),
+			'2fa'                => array('eleType' => 'userAccount2FA',                'column' => null,           'profileColumn' => '2famethod'),
+			'groupmembership'    => array('eleType' => 'userAccountGroupMembership',    'column' => null,           'profileColumn' => null),
+			'masquerade'         => array('eleType' => 'userAccountMasquerade',         'column' => null,           'profileColumn' => null),
+			'password'           => array('eleType' => 'userAccountPassword',           'column' => null,           'profileColumn' => null),
+		);
+	}
+
 	// utility function to render radio buttons for this user account element types
-	function renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled) {
+	function renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled, $disabledOptions = array()) {
 		$disabled = ($isDisabled) ? 'disabled="disabled"' : '';
 		$form_ele = new XoopsFormElementTray('', '<br>');
 		foreach($options as $oKey=>$oValue) {
@@ -216,7 +263,8 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				$ele_value
 			);
 			$t->addOption($oKey, $oValue);
-			$t->setExtra("onchange=\"javascript:formulizechanged=1;\" $disabled");
+			$thisDisabled = $disabled ?: (in_array($oKey, $disabledOptions) ? 'disabled="disabled"' : '');
+			$t->setExtra("onchange=\"javascript:formulizechanged=1;\" $thisDisabled");
 			$form_ele->addElement($t);
 			unset($t);
 		}
@@ -240,26 +288,42 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			throw new Exception("You do not have permission to access this entry");
 		}
 		global $xoopsUser;
-		if(!formulizePermHandler::user_can_edit_entry($formId, $xoopsUser->getVar('uid'), $entryId)) {
-			throw new Exception("You do not have permission to edit this entry");
-		}
 
-		if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId, cacheId: 'preWrite')) {
-			return false; // Entry doesn't meet base conditions for representing a user, so we won't attempt to process a user account for it
+		// Detect the system users table form.
+		// For this form type, entry_id IS the uid; EAU checks do not apply.
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($formId);
+		$isUserTableForm = $formObject && $formObject->isSystemUsersTableForm();
+
+		if ($isUserTableForm) {
+			$gperm_handler = xoops_gethandler('groupperm');
+			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+			if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
+				throw new Exception("You do not have permission to manage system users.");
+			}
+		} else {
+			if(!formulizePermHandler::user_can_edit_entry($formId, $xoopsUser->getVar('uid'), $entryId)) {
+				throw new Exception("You do not have permission to edit this entry");
+			}
+			if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId, cacheId: 'preWrite')) {
+				return false;
+			}
 		}
 
 		static $results = array();
 		$cacheKey = $formId.'-'.$entryId;
 		if(!isset($results[$cacheKey])) {
 			$results[$cacheKey] = false;
-			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			if($formObject = $form_handler->get($formId) AND $formObject->getVar('entries_are_users')) {
-				$data_handler = new formulizeDataHandler($formId);
+			if($formObject && ($formObject->getVar('entries_are_users') || $isUserTableForm)) {
 				$member_handler = xoops_gethandler('member');
 				$profile_handler = xoops_getmodulehandler('profile', 'profile');
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
-				if($entryUserId = intval($data_handler->getElementValueInEntry($entryId, 'formulize_user_account_uid_'.$formId))) {
+				$entryUserId = $formObject->getSystemUserIdFromEntry($entryId);
+				if($entryUserId) {
 					$userObject = $member_handler->getUser($entryUserId);
+					if (!$userObject) {
+						return false; // user was deleted before this submission was processed
+					}
 					$profile = $profile_handler->get($userObject->getVar('uid'));
 				} else {
 					global $xoopsConfig;
@@ -282,9 +346,15 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 
 				$unameParts = array();
 				foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
-					if($userAccountElementType != 'userAccountUid' AND $accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId)) {
+					if($accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId)) {
 						$elementId = $accountElement->getVar('ele_id');
 						$userProperty = $accountElement->userProperty;
+						if($accountElement->readOnly) {
+							continue; // system-managed property, never written by Formulize regardless of what was submitted
+						}
+						if(!isset($_POST['decue_'.$formId.'_'.$entryId.'_'.$elementId])) {
+							continue; // element not on this form/page, don't overwrite existing value
+						}
 						$value = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$elementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId] : '';
 						if($userProperty == 'pass') {
 							if($value === '') {

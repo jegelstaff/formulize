@@ -31,7 +31,7 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 define('DBPRE', XOOPS_DB_PREFIX.'_');
 
 // this file contains the functions for gathering a dataset from the database and interacting with the dataset
@@ -280,13 +280,14 @@ function prepvalues($value, $handle, $entry_id)
 	$original_value = $value;
 	static $cachedPrepedValues = array();
 	$fk = (!isset($GLOBALS['formulize_useForeignKeysInDataset'][$handle]) and !isset($GLOBALS['formulize_useForeignKeysInDataset']['all']));
-	if (isset($cachedPrepedValues[$original_value][$handle][$entry_id][$fk])) {
+	$canCache = !is_array($original_value);
+	if ($canCache && isset($cachedPrepedValues[$original_value][$handle][$entry_id][$fk])) {
 		return $cachedPrepedValues[$original_value][$handle][$entry_id][$fk];
 	}
 
 	// return metadata values without putting them in an array
 	if (isMetaDataField($handle)) {
-		if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+		if (!isset($GLOBALS['formulize_doNotCacheDataSet']) && $canCache) {
 			$cachedPrepedValues[$original_value][$handle][$entry_id][$fk] = $value;
 		}
 		return $value;
@@ -319,7 +320,7 @@ function prepvalues($value, $handle, $entry_id)
 		$valueToReturn = $preppedValue;
 	}
 
-	if (!isset($GLOBALS['formulize_doNotCacheDataSet'])) {
+	if (!isset($GLOBALS['formulize_doNotCacheDataSet']) && $canCache) {
 		$cachedPrepedValues[$original_value][$handle][$entry_id][$fk] = $valueToReturn;
 	}
 	return $valueToReturn;
@@ -440,10 +441,17 @@ function getData(
 
 	// check to see if this form is a "tableform", ie: a reference to plain db table
 	$isTableForm = false;
+	$isUserTableForm = false;
+	$tableform = '';
+	$formHandle = '';
 	if (is_numeric($form)) {
-		$checkTableForm = $xoopsDB->query("SELECT tableform, form_handle FROM " . DBPRE . "formulize_id WHERE id_form=$form");
-		$tableFormRow = $xoopsDB->fetchRow($checkTableForm);
-		$isTableForm = $tableFormRow[0] == "" ? false : true;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($form);
+		$isUserTableForm = $formObject && $formObject->isSystemUsersTableForm();
+		$tableform = $formObject ? $formObject->getVar('tableform', 'raw') : '';
+		$formHandle = $formObject ? $formObject->getVar('form_handle') : '';
+		// the userTableForm, ie: system managed users table reference, is handled like a regular query, not an old school data table extraction
+		$isTableForm = !$isUserTableForm && ($tableform != '');
 	}
 
 	// handle old style sort and order values...
@@ -451,7 +459,7 @@ function getData(
 	$sortOrder = ($sortOrder == "SORT_DESC") ? "DESC" : $sortOrder;
 
 	if ($isTableForm) {
-		$result = dataExtractionTableForm($tableFormRow[0], $tableFormRow[1], $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
+		$result = dataExtractionTableForm($tableform, $formHandle, $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
 	} else {
 		$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
 	}
@@ -529,6 +537,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$formObject = $form_handler->get($fid);
 
+	$usersTable = $xoopsDB->prefix('users');
+	$isUserTableForm = $formObject->isSystemUsersTableForm();
+	$mainTable = $isUserTableForm ? $usersTable : DBPRE . "formulize_" . $formObject->getVar('form_handle');
+	$mainIdColumn = $isUserTableForm ? "uid" : "entry_id";
+
 	list($linkkeys, $linkisparent, $linkformids, $linktargetids, $linkselfids, $linkcommonvalue) = formulize_gatherLinkMetadata($frid, $fid, $mainFormOnly);
     // if there are no links from the mainform to others in the active relationship, then don't bother with the relationship
     if(empty($linkkeys)) {
@@ -589,11 +602,20 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		} elseif ($scope) { // need to handle old "uid = X OR..." syntax
 			$scopeFilter = formulize_db_escape(" AND (" . str_replace("uid", "main.creation_uid", $scope) . ") ");
 		}
+		if ($isUserTableForm) {
+			// owner_groups scope doesn't apply to users table; remap column refs for string/numeric scopes
+			if (strpos($scopeFilter, 'formulize_entry_owner_groups') !== false) {
+				$scopeFilter = "";
+			} else {
+				$scopeFilter = str_replace("main.creation_uid", "main.uid", $scopeFilter);
+				$scopeFilter = str_replace("main.entry_id", "main.uid", $scopeFilter);
+			}
+		}
 
 		// PARSE THE FILTER THAT HAS BEEN PASSED IN, INTO WHERE CLAUSE AND OTHER RELATED CLAUSES WE WILL NEED
 		// parsing the filter MUST come early in the process, because other things rely on it!
 		formulize_getElementMetaData("", false, $fid); // initialize the element metadata for this form...serious performance gain from this
-		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope);
+		list($formFieldFilterMap, $whereClause, $orderByClause, $oneSideFilters, $otherPerGroupFilterJoins, $otherPerGroupFilterWhereClause) = formulize_parseFilter($filter, $andor, $linkformids, $fid, $frid, $scope, $isUserTableForm);
 
 		// ***********************
 		// NOTE:  the oneSideFilters are divided into two sections, the AND filters and OR filters for a given form
@@ -743,8 +765,13 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		// specify the join info for user table (depending whether there's a query on creator_email or not)
-		$userJoinType = (isset($formFieldFilterMap['creator_email']) AND $formFieldFilterMap['creator_email']) ? "INNER" : "LEFT";
-		$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
+		if ($isUserTableForm) {
+			// main IS the users table — self-join on uid so usertable.email etc. still resolve
+			$userJoinText = " LEFT JOIN " . DBPRE . "users AS usertable ON main.uid=usertable.uid";
+		} else {
+			$userJoinType = (isset($formFieldFilterMap['creator_email']) AND $formFieldFilterMap['creator_email']) ? "INNER" : "LEFT";
+			$userJoinText = " $userJoinType JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid";
+		}
 
 		// Build EAU (entries_are_users) join and select variables for the main form
 		$eauMainJoinText = "";
@@ -772,6 +799,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$sortIsOnMain = true;
 		$ownerGroupsSortSelect = "";
 		$creatorEmailSortSelect = "";
+		$profileSortSelect = "";
 		if (!$orderByClause and $sortField) {
 			// Support comma-separated multi-sort: "year,price" / "SORT_ASC,SORT_DESC"
 			$sortFields = array_map('trim', explode(',', $sortField));
@@ -826,6 +854,29 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$ownerGroupSearchClause
 					GROUP BY eog.entry_id) AS owner_groups_subquery";
 					$sortField = "owner_groups_subquery";
+				} elseif ($isUserTableForm && strpos($sortField, 'formulize_user_account_') === 0) {
+					// Parse canonical handle: formulize_user_account_{type}_{formId}
+					$sortEauFidStr = substr($sortField, strrpos($sortField, '_') + 1);
+					$sortEauType = substr($sortField, strlen('formulize_user_account_'), strlen($sortField) - strlen('formulize_user_account_') - strlen('_' . $sortEauFidStr));
+					global $xoopsDB;
+					require_once XOOPS_ROOT_PATH . '/modules/formulize/class/userAccountElement.php';
+					$eauSortRegistry = formulizeUserAccountElementHandler::getTypeRegistry();
+					if ($sortEauType === 'groupmembership') {
+						$profileSortAlias = 'profile_sort_groupmembership';
+						$profileSortSelect .= ", (SELECT GROUP_CONCAT(g.name ORDER BY g.name ASC SEPARATOR '*/-+,') FROM " . $xoopsDB->prefix('groups_users_link') . " AS gul JOIN " . $xoopsDB->prefix('groups') . " AS g ON g.groupid = gul.groupid WHERE gul.uid = main.uid AND gul.groupid NOT IN (" . XOOPS_GROUP_USERS . "," . XOOPS_GROUP_ANONYMOUS . ")) AS $profileSortAlias";
+						$sortField = $profileSortAlias;
+					} elseif (isset($eauSortRegistry[$sortEauType]) && $eauSortRegistry[$sortEauType]['profileColumn'] !== null) {
+						$profileSortAlias = 'profile_sort_' . preg_replace('/[^a-z0-9]/i', '_', $sortEauType);
+						$ppCol = $eauSortRegistry[$sortEauType]['profileColumn'];
+						$profileSortSelect .= ", (SELECT pp.`" . formulize_db_escape($ppCol) . "` FROM " . $xoopsDB->prefix('profile_profile') . " AS pp WHERE pp.profileid = main.uid) AS $profileSortAlias";
+						$sortField = $profileSortAlias;
+					} elseif (isset($eauSortRegistry[$sortEauType]) && $eauSortRegistry[$sortEauType]['column'] !== null) {
+						// Real column on users table — sort directly via main.*
+						$sortField = $eauSortRegistry[$sortEauType]['column'];
+						// Falls through to standard sort path; $sortFid stays as $fid → $sortFidAlias = "main"
+					} else {
+						continue; // unknown or non-sortable type, skip
+					}
 				} else {
 					// Check for alternate sort field (e.g., "Full Name" element configured to sort by "Last Name")
 					$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -866,7 +917,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					// note you cannot sort by multi select boxes!
 					$sortFieldFullValue = "(SELECT sourceSortForm.`" . $target_element_handle . "` FROM " . DBPRE . "formulize_" . $targetFormObject->getVar('form_handle') . " as sourceSortForm WHERE sourceSortForm.`entry_id` = " . $sortFidAlias . ".`" . $sortField . "`)";
 				} else {
-					$sortFieldFullValue = ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email") ? $sortField : "$sortFidAlias.`$sortField`";
+					$sortFieldFullValue = ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email" OR strpos($sortField, 'profile_sort_') === 0) ? $sortField : "$sortFidAlias.`$sortField`";
 				}
 
 				$orderByParts[] = "$sortFieldFullValue $sortOrder";
@@ -894,19 +945,19 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 		if (!$orderByClause) {
-			$orderByClause = "ORDER BY main.entry_id";
+			$orderByClause = $isUserTableForm ? "ORDER BY main.uid" : "ORDER BY main.entry_id";
 		}
 
 		debug_memory("Before retrieving mainresults");
 
 		// DO A PRELIMINARY QUERY TO COUNT THE NUMBER OF RESULTS IN THE DATASET, INDEPENDENT OF WHAT WE WILL QUERY TO GET THE ACTUAL DATA
-		$revisionTableYesNo = (!$frid and isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
-		$countMasterResults = "SELECT COUNT(main.entry_id) FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main ";
+		$revisionTableYesNo = (!$frid and !$isUserTableForm and isset($GLOBALS['formulize_getDataFromRevisionsTable'])) ? "_revisions" : "";
+		$countMasterResults = "SELECT COUNT(main.$mainIdColumn) FROM " . $mainTable . $revisionTableYesNo . " AS main ";
 		// Only include the main-form EAU join when the COUNT WHERE clause actually references those aliases.
 		// Linked-form EAU joins (eau_usertable_f0, etc.) are never valid here since linked tables are not in scope.
 		$countWhereContent = $mainFormWhereClause . $scopeFilter . $otherPerGroupFilterWhereClause;
 		$eauCountJoinText = (strpos($countWhereContent, 'eau_usertable_main') !== false || strpos($countWhereContent, 'eau_profile_main') !== false) ? $eauMainJoinText : "";
-		$countMasterResults .= "$userJoinText $eauCountJoinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
+		$countMasterResults .= "$userJoinText $eauCountJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
 		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 		if (isset($GLOBALS['formulize_getCountForPageNumbers'])) {
@@ -931,7 +982,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$useAsSortSubQuery = "";
 		if ($frid) {
 			$limitByEntryId = " AND (";
-			$entryIdQuery = str_replace("COUNT(main.entry_id)", "main.entry_id as main_entry_id $ownerGroupsSortSelect", $countMasterResults); // don't count the entries, select their id numbers
+			$entryIdQuery = str_replace("COUNT(main.$mainIdColumn)", "main.$mainIdColumn as main_entry_id $ownerGroupsSortSelect $profileSortSelect", $countMasterResults); // don't count the entries, select their id numbers
 			if (!$sortIsOnMain) {
 				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 				$sortFormObject = $form_handler->get($sortFid);
@@ -1010,15 +1061,62 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$linkSelect = $newLinkSelect;
 			}
 		}
-		$mainSelectFields = isset($sqlFilterElementsIndex['main']) ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
-		$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime $ownerGroupsSortSelect";
-		$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
-		$firstTimeGetAllMainFields = "$mainSelectFields $eauMainSelectFields , ";
+		if ($isUserTableForm) {
+			// Build select using only handles that correspond to real users table columns.
+			// Extra elements (tfa_method, phone, etc.) may have real ele_types now, so we
+			// use INFORMATION_SCHEMA (a proper SELECT) instead of SHOW COLUMNS (blocked by query())
+			// to exclude post-query-injected fields.
+			$realColRes = $xoopsDB->query(
+				"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" . formulize_db_escape($usersTable) . "'"
+			);
+			$usersRealCols = array();
+			$usersRealColsSet = array(); // unquoted, for O(1) lookup
+			while ($realColRow = $xoopsDB->fetchArray($realColRes)) {
+				$colName = $realColRow['COLUMN_NAME'];
+				$usersRealCols[] = "'" . formulize_db_escape($colName) . "'";
+				$usersRealColsSet[$colName] = true;
+			}
+			$usersRealColsIn = empty($usersRealCols) ? "''" : implode(',', $usersRealCols);
+			// Fetch ele_value so we can extract source_column for canonical-handle elements.
+			// Canonical handles (e.g. formulize_user_account_email_5) store the real DB column
+			// name (e.g. "email") in ele_value['source_column']. Alias the column in the SELECT
+			// so the result is keyed by the canonical handle, not the raw column name.
+			$eleColResult = $xoopsDB->query(
+				"SELECT ele_handle, ele_value FROM " . DBPRE . "formulize" .
+				" WHERE id_form = " . intval($fid) . " ORDER BY ele_order"
+			);
+			$plainCols = array();
+			while ($eleColRow = $xoopsDB->fetchArray($eleColResult)) {
+				$eleVal = @unserialize($eleColRow['ele_value']);
+				$sourceCol = (is_array($eleVal) && isset($eleVal['source_column']))
+					? $eleVal['source_column']
+					: $eleColRow['ele_handle'];
+				// Skip injected fields (phone, timezone, etc.) — not real users table columns.
+				if (!isset($usersRealColsSet[$sourceCol])) {
+					continue;
+				}
+				$safeSourceCol = formulize_db_escape($sourceCol);
+				$safeHandle    = formulize_db_escape($eleColRow['ele_handle']);
+				$plainCols[] = ($sourceCol !== $eleColRow['ele_handle'])
+					? 'main.`' . $safeSourceCol . '` AS `' . $safeHandle . '`'
+					: 'main.`' . $safeHandle . '`';
+			}
+			$mainSelectFields = empty($plainCols) ? "main.*" : implode(', ', $plainCols);
+			// uid serves as both entry_id and creation_uid; creation/mod datetimes are not on the users table
+			$mainSelectClause = "main.uid AS main_entry_id, main.uid AS main_creation_uid, NULL AS main_mod_uid, NULL AS main_creation_datetime, NULL AS main_mod_datetime";
+			$selectClause = $mainSelectFields ? "$mainSelectClause $profileSortSelect, $mainSelectFields $linkSelect" : "$mainSelectClause $profileSortSelect $linkSelect";
+			$firstTimeGetAllMainFields = ($mainSelectFields ? "$mainSelectFields " : "") . ", ";
+		} else {
+			$mainSelectFields = isset($sqlFilterElementsIndex['main']) ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
+			$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime $ownerGroupsSortSelect $profileSortSelect";
+			$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
+			$firstTimeGetAllMainFields = "$mainSelectFields $eauMainSelectFields , ";
+		}
 
 		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
 		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
 		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
-		$oneSideSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main $userJoinText $eauMainJoinText WHERE main.entry_id>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
+		$oneSideSQL = " FROM " . $mainTable . " AS main $userJoinText $eauMainJoinText WHERE main.$mainIdColumn>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
 		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		if (isset($oneSideFilters[$fid]) AND is_array($oneSideFilters[$fid]) AND count($oneSideFilters[$fid]) > 0) {
 			$oneSideSQL .= " AND (";
@@ -1031,8 +1129,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 		$oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
-		$restOfTheSQL = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
-		$restOfTheSQLForExport = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.entry_id>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
+		$restOfTheSQL = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
+		$restOfTheSQLForExport = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
 		if (count((array) $linkformids) > 1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if (!$sortIsOnMain) {
 				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
@@ -1043,7 +1141,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$orderByToUse = $frameworkSafeOrderByParts
 					? " ORDER BY " . implode(", ", $frameworkSafeOrderByParts) . " "
 					: " ORDER BY main.entry_id ";
-				$useAsSortSubQuery = "  @rownum:=@rownum+1 $ownerGroupsSortSelect $creatorEmailSortSelect, "; // need to add a counter as the first field, used as the master sorting key
+				$useAsSortSubQuery = "  @rownum:=@rownum+1 $ownerGroupsSortSelect $creatorEmailSortSelect $profileSortSelect, "; // need to add a counter as the first field, used as the master sorting key
 			}
 			$oneSideSQLToUse = str_replace(" AS main $userJoinText", " AS main JOIN (SELECT @rownum := 0) as r $userJoinText", $oneSideSQL); // need to add the initialization of the rownum, which is what we use as the master sorting key
 			$masterQuerySQL = "SELECT $useAsSortSubQuery main.entry_id $oneSideSQLToUse $limitByEntryId $orderByToUse ";
@@ -1057,7 +1155,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 
 		if (isset($GLOBALS['formulize_setBaseQueryForCalcs']) OR isset($GLOBALS['formulize_returnAfterSettingBaseQuery'])) {
-			$GLOBALS['formulize_queryForCalcs'] = " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText WHERE main.entry_id>0  $whereClause $scopeFilter ";
+			$GLOBALS['formulize_queryForCalcs'] = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText WHERE main.$mainIdColumn>0  $whereClause $scopeFilter ";
 			$GLOBALS['formulize_queryForCalcs'] .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 			$GLOBALS['formulize_queryForOneSideCalcs'] = $oneSideSQL;
 			if(isset($GLOBALS['formulize_setBaseQueryForCalcs'])) {
@@ -1112,7 +1210,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 	if (count((array) $linkformids) > 1) { // AND $dummy=="never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins, so we create a series of queries that will each handle the main form plus one of the linked forms, then we put all the data together into a single result set below
 		$timestamp = str_replace(".", "", microtime(true));
-		if (!$sortIsOnMain OR $ownerGroupsSortSelect OR $creatorEmailSortSelect) {
+		if (!$sortIsOnMain OR $ownerGroupsSortSelect OR $creatorEmailSortSelect OR $profileSortSelect) {
 			$createTableSQL = "CREATE TABLE " . DBPRE . "formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `throwaway_sort_values` text, `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=InnoDB;"; // when the sort is not on the main form, then we are including a special field in the select statement that we sort it by, so that the order is correct, and so it has to have a place to get inserted here
 		} else {
 			$createTableSQL = "CREATE TABLE " . DBPRE . "formulize_temp_extract_$timestamp ( `mastersort` BIGINT(11), `entry_id` BIGINT(11), PRIMARY KEY (`mastersort`), INDEX i_entry_id (`entry_id`) ) ENGINE=InnoDB;";
@@ -1175,12 +1273,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			}
 		}
 		$dropRes = $xoopsDB->queryF("DROP TABLE " . DBPRE . "formulize_temp_extract_$timestamp");
-		$resultData = array('results' => $linkQueryRes, 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids);
+		$resultData = array('results' => $linkQueryRes, 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm);
 	} else {
 		if ($resultOnly !== 'bypass') {
 			$masterQueryRes = $xoopsDB->query($masterQuerySQL);
 		}
-		$resultData = array('results' => array($masterQueryRes), 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids);
+		$resultData = array('results' => array($masterQueryRes), 'fid' => $fid, 'frid' => $frid, 'linkFids' => $linkformids, 'isUserTableForm' => $isUserTableForm);
 	}
 	unset($GLOBALS['formulize_setQueryForExport']);
 
@@ -1520,6 +1618,7 @@ function processGetDataResults($resultData)
 	$fid = $resultData['fid'];
 	$frid = $resultData['frid'];
 	$linkformids = $resultData['linkFids'];
+	$isUserTableForm = isset($resultData['isUserTableForm']) ? $resultData['isUserTableForm'] : false;
 
 	global $xoopsDB, $xoopsUser;
 	$masterResults = array();
@@ -1669,6 +1768,28 @@ function processGetDataResults($resultData)
 		}
 	}
 
+	$masterResults = injectSupplementaryData($masterResults, $fid, $totalMainFormEntryIdIndex, $isUserTableForm);
+
+	return $masterResults;
+}
+
+
+// Inject supplementary data into the master results after the main query.
+// For regular forms: injects owner_groups from the entry_owner_groups table.
+// For the System Users form (isUserTableForm=true): injects profile fields, group memberships, and formatted timestamps.
+function injectSupplementaryData($masterResults, $fid, $totalMainFormEntryIdIndex, $isUserTableForm)
+{
+	global $xoopsDB;
+
+	if ($isUserTableForm) {
+		// Inject profile data, group memberships and timestamp formatting for the users table form.
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/usersAndGroups.php";
+		$systemFormHandle = '__system_users';
+		$masterResults = injectProfileData($masterResults, $systemFormHandle, $fid);
+		$masterResults = injectGroupMembershipData($masterResults, $systemFormHandle, $fid);
+		return $masterResults;
+	}
+
 	// deduce the owner_groups data
 	// efficient single add in to dataset, since we don't cache this info in each entry, and gathering it as part of every getData query would be unnecessarily expensive
 	// If the user searches for a group name, then we do an unavoidable expensive subquery at that time, and we include the search term here to limit the groups shown,
@@ -1699,7 +1820,7 @@ function processGetDataResults($resultData)
 			}
 			foreach ($totalMainFormEntryIdIndex as $entryId) {
 				if (isset($ownershipData[$entryId])) {
-					$ownershipDataToAdd =  $ownershipData[$entryId];
+					$ownershipDataToAdd = $ownershipData[$entryId];
 				} else {
 					error_log("Formulize error: ownership information missing for entry $entryId in form $fid. Try repairing the Ownership Table via the Settings tab of the Form.");
 					$ownershipDataToAdd = array("Could not determine groups");
@@ -1760,9 +1881,32 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids)
 	return $derivedFieldMetadata;
 }
 
+// Attempt to delegate WHERE clause construction to an element handler class.
+// Returns the WHERE clause string if the handler implements buildSearchWhereClause(), or false otherwise.
+// This allows element types that require complex subqueries (e.g., group_memberships) to encapsulate
+// their own SQL generation rather than embedding it in the monolithic formulize_parseFilter function.
+function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main')
+{
+	$classFile = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleType . 'Element.php';
+	if (!file_exists($classFile)) {
+		return false;
+	}
+	require_once $classFile;
+	$typeHandler = xoops_getmodulehandler($eleType . 'Element', 'formulize');
+	if ($typeHandler && method_exists($typeHandler, 'buildSearchWhereClause')) {
+		if (method_exists($typeHandler, 'prepareLiteralTextForDB')) {
+			$isPartial = ($likebits !== '');
+			$term = $typeHandler->prepareLiteralTextForDB($term, null, $isPartial);
+		}
+		return $typeHandler->buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias);
+	}
+	return false;
+}
+
+
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
-function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $scope)
+function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $scope, $isUserTableForm = false)
 {
 	global $xoopsDB;
 	if ($filtertemp == "") {
@@ -1855,11 +1999,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 			$ifParts[1] = str_replace("\\", "", $ifParts[1]);
 
-			// convert legacy metadata terms to new terms
-			$ifParts[0] = $ifParts[0] == "uid" ? "creation_uid" : $ifParts[0];
-			$ifParts[0] = $ifParts[0] == "proxyid" ? "mod_uid" : $ifParts[0];
-			$ifParts[0] = $ifParts[0] == "creation_date" ? "creation_datetime" : $ifParts[0];
-			$ifParts[0] = $ifParts[0] == "mod_date" ? "mod_datetime" : $ifParts[0];
 
 			// set order by clause for newest operator -- assume only one newest operator per query!
 			// does this need to be based on entry_id and not use $queryElement (which is based on ifParts[0]) ??
@@ -1971,24 +2110,24 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 						}
 					}
 				}
-				static $eauTypeToSqlColumn = array(
-					'uid'                => array('usertable', 'uid'),
-					'username'           => array('usertable', 'login_name'),
-					'email'              => array('usertable', 'email'),
-					'firstname'          => array('usertable', 'uname'),
-					'lastname'           => array('usertable', 'uname'),
-					'notificationmethod' => array('usertable', 'notify_method'),
-					'phone'              => array('profile', '2faphone'),
-					'timezone'           => array('profile', 'timezone'),
-					'2fa'                => array('profile', '2famethod'),
-				);
-				if ($eauAlias !== false && isset($eauTypeToSqlColumn[$eauType])) {
-					list($eauTable, $eauColumn) = $eauTypeToSqlColumn[$eauType];
-					$eauTableAlias = 'eau_' . $eauTable . '_' . $eauAlias;
-					$eauSqlColumn = $eauTableAlias . '.`' . $eauColumn . '`';
-					$newWhereClause = $eauSqlColumn . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				require_once XOOPS_ROOT_PATH . '/modules/formulize/class/userAccountElement.php';
+				$eauRegistry = formulizeUserAccountElementHandler::getTypeRegistry();
+				if ($eauAlias !== false && isset($eauRegistry[$eauType])) {
+					$eauEntry = $eauRegistry[$eauType];
+					$eleType = $eauEntry['eleType'];
+					$tableAlias = $isUserTableForm ? 'main' : 'eau_usertable_' . $eauAlias;
+					$delegated = formulize_tryDelegatedSearchWhere($eleType, $ifParts[1], $operator, $quotes, $likebits, $fid, $tableAlias);
+					if ($delegated !== false) {
+						$newWhereClause = $delegated;
+					} elseif ($eauEntry['column'] !== null) {
+						// Direct users-table column with no handler delegation
+						$safeCol = formulize_db_escape($eauEntry['column']);
+						$newWhereClause = "{$tableAlias}.`$safeCol`" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+					} else {
+						$newWhereClause = "1"; // no column mapping and no delegation, skip filter
+					}
 				} else {
-					$newWhereClause = "1"; // unknown type or form, skip filter
+					$newWhereClause = "1"; // unknown alias or type, skip filter
 				}
 
 				//THIRD: NON-METADATA QUERIES
@@ -2138,7 +2277,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 						$newWhereClause = "main.entry_id<0"; // no matches, so result set should be empty, so set a where clause that will return zero results
 					}
 
-					// HANDLE ALL OTHER ELEMENT TYPES (not other box, not linked, not username/fullname list)
+					// HANDLE ELEMENT TYPES THAT IMPLEMENT THEIR OWN buildSearchWhereClause
+				} elseif ($delegatedWhereClause = formulize_tryDelegatedSearchWhere($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], $ifParts[1], $operator, $quotes, $likebits, $fid)) {
+					$newWhereClause = $delegatedWhereClause;
+
+					// HANDLE ALL OTHER ELEMENT TYPES (not other box, not linked, not username/fullname list, not delegated)
 				} else {
 					// check if there's any conversion necessary from what the user typed into a special value that will work in the database
 					$searchTerm = $ifParts[1];
@@ -2718,7 +2861,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 	$fid = intval($fid);
 
 	// user must have permission to access the form!
-	$gperm_handler = xoops_gethandler('groupperm');
+		$gperm_handler = xoops_gethandler('groupperm');
 	global $xoopsUser;
 	if (!$xoopsUser or !$gperm_handler->checkRight("view_form", $fid, $xoopsUser->getGroups(), getFormulizeModId())) {
 		return array();
@@ -2736,22 +2879,22 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 	$excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
 
 	// setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-	$sql = "SELECT ele_id, ele_caption FROM " . DBPRE . "formulize WHERE id_form=" . $fid . " $includeWhere $excludeWhere";
+		$sql = "SELECT ele_id, ele_caption FROM " . DBPRE . "formulize WHERE id_form=" . $fid . " $includeWhere $excludeWhere";
 	$res = $xoopsDB->query($sql);
 	$elementsById = array();
-	$elementsByCaption = array();
+		$elementsByCaption = array();
 	$elementsByField = array();
 	while ($array = $xoopsDB->fetchArray($res)) {
 		$field = str_replace(" ", "_", str_replace("`", "'", $array['ele_caption']));
 		$id = $array['ele_id'];
 		$caption = $array['ele_caption'];
-		$elementsById[$id]['caption'] = $caption;
+				$elementsById[$id]['caption'] = $caption;
 		$elementsById[$id]['field'] = $field;
-		$elementsByCaption[$caption]['id'] = $id;
+				$elementsByCaption[$caption]['id'] = $id;
 		$elementsByCaption[$caption]['field'] = $field;
-		$elementsByField[$field]['id'] = $id;
+				$elementsByField[$field]['id'] = $id;
 		$elementsByField[$field]['caption'] = $caption;
-	}
+			}
 
 	if (strstr($tablename, 'SELECT ')) { // preped query for export being passed back in, so run with it
 		$sql = $tablename;
@@ -2821,7 +2964,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 	while ($array = $xoopsDB->fetchArray($res)) {
 		foreach ($elementsByField as $field => $fieldDetails) {
 			$pkValue = $pkField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
-			$result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
+						$result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
 		}
 		$indexer++;
 	}
@@ -2848,10 +2991,10 @@ function parseTableFormFilter($filter, $andor, $elementsById)
 		if ($thisFilter == "") {
 			continue;
 		}
-		if ($whereClause != "") {
+				if ($whereClause != "") {
 			$whereClause .= " $andor ";
 		}
-		$filterParts = explode("/**/", $thisFilter);
+$filterParts = explode("/**/", $thisFilter);
 		$operator = isset($filterParts[2]) ? $filterParts[2] : "LIKE";
 		$likeparts = ($operator == "LIKE" or $operator == "NOT LIKE") ? "%" : "";
 		$whereClause .= "`" . $elementsById[$filterParts[0]]['field'] . "` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";

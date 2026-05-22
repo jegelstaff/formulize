@@ -77,7 +77,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$couldLoadAdvanceView = false; // default to not loading the 'advance view' (screen settings for cols, searches, etc) -- but turn this on when initially loading views, in case they are just partial views and we need to layer in missing features
 
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
+	// For ad hoc table forms (Users/Groups management), system_admin permission was already
+	// verified at the page level, so skip the normal view_form security check
+	$isCompositeMode = isset($GLOBALS['formulize_compositeDataMode']);
+	if((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) && !$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
 		return;
 	}
@@ -113,6 +116,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 	$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 	$update_entry_ownership = $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid);
+
+	// For ad hoc table forms (Users/Groups management), force global scope since
+	// system tables have no ownership model and the user already has system_admin permission
+	if ($isCompositeMode AND isset($GLOBALS['formulize_systemAdminPermissionVerified']) AND $GLOBALS['formulize_systemAdminPermissionVerified']) {
+		$view_globalscope = true;
+	}
 
 	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 
@@ -985,8 +994,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
 					if(in_array($displayScreen->getVar('fid'),$dataSetEntries['fids'])) {
 							$this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
-					} elseif(in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
-							exit('Error: cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
+					} elseif(isset($dataSetEntries['sub_fids']) AND in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
+							throw new Exception('Cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
 					}
 				}
 				$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
@@ -4200,6 +4209,14 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	$manageSelectionTitle = ($cloneButton OR $deleteButton OR $changeOwnerButton) ? _formulize_MANAGE_SELECTION_TITLE : "";
 	$manageActionsTitle = ($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton) ? _formulize_MANAGE_ACTIONS_TITLE : "";
 	$manageOperationsTitle = ($saveViewButton OR $deleteViewButton OR $resetViewButton) ? _formulize_MANAGE_OPERATIONS_TITLE : "";
+	// When only one button group is present, a heading adds no context — suppress them all.
+	$buttonGroupCount = (int)!!($selectAllButton OR $clearSelectButton)
+	                  + (int)!!($cloneButton OR $deleteButton OR $changeOwnerButton)
+	                  + (int)!!($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton)
+	                  + (int)!!($saveViewButton OR $deleteViewButton OR $resetViewButton);
+	if ($buttonGroupCount <= 1) {
+		$manageViewsTitle = $manageSelectionTitle = $manageActionsTitle = $manageOperationsTitle = "";
+	}
 
 	// setup the view name variables, with true only set for the last loaded view
 	$viewNumber = 1;
@@ -4692,6 +4709,12 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
+
+	// If composite data mode is active (Users/Groups management), delegate to the composite function
+	if (isset($GLOBALS['formulize_compositeDataMode'])) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/usersAndGroups.php';
+		return formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, $forcequery);
+	}
 
 	global $xoopsUser;
 

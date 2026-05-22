@@ -109,4 +109,31 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		return formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id);
 	}
 
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		$format = 'XXX-XXX-XXXX';
+		if ($handle) {
+			static $formatCache = array();
+			if (!isset($formatCache[$handle])) {
+				$meta = formulize_getElementMetaData($handle, true);
+				$eleValue = isset($meta['ele_value']) ? $meta['ele_value'] : array();
+				$formatCache[$handle] = (isset($eleValue['format']) && $eleValue['format']) ? $eleValue['format'] : 'XXX-XXX-XXXX';
+			}
+			$format = $formatCache[$handle];
+		}
+		$this->clickable = false;
+		$this->striphtml = true;
+		$this->length = 255;
+		return parent::formatDataForList($value ? formatPhoneNumber($value, $format) : $value);
+	}
+
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
+		global $xoopsDB;
+		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		return "EXISTS("
+			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
+			. " WHERE pp.profileid = {$tableAlias}.uid"
+			. " AND pp.`2faphone`" . $safeTermClause
+			. ")";
+	}
+
 }
