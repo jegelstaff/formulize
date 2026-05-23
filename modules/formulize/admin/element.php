@@ -182,6 +182,12 @@ if ($_GET['ele_id'] != "new") {
 	$ele_type = $_GET['type'];
 	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+		if ($customTypeHandler) {
+			$customTypeObject = $customTypeHandler->create();
+			if (!empty($customTypeObject->isVirtualElement)) {
+				throw new Exception('Virtual element types are managed automatically by the system and cannot be added to forms manually.');
+			}
+		}
 	}
 	$ele_value = array();
 	$ele_delim = "br";

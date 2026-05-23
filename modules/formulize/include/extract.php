@@ -2879,7 +2879,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 	$excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
 
 	// setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-	$sql = "SELECT ele_id, ele_handle, ele_caption, ele_value FROM " . DBPRE . "formulize WHERE id_form=" . $fid . " $includeWhere $excludeWhere";
+	$sql = "SELECT ele_id, ele_handle, ele_caption, ele_value, ele_type FROM " . DBPRE . "formulize WHERE id_form=" . $fid . " $includeWhere $excludeWhere";
 	$res = $xoopsDB->query($sql);
 	$elementsById = array();
 	$elementsByField = array();
@@ -2889,9 +2889,11 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 		$handle = $array['ele_handle'];
 		$eleVal = @unserialize($array['ele_value']);
 		// Virtual elements have no backing DB column — they are populated post-query by injection
-		// functions (e.g. injectGroupCategoriesData). Skip them from the field map so the query
-		// loop does not try to read a non-existent column from the SELECT * result.
+		// functions (e.g. injectGroupCategoriesData). Exclude them from the field map so the query
+		// loop does not try to read a non-existent column, but keep them in the handle lookup so
+		// parseTableFormFilter can delegate search terms to their element class handlers.
 		if (is_array($eleVal) && !empty($eleVal['virtual'])) {
+			$elementsByHandle[$handle] = array('field' => null, 'type' => $array['ele_type']);
 			continue;
 		}
 		if (is_numeric($handle)) {
@@ -2933,10 +2935,10 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 					$whereClause .= " $andor ";
 				}
 				$localandor = $thisFilter[0];
-				$whereClause .= "(" . parseTableFormFilter($thisFilter[1], $localandor, $elementsLookup) . ")";
+				$whereClause .= "(" . parseTableFormFilter($thisFilter[1], $localandor, $elementsLookup, $fid, $tablename) . ")";
 			}
 		} else {
-			$whereClause = parseTableFormFilter($filter, $andor, $elementsLookup);
+			$whereClause = parseTableFormFilter($filter, $andor, $elementsLookup, $fid, $tablename);
 		}
 
 		// Allow callers to inject an extra raw WHERE fragment (e.g. a dedup subquery for composite
@@ -3010,7 +3012,7 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 }
 
 // THIS FUNCTION READS A FILTER STRING AND PARSES IT UP FOR USE IN A "TABLEFORM" WHICH IS JUST A REFERENCE TO A PLAIN DATA TABLE
-function parseTableFormFilter($filter, $andor, $elementsById)
+function parseTableFormFilter($filter, $andor, $elementsById, $fid = 0, $tableName = '')
 {
 	$whereClause = "";
 	$andor = $andor == "AND" ? "AND" : "OR";
@@ -3018,17 +3020,38 @@ function parseTableFormFilter($filter, $andor, $elementsById)
 		if ($thisFilter == "") {
 			continue;
 		}
-				if ($whereClause != "") {
-			$whereClause .= " $andor ";
+		$filterParts = explode("/**/", $thisFilter);
+		$handle      = $filterParts[0];
+		$operator    = isset($filterParts[2]) ? $filterParts[2] : "LIKE";
+		$elementInfo = $elementsById[$handle] ?? null;
+		$field       = $elementInfo['field'] ?? null;
+
+		$clause = null;
+		if ($field === null && $elementInfo !== null && !empty($elementInfo['type'])) {
+			// Virtual element with a typed class — delegate to buildSearchWhereClause.
+			// IS NULL / IS NOT NULL have no meaningful interpretation for virtual columns.
+			if ($operator !== 'IS NULL' && $operator !== 'IS NOT NULL') {
+				$likeparts   = ($operator == "LIKE" || $operator == "NOT LIKE") ? "%" : "";
+				$adjustedOp  = ($operator == "LIKE" || $operator == "NOT LIKE") ? " $operator " : $operator;
+				$clause = formulize_tryDelegatedSearchWhere(
+					$elementInfo['type'], $filterParts[1] ?? '', $adjustedOp, "'", $likeparts, $fid, $tableName ?: $handle
+				);
+			}
+		} elseif ($field !== null) {
+			if ($operator === 'IS NULL' || $operator === 'IS NOT NULL') {
+				$clause = "`$field` $operator";
+			} else {
+				$likeparts = ($operator == "LIKE" || $operator == "NOT LIKE") ? "%" : "";
+				$clause = "`$field` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";
+			}
 		}
-$filterParts = explode("/**/", $thisFilter);
-		$operator = isset($filterParts[2]) ? $filterParts[2] : "LIKE";
-		$field = $elementsById[$filterParts[0]]['field'] ?? $filterParts[0];
-		if ($operator === 'IS NULL' || $operator === 'IS NOT NULL') {
-			$whereClause .= "`$field` $operator";
-		} else {
-			$likeparts = ($operator == "LIKE" or $operator == "NOT LIKE") ? "%" : "";
-			$whereClause .= "`$field` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";
+		// Unknown handle with no delegation: skip to avoid invalid SQL.
+
+		if ($clause) {
+			if ($whereClause != "") {
+				$whereClause .= " $andor ";
+			}
+			$whereClause .= $clause;
 		}
 	}
 	return $whereClause;

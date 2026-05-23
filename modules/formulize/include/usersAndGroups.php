@@ -116,9 +116,11 @@ function ensureGroupsTableForm() {
 			// Virtual columns injected post-query for template groups.
 			// virtual=true stores a marker in ele_value so dataExtractionTableForm
 			// skips these in SELECT/ORDER BY/WHERE (they have no real DB backing).
+			// type points to element class files that implement buildSearchWhereClause
+			// so search terms on these columns delegate to correlated subqueries.
 			'extraElements' => array(
-				array('handle' => 'group_categories', 'caption' => 'Categories', 'virtual' => true),
-				array('handle' => 'group_entries',    'caption' => 'Instances',  'virtual' => true),
+				array('handle' => 'group_categories', 'caption' => 'Categories', 'virtual' => true, 'type' => 'eagGroupCategories'),
+				array('handle' => 'group_entries',    'caption' => 'Instances',  'virtual' => true, 'type' => 'eagGroupEntries'),
 			),
 			// Default visible columns; others accessible via Change Columns.
 			'defaultColumns' => array('groupid', 'name', 'group_categories', 'group_entries'),
