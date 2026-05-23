@@ -153,6 +153,7 @@ $pseudoScreen = $screen_handler->create();
 $screen_handler->setDefaultListScreenVars($pseudoScreen, $eauViewEntryScreenId, $formObject);
 // Override: no framework for ad hoc table forms
 $pseudoScreen->setVar('frid', 0);
+$pseudoScreen->setVar('textwidth', 0);
 // Suppress buttons not appropriate for user management
 $pseudoScreen->setVar('useclone', '');
 $pseudoScreen->setVar('usedelete', _formulize_DE_DELETE_USER_BUTTON);

@@ -1499,9 +1499,19 @@ class formulizeFormsHandler {
 	}
 
 	// check to see if a handle is unique within a form
-	function isElementHandleUnique($handle, $elementIdentifier="") {
-        $handle = formulizeElement::sanitize_handle_name($handle);
-		if(isMetaDataField($handle)){
+	// $formIdentifier: optional form id/object — when provided and the form is a table form
+	// (has a tableform value), the metadata-field reserved-name check is skipped, since
+	// table forms map directly to existing DB columns that can share metadata field names.
+	function isElementHandleUnique($handle, $elementIdentifier="", $formIdentifier=null) {
+    $handle = formulizeElement::sanitize_handle_name($handle);
+		$skipMetadataCheck = false;
+		if ($formIdentifier) {
+			$checkForm = is_object($formIdentifier) ? $formIdentifier : $this->get($formIdentifier);
+			if ($checkForm && $checkForm->getVar('tableform')) {
+				$skipMetadataCheck = true;
+			}
+		}
+		if (!$skipMetadataCheck && isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
 		global $xoopsDB;

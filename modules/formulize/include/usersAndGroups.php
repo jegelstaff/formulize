@@ -105,14 +105,23 @@ function ensureGroupsTableForm() {
 		'System Groups',
 		array(
 			'columnLabels' => array(
-				'groupid' => 'Group ID',
-				'name' => 'Group Name',
-				'description' => 'Description',
-				'group_type' => 'Group Type',
+				'groupid'           => 'Group ID',
+				'name'              => 'Group Name',
+				'description'       => 'Description',
+				'group_type'        => 'Group Type',
 				'is_group_template' => 'Is Template',
-				'form_id' => 'Form ID',
-				'entry_id' => 'Entry ID',
-			)
+				'form_id'           => 'Form ID',
+				'entry_id'          => 'Entry ID',
+			),
+			// Virtual columns injected post-query for template groups.
+			// virtual=true stores a marker in ele_value so dataExtractionTableForm
+			// skips these in SELECT/ORDER BY/WHERE (they have no real DB backing).
+			'extraElements' => array(
+				array('handle' => 'group_categories', 'caption' => 'Categories', 'virtual' => true),
+				array('handle' => 'group_entries',    'caption' => 'Instances',  'virtual' => true),
+			),
+			// Default visible columns; others accessible via Change Columns.
+			'defaultColumns' => array('groupid', 'name', 'group_categories', 'group_entries'),
 		)
 	);
 	return $fid;
@@ -232,6 +241,17 @@ function formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $
 		}
 	}
 
+	// For the groups composite mode, exclude entry-group rows and collapse template groups so
+	// that exactly one row per EAG form appears — making pagination counts correct.
+	if (isset($GLOBALS['formulize_compositeDataMode']) AND $GLOBALS['formulize_compositeDataMode'] === 'groups') {
+		$entryIdFilter = 'entry_id/**//**/IS NULL';
+		$filter = $filter ? $filter . '][' . $entryIdFilter : $entryIdFilter;
+		global $xoopsDB;
+		$groupsTable = $xoopsDB->prefix('groups');
+		$GLOBALS['formulize_tableFormAdditionalWhere'] =
+			"(form_id IS NULL OR form_id = 0) OR groupid IN (SELECT MIN(groupid) FROM `$groupsTable` WHERE entry_id IS NULL AND form_id > 0 GROUP BY form_id)";
+	}
+
 	$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 	// If we deleted entries and the current page is now empty, shunt back 1 page
@@ -239,6 +259,8 @@ function formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $
 		$_POST['formulize_LOEPageStart'] = $_POST['formulize_LOEPageStart'] - $formulize_LOEPageSize;
 		$data = getData($frid, $fid, $filter, "AND", $scope, ($limitStart - $formulize_LOEPageSize), $limitSize, $sort, $order, $forcequery);
 	}
+
+	unset($GLOBALS['formulize_tableFormAdditionalWhere']);
 
 	if ($currentURL == "") {
 		return array(0 => "", 1 => "", 2 => "");
@@ -508,94 +530,239 @@ function injectGroupMembershipData($data, $systemFormHandle, $systemFid) {
 }
 
 // Merge entries_are_groups form data into the system groups dataset.
+// Injects virtual categories/entries columns into template group rows.
+// Entry-group rows (entry_id IS NOT NULL) are excluded at the SQL query level
+// via fundamental_filters on the pseudo screen, so pagination counts are correct.
 function mergeGroupsCompositeData($data) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
 	}
 
+	$systemFormHandle = '__system_groups';
+
 	$eagFids = getEntriesAreGroupsForms();
-	if (count($eagFids) == 0) {
+
+	// Inject virtual columns into all remaining rows (plain groups get empty arrays;
+	// template groups get their categories and entry names).
+	$fid  = ensureGroupsTableForm();
+	$data = injectGroupCategoriesData($data, $systemFormHandle, $fid);
+	$data = injectGroupEntriesData($data, $systemFormHandle, $fid, $eagFids);
+
+	return $data;
+}
+
+// Inject "Categories" (template group names for the same EAG form) into template group rows.
+// Plain group rows receive an empty array.
+// $data is in standard getData format; $systemFormHandle is '__system_groups'.
+function injectGroupCategoriesData($data, $systemFormHandle, $systemFid) {
+	if (!is_array($data) || count($data) == 0) {
 		return $data;
 	}
 
-	global $xoopsUser;
-	$gperm_handler = xoops_gethandler('groupperm');
-	$mid = getFormulizeModId();
-	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+	global $xoopsDB;
 
-	// Extract group IDs and their entry_id/form_id links from the system data.
-	// dataExtractionTableForm keys results by element handle (= column name), so access directly.
-	$systemFormHandle = '__system_groups';
+	// Find the virtual categories element handle.
+	$res = $xoopsDB->query(
+		"SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") .
+		" WHERE id_form = " . intval($systemFid) . " AND ele_handle = 'group_categories'"
+	);
+	if (!$res || $xoopsDB->getRowsNum($res) == 0) {
+		return $data;
+	}
+	$row = $xoopsDB->fetchArray($res);
+	$categoriesHandle = $row['ele_handle'];
 
-	// Build map: for each group that has a form_id and entry_id, map to the data index
-	$entryMap = array(); // eagFid => entryId => dataIndex
+	// Collect template form_ids from the data (one row per EAG form after SQL dedup).
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formTitlesByFormId = array();
+	$templateFormIds = array();
+	foreach ($data as $entry) {
+		if (!isset($entry[$systemFormHandle])) {
+			continue;
+		}
+		foreach ($entry[$systemFormHandle] as $elements) {
+			$isTemplate = (int)(is_array($elements['is_group_template'] ?? null)
+				? ($elements['is_group_template'][0] ?? 0)
+				: ($elements['is_group_template'] ?? 0));
+			$formId = (int)(is_array($elements['form_id'] ?? null)
+				? ($elements['form_id'][0] ?? 0)
+				: ($elements['form_id'] ?? 0));
+			if ($isTemplate && $formId) {
+				$templateFormIds[$formId] = $formId;
+			}
+		}
+	}
+
+	// Query the groups table directly for ALL template group names across all pages,
+	// since the SQL dedup means the data only carries one representative row per EAG form.
+	// Strip the "{FormTitle} - " prefix so only the bare category name is stored.
+	$categoriesByFormId = array();
+	if (!empty($templateFormIds)) {
+		$inList = implode(',', array_map('intval', $templateFormIds));
+		$res = $xoopsDB->query(
+			"SELECT form_id, name FROM " . $xoopsDB->prefix('groups') .
+			" WHERE is_group_template = 1 AND form_id IN ($inList) ORDER BY name"
+		);
+		while ($res && ($row = $xoopsDB->fetchArray($res))) {
+			$fid2 = (int)$row['form_id'];
+			$name = $row['name'];
+			if (!isset($formTitlesByFormId[$fid2])) {
+				$formObject = $form_handler->get($fid2);
+				$formTitlesByFormId[$fid2] = $formObject ? $formObject->getVar('form_title', 'raw') : '';
+			}
+			$prefix = $formTitlesByFormId[$fid2] ? $formTitlesByFormId[$fid2] . ' - ' : '';
+			$categoryName = ($prefix && strpos($name, $prefix) === 0) ? substr($name, strlen($prefix)) : $name;
+			$categoriesByFormId[$fid2][] = $categoryName;
+		}
+	}
+
+	// Inject into each row. For template group rows also rename 'name' to the EAG form title.
 	foreach ($data as $index => $entry) {
 		if (!isset($entry[$systemFormHandle])) {
 			continue;
 		}
-		foreach ($entry[$systemFormHandle] as $pkValue => $elements) {
-			$formId = null;
-			$entryId = null;
-			if (isset($elements['form_id'])) {
-				$formId = is_array($elements['form_id']) ? $elements['form_id'][0] : $elements['form_id'];
-			}
-			if (isset($elements['entry_id'])) {
-				$entryId = is_array($elements['entry_id']) ? $elements['entry_id'][0] : $elements['entry_id'];
-			}
-			if ($formId && $entryId) {
-				$entryMap[intval($formId)][intval($entryId)] = $index;
+		foreach (array_keys($entry[$systemFormHandle]) as $pkValue) {
+			$elements   = $entry[$systemFormHandle][$pkValue];
+			$isTemplate = (int)(is_array($elements['is_group_template'] ?? null)
+				? ($elements['is_group_template'][0] ?? 0)
+				: ($elements['is_group_template'] ?? 0));
+			$formId = (int)(is_array($elements['form_id'] ?? null)
+				? ($elements['form_id'][0] ?? 0)
+				: ($elements['form_id'] ?? 0));
+			$categories = ($isTemplate && $formId && isset($categoriesByFormId[$formId]))
+				? $categoriesByFormId[$formId]
+				: array();
+			$data[$index][$systemFormHandle][$pkValue][$categoriesHandle] = $categories;
+			if ($isTemplate && $formId && isset($formTitlesByFormId[$formId])) {
+				$data[$index][$systemFormHandle][$pkValue]['name'] = array($formTitlesByFormId[$formId]);
 			}
 		}
 	}
 
-	// For each EAG form, get matching entries and merge
-	foreach ($eagFids as $eagFid) {
-		if (!$gperm_handler->checkRight("view_form", $eagFid, $groups, $mid)) {
+	return $data;
+}
+
+// Inject "Entries" (PI values from the EAG form data table) into template group rows.
+// Queries the EAG form's data table using the form's PI element to get entry names.
+// Falls back to stripping the category suffix from entry group names if no PI element is set.
+function injectGroupEntriesData($data, $systemFormHandle, $systemFid, $eagFids = null) {
+	if (!is_array($data) || count($data) == 0) {
+		return $data;
+	}
+
+	global $xoopsDB;
+
+	// Find the virtual entries element handle.
+	$res = $xoopsDB->query(
+		"SELECT ele_handle FROM " . $xoopsDB->prefix("formulize") .
+		" WHERE id_form = " . intval($systemFid) . " AND ele_handle = 'group_entries'"
+	);
+	if (!$res || $xoopsDB->getRowsNum($res) == 0) {
+		return $data;
+	}
+	$row = $xoopsDB->fetchArray($res);
+	$entriesHandle = $row['ele_handle'];
+
+	// Collect the unique EAG form_ids referenced by template group rows.
+	$templateFormIds = array();
+	foreach ($data as $entry) {
+		if (!isset($entry[$systemFormHandle])) {
 			continue;
 		}
-
-		if (!isset($entryMap[$eagFid]) || count($entryMap[$eagFid]) == 0) {
-			continue;
+		foreach ($entry[$systemFormHandle] as $elements) {
+			$isTemplate = (int)(is_array($elements['is_group_template'] ?? null)
+				? ($elements['is_group_template'][0] ?? 0)
+				: ($elements['is_group_template'] ?? 0));
+			$formId = (int)(is_array($elements['form_id'] ?? null)
+				? ($elements['form_id'][0] ?? 0)
+				: ($elements['form_id'] ?? 0));
+			if ($isTemplate && $formId) {
+				$templateFormIds[$formId] = $formId;
+			}
 		}
+	}
 
-		// Determine the user's scope for this form
-		$view_globalscope = $gperm_handler->checkRight("view_globalscope", $eagFid, $groups, $mid);
-		$view_groupscope = $gperm_handler->checkRight("view_groupscope", $eagFid, $groups, $mid);
-
-		$eagScope = "";
-		if ($view_globalscope) {
-			$eagScope = "";
-		} elseif ($view_groupscope) {
-			$eagScope = buildScope("group", $xoopsUser, $eagFid);
-		} else {
-			$eagScope = buildScope("mine", $xoopsUser, $eagFid);
-		}
-
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$eagFormObject = $form_handler->get($eagFid);
-		$eagFormHandle = $eagFormObject->getVar('form_handle');
-
-		// Get entries from this EAG form (with scope)
-		$eagData = getData("", $eagFid, "", "AND", $eagScope);
-
-		if (!is_array($eagData) || count($eagData) == 0) {
-			continue;
-		}
-
-		// Merge EAG form data into the matching group entries
-		foreach ($eagData as $eagEntry) {
-			if (!isset($eagEntry[$eagFormHandle])) {
+	// For each EAG form, retrieve entry names via the form's PI element.
+	$entriesByFormId = array(); // form_id => [pi_value, ...]
+	if (!empty($templateFormIds)) {
+		$form_handler    = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		foreach ($templateFormIds as $eagFid) {
+			$formObject  = $form_handler->get($eagFid);
+			if (!$formObject) {
 				continue;
 			}
-			foreach ($eagEntry[$eagFormHandle] as $entryId => $elements) {
-				if (isset($entryMap[$eagFid][$entryId])) {
-					$dataIndex = $entryMap[$eagFid][$entryId];
-					if (!isset($data[$dataIndex][$eagFormHandle])) {
-						$data[$dataIndex][$eagFormHandle] = array();
+			$piElementId = intval($formObject->getVar('pi'));
+			$formHandle  = $formObject->getVar('form_handle', 'raw');
+			$dataTable   = $xoopsDB->prefix('formulize_' . $formHandle);
+			if ($piElementId) {
+				// Query PI values from the data table.
+				$piElement = $element_handler->get($piElementId);
+				if ($piElement) {
+					$piHandle = formulize_db_escape($piElement->getVar('ele_handle', 'raw'));
+					$sql = "SELECT DISTINCT `$piHandle`, `entry_id` FROM $dataTable WHERE `$piHandle` IS NOT NULL AND `$piHandle` != '' ORDER BY `$piHandle`";
+					$res = $xoopsDB->query($sql);
+					while ($res && ($piRow = $xoopsDB->fetchRow($res))) {
+						$entriesByFormId[$eagFid][] = viewEntryLink($piRow[0], $piRow[1], override_screen_id: $formObject->getVar('defaultform'));
 					}
-					$data[$dataIndex][$eagFormHandle][$entryId] = $elements;
+					continue;
 				}
 			}
+			// Fallback: derive entry names by stripping category suffixes from entry group names.
+			// Entry groups follow the format "{PI value} - {Category name}".
+			// Collect all category names for this form from the groups table.
+			$catNames = array();
+			$catRes   = $xoopsDB->query(
+				"SELECT name FROM " . $xoopsDB->prefix('groups') .
+				" WHERE form_id = " . intval($eagFid) . " AND is_group_template = 1"
+			);
+			while ($catRes && ($catRow = $xoopsDB->fetchArray($catRes))) {
+				$catNames[] = $catRow['name'];
+			}
+			if (empty($catNames)) {
+				continue;
+			}
+			// Sort by length descending so longer suffixes are matched first (avoids partial stripping).
+			usort($catNames, function($a, $b) { return strlen($b) - strlen($a); });
+			$piValues = array();
+			$entryGroupRes = $xoopsDB->query(
+				"SELECT name, entry_id FROM " . $xoopsDB->prefix('groups') .
+				" WHERE form_id = " . intval($eagFid) . " AND is_group_template = 0 AND entry_id > 0"
+			);
+			while ($entryGroupRes && ($egRow = $xoopsDB->fetchArray($entryGroupRes))) {
+				$entryName = $egRow['name'];
+				$entryId	 = $egRow['entry_id'];
+				foreach ($catNames as $cat) {
+					$suffix = ' - ' . $cat;
+					if (substr($entryName, -strlen($suffix)) === $suffix) {
+						$entryName = substr($entryName, 0, -strlen($suffix));
+						break;
+					}
+				}
+				$piValues[$entryName] = viewEntryLink($entryName, $entryId, override_screen_id: $formObject->getVar('defaultform'));
+			}
+			ksort($piValues);
+			$entriesByFormId[$eagFid] = array_values($piValues);
+		}
+	}
+
+	// Inject into each template group row.
+	foreach ($data as $index => $entry) {
+		if (!isset($entry[$systemFormHandle])) {
+			continue;
+		}
+		foreach (array_keys($entry[$systemFormHandle]) as $pkValue) {
+			$elements   = $entry[$systemFormHandle][$pkValue];
+			$isTemplate = (int)(is_array($elements['is_group_template'] ?? null)
+				? ($elements['is_group_template'][0] ?? 0)
+				: ($elements['is_group_template'] ?? 0));
+			$formId = (int)(is_array($elements['form_id'] ?? null)
+				? ($elements['form_id'][0] ?? 0)
+				: ($elements['form_id'] ?? 0));
+			$entries = ($isTemplate && $formId && isset($entriesByFormId[$formId]))
+				? $entriesByFormId[$formId]
+				: array();
+			$data[$index][$systemFormHandle][$pkValue][$entriesHandle] = $entries;
 		}
 	}
 
@@ -660,7 +827,7 @@ function drawUsersAndGroupsMenuSection() {
 
 	// Sub-items
 	if ($isActive) {
-		$view = isset($_GET['view']) ? $_GET['view'] : 'users';
+		$view = strstr(getCurrentURL(), '/modules/formulize/users.php') !== false ? 'users' : 'groups';
 
 		if ($canManageUsers) {
 			$usersActive = ($view == 'users') ? ' menuSubActive' : '';

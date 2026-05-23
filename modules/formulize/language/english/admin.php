@@ -1073,3 +1073,4 @@ define("_AM_ELE_CLONE_TO_FORM_THISFORM", "This form");
 define("_AM_ELE_CLONE_TO_FORM_BUTTON", "Clone");
 
 define("_AM_FORMULIZE_ADD_USER", "Add User");
+define("_AM_FORMULIZE_ADD_GROUP", "Add Group");

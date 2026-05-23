@@ -2879,22 +2879,42 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 	$excludeWhere = prepareFieldIncludeExclude($excludeFields, 'exclude');
 
 	// setup a translation table for the formulize records of the fields, so we can use that lower down in several places
-		$sql = "SELECT ele_id, ele_caption FROM " . DBPRE . "formulize WHERE id_form=" . $fid . " $includeWhere $excludeWhere";
+	$sql = "SELECT ele_id, ele_handle, ele_caption, ele_value FROM " . DBPRE . "formulize WHERE id_form=" . $fid . " $includeWhere $excludeWhere";
 	$res = $xoopsDB->query($sql);
 	$elementsById = array();
-		$elementsByCaption = array();
 	$elementsByField = array();
+	$elementsByHandle = array();
 	while ($array = $xoopsDB->fetchArray($res)) {
-		$field = str_replace(" ", "_", str_replace("`", "'", $array['ele_caption']));
 		$id = $array['ele_id'];
-		$caption = $array['ele_caption'];
-				$elementsById[$id]['caption'] = $caption;
+		$handle = $array['ele_handle'];
+		$eleVal = @unserialize($array['ele_value']);
+		// Virtual elements have no backing DB column — they are populated post-query by injection
+		// functions (e.g. injectGroupCategoriesData). Skip them from the field map so the query
+		// loop does not try to read a non-existent column from the SELECT * result.
+		if (is_array($eleVal) && !empty($eleVal['virtual'])) {
+			continue;
+		}
+		if (is_numeric($handle)) {
+			// Old-style table form: ele_handle was set to the ele_id integer. The actual DB column
+			// name is encoded in the caption (spaces replaced with underscores).
+			$field = str_replace(" ", "_", str_replace("`", "'", $array['ele_caption']));
+		} elseif (is_array($eleVal) && isset($eleVal['source_column'])) {
+			// Ad hoc form with a renamed handle (e.g. userAccount-typed elements where the handle
+			// is formulize_user_account_uid_N but the real column is uid).
+			$field = $eleVal['source_column'];
+		} else {
+			// Ad hoc form plain column: ele_handle is the column name directly (e.g. groups form).
+			$field = $handle;
+		}
 		$elementsById[$id]['field'] = $field;
-				$elementsByCaption[$caption]['id'] = $id;
-		$elementsByCaption[$caption]['field'] = $field;
-				$elementsByField[$field]['id'] = $id;
-		$elementsByField[$field]['caption'] = $caption;
-			}
+		$elementsByField[$field]['id'] = $id;
+		$elementsByField[$field]['handle'] = $handle;
+		$elementsByHandle[$handle]['field'] = $field;
+	}
+	// Unified lookup used for sort and filter key resolution.
+	// Old-style forms pass ele_id (integer) as the sort/filter key → hits $elementsById.
+	// Ad hoc forms (groups etc.) pass ele_handle (string) → falls through to $elementsByHandle.
+	$elementsLookup = $elementsById + $elementsByHandle;
 
 	if (strstr($tablename, 'SELECT ')) { // preped query for export being passed back in, so run with it
 		$sql = $tablename;
@@ -2913,18 +2933,25 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 					$whereClause .= " $andor ";
 				}
 				$localandor = $thisFilter[0];
-				$whereClause .= "(" . parseTableFormFilter($thisFilter[1], $localandor, $elementsById) . ")";
+				$whereClause .= "(" . parseTableFormFilter($thisFilter[1], $localandor, $elementsLookup) . ")";
 			}
 		} else {
-			$whereClause = parseTableFormFilter($filter, $andor, $elementsById);
+			$whereClause = parseTableFormFilter($filter, $andor, $elementsLookup);
+		}
+
+		// Allow callers to inject an extra raw WHERE fragment (e.g. a dedup subquery for composite
+		// modes). Must be a complete SQL condition — no leading AND/WHERE needed.
+		if (isset($GLOBALS['formulize_tableFormAdditionalWhere'])) {
+			$extra = $GLOBALS['formulize_tableFormAdditionalWhere'];
+			$whereClause = $whereClause ? $whereClause . ' AND (' . $extra . ')' : $extra;
 		}
 
 		// query for the data
 		$whereClause = $whereClause ? "WHERE $whereClause" : "";
 		$basesql = "SELECT * FROM $tablename $whereClause ";
 		$sql = $basesql;
-		if ($sortField) {
-			$sql .= " ORDER BY `" . $elementsById[$sortField]['field'] . "` $sortOrder ";
+		if ($sortField && isset($elementsLookup[$sortField])) {
+			$sql .= " ORDER BY `" . $elementsLookup[$sortField]['field'] . "` $sortOrder ";
 		}
 		if ($limitSize) {
 			$sql .= " LIMIT $limitStart,$limitSize ";
@@ -2959,12 +2986,12 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 	$result = array();
 	$indexer = 0;
 	// result syntax is:
-	// [id][title of form][primary id][formulize element id][value id]
+	// [id][title of form][primary id][element handle][value id]
 	// package up data in the format we need it
 	while ($array = $xoopsDB->fetchArray($res)) {
 		foreach ($elementsByField as $field => $fieldDetails) {
 			$pkValue = $pkField ? $array[$pkField] : $array[key($array)]; // use first field if no PK found above
-						$result[$indexer][$formname][$pkValue][$fieldDetails['id']][] = $array[$field];
+			$result[$indexer][$formname][$pkValue][$fieldDetails['handle']][] = $array[$field];
 		}
 		$indexer++;
 	}
@@ -2996,8 +3023,13 @@ function parseTableFormFilter($filter, $andor, $elementsById)
 		}
 $filterParts = explode("/**/", $thisFilter);
 		$operator = isset($filterParts[2]) ? $filterParts[2] : "LIKE";
-		$likeparts = ($operator == "LIKE" or $operator == "NOT LIKE") ? "%" : "";
-		$whereClause .= "`" . $elementsById[$filterParts[0]]['field'] . "` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";
+		$field = $elementsById[$filterParts[0]]['field'] ?? $filterParts[0];
+		if ($operator === 'IS NULL' || $operator === 'IS NOT NULL') {
+			$whereClause .= "`$field` $operator";
+		} else {
+			$likeparts = ($operator == "LIKE" or $operator == "NOT LIKE") ? "%" : "";
+			$whereClause .= "`$field` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";
+		}
 	}
 	return $whereClause;
 }

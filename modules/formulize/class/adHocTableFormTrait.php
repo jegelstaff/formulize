@@ -249,12 +249,16 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_order', $element_order);
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
-			$element->setVar('ele_value', array(0=>"", 1=>5, 2=>35, 3=>""));
+			$extraEleVal = array(0=>"", 1=>5, 2=>35, 3=>"");
+			if (!empty($extra['virtual'])) {
+				$extraEleVal['virtual'] = true;
+			}
+			$element->setVar('ele_value', $extraEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
 			$element->setVar('ele_display', 1);
 			$element->setVar('ele_disabled', 0);
-			$element->setVar('ele_type', isset($extra['typeForCaption']) ? $extra['typeForCaption'] : 'text');
+			$element->setVar('ele_type', isset($extra['typeForCaption']) ? $extra['typeForCaption'] : ($extra['type'] ?? 'text'));
 			if (!$element_handler->insert($element, force: true)) {
 				return false;
 			}
@@ -391,7 +395,7 @@ trait formulizeAdHocTableFormTrait {
 
 		// Sync extra (post-query-injected) elements
 		foreach ($extraElements as $extra) {
-			$desiredType   = isset($extra['typeForCaption']) ? $extra['typeForCaption'] : 'text';
+			$desiredType   = isset($extra['typeForCaption']) ? $extra['typeForCaption'] : ($extra['type'] ?? 'text');
 			$desiredHandle = $this->_adHocCanonicalHandle($desiredType, $fid, $extra['handle']);
 			$validHandles[] = $desiredHandle;
 
@@ -408,6 +412,11 @@ trait formulizeAdHocTableFormTrait {
 			// Check by canonical handle first, then by original handle (migration path).
 			$existingKey = isset($existingByHandle[$desiredHandle]) ? $desiredHandle
 				: (isset($existingByHandle[$extra['handle']]) ? $extra['handle'] : null);
+
+			$desiredEleVal = array(0=>"", 1=>5, 2=>35, 3=>"");
+			if (!empty($extra['virtual'])) {
+				$desiredEleVal['virtual'] = true;
+			}
 
 			if ($existingKey !== null) {
 				$updates = array();
@@ -430,6 +439,14 @@ trait formulizeAdHocTableFormTrait {
 				if ($existingByHandle[$desiredHandle]['ele_desc'] !== $desiredDesc) {
 					$updates[] = "ele_desc = " . $this->db->quoteString($desiredDesc);
 				}
+				// Ensure the virtual flag is set in ele_value when the extra definition requires it.
+				$existingEleVal = $existingByHandle[$desiredHandle]['ele_value'];
+				$hasVirtualFlag = is_array($existingEleVal) && !empty($existingEleVal['virtual']);
+				$wantsVirtualFlag = !empty($extra['virtual']);
+				if ($wantsVirtualFlag && !$hasVirtualFlag) {
+					$desiredEleVal = array_merge(is_array($existingEleVal) ? $existingEleVal : array(), array('virtual' => true));
+					$updates[] = "ele_value = " . $this->db->quoteString(serialize($desiredEleVal));
+				}
 				if (!empty($updates)) {
 					$this->db->queryF("UPDATE " . $this->db->prefix("formulize") . " SET " . implode(', ', $updates) . " WHERE ele_id = " . intval($existingByHandle[$desiredHandle]['ele_id']));
 					$changed = true;
@@ -445,7 +462,7 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_order', $desiredOrder);
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
-			$element->setVar('ele_value', array(0=>"", 1=>5, 2=>35, 3=>""));
+			$element->setVar('ele_value', $desiredEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
 			$element->setVar('ele_display', 1);

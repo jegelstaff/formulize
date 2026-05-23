@@ -1523,12 +1523,13 @@ class formulizeHandler {
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			if($elementIdentifer AND $elementObject = $element_handler->get($elementIdentifer)) {
 				$formId = $elementObject->getVar('fid');
+				$formIdentifier = $formIdentifier ? $formIdentifier : $formId;
 			} elseif($formIdentifier AND $formObject = $form_handler->get($formIdentifier)) {
 				$formId = $formObject->getVar('fid');
 			} else {
 				throw new Exception("Must provide either elementIdentifer or formIdentifier to enforce unique element handles");
 			}
-			while (!$uniqueCheck = $form_handler->isElementHandleUnique($element_handle_name, $elementIdentifer)) {
+			while (!$uniqueCheck = $form_handler->isElementHandleUnique($element_handle_name, $elementIdentifer, $formIdentifier)) {
 				if ($firstUniqueCheck) {
 						$element_handle_name = $element_handle_name . "_".$formId;
 						$firstUniqueCheck = false;
