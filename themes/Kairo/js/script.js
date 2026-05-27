@@ -1,484 +1,141 @@
-// modules are defined as an array
-// [ module function, map of requires ]
-//
-// map of requires is short require name -> numeric require
-//
-// anything defined in a previous bundle is accessed via the
-// orig method which is the require for previous bundles
-parcelRequire = (function (modules, cache, entry, globalName) {
-  // Save the require from previous bundle to this closure if any
-  var previousRequire = typeof parcelRequire === 'function' && parcelRequire;
-  var nodeRequire = typeof require === 'function' && require;
+'use strict';
 
-  function newRequire(name, jumped) {
-    if (!cache[name]) {
-      if (!modules[name]) {
-        // if we cannot find the module within our internal map or
-        // cache jump to the current global require ie. the last bundle
-        // that was added to the page.
-        var currentRequire = typeof parcelRequire === 'function' && parcelRequire;
-        if (!jumped && currentRequire) {
-          return currentRequire(name, true);
-        }
-
-        // If there are other bundles on this page the require from the
-        // previous one is saved to 'previousRequire'. Repeat this as
-        // many times as there are bundles until the module is found or
-        // we exhaust the require chain.
-        if (previousRequire) {
-          return previousRequire(name, true);
-        }
-
-        // Try the node require function if it exists.
-        if (nodeRequire && typeof name === 'string') {
-          return nodeRequire(name);
-        }
-
-        var err = new Error('Cannot find module \'' + name + '\'');
-        err.code = 'MODULE_NOT_FOUND';
-        throw err;
-      }
-
-      localRequire.resolve = resolve;
-      localRequire.cache = {};
-
-      var module = cache[name] = new newRequire.Module(name);
-
-      modules[name][0].call(module.exports, localRequire, module, module.exports, this);
-    }
-
-    return cache[name].exports;
-
-    function localRequire(x){
-      return newRequire(localRequire.resolve(x));
-    }
-
-    function resolve(x){
-      return modules[name][1][x] || x;
-    }
-  }
-
-  function Module(moduleName) {
-    this.id = moduleName;
-    this.bundle = newRequire;
-    this.exports = {};
-  }
-
-  newRequire.isParcelRequire = true;
-  newRequire.Module = Module;
-  newRequire.modules = modules;
-  newRequire.cache = cache;
-  newRequire.parent = previousRequire;
-  newRequire.register = function (id, exports) {
-    modules[id] = [function (require, module) {
-      module.exports = exports;
-    }, {}];
-  };
-
-  var error;
-  for (var i = 0; i < entry.length; i++) {
-    try {
-      newRequire(entry[i]);
-    } catch (e) {
-      // Save first error but execute all entries
-      if (!error) {
-        error = e;
-      }
-    }
-  }
-
-  if (entry.length) {
-    // Expose entry point to Node, AMD or browser globals
-    // Based on https://github.com/ForbesLindesay/umd/blob/master/template.js
-    var mainExports = newRequire(entry[entry.length - 1]);
-
-    // CommonJS
-    if (typeof exports === "object" && typeof module !== "undefined") {
-      module.exports = mainExports;
-
-    // RequireJS
-    } else if (typeof define === "function" && define.amd) {
-     define(function () {
-       return mainExports;
-     });
-
-    // <script>
-    } else if (globalName) {
-      this[globalName] = mainExports;
-    }
-  }
-
-  // Override the current require with this new one
-  parcelRequire = newRequire;
-
-  if (error) {
-    // throw error from earlier, _after updating parcelRequire_
-    throw error;
-  }
-
-  return newRequire;
-})({"scripts/main.js":[function(require,module,exports) {
-/**
- * Load all plugins on load
- */
-document.addEventListener('DOMContentLoaded', function () {
-  initHamburgerMenu();
-	initAccessibleCardToggles();
+document.addEventListener('DOMContentLoaded', () => {
+  initSidebar();
+  initDrawer();
+  initAccordions();
+  initCardToggles();
+  showApp();
 });
-/**
- * Add support for opening and closing the hamburger menu
- */
 
-function initHamburgerMenu() {
-  var flyoutMenu = document.querySelector('.js-flyout-menu');
-  var triggerOpenButton = document.querySelector('.js-site-menu-open-trigger');
-  var triggerCloseButton = document.querySelector('.js-site-menu-close-trigger');
-  triggerOpenButton.addEventListener('click', function (evt) {
-    evt.preventDefault();
-    flyoutMenu.classList.add('site-layout__sidebar--open');
-  });
-  triggerCloseButton.addEventListener('click', function (evt) {
-    evt.preventDefault();
-    flyoutMenu.classList.remove('site-layout__sidebar--open');
-  });
-  var login_button = document.querySelector('#block_login_form input[type=submit]');
-  if (login_button) {
-    login_button.addEventListener('click', function(evt) {
-      flyoutMenu.classList.remove('site-layout__sidebar--open');
-    });
+// ============================================================
+// Sidebar toggle
+// ============================================================
+
+function initSidebar() {
+  const app = document.getElementById('fz-app');
+  const toggle = document.querySelector('.js-sidebar-toggle');
+  if (!app || !toggle) return;
+
+  const STORAGE_KEY = 'fz-sidebar-closed';
+  const isMobile = () => window.innerWidth <= 768;
+
+  function setSidebarState(closed) {
+    if (isMobile()) {
+      app.classList.toggle('fz-app--sidebar-open', !closed);
+      app.classList.remove('fz-app--sidebar-closed');
+    } else {
+      app.classList.toggle('fz-app--sidebar-closed', closed);
+      app.classList.remove('fz-app--sidebar-open');
+    }
+    toggle.setAttribute('aria-expanded', String(!closed));
+    try { localStorage.setItem(STORAGE_KEY, String(closed)); } catch (_) { /* ignore */ }
   }
 
-}
-
-/**
- * Accessible Toggle cards
- */
-function initAccessibleCardToggles() {
-	const accordionHeaders = document.querySelectorAll('[data-accordion-header]');
-	Array.prototype.forEach.call(accordionHeaders, accordionHeader => {
-		let target = accordionHeader.parentElement.nextElementSibling;
-		accordionHeader.onclick = (event) => {
-			event.preventDefault();
-			let expanded = accordionHeader.getAttribute('aria-expanded') === 'true' || false;
-			accordionHeader.setAttribute('aria-expanded', !expanded);
-			target.hidden = expanded;
-		}
-	})
-}
-
-/**
- * Toggle cards
- */
-
-(function initCardToggles($) {
-  if (!$) return console.warn('jQuery not loaded'); // Hide all togglable
-
-  $('[data-toggle-detail]').hide(); // Attach listeners to all of the togglers
-
-  $('[data-toggle]').on('click', function () {
-    var $this = $(this);
-    var contentId = $this.attr('data-toggle');
-    var $contentElement = $('[data-toggle-detail="' + contentId + '"]');
-    $contentElement.toggle();
+  toggle.addEventListener('click', () => {
+    const closed = isMobile()
+      ? app.classList.contains('fz-app--sidebar-open')
+      : !app.classList.contains('fz-app--sidebar-closed');
+    setSidebarState(closed);
   });
-})(window.jQuery);
 
-(function initDatepicker($) {
-  if (!$) return console.warn('jQuery not loaded');
-  var $datepicker = $('.js-datepicker');
-
-  if ($datepicker && $datepicker.datepicker) {
-    $datepicker.datepicker({
-      prevText: '←',
-      nextText: '→'
-    });
+  // Restore saved state on desktop; use data attribute default otherwise
+  if (!isMobile()) {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const defaultOpen = app.dataset.sidebarDefault === 'open';
+      setSidebarState(saved !== null ? saved === 'true' : !defaultOpen);
+    } catch (_) { /* ignore */ }
   }
-})(window.jQuery);
-/**
- * for development only
- */
 
-
-(function initDynamicNav($) {
-    return;
-  if (!$) return console.warn('jQuery not loaded');
-  var $menu = $('#mainmenu');
-  var menuItems = [{
-    name: 'Card Layout',
-    url: 'index.html'
-  }, {
-    name: 'Single Row Layout',
-    url: 'single-row-layout.html'
-  }, {
-    name: 'Forms',
-    url: 'forms.html'
-  }, {
-    name: 'Forms in Cards',
-    url: 'forms-in-cards.html'
-  }, {
-    name: 'Survey',
-    url: 'survey.html'
-  }, {
-    name: 'Notes',
-    url: 'notes.html'
-  }, {
-    name: 'Self-assessment',
-    url: 'self-assessment.html'
-  }, {
-    name: 'Timepoints',
-    url: 'timepoints.html'
-  }, {
-    name: 'Create Timepoints',
-    url: 'create-timepoints.html'
-  }, {
-    name: 'Fake Graphs',
-    url: 'fake-graphs.html'
-  }, {
-    name: 'Blank Page',
-    url: '_template-page.html'
-  }];
-  menuItems.reverse().forEach(function (itemData) {
-    var menuListItem = $('<li>');
-    menuListItem.addClass('main-menu__item');
-    var menuLink = $('<a>');
-    menuLink.attr({
-      href: itemData.url,
-      class: 'main-menu__item-link'
-    });
-    menuLink.text(itemData.name);
-
-    if (window.location.href.endsWith(itemData.url)) {
-      menuLink.addClass('main-menu__item-link--active');
+  // Close mobile sidebar on outside click
+  document.addEventListener('click', (e) => {
+    if (!isMobile() || !app.classList.contains('fz-app--sidebar-open')) return;
+    const sidebar = document.getElementById('fz-sidebar');
+    if (sidebar && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+      setSidebarState(true);
     }
-
-    menuLink.appendTo(menuListItem);
-    menuListItem.prependTo($menu);
   });
-})(window.jQuery);
-/**
- * tabs (navigation)
- */
-
-
-(function initTabs($) {
-  var $tabs = $('.js-tabs');
-  $tabs.on('click', '[data-tab-set]', function () {
-    var $currentTab = $(this);
-    var tabSet = $currentTab.data('tab-set');
-    $tabs.find("[data-tab-set=\"".concat(tabSet, "\"]")).each(function (index, tab) {
-      $(tab).removeClass('pill-tabs__item--active');
-    }); // Active state
-
-    $currentTab.addClass('pill-tabs__item--active'); // Toggle content, if applicable
-
-    var tabContentId = $currentTab.data('tab-content');
-    $('.js-tab-content').hide();
-    $("#".concat(tabContentId)).show();
-  });
-})(window.jQuery);
-},{}],"../node_modules/parcel/src/builtins/hmr-runtime.js":[function(require,module,exports) {
-var global = arguments[3];
-var OVERLAY_ID = '__parcel__error__overlay__';
-var OldModule = module.bundle.Module;
-
-function Module(moduleName) {
-  OldModule.call(this, moduleName);
-  this.hot = {
-    data: module.bundle.hotData,
-    _acceptCallbacks: [],
-    _disposeCallbacks: [],
-    accept: function (fn) {
-      this._acceptCallbacks.push(fn || function () {});
-    },
-    dispose: function (fn) {
-      this._disposeCallbacks.push(fn);
-    }
-  };
-  module.bundle.hotData = null;
 }
 
-module.bundle.Module = Module;
-var checkedAssets, assetsToAccept;
-var parent = module.bundle.parent;
+// ============================================================
+// Right slide-out drawer
+// Exposed as window.formulizeDrawer.open({ title, html, footerHtml })
+// ============================================================
 
-if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
-  var hostname = "" || location.hostname;
-  var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54491" + '/');
+function initDrawer() {
+  const scrim = document.querySelector('.js-drawer-scrim');
+  const drawer = document.querySelector('.js-drawer');
+  const closeBtn = document.querySelector('.js-drawer-close');
+  if (!drawer) return;
 
-  ws.onmessage = function (event) {
-    checkedAssets = {};
-    assetsToAccept = [];
-    var data = JSON.parse(event.data);
+  const titleEl  = drawer.querySelector('.js-drawer-title');
+  const bodyEl   = drawer.querySelector('.js-drawer-body');
+  const footEl   = drawer.querySelector('.js-drawer-foot');
 
-    if (data.type === 'update') {
-      var handled = false;
-      data.assets.forEach(function (asset) {
-        if (!asset.isNew) {
-          var didAccept = hmrAcceptCheck(global.parcelRequire, asset.id);
+  function openDrawer({ title = '', html = '', footerHtml = '' } = {}) {
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl)  bodyEl.innerHTML = html;
+    if (footEl)  footEl.innerHTML = footerHtml;
+    drawer.removeAttribute('hidden');
+    if (scrim) scrim.removeAttribute('hidden');
+    document.documentElement.style.overflow = 'hidden';
+  }
 
-          if (didAccept) {
-            handled = true;
-          }
-        }
-      }); // Enable HMR for CSS by default.
+  function closeDrawer() {
+    drawer.setAttribute('hidden', '');
+    if (scrim) scrim.setAttribute('hidden', '');
+    document.documentElement.style.overflow = '';
+  }
 
-      handled = handled || data.assets.every(function (asset) {
-        return asset.type === 'css' && asset.generated.js;
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+  if (scrim)    scrim.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !drawer.hasAttribute('hidden')) closeDrawer();
+  });
+
+  window.formulizeDrawer = { open: openDrawer, close: closeDrawer };
+}
+
+// ============================================================
+// Accordion (accessible toggle via data-accordion-header)
+// ============================================================
+
+function initAccordions() {
+  document.querySelectorAll('[data-accordion-header]').forEach((header) => {
+    const target = header.parentElement && header.parentElement.nextElementSibling;
+    if (!target) return;
+    header.addEventListener('click', (e) => {
+      e.preventDefault();
+      const expanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!expanded));
+      target.hidden = expanded;
+    });
+  });
+}
+
+// ============================================================
+// Card toggles (data-toggle / data-toggle-detail)
+// ============================================================
+
+function initCardToggles() {
+  document.querySelectorAll('[data-toggle-detail]').forEach((el) => {
+    el.hidden = true;
+  });
+  document.querySelectorAll('[data-toggle]').forEach((trigger) => {
+    trigger.addEventListener('click', () => {
+      const id = trigger.dataset.toggle;
+      document.querySelectorAll(`[data-toggle-detail="${id}"]`).forEach((el) => {
+        el.hidden = !el.hidden;
       });
-
-      if (handled) {
-        console.clear();
-        data.assets.forEach(function (asset) {
-          hmrApply(global.parcelRequire, asset);
-        });
-        assetsToAccept.forEach(function (v) {
-          hmrAcceptRun(v[0], v[1]);
-        });
-      } else if (location.reload) {
-        // `location` global exists in a web worker context but lacks `.reload()` function.
-        location.reload();
-      }
-    }
-
-    if (data.type === 'reload') {
-      ws.close();
-
-      ws.onclose = function () {
-        location.reload();
-      };
-    }
-
-    if (data.type === 'error-resolved') {
-      console.log('[parcel] ✨ Error resolved');
-      removeErrorOverlay();
-    }
-
-    if (data.type === 'error') {
-      console.error('[parcel] 🚨  ' + data.error.message + '\n' + data.error.stack);
-      removeErrorOverlay();
-      var overlay = createErrorOverlay(data);
-      document.body.appendChild(overlay);
-    }
-  };
-}
-
-function removeErrorOverlay() {
-  var overlay = document.getElementById(OVERLAY_ID);
-
-  if (overlay) {
-    overlay.remove();
-  }
-}
-
-function createErrorOverlay(data) {
-  var overlay = document.createElement('div');
-  overlay.id = OVERLAY_ID; // html encode message and stack trace
-
-  var message = document.createElement('div');
-  var stackTrace = document.createElement('pre');
-  message.innerText = data.error.message;
-  stackTrace.innerText = data.error.stack;
-  overlay.innerHTML = '<div style="background: black; font-size: 16px; color: white; position: fixed; height: 100%; width: 100%; top: 0px; left: 0px; padding: 30px; opacity: 0.85; font-family: Menlo, Consolas, monospace; z-index: 9999;">' + '<span style="background: red; padding: 2px 4px; border-radius: 2px;">ERROR</span>' + '<span style="top: 2px; margin-left: 5px; position: relative;">🚨</span>' + '<div style="font-size: 18px; font-weight: bold; margin-top: 20px;">' + message.innerHTML + '</div>' + '<pre>' + stackTrace.innerHTML + '</pre>' + '</div>';
-  return overlay;
-}
-
-function getParents(bundle, id) {
-  var modules = bundle.modules;
-
-  if (!modules) {
-    return [];
-  }
-
-  var parents = [];
-  var k, d, dep;
-
-  for (k in modules) {
-    for (d in modules[k][1]) {
-      dep = modules[k][1][d];
-
-      if (dep === id || Array.isArray(dep) && dep[dep.length - 1] === id) {
-        parents.push(k);
-      }
-    }
-  }
-
-  if (bundle.parent) {
-    parents = parents.concat(getParents(bundle.parent, id));
-  }
-
-  return parents;
-}
-
-function hmrApply(bundle, asset) {
-  var modules = bundle.modules;
-
-  if (!modules) {
-    return;
-  }
-
-  if (modules[asset.id] || !bundle.parent) {
-    var fn = new Function('require', 'module', 'exports', asset.generated.js);
-    asset.isNew = !modules[asset.id];
-    modules[asset.id] = [fn, asset.deps];
-  } else if (bundle.parent) {
-    hmrApply(bundle.parent, asset);
-  }
-}
-
-function hmrAcceptCheck(bundle, id) {
-  var modules = bundle.modules;
-
-  if (!modules) {
-    return;
-  }
-
-  if (!modules[id] && bundle.parent) {
-    return hmrAcceptCheck(bundle.parent, id);
-  }
-
-  if (checkedAssets[id]) {
-    return;
-  }
-
-  checkedAssets[id] = true;
-  var cached = bundle.cache[id];
-  assetsToAccept.push([bundle, id]);
-
-  if (cached && cached.hot && cached.hot._acceptCallbacks.length) {
-    return true;
-  }
-
-  return getParents(global.parcelRequire, id).some(function (id) {
-    return hmrAcceptCheck(global.parcelRequire, id);
+    });
   });
 }
 
-function hmrAcceptRun(bundle, id) {
-  var cached = bundle.cache[id];
-  bundle.hotData = {};
+// ============================================================
+// Show app and fire page-shown event
+// ============================================================
 
-  if (cached) {
-    cached.hot.data = bundle.hotData;
-  }
-
-  if (cached && cached.hot && cached.hot._disposeCallbacks.length) {
-    cached.hot._disposeCallbacks.forEach(function (cb) {
-      cb(bundle.hotData);
-    });
-  }
-
-  delete bundle.cache[id];
-  bundle(id);
-  cached = bundle.cache[id];
-
-  if (cached && cached.hot && cached.hot._acceptCallbacks.length) {
-    cached.hot._acceptCallbacks.forEach(function (cb) {
-      cb();
-    });
-
-    return true;
-  }
+function showApp() {
+  window.dispatchEvent(new CustomEvent('formulize_pageShown'));
 }
-},{}]},{},["../node_modules/parcel/src/builtins/hmr-runtime.js","scripts/main.js"], null)
-//# sourceMappingURL=/main.d8ebb8d6.js.map
