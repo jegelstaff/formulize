@@ -334,6 +334,8 @@ body {
   cursor: pointer;
   white-space: nowrap;
   text-decoration: none;
+  appearance: none;
+  -webkit-appearance: none;
   transition: background var(--dur-1) var(--ease),
               border-color var(--dur-1) var(--ease),
               color var(--dur-1) var(--ease);
@@ -357,6 +359,13 @@ body {
   background: transparent;
 }
 .fz-btn--ghost:hover { background: var(--c-surface-3); }
+
+/* Filter toggle — highlight when filters are visible */
+#fz-filter-toggle[aria-pressed="true"] {
+  background: var(--c-accent-soft);
+  border-color: var(--c-accent-soft-2);
+  color: var(--c-accent);
+}
 
 .fz-btn--sm  { height: 26px; padding: 0 var(--s-2); font-size: var(--fs-12); }
 .fz-btn--lg  { height: 36px; padding: 0 14px; font-size: var(--fs-14); }
