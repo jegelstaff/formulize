@@ -1657,6 +1657,11 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	formulize_benchmark("before rendering top template");
 	$buttonCodeArray['submitButton'] = $submitButton;
 	$buttonCodeArray['messageText'] = str_replace("'", "\'", $messageText); // message text will be output inside single quotes;
+	if (!isset($useSearch)) {
+		$useSearch = $settings['lockcontrols'] ? 0 : 1;
+		if ($screen) { $useSearch = $screen->getVar('usesearch') ? $screen->getVar('usesearch') : 0; }
+	}
+	$buttonCodeArray['searchesShown'] = $useSearch;
 	formulize_screenLOETemplate($screen, "top", $buttonCodeArray, $settings);
 	formulize_benchmark("after rendering top template");
 	if(strstr(getTemplateToRender('toptemplate', $screenOrScreenType), "\$submitButton")) {
