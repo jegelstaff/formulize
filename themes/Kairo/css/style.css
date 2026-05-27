@@ -373,6 +373,354 @@ body {
 .fz-mono    { font-family: var(--font-mono); font-feature-settings: "tnum"; }
 
 /* ============================================================
+   List screen
+   ============================================================ */
+
+.fz-list-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Title bar */
+.fz-list__titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.fz-list__titlebar-start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.fz-list__titlebar-end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+.fz-list__title {
+  font-size: var(--fs-20);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: var(--lh-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* More-actions wrapper — anchors the dropdown to the "..." button */
+.fz-list__more-wrap {
+  position: relative;
+}
+
+/* More-actions dropdown */
+.fz-list__action-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  min-width: 220px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  padding: var(--s-1) 0;
+  flex-direction: column;
+}
+
+.fz-list__action-panel.open {
+  display: flex;
+}
+
+/* Formulize-generated buttons inside the dropdown styled as pop items */
+.fz-list__action-panel input[type="button"],
+.fz-list__action-panel input[type="submit"],
+.fz-list__action-panel .formulize_button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--s-2);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-13);
+  color: var(--c-text);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fz-list__action-panel input[type="button"]:hover,
+.fz-list__action-panel input[type="submit"]:hover,
+.fz-list__action-panel .formulize_button:hover {
+  background: var(--c-surface-3);
+}
+
+/* Popover components (shared across dropdown contexts) */
+.fz-pop {
+  background: var(--c-surface);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  border: 1px solid var(--c-border);
+  padding: var(--s-1);
+  min-width: 180px;
+}
+
+.fz-pop__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--s-2);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-13);
+  color: var(--c-text);
+  border-radius: var(--r-1);
+  cursor: pointer;
+  text-align: left;
+}
+
+.fz-pop__item:hover { background: var(--c-surface-3); }
+.fz-pop__item--danger { color: var(--c-danger); }
+.fz-pop__sep { height: 1px; background: var(--c-border); margin: 4px 2px; }
+.fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--c-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
+
+/* Selection bar (shown when rows are checked) */
+.fz-selection-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-text);
+  color: var(--c-bg);
+  border-bottom: 1px solid var(--c-text);
+  min-height: 56px;
+  flex-shrink: 0;
+}
+
+.fz-selection-bar__start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+.fz-selection-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.js-selection-count {
+  font-size: var(--fs-14);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Buttons inside the dark selection bar */
+.fz-selection-bar input[type="button"],
+.fz-selection-bar input[type="submit"],
+.fz-selection-bar .formulize_button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--r-md);
+  padding: var(--s-1) var(--s-3);
+  font-size: var(--fs-13);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease);
+  white-space: nowrap;
+}
+
+.fz-selection-bar input[type="button"]:hover,
+.fz-selection-bar input[type="submit"]:hover,
+.fz-selection-bar .formulize_button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Footer (pagination) */
+.fz-list__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-5);
+  background: var(--c-surface-2);
+  border-top: 1px solid var(--c-border);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.fz-list__footer-start {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.fz-list__footer-end {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* ============================================================
+   List body — scrollable table container
+   ============================================================ */
+
+.fz-list__body {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================================
+   Table
+   ============================================================ */
+
+.fz-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-13);
+  table-layout: auto;
+}
+
+.fz-table th,
+.fz-table td {
+  text-align: left;
+  vertical-align: middle;
+  padding: 0 var(--row-pad-x);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fz-table thead th {
+  height: 36px;
+  font-weight: 600;
+  font-size: var(--fs-12);
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border-bottom-color: var(--c-border-strong);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.fz-table tbody tr:hover td { background: var(--c-surface-2); cursor: pointer; }
+.fz-table tbody tr[aria-selected="true"] td { background: var(--c-accent-soft); }
+
+.fz-table--compact     tbody td { height: var(--row-h-compact); }
+.fz-table--cozy        tbody td { height: var(--row-h-cozy); }
+.fz-table--comfortable tbody td { height: var(--row-h-comfortable); white-space: normal; line-height: var(--lh-snug); }
+
+/* Checkbox / controls column */
+.fz-table .fz-cb {
+  width: 36px;
+  padding: 0;
+  text-align: center;
+}
+
+/* Checkbox styling */
+.fz-checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid var(--c-border-strong);
+  background: var(--c-surface);
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.fz-checkbox:checked {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.fz-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Formulize selection checkboxes get the same treatment as fz-checkbox */
+.fz-table .formulize_selection_checkbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1.5px solid var(--c-border-strong);
+  background: var(--c-surface);
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.fz-table .formulize_selection_checkbox:checked {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.fz-table .formulize_selection_checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Sort link in column headers */
+.fz-th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fz-th-sort:hover { color: var(--c-text); }
+
+/* ============================================================
    Sidebar nav content
    ============================================================ */
 
