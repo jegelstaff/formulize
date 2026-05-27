@@ -239,6 +239,22 @@ body {
   background: var(--c-bg);
 }
 
+/* Inline / drawer-iframe mode — header and sidebar suppressed via theme.html */
+.fz-inline .fz-app {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.fz-inline .fz-app__body {
+  flex: 1;
+  overflow: visible;
+}
+
+.fz-inline .fz-main {
+  overflow: visible;
+}
+
 /* ============================================================
    Right slide-out drawer
    ============================================================ */
@@ -296,6 +312,18 @@ body {
   flex: 1;
   overflow: auto;
   padding: var(--s-5);
+}
+
+.fz-drawer__body:has(iframe) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.fz-drawer__iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .fz-drawer__foot {
