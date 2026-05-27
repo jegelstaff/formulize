@@ -363,6 +363,73 @@ body {
 .fz-btn--icon { width: 32px; padding: 0; }
 .fz-btn--icon.fz-btn--sm { width: 26px; }
 
+/* Chip — pill button used for filter chips and selection bar actions */
+.fz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-full);
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent-soft-2);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+button.fz-chip { cursor: pointer; }
+button.fz-chip:hover { background: var(--c-accent-soft-2); }
+
+.fz-chip:has(.fz-chip__close) { padding-right: 4px; }
+
+.fz-chip__close {
+  width: 18px; height: 18px;
+  border-radius: var(--r-full);
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0;
+  cursor: pointer; color: var(--c-text-muted);
+}
+.fz-chip__close:hover { background: rgba(0,0,0,.08); color: var(--c-text); }
+
+.fz-chip--ghost {
+  background: var(--c-surface);
+  border-color: var(--c-border-strong);
+  border-style: dashed;
+  color: var(--c-text-muted);
+  font-weight: 400;
+  cursor: pointer;
+}
+.fz-chip--ghost:hover { background: var(--c-surface-3); color: var(--c-text); }
+
+.fz-chip--dark {
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+  color: #fff;
+}
+button.fz-chip--dark:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.28); }
+
+.fz-chip--dark.fz-chip--danger {
+  background: rgba(255,90,90,.14);
+  border-color: rgba(255,120,120,.35);
+  color: #ffbaba;
+}
+button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); border-color: rgba(255,120,120,.5); }
+
+.fz-chip--outline {
+  background: transparent;
+  border-color: var(--c-border-strong);
+  color: var(--c-text-muted);
+}
+.fz-chip--dark.fz-chip--outline {
+  background: transparent;
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.85);
+}
+
 /* Helpers */
 .fz-spacer  { flex: 1 1 auto; }
 .fz-divider { width: 1px; height: 20px; background: var(--c-border); }
@@ -408,6 +475,48 @@ body {
   gap: var(--s-2);
   flex-shrink: 0;
 }
+
+/* Formulize-generated buttons in the titlebar styled as fz-btn */
+.fz-list__titlebar input[type="button"],
+.fz-list__titlebar .formulize_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.fz-list__titlebar input[type="button"]:hover,
+.fz-list__titlebar .formulize_button:hover { background: var(--c-surface-3); }
+
+/* Add entry — primary */
+.fz-list__titlebar #formulize_addButton {
+  background: var(--c-accent);
+  color: var(--c-text-on-accent);
+  border-color: var(--c-accent);
+}
+.fz-list__titlebar #formulize_addButton:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent-hover);
+}
+
+/* More actions (...) — ghost icon button */
+.fz-list__titlebar #formulize_moreActions {
+  width: 32px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.fz-list__titlebar #formulize_moreActions:hover { background: var(--c-surface-3); }
 
 .fz-list__title {
   font-size: var(--fs-20);
@@ -535,26 +644,51 @@ body {
   white-space: nowrap;
 }
 
-/* Buttons inside the dark selection bar */
+/* Buttons inside the dark selection bar — chip-dark style */
 .fz-selection-bar input[type="button"],
 .fz-selection-bar input[type="submit"],
 .fz-selection-bar .formulize_button {
-  background: rgba(255, 255, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-full);
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.18);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: var(--r-md);
-  padding: var(--s-1) var(--s-3);
+  font: inherit;
   font-size: var(--fs-13);
-  font-family: var(--font-sans);
+  font-weight: 500;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease);
   white-space: nowrap;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
 
 .fz-selection-bar input[type="button"]:hover,
 .fz-selection-bar input[type="submit"]:hover,
 .fz-selection-bar .formulize_button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.28);
+}
+
+/* Delete button — danger chip-dark */
+.fz-selection-bar #formulize_deleteButton {
+  background: rgba(255,90,90,.14);
+  border-color: rgba(255,120,120,.35);
+  color: #ffbaba;
+}
+.fz-selection-bar #formulize_deleteButton:hover {
+  background: rgba(255,90,90,.22);
+  border-color: rgba(255,120,120,.5);
+}
+
+/* Clear/select-all buttons — outlined chip-dark */
+.fz-selection-bar #formulize_clearSelectButton,
+.fz-selection-bar #formulize_selectAllButton {
+  background: transparent;
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.85);
 }
 
 /* Footer (pagination) */
@@ -641,6 +775,13 @@ body {
   width: 36px;
   padding: 0;
   text-align: center;
+  vertical-align: middle;
+}
+
+.fz-table .fz-cb input[type="checkbox"] {
+  display: block;
+  margin: 0 auto;
+  vertical-align: middle;
 }
 
 /* Checkbox styling */

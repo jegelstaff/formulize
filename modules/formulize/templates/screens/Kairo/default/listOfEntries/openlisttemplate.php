@@ -18,7 +18,7 @@ print "
 
 		if($searchesShown) {
 
-			print "<tr>";
+			print "<tr class='fz-search-row' hidden>";
 
 			if($searchHelp OR $toggleSearches) {
 				print "<td class='fz-cb head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
