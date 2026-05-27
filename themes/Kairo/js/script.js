@@ -60,7 +60,7 @@ function initSidebar() {
 
 // ============================================================
 // Right slide-out drawer
-// Exposed as window.formulizeDrawer.open({ title, html, footerHtml })
+// Exposed as window.formulize.drawer.open({ title, html, footerHtml })
 // ============================================================
 
 function initDrawer() {
@@ -88,13 +88,48 @@ function initDrawer() {
     document.documentElement.style.overflow = '';
   }
 
+  // Load a Formulize entry URL into the drawer via an iframe.
+  // Appends fz_inline=1, extracts the page h1 for the drawer title,
+  // and reloads the parent list on any subsequent navigation (save/cancel).
+  function openEntryInDrawer(url) {
+    var sep = url.indexOf('?') >= 0 ? '&' : '?';
+    var iframeUrl = url + sep + 'fz_inline=1';
+
+    openDrawer({ title: '' });
+    if (!bodyEl) return;
+    bodyEl.innerHTML = '';
+
+    var iframe = document.createElement('iframe');
+    iframe.src = iframeUrl;
+    iframe.className = 'fz-drawer__iframe';
+    iframe.setAttribute('title', 'Entry detail');
+
+    var initialLoad = true;
+    iframe.addEventListener('load', function () {
+      if (initialLoad) {
+        initialLoad = false;
+        try {
+          var h1 = iframe.contentDocument.querySelector('h1');
+          var drawerTitleEl = drawer.querySelector('.js-drawer-title');
+          if (h1 && drawerTitleEl) drawerTitleEl.textContent = h1.textContent.trim();
+        } catch (_) {}
+        return;
+      }
+      // Subsequent navigation (save / cancel) → close drawer
+      closeDrawer();
+    });
+
+    bodyEl.appendChild(iframe);
+  }
+
   if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
   if (scrim)    scrim.addEventListener('click', closeDrawer);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !drawer.hasAttribute('hidden')) closeDrawer();
   });
 
-  window.formulizeDrawer = { open: openDrawer, close: closeDrawer };
+  window.formulize = window.formulize || {};
+  window.formulize.drawer = { open: openDrawer, close: closeDrawer, openEntry: openEntryInDrawer };
 }
 
 // ============================================================
