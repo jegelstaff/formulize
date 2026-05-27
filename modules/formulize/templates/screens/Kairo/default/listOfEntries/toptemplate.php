@@ -13,7 +13,16 @@ $procedureResults
       $currentViewList
     </div>
     <div class='fz-list__titlebar-end'>
-      $addButton
+      $addButton";
+
+if ($searchesShown) {
+    print "
+      <button id='fz-filter-toggle' class='fz-btn fz-btn--ghost fz-btn--icon' aria-label='Toggle filters' title='Toggle filters'>
+        <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3 5h18M6 12h12M10 19h4'/></svg>
+      </button>";
+}
+
+print "
       <div class='fz-list__more-wrap'>
         $moreActionsButton
         <div id='more-action-buttons' class='fz-list__action-panel'>
