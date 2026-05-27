@@ -49,13 +49,14 @@ document.addEventListener('click', function (e) {
         });
     }
 
-    // Filter toggle: show/hide the search row
     function initFilterToggle() {
-        var btn = document.getElementById('fz-filter-toggle');
+        var btn  = document.getElementById('fz-filter-toggle');
+        var rows = document.querySelectorAll('.fz-search-row');
         if (!btn) return;
+        if (rows.length === 0) { btn.style.display = 'none'; return; }
+        btn.setAttribute('aria-pressed', String(!rows[0].hasAttribute('hidden')));
         btn.addEventListener('click', function () {
-            var rows = document.querySelectorAll('.fz-search-row');
-            var isHidden = rows.length > 0 && rows[0].hasAttribute('hidden');
+            var isHidden = rows[0].hasAttribute('hidden');
             rows.forEach(function (row) {
                 if (isHidden) { row.removeAttribute('hidden'); }
                 else          { row.setAttribute('hidden', ''); }
