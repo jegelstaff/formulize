@@ -373,6 +373,152 @@ body {
 .fz-mono    { font-family: var(--font-mono); font-feature-settings: "tnum"; }
 
 /* ============================================================
+   Sidebar nav content
+   ============================================================ */
+
+/* Container injected by blockszone.html */
+#xo-canvas-leftcolumn {
+  /* Scroll is handled by .fz-sidebar; don't add overflow here */
+}
+
+.xo-blockszone {
+  padding: var(--s-4) var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* Block title renders as a section label */
+.xo-blocktitle h3 {
+  padding: 0 var(--s-2) var(--s-2);
+  font-size: var(--fs-11);
+  font-weight: 600;
+  color: var(--c-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: var(--lh-tight);
+}
+
+/* Nav menu (menu.html outputs .main-menu) */
+.main-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.main-menu__item {
+  position: relative;
+}
+
+.main-menu__item-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px var(--s-2);
+  border-radius: var(--r-2);
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text);
+  text-decoration: none;
+  transition: background var(--dur-1) var(--ease);
+  line-height: var(--lh-snug);
+}
+
+.main-menu__item-link:hover {
+  background: var(--c-surface-3);
+}
+
+.main-menu__item-link--active {
+  background: var(--c-surface);
+  font-weight: 600;
+  box-shadow: var(--sh-1);
+}
+
+.main-menu__item-link--active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: var(--r-full);
+  background: var(--c-accent);
+}
+
+.main-menu__item-link-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--c-text-subtle);
+}
+
+.main-menu__item-link--active .main-menu__item-link-icon {
+  color: var(--c-accent);
+}
+
+/* Sub-items */
+.main-menu__subitem {
+  padding-left: var(--s-4);
+}
+
+.main-menu__subitem .main-menu__item-link {
+  font-size: var(--fs-12);
+  color: var(--c-text-muted);
+}
+
+.main-menu__subitem .main-menu__item-link:hover,
+.main-menu__subitem .main-menu__item-link--active {
+  color: var(--c-text);
+}
+
+/* ============================================================
+   Session timeout warning
+   ============================================================ */
+
+#session-timeout-warning {
+  position: fixed;
+  bottom: var(--s-5);
+  right: var(--s-5);
+  max-width: 340px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-3);
+  box-shadow: var(--sh-4);
+  padding: var(--s-4) var(--s-5);
+  z-index: 50;
+  font-size: var(--fs-13);
+  line-height: var(--lh-base);
+  display: none; /* shown via JS */
+}
+
+#session-timeout-warning p {
+  margin: var(--s-1) 0 0;
+  color: var(--c-text-muted);
+}
+
+.session-timeout-warning-icon {
+  width: 20px;
+  height: 20px;
+  float: left;
+  margin-right: var(--s-2);
+}
+
+.session-timeout-warning-close {
+  float: right;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--dur-1) var(--ease);
+}
+
+.session-timeout-warning-close:hover {
+  opacity: 1;
+}
+
+/* ============================================================
    Masquerade bar
    ============================================================ */
 
