@@ -33,7 +33,7 @@
     <{/php}>
 </head>
 
-<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}>">
+<body id="<{$icms_dirname}>" class="<{$icms_langcode}><{if isset($formulize_screen_id) && $formulize_screen_id}> formulize-screen formulize-screen-<{$formulize_screen_id}><{/if}><{if $smarty.get.fz_inline}> fz-inline<{/if}>">
 
 <{includeq file="$theme_name/session-timeout-warning.html"}>
 
@@ -51,6 +51,7 @@ if ($xoopsUser) {
 <div class="fz-app" id="fz-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
 
   <!-- HEADER -->
+  <{if !$smarty.get.fz_inline}>
   <header class="fz-header" role="banner">
 
     <div class="fz-header__start">
@@ -94,11 +95,12 @@ if ($xoopsUser) {
     </div>
 
   </header>
+  <{/if}>
 
   <!-- APP BODY (sidebar + main) -->
   <div class="fz-app__body">
 
-    <{if $xoBlocks.canvas_left}>
+    <{if $xoBlocks.canvas_left && !$smarty.get.fz_inline}>
     <aside class="fz-sidebar" id="fz-sidebar" role="navigation" aria-label="Main navigation">
       <{includeq file="$theme_name/blockszone.html" blocks=$xoBlocks.canvas_left
           zoneClass='xo-canvas-column' zoneId='xo-canvas-leftcolumn'
@@ -112,6 +114,7 @@ if ($xoopsUser) {
 
   </div>
 
+  <{if !$smarty.get.fz_inline}>
   <!-- RIGHT SLIDE-OUT DRAWER -->
   <div class="fz-drawer-scrim js-drawer-scrim" aria-hidden="true" hidden></div>
   <aside class="fz-drawer js-drawer" id="fz-drawer" role="dialog" aria-modal="true" aria-label="Detail panel" hidden>
@@ -128,6 +131,7 @@ if ($xoopsUser) {
     <div class="fz-drawer__body js-drawer-body"></div>
     <div class="fz-drawer__foot js-drawer-foot"></div>
   </aside>
+  <{/if}>
 
 </div>
 
