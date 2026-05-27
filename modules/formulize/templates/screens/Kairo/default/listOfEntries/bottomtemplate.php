@@ -65,48 +65,13 @@ document.addEventListener('click', function (e) {
         });
     }
 
-    function openEntryDrawer(url) {
-        if (!window.formulizeDrawer) return;
-        var sep = url.indexOf('?') >= 0 ? '&' : '?';
-        var iframeUrl = url + sep + 'fz_inline=1';
-
-        window.formulizeDrawer.open({ title: '' });
-
-        var bodyEl = document.querySelector('.js-drawer-body');
-        if (!bodyEl) return;
-        bodyEl.innerHTML = '';
-
-        var iframe = document.createElement('iframe');
-        iframe.src = iframeUrl;
-        iframe.className = 'fz-drawer__iframe';
-        iframe.setAttribute('title', 'Entry detail');
-
-        var initialLoad = true;
-        iframe.addEventListener('load', function () {
-            if (initialLoad) {
-                initialLoad = false;
-                try {
-                    var h1 = iframe.contentDocument.querySelector('h1');
-                    var titleEl = document.querySelector('.js-drawer-title');
-                    if (h1 && titleEl) titleEl.textContent = h1.textContent.trim();
-                } catch (e) {}
-                return;
-            }
-            // Any subsequent navigation (save / cancel) → close and refresh list
-            window.formulizeDrawer.close();
-            window.location.reload();
-        });
-
-        bodyEl.appendChild(iframe);
-    }
-
     function initRowDrawer() {
         document.querySelectorAll('tr.entry-row').forEach(function (row) {
             var link = row.querySelector('.loe-edit-entry');
             if (!link || !link.href) return;
             row.addEventListener('click', function (e) {
                 if (e.target.closest('.fz-cb')) return;
-                openEntryDrawer(link.href);
+                window.formulize.drawer.openEntry(link.href);
             });
         });
 
@@ -114,7 +79,7 @@ document.addEventListener('click', function (e) {
         window.goDetails = function (entryId) {
             var selector = '.loe-edit-entry[onclick*="goDetails(\'' + entryId + '\')"]';
             var link = document.querySelector(selector);
-            if (link && link.href) { openEntryDrawer(link.href); }
+            if (link && link.href) { window.formulize.drawer.openEntry(link.href); }
         };
 
         // Override addNew so the Add button opens the drawer instead of submitting the form
@@ -131,7 +96,7 @@ document.addEventListener('click', function (e) {
                 params.set('ve', 'addnew');
                 url = window.location.pathname + '?' + params.toString();
             }
-            openEntryDrawer(url);
+            window.formulize.drawer.openEntry(url);
         };
     }
 
