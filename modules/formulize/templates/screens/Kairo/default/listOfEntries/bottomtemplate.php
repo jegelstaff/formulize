@@ -32,20 +32,16 @@ document.addEventListener('click', function (e) {
 });
 
 (function () {
-    // Selection bar: show over the titlebar when rows are checked
     function updateSelectionBar() {
         var checked = document.querySelectorAll('.formulize_selection_checkbox:checked');
-        var bar      = document.getElementById('fz-selection-bar');
-        var titlebar = document.querySelector('.fz-list__titlebar');
-        var countEl  = document.querySelector('.js-selection-count');
+        var bar     = document.getElementById('fz-selection-bar');
+        var countEl = document.querySelector('.js-selection-count');
         if (!bar) return;
         if (countEl) countEl.textContent = checked.length + ' selected';
         if (checked.length > 0) {
-            bar.removeAttribute('hidden');
-            if (titlebar) titlebar.setAttribute('hidden', '');
+            bar.classList.add('is-active');
         } else {
-            bar.setAttribute('hidden', '');
-            if (titlebar) titlebar.removeAttribute('hidden');
+            bar.classList.remove('is-active');
         }
         document.querySelectorAll('.formulize_selection_checkbox').forEach(function (cb) {
             var row = cb.closest('tr');
