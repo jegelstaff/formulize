@@ -1,6 +1,5 @@
 <?php
 
-// if the user requested to download calculations, draw the link for downloading calculations
 if($downloadCalculationsURL AND $downloadCalculationsText) {
 	print "
 	<div id='exportlink' style='display: none;'>
@@ -8,162 +7,113 @@ if($downloadCalculationsURL AND $downloadCalculationsText) {
 	</div>";
 }
 
-// scrollbox always on in Anari
-$scrollBoxClassOnOff = 'scrollbox';
-
-// start the main table of entries
 print "
-<div class='$scrollBoxClassOnOff' id='formulize-list-of-entries'>
-	<div class='list-of-entries-container'>
-		<table class='outer'>
-			";
+<div class='fz-list__body' id='formulize-list-of-entries'>
+	<table class='fz-table fz-table--cozy'>
+	<thead>";
 
-		// draw the row of headers
 		if($headersShown) {
 			print drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $columnWidthStyle, $headingHelpAndLockShown, $lockedColumns, $numberOfInlineCustomButtons, $spacerNeeded);
 		}
 
-		// draw the row of search boxes
 		if($searchesShown) {
 
-            print "<tr>";
+			print "<tr>";
 
-            // draw in the search help text if necessary, in the first column where the selection checkboxes and view entry links would be
-            if($searchHelp OR $toggleSearches) {
-                print "<td class='head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
-            }
+			if($searchHelp OR $toggleSearches) {
+				print "<td class='fz-cb head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
+			}
 
-            // draw in a cell for the locked columns feature
-            print "<td class='head floating-column' id='floatingcelladdress_1'></td>";
+			foreach($columns as $columnNumber=>$elementHandle) {
+				print "
+					<td class='head column column$columnNumber' id='celladdress_1_$columnNumber'>
+						<div class='main-cell-div' id='cellcontents_1_$columnNumber'>
+							{${'quickSearch'.$searchTypes[$elementHandle].'_'.$elementHandle}}
+						</div>
+					</td>";
+			}
 
-            // draw cells for all the search boxes
-            // examples of search box variables: $quickSearchBox_quantity, $quickSearchFilter_ordertype
-            foreach($columns as $columnNumber=>$elementHandle) {
-                print "
-                    <td $columnWidthStyle class='head column column$columnNumber' id='celladdress_1_$columnNumber'>
-                        <div class='main-cell-div' id='cellcontents_1_$columnNumber'>
-                            {${'quickSearch'.$searchTypes[$elementHandle].'_'.$elementHandle}}
-                        </div>
-                    </td>";
-            }
+			while($numberOfInlineCustomButtons > 0) {
+				$numberOfInlineCustomButtons--;
+				print "<td id='celladdress_1_$columnNumber' class='head'>&nbsp;</td>";
+				$columnNumber++;
+			}
 
-            // add extra cells for each of the inline custom buttons, if any
-            while($numberOfInlineCustomButtons > 0) {
-                $numberOfInlineCustomButtons--;
-                print "<td id='celladdress_1_$columnNumber' class=head>&nbsp;</td>";
-                $columnNumber++;
-            }
+			if($spacerNeeded) {
+				print "<td class='head formulize-spacer'>&nbsp;</td>";
+			}
 
-            // add a spacer column if necessary
-            if($spacerNeeded) {
-                print "<td class='head formulize-spacer'>&nbsp;</td>";
-            }
-
-            print "</tr>";
+			print "</tr>";
 
 		}
 
-		// show the buttons for interacting with calculations, if necessary
 		if($modCalcsButton AND $cancelCalcsButton AND $toggleCalcsButton) {
 			print "
 			<tr>
-				<td class=head colspan='$colspan'>$modCalcsButton&nbsp;&nbsp;$cancelCalcsButton&nbsp;&nbsp;$toggleCalcsButton</td>
+				<td class='head' colspan='$colspan'>$modCalcsButton&nbsp;&nbsp;$cancelCalcsButton&nbsp;&nbsp;$toggleCalcsButton</td>
 			<tr>";
 		}
 
+print "</thead><tbody>";
 
-// drawHeaderRow creates the HTML for displaying the headers at the top of a list of entries
-// the Open List Template MUST have a function with this name and these arguments, if you intend to use the "repeat headers every X rows" feature
-// $headers is an array of all the heading texts. The keys are the element handles.
-// $checkBoxesShown is a boolean that indicates if the selection checkboxes are being shown to the user
-// $viewEntryLinksShown is a boolean that indicates if the links to view an entry are being shown to the user
-// $columnWidthStyle is a snippet of inline styling that sets a width for the column, if the user has set one
-// $headingHelpAndLockShown is a boolean where that indicates if the the help and lock icons beside each header are being shown to the user
-// $lockedColumns is an array of all columns that are currently locked by the user. The values are numbers indicating which columns are locked. Columns are numbered from 0 on the far left.
-// $numberOfInlineCustomButtons is a number indicating if the number of inline custom buttons, so we can add columns to account for them
-// $spacerNeeded is a boolean that indicates if we need to add something to take up space on the right side. Used so the browser will respect specific widths the user might have specified for columns
+
+// drawHeaderRow creates the HTML for the sticky column headers.
+// The Open List Template MUST have a function with this name and these arguments
+// if you intend to use the "repeat headers every X rows" feature.
 function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $columnWidthStyle, $headingHelpAndLockShown, $lockedColumns, $numberOfInlineCustomButtons, $spacerNeeded) {
 
-	// keep a persistent counter for which heading row we're drawing
-	// since there can be more than one heading row per page, if headings are being repeated
 	static $headingRowNumber = 0;
 	$headingRowNumber++;
 
-	// make an array of the cells we are going to draw, then draw them in a row
 	$cells = array();
 
-	// draw in a cell for the column with the selection checkboxes and view entry links
 	if($checkBoxesShown OR $viewEntryLinksShown) {
-		$cells[] = "<td class='head formulize-controls-head' id='celladdress_h$headingRowNumber"."_"."margin'>&nbsp;</td>";
+		$cells[] = "<th class='fz-cb' id='celladdress_h$headingRowNumber"."_margin'></th>";
 	}
 
-	// draw in a cell for the locked columns feature
-	$cells[] = "<td class='head floating-column' id='floatingcelladdress_h$headingRowNumber'></td>";
-
-	// draw the cells for each heading
 	$columnNumber = 0;
 	foreach($headers as $elementHandle=>$headingText) {
-		$cell = "
-				<th $columnWidthStyle class='head column column $columnNumber' id='celladdress_h$headingRowNumber"."_"."$columnNumber' scope='col' aria-sort='".getAriaSort($elementHandle)."'>
-					<div class='main-cell-div' id='cellcontents_h$headingRowNumber"."_"."$columnNumber'>";
-						if($headingHelpAndLockShown) {
-							// NEEDS DEBUGGING - display of lock column doesn't work smoothly, icon doesn't show up when it should either?
-							$lockColumnClass = in_array($columnNumber, $lockedColumns) ? 'lockcolumn heading-locked' : 'lockcolumn heading-unlocked';
-							$cell .= "<a href='' id='lockcolumn_$columnNumber' class='$lockColumnClass' title='"._formulize_DE_FREEZECOLUMN."'></a>\n";
-							$cell .= "<a href='' class='header-info-link' onclick='javascript:showPop(\"".XOOPS_URL."/modules/formulize/include/moreinfo.php?col=$elementHandle\");return false;' title='"._formulize_DE_MOREINFO."'></a>\n";
-						}
-						$cell .= clickableSortLink($elementHandle, trans($headingText)); // create the clickable sort text, with icon if applicable
-					$cell .= "
-					</div>
-				</th>";
+		$cell = "<th $columnWidthStyle class='column column$columnNumber' id='celladdress_h$headingRowNumber"."_"."$columnNumber' scope='col' aria-sort='".getAriaSort($elementHandle)."'>"
+			. clickableSortLink($elementHandle, trans($headingText))
+			. "</th>";
 		$cells[] = $cell;
 		$columnNumber++;
 	}
 
-	// add extra cells for each of the inline custom buttons, if any
 	while($numberOfInlineCustomButtons > 0) {
 		$numberOfInlineCustomButtons--;
-		$cells[] = "<td id='celladdress_h$headingRowNumber"."_"."$columnNumber' class=head>&nbsp;</td>";
+		$cells[] = "<th id='celladdress_h$headingRowNumber"."_"."$columnNumber' class='head'></th>";
         $columnNumber++;
 	}
 
-	// add a spacer column if necessary
 	if($spacerNeeded) {
-		$cells[] = "<td class='head formulize-spacer'>&nbsp;</td>";
+		$cells[] = "<th class='formulize-spacer'></th>";
 	}
 
-	// draw the cells in a row
-    $row = "<tr>".implode("\n", $cells)."</tr>";
-
-	return $row;
+	return "<tr>".implode("\n", $cells)."</tr>";
 }
 
 /**
- * Generate the markup for the clickable sort links in the column headers, including the appropriate sort icon and tooltip text based on the current sort state.
- * The link will have an onclick handler that calls the sort_data JavaScript function with the element handle and whether the shift key was held (for multi-column sorting).
- * @param string elementHandle - the handle of the element for the column header we are generating the link for
- * @param string clickableContent - the text or markup that will be displayed to the user as the clickable thing on screen
- * @return string The HTML markup for the clickable sort link, including the appropriate sort icon and tooltip text based on the current sort state.
+ * Generate the markup for a clickable sort link in a column header.
+ * @param string $elementHandle
+ * @param string $clickableContent
+ * @return string
  */
 function clickableSortLink($elementHandle, $clickableContent) {
 
 	list($title, $icon) = getSortTitleAndIcon($elementHandle);
 
-	return "
-		<div class='sort-link-wrapper'>
-			<a href='' alt='" . htmlspecialchars($title) . "' title='" . htmlspecialchars($title) . "' onclick='javascript:sort_data(\"$elementHandle\", event.shiftKey);return false;'>
-				<div>$clickableContent</div>
-				<div class='sort-link-icon' aria-hidden='true'>$icon</div>
-			</a>
-		</div>";
+	return "<a class='fz-th-sort' href='' title='" . htmlspecialchars($title) . "' onclick='sort_data(\"$elementHandle\", event.shiftKey); return false;'>"
+		. $clickableContent
+		. "<span aria-hidden='true'>$icon</span>"
+		. "</a>";
 }
 
 /**
- * Keep track of prior column contents and compare to what is passed in.
- * Return the class name 'same-contents-as-prior-cell' if appropriate.
- * @param string content - the cell contents
- * @param int columnNumber - the number of the column, starting from zero
- * @return string An empty string if content is different, or a css class name if content is the same
+ * Keep track of prior column contents; return 'same-contents-as-prior-cell' if repeated.
+ * @param string $content
+ * @param int $columnNumber
+ * @return string
  */
 function checkIfContentIsTheSameAsPrior($content, $columnNumber) {
 	static $contents = array();
