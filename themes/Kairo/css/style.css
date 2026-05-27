@@ -447,6 +447,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  position: relative;
 }
 
 /* Title bar */
@@ -611,9 +612,14 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 .fz-pop__sep { height: 1px; background: var(--c-border); margin: 4px 2px; }
 .fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--c-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
 
-/* Selection bar (shown when rows are checked) */
+/* Selection bar (shown when rows are checked, overlays the titlebar) */
 .fz-selection-bar {
-  display: flex;
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   align-items: center;
   gap: var(--s-2);
   padding: var(--s-3) var(--s-5);
@@ -621,7 +627,10 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   color: var(--c-bg);
   border-bottom: 1px solid var(--c-text);
   min-height: 56px;
-  flex-shrink: 0;
+}
+
+.fz-selection-bar.is-active {
+  display: flex;
 }
 
 .fz-selection-bar__start {
@@ -772,16 +781,20 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 
 /* Checkbox / controls column */
 .fz-table .fz-cb {
-  width: 36px;
-  padding: 0;
-  text-align: center;
+  width: 52px;
+  padding: 0 var(--s-2);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .fz-table .fz-cb input[type="checkbox"] {
-  display: block;
-  margin: 0 auto;
   vertical-align: middle;
+}
+
+.fz-table .fz-cb .loe-edit-entry {
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
 }
 
 /* Checkbox styling */
