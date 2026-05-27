@@ -46,7 +46,7 @@ print "
     </div>
   </div>
 
-  <div id='fz-selection-bar' class='fz-selection-bar' hidden>
+  <div id='fz-selection-bar' class='fz-selection-bar'>
     <div class='fz-selection-bar__start'>
       $clearSelectButton
       <span class='js-selection-count'></span>
