@@ -1,43 +1,34 @@
 <?php
 
-print "
-<tr class='entry-row'>";
-					
-	// draw in the cell for the selection checkbox and view entry link if applicable
+print "<tr class='entry-row' aria-selected='false'>";
+
 	if($viewEntryLink OR $selectionCheckbox) {
 		print "
-			<td class='head $class formulize-controls'>
+			<td class='fz-cb'>
 				$selectionCheckbox $viewEntryLink
 			</td>";
 	} elseif($searchHelp OR $toggleSearches) {
-        print "
-            <td class='head $class formulize-controls'></td>";
-    }
-	
-	// draw in a cell for the locked columns feature
-	print "<td $columnWidthStyle class='$class floating-column' id='floatingcelladdress_$rowNumber'></td>";
-						
-	// draw in all the cells for the contents of this row
-	foreach($columnContents as $columnNumber=>$columnContent) {
-		$cellClass = "$class column column$columnNumber ".checkIfContentIsTheSameAsPrior($columnContent, $columnNumber);
 		print "
-			<td $columnWidthStyle class='$cellClass' id='celladdress_$rowNumber"."_"."$columnNumber'>
+			<td class='fz-cb'></td>";
+	}
+
+	foreach($columnContents as $columnNumber=>$columnContent) {
+		$sameClass = checkIfContentIsTheSameAsPrior($columnContent, $columnNumber);
+		print "
+			<td $columnWidthStyle class='column column$columnNumber $class $sameClass' id='celladdress_$rowNumber"."_"."$columnNumber'>
 				$columnContent
 			</td>";
 	}
-				
-	// draw in a cell with each custom button
+
 	foreach($customButtons as $customButton) {
 		print "
-			<td $columnWidthStyle class=$class>
+			<td $columnWidthStyle class='$class'>
 				<center>$customButton</center>
 			</td>";
 	}
-	
-	// add a spacer column if necessary
+
 	if($spacerNeeded) {
-		print "<td class='$class formulize-spacer'>&nbsp;</td>";
-	}						
-					
-print "
-</tr>";
+		print "<td class='formulize-spacer'>&nbsp;</td>";
+	}
+
+print "</tr>";
