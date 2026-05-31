@@ -2241,8 +2241,9 @@ function loadValue($element, $entry_id, $prevEntry=null) {
 		return array();
 	}
 
-	// check for previously entered data, unless it's a user account element, which loads its own data differently directly from user table
-	if(!$element->isUserAccountElement) {
+	// check for previously entered data, unless it's a user account element (loads from users table)
+	// or a group table element (loads from groups table) — both bypass the Formulize prevEntry lookup
+	if(!$element->isUserAccountElement && empty($element->isGroupTableElement)) {
 		$ele_value = $element->getVar('ele_value');
 		// if there is no previous entry data to load, then just return the default ele_value
 		if(empty($prevEntry)) {

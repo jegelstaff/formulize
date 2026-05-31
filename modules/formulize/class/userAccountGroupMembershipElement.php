@@ -399,6 +399,99 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		}
 	}
 
+	/**
+	 * Returns true if the given user must remain a member of the given group
+	 * because at least one entries-are-users form mandates that membership.
+	 * Checks base conditions and per-group conditions for the user's EAU entry.
+	 * Adds are always allowed — this check only governs removals.
+	 *
+	 * @param int $userId  The uid being evaluated
+	 * @param int $groupId The group the user is being removed from
+	 * @return bool
+	 */
+	static public function isGroupMandatoryForUser($userId, $groupId) {
+		static $cache = array();
+		$userId  = intval($userId);
+		$groupId = intval($groupId);
+		if (!$userId || !$groupId) {
+			return false;
+		}
+		$cacheKey = $userId . '_' . $groupId;
+		if (array_key_exists($cacheKey, $cache)) {
+			return $cache[$cacheKey];
+		}
+		$cache[$cacheKey] = false;
+
+		global $xoopsDB;
+		require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+		require_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
+		require_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';
+
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$allFidsRes = $xoopsDB->query(
+			"SELECT id_form FROM " . $xoopsDB->prefix('formulize_id') . " WHERE entries_are_users = 1"
+		);
+		if (!$allFidsRes) {
+			return false;
+		}
+
+		while ($fRow = $xoopsDB->fetchArray($allFidsRes)) {
+			$eauFid = intval($fRow['id_form']);
+			if (!$eauForm = $form_handler->get($eauFid)) {
+				continue;
+			}
+			$defaultGroups = $eauForm->getVar('entries_are_users_default_groups');
+			if (!is_array($defaultGroups) || empty($defaultGroups)) {
+				continue;
+			}
+
+			// Find the relevant default group entry that maps to $groupId
+			$relevantDgId = null;
+			foreach ($defaultGroups as $dgId) {
+				$dgId = intval($dgId);
+				if ($dgId === $groupId) {
+					$relevantDgId = $groupId;
+					break;
+				}
+				$family = formulizeHandler::getAllGroupsForTemplateCategory($dgId);
+				if (!empty($family) && in_array($groupId, $family)) {
+					$relevantDgId = $dgId;
+					break;
+				}
+			}
+			if ($relevantDgId === null) {
+				continue;
+			}
+
+			// Find the user's entry in this EAU form
+			$uidHandle   = 'formulize_user_account_uid_' . $eauFid;
+			$dataHandler = new formulizeDataHandler($eauFid);
+			$entryIds    = $dataHandler->findAllEntriesWithValue($uidHandle, $userId);
+			if (!$entryIds || empty($entryIds)) {
+				continue;
+			}
+			$eauEntryId = intval($entryIds[0]);
+
+			// Check base conditions
+			if (!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($eauFid, $eauEntryId)) {
+				continue;
+			}
+
+			// Check per-group conditions for this default group
+			$allConditions = $eauForm->getVar('entries_are_users_conditions');
+			if (is_array($allConditions) && isset($allConditions[$relevantDgId]) && !empty($allConditions[$relevantDgId])) {
+				if (!checkConditionsAgainstAnEntry($allConditions[$relevantDgId], $eauFid, $eauEntryId, null, -1)) {
+					continue;
+				}
+			}
+
+			$cache[$cacheKey] = true;
+			return true;
+		}
+
+		return false;
+	}
+
 	// Build a WHERE clause subquery that searches group membership by group name.
 	// Searches groups the user belongs to (excluding built-in registered-users and anonymous groups).
 	// Used by formulize_tryDelegatedSearchWhere so this element type can handle its own complex subquery.

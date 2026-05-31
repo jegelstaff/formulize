@@ -1787,6 +1787,7 @@ function injectSupplementaryData($masterResults, $fid, $totalMainFormEntryIdInde
 		$systemFormHandle = '__system_users';
 		$masterResults = injectProfileData($masterResults, $systemFormHandle, $fid);
 		$masterResults = injectGroupMembershipData($masterResults, $systemFormHandle, $fid);
+		$masterResults = injectUserEauTypeData($masterResults, $systemFormHandle, $fid);
 		return $masterResults;
 	}
 
@@ -2952,8 +2953,15 @@ function dataExtractionTableForm($tablename, $formname, $fid, $filter = false, $
 		$whereClause = $whereClause ? "WHERE $whereClause" : "";
 		$basesql = "SELECT * FROM $tablename $whereClause ";
 		$sql = $basesql;
+		$orderByParts = array();
+		if (isset($GLOBALS['formulize_tableFormAdditionalOrderBy'])) {
+			$orderByParts[] = $GLOBALS['formulize_tableFormAdditionalOrderBy'];
+		}
 		if ($sortField && isset($elementsLookup[$sortField])) {
-			$sql .= " ORDER BY `" . $elementsLookup[$sortField]['field'] . "` $sortOrder ";
+			$orderByParts[] = "`" . $elementsLookup[$sortField]['field'] . "` $sortOrder";
+		}
+		if (!empty($orderByParts)) {
+			$sql .= " ORDER BY " . implode(', ', $orderByParts) . " ";
 		}
 		if ($limitSize) {
 			$sql .= " LIMIT $limitStart,$limitSize ";

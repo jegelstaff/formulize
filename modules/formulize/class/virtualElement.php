@@ -49,4 +49,21 @@ class formulizeVirtualElementHandler extends formulizeElementsHandler {
 		return $value;
 	}
 
+	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen = false, $owner = null) {
+		return null;
+	}
+
+	// Virtual elements store arrays of pre-formatted strings. Join with line breaks,
+	// skip HTML escaping (values may contain links), and skip printSmart truncation
+	// (the injection functions apply their own display limits before we get here).
+	function formatDataForList($value, $handle = "", $entry_id = 0, $textWidth = 100) {
+		if (is_array($value)) {
+			//$value = implode('<br>', $value);
+		}
+		$this->striphtml = false;
+		$this->length    = 0;
+		$this->clickable = false;
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth);
+	}
+
 }

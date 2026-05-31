@@ -1265,6 +1265,10 @@ class formulizeHandler {
 			// userAccount elements are valid (not discoverable for MCP, but valid for upsert)
 			return true;
 		}
+		if($elementType === 'eagGroupMembers') {
+			// eagGroupMembers is a system element added to entries-are-groups forms, not discoverable for MCP
+			return true;
+		}
 		list($elementTypes, $mcpElementDescriptions, $mcpSingleTypeDescriptions) = formulizeHandler::discoverElementTypes();
 		$allValidElementTypes = array();
 		foreach($elementTypes as $category=>$categoryTypes) {

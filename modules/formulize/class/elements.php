@@ -1161,6 +1161,17 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * Process group table element data through the base groupTableElement handler class
+	 * @param int $formId  The id of the form the element is in
+	 * @param int $entryId The groupid of the group being edited
+	 * @return int|bool the groupid or false on failure
+	 */
+	static public function processGroupSubmission($formId, $entryId) {
+		require_once XOOPS_ROOT_PATH . "/modules/formulize/class/groupTableElement.php";
+		return formulizeGroupTableElementHandler::processGroupSubmission($formId, $entryId);
+	}
+
+	/**
 	 * Evaluate an entry regarding the default group memberships for users that may be impacted by the data in the entry
 	 * Some group memberships are conditional, based on the data in the entry, and this method will evaluate those conditions and add or remove group memberships accordingly
 	 * The form associated with the groups might be a different one, the form associated with the user might be a different one. Everything is worked out in the method.

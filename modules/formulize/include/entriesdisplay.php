@@ -2127,6 +2127,48 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 						}
 					}
 
+					// Groups composite mode: template groups get no checkbox or edit icon.
+					// Non-deletable groups (e.g. system groups, groups with members or data) get no
+					// checkbox but keep the edit icon.
+					// Instead the group-name column becomes a link to the admin form-settings page,
+					// with the form's category names listed below the link.
+					if (!empty($GLOBALS['formulize_compositeDataMode']) && $GLOBALS['formulize_compositeDataMode'] === 'groups') {
+						$_isTemplateGroup = intval(getValue($entry, 'is_group_template'));
+						if (!$_isTemplateGroup
+							&& isset($GLOBALS['formulize_deletableGroupIds'])
+							&& !isset($GLOBALS['formulize_deletableGroupIds'][intval($entry_id)])) {
+							$templateVariables['selectionCheckbox'] = '';
+						}
+						if ($_isTemplateGroup) {
+							$templateVariables['selectionCheckbox'] = '';
+							$templateVariables['viewEntryLink']     = '';
+							$_templateGroupFormId = intval(getValue($entry, 'form_id'));
+							if ($_templateGroupFormId) {
+								foreach ($templateVariables['columnHandles'] as $_ci => $_ch) {
+									if (strpos($_ch, 'formulize_group_name_') === 0) {
+										$_appId    = intval(formulize_getFirstApplicationForForm($_templateGroupFormId));
+										$_adminUrl = htmlspecialchars(XOOPS_URL . '/modules/formulize/admin/ui.php?page=form&aid=' . $_appId . '&fid=' . $_templateGroupFormId . '&tab=settings');
+										$_nameCell = "<a class='template-group-form-name' href='" . $_adminUrl . "' target='_blank'>" .
+											$templateVariables['columnContents'][$_ci] . "</a>";
+										// Append category names as a bulleted list below the link.
+										$_rawCats = getValue($entry, 'group_categories');
+										$_cats    = is_array($_rawCats) ? $_rawCats
+											: (is_string($_rawCats) && $_rawCats !== '' ? array($_rawCats) : array());
+										if (!empty($_cats)) {
+											$_nameCell .= '<ul class="main-cell-list">';
+											foreach ($_cats as $_cat) {
+												$_nameCell .= '<li>' . htmlspecialchars((string)$_cat) . '</li>';
+											}
+											$_nameCell .= '</ul>';
+										}
+										$templateVariables['columnContents'][$_ci] = $_nameCell;
+										break;
+									}
+								}
+							}
+						}
+					}
+
 					formulize_screenLOETemplate($screen, 'list', $templateVariables, $settings);
 
 					// handle hidden elements for passing back to custom buttons

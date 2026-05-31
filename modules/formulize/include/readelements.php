@@ -99,6 +99,7 @@ if(!isset($element_handler) OR !$element_handler) {
 $formulize_elementData = array(); // this array has multiple dimensions, in this order:  form id, entry id, element id.  "new" means a nea entry.  Multiple new entries will be recorded as new1, new2, etc
 $formulize_subformBlankCues = array();
 $userIdsForUserAccountElements = array();
+$groupIdsForGroupTableElements = array();
 $newUserTableUserIds = array(); // this is where we will store the new user IDs created from user account elements in the case of a system users table form, because those UIDs are not stored in formulize entry rows like they are for regular EAU forms, but we still need to keep track of them so we can assign them to the correct entries in the case of subforms, and also so we can return them at the end of this process for use in the UI if needed (e.g. to log in as a newly created user right after creating them)
 
 // loop through POST and catalogue everything that we need to do something with
@@ -165,6 +166,11 @@ foreach($_POST as $k=>$v) {
 					$newUserTableUserIds[$elementMetaData[1]] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
 				}
 			}
+		} elseif(!empty($elementObject->isGroupTableElement)) {
+			// For the system groups table form, processGroupSubmission writes directly to
+			// the groups table — no Formulize data table exists to update.
+			$groupIdsForGroupTableElements[$elementMetaData[1]][$elementMetaData[2]] =
+				formulizeElementsHandler::processGroupSubmission($elementMetaData[1], $elementMetaData[2]);
 		} else {
 			if(isset($_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]])) {
 				$v = prepDataForWrite($elementObject, $_POST["de_".$elementMetaData[1]."_".$elementMetaData[2]."_".$elementMetaData[3]], $elementMetaData[2]);
@@ -200,6 +206,19 @@ if(!empty($newUserTableUserIds)) {
 	foreach($newUserTableUserIds as $nutFormId => $nutUserId) {
 		$formulize_newEntryIds[$nutFormId][] = $nutUserId;
 		$_POST['entry' . $nutFormId] = $nutUserId;
+	}
+}
+// For system groups forms, same approach: no Formulize entry is written.
+// Populate formulize_newEntryIds and update the POST entry key so displayFormPages
+// reloads with the newly created group's ID rather than a blank new form.
+if(!empty($groupIdsForGroupTableElements)) {
+	foreach($groupIdsForGroupTableElements as $gtFormId => $entryMap) {
+		foreach($entryMap as $submittedEntry => $resolvedGroupId) {
+			if($resolvedGroupId && ($submittedEntry === 'new' || !is_numeric($submittedEntry))) {
+				$formulize_newEntryIds[$gtFormId][] = $resolvedGroupId;
+				$_POST['entry' . $gtFormId] = $resolvedGroupId;
+			}
+		}
 	}
 }
 $formulize_newEntryUsers = array();

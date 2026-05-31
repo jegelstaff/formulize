@@ -712,6 +712,11 @@ EOF;
 		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('users');
 	}
 
+	public function isSystemGroupsTableForm() {
+		global $xoopsDB;
+		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('groups');
+	}
+
 	/**
 	 * Resolve the system user ID associated with a given entry.
 	 *
@@ -1066,6 +1071,15 @@ class formulizeFormsHandler {
 					$this->removeUserAccountElements($formObject);
 				}
 
+				// if entries_are_groups is set, add the group members element to the form
+				if($formObject->getVar('entries_are_groups')) {
+					if(!$this->createGroupMembersElement($formObject)) {
+						throw new Exception("Could not create group members element for form $id_form");
+					}
+				} else {
+					$this->removeGroupMembersElement($formObject);
+				}
+
 				$procedures = array(
 					'on_before_save',
 					'on_after_save',
@@ -1125,6 +1139,30 @@ class formulizeFormsHandler {
 			$userAccountElementTypes = $orderedTypes;
 		}
 		return $userAccountElementTypes;
+	}
+
+	/**
+	 * Get the group table element types, based on the classes defined for them
+	 * @return array An array of element types for the group table elements
+	 */
+	function getGroupTableElementTypes() {
+		static $groupTableElementTypes = array();
+		if (empty($groupTableElementTypes)) {
+			$groupTableClassFiles = glob(XOOPS_ROOT_PATH . "/modules/formulize/class/group*Element.php");
+			foreach ($groupTableClassFiles as $classFile) {
+				$className = str_replace(array(XOOPS_ROOT_PATH . "/modules/formulize/class/", "Element.php"), "", $classFile);
+				$groupTableElementTypes[] = $className;
+			}
+			$order = array('Name', 'Description');
+			$orderedTypes = array();
+			foreach ($order as $type) {
+				if (in_array('group' . $type, $groupTableElementTypes)) {
+					$orderedTypes[] = 'group' . $type;
+				}
+			}
+			$groupTableElementTypes = $orderedTypes;
+		}
+		return $groupTableElementTypes;
 	}
 
 	/**
@@ -1333,6 +1371,67 @@ class formulizeFormsHandler {
 			}
 		}
 
+		return true;
+	}
+
+	/**
+	 * Add the eagGroupMembers system element to an entries-are-groups form, if it does not already exist.
+	 * Adds to the first page of the default form screen.
+	 * @param object $formObject The form to add the element to.
+	 * @return bool True if the element exists or was created successfully.
+	 */
+	function createGroupMembersElement($formObject) {
+		$fid    = intval($formObject->getVar('fid'));
+		$handle = 'formulize_eag_group_members_' . $fid;
+
+		if(in_array($handle, $formObject->getVar('elementHandles'))) {
+			return true; // already present
+		}
+
+		$defaultFormSid = $formObject->getVar('defaultform');
+		$screenIdsAndPagesForAdding = array();
+		if($defaultFormSid) {
+			$screenIdsAndPagesForAdding = array(intval($defaultFormSid) => array(0)); // ordinal 0 = first page
+		}
+
+		$elementObjectProperties = array(
+			'ele_caption'  => _formulize_EAGGROUPMEMBERS,
+			'ele_type'     => 'eagGroupMembers',
+			'ele_handle'   => $handle,
+			'ele_private'  => 1,
+			'ele_required' => 0,
+			'fid'          => $fid,
+			'ele_order'    => figureOutOrder('bottom', 0, $fid),
+			'ele_display'  => 1,
+		);
+
+		FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding);
+		return true;
+	}
+
+	/**
+	 * Remove the eagGroupMembers system element from an entries-are-groups form if it exists.
+	 * @param object $formObject The form to remove the element from.
+	 * @return bool True always.
+	 */
+	function removeGroupMembersElement($formObject) {
+		$fid    = intval($formObject->getVar('fid'));
+		$handle = 'formulize_eag_group_members_' . $fid;
+		$elementIds = array();
+		foreach($formObject->getVar('elementHandles') as $h) {
+			if(substr($h, 0, strlen($handle)) === $handle) {
+				if($elementObject = _getElementObject($h)) {
+					$elementIds[] = intval($elementObject->getVar('ele_id'));
+				}
+			}
+		}
+		if(!empty($elementIds)) {
+			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
+			$screenHandler->removeElementsFromScreens($elementIds, removeEmptyPages: false);
+			global $xoopsDB;
+			$sql = "DELETE FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_id IN (" . implode(",", $elementIds) . ") AND id_form = $fid";
+			$xoopsDB->queryF($sql);
+		}
 		return true;
 	}
 

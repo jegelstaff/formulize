@@ -39,8 +39,12 @@ if(isset($_POST['deleteform']) AND $_POST['deleteform'] > 0 AND $gperm_handler->
   $form_handler = xoops_getmodulehandler('forms', 'formulize');
   $formObject = $form_handler->get($_POST['deleteform']);
   if(!$formObject->getVar('lockedform')) {
-    $form_handler->delete(intval($_POST['deleteform']));
-    print "/* eval */ reloadWithScrollPosition()";
+    if($formObject->getVar('entries_are_groups') && eagFormHasUndeletableGroups(intval($_POST['deleteform']))) {
+      print "Error: this form cannot be deleted because one or more of its associated groups still has members or owns data.";
+    } else {
+      $form_handler->delete(intval($_POST['deleteform']));
+      print "/* eval */ reloadWithScrollPosition()";
+    }
   } else {
     print "Error: this form is locked!";
   }

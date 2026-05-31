@@ -163,13 +163,13 @@ EOF;
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		static $typesWithData = array();
-		if(($prevEntry OR $profileForm === "new" OR $element->isUserAccountElement) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+		if(($prevEntry OR $profileForm === "new" OR $element->isUserAccountElement OR $element->isGroupTableElement) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 			if(!isset($typesWithData[$ele_type])) {
 				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
 				$customTypeObject = $customTypeHandler->create();
 		    $typesWithData[$ele_type] = $customTypeObject->hasData ? true : false;
 			}
-	    if($typesWithData[$ele_type] OR $element->isUserAccountElement) {
+	    if($typesWithData[$ele_type] OR $element->isUserAccountElement OR $element->isGroupTableElement) {
 				$ele_value = loadValue($element, $entry, $prevEntry); // get the value of this element for this entry as stored in the DB -- and unset any defaults if we are looking at an existing entry
 			}
 		}

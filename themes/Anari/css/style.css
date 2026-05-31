@@ -3201,6 +3201,12 @@ span.formulize-masquerade-help {
 .list-of-entries table.outer td.column li {
 	list-style: disc;
 	list-style-position: outside;
+	padding-bottom: 0.3em;
+}
+
+.list-of-entries table.outer td.column ul,
+.list-of-entries table.outer td.column ol {
+	padding-left: 1.2em;
 }
 
 .list-of-entries table.outer {
@@ -3353,6 +3359,10 @@ input[name='pickdiffgroup'] {
 /* give inline table elements 100% of space */
 #listofentries div.main-cell-div div input {
     width: auto;
+}
+
+#listofentries div.main-cell-div a.template-group-form-name {
+	margin-bottom: 0.6em;
 }
 
 .list-of-entries table.outer tr.entry-row:last-of-type td.formulize-controls {

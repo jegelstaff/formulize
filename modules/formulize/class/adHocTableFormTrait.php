@@ -36,8 +36,10 @@ trait formulizeAdHocTableFormTrait {
 		$checkRes = $xoopsDB->query($checkSQL);
 		if ($checkRes && $row = $xoopsDB->fetchArray($checkRes)) {
 			$fid = intval($row['id_form']);
-			// Sync elements in case the table schema changed
+			// Sync elements in case the table schema changed, then re-apply the
+			// code-defined default columns so newly added extraElements appear.
 			$this->syncAdHocTableFormElements($fid, $tableName, $options);
+			$this->setAdHocFormHeaderlist($fid, $options);
 			return $fid;
 		}
 
@@ -132,23 +134,43 @@ trait formulizeAdHocTableFormTrait {
 		}
 	}
 
-	// Generate the canonical element handle for a userAccount type in an ad hoc form,
-	// matching the convention used by createUserAccountElements() and all lookup code:
-	// formulize_user_account_{lowercasetype}_{fid}.
-	// Returns $fallback unchanged for non-userAccount types.
+	// Generate the canonical element handle for a typed element in an ad hoc form.
+	// userAccount types:  formulize_user_account_{lowercasetype}_{fid}
+	// group types:        formulize_group_{lowercasetype}_{fid}
+	// All other types fall back to the raw column name.
 	function _adHocCanonicalHandle($type, $fid, $fallback) {
 		if ($type && strpos($type, 'userAccount') === 0) {
 			return 'formulize_user_account_' . strtolower(str_replace('userAccount', '', $type)) . '_' . intval($fid);
 		}
+		if ($type && strpos($type, 'group') === 0) {
+			return 'formulize_group_' . strtolower(str_replace('group', '', $type)) . '_' . intval($fid);
+		}
 		return $fallback;
 	}
 
-	// Return the display name for a userAccount element type using the same
-	// language constants as createUserAccountElements(), e.g. _formulize_USERACCOUNTUID.
+	// Return the display name for a typed element.
+	// Tries the language constant _formulize_{TYPE} first, then falls back to loading the
+	// element class and reading its ->name property, then strips the type prefix.
 	function _adHocElementName($type, &$nameCache) {
 		if (!isset($nameCache[$type])) {
 			$constName = "_formulize_" . strtoupper($type);
-			$nameCache[$type] = defined($constName) ? constant($constName) : str_replace('userAccount', '', $type);
+			if (defined($constName)) {
+				$nameCache[$type] = constant($constName);
+			} else {
+				$classFile = XOOPS_ROOT_PATH . "/modules/formulize/class/{$type}Element.php";
+				if (file_exists($classFile)) {
+					require_once $classFile;
+					$className = "formulize" . ucfirst($type) . "Element";
+					if (class_exists($className)) {
+						$obj = new $className();
+						$nameCache[$type] = isset($obj->name) ? $obj->name : str_replace(array('userAccount', 'group'), '', $type);
+					} else {
+						$nameCache[$type] = str_replace(array('userAccount', 'group'), '', $type);
+					}
+				} else {
+					$nameCache[$type] = str_replace('userAccount', '', $type);
+				}
+			}
 		}
 		return $nameCache[$type];
 	}

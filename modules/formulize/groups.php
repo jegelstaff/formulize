@@ -53,9 +53,11 @@ if ($xoTheme) {
 // Set the permission flag so low-level form checks know system_admin was already verified above.
 $GLOBALS['formulize_compositeDataMode'] = 'groups';
 $GLOBALS['formulize_systemAdminPermissionVerified'] = true;
+$GLOBALS['formulize_tableFormAdditionalOrderBy'] = 'is_group_template ASC';
 
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($fid);
+$fidInt = intval($fid);
 
 // Build a pseudo list-of-entries screen to leverage standard entriesdisplay machinery.
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/listOfEntriesScreen.php';
@@ -63,13 +65,14 @@ $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $pseudoScreen = $screen_handler->create();
 $screen_handler->setDefaultListScreenVars($pseudoScreen, 0, $formObject);
 // Override: no framework for ad hoc table forms
+$pseudoScreen->setVar('title', 'All Groups');
 $pseudoScreen->setVar('frid', 0);
 $pseudoScreen->setVar('textwidth', 0);
 // Suppress buttons not appropriate for group management
 $pseudoScreen->setVar('useaddupdate', _AM_FORMULIZE_ADD_GROUP);
 $pseudoScreen->setVar('usechangecols', '');
 $pseudoScreen->setVar('useclone', '');
-$pseudoScreen->setVar('usedelete', '');
+$pseudoScreen->setVar('usedelete', _formulize_DE_DELETE_GROUP_BUTTON);
 $pseudoScreen->setVar('useexport', '');
 $pseudoScreen->setVar('useimport', '');
 $pseudoScreen->setVar('usechangeowner', '');
@@ -83,15 +86,71 @@ $pseudoScreen->setVar('usecurrentviewlist', '');
 $pseudoScreen->setVar('useselectall', '');
 $pseudoScreen->setVar('useclearall', '');
 
-// Set advanceview: groupid, name (sorted ASC by default), plus the two virtual injection columns.
+// Set advanceview: name, members, then Type (conditional, last).
+// Categories and instances are injected but embedded inside other columns, not shown separately.
 $advanceViewArray = array(
-	array('name',             '', 'ASC', 'Box'),
-	array('group_categories', '', 0,     'Box'),
-	array('group_entries',    '', 0,     'Box'),
+	array('formulize_group_name_' . $fidInt, '', 'ASC', 'Box'),
+	array('group_members', '', 0, 'Box'),
 );
+if (!empty(getEntriesAreGroupsForms())) {
+	$advanceViewArray[] = array('eag_type', '', 0, 'Filter');
+}
+
 $pseudoScreen->setVar('advanceview', $advanceViewArray);
+
+// Inject the group name as a hidden value per row so confirmDel() can display it.
+$pseudoScreen->setVar('hiddencolumns', array(
+	'formulize_group_name_' . $fidInt,
+));
+
+// Compute which groups are safe to delete (before readelements.php so we have
+// the correct state for both the deletion handler and the checkbox suppression).
+$deletableGroupIds = getDeletableGroupIds();
+
+// Handle group deletion before readelements.php so Stage 2 of entriesdisplay
+// never fires on these entries.
+if (!empty($_POST['delconfirmed'])) {
+	$deletableSet = array_flip($deletableGroupIds);
+	foreach ($_POST as $key => $val) {
+		if (strpos($key, 'delete_') === 0) {
+			$groupIdToDelete = intval(substr($key, 7));
+			if ($groupIdToDelete > 0 && isset($deletableSet[$groupIdToDelete])) {
+				deleteGroupById($groupIdToDelete);
+			}
+		}
+	}
+	unset($_POST['delconfirmed']);
+	// Recompute after deletions so the checkbox suppression below reflects the new state.
+	$deletableGroupIds = getDeletableGroupIds();
+}
+
+// Pass the deletable set to entriesdisplay so it can suppress checkboxes for
+// groups that do not qualify for deletion.
+$GLOBALS['formulize_deletableGroupIds'] = array_flip($deletableGroupIds);
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
 $screen_handler->render($pseudoScreen, '', '');
+
+// Override confirmDel() to show the group name in the confirmation prompt.
+echo '<script>
+function confirmDel() {
+	var checked = jQuery("input[name^=\'delete_\']:checked");
+	if(checked.length === 0){ return false; }
+	var names = [];
+	checked.each(function(){
+		var gid = parseInt(this.name.replace("delete_",""),10);
+		var nameInput = jQuery("input[name=\'hiddencolumn_" + gid + "_formulize_group_name_' . $fidInt . '\']");
+		names.push(nameInput.length ? nameInput.val() : gid);
+	});
+	var msg = ' . json_encode(_formulize_DE_DELETE_GROUP_CONFIRM) . '.replace("%s", names.join(", "));
+	if(confirm(msg)){
+		window.document.controls.delconfirmed.value = 1;
+		window.document.controls.ventry.value = "";
+		showLoading();
+		return true;
+	}
+	return false;
+}
+</script>';
 
 include XOOPS_ROOT_PATH . '/footer.php';

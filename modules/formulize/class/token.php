@@ -101,7 +101,7 @@ class formulizeTokenHandler {
         return false;
 	}
 
-	function insert($groups, $expiry=0, $tokenlength =32, $maxuses) {
+	function insert($groups, $expiry=0, $tokenlength =32, $maxuses = 0) {
         $candidateID = $this->_generateKey($tokenlength);
         $currentuses = 0;
         $expiry = $expiry ? "'".date("Y-m-d H:i:s",time()+($expiry*3600))."'" : "NULL";

@@ -201,7 +201,7 @@ class formulizeElementRenderer{
 
 		// if element is object, with data, not disabled, let's get it ready for rendering
 		// by rendering everything now, and sticking it in a clean "label" element
-		if(is_object($form_ele) AND !$isDisabled AND ($this->_ele->hasData OR $this->_ele->isUserAccountElement)) {
+		if(is_object($form_ele) AND !$isDisabled AND ($this->_ele->hasData OR $this->_ele->isUserAccountElement OR $this->_ele->isGroupTableElement)) {
 
 			// put in cue if element has data we should be handling on save
 			$elementCue = "";
@@ -209,7 +209,7 @@ class formulizeElementRenderer{
 				AND $this->_ele->getVar('ele_type') != "derived"
 				AND !$isDisabled
 				AND !$wasDisabled
-				AND ($customElementHasData OR $this->_ele->isUserAccountElement)) {
+				AND ($customElementHasData OR $this->_ele->isUserAccountElement OR $this->_ele->isGroupTableElement)) {
 				$elementCue = "\n<input type=\"hidden\" id=\"decue_".trim($renderedElementMarkupName,"de_")."\" name=\"decue_".trim($renderedElementMarkupName,"de_")."\" value=1>\n";
 			}
 

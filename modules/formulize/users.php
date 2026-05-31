@@ -91,58 +91,6 @@ $GLOBALS['formulize_systemAdminPermissionVerified'] = true;
 
 $formObject = $form_handler->get($fid);
 
-// Ensure the system users form has a persisted multiPageScreen as its defaultform.
-// When a user without an EAU entry is clicked, displayEntries routes through
-// determineViewEntryScreen → formObject->defaultform, using the modern screen-based
-// rendering path with full settings propagation.
-// Also sync the screen's pages whenever the form's element list changes (e.g. when a new
-// extraElement is added to ensureUsersTableForm after the screen was first created).
-global $xoopsDB;
-include_once XOOPS_ROOT_PATH . '/modules/formulize/class/multiPageScreen.php';
-$mp_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-$allElementIds = array_values($formObject->getVar('elements'));
-if (!$formObject->getVar('defaultform')) {
-	$newScreen = $mp_handler->create();
-	$mp_handler->setDefaultFormScreenVars($newScreen, $formObject);
-	$newScreen->setVar('frid', 0);
-	$newScreen->setVar('pages', serialize(array(0 => $allElementIds)));
-	if ($mp_handler->insert($newScreen)) {
-		$sid = intval($newScreen->getVar('sid'));
-		$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize_id") . " SET defaultform = $sid WHERE id_form = " . intval($fid));
-		$formObject->setVar('defaultform', $sid);
-	}
-} else {
-	// Sync pages to include any elements added after the screen was created.
-	// Use a direct SQL UPDATE on just the pages column to avoid routing through
-	// the screen handler's insert(), which uses query() (not queryF()) for UPDATEs.
-	$sid = intval($formObject->getVar('defaultform'));
-	$pagesRow = $xoopsDB->queryF(
-		"SELECT pages FROM " . $xoopsDB->prefix('formulize_screen_multipage') .
-		" WHERE sid = $sid"
-	);
-	if ($pagesRow && $row = $xoopsDB->fetchArray($pagesRow)) {
-		$screenPages = @unserialize($row['pages']);
-		$screenElementIds = array();
-		if (is_array($screenPages)) {
-			foreach ($screenPages as $pageElements) {
-				if (is_array($pageElements)) {
-					$screenElementIds = array_merge($screenElementIds, $pageElements);
-				}
-			}
-		}
-		$sortedAll = $allElementIds;
-		sort($sortedAll);
-		sort($screenElementIds);
-		if ($sortedAll !== $screenElementIds) {
-			$xoopsDB->queryF(
-				"UPDATE " . $xoopsDB->prefix('formulize_screen_multipage') .
-				" SET pages = " . $xoopsDB->quoteString(serialize(array(0 => $allElementIds))) .
-				" WHERE sid = $sid"
-			);
-		}
-	}
-}
-
 // Build a pseudo list-of-entries screen to leverage standard entriesdisplay machinery
 // while customising button visibility. For the view-entry case, displayEntries routes
 // to the EAU form's defaultform screen (if any), or falls back to the system users
@@ -152,6 +100,7 @@ $screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
 $pseudoScreen = $screen_handler->create();
 $screen_handler->setDefaultListScreenVars($pseudoScreen, $eauViewEntryScreenId, $formObject);
 // Override: no framework for ad hoc table forms
+$pseudoScreen->setVar('title', 'All Users');
 $pseudoScreen->setVar('frid', 0);
 $pseudoScreen->setVar('textwidth', 0);
 // Suppress buttons not appropriate for user management
@@ -175,19 +124,19 @@ $pseudoScreen->setVar('useaddupdate', _AM_FORMULIZE_ADD_USER);
 // advanceview format: array of [handle, search_value, sort_direction, search_type] per column.
 // This bypasses the headerlist→getDefaultCols chain and lets entriesdisplay.php
 // use our explicit column list directly.
+// Include the Type column only when EAU forms exist (i.e. both regular and EAU users are present).
 $fidInt = intval($fid);
-$defaultHandles = array(
-	'formulize_user_account_uid_'         . $fidInt,
-	'formulize_user_account_firstname_'   . $fidInt,
-	'formulize_user_account_username_'    . $fidInt,
-	'formulize_user_account_email_'       . $fidInt,
-	'formulize_user_account_phone_'       . $fidInt,
-	'formulize_user_account_status_'      . $fidInt,
-	'formulize_user_account_masquerade_'  . $fidInt,
+$advanceViewArray = array(
+	array('formulize_user_account_uid_'        . $fidInt, '', 0, 'Box'),
+	array('formulize_user_account_firstname_'  . $fidInt, '', 0, 'Box'),
+	array('formulize_user_account_username_'   . $fidInt, '', 0, 'Box'),
+	array('formulize_user_account_email_'      . $fidInt, '', 0, 'Box'),
+	array('formulize_user_account_phone_'      . $fidInt, '', 0, 'Box'),
 );
-$advanceViewArray = array();
-foreach ($defaultHandles as $avHandle) {
-	$advanceViewArray[] = array($avHandle, '', 0, 'Box');
+$advanceViewArray[] = array('formulize_user_account_status_'     . $fidInt, '', 0, 'Box');
+$advanceViewArray[] = array('formulize_user_account_masquerade_' . $fidInt, '', 0, 'Box');
+if (!empty(getEntriesAreUsersForms())) {
+	$advanceViewArray[] = array('eau_type', '', 0, 'Filter');
 }
 $pseudoScreen->setVar('advanceview', $advanceViewArray);
 

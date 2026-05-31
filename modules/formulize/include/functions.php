@@ -486,6 +486,13 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
         return false;
     }
 
+    // system_admin was verified at the page level — skip all entry-level ownership/scope checks
+    // since there is no Formulize data table to look up owner info from (e.g. groups form)
+    if (isset($GLOBALS['formulize_systemAdminPermissionVerified']) AND $GLOBALS['formulize_systemAdminPermissionVerified']) {
+        $cachedSecurityChecks[$form_id][$entry_id] = true;
+        return true;
+    }
+
     if ($entry_id == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, $mid)) {
 				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
@@ -1058,12 +1065,103 @@ function deleteMaintenance($entry_id, $fid) {
 }
 
 /**
+ * Returns true if an entries-are-groups form has at least one associated group
+ * that cannot be deleted — i.e. a group that has members or owns data on a form
+ * for which it still holds view_form permission.
+ * Returns false for non-EAG forms and for EAG forms whose groups are all deletable.
+ */
+function eagFormHasUndeletableGroups($fid) {
+	global $xoopsDB;
+	$fid        = intval($fid);
+	$modId      = intval(getFormulizeModId());
+	$groupsTable = $xoopsDB->prefix('groups');
+	$gulTable    = $xoopsDB->prefix('groups_users_link');
+	$eogTable    = $xoopsDB->prefix('formulize_entry_owner_groups');
+	$gpermTable  = $xoopsDB->prefix('group_permission');
+
+	$res = $xoopsDB->query(
+		"SELECT 1 FROM `$groupsTable` g" .
+		" WHERE g.form_id = $fid AND g.is_group_template = 0" .
+		" AND (" .
+		"   EXISTS (SELECT 1 FROM `$gulTable` WHERE groupid = g.groupid)" .
+		"   OR EXISTS (" .
+		"     SELECT 1 FROM `$eogTable` eog" .
+		"     JOIN `$gpermTable` gp" .
+		"       ON gp.gperm_name = 'view_form'" .
+		"       AND gp.gperm_groupid = g.groupid" .
+		"       AND gp.gperm_itemid = eog.fid" .
+		"       AND gp.gperm_modid = $modId" .
+		"     WHERE eog.groupid = g.groupid" .
+		"   )" .
+		" ) LIMIT 1"
+	);
+	return ($res && $xoopsDB->fetchArray($res)) ? true : false;
+}
+
+/**
  * Delete a specific entry from a form
  *
  * @param int $entry_id The entry ID to delete
  * @param int $fid The form ID from which to delete the entry
  */
 function deleteIdReq($entry_id, $fid) {
+	$entry_id = intval($entry_id);
+	$fid      = intval($fid);
+
+	// For entries-are-groups forms: apply the same deletability rules used on
+	// the Groups management page. If the associated group has members or owns
+	// data (with view_form permission) it is blocked — deleting the entry while
+	// the group is still active would leave it orphaned. If the group passes
+	// all criteria, delete it together with the entry.
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if ($formObject = $form_handler->get($fid)) {
+		if ($formObject->getVar('entries_are_groups')) {
+			global $xoopsDB;
+			$groupsTable = $xoopsDB->prefix('groups');
+			$res = $xoopsDB->query(
+				"SELECT groupid FROM `$groupsTable`" .
+				" WHERE form_id = $fid AND entry_id = $entry_id AND is_group_template = 0"
+			);
+			if ($res && $row = $xoopsDB->fetchArray($res)) {
+				$groupId    = intval($row['groupid']);
+				$gulTable   = $xoopsDB->prefix('groups_users_link');
+				$eogTable   = $xoopsDB->prefix('formulize_entry_owner_groups');
+				$gpermTable = $xoopsDB->prefix('group_permission');
+				$modId      = intval(getFormulizeModId());
+
+				// Criterion 1: not a built-in system group
+				if (in_array($groupId, array(1, 2, 3))) {
+					return;
+				}
+				// Criterion 2: no members
+				$r = $xoopsDB->query("SELECT 1 FROM `$gulTable` WHERE groupid = $groupId LIMIT 1");
+				if ($r && $xoopsDB->fetchArray($r)) {
+					return;
+				}
+				// Criterion 3: no entries in entry_owner_groups where the group
+				// still holds view_form permission on the associated form
+				$r = $xoopsDB->query(
+					"SELECT 1 FROM `$eogTable` eog" .
+					" JOIN `$gpermTable` gp" .
+					"   ON gp.gperm_name = 'view_form'" .
+					"   AND gp.gperm_groupid = $groupId" .
+					"   AND gp.gperm_itemid = eog.fid" .
+					"   AND gp.gperm_modid = $modId" .
+					" WHERE eog.groupid = $groupId LIMIT 1"
+				);
+				if ($r && $xoopsDB->fetchArray($r)) {
+					return;
+				}
+
+				// Group is safe to delete — remove it along with the entry.
+				$xoopsDB->queryF("DELETE FROM `$gulTable`   WHERE groupid = $groupId");
+				$xoopsDB->queryF("DELETE FROM `$gpermTable` WHERE gperm_groupid = $groupId");
+				$xoopsDB->queryF("DELETE FROM `$eogTable`   WHERE groupid = $groupId");
+				$xoopsDB->queryF("DELETE FROM `$groupsTable` WHERE groupid = $groupId");
+			}
+		}
+	}
+
 	$data_handler = new formulizeDataHandler($fid);
 	if (!$deleteResult = $data_handler->deleteEntries($entry_id)) {
 		throw new Exception("Could not delete entry ".intval($entry_id)." from the database for form ".intval($fid));
@@ -4858,6 +4956,17 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 					foreach($options as $checkThisKey=>$checkThisValue) {
 						if(strstr($checkThisKey, "{OTHER|")) {
 							unset($options[$checkThisKey]);
+						}
+					}
+				}
+				if (empty($options)) {
+					$eleTypeForOpts  = $elementObject->getVar('ele_type');
+					$classFileForOpts = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleTypeForOpts . 'Element.php';
+					if (file_exists($classFileForOpts)) {
+						require_once $classFileForOpts;
+						$optsHandler = xoops_getmodulehandler($eleTypeForOpts . 'Element', 'formulize');
+						if ($optsHandler && method_exists($optsHandler, 'getFilterOptions')) {
+							$options = $optsHandler->getFilterOptions();
 						}
 					}
 				}

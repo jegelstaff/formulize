@@ -77,6 +77,7 @@ if($op != "check_for_unique_value"
    AND $op != 'validate_php_code'
    AND $op != 'get_views_for_form'
 	 AND $op != 'get_form_screens_for_form'
+	 AND $op != 'group_member_search'
   ) {
   exit();
 }
@@ -430,6 +431,62 @@ switch($op) {
     echo json_encode($array);
     break;
 
+
+	case 'group_member_search':
+		// Search current members or non-members for the group member management widget.
+		// System groups table form requires system_admin; EAG forms require view_form on the fid.
+		global $xoopsDB;
+		$gperm_handler = xoops_gethandler('groupperm');
+		$userGroups    = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		$gmsFid        = isset($_GET['fid']) ? intval($_GET['fid']) : 0;
+		$gmsCanSearch  = false;
+		if ($gmsFid) {
+			$gmsFormHandler = xoops_getmodulehandler('forms', 'formulize');
+			$gmsFormObject  = $gmsFormHandler->get($gmsFid);
+			if ($gmsFormObject && $gmsFormObject->getVar('entries_are_groups')) {
+				$gmsMid       = getFormulizeModId();
+				$gmsCanSearch = $xoopsUser && $gperm_handler->checkRight('view_form', $gmsFid, $userGroups, $gmsMid);
+			}
+		}
+		if (!$gmsCanSearch && !$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_GROUP, $userGroups)) {
+			print json_encode(array('error' => 'Permission denied'));
+			break;
+		}
+		$gmsAction     = isset($_GET['action'])  ? trim($_GET['action'])    : '';
+		$gmsGroupId    = isset($_GET['groupid']) ? intval($_GET['groupid']) : 0;
+		$gmsTerm       = isset($_GET['term'])    ? trim($_GET['term'])      : '';
+		$gmsUsersTable = $xoopsDB->prefix('users');
+		$gmsGulTable   = $xoopsDB->prefix('groups_users_link');
+		if ($gmsGroupId <= 0) {
+			print json_encode(array('error' => 'Invalid group'));
+			break;
+		}
+		if ($gmsAction === 'members') {
+			require_once XOOPS_ROOT_PATH . '/modules/formulize/class/eagGroupMembersElement.php';
+			$gmsLimit = $gmsTerm !== '' ? 200 : 10;
+			print json_encode(formulizeEagGroupMembersElementHandler::queryMembers($gmsGroupId, $gmsTerm, $gmsLimit, true));
+		} elseif ($gmsAction === 'nonmembers') {
+			if (strlen($gmsTerm) < 2) {
+				print json_encode(array());
+				break;
+			}
+			$gmsSafe = formulize_db_escape($gmsTerm);
+			$gmsRes  = $xoopsDB->query(
+				"SELECT u.uid, u.uname, u.name FROM `$gmsUsersTable` u"
+				. " WHERE (u.name LIKE '%$gmsSafe%' OR u.uname LIKE '%$gmsSafe%' OR u.email LIKE '%$gmsSafe%')"
+				. " AND u.uid NOT IN (SELECT gul.uid FROM `$gmsGulTable` gul WHERE gul.groupid = $gmsGroupId)"
+				. " ORDER BY u.name, u.uname LIMIT 50"
+			);
+			$gmsResults = array();
+			while ($gmsRes && $gmsRow = $xoopsDB->fetchArray($gmsRes)) {
+				$gmsDisplay   = ($gmsRow['name'] !== '') ? $gmsRow['name'] . ' (' . $gmsRow['uname'] . ')' : $gmsRow['uname'];
+				$gmsResults[] = array('uid' => intval($gmsRow['uid']), 'display' => htmlspecialchars($gmsDisplay, ENT_QUOTES, 'UTF-8'));
+			}
+			print json_encode($gmsResults);
+		} else {
+			print json_encode(array('error' => 'Unknown action'));
+		}
+		break;
 
 }
 
