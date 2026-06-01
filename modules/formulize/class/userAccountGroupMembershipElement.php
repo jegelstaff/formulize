@@ -83,6 +83,15 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		list($autocomplete_ele_value[ELE_VALUE_SELECT_OPTIONS], $groupUITextList) = self::getAvailableGroupsForOptions($ele_value[ELE_VALUE_SELECT_OPTIONS], $element->excludeTemplateGroups);
 		$autocompleteElement->setVar('ele_uitext', $groupUITextList);
 		$autocompleteElement->useOptionsAsValues = true; // will use group ids as the values in the HTML markup, and then we can just save those values directly without having to do extra work to figure out which options were selected based on their ordinal position in the list, which would introduce race conditions too!
+		if($isDisabled) {
+			$selectedNames = array();
+			foreach($autocomplete_ele_value[ELE_VALUE_SELECT_OPTIONS] as $groupId => $isSelected) {
+				if($isSelected && isset($groupUITextList[$groupId])) {
+					$selectedNames[] = htmlspecialchars($groupUITextList[$groupId], ENT_QUOTES);
+				}
+			}
+			return new XoopsFormLabel($caption, implode('<br>', $selectedNames), $markupName);
+		}
 		return $autocompleteHandler->render($autocomplete_ele_value, $caption, $markupName, $isDisabled, $autocompleteElement, $entry_id, $screen, $owner);
 	}
 

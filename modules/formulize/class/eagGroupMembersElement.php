@@ -101,6 +101,10 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen = false, $owner = null) {
 		$fid = intval($element->getVar('id_form'));
 
+		if ($isDisabled) {
+			return new XoopsFormLabel($caption, '');
+		}
+
 		if ($entry_id === 'new' || !is_numeric($entry_id) || intval($entry_id) <= 0) {
 			return new XoopsFormLabel($caption, '<em>' . _formulize_GMM_SAVE_FIRST . '</em>');
 		}

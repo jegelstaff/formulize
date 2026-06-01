@@ -80,20 +80,21 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		$timezones = formulize_getTimezoneList();
 		if(!$ele_value) {
 			global $xoopsConfig;
 			$ele_value = formulize_getIANATimezone($xoopsConfig['default_TZ']);
 		}
-		$disabled = $isDisabled ? ' disabled="disabled"' : '';
-		$html = '<select name="'.$markupName.'" id="'.$markupName.'" onchange="javascript:formulizechanged=1;"'.$disabled.'>';
+		if($isDisabled) {
+			return new XoopsFormLabel($caption, $ele_value, $markupName);
+		}
+		$timezones = formulize_getTimezoneList();
+		$html = '<select name="'.$markupName.'" id="'.$markupName.'" onchange="javascript:formulizechanged=1;">';
 		foreach($timezones as $tz) {
 			$selected = ($tz == $ele_value) ? ' selected="selected"' : '';
 			$html .= '<option value="'.htmlspecialchars($tz, ENT_QUOTES).'"'.$selected.'>'.htmlspecialchars($tz, ENT_QUOTES).'</option>';
 		}
 		$html .= '</select>';
-		$form_ele = new XoopsFormLabel($caption, $html, $markupName);
-		return $form_ele;
+		return new XoopsFormLabel($caption, $html, $markupName);
 	}
 
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
