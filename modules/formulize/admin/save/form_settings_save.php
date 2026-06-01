@@ -216,6 +216,8 @@ if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_PO
 if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
 	OR ($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0)
 	OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)
+	OR ($formObject->getVar('entries_are_groups') && $oldEntriesAreGroups === 0)
+	OR (!$formObject->getVar('entries_are_groups') && $oldEntriesAreGroups === 1)
 	OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged
 	OR $newGroupCategoriesCreated
 	OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
@@ -225,7 +227,8 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
   } else {
     $appidToUse = intval($_POST['application_url_id']);
   }
-	if(($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0) OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)) {
+	if(($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0) OR (!$formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 1)
+		OR ($formObject->getVar('entries_are_groups') && $oldEntriesAreGroups === 0) OR (!$formObject->getVar('entries_are_groups') && $oldEntriesAreGroups === 1)) {
 		print "/* evalnowandreturn */ ";  // have to abort doing anything else... should probably do this all the time with evalnow except that's not how things were architected and sometimes the operations performed 'now' are necessary for subsequent calls to work cleanly so we can't always return when processing evalnow :(
 	} else {
 		print "/* eval */ ";

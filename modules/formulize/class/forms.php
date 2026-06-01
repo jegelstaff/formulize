@@ -1384,7 +1384,13 @@ class formulizeFormsHandler {
 		$fid    = intval($formObject->getVar('fid'));
 		$handle = 'formulize_eag_group_members_' . $fid;
 
-		if(in_array($handle, $formObject->getVar('elementHandles'))) {
+		// Query the database directly rather than the in-memory form object: insert() can be
+		// called multiple times in one request (e.g. from syncTemplateGroupsForForm), and the
+		// in-memory elementHandles is not updated after the first creation, so the stale cache
+		// would pass this check and create a duplicate element on the second call.
+		global $xoopsDB;
+		$checkResult = $xoopsDB->query("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_handle = '" . formulize_db_escape($handle) . "' AND id_form = $fid");
+		if($checkResult && $xoopsDB->fetchArray($checkResult)) {
 			return true; // already present
 		}
 
