@@ -512,6 +512,7 @@ $("[name=perm_mode]").change(function () {
 		$("#perm_group_checkboxes_wrapper").show();
 		$("#perm_filters_section :input").attr('disabled', 'disabled');
 		$("#perm_direct_top_content :input, #perm_group_checkboxes_wrapper :input").removeAttr('disabled');
+		$("input[name$='_dummy1'], input[name$='_dummy2']").attr('disabled', 'disabled');
 	}
 });
 

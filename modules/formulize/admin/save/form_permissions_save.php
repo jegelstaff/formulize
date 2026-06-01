@@ -117,6 +117,7 @@ foreach($group_list as $group_id) {
             $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, '$permission_name')";
         }
     }
+    $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, 'view_their_own_entries')"; // always on regardless of submission
 
     // enable only the selected permissions
     if (count((array) $enabled_permissions) > 0) {
