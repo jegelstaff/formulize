@@ -89,6 +89,7 @@ if ($_GET['fid'] != "new") {
 			$entries_are_users_conditions_all = array();
 		}
 		$entries_are_users_conditions = isset($entries_are_users_conditions_all[0]) ? $entries_are_users_conditions_all[0] : null;
+		$entries_are_users_has_conditions = !empty($entries_are_users_conditions) && is_array($entries_are_users_conditions) && !empty($entries_are_users_conditions[0]);
 		$entries_are_users_conditions_ui = formulize_createFilterUI($entries_are_users_conditions, "entriesareusersconditions", $fid, "form-1", -1);
 		$entries_are_users_default_groups = $formObject->getVar('entries_are_users_default_groups');
 		$entries_are_users_default_groups_ui = formulize_renderDefaultGroupsUI($entries_are_users_default_groups);
@@ -102,7 +103,8 @@ if ($_GET['fid'] != "new") {
 				if ($groupObj) {
 					$groupConditions = isset($entries_are_users_conditions_all[$gid]) ? $entries_are_users_conditions_all[$gid] : null;
 					$hasGroupConditions = !empty($groupConditions);
-					$entries_are_users_default_groups_selected[] = array('id' => $gid, 'name' => $groupObj->getVar('name'), 'hasConditions' => $hasGroupConditions);
+					$conditionCount = ($hasGroupConditions && is_array($groupConditions[0])) ? count($groupConditions[0]) : 0;
+					$entries_are_users_default_groups_selected[] = array('id' => $gid, 'name' => $groupObj->getVar('name'), 'hasConditions' => $hasGroupConditions, 'conditionCount' => $conditionCount);
 					$per_group_conditions_ui[$gid] = formulize_createFilterUI($groupConditions, "eaugroup_".$gid, $fid, "form-1", -1);
 				}
 			}
@@ -972,6 +974,8 @@ $settings['istableform'] = ($tableform OR $newtableform) ? true : false;
 $settings['entries_are_users'] = $entries_are_users;
 $settings['entries_are_users_user_is_owner'] = $entries_are_users_user_is_owner;
 $settings['entries_are_users_conditions_ui'] = $entries_are_users_conditions_ui;
+$settings['entries_are_users_has_conditions'] = $entries_are_users_has_conditions ?? false;
+$settings['open_group_conditions_panels'] = isset($_POST['open_group_conditions_panels']) ? preg_replace('/[^0-9,]/', '', $_POST['open_group_conditions_panels']) : '';
 $settings['entries_are_users_default_groups_ui'] = $entries_are_users_default_groups_ui;
 $settings['entries_are_users_default_groups_selected'] = $entries_are_users_default_groups_selected;
 $settings['per_group_conditions_ui'] = $per_group_conditions_ui;

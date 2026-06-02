@@ -94,6 +94,7 @@ $(document).ready(function() {
   <input type="hidden" name="accordion_active" value="">
   <input type="hidden" name="themeswitch" value="">
   <input type="hidden" name="seedtemplates" value="">
+  <input type="hidden" name="open_group_conditions_panels" value="">
 </form>
 
 <{if $adminPage.show_user_view}>
@@ -322,6 +323,10 @@ $(document).ready(function() {
       accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
     }
     window.document.scrollposition.accordion_active.value = accordion_active;
+    var $openPanelsField = $("#open_group_conditions_panels");
+    if ($openPanelsField.length) {
+      window.document.scrollposition.open_group_conditions_panels.value = $openPanelsField.val();
+    }
     window.document.scrollposition.submit();
   }
 
