@@ -48,7 +48,7 @@ if(($xoopsUser AND $sentUid != $xoopsUser->getVar('uid')) OR (!$xoopsUser AND $s
   exit();
 }
 
-include_once "../../header.php";
+
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 include XOOPS_ROOT_PATH .'/modules/formulize/include/customCodeForApplications.php';
 
