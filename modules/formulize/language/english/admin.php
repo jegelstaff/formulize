@@ -307,30 +307,34 @@ define("_AM_PERMISSIONS_SAME_CHECKBOX_YES","Yes, when I check a box for one grou
 define("_AM_PERMISSIONS_SAME_CHECKBOX_NO","No, I will set each group individually");
 define("_AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN","You can change this setting at any time while you are adjusting the checkboxes.  Set it to <b>Yes</b>, to quickly set some checkboxes the same for all groups.  Change it to <b>No</b> when you need to set specific checkboxes for only certain groups.");
 define("_AM_PERMISSIONS_SELECT_GROUP","Select some groups to see their permissions");
-define("_AM_PERMISSIONS_DEFINE_BASIC","The basics:");
-define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form");
-define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries in the form");
+define("_AM_PERMISSIONS_DEFINE_ACCESS","Access:");
+define("_AM_PERMISSIONS_DEFINE_BASIC","Operations:");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM","View the form and entries");
+define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Create their own entries");
+define("_AM_PERMISSIONS_DEFINE_UPDATE_ENTRIES_HEADER","Update entries belonging to:");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Update entries <i>made by themselves</i>");
 define("_AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES","Update entries <i>made by their group(s)</i>");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES","Update entries <i>made by anyone</i>");
+define("_AM_PERMISSIONS_DEFINE_DELETE_ENTRIES_HEADER","Delete entries belonging to:");
 define("_AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES","Delete entries <i>made by themselves</i>");
 define("_AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES","Delete entries <i>made by their group(s)</i>");
 define("_AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES","Delete entries <i>made by anyone</i>");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY","Visibility:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_HEADER","View entries belonging to:");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE","View elements in the form that are marked as 'private'");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN","View their own entries (always on)");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL","View entries by all other users in all groups");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY","View entries by other users from these groups only:");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER","All the groups the user is a member of, that can view the form");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN","View entries <i>made by themselves</i> <span style=\"font-size:.85em\"><em>(always on)</em></span>");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL","View entries <i>made by anyone</i>");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY","View entries <i>made by their group(s)</i>:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER","all the user's groups that can view the form");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED","disabled");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS","View only entries that meet these conditions:");
-define("_AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS","Publishing 'Saved Views' of form entries:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS","Restrict visibility to entries that meet these conditions:");
+define("_AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS","Saved Views:");
 define("_AM_PERMISSIONS_DEFINE_VIEW_THEIROWN","Create, update, delete their own 'saved views' (always on)");
 define("_AM_PERMISSIONS_DEFINE_VIEW_INTHEIR","Publish 'saved views' for other users <i>in their group(s)</i>");
 define("_AM_PERMISSIONS_DEFINE_VIEW_FOROTHER","Publish 'saved views' for other users <i>in any group</i>");
 define("_AM_PERMISSIONS_DEFINE_VIEW_UPDATE","Update 'saved views' that other people have published");
 define("_AM_PERMISSIONS_DEFINE_VIEW_DELETE","Delete 'saved views' that other people have published");
-define("_AM_PERMISSIONS_ADVANCED","Advanced options:");
+define("_AM_PERMISSIONS_ADVANCED","Advanced:");
 define("_AM_PERMISSIONS_ADVANCED_IMPORT","Import data from a spreadsheet");
 define("_AM_PERMISSIONS_ADVANCED_NOTIFICATIONS","Create notifications that get sent to other users");
 define("_AM_PERMISSIONS_ADVANCED_CREATEFOROTHER","Create entries on behalf of other users");
@@ -1083,3 +1087,11 @@ define("_AM_ELE_CLONE_TO_FORM_BUTTON", "Clone");
 
 define("_AM_FORMULIZE_ADD_USER", "Add User");
 define("_AM_FORMULIZE_ADD_GROUP", "Add Group");
+
+// Entry group selector widget (EGS) and entry group permission panel
+define('_AM_EGS_NO_GROUPS_FOUND', 'No groups found');
+define('_AM_EGS_SHOW_SELECTED', 'Show these groups');
+define('_AM_EGS_SEARCH_PLACEHOLDER', 'Search by name...');
+define('_AM_ENTRY_GROUP_NOTICE', 'Disabled permissions are inherited from the template for all %s. You cannot change them, but you can set additional permissions.');
+define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Visibility conditions:');
+

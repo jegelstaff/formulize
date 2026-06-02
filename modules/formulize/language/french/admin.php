@@ -143,30 +143,34 @@ define("_AM_PERMISSIONS_SAME_CHECKBOX_YES","Oui, quand je coche une case pour un
 define("_AM_PERMISSIONS_SAME_CHECKBOX_NO","Non, je définirai chaque groupe individuellement");
 define("_AM_PERMISSIONS_SAME_CHECKBOX_EXPLAIN","Vous pouvez changer ce paramètre à tout moment lorsque vous éditez les permissions. Mettez le sur <b>Oui</b>, pour rapidement affecter une même permission à tous les groupes en même temps. Modifiez la en <b>Non</b> lorsque vous souhaitez n'affecter une permission qu'à certains groupes.");
 define("_AM_PERMISSIONS_SELECT_GROUP","Sélectionnez des groupes pour voir leurs permissions");
-define("_AM_PERMISSIONS_DEFINE_BASIC","Les basiques:");
-define("_AM_PERMISSIONS_DEFINE_VIEWFORM","Voir le formulaire");
-define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Créer sa propre entrée dans le formulaire");
+define("_AM_PERMISSIONS_DEFINE_ACCESS","Accès:");
+define("_AM_PERMISSIONS_DEFINE_BASIC","Opérations:");
+define("_AM_PERMISSIONS_DEFINE_VIEWFORM","Voir le formulaire et les entrées");
+define("_AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES","Créer sa propre entrée");
+define("_AM_PERMISSIONS_DEFINE_UPDATE_ENTRIES_HEADER","Mettre à jour les entrées appartenant à :");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES","Mettre à jour <i>ses entrées</i>");
 define("_AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES","Mettre à jour les <i>entrées des les groupes</i>");
 define("_AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES","Mettre à jour les <i>entrées des autres</i>");
+define("_AM_PERMISSIONS_DEFINE_DELETE_ENTRIES_HEADER","Effacer les entrées appartenant à :");
 define("_AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES","Effacer <i>ses entrées</i>");
 define("_AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES","Effacer <i>les entrées des les groupes</i>");
 define("_AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES","Effacer <i>les entrées des autres</i>");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY","Visibilité:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_HEADER","Voir les entrées appartenant à :");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE","Voir les éléments du formulaire marqués comme 'privés'");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN","Voir leurs propres entrées (toujours actif)");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL","Voir les entrées de tous les utilisateurs dans tous les groupes");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY","Voir seulement les entrées des utilisateurs appartenant à ce(s) groupe(s):");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER","Tous les groupes qui peuvent voir ce formulaire et dont l'utilisateur est membre");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN","Voir les entrées <i>faites par eux-mêmes</i> <span style=\"font-size:.85em\"><em>(toujours actif)</em></span>");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL","Voir les entrées <i>faites par n'importe qui</i>");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY","Voir les entrées <i>faites par leur(s) groupe(s)</i> :");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER","tous les groupes de l'utilisateur pouvant voir ce formulaire");
 define("_AM_PERMISSIONS_DEFINE_VISIBILITY_DISABLED","désactivé");
-define("_AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS","Voir seulement les entrées rencontrant ces conditions:");
-define("_AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS","Publier les 'Vues sauvegardées' des entrées du formulaire:");
+define("_AM_PERMISSIONS_DEFINE_VISIBILITY_CONDITIONS","Limiter la visibilité aux entrées répondant à ces conditions:");
+define("_AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS","Vues sauvegardées:");
 define("_AM_PERMISSIONS_DEFINE_VIEW_THEIROWN","Créer, mettre à jour, effacer leurs propres vues 'sauvegardées' (toujours actif)");
 define("_AM_PERMISSIONS_DEFINE_VIEW_INTHEIR","Publier les 'vues sauvegardées' pour les autres utilisateurs <i>dans leur(s) groupe(s)</i>");
 define("_AM_PERMISSIONS_DEFINE_VIEW_FOROTHER","Publier les 'vues sauvegardées' pour les autres utilisateurs <i>dans n'importe quel(s) groupe(s)</i>");
 define("_AM_PERMISSIONS_DEFINE_VIEW_UPDATE","Mettre à jour les 'vues sauvegardées' que d'autres personnes ont publiées");
 define("_AM_PERMISSIONS_DEFINE_VIEW_DELETE","Effacer les 'vues sauvegardées' que d'autres personnes ont publiées");
-define("_AM_PERMISSIONS_ADVANCED","Options avancées:");
+define("_AM_PERMISSIONS_ADVANCED","Avancé:");
 define("_AM_PERMISSIONS_ADVANCED_IMPORT","Importer les données d'une feuille de calcul");
 define("_AM_PERMISSIONS_ADVANCED_NOTIFICATIONS","Créer des notifications pouvant être envoyées à d'autres utilisateurs");
 define("_AM_PERMISSIONS_ADVANCED_CREATEFOROTHER","Créer des entrées au nom d'autres utilisateurs");
@@ -650,5 +654,13 @@ define("_AM_FORMULIZE_LIST_SCREEN_TITLE", "Liste - %s");
 define("_AM_ELE_CLONE_TO_FORM", "Cloner cet élément dans quel formulaire ?");
 define("_AM_ELE_CLONE_TO_FORM_THISFORM", "Ce formulaire");
 define("_AM_ELE_CLONE_TO_FORM_BUTTON", "Cloner");
+
+// Entry group selector widget (EGS) and entry group permission panel
+define('_AM_EGS_NO_GROUPS_FOUND', 'Aucun groupe trouvé');
+define('_AM_EGS_SHOW_SELECTED', 'Afficher ces groupes');
+define('_AM_EGS_SEARCH_PLACEHOLDER', 'Rechercher par nom...');
+define('_AM_ENTRY_GROUP_NOTICE', 'Les permissions désactivées ne peuvent pas être modifiées. Elles sont héritées du modèle pour tous les %s.');
+define('_AM_ENTRY_GROUP_CONDITIONS_LABEL', 'Conditions de visibilité :');
+
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

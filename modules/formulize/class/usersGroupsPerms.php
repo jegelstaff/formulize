@@ -339,17 +339,14 @@ class formulizePermHandler {
 			$thisFid = $thisForm->getVar('id_form');
 			$permHandler = new formulizePermHandler($thisFid);
 			$scopeGroupIds = $permHandler->getGroupScopeGroupIds($sourceGroupId);
+			$resolvedScopeGroups = array();
 			if (is_array($scopeGroupIds) && count($scopeGroupIds) > 0) {
-				$resolvedScopeGroups = array();
 				foreach ($scopeGroupIds as $scopeGid) {
-					if (isset($groupIdMapping[$scopeGid])) {
-						$resolvedScopeGroups[] = $groupIdMapping[$scopeGid];
-					} else {
-						$resolvedScopeGroups[] = $scopeGid;
-					}
+					$resolvedScopeGroups[] = isset($groupIdMapping[$scopeGid]) ? $groupIdMapping[$scopeGid] : $scopeGid;
 				}
-				$permHandler->setGroupScopeGroups($targetGroupId, $resolvedScopeGroups);
 			}
+			// Always call setGroupScopeGroups so that resetting source to default clears the target too
+			$permHandler->setGroupScopeGroups($targetGroupId, $resolvedScopeGroups);
 		}
 
 		return true;

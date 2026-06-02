@@ -379,7 +379,7 @@ if ($_GET['fid'] != "new") {
 				$selectedGroups = (isset($_POST['groups']) AND is_array($_POST['groups'])) ? $_POST['groups'] : array();
 			}
     }
-		$selectedGroups = array_filter($selectedGroups, 'is_numeric');
+		$selectedGroups = array_unique(array_filter($selectedGroups, 'is_numeric'));
     $orderGroups = isset($_POST['order']) ? $_POST['order'] : "creation";
     foreach($allGroups as $thisGroup) {
         $groups[$thisGroup->getVar('name')]['id'] = $thisGroup->getVar('groupid');
@@ -406,6 +406,103 @@ if ($_GET['fid'] != "new") {
     // 3. Render the xoopsform element object to get the markup
     $userSelectionList = $userSelectionList->render();
 
+    // Builds the entry-group selector widget HTML for a template group's permission panel.
+    // Uses AJAX search so admins can find entry groups by name without loading all of them.
+    if (!function_exists('formulize_buildEntryGroupSelectorWidget')) {
+        function formulize_buildEntryGroupSelectorWidget($templateGroupId, $ajaxUrl, $groupName = '', $formSingular = '') {
+            $tgid = intval($templateGroupId);
+            $ajaxUrlJs = json_encode($ajaxUrl);
+            $tgidJs = json_encode($tgid);
+            $groupNameEsc = htmlspecialchars((string) $groupName, ENT_QUOTES, 'UTF-8');
+            global $xoopsUser;
+            $currentUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+
+            $css = '';
+            if (empty($GLOBALS['formulize_egsStyleOutput'])) {
+                $GLOBALS['formulize_egsStyleOutput'] = true;
+                $css = '<style>
+.egs-widget{margin-top:12px;padding-top:10px;border-top:1px solid #ddd;}
+.egs-ac-input{width:450px;}
+.egs-selected-row{padding:2px 0;}
+.egs-remove-btn{background:none;border:none;color:#a00;cursor:pointer;font-weight:bold;padding:0 4px 0 0;}
+.egs-remove-btn:hover{color:#f00;}
+.egs-pending{margin-top:6px;}
+.egs-reload-btn{margin-top:8px;}
+.entry-group-panel{background:#f9f6ee;border-left:4px solid #c8a000;padding:0 10px 10px 10px;margin-bottom:4px;}
+.entry-group-notice{background:#fff8d6;border:1px solid #e8c800;padding:6px 10px;margin-bottom:10px;font-size:.9em;}
+.entry-group-subtitle{color:#666;font-size:.85em;margin-bottom:6px;}
+</style>';
+            }
+
+            $js = '';
+            if (empty($GLOBALS['formulize_egsJsOutput'])) {
+                $GLOBALS['formulize_egsJsOutput'] = true;
+                $js = '<script>
+var egsState={};
+function egsInit(tgid,ajaxUrl,uid){
+    egsState[tgid]={url:ajaxUrl,uid:uid};
+    jQuery("#egs-ac-input-"+tgid).autocomplete({
+        source:function(request,response){
+            jQuery.ajax({url:egsState[tgid].url,data:{op:"entry_group_search",uid:egsState[tgid].uid,template_group_id:tgid,term:request.term},dataType:"json",
+                success:function(data){
+                    if(!data||data.error||!data.length){response([]);return;}
+                    response(jQuery.map(data,function(g){return{label:g.name,value:g.id};}));
+                },
+                error:function(){response([]);}
+            });
+        },
+        minLength:1,
+        delay:200,
+        select:function(event,ui){
+            event.preventDefault();
+            egsAdd(tgid,ui.item.value,ui.item.label);
+            jQuery("#egs-ac-input-"+tgid).val("");
+            return false;
+        },
+        focus:function(event,ui){
+            event.preventDefault();
+            jQuery("#egs-ac-input-"+tgid).val(ui.item.label);
+            return false;
+        }
+    });
+}
+function egsAdd(tgid,gid,name){
+    if(jQuery("#egs-hidden-"+tgid+"-"+gid).length>0)return;
+    jQuery("#egs-hiddens-"+tgid).append("<input type=\"hidden\" name=\"groups[]\" id=\"egs-hidden-"+tgid+"-"+gid+"\" value=\""+gid+"\">");
+    jQuery("#egs-pending-"+tgid).append("<div class=\"egs-selected-row\" id=\"egs-pending-row-"+tgid+"-"+gid+"\"><button type=\"button\" class=\"egs-remove-btn\" onclick=\"egsCancelAdd("+tgid+","+gid+")\">&#215;</button> "+jQuery("<div>").text(name).html()+"</div>");
+}
+function egsCancelAdd(tgid,gid){
+    jQuery("#egs-hidden-"+tgid+"-"+gid).remove();
+    jQuery("#egs-pending-row-"+tgid+"-"+gid).remove();
+}
+</script>';
+            }
+
+            $html  = $css . $js;
+            $html .= '<div class="egs-widget">';
+            $placeholder = $formSingular ? 'Search for specific ' . htmlspecialchars($formSingular, ENT_QUOTES, 'UTF-8') . ' groups' : htmlspecialchars(_AM_EGS_SEARCH_PLACEHOLDER, ENT_QUOTES, 'UTF-8');
+            $html .= '<input type="text" id="egs-ac-input-' . $tgid . '" class="egs-ac-input" placeholder="' . $placeholder . '" autocomplete="off">';
+            $html .= '<div class="egs-pending" id="egs-pending-' . $tgid . '"></div>';
+            $html .= '<div id="egs-hiddens-' . $tgid . '"></div>';
+            $html .= '<div class="egs-reload-btn"><button type="button" onclick="formulize_reload()">' . _AM_EGS_SHOW_SELECTED . '</button></div>';
+            $html .= '</div>'; // .egs-widget
+            $html .= '<script>jQuery(document).ready(function(){egsInit(' . $tgidJs . ',' . $ajaxUrlJs . ',' . $currentUid . ');});</script>';
+
+            return $html;
+        }
+    }
+
+    // Build group metadata lookup (entry_id, form_id, is_group_template) for all selected groups
+    $groupMetaMap = array();
+    if (!empty($selectedGroups)) {
+        $safeSelectedIds = implode(',', array_map('intval', $selectedGroups));
+        $gmResult = $xoopsDB->query("SELECT groupid, entry_id, form_id, is_group_template FROM " . $xoopsDB->prefix('groups') . " WHERE groupid IN ($safeSelectedIds)");
+        while ($gmResult && $gmRow = $xoopsDB->fetchArray($gmResult)) {
+            $groupMetaMap[intval($gmRow['groupid'])] = $gmRow;
+        }
+    }
+    $egsAjaxUrl = XOOPS_URL . '/modules/formulize/formulize_xhr_responder.php';
+
     // get all the permissions for the selected groups for this form
     $gperm_handler =& xoops_gethandler('groupperm');
     $formulize_permHandler = new formulizePermHandler($fid);
@@ -421,6 +518,10 @@ if ($_GET['fid'] != "new") {
         $perms = $gperm_handler->getObjects($criteria, true);
         if($groupObject = $member_handler->getGroup($thisGroup)) {
 
+        $thisMeta = isset($groupMetaMap[intval($thisGroup)]) ? $groupMetaMap[intval($thisGroup)] : null;
+        $isEntryGroup = $thisMeta && intval($thisMeta['entry_id']) > 0;
+        $isTemplateGroup = $thisMeta && intval($thisMeta['is_group_template']) == 1;
+
         $groupperms[$i]['name'] = $groupObject->getVar('name');
         $groupperms[$i]['id'] = $groupObject->getVar('groupid');
         foreach($perms as $perm) {
@@ -428,22 +529,137 @@ if ($_GET['fid'] != "new") {
         }
         // group-specific-scope
         $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groupObject->getVar('groupid'));
-        if ($scopeGroups===false) {
+        if ($scopeGroups === false) {
             $groupperms[$i]['groupscope_choice'][0] = " selected";
+            $groupperms[$i]['groupscope_text'] = _AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER;
+            $groupperms[$i]['groupscope_is_custom'] = false;
         } else {
-            foreach($scopeGroups as $thisScopeGroupId) {
-            $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
+            foreach ($scopeGroups as $thisScopeGroupId) {
+                $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
             }
+            $scopeNames = array();
+            foreach ((array) $scopeGroups as $sgid) {
+                if (intval($sgid) == 0) {
+                    $scopeNames[] = _AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER;
+                } else {
+                    $sgObj = $member_handler->getGroup(intval($sgid));
+                    $scopeNames[] = $sgObj ? $sgObj->getVar('name') : "Group $sgid";
+                }
+            }
+            $groupperms[$i]['groupscope_text'] = $scopeNames ? implode(', ', $scopeNames) : _AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER;
+            $groupperms[$i]['groupscope_is_custom'] = true;
         }
-        // per-group-filters
-        $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
-        $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
-        $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
-        $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
-        $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
+
+        if ($isEntryGroup) {
+            $eagFormId = intval($thisMeta['form_id']);
+            $eagFormObject = $form_handler->get($eagFormId);
+            $eagFormPlural = $eagFormObject ? $eagFormObject->getVar('plural') : '';
+            // Derive template group name from entry group name (format: "{entry} - {CategoryName}")
+            $entryGroupRawName = $groupObject->getVar('name');
+            $dashPos = strrpos($entryGroupRawName, ' - ');
+            $templateGroupName = ($dashPos !== false) ? substr($entryGroupRawName, $dashPos + 3) : '';
+            // A permission is inherited (disabled) only if the governing template group has it.
+            // Permissions set specifically on this entry group as overrides remain editable.
+            $templateGroupPerms = array();
+            if ($eagFormId) {
+                $egCatSuffix    = ($dashPos !== false) ? substr($entryGroupRawName, $dashPos) : '';
+                $egCatSuffixSafe = formulize_db_escape($egCatSuffix);
+                $tgLookupRes = $xoopsDB->query(
+                    "SELECT groupid FROM `" . $xoopsDB->prefix('groups') . "`"
+                    . " WHERE form_id = $eagFormId AND is_group_template = 1 AND name LIKE '%$egCatSuffixSafe' LIMIT 1"
+                );
+                if ($tgLookupRes && ($tgLookupRow = $xoopsDB->fetchArray($tgLookupRes))) {
+                    $tgLookupId = intval($tgLookupRow['groupid']);
+                    $tgPermCriteria = new CriteriaCompo(new Criteria('gperm_groupid', $tgLookupId));
+                    $tgPermCriteria->add(new Criteria('gperm_itemid', $fid));
+                    $tgPermCriteria->add(new Criteria('gperm_modid', getFormulizeModId()));
+                    foreach ($gperm_handler->getObjects($tgPermCriteria, true) as $tgPerm) {
+                        $templateGroupPerms[$tgPerm->getVar('gperm_name')] = true;
+                    }
+                }
+            }
+            foreach (formulizePermHandler::getPermissionList() as $pn) {
+                $groupperms[$i][$pn . '_inherited'] = isset($templateGroupPerms[$pn]);
+            }
+            $groupperms[$i]['view_their_own_entries_inherited'] = true;
+            $entryGroupFilterSettings = ($filterSettings && isset($filterSettings[intval($thisGroup)])) ? $filterSettings[intval($thisGroup)] : "";
+            $filterConditions = array('all' => array(), 'oom' => array());
+            if ($entryGroupFilterSettings) {
+                $htmlFormId = $tableform ? "form-2" : "form-3";
+                $readout = getExistingFilter($entryGroupFilterSettings, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
+                if (is_array($readout)) {
+                    $filterConditions = $readout;
+                }
+            }
+            $groupperms[$i]['filter_conditions'] = $filterConditions;
+            $groupperms[$i]['is_entry_group'] = true;
+            $groupperms[$i]['template_group_name'] = htmlspecialchars((string) $templateGroupName, ENT_QUOTES, 'UTF-8');
+            $groupperms[$i]['eag_form_plural'] = htmlspecialchars((string) $eagFormPlural, ENT_QUOTES, 'UTF-8');
+            $groupperms[$i]['entry_group_notice'] = sprintf(_AM_ENTRY_GROUP_NOTICE, $groupperms[$i]['eag_form_plural']);
+        } else {
+            // per-group-filters (entry groups inherit from template, not edited directly)
+            $filterSettingsToSend = isset($filterSettings[$thisGroup]) ? $filterSettings[$thisGroup] : "";
+            $htmlFormId = $tableform ? "form-2" : "form-3"; // the form id will vary depending on the tabs, and tableforms have no elements tab
+            $groupperms[$i]['groupfilter'] = formulize_createFilterUI($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
+            $groupperms[$i]['existingFilter'] = getExistingFilter($filterSettingsToSend, $fid."_".$thisGroup."_filter", $fid, $htmlFormId, 0, "oom");
+            $groupperms[$i]['hasgroupfilter'] = $filterSettingsToSend ? " checked" : "";
+        }
+
+        if ($isTemplateGroup) {
+            $groupperms[$i]['is_template_group'] = true;
+            $tgGroupName = (string) $groupObject->getVar('name');
+            $tgFormId = intval($thisMeta['form_id']);
+            $tgFormObject = $tgFormId ? $form_handler->get($tgFormId) : null;
+            $tgFormSingular = $tgFormObject ? (string) $tgFormObject->getVar('singular') : '';
+            $groupperms[$i]['egs_widget'] = formulize_buildEntryGroupSelectorWidget(intval($thisGroup), $egsAjaxUrl, $tgGroupName, $tgFormSingular);
+        }
+
         $i++;
         }
         unset($criteria);
+    }
+
+    // Reorder $groupperms so each entry group appears immediately after its parent template group.
+    // Matching is done on form_id + category suffix (the part after the last " - " in the name).
+    if (!empty($groupperms)) {
+        $egsByKey = array();
+        $nonEntryPerms = array();
+        foreach ($groupperms as $gp) {
+            if (!empty($gp['is_entry_group'])) {
+                $egId = $gp['id'];
+                $egFormId = isset($groupMetaMap[$egId]) ? intval($groupMetaMap[$egId]['form_id']) : 0;
+                $egsByKey[$egFormId . ':' . $gp['template_group_name']][] = $gp;
+            } else {
+                $nonEntryPerms[] = $gp;
+            }
+        }
+        $reordered = array();
+        foreach ($nonEntryPerms as $gp) {
+            $reordered[] = $gp;
+            if (!empty($gp['is_template_group'])) {
+                $tgId = $gp['id'];
+                $tgFormId = isset($groupMetaMap[$tgId]) ? intval($groupMetaMap[$tgId]['form_id']) : 0;
+                $tgName = $gp['name'];
+                $tgDash = strrpos($tgName, ' - ');
+                $tgCategory = htmlspecialchars(
+                    ($tgDash !== false) ? substr($tgName, $tgDash + 3) : $tgName,
+                    ENT_QUOTES, 'UTF-8'
+                );
+                $key = $tgFormId . ':' . $tgCategory;
+                if (isset($egsByKey[$key])) {
+                    foreach ($egsByKey[$key] as $egp) {
+                        $reordered[] = $egp;
+                    }
+                    unset($egsByKey[$key]);
+                }
+            }
+        }
+        foreach ($egsByKey as $orphans) {
+            foreach ($orphans as $egp) {
+                $reordered[] = $egp;
+            }
+        }
+        $groupperms = $reordered;
     }
 
     // get all the permissions for the submitted_user
@@ -831,7 +1047,6 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['content']['groups'] = $groupsMinusEntryGroups;
     $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
     $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
-    $adminPage['tabs'][$i]['content']['samediff'] = $_POST['same_diff'] == "same" ? "same" : "different";
     $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;
     $adminPage['tabs'][$i]['content']['submitted_user'] = $submitted_user;
     $adminPage['tabs'][$i]['content']['userSelectionList'] = $userSelectionList;

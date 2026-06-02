@@ -78,6 +78,7 @@ if($op != "check_for_unique_value"
    AND $op != 'get_views_for_form'
 	 AND $op != 'get_form_screens_for_form'
 	 AND $op != 'group_member_search'
+	 AND $op != 'entry_group_search'
   ) {
   exit();
 }
@@ -486,6 +487,54 @@ switch($op) {
 		} else {
 			print json_encode(array('error' => 'Unknown action'));
 		}
+		break;
+
+
+	case 'entry_group_search':
+		// Search entry groups belonging to a template group. Requires system_admin.
+		global $xoopsDB;
+		$gperm_handler = xoops_gethandler('groupperm');
+		$egsUserGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_GROUP, $egsUserGroups)) {
+			print json_encode(array('error' => 'Permission denied'));
+			break;
+		}
+		$egsTemplateGroupId = isset($_GET['template_group_id']) ? intval($_GET['template_group_id']) : 0;
+		$egsTerm            = isset($_GET['term']) ? trim($_GET['term']) : '';
+		if (!$egsTemplateGroupId) {
+			print json_encode(array('error' => 'Invalid template_group_id'));
+			break;
+		}
+		$egsGroupsTable = $xoopsDB->prefix('groups');
+		// Get the template group's form_id and name for category-scoped search
+		$egsTmplRes = $xoopsDB->query(
+			"SELECT form_id, name FROM `$egsGroupsTable` WHERE groupid = $egsTemplateGroupId AND is_group_template = 1 LIMIT 1"
+		);
+		if (!$egsTmplRes || !($egsTmplRow = $xoopsDB->fetchArray($egsTmplRes)) || !$egsTmplRow['form_id']) {
+			print json_encode(array('error' => 'Template group not found or has no associated form'));
+			break;
+		}
+		$egsFormId = intval($egsTmplRow['form_id']);
+		// Template group names follow "{prefix} - {CategoryName}"; strip the prefix but keep " - CategoryName"
+		$egsTmplName   = $egsTmplRow['name'];
+		$egsDashPos    = strrpos($egsTmplName, ' - ');
+		$egsCatSuffix  = ($egsDashPos !== false) ? substr($egsTmplName, $egsDashPos) : (' - ' . $egsTmplName);
+		$egsCategorySafe = formulize_db_escape($egsCatSuffix);
+		$egsResults = array();
+		// Limit to entry groups of this category (name ends with " - {CategoryName}")
+		$egsWhere = "form_id = $egsFormId AND is_group_template = 0 AND entry_id > 0"
+		          . " AND name LIKE '%$egsCategorySafe'";
+		if ($egsTerm !== '') {
+			$egsSafe  = formulize_db_escape($egsTerm);
+			$egsWhere .= " AND name LIKE '%$egsSafe%'";
+		}
+		$egsRes = $xoopsDB->query(
+			"SELECT groupid, name FROM `$egsGroupsTable` WHERE $egsWhere ORDER BY name LIMIT 50"
+		);
+		while ($egsRes && $egsRow = $xoopsDB->fetchArray($egsRes)) {
+			$egsResults[] = array('id' => intval($egsRow['groupid']), 'name' => htmlspecialchars($egsRow['name'], ENT_QUOTES, 'UTF-8'));
+		}
+		print json_encode($egsResults);
 		break;
 
 }
