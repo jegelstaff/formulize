@@ -135,7 +135,6 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
         }
     }
 
-	if(!$saveAndContinueButtonText AND isset($_POST['formulize_saveAndContinueButtonText'])) { $saveAndContinueButtonText = unserialize($_POST['formulize_saveAndContinueButtonText']); }
 	if(!$done_dest AND isset($_POST['formulize_doneDest']) AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
 	if(!$thankYouLinkText AND isset($_POST['formulize_buttonText']) AND $_POST['formulize_buttonText']) { $thankYouLinkText = $_POST['formulize_buttonText']; }
 
