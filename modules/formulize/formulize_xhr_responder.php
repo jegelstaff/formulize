@@ -201,7 +201,7 @@ switch($op) {
     foreach($_GET as $k=>$v) {
       if($k == 'elementId' OR $k == 'entryId' OR $k == 'fid' OR $k == 'frid' OR substr($k, 0, 8) == 'onetoone' OR $k == 'sid') { // serveral onetoone keys can be passed back too
         if($k == 'onetooneentries' OR $k == 'onetoonefids') {
-            ${$k} = unserialize($v);
+            ${$k} = json_decode($v, true);
 				} elseif($k == 'elementId') {
 					if(strstr($v,",") !== false) {
 						$elementId = array();

@@ -1648,7 +1648,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 								$governingElements2 = _compileGoverningElements($entries, $keyElementObject, $renderedMarkupName, true); // last true marks it as one to one compiling, when matching entry ids between governed and governing elements doesn't matter
 								foreach($governingElements2 as $key=>$value) {
 									$formulize_oneToOneElements[markupNameAttr($key)] = true;
-									$formulize_oneToOneMetaData[markupNameAttr($key)] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(serialize($entries)), 'onetoonefids'=>urlencode(serialize($fids)));
+									$formulize_oneToOneMetaData[markupNameAttr($key)] = array('onetoonefrid' => $frid, 'onetoonefid' => $fid, 'onetooneentries' => urlencode(json_encode($entries)), 'onetoonefids'=>urlencode(json_encode($fids)));
 								}
 								$formulize_governingElements = mergeGoverningElements($formulize_governingElements, $governingElements2);
 							}
