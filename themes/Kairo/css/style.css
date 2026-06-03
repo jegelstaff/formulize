@@ -647,6 +647,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 .fz-pop__item:hover { background: var(--c-surface-3); }
 .fz-pop__item--active { background: var(--c-accent-soft); color: var(--c-accent-fg); font-weight: 500; }
 .fz-pop__item--active:hover { background: var(--c-accent-soft-2); }
+.fz-pop__item--disabled { color: var(--c-text-subtle); cursor: default; pointer-events: none; }
 .fz-pop__item--danger { color: var(--c-danger); }
 .fz-pop__sep { height: 1px; background: var(--c-border); margin: 4px 2px; }
 .fz-pop__group { padding: 4px 8px; font-size: var(--fs-11); color: var(--c-text-subtle); text-transform: uppercase; letter-spacing: .04em; }
