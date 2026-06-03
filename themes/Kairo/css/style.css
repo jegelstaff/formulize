@@ -632,8 +632,8 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   align-items: center;
   gap: var(--s-2);
   width: 100%;
-  height: 30px;
-  padding: 0 var(--s-2);
+  min-height: 30px;
+  padding: 5px var(--s-2);
   border: 0;
   background: transparent;
   font: inherit;
@@ -642,6 +642,8 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   border-radius: var(--r-1);
   cursor: pointer;
   text-align: left;
+  white-space: normal;
+  line-height: var(--lh-snug);
 }
 
 .fz-pop__item:hover { background: var(--c-surface-3); }
@@ -661,9 +663,9 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   display: none;
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
+  right: 0;
   z-index: 200;
-  min-width: 200px;
+  min-width: 240px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--r-3);
