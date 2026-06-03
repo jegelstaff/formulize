@@ -4,7 +4,7 @@ $changeScopeUrl = htmlspecialchars(XOOPS_URL . "/modules/formulize/include/chang
 print "
 <div class='fz-view-switcher'>
   <input type='hidden' name='currentview' id='currentview' value='" . htmlspecialchars($currentview) . "'>
-  <button type='button' class='fz-btn fz-btn--ghost fz-btn--icon' id='fz-view-toggle' aria-label='Switch view' title='Switch view'>
+  <button type='button' class='fz-btn fz-btn--ghost fz-btn--icon' id='fz-view-toggle' data-fz-panel='fz-view-panel' aria-label='Switch view' title='Switch view'>
     <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
       <circle cx='6' cy='15' r='4'/>
       <circle cx='18' cy='15' r='4'/>
@@ -14,7 +14,7 @@ print "
       <path d='M11 12h2'/>
     </svg>
   </button>
-  <div id='fz-view-panel' class='fz-view-switcher__panel'>";
+  <div id='fz-view-panel' class='fz-view-switcher__panel fz-panel'>";
 
 foreach ($viewitems as $item) {
     switch ($item['type']) {
