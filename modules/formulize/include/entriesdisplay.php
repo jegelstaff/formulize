@@ -4694,6 +4694,9 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 		$buttonText = trans($buttonText);
 		switch ($button) {
             case "moreActions":
+                $screenOrScreenType = is_object($screen) ? $screen : 'listOfEntries';
+                $rendered = renderVariableTemplate('moreActionsButton', $screenOrScreenType, array('buttonText' => $buttonText));
+                if ($rendered !== false) { return $rendered; }
                 return "<input type='button' class='formulize_button' id='formulize_$button' name='moreActions' value='$buttonText' onclick='showMoreActionButtons();'></input>";
                 break;
 			case "modifyScreenLink":
