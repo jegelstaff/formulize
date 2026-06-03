@@ -735,7 +735,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	 * STAGE 10 - DETERMINE THE SCOPE WE SHOULD USE FOR THIS PAGELOAD, AND THE VIEWS AVAILABLE TO THE USER. ENFORCE FUNDAMENTAL SEARCHES FROM THE LAST LOADED VIEW IF IT HAD ANY.
 	 */
 	list($scope, $currentView) = buildScope($currentView, $uid, $fid, $currentViewCanExpand);
-	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
+	list($settings['viewoptions'], $settings['pubstart'], $settings['endstandard'], $settings['pickgroups'], $settings['loadviewname'], $settings['curviewid'], $settings['publishedviewnames'], $settings['viewitems']) = generateViews($fid, $uid, $groups, $frid, $currentView, (isset($loadedView) ? $loadedView : null), $view_groupscope, $view_globalscope, (isset($_POST['curviewid']) ? $_POST['curviewid'] : null), $loadOnlyView, $screen, (isset($_POST['lastloaded']) ? $_POST['lastloaded'] : null)); // pubstart used to indicate to the delete button where the list of published views begins in the current view drop down (since you cannot delete published views)
 	if(isset($_POST['loadviewname']) AND $_POST['loadviewname']) { $settings['loadviewname'] = $_POST['loadviewname']; }
 	// if a view was loaded, then update the lastloaded value, otherwise preserve the previous value
 	if(isset($settings['curviewid']) AND $settings['curviewid']) {
@@ -1281,22 +1281,30 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 		}
 	}
 
-
-	$options =  !$limitViews ? "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n" : "";
+	$options =  "";
+	$viewItems = array();
 	$vcounter=0;
+
+	if (!$limitViews) {
+		$options .= "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n";
+		$viewItems[] = array('type' => 'group', 'label' => _formulize_DE_STANDARD_VIEWS);
+	}
 
 	if($loadOnlyView AND $loadedView AND !$limitViews) {
 		$vcounter++;
 		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_NO_STANDARD_VIEWS . "</option>\n";
+		$viewItems[] = array('type' => 'disabled', 'label' => _formulize_DE_NO_STANDARD_VIEWS);
 	}
 
 
 	if($currentView == "mine" AND !$loadOnlyView AND (!$limitViews OR in_array("mine", $screenLimitViews))) {
 		$options .= "<option value=mine selected>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
 		$vcounter++;
+		$viewItems[] = array('type' => 'item', 'value' => 'mine', 'label' => _formulize_DE_MINE, 'selected' => true, 'standard' => true);
 	} elseif(!$loadOnlyView AND (!$limitViews OR in_array("mine", $screenLimitViews))) {
 		$vcounter++;
 		$options .= "<option value=mine>&nbsp;&nbsp;" . _formulize_DE_MINE . "</option>\n";
+		$viewItems[] = array('type' => 'item', 'value' => 'mine', 'label' => _formulize_DE_MINE, 'selected' => false, 'standard' => true);
 	}
 
 
@@ -1304,17 +1312,21 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	if($currentView == "group" AND $view_groupscope AND !$loadOnlyView AND (!$limitViews OR in_array("group", $screenLimitViews))) {
 		$options .= "<option value=group selected>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
 		$vcounter++;
+		$viewItems[] = array('type' => 'item', 'value' => 'group', 'label' => _formulize_DE_GROUP, 'selected' => true, 'standard' => true);
 	} elseif($view_groupscope AND !$loadOnlyView AND (!$limitViews OR in_array("group", $screenLimitViews))) {
 		$vcounter++;
 		$options .= "<option value=group>&nbsp;&nbsp;" . _formulize_DE_GROUP . "</option>\n";
+		$viewItems[] = array('type' => 'item', 'value' => 'group', 'label' => _formulize_DE_GROUP, 'selected' => false, 'standard' => true);
 	}
 
 	if($currentView == "all" AND $view_globalscope AND !$loadOnlyView AND (!$limitViews OR in_array("all", $screenLimitViews))) {
 		$options .= "<option value=all selected>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
 		$vcounter++;
+		$viewItems[] = array('type' => 'item', 'value' => 'all', 'label' => _formulize_DE_ALL, 'selected' => true, 'standard' => true);
 	} elseif($view_globalscope AND !$loadOnlyView AND (!$limitViews OR in_array("all", $screenLimitViews))) {
 		$vcounter++;
 		$options .= "<option value=all>&nbsp;&nbsp;" . _formulize_DE_ALL . "</option>\n";
+		$viewItems[] = array('type' => 'item', 'value' => 'all', 'label' => _formulize_DE_ALL, 'selected' => false, 'standard' => true);
 	}
 
 	// check for pressence of advanced scope
@@ -1322,10 +1334,12 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 		$vcounter++;
 		$groupNames = groupNameList(trim($currentView, ","));
 		$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . _formulize_DE_AS_ENTRIESBY . printSmart($groupNames) . "</option>\n";
+		$viewItems[] = array('type' => 'item', 'value' => $currentView, 'label' => _formulize_DE_AS_ENTRIESBY . printSmart($groupNames), 'selected' => true, 'standard' => true);
 	} elseif(($view_globalscope OR $view_groupscope) AND !$loadOnlyView AND !$limitViews) {
 		$vcounter++;
 		$pickgroups = $vcounter;
 		$options .= "<option value=\"\">&nbsp;&nbsp;" . _formulize_DE_AS_PICKGROUPS . "</option>\n";
+		$viewItems[] = array('type' => 'popup', 'label' => _formulize_DE_AS_PICKGROUPS);
 	}
 
 
@@ -1337,6 +1351,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 		if((count((array) $s_reports)>0 OR count((array) $ns_reports)>0) AND !$limitViews) { // we have saved reports...
 			$options .= "<option value=\"\">" . _formulize_DE_SAVED_VIEWS . "</option>\n";
 			$vcounter++;
+			$viewItems[] = array('type' => 'group', 'label' => _formulize_DE_SAVED_VIEWS);
 		}
 		for($i=0;$i<count((array) $s_reports);$i++) {
 			if($loadedView == "sold_" . $s_reports[$i]['report_id'] OR $prevview == "sold_" . $s_reports[$i]['report_id']) {
@@ -1344,9 +1359,11 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
 				$loadviewname = $s_reports[$i]['report_name'];
 				$curviewid = "sold_" . $s_reports[$i]['report_id'];
+				$viewItems[] = array('type' => 'item', 'value' => $currentView, 'label' => stripslashes($s_reports[$i]['report_name']), 'selected' => true, 'standard' => false);
 			} else {
 				$vcounter++;
 				$options .= "<option value=sold_" . $s_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($s_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $s_reports[$i]['report_id'] . ")</option>\n";
+				$viewItems[] = array('type' => 'item', 'value' => 'sold_' . $s_reports[$i]['report_id'], 'label' => stripslashes($s_reports[$i]['report_name']), 'selected' => false, 'standard' => false);
 			}
 		}
 		for($i=0;$i<count((array) $ns_reports);$i++) {
@@ -1355,9 +1372,11 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
 				$loadviewname = $ns_reports[$i]['sv_name'];
 				$curviewid = "s" . $ns_reports[$i]['sv_id'];
+				$viewItems[] = array('type' => 'item', 'value' => $currentView, 'label' => stripslashes($ns_reports[$i]['sv_name']), 'selected' => true, 'standard' => false);
 			} else {
 				$vcounter++;
 				$options .= "<option value=s" . $ns_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . stripslashes($ns_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $ns_reports[$i]['sv_id'] . ")</option>\n";
+				$viewItems[] = array('type' => 'item', 'value' => 's' . $ns_reports[$i]['sv_id'], 'label' => stripslashes($ns_reports[$i]['sv_name']), 'selected' => false, 'standard' => false);
 			}
 		}
 	}
@@ -1366,6 +1385,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	if((count((array) $p_reports)>0 OR count((array) $np_reports)>0) AND !$limitViews) { // we have saved reports...
 		$options .= "<option value=\"\">" . _formulize_DE_PUB_VIEWS . "</option>\n";
 		$vcounter++;
+		$viewItems[] = array('type' => 'group', 'label' => _formulize_DE_PUB_VIEWS);
 	}
 	$firstPublishedView = $vcounter + 1;
 	if(!$limitViews) { // old reports are not selectable in the screen UI so will never be in the limit list
@@ -1375,9 +1395,11 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
 				$loadviewname = $p_reports[$i]['report_name'];
 				$curviewid = "pold_" . $p_reports[$i]['report_id'];
+				$viewItems[] = array('type' => 'item', 'value' => $currentView, 'label' => stripslashes($p_reports[$i]['report_name']), 'selected' => true, 'standard' => false);
 			} else {
 				$vcounter++;
 				$options .= "<option value=pold_" . $p_reports[$i]['report_id'] . ">&nbsp;&nbsp;" . stripslashes($p_reports[$i]['report_name']) . "</option>\n"; // " (id: " . $p_reports[$i]['report_id'] . ")</option>\n";
+				$viewItems[] = array('type' => 'item', 'value' => 'pold_' . $p_reports[$i]['report_id'], 'label' => stripslashes($p_reports[$i]['report_name']), 'selected' => false, 'standard' => false);
 			}
 		}
 	}
@@ -1389,9 +1411,11 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 				$options .= "<option value=$currentView selected>&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
 				$loadviewname = $np_reports[$i]['sv_name'];
 				$curviewid = "p" . $np_reports[$i]['sv_id'];
+				$viewItems[] = array('type' => 'item', 'value' => $currentView, 'label' => stripslashes($np_reports[$i]['sv_name']), 'selected' => true, 'standard' => false);
 			} else {
 				$vcounter++;
 				$options .= "<option value=p" . $np_reports[$i]['sv_id'] . ">&nbsp;&nbsp;" . stripslashes($np_reports[$i]['sv_name']) . "</option>\n"; // " (id: " . $np_reports[$i]['sv_id'] . ")</option>\n";
+				$viewItems[] = array('type' => 'item', 'value' => 'p' . $np_reports[$i]['sv_id'], 'label' => stripslashes($np_reports[$i]['sv_name']), 'selected' => false, 'standard' => false);
 			}
 			$publishedViewNames["p" . $np_reports[$i]['sv_id']] = stripslashes($np_reports[$i]['sv_name']); // used by the screen system to create a variable for each view name, and only the last loaded view is set to true.
 		}
@@ -1403,6 +1427,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	$to_return[4] = (isset($loadviewname) ? $loadviewname : null);
 	$to_return[5] = (isset($curviewid) ? $curviewid : null);
 	$to_return[6] = $publishedViewNames;
+	$to_return[7] = $viewItems;
 	return $to_return;
 
 }
@@ -4742,6 +4767,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				$templateVars = array(
 					'buttonText'   => $buttonText,
 					'viewoptions'  => $viewoptions,
+					'viewitems'    => isset($settings['viewitems']) ? $settings['viewitems'] : array(),
 					'currentview'  => $currentview,
 					'pickgroups'   => $pickgroups,
 					'endstandard'  => $endstandard,
