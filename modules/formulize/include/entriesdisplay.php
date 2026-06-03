@@ -4739,13 +4739,29 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=delete value='" . $buttonText . "' onclick=\"javascript:delete_view('$pubstart', '$endstandard');\"></input>";
 				break;
 			case "currentViewList":
+				$templateVars = array(
+					'buttonText'   => $buttonText,
+					'viewoptions'  => $viewoptions,
+					'currentview'  => $currentview,
+					'pickgroups'   => $pickgroups,
+					'endstandard'  => $endstandard,
+					'loadviewname' => $loadviewname,
+					'loadOnlyView' => $loadOnlyView,
+					'fid'          => $fid,
+					'frid'         => $frid,
+				);
+				$screenOrScreenType = is_object($screen) ? $screen : 'listOfEntries';
+				$rendered = renderVariableTemplate('currentViewList', $screenOrScreenType, $templateVars);
+				if($rendered !== false) {
+					return $rendered;
+				}
 				$currentViewList = "<div class='currentViewList'><div class='currentViewList-caption'><b>" . $buttonText . "</b></div><div class='currentViewList-list'><SELECT name=currentview id=currentview size=1 onchange=\"javascript:change_view(this.form, '$pickgroups', '$endstandard');\">\n";
 				$currentViewList .= $viewoptions;
 				$currentViewList .= "\n</SELECT></div>\n";
-				if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) { // if we're on a genuine pick-groups view (not a loaded view)...and the load-only-view override is not in place (which eliminates other viewing options besides the loaded view)
+				if(!$loadviewname AND strstr($currentview, ",") AND !$loadOnlyView) {
 					$currentViewList .= "<div class='currentViewList-button'><input type=button name=pickdiffgroup value='" . _formulize_DE_PICKDIFFGROUP . "' onclick=\"javascript:showPop('" . XOOPS_URL . "/modules/formulize/include/changescope.php?fid=$fid&frid=$frid&scope=$currentview');\"></input></div>";
 				}
-                $currentViewList .= '</div>';
+				$currentViewList .= '</div>';
 				return $currentViewList;
 				break;
 			case "saveButton":
