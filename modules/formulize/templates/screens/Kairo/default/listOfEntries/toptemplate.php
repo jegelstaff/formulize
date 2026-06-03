@@ -10,10 +10,10 @@ $procedureResults
   <div class='fz-list__titlebar'>
     <div class='fz-list__titlebar-start'>
       <h1 class='fz-list__title'>$title</h1>
-      $currentViewList
     </div>
     <div class='fz-list__titlebar-end'>
-      $addButton";
+      $addButton
+			$currentViewList";
 
 if ($searchesShown) {
     print "
@@ -25,7 +25,7 @@ if ($searchesShown) {
 print "
       <div class='fz-list__more-wrap'>
         $moreActionsButton
-        <div id='more-action-buttons' class='fz-list__action-panel'>
+        <div id='more-action-buttons' class='fz-list__action-panel fz-panel'>
           <div class='fz-pop__group'>Entries</div>
           $addMultiButton
           $addProxyButton

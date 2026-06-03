@@ -16,41 +16,22 @@ if ($messageText) {
 ?>
 
 <script>
-function showMoreActionButtons() {
-    var panel = document.getElementById('more-action-buttons');
-    if (panel) { panel.classList.toggle('open'); }
-}
-
-// Close the more-actions dropdown when clicking outside it
+// Generic panel system: buttons with [data-fz-panel="id"] toggle panels by ID.
+// All toggleable panels must carry the fz-panel class.
 document.addEventListener('click', function (e) {
-    var panel = document.getElementById('more-action-buttons');
-    if (!panel || !panel.classList.contains('open')) return;
-    var wrap = panel.closest('.fz-list__more-wrap');
-    if (wrap && !wrap.contains(e.target)) {
-        panel.classList.remove('open');
+    var trigger = e.target.closest('[data-fz-panel]');
+    var inPanel = e.target.closest('.fz-panel');
+    if (trigger) {
+        var panelId = trigger.getAttribute('data-fz-panel');
+        var panel   = document.getElementById(panelId);
+        if (!panel) return;
+        var opening = !panel.classList.contains('open');
+        document.querySelectorAll('.fz-panel.open').forEach(function (p) { p.classList.remove('open'); });
+        if (opening) { panel.classList.add('open'); }
+    } else if (!inPanel) {
+        document.querySelectorAll('.fz-panel.open').forEach(function (p) { p.classList.remove('open'); });
     }
 });
-
-// View switcher — toggle and outside-click close
-(function () {
-    var toggle = document.getElementById('fz-view-toggle');
-    if (toggle) {
-        toggle.addEventListener('click', function (e) {
-            e.stopPropagation();
-            var panel = document.getElementById('fz-view-panel');
-            if (panel) { panel.classList.toggle('open'); }
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        var panel = document.getElementById('fz-view-panel');
-        if (!panel || !panel.classList.contains('open')) return;
-        var wrap = panel.closest('.fz-view-switcher');
-        if (wrap && !wrap.contains(e.target)) {
-            panel.classList.remove('open');
-        }
-    });
-}());
 
 // Selects a view: updates the hidden currentview input and submits the form.
 // isStandard: true for mine/group/all/scope views; false for saved/published views.
