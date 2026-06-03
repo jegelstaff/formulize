@@ -10,7 +10,7 @@ if($calculationResults) {
 }
 
 if($noDataFound) {
-	print "<br /><p>$noDataFound</p>";
+	print "<p class='fz-table-empty'>$noDataFound</p>";
 }
 
 print "</div><!-- /.fz-list__body -->";
