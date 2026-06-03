@@ -10,7 +10,7 @@ $procedureResults
   <div class='fz-list__titlebar'>
     <div class='fz-list__titlebar-start'>
       <h1 class='fz-list__title'>$title</h1>
-      <!-- $currentViewList -->
+      $currentViewList
     </div>
     <div class='fz-list__titlebar-end'>
       $addButton";
