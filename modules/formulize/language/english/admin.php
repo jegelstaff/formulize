@@ -263,6 +263,7 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION","condition");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_HIDE","hide conditions");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC","Optionally, set conditions to control when a user is assigned to this group. If no conditions are set, users are always assigned to this group.");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DISABLE_WARNING","Warning: this form has entries that are already linked to user accounts. Disabling 'People with accounts' will remove the user account fields from this form. The user ID values will be preserved in the database, so if you re-enable this feature later the existing links will be restored. Are you sure you want to continue?");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS","This form represents groups");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN","For each entry in this form, a group will be created in Formulize.");
 define("_AM_SETTINGS_FORM_GROUP_CATEGORIES_TITLE","User Categories for each entry in this form");

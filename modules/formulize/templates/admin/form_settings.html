@@ -426,6 +426,13 @@
 		// 3-way form type selector change handler
 		$("input[name='form_type']").change(function() {
 			var val = $(this).val();
+			var wasEntriesAreUsers = parseInt($("#forms_entries_are_users").val()) == 1;
+			if (val !== "users" && wasEntriesAreUsers && parseInt("<{$content.entries_are_users_has_associations|default:0}>") == 1) {
+				if (!confirm("<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DISABLE_WARNING}>")) {
+					$("#form_type-users").attr('checked', 'checked');
+					return;
+				}
+			}
 			if (val === "users") {
 				$("#forms_entries_are_users").val(1);
 				$("#forms_entries_are_groups").val(0);

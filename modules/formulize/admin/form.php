@@ -1005,6 +1005,9 @@ if($fid != "new" && $entries_are_users == 1) {
 	if($totalEntries == 0 || $maxUid > 0) {
 		$settings['show_user_mapping_ui'] = false;
 	}
+	$settings['entries_are_users_has_associations'] = ($maxUid > 0) ? 1 : 0;
+} else {
+	$settings['entries_are_users_has_associations'] = 0;
 }
 if (isset($groupsCanEditOptions)) {
     $settings['groupsCanEditOptions'] = $groupsCanEditOptions;

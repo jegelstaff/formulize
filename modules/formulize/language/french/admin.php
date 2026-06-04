@@ -111,6 +111,7 @@ define("_AM_SETTINGS_FORM_TYPE_USERS_SETTINGS","Paramètres du compte utilisateu
 define("_AM_SETTINGS_FORM_TYPE_GROUPS_SETTINGS","Paramètres du groupe");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS","Ce formulaire représente des utilisateurs");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN","Pour chaque entrée de ce formulaire, un compte utilisateur sera créé dans Formulize.");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DISABLE_WARNING","Avertissement : ce formulaire contient des entrées déjà liées à des comptes utilisateurs. Désactiver « Personnes avec des comptes » supprimera les champs de compte utilisateur du formulaire. Les valeurs d'identifiant utilisateur seront conservées dans la base de données, de sorte que si vous réactivez cette fonctionnalité plus tard, les liens existants seront restaurés. Êtes-vous sûr de vouloir continuer?");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS","Ce formulaire représente des groupes");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_GROUPS_EXPLAIN","Pour chaque entrée de ce formulaire, un groupe sera créé dans Formulize.");
 define("_AM_SETTINGS_FORM_USER_MAPPING_TITLE","Associer les entrées existantes aux utilisateurs existants");

@@ -1177,7 +1177,6 @@ class formulizeFormsHandler {
 		// delete the elements themselves
 		$userAccountElementTypes = $this->getUserAccountElementTypes();
 		$userAccountElementIds = array();
-		$userAccountUidElementObjects = array();
 		$userAccountHandles = array();
 		foreach($userAccountElementTypes as $type) {
 			$userAccountHandles[] = 'formulize_user_account_'.strtolower(str_replace('userAccount', '', $type)).'_'.$formObject->getVar('fid');
@@ -1188,9 +1187,6 @@ class formulizeFormsHandler {
 				if(substr($handle, 0, strlen($candidateHandle)) == $candidateHandle) {
 					if($elementObject = _getElementObject($handle)) {
 						$userAccountElementIds[] = $elementObject->getVar('ele_id');
-						if(strstr($handle, 'formulize_user_account_uid') !== false) {
-							$userAccountUidElementObjects[] = $elementObject;
-						}
 						unset($userAccountHandles[$i]); // remove from list so we don't keep checking for it
 						break;
 					}
@@ -1200,11 +1196,8 @@ class formulizeFormsHandler {
 		if(!empty($userAccountElementIds)) {
 			$screenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 			$screenHandler->removeElementsFromScreens($userAccountElementIds, removeEmptyPages: true);
-			if(!empty($userAccountUidElementObjects)) {
-				foreach($userAccountUidElementObjects as $userAccountUidElementObject) {
-					$this->deleteElementField($userAccountUidElementObject);
-				}
-			}
+			// Do NOT drop the UID column from the data table — preserve it so that if entries-are-users
+			// is re-enabled later the existing entry-to-user linkages are still intact.
 			// now delete the elements themselves
 			global $xoopsDB;
 			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize")." WHERE ele_id IN (".implode(",", $userAccountElementIds).") AND id_form = ".intval($formObject->getVar('fid'));
@@ -1960,6 +1953,9 @@ class formulizeFormsHandler {
 			$formObject = $form_handler->get($element->getVar('id_form'),false,true);
 			$dataType = $dataType ? $dataType : "text";
 			$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
+			if(!$this->elementFieldMissing($element)) {
+				return true; // column already exists (e.g. preserved from a prior entries-are-users disable)
+			}
 			$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `" . $element->getVar('ele_handle') . "` $type_with_default";
 			if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
 				throw new Exception($xoopsDB->error());
