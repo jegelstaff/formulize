@@ -63,13 +63,9 @@ class formulizeUserAccountRegistrationDateElementHandler extends formulizeUserAc
 	}
 
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
-		$safeTerm = formulize_db_escape($term);
 		$op = trim($operator);
-		if (in_array($op, ['>=', '<=', '>', '<'])) {
-			return "FROM_UNIXTIME({$tableAlias}.`user_regdate`) $op '$safeTerm'";
-		}
-		$isNegative = ($op === '!=' || $op === 'NOT LIKE');
-		return "FROM_UNIXTIME({$tableAlias}.`user_regdate`) " . ($isNegative ? 'NOT LIKE' : 'LIKE') . " '%$safeTerm%'";
+		$partialMatch = !in_array($op, ['>=', '<=', '>', '<']);
+		return $this->buildUnixTimestampClause('user_regdate', $term, $operator, $partialMatch, $tableAlias);
 	}
 
 }

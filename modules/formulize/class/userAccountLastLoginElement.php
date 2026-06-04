@@ -63,13 +63,9 @@ class formulizeUserAccountLastLoginElementHandler extends formulizeUserAccountEl
 	}
 
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
-		$safeTerm = formulize_db_escape($term);
 		$op = trim($operator);
-		if (in_array($op, ['>=', '<=', '>', '<'])) {
-			return "FROM_UNIXTIME({$tableAlias}.`last_login`) $op '$safeTerm'";
-		}
-		$isNegative = ($op === '!=' || $op === 'NOT LIKE');
-		return "FROM_UNIXTIME({$tableAlias}.`last_login`) " . ($isNegative ? 'NOT LIKE' : 'LIKE') . " '%$safeTerm%'";
+		$partialMatch = !in_array($op, ['>=', '<=', '>', '<']);
+		return $this->buildUnixTimestampClause('last_login', $term, $operator, $partialMatch, $tableAlias);
 	}
 
 }

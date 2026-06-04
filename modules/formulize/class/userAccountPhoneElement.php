@@ -127,13 +127,7 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 	}
 
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
-		global $xoopsDB;
-		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
-		return "EXISTS("
-			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
-			. " WHERE pp.profileid = {$tableAlias}.uid"
-			. " AND pp.`2faphone`" . $safeTermClause
-			. ")";
+		return $this->buildProfileExistsClause('2faphone', $term, $operator, $quotes, $likebits, $tableAlias);
 	}
 
 }

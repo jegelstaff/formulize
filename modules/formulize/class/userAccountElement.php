@@ -303,6 +303,34 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			}
 
 			if($formObject && ($formObject->getVar('entries_are_users') || $isUserTableForm)) {
+				// Load or create user context
+				$context = self::loadOrCreateUserContext($formObject, $entryId);
+				if($context === null) {
+					return $results[$cacheKey]; // user was deleted
+				}
+				extract($context); // userObject, profile, entryUserId, old2faMethod, old2faPhone, oldEmail
+				
+				// Collect all pending changes from form submission
+				$changes = self::collectPendingUserVars($formId, $entryId, $userObject, $profile, $entryUserId, $old2faMethod);
+				extract($changes); // pendingUserVars, pendingProfileVars, rawSubmitted2faMethod, passwordChanged, cleanupAppSecret
+				
+				// Validate 2FA transition if user is editing their own account
+				if(!self::validateOwnAccount2faTransition(
+					$entryUserId, $userObject, $profile, $pendingUserVars, $pendingProfileVars,
+					$rawSubmitted2faMethod, $passwordChanged, $old2faMethod, $old2faPhone, $oldEmail, $cleanupAppSecret
+				)) {
+					return self::setTfaValidationError($results[$cacheKey]);
+				}
+				
+				// Apply all pending changes now that validation has passed
+				foreach($pendingProfileVars as $k => $v) { $profile->setVar($k, $v); }
+				foreach($pendingUserVars as $k => $v) { $userObject->setVar($k, $v); }
+				
+				// Persist to database
+				$userId = self::persistUserAndProfile($userObject, $profile, $entryUserId);
+				if($userId) {
+					$results[$cacheKey] = $userId;
+				}
 				global $xoopsUser;
 				$member_handler = xoops_gethandler('member');
 				$profile_handler = xoops_getmodulehandler('profile', 'profile');
@@ -534,6 +562,326 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	private static function setTfaValidationError($returnValue) {
 		self::$tfaValidationError = true;
 		return $returnValue;
+	}
+
+	/**
+	 * Load or create user context (user and profile objects) for the given entry
+	 * @return array Array with keys: userObject, profile, entryUserId, old2faMethod, old2faPhone, oldEmail
+	 */
+	private static function loadOrCreateUserContext($formObject, $entryId) {
+		$member_handler = xoops_gethandler('member');
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$entryUserId = $formObject->getSystemUserIdFromEntry($entryId);
+		
+		if($entryUserId) {
+			$userObject = $member_handler->getUser($entryUserId);
+			if (!$userObject) {
+				return null; // user was deleted before this submission was processed
+			}
+			$profile = $profile_handler->get($userObject->getVar('uid'));
+			$old2faMethod = intval($profile->getVar('2famethod'));
+			$old2faPhone = preg_replace('/[^0-9]/', '', $profile->getVar('2faphone') ?? '');
+			$oldEmail = $userObject->getVar('email');
+		} else {
+			global $xoopsConfig;
+			$userObject = $member_handler->createUser();
+			$profile = $profile_handler->create();
+			$userObject->setVar('user_avatar', 'blank.gif');
+			$userObject->setVar('theme', $xoopsConfig['theme_set']);
+			$userObject->setVar('level', 1);
+			$old2faMethod = 0;
+			$old2faPhone = '';
+			$oldEmail = '';
+		}
+		
+		return array(
+			'userObject' => $userObject,
+			'profile' => $profile,
+			'entryUserId' => $entryUserId,
+			'old2faMethod' => $old2faMethod,
+			'old2faPhone' => $old2faPhone,
+			'oldEmail' => $oldEmail
+		);
+	}
+
+	/**
+	 * Collect pending user and profile variable changes from POST data
+	 * @return array Array with keys: pendingUserVars, pendingProfileVars, rawSubmitted2faMethod, passwordChanged, cleanupAppSecret
+	 */
+	private static function collectPendingUserVars($formId, $entryId, $userObject, $profile, $entryUserId, $old2faMethod) {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		
+		$pendingProfileVars = array();
+		$pendingUserVars = array();
+		$rawSubmitted2faMethod = null;
+		$passwordChanged = false;
+		$cleanupAppSecret = false;
+		$unameParts = array();
+		
+		foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
+			$accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId);
+			if(!$accountElement) {
+				continue;
+			}
+			
+			$elementId = $accountElement->getVar('ele_id');
+			$userProperty = $accountElement->userProperty;
+			
+			if($accountElement->readOnly) {
+				continue; // system-managed property
+			}
+			if(!isset($_POST['decue_'.$formId.'_'.$entryId.'_'.$elementId])) {
+				continue; // element not on this form/page
+			}
+			
+			$value = isset($_POST['de_'.$formId.'_'.$entryId.'_'.$elementId]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId] : '';
+			
+			// Handle password encryption
+			if($userProperty == 'pass') {
+				if($value === '') {
+					continue; // don't change password if no value entered
+				}
+				$passwordChanged = true;
+				global $icmsConfigUser;
+				$icmspass = new icms_core_Password();
+				$salt = $icmspass->createSalt();
+				$enc_type = $icmsConfigUser['enc_type'];
+				$value = $icmspass->encryptPass($value, $salt, $enc_type);
+				$pendingUserVars['salt'] = $salt;
+				$pendingUserVars['enc_type'] = $enc_type;
+			}
+			
+			// Handle profile properties
+			if(substr($userProperty, 0, 8) == 'profile:') {
+				$property = substr($userProperty, 8);
+				if($property == '2faphone') {
+					$value = preg_replace('/[^0-9]/', '', $value);
+				}
+				if($property == '2famethod') {
+					$rawSubmitted2faMethod = intval($value);
+					if($entryUserId) {
+						$value = self::enforce2faPolicyRules($userObject, $value, $formId, $entryId);
+						if($old2faMethod == TFA_APP AND $value != TFA_APP) {
+							$cleanupAppSecret = true;
+						}
+					}
+				}
+				if($property == 'timezone') {
+					$pendingUserVars['timezone_offset'] = formulize_getStandardTimezoneOffset($value);
+				}
+				$pendingProfileVars[$property] = $value;
+			} else {
+				// Handle standard user properties
+				if($userProperty == 'uname') {
+					$unameParts[] = $value;
+					$value = implode(' ', $unameParts);
+				}
+				if($userProperty == 'level' && intval($value) != 1) {
+					global $xoopsUser;
+					if($entryUserId && $xoopsUser && intval($entryUserId) == intval($xoopsUser->getVar('uid'))) {
+						continue; // safety net: active user cannot disable their own account
+					}
+				}
+				$pendingUserVars[$userProperty] = $value;
+			}
+		}
+		
+		return array(
+			'pendingUserVars' => $pendingUserVars,
+			'pendingProfileVars' => $pendingProfileVars,
+			'rawSubmitted2faMethod' => $rawSubmitted2faMethod,
+			'passwordChanged' => $passwordChanged,
+			'cleanupAppSecret' => $cleanupAppSecret
+		);
+	}
+
+	/**
+	 * Enforce 2FA policy rules (group-based requirements and SMS-without-phone)
+	 * @return int The adjusted 2FA method value
+	 */
+	private static function enforce2faPolicyRules($userObject, $value, $formId, $entryId) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$edituserGroups = $userObject->getGroups();
+		$criteria_2fagroups = new Criteria('conf_name', 'auth_2fa_groups');
+		$auth_2fa_groups_cfg = icms::handler('icms_config')->getConfigs($criteria_2fagroups);
+		$auth_2fa_groups = ($auth_2fa_groups_cfg) ? $auth_2fa_groups_cfg[0]->getConfValueForOutput() : array();
+		
+		// Get submitted phone to check SMS-without-phone case
+		$phoneEleForCheck = $element_handler->get('formulize_user_account_phone_'.$formId);
+		$submittedPhoneForCheck = '';
+		if($phoneEleForCheck) {
+			$phoneEleIdForCheck = $phoneEleForCheck->getVar('ele_id');
+			$submittedPhoneForCheck = preg_replace('/[^0-9]/', '', isset($_POST['de_'.$formId.'_'.$entryId.'_'.$phoneEleIdForCheck]) ? $_POST['de_'.$formId.'_'.$entryId.'_'.$phoneEleIdForCheck] : '');
+		}
+		
+		if(($value == TFA_OFF && array_intersect($edituserGroups, (array)$auth_2fa_groups))
+		   || ($value == TFA_SMS && !$submittedPhoneForCheck)) {
+			return TFA_EMAIL;
+		}
+		
+		return $value;
+	}
+
+	/**
+	 * Validate 2FA code when user changes their own sensitive account settings
+	 * @return bool True if validation passed or not required, false if validation failed
+	 */
+	private static function validateOwnAccount2faTransition($entryUserId, $userObject, $profile, $pendingUserVars, $pendingProfileVars, $rawSubmitted2faMethod, $passwordChanged, $old2faMethod, $old2faPhone, $oldEmail, $cleanupAppSecret) {
+		global $xoopsUser;
+		if(!$entryUserId || !$xoopsUser || intval($entryUserId) != intval($xoopsUser->getVar('uid'))) {
+			return true; // Not editing own account
+		}
+		
+		$criteria_2fa_sv = new Criteria('conf_name', 'auth_2fa');
+		$is2faOn = false;
+		if($auth_2fa_sv = icms::handler('icms_config')->getConfigs($criteria_2fa_sv)) {
+			$is2faOn = $auth_2fa_sv[0]->getConfValueForOutput();
+		}
+		if(!$is2faOn) {
+			return true; // 2FA not enabled
+		}
+		
+		include_once XOOPS_ROOT_PATH . '/include/2fa/manage.php';
+		self::$submittedValues = $_POST;
+		$newEmail  = isset($pendingUserVars['email']) ? $pendingUserVars['email'] : $userObject->getVar('email');
+		$newPhone  = isset($pendingProfileVars['2faphone']) ? $pendingProfileVars['2faphone'] : $profile->getVar('2faphone');
+		$effectiveNewMethod = $rawSubmitted2faMethod !== null ? $rawSubmitted2faMethod : $old2faMethod;
+		
+		$needsValidation = (
+			($rawSubmitted2faMethod != $old2faMethod) ||
+			(($old2faMethod == TFA_SMS || $effectiveNewMethod == TFA_SMS) && $newPhone != $old2faPhone) ||
+			(($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF || $effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF) && $oldEmail && $newEmail != $oldEmail) ||
+			$passwordChanged
+		);
+		
+		if(!$needsValidation) {
+			return true;
+		}
+		
+		// Two-phase required in three cases:
+		// 1. Method unchanged = email, email is changing.
+		// 2. Method unchanged = SMS, phone is changing.
+		// 3. Method was active and is changing to a different active method.
+		$contactChanging = (
+			($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_EMAIL && $oldEmail && $newEmail != $oldEmail) ||
+			($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
+			($rawSubmitted2faMethod !== null && $old2faMethod != TFA_OFF && $rawSubmitted2faMethod != TFA_OFF && $rawSubmitted2faMethod != $old2faMethod)
+		);
+		
+		if($contactChanging) {
+			$step1Token = isset($_POST['formulize_tfa_step1token']) ? trim($_POST['formulize_tfa_step1token']) : '';
+			if($rawSubmitted2faMethod == TFA_APP) {
+				$newContactId = 'authenticator-app';
+			} elseif($rawSubmitted2faMethod == TFA_SMS) {
+				$newContactId = $newPhone;
+			} else {
+				$newContactId = $newEmail;
+			}
+			if(!icms::$security->validateToken($step1Token, true, $newContactId)) {
+				return false;
+			}
+		} else {
+			// Single-phase: validate confirm token
+			if($rawSubmitted2faMethod == TFA_APP ||
+			   ($rawSubmitted2faMethod == TFA_OFF && $old2faMethod == TFA_APP)) {
+				$storedContactId = 'authenticator-app';
+			} elseif($rawSubmitted2faMethod == TFA_SMS) {
+				$storedContactId = $newPhone;
+			} elseif($rawSubmitted2faMethod == TFA_OFF && $old2faMethod == TFA_SMS) {
+				$storedContactId = $old2faPhone;
+			} else {
+				$storedContactId = $oldEmail;
+			}
+			$confirmToken = isset($_POST['tfa_confirm_token']) ? trim($_POST['tfa_confirm_token']) : '';
+			if(!icms::$security->validateToken($confirmToken, true, $storedContactId)) {
+				return false;
+			}
+		}
+		
+		$submittedCode = isset($_POST['formulize_tfa_code']) ? trim($_POST['formulize_tfa_code']) : '';
+		if(!validateCode($submittedCode, intval($entryUserId))) {
+			return false;
+		}
+		
+		// Validation passed -- now safe to delete the app secret if switching away from app
+		if($cleanupAppSecret) {
+			global $xoopsDB;
+			$sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($userObject->getVar('uid')).' AND method = '.TFA_APP;
+			$xoopsDB->queryF($sql);
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Persist user and profile objects to database
+	 * @return int|false The user ID on success, false on failure
+	 */
+	private static function persistUserAndProfile($userObject, $profile, $entryUserId) {
+		// login name cannot be empty, set to email if available, or timestamp to attempt to guarantee uniqueness
+		if($userObject->getVar('login_name') == '') {
+			$altLoginName = $userObject->getVar('email');
+			if(!$altLoginName) {
+				$altLoginName = microtime(true);
+			}
+			$userObject->setVar('login_name', $altLoginName);
+		}
+		
+		$member_handler = xoops_gethandler('member');
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		
+		if($member_handler->insertUser($userObject)) {
+			$userId = $userObject->getVar('uid');
+			if(!$entryUserId) {
+				$profile->setVar('profileid', $userId);
+			}
+			$profile_handler->insert($profile);
+			return $userId;
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Build an EXISTS subquery for profile table columns
+	 * Used by user account elements that store data in the profile table
+	 * @param string $column The profile table column name
+	 * @param string $term The search term
+	 * @param string $operator The SQL operator (=, !=, LIKE, etc)
+	 * @param string $quotes The quote character for the value
+	 * @param string $likebits The LIKE wildcards (%, empty, etc)
+	 * @param string $tableAlias The alias for the main table
+	 * @return string The WHERE clause fragment
+	 */
+	protected function buildProfileExistsClause($column, $term, $operator, $quotes, $likebits, $tableAlias='main') {
+		global $xoopsDB;
+		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		return "EXISTS("
+			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
+			. " WHERE pp.profileid = {$tableAlias}.uid"
+			. " AND pp.`" . formulize_db_escape($column) . "`" . $safeTermClause
+			. ")";
+	}
+
+	/**
+	 * Build a search WHERE clause for Unix timestamp columns
+	 * Handles date strings by converting them to MySQL datetime format for comparison
+	 * @param string $column The user table column name containing Unix timestamp
+	 * @param string $term The search term (date string or number)
+	 * @param string $operator The SQL operator
+	 * @param bool $partialMatch Whether to allow partial date matches
+	 * @param string $tableAlias The alias for the main table
+	 * @return string The WHERE clause fragment
+	 */
+	protected function buildUnixTimestampClause($column, $term, $operator, $partialMatch, $tableAlias='main') {
+		$dbTerm = self::prepareDateTimestampForDB($term, $partialMatch);
+		$safeTerm = formulize_db_escape($dbTerm);
+		if($partialMatch) {
+			return "FROM_UNIXTIME({$tableAlias}.`" . formulize_db_escape($column) . "`) LIKE '%$safeTerm%'";
+		} else {
+			return "FROM_UNIXTIME({$tableAlias}.`" . formulize_db_escape($column) . "`) $operator '$safeTerm'";
+		}
 	}
 
 
