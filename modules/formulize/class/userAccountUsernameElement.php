@@ -27,9 +27,9 @@
 ###############################################################################
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
-require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountFirstNameElement.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
 
-class formulizeUserAccountUsernameElement extends formulizeUserAccountFirstNameElement {
+class formulizeUserAccountUsernameElement extends formulizeUserAccountElement {
 
     function __construct() {
 			parent::__construct();
@@ -40,11 +40,16 @@ class formulizeUserAccountUsernameElement extends formulizeUserAccountFirstNameE
 }
 
 #[AllowDynamicProperties]
-class formulizeUserAccountUsernameElementHandler extends formulizeUserAccountFirstNameElementHandler {
+class formulizeUserAccountUsernameElementHandler extends formulizeUserAccountElementHandler {
 
-	function create() {
-		return new formulizeUserAccountUsernameElement();
-	}
+		function create() {
+			return new formulizeUserAccountUsernameElement();
+		}
+
+		// this method renders the element for display in a form
+		function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+			return $this->renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled);
+		}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element
 	// 'myform' is a name enforced by convention that refers to the form where this element resides

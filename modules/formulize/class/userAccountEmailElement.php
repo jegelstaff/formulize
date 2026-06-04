@@ -57,13 +57,7 @@ class formulizeUserAccountEmailElementHandler extends formulizeUserAccountElemen
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		if($isDisabled) {
-			$formElement = new xoopsFormLabel($caption, $ele_value);
-		} else {
-			$formElement = new xoopsFormText($caption, $markupName, 20, 255, $ele_value); // caption, markup name, size, maxlength, default value, according to the xoops form class
-			$formElement->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-		}
-		return $formElement;
+		return $this->renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled, 20, 255);
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element

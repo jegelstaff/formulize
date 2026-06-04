@@ -86,29 +86,7 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 	// $entry_id is the ID number of the entry where this particular element comes from
 	// $screen is the screen object that is in effect, if any (may be null)
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		if(is_array($ele_value)) {
-			$ele_value = "";
-		}
-		if($isDisabled) {
-			$form_ele = new XoopsFormLabel(
-				$caption,
-				$ele_value
-			);
-		} else {
-			$config_handler = xoops_gethandler('config');
-			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$form_ele = new XoopsFormText(
-				$caption,
-				$markupName,
-				(isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30),	//	box width
-				(isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),	//	max width
-				$ele_value,	//	value
-				false,		// autocomplete in browser
-				'text'		// numbers only
-			);
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
-		}
-		return $form_ele;
+		return $this->renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled);
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element

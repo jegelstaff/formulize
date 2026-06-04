@@ -237,7 +237,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			'uid'                => array('eleType' => 'userAccountUid',                'column' => 'uid',          'profileColumn' => null),
 			'fullname'           => array('eleType' => 'userAccountFullName',           'column' => 'uname',        'profileColumn' => null),
 			'firstname'          => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
-			'lastname'           => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
+			'lastname'           => array('eleType' => 'userAccountLastName',           'column' => 'uname',        'profileColumn' => null),
 			'username'           => array('eleType' => 'userAccountUsername',           'column' => 'login_name',   'profileColumn' => null),
 			'email'              => array('eleType' => 'userAccountEmail',              'column' => 'email',        'profileColumn' => null),
 			'status'             => array('eleType' => 'userAccountStatus',             'column' => 'level',        'profileColumn' => null),
@@ -882,6 +882,39 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		} else {
 			return "FROM_UNIXTIME({$tableAlias}.`" . formulize_db_escape($column) . "`) $operator '$safeTerm'";
 		}
+	}
+
+	/**
+	 * Render a simple text input for user account elements
+	 * Reduces boilerplate in child classes
+	 * @param mixed $ele_value The current value
+	 * @param string $caption The field caption
+	 * @param string $markupName The HTML input name
+	 * @param bool $isDisabled Whether the field is read-only
+	 * @param int $size Optional input width (defaults to config or 30)
+	 * @param int $maxlength Optional max length (defaults to config or 255)
+	 * @return XoopsFormElement The rendered form element
+	 */
+	protected function renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled, $size=null, $maxlength=null) {
+		if(is_array($ele_value)) {
+			$ele_value = "";
+		}
+		if($isDisabled) {
+			return new XoopsFormLabel($caption, $ele_value);
+		}
+		$config_handler = xoops_gethandler('config');
+		$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+		$form_ele = new XoopsFormText(
+			$caption,
+			$markupName,
+			$size !== null ? $size : (isset($formulizeConfig['t_width']) ? $formulizeConfig['t_width'] : 30),
+			$maxlength !== null ? $maxlength : (isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),
+			$ele_value,
+			false,		// autocomplete
+			'text'		// type
+		);
+		$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
+		return $form_ele;
 	}
 
 
