@@ -285,36 +285,39 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * @return int|bool the user id or false on failure
 	 */
 	static public function processUserAccountSubmission($formId, $entryId) {
-		if(!security_check($formId, $entryId)) {
-			throw new Exception("You do not have permission to access this entry");
-		}
-		global $xoopsUser;
-
-		// Detect the system users table form.
-		// For this form type, entry_id IS the uid; EAU checks do not apply.
-		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		$formObject = $form_handler->get($formId);
-		$isUserTableForm = $formObject && $formObject->isSystemUsersTableForm();
-
-		if ($isUserTableForm) {
-			$gperm_handler = xoops_gethandler('groupperm');
-			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-			if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
-				throw new Exception("You do not have permission to manage system users.");
-			}
-		} else {
-			if(!formulizePermHandler::user_can_edit_entry($formId, $xoopsUser->getVar('uid'), $entryId)) {
-				throw new Exception("You do not have permission to edit this entry");
-			}
-			if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId, cacheId: 'preWrite')) {
-				return false;
-			}
-		}
 
 		static $results = array();
 		$cacheKey = $formId.'-'.$entryId;
 		if(!isset($results[$cacheKey])) {
+
 			$results[$cacheKey] = false;
+
+			if(!security_check($formId, $entryId)) {
+				throw new Exception("You do not have permission to access this entry");
+			}
+			global $xoopsUser;
+
+			// Detect the system users table form.
+			// For this form type, entry_id IS the uid; EAU checks do not apply.
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$formObject = $form_handler->get($formId);
+			$isUserTableForm = $formObject && $formObject->isSystemUsersTableForm();
+
+			if ($isUserTableForm) {
+				$gperm_handler = xoops_gethandler('groupperm');
+				$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+				if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
+					throw new Exception("You do not have permission to manage system users.");
+				}
+			} else {
+				if(!formulizePermHandler::user_can_edit_entry($formId, $xoopsUser->getVar('uid'), $entryId)) {
+					throw new Exception("You do not have permission to edit this entry");
+				}
+				if(!formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId, cacheId: 'preWrite')) {
+					return $results[$cacheKey];
+				}
+			}
+
 			if($formObject && ($formObject->getVar('entries_are_users') || $isUserTableForm)) {
 				$member_handler = xoops_gethandler('member');
 				$profile_handler = xoops_getmodulehandler('profile', 'profile');
@@ -323,7 +326,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				if($entryUserId) {
 					$userObject = $member_handler->getUser($entryUserId);
 					if (!$userObject) {
-						return false; // user was deleted before this submission was processed
+						return $results[$cacheKey]; // user was deleted before this submission was processed
 					}
 					$profile = $profile_handler->get($userObject->getVar('uid'));
 				} else {
@@ -460,7 +463,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 								}
 								if(!icms::$security->validateToken($step1Token, true, $newContactId)) {
 									self::$tfaValidationError = true;
-									return false;
+									return $results[$cacheKey];
 								}
 							} else {
 								// Single-phase: validate confirm token bound to the contact confirm.php sent the code to.
@@ -480,13 +483,13 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 								$confirmToken = isset($_POST['tfa_confirm_token']) ? trim($_POST['tfa_confirm_token']) : '';
 								if(!icms::$security->validateToken($confirmToken, true, $storedContactId)) {
 									self::$tfaValidationError = true;
-									return false;
+									return $results[$cacheKey];
 								}
 							}
 							$submittedCode = isset($_POST['formulize_tfa_code']) ? trim($_POST['formulize_tfa_code']) : '';
 							if(!validateCode($submittedCode, intval($entryUserId))) {
 								self::$tfaValidationError = true;
-								return false;
+								return $results[$cacheKey];
 							}
 							// Validation passed -- now safe to delete the app secret if switching away from app
 							if($cleanupAppSecret) {
