@@ -75,7 +75,11 @@ function ensureUsersTableForm() {
 			// Virtual fields injected post-query (profile-backed or computed).
 			// typeForCaption points to the userAccount class whose ->name is used.
 			// tfa_method handle avoids leading digit (2famethod column).
+			// fullname and lastname both read from uname via source_column; fullname is for the list,
+			// lastname is for the edit form (both split the uname value at display/load time).
 			'extraElements' => array(
+				array('handle' => 'fullname',  'typeForCaption' => 'userAccountFullName',  'source_column' => 'uname'),
+				array('handle' => 'lastname',  'typeForCaption' => 'userAccountLastName',  'source_column' => 'uname'),
 				array('handle' => 'phone',            'typeForCaption' => 'userAccountPhone'),
 				array('handle' => 'tfa_method',       'typeForCaption' => 'userAccount2FA'),
 				array('handle' => 'timezone',         'typeForCaption' => 'userAccountTimezone'),
@@ -84,7 +88,7 @@ function ensureUsersTableForm() {
 				array('handle' => 'masquerade',       'typeForCaption' => 'userAccountMasquerade', 'description' => _formulize_UA_MASQUERADE_HELP),
 				array('handle' => 'eau_type', 'caption' => 'Type', 'virtual' => true, 'type' => 'userEauType'),
 			),
-			// Default visible columns in canonical order; others available via Change Columns.
+			// Default visible columns for use if/when for is displayed without defined columns from a screen
 			'defaultColumns' => array('uname', 'login_name', 'email', 'phone', 'eau_type', 'level'),
 		)
 	);

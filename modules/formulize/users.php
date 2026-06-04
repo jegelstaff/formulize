@@ -128,7 +128,7 @@ $pseudoScreen->setVar('useaddupdate', _AM_FORMULIZE_ADD_USER);
 $fidInt = intval($fid);
 $advanceViewArray = array(
 	array('formulize_user_account_uid_'        . $fidInt, '', 0, 'Box'),
-	array('formulize_user_account_firstname_'  . $fidInt, '', 0, 'Box'),
+	array('formulize_user_account_fullname_'   . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_username_'   . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_email_'      . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_phone_'      . $fidInt, '', 0, 'Box'),
@@ -140,11 +140,11 @@ if (!empty(getEntriesAreUsersForms())) {
 }
 $pseudoScreen->setVar('advanceview', $advanceViewArray);
 
-// Inject firstname and username as hidden values on each row so confirmDel() can
+// Inject fullname and username as hidden values on each row so confirmDel() can
 // display the user's name without a separate lookup.
 // Also mark status as an editable inline column (decolumns).
 $pseudoScreen->setVar('hiddencolumns', array(
-	'formulize_user_account_firstname_' . $fidInt,
+	'formulize_user_account_fullname_'  . $fidInt,
 	'formulize_user_account_username_'  . $fidInt,
 ));
 $pseudoScreen->setVar('decolumns', array(
@@ -197,9 +197,9 @@ function confirmDel() {
 	var names = [];
 	checked.each(function() {
 		var uid = parseInt(this.name.replace("delete_", ""), 10);
-		var firstName = jQuery("input[name=\'hiddencolumn_" + uid + "_formulize_user_account_firstname_" + fid + "\']").val() || "";
-		var username  = jQuery("input[name=\'hiddencolumn_" + uid + "_formulize_user_account_username_"  + fid + "\']").val() || "";
-		names.push(firstName || username || uid);
+		var fullName = jQuery("input[name=\'hiddencolumn_" + uid + "_formulize_user_account_fullname_" + fid + "\']").val() || "";
+		var username = jQuery("input[name=\'hiddencolumn_" + uid + "_formulize_user_account_username_" + fid + "\']").val() || "";
+		names.push(fullName || username || uid);
 	});
 	var fullName = names.join(", ");
 	var msgTemplate = ' . json_encode(_formulize_DE_DELETE_USER_CONFIRM) . ';

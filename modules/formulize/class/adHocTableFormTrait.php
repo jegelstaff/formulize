@@ -275,6 +275,9 @@ trait formulizeAdHocTableFormTrait {
 			if (!empty($extra['virtual'])) {
 				$extraEleVal['virtual'] = true;
 			}
+			if (!empty($extra['source_column'])) {
+				$extraEleVal['source_column'] = $extra['source_column'];
+			}
 			$element->setVar('ele_value', $extraEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
@@ -439,6 +442,9 @@ trait formulizeAdHocTableFormTrait {
 			if (!empty($extra['virtual'])) {
 				$desiredEleVal['virtual'] = true;
 			}
+			if (!empty($extra['source_column'])) {
+				$desiredEleVal['source_column'] = $extra['source_column'];
+			}
 
 			if ($existingKey !== null) {
 				$updates = array();
@@ -461,13 +467,20 @@ trait formulizeAdHocTableFormTrait {
 				if ($existingByHandle[$desiredHandle]['ele_desc'] !== $desiredDesc) {
 					$updates[] = "ele_desc = " . $this->db->quoteString($desiredDesc);
 				}
-				// Ensure the virtual flag is set in ele_value when the extra definition requires it.
-				$existingEleVal = $existingByHandle[$desiredHandle]['ele_value'];
-				$hasVirtualFlag = is_array($existingEleVal) && !empty($existingEleVal['virtual']);
-				$wantsVirtualFlag = !empty($extra['virtual']);
-				if ($wantsVirtualFlag && !$hasVirtualFlag) {
-					$desiredEleVal = array_merge(is_array($existingEleVal) ? $existingEleVal : array(), array('virtual' => true));
-					$updates[] = "ele_value = " . $this->db->quoteString(serialize($desiredEleVal));
+				// Ensure virtual flag and source_column are correct in ele_value.
+				$existingEleVal = is_array($existingByHandle[$desiredHandle]['ele_value']) ? $existingByHandle[$desiredHandle]['ele_value'] : array();
+				$needsEleValUpdate = false;
+				$updatedEleVal = $existingEleVal;
+				if (!empty($extra['virtual']) && empty($existingEleVal['virtual'])) {
+					$updatedEleVal['virtual'] = true;
+					$needsEleValUpdate = true;
+				}
+				if (!empty($extra['source_column']) && (($existingEleVal['source_column'] ?? null) !== $extra['source_column'])) {
+					$updatedEleVal['source_column'] = $extra['source_column'];
+					$needsEleValUpdate = true;
+				}
+				if ($needsEleValUpdate) {
+					$updates[] = "ele_value = " . $this->db->quoteString(serialize($updatedEleVal));
 				}
 				if (!empty($updates)) {
 					$this->db->queryF("UPDATE " . $this->db->prefix("formulize") . " SET " . implode(', ', $updates) . " WHERE ele_id = " . intval($existingByHandle[$desiredHandle]['ele_id']));

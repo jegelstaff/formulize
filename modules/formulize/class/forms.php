@@ -1114,6 +1114,7 @@ class formulizeFormsHandler {
 			}
 			$order = array(
 				'Uid',
+				'FullName',
 				'FirstName',
 				'LastName',
 				'Username',
@@ -1276,6 +1277,7 @@ class formulizeFormsHandler {
 				}
 				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail', 'userAccountRegistrationDate', 'userAccountLastLogin', 'userAccountMasquerade');
 				$webmastersOnlyTypes = array('userAccountUid', 'userAccountRegistrationDate', 'userAccountLastLogin');
+				$listOnlyTypes = array('userAccountFullName');
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
 					'ele_type' => $type,
@@ -1290,12 +1292,14 @@ class formulizeFormsHandler {
 					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.",";
 					$elementObjectProperties['ele_required'] = 0;
 				}
-				if($userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
+				// List-only elements are created in the element set but never placed on a form screen page.
+				if(!in_array($type, $listOnlyTypes) && $userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
 					$screenIdsAndPagesForAdding = array(
 						$defaultFormSid => array($userAccountPageOrdinal)
 					);
 				}
-				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsAndPagesForAdding);
+				$screenIdsForThisElement = in_array($type, $listOnlyTypes) ? array() : $screenIdsAndPagesForAdding;
+				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsForThisElement);
 			}
 		}
 		if(!empty($screenIdsAndPagesForAdding)) {

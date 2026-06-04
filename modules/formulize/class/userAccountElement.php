@@ -235,6 +235,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	static function getTypeRegistry() {
 		return array(
 			'uid'                => array('eleType' => 'userAccountUid',                'column' => 'uid',          'profileColumn' => null),
+			'fullname'           => array('eleType' => 'userAccountFullName',           'column' => 'uname',        'profileColumn' => null),
 			'firstname'          => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
 			'lastname'           => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
 			'username'           => array('eleType' => 'userAccountUsername',           'column' => 'login_name',   'profileColumn' => null),

@@ -46,6 +46,19 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 		return new formulizeUserAccountFirstNameElement();
 	}
 
+	private function extractNamePart($value) {
+		$nameParts = explode(" ", trim($value));
+		$elementTypeName = strtolower(str_ireplace(['formulizeUserAccount', 'ElementHandler'], "", static::class));
+		if ($elementTypeName != 'lastname') {
+			return $nameParts[0];
+		} elseif (count($nameParts) > 1) {
+			unset($nameParts[0]);
+			return implode(" ", $nameParts);
+		} else {
+			return $nameParts[0];
+		}
+	}
+
 	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
 	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
 	// $element is the element object
@@ -53,17 +66,13 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 		$value = parent::loadValue($element, $value, $entry_id);
-		$nameParts = explode(" ", trim($value));
-		$elementTypeName = strtolower(str_ireplace(['formulizeUserAccount', 'ElementHandler'], "", static::class));
-		if($elementTypeName != 'lastname') {
-			$value = $nameParts[0];
-		} elseif(count($nameParts) > 1) {
-			unset($nameParts[0]);
-			$value = implode(" ", $nameParts);
-		} else {
-			$value = $nameParts[0];
-		}
-		return $value;
+		return $this->extractNamePart($value);
+	}
+
+	// this method formats a dataset value for list display
+	// splits the uname value into first-name or last-name portion, matching the loadValue logic
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		return parent::formatDataForList($this->extractNamePart($value), $handle, $entry_id, $textWidth);
 	}
 
 	// this method renders the element for display in a form

@@ -661,7 +661,8 @@ define("_formulize_REQUIRED_UNIQUE", "Le champ '%s' exige une valeur unique. Ent
 define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
 define("_formulize_USER_ACCOUNT_EN", "User Account");
 define("_formulize_USERACCOUNTUID", "ID de l'utilisateur");
-define("_formulize_USERACCOUNTFIRSTNAME", "Nom complet");
+define("_formulize_USERACCOUNTFULLNAME", "Nom complet");
+define("_formulize_USERACCOUNTFIRSTNAME", "Prénom");
 define("_formulize_USERACCOUNTLASTNAME", "Nom de famille");
 define("_formulize_USERACCOUNTEMAIL", "Adresse e-mail");
 define("_formulize_USERACCOUNTUSERNAME", "Nom d'utilisateur");

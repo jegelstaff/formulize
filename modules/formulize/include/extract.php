@@ -1088,6 +1088,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$plainCols = array();
 			while ($eleColRow = $xoopsDB->fetchArray($eleColResult)) {
 				$eleVal = @unserialize($eleColRow['ele_value']);
+				// Skip virtual elements — their values are injected post-query (e.g. lastname, eau_type).
+				if (is_array($eleVal) && !empty($eleVal['virtual'])) {
+					continue;
+				}
 				$sourceCol = (is_array($eleVal) && isset($eleVal['source_column']))
 					? $eleVal['source_column']
 					: $eleColRow['ele_handle'];
