@@ -476,35 +476,17 @@ function getTemplateToRender($templateName, $screenOrScreenType="", $theme="") {
 	}
 }
 
-function getTemplatePath($screenOrScreenType, $templateName) {
+function getTemplatePath($screenOrScreenType, $templateName, $subdir = '') {
 	global $xoopsConfig;
 	$paths = array();
-	$type = $screenOrScreenType;
+	$type  = $screenOrScreenType;
+	$file  = ($subdir ? $subdir . '/' : '') . $templateName . '.php';
 	if(is_object($screenOrScreenType) AND is_a($screenOrScreenType, 'formulizeScreen')) {
-		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/".$templateName.".php";
+		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/".$file;
 		$type = $screenOrScreenType->getVar('type');
 	}
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$templateName.".php";
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$templateName.".php";
-	foreach($paths as $path) {
-		if(file_exists($path) AND filesize($path)) {
-			return $path;
-		}
-	}
-}
-
-// Returns the path to a variable sub-template, following the same resolution order as getTemplatePath.
-// Variable templates live in a variables/ subfolder within each template type directory.
-function getVariableTemplatePath($screenOrScreenType, $variableName) {
-	global $xoopsConfig;
-	$paths = array();
-	$type = $screenOrScreenType;
-	if(is_object($screenOrScreenType) AND is_a($screenOrScreenType, 'formulizeScreen')) {
-		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/variables/".$variableName.".php";
-		$type = $screenOrScreenType->getVar('type');
-	}
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/variables/".$variableName.".php";
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/variables/".$variableName.".php";
+	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$file;
+	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$file;
 	foreach($paths as $path) {
 		if(file_exists($path) AND filesize($path)) {
 			return $path;
@@ -513,9 +495,14 @@ function getVariableTemplatePath($screenOrScreenType, $variableName) {
 	return null;
 }
 
+// Shim for backward compatibility — prefer getTemplatePath($s, $name, 'variables') for new callers.
+function getVariableTemplatePath($screenOrScreenType, $variableName) {
+	return getTemplatePath($screenOrScreenType, $variableName, 'variables');
+}
+
 // Renders a variable sub-template, exposing $templateVars as local variables. Returns the rendered HTML or false if no template found.
 function renderVariableTemplate($variableName, $screenOrScreenType, $templateVars = array()) {
-	$path = getVariableTemplatePath($screenOrScreenType, $variableName);
+	$path = getTemplatePath($screenOrScreenType, $variableName, 'variables');
 	if(!$path) {
 		return false;
 	}

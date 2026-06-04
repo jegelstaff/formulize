@@ -4691,12 +4691,12 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 	if($buttonText) {
 		$buttonText = trans($buttonText);
 		switch ($button) {
-            case "moreActions":
-                $screenOrScreenType = is_object($screen) ? $screen : 'listOfEntries';
-                $rendered = renderVariableTemplate('moreActionsButton', $screenOrScreenType, array('buttonText' => $buttonText));
-                if ($rendered !== false) { return $rendered; }
-                return "<input type='button' class='formulize_button' id='formulize_$button' name='moreActions' value='$buttonText' onclick='showMoreActionButtons();'></input>";
-                break;
+			case "moreActions":
+				$screenOrScreenType = is_object($screen) ? $screen : 'listOfEntries';
+				$rendered = renderVariableTemplate('moreActionsButton', $screenOrScreenType, array('buttonText' => $buttonText));
+				if ($rendered !== false) { return $rendered; }
+				return "<input type='button' class='formulize_button' id='formulize_$button' name='moreActions' value='$buttonText' onclick='showMoreActionButtons();'></input>";
+				break;
 			case "modifyScreenLink":
 				$firstAppId = formulize_getFirstApplicationForForm($screen->getVar('fid'));
         $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&sid=".$screen->getVar('sid')."&fid=".$screen->getVar('fid')."&aid=".intval($firstAppId);
