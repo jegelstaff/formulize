@@ -334,6 +334,58 @@ body {
   display: none;
 }
 
+.fz-drawer__notice {
+  margin-right: auto;
+  align-self: center;
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+}
+
+/* ============================================================
+   Loading overlay (list reloads via showLoading())
+   ============================================================ */
+
+/* #workingmessage is core Formulize markup: a div (inline display:none) holding a
+   working gif, flipped to display:block by showLoading(). We hide the gif and turn
+   the div into a full-screen, content-blocking overlay with a CSS spinner. Centering
+   uses absolute positioning rather than flex because showLoading() forces an inline
+   display:block that would override a CSS display:flex. */
+#workingmessage {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(255, 255, 255, 0.40);
+  backdrop-filter: blur(1px);
+}
+
+#workingmessage img {
+  display: none;
+}
+
+#workingmessage::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  border: 3px solid var(--c-border);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: fz-spin 0.7s linear infinite;
+}
+
+@keyframes fz-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #workingmessage::after {
+    animation-duration: 1.6s;
+  }
+}
+
 /* ============================================================
    Utility components
    ============================================================ */
