@@ -220,9 +220,28 @@ class formulizeGroupTableElementHandler extends formulizeElementsHandler {
 
 		// Process membership changes submitted by the eagGroupMembers widget.
 		// Only applies to existing groups — new groups show "save first" in the widget.
+		// For EAG forms with multiple categories there is one group per category, so we
+		// collect all valid entry groups from the DB and process each independently.
 		$actualGroupId = $results[$cacheKey];
 		if ($actualGroupId && $entryId !== 'new' && is_numeric($entryId)) {
-			GroupMembershipService::processGroupMembershipWidget($actualGroupId, $formId, $entryId);
+			if ($isEagForm) {
+				$groupsTable  = $xoopsDB->prefix('groups');
+				$validGroupIds = array();
+				$vgRes = $xoopsDB->query(
+					"SELECT groupid FROM `$groupsTable`"
+					. " WHERE form_id = " . intval($formId)
+					. " AND entry_id = " . intval($entryId)
+					. " AND is_group_template = 0"
+				);
+				while ($vgRes && $vgRow = $xoopsDB->fetchArray($vgRes)) {
+					$validGroupIds[] = intval($vgRow['groupid']);
+				}
+			} else {
+				$validGroupIds = array($actualGroupId);
+			}
+			foreach ($validGroupIds as $targetGroupId) {
+				GroupMembershipService::processGroupMembershipWidget($targetGroupId, $formId, $entryId);
+			}
 		}
 
 		return $results[$cacheKey];

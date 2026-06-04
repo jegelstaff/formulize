@@ -19,6 +19,12 @@
 // injectGroupMembersData() in usersAndGroups.php.
 // buildSearchWhereClause uses a correlated EXISTS subquery against
 // groups_users_link JOIN users so that searching by member name filters groups.
+//
+// For EAG forms with multiple group categories (e.g. All Users, Manager, Staff),
+// render() emits one widget per category wrapped in outer category tabs.
+// Hidden input names include the groupId: group_members_add_{fid}_{entryId}_{groupId}
+// processGroupSubmission() in groupTableElement.php iterates all valid entry
+// groups for this fid+entryId and processes each independently.
 
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
@@ -53,7 +59,7 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 	// total is the unfiltered member count; results are capped at $limit rows.
 	// When $checkProtection is true each result gains a 'protected' bool indicating the user
 	// must stay in this group due to entries-are-users settings.
-	// Used by both render() for server-side pre-population and the XHR responder for AJAX searches.
+	// Used by both renderSingleWidget() for server-side pre-population and the XHR responder for AJAX searches.
 	static function queryMembers($groupId, $term = '', $limit = 10, $checkProtection = false) {
 		global $xoopsDB;
 		$gulTable   = $xoopsDB->prefix('groups_users_link');
@@ -95,35 +101,49 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		return array('total' => $total, 'results' => $results);
 	}
 
-	// Render the member management widget for the group edit form.
-	// Returns an XoopsFormLabel wrapping the tab widget HTML + JS.
-	// For new (unsaved) groups, returns a read-only notice instead.
-	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen = false, $owner = null) {
-		$fid = intval($element->getVar('id_form'));
-
-		if ($isDisabled) {
-			return new XoopsFormLabel($caption, '');
-		}
-
-		if ($entry_id === 'new' || !is_numeric($entry_id) || intval($entry_id) <= 0) {
-			return new XoopsFormLabel($caption, '<em>' . _formulize_GMM_SAVE_FIRST . '</em>');
-		}
-
-		global $xoopsUser, $xoopsDB;
-		// On EAG forms entry_id is the data table entry; look up the real groupid.
-		// On the system groups table form entry_id is already the groupid.
+	// Build a map of categoryName => entryGroupId for this form+entry.
+	// For EAG forms with group_categories defined, resolves each template group to
+	// the corresponding entry group using buildTemplateToEntryGroupMap.
+	// Falls back to a single-group lookup for system forms or EAG forms with no categories set.
+	// Returns an array with at least one entry; keys are category names (empty string for non-EAG).
+	private static function buildCategoryGroupMap($fid, $entry_id) {
+		global $xoopsDB;
 		$groupsTable = $xoopsDB->prefix('groups');
-		$groupId     = 0;
-		$res = $xoopsDB->query("SELECT groupid FROM `$groupsTable` WHERE form_id = $fid AND entry_id = " . intval($entry_id) . " AND is_group_template = 0");
-		if ($res && $row = $xoopsDB->fetchArray($res)) {
-			$groupId = intval($row['groupid']);
-		} else {
-			$groupId = intval($entry_id); // system groups table form: entry_id is the groupid
-		}
-		$ajaxUrl = XOOPS_URL . '/modules/formulize/formulize_xhr_responder.php';
-		$uid     = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
-		$key     = $fid . '_' . $groupId;
 
+		$form_handler    = xoops_getmodulehandler('forms', 'formulize');
+		$formObject      = $form_handler->get($fid);
+		$groupCategories = ($formObject && $formObject->getVar('entries_are_groups'))
+			? $formObject->getVar('group_categories')
+			: null;
+
+		if (is_array($groupCategories) && !empty($groupCategories)) {
+			require_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
+			$templateToEntry = formulizeHandler::buildTemplateToEntryGroupMap($fid, $entry_id, $groupCategories);
+			$map = array();
+			foreach ($groupCategories as $templateGroupId => $catName) {
+				if (isset($templateToEntry[$templateGroupId])) {
+					$map[$catName] = $templateToEntry[$templateGroupId];
+				}
+			}
+			if (!empty($map)) {
+				return $map;
+			}
+		}
+
+		// Fall back: single group lookup (system groups form or legacy EAG form with no categories)
+		$res = $xoopsDB->query(
+			"SELECT groupid FROM `$groupsTable` WHERE form_id = $fid AND entry_id = " . intval($entry_id) . " AND is_group_template = 0"
+		);
+		if ($res && $row = $xoopsDB->fetchArray($res)) {
+			return array('' => intval($row['groupid']));
+		}
+		return array('' => intval($entry_id)); // system groups form: entry_id is the groupid
+	}
+
+	// Render the hidden inputs + inner widget HTML for a single category/group.
+	// CSS and JS are emitted separately by render() via globals guards.
+	private static function renderSingleWidget($fid, $entry_id, $groupId, $uid, $ajaxUrl) {
+		$key       = $fid . '_' . $groupId;
 		$fidJs     = json_encode($fid);
 		$groupIdJs = json_encode($groupId);
 		$ajaxUrlJs = json_encode($ajaxUrl);
@@ -150,14 +170,82 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		$infoHtml .= '</div>';
 		$initialMemberListHtml = $infoHtml . '<div class="gmm-rows">' . $memberRows . '</div>';
 
+		$html = '';
+		// Hidden inputs carry add/remove UID lists to processGroupSubmission on save.
+		// Name includes groupId so multiple categories on the same form don't collide.
+		$html .= '<input type="hidden" name="group_members_add_'    . $fid . '_' . $entry_id . '_' . $groupId . '" id="gmm-add-input-'    . $key . '" value="[]">';
+		$html .= '<input type="hidden" name="group_members_remove_' . $fid . '_' . $entry_id . '_' . $groupId . '" id="gmm-remove-input-' . $key . '" value="[]">';
+
+		$html .= '<div class="gmm-widget" id="gmm-' . $key . '">';
+
+		// Tab bar
+		$html .= '<div class="gmm-tabs">';
+		$html .= '<span class="gmm-tab gmm-tab-active" data-panel="members">' . htmlspecialchars(_formulize_GMM_TAB_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
+		$html .= '<span class="gmm-tab" data-panel="add">' . htmlspecialchars(_formulize_GMM_TAB_ADD_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
+		$html .= '</div>';
+
+		// Members panel
+		$html .= '<div class="gmm-panel" id="gmm-panel-members-' . $key . '">';
+		$html .= '<div class="gmm-searchbar">';
+		$html .= '<input type="text" id="gmm-member-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_SEARCH_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
+		$html .= '<button type="button" onclick="gmmSearchMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
+		$html .= '</div>';
+		$html .= '<div id="gmm-member-list-' . $key . '">' . $initialMemberListHtml . '</div>';
+		$html .= '<div class="gmm-pending-removes" id="gmm-pending-removes-' . $key . '"></div>';
+		$html .= '</div>';
+
+		// Add Members panel
+		$html .= '<div class="gmm-panel" id="gmm-panel-add-' . $key . '" style="display:none">';
+		$html .= '<div class="gmm-searchbar">';
+		$html .= '<input type="text" id="gmm-add-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_FIND_USER_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
+		$html .= '<button type="button" onclick="gmmSearchNonMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
+		$html .= '</div>';
+		$html .= '<div id="gmm-add-results-' . $key . '"></div>';
+		$html .= '<div class="gmm-pending-adds" id="gmm-pending-adds-' . $key . '"></div>';
+		$html .= '</div>';
+
+		$html .= '</div>'; // .gmm-widget
+		$html .= '<script>jQuery(document).ready(function(){gmmInit(' . $fidJs . ',' . $groupIdJs . ',' . $ajaxUrlJs . ',' . $uidJs . ');});</script>';
+
+		return $html;
+	}
+
+	// Render the member management widget for the group edit form.
+	// Returns an XoopsFormLabel wrapping the tab widget HTML + JS.
+	// For new (unsaved) groups, returns a read-only notice instead.
+	// For EAG forms with multiple categories, wraps each category's widget in outer category tabs.
+	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen = false, $owner = null) {
+		$fid = intval($element->getVar('id_form'));
+
+		if ($isDisabled) {
+			return new XoopsFormLabel($caption, '');
+		}
+
+		if ($entry_id === 'new' || !is_numeric($entry_id) || intval($entry_id) <= 0) {
+			return new XoopsFormLabel($caption, '<em>' . _formulize_GMM_SAVE_FIRST . '</em>');
+		}
+
+		global $xoopsUser;
+		$ajaxUrl = XOOPS_URL . '/modules/formulize/formulize_xhr_responder.php';
+		$uid     = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+
+		$categoryGroupMap = self::buildCategoryGroupMap($fid, intval($entry_id));
+		$multiCategory    = count($categoryGroupMap) > 1;
+
 		// CSS and JS are output once per page via a global guard.
 		$css = '';
 		if (empty($GLOBALS['gmmStyleOutput'])) {
 			$GLOBALS['gmmStyleOutput'] = true;
 			$css = '
 <style>
+.gmm-outer{box-sizing:border-box;border:1px solid #ccc;width:100%;max-width:300px;margin:4px 0;}
+.gmm-outer .gmm-widget{border:none;max-width:none;margin:0;}
 .gmm-widget{box-sizing:border-box;border:1px solid #ccc;width:100%;max-width:300px;margin:4px 0;}
 .gmm-widget button{min-width:4em;width:auto;padding-left:1em;padding-right:1em;}
+.gmm-cat-tabs{display:flex;background:#e8e8e8;border-bottom:1px solid #ccc;}
+.gmm-cat-tab{padding:6px 14px;cursor:pointer;border-right:1px solid #ccc;font-size:.9em;}
+.gmm-cat-tab:last-child{border-right:none;}
+.gmm-cat-tab.gmm-cat-tab-active{background:#fff;font-weight:bold;}
 .gmm-tabs{display:flex;border-bottom:1px solid #ccc;background:#f5f5f5;}
 .gmm-tab{padding:7px 16px;cursor:pointer;border-right:1px solid #ccc;}
 .gmm-tab:last-child{border-right:none;}
@@ -176,7 +264,7 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 .gmm-pending-header{font-weight:bold;font-size:.9em;margin-bottom:4px;color:#666;}
 .gmm-pending-adds .gmm-pending-row span{color:#060;}
 .gmm-pending-removes .gmm-pending-row span{color:#c00;}
-@media (min-width:768px){.col2 .gmm-widget{min-width:700px;max-width:none;}}
+@media (min-width:768px){.col2 .gmm-outer,.col2 .gmm-widget{min-width:700px;max-width:none;}}
 </style>';
 		}
 
@@ -204,6 +292,14 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 			$js = '<script>var gmmLang=' . json_encode($gmmLang) . ';
 var gmmState={};
 function gmmKey(f,g){return f+"_"+g;}
+function gmmSwitchCategory(el,panelId,inputId,groupId){
+	var outer=jQuery(el).closest(".gmm-outer");
+	outer.find(".gmm-cat-tab").removeClass("gmm-cat-tab-active");
+	jQuery(el).addClass("gmm-cat-tab-active");
+	outer.find(".gmm-cat-panel").hide();
+	jQuery("#"+panelId).show();
+	jQuery("#"+inputId).val(groupId);
+}
 function gmmInit(fid,gid,ajaxUrl,uid){
 	var k=gmmKey(fid,gid);
 	gmmState[k]={fid:fid,gid:gid,url:ajaxUrl,uid:uid,toAdd:[],toRemove:[]};
@@ -226,7 +322,7 @@ function gmmSearchMembers(fid,gid){
 			if(!data||!data.results){list.html("<em>"+gmmLang.noMembersFound+"</em>");return;}
 			var tr=gmmState[k].toRemove,html="",rows="";
 			html+="<div class=\"gmm-info\">"+data.total+" "+(data.total===1?gmmLang.member:gmmLang.members);
-			if(data.total>data.results.length)html+=" — "+gmmLang.showingFirst+" "+data.results.length+(term?" "+gmmLang.matching+" “"+jQuery("<span>").text(term).html()+"”":"");
+			if(data.total>data.results.length)html+=" — "+gmmLang.showingFirst+" "+data.results.length+(term?" "+gmmLang.matching+" \""+jQuery("<span>").text(term).html()+"\"":"");
 			html+="</div>";
 			jQuery.each(data.results,function(i,m){
 				if(jQuery.inArray(m.uid,tr)!==-1)return;
@@ -302,43 +398,44 @@ function gmmSyncHiddens(fid,gid){
 </script>';
 		}
 
-		$html  = $css . $js;
-		// Hidden inputs carry add/remove UID lists to processGroupSubmission on save.
-		// Names use entry_id (what readelements.php/processGroupSubmission key on), not groupId.
-		// On the system groups table form entry_id == groupId, so both forms work correctly.
-		$html .= '<input type="hidden" name="group_members_add_'    . $fid . '_' . intval($entry_id) . '" id="gmm-add-input-'    . $key . '" value="[]">';
-		$html .= '<input type="hidden" name="group_members_remove_' . $fid . '_' . intval($entry_id) . '" id="gmm-remove-input-' . $key . '" value="[]">';
+		$html = $css . $js;
 
-		$html .= '<div class="gmm-widget" id="gmm-' . $key . '">';
+		if ($multiCategory) {
+			// Restore the active category from the last submission, defaulting to the first.
+			$activeCatInputName = 'gmm_active_category_' . $fid . '_' . intval($entry_id);
+			$postedGroupId      = isset($_POST[$activeCatInputName]) ? intval($_POST[$activeCatInputName]) : 0;
+			$activeGroupId      = (in_array($postedGroupId, $categoryGroupMap) && $postedGroupId > 0)
+				? $postedGroupId
+				: reset($categoryGroupMap);
 
-		// Tab bar
-		$html .= '<div class="gmm-tabs">';
-		$html .= '<span class="gmm-tab gmm-tab-active" data-panel="members">' . htmlspecialchars(_formulize_GMM_TAB_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
-		$html .= '<span class="gmm-tab" data-panel="add">' . htmlspecialchars(_formulize_GMM_TAB_ADD_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
-		$html .= '</div>';
+			$outerKey  = $fid . '-' . intval($entry_id);
+			$inputId   = 'gmm-active-cat-' . $outerKey;
 
-		// Members panel
-		$html .= '<div class="gmm-panel" id="gmm-panel-members-' . $key . '">';
-		$html .= '<div class="gmm-searchbar">';
-		$html .= '<input type="text" id="gmm-member-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_SEARCH_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
-		$html .= '<button type="button" onclick="gmmSearchMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
-		$html .= '</div>';
-		$html .= '<div id="gmm-member-list-' . $key . '">' . $initialMemberListHtml . '</div>';
-		$html .= '<div class="gmm-pending-removes" id="gmm-pending-removes-' . $key . '"></div>';
-		$html .= '</div>';
+			$html .= '<input type="hidden" id="' . $inputId . '" name="' . $activeCatInputName . '" value="' . intval($activeGroupId) . '">';
+			$html .= '<div class="gmm-outer" id="gmm-outer-' . $outerKey . '">';
+			$html .= '<div class="gmm-cat-tabs">';
+			foreach ($categoryGroupMap as $catName => $groupId) {
+				$panelId     = 'gmm-cat-panel-' . $fid . '-' . $groupId;
+				$activeClass = ($groupId === $activeGroupId) ? ' gmm-cat-tab-active' : '';
+				$html .= '<span class="gmm-cat-tab' . $activeClass . '" onclick="gmmSwitchCategory(this,\'' . htmlspecialchars($panelId, ENT_QUOTES, 'UTF-8') . '\',\'' . $inputId . '\',' . intval($groupId) . ')">'
+					. htmlspecialchars($catName, ENT_QUOTES, 'UTF-8') . '</span>';
+			}
+			$html .= '</div>';
 
-		// Add Members panel
-		$html .= '<div class="gmm-panel" id="gmm-panel-add-' . $key . '" style="display:none">';
-		$html .= '<div class="gmm-searchbar">';
-		$html .= '<input type="text" id="gmm-add-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_FIND_USER_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
-		$html .= '<button type="button" onclick="gmmSearchNonMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
-		$html .= '</div>';
-		$html .= '<div id="gmm-add-results-' . $key . '"></div>';
-		$html .= '<div class="gmm-pending-adds" id="gmm-pending-adds-' . $key . '"></div>';
-		$html .= '</div>';
+			foreach ($categoryGroupMap as $catName => $groupId) {
+				$panelId     = 'gmm-cat-panel-' . $fid . '-' . $groupId;
+				$panelHidden = ($groupId === $activeGroupId) ? '' : ' style="display:none"';
+				$html .= '<div class="gmm-cat-panel" id="' . $panelId . '"' . $panelHidden . '>';
+				$html .= self::renderSingleWidget($fid, intval($entry_id), $groupId, $uid, $ajaxUrl);
+				$html .= '</div>';
+			}
 
-		$html .= '</div>'; // .gmm-widget
-		$html .= '<script>jQuery(document).ready(function(){gmmInit(' . $fidJs . ',' . $groupIdJs . ',' . $ajaxUrlJs . ',' . $uidJs . ');});</script>';
+			$html .= '</div>'; // .gmm-outer
+		} else {
+			// Single category (or fallback): render widget directly, no outer wrapper needed.
+			$groupId = reset($categoryGroupMap);
+			$html   .= self::renderSingleWidget($fid, intval($entry_id), $groupId, $uid, $ajaxUrl);
+		}
 
 		return new XoopsFormLabel($caption, $html);
 	}

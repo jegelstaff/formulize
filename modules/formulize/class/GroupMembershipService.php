@@ -273,8 +273,8 @@ class GroupMembershipService {
 	public static function processGroupMembershipWidget($groupId, $formId, $entryId) {
 		global $xoopsDB;
 		
-		$addKey = 'group_members_add_' . $formId . '_' . $entryId;
-		$removeKey = 'group_members_remove_' . $formId . '_' . $entryId;
+		$addKey = 'group_members_add_' . $formId . '_' . $entryId . '_' . $groupId;
+		$removeKey = 'group_members_remove_' . $formId . '_' . $entryId . '_' . $groupId;
 		
 		// Parse UIDs from POST
 		$addUids = array();
