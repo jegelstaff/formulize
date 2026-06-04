@@ -164,7 +164,7 @@ $processedValues['forms']['single'] = $sanitizedSingle;
 $formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds, $groupCategories);
 $fid = $formObject->getVar('fid');
 
-// Process user mapping if switching to entries_are_users and user chose to map existing entries
+// Process user mapping if user chose to associate existing entries with user accounts
 if($formObject->getVar('entries_are_users')
 	AND isset($_POST['user_mapping_yes_no'])
 	AND $_POST['user_mapping_yes_no'] == '1'
@@ -175,8 +175,33 @@ if($formObject->getVar('entries_are_users')
 ) {
 	$formObject = $oldEntriesAreUsers === 0 ? $form_handler->get($fid, refreshCache: true) : $formObject; // reload form object to ensure we have the user account element available
 	if($form_handler->associateExistingUsersWithFormEntries($formObject, $_POST['user_mapping_element'], $_POST['user_mapping_type'])) {
-		$_POST['reload_settings'] = 1; // force a reload of the settings page to remove the user mapping UI
+		$_POST['reload_settings'] = 1;
 	}
+}
+
+// Process create entries from existing users if requested
+if($formObject->getVar('entries_are_users')
+	AND isset($_POST['create_entries_yes_no'])
+	AND $_POST['create_entries_yes_no'] == '1'
+	AND isset($_POST['create_entries_include_groups'])
+	AND is_array($_POST['create_entries_include_groups'])
+	AND !empty($_POST['create_entries_include_groups'])
+) {
+	$includeGroups = array_map('intval', $_POST['create_entries_include_groups']);
+	$excludeGroups = isset($_POST['create_entries_exclude_groups']) && is_array($_POST['create_entries_exclude_groups'])
+		? array_map('intval', $_POST['create_entries_exclude_groups'])
+		: array();
+	$proxyUserId = false; // false = "me": no proxy, formulize_writeEntry uses logged-in user naturally
+	if(isset($_POST['create_entries_proxy_mode'])) {
+		if($_POST['create_entries_proxy_mode'] == 'self') {
+			$proxyUserId = 0; // 0 = each entry attributed to the user it represents
+		} elseif($_POST['create_entries_proxy_mode'] == 'specific') {
+			$proxyUserId = intval($_POST['create_entries_proxy_user']);
+		}
+	}
+	$formObject = $form_handler->get($fid, refreshCache: true);
+	$form_handler->createEntriesForExistingUsers($formObject, $proxyUserId, $includeGroups, $excludeGroups);
+	$_POST['reload_settings'] = 1;
 }
 
 // check if form handle changed

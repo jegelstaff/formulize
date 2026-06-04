@@ -227,62 +227,119 @@
 					</fieldset>
 				</div>
 
-				<!-- User Mapping for Existing Entries -->
-				<{if $content.show_user_mapping_ui AND $content.elementheadings|is_array AND $content.elementheadings|@count}>
+				<!-- Section 1: Associate existing entries with existing users -->
+				<{if $content.show_user_mapping_ui AND $content.elementheadings_for_mapping|is_array AND $content.elementheadings_for_mapping|@count}>
 				<div class="form-item">
 					<fieldset>
 						<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TITLE}></label></legend>
-						<div id="user_mapping_container">
-							<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_QUESTION}></p>
-
-							<div class="form-radios">
-								<label for="user_mapping_yes_no-0">
-									<input type="radio" id="user_mapping_yes_no-0" name="user_mapping_yes_no" value="0" checked />
-									<{$smarty.const._AM_NO}>
-								</label>
-							</div>
-							<div class="form-radios">
-								<label for="user_mapping_yes_no-1">
-									<input type="radio" id="user_mapping_yes_no-1" name="user_mapping_yes_no" value="1" />
-									<{$smarty.const._AM_YES}>
-								</label>
-							</div>
-
-							<div id="user_mapping_details" style="display: none; margin-top: 15px;">
-								<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_EXPLAIN}></p>
-
-								<div style="display: flex; gap: 30px; margin-top: 10px;">
-									<div style="display: flex; flex-direction: column;">
-										<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_LABEL}></label>
-										<select name="user_mapping_element" id="user_mapping_element" style="width: auto;">
-											<option value=""><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_SELECT}></option>
-											<{foreach from=$content.elementheadings item=element}>
-											<option value="<{$element.ele_id}>"><{$element.text}></option>
-											<{/foreach}>
-										</select>
-									</div>
-									<div style="display: flex; flex-direction: column;">
-										<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_CONTAINS_LABEL}></label>
-										<label for="user_mapping_type-login_name" style="margin-bottom: 3px;">
-											<input type="radio" id="user_mapping_type-login_name" name="user_mapping_type" value="login_name" />
-											<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_USERNAME}>
-										</label>
-										<label for="user_mapping_type-email" style="margin-bottom: 3px;">
-											<input type="radio" id="user_mapping_type-email" name="user_mapping_type" value="email" />
-											<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_EMAIL}>
-										</label>
-										<label for="user_mapping_type-uid">
-											<input type="radio" id="user_mapping_type-uid" name="user_mapping_type" value="uid" />
-											<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_UID}>
-										</label>
-									</div>
+						<div class="form-radios">
+							<label for="user_mapping_yes_no-0">
+								<input type="radio" id="user_mapping_yes_no-0" name="user_mapping_yes_no" value="0" checked />
+								<{$smarty.const._AM_NO}>
+							</label>
+						</div>
+						<div class="form-radios">
+							<label for="user_mapping_yes_no-1">
+								<input type="radio" id="user_mapping_yes_no-1" name="user_mapping_yes_no" value="1" />
+								<{$smarty.const._AM_YES}>
+							</label>
+						</div>
+						<div id="user_mapping_details" style="display: none; margin-top: 15px;">
+							<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_EXPLAIN}></p>
+							<div style="display: flex; gap: 30px; margin-top: 10px;">
+								<div style="display: flex; flex-direction: column;">
+									<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_LABEL}></label>
+									<select name="user_mapping_element" id="user_mapping_element" style="width: auto;">
+										<option value=""><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_SELECT}></option>
+										<{foreach from=$content.elementheadings_for_mapping item=element}>
+										<option value="<{$element.ele_id}>"><{$element.text}></option>
+										<{/foreach}>
+									</select>
 								</div>
-
-								<p style="margin-top: 10px;"><em><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_SYNC_NOTE}></em></p>
+								<div style="display: flex; flex-direction: column;">
+									<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_CONTAINS_LABEL}></label>
+									<label for="user_mapping_type-login_name" style="margin-bottom: 3px;">
+										<input type="radio" id="user_mapping_type-login_name" name="user_mapping_type" value="login_name" />
+										<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_USERNAME}>
+									</label>
+									<label for="user_mapping_type-email" style="margin-bottom: 3px;">
+										<input type="radio" id="user_mapping_type-email" name="user_mapping_type" value="email" />
+										<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_EMAIL}>
+									</label>
+									<label for="user_mapping_type-uid">
+										<input type="radio" id="user_mapping_type-uid" name="user_mapping_type" value="uid" />
+										<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_UID}>
+									</label>
+								</div>
 							</div>
 						</div>
 					</fieldset>
 				</div>
+
+				<!-- Section 2: Create entries for existing users -->
+				<{if $content.sync_groups|is_array AND $content.sync_groups|@count}>
+				<div class="form-item">
+					<fieldset>
+						<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_TITLE}></label></legend>
+						<div class="form-radios">
+							<label for="create_entries_yes_no-0">
+								<input type="radio" id="create_entries_yes_no-0" name="create_entries_yes_no" value="0" checked />
+								<{$smarty.const._AM_NO}>
+							</label>
+						</div>
+						<div class="form-radios">
+							<label for="create_entries_yes_no-1">
+								<input type="radio" id="create_entries_yes_no-1" name="create_entries_yes_no" value="1" />
+								<{$smarty.const._AM_YES}>
+							</label>
+						</div>
+						<div id="create_entries_details" style="display: none; margin-top: 15px;">
+							<div style="display: flex; gap: 30px;">
+								<div>
+									<label style="font-weight: bold; display: block; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_INCLUDE_GROUPS}></label>
+									<div style="max-height: 150px; overflow-y: auto; padding: 5px; border: 1px solid #ccc;">
+										<{foreach from=$content.sync_groups item=group}>
+										<div style="margin: 3px 0;"><label><input type="checkbox" name="create_entries_include_groups[]" value="<{$group.id}>" /> <{$group.name}></label></div>
+										<{/foreach}>
+									</div>
+								</div>
+								<div>
+									<label style="font-weight: bold; display: block; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_EXCLUDE_GROUPS}></label>
+									<div style="max-height: 150px; overflow-y: auto; padding: 5px; border: 1px solid #ccc;">
+										<{foreach from=$content.sync_groups item=group}>
+										<div style="margin: 3px 0;"><label><input type="checkbox" name="create_entries_exclude_groups[]" value="<{$group.id}>" /> <{$group.name}></label></div>
+										<{/foreach}>
+									</div>
+								</div>
+							</div>
+							<div style="margin-top: 15px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_LABEL}></label>
+								<div class="form-radios">
+									<label>
+										<input type="radio" name="create_entries_proxy_mode" value="me" checked="checked" />
+										<{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_ME}> (<{$content.current_user_uname}>)
+									</label>
+								</div>
+								<div class="form-radios">
+									<label>
+										<input type="radio" name="create_entries_proxy_mode" value="self" />
+										<{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SELF}>
+									</label>
+								</div>
+								<div class="form-radios">
+									<label>
+										<input type="radio" name="create_entries_proxy_mode" value="specific" />
+										<{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SPECIFIC}>
+									</label>
+								</div>
+								<div id="create_entries_proxy_user_container" style="display: none; margin-top: 8px;">
+									<{$content.sync_proxy_user_ui}>
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<{/if}>
 				<{/if}>
 
 			</div>
@@ -469,6 +526,24 @@
 				$("#user_mapping_details").slideDown();
 			} else if ($(this).val() == "0" && $(this).is(':checked')) {
 				$("#user_mapping_details").slideUp();
+			}
+		});
+
+		// Create entries yes/no toggle
+		$("input[name='create_entries_yes_no']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#create_entries_details").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#create_entries_details").slideUp();
+			}
+		});
+
+		// Create entries proxy mode toggle
+		$("input[name='create_entries_proxy_mode']").change(function() {
+			if ($(this).val() == "specific" && $(this).is(':checked')) {
+				$("#create_entries_proxy_user_container").slideDown();
+			} else {
+				$("#create_entries_proxy_user_container").slideUp();
 			}
 		});
 

@@ -224,6 +224,7 @@ if ($_GET['fid'] != "new") {
 		$elementIdsWithData = $formObject->getVar('elementsWithData');
     $elements = array();
     $elementHeadings = array();
+		$elementHeadingsForMapping = array();
     $formApplications = array();
     // $elements array is going to be used to populate accordion sections, so it must contain the following:
     // a 'name' key and a 'content' key for each form that is found
@@ -307,6 +308,9 @@ if ($_GET['fid'] != "new") {
         $elementHeadings[$i]['text'] = $colhead ? printSmart($colhead) : printSmart($elementCaption);
         $elementHeadings[$i]['ele_id'] = $ele_id;
         $elementHeadings[$i]['selected'] = in_array($ele_id, $headerlistArray) ? " selected" : "";
+				if(strpos($ele_type, 'userAccount') !== 0) {
+					$elementHeadingsForMapping[] = array('text' => $colhead ? printSmart($colhead) : printSmart($elementCaption), 'ele_id' => $ele_id);
+				}
         $i++;
     }
 
@@ -1001,11 +1005,7 @@ if($fid != "new" && $entries_are_users == 1) {
 	$totalEntries = intval($checkRow['total_entries']);
 	$maxUid = intval($checkRow['max_uid']);
 
-	// Hide UI if there are no entries, OR if entries are already associated with users
-	if($totalEntries == 0 || $maxUid > 0) {
-		$settings['show_user_mapping_ui'] = false;
-	}
-	$settings['entries_are_users_has_associations'] = ($maxUid > 0) ? 1 : 0;
+$settings['entries_are_users_has_associations'] = ($maxUid > 0) ? 1 : 0;
 } else {
 	$settings['entries_are_users_has_associations'] = 0;
 }
@@ -1022,8 +1022,24 @@ $adminPage['tabs'][$i]['content']['applications'] = $applications;
 if (isset($elementHeadings)) {
     $adminPage['tabs'][$i]['content']['elementheadings'] = $elementHeadings;
 }
+if (isset($elementHeadingsForMapping) && !empty($elementHeadingsForMapping)) {
+    $adminPage['tabs'][$i]['content']['elementheadings_for_mapping'] = $elementHeadingsForMapping;
+}
 if (isset($formApplications)) {
     $adminPage['tabs'][$i]['content']['formapplications'] = $formApplications;
+}
+if(isset($entries_are_users) && $entries_are_users == 1 && isset($groupsMinusEntryGroups)) {
+    $adminPage['tabs'][$i]['content']['sync_groups'] = array_values($groupsMinusEntryGroups);
+    global $icmsUser;
+    $adminPage['tabs'][$i]['content']['current_user_uname'] = $icmsUser ? $icmsUser->getVar('uname') : '';
+    $syncProxyUserHandler = xoops_getmodulehandler('autocompleteUsersElement', 'formulize');
+    $syncProxyUserObject = $syncProxyUserHandler->create();
+    $syncProxyUserObject->setVar('ele_value', $syncProxyUserHandler->getDefaultEleValue());
+    $syncProxyUserObject->setVar('ele_handle', 'syncProxyUser');
+    $syncProxyUserObject->setVar('ele_type', 'autocompleteUsers');
+    $syncProxyUserObject->setVar('ele_display', 1);
+    $syncProxyUserUI = $syncProxyUserHandler->render($syncProxyUserObject->getVar('ele_value'), '', 'create_entries_proxy_user', isDisabled: false, element: $syncProxyUserObject, entry_id: 'new');
+    $adminPage['tabs'][$i]['content']['sync_proxy_user_ui'] = $syncProxyUserUI->render();
 }
 $i++;
 

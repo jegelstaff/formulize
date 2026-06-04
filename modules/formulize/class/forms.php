@@ -1461,11 +1461,10 @@ class formulizeFormsHandler {
 		if(!in_array('formulize_user_account_uid_'.$formObject->getVar('fid'), $formObject->getVar('elementHandles'))) {
 			return false;
 		}
-		// validate that the userAccountUid element has no values yet
 		$dataHandler = new formulizeDataHandler($formObject->getVar('fid'));
-		$existingAssociatedUids = $dataHandler->findAllEntriesWithValue('formulize_user_account_uid_'.$formObject->getVar('fid'), 0, operator: '>');
-		if(!empty($existingAssociatedUids)) {
-			return false;
+		$alreadyLinkedEntryIds = $dataHandler->findAllEntriesWithValue('formulize_user_account_uid_'.$formObject->getVar('fid'), 0, operator: '>');
+		if($alreadyLinkedEntryIds === false) {
+			$alreadyLinkedEntryIds = array();
 		}
 		// validate the user field
 		if(!in_array($userField, ['login_name', 'email', 'uid'])) {
@@ -1483,6 +1482,9 @@ class formulizeFormsHandler {
 		if($values = $dataHandler->findAllValuesForField($elementHandle)) {
 			$member_handler = xoops_gethandler('member');
 			foreach($values as $entryId => $value) {
+				if(in_array($entryId, $alreadyLinkedEntryIds)) {
+					continue;
+				}
 				$criteria = new Criteria($userField, $value);
 				if($userObjects = $member_handler->getUsers($criteria)
 					AND is_array($userObjects)
@@ -1495,11 +1497,87 @@ class formulizeFormsHandler {
 					), forceUpdate: true)) {
 						throw new Exception("Could not associate entry $entryId with user account $userId in form ".$formObject->getVar('form_handle'));
 					}
+					formulizeElementsHandler::processUserGroupMemberships($userId, $formObject->getVar('fid'), $entryId);
 				}
 			}
 			return true;
 		}
 		return false;
+	}
+
+	function createEntriesForExistingUsers($formObject, $proxyUserId, $includeGroupIds, $excludeGroupIds = array()) {
+
+		if(!is_a($formObject, 'formulizeForm')) {
+			$formObject = $this->get($formObject);
+			if(!$formObject) return false;
+		}
+
+		$fid = $formObject->getVar('fid');
+		$uidField = 'formulize_user_account_uid_'.$fid;
+
+		if(!in_array($uidField, $formObject->getVar('elementHandles'))) {
+			return false;
+		}
+
+		$includeGroupIds = array_map('intval', array_filter((array)$includeGroupIds));
+		if(empty($includeGroupIds)) {
+			return false;
+		}
+
+		// Build the intersection of UIDs across all include groups
+		$member_handler = xoops_gethandler('member');
+		$qualifiedUids = null;
+		foreach($includeGroupIds as $gid) {
+			$uidsInGroup = $member_handler->getUsersByGroup($gid); // returns array of uid integers
+			$qualifiedUids = ($qualifiedUids === null) ? $uidsInGroup : array_intersect($qualifiedUids, $uidsInGroup);
+			if(empty($qualifiedUids)) break;
+		}
+
+		if(empty($qualifiedUids)) return 0;
+
+		// Subtract UIDs belonging to any exclude group
+		$excludeGroupIds = array_map('intval', array_filter((array)$excludeGroupIds));
+		foreach($excludeGroupIds as $gid) {
+			$qualifiedUids = array_diff($qualifiedUids, $member_handler->getUsersByGroup($gid));
+			if(empty($qualifiedUids)) break;
+		}
+
+		if(empty($qualifiedUids)) return 0;
+
+		// Find UIDs that already have an entry in this form
+		global $xoopsDB;
+		$formHandle = $formObject->getVar('form_handle');
+		$sql = "SELECT `$uidField` FROM ".$xoopsDB->prefix("formulize_".$formHandle)." WHERE `$uidField` > 0";
+		$alreadyLinkedUids = array();
+		if($result = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchRow($result)) {
+				$alreadyLinkedUids[] = intval($row[0]);
+			}
+		}
+
+		$usersToCreate = array_unique(array_diff($qualifiedUids, $alreadyLinkedUids));
+		if(empty($usersToCreate)) return 0;
+
+		$count = 0;
+		foreach($usersToCreate as $targetUid) {
+			$targetUid = intval($targetUid);
+			// false = "me" (no proxy, logged-in user used by default), 0 = "self" (target user), >0 = specific user
+			if($proxyUserId === false) {
+				$effectiveProxy = false;
+			} elseif($proxyUserId > 0) {
+				$effectiveProxy = $proxyUserId;
+			} else {
+				$effectiveProxy = $targetUid;
+			}
+			$newEntryId = formulize_writeEntry(array($uidField => $targetUid), 'new', 'replace', $effectiveProxy);
+			if($newEntryId) {
+				formulize_updateDerivedValues($newEntryId, $fid);
+				formulizeElementsHandler::processUserGroupMemberships($targetUid, $fid, $newEntryId);
+				$count++;
+			}
+		}
+
+		return $count;
 	}
 
 	/**
