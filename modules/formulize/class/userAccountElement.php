@@ -308,11 +308,20 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 				if($context === null) {
 					return $results[$cacheKey]; // user was deleted
 				}
-				extract($context); // userObject, profile, entryUserId, old2faMethod, old2faPhone, oldEmail
+				$userObject = $context['userObject'];
+				$profile = $context['profile'];
+				$entryUserId = $context['entryUserId'];
+				$old2faMethod = $context['old2faMethod'];
+				$old2faPhone = $context['old2faPhone'];
+				$oldEmail = $context['oldEmail'];
 				
 				// Collect all pending changes from form submission
 				$changes = self::collectPendingUserVars($formId, $entryId, $userObject, $profile, $entryUserId, $old2faMethod);
-				extract($changes); // pendingUserVars, pendingProfileVars, rawSubmitted2faMethod, passwordChanged, cleanupAppSecret
+				$pendingUserVars = $changes['pendingUserVars'];
+				$pendingProfileVars = $changes['pendingProfileVars'];
+				$rawSubmitted2faMethod = $changes['rawSubmitted2faMethod'];
+				$passwordChanged = $changes['passwordChanged'];
+				$cleanupAppSecret = $changes['cleanupAppSecret'];
 				
 				// Validate 2FA transition if user is editing their own account
 				if(!self::validateOwnAccount2faTransition(
@@ -844,6 +853,28 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	}
 
 	/**
+	 * Validate that a column name is from the users or profile table
+	 * @param string $column The column name to validate
+	 * @param bool $isProfile Whether this is a profile column (default false)
+	 * @return bool True if valid, false otherwise
+	 */
+	protected static function isValidColumnName($column, $isProfile = false) {
+		$registry = self::getTypeRegistry();
+		foreach($registry as $entry) {
+			if($isProfile) {
+				if($entry['profileColumn'] === $column) {
+					return true;
+				}
+			} else {
+				if($entry['column'] === $column) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Build an EXISTS subquery for profile table columns
 	 * Used by user account elements that store data in the profile table
 	 * @param string $column The profile table column name
@@ -856,11 +887,24 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 */
 	protected function buildProfileExistsClause($column, $term, $operator, $quotes, $likebits, $tableAlias='main') {
 		global $xoopsDB;
+		// Validate column name against whitelist
+		if(!self::isValidColumnName($column, true)) {
+			trigger_error("Invalid profile column name: $column", E_USER_WARNING);
+			return "1=0"; // Return a clause that will never match
+		}
+		
+		// Validate operator against whitelist
+		$validOperators = array('=', '!=', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE');
+		if(!in_array($operator, $validOperators, true)) {
+			trigger_error("Invalid operator: $operator", E_USER_WARNING);
+			return "1=0";
+		}
+		
 		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
 		return "EXISTS("
 			. "SELECT 1 FROM " . $xoopsDB->prefix('profile_profile') . " AS pp"
 			. " WHERE pp.profileid = {$tableAlias}.uid"
-			. " AND pp.`" . formulize_db_escape($column) . "`" . $safeTermClause
+			. " AND pp.`{$column}`" . $safeTermClause
 			. ")";
 	}
 
@@ -875,12 +919,25 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 	 * @return string The WHERE clause fragment
 	 */
 	protected function buildUnixTimestampClause($column, $term, $operator, $partialMatch, $tableAlias='main') {
+		// Validate column name against whitelist
+		if(!self::isValidColumnName($column, false)) {
+			trigger_error("Invalid user table column name: $column", E_USER_WARNING);
+			return "1=0"; // Return a clause that will never match
+		}
+		
+		// Validate operator against whitelist
+		$validOperators = array('=', '!=', '<', '>', '<=', '>=');
+		if(!in_array($operator, $validOperators, true)) {
+			trigger_error("Invalid operator: $operator", E_USER_WARNING);
+			return "1=0";
+		}
+		
 		$dbTerm = self::prepareDateTimestampForDB($term, $partialMatch);
 		$safeTerm = formulize_db_escape($dbTerm);
 		if($partialMatch) {
-			return "FROM_UNIXTIME({$tableAlias}.`" . formulize_db_escape($column) . "`) LIKE '%$safeTerm%'";
+			return "FROM_UNIXTIME({$tableAlias}.`{$column}`) LIKE '%$safeTerm%'";
 		} else {
-			return "FROM_UNIXTIME({$tableAlias}.`" . formulize_db_escape($column) . "`) $operator '$safeTerm'";
+			return "FROM_UNIXTIME({$tableAlias}.`{$column}`) $operator '$safeTerm'";
 		}
 	}
 
