@@ -1169,6 +1169,7 @@ class formulizeHandler {
 
 			$formSingular = $eagFormObject->getSingular();
 			$formPlural = $eagFormObject->getPlural();
+			$formTitle = $eagFormObject->getVar('form_title');
 
 			foreach ($tgCategories as $tgGroupId => $categoryName) {
 				if (!$categoryName) { continue; }
@@ -1177,6 +1178,7 @@ class formulizeHandler {
 					'categoryName' => $categoryName,
 					'formSingular' => $formSingular,
 					'formPlural' => $formPlural,
+					'formTitle' => $formTitle,
 					'eagFormId' => $eagFormId,
 					'linkedElements' => isset($linkedFormElements[$eagFormId]) ? $linkedFormElements[$eagFormId] : array()
 				);

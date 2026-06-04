@@ -128,7 +128,8 @@ if ($_GET['fid'] != "new") {
 			$template_group_metadata[$tgGroupId] = array(
 				'categoryName' => $tgInfo['categoryName'],
 				'formSingular' => strtolower($tgInfo['formSingular']),
-				'formPlural' => strtolower($tgInfo['formPlural']),
+				'formPlural' => $tgInfo['formPlural'],
+				'formTitle' => $tgInfo['formTitle'],
 				'hasLinkedElements' => !empty($tgInfo['linkedElements']),
 				'linkedElements' => $tgInfo['linkedElements'],
 				'elementsByForm' => array_values($elementsByForm),
@@ -172,6 +173,7 @@ if ($_GET['fid'] != "new") {
 						'categoryNames' => array($meta['categoryName']),
 						'formSingular' => $meta['formSingular'],
 						'formPlural' => $meta['formPlural'],
+						'formTitle' => $meta['formTitle'],
 						'hasLinkedElements' => $meta['hasLinkedElements'],
 						'elementsByForm' => $elementsByForm,
 						'description' => '', // built below after all groups are processed
@@ -191,9 +193,9 @@ if ($_GET['fid'] != "new") {
 			$catNames = $cluster['categoryNames'];
 			$catList = implode(', ', $catNames);
 			if ($cluster['hasLinkedElements']) {
-				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC, $catList, $cluster['formSingular']);
+				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC, $cluster['formPlural']);
 			} else {
-				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK, $catList, $cluster['formPlural']);
+				$cluster['description'] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK, $cluster['formTitle']);
 			}
 		}
 		unset($cluster);

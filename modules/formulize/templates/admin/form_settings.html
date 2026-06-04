@@ -144,14 +144,14 @@
 								<{* Render regular (non-template) groups as standalone items *}>
 								<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
 								<{if !$group.isTemplate}>
-								<div class="default-group-item" data-groupid="<{$group.id}>" style="margin-bottom: 5px;">
+								<div class="default-group-item" data-groupid="<{$group.id}>" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">
 									<span style="font-weight: bold;"><{$group.name}></span>
 									<span>&mdash;</span>
-									<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" data-condition-count="<{$group.conditionCount}>" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{if $group.conditionCount == 1}> 1 condition<{elseif $group.conditionCount > 1}> <{$group.conditionCount}> conditions<{/if}></a>
+									<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" data-condition-count="<{$group.conditionCount}>" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{if $group.conditionCount > 0}> <{$group.conditionCount}><{/if}> <{if $group.conditionCount == 1}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION}><{else}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS}><{/if}></a>
 									<span>&mdash;</span>
 									<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
 									<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
-									<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">
+									<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">
 										<p style="margin-top: 0; font-size: 0.85em; font-style: italic; color: #666;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC}></p>
 										<{if $content.per_group_conditions_ui[$group.id]}>
 										<{$content.per_group_conditions_ui[$group.id]}>
@@ -166,18 +166,18 @@
 								<{* Render template group clusters *}>
 								<{if $content.template_group_clusters|is_array}>
 								<{foreach from=$content.template_group_clusters key=eagFormId item=cluster}>
-								<div class="template-group-cluster" data-eagformid="<{$eagFormId}>" style="margin-bottom: 5px;">
+								<div class="template-group-cluster" data-eagformid="<{$eagFormId}>" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">
 									<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
 									<{if $group.isTemplate && $group.eagFormId == $eagFormId}>
-									<div class="default-group-item template-group-in-cluster" data-groupid="<{$group.id}>" style="margin-bottom: 4px;">
+									<div class="default-group-item template-group-in-cluster" data-groupid="<{$group.id}>" style="margin-bottom: 6px;">
 										<span style="font-weight: bold;"><{$group.name}></span>
 										<span>&mdash;</span>
-										<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" data-condition-count="<{$group.conditionCount}>" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{if $group.conditionCount == 1}> 1 condition<{elseif $group.conditionCount > 1}> <{$group.conditionCount}> conditions<{/if}></a>
+										<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" data-condition-count="<{$group.conditionCount}>" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{if $group.conditionCount > 0}> <{$group.conditionCount}><{/if}> <{if $group.conditionCount == 1}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION}><{else}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS}><{/if}></a>
 										<span>&mdash;</span>
 										<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
 										<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
 										<input type="hidden" name="entries_are_users_default_groups_form_map[<{$group.id}>]" value="<{$eagFormId}>" />
-										<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">
+										<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">
 											<p style="margin-top: 0; font-size: 0.85em; font-style: italic; color: #666;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC}></p>
 											<{if $content.per_group_conditions_ui[$group.id]}>
 											<{$content.per_group_conditions_ui[$group.id]}>
@@ -188,28 +188,32 @@
 									</div>
 									<{/if}>
 									<{/foreach}>
-									<{if $cluster.description}>
-									<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 4px;"><{$cluster.description}></div>
-									<{/if}>
-									<{if $cluster.elementsByForm|is_array && $cluster.elementsByForm|@count}>
-									<table class="template-group-cluster-checkboxes" style="margin-top: 4px; font-size: 0.9em; border: none; border-collapse: collapse;">
-										<{foreach from=$cluster.elementsByForm item=formGroup}>
-										<tr>
-											<td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;"><{$formGroup.formName}>:</td>
-											<td style="vertical-align: top; padding: 4px 0; border: none;">
-												<{foreach from=$formGroup.elements item=linkedEl}>
-												<label style="display: block;">
-													<input type="checkbox" name="entries_are_users_default_groups_element_links[<{$eagFormId}>][]"
-														value="<{$linkedEl.ele_id}>"
-														class="template-group-element-checkbox"
-														<{if $linkedEl.selected}>checked="checked"<{/if}> />
-													<{$linkedEl.caption}>
-												</label>
-												<{/foreach}>
-											</td>
-										</tr>
-										<{/foreach}>
-									</table>
+									<{if $cluster.hasLinkedElements && $cluster.elementsByForm|is_array && $cluster.elementsByForm|@count}>
+									<div class="template-group-cluster-element-config" style="margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;">
+										<{if $cluster.description}>
+										<p class="template-group-cluster-description" style="margin: 0 0 6px 0; font-size: 0.85em; font-weight: bold; color: #333;"><{$cluster.description}></p>
+										<{/if}>
+										<table class="template-group-cluster-checkboxes" style="margin-top: 0; font-size: 0.9em; border: none; border-collapse: collapse;">
+											<{foreach from=$cluster.elementsByForm item=formGroup}>
+											<tr>
+												<td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;"><{$formGroup.formName}>:</td>
+												<td style="vertical-align: top; padding: 4px 0; border: none;">
+													<{foreach from=$formGroup.elements item=linkedEl}>
+													<label style="display: block;">
+														<input type="checkbox" name="entries_are_users_default_groups_element_links[<{$eagFormId}>][]"
+															value="<{$linkedEl.ele_id}>"
+															class="template-group-element-checkbox"
+															<{if $linkedEl.selected}>checked="checked"<{/if}> />
+														<{$linkedEl.caption}>
+													</label>
+													<{/foreach}>
+												</td>
+											</tr>
+											<{/foreach}>
+										</table>
+									</div>
+									<{elseif $cluster.description}>
+									<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;"><{$cluster.description}></div>
 									<{/if}>
 								</div>
 								<{/foreach}>
@@ -489,12 +493,14 @@
 		var removeLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}>";
 		var conditionsShowLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}>";
 		var conditionsHideLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_HIDE}>";
+		var conditionLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION}>";
+		var conditionsLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS}>";
 
 		function buildConditionsLinkText(count, isOpen) {
 			if (isOpen) return conditionsHideLabel;
-			if (count === 1) return conditionsShowLabel + ' 1 condition';
-			if (count > 1) return conditionsShowLabel + ' ' + count + ' conditions';
-			return conditionsShowLabel + ' conditions';
+			if (count === 1) return conditionsShowLabel + ' 1 ' + conditionLabel;
+			if (count > 1) return conditionsShowLabel + ' ' + count + ' ' + conditionsLabel;
+			return conditionsShowLabel + ' ' + conditionsLabel;
 		}
 		function addToOpenPanels(groupId) {
 			var current = $("#open_group_conditions_panels").val();
@@ -530,7 +536,7 @@
 
 		// Helper: build group item HTML for a template group inside a cluster
 		function buildTemplateGroupItemHtml(groupId, groupName, eagFormId) {
-			return '<div class="default-group-item template-group-in-cluster" data-groupid="' + groupId + '" style="margin-bottom: 4px;">' +
+			return '<div class="default-group-item template-group-in-cluster" data-groupid="' + groupId + '" style="margin-bottom: 6px;">' +
 				'<span style="font-weight: bold;">' + groupName + '</span>' +
 				' <span>&mdash;</span> ' +
 				'<a href="#" class="toggle-group-conditions-btn" data-groupid="' + groupId + '" style="font-size: 0.85em; font-weight: normal;">' + conditionsShowLabel + ' conditions</a>' +
@@ -538,7 +544,7 @@
 				'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
 				'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
 				'<input type="hidden" name="entries_are_users_default_groups_form_map[' + groupId + ']" value="' + eagFormId + '" />' +
-				'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">' +
+				'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">' +
 				'<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>' +
 				'</div>' +
 				'</div>';
@@ -552,9 +558,9 @@
 		function buildClusterDescription(categoryNames, meta) {
 			var catList = categoryNames.join(', ');
 			if (meta.hasLinkedElements) {
-				return templateDescPattern.replace('%s', catList).replace('%s', meta.formSingular);
+				return templateDescPattern.replace('%s', meta.formPlural);
 			} else {
-				return templateDescFallbackPattern.replace('%s', catList).replace('%s', meta.formPlural);
+				return templateDescFallbackPattern.replace('%s', meta.formTitle || meta.formPlural);
 			}
 		}
 
@@ -593,12 +599,13 @@
 
 		// Helper: build a new cluster container with checkboxes grouped by form
 		function buildClusterHtml(eagFormId, meta, firstGroupId, firstGroupName) {
-			var html = '<div class="template-group-cluster" data-eagformid="' + eagFormId + '" style="margin-bottom: 5px;">';
+			var html = '<div class="template-group-cluster" data-eagformid="' + eagFormId + '" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">';
 			html += buildTemplateGroupItemHtml(firstGroupId, firstGroupName, eagFormId);
 			var desc = buildClusterDescription([meta.categoryName], meta);
-			html += '<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 4px;">' + desc + '</div>';
-			if (meta.elementsByForm && meta.elementsByForm.length > 0) {
-				html += '<table class="template-group-cluster-checkboxes" style="margin-top: 4px; font-size: 0.9em; border: none; border-collapse: collapse;">';
+			if (meta.hasLinkedElements && meta.elementsByForm && meta.elementsByForm.length > 0) {
+				html += '<div class="template-group-cluster-element-config" style="margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;">';
+				html += '<p class="template-group-cluster-description" style="margin: 0 0 6px 0; font-size: 0.85em; font-weight: bold; color: #333;">' + desc + '</p>';
+				html += '<table class="template-group-cluster-checkboxes" style="margin-top: 0; font-size: 0.9em; border: none; border-collapse: collapse;">';
 				for (var f = 0; f < meta.elementsByForm.length; f++) {
 					var fg = meta.elementsByForm[f];
 					html += '<tr><td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;">' + fg.formName + ':</td>';
@@ -616,6 +623,9 @@
 					html += '</td></tr>';
 				}
 				html += '</table>';
+				html += '</div>';
+			} else {
+				html += '<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;">' + desc + '</div>';
 			}
 			html += '</div>';
 			return html;
@@ -668,14 +678,14 @@
 						}
 					} else {
 						// Regular group — add as standalone item
-						var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="margin-bottom: 5px;">' +
+						var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">' +
 							'<span style="font-weight: bold;">' + groupName + '</span>' +
 							' <span>&mdash;</span> ' +
 							'<a href="#" class="toggle-group-conditions-btn" data-groupid="' + groupId + '" style="font-size: 0.85em; font-weight: normal;">' + conditionsShowLabel + ' conditions</a>' +
 							' <span>&mdash;</span> ' +
 							'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
 							'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
-							'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ccc; background: #f5f5f5; border-radius: 3px;">' +
+							'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">' +
 							'<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>' +
 							'</div>' +
 							'</div>';
