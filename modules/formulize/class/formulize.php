@@ -494,7 +494,7 @@ class formulizeHandler {
 										}
 									}
 									if(!empty($conditionsOnThisForm)
-										AND checkConditionsAgainstAnEntry($conditionsOnThisForm, $conditionElementObject->getVar('fid'), $linkSourceEntryIds[$i]) == false) {
+										AND checkConditionsAgainstAnEntry($conditionsOnThisForm, $linkedElement->getVar('fid'), $linkSourceEntryIds[$i], frid: -1) == false) {
 										continue; // this entry doesn't meet the conditions, skip to the next one
 									}
 								}
