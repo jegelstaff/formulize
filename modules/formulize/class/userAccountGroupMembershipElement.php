@@ -175,48 +175,111 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		$member_handler = xoops_gethandler('member');
 		$templateGroupMetadata = formulizeHandler::getTemplateGroupMetadataForForm($fid);
 		$groupDescriptions = array();
+
+		// First pass: collect structured entries for each group
+		$structuredEntries = array();
 		foreach ($defaultGroups as $groupId) {
 			$groupId = intval($groupId);
 			if (isset($sanitizedLinks[$groupId]) && isset($templateGroupMetadata[$groupId])) {
-				// Template group - build description with "for the X selected in Y" text
+				// Template group
 				$meta = $templateGroupMetadata[$groupId];
 				$conditionDesc = '';
 				if (isset($allConditions[$groupId]) && !empty($allConditions[$groupId])) {
 					$conditionDesc = self::describeConditions($allConditions[$groupId], $element_handler);
 				}
+				$basedOnList = array();
 				foreach ($meta['linkedElements'] as $linkedElement) {
 					if (in_array(intval($linkedElement['ele_id']), $sanitizedLinks[$groupId])) {
-						$caption = $linkedElement['caption'];
-						if (!empty($linkedElement['formName'])) {
-							$caption = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM, $caption, $linkedElement['formName']);
+						if (!empty($linkedElement['formName']) && $linkedElement['formName'] !== $meta['formPlural']) {
+							$basedOnList[] = sprintf(
+							    _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_BASED_ON_IN_FORM,
+							    $meta['formSingular'],
+							    $linkedElement['caption'],
+							    $linkedElement['formName']
+							);
+						} else {
+							$basedOnList[] = sprintf(
+							    _AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_BASED_ON,
+							    $meta['formSingular'],
+							    $linkedElement['caption']
+							);
 						}
-						$desc = sprintf(
-							_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE,
-							$meta['categoryName'],
-							$meta['formSingular'],
-							$caption
-						);
-						if ($conditionDesc) {
-							$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $conditionDesc);
-						}
-						$groupDescriptions[] = $desc;
 					}
 				}
+				if (!empty($basedOnList)) {
+					$structuredEntries[] = array(
+						'title' => $meta['formSingular'] . ' - ' . $meta['categoryName'],
+						'basedOnList' => $basedOnList,
+						'conditionDesc' => $conditionDesc,
+						'isTemplate' => true
+					);
+				}
 			} else {
-				// Regular group - use literal name, with condition qualifier if applicable
+				// Regular group
 				$groupObject = $member_handler->getGroup($groupId);
 				if ($groupObject) {
-					$desc = $groupObject->getVar('name');
+					$conditionDesc = '';
 					if (isset($allConditions[$groupId]) && !empty($allConditions[$groupId])) {
 						$conditionDesc = self::describeConditions($allConditions[$groupId], $element_handler);
-						if ($conditionDesc) {
-							$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $conditionDesc);
-						}
 					}
-					$groupDescriptions[] = $desc;
+					$structuredEntries[] = array(
+						'title' => $groupObject->getVar('name'),
+						'basedOnList' => array(),
+						'conditionDesc' => $conditionDesc,
+						'isTemplate' => false
+					);
 				}
 			}
 		}
+
+		// Second pass: merge template groups sharing the same basedOnList and conditionDesc
+		$mergedEntries = array();
+		foreach ($structuredEntries as $entry) {
+			if ($entry['isTemplate']) {
+				$sortedBasedOn = $entry['basedOnList'];
+				sort($sortedBasedOn);
+				$mergeKey = implode('|||', $sortedBasedOn) . '~~~~' . $entry['conditionDesc'];
+				if (isset($mergedEntries[$mergeKey])) {
+					$mergedEntries[$mergeKey]['titles'][] = $entry['title'];
+				} else {
+					$mergedEntries[$mergeKey] = array(
+						'titles' => array($entry['title']),
+						'basedOnList' => $entry['basedOnList'],
+						'conditionDesc' => $entry['conditionDesc'],
+						'isTemplate' => true
+					);
+				}
+			} else {
+				$mergedEntries[] = array(
+					'titles' => array($entry['title']),
+					'basedOnList' => array(),
+					'conditionDesc' => $entry['conditionDesc'],
+					'isTemplate' => false
+				);
+			}
+		}
+
+		// Build HTML descriptions from merged entries
+		foreach ($mergedEntries as $entry) {
+			if ($entry['isTemplate']) {
+				$titlesHtml = implode('<br>', $entry['titles']);
+				$bullets = '';
+				foreach ($entry['basedOnList'] as $basedOn) {
+					$bullets .= '<li>' . $basedOn . '</li>';
+				}
+				if ($entry['conditionDesc']) {
+					$bullets .= '<li>' . sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_ONLY_IF, $entry['conditionDesc']) . '</li>';
+				}
+				$groupDescriptions[] = $titlesHtml . '<ul>' . $bullets . '</ul>';
+			} else {
+				$desc = $entry['titles'][0];
+				if ($entry['conditionDesc']) {
+					$desc .= sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL, $entry['conditionDesc']);
+				}
+				$groupDescriptions[] = $desc;
+			}
+		}
+
 		if (!empty($groupDescriptions)) {
 			$count = count($groupDescriptions);
 			if ($count > 1) {

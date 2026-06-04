@@ -5946,37 +5946,6 @@ function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete',
 }
 
 /**
- * This function takes a parsed condition array and returns a human-readable description.
- * Condition structure: [0] = element IDs/handles, [1] = operators, [2] = terms/values, [3] = types
- * $element_handler is optional; if provided, element IDs will be resolved to captions.
- * @param array $conditions The conditions to describe. Should be an array with keys 0, 1, 2, 3, representing elements, operators, terms, and types.
- * @param object|null $element_handler Optional element handler to resolve element IDs to captions.
- * @return string Human-readable description of the conditions.
- */
-function formulize_describeConditions($conditions, $element_handler = null) {
-	if(!is_array($conditions) || empty($conditions) || !isset($conditions[0])) {
-		return '';
-	}
-	$parts = array();
-	$elements = $conditions[0];
-	$ops = isset($conditions[1]) ? $conditions[1] : array();
-	$terms = isset($conditions[2]) ? $conditions[2] : array();
-	foreach($elements as $i => $eleIdOrHandle) {
-		$elementLabel = $eleIdOrHandle;
-		if($element_handler) {
-			$elementObject = $element_handler->get($eleIdOrHandle);
-			if($elementObject) {
-				$elementLabel = strip_tags($elementObject->getVar('ele_caption'));
-			}
-		}
-		$op = isset($ops[$i]) ? $ops[$i] : '=';
-		$term = isset($terms[$i]) ? $terms[$i] : '';
-		$parts[] = sprintf(_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITION_ITEM, $elementLabel, $op, $term);
-	}
-	return implode(' and ', $parts);
-}
-
-/**
  * Formats an array of strings as a natural-language list with commas and "and".
  * eg: ['A'] => 'A', ['A','B'] => 'A and B', ['A','B','C'] => 'A, B, and C'
  * @param array $items The array of strings to format

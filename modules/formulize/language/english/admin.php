@@ -249,9 +249,11 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC","User accounts 
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC","Users in the %s form will always be members of certain groups %s");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_SHOW","show details");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_HIDE","hide details");
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_TEMPLATE",'The %s group for the %s selected in &ldquo;%s&rdquo;');
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL",' if %s');
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITION_ITEM",'&ldquo;%s&rdquo; %s &ldquo;%s&rdquo;');
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITION_ITEM",'<i>%s</i> %s <i>%s</i>');
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_BASED_ON_IN_FORM",'based on the <i>%s</i> selected in <i>%s</i> (in the <i>%s form</i>)');
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_BASED_ON",'based on the <i>%s</i> selected in <i>%s</i>');
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_ONLY_IF",'Only if %s');
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC","Which element(s) determine the %s that users will be assigned to?");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK","Warning: there are no associations between this form and the %s form, so users cannot be automatically assigned to these groups.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_ELEMENT_IN_FORM","%s (in %s form)");
