@@ -1,11 +1,14 @@
 <?php
 
+$listFid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('fid')) : 0;
+$listFrid = (isset($screen) AND is_object($screen) AND $screen->getVar('frid')) ? intval($screen->getVar('frid')) : 0;
+
 print "
 
 $submitButton
 $procedureResults
 
-<div class='fz-list-screen'>
+<div class='fz-list-screen' data-fz-fid='$listFid' data-fz-frid='$listFrid'>
 
   <div class='fz-list__titlebar'>
     <div class='fz-list__titlebar-start'>

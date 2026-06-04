@@ -83,38 +83,70 @@ function fzSelectView(value, isStandard) {
         });
     }
 
+    // Read the list's form ids, emitted as data attributes on .fz-list-screen.
+    function listFormIds() {
+        var screenEl = document.querySelector('.fz-list-screen');
+        return {
+            fid:  screenEl ? screenEl.getAttribute('data-fz-fid')  : '',
+            frid: screenEl ? screenEl.getAttribute('data-fz-frid') : ''
+        };
+    }
+
+    // Parse goDetails('entry', 'screen') out of a loe-edit-entry onclick attribute.
+    function parseGoDetails(link) {
+        var result = { entryId: '', sid: '' };
+        if (!link) return result;
+        var onclick = link.getAttribute('onclick') || '';
+        var m = onclick.match(/goDetails\(\s*'([^']*)'\s*(?:,\s*'([^']*)')?/);
+        if (m) {
+            result.entryId = m[1] || '';
+            result.sid = m[2] || '';
+        }
+        return result;
+    }
+
+    function openEntry(entryId, sid) {
+        var ids = listFormIds();
+        window.formulize.drawer.openEntry({
+            fid: ids.fid,
+            frid: ids.frid,
+            entryId: entryId,
+            sid: sid
+        });
+    }
+
     function initRowDrawer() {
         document.querySelectorAll('tr.entry-row').forEach(function (row) {
             var link = row.querySelector('.loe-edit-entry');
-            if (!link || !link.href) return;
+            if (!link) return;
             row.addEventListener('click', function (e) {
                 if (e.target.closest('.fz-cb')) return;
-                window.formulize.drawer.openEntry(link.href);
+                var d = parseGoDetails(link);
+                openEntry(d.entryId, d.sid);
             });
         });
 
-        // Override Formulize's goDetails so the loe-edit-entry onclick also opens the drawer
-        window.goDetails = function (entryId) {
-            var selector = '.loe-edit-entry[onclick*="goDetails(\'' + entryId + '\')"]';
-            var link = document.querySelector(selector);
-            if (link && link.href) { window.formulize.drawer.openEntry(link.href); }
+        // Override Formulize's goDetails so the loe-edit-entry onclick opens the drawer
+        window.goDetails = function (entryId, screen) {
+            openEntry(entryId, screen || '');
         };
 
-        // Override addNew so the Add button opens the drawer instead of submitting the form
+        // Override addNew so the Add button opens a blank entry in the drawer
         window.addNew = function () {
-            var base = document.querySelector('.loe-edit-entry');
-            var url;
-            if (base && base.href) {
-                url = base.href.replace(/([?&])ve=[^&]+/, '$1ve=addnew');
-                if (url === base.href) {
-                    url += (base.href.indexOf('?') >= 0 ? '&' : '?') + 've=addnew';
-                }
+            openEntry('', '');
+        };
+
+        // After a drawer save, reload the list by submitting its controls form.
+        // showLoading() captures the current scroll position and preserves all
+        // active filters, sorting, and paging (they live as hidden fields in the
+        // controls form), so the refreshed list reflects the change in place.
+        window.formulize = window.formulize || {};
+        window.formulize.onEntrySaved = function () {
+            if (typeof showLoading === 'function') {
+                showLoading();
             } else {
-                var params = new URLSearchParams(window.location.search);
-                params.set('ve', 'addnew');
-                url = window.location.pathname + '?' + params.toString();
+                window.location.reload();
             }
-            window.formulize.drawer.openEntry(url);
         };
     }
 
