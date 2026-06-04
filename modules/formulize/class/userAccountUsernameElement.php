@@ -27,9 +27,9 @@
 ###############################################################################
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
-require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountFirstNameElement.php";
 
-class formulizeUserAccountUsernameElement extends formulizeUserAccountElement {
+class formulizeUserAccountUsernameElement extends formulizeUserAccountFirstNameElement {
 
     function __construct() {
 			parent::__construct();
@@ -40,7 +40,7 @@ class formulizeUserAccountUsernameElement extends formulizeUserAccountElement {
 }
 
 #[AllowDynamicProperties]
-class formulizeUserAccountUsernameElementHandler extends formulizeUserAccountElementHandler {
+class formulizeUserAccountUsernameElementHandler extends formulizeUserAccountFirstNameElementHandler {
 
 		function create() {
 			return new formulizeUserAccountUsernameElement();
