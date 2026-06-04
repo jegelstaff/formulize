@@ -222,52 +222,7 @@ class formulizeGroupTableElementHandler extends formulizeElementsHandler {
 		// Only applies to existing groups — new groups show "save first" in the widget.
 		$actualGroupId = $results[$cacheKey];
 		if ($actualGroupId && $entryId !== 'new' && is_numeric($entryId)) {
-			$addKey    = 'group_members_add_'    . $formId . '_' . $entryId;
-			$removeKey = 'group_members_remove_' . $formId . '_' . $entryId;
-			$addUids    = array();
-			$removeUids = array();
-			if (!empty($_POST[$addKey]) && $_POST[$addKey] !== '[]') {
-				$decoded = json_decode($_POST[$addKey], true);
-				if (is_array($decoded)) {
-					$addUids = array_values(array_filter(array_map('intval', $decoded), function($uid) { return $uid > 0; }));
-				}
-			}
-			if (!empty($_POST[$removeKey]) && $_POST[$removeKey] !== '[]') {
-				$decoded = json_decode($_POST[$removeKey], true);
-				if (is_array($decoded)) {
-					$removeUids = array_values(array_filter(array_map('intval', $decoded), function($uid) { return $uid > 0; }));
-				}
-			}
-			$gulTable = $xoopsDB->prefix('groups_users_link');
-			if (!empty($removeUids)) {
-				// Filter out any user whose membership in this group is mandated by an EAU form.
-				$removeUids = array_values(array_filter($removeUids, function($uid) use ($actualGroupId) {
-					return !formulizeUserAccountGroupMembershipElementHandler::isGroupMandatoryForUser($uid, $actualGroupId);
-				}));
-			}
-			if (!empty($removeUids)) {
-				$removeList = implode(',', $removeUids);
-				$xoopsDB->queryF(
-					"DELETE FROM `$gulTable` WHERE groupid = $actualGroupId AND uid IN ($removeList)"
-				);
-			}
-			if (!empty($addUids)) {
-				$existRes = $xoopsDB->query(
-					"SELECT uid FROM `$gulTable` WHERE groupid = $actualGroupId"
-				);
-				$existingUids = array();
-				while ($existRes && $row = $xoopsDB->fetchArray($existRes)) {
-					$existingUids[] = intval($row['uid']);
-				}
-				foreach ($addUids as $uid) {
-					if (!in_array($uid, $existingUids)) {
-						$xoopsDB->queryF(
-							"INSERT INTO `$gulTable` (groupid, uid) VALUES ($actualGroupId, $uid)"
-						);
-						$existingUids[] = $uid;
-					}
-				}
-			}
+			GroupMembershipService::processGroupMembershipWidget($actualGroupId, $formId, $entryId);
 		}
 
 		return $results[$cacheKey];
