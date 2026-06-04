@@ -19,7 +19,7 @@ class formulizeUserAccountMasqueradeElement extends formulizeUserAccountElement 
 
 	function __construct() {
 		parent::__construct();
-		$this->name = "Masquerade";
+		$this->name = "User Account Masquerade";
 		$this->userProperty = ''; // no DB column; uid derived from entry_id
 		$this->adminCanMakeRequired = false;
 		$this->readOnly = true;

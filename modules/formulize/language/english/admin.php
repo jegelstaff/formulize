@@ -238,11 +238,11 @@ define("_AM_SETTINGS_FORM_TYPE_GROUPS_SETTINGS","User Categories for each entry 
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS","This form represents users");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_EXPLAIN","For each entry in this form, a user account will be created in Formulize.");
 	define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER","Should each entry be owned by the user it represents?");
-	define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER_EXPLAIN","For example, if you have a Referral form that contains names, email addresses, phone numbers, etc, you might want the users arising from each entry to be the owners of their data. This would allow you to give those users access to only their own entry in the form, through the settings on the Permissions tab.");
+	define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER_EXPLAIN","For example, if you have a Referral form that contains names, email addresses, phone numbers, etc, you might want the users arising from each entry to be the owners of their data, so they can edit it, etc.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_TITLE","Conditions for Creating User Accounts (optional)");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_SCOPE","Create a user account for:");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_ALL","All entries");
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_CONDITIONAL","Entries matching conditions");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_CONDITIONAL","Only entries matching conditions...");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC","By default, every entry in the form can have a user account associated with it. Optionally, set conditions here to restrict which entries can be associated with user accounts. For example, if you have a Referrals form, and the form has a dropdown list with the options \"Pending,\" \"Approved,\" and \"Rejected,\" you could set a condition here so that only entries with the \"Approved\" status can have user accounts created for them.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE","Group Memberships");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC","User accounts created from entries in this form will always be added to these groups:");
