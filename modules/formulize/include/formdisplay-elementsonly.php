@@ -62,6 +62,12 @@ if(!window.formulizeShowHideOverrideApplied) {
     })(jQuery);
     window.formulizeShowHideOverrideApplied = true;
 }
+// Form-page globals the element validation/save code expects. Normally set by
+// drawJavascript(), which is skipped in elements-only mode. Guarded so a host page
+// that already defines them (a real form page) is not clobbered.
+if(typeof formulizechanged === 'undefined') { window.formulizechanged = 0; }
+if(typeof formulize_javascriptFileIncluded === 'undefined') { window.formulize_javascriptFileIncluded = []; }
+if(typeof formulize_xhr_returned_check_for_unique_value === 'undefined') { window.formulize_xhr_returned_check_for_unique_value = []; }
 var FORMULIZE = {
     XOOPS_URL : '".XOOPS_URL."',
     XOOPS_UID : ".$bootstrapUid.",

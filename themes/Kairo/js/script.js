@@ -119,7 +119,13 @@ function initDrawer() {
     fetch(url, { credentials: 'same-origin' })
       .then(function (r) { return r.text(); })
       .then(function (html) { return injectFragment(bodyEl, html); })
-      .then(function () { renderEntryFooter(); })
+      .then(function () {
+        // Each freshly loaded form starts as unchanged. The endpoint only defines
+        // formulizechanged when it is undefined, so reset it here to clear any value
+        // left over from a previous drawer session.
+        window.formulizechanged = 0;
+        renderEntryFooter();
+      })
       .catch(function () {
         bodyEl.innerHTML = '<div class="fz-drawer__loading">Could not load form.</div>';
       });
@@ -160,11 +166,8 @@ function initDrawer() {
     if (!footEl) return;
     footEl.innerHTML = '';
 
-    var saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.className = 'fz-btn fz-btn--primary';
-    saveBtn.textContent = 'Save';
-    saveBtn.addEventListener('click', saveEntryFromDrawer);
+    var notice = document.createElement('span');
+    notice.className = 'fz-drawer__notice js-drawer-notice';
 
     var cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
@@ -172,8 +175,24 @@ function initDrawer() {
     cancelBtn.textContent = 'Cancel';
     cancelBtn.addEventListener('click', closeDrawer);
 
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'fz-btn fz-btn--primary';
+    saveBtn.textContent = 'Save';
+    saveBtn.addEventListener('click', saveEntryFromDrawer);
+
+    footEl.appendChild(notice);
     footEl.appendChild(cancelBtn);
     footEl.appendChild(saveBtn);
+  }
+
+  // Briefly surface a message in the drawer footer (e.g. "No changes to save").
+  function showDrawerNotice(message) {
+    var el = footEl ? footEl.querySelector('.js-drawer-notice') : null;
+    if (!el) return;
+    el.textContent = message;
+    clearTimeout(showDrawerNotice._timer);
+    showDrawerNotice._timer = setTimeout(function () { el.textContent = ''; }, 3000);
   }
 
   // Submit the drawer's elements-only form the standard Formulize way.
@@ -181,6 +200,16 @@ function initDrawer() {
     if (typeof jQuery === 'undefined') return;
     var form = bodyEl ? bodyEl.querySelector('form') : null;
     if (!form) return;
+
+    // Honour Formulize's change tracking. Formulize only runs field validation
+    // (required, format, uniqueness, etc.) once something has changed, and there is
+    // nothing to save when nothing changed — so mirror that here. This both prevents
+    // pointless no-op saves and ensures we never bypass required-field validation by
+    // saving an untouched form.
+    if (typeof window.formulizechanged !== 'undefined' && !window.formulizechanged) {
+      showDrawerNotice('No changes to save.');
+      return;
+    }
 
     var validateFn = window['xoopsFormValidate_' + form.id];
     if (typeof validateFn === 'function' && !validateFn(form)) return;
