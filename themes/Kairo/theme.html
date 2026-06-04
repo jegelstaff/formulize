@@ -135,6 +135,10 @@ if ($xoopsUser) {
 
 </div>
 
+<script>
+  window.formulize = window.formulize || {};
+  window.formulize.xoopsUrl = '<{$smarty.const.XOOPS_URL}>';
+</script>
 <{php}>
 $jsVersion = formulize_get_file_version('/themes/Kairo/js/script.js');
 echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
