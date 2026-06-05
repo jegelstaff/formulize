@@ -885,6 +885,12 @@ class formulizeHandler {
 			return false; // Can't create groups without a PI value
 		}
 
+		// Truncate PI to 200 chars so that the longest possible group name
+		// (200 PI + " - " + 52 category) never exceeds the 255-char DB column
+		if (mb_strlen($piValue) > 200) {
+			$piValue = mb_substr($piValue, 0, 200);
+		}
+
 		$group_handler = xoops_gethandler('group');
 
 		// Check if groups already exist for this entry
@@ -900,9 +906,29 @@ class formulizeHandler {
 		// For each category, create or update the group, and build a map for permission copying
 		$templateToEntryGroupMap = array();
 		$newGroupIds = array();
+		$piBase = mb_substr($piValue, 0, 198); // base for disambiguation suffixes
 		foreach ($groupCategories as $templateGroupId => $categoryName) {
-			$expectedGroupName = $piValue . " - " . $categoryName;
-			$expectedDescription = $categoryName . ' group for ' . $piValue;
+			// Resolve the PI portion of the name, disambiguating if another entry already
+			// has a group with the same truncated name (extremely unlikely in practice)
+			$resolvedPiValue = $piValue;
+			$expectedGroupName = $resolvedPiValue . " - " . $categoryName;
+			$expectedDescription = $categoryName . ' group for ' . $resolvedPiValue;
+			$collisionCounter = 1;
+			while ($collisionCounter <= 99) {
+				$collisionSql = "SELECT groupid FROM " . $xoopsDB->prefix('groups') .
+								" WHERE name = " . $xoopsDB->quoteString($expectedGroupName) .
+								" AND form_id = " . intval($fid) .
+								" AND entry_id != " . intval($entryId);
+				$collisionResult = $xoopsDB->query($collisionSql);
+				if (!$xoopsDB->fetchArray($collisionResult)) {
+					break; // Name is unique across entries
+				}
+				$suffix = ($collisionCounter <= 9) ? " " . $collisionCounter : (string)$collisionCounter;
+				$resolvedPiValue = $piBase . $suffix;
+				$expectedGroupName = $resolvedPiValue . " - " . $categoryName;
+				$expectedDescription = $categoryName . ' group for ' . $resolvedPiValue;
+				$collisionCounter++;
+			}
 
 			// Check if we already have a group for this entry+category
 			$existingGroupId = null;
@@ -924,7 +950,7 @@ class formulizeHandler {
 
 			// No group found by form_id+entry_id — try to adopt an existing group by name
 			} elseif(!$existingGroupId) {
-				$adoptedGroupId = self::findUnassociatedGroupByName($piValue, $categoryName);
+				$adoptedGroupId = self::findUnassociatedGroupByName($resolvedPiValue, $categoryName);
 				if ($adoptedGroupId) {
 					// Adopt the existing group: update it to be a proper entry group
 					$groupObject = $group_handler->get($adoptedGroupId);

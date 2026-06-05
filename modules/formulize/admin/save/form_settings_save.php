@@ -137,6 +137,11 @@ $newGroupCategoriesCreated = false;
 if (isset($processedValues['forms']['entries_are_groups'])) {
 	// Pass categories if entries_are_groups is being set (even if to 0, so we can clean up groups)
 	$groupCategories = (isset($_POST['group_categories']) && is_array($_POST['group_categories'])) ? $_POST['group_categories'] : array();
+	foreach ($groupCategories as $key => $value) {
+		if (mb_strlen($value) > 52) {
+			$groupCategories[$key] = mb_substr($value, 0, 52);
+		}
+	}
 	// Check if any new categories are being created (keys starting with "new_")
 	foreach ($groupCategories as $key => $value) {
 		if (is_string($key) && strpos($key, 'new_') === 0 && trim($value) !== '') {

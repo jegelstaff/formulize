@@ -556,6 +556,7 @@ function patch40() {
 				$sql['add_form_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `form_id` int(5) unsigned NULL default NULL";
 				$sql['add_entry_id'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD `entry_id` int(10) unsigned NULL default NULL";
 				$sql['add_form_entry_index'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " ADD INDEX `form_entry` (`form_id`, `entry_id`)";
+				$sql['widen_groups_name'] = "ALTER TABLE ".$xoopsDB->prefix("groups"). " CHANGE `name` `name` varchar(255) NOT NULL default ''";
 				$sql['singleentry_to_text'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " CHANGE `singleentry` `singleentry` text NULL";
 				$sql['add_parent_perm_fid'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `parent_perm_fid` int(5) NOT NULL default 0";
 

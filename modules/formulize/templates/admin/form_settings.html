@@ -366,7 +366,7 @@
 								<{if $content.group_categories|is_array}>
 								<{foreach from=$content.group_categories item=category key=groupid}>
 								<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-									<input type="text" name="group_categories[<{$groupid}>]" value="<{$category}>" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />
+									<input type="text" name="group_categories[<{$groupid}>]" value="<{$category}>" maxlength="52" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />
 									<a class="conditionsdelete remove-category-btn" href="" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">X</a>
 								</div>
 								<{/foreach}>
@@ -555,7 +555,7 @@
 			var newKey = 'new_' + newCategoryCounter;
 			newCategoryCounter++;
 			var newCategoryHtml = '<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
-				'<input type="text" name="group_categories[' + newKey + ']" value="" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />' +
+				'<input type="text" name="group_categories[' + newKey + ']" value="" maxlength="52" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />' +
 				'<a class="conditionsdelete remove-category-btn" href="" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">X</a>' +
 				'</div>';
 			$("#group_categories_list").append(newCategoryHtml);

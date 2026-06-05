@@ -228,7 +228,7 @@ CREATE TABLE configoption (
 
 CREATE TABLE groups (
   groupid smallint(5) unsigned NOT NULL auto_increment,
-  name varchar(50) NOT NULL default '',
+  name varchar(255) NOT NULL default '',
   description text NOT NULL,
   group_type varchar(10) NOT NULL default '',
   is_group_template tinyint(1) NOT NULL default 0,

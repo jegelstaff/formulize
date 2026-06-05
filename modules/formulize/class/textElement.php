@@ -165,6 +165,25 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		return new formulizeTextElement();
 	}
 
+	function insert(&$element, $force = false) {
+		$eleId = intval($element->getVar('ele_id'));
+		$fid = intval($element->getVar('id_form') ?: $element->getVar('fid'));
+		if ($eleId && $fid) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if ($formObject = $form_handler->get($fid)) {
+				$piElementId = intval($formObject->getVar('pi'));
+				if ($piElementId && $piElementId === $eleId && $formObject->getVar('entries_are_groups')) {
+					$ele_value = $element->getVar('ele_value');
+					if (is_array($ele_value) && empty($ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED])) {
+						$ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED] = 1;
+						$element->setVar('ele_value', $ele_value);
+					}
+				}
+			}
+		}
+		return parent::insert($element, $force);
+	}
+
 	/**
 	 * Validate properties for this element type, based on the structure used publically (MCP, Public API, etc).
 	 * The description in the mcpElementPropertiesDescriptionAndExamples static method on the element class, follows this convention
