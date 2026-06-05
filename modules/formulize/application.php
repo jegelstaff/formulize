@@ -101,11 +101,9 @@ require(XOOPS_ROOT_PATH."/footer.php");
 // $forms must be an array of form ids
 function getNavDataForForms($links) {
     $formsToSend = array();
-    $i=0;
+    $i = 0;
     foreach($links as $link) {
-        $url = buildMenuLinkURL($link);
-        $suburl = $url ? $url : XOOPS_URL."/modules/formulize/index.php?".$link->getVar("screen");
-        $formsToSend[$i]['url'] = $suburl;
+        $formsToSend[$i]['url'] = resolveMenuLinkURL($link);
         $formsToSend[$i]['title'] = $link->getVar("text");
         $i++;
     }

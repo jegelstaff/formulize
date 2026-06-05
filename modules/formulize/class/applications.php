@@ -766,5 +766,40 @@ function buildMenuLinkURL($menulink) {
     return $url;
 }
 
+function resolveMenuLinkURL($menulink) {
+    if($url = buildMenuLinkURL($menulink)) {
+        return $url;
+    }
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    global $xoopsUser;
+    $screen_value = $menulink->getVar("screen");
+    $sid = strstr($screen_value, 'sid=') ? intval(str_replace('sid=', '', $screen_value)) : 0;
+    $fid = strstr($screen_value, 'fid=') ? intval(str_replace('fid=', '', $screen_value)) : 0;
+    $menuLinkScreenId = $sid;
+    if(!$menuLinkScreenId && $fid) {
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $gperm_handler = xoops_gethandler('groupperm');
+        $mid = getFormulizeModId();
+        $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0 => XOOPS_GROUP_ANONYMOUS);
+        $menulinkFormObject = $form_handler->get($fid);
+        $singleEntry = $menulinkFormObject->getVar('single');
+        $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
+        $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
+        if((!$singleEntry AND $xoopsUser) OR $view_globalscope OR ($view_groupscope AND $singleEntry != "group")) {
+            $menuLinkScreenId = $menulinkFormObject->getVar('defaultlist');
+        } else {
+            $menuLinkScreenId = $menulinkFormObject->getVar('defaultform');
+        }
+    }
+    if($menuLinkScreenId) {
+        $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+        $menuLinkScreen = $screen_handler->get($menuLinkScreenId);
+        if($menuLinkScreen && ($rewriteruleAddress = $menuLinkScreen->getVar('rewriteruleAddress'))) {
+            return XOOPS_URL . "/" . $rewriteruleAddress;
+        }
+    }
+    return XOOPS_URL . "/modules/formulize/index.php?" . $screen_value;
+}
+
 
 
