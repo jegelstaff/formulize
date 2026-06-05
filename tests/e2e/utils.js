@@ -498,3 +498,169 @@ export async function addElementForm(page, type) {
 	await page.getByTestId(type).click();
 	await expect(page.getByRole('heading')).toContainText(heading);
 }
+
+// =============================================================================
+// EAU / EAG helpers (Phase 1 — see plan: the-current-branch-adds-luminous-catmull.md)
+// =============================================================================
+
+/**
+ * On a form-settings page, switch the form type to "Entries are Users" and
+ * wait for the user-account configuration container to slide into view.
+ * The userAccount system elements get auto-injected on the next save.
+ *
+ * @param {object} page Playwright page
+ */
+export async function enableEntriesAreUsers(page) {
+	await page.locator('#form_type-users').check();
+	await expect(page.locator('#entries_are_users_container')).toBeVisible();
+}
+
+/**
+ * On a form-settings page, switch the form type to "Entries are Groups" and
+ * wait for the categories configuration container to slide into view.
+ *
+ * @param {object} page Playwright page
+ */
+export async function enableEntriesAreGroups(page) {
+	await page.locator('#form_type-groups').check();
+	await expect(page.locator('#entries_are_groups_container')).toBeVisible();
+	await expect(page.locator('#group_categories_container')).toBeVisible();
+}
+
+/**
+ * Add a category to an Entries-Are-Groups form's settings. The implicit
+ * "All Users" base category is always present and not editable.
+ *
+ * @param {object} page Playwright page
+ * @param {string} categoryName The visible name of the new category
+ */
+export async function addEAGCategory(page, categoryName) {
+	const beforeCount = await page.locator('#group_categories_list .group-category-item').count();
+	await page.locator('#add_group_category_btn').click();
+	// wait for the new input row to appear and gain focus
+	await expect(page.locator('#group_categories_list .group-category-item')).toHaveCount(beforeCount + 1);
+	const newInput = page.locator('#group_categories_list input[name^="group_categories[new_"]').last();
+	await newInput.fill(categoryName);
+}
+
+/**
+ * Use the EAU default-groups autocomplete to add a group as a default
+ * membership. Returns the data-groupid attribute of the resulting
+ * `.default-group-item`, which subsequent helpers reference.
+ *
+ * @param {object} page Playwright page
+ * @param {string} groupName The exact group name to add
+ * @returns {Promise<string>} The group's data-groupid
+ */
+export async function addDefaultGroupToEAUForm(page, groupName) {
+	const input = page.locator('#entries_are_users_default_groups_user');
+	await input.click();
+	await input.fill('');
+	await input.pressSequentially(groupName);
+	// jQuery UI autocomplete renders results into a ul.ui-autocomplete that's
+	// appended to body; match the exact text in a list item.
+	await page.locator('ul.ui-autocomplete:visible li').filter({ hasText: new RegExp(`^${groupName}$`) }).first().click();
+	const item = page.locator('.default-group-item').filter({ hasText: groupName });
+	await expect(item).toBeVisible();
+	return await item.first().getAttribute('data-groupid');
+}
+
+/**
+ * Inside the template-group cluster on the EAU form-settings page, check the
+ * element-link checkbox for the named element. The element is identified by
+ * its visible caption text inside the cluster's checkboxes table.
+ *
+ * @param {object} page Playwright page
+ * @param {string|number} eagFormId The id of the EAG form this cluster belongs to
+ * @param {string} elementCaption The visible caption of the element to link
+ */
+export async function linkTemplateGroupToElement(page, eagFormId, elementCaption) {
+	const cluster = page.locator(`.template-group-cluster[data-eagformid="${eagFormId}"]`);
+	const label = cluster.locator('label').filter({ hasText: elementCaption });
+	await label.locator('input.template-group-element-checkbox').check();
+}
+
+/**
+ * Show the per-group conditions panel for the given default-group entry.
+ * The panel is hidden by default and slides open on click.
+ *
+ * @param {object} page Playwright page
+ * @param {string|number} groupId The data-groupid of the default-group-item
+ */
+export async function showConditionsPanel(page, groupId) {
+	await page.locator(`.toggle-group-conditions-btn[data-groupid="${groupId}"]`).click();
+	await expect(page.locator(`.per-group-conditions-panel[data-groupid="${groupId}"]`)).toBeVisible();
+}
+
+/**
+ * Add a single equality condition to the per-group conditions panel for the
+ * given group. Filling the "all of these" row and clicking the panel's
+ * `addcon` button triggers a form-save+reload that persists the condition.
+ * Caller is responsible for opening the panel first via showConditionsPanel.
+ *
+ * @param {object} page Playwright page
+ * @param {string|number} groupId The data-groupid of the panel
+ * @param {string} elementCaption The element caption shown in the select
+ * @param {string} op The operator label, e.g. '=' or '!='
+ * @param {string} value The value to match
+ */
+export async function addConditionToPerGroupPanel(page, groupId, elementCaption, op, value) {
+	const panel = page.locator(`.per-group-conditions-panel[data-groupid="${groupId}"]`);
+	// The element select renders options labelled "FormName: ElementCaption".
+	// Use a regex on the caption, with regex metacharacters escaped so that
+	// captions like "Is curator?" don't accidentally match a shorter prefix.
+	const escapedCaption = elementCaption.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	await panel.locator(`select[name="new_eaugroup_${groupId}_element"]`).selectOption({ label: new RegExp(escapedCaption) });
+	await panel.locator(`select[name="new_eaugroup_${groupId}_op"]`).selectOption(op);
+	await panel.locator(`input[name="new_eaugroup_${groupId}_term"]`).fill(value);
+	// Clicking addcon inside the panel triggers a form save and reload.
+	// Wait for the admin-ui opacity dance the same way saveAdminForm does.
+	await Promise.all([
+		page.waitForFunction(() => {
+			const el = document.querySelector('div.admin-ui');
+			return el && parseFloat(window.getComputedStyle(el).opacity) < 1.0;
+		}, null, { timeout: 120000 }),
+		panel.locator('input[name="addcon"]').click()
+	]);
+	await page.waitForFunction(() => {
+		const el = document.querySelector('div.admin-ui');
+		return el && parseFloat(window.getComputedStyle(el).opacity) >= 1.0;
+	}, null, { timeout: 120000 });
+}
+
+/**
+ * On users.php or groups.php, read the form id (fid) from the hidden
+ * `oldcols` input that carries the current column list. Column handles
+ * follow the pattern `..._{fid}` so we extract the trailing integer from
+ * the first column.
+ *
+ * @param {object} page Playwright page
+ * @returns {Promise<number>}
+ */
+export async function getFidFromListPage(page) {
+	const oldcols = await page.locator('input[name="oldcols"]').inputValue();
+	const firstCol = oldcols.split(',')[0];
+	const match = firstCol.match(/_(\d+)$/);
+	if (!match) {
+		throw new Error(`Could not parse fid from oldcols value: ${oldcols}`);
+	}
+	return parseInt(match[1], 10);
+}
+
+/**
+ * After saving a brand-new form, the form-settings page renders with the
+ * new fid in the URL (or in a hidden field). Returns it as an integer.
+ *
+ * @param {object} page Playwright page
+ * @returns {Promise<number>}
+ */
+export async function getFidFromFormAdminPage(page) {
+	// Try URL first.
+	const url = page.url();
+	const urlMatch = url.match(/[?&]fid=(\d+)/);
+	if (urlMatch) return parseInt(urlMatch[1], 10);
+	// Fallback: read the hidden formulize_admin_key on the form settings panel
+	const key = await page.locator('input[name="formulize_admin_key"]').first().inputValue();
+	if (/^\d+$/.test(key)) return parseInt(key, 10);
+	throw new Error('Could not determine fid for the current admin page');
+}
