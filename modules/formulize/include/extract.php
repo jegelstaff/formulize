@@ -1077,24 +1077,37 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$usersRealColsSet[$colName] = true;
 			}
 			$usersRealColsIn = empty($usersRealCols) ? "''" : implode(',', $usersRealCols);
-			// Fetch ele_value so we can extract source_column for canonical-handle elements.
+			// Fetch ele_value and ele_type so we can extract source_column for canonical-handle elements.
 			// Canonical handles (e.g. formulize_user_account_email_5) store the real DB column
 			// name (e.g. "email") in ele_value['source_column']. Alias the column in the SELECT
 			// so the result is keyed by the canonical handle, not the raw column name.
 			$eleColResult = $xoopsDB->query(
-				"SELECT ele_handle, ele_value FROM " . DBPRE . "formulize" .
+				"SELECT ele_handle, ele_value, ele_type FROM " . DBPRE . "formulize" .
 				" WHERE id_form = " . intval($fid) . " ORDER BY ele_order"
 			);
 			$plainCols = array();
 			while ($eleColRow = $xoopsDB->fetchArray($eleColResult)) {
 				$eleVal = @unserialize($eleColRow['ele_value']);
-				// Skip virtual elements — their values are injected post-query (e.g. lastname, eau_type).
+				// Skip virtual elements — their values are injected post-query (e.g. eau_type).
 				if (is_array($eleVal) && !empty($eleVal['virtual'])) {
 					continue;
 				}
 				$sourceCol = (is_array($eleVal) && isset($eleVal['source_column']))
 					? $eleVal['source_column']
 					: $eleColRow['ele_handle'];
+				// Fallback: if source_column isn't persisted in ele_value, look it up via the type
+				// registry. This handles elements created before source_column was stored (e.g.
+				// fullname, lastname) whose type maps to a known users table column.
+				if (!isset($usersRealColsSet[$sourceCol]) && !empty($eleColRow['ele_type'])) {
+					include_once XOOPS_ROOT_PATH . '/modules/formulize/class/userAccountElement.php';
+					$uaRegistry = formulizeUserAccountElementHandler::getTypeRegistry();
+					foreach ($uaRegistry as $regEntry) {
+						if ($regEntry['eleType'] === $eleColRow['ele_type'] && !empty($regEntry['column'])) {
+							$sourceCol = $regEntry['column'];
+							break;
+						}
+					}
+				}
 				// Skip injected fields (phone, timezone, etc.) — not real users table columns.
 				if (!isset($usersRealColsSet[$sourceCol])) {
 					continue;
@@ -1734,6 +1747,7 @@ function processGetDataResults($resultData)
 					);
 					if($eauProperty === 'uname') {
 						$unameParts = explode(' ', $value ?? '', 2);
+						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_fullname_'  . $eauCurFormId] = $value ?? '';
 						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_firstname_' . $eauCurFormId] = $unameParts[0] ?? '';
 						$masterResults[$masterIndexer][getFormHandle($eauCurFormId)][$entryIdIndex[$eauFormAlias]]['formulize_user_account_lastname_'  . $eauCurFormId] = isset($unameParts[1]) ? $unameParts[1] : '';
 					} elseif(isset($eauPropertyToType[$eauProperty])) {

@@ -850,7 +850,7 @@ define("_formulize_GMM_MEMBER", "member");
 define("_formulize_GMM_MEMBERS", "members");
 define("_formulize_GMM_SHOWING_FIRST", "showing first");
 define("_formulize_GMM_MATCHING", "matching");
-define("_formulize_GMM_TAB_MEMBERS", "Members");
+define("_formulize_GMM_TAB_MEMBERS", "Current Members");
 define("_formulize_GMM_TAB_ADD_MEMBERS", "Add Members");
 define("_formulize_GMM_SEARCH_PLACEHOLDER", "Search members…");
 define("_formulize_GMM_FIND_USER_PLACEHOLDER", "Find user by name or username…");

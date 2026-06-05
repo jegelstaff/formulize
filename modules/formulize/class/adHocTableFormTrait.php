@@ -471,8 +471,14 @@ trait formulizeAdHocTableFormTrait {
 				$existingEleVal = is_array($existingByHandle[$desiredHandle]['ele_value']) ? $existingByHandle[$desiredHandle]['ele_value'] : array();
 				$needsEleValUpdate = false;
 				$updatedEleVal = $existingEleVal;
-				if (!empty($extra['virtual']) && empty($existingEleVal['virtual'])) {
+				// Sync virtual flag bidirectionally: add it when needed, remove it when no longer needed.
+				$desiredVirtual = !empty($extra['virtual']);
+				$currentVirtual = !empty($existingEleVal['virtual']);
+				if ($desiredVirtual && !$currentVirtual) {
 					$updatedEleVal['virtual'] = true;
+					$needsEleValUpdate = true;
+				} elseif (!$desiredVirtual && $currentVirtual) {
+					unset($updatedEleVal['virtual']);
 					$needsEleValUpdate = true;
 				}
 				if (!empty($extra['source_column']) && (($existingEleVal['source_column'] ?? null) !== $extra['source_column'])) {

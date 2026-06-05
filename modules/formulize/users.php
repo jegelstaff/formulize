@@ -127,7 +127,6 @@ $pseudoScreen->setVar('useaddupdate', _AM_FORMULIZE_ADD_USER);
 // Include the Type column only when EAU forms exist (i.e. both regular and EAU users are present).
 $fidInt = intval($fid);
 $advanceViewArray = array(
-	array('formulize_user_account_uid_'        . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_fullname_'   . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_username_'   . $fidInt, '', 0, 'Box'),
 	array('formulize_user_account_email_'      . $fidInt, '', 0, 'Box'),

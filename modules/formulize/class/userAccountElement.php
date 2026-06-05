@@ -30,7 +30,15 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you n
 
 class formulizeUserAccountElement extends formulizeElement {
 
-		var $userProperty = null; // the user property that this element represents, ie: 'uid', 'email', 'name', etc. Overridden in child classes.
+	// Maps this element to its backing store in the XOOPS user account system.
+	// Drives loadValue(), processUserAccountSubmission(), and getTypeRegistry().
+	//
+	// Values:
+	//   null or ''       → no database column (e.g. group membership, masquerade)
+	//   'profile:{col}'  → column {col} in the profile_profile table (e.g. 'profile:2faphone')
+	//   'pass'           → write-only password field; never read back or used in SQL queries
+	//   anything else    → column name in the users table (e.g. 'uname', 'email', 'level')
+	var $userProperty = null;
 
     function __construct() {
         $this->name = "User Account Settings Base Element";
@@ -232,25 +240,66 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
+	// Build the type registry dynamically by reflecting over every userAccount*Element.php
+	// class file. Each element's $userProperty drives the column/profileColumn mapping — so
+	// adding a new userAccount element type automatically appears here with no manual update.
+	//
+	// Registry structure: key = strtolower type suffix (e.g. 'email', '2fa', 'fullname')
+	//   'eleType'       → the element type string (e.g. 'userAccountEmail')
+	//   'column'        → users table column, or null
+	//   'profileColumn' → profile_profile table column, or null
 	static function getTypeRegistry() {
-		return array(
-			'uid'                => array('eleType' => 'userAccountUid',                'column' => 'uid',          'profileColumn' => null),
-			'fullname'           => array('eleType' => 'userAccountFullName',           'column' => 'uname',        'profileColumn' => null),
-			'firstname'          => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
-			'lastname'           => array('eleType' => 'userAccountFirstName',          'column' => 'uname',        'profileColumn' => null),
-			'username'           => array('eleType' => 'userAccountUsername',           'column' => 'login_name',   'profileColumn' => null),
-			'email'              => array('eleType' => 'userAccountEmail',              'column' => 'email',        'profileColumn' => null),
-			'status'             => array('eleType' => 'userAccountStatus',             'column' => 'level',        'profileColumn' => null),
-			'notificationmethod' => array('eleType' => 'userAccountNotificationMethod', 'column' => 'notify_method','profileColumn' => null),
-			'lastlogin'          => array('eleType' => 'userAccountLastLogin',          'column' => 'last_login',   'profileColumn' => null),
-			'registrationdate'   => array('eleType' => 'userAccountRegistrationDate',   'column' => 'user_regdate', 'profileColumn' => null),
-			'phone'              => array('eleType' => 'userAccountPhone',              'column' => null,           'profileColumn' => '2faphone'),
-			'timezone'           => array('eleType' => 'userAccountTimezone',           'column' => null,           'profileColumn' => 'timezone'),
-			'2fa'                => array('eleType' => 'userAccount2FA',                'column' => null,           'profileColumn' => '2famethod'),
-			'groupmembership'    => array('eleType' => 'userAccountGroupMembership',    'column' => null,           'profileColumn' => null),
-			'masquerade'         => array('eleType' => 'userAccountMasquerade',         'column' => null,           'profileColumn' => null),
-			'password'           => array('eleType' => 'userAccountPassword',           'column' => null,           'profileColumn' => null),
-		);
+		static $registry = null;
+		if ($registry !== null) {
+			return $registry;
+		}
+
+		$registry   = array();
+		$classFiles = glob(XOOPS_ROOT_PATH . '/modules/formulize/class/userAccount*Element.php');
+
+		foreach ($classFiles as $classFile) {
+			$basename   = basename($classFile, '.php');           // e.g. 'userAccountEmailElement'
+			$typeWithUA = str_replace('Element', '', $basename); // e.g. 'userAccountEmail'
+			$typeSuffix = str_replace('userAccount', '', $typeWithUA); // e.g. 'Email'
+
+			// Skip the base class file (userAccountElement.php → empty suffix)
+			if ($typeSuffix === '') {
+				continue;
+			}
+
+			require_once $classFile;
+
+			// Class names are PascalCase-prefixed: formulizeUserAccountEmailElement
+			$elementClass = 'formulize' . ucfirst($typeWithUA) . 'Element';
+			if (!class_exists($elementClass)) {
+				continue;
+			}
+
+			$element     = new $elementClass();
+			$userProp    = $element->userProperty;
+			$registryKey = strtolower($typeSuffix); // e.g. 'email', '2fa', 'groupmembership'
+			$eleType     = $typeWithUA;              // e.g. 'userAccountEmail', 'userAccount2FA'
+
+			// Derive column/profileColumn from $userProperty (see comment on that property above)
+			if (!empty($userProp) && strpos($userProp, 'profile:') === 0) {
+				$column        = null;
+				$profileColumn = substr($userProp, 8);
+			} elseif (!empty($userProp) && $userProp !== 'pass') {
+				$column        = $userProp;
+				$profileColumn = null;
+			} else {
+				$column        = null;
+				$profileColumn = null;
+			}
+
+			$registry[$registryKey] = array(
+				'eleType'       => $eleType,
+				'column'        => $column,
+				'profileColumn' => $profileColumn,
+			);
+		}
+
+		return $registry;
 	}
 
 	// utility function to render radio buttons for this user account element types
@@ -723,12 +772,12 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		}
 		
 		// Validate operator against whitelist
-		$validOperators = array('=', '!=', '<', '>', '<=', '>=');
+		$validOperators = array('=', '!=', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE');
 		if(!in_array($operator, $validOperators, true)) {
 			trigger_error("Invalid operator: $operator", E_USER_WARNING);
 			return "1=0";
 		}
-		
+
 		$dbTerm = self::prepareDateTimestampForDB($term, $partialMatch);
 		$safeTerm = formulize_db_escape($dbTerm);
 		if($partialMatch) {
