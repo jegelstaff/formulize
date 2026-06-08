@@ -37,6 +37,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   manual-e2e-test-run:
