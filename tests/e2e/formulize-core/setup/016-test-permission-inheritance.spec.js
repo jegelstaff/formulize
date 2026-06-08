@@ -45,14 +45,22 @@ test.describe('Permission inheritance', () => {
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		const egsInput = page.locator('input[id^="egs-ac-input-"]').first();
 		await expect(egsInput).toBeVisible({ timeout: 30000 });
-		// Type a clean term with real keystrokes so jQuery-UI autocomplete fires, then
-		// click the suggestion (rendered as a plain <li>, no <a> in this jQuery-UI build).
+		// Type a term that matches only "Ancient History - All Users" (not "Modern…") so the
+		// dropdown has a single item, then select via KEYBOARD (ArrowDown+Enter). Keyboard
+		// selection reliably fires jQuery-UI's select AND closes the menu; a mouse click on the
+		// item can leave the menu open on fast CI, where its <a> overlaps and intercepts the
+		// "Show these groups" button click (observed failing on GitHub).
 		await egsInput.click();
-		await egsInput.pressSequentially('All Users', { delay: 60 });
-		const suggestion = page.locator('ul.ui-autocomplete:visible li', { hasText: 'Ancient History - All Users' }).first();
-		await expect(suggestion).toBeVisible({ timeout: 30000 });
-		await suggestion.click();
-		await page.getByRole('button', { name: 'Show these groups' }).click();
+		await egsInput.pressSequentially('Ancient', { delay: 60 });
+		await expect(page.locator('ul.ui-autocomplete:visible li', { hasText: 'Ancient History - All Users' })).toBeVisible({ timeout: 30000 });
+		await egsInput.press('ArrowDown');
+		await egsInput.press('Enter');
+		// Confirm the selection registered (egsAdd appended a pending row) AND the autocomplete
+		// menu is gone before clicking reload — blocking on the menu being closed is what makes
+		// this immune to the CI timing race (the menu can no longer intercept the click).
+		await expect(page.locator('.egs-selected-row', { hasText: 'Ancient History - All Users' })).toBeVisible({ timeout: 30000 });
+		await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
+		await page.getByRole('button', { name: 'Show these groups' }).click({ force: true });
 		await waitForAdminPageReady(page);
 
 		// The entry-group panel renders the cascaded permissions as inherited: disabled +
