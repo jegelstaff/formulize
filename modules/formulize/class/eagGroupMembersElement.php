@@ -446,7 +446,9 @@ function gmmSyncHiddens(fid,gid){
 		global $xoopsDB;
 		$usersTable     = $xoopsDB->prefix('users');
 		$gulTable       = $xoopsDB->prefix('groups_users_link');
-		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		// For IN / NOT IN, $term is already a fully escaped, parenthesized list from prepareValueForInOperator; escaping it again would corrupt the structural quotes. Escape only scalar terms.
+		$escapedTerm = (trim($operator) === 'IN' || trim($operator) === 'NOT IN') ? $term : formulize_db_escape($term);
+		$safeTermClause = ' ' . trim($operator) . ' ' . $quotes . $likebits . $escapedTerm . $likebits . $quotes;
 		return "EXISTS (SELECT 1 FROM `$gulTable` AS gm"
 			. " JOIN `$usersTable` AS gm_u ON gm_u.uid = gm.uid"
 			. " WHERE gm.groupid = `{$tableAlias}`.groupid"

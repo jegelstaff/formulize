@@ -98,7 +98,9 @@ class formulizeUserEauTypeElementHandler extends formulizeVirtualElementHandler 
 
 		// Find EAU forms whose displayed singular name matches the search term.
 		// Mirrors getSingular(): use the singular field when set, fall back to form_title.
-		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		// For IN / NOT IN, $term is already a fully escaped, parenthesized list from prepareValueForInOperator; escaping it again would corrupt the structural quotes. Escape only scalar terms.
+		$escapedTerm = (trim($operator) === 'IN' || trim($operator) === 'NOT IN') ? $term : formulize_db_escape($term);
+		$safeTermClause = ' ' . trim($operator) . ' ' . $quotes . $likebits . $escapedTerm . $likebits . $quotes;
 		$res = $xoopsDB->query(
 			"SELECT id_form, form_handle FROM `$formsTable`"
 			. " WHERE entries_are_users = 1"

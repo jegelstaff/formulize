@@ -49,7 +49,9 @@ class formulizeEagGroupEntriesElementHandler extends formulizeVirtualElementHand
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		global $xoopsDB;
 		$groupsTable    = $xoopsDB->prefix('groups');
-		$safeTermClause = $operator . $quotes . $likebits . formulize_db_escape($term) . $likebits . $quotes;
+		// For IN / NOT IN, $term is already a fully escaped, parenthesized list from prepareValueForInOperator; escaping it again would corrupt the structural quotes. Escape only scalar terms.
+		$escapedTerm = (trim($operator) === 'IN' || trim($operator) === 'NOT IN') ? $term : formulize_db_escape($term);
+		$safeTermClause = ' ' . trim($operator) . ' ' . $quotes . $likebits . $escapedTerm . $likebits . $quotes;
 		return "EXISTS (SELECT 1 FROM `$groupsTable` AS g_ent"
 			. " WHERE g_ent.form_id = `{$tableAlias}`.form_id"
 			. " AND g_ent.is_group_template = 0"

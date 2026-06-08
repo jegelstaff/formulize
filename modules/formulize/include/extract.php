@@ -1911,13 +1911,39 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 		return false;
 	}
 	require_once $classFile;
+
+	$normalizedOperator = formulizeDataHandler::normalizeSearchOperator($operator);
+	if ($normalizedOperator === false || $normalizedOperator === 'IS NULL' || $normalizedOperator === 'IS NOT NULL') {
+		return false;
+	}
+	if (!formulizeDataHandler::validateSqlIdentifier($tableAlias)) {
+		$tableAlias = 'main';
+	}
+
 	$typeHandler = xoops_getmodulehandler($eleType . 'Element', 'formulize');
 	if ($typeHandler && method_exists($typeHandler, 'buildSearchWhereClause')) {
-		if (method_exists($typeHandler, 'prepareLiteralTextForDB')) {
-			$isPartial = ($likebits !== '');
-			$term = $typeHandler->prepareLiteralTextForDB($term, null, $isPartial);
+		$isPartial = ($normalizedOperator === 'LIKE' || $normalizedOperator === 'NOT LIKE');
+		$term = $typeHandler->prepareLiteralTextForDB($term, null, $isPartial);
+
+		if ($normalizedOperator === 'IN' || $normalizedOperator === 'NOT IN') {
+			$term = formulizeDataHandler::prepareValueForInOperator($term);
+			if ($term === false) {
+				return false;
+			}
+			$trimmedTerm = trim($term);
+			if (substr($trimmedTerm, 0, 1) !== '(' || substr($trimmedTerm, -1) !== ')') {
+				$term = '(' . $trimmedTerm . ')';
+			}
+			$quotes = '';
+			$likebits = '';
+		} elseif ($normalizedOperator === 'LIKE' || $normalizedOperator === 'NOT LIKE') {
+			$likebits = $likebits === '%' ? '%' : '';
+			$quotes = "'";
+		} else {
+			$likebits = '';
+			$quotes = $quotes === '' ? '' : "'";
 		}
-		return $typeHandler->buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias);
+		return $typeHandler->buildSearchWhereClause($term, $normalizedOperator, $quotes, $likebits, $fid, $tableAlias);
 	}
 	return false;
 }
@@ -2019,32 +2045,47 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			$ifParts[1] = str_replace("\\", "", $ifParts[1]);
 
 
+			$operator = formulizeDataHandler::normalizeSearchOperator($ifParts[2], true);
+			if ($operator === false) {
+				continue;
+			}
+
 			// set order by clause for newest operator -- assume only one newest operator per query!
 			// does this need to be based on entry_id and not use $queryElement (which is based on ifParts[0]) ??
-			if (strstr($ifParts[2], "newest")) {
+			if (strpos($operator, 'newest') === 0) {
 				if ($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") {
 					$queryElement = $ifParts[0];
 				} else {
 					list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
 				}
-				$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($ifParts[2], 6);
+				$orderByClause = " ORDER BY $queryElement DESC LIMIT 0," . substr($operator, 6);
 				continue;
 			}
 
 			$newWhereClause = ""; // tracks just the current iteration of this loop, so we can capture this filter and add it to the record of filters for this form lower down
 
-			$operator = isset($ifParts[2]) ? $ifParts[2] : "LIKE";
-			if (trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") {
+			if ($operator == "LIKE" or $operator == "NOT LIKE") {
 				if (strlen($ifParts[1]) > 1 and (substr($ifParts[1], 0, 1) == "%" or substr($ifParts[1], -1) == "%")) { // if the query term includes % at the front or back (or both), then we let that work as the "likebits" and don't put in any ourselves
 					$likebits = "";
 				} else {
 					$likebits = "%";
 				}
 				$operator = " " . $operator . " ";
+			} elseif ($operator == "IN" or $operator == "NOT IN") {
+				$ifParts[1] = formulizeDataHandler::prepareValueForInOperator($ifParts[1]);
+				if ($ifParts[1] === false) {
+					continue;
+				}
+				$trimmedInList = trim($ifParts[1]);
+				if (substr($trimmedInList, 0, 1) !== '(' || substr($trimmedInList, -1) !== ')') {
+					$ifParts[1] = '(' . $trimmedInList . ')';
+				}
+				$likebits = "";
+				$operator = " " . $operator . " ";
 			} else {
 				$likebits = "";
 			}
-			$quotes = ((is_numeric($ifParts[1]) and !strstr(trim(strtoupper($operator)), "LIKE")) or strstr(strtoupper($operator), "NULL"))  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query.  Don't use quotes on the special IS NULL query either
+			$quotes = ((is_numeric($ifParts[1]) and !strstr(trim(strtoupper($operator)), "LIKE")) or strstr(strtoupper($operator), "NULL") or trim($operator) == 'IN' or trim($operator) == 'NOT IN')  ? "" : "'"; // don't put quotes around numeric queries, unless they're part of a LIKE query.  Don't use quotes on the special IS NULL query either
 
 			$formFieldFilterMap['creator_email'] = false; // can be set to true lower down, need to initalize it properly here
 
@@ -2060,7 +2101,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				if (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and !is_numeric($ifParts[1])) {
 					// subquery the user table for the username or full name
 					$subQueryAndOr = "OR";
-					if($operator == '!=' OR $operator == 'NOT LIKE') {
+					if(trim($operator) == '!=' OR trim($operator) == 'NOT LIKE') {
 						$subQueryAndOr = "AND";
 					}
 					$ifParts[1] = "(SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " $subQueryAndOr name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . ")";
@@ -2179,7 +2220,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// check if user is searching for blank values, and if so, then query this element directly, rather than looking in the source
 					// ALSO do this if the user is searching for a numeric value with an = operator
 					// Note that $ifParts[0] gets surrounded by `` when going through prepareElementMetaData (?!)
-					if (($ifParts[1] === '' or $operator == ' IS NULL ' or $operator == ' IS NOT NULL ' or (is_numeric($ifParts[1]) and $operator == '=')) and !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
+					if (($ifParts[1] === '' OR trim($operator) == 'IS NULL' OR trim($operator) == 'IS NOT NULL' OR (is_numeric($ifParts[1]) AND trim($operator) == '=')) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 						$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
 					} else {
 						if (isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
@@ -2300,6 +2341,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				} elseif ($delegatedWhereClause = formulize_tryDelegatedSearchWhere($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], $ifParts[1], $operator, $quotes, $likebits, $fid)) {
 					$newWhereClause = $delegatedWhereClause;
 
+					// HANDLE IN / NOT IN ON A PLAIN ELEMENT
+				} elseif (trim($operator) === 'IN' || trim($operator) === 'NOT IN') {
+					// $ifParts[1] is already a safe, parenthesized list from prepareValueForInOperator.
+					// Use it directly rather than the scalar search-term pipeline below, which would mangle the
+					// list via prepareLiteralTextForDB and/or re-escape it (corrupting quoted string values).
+					$newWhereClause = "$queryElement " . $operator . $ifParts[1];
+
 					// HANDLE ALL OTHER ELEMENT TYPES (not other box, not linked, not username/fullname list, not delegated)
 				} else {
 					// check if there's any conversion necessary from what the user typed into a special value that will work in the database
@@ -2341,9 +2389,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($searchTerm) . $likebits . $quotes;
 							}
 							// exclude 0 from searches for empty values (because we use lazy mode in MySQL we have to do this manually Argh!!)
-							if ($searchTerm === '' and ($operator == "=" or $operator == "!=")) {
-								$extraBoolean = $operator == "=" ? 'AND' : 'OR';
-								$regexYN = $operator == "=" ? "NOT" : "";
+							if ($searchTerm === '' AND (trim($operator) == "=" OR trim($operator) == "!=")) {
+								$extraBoolean = trim($operator) == "=" ? 'AND' : 'OR';
+								$regexYN = trim($operator) == "=" ? "NOT" : "";
 								$newWhereClause = "( $newWhereClause $extraBoolean $queryElement $regexYN REGEXP '^[0\.]+$' )"; // must use REGEXP because = 0 matches blank not null cells in not strict mode! Ack!
 							}
 						}
@@ -3048,7 +3096,10 @@ function parseTableFormFilter($filter, $andor, $elementsById, $fid = 0, $tableNa
 		}
 		$filterParts = explode("/**/", $thisFilter);
 		$handle      = $filterParts[0];
-		$operator    = isset($filterParts[2]) ? $filterParts[2] : "LIKE";
+		$operator    = formulizeDataHandler::normalizeSearchOperator(isset($filterParts[2]) ? $filterParts[2] : "LIKE");
+		if ($operator === false) {
+			continue;
+		}
 		$elementInfo = $elementsById[$handle] ?? null;
 		$field       = $elementInfo['field'] ?? null;
 
@@ -3058,7 +3109,7 @@ function parseTableFormFilter($filter, $andor, $elementsById, $fid = 0, $tableNa
 			// IS NULL / IS NOT NULL have no meaningful interpretation for virtual columns.
 			if ($operator !== 'IS NULL' && $operator !== 'IS NOT NULL') {
 				$likeparts   = ($operator == "LIKE" || $operator == "NOT LIKE") ? "%" : "";
-				$adjustedOp  = ($operator == "LIKE" || $operator == "NOT LIKE") ? " $operator " : $operator;
+				$adjustedOp  = ($operator == "LIKE" || $operator == "NOT LIKE" || $operator == "IN" || $operator == "NOT IN") ? " $operator " : $operator;
 				$clause = formulize_tryDelegatedSearchWhere(
 					$elementInfo['type'], $filterParts[1] ?? '', $adjustedOp, "'", $likeparts, $fid, $tableName ?: $handle
 				);
@@ -3066,6 +3117,15 @@ function parseTableFormFilter($filter, $andor, $elementsById, $fid = 0, $tableNa
 		} elseif ($field !== null) {
 			if ($operator === 'IS NULL' || $operator === 'IS NOT NULL') {
 				$clause = "`$field` $operator";
+			} elseif ($operator === 'IN' || $operator === 'NOT IN') {
+				$inList = formulizeDataHandler::prepareValueForInOperator($filterParts[1] ?? '');
+				if ($inList !== false) {
+					$trimmedInList = trim($inList);
+					if (substr($trimmedInList, 0, 1) !== '(' || substr($trimmedInList, -1) !== ')') {
+						$inList = '(' . $trimmedInList . ')';
+					}
+					$clause = "`$field` $operator $inList";
+				}
 			} else {
 				$likeparts = ($operator == "LIKE" || $operator == "NOT LIKE") ? "%" : "";
 				$clause = "`$field` $operator '$likeparts" . formulize_db_escape($filterParts[1]) . "$likeparts'";

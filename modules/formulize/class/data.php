@@ -525,13 +525,16 @@ class formulizeDataHandler {
 			));
 			return false;
 		}
-    $likeBits = ($operator == "LIKE" OR $operator == "NOT LIKE") ? "%" : "";
+		$comparisonClause = $this->buildSafeWhereClause($element->getVar('ele_handle'), $operator, $value, true);
+		if($comparisonClause === false) {
+			return false;
+		}
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
 		$scopeFilter = $this->_buildScopeFilter($scope_uids);
 		$desc = $desc ? 'DESC' : '';
-		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $fieldName . "` ".formulize_db_escape($operator)." \"$likeBits" . formulize_db_escape($value) . "$likeBits\" $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
+		$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE $comparisonClause $scopeFilter ORDER BY entry_id $desc LIMIT 0,1";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -604,31 +607,14 @@ class formulizeDataHandler {
 						));
 						continue;
 				}
-				$quotes = '"';
-				$likeBits = $opp == "LIKE" ? "%" : "";
-				$workingOp = $opp;
-				if($value === null) {
-						switch($opp) {
-								case "!=":
-										$value = " IS NOT NULL ";
-										break;
-								case "=":
-								default:
-										$value = " IS NULL ";
-						}
-						$workingOp = '';
-						$quotes = '';
-						$likeBits = '';
-				} else {
-						$value = formulize_db_escape($value);
-						if($opp == 'IN') {
-							$quotes = '';
-							$value = "(".$this->prepareValueForInOperator($value).")";
-						} else {
-							$quotes = (is_numeric($value) AND !$likeBits) ? '' : $quotes;
-						}
+				$clause = $this->buildSafeWhereClause($element->getVar('ele_handle'), $opp, $value, false);
+				if($clause === false) {
+					return false; // fail closed: an invalid operator/field must not silently broaden the result set by dropping a condition
 				}
-				$valuesSQL[] = "`". $fieldName . "` ".formulize_db_escape($workingOp)." ".$quotes.$likeBits.$value.$likeBits.$quotes;
+				$valuesSQL[] = $clause;
+		}
+		if(empty($valuesSQL)) {
+			return false;
 		}
 		$sql .= implode(' AND ', $valuesSQL)." ORDER BY entry_id $findFirstEntryLimit";
 		if(!$res = $xoopsDB->query($sql)) {
@@ -658,16 +644,71 @@ class formulizeDataHandler {
 	}
 
 	/**
-	 * This function prepares a value for use in an IN operator SQL clause
-	 * If the value is a string, it is split on commas to get the individual components
-	 * If the value is an array, it is treated as is
-	 * All components/items are then checked to see if they are numeric or not, and quoted as needed
-	 * Finally the components/items are joined with commas and returned as a string
-	 * @param mixed $value The value to prepare, either a comma separated string or an array
-	 * @return string The prepared value, ready for use in an IN operator SQL clause
+	 * Normalize a search operator string and validate it against the whitelist.
+	 * Supports legacy NEWESTn syntax when $allowNewest is true.
+	 * @param mixed $operator The operator string supplied by caller.
+	 * @param bool $allowNewest Whether to allow NEWESTn pseudo-operator.
+	 * @return string|false Normalized operator string, or false if invalid.
 	 */
-	function prepareValueForInOperator($value) {
+	static function normalizeSearchOperator($operator, $allowNewest = false) {
+		if(!is_string($operator)) {
+			return false;
+		}
+		$operator = strtoupper(trim(preg_replace('/\s+/', ' ', $operator)));
+		if($operator === '') {
+			return false;
+		}
+		if($allowNewest && strpos($operator, 'NEWEST') === 0) {
+			$limit = trim(substr($operator, 6));
+			if($limit !== '' && ctype_digit($limit)) {
+				return 'newest' . $limit;
+			}
+			return false;
+		}
+		$validOperators = array(
+			'=',
+			'!=',
+			'<>',
+			'<=>',
+			'<',
+			'>',
+			'<=',
+			'>=',
+			'LIKE',
+			'NOT LIKE',
+			'IN',
+			'NOT IN',
+			'IS NULL',
+			'IS NOT NULL'
+		);
+		return in_array($operator, $validOperators, true) ? $operator : false;
+	}
+
+	/**
+	 * Validate an SQL identifier for safe interpolation.
+	 * @param mixed $value Candidate identifier.
+	 * @return bool
+	 */
+	static function validateSqlIdentifier($value) {
+		return is_string($value) && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $value);
+	}
+
+	/**
+	 * Prepare an IN-list payload as a comma separated, safely escaped SQL literal list.
+	 * @param mixed $value A comma-delimited string, array, or scalar input.
+	 * @return string|false Comma-separated safe items (no surrounding parentheses), or false if empty/invalid.
+	 */
+	static function prepareValueForInOperator($value) {
+		$hasOuterParentheses = false;
 		if(is_string($value)) {
+			$value = trim($value);
+			if($value === '') {
+				return false;
+			}
+			if(substr($value, 0, 1) === '(' && substr($value, -1) === ')') {
+				$hasOuterParentheses = true;
+				$value = trim(substr($value, 1, -1));
+			}
 			$items = explode(",", trim($value, ","));
 		} elseif(is_array($value)) {
 			$items = $value;
@@ -676,13 +717,63 @@ class formulizeDataHandler {
 		}
 		$preparedItems = array();
 		foreach($items as $item) {
-			if(is_numeric(trim($item))) {
-				$preparedItems[] = formulize_db_escape(trim($item));
+			$item = trim((string)$item);
+			if($item === '') {
+				continue;
+			}
+			if(strcasecmp($item, 'NULL') === 0) {
+				$preparedItems[] = 'NULL';
+			} elseif(is_numeric($item)) {
+				$preparedItems[] = formulize_db_escape($item);
 			} else {
+				$item = trim($item, "'\"");
 				$preparedItems[] = "'" . formulize_db_escape($item) . "'";
 			}
 		}
-		return implode(",", $preparedItems);
+		if(empty($preparedItems)) {
+			return false;
+		}
+		$result = implode(",", $preparedItems);
+		return $hasOuterParentheses ? "($result)" : $result;
+	}
+
+	function buildSafeWhereClause($fieldName, $operator, $value, $wrapLikeWithPercents = false) {
+		$operator = self::normalizeSearchOperator($operator);
+		if($operator === false || self::validateSqlIdentifier($fieldName) === false) {
+			return false;
+		}
+
+		if($operator === 'IS NULL' || $operator === 'IS NOT NULL') {
+			return "`$fieldName` $operator";
+		}
+
+		if($value === null) {
+			if($operator === '!=' || $operator === '<>' || $operator === 'NOT LIKE' || $operator === 'NOT IN') {
+				return "`$fieldName` IS NOT NULL";
+			}
+			return "`$fieldName` IS NULL";
+		}
+
+		if($operator === 'IN' || $operator === 'NOT IN') {
+			$inList = self::prepareValueForInOperator($value);
+			if($inList === false || $inList === '') {
+				return false;
+			}
+			$trimmedInList = trim($inList);
+			if(substr($trimmedInList, 0, 1) !== '(' || substr($trimmedInList, -1) !== ')') {
+				$inList = "($trimmedInList)";
+			}
+			return "`$fieldName` $operator $inList";
+		}
+
+		$escapedValue = formulize_db_escape($value);
+		if($operator === 'LIKE' || $operator === 'NOT LIKE') {
+			$likeBits = $wrapLikeWithPercents ? '%' : '';
+			return "`$fieldName` $operator \"$likeBits$escapedValue$likeBits\"";
+		}
+
+		$quotedValue = is_numeric($value) ? $escapedValue : "\"$escapedValue\"";
+		return "`$fieldName` $operator $quotedValue";
 	}
 
 	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
@@ -703,19 +794,18 @@ class formulizeDataHandler {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		if($operator == "IN") {
-			$queryValue = "(".$this->prepareValueForInOperator($value).")";
-		} else {
-			$queryValue = is_numeric($value) ? formulize_db_escape($value) : "'" . formulize_db_escape($value) . "'";
+		$comparisonClause = $this->buildSafeWhereClause($element->getVar('ele_handle'), $operator, $value, false);
+		if($comparisonClause === false) {
+			return false;
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $fieldName . "` $operator $queryValue $scopeFilter GROUP BY entry_id ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE $comparisonClause $scopeFilter GROUP BY entry_id ORDER BY entry_id";
 		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
-			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.`". $fieldName . "` $operator $queryValue $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.$comparisonClause $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
 		} else {
-			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE `". $fieldName . "` $operator $queryValue GROUP BY entry_id ORDER BY entry_id";
+			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE $comparisonClause GROUP BY entry_id ORDER BY entry_id";
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
