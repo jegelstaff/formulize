@@ -38,6 +38,7 @@ if(!defined('FORMULIZE_COMMON_INCLUDED')) {
 }
 
 include_once XOOPS_ROOT_PATH . '/class/xoopsformloader.php';
+require_once XOOPS_ROOT_PATH . '/modules/system/constants.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/formulize.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementrenderer.php';
