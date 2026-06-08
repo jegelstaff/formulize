@@ -860,9 +860,12 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 	$usersTable = $xoopsDB->prefix('users');
 
 	// Total member count per group (one query).
+	// JOIN to users filters out orphaned groups_users_link rows for deleted users.
 	$countsByGid = array();
 	$cntRes = $xoopsDB->query(
-		"SELECT groupid, COUNT(*) AS cnt FROM `$gulTable` WHERE groupid IN ($inList) GROUP BY groupid"
+		"SELECT gul.groupid, COUNT(*) AS cnt FROM `$gulTable` gul"
+		. " JOIN `$usersTable` u ON u.uid = gul.uid"
+		. " WHERE gul.groupid IN ($inList) GROUP BY gul.groupid"
 	);
 	if ($cntRes) {
 		while ($cntRow = $xoopsDB->fetchArray($cntRes)) {
@@ -890,13 +893,17 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 			$dataTable = $xoopsDB->prefix('formulize_' . $formHandle);
 
 			// DISTINCT member count per entry_id (across all category groups for that entry).
+			// LEFT JOIN to users filters out orphaned groups_users_link rows for deleted users
+			// while still counting entries that have zero valid members (gul.uid IS NULL).
 			$memberCountsByEntryId = array();
 			$perEntryRes = $xoopsDB->query(
 				"SELECT g.entry_id, COUNT(DISTINCT gul.uid) AS cnt"
 				. " FROM `$groupsTable` g"
 				. " LEFT JOIN `$gulTable` gul ON gul.groupid = g.groupid"
+				. " LEFT JOIN `$usersTable` u ON u.uid = gul.uid"
 				. " WHERE g.form_id = " . intval($eagFid)
 				. " AND g.is_group_template = 0 AND g.entry_id > 0"
+				. " AND (gul.uid IS NULL OR u.uid IS NOT NULL)"
 				. " GROUP BY g.entry_id"
 			);
 			if ($perEntryRes) {
@@ -944,6 +951,7 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 						"SELECT COUNT(DISTINCT gul.uid) AS cnt"
 						. " FROM `$groupsTable` g"
 						. " JOIN `$gulTable` gul ON gul.groupid = g.groupid"
+						. " JOIN `$usersTable` u ON u.uid = gul.uid"
 						. " WHERE g.form_id = " . intval($eagFid)
 						. " AND g.is_group_template = 0 AND g.entry_id IN ($overflowInList)"
 					);
