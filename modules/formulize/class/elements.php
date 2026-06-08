@@ -950,6 +950,17 @@ class formulizeElementsHandler {
 		}
 	}
 
+	/**
+	 * Delete an element and all associated data, index, and screen resources.
+	 *
+	 * Runs pre-delete processing via the type-specific handler, removes the element row,
+	 * drops the backing data table column (for elements with data), removes framework
+	 * relationship connections, and strips the element from all screen pages.
+	 *
+	 * @param formulizeElement $elementObject The element to delete
+	 * @param bool             $force         True to use queryF (bypass transaction handling)
+	 * @return bool True if all cleanup steps succeeded, false if any failed
+	 */
 	function delete($elementObject, $force = false){
 		$elementType = $elementObject->getVar('ele_type');
 		if(file_exists(XOOPS_ROOT_PATH . "/modules/formulize/class/".$elementType."Element.php")) {

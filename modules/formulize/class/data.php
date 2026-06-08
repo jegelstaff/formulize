@@ -404,8 +404,17 @@ class formulizeDataHandler {
 		return $row[0];
 	}
 
-	// this function finds all entries created by a given user in the form
-	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
+	/**
+	 * Find all entry IDs created by the given user(s) in this form, optionally scoped.
+	 *
+	 * $scope_uids should only be used when searching for entries by the current user.
+	 * All other group-based scopes should be passed via $scope_group_ids.
+	 *
+	 * @param int|int[] $uids            UID or array of UIDs to search for
+	 * @param int[]     $scope_uids      Optional: restrict to entries owned by these UIDs (user scope)
+	 * @param int[]     $scope_group_ids Optional: restrict to entries owned by these groups (group scope)
+	 * @return int[]|false Array of entry IDs, or false on query failure
+	 */
 	function findAllEntriesForUsers($uids, $scope_uids=array(), $scope_group_ids=array()) {
 		return $this->getAllEntriesForUsers($uids, $scope_uids, $scope_group_ids);
 	}
@@ -436,16 +445,35 @@ class formulizeDataHandler {
 
 	}
 
-	// this function finds the first entry for a given user in the form
+	/**
+	 * Find the first entry ID owned by any of the given groups in this form.
+	 *
+	 * @param int|int[] $group_ids Group ID or array of group IDs
+	 * @return int|false First matching entry ID, or false on failure
+	 */
 	function findFirstEntryForGroups($group_ids) {
 		return $this->getEntriesForGroups($group_ids, findFirst: true);
 	}
+	/**
+	 * Find all entry IDs owned by any of the given groups in this form.
+	 *
+	 * @param int|int[] $group_ids Group ID or array of group IDs
+	 * @return int[]|false Array of matching entry IDs, or false on failure
+	 */
 	function findAllEntriesForGroups($group_ids) {
 		return $this->getEntriesForGroups($group_ids, findAll: true);
 	}
 	function getFirstEntryForGroups($group_ids) {
 		return $this->findFirstEntryForGroups($group_ids);
 	}
+	/**
+	 * Internal implementation for group-owned entry lookup.
+	 *
+	 * @param int|int[] $group_ids  Group ID or array of group IDs
+	 * @param bool      $findFirst  True to return only the first matching entry ID
+	 * @param bool      $findAll    True to return all matching entry IDs
+	 * @return int|int[]|false First entry ID (int) when $findFirst, array when $findAll, or false on failure
+	 */
 	function getEntriesForGroups($group_ids, $findFirst=false, $findAll=false) {
 		if(!is_array($group_ids)) {
 			$group_ids = array(0=>intval($group_ids));
@@ -737,6 +765,18 @@ class formulizeDataHandler {
 		return $hasOuterParentheses ? "($result)" : $result;
 	}
 
+	/**
+	 * Build a safe SQL WHERE clause fragment for a single field comparison.
+	 *
+	 * Validates the field name as a SQL identifier and normalizes the operator. Handles
+	 * NULL values, IN/NOT IN lists, LIKE wildcards, and scalar comparisons.
+	 *
+	 * @param string $fieldName          The column name (validated as a SQL identifier)
+	 * @param string $operator           SQL operator (=, !=, LIKE, IN, IS NULL, etc.)
+	 * @param mixed  $value              The comparison value (null, scalar, or comma-delimited string for IN)
+	 * @param bool   $wrapLikeWithPercents True to wrap LIKE/NOT LIKE values with % wildcards
+	 * @return string|false SQL fragment like "`field` = 'value'", or false if inputs are invalid
+	 */
 	function buildSafeWhereClause($fieldName, $operator, $value, $wrapLikeWithPercents = false) {
 		$operator = self::normalizeSearchOperator($operator);
 		if($operator === false || self::validateSqlIdentifier($fieldName) === false) {

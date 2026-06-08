@@ -10481,6 +10481,22 @@ function checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_
 	return $allowed;
 }
 
+/**
+ * Build a PHP eval()-able boolean condition string for a set of filter conditions.
+ *
+ * Translates Formulize filter settings (elements, operators, terms) into a PHP expression
+ * that can be eval()'d to determine whether a given entry satisfies the conditions.
+ * Called by checkConditionsAgainstAnEntry() for both "match all" and "match one or more" sets.
+ *
+ * @param string  $match          'AND' or 'OR' — determines the logical join
+ * @param int[]   $indexes        Array of position indexes into the filter arrays to include
+ * @param array   $filterElements Array of element handles or metadata field names
+ * @param array   $filterOps      Array of comparison operator strings
+ * @param array   $filterTerms    Array of comparison term values
+ * @param mixed   $entry          The entry ID or 'new'
+ * @param array   $entryData      Pre-fetched entry data from gatherDataset()
+ * @return string|false PHP boolean expression string, or false on invalid input
+ */
 function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
 	$evaluationCondition = "";
 

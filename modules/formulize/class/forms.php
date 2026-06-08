@@ -703,15 +703,30 @@ EOF;
 			return false;
 		}
 
+	/**
+	 * Return whether this form is a system-managed ad hoc table form.
+	 *
+	 * @return bool True when lockedform equals FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED
+	 */
 	public function isSystemManagedForm() {
 		return intval($this->getVar('lockedform')) === FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED;
 	}
 
+	/**
+	 * Return whether this form is backed by the system users table.
+	 *
+	 * @return bool True when this is a system-managed form whose tableform points to the users table
+	 */
 	public function isSystemUsersTableForm() {
 		global $xoopsDB;
 		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('users');
 	}
 
+	/**
+	 * Return whether this form is backed by the system groups table.
+	 *
+	 * @return bool True when this is a system-managed form whose tableform points to the groups table
+	 */
 	public function isSystemGroupsTableForm() {
 		global $xoopsDB;
 		return $this->isSystemManagedForm() && $this->getVar('tableform', 'raw') === $xoopsDB->prefix('groups');
@@ -851,6 +866,15 @@ class formulizeFormsHandler {
 		return $foundForms;
 	}
 
+	/**
+	 * Return all form objects, optionally filtered.
+	 *
+	 * @param bool  $includeAllElements True to load all element objects for each form
+	 * @param int[] $formIds            Restrict to these form IDs (empty = all)
+	 * @param bool  $includeTableForms  Include forms backed by an external table (default true)
+	 * @param bool  $includeAdHocForms  Include system-managed ad hoc table forms (default false)
+	 * @return formulizeForm[] Array of form objects keyed by form ID
+	 */
 	function getAllForms($includeAllElements=false, $formIds=array(), $includeTableForms=true, $includeAdHocForms=false) {
 		global $xoopsDB;
 		$conditions = array();
@@ -1505,6 +1529,20 @@ class formulizeFormsHandler {
 		return false;
 	}
 
+	/**
+	 * Create EAU form entries for existing users that match a set of group inclusion/exclusion criteria.
+	 *
+	 * Builds the intersection of UIDs across all $includeGroupIds, subtracts any UIDs in
+	 * $excludeGroupIds, skips UIDs already linked to an entry in the form, then creates a
+	 * new entry for each remaining UID and runs derived-value/group-membership post-processing.
+	 *
+	 * @param formulizeForm|int|string $formObject      The form object, form ID, or form handle
+	 * @param int|false                $proxyUserId     The user to record as entry creator: false = logged-in user,
+	 *                                                  0 = the target user themselves, >0 = a specific user ID
+	 * @param int[]                    $includeGroupIds UIDs must belong to all these groups (AND logic)
+	 * @param int[]                    $excludeGroupIds UIDs in any of these groups are excluded
+	 * @return int|false Number of entries created, or false if preconditions failed
+	 */
 	function createEntriesForExistingUsers($formObject, $proxyUserId, $includeGroupIds, $excludeGroupIds = array()) {
 
 		if(!is_a($formObject, 'formulizeForm')) {
@@ -1678,10 +1716,18 @@ class formulizeFormsHandler {
 		}
 	}
 
-	// check to see if a handle is unique within a form
-	// $formIdentifier: optional form id/object — when provided and the form is a table form
-	// (has a tableform value), the metadata-field reserved-name check is skipped, since
-	// table forms map directly to existing DB columns that can share metadata field names.
+	/**
+	 * Check whether an element handle is unique within a form.
+	 *
+	 * When $formIdentifier is provided and the form is a table form (has a tableform value),
+	 * the metadata-field reserved-name check is skipped, since table forms map directly to
+	 * existing DB columns that can share metadata field names.
+	 *
+	 * @param string                   $handle            The handle to validate
+	 * @param int|string|object        $elementIdentifier Optional element ID/handle/object to exclude from the uniqueness check (the element being renamed)
+	 * @param int|formulizeForm|null   $formIdentifier    Optional form ID or object used to determine table-form context
+	 * @return bool True if the handle is available, false if already in use or reserved
+	 */
 	function isElementHandleUnique($handle, $elementIdentifier="", $formIdentifier=null) {
     $handle = formulizeElement::sanitize_handle_name($handle);
 		$skipMetadataCheck = false;
