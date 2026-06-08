@@ -525,7 +525,7 @@ class formulizeDataHandler {
 			));
 			return false;
 		}
-		$comparisonClause = $this->buildSafeWhereClause($element->getVar('ele_handle'), $operator, $value, true);
+		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value, true);
 		if($comparisonClause === false) {
 			return false;
 		}
@@ -607,7 +607,7 @@ class formulizeDataHandler {
 						));
 						continue;
 				}
-				$clause = $this->buildSafeWhereClause($element->getVar('ele_handle'), $opp, $value, false);
+				$clause = $this->buildSafeWhereClause($fieldName, $opp, $value, false);
 				if($clause === false) {
 					return false; // fail closed: an invalid operator/field must not silently broaden the result set by dropping a condition
 				}
@@ -794,7 +794,7 @@ class formulizeDataHandler {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$comparisonClause = $this->buildSafeWhereClause($element->getVar('ele_handle'), $operator, $value, false);
+		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value, false);
 		if($comparisonClause === false) {
 			return false;
 		}
