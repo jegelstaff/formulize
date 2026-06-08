@@ -15,7 +15,7 @@ test('Update Derived Values button triggers XHR and completes successfully', asy
 	await page.getByText('Artifacts').first().click();
 	await page.getByRole('link', { name: 'Elements' }).first().click();
 
-	await openElementAccordion(page, 'Year-Era Derived Value');
+	await openElementAccordion(page, 'Year-Era');
 	await page.getByRole('link', { name: 'Configure' }).click();
 	await waitForAdminPageReady(page);
 	await page.getByRole('link', { name: 'Options' }).click();
