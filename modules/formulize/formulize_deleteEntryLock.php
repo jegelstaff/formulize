@@ -33,7 +33,11 @@ if(isset($_POST['formulize_entry_lock_token'])) {
             foreach(array_keys($theseEntries) as $entry_id) {
                 $fileName = __DIR__."/temp/entry_".$entry_id."_in_form_".$thisForm."_is_locked_for_editing";
                 if(file_exists($fileName)) {
-                    unlink($fileName);
+										// Only delete the lock file if the uid matches, to prevent a situation where a user with override entry locks permission has taken over the lock... an original user who had the lock should not be able to clear the now overriden lock.
+                    list($lockFileUid) = explode(",", file_get_contents($fileName));
+                    if(intval($lockFileUid) === intval($userPassedUid)) {
+                        unlink($fileName);
+                    }
                 }
             }
         }

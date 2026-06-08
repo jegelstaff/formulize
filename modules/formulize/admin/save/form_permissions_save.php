@@ -90,14 +90,32 @@ if ($_POST['removelistid']) {
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/class/usersGroupsPerms.php";
 $formulize_permHandler = new formulizePermHandler($form_id);
+
+// Determine inheritance mode before the main loop
+$submitted_parent_perm_fid = isset($_POST['parent_perm_fid']) ? intval($_POST['parent_perm_fid']) : intval($formObject->getVar('parent_perm_fid', 'n'));
+$filters_only = ($submitted_parent_perm_fid > 0);
+
 $groupsToClear = array();
 $filterSettings = array();
 $group_list = (isset($_POST['group_list']) and is_array($_POST['group_list'])) ? $_POST['group_list'] : array();
+$group_list = array_unique($group_list); // deduplicate (filter section and direct section may both submit group_list[])
+$entryGroupIds = array();
+if (isset($_POST['entry_group_ids']) && is_array($_POST['entry_group_ids'])) {
+    foreach ($_POST['entry_group_ids'] as $egid) {
+        $entryGroupIds[] = intval($egid);
+    }
+}
 foreach($group_list as $group_id) {
   if(!is_numeric($group_id)) {
     continue;
   }
 
+  // Entry groups are handled separately after propagation — skip them here
+  if (in_array(intval($group_id), $entryGroupIds)) {
+    continue;
+  }
+
+  if (!$filters_only) {
     // delete existing permission records for this group to start with a blank slate
     if (!$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("group_permission") . " WHERE gperm_groupid='$group_id' AND gperm_itemid='$form_id' AND gperm_modid='$formulize_module_id'")) {
         print "Error: could not delete the permissions for group $group_id";
@@ -108,24 +126,27 @@ foreach($group_list as $group_id) {
     foreach(formulizePermHandler::getPermissionList() as $permission_name) {
         if ($_POST[$form_id."_".$group_id."_".$permission_name] OR ($permission_name == 'view_form' AND $group_id == 1)) { // always enable view_form for webmasters!
             $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, '$permission_name')";
-  			}
-  }
+        }
+    }
+    $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, 'view_their_own_entries')"; // always on regardless of submission
+    $enabled_permissions[] = "($group_id, $form_id, $formulize_module_id, 'manage_own')"; // always on regardless of submission
 
     // enable only the selected permissions
     if (count((array) $enabled_permissions) > 0) {
         $insertSQL = "INSERT INTO ".$xoopsDB->prefix("group_permission") . " (`gperm_groupid`, `gperm_itemid`, `gperm_modid`, `gperm_name`) VALUES ".
             implode(", ", $enabled_permissions);
-    if(!$xoopsDB->query($insertSQL)) {
-      print "Error: could not set the permissions for group $group_id";
+        if(!$xoopsDB->query($insertSQL)) {
+            print "Error: could not set the permissions for group $group_id";
+        }
+    }
+
+    // deal with specific groupscope settings
+    if(!$formulize_permHandler->setGroupScopeGroups($group_id, $_POST["groupsscope_choice_".$form_id."_".$group_id])) {
+        print "Error: could not set the groupscope groups for form $form_id.";
     }
   }
 
-  // deal with specific groupscope settings
-  if(!$formulize_permHandler->setGroupScopeGroups($group_id, $_POST["groupsscope_choice_".$form_id."_".$group_id])) {
-	  print "Error: could not set the groupscope groups for form $form_id.";
-  }
-
-  // handle the per-group-filter-settings
+  // handle the per-group-filter-settings (always, regardless of filters_only)
   $filter_key = $form_id."_".$group_id."_filter";
 	list($filterSettings[$group_id], $reloadFlag) = parseSubmittedConditions($filter_key, 'conditionsdelete', deleteTargetKey: 3, conditionsDeletePartsKeyOneMustMatch: $group_id); // reloadFlag is not used on this page, for some reason (reload is set/flagged through other means?)
 	if(!isset($filterSettings[$group_id][0]) OR !is_array($filterSettings[$group_id][0]) OR count($filterSettings[$group_id][0]) == 0) {
@@ -142,6 +163,93 @@ if(count((array) $filterSettings)>0) {
   $form_handler->setPerGroupFilters($filterSettings, $form_id);
 }
 
-if($_POST['reload'] OR $_POST['loadthislist']) {
-  print "/* eval */ window.document.getElementById('form-".intval($_POST['form_number'])."').submit();";
+if (!$filters_only) {
+  // Propagate permissions, filters, and groupscope from template groups to their entry groups
+  // This runs after all permission data has been saved, so the source data is up to date
+  formulizeHandler::propagateTemplateGroupPermissions($group_list);
+
+  // After propagation, apply any override permissions submitted for entry groups via INSERT IGNORE
+  // (propagation does a full REPLACE, so overrides must be added after)
+  foreach ($entryGroupIds as $eg_id) {
+    if (!$eg_id) continue;
+    foreach (formulizePermHandler::getPermissionList() as $permission_name) {
+      if (!empty($_POST[$form_id . "_" . $eg_id . "_" . $permission_name])) {
+        $xoopsDB->query("INSERT IGNORE INTO " . $xoopsDB->prefix("group_permission")
+          . " (gperm_groupid, gperm_itemid, gperm_modid, gperm_name)"
+          . " VALUES ($eg_id, $form_id, $formulize_module_id, '$permission_name')");
+      }
+    }
+    // these two permissions are always on
+    $xoopsDB->query("INSERT IGNORE INTO " . $xoopsDB->prefix("group_permission")
+      . " (gperm_groupid, gperm_itemid, gperm_modid, gperm_name)"
+      . " VALUES ($eg_id, $form_id, $formulize_module_id, 'view_their_own_entries')");
+    $xoopsDB->query("INSERT IGNORE INTO " . $xoopsDB->prefix("group_permission")
+      . " (gperm_groupid, gperm_itemid, gperm_modid, gperm_name)"
+      . " VALUES ($eg_id, $form_id, $formulize_module_id, 'manage_own')");
+  }
+}
+
+// --- Handle parent_perm_fid (this form inherits permissions from another form) ---
+$old_parent_perm_fid = intval($formObject->getVar('parent_perm_fid', 'n'));
+if ($submitted_parent_perm_fid !== $old_parent_perm_fid) {
+    $formObject->setVar('parent_perm_fid', $submitted_parent_perm_fid);
+    $form_handler->insert($formObject, true);
+}
+// If a parent is set, copy permissions from the parent to this form
+if ($submitted_parent_perm_fid > 0) {
+    formulizePermHandler::copyFormPermissions($submitted_parent_perm_fid, $form_id);
+}
+
+if (!$filters_only) {
+  // --- Handle child_perm_fids[] (this form is the parent of other forms) ---
+  $currentChildrenSql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE parent_perm_fid = " . intval($form_id);
+  $currentChildIds = array();
+  if ($currentChildRes = $xoopsDB->query($currentChildrenSql)) {
+      while ($row = $xoopsDB->fetchArray($currentChildRes)) {
+          $currentChildIds[] = intval($row['id_form']);
+      }
+  }
+
+  $submittedChildIds = array();
+  if (isset($_POST['child_perm_fids']) && is_array($_POST['child_perm_fids'])) {
+      foreach ($_POST['child_perm_fids'] as $cid) {
+          $submittedChildIds[] = intval($cid);
+      }
+  }
+
+  // Add newly declared children: set their parent_perm_fid to this form
+  $newChildIds = array_diff($submittedChildIds, $currentChildIds);
+  foreach ($newChildIds as $childFid) {
+      $childForm = $form_handler->get($childFid);
+      if ($childForm) {
+          $childForm->setVar('parent_perm_fid', $form_id);
+          $form_handler->insert($childForm, true);
+      }
+  }
+
+  // Remove children no longer declared: clear their parent_perm_fid
+  $removedChildIds = array_diff($currentChildIds, $submittedChildIds);
+  foreach ($removedChildIds as $childFid) {
+      $childForm = $form_handler->get($childFid);
+      if ($childForm) {
+          $childForm->setVar('parent_perm_fid', 0);
+          $form_handler->insert($childForm, true);
+      }
+  }
+
+  // Propagate this form's permissions to all current children (newly added + existing minus removed)
+  $allChildIds = array_unique(array_merge($currentChildIds, $newChildIds));
+  $allChildIds = array_diff($allChildIds, $removedChildIds);
+  foreach ($allChildIds as $childFid) {
+      formulizePermHandler::copyFormPermissions($form_id, $childFid);
+  }
+}
+
+$formNum = intval($_POST['form_number']);
+if ($_POST['reload'] || $_POST['loadthislist']) {
+  // formulize_reload() already captured scroll into #permscrollx before submitting
+  print "/* eval */ window.document.getElementById('form-$formNum').submit();";
+} elseif (!$filters_only && !empty($entryGroupIds)) {
+  // Auto-reload after a real save with entry groups visible: capture scroll first, then reload
+  print "/* eval */ jQuery('#permscrollx').val(jQuery(window).scrollTop()); window.document.getElementById('form-$formNum').submit();";
 }

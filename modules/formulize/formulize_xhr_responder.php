@@ -77,6 +77,8 @@ if($op != "check_for_unique_value"
    AND $op != 'validate_php_code'
    AND $op != 'get_views_for_form'
 	 AND $op != 'get_form_screens_for_form'
+	 AND $op != 'group_member_search'
+	 AND $op != 'entry_group_search'
   ) {
   exit();
 }
@@ -103,17 +105,75 @@ switch($op) {
     $entry = $_GET['param3'];
     $leave = $_GET['param4'];
 
+		if($entry != 'new' AND !is_numeric($entry)) {
+			throw new Exception('Invalid entry ID passed to check_for_unique_value');
+		}
+
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = $element_handler->get($element);
     if(is_object($elementObject)) {
-      include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-      $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-      $entry_id = $data_handler->findFirstEntryWithValue($element, $value);
-      if(is_numeric($entry_id) AND $entry_id != $entry) {
-        print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
-      } else {
-        print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
-      }
+
+			if($elementObject->getVar('ele_type') == 'userAccountEmail'
+			OR $elementObject->getVar('ele_type') == 'userAccountUsername'
+			OR $elementObject->getVar('ele_type') == 'userAccountPhone') {
+
+				if($elementObject->getVar('ele_type') == 'userAccountUsername') {
+					// The Username element stores its value in the ImpressCMS login field
+					// (login_name), not the display-name field (uname) — see
+					// userAccountUsernameElement::$userProperty. Uniqueness must therefore
+					// be checked against login_name, otherwise duplicate logins are allowed.
+					$keyField = 'login_name';
+					$table = "users";
+				}elseif($elementObject->getVar('ele_type') == 'userAccountEmail') {
+					$keyField = 'email';
+					$table = "users";
+				} elseif($elementObject->getVar('ele_type') == 'userAccountPhone') {
+					$value = preg_replace('/[^0-9]/', '', $value);
+					$keyField = '2faphone';
+					$table = "profile_profile";
+				}
+				// For existing entries, exclude the current user's own record from the uniqueness check
+				$excludeClause = '';
+				global $xoopsDB;
+				if($entry != 'new' AND is_numeric($entry)) {
+					$fid = $elementObject->getVar('fid');
+					$form_handler = xoops_getmodulehandler('forms', 'formulize');
+					$isUserTableForm = ($formObject = $form_handler->get($fid) AND $formObject->isSystemUsersTableForm()) ? true : false;
+					if ($isUserTableForm) {
+						// The system users form uses uid as its primary key — entry IS the uid
+						$entryUserId = intval($entry);
+					} else {
+						$data_handler = new formulizeDataHandler($fid);
+						$entryUserId = intval($data_handler->getElementValueInEntry($entry, 'formulize_user_account_uid_'.$fid));
+					}
+					if($entryUserId > 0) {
+						$idField = ($table == 'profile_profile') ? 'profileid' : 'uid';
+						$excludeClause = " AND `$idField` != $entryUserId";
+					}
+				}
+				$sql = "SELECT COUNT(*) AS count FROM ".$xoopsDB->prefix($table)." WHERE `$keyField` = '".formulize_db_escape($value)."'".$excludeClause;
+				if($res = $xoopsDB->query($sql)) {
+					$row = $xoopsDB->fetchArray($res);
+					if($row['count'] > 0) {
+						print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+					} else {
+						print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+					}
+				} else {
+					print json_encode(array('val'=>'invalidsql', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				}
+
+			} else {
+				include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+				$data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+				$entry_id = $data_handler->findFirstEntryWithValue($element, $value);
+				if(is_numeric($entry_id) AND $entry_id != $entry) {
+					print json_encode(array('val'=>'valuefound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				} else {
+					print json_encode(array('val'=>'valuenotfound', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
+				}
+			}
+
     } else {
       print json_encode(array('val'=>'invalidelement', 'key'=>'de_'.$elementObject->getVar('id_form').'_'.$entry.'_'.$elementObject->getVar('ele_id'), 'leave'=>$leave));
     }
@@ -376,6 +436,110 @@ switch($op) {
     echo json_encode($array);
     break;
 
+
+	case 'group_member_search':
+		// Search current members or non-members for the group member management widget.
+		// System groups table form requires system_admin; EAG forms require view_form on the fid.
+		global $xoopsDB;
+		$gperm_handler = xoops_gethandler('groupperm');
+		$userGroups    = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		$gmsFid        = isset($_GET['fid']) ? intval($_GET['fid']) : 0;
+		$gmsCanSearch  = false;
+		if ($gmsFid) {
+			$gmsFormHandler = xoops_getmodulehandler('forms', 'formulize');
+			$gmsFormObject  = $gmsFormHandler->get($gmsFid);
+			if ($gmsFormObject && $gmsFormObject->getVar('entries_are_groups')) {
+				$gmsMid       = getFormulizeModId();
+				$gmsCanSearch = $xoopsUser && $gperm_handler->checkRight('view_form', $gmsFid, $userGroups, $gmsMid);
+			}
+		}
+		if (!$gmsCanSearch && !$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_GROUP, $userGroups)) {
+			print json_encode(array('error' => 'Permission denied'));
+			break;
+		}
+		$gmsAction     = isset($_GET['action'])  ? trim($_GET['action'])    : '';
+		$gmsGroupId    = isset($_GET['groupid']) ? intval($_GET['groupid']) : 0;
+		$gmsTerm       = isset($_GET['term'])    ? trim($_GET['term'])      : '';
+		$gmsUsersTable = $xoopsDB->prefix('users');
+		$gmsGulTable   = $xoopsDB->prefix('groups_users_link');
+		if ($gmsGroupId <= 0) {
+			print json_encode(array('error' => 'Invalid group'));
+			break;
+		}
+		if ($gmsAction === 'members') {
+			require_once XOOPS_ROOT_PATH . '/modules/formulize/class/eagGroupMembersElement.php';
+			$gmsLimit = $gmsTerm !== '' ? 200 : 10;
+			print json_encode(formulizeEagGroupMembersElementHandler::queryMembers($gmsGroupId, $gmsTerm, $gmsLimit, true));
+		} elseif ($gmsAction === 'nonmembers') {
+			if (strlen($gmsTerm) < 2) {
+				print json_encode(array());
+				break;
+			}
+			$gmsSafe = formulize_db_escape($gmsTerm);
+			$gmsRes  = $xoopsDB->query(
+				"SELECT u.uid, u.uname, u.name FROM `$gmsUsersTable` u"
+				. " WHERE (u.name LIKE '%$gmsSafe%' OR u.uname LIKE '%$gmsSafe%' OR u.email LIKE '%$gmsSafe%')"
+				. " AND u.uid NOT IN (SELECT gul.uid FROM `$gmsGulTable` gul WHERE gul.groupid = $gmsGroupId)"
+				. " ORDER BY u.name, u.uname LIMIT 50"
+			);
+			$gmsResults = array();
+			while ($gmsRes && $gmsRow = $xoopsDB->fetchArray($gmsRes)) {
+				$gmsDisplay   = ($gmsRow['name'] !== '') ? $gmsRow['name'] . ' (' . $gmsRow['uname'] . ')' : $gmsRow['uname'];
+				$gmsResults[] = array('uid' => intval($gmsRow['uid']), 'display' => htmlspecialchars($gmsDisplay, ENT_QUOTES, 'UTF-8'));
+			}
+			print json_encode($gmsResults);
+		} else {
+			print json_encode(array('error' => 'Unknown action'));
+		}
+		break;
+
+
+	case 'entry_group_search':
+		// Search entry groups belonging to a template group. Requires system_admin.
+		global $xoopsDB;
+		$gperm_handler = xoops_gethandler('groupperm');
+		$egsUserGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_GROUP, $egsUserGroups)) {
+			print json_encode(array('error' => 'Permission denied'));
+			break;
+		}
+		$egsTemplateGroupId = isset($_GET['template_group_id']) ? intval($_GET['template_group_id']) : 0;
+		$egsTerm            = isset($_GET['term']) ? trim($_GET['term']) : '';
+		if (!$egsTemplateGroupId) {
+			print json_encode(array('error' => 'Invalid template_group_id'));
+			break;
+		}
+		$egsGroupsTable = $xoopsDB->prefix('groups');
+		// Get the template group's form_id and name for category-scoped search
+		$egsTmplRes = $xoopsDB->query(
+			"SELECT form_id, name FROM `$egsGroupsTable` WHERE groupid = $egsTemplateGroupId AND is_group_template = 1 LIMIT 1"
+		);
+		if (!$egsTmplRes || !($egsTmplRow = $xoopsDB->fetchArray($egsTmplRes)) || !$egsTmplRow['form_id']) {
+			print json_encode(array('error' => 'Template group not found or has no associated form'));
+			break;
+		}
+		$egsFormId = intval($egsTmplRow['form_id']);
+		// Template group names follow "{prefix} - {CategoryName}"; strip the prefix but keep " - CategoryName"
+		$egsTmplName   = $egsTmplRow['name'];
+		$egsDashPos    = strrpos($egsTmplName, ' - ');
+		$egsCatSuffix  = ($egsDashPos !== false) ? substr($egsTmplName, $egsDashPos) : (' - ' . $egsTmplName);
+		$egsCategorySafe = formulize_db_escape($egsCatSuffix);
+		$egsResults = array();
+		// Limit to entry groups of this category (name ends with " - {CategoryName}")
+		$egsWhere = "form_id = $egsFormId AND is_group_template = 0 AND entry_id > 0"
+		          . " AND name LIKE '%$egsCategorySafe'";
+		if ($egsTerm !== '') {
+			$egsSafe  = formulize_db_escape($egsTerm);
+			$egsWhere .= " AND name LIKE '%$egsSafe%'";
+		}
+		$egsRes = $xoopsDB->query(
+			"SELECT groupid, name FROM `$egsGroupsTable` WHERE $egsWhere ORDER BY name LIMIT 50"
+		);
+		while ($egsRes && $egsRow = $xoopsDB->fetchArray($egsRes)) {
+			$egsResults[] = array('id' => intval($egsRow['groupid']), 'name' => htmlspecialchars($egsRow['name'], ENT_QUOTES, 'UTF-8'));
+		}
+		print json_encode($egsResults);
+		break;
 
 }
 

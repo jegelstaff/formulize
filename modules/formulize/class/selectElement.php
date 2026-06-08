@@ -1028,6 +1028,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 			if(is_array($ele_value[ELE_VALUE_SELECT_OPTIONS])) {
 				foreach($ele_value[ELE_VALUE_SELECT_OPTIONS] as $iKey=>$iValue) {
+					// confusing! keys are the options (usually text), and values is 1 or 0 for selected or not selected
 					$i = array('key'=>$iKey, 'value'=>$iValue); // kinda ugly compatibility hack to refactor the really ugly use of 'each' for PHP 8
 					// handle requests for full names or usernames -- will only kick in if there is no saved value (otherwise ele_value will have been rewritten by the loadValues function in the form display
 					// note: if the user is about to make a proxy entry, then the list of users displayed will be from their own groups, but not from the groups of the user they are about to make a proxy entry for.  ie: until the proxy user is known, the choice of users for this list can only be based on the current user.  This could lead to confusing or buggy situations, such as users being selected who are outside the groups of the proxy user (who will become the owner) and so there will be an invalid value stored for this element in the db.
@@ -1099,12 +1100,12 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 						$selected = $i['value'];
 					} elseif($i['key'] === "{OWNERGROUPS}") { // do nothing with this piece of metadata that gets set in loadValue, since it's used above
 					} else { // regular selection list....
-						$options[$opt_count] = $myts->stripSlashesGPC($i['key']);
+						$options[$opt_count] = $myts->stripSlashesGPC($i['key']); // extra confusing! use the text as the value of $options array, and keys will be ordinals
 						if(strstr($i['key'], _formulize_OUTOFRANGE_DATA)) {
 							$hiddenOutOfRangeValuesToWrite[$opt_count] = str_replace(_formulize_OUTOFRANGE_DATA, "", $i['key']); // if this is an out of range value, grab the actual value so we can stick it in a hidden element later
 						}
 						if( $i['value'] > 0 ){
-							$selected[] = $opt_count;
+							$selected[] = $element->useOptionsAsValues ? $i['key'] : $opt_count;
 						}
 						$opt_count++;
 					}
@@ -1126,8 +1127,11 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$markupName'");
 
 			// must check the options for uitext before adding to the element -- aug 25, 2007
+			// extra extra confusing -- now in the $options array, keys are the ordinal (as determined above, or something else for special kinds of lists), and values are the text of the options to show users
+			// the keys of this array ultimately become the values of the HTML markup
 			foreach($options as $okey=>$ovalue) {
-				$options[$okey] = formulize_handleRandomAndDateText(formulize_swapUIText($ovalue, $element->getVar('ele_uitext')));
+				$optionKey = $element->useOptionsAsValues ? $ovalue : $okey;
+				$options[$optionKey] = formulize_handleRandomAndDateText(formulize_swapUIText($ovalue, $element->getVar('ele_uitext')));
 			}
 			$form_ele1->addOptionArray($options);
 			$GLOBALS['formulize_lastRenderedElementOptions'] = $options;

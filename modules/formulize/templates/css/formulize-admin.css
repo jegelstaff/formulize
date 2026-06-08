@@ -1766,8 +1766,14 @@ form fieldset li {
 form .groupselectionbox, form .permissiongroup {
   margin-left: 30px; }
 
+form .entry-group-notice {
+  width: 475px; }
+
+form .permissiongroup input[type=checkbox] {
+  vertical-align: top; }
+
 form .permissiongroup label {
-	width: 350px;
+	width: 450px;
 }
 
 form .groupselectionbox {
@@ -2224,4 +2230,14 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 
 .element-category-content {
 	/*display: none;*/
+}
+
+.formulize_autocomplete {
+	display: inline-block;
+	float: left;
+	margin-right: 0.25em;
+}
+
+.autocomplete-icon {
+	vertical-align: middle;
 }

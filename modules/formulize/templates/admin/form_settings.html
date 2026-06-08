@@ -12,6 +12,9 @@
 <input type="hidden" name="formulize_admin_key" value="<{$content.fid}>">
 <input type="hidden" name="application_url_id" value="<{$content.aid}>">
 <input type="hidden" id="reload_settings" name="reload_settings" value="<{if $content.fid == 'new'}>1<{/if}>">
+<input type="hidden" id="open_group_conditions_panels" name="open_group_conditions_panels" value="<{$content.open_group_conditions_panels|default:''}>" />
+<input type="hidden" class="entries-are-users-conditions-conditionsdelete" name="conditionsdelete" value="">
+<input type="hidden" id="per_group_conditionsdelete" name="per_group_conditionsdelete" value="">
 
 
 		<div class="form-item required">
@@ -47,6 +50,340 @@
 					</div>
 				</fieldset>
 			</div>
+		<{/if}>
+
+		<{if $content.istableform == false}>
+
+			<!-- Form Type -->
+			<div class="form-item" id="form_type_container">
+				<fieldset>
+					<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_TYPE}></label></legend>
+					<input type="hidden" name="forms-entries_are_users" id="forms_entries_are_users" value="<{$content.entries_are_users}>">
+					<input type="hidden" name="forms-entries_are_groups" id="forms_entries_are_groups" value="<{$content.entries_are_groups}>">
+					<div class="form-radios">
+						<label for="form_type-data">
+							<input type="radio" id="form_type-data" name="form_type" value="data" />
+							<{$smarty.const._AM_SETTINGS_FORM_TYPE_DATA}> &mdash; <{$smarty.const._AM_SETTINGS_FORM_TYPE_DATA_DESC}>
+						</label>
+					</div>
+					<div class="form-radios">
+						<label for="form_type-users">
+							<input type="radio" id="form_type-users" name="form_type" value="users" />
+							<{$smarty.const._AM_SETTINGS_FORM_TYPE_USERS}> &mdash; <{$smarty.const._AM_SETTINGS_FORM_TYPE_USERS_DESC}>
+						</label>
+					</div>
+					<div class="form-radios">
+						<label for="form_type-groups">
+							<input type="radio" id="form_type-groups" name="form_type" value="groups" />
+							<{$smarty.const._AM_SETTINGS_FORM_TYPE_GROUPS}> &mdash; <{$smarty.const._AM_SETTINGS_FORM_TYPE_GROUPS_DESC}>
+						</label>
+					</div>
+				</fieldset>
+			</div>
+
+			<!-- User Account Sub-settings -->
+			<div id="entries_are_users_container" style="display: none;">
+				<div class="form-item">
+					<fieldset>
+						<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_TYPE_USERS_SETTINGS}></label></legend>
+
+						<!-- User Creation Conditions -->
+						<{if $content.entries_are_users_conditions_ui}>
+						<div id="entries_are_users_creation_scope_container" style="margin-bottom: 15px;">
+							<p><strong><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_SCOPE}></strong></p>
+							<div class="form-radios">
+								<label>
+									<input type="radio" name="entries_are_users_creation_scope" value="all" <{if !$content.entries_are_users_has_conditions}>checked="checked"<{/if}> />
+									<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_ALL}>
+								</label>
+							</div>
+							<div class="form-radios">
+								<label>
+									<input type="radio" name="entries_are_users_creation_scope" value="conditional" <{if $content.entries_are_users_has_conditions}>checked="checked"<{/if}> />
+									<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_CONDITIONAL}>
+								</label>
+							</div>
+							<div id="entries_are_users_conditions_container" style="display: <{if $content.entries_are_users_has_conditions}>block<{else}>none<{/if}>; margin-top: 10px;">
+								<{$content.entries_are_users_conditions_ui}>
+							</div>
+							<div class="description">
+								<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC}></p>
+							</div>
+						</div>
+						<{/if}>
+
+						<!-- User Is Owner -->
+						<div id="entries_are_users_user_is_owner_container" style="display: none; margin-top: 15px;">
+							<p><strong><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER}></strong></p>
+							<div class="form-radios">
+								<label for="entries_are_users_user_is_owner-0">
+									<input type="radio" id="entries_are_users_user_is_owner-0" name="forms-entries_are_users_user_is_owner" value="0" />
+									<{$smarty.const._AM_NO}>
+								</label>
+							</div>
+							<div class="form-radios">
+								<label for="entries_are_users_user_is_owner-1">
+									<input type="radio" id="entries_are_users_user_is_owner-1" name="forms-entries_are_users_user_is_owner" value="1" />
+									<{$smarty.const._AM_YES}>
+								</label>
+							</div>
+							<div class="description">
+								<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_USER_IS_OWNER_EXPLAIN}></p>
+							</div>
+						</div>
+
+						<!-- Group Membership -->
+						<{if $content.entries_are_users_default_groups_ui}>
+						<div id="entries_are_users_default_groups_container" style="display: none; margin-top: 15px;">
+							<p><strong><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE}></strong></p>
+							<p><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC}></p>
+							<{$content.entries_are_users_default_groups_ui}>
+							<div id="default_groups_selected_list" style="margin-top: 10px;">
+								<{if $content.entries_are_users_default_groups_selected|is_array}>
+
+								<{* Render regular (non-template) groups as standalone items *}>
+								<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
+								<{if !$group.isTemplate}>
+								<div class="default-group-item" data-groupid="<{$group.id}>" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">
+									<span style="font-weight: bold;"><{$group.name}></span>
+									<span>&mdash;</span>
+									<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" data-condition-count="<{$group.conditionCount}>" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{if $group.conditionCount > 0}> <{$group.conditionCount}><{/if}> <{if $group.conditionCount == 1}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION}><{else}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS}><{/if}></a>
+									<span>&mdash;</span>
+									<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
+									<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
+									<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">
+										<p style="margin-top: 0; font-size: 0.85em; font-style: italic; color: #666;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC}></p>
+										<{if $content.per_group_conditions_ui[$group.id]}>
+										<{$content.per_group_conditions_ui[$group.id]}>
+										<{else}>
+										<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>
+										<{/if}>
+									</div>
+								</div>
+								<{/if}>
+								<{/foreach}>
+
+								<{* Render template group clusters *}>
+								<{if $content.template_group_clusters|is_array}>
+								<{foreach from=$content.template_group_clusters key=eagFormId item=cluster}>
+								<div class="template-group-cluster" data-eagformid="<{$eagFormId}>" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">
+									<{foreach from=$content.entries_are_users_default_groups_selected item=group}>
+									<{if $group.isTemplate && $group.eagFormId == $eagFormId}>
+									<div class="default-group-item template-group-in-cluster" data-groupid="<{$group.id}>" style="margin-bottom: 6px;">
+										<span style="font-weight: bold;"><{$group.name}></span>
+										<span>&mdash;</span>
+										<a href="#" class="toggle-group-conditions-btn" data-groupid="<{$group.id}>" data-condition-count="<{$group.conditionCount}>" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}><{if $group.conditionCount > 0}> <{$group.conditionCount}><{/if}> <{if $group.conditionCount == 1}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION}><{else}><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS}><{/if}></a>
+										<span>&mdash;</span>
+										<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}></a>
+										<input type="hidden" name="entries_are_users_default_groups[]" value="<{$group.id}>" />
+										<input type="hidden" name="entries_are_users_default_groups_form_map[<{$group.id}>]" value="<{$eagFormId}>" />
+										<div class="per-group-conditions-panel" data-groupid="<{$group.id}>" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">
+											<p style="margin-top: 0; font-size: 0.85em; font-style: italic; color: #666;"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_DESC}></p>
+											<{if $content.per_group_conditions_ui[$group.id]}>
+											<{$content.per_group_conditions_ui[$group.id]}>
+											<{else}>
+											<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>
+											<{/if}>
+										</div>
+									</div>
+									<{/if}>
+									<{/foreach}>
+									<{if $cluster.hasLinkedElements && $cluster.elementsByForm|is_array && $cluster.elementsByForm|@count}>
+									<div class="template-group-cluster-element-config" style="margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;">
+										<{if $cluster.description}>
+										<p class="template-group-cluster-description" style="margin: 0 0 6px 0; font-size: 0.85em; font-weight: bold; color: #333;"><{$cluster.description}></p>
+										<{/if}>
+										<table class="template-group-cluster-checkboxes" style="margin-top: 0; font-size: 0.9em; border: none; border-collapse: collapse;">
+											<{foreach from=$cluster.elementsByForm item=formGroup}>
+											<tr>
+												<td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;"><{$formGroup.formName}>:</td>
+												<td style="vertical-align: top; padding: 4px 0; border: none;">
+													<{foreach from=$formGroup.elements item=linkedEl}>
+													<label style="display: block;">
+														<input type="checkbox" name="entries_are_users_default_groups_element_links[<{$eagFormId}>][]"
+															value="<{$linkedEl.ele_id}>"
+															class="template-group-element-checkbox"
+															<{if $linkedEl.selected}>checked="checked"<{/if}> />
+														<{$linkedEl.caption}>
+													</label>
+													<{/foreach}>
+												</td>
+											</tr>
+											<{/foreach}>
+										</table>
+									</div>
+									<{elseif $cluster.description}>
+									<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;"><{$cluster.description}></div>
+									<{/if}>
+								</div>
+								<{/foreach}>
+								<{/if}>
+
+								<{/if}>
+							</div>
+						</div>
+						<{/if}>
+
+					</fieldset>
+				</div>
+
+				<!-- Section 1: Associate existing entries with existing users -->
+				<{if $content.show_user_mapping_ui AND $content.elementheadings_for_mapping|is_array AND $content.elementheadings_for_mapping|@count}>
+				<div class="form-item">
+					<fieldset>
+						<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TITLE}></label></legend>
+						<div class="form-radios">
+							<label for="user_mapping_yes_no-0">
+								<input type="radio" id="user_mapping_yes_no-0" name="user_mapping_yes_no" value="0" checked />
+								<{$smarty.const._AM_NO}>
+							</label>
+						</div>
+						<div class="form-radios">
+							<label for="user_mapping_yes_no-1">
+								<input type="radio" id="user_mapping_yes_no-1" name="user_mapping_yes_no" value="1" />
+								<{$smarty.const._AM_YES}>
+							</label>
+						</div>
+						<div id="user_mapping_details" style="display: none; margin-top: 15px;">
+							<p><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_EXPLAIN}></p>
+							<div style="display: flex; gap: 30px; margin-top: 10px;">
+								<div style="display: flex; flex-direction: column;">
+									<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_LABEL}></label>
+									<select name="user_mapping_element" id="user_mapping_element" style="width: auto;">
+										<option value=""><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_ELEMENT_SELECT}></option>
+										<{foreach from=$content.elementheadings_for_mapping item=element}>
+										<option value="<{$element.ele_id}>"><{$element.text}></option>
+										<{/foreach}>
+									</select>
+								</div>
+								<div style="display: flex; flex-direction: column;">
+									<label style="font-weight: bold; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_CONTAINS_LABEL}></label>
+									<label for="user_mapping_type-login_name" style="margin-bottom: 3px;">
+										<input type="radio" id="user_mapping_type-login_name" name="user_mapping_type" value="login_name" />
+										<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_USERNAME}>
+									</label>
+									<label for="user_mapping_type-email" style="margin-bottom: 3px;">
+										<input type="radio" id="user_mapping_type-email" name="user_mapping_type" value="email" />
+										<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_EMAIL}>
+									</label>
+									<label for="user_mapping_type-uid">
+										<input type="radio" id="user_mapping_type-uid" name="user_mapping_type" value="uid" />
+										<{$smarty.const._AM_SETTINGS_FORM_USER_MAPPING_TYPE_UID}>
+									</label>
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+
+				<!-- Section 2: Create entries for existing users -->
+				<{if $content.sync_groups|is_array AND $content.sync_groups|@count}>
+				<div class="form-item">
+					<fieldset>
+						<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_TITLE}></label></legend>
+						<div class="form-radios">
+							<label for="create_entries_yes_no-0">
+								<input type="radio" id="create_entries_yes_no-0" name="create_entries_yes_no" value="0" checked />
+								<{$smarty.const._AM_NO}>
+							</label>
+						</div>
+						<div class="form-radios">
+							<label for="create_entries_yes_no-1">
+								<input type="radio" id="create_entries_yes_no-1" name="create_entries_yes_no" value="1" />
+								<{$smarty.const._AM_YES}>
+							</label>
+						</div>
+						<div id="create_entries_details" style="display: none; margin-top: 15px;">
+							<div style="display: flex; gap: 30px;">
+								<div>
+									<label style="font-weight: bold; display: block; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_INCLUDE_GROUPS}></label>
+									<div style="max-height: 150px; overflow-y: auto; padding: 5px; border: 1px solid #ccc;">
+										<{foreach from=$content.sync_groups item=group}>
+										<div style="margin: 3px 0;"><label><input type="checkbox" name="create_entries_include_groups[]" value="<{$group.id}>" /> <{$group.name}></label></div>
+										<{/foreach}>
+									</div>
+								</div>
+								<div>
+									<label style="font-weight: bold; display: block; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_EXCLUDE_GROUPS}></label>
+									<div style="max-height: 150px; overflow-y: auto; padding: 5px; border: 1px solid #ccc;">
+										<{foreach from=$content.sync_groups item=group}>
+										<div style="margin: 3px 0;"><label><input type="checkbox" name="create_entries_exclude_groups[]" value="<{$group.id}>" /> <{$group.name}></label></div>
+										<{/foreach}>
+									</div>
+								</div>
+							</div>
+							<div style="margin-top: 15px;">
+								<label style="font-weight: bold; display: block; margin-bottom: 5px;"><{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_LABEL}></label>
+								<div class="form-radios">
+									<label>
+										<input type="radio" name="create_entries_proxy_mode" value="me" checked="checked" />
+										<{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_ME}> (<{$content.current_user_uname}>)
+									</label>
+								</div>
+								<div class="form-radios">
+									<label>
+										<input type="radio" name="create_entries_proxy_mode" value="self" />
+										<{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SELF}>
+									</label>
+								</div>
+								<div class="form-radios">
+									<label>
+										<input type="radio" name="create_entries_proxy_mode" value="specific" />
+										<{$smarty.const._AM_SETTINGS_FORM_CREATE_ENTRIES_PROXY_SPECIFIC}>
+									</label>
+								</div>
+								<div id="create_entries_proxy_user_container" style="display: none; margin-top: 8px;">
+									<{$content.sync_proxy_user_ui}>
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<{/if}>
+				<{/if}>
+
+			</div>
+
+			<!-- Group Sub-settings -->
+			<div id="entries_are_groups_container" style="display: none;">
+				<div class="form-item">
+					<fieldset>
+						<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_TYPE_GROUPS_SETTINGS}></label></legend>
+
+						<!-- Group Categories Configuration -->
+						<div id="group_categories_container" style="display: none; margin-top: 15px;">
+							<!-- Base category - always present, not editable -->
+							<div style="margin-top: 15px;">
+								<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+									<input type="text" value="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_ALL_USERS}>" style="flex: 1; max-width: 300px; background: #e9e9e9; color: #666;" disabled />
+								</div>
+							</div>
+
+							<div id="group_categories_list">
+								<!-- Additional categories will be listed here -->
+								<!-- For existing categories, the key ($groupid) is the group ID in the database -->
+								<!-- For new categories added via JS, the key will be "new_X" where X is a counter -->
+								<{if $content.group_categories|is_array}>
+								<{foreach from=$content.group_categories item=category key=groupid}>
+								<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+									<input type="text" name="group_categories[<{$groupid}>]" value="<{$category}>" maxlength="52" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />
+									<a class="conditionsdelete remove-category-btn" href="" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">X</a>
+								</div>
+								<{/foreach}>
+								<{/if}>
+							</div>
+
+							<div style="margin-top: 15px;">
+								<a id="add_group_category_btn" href=""><img src="../images/filenew2.png"> <{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_ADD}></a>
+							</div>
+
+							<p style="margin-top: 15px;"><em><{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_NOTE}></em></p>
+						</div>
+
+					</fieldset>
+				</div>
+			</div>
+
 		<{/if}>
 
 		<{if $content.fid != 'new'}>
@@ -102,17 +439,439 @@
         	<fieldset>
 				<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED}></label></legend>
 
-				<div class="form-radios">
-					<label for="group"><input type="radio" id="group" name="forms-single" value="group" /><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP}></label>
+				<div id="singleentry_groups_list">
+					<{foreach from=$content.singleentry_groups item=sg}>
+					<div class="singleentry-group-item" data-groupid="<{$sg.id}>" style="margin-bottom: 10px; padding: 8px; background: #f5f5f5; border-radius: 3px;">
+						<strong><{$sg.name}></strong>
+						<{if $sg.id != 2}> &mdash; <a href="#" class="remove-singleentry-group-btn" style="font-size: 0.85em;">Remove</a><{/if}>
+						<div class="form-radios" style="margin-top: 4px;">
+							<label><input type="radio" name="forms-single[<{$sg.id}>]" value="group" <{if $sg.value == 'group'}>checked="checked"<{/if}> /> <{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP}></label>
+							<label><input type="radio" name="forms-single[<{$sg.id}>]" value="user" <{if $sg.value == 'user'}>checked="checked"<{/if}> /> <{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERUSER}></label>
+							<label><input type="radio" name="forms-single[<{$sg.id}>]" value="off" <{if $sg.value == 'off'}>checked="checked"<{/if}> /> <{$smarty.const._AM_SETTINGS_FORM_ENTRIES_MORETHANONE}></label>
+						</div>
+					</div>
+					<{/foreach}>
 				</div>
-				<div class="form-radios">
-					<label for="on"><input type="radio" id="user" name="forms-single" value="user" /><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERUSER}></label>
+
+				<div style="margin-top: 8px;">
+					<label>Add group-specific setting:</label>
+					<{$content.singleentry_group_autocomplete_ui}>
 				</div>
-				<div class="form-radios">
-					<label for="empty"><input type="radio" id="off" name="forms-single" value="off" /><{$smarty.const._AM_SETTINGS_FORM_ENTRIES_MORETHANONE}></label>
+
+				<div class="description" style="margin-top: 8px;">
+					<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ALLOWED_PERGROUP_DESC}>
 				</div>
              </fieldset>
 		</div>
+
+		<script>
+		// Initialize 3-way form type selector
+		$("#entries_are_users_user_is_owner-<{$content.entries_are_users_user_is_owner|default:0}>").attr('checked', 'checked');
+		if (parseInt("<{$content.entries_are_users}>") == 1) {
+			$("#form_type-users").attr('checked', 'checked');
+			$("#entries_are_users_container").show();
+			$("#entries_are_users_user_is_owner_container").show();
+			$("#entries_are_users_default_groups_container").show();
+		} else if (parseInt("<{$content.entries_are_groups}>") == 1) {
+			$("#form_type-groups").attr('checked', 'checked');
+			$("#entries_are_groups_container").show();
+			$("#group_categories_container").show();
+		} else {
+			$("#form_type-data").attr('checked', 'checked');
+		}
+
+		// 3-way form type selector change handler
+		$("input[name='form_type']").change(function() {
+			var val = $(this).val();
+			var wasEntriesAreUsers = parseInt($("#forms_entries_are_users").val()) == 1;
+			if (val !== "users" && wasEntriesAreUsers && parseInt("<{$content.entries_are_users_has_associations|default:0}>") == 1) {
+				if (!confirm("<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DISABLE_WARNING}>")) {
+					$("#form_type-users").attr('checked', 'checked');
+					return;
+				}
+			}
+			if (val === "users") {
+				$("#forms_entries_are_users").val(1);
+				$("#forms_entries_are_groups").val(0);
+				$("#entries_are_users_container").slideDown();
+				$("#entries_are_groups_container").slideUp();
+				$("#entries_are_users_user_is_owner_container").slideDown();
+				$("#entries_are_users_default_groups_container").slideDown();
+			} else if (val === "groups") {
+				$("#forms_entries_are_users").val(0);
+				$("#forms_entries_are_groups").val(1);
+				$("#entries_are_users_container").slideUp();
+				$("#entries_are_groups_container").slideDown();
+				$("#group_categories_container").slideDown();
+			} else {
+				$("#forms_entries_are_users").val(0);
+				$("#forms_entries_are_groups").val(0);
+				$("#entries_are_users_container").slideUp();
+				$("#entries_are_groups_container").slideUp();
+			}
+		});
+
+		// User creation scope toggle
+		$("input[name='entries_are_users_creation_scope']").change(function() {
+			if ($(this).val() === "conditional") {
+				$("#entries_are_users_conditions_container").slideDown();
+			} else {
+				$("#entries_are_users_conditions_container").slideUp();
+			}
+		});
+
+		// User mapping yes/no toggle
+		$("input[name='user_mapping_yes_no']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#user_mapping_details").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#user_mapping_details").slideUp();
+			}
+		});
+
+		// Create entries yes/no toggle
+		$("input[name='create_entries_yes_no']").change(function() {
+			if ($(this).val() == "1" && $(this).is(':checked')) {
+				$("#create_entries_details").slideDown();
+			} else if ($(this).val() == "0" && $(this).is(':checked')) {
+				$("#create_entries_details").slideUp();
+			}
+		});
+
+		// Create entries proxy mode toggle
+		$("input[name='create_entries_proxy_mode']").change(function() {
+			if ($(this).val() == "specific" && $(this).is(':checked')) {
+				$("#create_entries_proxy_user_container").slideDown();
+			} else {
+				$("#create_entries_proxy_user_container").slideUp();
+			}
+		});
+
+		// Group categories management
+		// Counter for new categories (keys will be "new_0", "new_1", etc.)
+		var newCategoryCounter = 0;
+		$("#add_group_category_btn").click(function(e) {
+			e.preventDefault();
+			var newKey = 'new_' + newCategoryCounter;
+			newCategoryCounter++;
+			var newCategoryHtml = '<div class="group-category-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">' +
+				'<input type="text" name="group_categories[' + newKey + ']" value="" maxlength="52" style="flex: 1; max-width: 300px;" placeholder="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_PLACEHOLDER}>" />' +
+				'<a class="conditionsdelete remove-category-btn" href="" title="<{$smarty.const._AM_SETTINGS_FORM_GROUP_CATEGORIES_REMOVE}>">X</a>' +
+				'</div>';
+			$("#group_categories_list").append(newCategoryHtml);
+			// Focus on the new input
+			$("#group_categories_list .group-category-item:last-child input").focus();
+		});
+
+		// Remove category button handler (using delegation for dynamically added elements)
+		$(".remove-category-btn").live("click", function(e) {
+			e.preventDefault();
+			$(this).closest(".group-category-item").remove();
+		});
+
+		// Template group metadata for element checkboxes and descriptions
+		var templateGroupMetadata = <{$content.template_group_metadata_json}>;
+
+		var removeLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_REMOVE}>";
+		var conditionsShowLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_SHOW}>";
+		var conditionsHideLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_HIDE}>";
+		var conditionLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITION}>";
+		var conditionsLabel = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_CONDITIONS_CONDITIONS}>";
+
+		function buildConditionsLinkText(count, isOpen) {
+			if (isOpen) return conditionsHideLabel;
+			if (count === 1) return conditionsShowLabel + ' 1 ' + conditionLabel;
+			if (count > 1) return conditionsShowLabel + ' ' + count + ' ' + conditionsLabel;
+			return conditionsShowLabel + ' ' + conditionsLabel;
+		}
+		function addToOpenPanels(groupId) {
+			var current = $("#open_group_conditions_panels").val();
+			var panels = current ? current.split(',').filter(function(s) { return s !== ''; }) : [];
+			if (panels.indexOf(String(groupId)) === -1) { panels.push(String(groupId)); }
+			$("#open_group_conditions_panels").val(panels.join(','));
+		}
+		function removeFromOpenPanels(groupId) {
+			var current = $("#open_group_conditions_panels").val();
+			var panels = current ? current.split(',').filter(function(s) { return s !== ''; }) : [];
+			var idx = panels.indexOf(String(groupId));
+			if (idx !== -1) { panels.splice(idx, 1); }
+			$("#open_group_conditions_panels").val(panels.join(','));
+		}
+
+		// Restore conditions panels that were open before a save+reload
+		(function() {
+			var openPanelsStr = "<{$content.open_group_conditions_panels|default:''}>";
+			if (!openPanelsStr) return;
+			var openPanels = openPanelsStr.split(',').filter(function(s) { return s !== ''; });
+			for (var i = 0; i < openPanels.length; i++) {
+				var gid = openPanels[i];
+				var $panel = $(".per-group-conditions-panel[data-groupid='" + gid + "']");
+				var $btn = $(".toggle-group-conditions-btn[data-groupid='" + gid + "']");
+				if ($panel.length) {
+					$panel.show();
+					var count = parseInt($btn.attr('data-condition-count')) || 0;
+					$btn.text(buildConditionsLinkText(count, true));
+					addToOpenPanels(gid);
+				}
+			}
+		})();
+
+		// Helper: build group item HTML for a template group inside a cluster
+		function buildTemplateGroupItemHtml(groupId, groupName, eagFormId) {
+			return '<div class="default-group-item template-group-in-cluster" data-groupid="' + groupId + '" style="margin-bottom: 6px;">' +
+				'<span style="font-weight: bold;">' + groupName + '</span>' +
+				' <span>&mdash;</span> ' +
+				'<a href="#" class="toggle-group-conditions-btn" data-groupid="' + groupId + '" style="font-size: 0.85em; font-weight: normal;">' + conditionsShowLabel + ' conditions</a>' +
+				' <span>&mdash;</span> ' +
+				'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
+				'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
+				'<input type="hidden" name="entries_are_users_default_groups_form_map[' + groupId + ']" value="' + eagFormId + '" />' +
+				'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">' +
+				'<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>' +
+				'</div>' +
+				'</div>';
+		}
+
+		// Language constant templates for cluster descriptions
+		var templateDescPattern = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC}>";
+		var templateDescFallbackPattern = "<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_DESC_FALLBACK}>";
+
+		// Helper: build description text from a list of category names and metadata
+		function buildClusterDescription(categoryNames, meta) {
+			var catList = categoryNames.join(', ');
+			if (meta.hasLinkedElements) {
+				return templateDescPattern.replace('%s', meta.formPlural);
+			} else {
+				return templateDescFallbackPattern.replace('%s', meta.formTitle || meta.formPlural);
+			}
+		}
+
+		// Helper: update the description text for a cluster based on current groups in it
+		function updateClusterDescription($cluster) {
+			// Collect category names from all template groups in this cluster
+			var categoryNames = [];
+			var firstMeta = null;
+			$cluster.find('.template-group-in-cluster').each(function() {
+				var gid = String($(this).attr('data-groupid'));
+				var meta = templateGroupMetadata[gid];
+				if (meta) {
+					categoryNames.push(meta.categoryName);
+					if (!firstMeta) {
+						firstMeta = meta;
+					}
+				}
+			});
+			if (categoryNames.length > 0 && firstMeta) {
+				var desc = buildClusterDescription(categoryNames, firstMeta);
+				var $descEl = $cluster.find('.template-group-cluster-description');
+				if ($descEl.length) {
+					$descEl.text(desc);
+				} else {
+					// Description element doesn't exist yet, create it before the checkboxes table
+					var $cbs = $cluster.find('.template-group-cluster-checkboxes');
+					var descHtml = '<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 4px;">' + desc + '</div>';
+					if ($cbs.length) {
+						$cbs.before(descHtml);
+					} else {
+						$cluster.append(descHtml);
+					}
+				}
+			}
+		}
+
+		// Helper: build a new cluster container with checkboxes grouped by form
+		function buildClusterHtml(eagFormId, meta, firstGroupId, firstGroupName) {
+			var html = '<div class="template-group-cluster" data-eagformid="' + eagFormId + '" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">';
+			html += buildTemplateGroupItemHtml(firstGroupId, firstGroupName, eagFormId);
+			var desc = buildClusterDescription([meta.categoryName], meta);
+			if (meta.hasLinkedElements && meta.elementsByForm && meta.elementsByForm.length > 0) {
+				html += '<div class="template-group-cluster-element-config" style="margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;">';
+				html += '<p class="template-group-cluster-description" style="margin: 0 0 6px 0; font-size: 0.85em; font-weight: bold; color: #333;">' + desc + '</p>';
+				html += '<table class="template-group-cluster-checkboxes" style="margin-top: 0; font-size: 0.9em; border: none; border-collapse: collapse;">';
+				for (var f = 0; f < meta.elementsByForm.length; f++) {
+					var fg = meta.elementsByForm[f];
+					html += '<tr><td style="vertical-align: top; padding: 4px 12px 4px 0; width: 200px; text-align: right; border: none;">' + fg.formName + ':</td>';
+					html += '<td style="vertical-align: top; padding: 4px 0; border: none;">';
+					for (var i = 0; i < fg.elements.length; i++) {
+						var le = fg.elements[i];
+						html += '<label style="display: block;">' +
+							'<input type="checkbox" name="entries_are_users_default_groups_element_links[' + eagFormId + '][]"' +
+							' value="' + le.ele_id + '"' +
+							' class="template-group-element-checkbox"' +
+							' checked="checked" />' +
+							' ' + le.caption +
+							'</label>';
+					}
+					html += '</td></tr>';
+				}
+				html += '</table>';
+				html += '</div>';
+			} else {
+				html += '<div class="template-group-cluster-description" style="font-size: 0.85em; font-style: italic; color: #666; margin-top: 6px; padding-top: 8px; border-top: 1px solid #d0d0d0;">' + desc + '</div>';
+			}
+			html += '</div>';
+			return html;
+		}
+
+		// Override the default groups autocomplete select behaviour
+		// Instead of setting the textbox value, add the selected group to a list below
+		$(window).load(function() {
+			// Remove the original single-value hidden input so it doesn't conflict with the array inputs
+			$("#entries_are_users_default_groups").remove();
+			var $ac = $("#entries_are_users_default_groups_user");
+			if ($ac.length && $ac.data("autocomplete")) {
+				// Prevent hover from selecting/changing the textbox value
+				$ac.autocomplete("option", "focus", function(event, ui) {
+					event.preventDefault();
+				});
+				$ac.autocomplete("option", "select", function(event, ui) {
+					event.preventDefault();
+					if (ui.item.value == "none") {
+						$ac.val("");
+						return;
+					}
+					var groupId = ui.item.value;
+					var groupName = ui.item.label;
+					// Check if this group is already in the list
+					if ($("#default_groups_selected_list .default-group-item[data-groupid='" + groupId + "']").length > 0) {
+						$ac.val("");
+						return;
+					}
+					var meta = templateGroupMetadata[groupId];
+					if (meta) {
+						// Template group — add to existing cluster or create new one
+						var eagFormId = meta.eagFormId;
+						var $existingCluster = $(".template-group-cluster[data-eagformid='" + eagFormId + "']");
+						if ($existingCluster.length > 0) {
+							// Add group item before the description/checkboxes section
+							var $desc = $existingCluster.find(".template-group-cluster-description");
+							var $cbs = $existingCluster.find(".template-group-cluster-checkboxes");
+							var $insertBefore = $desc.length ? $desc : ($cbs.length ? $cbs : null);
+							if ($insertBefore) {
+								$insertBefore.before(buildTemplateGroupItemHtml(groupId, groupName, eagFormId));
+							} else {
+								$existingCluster.append(buildTemplateGroupItemHtml(groupId, groupName, eagFormId));
+							}
+							// Update the description to include the new category name
+							updateClusterDescription($existingCluster);
+						} else {
+							// Create a new cluster
+							$("#default_groups_selected_list").append(buildClusterHtml(eagFormId, meta, groupId, groupName));
+						}
+					} else {
+						// Regular group — add as standalone item
+						var itemHtml = '<div class="default-group-item" data-groupid="' + groupId + '" style="border: 1px solid #d0d0d0; border-radius: 3px; padding: 8px 10px; margin-bottom: 6px; background: #f8f8f8;">' +
+							'<span style="font-weight: bold;">' + groupName + '</span>' +
+							' <span>&mdash;</span> ' +
+							'<a href="#" class="toggle-group-conditions-btn" data-groupid="' + groupId + '" style="font-size: 0.85em; font-weight: normal;">' + conditionsShowLabel + ' conditions</a>' +
+							' <span>&mdash;</span> ' +
+							'<a href="#" class="remove-default-group-btn" style="font-size: 0.85em; font-weight: normal;">' + removeLabel + '</a>' +
+							'<input type="hidden" name="entries_are_users_default_groups[]" value="' + groupId + '" />' +
+							'<div class="per-group-conditions-panel" data-groupid="' + groupId + '" style="display: none; margin-top: 8px; padding: 10px; border: 1px solid #ddd; background: #fff; border-radius: 3px;">' +
+							'<p style="font-size: 0.85em; color: #999;">No conditions set. Save the form to enable adding conditions for this group.</p>' +
+							'</div>' +
+							'</div>';
+						$("#default_groups_selected_list").append(itemHtml);
+					}
+					$ac.val("");
+				});
+				// Also override the blur to just clear the box without setting the hidden value
+				$ac.unbind("blur").blur(function() {
+					$ac.val("");
+				});
+			}
+		});
+
+		// Remove default group from list — if it's the last group in a cluster, remove the whole cluster
+		$(".remove-default-group-btn").live("click", function(e) {
+			e.preventDefault();
+			var $item = $(this).closest(".default-group-item");
+			var $cluster = $item.closest(".template-group-cluster");
+			$item.remove();
+			if ($cluster.length > 0) {
+				if ($cluster.find(".template-group-in-cluster").length == 0) {
+					$cluster.remove();
+				} else {
+					// Update description to reflect remaining categories
+					updateClusterDescription($cluster);
+				}
+			}
+		});
+
+		// Toggle per-group conditions panel visibility
+		$(".toggle-group-conditions-btn").live("click", function(e) {
+			e.preventDefault();
+			var $link = $(this);
+			var $panel = $link.closest(".default-group-item, .template-group-in-cluster").find(".per-group-conditions-panel");
+			var groupId = String($link.attr('data-groupid'));
+			var count = parseInt($link.attr('data-condition-count')) || 0;
+			if ($panel.is(':visible')) {
+				$panel.slideUp();
+				$link.text(buildConditionsLinkText(count, false));
+				removeFromOpenPanels(groupId);
+			} else {
+				$panel.slideDown();
+				$link.text(buildConditionsLinkText(count, true));
+				addToOpenPanels(groupId);
+			}
+		});
+
+		// Handle add condition button for per-group conditions (save+reload pattern)
+		$(".per-group-conditions-panel input[name=addcon]").live("click", function() {
+			$("#reload_settings").val(1);
+			$(".savebutton").click();
+			return false;
+		});
+
+		// Handle delete condition link for per-group conditions
+		$(".per-group-conditions-panel a.conditionsdelete").live("click", function() {
+			$("#per_group_conditionsdelete").val($(this).attr('target'));
+			$("#reload_settings").val(1);
+			$(".savebutton").click();
+			return false;
+		});
+
+		// Singleentry per-group autocomplete behavior
+		$(window).load(function() {
+			// Remove the hidden input generated by the autocomplete element so it doesn't conflict with array inputs
+			$("#singleentry_add_group").remove();
+			var $seAc = $("#singleentry_add_group_user");
+			if ($seAc.length && $seAc.data("autocomplete")) {
+				$seAc.autocomplete("option", "focus", function(event, ui) {
+					event.preventDefault();
+				});
+				$seAc.autocomplete("option", "select", function(event, ui) {
+					event.preventDefault();
+					if (ui.item.value == "none") { $seAc.val(""); return; }
+					var groupId = ui.item.value;
+					var groupName = ui.item.label;
+					// Check if already present
+					if ($("#singleentry_groups_list .singleentry-group-item[data-groupid='" + groupId + "']").length > 0) {
+						$seAc.val("");
+						return;
+					}
+					var html = '<div class="singleentry-group-item" data-groupid="' + groupId + '" style="margin-bottom: 10px; padding: 8px; background: #f5f5f5; border-radius: 3px;">' +
+						'<strong>' + groupName + '</strong> &mdash; <a href="#" class="remove-singleentry-group-btn" style="font-size: 0.85em;">Remove</a>' +
+						'<div class="form-radios" style="margin-top: 4px;">' +
+						'<label><input type="radio" name="forms-single[' + groupId + ']" value="group" /> <{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP}></label>' +
+						'<label><input type="radio" name="forms-single[' + groupId + ']" value="user" /> <{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ONEPERUSER}></label>' +
+						'<label><input type="radio" name="forms-single[' + groupId + ']" value="off" checked="checked" /> <{$smarty.const._AM_SETTINGS_FORM_ENTRIES_MORETHANONE}></label>' +
+						'</div></div>';
+					$("#singleentry_groups_list").append(html);
+					$seAc.val("");
+				});
+				$seAc.unbind("blur").blur(function() {
+					$seAc.val("");
+				});
+			}
+		});
+		// Remove singleentry group
+		$(".remove-singleentry-group-btn").live("click", function(e) {
+			e.preventDefault();
+			$(this).closest(".singleentry-group-item").remove();
+		});
+		</script>
+
 			<div class="form-item">
 				<fieldset>
 					<legend><label class="question">Do you want to keep a revision history of all the changes people make to entries in this form?</label></legend>
@@ -142,6 +901,7 @@
 					</div>
 				</fieldset>
 			</div>
+
 
 	<{/if}>
 
@@ -188,7 +948,6 @@
 <!-- Thanks to https://github.com/plurals/pluralize/ !! -->
 <script type="text/javascript" src="<{$xoops_url}>/modules/formulize/libraries/pluralize.js"></script>
 <script type="text/javascript">
-  $("#<{$content.singleentry}>").attr('checked', true);
   $("#store_revisions-<{$content.store_revisions}>").attr('checked', true);
   $("#send_digests-<{$content.send_digests}>").attr('checked', true);
 
@@ -204,16 +963,25 @@
 		}
 		});
 
-	$(".savebutton").click(function() {
-		if($("[name=forms-form_title]").val() == "") {
-			alert("Forms must have a name!");
-			$("[name=forms-form_title]").focus();
-		}
+	function validateCustom() {
 		if ($("[name=forms-form_handle]").val() == "") {
 			fillHandle();
 		}
-
-	});
+		// Validate that each template group cluster has at least one element checkbox selected
+		var templateGroupValid = true;
+		$(".template-group-cluster").each(function() {
+			var $checkboxes = $(this).find(".template-group-element-checkbox");
+			if ($checkboxes.length > 0 && $checkboxes.filter(":checked").length == 0) {
+				templateGroupValid = false;
+				return false; // break out of each loop
+			}
+		});
+		if (!templateGroupValid) {
+			alert("<{$smarty.const._AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TEMPLATE_VALIDATION}>");
+			return false;
+		}
+		return true;
+	}
 	function fillHandle(){
 		var str=$("[name=forms-form_title]").val();
 		if ("<{$content.fid}>" == "new") {
@@ -256,6 +1024,21 @@
 	});
 	$('input[name=pi_new_caption]').change(function() {
 		$('input[name=pi_new_yes_no][value=yes]').attr('checked', true);
+	});
+
+	// Handle add condition button for entries_are_users_conditions (only for existing forms)
+	$("div#entries_are_users_conditions_container input[name=addcon]").click(function () {
+		$("#reload_settings").val(1);
+		$(".savebutton").click();
+		return false;
+	});
+
+	// Handle delete condition link for entries_are_users_conditions
+	$("div#entries_are_users_conditions_container a.conditionsdelete").click(function () {
+		$(".entries-are-users-conditions-conditionsdelete").val($(this).attr('target'));
+		$("#reload_settings").val(1);
+		$(".savebutton").click();
+		return false;
 	});
 
 </script>

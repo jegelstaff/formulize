@@ -1,0 +1,156 @@
+<{* Persist this entry group in the groups[] selection across reloads *}>
+<input type="hidden" name="groups[]" value="<{$groupperm.id}>">
+<input type="hidden" name="group_list[]" value=<{$groupperm.id}>>
+<input type="hidden" name="entry_group_ids[]" value=<{$groupperm.id}>>
+
+<div class="form-item entry-group-panel">
+    <fieldset>
+        <legend><label class="question"><{$groupperm.name}></label></legend>
+        <div class="entry-group-notice"><{$groupperm.entry_group_notice}></div>
+
+        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_ACCESS}></b></p>
+        <div class="permissiongroup">
+            <{if $groupperm.view_form_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;">Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.</em></label>
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_form" value=1 <{$groupperm.view_form}> id="<{$content.fid}>_<{$groupperm.id}>_view_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_form"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEWFORM}><br /><em style="font-size:.85em;">Gives group members access to this form, and makes this group one of <b>their groups</b> for updating, deleting, and viewing entries.</em></label>
+            <{/if}>
+        </div>
+
+        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_BASIC}></b></p>
+        <div class="permissiongroup">
+            <{if $groupperm.add_own_entry_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_add_own_entry">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_add_own_entry"><{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_add_own_entry" value=1 <{$groupperm.add_own_entry}> id="<{$content.fid}>_<{$groupperm.id}>_add_own_entry">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_add_own_entry"><{$smarty.const._AM_PERMISSIONS_DEFINE_CREATEOWNENTRIES}></label><br />
+            <{/if}>
+            <div style="margin-top:0.6em;">
+                <{if $groupperm.update_own_entry_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_update_own_entry">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_own_entry"><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_update_own_entry" value=1 <{$groupperm.update_own_entry}> id="<{$content.fid}>_<{$groupperm.id}>_update_own_entry">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_own_entry"><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOWNENTRIES}></label><br />
+                <{/if}>
+                <{if $groupperm.update_group_entries_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_update_group_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_group_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_update_group_entries" value=1 <{$groupperm.update_group_entries}> id="<{$content.fid}>_<{$groupperm.id}>_update_group_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_group_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATE_GROUP_ENTRIES}></label><br />
+                <{/if}>
+                <{if $groupperm.update_other_entries_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_update_other_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_other_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_update_other_entries" value=1 <{$groupperm.update_other_entries}> id="<{$content.fid}>_<{$groupperm.id}>_update_other_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_other_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_UPDATEOTHERENTRIES}></label><br />
+                <{/if}>
+            </div>
+            <div style="margin-top:0.6em;">
+                <{if $groupperm.delete_own_entry_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry"><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry" value=1 <{$groupperm.delete_own_entry}> id="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_own_entry"><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOWNENTRIES}></label><br />
+                <{/if}>
+                <{if $groupperm.delete_group_entries_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries" value=1 <{$groupperm.delete_group_entries}> id="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_group_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETE_GROUP_ENTRIES}></label><br />
+                <{/if}>
+                <{if $groupperm.delete_other_entries_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries" value=1 <{$groupperm.delete_other_entries}> id="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_other_entries"><{$smarty.const._AM_PERMISSIONS_DEFINE_DELETEOTHERENTRIES}></label><br />
+                <{/if}>
+            </div>
+        </div>
+
+        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY}></b></p>
+        <div class="permissiongroup">
+            <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_their_own">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_their_own"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_THEIROWN}></label><br />
+                <{if $groupperm.view_groupscope_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_groupscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_groupscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}><br /><em style="font-size:.85em"><{$groupperm.groupscope_text}></em></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_groupscope" value=1 <{$groupperm.view_groupscope}> id="<{$content.fid}>_<{$groupperm.id}>_view_groupscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_groupscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPONLY}><br /><em style="font-size:.85em"><{$groupperm.groupscope_text}></em></label><br />
+                <{/if}>
+                <{if $groupperm.view_globalscope_inherited}>
+                    <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_globalscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_globalscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}></label><br />
+                <{else}>
+                    <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_globalscope" value=1 <{$groupperm.view_globalscope}> id="<{$content.fid}>_<{$groupperm.id}>_view_globalscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_globalscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWALL}></label><br />
+                <{/if}>
+            <{if $groupperm.filter_conditions.all || $groupperm.filter_conditions.oom}>
+                <div style="margin-top:0.4em;padding-left:2.2em;">
+                    <{$smarty.const._AM_ENTRY_GROUP_CONDITIONS_LABEL}><br />
+                    <ul style="margin:0;padding:0 0 0 1em;font-size:.85em;font-style:italic;">
+                    <{foreach from=$groupperm.filter_conditions.all item=cond}><li style="margin:0;padding:0;"><{$cond}></li><{/foreach}>
+                    <{foreach from=$groupperm.filter_conditions.oom item=cond}><li style="margin:0;padding:0;"><{$cond}></li><{/foreach}>
+                    </ul>
+                </div>
+            <{/if}>
+        </div>
+
+        <p><b><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_CONDITIONS}></b></p>
+        <div class="permissiongroup">
+            <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_eg_own">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_eg_own"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_THEIROWN}></label><br />
+            <{if $groupperm.publish_reports_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_publish_reports">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_publish_reports"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_publish_reports" value=1 <{$groupperm.publish_reports}> id="<{$content.fid}>_<{$groupperm.id}>_publish_reports">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_publish_reports"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_INTHEIR}></label><br />
+            <{/if}>
+            <{if $groupperm.publish_globalscope_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope" value=1 <{$groupperm.publish_globalscope}> id="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_publish_globalscope"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_FOROTHER}></label><br />
+            <{/if}>
+            <{if $groupperm.update_other_reports_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_update_other_reports">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_other_reports"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_update_other_reports" value=1 <{$groupperm.update_other_reports}> id="<{$content.fid}>_<{$groupperm.id}>_update_other_reports">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_other_reports"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_UPDATE}></label><br />
+            <{/if}>
+            <{if $groupperm.delete_other_reports_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports" value=1 <{$groupperm.delete_other_reports}> id="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_other_reports"><{$smarty.const._AM_PERMISSIONS_DEFINE_VIEW_DELETE}></label><br />
+            <{/if}>
+        </div>
+
+        <p><b><{$smarty.const._AM_PERMISSIONS_ADVANCED}></b></p>
+        <div class="permissiongroup">
+            <{if $groupperm.view_private_elements_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_view_private_elements">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_private_elements"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_view_private_elements" value=1 <{$groupperm.view_private_elements}> id="<{$content.fid}>_<{$groupperm.id}>_view_private_elements">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_view_private_elements"><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_PRIVATE}></label><br />
+            <{/if}>
+            <{if $groupperm.import_data_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_import_data">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_import_data"><{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_import_data" value=1 <{$groupperm.import_data}> id="<{$content.fid}>_<{$groupperm.id}>_import_data">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_import_data"><{$smarty.const._AM_PERMISSIONS_ADVANCED_IMPORT}></label><br />
+            <{/if}>
+            <{if $groupperm.set_notifications_for_others_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others"><{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others" value=1 <{$groupperm.set_notifications_for_others}> id="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_set_notifications_for_others"><{$smarty.const._AM_PERMISSIONS_ADVANCED_NOTIFICATIONS}></label><br />
+            <{/if}>
+            <{if $groupperm.add_proxy_entries_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries"><{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries" value=1 <{$groupperm.add_proxy_entries}> id="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_add_proxy_entries"><{$smarty.const._AM_PERMISSIONS_ADVANCED_CREATEFOROTHER}></label><br />
+            <{/if}>
+            <{if $groupperm.update_entry_ownership_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership"><{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership" value=1 <{$groupperm.update_entry_ownership}> id="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_update_entry_ownership"><{$smarty.const._AM_PERMISSIONS_ADVANCED_CHANGEOWNER}></label><br />
+            <{/if}>
+            <{if $groupperm.ignore_editing_lock_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock"><{$smarty.const._AM_PERMISSIONS_ADVANCED_IGNORELOCK}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock" value=1 <{$groupperm.ignore_editing_lock}> id="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_ignore_editing_lock"><{$smarty.const._AM_PERMISSIONS_ADVANCED_IGNORELOCK}></label><br />
+            <{/if}>
+            <{if $groupperm.edit_form_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_edit_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_edit_form"><{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}></label><br />
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_edit_form" value=1 <{$groupperm.edit_form}> id="<{$content.fid}>_<{$groupperm.id}>_edit_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_edit_form"><{$smarty.const._AM_PERMISSIONS_ADVANCED_ALTER}></label><br />
+            <{/if}>
+            <{if $groupperm.delete_form_inherited}>
+                <input type="checkbox" disabled="disabled" checked="checked" id="<{$content.fid}>_<{$groupperm.id}>_delete_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_form"><{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}></label>
+            <{else}>
+                <input type="checkbox" name="<{$content.fid}>_<{$groupperm.id}>_delete_form" value=1 <{$groupperm.delete_form}> id="<{$content.fid}>_<{$groupperm.id}>_delete_form">&nbsp;&nbsp;<label for="<{$content.fid}>_<{$groupperm.id}>_delete_form"><{$smarty.const._AM_PERMISSIONS_ADVANCED_DELETEFORM}></label>
+            <{/if}>
+        </div>
+    </fieldset>
+</div>

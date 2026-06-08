@@ -21,76 +21,79 @@
 // ------------------------------------------------------------------------- //
 
 function block_formulizeMENU_show() {
-        global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
-		    $myts = MyTextSanitizer::getInstance();
+	global $xoopsDB, $xoopsUser, $xoopsModule, $myts;
+	$myts = MyTextSanitizer::getInstance();
 
-		if(!defined('_AM_NOFORMS_AVAIL')) {
-				include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';
-		}
+	if (!defined('_AM_NOFORMS_AVAIL')) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/main.php';
+	}
 
+	$block = array();
+	$block['title'] = "";
 
-        $block = array();
-        $groups = array();
-        $block['title'] = ""; //_MB_formulizeMENU_TITLE;
-        $block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">";
+	include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
 
-	// MODIFIED April 25/05 to handle menu categories
+	$id_form = ((isset($_GET['fid'])) AND is_numeric($_GET['fid'])) ? intval($_GET['fid']) : "";
+	$id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form;
 
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
-
-	// GENERATE THE ID_FORM
-	$id_form = ((isset( $_GET['fid'])) AND is_numeric( $_GET['fid'])) ? intval( $_GET['fid']) : "" ;
-    $id_form = ((isset($_POST['fid'])) AND is_numeric($_POST['fid'])) ? intval($_POST['fid']) : $id_form ;
-
-    $application_handler = xoops_getmodulehandler('applications', 'formulize');
+	$application_handler = xoops_getmodulehandler('applications', 'formulize');
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$allApplications = $application_handler->getAllApplications();
 	$menuTexts = array();
 	$i = 0;
 
-        foreach($allApplications as $thisApplication) {
-
-        		$links = $thisApplication->getVar('links');
-
-        		if(count((array) $links) > 0){
-
-            			$menuTexts[$i]['application'] = $thisApplication;
-
-            			$menuTexts[$i]['links'] = $links;
-
-            			$i++;
-
-            		}
- 	}
+	foreach ($allApplications as $thisApplication) {
+		$links = $thisApplication->getVar('links');
+		if (count((array)$links) > 0) {
+			$menuTexts[$i]['application'] = $thisApplication;
+			$menuTexts[$i]['links'] = $links;
+			$i++;
+		}
+	}
 	$links = $application_handler->getMenuLinksForApp(0);
-	if(count((array) $links)>0) {
-        $menuTexts[$i]['links'] = $links;
-        $menuTexts[$i]['application'] = 0;
-  }
-	if(count((array) $menuTexts) == 0) { // if no menu entries were found, return nothing
-				$block['content'] = _AM_NOFORMS_AVAIL;
-				return $block;
-  }
-	$forceOpen = count((array) $menuTexts)==1 ? true : false;
-    $menuData = array();
-	foreach($menuTexts as $thisMenuData) {
-				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
-                $block['content'] .= $content;
-                $menuData[] = $data;
+	if (count((array)$links) > 0) {
+		$menuTexts[$i]['links'] = $links;
+		$menuTexts[$i]['application'] = 0;
 	}
 
-  $block['content'] .= "</td></tr></table>";
+	include_once XOOPS_ROOT_PATH . '/modules/formulize/include/usersAndGroups.php';
+	list($ugContent, $ugData) = drawUsersAndGroupsMenuSection();
 
-  $module_handler = xoops_gethandler('module');
-  $config_handler = xoops_gethandler('config');
-  $formulizeModule = $module_handler->getByDirname("formulize");
-  $formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
-  if($formulizeConfig['f7MenuTemplate']) {
-    $block['content'] = $menuData;
-  }
+	$hasMenuEntries = count((array)$menuTexts) > 0;
+	$hasUgSection = ($ugContent !== false);
 
-  return $block;
+	if ($hasMenuEntries || $hasUgSection) {
+		$innerContent = "";
+		$menuData = array();
 
+		if ($hasMenuEntries) {
+			$forceOpen = count((array)$menuTexts) == 1;
+			foreach ($menuTexts as $thisMenuData) {
+				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+				$innerContent .= $content;
+				$menuData[] = $data;
+			}
+		}
+
+		if ($hasUgSection) {
+			$innerContent .= $ugContent;
+			$menuData[] = $ugData;
+		}
+
+		$block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">" . $innerContent . "</td></tr></table>";
+
+		$module_handler = xoops_gethandler('module');
+		$config_handler = xoops_gethandler('config');
+		$formulizeModule = $module_handler->getByDirname("formulize");
+		$formulizeConfig = $config_handler->getConfigsByCat(0, $formulizeModule->getVar('mid'));
+		if ($formulizeConfig['f7MenuTemplate']) {
+			$block['content'] = $menuData;
+		}
+	} else {
+		$block['content'] = _AM_NOFORMS_AVAIL;
+	}
+
+	return $block;
 }
 
 function getMenuTextsForForms($forms, $form_handler) {

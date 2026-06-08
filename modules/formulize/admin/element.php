@@ -182,6 +182,12 @@ if ($_GET['ele_id'] != "new") {
 	$ele_type = $_GET['type'];
 	if (file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 		$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
+		if ($customTypeHandler) {
+			$customTypeObject = $customTypeHandler->create();
+			if (!empty($customTypeObject->isVirtualElement)) {
+				throw new Exception('Virtual element types are managed automatically by the system and cannot be added to forms manually.');
+			}
+		}
 	}
 	$ele_value = array();
 	$ele_delim = "br";
@@ -268,6 +274,8 @@ $common['aid'] = $aid;
 $common['type'] = $ele_type;
 $common['typeIsSelect'] = anySelectElementType($ele_type);
 $common['uid'] = $xoopsUser->getVar('uid');
+$common['isSystemElement'] = $elementObject ? $elementObject->isSystemElement : false;
+$common['isUserAccountElement'] = $elementObject ? $elementObject->isUserAccountElement : false;
 
 $options = array();
 $options['ele_delim'] = $ele_delim;
@@ -335,12 +343,14 @@ $adminPage['tabs'][$tabindex]['name'] = _AM_ELE_NAMEANDSETTINGS;
 $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_names.html";
 $adminPage['tabs'][$tabindex]['content'] = $names+$common;
 
-$adminPage['tabs'][++$tabindex]['name'] = "Options";
-$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
-if (count((array) $customValues)>0) {
-	$adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
-} else {
-	$adminPage['tabs'][$tabindex]['content'] = $options + $common;
+if(!$elementObject OR $elementObject->isSystemElement == false OR $ele_type == 'userAccountPhone' OR $ele_type == 'userAccountFirstName' OR $ele_type == 'userAccountLastName' OR $ele_type == 'userAccountUsername' OR $ele_type == 'userAccountEmail') {
+	$adminPage['tabs'][++$tabindex]['name'] = "Options";
+	$adminPage['tabs'][$tabindex]['template'] = "db:admin/element_options.html";
+	if (count((array) $customValues)>0) {
+		$adminPage['tabs'][$tabindex]['content'] = $customValues + $options + $common;
+	} else {
+		$adminPage['tabs'][$tabindex]['content'] = $options + $common;
+	}
 }
 
 $adminPage['tabs'][++$tabindex]['name'] = _AM_ELE_DISPLAYSETTINGS;
@@ -358,7 +368,7 @@ if ($ele_id == "new") {
 }
 
 
-if ($advanced['datatypeui'] OR $advanced['ele_encrypt_show']) {
+if ($elementObject->isSystemElement == false AND ($advanced['datatypeui'] OR $advanced['ele_encrypt_show'])) {
     $adminPage['tabs'][++$tabindex]['name'] = "Advanced";
     $adminPage['tabs'][$tabindex]['template'] = "db:admin/element_advanced.html";
     $adminPage['tabs'][$tabindex]['content'] = $advanced + $common + $advancedCustomValues;

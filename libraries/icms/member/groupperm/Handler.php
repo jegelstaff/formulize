@@ -401,5 +401,56 @@ class icms_member_groupperm_Handler extends icms_core_ObjectHandler {
 		return $ret;
 	}
 
+	/**
+	 * Copy all permission records from one item to another within the same module.
+	 * Deletes existing permissions for the target item before copying.
+	 *
+	 * @param   int  $sourceItemId  The item ID to copy permissions from (e.g. a form ID)
+	 * @param   int  $targetItemId  The item ID to copy permissions to (e.g. a form ID)
+	 * @param   int  $gperm_modid   The module ID to scope the operation
+	 *
+	 * @return  bool  True on success, false on failure
+	 */
+	public function copyItemRights($sourceItemId, $targetItemId, $gperm_modid) {
+		$sourceItemId = intval($sourceItemId);
+		$targetItemId = intval($targetItemId);
+		$gperm_modid = intval($gperm_modid);
+		$deleteSql = "DELETE FROM " . icms::$xoopsDB->prefix('group_permission') . " WHERE gperm_itemid = $targetItemId AND gperm_modid = $gperm_modid";
+		if (!icms::$xoopsDB->queryF($deleteSql)) {
+			return false;
+		}
+		$copySql = "INSERT INTO " . icms::$xoopsDB->prefix('group_permission') . " (gperm_groupid, gperm_itemid, gperm_modid, gperm_name)"
+			. " SELECT gperm_groupid, $targetItemId, gperm_modid, gperm_name"
+			. " FROM " . icms::$xoopsDB->prefix('group_permission')
+			. " WHERE gperm_itemid = $sourceItemId AND gperm_modid = $gperm_modid";
+		return (bool) icms::$xoopsDB->queryF($copySql);
+	}
+
+	/**
+	 * Copy all permission records from one group to another.
+	 * Deletes existing permissions for the target group before copying.
+	 * Optionally scoped to a single module.
+	 *
+	 * @param   int       $sourceGroupId  The group ID to copy permissions from
+	 * @param   int       $targetGroupId  The group ID to copy permissions to
+	 * @param   int|null  $gperm_modid    Optional module ID to restrict the copy
+	 *
+	 * @return  bool  True on success, false on failure
+	 */
+	public function copyGroupIdRights($sourceGroupId, $targetGroupId, $gperm_modid = null) {
+		$sourceGroupId = intval($sourceGroupId);
+		$targetGroupId = intval($targetGroupId);
+		$modFilter = $gperm_modid ? " AND gperm_modid = " . intval($gperm_modid) : "";
+		$deleteSql = "DELETE FROM " . icms::$xoopsDB->prefix('group_permission') . " WHERE gperm_groupid = $targetGroupId $modFilter";
+		if (!icms::$xoopsDB->queryF($deleteSql)) {
+			return false;
+		}
+		$copySql = "INSERT INTO " . icms::$xoopsDB->prefix('group_permission') . " (gperm_groupid, gperm_itemid, gperm_modid, gperm_name)"
+			. " SELECT $targetGroupId, gperm_itemid, gperm_modid, gperm_name"
+			. " FROM " . icms::$xoopsDB->prefix('group_permission')
+			. " WHERE gperm_groupid = $sourceGroupId $modFilter";
+		return (bool) icms::$xoopsDB->queryF($copySql);
+	}
+
 }
 

@@ -87,6 +87,10 @@ class mod_profile_Field extends icms_ipf_Object {
 				$options[$optkey] = $optval;
 			}
 		}
+		// MODIFIED BY JULIAN EGELSTAFF FEB 17 2026 TO SET TIMEZONE DEFAULT VALUE PROPERLY
+		if($name == 'timezone') {
+			$value = $value ? intval(array_search($value, $options)) : 0;
+		}
 		switch ($this->getVar('field_type')) {
 			case "autotext":
 				$element = new icms_form_elements_Label($caption, $value);

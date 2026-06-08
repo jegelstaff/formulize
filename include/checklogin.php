@@ -31,7 +31,19 @@ if (empty($user) || !is_object($user)) {
 		include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';
 		if($method = user2FAMethod($user) AND userRemembersDevice($user) == false) {
             $uidToCheck = $user->getVar('uid');
-			if(validateCode($_POST['tfacode'], $uidToCheck) == false) {
+			if($method == TFA_APP) {
+				$loginTokenContact = 'authenticator-app';
+			} elseif($method == TFA_SMS) {
+				$profile_handler = xoops_getmodulehandler('profile', 'profile');
+				$profile = $profile_handler->get($uidToCheck);
+				$loginTokenContact = preg_replace('/[^0-9]/', '', $profile->getVar('2faphone'));
+			} else {
+				$loginTokenContact = $user->getVar('email');
+			}
+			$loginToken = isset($_POST['tfa_login_token']) ? trim($_POST['tfa_login_token']) : '';
+			if(!icms::$security->validateToken($loginToken, true, $loginTokenContact)) {
+				unset($user);
+			} elseif(validateCode($_POST['tfacode'], $uidToCheck) == false) {
 				unset($user);
 			} elseif($_POST['tfaremember']) {
 				rememberDevice($user);
@@ -45,7 +57,7 @@ if (empty($user) || !is_object($user)) {
 // end of uname&email hack GIJ
 
 if (false != $user) {
-	if (0 == $user->getVar('level')) {
+	if ($user->getVar('level') <= 0) {
 		redirect_header(ICMS_URL . '/index.php', 5, _US_NOACTTPADM);
 		exit();
 	}

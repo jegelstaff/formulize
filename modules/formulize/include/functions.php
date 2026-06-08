@@ -479,9 +479,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
         }
     }
 
-    if (!$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
+    // For ad hoc table forms (Users/Groups management), system_admin permission was already
+    // verified at the page level, so bypass the normal view_form check
+    if ((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) AND !$gperm_handler->checkRight("view_form", $form_id, $groups, $mid)) {
 				$cachedSecurityChecks[$form_id][$entry_id] = false;
         return false;
+    }
+
+    // system_admin was verified at the page level — skip all entry-level ownership/scope checks
+    // since there is no Formulize data table to look up owner info from (e.g. groups form)
+    if (isset($GLOBALS['formulize_systemAdminPermissionVerified']) AND $GLOBALS['formulize_systemAdminPermissionVerified']) {
+        $cachedSecurityChecks[$form_id][$entry_id] = true;
+        return true;
     }
 
     if ($entry_id == "proxy" AND !$gperm_handler->checkRight("add_proxy_entries", $form_id, $groups, $mid)) {
@@ -538,9 +547,9 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid);
                 // if no view_groupscope, then check to see if the settings for the form are "one entry per group" in which case override the groupscope setting
                 if (!$view_groupscope) {
-                    global $xoopsDB;
-                    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$form_id");
-                    if ($smq[0]['singleentry'] == "group") {
+                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+                    $checkFormObject = $form_handler->get($form_id);
+                    if ($checkFormObject AND resolveEffectiveSingle($checkFormObject->getVar('single'), $groups) == "group") {
                         $view_groupscope = true;
                     }
                 }
@@ -1056,12 +1065,103 @@ function deleteMaintenance($entry_id, $fid) {
 }
 
 /**
+ * Returns true if an entries-are-groups form has at least one associated group
+ * that cannot be deleted — i.e. a group that has members or owns data on a form
+ * for which it still holds view_form permission.
+ * Returns false for non-EAG forms and for EAG forms whose groups are all deletable.
+ */
+function eagFormHasUndeletableGroups($fid) {
+	global $xoopsDB;
+	$fid        = intval($fid);
+	$modId      = intval(getFormulizeModId());
+	$groupsTable = $xoopsDB->prefix('groups');
+	$gulTable    = $xoopsDB->prefix('groups_users_link');
+	$eogTable    = $xoopsDB->prefix('formulize_entry_owner_groups');
+	$gpermTable  = $xoopsDB->prefix('group_permission');
+
+	$res = $xoopsDB->query(
+		"SELECT 1 FROM `$groupsTable` g" .
+		" WHERE g.form_id = $fid AND g.is_group_template = 0" .
+		" AND (" .
+		"   EXISTS (SELECT 1 FROM `$gulTable` WHERE groupid = g.groupid)" .
+		"   OR EXISTS (" .
+		"     SELECT 1 FROM `$eogTable` eog" .
+		"     JOIN `$gpermTable` gp" .
+		"       ON gp.gperm_name = 'view_form'" .
+		"       AND gp.gperm_groupid = g.groupid" .
+		"       AND gp.gperm_itemid = eog.fid" .
+		"       AND gp.gperm_modid = $modId" .
+		"     WHERE eog.groupid = g.groupid" .
+		"   )" .
+		" ) LIMIT 1"
+	);
+	return ($res && $xoopsDB->fetchArray($res)) ? true : false;
+}
+
+/**
  * Delete a specific entry from a form
  *
  * @param int $entry_id The entry ID to delete
  * @param int $fid The form ID from which to delete the entry
  */
 function deleteIdReq($entry_id, $fid) {
+	$entry_id = intval($entry_id);
+	$fid      = intval($fid);
+
+	// For entries-are-groups forms: apply the same deletability rules used on
+	// the Groups management page. If the associated group has members or owns
+	// data (with view_form permission) it is blocked — deleting the entry while
+	// the group is still active would leave it orphaned. If the group passes
+	// all criteria, delete it together with the entry.
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	if ($formObject = $form_handler->get($fid)) {
+		if ($formObject->getVar('entries_are_groups')) {
+			global $xoopsDB;
+			$groupsTable = $xoopsDB->prefix('groups');
+			$res = $xoopsDB->query(
+				"SELECT groupid FROM `$groupsTable`" .
+				" WHERE form_id = $fid AND entry_id = $entry_id AND is_group_template = 0"
+			);
+			if ($res && $row = $xoopsDB->fetchArray($res)) {
+				$groupId    = intval($row['groupid']);
+				$gulTable   = $xoopsDB->prefix('groups_users_link');
+				$eogTable   = $xoopsDB->prefix('formulize_entry_owner_groups');
+				$gpermTable = $xoopsDB->prefix('group_permission');
+				$modId      = intval(getFormulizeModId());
+
+				// Criterion 1: not a built-in system group
+				if (in_array($groupId, array(1, 2, 3))) {
+					return;
+				}
+				// Criterion 2: no members
+				$r = $xoopsDB->query("SELECT 1 FROM `$gulTable` WHERE groupid = $groupId LIMIT 1");
+				if ($r && $xoopsDB->fetchArray($r)) {
+					return;
+				}
+				// Criterion 3: no entries in entry_owner_groups where the group
+				// still holds view_form permission on the associated form
+				$r = $xoopsDB->query(
+					"SELECT 1 FROM `$eogTable` eog" .
+					" JOIN `$gpermTable` gp" .
+					"   ON gp.gperm_name = 'view_form'" .
+					"   AND gp.gperm_groupid = $groupId" .
+					"   AND gp.gperm_itemid = eog.fid" .
+					"   AND gp.gperm_modid = $modId" .
+					" WHERE eog.groupid = $groupId LIMIT 1"
+				);
+				if ($r && $xoopsDB->fetchArray($r)) {
+					return;
+				}
+
+				// Group is safe to delete — remove it along with the entry.
+				$xoopsDB->queryF("DELETE FROM `$gulTable`   WHERE groupid = $groupId");
+				$xoopsDB->queryF("DELETE FROM `$gpermTable` WHERE gperm_groupid = $groupId");
+				$xoopsDB->queryF("DELETE FROM `$eogTable`   WHERE groupid = $groupId");
+				$xoopsDB->queryF("DELETE FROM `$groupsTable` WHERE groupid = $groupId");
+			}
+		}
+	}
+
 	$data_handler = new formulizeDataHandler($fid);
 	if (!$deleteResult = $data_handler->deleteEntries($entry_id)) {
 		throw new Exception("Could not delete entry ".intval($entry_id)." from the database for form ".intval($fid));
@@ -1444,7 +1544,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
     }
 
     foreach ($many_to_one as $manyToOneFid) {
-        array_unshift($fids, $manyToOneFid['fid']);
+        $fids[] = $manyToOneFid['fid'];
         if (isset($entries[$fid][0])) {
             // for some reason PHP 5 won't let us evaluate this directly
             if ($thisent = $entries[$fid][0]) {
@@ -2311,19 +2411,58 @@ function getElementValue($entry_id, $element_id, $fid) {
 }
 
 /**
- * checks for singleentry status and returns the appropriate entry in the form
- * if there is one
- *
- * @param mixed $fid
- * @param mixed $uid
- * @param mixed $groups
- * @param mixed $member_handler=null
- * @param mixed $gperm_handler=null
- * @param mixed $mid=null
- *
- * @return array
+ * Resolve a per-group singleentry array to a scalar value for a given set of groups.
+ * Registered Users (group 2) is the base default. Any other group's setting overrides it.
+ * Conflicts among non-base groups: least restrictive wins.
+ * Restrictiveness: "group" (most) > "user" > "off" (least)
+ * @param array|string $singleArray Per-group array (groupId => value) or legacy scalar string
+ * @param array $userGroups The user's group IDs
+ * @return string "user", "group", or "off"
  */
-function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=null, $mid=null) {
+function resolveEffectiveSingle($singleArray, $userGroups=null) {
+	if (!is_array($singleArray)) {
+		// Legacy scalar — return as-is after normalization
+		if ($singleArray == "on") return "user";
+		if ($singleArray == "group") return "group";
+		if ($singleArray == "user") return "user";
+		return "off";
+	}
+	if($userGroups === null) {
+		global $xoopsUser;
+		$userGroups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	}
+	// Base value from Registered Users (group 2)
+	$base = isset($singleArray[2]) ? $singleArray[2] : "off";
+	// Collect values from non-base groups the user belongs to
+	// Restrictiveness: "group"=3, "user"=2, "off"=1 — least restrictive wins among overrides
+	$priority = array("group" => 3, "user" => 2, "off" => 1);
+	$overrideValue = null;
+	$overridePriority = 999; // start high, look for lowest (least restrictive)
+	foreach ($singleArray as $gid => $value) {
+		if ($gid == 2) continue; // skip base
+		if (in_array(intval($gid), $userGroups) AND isset($priority[$value])) {
+			$p = $priority[$value];
+			if ($overrideValue === null OR $p < $overridePriority) {
+				$overrideValue = $value;
+				$overridePriority = $p;
+			}
+		}
+	}
+	return ($overrideValue !== null) ? $overrideValue : $base;
+}
+
+/**
+ * Check for singleentry status and returns the appropriate entry in the form if there is one
+ * Or return false if there is no single entry that applies to this user for this form
+ * @param int fid - the form id
+ * @param int uid - the user id for whom we are checking single entry status
+ * @param array groups - optional, deprecated and not necessary to pass in any longer. The groups of the user for whom we are checking single entry status. If not passed in, the groups of the uid that is passed in will be used.
+ * @param object member_handler - optional, deprecated and not necessary to pass in any longer. The member handler object, in case the calling code already has it and wants to avoid instantiating a new one. If not passed in, a new one will be instantiated.
+ * @param object gperm_handler - optional, deprecated and not necessary to pass in any longer. The group permissions handler object, in case the calling code already has it and wants to avoid instantiating a new one. If not passed in, a new one will be instantiated.`
+ * @param int mid - optional, deprecated and not necessary to pass in any longer. The Formulize module id for the permissions checks, in case the calling code already has it and wants to avoid getting it again.
+ * @return array Returns an array with two keys, flag and entry. Flag is either 0 for no single entry, 1 for single entry by user, or "group" for single entry by group. Entry is the entry id of the single entry that applies to this user for this form, or blank if there is no such entry or if the active user is anonymous (since in that case we don't want to show them the same single entry as another anon user had).
+ */
+function getSingle($fid, $uid, $groups=null, $member_handler=null, $gperm_handler=null, $mid=null) {
 		if(!$member_handler) {
 			$member_handler = xoops_gethandler('member');
 		}
@@ -2333,36 +2472,53 @@ function getSingle($fid, $uid, $groups, $member_handler=null, $gperm_handler=nul
 		if(!$mid) {
 			$mid = getFormulizeModId();
 		}
-    global $xoopsDB, $xoopsUser;
-    // determine single/multi status
-    $smq = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form=$fid");
-    if ($smq[0]['singleentry'] == "on" OR $smq[0]['singleentry'] == "group") {
-        // find the entry that applies
-        $single['flag'] = $smq[0]['singleentry'] == "on" ? 1 : "group";
-        // if we're looking for a regular single, find first entry for this user
-        if ($smq[0]['singleentry'] == "on") {
-            if (!$xoopsUser) {
-                $single['entry'] = ""; // don't set an entry for anons. they should not share the same entry in a single entry form, since user zero is actually lots of different people. cookie logic in displayform will cause their past entry to show up for them, if they have cookies working
-            } else {
-                $data_handler = new formulizeDataHandler($fid);
-                $single['entry'] = $data_handler->getFirstEntryForUsers($uid);
-            }
-        } elseif ($smq[0]['singleentry'] == "group") {
-            // get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
-            $formulize_permHandler = new formulizePermHandler($fid);
-            $intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
-            if ($intersect_groups === false) {
-                $groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
-                $intersect_groups = array_intersect($groups, $groupsWithAccess);
-            }
-            $data_handler = new formulizeDataHandler($fid);
-            $single['entry'] = $data_handler->getFirstEntryForGroups($intersect_groups);
-        } else {
-            exit("Error: invalid value found for singleentry for form $fid");
-        }
-    } else {
-        $single['flag'] = 0;
+		if($groups === null) {
+			$groups = array(XOOPS_GROUP_ANONYMOUS);
+			if($uid) {
+				$member_handler = xoops_gethandler('member');
+				if($userObject = $member_handler->getUser($uid)) {
+					$groups = $userObject->getGroups();
+				}
+			}
+		}
+
+		global $xoopsUser;
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$data_handler = new formulizeDataHandler($fid);
+    $formObject = $form_handler->get($fid);
+    $effectiveSingle = resolveEffectiveSingle($formObject->getVar('single'), $groups);
+
+		// default, not single, no entry
+		// try to find the entry if applicable
+		$single = array(
+			'flag'=> ($effectiveSingle == "user" ? 1 : ($effectiveSingle == "group" ? "group" : 0)),
+			'entry' => ""
+		);
+
+		// get the candidate entries for the user, probably just one, but could be more than one in some cases
+		$foundEntries = array();
+		if (!$xoopsUser AND $effectiveSingle == "user") {
+			$foundEntries = $data_handler->findAllEntriesForUsers($uid);
+		} elseif($effectiveSingle == "group") {
+			// get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
+			$formulize_permHandler = new formulizePermHandler($fid);
+			$intersect_groups = $formulize_permHandler->getGroupScopeGroupIds($groups); // use specified groups if any are available
+			if ($intersect_groups === false) {
+					$groupsWithAccess = $gperm_handler->getGroupIds("view_form", $fid, $mid);
+					$intersect_groups = array_intersect($groups, $groupsWithAccess);
+			}
+			$foundEntries = $data_handler->findAllEntriesForGroups($intersect_groups);
     }
+
+		// if user has one entry in a single entry form, we declare that entry
+		// if there's more than one entry found, then we can't declare an entry, and the system should treat this as a multi entry situation for this user
+		$count = count($foundEntries);
+		if($count == 1) {
+			$single['entry'] = $foundEntries[0];
+		} if($count > 1) {
+			$single['flag'] = 0;
+		}
+
     return $single;
 }
 
@@ -3105,11 +3261,14 @@ function cloneEntry($entryOrFilter, $frid, $fid, $copies=1, $callback = null, $t
 
     $dataHandlers = array();
     $entryMap = array();
+		global $xoopsUser;
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
     for ($copy_counter = 0; $copy_counter<$copies; $copy_counter++) {
         foreach ($entries_to_clone as $fid=>$entries) {
             // never clone an entry in a form that is a single-entry form
             $thisform = new formulizeForm($fid);
-            if ($thisform->getVar('single') != "off") {
+
+            if (resolveEffectiveSingle($thisform->getVar('single'), $groups) != "off") {
                 continue;
             }
             foreach ($entries as $thisentry) {
@@ -4800,6 +4959,17 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 						}
 					}
 				}
+				if (empty($options)) {
+					$eleTypeForOpts  = $elementObject->getVar('ele_type');
+					$classFileForOpts = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleTypeForOpts . 'Element.php';
+					if (file_exists($classFileForOpts)) {
+						require_once $classFileForOpts;
+						$optsHandler = xoops_getmodulehandler($eleTypeForOpts . 'Element', 'formulize');
+						if ($optsHandler && method_exists($optsHandler, 'getFilterOptions')) {
+							$options = $optsHandler->getFilterOptions();
+						}
+					}
+				}
 
         $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
 
@@ -5712,12 +5882,12 @@ function getExistingFilter($filterSettings, $filterName, $formWithSourceElements
 /**
  * Used to handle filter conditions being saved in the admin UI
  * @param string $filter_key - The prefix used in the values in POST that we want to read, ie: if in POST we have displayCondition_elements, and displayCondition_ops then the key is displayCondition
- * @param string $delete_key - The key in POST for a delete signal sent from the admin UI
+ * @param string $delete_key - Optional. The key in POST for a delete signal sent from the admin UI. Defaults to conditionsdelete, which is what the permission editing UI sends by default. Comments from AI: The value of this key will have the format of filterkey_x_y where x is the key in the array of conditions that we want to delete, and y is an optional value that can be used to isolate which conditions to delete if there are multiple sets of conditions being handled on the same page (such as in the permissions editing, where there are multiple groups each with their own set of conditions).  So for example, if we only want to delete conditions for group id 3, then y would be 3, and we would set $conditionsDeletePartsKeyOneMustMatch to 3 as well, so that only delete signals with a value that has 3 in the y position will be acted on.
  * @param int $deleteTargetKey - Optional. The key we care about for isolating which conditions to delete, as found in the array created by exploding the delete_key in POST on the _ character.
  * @param int $conditionsDeletePartsKeyOneMustMatch - Optional value that is meant to isolate only certain conditions to be deleted. The delete key's value will have _ in it, and exploding on _ gives an array, and the 1 key (second position) must match this value. Used by the permissions saving to delete conditions only from the appropriate group's permissions.
  * @return array Returns an array with two elements. The first is an array of the elements, ops, terms and types properly organized for saving into the database. The second is a flag to indicate if a reload is necessary for the user to see cleanly what has changed.
  */
-function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
+function parseSubmittedConditions($filter_key, $delete_key = 'conditionsdelete', $deleteTargetKey = 1, $conditionsDeletePartsKeyOneMustMatch = false) {
 
 	if(!isset($_POST[$filter_key."_elements"]) AND !isset($_POST["new_".$filter_key."_term"]) AND !isset($_POST["new_".$filter_key."_oom_term"])) {
 		return "";
@@ -5776,6 +5946,68 @@ function parseSubmittedConditions($filter_key, $delete_key, $deleteTargetKey = 1
 }
 
 /**
+ * Formats an array of strings as a natural-language list with commas and "and".
+ * eg: ['A'] => 'A', ['A','B'] => 'A and B', ['A','B','C'] => 'A, B, and C'
+ * @param array $items The array of strings to format
+ * @return string The formatted string
+ */
+function formulize_listWithAnd($items) {
+	$items = array_values($items);
+	$count = count($items);
+	if($count == 0) { return ''; }
+	if($count == 1) { return $items[0]; }
+	if($count == 2) { return $items[0] . ' and ' . $items[1]; }
+	$last = array_pop($items);
+	return implode(', ', $items) . ', and ' . $last;
+}
+
+/**
+ * This function renders the default groups selection UI for entries-are-users forms
+ * Uses the same group list as the userAccountGroupMembership element type
+ *
+ * @param array $currentlySelectedGroupIds Array of currently selected group IDs
+ * @return string HTML output of the default groups UI
+ */
+function formulize_renderDefaultGroupsUI($currentlySelectedGroupIds) {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = false; // we want to show all groups, even if they are template groups
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0; // we'll just have a single selection and override the behaviour of a selection/click in the admin UI
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	if(!is_array($currentlySelectedGroupIds)) {
+		$currentlySelectedGroupIds = array();
+	}
+	$formElementObject = $groupMembershipHandler->render($currentlySelectedGroupIds, '', 'entries_are_users_default_groups', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
+}
+
+/**
+ * Render a group autocomplete for adding groups to the per-group singleentry setting
+ * @return string HTML output of the singleentry groups UI
+ */
+function formulize_renderSingleentryGroupsUI() {
+	require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
+	$groupMembershipHandler = xoops_getmodulehandler('userAccountGroupMembershipElement', 'formulize');
+	$groupMembershipElement = $groupMembershipHandler->create();
+	$groupMembershipElement->excludeTemplateGroups = true; // template groups are not relevant for singleentry settings
+	$ele_value = $groupMembershipElement->getVar('ele_value');
+	$ele_value[ELE_VALUE_SELECT_MULTIPLE] = 0;
+	$ele_value[ELE_VALUE_SELECT_OPTIONS] = array();
+	$groupMembershipElement->setVar('ele_value', $ele_value);
+	$formElementObject = $groupMembershipHandler->render(array(), '', 'singleentry_add_group', false, $groupMembershipElement, false, null, null);
+	if(is_object($formElementObject)) {
+		return $formElementObject->render();
+	}
+	return '';
+}
+
+/**
  * Get AES password for encryption
  *
  * This function retrieves the AES password used for encryption in the system.
@@ -5790,7 +6022,6 @@ function getAESPassword() {
     $dbPass = $icmsDB ? $icmsDB : $xoopsDB;
     return sha1($dbPass."I'm a cool, cool, cool dingbat");
 }
-
 
 /**
  * Convert element type to text representation
@@ -6797,6 +7028,10 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
     }
     $fid = $cachedFormIds[$handle];
     $element_type = $cached_object_type[$handle];
+    $useList = ($countOfValue > 1 && !$deDisplay);
+    if ($useList) {
+        $output .= '<ul class="main-cell-list">';
+    }
     foreach ($value as $valueId=>$v) {
         $elstyle = 'style="text-align: ';
         if (is_numeric($v)) {
@@ -6815,9 +7050,13 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
 					$v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
 				}
-				$output .= '<span '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
-        $output .= '</span>';
+        $tag = $useList ? 'li' : 'span';
+				$output .= '<'.$tag.' '.$elstyle.'>' . formulize_numberFormat(str_replace("\n", "<br>", formatLinks($v, $handle, $textWidth, $thisEntryId)), $handle);
+        $output .= '</'.$tag.'>';
         $counter++;
+    }
+    if ($useList) {
+        $output .= '</ul>';
     }
 		// if there were no values, still need to draw the edit icon container if applicable
 		if($counter == 1 AND $deDisplay AND $element_type != 'derived') {
@@ -7341,7 +7580,50 @@ function generateTidyElementList($mainformFid, $cols, $selectedCols=array()) {
         }
         $formObject = $form_handler->get($thisFid);
         $boxeshtml = "";
-        if($fidCounter == 0 AND $thisFid == $mainformFid) { // add in metadata columns first time through
+        // Add user account elements if this is an entries_are_users form, excluding password and non-visible elements
+        $userAccountElementIds = $formObject->getVar('userAccountElements');
+        if(is_array($userAccountElementIds) && count($userAccountElementIds) > 0) {
+            $elementCaptions = $formObject->getVar('elementCaptions');
+            $elementColheads = $formObject->getVar('elementColheads');
+            $elementHandles  = $formObject->getVar('elementHandles');
+            $elementTypes    = $formObject->getVar('elementTypes');
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            global $xoopsUser;
+            $userAccountColsToAdd = array();
+            $excludedUaHandles = array(); // UA handles excluded from the column list entirely (e.g. password)
+            foreach($userAccountElementIds as $eleId) {
+                if($elementTypes[$eleId] == 'userAccountPassword') {
+                    $excludedUaHandles[] = $elementHandles[$eleId]; // track so it's also stripped from $columns below
+                    continue;
+                }
+                if(!$element_handler->isElementVisibleForUser($eleId)) { continue; }
+                $userAccountColsToAdd[] = array(
+                    'ele_id'      => $eleId,
+                    'ele_caption' => $elementCaptions[$eleId],
+                    'ele_colhead' => $elementColheads[$eleId],
+                    'ele_handle'  => $elementHandles[$eleId],
+                );
+            }
+            // Remove from $columns any element whose handle already appears in $userAccountColsToAdd,
+            // or in $excludedUaHandles (UA types that should never appear in the list, like password).
+            // This prevents duplicates for both EAU forms (handles may be formulize_user_account_*)
+            // and ad hoc table forms (handles are plain column names like uid, uname, email).
+            $uaHandles = array_merge(array_column($userAccountColsToAdd, 'ele_handle'), $excludedUaHandles);
+            $columns = array_values(array_filter($columns, function($col) use ($uaHandles) {
+                return !in_array($col['ele_handle'], $uaHandles);
+            }));
+            // Merge and sort by position in the form's canonical element order
+            $columns = array_merge($userAccountColsToAdd, $columns);
+            $elementIdOrder = array_keys($formObject->getVar('elements'));
+            usort($columns, function($a, $b) use ($elementIdOrder) {
+                $posA = array_search($a['ele_id'], $elementIdOrder);
+                $posB = array_search($b['ele_id'], $elementIdOrder);
+                if($posA === false) { $posA = PHP_INT_MAX; }
+                if($posB === false) { $posB = PHP_INT_MAX; }
+                return $posA - $posB;
+            });
+        }
+				if($fidCounter == 0 AND $thisFid == $mainformFid AND !$formObject->getVar('tableform')) { // add in metadata columns first time through, but not for ad hoc table forms
             array_unshift($columns,
                 array('ele_handle'=>'entry_id', 'ele_caption' => _formulize_ENTRY_ID),
                 array('ele_handle'=>'creation_uid', 'ele_caption' => _formulize_DE_CALC_CREATOR),
@@ -8889,101 +9171,111 @@ function repairEOGTable($fid) {
 }
 
 /**
- * Get user timezone offset from server timezone in seconds. Take daylight savings time into account.
- *
- * @param object|null $userObject User object (optional, defaults to current user)
- * @param int|null $timestamp Unix timestamp for the date/time to check (optional, defaults to current time)
- * @return int Timezone offset difference from server timezone in seconds, at the moment the timestamp represents, taking into account daylight savings time adjustments for both the user's timezone and the server's timezone
+ * Get the user's IANA timezone name for a user object or a numeric timezone offset
+ * Note: User profiles store timezones with spaces instead of underscores for readability
+ * Fallback to server timezone for users without a timezone set, and then to UTC if the server timezone is not set. If a numeric offset is provided that doesn't match a known timezone, will also fall back to UTC.
+ * @param object|null $userObjectOrTZOffsetNumber - optional user object to get the timezone for, or a numeric offset. If not provided, will use the global $xoopsUser. If numeric will attempt a standard conversion.
+ * @return string The timezone string
+ */
+function formulize_getIANATimezone($userObjectOrTZOffsetNumber=null) {
+	$tz = $userObjectOrTZOffsetNumber;
+	// if no numeric value passed in, assume user object and try to get their proper timezone
+	if(!is_numeric($tz)) {
+		global $xoopsUser, $xoopsConfig;
+		$profile_handler = xoops_getmodulehandler('profile', 'profile');
+		$userObject = is_object($userObjectOrTZOffsetNumber) ? $userObjectOrTZOffsetNumber : $xoopsUser;
+		$uid = $userObject ? $userObject->getVar('uid') : 0;
+		$profileTz = $userObject ? $userObject->getVar('timezone_offset') : "";
+		if ($uid AND $profile = $profile_handler->get($uid)) {
+			$profileTz = str_replace(' ', '_', $profile->getVar('timezone'));
+		}
+		$tz = $profileTz ? $profileTz : ($userObject ? $userObject->getVar('timezone_offset') :  $xoopsConfig['server_TZ']);
+	}
+	// if we have a numeric value, convert it to a timezone name
+	if(is_numeric($tz)) {
+		$tzNames = array(
+			'-12' => 'Etc/GMT+12',
+			'-11' => 'Pacific/Pago Pago',
+			'-10' => 'Pacific/Honolulu',
+			'-9.5' => 'Pacific/Marquesas',
+			'-9' => 'America/Anchorage',
+			'-8' => 'America/Vancouver',
+			'-7' => 'America/Edmonton',
+			'-6' => 'America/Winnipeg',
+			'-5' => 'America/Toronto',
+			'-4' => 'America/Halifax',
+			'-3.5' => 'America/St Johns',
+			'-3' => 'America/Argentina/Buenos Aires',
+			'-2' => 'Atlantic/South Georgia',
+			'-1' => 'Atlantic/Azores',
+			'0' => 'UTC',
+			'1' => 'Europe/Paris',
+			'2' => 'Africa/Cairo',
+			'3' => 'Europe/Moscow',
+			'3.5' => 'Asia/Tehran',
+			'4' => 'Asia/Dubai',
+			'4.5' => 'Asia/Kabul',
+			'5' => 'Asia/Karachi',
+			'5.5' => 'Asia/Kolkata',
+			'6' => 'Asia/Dhaka',
+			'6.5' => 'Asia/Yangon',
+			'7' => 'Asia/Bangkok',
+			'8' => 'Asia/Shanghai',
+			'9' => 'Asia/Tokyo',
+			'9.5' => 'Australia/Darwin',
+			'10' => 'Australia/Sydney',
+			'10.5' => 'Australia/Lord Howe',
+			'11' => 'Pacific/Guadalcanal',
+			'12' => 'Pacific/Auckland',
+			'13' => 'Pacific/Apia',
+			'14' => 'Pacific/Kiritimati',
+		);
+		if(isset($tzNames[$tz])) {
+			return $tzNames[$tz];
+		} else {
+			error_log("Formulize error: unrecognized numeric timezone offset ($tz) for user $uid. Defaulting to UTC.");
+			return 'UTC';
+		}
+	} else {
+		return $tz;
+	}
+}
+
+/**
+ * Get the user offset from the server timezone in seconds, taking into account daylight savings time if applicable.
+ * @param object|null $userObject - optional user object to get the timezone for. If not provided, will use the global $xoopsUser
+ * @param int|null $timestamp - optional timestamp to calculate the offset for. Assumes timestamp provided is accurate based on the server timezone, ie: is a UTC timestamp representing a moment that we care about in the server timezone (this is because string representations of server time may/will have been converted by PHP to UTC through use of strtotime - yuck!). If not provided, will use the current time.
+ * @return int The offset in seconds from the server timezone to the user's timezone, including daylight savings adjustment if applicable
  */
 function formulize_getUserServerOffsetSecs($userObject=null, $timestamp=null) {
-	// checks if the user's timezone and/or server timezone were in daylight savings at the given $timestamp (or current time) and adjusts offset accordingly
 	global $xoopsConfig, $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
 	$timestamp = $timestamp ? $timestamp : time();
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-	$tzDiff = $userTimeZone - $serverTimeZone;
-	$daylightSavingsAdjustment = getDaylightSavingsAdjustment($userTimeZone, $serverTimeZone, $timestamp);
-	$tzDiff = $tzDiff + $daylightSavingsAdjustment;
-	return $tzDiff * 3600;
+	$userTimeZone = formulize_getIANATimezone($userObject);
+	$serverTimeZone = formulize_getIANATimezone($xoopsConfig['server_TZ']);
+	$serverTZPlusMinus = intval($xoopsConfig['server_TZ']) >= 0 ? '+' : (substr($xoopsConfig['server_TZ'], 0, 1) == '-' ? '' : '-');
+	$timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$serverTZPlusMinus.intval($xoopsConfig['server_TZ'])); // need to construct new timestamp with the tz offset included, and @ sign in front so PHP dateTime will understand it - necessary to correct for prior conversions to UTC that may have been involved in the production of the timestamps from strings with strtotime
+	$dt = new DateTime($timestamp);
+	$dt->setTimezone(new DateTimeZone($serverTimeZone));
+	$serverOffset = $dt->getOffset();
+	$dt->setTimezone(new DateTimeZone($userTimeZone));
+	$userOffset = $dt->getOffset();
+	return $userOffset - $serverOffset;
 }
 
 /**
- * Get user timezone offset from UTC in seconds, taking into account daylight savings
- *
- * @param object|null $userObject User object (optional, defaults to current user)
- * @param int|null $timestamp Unix timestamp for the date/time to check (optional, defaults to current time)
- * @return int Timezone offset from UTC in seconds, at the moment the timestamp represents, taking into account daylight savings time adjustments for the user's timezone
+ * Get the user offset from UTC in seconds, taking into account daylight savings time if applicable.
+ * @param object|null $userObject - optional user object to get the timezone for. If not provided, will use the global $xoopsUser
+ * @param int|null $timestamp - optional timestamp to calculate the offset for. If not provided, will use the current time.
+ * @return int The offset in seconds from UTC to the user's timezone, including daylight savings adjustment if applicable for the timestamp used
  */
 function formulize_getUserUTCOffsetSecs($userObject=null, $timestamp=null) {
-	global $xoopsConfig, $xoopsUser;
+	global $xoopsUser;
 	$userObject = is_object($userObject) ? $userObject : $xoopsUser;
 	$timestamp = $timestamp ? $timestamp : time();
-	$serverTimeZone = $xoopsConfig['server_TZ'];
-	$userTimeZone = $userObject ? $userObject->getVar('timezone_offset') : $serverTimeZone;
-	$userTimeZone = $userTimeZone + getDaylightSavingsAdjustment($userTimeZone, 0, $timestamp);
-	return $userTimeZone * 3600;
-}
-
-/**
- * Calculate daylight savings adjustment between timezones
- *
- * @param float $userTimeZone The user's timezone offset
- * @param float $compareTimeZone The timezone to compare against
- * @param int $timestamp Unix timestamp for the date/time to check
- * @return int The adjustment difference in hours
- *
- * $userTimeZone and $compareTimeZone are numbers for the base offset (ie: when standard time is in effect)
- * timestamp is a timestamp from the **$compareTimeZone** timezone, that we are using the determine if daylight savings is in effect
- * This will necessarily be off by 1 hour when we're using the old basic tz numbers in XOOPS! (because they're standard time only)
- * since the window for an error is really small and only at the moment the time changes, that's acceptable? Seems to be the best we can do without overhauling the entire timezone system :(
- * we are seriously hampered by the fact that old XOOPS only uses a number for the timezone offset, not the actual timezone. Numbers to not equal timezones!
- * if timezones are the same, no adjustment
- * if timezones are both in daylight savings at a given time, no adjustment
- * if timezones are neither in daylight savings at a given time, no adjustment
- * if timezones are one in daylight savings and one not in daylight savings, calculate adjustment
- * returns difference in hours
- */
-function getDaylightSavingsAdjustment($userTimeZone, $compareTimeZone, $timestamp) {
-
-    // timezone name and number equivalents. crude!!
-    // could/should be expanded (or better yet, proper timezones recorded for users!!)
-    // XOOPS does not support two digit decimals for timezones (yet, we could add it)
-    // In Australia, different timezones with the same base offset, have different daylight savings rules :(
-    $tzNames = array(
-        '-8'=>'PST8PDT',
-        '-7'=>'MST7MDT',
-        '-6'=>'CST6CDT',
-        '-5'=>'EST5EDT',
-        '-4'=>'Canada/Atlantic',
-        '-3.5'=>'Canada/Newfoundland',
-        '+0'=>'UTC',
-        '+8'=>'Australia/Perth',
-        '+8.75'=>'Australia/Eucla',
-        '+9.5'=>'Australia/Adelaide',
-        '+10'=>'Australia/Sydney'
-    );
-
-    // need plus or minus on the timezone number, even zero
-    $userTimeZone = floatval($userTimeZone) >= 0 ? strval("+".floatval($userTimeZone)) : strval(floatval($userTimeZone));
-    $compareTimeZone = floatval($compareTimeZone) >= 0 ? strval("+".floatval($compareTimeZone)) : strval(floatval($compareTimeZone));
-
-    $adjustment = 0;
-    if($userTimeZone != $compareTimeZone) {
-        $timestamp = '@'.strtotime(date('Y-m-d H:i:s', $timestamp).' '.$compareTimeZone); // need to construct new timestamp with the xoops tz offset included, and @ sign in front so PHP dateTime will understand it
-        $dt = new DateTime($timestamp);
-        $dt->setTimezone(new DateTimeZone($tzNames[$compareTimeZone]));
-        $compareDST = $dt->format('I');
-        $dt->setTimezone(new DateTimeZone($tzNames[$userTimeZone]));
-        $userDST = $dt->format('I');
-        if($compareDST AND !$userDST) {
-            $adjustment = -1;
-        } elseif(!$compareDST AND $userDST) {
-            $adjustment = +1;
-        }
-    }
-    return $adjustment;
-
+	$dt = new DateTime('@'.$timestamp);
+	$dt->setTimezone(new DateTimeZone(formulize_getIANATimezone($userObject)));
+	return $dt->getOffset();
 }
 
 /**
@@ -9277,7 +9569,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 				$URLAddOn .= htmlspecialchars_decode($currentPageTitle)."/";
 			}
 		}
-		$code = "window.history.replaceState(null, '', ".json_encode($initialURL.$URLAddOn).");
+		$code = "window.history.replaceState(null, '', ".json_encode(trans($initialURL.$URLAddOn)).");
 		jQuery(window).load(function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());
@@ -9617,8 +9909,9 @@ function determineScreenForUserFromFid($formID_or_formObject) {
 		global $xoopsUser;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 		$gperm_handler = xoops_gethandler('groupperm');
-		$singleEntry = $formObject->getVar('single');
-		if (($singleEntry != 'group' AND $singleEntry != 'user' AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
+		$singleEntryMetadata = getSingle($formObject->getVar('fid'), ($xoopsUser ? $xoopsUser->getVar('uid') : 0)); // returns array with flag and entry as keys
+		$singleEntry = $singleEntryMetadata['flag'];
+		if ((!$singleEntry AND $xoopsUser) // logged in users see the list for multi-entry-per-user forms
 			OR $gperm_handler->checkRight("view_globalscope", $formObject->getVar('fid'), $groups, getFormulizeModId()) // users with global scope see the list
 			OR ($singleEntry != 'group' AND $gperm_handler->checkRight("view_groupscope", $formObject->getVar('fid'), $groups, getFormulizeModId())) // users with groupscope see the list, unless it's a one-entry-per-group form
 		) {
@@ -9980,7 +10273,56 @@ function getListOfCandidateOwnersForFormEntries($fid) {
 	}
 	asort($names);
 	return $names;
+}
 
+/**
+ * Get the standard (non-DST) UTC offset in hours for a given timezone name.
+ * Checks January and July to find a non-DST month, covering both hemispheres.
+ *
+ * @param string $timezoneName The timezone name, either with spaces (e.g. "America/New York") or underscores (e.g. "America/New_York")
+ * @return float The standard offset in hours (e.g. -5.0 for Eastern, 5.5 for India)
+ */
+function formulize_getStandardTimezoneOffset($timezoneName) {
+	$tzName = str_replace(' ', '_', $timezoneName);
+	$tz = new DateTimeZone($tzName);
+	$jan = new DateTime('January 15', $tz);
+	if (!$jan->format('I')) {
+		$standardOffset = $tz->getOffset($jan) / 3600;
+	} else {
+		$jul = new DateTime('July 15', $tz);
+		$standardOffset = $tz->getOffset($jul) / 3600;
+	}
+	return round($standardOffset, 1);
+}
+
+/**
+ * Generate the list of official IANA timezones, sorted alphabetically,
+ * with underscores replaced by spaces for display. Uses PHP's
+ * timezone_identifiers_list() so the list stays current with PHP updates.
+ *
+ * @return array Indexed array of timezone names (e.g. "America/Toronto")
+ */
+function formulize_getTimezoneList() {
+	$timezones = timezone_identifiers_list();
+	$labels = array();
+	foreach ($timezones as $tz) {
+		$labels[] = str_replace('_', ' ', $tz);
+	}
+	sort($labels);
+	return array_values($labels);
+}
+
+/**
+ * Update the profile_field options for the timezone field with the full
+ * list of official IANA timezones.
+ *
+ * @param object $db Database connection object ($xoopsDB or equivalent)
+ */
+function formulize_update_timezone_options($db) {
+	$options = formulize_getTimezoneList();
+	$serialized = serialize($options);
+	$sql = "UPDATE " . $db->prefix("profile_field") . " SET field_options = " . $db->quoteString($serialized) . " WHERE field_name = 'timezone'";
+	$db->queryF($sql);
 }
 
 /**
@@ -10059,4 +10401,205 @@ function getSortTitleAndIcon($elementHandle) {
 	}
 
 	return [$title, $icon];
+}
+
+/**
+ * Check if conditions are met for a given entry.
+ * Evaluates a standard condition array, which is an array with the following keys: [elements[], ops[], terms[], types[]], where each of those is an array with the same number of items, and each item corresponds to a condition.  So elements[0], ops[0], terms[0], and types[0] together make up the first condition, and so on.
+ * Compares a given entry to the conditions to see if they pass or not.
+ * Used for element display conditions, and also for evaluating per-group conditions for entries_are_users default groups.
+ * @param array $elementFilterSettings The filter settings array [elements[], ops[], terms[], types[]]
+ * @param int $form_id The form ID
+ * @param int|string $entry_id The entry ID or "new"
+ * @param object|null $elementObject The element object (optional, used for error messages)
+ * @param int $frid The form relationship ID. 0 = no relationship, -1 = primary relationship. Default 0.
+ * @param string $cacheId A string to append to the cache key to bypass cache when needed. Normally, the state of the entry is reused from the first time the function is called. If the absolute current state of data should be used, you can specify an arbitrary value for the cache ID and a fresh copy of data will be used. All requests with the same cache ID will reuse the same data as retrieved from the first time that cache ID was used. This is useful inside loops where the previous state of data from the last time this function was called prior to the loop, will not be correct.
+ * @return int 1 if conditions are met, 0 if not. If there are no conditions, returns 1.
+ */
+function checkConditionsAgainstAnEntry($elementFilterSettings, $form_id, $entry_id, $elementObject = null, $frid = 0, $cacheId = "") {
+	// need to check if there's a condition on this element that is met or not
+	static $cachedEntries = array();
+	if($entry_id != "new") {
+		$cacheKey = $form_id.'_'.$entry_id.'_'.$frid.$cacheId;
+		if(!isset($cachedEntries[$cacheKey])) {
+			$cachedEntries[$cacheKey] = gatherDataset($form_id, filter: $entry_id, frid: $frid, bypassCache: true);
+		}
+		$entryData = $cachedEntries[$cacheKey];
+	}
+
+	if(empty($elementFilterSettings) OR !is_array($elementFilterSettings) OR count((array)$elementFilterSettings) != 4) {
+		return 1;
+	}
+
+	$filterElements = array_map('undoAllHTMLChars', $elementFilterSettings[0]);
+	$filterOps = array_map('undoAllHTMLChars', $elementFilterSettings[1]);
+	$filterTerms = array_map('undoAllHTMLChars', $elementFilterSettings[2]);
+	$filterTypes = array_map('undoAllHTMLChars', $elementFilterSettings[3]);
+
+	// find the filter indexes for 'match all' and 'match one or more'
+	$filterElementsAll = array();
+	$filterElementsOOM = array();
+	for($i=0;$i<count((array) $filterTypes);$i++) {
+		if($filterTypes[$i] == "all") {
+			$filterElementsAll[] = $i;
+		} else {
+			$filterElementsOOM[] = $i;
+		}
+	}
+
+	// setup evaluation condition as PHP and then eval it so we know if we should include this element or not
+	$evaluationCondition = "if(";
+
+	$evaluationConditionAND = buildEvaluationCondition("AND",$filterElementsAll,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
+	$evaluationConditionOR = buildEvaluationCondition("OR",$filterElementsOOM,$filterElements,$filterOps,$filterTerms,$entry_id,$entryData);
+
+	if($evaluationConditionAND === false OR $evaluationConditionOR === false) {
+		$errorContext = $elementObject ? "form element ".$elementObject->getVar('ele_id') : "a condition filter for form ".$form_id;
+		exit("Fatal Formulize Error: ".$errorContext." is misconfigured. Please notify the webmaster.");
+	}
+
+	$evaluationCondition .= $evaluationConditionAND;
+	if( $evaluationConditionOR ) {
+		if( $evaluationConditionAND ) {
+			$evaluationCondition .= " AND (" . $evaluationConditionOR . ")";
+		} else {
+			$evaluationCondition .= $evaluationConditionOR;
+		}
+	}
+
+	$evaluationCondition .= ") {\n";
+	$evaluationCondition .= "  \$passedCondition = true;\n";
+	$evaluationCondition .= "}\n";
+
+	$passedCondition = false;
+	eval($evaluationCondition);
+
+	$allowed = 1;
+	if(!$passedCondition) {
+		$allowed = 0;
+	}
+	return $allowed;
+}
+
+function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$filterTerms,$entry,$entryData) {
+	$evaluationCondition = "";
+
+	// convert the internal database representation to the displayed value, if this element has uitext that we're supposed to use
+	// translate yes/no choices for yes/no elements if French is active language
+	global $xoopsConfig;
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+
+	foreach ($filterElements as $key => $element) {
+		if(!isMetaDataField($element)) {
+			// make sure that the filterElements array is using handles, as originally designed and required by code below
+			if($filterElementObject = $element_handler->get($element)) {
+				$filterElements[$key] = $filterElementObject->getVar('ele_handle');
+			} else {
+				return false;
+			}
+			$element_metadata = formulize_getElementMetaData($element, !is_numeric($element));
+			if($element_metadata['ele_uitextshow'] AND isset($element_metadata['ele_uitext'])) {
+				$filterTerms[$key] = formulize_swapUIText($filterTerms[$key], unserialize($element_metadata['ele_uitext']));
+			}
+			if($element_metadata['ele_type'] == 'yn' AND ($filterTerms[$key] == 'Yes' OR $filterTerms[$key] == 'No') AND $xoopsConfig['language'] == 'french') {
+				$filterTerms[$key] = $filterTerms[$key] == 'Yes' ? 'Oui' : $filterTerms[$key];
+				$filterTerms[$key] = $filterTerms[$key] == 'No' ? 'Non' : $filterTerms[$key];
+			}
+		}
+	}
+
+	for($io=0;$io<count((array) $indexes);$io++) {
+		$i = $indexes[$io];
+		if(!($evaluationCondition == "")) {
+			$evaluationCondition .= " $match ";
+		}
+		switch($filterOps[$i]) {
+			case "=";
+				$thisOp = "==";
+				break;
+			case "NOT";
+				$thisOp = "!=";
+				break;
+			default:
+				$thisOp = $filterOps[$i];
+		}
+		if($filterTerms[$i] === "{BLANK}") {
+			$filterTerms[$i] = "";
+		}
+
+		$filterTerms[$i] = parseUserAndToday($filterTerms[$i]);
+
+		// convert { } element references to their API format version (prepValues function output), unless the filter element is creation_uid or mod_uid
+		if(substr($filterTerms[$i],0,1) == "{" AND substr($filterTerms[$i],-1)=="}") {
+			$handle_reference = substr($filterTerms[$i],1,-1);
+			if($filterElements[$i] != 'creation_uid' AND $filterElements[$i] != 'mod_uid') { // comparing to a regular element, get the db value
+				$filterTerms[$i] = $entry == 'new' ? '' : getValue($entryData[0], $handle_reference); // get blank, but we could try to get defaults like below
+			} elseif($entry != 'new') { // comparing to user metadata field, entry is not new
+				// take a wild guess that the reference is to something that should be a uid in the db...
+				$element_handler = xoops_getmodulehandler('elements', 'formulize');
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$elementObject = $element_handler->get($handle_reference);
+				$formObject = $form_handler->get($elementObject->getVar('id_form'));
+				global $xoopsDB;
+				$sql = 'SELECT '.formulize_db_escape($handle_reference).' FROM '.$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')).' WHERE entry_id = '.intval($entry);
+				$res = $xoopsDB->query($sql);
+				$row = $xoopsDB->fetchRow($res);
+				$filterTerms[$i] = $row[0];
+			} else { // comparing to user metadata field, entry is new
+					$filterTerms[$i] = 0;
+			}
+		}
+
+		$entryKey = is_numeric($entry) ? intval($entry) : $entry;
+		if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey]) AND array_key_exists($filterElements[$i], $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey])) {
+			$compValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entryKey][$filterElements[$i]];
+		} elseif($entry == "new") {
+			$elementObject = $element_handler->get($filterElements[$i]);
+			if(is_object($elementObject)) {
+				$defaultValueMap = getEntryDefaultsInDBFormat($elementObject);
+				$compValue = isset($defaultValueMap[$elementObject->getVar('ele_handle')]) ? $defaultValueMap[$elementObject->getVar('ele_handle')] : "";
+			} else {
+				$compValue = "";
+			}
+		} else {
+			$compValue = getValue($entryData[0], $filterElements[$i]);
+		}
+		if(is_array($compValue)) {
+			if($thisOp == "==") {
+				$thisOp = "LIKE";
+			}
+			if($thisOp == "!=") {
+				$thisOp = "NOT LIKE";
+			}
+			$compValue = addslashes(implode(",",$compValue));
+		} else {
+			$compValue = is_string($compValue) ? addslashes($compValue) : $compValue;
+		}
+		$compValueQuoted = is_numeric($compValue) ? $compValue : "'".$compValue."'";
+
+		$rawFilterTerms = $filterTerms[$i];
+		$filterTermToUse = addslashes($filterTerms[$i]);
+
+    // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
+		if($thisOp == "LIKE" AND $filterTermToUse != '') {
+			$evaluationCondition .= "stristr('".$compValue."', '".$filterTermToUse."')";
+		} elseif($thisOp == "NOT LIKE" AND $filterTermToUse != '') {
+			$evaluationCondition .= "!stristr('".$compValue."', '".$filterTermToUse."')";
+    } elseif($thisOp == "LIKE") {
+      $evaluationCondition .= $compValue ? 'FALSE' : 'TRUE';
+    } elseif($thisOp == "NOT LIKE") {
+      $evaluationCondition .= $compValue ? 'TRUE' : 'FALSE';
+		} elseif($thisOp == "IN") {
+			$cleanTerms = array();
+			foreach(explode(',',$rawFilterTerms) as $ft) {
+				$cleanTerms[] = str_replace("'", "\'", trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
+			}
+			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
+		} else {
+			$filterTermToUse = is_numeric($filterTermToUse) ? $filterTermToUse : "'".$filterTermToUse."'";
+			$evaluationCondition .= "$compValueQuoted $thisOp $filterTermToUse";
+		}
+	}
+
+	return $evaluationCondition;
 }

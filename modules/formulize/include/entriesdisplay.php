@@ -77,7 +77,10 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : "0";
 	$couldLoadAdvanceView = false; // default to not loading the 'advance view' (screen settings for cols, searches, etc) -- but turn this on when initially loading views, in case they are just partial views and we need to layer in missing features
 
-	if(!$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
+	// For ad hoc table forms (Users/Groups management), system_admin permission was already
+	// verified at the page level, so skip the normal view_form security check
+	$isCompositeMode = isset($GLOBALS['formulize_compositeDataMode']);
+	if((!isset($GLOBALS['formulize_systemAdminPermissionVerified']) OR !$GLOBALS['formulize_systemAdminPermissionVerified']) && !$scheck = security_check($fid, "", $uid, "", $groups, $mid, $gperm_handler)) {
 		print "<p>" . _NO_PERM . "</p>";
 		return;
 	}
@@ -113,6 +116,12 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	$view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 	$view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 	$update_entry_ownership = $gperm_handler->checkRight("update_entry_ownership", $fid, $groups, $mid);
+
+	// For ad hoc table forms (Users/Groups management), force global scope since
+	// system tables have no ownership model and the user already has system_admin permission
+	if ($isCompositeMode AND isset($GLOBALS['formulize_systemAdminPermissionVerified']) AND $GLOBALS['formulize_systemAdminPermissionVerified']) {
+		$view_globalscope = true;
+	}
 
 	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 
@@ -985,8 +994,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					$dataSetEntries = checkForLinks($frid, array($fid), $fid, array($fid=>array($this_ent))); // returns array of the forms and entries in the dataset
 					if(in_array($displayScreen->getVar('fid'),$dataSetEntries['fids'])) {
 							$this_ent = $dataSetEntries['entries'][$displayScreen->getVar('fid')][0]; // first entry for the screen's form, in this dataset - see formdisplay.php for more detailed example of usage of checkforlinks
-					} elseif(in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
-							exit('Error: cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
+					} elseif(isset($dataSetEntries['sub_fids']) AND in_array($displayScreen->getVar('fid'),$dataSetEntries['sub_fids'])) {
+							throw new Exception('Cannot yet determine the correct subform entry to display in the alternate form display screen specified in the list\'s settings.');
 					}
 				}
 				$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
@@ -1415,8 +1424,10 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
       $procedureResults = $procedureResults['text'];
 	}
 
-	// get single/multi entry status of this form...
-	$singleMulti = q("SELECT singleentry FROM " . $xoopsDB->prefix("formulize_id") . " WHERE id_form = $fid");
+	// get single/multi entry status of this form, resolved for current user's groups
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$deFormObject = $form_handler->get($fid);
+	$effectiveSingle = resolveEffectiveSingle($deFormObject->getVar('single'), $groups);
 
 	// flatten columns array and convert handles to ids so that we can send them to the change columns popup
 	// Since 4.0 columns and columnhandles are identical...this is a cleanup job for later
@@ -1465,7 +1476,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$screenButtonText['saveButton'] = _formulize_SAVE;
 	$screenButtonText['globalQuickSearch'] = _formulize_GLOBAL_SEARCH;
     if(!$lockcontrols) {
-        $screenButtonText['addButton'] = $singleMulti[0]['singleentry'] == "" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
+        $screenButtonText['addButton'] = $effectiveSingle == "off" ? _formulize_DE_ADDENTRY : _formulize_DE_UPDATEENTRY;
         $screenButtonText['addMultiButton'] = _formulize_DE_ADD_MULTIPLE_ENTRY;
         $screenButtonText['addProxyButton'] = _formulize_DE_PROXYENTRY;
     }
@@ -1537,7 +1548,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$atLeastOneActionButton = false;
   $atLeastOneActionButtonNotChangeCols = false;
 	foreach($screenButtonText as $scrButton=>$scrText) {
-		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
+		$buttonCodeArray[$scrButton] = formulize_screenLOEButton($scrButton, $scrText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
 		if($buttonCodeArray[$scrButton] AND $onActionButtonCounter < 15) { // first 0-15 items in the array should be the action buttons only
 			$atLeastOneActionButton = true;
 				if($onActionButtonCounter > 0) {
@@ -1546,10 +1557,9 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		}
 		$onActionButtonCounter++;
 	}
-
 	// make a ... button available for opening up extra actions beyond change cols
 	if($atLeastOneActionButtonNotChangeCols) {
-			$buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $singleMulti[0]['singleentry'], $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
+			$buttonCodeArray['moreActionsButton'] = formulize_screenLOEButton('moreActions', '...', $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen);
 	}
 
 	if($hlist) { // if we're on the calc side, then the export button should be the export calcs one
@@ -1568,7 +1578,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	$buttonCodeArray['autoLoadedView'] = $loadview ? $loadviewname : '';
 	$buttonCodeArray['lockControls'] = $lockcontrols;
 	$buttonCodeArray['actionButtonHeading'] = $atLeastOneActionButton ? _formulize_DE_ACTIONS : "";
-	if($add_own_entry AND $singleMulti[0]['singleentry'] == "" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
+	if($add_own_entry AND $effectiveSingle == "off" AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addMultiButton'])) {
 		$buttonCodeArray['addProxyButton'] = '';
 	} elseif($add_own_entry AND $proxy AND ($buttonCodeArray['addButton'] OR $buttonCodeArray['addProxyButton'])) { // this is a single entry form, so add in the update and proxy buttons if they have proxy, otherwise, just add in update button
 		$buttonCodeArray['addMultiButton'] = '';
@@ -2114,6 +2124,48 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 						if($caCode) {
 							$templateVariables[$thisCustomAction['handle']] = $caCode;
 							$templateVariables['customButtons'][$thisCustomAction['handle']] = $caCode; // assign the button code that was returned
+						}
+					}
+
+					// Groups composite mode: template groups get no checkbox or edit icon.
+					// Non-deletable groups (e.g. system groups, groups with members or data) get no
+					// checkbox but keep the edit icon.
+					// Instead the group-name column becomes a link to the admin form-settings page,
+					// with the form's category names listed below the link.
+					if (!empty($GLOBALS['formulize_compositeDataMode']) && $GLOBALS['formulize_compositeDataMode'] === 'groups') {
+						$_isTemplateGroup = intval(getValue($entry, 'is_group_template'));
+						if (!$_isTemplateGroup
+							&& isset($GLOBALS['formulize_deletableGroupIds'])
+							&& !isset($GLOBALS['formulize_deletableGroupIds'][intval($entry_id)])) {
+							$templateVariables['selectionCheckbox'] = '';
+						}
+						if ($_isTemplateGroup) {
+							$templateVariables['selectionCheckbox'] = '';
+							$templateVariables['viewEntryLink']     = '';
+							$_templateGroupFormId = intval(getValue($entry, 'form_id'));
+							if ($_templateGroupFormId) {
+								foreach ($templateVariables['columnHandles'] as $_ci => $_ch) {
+									if (strpos($_ch, 'formulize_group_name_') === 0) {
+										$_appId    = intval(formulize_getFirstApplicationForForm($_templateGroupFormId));
+										$_adminUrl = htmlspecialchars(XOOPS_URL . '/modules/formulize/admin/ui.php?page=form&aid=' . $_appId . '&fid=' . $_templateGroupFormId . '&tab=settings');
+										$_nameCell = "<a class='template-group-form-name' href='" . $_adminUrl . "' target='_blank'>" .
+											$templateVariables['columnContents'][$_ci] . "</a>";
+										// Append category names as a bulleted list below the link.
+										$_rawCats = getValue($entry, 'group_categories');
+										$_cats    = is_array($_rawCats) ? $_rawCats
+											: (is_string($_rawCats) && $_rawCats !== '' ? array($_rawCats) : array());
+										if (!empty($_cats)) {
+											$_nameCell .= '<ul class="main-cell-list">';
+											foreach ($_cats as $_cat) {
+												$_nameCell .= '<li>' . htmlspecialchars((string)$_cat) . '</li>';
+											}
+											$_nameCell .= '</ul>';
+										}
+										$templateVariables['columnContents'][$_ci] = $_nameCell;
+										break;
+									}
+								}
+							}
 						}
 					}
 
@@ -4146,6 +4198,28 @@ function removeNotAllowedCols($fid, $frid, $cols, $groups) {
 			if(!in_array($value['ele_handle'], $all_allowed_cols)) {	$all_allowed_cols[] = $value['ele_handle']; }
 		}
 	}
+
+	// Also allow user account element handles for entries_are_users forms, subject to visibility permissions
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	global $xoopsUser;
+	foreach(array_keys($all_allowed_cols_raw) as $form_id) {
+		$formObj = $form_handler->get($form_id);
+		if($formObj && $formObj->getVar('entries_are_users')) {
+			$uaElementIds = $formObj->getVar('userAccountElements');
+			$elementHandles = $formObj->getVar('elementHandles');
+			if(is_array($uaElementIds)) {
+				foreach($uaElementIds as $eleId) {
+					if(isset($elementHandles[$eleId]) && !in_array($elementHandles[$eleId], $all_allowed_cols)) {
+						if($element_handler->isElementVisibleForUser($eleId)) {
+							$all_allowed_cols[] = $elementHandles[$eleId];
+						}
+					}
+				}
+			}
+		}
+	}
+
 	$all_cols_from_view = $cols;
 
 	$allowed_cols_in_view = array_intersect($all_cols_from_view, $all_allowed_cols);
@@ -4177,6 +4251,14 @@ function formulize_screenLOETemplate($screen, $type, $buttonCodeArray, $settings
 	$manageSelectionTitle = ($cloneButton OR $deleteButton OR $changeOwnerButton) ? _formulize_MANAGE_SELECTION_TITLE : "";
 	$manageActionsTitle = ($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton) ? _formulize_MANAGE_ACTIONS_TITLE : "";
 	$manageOperationsTitle = ($saveViewButton OR $deleteViewButton OR $resetViewButton) ? _formulize_MANAGE_OPERATIONS_TITLE : "";
+	// When only one button group is present, a heading adds no context — suppress them all.
+	$buttonGroupCount = (int)!!($selectAllButton OR $clearSelectButton)
+	                  + (int)!!($cloneButton OR $deleteButton OR $changeOwnerButton)
+	                  + (int)!!($calcButton OR $proceduresButton OR $exportButton OR $importButton OR $notifButton)
+	                  + (int)!!($saveViewButton OR $deleteViewButton OR $resetViewButton);
+	if ($buttonGroupCount <= 1) {
+		$manageViewsTitle = $manageSelectionTitle = $manageActionsTitle = $manageOperationsTitle = "";
+	}
 
 	// setup the view name variables, with true only set for the last loaded view
 	$viewNumber = 1;
@@ -4561,7 +4643,7 @@ function gatherHiddenValues($handle) {
 }
 
 // THIS FUNCTION GENERATES HTML FOR ANY BUTTONS THAT ARE REQUESTED
-function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $doNotForceSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
+function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid, $colhandles, $flatcols, $pubstart, $loadOnlyView, $calc_cols, $calc_calcs, $calc_blanks, $calc_grouping, $effectiveSingle, $lastloaded, $currentview, $endstandard, $pickgroups, $viewoptions, $loadviewname, $advcalc_acid, $screen) {
   static $importExportCleanupDone = false;
 	if($buttonText) {
 		$buttonText = trans($buttonText);
@@ -4605,7 +4687,7 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 				}
 				break;
 			case "addButton":
-				$addNewParam = $doNotForceSingle ? "" : "'single'"; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
+				$addNewParam = ($effectiveSingle == "off") ? "'single'" : ""; // force the addNew behaviour to single entry unless this button is being used on a single entry form, in which case we don't need to force anything
 				return "<input type=button class=\"formulize_button\" id=\"formulize_$button\" name=addentry value='" . $buttonText . "' onclick=\"javascript:addNew($addNewParam);\"></input>";
 				break;
 			case "addMultiButton":
@@ -4669,6 +4751,12 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
+
+	// If composite data mode is active (Users/Groups management), delegate to the composite function
+	if (isset($GLOBALS['formulize_compositeDataMode'])) {
+		include_once XOOPS_ROOT_PATH . '/modules/formulize/include/usersAndGroups.php';
+		return formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, $forcequery);
+	}
 
 	global $xoopsUser;
 

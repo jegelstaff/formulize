@@ -2430,6 +2430,14 @@ function icms_unlinkRecursive($dir, $deleteRootToo=true){
  */
 function icms_PasswordMeter(){
 	global $xoTheme, $icmsConfigUser;
+	// $xoTheme is only available when a full theme/header has been initialized.
+	// Some contexts that render password elements (e.g. the admin fakeform.php
+	// endpoint used for ad hoc group-member forms) do not set up a theme, so
+	// there is no page header to add scripts to. Bail out quietly in that case
+	// rather than fataling on a null $xoTheme.
+	if (!is_object($xoTheme)) {
+		return;
+	}
 	//$xoTheme->addScript(ICMS_URL.'/libraries/jquery/jquery.js', array('type' => 'text/javascript')); // Avoid conflict with jquery which is included in base page template as part of standard header
 	$xoTheme->addScript(ICMS_URL.'/libraries/jquery/password_strength_plugin.js', array('type' => 'text/javascript'));
 	$xoTheme->addScript('', array('type' => ''), '

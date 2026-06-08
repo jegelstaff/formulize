@@ -57,7 +57,7 @@ class formulizeScreen extends FormulizeObject {
             case "customactions":
             case "decolumns":
             case "hiddencolumns":
-            if (!is_array(unserialize($value))) {
+            if (!is_array($value) && !is_array(unserialize($value))) {
                 $value = serialize(array());
             }
             break;

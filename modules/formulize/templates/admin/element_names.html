@@ -29,6 +29,8 @@
 		</fieldset>
 	</div>
 
+	<{if $content.isSystemElement == false}>
+
 	<div class="form-item">
    	<fieldset>
       <legend><label for="elements-ele_desc" class="question">Help text</label></legend>
@@ -101,6 +103,7 @@
 	</div>
 </div>
 <{/if}>
+<{/if}>
 
 </form>
 <div style="clear: both;"></div>
@@ -137,8 +140,5 @@ function fillHandle(){
 $("[name=elements-ele_caption]").keydown(function () {
 	$("[name=reload_names_page]").val(1);
 });
-
-
-
 
 </script>

@@ -414,6 +414,12 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('useToken', 1);
 			$defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
 			$defaultListScreen->setVar('anonNeedsPasscode', 1);
+			// ARRAY-typed vars with no non-null initVar default
+			$defaultListScreen->setVar('advanceview', serialize(array()));
+			$defaultListScreen->setVar('hiddencolumns', serialize(array()));
+			$defaultListScreen->setVar('decolumns', serialize(array()));
+			$defaultListScreen->setVar('customactions', serialize(array()));
+			$defaultListScreen->setVar('fundamental_filters', serialize(array()));
     }
 }
 

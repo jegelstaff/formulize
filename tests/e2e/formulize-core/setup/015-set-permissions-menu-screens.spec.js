@@ -1,56 +1,79 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
 test.beforeEach(async ({ page }) => {
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-	await page.getByRole('link', { name: 'Admin' }).click();
+	// Direct navigation rather than the theme "Admin" link, whose destination
+	// varies with DB/startpage state once forms exist (same pattern as 005/010).
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
+	await waitForAdminPageReady(page);
 })
 
-async function setStandardPermissions(page) {
-	await page.locator('#groups').selectOption(['Ancient History', 'Modern History', 'Curators']);
-	await page.getByRole('button', { name: 'Show permissions for these' }).click();
-	await expect(page.getByRole('group', { name: 'Ancient History' }).locator('legend')).toBeVisible();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('Update entries made by their').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('Delete entries made by their').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('View entries by other users').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('Update entries made by their').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('Delete entries made by their').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('View entries by other users').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Update entries made by anyone').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Delete entries made by anyone').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('View entries by all other').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Change the owner/creator of an existing entry').check();
+// Check a permission checkbox inside a group's panel by the checkbox's stable
+// name suffix (e.g. "_view_form"). The redesigned permissions panel made some
+// label texts overlap (getByLabel('View the form') now also matches the
+// groupscope checkbox), so target by name instead. .first() skips any entry-group
+// preview rows that the template-group panel's entry-group-selector widget adds.
+async function checkPerm(groupLocator, nameSuffix) {
+	await groupLocator.locator(`input[name$="${nameSuffix}"]`).first().check();
 }
 
-async function setGlobalPermissions(page) {
-	await page.locator('#groups').selectOption(['Ancient History', 'Modern History', 'Curators']);
+// Permission name suffixes (from form_permissions_group_panel.html):
+//   _view_form, _add_own_entry, _update_own_entry, _update_group_entries,
+//   _update_other_entries, _delete_own_entry, _delete_group_entries,
+//   _delete_other_entries, _view_groupscope, _view_globalscope,
+//   _update_entry_ownership
+
+// Permissions are now assigned to the EAG TEMPLATE groups created in 005.
+// Granting a permission on a template group cascades to all of its per-department
+// entry groups (e.g. "Departments - All Users" → "Ancient History - All Users" +
+// "Modern History - All Users"). Combined with each user's dynamic groupscope
+// (the union of their groups that hold view_form), this yields per-department
+// data isolation: staff see only their department, curators (members of both
+// departments' groups) see both. See plan Phase 5.2 + the cascade discussion.
+async function setStandardPermissions(page) {
+	await page.locator('#groups').selectOption(['Departments - All Users', 'Departments - Curators']);
 	await page.getByRole('button', { name: 'Show permissions for these' }).click();
-	await expect(page.getByRole('group', { name: 'Ancient History' }).locator('legend')).toBeVisible();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('Update entries made by anyone').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('Delete entries made by anyone').check();
-	await page.getByRole('group', { name: 'Ancient History' }).getByLabel('View entries by all other').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('Update entries made by anyone').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('Delete entries made by anyone').check();
-	await page.getByRole('group', { name: 'Modern History' }).getByLabel('View entries by all other').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Update entries made by anyone').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Delete entries made by anyone').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('View entries by all other').check();
-	await page.getByRole('group', { name: 'Curators' }).getByLabel('Change the owner/creator of an existing entry').check();
+	await expect(page.getByRole('group', { name: 'Departments - All Users' }).locator('legend')).toBeVisible();
+	// All department users: own entries + groupscope visibility (drives isolation).
+	const allUsers = page.getByRole('group', { name: 'Departments - All Users' });
+	await checkPerm(allUsers, '_view_form');
+	await checkPerm(allUsers, '_add_own_entry');
+	await checkPerm(allUsers, '_update_group_entries');
+	await checkPerm(allUsers, '_delete_group_entries');
+	await checkPerm(allUsers, '_view_groupscope');
+	// Curators: full access across all entries.
+	const curators = page.getByRole('group', { name: 'Departments - Curators' });
+	await checkPerm(curators, '_view_form');
+	await checkPerm(curators, '_add_own_entry');
+	await checkPerm(curators, '_update_other_entries');
+	await checkPerm(curators, '_delete_other_entries');
+	await checkPerm(curators, '_view_globalscope');
+	await checkPerm(curators, '_update_entry_ownership');
+}
+
+// Like setStandardPermissions but every department user gets global visibility
+// (view/update/delete any entry), used for forms that are not department-isolated.
+async function setGlobalPermissions(page) {
+	await page.locator('#groups').selectOption(['Departments - All Users', 'Departments - Curators']);
+	await page.getByRole('button', { name: 'Show permissions for these' }).click();
+	await expect(page.getByRole('group', { name: 'Departments - All Users' }).locator('legend')).toBeVisible();
+	const allUsers = page.getByRole('group', { name: 'Departments - All Users' });
+	await checkPerm(allUsers, '_view_form');
+	await checkPerm(allUsers, '_add_own_entry');
+	await checkPerm(allUsers, '_update_other_entries');
+	await checkPerm(allUsers, '_delete_other_entries');
+	await checkPerm(allUsers, '_view_globalscope');
+	const curators = page.getByRole('group', { name: 'Departments - Curators' });
+	await checkPerm(curators, '_view_form');
+	await checkPerm(curators, '_add_own_entry');
+	await checkPerm(curators, '_update_other_entries');
+	await checkPerm(curators, '_delete_other_entries');
+	await checkPerm(curators, '_view_globalscope');
+	await checkPerm(curators, '_update_entry_ownership');
 	await saveAdminForm(page);
 }
 
@@ -58,10 +81,39 @@ async function setAnonPermissions(page) {
 	await page.locator('#groups').selectOption(['Anonymous Users']);
 	await page.getByRole('button', { name: 'Show permissions for these' }).click();
 	await expect(page.getByRole('group', { name: 'Anonymous Users' }).locator('legend')).toBeVisible();
-	await page.getByRole('group', { name: 'Anonymous Users' }).getByLabel('View the form').check();
-	await page.getByRole('group', { name: 'Anonymous Users' }).getByLabel('Create their own entries in').check();
-	await page.getByRole('group', { name: 'Anonymous Users' }).getByLabel('Update entries made by themselves').check();
+	const anon = page.getByRole('group', { name: 'Anonymous Users' });
+	await checkPerm(anon, '_view_form');
+	await checkPerm(anon, '_add_own_entry');
+	await checkPerm(anon, '_update_own_entry');
 	await saveAdminForm(page);
+}
+
+// Phase 3 (3.2 form-to-form inheritance + 3.3 cascade-through): a museum form that needs the
+// exact same permissions as Artifacts INHERITS from it instead of re-running
+// setStandardPermissions. Saving with a parent calls formulizePermHandler::copyFormPermissions(),
+// which copies Artifacts' full permission set — including the template→entry group cascade and
+// groupscope — onto the child form (re-synced if Artifacts changes). De-duplicates the identical
+// permission setup and proves inheritance carries the cascade. Must run AFTER the Artifacts test.
+// `openFormPermissions` clicks the child form's name then its Permissions tab. The caller's
+// beforeEach has already navigated to the Museum forms-list page (which has NO self-referential
+// "Application: Museum" link), so openFormPermissions must NOT click that link; for the
+// verify-after-save reopen we first click "Application: Museum" (present on the form admin page)
+// to get back to the list, then call openFormPermissions again.
+async function inheritPermissionsFromArtifacts(page, openFormPermissions) {
+	await openFormPermissions();
+	const formUrl = page.url(); // form admin URL (carries the fid) — used to reopen for the verify
+	// Readiness: the permissions panel is revealed by jQuery-UI when the tab is shown.
+	await expect(page.locator('#perm_mode_inherit')).toBeVisible({ timeout: 30000 });
+	await page.locator('#perm_mode_inherit').check();
+	await page.locator('#parent_perm_fid_select').selectOption({ label: 'Artifacts' });
+	await saveAdminForm(page);
+	// Verify-after-save: reopen the form by URL (robust — the admin nav links can be unreliable
+	// from the post-inherit-save page). The inherit radio's checked state is set by JS on load and
+	// the parent <option> is server-rendered, so these assert correctly even if the Permissions
+	// tab isn't the active jQuery-UI tab (checkbox/select state doesn't require visibility).
+	await page.goto(formUrl);
+	await expect(page.locator('#perm_mode_inherit')).toBeChecked({ timeout: 30000 });
+	await expect(page.locator('#parent_perm_fid_select option:checked')).toHaveText('Artifacts');
 }
 
 test.describe('Set Permissions', () => {
@@ -75,39 +127,50 @@ test.describe('Set Permissions', () => {
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await setStandardPermissions(page);
 		await saveAdminForm(page);
-	})
-
-	test('Set permissions for Donors', async ({ page }) => {
-		await page.getByText('Donors').first().click();
-		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		await setStandardPermissions(page);
-		await saveAdminForm(page);
-	})
-
-	test('Set permissions for Collections', async ({ page }) => {
-		await page.getByText('Collections').first().click();
-		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		await setStandardPermissions(page);
-		await saveAdminForm(page);
-	})
-
-	test('Set permissions for Exhibits', async ({ page }) => {
-		await page.getByText('Exhibits').nth(2).click();
-		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		await setStandardPermissions(page);
-		await saveAdminForm(page);
-  	await page.locator('#submitted_user_user').pressSequentially('hist');
-  	await page.getByText('Modern History Staff').click();
-  	await page.getByRole('button', { name: 'Show permissions for the user' }).click();
+		// Verify the per-user effective scope resolves from the standard permissions.
+		// (Donors/Collections/Exhibits inherit these same perms, so the scopes apply there too.)
+		await selectAutocompleteOption(page, page.locator('#submitted_user_user'), 'Modern History Staff', { searchText: 'hist' });
+		// The jQuery-UI autocomplete dropdown and the fixed #admin_toolbar can both
+		// intercept the button click (a UI/Playwright timing race). Wait for the
+		// dropdown to close, then force past any fixed-toolbar overlap.
+		await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
+		await page.getByRole('button', { name: 'Show permissions for the user' }).click({ force: true });
 		await waitForAdminPageReady(page);
-	  await expect(page.getByText('View entries by other users')).toBeVisible();
-		await expect(page.getByText('View entries by all other')).not.toBeVisible();
-		await page.locator('#submitted_user_user').pressSequentially('cur');
-  	await page.getByText('Curator One').click();
-  	await page.getByRole('button', { name: 'Show permissions for the user' }).click();
+		// The permissions redesign reworded the visibility labels:
+		//   groupscope  -> "View entries made by their group(s):"
+		//   globalscope -> "View entries made by anyone"
+		// mhstaff is in Modern History - All Users (groupscope), so they see the
+		// groupscope line but not the global one.
+		await expect(page.getByText('View entries made by their group(s)')).toBeVisible();
+		await expect(page.getByText('View entries made by anyone')).not.toBeVisible();
+		await selectAutocompleteOption(page, page.locator('#submitted_user_user'), 'Curator One', { searchText: 'cur' });
+		await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
+		await page.getByRole('button', { name: 'Show permissions for the user' }).click({ force: true });
 		await waitForAdminPageReady(page);
-		await expect(page.getByText('View entries by all other')).toBeVisible();
-		await expect(page.getByText('View entries by other users')).not.toBeVisible();
+		// Curator One is in the Curators groups (globalscope).
+		await expect(page.getByText('View entries made by anyone')).toBeVisible();
+		await expect(page.getByText('View entries made by their group(s)')).not.toBeVisible();
+	})
+
+	test('Donors inherits permissions from Artifacts (form-to-form)', async ({ page }) => {
+		await inheritPermissionsFromArtifacts(page, async () => {
+			await page.getByText('Donors').first().click();
+			await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		});
+	})
+
+	test('Collections inherits permissions from Artifacts (form-to-form)', async ({ page }) => {
+		await inheritPermissionsFromArtifacts(page, async () => {
+			await page.getByText('Collections').first().click();
+			await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		});
+	})
+
+	test('Exhibits inherits permissions from Artifacts (form-to-form)', async ({ page }) => {
+		await inheritPermissionsFromArtifacts(page, async () => {
+			await page.getByText('Exhibits').nth(2).click();
+			await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		});
 	})
 
 	test('Set permissions for Surveys', async ({ page }) => {
@@ -127,7 +190,10 @@ test.describe('Set Permissions', () => {
 		await saveAdminForm(page);
 		await page.goto('/');
 		await page.getByText('Logout').click();
-		await page.goto('/modules/formulize/index.php?sid=10');
+		// The Survey multipage screen is sid=16 now: the 4 forms 005 creates
+		// (Departments, System Groups, Staff, System Users) consume screen ids
+		// 1-6, shifting the museum screens up by 6 (was sid=10 pre-005-rewrite).
+		await page.goto('/modules/formulize/index.php?sid=16');
 		await expect(page.getByRole('heading', { name: 'Password:' })).not.toBeVisible();
 		await expect(page.getByText('Which exhibit did you see?')).toBeVisible();
 	})
@@ -136,52 +202,33 @@ test.describe('Set Permissions', () => {
 
 test.describe('Set Menu Entries', () => {
 
+	// Menu group selections are set via setMenuEntryGroups(), which saves then
+	// re-navigates and verifies the selection actually persisted (retrying on
+	// failure). This guards against the Playwright-vs-UI save race that silently
+	// dropped these selections for some menus when each test just saved once.
+	const museumMenuGroups = ['Webmasters', 'Ancient History - All Users', 'Modern History - All Users'];
+
 	test('Set Menu Entry for Artifacts', async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Menu Entries' }).click();
-		await openMenuAccordion(page, 'Artifacts');
- 	  await page.locator('#groups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
-		await page.locator('#defaultScreenGroups0').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
-		await saveAdminForm(page);
+		await setMenuEntryGroups(page, 'Museum', 'Artifacts', 'groups0', museumMenuGroups, { defaultScreenSelectId: 'defaultScreenGroups0' });
 	})
 	test('Set Menu Entry for Donors', async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Menu Entries' }).click();
-		await openMenuAccordion(page, 'Donors');
- 	  await page.locator('#groups1').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
-		await saveAdminForm(page);
+		await setMenuEntryGroups(page, 'Museum', 'Donors', 'groups1', museumMenuGroups);
 	})
 	test('Set Menu Entry for Collections', async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Menu Entries' }).click();
-		await openMenuAccordion(page, 'Collections');
- 	  await page.locator('#groups2').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
-		await saveAdminForm(page);
+		await setMenuEntryGroups(page, 'Museum', 'Collections', 'groups2', museumMenuGroups);
 	})
 	test('Set Menu Entry for Exhibits', async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Menu Entries' }).click();
-		await openMenuAccordion(page, 'Exhibits');
- 	  await page.locator('#groups3').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
-		await saveAdminForm(page);
+		await setMenuEntryGroups(page, 'Museum', 'Exhibits', 'groups3', museumMenuGroups);
 	})
 	test('Set Menu Entry for Surveys', async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
-		await page.getByRole('link', { name: 'Menu Entries' }).click();
-		await openMenuAccordion(page, 'Surveys');
- 	  await page.locator('#groups4').selectOption(['Webmasters', 'Ancient History', 'Modern History']);
-		await saveAdminForm(page);
+		await setMenuEntryGroups(page, 'Museum', 'Surveys', 'groups4', museumMenuGroups);
 	})
 })
 
 test.describe('Set columns and elements for screens', () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
+		await page.goto('/modules/formulize/admin/ui.php?page=home');
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 	})
 
@@ -286,7 +333,7 @@ test.describe('Set columns and elements for screens', () => {
 		await checkboxByLabelText('Donated Artifacts').uncheck();
 		await checkboxByLabelText('Profile').check();
 		await saveAdminForm(page);
-		await page.getByRole('link', { name: 'Home' }).click();
+		await page.goto('/modules/formulize/admin/ui.php?page=home');
 	})
 
 	test('Collections form screen', async ({ page }) => {
@@ -340,7 +387,7 @@ test.describe('Set columns and elements for screens', () => {
 	})
 
 	test('Set Preferences for Rewrite Rules', async ({ page }) => {
-		await page.getByRole('link', { name: 'Formulize Preferences' }).click();
+		await page.getByRole('link', { name: 'Preferences' }).click();
 		await page.locator('#formulizeRewriteRulesEnabled-13').check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);

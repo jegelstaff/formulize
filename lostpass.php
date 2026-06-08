@@ -90,11 +90,16 @@ switch($method) {
         	$method = 'email';
 				}
 }
+if($method == 'texts') {
+    $lp_profile_handler = xoops_getmodulehandler('profile', 'profile');
+    $lp_profile = $lp_profile_handler->get($uid);
+    $lp_phone = $lp_profile ? $lp_profile->getVar('2faphone') : '';
+}
 print "
 <div style='padding: 2em;'>
 <h1>"._US_RESET_PW_FOR.strip_tags(htmlspecialchars($row['login_name'], ENT_QUOTES))."</h1>$errorMessage
 <form id='pwchange' action='".XOOPS_URL."/lostpass.php?a=".urlencode(strip_tags(htmlspecialchars($_GET['a'], ENT_QUOTES)))."&token=".urlencode($GLOBALS['xoopsSecurity']->createToken())."' method='post'>
-<p><b>"._US_TO_CHANGE_PASS.$method.":</b><br><input type='text' autocomplete='one-time-code' inputmode='numeric' name='code' value='' /></p><br>
+<p><b>".($method == 'app' ? _US_TO_CHANGE_PASS_APP : ($method == 'texts' ? sprintf(_US_TO_CHANGE_PASS, htmlspecialchars(tfa_formatPhone($lp_phone))) : sprintf(_US_TO_CHANGE_PASS, htmlspecialchars($userObject->getVar('email')))))."</b><br><input type='text' autocomplete='one-time-code' inputmode='numeric' name='code' value='' /></p><br>
 <p>"._US_NEW_PASSWORD."<br><input type='password' autocomplete='new-password' name='pass1' value='' /></p><br>
 <p>"._US_CONFIRM_PASSWORD."<br><input type='password' autocomplete='new-password' name='pass2' value='' /></p><br>
 <input type='submit' name='submit' value='"._US_RESET_PW_BUTTON."'>
