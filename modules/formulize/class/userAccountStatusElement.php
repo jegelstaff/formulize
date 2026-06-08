@@ -32,6 +32,19 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 		return new formulizeUserAccountStatusElement();
 	}
 
+	/**
+	 * Build a WHERE clause fragment to search by account status label or numeric level.
+	 *
+	 * Matches "Active" (level=1) and "Disabled" (level=-1) by label substring or numeric key.
+	 *
+	 * @param string|array $term       Search term(s) (label substring or numeric level)
+	 * @param string       $operator   SQL operator; 'NOT LIKE'/'!=' produces a NOT IN clause
+	 * @param string       $quotes     Ignored
+	 * @param string       $likebits   Ignored
+	 * @param int          $fid        Form ID (unused)
+	 * @param string       $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
 		$options = array(1 => _formulize_UA_STATUS_ACTIVE, -1 => _formulize_UA_STATUS_DISABLED);
@@ -58,6 +71,21 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 			: "{$tableAlias}.`level` IN ($safeKeys)";
 	}
 
+	/**
+	 * Render the account status field as a dropdown (Active / Disabled).
+	 *
+	 * Defaults to Active when no value is set. When disabled, renders the label as read-only.
+	 *
+	 * @param mixed  $ele_value  Current level value (1 = Active, -1 = Disabled)
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML element name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		$options = array(
 			1  => _formulize_UA_STATUS_ACTIVE,

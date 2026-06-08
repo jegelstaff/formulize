@@ -12,19 +12,21 @@
 ##  Project: Formulize                                                        ##
 ###############################################################################
 
-// Virtual element type for the "Type" column on the Users management page.
-// Represents the title of the entries-are-users form that a user belongs to.
-// Has no real database column — data is injected post-query by
-// injectUserEauTypeData() in usersAndGroups.php.
-// buildSearchWhereClause does a PHP-level fan-out across EAU form data tables
-// (since table names are dynamic) and returns a static uid IN (...) clause.
-
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
 }
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/virtualElement.php";
 
+/**
+ * Virtual element representing the "Type" column on the Users management page.
+ *
+ * Displays the title of the entries-are-users form the user belongs to, or "Regular"
+ * if no EAU form claims the user. Has no backing database column — data is injected
+ * post-query by injectUserEauTypeData() in usersAndGroups.php.
+ * buildSearchWhereClause() fans out across dynamic EAU data tables and returns a
+ * static uid IN (...) clause.
+ */
 class formulizeUserEauTypeElement extends formulizeVirtualElement {
 
 	function __construct() {
@@ -40,8 +42,13 @@ class formulizeUserEauTypeElementHandler extends formulizeVirtualElementHandler 
 		return new formulizeUserEauTypeElement();
 	}
 
-	// Return the hardcoded filter options: "Regular" plus one entry per EAU form
-	// (using its singular name, falling back to form_title).
+	/**
+	 * Return the available filter options for this element.
+	 *
+	 * Returns "Regular" plus one entry per EAU form (singular name, or form_title as fallback).
+	 *
+	 * @return array Associative array of option value => display label
+	 */
 	function getFilterOptions() {
 		global $xoopsDB;
 		$options    = array('Regular' => 'Regular');
@@ -56,10 +63,21 @@ class formulizeUserEauTypeElementHandler extends formulizeVirtualElementHandler 
 		return $options;
 	}
 
-	// Return a WHERE clause that matches users of the given type.
-	// "Regular" (case-insensitive) → users NOT linked to any EAU form.
-	// Anything else → PHP-level fan-out across EAU data tables whose singular
-	// name matches the term, returning a static uid IN (...) clause.
+	/**
+	 * Build a WHERE clause fragment matching users by their EAU type.
+	 *
+	 * "Regular" (case-insensitive) returns users NOT linked to any EAU form.
+	 * Any other term fans out across EAU form data tables whose singular name matches,
+	 * then returns a static uid IN (...) clause.
+	 *
+	 * @param string $term       The search term (e.g. "Regular" or an EAU form singular name)
+	 * @param string $operator   SQL operator applied when matching form names
+	 * @param string $quotes     Quote character(s) for the term
+	 * @param string $likebits   LIKE wildcards
+	 * @param int    $fid        Form ID (unused)
+	 * @param string $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		global $xoopsDB;
 

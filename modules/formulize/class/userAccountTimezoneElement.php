@@ -46,11 +46,18 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 		return new formulizeUserAccountTimezoneElement();
 	}
 
-	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
-	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-	// $element is the element object
-	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-	// $entry_id is the ID of the entry being loaded
+	/**
+	 * Load the IANA timezone for this user entry.
+	 *
+	 * Reads the profile:timezone column via the parent. When no timezone has been set
+	 * in the profile, falls back to the user's legacy timezone_offset converted to an
+	 * IANA identifier.
+	 *
+	 * @param object    $element  The element object
+	 * @param mixed     $value    Ignored; value is read from the user profile
+	 * @param int|mixed $entry_id Entry ID
+	 * @return string|null IANA timezone string, or null if none found
+	 */
 	function loadValue($element, $value, $entry_id) {
 		$value = parent::loadValue($element, $value, $entry_id);
 		if(!$value) {
@@ -69,16 +76,22 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 		return $value;
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the timezone field as a native HTML select populated from the IANA timezone list.
+	 *
+	 * Defaults to the site's default timezone when no value is set. When disabled, renders
+	 * the timezone name as a read-only label.
+	 *
+	 * @param mixed  $ele_value  Current IANA timezone string
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML select name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormLabel
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		if(!$ele_value) {
 			global $xoopsConfig;
@@ -97,6 +110,19 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 		return new XoopsFormLabel($caption, $html, $markupName);
 	}
 
+	/**
+	 * Build a WHERE clause fragment to search by timezone.
+	 *
+	 * Delegates to an EXISTS subquery against the profile_profile.timezone column.
+	 *
+	 * @param string $term       Search term (IANA timezone string)
+	 * @param string $operator   SQL operator
+	 * @param string $quotes     Quote character(s) for the term
+	 * @param string $likebits   LIKE wildcards
+	 * @param int    $fid        Form ID (unused)
+	 * @param string $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		return $this->buildProfileExistsClause('timezone', $term, $operator, $quotes, $likebits, $tableAlias);
 	}

@@ -50,8 +50,18 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		return new formulizeUserAccountGroupMembershipElement();
 	}
 
-	// Override loadValue since we're not reading from a user property
-	// Group membership data comes from the groups_users_link table
+	/**
+	 * Load the current group membership for this user entry.
+	 *
+	 * Returns an array keyed by ELE_VALUE_SELECT_OPTIONS (currently selected group IDs)
+	 * and ELE_VALUE_SELECT_MULTIPLE (always 1). When no user exists yet both values
+	 * are empty/default so that render() sees the correct mode.
+	 *
+	 * @param object    $element  The element object
+	 * @param mixed     $value    Ignored; membership is read from groups_users_link
+	 * @param int|mixed $entry_id Entry ID
+	 * @return array
+	 */
 	function loadValue($element, $value, $entry_id) {
 		$member_handler = xoops_gethandler('member');
 		$fid = $element->getVar('fid');
@@ -64,16 +74,23 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		return array(ELE_VALUE_SELECT_OPTIONS => $member_handler->getGroupsByUser($userId), ELE_VALUE_SELECT_MULTIPLE => 1); // unusual use of ELE_VALUE_SELECT_OPTIONS to store the selected group ids, but we will always gather the full set below in the render method and need a way of knowing which are selected
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the group membership selector as an autocomplete multi-select widget.
+	 *
+	 * When disabled, renders a read-only label listing the selected group names.
+	 * Injects an additional stable CSS class (auto_multi_{elementHandle}) alongside
+	 * the per-entry de_-based class so tests and selectors remain stable.
+	 *
+	 * @param mixed  $ele_value  Array from loadValue with selected group IDs and multi flag
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object
+	 * @param mixed  $entry_id   Entry ID
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		// Setup an autocomplete element to render the group selection UI, and render that
 		$autocompleteHandler = xoops_getmodulehandler('autocompleteElement', 'formulize');
@@ -117,9 +134,15 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		return $formElement;
 	}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	/**
+	 * Return JS validation code for this element (none required for group membership).
+	 *
+	 * @param string    $caption    Field caption (unused)
+	 * @param string    $markupName HTML input name (unused)
+	 * @param object    $element    The element object (unused)
+	 * @param int|mixed $entry_id   Entry ID (unused)
+	 * @return array Empty array
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id=false) {
 		$validationCode = array();
 		return $validationCode;
@@ -470,9 +493,22 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		return false;
 	}
 
-	// Build a WHERE clause subquery that searches group membership by group name.
-	// Searches groups the user belongs to (excluding built-in registered-users and anonymous groups).
-	// Used by formulize_tryDelegatedSearchWhere so this element type can handle its own complex subquery.
+	/**
+	 * Build a WHERE clause fragment that searches group membership by group name.
+	 *
+	 * Produces an EXISTS subquery joining groups_users_link to the groups table and
+	 * matches on the group name. Excludes built-in registered-users and anonymous groups.
+	 * Used by formulize_tryDelegatedSearchWhere() so this element can handle its own
+	 * complex subquery rather than relying on the generic search path.
+	 *
+	 * @param string|array $term       The search term (or a pre-escaped IN list)
+	 * @param string       $operator   SQL operator (LIKE, =, NOT LIKE, != etc.)
+	 * @param string       $quotes     Quote character(s) to wrap the term
+	 * @param string       $likebits   LIKE wildcards (%, or empty)
+	 * @param int          $fid        Form ID (unused)
+	 * @param string       $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main')
 	{
 		global $xoopsDB;

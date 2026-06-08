@@ -59,39 +59,64 @@ class formulizeUserAccountFirstNameElementHandler extends formulizeUserAccountEl
 		}
 	}
 
-	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
-	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-	// $element is the element object
-	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-	// $entry_id is the ID of the entry being loaded
+	/**
+	 * Load the first-name portion of the uname field for this entry.
+	 *
+	 * Delegates to the parent to read the full uname from the users table, then
+	 * extracts the appropriate name part via extractNamePart().
+	 *
+	 * @param object    $element  The element object
+	 * @param mixed     $value    Ignored; value is read from the user record
+	 * @param int|mixed $entry_id Entry ID
+	 * @return string The first-name portion of the uname value
+	 */
 	function loadValue($element, $value, $entry_id) {
 		$value = parent::loadValue($element, $value, $entry_id);
 		return $this->extractNamePart($value);
 	}
 
-	// this method formats a dataset value for list display
-	// splits the uname value into first-name or last-name portion, matching the loadValue logic
+	/**
+	 * Format a dataset value for list display.
+	 *
+	 * Splits the full uname value into the appropriate name part (first or last)
+	 * before delegating to the parent formatter.
+	 *
+	 * @param mixed  $value     Full uname value from the dataset
+	 * @param string $handle    Element handle
+	 * @param int    $entry_id  Entry ID
+	 * @param int    $textWidth Column display width hint
+	 * @return string Formatted name portion
+	 */
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		return parent::formatDataForList($this->extractNamePart($value), $handle, $entry_id, $textWidth);
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the first name field as a plain text input (or a label if disabled).
+	 *
+	 * @param mixed  $ele_value  Current value (already extracted to the name part by loadValue)
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		return $this->renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled);
 	}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	/**
+	 * Generate JS validation code requiring a non-empty first name.
+	 *
+	 * @param string    $caption    Field caption (used in the alert message)
+	 * @param string    $markupName HTML input name
+	 * @param object    $element    The element object (unused)
+	 * @param int|mixed $entry_id   Entry ID (unused)
+	 * @return void
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		$validationCode = array();
 		// Todo - add error message to language files

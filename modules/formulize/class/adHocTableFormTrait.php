@@ -12,22 +12,36 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-// Methods on formulizeFormsHandler for creating and maintaining ad hoc table
-// forms — forms backed directly by an existing database table (e.g. the system
-// users table) rather than a Formulize-managed data table.
-//
-// An ad hoc table form is created with lockedform = FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED
-// and its tableform column set to the target table name. Elements are auto-generated
-// from the table's columns (via SHOW COLUMNS) and kept in sync on every page load.
-
+/**
+ * Methods on formulizeFormsHandler for creating and maintaining ad hoc table forms.
+ *
+ * Ad hoc table forms are backed directly by an existing database table (e.g. the
+ * system users table) rather than a Formulize-managed data table. A form is created
+ * with lockedform = FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED and its tableform column set
+ * to the target table name. Elements are auto-generated from the table's columns via
+ * SHOW COLUMNS and kept in sync on every page load.
+ */
 trait formulizeAdHocTableFormTrait {
 
-	// Ensure an ad hoc table form exists for an arbitrary database table.
-	// If one already exists (matched by tableform column), returns its id_form.
-	// Otherwise, creates a new form record with lockedform=2 (system-managed)
-	// and auto-generates element records for each column.
-	// $options: 'excludeColumns' => array of column names to skip,
-	//           'columnLabels' => array of column_name => friendly label
+	/**
+	 * Ensure an ad hoc table form exists for an arbitrary database table.
+	 *
+	 * If one already exists (matched by tableform column), returns its id_form and
+	 * syncs elements in case the table schema changed.
+	 * Otherwise, creates a new form record with lockedform=FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED
+	 * and auto-generates element records for each column.
+	 *
+	 * @param string $tableName    The full (prefixed) table name to back the form
+	 * @param string $formHandle   The form handle to use when creating a new form
+	 * @param string $formTitle    The form title to use when creating a new form
+	 * @param array  $options      Optional settings:
+	 *   'excludeColumns' => array of column names to skip,
+	 *   'columnLabels'   => array of column_name => friendly label,
+	 *   'columnTypes'    => array of column_name => element type string,
+	 *   'extraElements'  => array of virtual element definitions,
+	 *   'defaultColumns' => array of column handles for the default visible headerlist
+	 * @return int|false The id_form on success, false on failure
+	 */
 	function ensureAdHocTableForm($tableName, $formHandle, $formTitle, $options = array()) {
 		global $xoopsDB;
 
@@ -74,11 +88,17 @@ trait formulizeAdHocTableFormTrait {
 		return $fid;
 	}
 
-	// Set the headerlist for an ad hoc form.
-	// If $options['defaultColumns'] is provided (array of raw column/handle names), only those
-	// elements appear as default columns (in the given order). Otherwise all elements
-	// are included. Always overwrites the current headerlist so code-defined defaults win.
-	// Resolves canonical handles automatically from columnTypes/extraElements in $options.
+	/**
+	 * Set the headerlist (default visible columns) for an ad hoc form.
+	 *
+	 * If $options['defaultColumns'] is provided, only those columns appear in order.
+	 * Otherwise all elements are included. Always overwrites the current headerlist
+	 * so code-defined defaults take precedence. Resolves canonical handles automatically
+	 * from columnTypes/extraElements in $options.
+	 *
+	 * @param int   $fid     The form ID
+	 * @param array $options The same options array passed to ensureAdHocTableForm
+	 */
 	function setAdHocFormHeaderlist($fid, $options = array()) {
 		global $xoopsDB;
 		$fid = intval($fid);
@@ -134,10 +154,18 @@ trait formulizeAdHocTableFormTrait {
 		}
 	}
 
-	// Generate the canonical element handle for a typed element in an ad hoc form.
-	// userAccount types:  formulize_user_account_{lowercasetype}_{fid}
-	// group types:        formulize_group_{lowercasetype}_{fid}
-	// All other types fall back to the raw column name.
+	/**
+	 * Generate the canonical element handle for a typed element in an ad hoc form.
+	 *
+	 * userAccount types:  formulize_user_account_{lowercasetype}_{fid}
+	 * group types:        formulize_group_{lowercasetype}_{fid}
+	 * All other types fall back to the raw column name.
+	 *
+	 * @param string $type     The element type string (e.g. 'userAccountEmail', 'groupName')
+	 * @param int    $fid      The form ID
+	 * @param string $fallback Returned as-is when $type is unrecognised
+	 * @return string Canonical element handle
+	 */
 	function _adHocCanonicalHandle($type, $fid, $fallback) {
 		if ($type && strpos($type, 'userAccount') === 0) {
 			return 'formulize_user_account_' . strtolower(str_replace('userAccount', '', $type)) . '_' . intval($fid);
@@ -148,9 +176,16 @@ trait formulizeAdHocTableFormTrait {
 		return $fallback;
 	}
 
-	// Return the display name for a typed element.
-	// Tries the language constant _formulize_{TYPE} first, then falls back to loading the
-	// element class and reading its ->name property, then strips the type prefix.
+	/**
+	 * Return the display name for a typed element.
+	 *
+	 * Tries the language constant _formulize_{TYPE} first, then loads the element class
+	 * and reads its ->name property, then strips the type prefix as a last resort.
+	 *
+	 * @param string $type      The element type string (e.g. 'userAccountEmail')
+	 * @param array  &$nameCache Cache array to avoid repeated reflection (passed by reference)
+	 * @return string Human-readable element name
+	 */
 	function _adHocElementName($type, &$nameCache) {
 		if (!isset($nameCache[$type])) {
 			$constName = "_formulize_" . strtoupper($type);
@@ -175,8 +210,14 @@ trait formulizeAdHocTableFormTrait {
 		return $nameCache[$type];
 	}
 
-	// Return the canonical ele_order for an element type based on getUserAccountElementTypes().
-	// Non-UA types return null (caller assigns a sequential fallback order).
+	/**
+	 * Return the canonical ele_order for an element type based on getUserAccountElementTypes().
+	 *
+	 * Non-UA types return null; the caller is expected to assign a sequential fallback order.
+	 *
+	 * @param string $type The element type string
+	 * @return int|null Canonical order value, or null if not a recognised UA type
+	 */
 	function _adHocElementOrder($type) {
 		static $positions = null;
 		if ($positions === null) {
@@ -185,10 +226,19 @@ trait formulizeAdHocTableFormTrait {
 		return isset($positions[$type]) ? ($positions[$type] + 1) * 10 : null;
 	}
 
-	// Create element records for an ad hoc table form, with support for
-	// excluding columns, applying custom labels, and adding virtual extra elements.
-	// Captions for typed columns are derived from the element class ->name.
-	// ele_order follows the canonical userAccount type order from getUserAccountElementTypes().
+	/**
+	 * Create element records for an ad hoc table form.
+	 *
+	 * Supports excluding columns, applying custom labels, assigning element types,
+	 * and adding virtual extra elements that are not backed by a real table column.
+	 * Captions for typed columns come from the element class ->name property.
+	 * ele_order follows the canonical userAccount type order from getUserAccountElementTypes().
+	 *
+	 * @param string $targetTableName The full (prefixed) table name
+	 * @param int    $fid             The form ID
+	 * @param array  $options         The same options array passed to ensureAdHocTableForm
+	 * @return bool True on success, false if any element insert failed
+	 */
 	function createAdHocTableFormElements($targetTableName, $fid, $options = array()) {
 		$excludeColumns = isset($options['excludeColumns']) ? $options['excludeColumns'] : array();
 		$columnLabels   = isset($options['columnLabels'])   ? $options['columnLabels']   : array();
@@ -293,10 +343,18 @@ trait formulizeAdHocTableFormTrait {
 		return true;
 	}
 
-	// Synchronize ad hoc table form elements with the current table schema.
-	// Adds elements for new columns, removes elements for dropped columns.
-	// Captions for typed columns come from the element class ->name.
-	// ele_order follows the canonical userAccount type order (see getUserAccountElementTypes()).
+	/**
+	 * Synchronize ad hoc table form elements with the current table schema.
+	 *
+	 * Adds elements for new columns, renames/updates elements whose type or order has
+	 * drifted, and removes elements for dropped columns. Also refreshes the headerlist
+	 * so code-defined defaults stay current.
+	 *
+	 * @param int    $fid       The form ID
+	 * @param string $tableName The full (prefixed) table name
+	 * @param array  $options   The same options array passed to ensureAdHocTableForm
+	 * @return bool Always true
+	 */
 	function syncAdHocTableFormElements($fid, $tableName, $options = array()) {
 		$fid = intval($fid);
 		$excludeColumns = isset($options['excludeColumns']) ? $options['excludeColumns'] : array();

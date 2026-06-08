@@ -12,19 +12,19 @@
 ##  Project: Formulize                                                        ##
 ###############################################################################
 
-// Virtual element type for the "Categories" column on the Groups management page.
-// Represents the list of template group categories (e.g. "All Users", "Staff")
-// for an entries-are-groups form. Has no real database column — data is injected
-// post-query by injectGroupCategoriesData() in usersAndGroups.php.
-// This class exists solely to provide buildSearchWhereClause so that search
-// terms typed into the Categories column produce a valid correlated subquery.
-
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
 }
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/virtualElement.php";
 
+/**
+ * Virtual element representing the "Categories" column on the Groups management page.
+ *
+ * Displays the list of template group categories (e.g. "All Users", "Staff") for an
+ * entries-are-groups form. Has no real database column — data is injected post-query
+ * by injectGroupCategoriesData() in usersAndGroups.php.
+ */
 class formulizeEagGroupCategoriesElement extends formulizeVirtualElement {
 
 	function __construct() {
@@ -34,16 +34,27 @@ class formulizeEagGroupCategoriesElement extends formulizeVirtualElement {
 
 }
 
+/** @see formulizeEagGroupCategoriesElement */
 class formulizeEagGroupCategoriesElementHandler extends formulizeVirtualElementHandler {
 
 	function create() {
 		return new formulizeEagGroupCategoriesElement();
 	}
 
-	// Return a correlated EXISTS subquery that matches template group rows whose
-	// category name (the part after the "{FormTitle} - " prefix) contains the
-	// search term. Searching on the full stored name is equivalent because the
-	// category suffix is always present in the stored group name.
+	/**
+	 * Return a correlated EXISTS subquery for searching by category name.
+	 *
+	 * Matches template group rows whose category name (the part after the
+	 * "{FormTitle} - " prefix) contains the search term.
+	 *
+	 * @param string $term       The search term
+	 * @param string $operator   SQL comparison operator
+	 * @param string $quotes     Quote characters around the value
+	 * @param string $likebits   LIKE wildcard characters
+	 * @param int    $fid        Form ID (unused for this element type)
+	 * @param string $tableAlias Alias for the main table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		global $xoopsDB;
 		$groupsTable    = $xoopsDB->prefix('groups');

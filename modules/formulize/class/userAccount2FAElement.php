@@ -61,16 +61,22 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		return isset($options[$value]) ? $options[$value] : $value;
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the 2FA settings field as a radio group plus a confirmation dialog.
+	 *
+	 * Returns false when 2FA is not enabled site-wide. When the element is editable,
+	 * a jQuery UI dialog is appended for the one- or two-phase confirmation flow.
+	 *
+	 * @param mixed  $ele_value  Current 2FA method value (TFA_OFF, TFA_EMAIL, TFA_SMS, TFA_APP)
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object
+	 * @param mixed  $entry_id   Entry ID
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement|false
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		include_once XOOPS_ROOT_PATH . '/include/2fa/manage.php';
 		// check if 2FA is turned on for the site, and return false if it is not
@@ -337,10 +343,19 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 	}
 
 
-	// Returns JS validation code that runs inside xoopsFormValidate_* when the form is submitted.
-	// If 2FA settings (method, phone, email) or the password are changing for the currently logged-in
-	// user, this code opens the confirmation dialog and returns false to halt the save until a valid
-	// code is entered.
+	/**
+	 * Generate JS that opens the 2FA confirmation dialog when sensitive settings change.
+	 *
+	 * Only emitted when the user is editing their own existing entry and 2FA is enabled
+	 * site-wide. Opens a one- or two-phase dialog and halts the save until a valid code
+	 * is entered.
+	 *
+	 * @param string    $caption    Field caption (unused)
+	 * @param string    $markupName HTML input name for the 2FA method radio group
+	 * @param object    $element    The element object
+	 * @param int|mixed $entry_id   Entry ID
+	 * @return array Array of JavaScript statement strings
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		// Only relevant when 2FA is enabled globally
 		$config_handler = icms::handler('icms_config');
@@ -438,6 +453,14 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		return $js;
 	}
 
+	/**
+	 * Convert a human-readable 2FA method label to its numeric constant for database comparison.
+	 *
+	 * @param mixed  $value        Label as typed by the user (e.g. "Email", "SMS")
+	 * @param object $element      The element object (unused)
+	 * @param bool   $partialMatch True for partial/LIKE matching, false for exact match
+	 * @return int|array|mixed Matching constant(s), or the original value if no match found
+	 */
 	function prepareLiteralTextForDB($value, $element, $partialMatch = false) {
 		$options = $this->getOptions();
 		$matchingKeys = array();
@@ -455,6 +478,20 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		return count($matchingKeys) === 1 ? $matchingKeys[0] : $matchingKeys;
 	}
 
+	/**
+	 * Build a WHERE clause fragment to search by 2FA method value.
+	 *
+	 * Resolves numeric method constants from $term and produces an EXISTS subquery against
+	 * the profile_profile table; TFA_OFF (0) also matches rows where 2famethod IS NULL.
+	 *
+	 * @param mixed  $term       Numeric method constant(s) (already resolved via prepareLiteralTextForDB)
+	 * @param string $operator   SQL operator; 'NOT LIKE'/'!=' produces a NOT EXISTS clause
+	 * @param string $quotes     Ignored
+	 * @param string $likebits   Ignored
+	 * @param int    $fid        Form ID (unused)
+	 * @param string $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		global $xoopsDB;
 		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');

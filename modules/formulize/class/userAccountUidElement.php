@@ -49,16 +49,19 @@ class formulizeUserAccountUidElementHandler extends formulizeUserAccountElementH
 		return new formulizeUserAccountUidElement();
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the UID as a read-only label (system-managed; never editable by users).
+	 *
+	 * @param mixed  $ele_value  The uid value
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML element name (unused)
+	 * @param bool   $isDisabled Whether the field is disabled (always read-only)
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormLabel
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		$formElement = new xoopsFormLabel($caption, $ele_value);
 		return $formElement;

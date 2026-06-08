@@ -12,12 +12,6 @@
 ##  Project: Formulize                                                        ##
 ###############################################################################
 
-// Base class for elements that map directly to columns in the system groups table.
-// Subclass to define a typed field (e.g. groupName, groupDescription).
-// The isGroupTableElement flag on the element object triggers processGroupSubmission()
-// in readelements.php, writing submitted values directly to the groups table rather
-// than to a Formulize data table.
-
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
 }
@@ -25,6 +19,14 @@ if (!defined('XOOPS_ROOT_PATH')) {
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
 
+/**
+ * Base class for elements that map directly to columns in the system groups table.
+ *
+ * Subclass to define a typed field (e.g. groupName, groupDescription). The
+ * isGroupTableElement flag triggers processGroupSubmission() in readelements.php,
+ * which writes submitted values directly to the groups table rather than to a
+ * Formulize data table.
+ */
 class formulizeGroupTableElement extends formulizeElement {
 
 	var $groupProperty = null; // the groups table column this element represents; overridden in child classes
@@ -65,7 +67,14 @@ class formulizeGroupTableElementHandler extends formulizeElementsHandler {
 		$element->setVar('ele_value', $ele_value);
 	}
 
-	// Read the group property for this element from the groups table using entry_id as groupid.
+	/**
+	 * Read the group property for this element from the groups table using entry_id as groupid.
+	 *
+	 * @param object $element  The element object (must have groupProperty set)
+	 * @param mixed  $value    Ignored; value is read from the database
+	 * @param mixed  $entry_id The groupid of the group being displayed/edited
+	 * @return mixed The column value, or null if not found
+	 */
 	function loadValue($element, $value, $entry_id) {
 		$value = null;
 		global $xoopsDB;

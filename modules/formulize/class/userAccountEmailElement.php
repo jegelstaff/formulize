@@ -46,23 +46,32 @@ class formulizeUserAccountEmailElementHandler extends formulizeUserAccountElemen
 		return new formulizeUserAccountEmailElement();
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the email address field as a plain text input (or a label if disabled).
+	 *
+	 * @param mixed  $ele_value  Current email value
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		return $this->renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled, 20, 255);
 	}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	/**
+	 * Generate the shared email/phone JS validation code.
+	 *
+	 * @param string    $caption    Field caption (unused)
+	 * @param string    $markupName HTML input name (unused; resolved from element)
+	 * @param object    $element    The element object
+	 * @param int|mixed $entry_id   Entry ID
+	 * @return array Array of JavaScript statement strings
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		return formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id);
 	}

@@ -34,13 +34,26 @@ class formulizeUserAccountMasqueradeElementHandler extends formulizeUserAccountE
 		return new formulizeUserAccountMasqueradeElement();
 	}
 
+	/**
+	 * Override the element help text to the masquerade-specific description.
+	 *
+	 * @param array $properties Element property array
+	 * @return array Updated property array
+	 */
 	public function setupAndValidateElementProperties($properties) {
 		$properties = parent::setupAndValidateElementProperties($properties);
 		$properties['ele_desc'] = _formulize_UA_MASQUERADE_HELP;
 		return $properties;
 	}
 
-	// Returns the uid for the user represented by this entry.
+	/**
+	 * Return the uid of the user represented by this entry.
+	 *
+	 * @param object    $element  The element object
+	 * @param mixed     $value    Ignored
+	 * @param int|mixed $entry_id Entry ID
+	 * @return int|null The uid, or null if the entry has no associated user
+	 */
 	function loadValue($element, $value, $entry_id) {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('fid'));
@@ -48,8 +61,22 @@ class formulizeUserAccountMasqueradeElementHandler extends formulizeUserAccountE
 		return $uid ?: null;
 	}
 
-	// Renders a Masquerade button linking to the masquerade endpoint.
-	// Shows nothing when already masquerading, or when viewing own account.
+	/**
+	 * Render a Masquerade button that links to the masquerade endpoint.
+	 *
+	 * Returns an empty label when already masquerading, when there is no target user,
+	 * or when the current user would be masquerading as themselves.
+	 *
+	 * @param mixed  $ele_value  The target uid (from loadValue)
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML element name
+	 * @param bool   $isDisabled Whether the element is disabled (unused; always read-only)
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormLabel
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		global $xoopsUser;
 		if (isset($_SESSION['masquerade_xoopsUserId'])) {

@@ -42,6 +42,11 @@ class formulizePermHandler {
     }
 
 
+    /**
+     * Return the canonical list of Formulize form permission names.
+     *
+     * @return array Array of permission name strings
+     */
     static function getPermissionList() {
         // canonical list of form permissions
         return array("view_form", "add_own_entry", "update_own_entry", "delete_own_entry", "update_other_entries", "delete_other_entries",
@@ -51,7 +56,15 @@ class formulizePermHandler {
     }
 
 
-    // check if a user belongs to a group with delete permission on a form. only for checking whether the delete button should be included in the page
+    /**
+     * Check whether a user belongs to any group with delete permission on a form.
+     *
+     * Used only to decide whether to include a delete button in the UI, not as a security gate.
+     *
+     * @param int $form_id The form ID
+     * @param int $user_id The user ID
+     * @return bool True if the user has any delete permission on the form
+     */
     static function user_can_delete_from_form($form_id, $user_id) {
         $cache_key = "delete-button $form_id $user_id";
         if (!isset(self::$cached_permissions[$cache_key])) {
@@ -76,13 +89,29 @@ class formulizePermHandler {
     }
 
 
-    // check whether a user is able to update an entry in a form
+    /**
+     * Check whether a user is allowed to update a specific entry.
+     *
+     * @param int       $form_id  The form ID
+     * @param int       $user_id  The user ID
+     * @param int|mixed $entry_id The entry ID ("new" or numeric)
+     * @return bool True if the user may update the entry
+     */
     static function user_can_edit_entry($form_id, $user_id, $entry_id) {
         return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
     }
 
 
-    // check whether a user is able to delete a specific entry in a form. use this to show the delete checkbox and as a security check before actual deletion
+    /**
+     * Check whether a user is allowed to delete a specific entry.
+     *
+     * Use this both to show the delete checkbox and as a security check before actual deletion.
+     *
+     * @param int       $form_id  The form ID
+     * @param int       $user_id  The user ID
+     * @param int|mixed $entry_id The entry ID
+     * @return bool True if the user may delete the entry
+     */
     static function user_can_delete_entry($form_id, $user_id, $entry_id) {
         return self::user_can_modify_entry("delete", $form_id, $user_id, $entry_id);
     }
@@ -161,33 +190,61 @@ class formulizePermHandler {
     }
 
 
-	// this method returns an array of group names, keys are ids
-	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
+	/**
+	 * Return an array of group names (keyed by group ID) that are in the scope of the given groups.
+	 *
+	 * @param int|array $gids Group ID or array of group IDs whose scope you want to query
+	 * @return array|false Group names keyed by group ID, or false if no scope is defined
+	 */
 	function getGroupScopeGroups($gids) {
 		return $this->_getGroupScopeGroupsOrIds($gids, 'group_names');
 	}
 
-	// this method returns an array of group ids
-	// gids can be a group id or array of ids...it is the groupids that you are asking about, and you want to know which specific groups are selected as the scope for these groups you're passing in
+	/**
+	 * Return an array of group IDs that are in the scope of the given groups.
+	 *
+	 * @param int|array $gids Group ID or array of group IDs whose scope you want to query
+	 * @return array|false Group IDs, or false if no scope is defined
+	 */
 	function getGroupScopeGroupIds($gids) {
 		return $this->_getGroupScopeGroupsOrIds($gids, 'group_ids');
 	}
 
-	// this method returns an array of group ids
-	// it finds the groups that have the specified gids as part of their defined scope (so backwards to the other methods like getGroupScopeGroupIds which return the specified groups that were selected as the scope for the ones passed in)
+	/**
+	 * Return an array of group IDs whose defined scope includes all of the given groups.
+	 *
+	 * This is the reverse of getGroupScopeGroupIds(): instead of asking "what is in this
+	 * group's scope?", this asks "which groups have these groups in their scope?".
+	 *
+	 * @param int|array $gids Group ID or array of group IDs to search for in scope definitions
+	 * @return array Group IDs that have $gids in their scope
+	 */
 	function getGroupsHavingSpecificScope($gids) {
 		return $this->_getGroupsHavingScopeInfo($gids);
 	}
 
-	// this method returns an array of group ids
-	// it finds the groups with a defined scope, that DOES NOT include the specified gids (so the inverse of the getGroupsHavingSpecificScope method)
+	/**
+	 * Return an array of group IDs that have a defined scope which does NOT include the given groups.
+	 *
+	 * The inverse of getGroupsHavingSpecificScope(): returns groups whose scope is defined
+	 * but excludes all of $gids.
+	 *
+	 * @param int|array $gids Group ID or array of group IDs to exclude from scope matching
+	 * @return array Group IDs whose scope does not include any of $gids
+	 */
 	function getGroupsHavingDifferentSpecificScope($gids) {
 		return $this->_getGroupsHavingScopeInfo($gids, true); // true causes the difference to be returned, instead of the groups that do have the specified gids as their scope
 	}
 
-	// this method sets view_groupids for a group
-	// gid is the group we're setting view groupids for
-	// gids is the group or groups that are being set...(int or an array)
+	/**
+	 * Set the groupscope (view_groupids) for a group on this form.
+	 *
+	 * Inserts groups that are newly added and removes groups that are no longer in scope.
+	 *
+	 * @param int       $gid  The group ID whose scope is being set
+	 * @param int|array $gids The group ID(s) to set as the scope (empty array clears the scope)
+	 * @return bool True on success, false on database failure
+	 */
 	function setGroupScopeGroups($gid, $gids) {
 		if(!is_array($gids)) {
 			if(is_numeric($gids) AND $gids > 0) {
@@ -230,7 +287,13 @@ class formulizePermHandler {
 		return true;
 	}
 
-	// this internal method gets the specified type of info about a group or groups
+	/**
+	 * Internal helper: retrieve group-scope info of the requested type for one or more groups.
+	 *
+	 * @param int|array $gids Group ID or array of group IDs
+	 * @param string    $type 'group_names' or 'group_ids'
+	 * @return array|false Combined scope data, or false if none found
+	 */
 	function _getGroupScopeGroupsOrIds($gids, $type) {
 		if(!is_array($gids)) {
 			$gids = array(0=>intval($gids));
@@ -249,7 +312,13 @@ class formulizePermHandler {
 		}
 	}
 
-	// this internal method retrieves the groupscope info for a given group
+	/**
+	 * Internal helper: retrieve and cache the groupscope info for a single group on this form.
+	 *
+	 * @param int  $gid         The group ID
+	 * @param bool $updateCache True to force a cache refresh
+	 * @return array|false Array with 'group_ids' and 'group_names' keys, or false if no scope defined
+	 */
 	function _getGroupScopeGroupInfo($gid, $updateCache=false) {
 		static $cachedGroupScopeInfo = array();
 		if(!isset($cachedGroupScopeInfo[$this->fid][$gid]) OR $updateCache) {
@@ -272,7 +341,13 @@ class formulizePermHandler {
 		return $cachedGroupScopeInfo[$this->fid][$gid];
 	}
 
-	// this internal method returns the groups that have specified groups in their scope
+	/**
+	 * Internal helper: return the group IDs that have (or don't have) the given groups in their scope.
+	 *
+	 * @param int|array $gids      Group ID or array of group IDs to search for
+	 * @param bool      $different True to return groups whose scope EXCLUDES $gids (inverse)
+	 * @return array Group IDs
+	 */
 	function _getGroupsHavingScopeInfo($gids, $different=false) {
 		if(!is_array($gids)) {
 			$gids = array(0=>intval($gids));

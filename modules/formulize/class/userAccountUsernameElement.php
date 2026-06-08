@@ -46,14 +46,34 @@ class formulizeUserAccountUsernameElementHandler extends formulizeUserAccountFir
 			return new formulizeUserAccountUsernameElement();
 		}
 
-		// this method renders the element for display in a form
+		/**
+		 * Render the username field as a plain text input (or a label if disabled).
+		 *
+		 * @param mixed  $ele_value  Current username value
+		 * @param string $caption    Field caption
+		 * @param string $markupName HTML input name
+		 * @param bool   $isDisabled Whether the field is read-only
+		 * @param object $element    The element object (unused)
+		 * @param mixed  $entry_id   Entry ID (unused)
+		 * @param mixed  $screen     Screen object (unused)
+		 * @param mixed  $owner      Owner context (unused)
+		 * @return XoopsFormElement
+		 */
 		function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 			return $this->renderSimpleTextInput($ele_value, $caption, $markupName, $isDisabled);
 		}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	/**
+	 * Generate JS validation code requiring a non-empty unique username.
+	 *
+	 * Uses an XHR uniqueness check; halts submission until the check returns.
+	 *
+	 * @param string    $caption    Field caption (used in the uniqueness alert message)
+	 * @param string    $markupName HTML input name
+	 * @param object    $element    The element object
+	 * @param int|mixed $entry_id   Entry ID
+	 * @return array Array of JavaScript statement strings
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		$validationCode = array();
 		// Todo - add error message to language files

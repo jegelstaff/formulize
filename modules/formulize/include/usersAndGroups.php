@@ -28,8 +28,14 @@ include_once XOOPS_ROOT_PATH . '/modules/system/constants.php';
 // REGISTRATION FUNCTIONS
 // ============================================================================
 
-// Ensure the system users table is registered as an ad hoc table form.
-// Returns the form ID, or false on failure. Cached per page load.
+/**
+ * Ensure the system users table is registered as an ad hoc table form.
+ *
+ * Also ensures a persisted multiPageScreen exists as the defaultform for the resulting
+ * form and keeps its pages list in sync with the current element set.
+ *
+ * @return int|false The form ID, or false on failure (cached per page load)
+ */
 function ensureUsersTableForm() {
 	static $fid = null;
 	if ($fid !== null) {
@@ -141,8 +147,14 @@ function ensureUsersTableForm() {
 	return $fid;
 }
 
-// Ensure the system groups table is registered as an ad hoc table form.
-// Returns the form ID, or false on failure. Cached per page load.
+/**
+ * Ensure the system groups table is registered as an ad hoc table form.
+ *
+ * Also ensures a persisted multiPageScreen exists as the defaultform for the resulting
+ * form (containing name, description, and the members widget) and keeps the screen in sync.
+ *
+ * @return int|false The form ID, or false on failure (cached per page load)
+ */
 function ensureGroupsTableForm() {
 	static $fid = null;
 	if ($fid !== null) {
@@ -249,7 +261,11 @@ function ensureGroupsTableForm() {
 	return $fid;
 }
 
-// Get all forms that have entries_are_users enabled.
+/**
+ * Return the form IDs of all forms that have entries_are_users enabled.
+ *
+ * @return int[] Array of form IDs
+ */
 function getEntriesAreUsersForms() {
 	global $xoopsDB;
 	$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE entries_are_users = 1";
@@ -261,8 +277,14 @@ function getEntriesAreUsersForms() {
 	return $fids;
 }
 
-// Find the EAU form entry (or entries) that correspond to a given uid.
-// Returns array of arrays, each with keys 'fid' and 'entry_id'.
+/**
+ * Find the EAU form entries that correspond to a given uid.
+ *
+ * Searches all entries-are-users forms and returns every match.
+ *
+ * @param int $uid The user ID to look up
+ * @return array Array of arrays, each with keys 'fid' and 'entry_id'
+ */
 function findUserEauEntry($uid) {
 	global $xoopsDB;
 	$uid = intval($uid);
@@ -292,7 +314,11 @@ function findUserEauEntry($uid) {
 	return $matches;
 }
 
-// Get all forms that have entries_are_groups enabled.
+/**
+ * Return the form IDs of all forms that have entries_are_groups enabled.
+ *
+ * @return int[] Array of form IDs
+ */
 function getEntriesAreGroupsForms() {
 	global $xoopsDB;
 	$sql = "SELECT id_form FROM " . $xoopsDB->prefix("formulize_id") . " WHERE entries_are_groups = 1";
@@ -308,12 +334,18 @@ function getEntriesAreGroupsForms() {
 // COMPOSITE DATA GATHERING
 // ============================================================================
 
-// Extract LIKE conditions for the group name column from the $searches array so
-// they can be injected into the template-group dedup subquery in getData().
-// Returns a SQL fragment like " AND (name LIKE '%Part%')" or "" when no name search.
-// Uses OR between multiple terms so the subquery selects a representative row for any
-// form that has at least one template group matching the search; the outer WHERE
-// enforces the actual AND/OR logic on the returned row.
+/**
+ * Build a SQL AND clause for group name LIKE conditions for use in the template-group dedup subquery.
+ *
+ * Extracts LIKE search terms from the group name element search in $searches and combines
+ * them with OR so the subquery selects a representative row for any EAG form whose template
+ * groups include at least one matching name. The outer WHERE enforces actual AND/OR logic.
+ *
+ * @param array  $searches  The searches array from the list-of-entries settings
+ * @param int    $systemFid The ad hoc groups form ID (used to locate the name element handle)
+ * @param object $db        Database connection
+ * @return string SQL fragment like " AND (name LIKE '%Part%')", or "" when no name search
+ */
 function formulize_buildGroupNameDedupCondition($searches, $systemFid, $db) {
 	$nameHandle = 'formulize_group_name_' . intval($systemFid);
 	if (empty($searches[$nameHandle])) {
@@ -337,9 +369,24 @@ function formulize_buildGroupNameDedupCondition($searches, $systemFid, $db) {
 	return ' AND (' . implode(' OR ', $likeClauses) . ')';
 }
 
-// Gather a composite dataset for Users or Groups, merging system table data
-// with entries_are_users or entries_are_groups form data.
-// This mirrors the signature and return format of formulize_gatherDataSet().
+/**
+ * Gather a composite dataset for Users or Groups, merging system table data with EAU/EAG form data.
+ *
+ * Mirrors the signature and return format of formulize_gatherDataSet(). Delegates the
+ * system table query to getData() and then injects EAU or EAG form data via the merge helpers.
+ *
+ * @param array       $settings   List-of-entries settings (columns, page size, global search, etc.)
+ * @param array       $searches   Current search/filter values keyed by element handle
+ * @param string      $sort       Sort column handle
+ * @param string      $order      Sort direction ('ASC' or 'DESC')
+ * @param int|mixed   $frid       Framework ID (0 for none)
+ * @param int         $fid        The ad hoc system form ID
+ * @param mixed       $scope      Scope restriction (user/group/global scope string or array)
+ * @param object|null $screen     Screen object, or null
+ * @param string      $currentURL Current page URL (empty = return empty result)
+ * @param int         $forcequery 1 to bypass the data cache
+ * @return array Array of [data, regeneratePageNumbers, filterToCompare, flatScope]
+ */
 function formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen = null, $currentURL = "", $forcequery = 0) {
 
 	global $xoopsUser;
@@ -438,8 +485,17 @@ function formulize_gatherCompositeDataSet($settings, $searches, $sort, $order, $
 	return $to_return;
 }
 
-// Merge entries_are_users form data into the system users dataset.
-// $data is in standard getData format, $systemFid is the ad hoc users form ID.
+/**
+ * Merge entries_are_users form data into the system users dataset.
+ *
+ * For each EAU form the current user has view permission on, finds entries whose uid
+ * matches users in $data and merges those entries into the data array under the EAU
+ * form handle.
+ *
+ * @param array $data      Standard getData result keyed by system form handle
+ * @param int   $systemFid The ad hoc users form ID
+ * @return array Updated data array
+ */
 function mergeUsersCompositeData($data, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -539,10 +595,17 @@ function mergeUsersCompositeData($data, $systemFid) {
 }
 
 
-// Look up profile fields and inject them into the system users dataset.
-// Handles phone (2faphone), timezone, and tfa_method (2famethod) — each only injected
-// when the corresponding element exists in the ad hoc users form.
-// $data is the standard getData result keyed by handle; $systemFid is the ad hoc users form ID.
+/**
+ * Look up profile fields and inject them into the system users dataset.
+ *
+ * Handles phone (2faphone), timezone, and tfa_method (2famethod) — each only injected
+ * when the corresponding element exists in the ad hoc users form.
+ *
+ * @param array  $data             Standard getData result keyed by system form handle
+ * @param string $systemFormHandle Handle of the system users form ('__system_users')
+ * @param int    $systemFid        The ad hoc users form ID
+ * @return array Updated data array
+ */
 function injectProfileData($data, $systemFormHandle, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -620,9 +683,17 @@ function injectProfileData($data, $systemFormHandle, $systemFid) {
 	return $data;
 }
 
-// Inject group membership names into the system users dataset.
-// Only runs when a group_memberships virtual element exists in the ad hoc users form.
-// Injects a comma-separated list of group names (excluding Registered Users and Anonymous).
+/**
+ * Inject group membership names into the system users dataset.
+ *
+ * Only runs when a group_memberships virtual element exists in the ad hoc users form.
+ * Injects a comma-separated list of group names (excluding Registered Users and Anonymous).
+ *
+ * @param array  $data             Standard getData result keyed by system form handle
+ * @param string $systemFormHandle Handle of the system users form ('__system_users')
+ * @param int    $systemFid        The ad hoc users form ID
+ * @return array Updated data array
+ */
 function injectGroupMembershipData($data, $systemFormHandle, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -686,9 +757,17 @@ function injectGroupMembershipData($data, $systemFormHandle, $systemFid) {
 	return $data;
 }
 
-// Inject the EAU form title ("Type") for each user that belongs to an entries-are-users form.
-// Users not linked to any EAU form receive an empty array for the column.
-// $data is the standard getData result; $systemFid is the ad hoc users form ID.
+/**
+ * Inject the EAU form title ("Type") for each user that belongs to an entries-are-users form.
+ *
+ * Users not linked to any EAU form receive the label "Regular". Only runs when a
+ * userEauType virtual element exists in the ad hoc users form.
+ *
+ * @param array  $data             Standard getData result keyed by system form handle
+ * @param string $systemFormHandle Handle of the system users form ('__system_users')
+ * @param int    $systemFid        The ad hoc users form ID
+ * @return array Updated data array
+ */
 function injectUserEauTypeData($data, $systemFormHandle, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -768,9 +847,17 @@ function injectUserEauTypeData($data, $systemFormHandle, $systemFid) {
 	return $data;
 }
 
-// Inject the group type label ("Regular" or "Form-based") into every group row.
-// Regular groups (is_group_template = 0) receive "Regular"; template groups receive "Form-based".
-// Only runs when an eagGroupType element exists in the ad hoc groups form.
+/**
+ * Inject the group type label ("Regular" or "Form-based") into every group row.
+ *
+ * Regular groups (is_group_template = 0) receive "Regular"; template groups receive "Form-based".
+ * Only runs when an eagGroupType element exists in the ad hoc groups form.
+ *
+ * @param array  $data             Standard getData result keyed by system form handle
+ * @param string $systemFormHandle Handle of the system groups form ('__system_groups')
+ * @param int    $systemFid        The ad hoc groups form ID
+ * @return array Updated data array
+ */
 function injectGroupTypeData($data, $systemFormHandle, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -803,9 +890,17 @@ function injectGroupTypeData($data, $systemFormHandle, $systemFid) {
 	return $data;
 }
 
-// Inject group member names into every group row.
-// Shows up to DISPLAY_LIMIT names; if the group has more, appends a summary line.
-// $data is in standard getData format; $systemFormHandle is '__system_groups'.
+/**
+ * Inject group member names into every group row.
+ *
+ * Shows up to 15 names (or entry links for template groups); if the group has more,
+ * appends a summary line. Only runs when an eagGroupMembers element exists in the form.
+ *
+ * @param array  $data             Standard getData result keyed by system form handle
+ * @param string $systemFormHandle Handle of the system groups form ('__system_groups')
+ * @param int    $systemFid        The ad hoc groups form ID
+ * @return array Updated data array
+ */
 function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -1026,10 +1121,16 @@ function injectGroupMembersData($data, $systemFormHandle, $systemFid) {
 	return $data;
 }
 
-// Merge entries_are_groups form data into the system groups dataset.
-// Injects virtual categories/entries columns into template group rows.
-// Entry-group rows (entry_id IS NOT NULL) are excluded at the SQL query level
-// via fundamental_filters on the pseudo screen, so pagination counts are correct.
+/**
+ * Merge entries_are_groups form data into the system groups dataset.
+ *
+ * Injects virtual categories/entries/members/type columns into template group rows.
+ * Entry-group rows (entry_id IS NOT NULL) are excluded at the SQL query level via
+ * fundamental_filters on the pseudo screen, so pagination counts are correct.
+ *
+ * @param array $data Standard getData result keyed by system groups form handle
+ * @return array Updated data array
+ */
 function mergeGroupsCompositeData($data) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -1050,9 +1151,17 @@ function mergeGroupsCompositeData($data) {
 	return $data;
 }
 
-// Inject "Categories" (template group names for the same EAG form) into template group rows.
-// Plain group rows receive an empty array.
-// $data is in standard getData format; $systemFormHandle is '__system_groups'.
+/**
+ * Inject "Categories" (template group names for the same EAG form) into template group rows.
+ *
+ * Plain group rows and non-template groups receive an empty array. Also renames the
+ * 'name' column for template group rows to the EAG form title.
+ *
+ * @param array  $data             Standard getData result keyed by system form handle
+ * @param string $systemFormHandle Handle of the system groups form ('__system_groups')
+ * @param int    $systemFid        The ad hoc groups form ID
+ * @return array Updated data array
+ */
 function injectGroupCategoriesData($data, $systemFormHandle, $systemFid) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -1141,9 +1250,19 @@ function injectGroupCategoriesData($data, $systemFormHandle, $systemFid) {
 	return $data;
 }
 
-// Inject "Entries" (PI values from the EAG form data table) into template group rows.
-// Queries the EAG form's data table using the form's PI element to get entry names.
-// Falls back to stripping the category suffix from entry group names if no PI element is set.
+/**
+ * Inject "Entries" (PI values from the EAG form data table) into template group rows.
+ *
+ * Queries the EAG form's data table using the form's PI element to get entry names.
+ * Falls back to stripping the category suffix from entry group names if no PI element is set.
+ * Plain/non-template group rows receive an empty array.
+ *
+ * @param array      $data             Standard getData result keyed by system form handle
+ * @param string     $systemFormHandle Handle of the system groups form ('__system_groups')
+ * @param int        $systemFid        The ad hoc groups form ID
+ * @param int[]|null $eagFids          Optional pre-fetched EAG form IDs (unused; kept for signature compat)
+ * @return array Updated data array
+ */
 function injectGroupEntriesData($data, $systemFormHandle, $systemFid, $eagFids = null) {
 	if (!is_array($data) || count($data) == 0) {
 		return $data;
@@ -1280,8 +1399,15 @@ function injectGroupEntriesData($data, $systemFormHandle, $systemFid, $eagFids =
 	return $data;
 }
 
-// Helper: get the element ID for a given column name in an ad hoc table form.
-// Column names are stored as captions (with underscores replaced by spaces) or custom labels.
+/**
+ * Get the element ID for a given column name in an ad hoc table form.
+ *
+ * Column names are stored as captions (with underscores replaced by spaces) or custom labels.
+ *
+ * @param int    $fid        The form ID
+ * @param string $columnName The database column name to look up
+ * @return int|false The element ID, or false if not found
+ */
 function getElementIdByColumnName($fid, $columnName) {
 	global $xoopsDB;
 	$caption = str_replace("_", " ", $columnName);
@@ -1297,12 +1423,17 @@ function getElementIdByColumnName($fid, $columnName) {
 // GROUP DELETION FUNCTIONS
 // ============================================================================
 
-// Returns an array of group IDs that are safe to delete. A group is deletable when:
-//   1. It is not a built-in system group (webmasters=1, registered=2, anonymous=3).
-//   2. It has no members in groups_users_link.
-//   3. It either has no rows in formulize_entry_owner_groups, or any rows it does
-//      have are for forms on which the group no longer holds view_form permission —
-//      in that case the group is not considered an active data owner.
+/**
+ * Return an array of group IDs that are safe to delete.
+ *
+ * A group is deletable when:
+ *   1. It is not a built-in system group (webmasters=1, registered=2, anonymous=3).
+ *   2. It has no members in groups_users_link.
+ *   3. It either has no rows in formulize_entry_owner_groups, or any rows it does
+ *      have are for forms on which the group no longer holds view_form permission.
+ *
+ * @return int[] Array of deletable group IDs
+ */
 function getDeletableGroupIds() {
 	global $xoopsDB;
 	$modId         = getFormulizeModId();
@@ -1334,9 +1465,15 @@ function getDeletableGroupIds() {
 	return $ids;
 }
 
-// Delete a group by ID. Cleans up groups_users_link, group_permission, and
-// formulize_entry_owner_groups in addition to removing the groups table row.
-// Returns true on success, false if the group cannot be found.
+/**
+ * Delete a group by ID.
+ *
+ * Cleans up groups_users_link, group_permission, and formulize_entry_owner_groups
+ * in addition to removing the groups table row.
+ *
+ * @param int $groupId The group ID to delete
+ * @return bool True on success, false if $groupId is 0 or invalid
+ */
 function deleteGroupById($groupId) {
 	global $xoopsDB;
 	$groupId = intval($groupId);
@@ -1359,8 +1496,15 @@ function deleteGroupById($groupId) {
 // MENU FUNCTIONS
 // ============================================================================
 
-// Draw the Users and Groups menu section for the Formulize menu block.
-// Returns array($htmlContent, $dataArray) or array(false, false) if user lacks permission.
+/**
+ * Draw the Users and Groups menu section for the Formulize menu block.
+ *
+ * Returns both an HTML string (for non-template menu mode) and a structured data array
+ * (for template menu mode). Returns array(false, false) if the current user lacks
+ * both system_admin/user and system_admin/group permissions.
+ *
+ * @return array Two-element array: [string|false $htmlContent, array|false $dataArray]
+ */
 function drawUsersAndGroupsMenuSection() {
 	global $xoopsUser;
 

@@ -12,20 +12,6 @@
 ##  Project: Formulize                                                        ##
 ###############################################################################
 
-// Virtual element type for the "Members" column on the Groups management page.
-// Shows up to DISPLAY_LIMIT member names for each group; appends a total count
-// summary when the group has more members than the limit.
-// Has no real database column — data is injected post-query by
-// injectGroupMembersData() in usersAndGroups.php.
-// buildSearchWhereClause uses a correlated EXISTS subquery against
-// groups_users_link JOIN users so that searching by member name filters groups.
-//
-// For EAG forms with multiple group categories (e.g. All Users, Manager, Staff),
-// render() emits one widget per category wrapped in outer category tabs.
-// Hidden input names include the groupId: group_members_add_{fid}_{entryId}_{groupId}
-// processGroupSubmission() in groupTableElement.php iterates all valid entry
-// groups for this fid+entryId and processes each independently.
-
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
 }
@@ -33,6 +19,18 @@ if (!defined('XOOPS_ROOT_PATH')) {
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/virtualElement.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountGroupMembershipElement.php";
 
+/**
+ * Virtual element representing the "Members" column on the Groups management page.
+ *
+ * Shows up to DISPLAY_LIMIT member names for each group; appends a total count summary
+ * when the group has more members than the limit. Data is injected post-query by
+ * injectGroupMembersData() in usersAndGroups.php.
+ *
+ * For EAG forms with multiple group categories, render() emits one member-management
+ * widget per category wrapped in outer category tabs. Hidden input names include the
+ * groupId (group_members_add_{fid}_{entryId}_{groupId}) so that processGroupSubmission()
+ * in groupTableElement.php can process each category independently.
+ */
 class formulizeEagGroupMembersElement extends formulizeVirtualElement {
 
 	function __construct() {
@@ -43,23 +41,41 @@ class formulizeEagGroupMembersElement extends formulizeVirtualElement {
 
 }
 
+/** @see formulizeEagGroupMembersElement */
 class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHandler {
 
 	function create() {
 		return new formulizeEagGroupMembersElement();
 	}
 
-	// No DB column to read — the widget populates itself via AJAX on load.
+	/**
+	 * No DB column to read — the widget populates itself via AJAX on load.
+	 *
+	 * @param object $element  The element object
+	 * @param mixed  $value    Ignored
+	 * @param mixed  $entry_id Ignored
+	 * @return null
+	 */
 	function loadValue($element, $value, $entry_id) {
 		return null;
 	}
 
-	// Query group members, optionally filtered by a search term.
-	// Returns array('total' => int, 'results' => array of array('uid', 'display', 'protected')).
-	// total is the unfiltered member count; results are capped at $limit rows.
-	// When $checkProtection is true each result gains a 'protected' bool indicating the user
-	// must stay in this group due to entries-are-users settings.
-	// Used by both renderSingleWidget() for server-side pre-population and the XHR responder for AJAX searches.
+	/**
+	 * Query group members, optionally filtered by a search term.
+	 *
+	 * Returns an array with keys 'total' (unfiltered count) and 'results' (capped at $limit).
+	 * Each result entry has keys 'uid', 'display', and optionally 'protected' (bool indicating
+	 * the user must remain in this group due to entries-are-users settings).
+	 *
+	 * Used by renderSingleWidget() for server-side pre-population and by the XHR responder
+	 * for AJAX member searches.
+	 *
+	 * @param int    $groupId         The group ID to query
+	 * @param string $term            Optional search term to filter by name/uname/email
+	 * @param int    $limit           Maximum number of results to return
+	 * @param bool   $checkProtection Whether to include the 'protected' flag per result
+	 * @return array Array with 'total' and 'results' keys
+	 */
 	static function queryMembers($groupId, $term = '', $limit = 10, $checkProtection = false) {
 		global $xoopsDB;
 		$gulTable   = $xoopsDB->prefix('groups_users_link');
@@ -101,11 +117,19 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		return array('total' => $total, 'results' => $results);
 	}
 
-	// Build a map of categoryName => entryGroupId for this form+entry.
-	// For EAG forms with group_categories defined, resolves each template group to
-	// the corresponding entry group using buildTemplateToEntryGroupMap.
-	// Falls back to a single-group lookup for system forms or EAG forms with no categories set.
-	// Returns an array with at least one entry; keys are category names (empty string for non-EAG).
+	/**
+	 * Build a map of categoryName => entryGroupId for this form+entry.
+	 *
+	 * For EAG forms with group_categories defined, resolves each template group to the
+	 * corresponding entry group using buildTemplateToEntryGroupMap(). Falls back to a
+	 * single-group lookup for system forms or EAG forms with no categories set.
+	 * Returns an array with at least one entry; keys are category names (empty string
+	 * for non-EAG/single-category forms).
+	 *
+	 * @param int $fid      The form ID
+	 * @param int $entry_id The entry ID
+	 * @return array categoryName => entryGroupId map
+	 */
 	private static function buildCategoryGroupMap($fid, $entry_id) {
 		global $xoopsDB;
 		$groupsTable = $xoopsDB->prefix('groups');
@@ -140,8 +164,19 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		return array('' => intval($entry_id)); // system groups form: entry_id is the groupid
 	}
 
-	// Render the hidden inputs + inner widget HTML for a single category/group.
-	// CSS and JS are emitted separately by render() via globals guards.
+	/**
+	 * Render the hidden inputs and inner widget HTML for a single category/group.
+	 *
+	 * CSS and JS are emitted separately by render() via global guards so they appear
+	 * only once per page even when multiple instances are present.
+	 *
+	 * @param int    $fid      The form ID
+	 * @param int    $entry_id The entry ID
+	 * @param int    $groupId  The group ID this widget manages
+	 * @param int    $uid      The current logged-in user's UID (for AJAX context)
+	 * @param string $ajaxUrl  URL for member search XHR calls
+	 * @return string HTML string for the widget
+	 */
 	private static function renderSingleWidget($fid, $entry_id, $groupId, $uid, $ajaxUrl) {
 		$key       = $fid . '_' . $groupId;
 		$fidJs     = json_encode($fid);
@@ -210,10 +245,24 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		return $html;
 	}
 
-	// Render the member management widget for the group edit form.
-	// Returns an XoopsFormLabel wrapping the tab widget HTML + JS.
-	// For new (unsaved) groups, returns a read-only notice instead.
-	// For EAG forms with multiple categories, wraps each category's widget in outer category tabs.
+	/**
+	 * Render the member management widget for the group edit form.
+	 *
+	 * Returns an XoopsFormLabel wrapping the tab widget HTML and JS.
+	 * For new (unsaved) entries, returns a read-only notice instead.
+	 * For EAG forms with multiple categories, wraps each category's widget in outer
+	 * category tabs so they can be switched without a page reload.
+	 *
+	 * @param mixed  $ele_value   Ignored (data is fetched live)
+	 * @param string $caption     Field caption
+	 * @param string $markupName  HTML input name
+	 * @param bool   $isDisabled  Whether the field should be read-only
+	 * @param object $element     The element object
+	 * @param mixed  $entry_id    Entry ID, or 'new' for unsaved entries
+	 * @param mixed  $screen      Screen object (unused)
+	 * @param mixed  $owner       Owner context (unused)
+	 * @return XoopsFormLabel
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen = false, $owner = null) {
 		$fid = intval($element->getVar('id_form'));
 
@@ -440,8 +489,19 @@ function gmmSyncHiddens(fid,gid){
 		return new XoopsFormLabel($caption, $html);
 	}
 
-	// Return a correlated EXISTS subquery that matches groups having at least one
-	// member whose display name contains the search term.
+	/**
+	 * Return a correlated EXISTS subquery that matches groups by member name.
+	 *
+	 * Matches groups having at least one member whose uname contains the search term.
+	 *
+	 * @param string $term       The search term
+	 * @param string $operator   SQL comparison operator
+	 * @param string $quotes     Quote characters around the value
+	 * @param string $likebits   LIKE wildcard characters
+	 * @param int    $fid        Form ID (unused for this element type)
+	 * @param string $tableAlias Alias for the main table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		global $xoopsDB;
 		$usersTable     = $xoopsDB->prefix('users');

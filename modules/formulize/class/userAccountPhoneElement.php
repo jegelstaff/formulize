@@ -47,10 +47,12 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		return new formulizeUserAccountPhoneElement();
 	}
 
-	// this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
-	// it receives the element object and returns an array of data that will go to the admin UI template
-	// when dealing with new elements, $element might be FALSE
-	// can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+	/**
+	 * Gather data for the admin UI template, including the phone format string.
+	 *
+	 * @param object|false $element The element object, or false for new elements
+	 * @return array Template data array merged with the format value
+	 */
 	function adminPrepare($element) {
 		$parentValues = parent::adminPrepare($element);
 		$ele_value = $element ? $element->getVar('ele_value') : array();
@@ -58,21 +60,29 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		return array_merge($parentValues, array('format'=>$format));
 	}
 
-	// this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
-	// this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
-	// the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
-	// You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
-	// You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-	// advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+	/**
+	 * Save admin UI option-tab data (phone format string) back to the element object.
+	 *
+	 * @param object $element    The element object (modified in place)
+	 * @param array  $ele_value  Values from the Options tab (includes 'format' key)
+	 * @param bool   $advancedTab True when called from the Advanced tab
+	 * @return void
+	 */
 	function adminSave($element, $ele_value = array(), $advancedTab = false) {
     $element->setVar('ele_value', $ele_value);
   }
 
-	// this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
-	// it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-	// $element is the element object
-	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-	// $entry_id is the ID of the entry being loaded
+	/**
+	 * Load the phone number from the user's profile and format it for display.
+	 *
+	 * Reads the raw digits from the profile_profile table via the parent, then
+	 * formats them according to the configured format string (default 'XXX-XXX-XXXX').
+	 *
+	 * @param object    $element  The element object
+	 * @param mixed     $value    Ignored; value is read from the user profile
+	 * @param int|mixed $entry_id Entry ID
+	 * @return array ele_value array with 'number' and 'format' keys
+	 */
 	function loadValue($element, $value, $entry_id) {
 		$value = parent::loadValue($element, $value, $entry_id);
 		$ele_value = $element->getVar('ele_value');
@@ -80,16 +90,21 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		return $ele_value;
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the phone number field as a text input with a format placeholder.
+	 *
+	 * When disabled, renders the formatted number as a read-only label.
+	 *
+	 * @param array  $ele_value  Array with 'number' (formatted) and 'format' keys
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		if($isDisabled) {
 			$formElement = new xoopsFormLabel($caption, $ele_value['number']);
@@ -102,13 +117,28 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		return $formElement;
 	}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	/**
+	 * Generate the shared email/phone JS validation code.
+	 *
+	 * @param string    $caption    Field caption (unused)
+	 * @param string    $markupName HTML input name (unused; resolved from element)
+	 * @param object    $element    The element object
+	 * @param int|mixed $entry_id   Entry ID
+	 * @return array Array of JavaScript statement strings
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		return formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id);
 	}
 
+	/**
+	 * Format the raw stored phone digits for list display using the configured format.
+	 *
+	 * @param mixed  $value     Raw phone digits from the database
+	 * @param string $handle    Element handle (used to look up the format string)
+	 * @param int    $entry_id  Entry ID (unused)
+	 * @param int    $textWidth Column width hint (unused)
+	 * @return string Formatted phone number
+	 */
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$format = 'XXX-XXX-XXXX';
 		if ($handle) {
@@ -126,6 +156,19 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 		return parent::formatDataForList($value ? formatPhoneNumber($value, $format) : $value);
 	}
 
+	/**
+	 * Build a WHERE clause fragment to search by phone number.
+	 *
+	 * Delegates to an EXISTS subquery against the profile_profile.2faphone column.
+	 *
+	 * @param string $term       Search term
+	 * @param string $operator   SQL operator
+	 * @param string $quotes     Quote character(s) for the term
+	 * @param string $likebits   LIKE wildcards
+	 * @param int    $fid        Form ID (unused)
+	 * @param string $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		return $this->buildProfileExistsClause('2faphone', $term, $operator, $quotes, $likebits, $tableAlias);
 	}

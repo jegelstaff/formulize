@@ -12,19 +12,18 @@
 ##  Project: Formulize                                                        ##
 ###############################################################################
 
-// Virtual element type for the "Type" column on the Groups management page.
-// Displays "Regular" for plain groups and "Form-based" for template groups.
-// Has no real database column — data is injected post-query by
-// injectGroupTypeData() in usersAndGroups.php.
-// buildSearchWhereClause maps "Form-based" → is_group_template = 1,
-// anything else → is_group_template = 0.
-
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
 }
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/virtualElement.php";
 
+/**
+ * Virtual element representing the "Type" column on the Groups management page.
+ *
+ * Displays "Regular" for plain groups and "Form-based" for template groups.
+ * Has no real database column — data is injected post-query by injectGroupTypeData().
+ */
 class formulizeEagGroupTypeElement extends formulizeVirtualElement {
 
 	function __construct() {
@@ -34,18 +33,36 @@ class formulizeEagGroupTypeElement extends formulizeVirtualElement {
 
 }
 
+/** @see formulizeEagGroupTypeElement */
 class formulizeEagGroupTypeElementHandler extends formulizeVirtualElementHandler {
 
 	function create() {
 		return new formulizeEagGroupTypeElement();
 	}
 
+	/**
+	 * Return the available filter options for this element type.
+	 *
+	 * @return array Associative array of option value => display label
+	 */
 	function getFilterOptions() {
 		return array('Regular' => 'Regular', 'Form-based' => 'Form-based');
 	}
 
-	// Map the search term to an is_group_template predicate.
-	// "Form-based" → template groups only; anything else → regular groups only.
+	/**
+	 * Map the search term to an is_group_template predicate.
+	 *
+	 * "Form-based" (case-insensitive) maps to template groups only (is_group_template = 1);
+	 * anything else maps to regular groups only (is_group_template = 0).
+	 *
+	 * @param string $term       The search term
+	 * @param string $operator   Ignored; predicate is always equality
+	 * @param string $quotes     Ignored
+	 * @param string $likebits   Ignored
+	 * @param int    $fid        Form ID (unused)
+	 * @param string $tableAlias Alias for the main table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		$isTemplate = (strtolower(trim($term)) === 'form-based') ? 1 : 0;
 		return "`{$tableAlias}`.is_group_template = $isTemplate";

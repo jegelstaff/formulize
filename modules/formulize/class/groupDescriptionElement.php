@@ -19,6 +19,9 @@ if (!defined('XOOPS_ROOT_PATH')) {
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/groupTableElement.php";
 
+/**
+ * Element type mapping to the 'description' column in the system groups table.
+ */
 class formulizeGroupDescriptionElement extends formulizeGroupTableElement {
 
 	function __construct() {
@@ -29,6 +32,7 @@ class formulizeGroupDescriptionElement extends formulizeGroupTableElement {
 
 }
 
+/** @see formulizeGroupDescriptionElement */
 #[AllowDynamicProperties]
 class formulizeGroupDescriptionElementHandler extends formulizeGroupTableElementHandler {
 
@@ -36,6 +40,19 @@ class formulizeGroupDescriptionElementHandler extends formulizeGroupTableElement
 		return new formulizeGroupDescriptionElement();
 	}
 
+	/**
+	 * Render the group description field as a textarea (or a read-only label if disabled).
+	 *
+	 * @param mixed  $ele_value  Current field value
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML form element name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object
+	 * @param mixed  $entry_id   Entry ID (groupid for system groups form)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen = false, $owner = null) {
 		if (is_array($ele_value)) {
 			$ele_value = "";

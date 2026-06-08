@@ -76,14 +76,21 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
         return new formulizeUserAccountElement();
     }
 
-    // Shared helper for Unix timestamp date columns (last_login, user_regdate).
-    // Converts a human-readable date string to a MySQL-comparable datetime string at the
-    // right granularity so that FROM_UNIXTIME(col) LIKE/comparison works naturally:
-    //   "2026"        → "2026"        (LIKE '%2026%' matches any date in 2026)
-    //   "Feb 2026"    → "2026-02"     (LIKE '%2026-02%' matches all of February 2026)
-    //   "Feb 1 2026"  → "2026-02-01"  (comparison operators work against start of that day)
-    // For comparison operators ($partialMatch = false) always returns at least Y-m-d so
-    // MySQL can cast it to a DATETIME correctly.
+    /**
+     * Convert a human-readable date string to a MySQL-comparable datetime string.
+     *
+     * Adapts granularity to the search context so that FROM_UNIXTIME(col) comparisons
+     * work naturally:
+     *   "2026"        → "2026"        (LIKE '%2026%' matches any date in 2026)
+     *   "Feb 2026"    → "2026-02"     (LIKE '%2026-02%' matches all of February 2026)
+     *   "Feb 1 2026"  → "2026-02-01"  (comparison operators work against start of that day)
+     * For comparison operators ($partialMatch = false) always returns at least Y-m-d so
+     * MySQL can cast it to a DATETIME correctly.
+     *
+     * @param string $value        Human-readable date string
+     * @param bool   $partialMatch True for LIKE searches, false for range operators
+     * @return string MySQL-formatted date string
+     */
     static function prepareDateTimestampForDB($value, $partialMatch) {
         $value = trim($value);
         $ts = strtotime($value);
@@ -101,10 +108,15 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
         return date('Y-m-d', $ts);
     }
 
-    // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
-    // it receives the element object and returns an array of data that will go to the admin UI template
-    // when dealing with new elements, $element might be FALSE
-    // can organize template data into two top level keys, advanced-tab-values and options-tab-values, if there are some options for the element type that appear on the Advanced tab in the admin UI. This requires an additional template file with _advanced.html as the end of the name. Text elements have an example.
+    /**
+     * Gather data to pass to the admin UI template for this element type.
+     *
+     * Returns an array with the default-value-source dropdown options and a human-readable
+     * label derived from the element name. $element may be false when creating a new element.
+     *
+     * @param object|false $element The element object, or false for new elements
+     * @return array Template data array
+     */
 		function adminPrepare($element) {
 			$ele_value = $element ? $element->getVar('ele_value') : array();
 			$defaultValueSource = isset($ele_value['defaultValueSource']) ? $ele_value['defaultValueSource'] : '';
@@ -134,21 +146,34 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			);
     }
 
-    // this method would read back any data from the user after they click save in the admin UI, and save the data to the database, if it were something beyond what is handled in the basic element class
-    // this is called as part of saving the options tab.  It receives a copy of the element object immediately prior to it being saved, so the element object will have all its properties set as they would be based on the user's changes in the names & settings tab, and in the options tab (the tabs are saved in order from left to right).
-    // the exception is the special ele_value array, which is passed separately from the object (this will contain the values the user set in the Options tab)
-    // You can modify the element object in this function and since it is an object, and passed by reference by default, then your changes will be saved when the element is saved.
-    // You should return a flag to indicate if any changes were made, so that the page can be reloaded for the user, and they can see the changes you've made here.
-    // advancedTab is a flag to indicate if this is being called from the advanced tab (as opposed to the Options tab, normal behaviour). In this case, you have to go off first principals based on what is in $_POST to setup the advanced values inside ele_value (presumably).
+    /**
+     * Save admin UI option-tab data back to the element object.
+     *
+     * Called after the user clicks Save on the Options tab. The element object already
+     * has its name/settings-tab properties set; $ele_value contains the Options tab values.
+     *
+     * @param object $element     The element object (modified in place)
+     * @param array  $ele_value   Values from the Options tab
+     * @param bool   $advancedTab True when called from the Advanced tab instead of Options
+     * @return void
+     */
 		function adminSave($element, $ele_value = array(), $advancedTab = false) {
 			$element->setVar('ele_value', $ele_value);
     }
 
-    // this method reads the current state of an element based on the user's input, and the admin options, and sets ele_value to what it needs to be so we can render the element correctly
-    // it must return $ele_value, with the correct value set in it, so that it will render as expected in the render method
-		// $element is the element object
-		// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
-    // $entry_id is the ID of the entry being loaded
+    /**
+     * Load the current value for this element from the XOOPS user or profile record.
+     *
+     * Reads from the users table, profile_profile table, or the configured default-value
+     * source element, depending on the element's userProperty. If a 2FA validation error
+     * occurred on the previous submit, restores the submitted value so the user does not
+     * have to retype their changes.
+     *
+     * @param object    $element  The element object
+     * @param mixed     $value    Ignored; value is read directly from the user/profile record
+     * @param int|mixed $entry_id The entry ID being loaded
+     * @return mixed The current field value, or null if not found
+     */
 		function loadValue($element, $value, $entry_id) {
 			$value = null;
 			// If 2FA validation failed on the previous submit, restore the submitted values
@@ -185,54 +210,93 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			return $value;
     }
 
-    // this method returns any custom validation code (javascript) that should figure out how to validate this element
-    // 'myform' is a name enforced by convention that refers to the form where this element resides
-    // use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+    /**
+     * Return JavaScript validation code for this element type (base: none).
+     *
+     * Subclasses override this to emit JS that validates user input before submit.
+     * 'myform' refers by convention to the form element in the DOM.
+     *
+     * @param string    $caption    Field caption
+     * @param string    $markupName HTML input name
+     * @param object    $element    The element object
+     * @param int|mixed $entry_id   The current entry ID
+     * @return void
+     */
     function generateValidationCode($caption, $markupName, $element, $entry_id) {
     }
 
-    // this method will read what the user submitted, and package it up however we want for insertion into the form's datatable
-    // You can return {WRITEASNULL} to cause a null value to be saved in the database
-    // $value is what the user submitted
-    // $element is the element object
-		// $entry_id is the ID number of the entry that this data is being saved into. Can be "new", or null in the event of a subformblank entry being saved.
-    // $subformBlankCounter is the instance of a blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
+    /**
+     * Prepare a submitted value for insertion into the form's data table (base: pass-through).
+     *
+     * Return {WRITEASNULL} to save a SQL NULL. $entry_id may be "new" for new entries or null
+     * for subform-blank entries.
+     *
+     * @param mixed     $value              The submitted value
+     * @param object    $element            The element object
+     * @param int|mixed $entry_id           Entry ID, "new", or null
+     * @param int|null  $subformBlankCounter Instance counter for multiple blank subform saves
+     * @return mixed The value to write to the database
+     */
     function prepareDataForSaving($value, $element, $entry_id=null, $subformBlankCounter=null) {
       return $value;
     }
 
-    // this method will handle any final actions that have to happen after data has been saved
-    // this is typically required for modifications to new entries, after the entry ID has been assigned, because before now, the entry ID will have been "new"
-    // value is the value that was just saved
-    // element_id is the id of the element that just had data saved
-    // entry_id is the entry id that was just saved
-    // ALSO, $GLOBALS['formulize_afterSavingLogicRequired']['elementId'] = type , must be declared in the prepareDataForSaving step if further action is required now -- see fileUploadElement.php for an example
+    /**
+     * Perform any final actions required after an entry has been saved (base: no-op).
+     *
+     * Typically needed when post-save actions depend on the newly assigned entry ID.
+     * To trigger this method, set $GLOBALS['formulize_afterSavingLogicRequired'][$elementId]
+     * in prepareDataForSaving().
+     *
+     * @param mixed $value      The value that was just saved
+     * @param int   $element_id The element ID whose data was just saved
+     * @param int   $entry_id   The entry ID that was just saved
+     * @return void
+     */
     function afterSavingLogic($value, $element_id, $entry_id) {
     }
 
-    // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
-    // in the standard elements, this particular step is where multivalue elements, like checkboxes, get converted from a string that comes out of the database, into an array, for example
-    // $value is the raw value that has been found in the database
-    // $handle is the element handle for the field that we're retrieving this for
-    // $entry_id is the entry id of the entry in the form that we're retrieving this for
+    /**
+     * Prepare a raw database value for inclusion in a dataset (base: pass-through).
+     *
+     * Called when Formulize builds a list of entries or the getData API is invoked.
+     *
+     * @param mixed  $value    Raw value from the database
+     * @param string $handle   Element handle
+     * @param int    $entry_id Entry ID
+     * @return mixed The value as it should appear in the dataset
+     */
     function prepareDataForDataset($value, $handle, $entry_id) {
       return $value; // we're not making any modifications for this element type
     }
 
-    // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
-    // it is only necessary to do special logic here if the values stored in the database do not match what users would be typing, ie: you're using coded numbers in the database, but displaying text on screen to users
-    // this would be where a Yes value would be converted to a 1, for example, in the case of a yes/no element, since 1 is how yes is represented in the database for that element type
-    // $partialMatch is used to indicate if we should search the values for partial string matches, like On matching Ontario.  This happens in the getData function when processing filter terms (ie: searches typed by users in a list of entries)
-    // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
-    // if literal text that users type can be used as is to interact with the database, simply return the $value
-    // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	/**
+	 * Convert a user-supplied text value to a form suitable for database comparison (base: pass-through).
+	 *
+	 * Only needed when stored values differ from what users type (e.g. "Yes" → 1). When
+	 * $partialMatch is true an array may be returned (multiple matching values possible).
+	 * Linked elements and UI-text are resolved before this method is called.
+	 *
+	 * @param mixed  $value        The user-supplied text value
+	 * @param object $element      The element object
+	 * @param bool   $partialMatch True for LIKE/contains searches, false for exact/range
+	 * @return mixed Value ready for database comparison
+	 */
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
     return $value;
   }
 
-	// this method will format a dataset value for display on screen when a list of entries is prepared
-	// for standard elements, this step is where linked selectboxes potentially become clickable or not, among other things
-	// Set certain properties in this function, to control whether the output will be sent through a "make clickable" function afterwards, sent through an HTML character filter (a security precaution), and trimmed to a certain length with ... appended.
+	/**
+	 * Format a dataset value for display in a list of entries.
+	 *
+	 * Sets clickable/striphtml/length properties that are enforced by the parent class.
+	 *
+	 * @param mixed  $value     The value from the dataset
+	 * @param string $handle    Element handle
+	 * @param int    $entry_id  Entry ID
+	 * @param int    $textWidth Column display width hint
+	 * @return string Formatted display value
+	 */
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		$this->clickable = false; // make urls clickable
 		$this->striphtml = true; // remove html tags as a security precaution
@@ -241,14 +305,20 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
-	// Build the type registry dynamically by reflecting over every userAccount*Element.php
-	// class file. Each element's $userProperty drives the column/profileColumn mapping — so
-	// adding a new userAccount element type automatically appears here with no manual update.
-	//
-	// Registry structure: key = strtolower type suffix (e.g. 'email', '2fa', 'fullname')
-	//   'eleType'       → the element type string (e.g. 'userAccountEmail')
-	//   'column'        → users table column, or null
-	//   'profileColumn' → profile_profile table column, or null
+	/**
+	 * Build the user account element type registry by reflecting over class files.
+	 *
+	 * Scans every userAccount*Element.php class file; each element's $userProperty drives
+	 * the column/profileColumn mapping, so adding a new element type automatically
+	 * appears here with no manual update.
+	 *
+	 * Registry structure: key = lowercase type suffix (e.g. 'email', '2fa', 'fullname')
+	 *   'eleType'       => element type string (e.g. 'userAccountEmail')
+	 *   'column'        => users table column name, or null
+	 *   'profileColumn' => profile_profile table column name, or null
+	 *
+	 * @return array The type registry, cached after the first call
+	 */
 	static function getTypeRegistry() {
 		static $registry = null;
 		if ($registry !== null) {
@@ -303,7 +373,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		return $registry;
 	}
 
-	// utility function to render radio buttons for this user account element types
+	/**
+	 * Render a group of radio buttons for a user account element.
+	 *
+	 * @param array  $options         Associative array of value => label
+	 * @param mixed  $ele_value       Currently selected value
+	 * @param string $caption         Field caption
+	 * @param string $markupName      HTML input name
+	 * @param bool   $isDisabled      Whether all radio buttons are disabled
+	 * @param array  $disabledOptions Values that should be individually disabled
+	 * @return XoopsFormElement
+	 */
 	function renderUserAccountRadioButtons($options, $ele_value, $caption, $markupName, $isDisabled, $disabledOptions = array()) {
 		$disabled = ($isDisabled) ? 'disabled="disabled"' : '';
 		$form_ele = new XoopsFormElementTray('', '<br>');
@@ -824,11 +904,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 
 }
 
-// Standalone function for generating the shared email/phone validation code.
-// Not a method on the handler class, so other element types won't inherit it.
-// Both the email and phone element handlers call this from their generateValidationCode methods.
-// The output must be byte-identical regardless of which element calls it, so that
-// the deduplication logic in _drawValidationJS() (formdisplay.php) ensures it only runs once.
+/**
+ * Generate the shared JS validation code for email and phone user account elements.
+ *
+ * Defined as a standalone function (not a handler method) so the output is byte-identical
+ * regardless of which element calls it; this allows the deduplication logic in
+ * _drawValidationJS() (formdisplay.php) to emit it only once per form.
+ *
+ * @param object    $element  The element object (used to resolve sibling element IDs)
+ * @param int|mixed $entry_id The current entry ID
+ * @return array Array of JavaScript statement strings
+ */
 function formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id) {
 	$fid = $element->getVar('id_form');
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');

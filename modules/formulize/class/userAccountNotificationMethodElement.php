@@ -57,11 +57,27 @@ class formulizeUserAccountNotificationMethodElementHandler extends formulizeUser
 		);
 	}
 
+	/**
+	 * Convert the stored numeric notification method constant to its display label.
+	 *
+	 * @param mixed  $value    Notification method constant from the database
+	 * @param string $handle   Element handle (unused)
+	 * @param int    $entry_id Entry ID (unused)
+	 * @return string Human-readable label, or the raw value if unrecognised
+	 */
 	function prepareDataForDataset($value, $handle, $entry_id) {
 		$options = $this->getOptions();
 		return isset($options[$value]) ? $options[$value] : $value;
 	}
 
+	/**
+	 * Convert a human-readable notification method label to its numeric constant.
+	 *
+	 * @param mixed  $value        Label as typed by the user (e.g. "Email", "Disable")
+	 * @param object $element      The element object (unused)
+	 * @param bool   $partialMatch True for partial/LIKE matching, false for exact match
+	 * @return int|array|mixed Matching constant(s), or the original value if no match found
+	 */
 	function prepareLiteralTextForDB($value, $element, $partialMatch = false) {
 		$options = $this->getOptions();
 		$matchingKeys = array();
@@ -79,6 +95,17 @@ class formulizeUserAccountNotificationMethodElementHandler extends formulizeUser
 		return count($matchingKeys) === 1 ? $matchingKeys[0] : $matchingKeys;
 	}
 
+	/**
+	 * Build a WHERE clause fragment to search by notification method.
+	 *
+	 * @param string|array $term       Numeric constant(s) (resolved via prepareLiteralTextForDB)
+	 * @param string       $operator   SQL operator; 'NOT LIKE'/'!=' produces a NOT IN clause
+	 * @param string       $quotes     Ignored
+	 * @param string       $likebits   Ignored
+	 * @param int          $fid        Form ID (unused)
+	 * @param string       $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
 		$options = $this->getOptions();
@@ -104,16 +131,21 @@ class formulizeUserAccountNotificationMethodElementHandler extends formulizeUser
 			: "{$tableAlias}.`notify_method` IN ($safeKeys)";
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the notification method field as a radio group.
+	 *
+	 * Defaults to Email when no value is set.
+	 *
+	 * @param mixed  $ele_value  Current notification method constant
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		if($ele_value === null OR $ele_value === false) {
 			$ele_value = XOOPS_NOTIFICATION_METHOD_EMAIL;

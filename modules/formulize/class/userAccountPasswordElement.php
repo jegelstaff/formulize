@@ -60,16 +60,22 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 		return $properties;
 	}
 
-	// this method renders the element for display in a form
-	// the caption has been pre-prepared and passed in separately from the element object
-	// if the element is disabled, then the method must take that into account and return a non-interactable label with some version of the element's value in it
-	// $ele_value is the options for this element - which will either be the admin values set by the admin user, or will be the value created in the loadValue method
-	// $caption is the prepared caption for the element
-	// $markupName is what we have to call the rendered element in HTML
-	// $isDisabled flags whether the element is disabled or not so we know how to render it
-	// $element is the element object
-	// $entry_id is the ID number of the entry where this particular element comes from
-	// $screen is the screen object that is in effect, if any (may be null)
+	/**
+	 * Render the password field as a pair of password inputs (or an empty label if disabled).
+	 *
+	 * When editing an existing user, the required-asterisk is hidden via JS because the
+	 * field may be left blank to keep the current password.
+	 *
+	 * @param mixed  $ele_value  Current value (always empty for passwords; never pre-filled)
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML input name
+	 * @param bool   $isDisabled Whether the field is read-only
+	 * @param object $element    The element object
+	 * @param mixed  $entry_id   Entry ID ("new" or numeric)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormElement
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		if($isDisabled) {
 			$form_ele = new XoopsFormLabel(
@@ -120,9 +126,18 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 		return $form_ele;
 	}
 
-	// this method returns any custom validation code (javascript) that should figure out how to validate this element
-	// 'myform' is a name enforced by convention that refers to the form where this element resides
-	// use the adminCanMakeRequired property and alwaysValidateInputs property to control when/if this validation code is respected
+	/**
+	 * Generate JS validation code requiring a password on new entries and matching confirmation.
+	 *
+	 * For existing entries (where a user already exists) the password field may be left blank;
+	 * for new entries it is required. Always validates that the two password fields match.
+	 *
+	 * @param string    $caption    Field caption (unused)
+	 * @param string    $markupName HTML input name
+	 * @param object    $element    The element object
+	 * @param int|mixed $entry_id   Entry ID ("new" or numeric)
+	 * @return array Array of JavaScript statement strings
+	 */
 	function generateValidationCode($caption, $markupName, $element, $entry_id) {
 		if($entry_id == 'new') {
 			$entryUserId = 0;

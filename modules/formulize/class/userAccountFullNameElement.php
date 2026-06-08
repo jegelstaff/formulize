@@ -32,7 +32,19 @@ class formulizeUserAccountFullNameElementHandler extends formulizeUserAccountEle
 		return new formulizeUserAccountFullNameElement();
 	}
 
-	// List-only element — render as a read-only label if it appears in a form.
+	/**
+	 * Render the full name as a read-only label (this is a list-only / display element).
+	 *
+	 * @param mixed  $ele_value  Current uname value
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML element name (unused)
+	 * @param bool   $isDisabled Whether the field is disabled (always treated as read-only)
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormLabel
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		if (is_array($ele_value)) {
 			$ele_value = "";

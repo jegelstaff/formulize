@@ -12,21 +12,19 @@
 ##  Project: Formulize                                                        ##
 ###############################################################################
 
-// Virtual element type for the "Instances" column on the Groups management page.
-// Represents the list of entry group instances (e.g. "HR", "Legal") for an
-// entries-are-groups form. Entry group names follow the format
-// "{PI value} - {Category name}", so the PI value (instance name) is the prefix.
-// Has no real database column — data is injected post-query by
-// injectGroupEntriesData() in usersAndGroups.php.
-// This class exists solely to provide buildSearchWhereClause so that search
-// terms typed into the Instances column produce a valid correlated subquery.
-
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();
 }
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/virtualElement.php";
 
+/**
+ * Virtual element representing the "Instances" column on the Groups management page.
+ *
+ * Shows the entry group instances (e.g. "HR", "Legal") for an entries-are-groups form.
+ * Entry group names follow the format "{PI value} - {Category name}", so the PI value
+ * is the instance name. Data is injected post-query by injectGroupEntriesData().
+ */
 class formulizeEagGroupEntriesElement extends formulizeVirtualElement {
 
 	function __construct() {
@@ -36,16 +34,28 @@ class formulizeEagGroupEntriesElement extends formulizeVirtualElement {
 
 }
 
+/** @see formulizeEagGroupEntriesElement */
 class formulizeEagGroupEntriesElementHandler extends formulizeVirtualElementHandler {
 
 	function create() {
 		return new formulizeEagGroupEntriesElement();
 	}
 
-	// Return a correlated EXISTS subquery that matches template group rows that
-	// have at least one entry group whose name contains the search term.
-	// Entry group names are stored as "{PI value} - {Category name}", so a search
-	// for "HR" will match "HR - All Users", "HR - Staff", etc.
+	/**
+	 * Return a correlated EXISTS subquery for searching by entry group instance name.
+	 *
+	 * Matches template group rows that have at least one entry group whose name
+	 * contains the search term. Entry groups are stored as "{PI value} - {Category name}",
+	 * so searching "HR" will match "HR - All Users", "HR - Staff", etc.
+	 *
+	 * @param string $term       The search term
+	 * @param string $operator   SQL comparison operator
+	 * @param string $quotes     Quote characters around the value
+	 * @param string $likebits   LIKE wildcard characters
+	 * @param int    $fid        Form ID (unused for this element type)
+	 * @param string $tableAlias Alias for the main table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		global $xoopsDB;
 		$groupsTable    = $xoopsDB->prefix('groups');

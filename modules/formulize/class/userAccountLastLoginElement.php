@@ -48,20 +48,61 @@ class formulizeUserAccountLastLoginElementHandler extends formulizeUserAccountEl
 		return new formulizeUserAccountLastLoginElement();
 	}
 
-	// Always renders as a read-only label; last login is system-managed.
+	/**
+	 * Render the last login date as a read-only label (system-managed value).
+	 *
+	 * @param mixed  $ele_value  Unix timestamp of the last login
+	 * @param string $caption    Field caption
+	 * @param string $markupName HTML element name
+	 * @param bool   $isDisabled Whether the field is disabled (always read-only)
+	 * @param object $element    The element object (unused)
+	 * @param mixed  $entry_id   Entry ID (unused)
+	 * @param mixed  $screen     Screen object (unused)
+	 * @param mixed  $owner      Owner context (unused)
+	 * @return XoopsFormLabel
+	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
 		$displayValue = $ele_value ? date(_MEDIUMDATESTRING, intval($ele_value) + formulize_getUserUTCOffsetSecs(timestamp: intval($ele_value))) : '';
 		return new XoopsFormLabel($caption, htmlspecialchars($displayValue, ENT_QUOTES), $markupName);
 	}
 
+	/**
+	 * Format the raw Unix timestamp for list display.
+	 *
+	 * @param mixed  $value    Unix timestamp from the database
+	 * @param string $handle   Element handle (unused)
+	 * @param int    $entry_id Entry ID (unused)
+	 * @return string Human-readable date string, or empty string if no value
+	 */
 	function prepareDataForDataset($value, $handle, $entry_id) {
 		return ($value && is_numeric($value)) ? date(_MEDIUMDATESTRING, intval($value) + formulize_getUserUTCOffsetSecs(timestamp: intval($value))) : '';
 	}
 
+	/**
+	 * Convert a human-readable date string to a MySQL datetime string for comparison.
+	 *
+	 * @param mixed  $value        User-supplied date string
+	 * @param object $element      The element object (unused)
+	 * @param bool   $partialMatch True for LIKE searches, false for range operators
+	 * @return string MySQL-formatted date string
+	 */
 	function prepareLiteralTextForDB($value, $element, $partialMatch = false) {
 		return self::prepareDateTimestampForDB($value, $partialMatch);
 	}
 
+	/**
+	 * Build a WHERE clause fragment searching by last-login date.
+	 *
+	 * Uses FROM_UNIXTIME() so the stored Unix timestamp can be compared to a human-readable date.
+	 *
+	 * @param string $term       Search term (date string)
+	 * @param string $operator   SQL operator
+	 * @param string $quotes     Quote character(s) (unused; handled internally)
+	 * @param string $likebits   LIKE wildcards (unused; handled internally)
+	 * @param int    $fid        Form ID (unused)
+	 * @param string $tableAlias Alias for the users table in the outer query
+	 * @return string SQL WHERE clause fragment
+	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		$op = trim($operator);
 		$partialMatch = !in_array($op, ['>=', '<=', '>', '<']);
