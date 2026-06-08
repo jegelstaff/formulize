@@ -152,18 +152,16 @@ foreach($_POST as $k=>$v) {
 		// WHAT ABOUT MCP?? NEED TO HAVE TOOLS FOR MANAGING USERS. AND MCP CANNOT ALTER THE UID VALUE OF AN ENTRY!
 		if($elementObject->isUserAccountElement) {
 			if($userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]] = formulizeElementsHandler::processUserAccountSubmission($elementMetaData[1], $elementMetaData[2])) {
-				// For the system users table form processUserAccountSubmission has
-				// already written all data directly to the users/profile tables — no formulize
-				// data table exists to update. For regular EAU forms, store the uid so that
-				// formulize_writeEntry can write it to the EAU entry row.
-				$_eau_formObj = $form_handler->get($elementMetaData[1]);
-				if (!($_eau_formObj && $_eau_formObj->isSystemUsersTableForm())) {
-					if($userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
-						$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$userAccountUidElement->getVar('ele_id')] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
-					}
-				} elseif($elementMetaData[2] === 'new') {
-					// Track newly created system user uid so displayForm can reload with their uid after save.
+				$submittedFormObj = $form_handler->get($elementMetaData[1]);
+				$isSystemUsersForm = $submittedFormObj && $submittedFormObj->isSystemUsersTableForm();
+				if($isSystemUsersForm && $elementMetaData[2] === 'new') {
+					// processUserAccountSubmission already wrote everything directly to the users/profile
+					// tables — there is no formulize data table to update. Just track the newly created
+					// user's uid so displayForm can reload with their uid after save.
 					$newUserTableUserIds[$elementMetaData[1]] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
+				} elseif(!$isSystemUsersForm AND $userAccountUidElement = $element_handler->get('formulize_user_account_uid_'.$elementMetaData[1])) {
+					// Regular EAU form: store the uid so formulize_writeEntry writes it to the EAU entry row.
+					$formulize_elementData[$elementMetaData[1]][$elementMetaData[2]][$userAccountUidElement->getVar('ele_id')] = $userIdsForUserAccountElements[$elementMetaData[1]][$elementMetaData[2]];
 				}
 			}
 		} elseif(!empty($elementObject->isGroupTableElement)) {
