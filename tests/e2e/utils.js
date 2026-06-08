@@ -564,6 +564,53 @@ export async function addEAGCategory(page, categoryName) {
 }
 
 /**
+ * Robustly select an option from a Formulize / jQuery-UI autocomplete. Types the term (real
+ * keystrokes — the admin jQuery-UI 1.8.2 autocomplete searches on keydown, so `.fill()` alone
+ * may not trigger it), waits for the matching suggestion, and clicks the EXACT-text <li> (works
+ * whether or not the item wraps an <a>: the admin widget has one, the front-end linked-element
+ * widget does not). Retries the whole cycle if the suggestion never stabilises — the menu
+ * re-renders per keystroke, so on fast CI a click can chase a detaching element and time out
+ * (the same race that broke 016 and 005). Matching by exact text makes it safe when the search
+ * returns several items (e.g. "hist" → both History Staff users).
+ *
+ * Callers own their post-select step: wait for an added row, OR — when the next action is a
+ * button the lingering menu could overlap — wait for `ul.ui-autocomplete:visible` to be gone
+ * and/or click that button with { force: true }.
+ *
+ * @param {object} page
+ * @param {import('@playwright/test').Locator} input  the autocomplete <input> locator
+ * @param {string} optionText  exact visible text of the option to select
+ * @param {{ searchText?: string }} [opts]  text to type, if different from optionText
+ */
+export async function selectAutocompleteOption(page, input, optionText, opts = {}) {
+	const term = opts.searchText ?? optionText;
+	const escaped = optionText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const suggestion = page.locator('ul.ui-autocomplete:visible li')
+		.filter({ hasText: new RegExp(`^${escaped}$`) }).first();
+	let lastErr;
+	for (let attempt = 1; attempt <= 3; attempt++) {
+		try {
+			await input.click();
+			await input.fill('');
+			await input.pressSequentially(term);
+			await expect(suggestion).toBeVisible({ timeout: 12000 });
+			// Click the item's <a> if it has one — the admin jQuery-UI autocomplete binds its
+			// select handler to the <a>, so clicking the bare <li> doesn't select. The front-end
+			// linked-element picker has no <a>, so click the <li> there.
+			const anchor = suggestion.locator('a');
+			const target = (await anchor.count()) > 0 ? anchor.first() : suggestion;
+			await target.click({ timeout: 8000 });
+			return;
+		} catch (e) {
+			lastErr = e;
+			await input.fill('').catch(() => {});
+			await page.keyboard.press('Escape').catch(() => {});
+		}
+	}
+	throw lastErr;
+}
+
+/**
  * Use the EAU default-groups autocomplete to add a group as a default
  * membership. Returns the data-groupid attribute of the resulting
  * `.default-group-item`, which subsequent helpers reference.
@@ -573,16 +620,12 @@ export async function addEAGCategory(page, categoryName) {
  * @returns {Promise<string>} The group's data-groupid
  */
 export async function addDefaultGroupToEAUForm(page, groupName) {
-	const input = page.locator('#entries_are_users_default_groups_user');
-	await input.click();
-	await input.fill('');
-	await input.pressSequentially(groupName);
-	// jQuery UI autocomplete renders results into a ul.ui-autocomplete that's
-	// appended to body; match the exact text in a list item.
-	await page.locator('ul.ui-autocomplete:visible li').filter({ hasText: new RegExp(`^${groupName}$`) }).first().locator('a').click();
-	const item = page.locator('.default-group-item').filter({ hasText: groupName });
-	await expect(item).toBeVisible();
-	return await item.first().getAttribute('data-groupid');
+	// Robust select (handles the per-keystroke re-render race that flaked on CI), then verify the
+	// group was actually added before returning its id.
+	await selectAutocompleteOption(page, page.locator('#entries_are_users_default_groups_user'), groupName);
+	const addedItem = page.locator('.default-group-item').filter({ hasText: groupName });
+	await expect(addedItem).toBeVisible({ timeout: 10000 });
+	return await addedItem.first().getAttribute('data-groupid');
 }
 
 /**
