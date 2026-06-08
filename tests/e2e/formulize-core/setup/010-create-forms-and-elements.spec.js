@@ -6,19 +6,31 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 
 test.beforeEach(async ({ page }) => {
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-	await page.getByRole('link', { name: 'Admin' }).click();
+	// Direct navigation rather than the theme "Admin" link, whose destination
+	// varies with DB/startpage state once forms exist (same pattern as 005).
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
+	await waitForAdminPageReady(page);
 })
 
 test('Create Artifacts Form', async ({ page }) => {
-	await expect(page.getByRole('link', { name: 'Create a new form' })).toBeVisible();
-	await page.getByRole('link', { name: 'Create a new form' }).click();
+	// The top-level "Create a new form" big button only renders when no
+	// applications exist yet (home.html showBigFormButton). After 005 the
+	// "Staff Management" app exists, so the home shows app accordions instead
+	// and the create link lives inside each app section. Navigate directly to
+	// the generic create-form URL (aid=0 = not yet assigned to an app); the
+	// Museum app is then created via the application-name field below.
+	await page.goto('/modules/formulize/admin/ui.php?page=form&tab=settings&fid=new&aid=0');
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Artifacts');
+	// Apps already exist (Staff Management from 005), so the "create a new
+	// application?" radio defaults to "No" and the new-app name field is hidden.
+	// Select "Yes" to reveal #applications-name, then name the new Museum app.
+	await page.locator('#new-app-yes').check();
 	await page.locator('#applications-name').fill('Museum');
 	await page.locator('input[name="pi_new_caption"]').fill('ID Number');
 	await saveAdminForm(page);
-	await page.getByRole('link', { name: 'Home' }).click();
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
  	await expect(page.getByRole('tabpanel')).toContainText('Artifacts(id:');
 })
@@ -26,7 +38,7 @@ test('Create Artifacts Form', async ({ page }) => {
 test.describe('Artifacts Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Home' }).click();
+		await page.goto('/modules/formulize/admin/ui.php?page=home');
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 		await page.getByText('Artifacts').first().click();
 	  await page.getByRole('link', { name: 'Elements' }).first().click();
@@ -192,14 +204,14 @@ test.describe('Artifacts Elements', async () => {
 })
 
 test('Create Donors Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Home' }).click();
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Donors');
 	await saveAdminForm(page);
-	await page.getByRole('link', { name: 'Home' }).click();
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
  	await expect(page.getByRole('tabpanel')).toContainText('Donors(id:');
 })
@@ -360,7 +372,7 @@ test('Create Collections Form', async ({ page }) => {
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Collections');
 	await saveAdminForm(page);
-	await page.getByRole('link', { name: 'Home' }).click();
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
  	await expect(page.getByRole('tabpanel')).toContainText('Collections(id:');
 })
@@ -406,7 +418,7 @@ test('Create Exhibits Form', async ({ page }) => {
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Exhibits');
 	await saveAdminForm(page);
-	await page.getByRole('link', { name: 'Home' }).click();
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
  	await expect(page.getByRole('tabpanel')).toContainText('Exhibits(id:');
 })
@@ -434,7 +446,7 @@ test.describe('Exhibits Elements', async () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Curator');
 		await page.locator('input[name="elements-ele_handle"]').fill('exhibits_curator');
   	await page.getByRole('link', { name: 'Options' }).click();
-  	await page.locator('#element-formlink_scope').selectOption('Curators');
+  	await page.locator('#element-formlink_scope').selectOption('All Curators');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Curator');
 	});
@@ -448,7 +460,7 @@ test.describe('Exhibits Elements', async () => {
 		await page.getByRole('link', { name: 'Options' }).click();
   	await page.locator('#formlink').selectOption('Collections: Name');
 		await page.getByRole('radio', { name: 'Allowed', exact: true }).check();
-		await page.locator('#element-formlink_scope').selectOption(['Ancient History', 'Modern History']);
+		await page.locator('#element-formlink_scope').selectOption(['Ancient History - All Users', 'Modern History - All Users']);
 	  await page.getByText('Yes. Only use groups that the').click();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Collections');
@@ -480,7 +492,7 @@ test('Create Surveys Form', async ({ page }) => {
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
 	await page.getByRole('textbox', { name: 'Form title:' }).fill('Surveys');
 	await saveAdminForm(page);
-	await page.getByRole('link', { name: 'Home' }).click();
+	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
  	await expect(page.getByRole('tabpanel')).toContainText('Surveys(id:');
 })
@@ -569,7 +581,7 @@ test.describe('Surveys Elements', async () => {
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.getByRole('radio', { name: 'No' }).check();
 		await page.getByRole('link', { name: 'Display Settings' }).click();
-		await page.locator('select[name="elements_ele_display[]"]').selectOption([{label: 'Webmasters'},{label: 'Curators'}]);
+		await page.locator('select[name="elements_ele_display[]"]').selectOption([{label: 'Webmasters'},{label: 'All Curators'}]);
 		await saveAdminForm(page);
 	});
 
@@ -578,7 +590,7 @@ test.describe('Surveys Elements', async () => {
 		await waitForAdminPageReady(page);
   	await page.locator('input[name="elements-ele_caption"]').fill('Staff comments');
 		await page.getByRole('link', { name: 'Display Settings' }).click();
-		await page.locator('select[name="elements_ele_display[]"]').selectOption([{label: 'Webmasters'},{label: 'Curators'},{label: 'Staff Only'}]);
+		await page.locator('select[name="elements_ele_display[]"]').selectOption([{label: 'Webmasters'},{label: 'All Curators'},{label: 'All Staff'}]);
 		await saveAdminForm(page);
 	});
 
@@ -589,11 +601,16 @@ test.describe('Set Special Survey Permissions', async () => {
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 	  await page.locator('div[id^=form-details-box-]').nth(4).getByText('Surveys').first().click();
   	await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		await page.locator('#groups').selectOption({label: 'Staff Only'});
+		await page.locator('#groups').selectOption({label: 'All Staff'});
 		await page.getByRole('button', { name: 'Show permissions for these' }).click();
 		await waitForAdminPageReady(page);
-		await page.locator('div.groupselectionbox').nth(1).locator('select').first().selectOption({label: 'Flagged'});
-		await page.locator('div.groupselectionbox').nth(1).locator('input').first().fill('Yes');
+		// The per-group entry-filter ("conditions") UI is in the group's panel in
+		// regular mode and is functional (its selects are enabled). The redesigned
+		// permissions panel added a hidden groupscope-selector box, so the old
+		// positional .nth(1) now lands on that hidden box. Target the visible
+		// filter controls by their stable name suffixes instead.
+		await page.locator('select[name$="_filter_element"]:visible').first().selectOption({label: 'Flagged'});
+		await page.locator('input[name$="_filter_term"]:visible').first().fill('Yes');
 		await saveAdminForm(page);
 	});
 })
@@ -641,7 +658,7 @@ test.describe('Create linked fields and settings', async () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_collections');
     await page.getByRole('link', { name: 'Options' }).click();
     await page.locator('#formlink').selectOption('Collections: Name');
-	  await page.locator('#element-formlink_scope').selectOption(['Ancient History', 'Modern History']);
+	  await page.locator('#element-formlink_scope').selectOption(['Ancient History - All Users', 'Modern History - All Users']);
 	  await page.getByText('Yes. Only use groups that the').click();
 		await page.getByRole('checkbox', { name: 'Create a Subform interface' }).check();
 		await saveAdminForm(page);
@@ -649,14 +666,39 @@ test.describe('Create linked fields and settings', async () => {
 	});
 
 	test('Filter exhibit artifacts by collection artifacts', async ({ page }) => {
-		await page.getByRole('link', { name: 'Elements' }).nth(3).click();
-		await openElementAccordion(page, 'Artifacts Linked Autocomplete List');
-		await page.getByRole('link', { name: 'Configure' }).click();
-		await page.getByRole('link', { name: 'Options' }).click();
-		await page.locator('#new_formlinkfilter_element').selectOption('Collections');
-  	await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
-  	await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
-  	await saveAdminForm(page);
+		// Navigate to the exhibits_artifacts element's Options tab.
+		const gotoArtifactsOptions = async () => {
+			await page.getByRole('link', { name: 'Elements' }).nth(3).click();
+			await openElementAccordion(page, 'Artifacts Linked Autocomplete List');
+			await page.getByRole('link', { name: 'Configure' }).click();
+			await page.getByRole('link', { name: 'Options' }).click();
+		};
+		// Set the formlinkfilter, save, then re-navigate and VERIFY it persisted.
+		// The admin save is AJAX + a reload (reload_option_page); ending the test on
+		// the save click lets Playwright tear down before the save commits, silently
+		// losing the filter — which then breaks 020's conditional data-entry test
+		// (the filter's {handle} term is what makes exhibits_artifacts conditional).
+		// So we verify-after-save and retry. The saved condition renders as
+		// "Collections LIKE {exhibits_collections}", so we check for that term.
+		for (let attempt = 1; attempt <= 3; attempt++) {
+			await gotoArtifactsOptions();
+			if (await page.getByText('{exhibits_collections}').count() > 0) {
+				return; // already persisted (e.g. from a previous attempt)
+			}
+			await page.locator('#new_formlinkfilter_element').selectOption('Collections');
+			await page.locator('#new_formlinkfilter_op').selectOption('LIKE');
+			await page.locator('#new_formlinkfilter_term').fill('{exhibits_collections}');
+			await saveAdminForm(page);
+			// Re-navigate from scratch and confirm the saved condition is present.
+			await page.goto('/modules/formulize/admin/ui.php?page=home');
+			await waitForAdminPageReady(page);
+			await page.getByRole('link', { name: 'Application: Museum' }).click();
+			await gotoArtifactsOptions();
+			if (await page.getByText('{exhibits_collections}').count() > 0) {
+				return; // persisted
+			}
+		}
+		throw new Error('formlinkfilter {exhibits_collections} did not persist on exhibits_artifacts after 3 attempts');
 	});
 });
 

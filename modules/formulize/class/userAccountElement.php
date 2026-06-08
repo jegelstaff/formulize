@@ -27,6 +27,7 @@
 ###############################################################################
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
+require_once XOOPS_ROOT_PATH . "/include/2fa/constants.php"; // defines TFA_OFF, TFA_EMAIL, TFA_SMS, TFA_APP used by the 2FA policy logic below
 
 class formulizeUserAccountElement extends formulizeElement {
 

@@ -575,7 +575,9 @@ test.describe('Data entry for Survey', () => {
 				}
 			}
 			if(!rewriteWorks) {
-				await page.goto('/modules/formulize/index.php?sid=10');
+				// Survey multipage screen is sid=16 after the 005 form/screen additions
+				// (the 4 005 forms shifted museum screen ids up by 6; was sid=10).
+				await page.goto('/modules/formulize/index.php?sid=16');
 			}
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
 			await expect(page.getByText('Thank you for visiting the Museum!')).toBeVisible();

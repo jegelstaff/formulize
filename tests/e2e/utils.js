@@ -245,17 +245,24 @@ export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120
  * Wait for Working message to disappear and page to be loaded
  */
 export async function waitForWorkingMessage(page) {
-	// first, make sure it is visible
+	// Note the working message appearing (display:block). Fire-and-forget — NOT awaited,
+	// so it doesn't shift the timing of the wait below — but caught so that when the
+	// message never appears (e.g. a plain navigation that doesn't run showLoading(); only
+	// in-page list actions like search/sort/page/view do) the promise can't reject
+	// unhandled with "Test ended" (the original latent bug). Only call this AFTER a list
+	// action; for a plain navigation, wait for the "Showing entries" footer instead.
 	page.waitForFunction(() => {
 		const element = document.getElementById('workingmessage');
 		return element && window.getComputedStyle(element).display === 'block';
-	}, { timeout: 10000 });
-	// then wait for it to disappear
+	}, { timeout: 10000 }).catch(() => {});
+	// Wait for it to disappear. A list action submits a full form (a page navigation), so
+	// this wait can be torn down mid-navigation ("Target closed") under load — tolerate
+	// that and fall back to networkidle so we still wait for the reloaded list to settle.
 	await page.waitForFunction(() => {
 		const element = document.getElementById('workingmessage');
 		return !element || window.getComputedStyle(element).display === 'none';
-	}, { timeout: 120000 });
-	await page.waitForLoadState('networkidle');
+	}, { timeout: 120000 }).catch(() => {});
+	await page.waitForLoadState('networkidle').catch(() => {});
 	// Ensure the data submitted error does not occurr
 	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
 }
@@ -291,7 +298,7 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 	}
 
 	// wait for the admin UI to become fully opaque again
-	return page.waitForFunction(
+	await page.waitForFunction(
 		(selector) => {
 			const element = document.querySelector(selector);
 			if (!element) return false;
@@ -301,6 +308,19 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		opacityTarget, // Pass the selector as an argument
   	{ timeout }
 	);
+	// The opacity restore is a ~1ms fadeTo animation, so Playwright's opacity polling
+	// can resolve the down/up cycle without ever waiting for the real save — the save
+	// then POSTs each admin tab to save.php sequentially (some returning a reload, and
+	// screen/template saves run an async PHP syntax-check BEFORE saving), and that
+	// trailing work can still be in flight. So wait for the network to go idle before
+	// returning, otherwise the save is silently lost when the test proceeds/ends (the
+	// root cause of the intermittent menu/filter/label save losses).
+	// On normal pages the network is already idle here, so this settles in ~1ms and
+	// adds nothing; it only really waits for the saves where the opacity check resolved
+	// too fast. The 30s bound is generous enough for long multi-template syntax checks
+	// without slowing normal saves; the .catch() handles the rare admin page that has a
+	// continuous background poll (the exception) so it can't hang the helper.
+	await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
 }
 
 /**
@@ -559,7 +579,7 @@ export async function addDefaultGroupToEAUForm(page, groupName) {
 	await input.pressSequentially(groupName);
 	// jQuery UI autocomplete renders results into a ul.ui-autocomplete that's
 	// appended to body; match the exact text in a list item.
-	await page.locator('ul.ui-autocomplete:visible li').filter({ hasText: new RegExp(`^${groupName}$`) }).first().click();
+	await page.locator('ul.ui-autocomplete:visible li').filter({ hasText: new RegExp(`^${groupName}$`) }).first().locator('a').click();
 	const item = page.locator('.default-group-item').filter({ hasText: groupName });
 	await expect(item).toBeVisible();
 	return await item.first().getAttribute('data-groupid');
@@ -588,6 +608,9 @@ export async function linkTemplateGroupToElement(page, eagFormId, elementCaption
  * @param {string|number} groupId The data-groupid of the default-group-item
  */
 export async function showConditionsPanel(page, groupId) {
+	// The container starts as display:none and is shown by JS after page init.
+	// Wait for it to become visible before attempting to click the toggle inside it.
+	await page.locator('#entries_are_users_default_groups_container').waitFor({ state: 'visible' });
 	await page.locator(`.toggle-group-conditions-btn[data-groupid="${groupId}"]`).click();
 	await expect(page.locator(`.per-group-conditions-panel[data-groupid="${groupId}"]`)).toBeVisible();
 }
@@ -605,27 +628,49 @@ export async function showConditionsPanel(page, groupId) {
  * @param {string} value The value to match
  */
 export async function addConditionToPerGroupPanel(page, groupId, elementCaption, op, value) {
+	// Ensure admin-ui is fully visible and animated before interacting.
+	// The window.load handler sets opacity 0 then animates to 1 over 250 ms,
+	// so we must confirm display != none AND opacity == 1 before proceeding.
+	await page.waitForFunction(() => {
+		const el = document.querySelector('div.admin-ui');
+		if (!el) return false;
+		const style = window.getComputedStyle(el);
+		return style.display !== 'none' && parseFloat(style.opacity) >= 1.0;
+	}, null, { timeout: 30000 });
+
 	const panel = page.locator(`.per-group-conditions-panel[data-groupid="${groupId}"]`);
 	// The element select renders options labelled "FormName: ElementCaption".
 	// Use a regex on the caption, with regex metacharacters escaped so that
 	// captions like "Is curator?" don't accidentally match a shorter prefix.
 	const escapedCaption = elementCaption.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	await panel.locator(`select[name="new_eaugroup_${groupId}_element"]`).selectOption({ label: new RegExp(escapedCaption) });
+	// selectOption({ label: RegExp }) is not supported — find the matching option
+	// value first, then select by value.
+	const elementSelect = panel.locator(`select[name="new_eaugroup_${groupId}_element"]`);
+	const optionValue = await elementSelect.evaluate((select, cap) => {
+		const re = new RegExp(cap);
+		const opt = Array.from(select.options).find(o => re.test(o.text));
+		return opt ? opt.value : null;
+	}, escapedCaption);
+	if (!optionValue) throw new Error(`No option matching /${escapedCaption}/ found in element select for group ${groupId}`);
+	await elementSelect.selectOption(optionValue);
 	await panel.locator(`select[name="new_eaugroup_${groupId}_op"]`).selectOption(op);
 	await panel.locator(`input[name="new_eaugroup_${groupId}_term"]`).fill(value);
-	// Clicking addcon inside the panel triggers a form save and reload.
-	// Wait for the admin-ui opacity dance the same way saveAdminForm does.
+	// Clicking addcon triggers: AJAX save to save.php → success handler evaluates
+	// reloadWithScrollPosition(url) → scrollposition form submits via POST → full
+	// page navigation.  waitForNavigation reliably catches the form-submit navigation
+	// regardless of how long the AJAX round-trip takes.
 	await Promise.all([
-		page.waitForFunction(() => {
-			const el = document.querySelector('div.admin-ui');
-			return el && parseFloat(window.getComputedStyle(el).opacity) < 1.0;
-		}, null, { timeout: 120000 }),
+		page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
 		panel.locator('input[name="addcon"]').click()
 	]);
+	// After navigation the window.load handler sets admin-ui opacity 0 → 1 (250 ms).
+	// Wait until that animation completes before returning.
 	await page.waitForFunction(() => {
 		const el = document.querySelector('div.admin-ui');
-		return el && parseFloat(window.getComputedStyle(el).opacity) >= 1.0;
-	}, null, { timeout: 120000 });
+		if (!el) return false;
+		const style = window.getComputedStyle(el);
+		return style.display !== 'none' && parseFloat(style.opacity) >= 1.0;
+	}, null, { timeout: 30000 });
 }
 
 /**
@@ -663,4 +708,57 @@ export async function getFidFromFormAdminPage(page) {
 	const key = await page.locator('input[name="formulize_admin_key"]').first().inputValue();
 	if (/^\d+$/.test(key)) return parseInt(key, 10);
 	throw new Error('Could not determine fid for the current admin page');
+}
+
+/**
+ * Robustly set the "show this link to these groups" selection for an application
+ * menu entry, working around the Playwright-vs-browser-UI save race.
+ *
+ * The admin save is AJAX + an opacity animation. Playwright's save click (and
+ * saveAdminForm's opacity wait) can complete before the browser has actually
+ * persisted the multi-select change, silently dropping some of the chosen groups
+ * — especially mid-suite under load. A green save-type test with no post-save
+ * assertion is a latent bug. This helper therefore saves, then re-navigates and
+ * VERIFIES the selection actually persisted, retrying up to `retries` times.
+ *
+ * @param {object} page Playwright page
+ * @param {string} appName Application name, e.g. 'Museum' (the "Application: <appName>" link)
+ * @param {string} accordionName Menu entry accordion header, e.g. 'Donors'
+ * @param {string} groupsSelectId id of the groups multiselect, e.g. 'groups1'
+ * @param {string[]} groupLabels Option labels to select (e.g. ['Webmasters', 'Ancient History - All Users'])
+ * @param {object} [opts] { defaultScreenSelectId?: string, retries?: number }
+ */
+export async function setMenuEntryGroups(page, appName, accordionName, groupsSelectId, groupLabels, opts = {}) {
+	const { defaultScreenSelectId = null, retries = 3 } = opts;
+
+	const gotoEntry = async () => {
+		await page.goto('/modules/formulize/admin/ui.php?page=home');
+		await page.getByRole('link', { name: 'Application: ' + appName }).click();
+		await page.getByRole('link', { name: 'Menu Entries' }).click();
+		await openMenuAccordion(page, accordionName);
+	};
+
+	const readSelected = async () =>
+		page.locator('#' + groupsSelectId).evaluate(sel =>
+			Array.from(sel.selectedOptions).map(o => o.label));
+
+	let lastSelected = [];
+	for (let attempt = 1; attempt <= retries; attempt++) {
+		await gotoEntry();
+		await page.locator('#' + groupsSelectId).selectOption(groupLabels);
+		if (defaultScreenSelectId) {
+			await page.locator('#' + defaultScreenSelectId).selectOption(groupLabels);
+		}
+		await saveAdminForm(page);
+
+		// Verify by re-navigating and reading back the persisted selection.
+		await gotoEntry();
+		lastSelected = await readSelected();
+		if (groupLabels.every(g => lastSelected.includes(g))) {
+			return; // persisted correctly
+		}
+	}
+	throw new Error(
+		`setMenuEntryGroups: "${accordionName}" did not persist groups ${JSON.stringify(groupLabels)} ` +
+		`after ${retries} attempts; last persisted selection was ${JSON.stringify(lastSelected)}`);
 }

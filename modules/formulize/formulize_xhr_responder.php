@@ -118,7 +118,11 @@ switch($op) {
 			OR $elementObject->getVar('ele_type') == 'userAccountPhone') {
 
 				if($elementObject->getVar('ele_type') == 'userAccountUsername') {
-					$keyField = 'uname';
+					// The Username element stores its value in the ImpressCMS login field
+					// (login_name), not the display-name field (uname) — see
+					// userAccountUsernameElement::$userProperty. Uniqueness must therefore
+					// be checked against login_name, otherwise duplicate logins are allowed.
+					$keyField = 'login_name';
 					$table = "users";
 				}elseif($elementObject->getVar('ele_type') == 'userAccountEmail') {
 					$keyField = 'email';

@@ -18,10 +18,7 @@ require_once "loader.php";
 Loader::register('../../libraries/TwoFactorAuth/','RobThree\\Auth');
 use \RobThree\Auth\TwoFactorAuth;
 
-define('TFA_OFF', 0);
-define('TFA_EMAIL', 2);
-define('TFA_SMS', 1);
-define('TFA_APP', 3);
+require_once __DIR__ . "/constants.php"; // defines TFA_OFF, TFA_EMAIL, TFA_SMS, TFA_APP
 
 function tfa_formatPhone($phone) {
 	// TODO: handle international numbers, extensions, etc. For now just handle basic US 10-digit format and optional leading 1, and format as ###-###-#### or +1-###-###-#### for readability in the UI, but store only digits in the DB for matching and sending

@@ -1397,7 +1397,9 @@ class formulizeHandler {
 		}
 
 		// set PI if that was requested for this element, or if this is the first element with data on the form
-		$formObject = $form_handler->get($elementObject->getVar('fid'));
+		// refreshCache: true ensures we read the latest DB state — the form may have been updated
+		// (e.g. group_categories set by syncTemplateGroupsForForm) after the handler's cache was primed.
+		$formObject = $form_handler->get($elementObject->getVar('fid'), refreshCache: true);
 		if($pi OR ($formObject->getVar('pi') == 0 AND $elementObject->hasData AND count($formObject->getVar('elementsWithData')) == 1)) {
 			$formObject->setVar('pi', $elementObject->getVar('ele_id'));
 			$form_handler->insert($formObject);

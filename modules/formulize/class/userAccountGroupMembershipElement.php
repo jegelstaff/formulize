@@ -90,9 +90,31 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 					$selectedNames[] = htmlspecialchars($groupUITextList[$groupId], ENT_QUOTES);
 				}
 			}
-			return new XoopsFormLabel($caption, implode('<br>', $selectedNames), $markupName);
+			$elementHandle = $element->getVar('ele_handle');
+			// Keep the markupName-based class (auto_multi_{markupName}) that the JS in
+			// selectElement.php / autocomplete.js relies on, and add the stable
+			// handle-based class (auto_multi_{elementHandle}) additively so tests can
+			// target the element across entries. Mirrors the enabled-branch behaviour below.
+			$labelContent = implode('', array_map(function($name) use ($markupName, $elementHandle) {
+				return "<p class='auto_multi auto_multi_{$markupName} auto_multi_{$elementHandle}'>{$name}</p>";
+			}, $selectedNames));
+			return new XoopsFormLabel($caption, $labelContent, $markupName);
 		}
-		return $autocompleteHandler->render($autocomplete_ele_value, $caption, $markupName, $isDisabled, $autocompleteElement, $entry_id, $screen, $owner);
+		$formElement = $autocompleteHandler->render($autocomplete_ele_value, $caption, $markupName, $isDisabled, $autocompleteElement, $entry_id, $screen, $owner);
+		// Add the stable element-handle CSS class alongside the de_-based class so that both the
+		// per-entry de_ name (de_{fid}_{entryId}_{eleId}) and the stable handle-based name are present.
+		// GroupMembershipService reads $_POST['de_...'] so the POST key must stay unchanged;
+		// we only inject the extra class into the rendered HTML.
+		$elementHandle = $element->getVar('ele_handle');
+		if($elementHandle && $elementHandle !== $markupName && $formElement instanceof XoopsFormLabel) {
+			$html = str_replace(
+				"auto_multi auto_multi_{$markupName}",
+				"auto_multi auto_multi_{$markupName} auto_multi_{$elementHandle}",
+				$formElement->getValue()
+			);
+			return new XoopsFormLabel($caption, $html, $markupName);
+		}
+		return $formElement;
 	}
 
 	// this method returns any custom validation code (javascript) that should figure out how to validate this element

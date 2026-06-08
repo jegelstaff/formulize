@@ -106,7 +106,7 @@ function ensureUsersTableForm() {
 			$mp_handler->setDefaultFormScreenVars($newScreen, $formObject);
 			$newScreen->setVar('frid', 0);
 			$newScreen->setVar('pages', serialize(array(0 => $allElementIds)));
-			if ($mp_handler->insert($newScreen)) {
+			if ($mp_handler->insert($newScreen, true)) {
 				$sid = intval($newScreen->getVar('sid'));
 				$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize_id") . " SET defaultform = $sid WHERE id_form = " . intval($fid));
 			}

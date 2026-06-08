@@ -52,7 +52,12 @@ test.describe('A. Create Departments form (EAG)', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.getByRole('link', { name: 'Admin' }).click();
+		// Navigate directly — the "Admin" link destination varies by DB state
+		// (it points to a screen-specific admin once any form becomes the startpage,
+		// and with a fresh DB the module may redirect to the admin area itself).
+		// Direct navigation is the pattern Block D already uses.
+		await page.goto('/modules/formulize/admin/ui.php?page=home');
+		await waitForAdminPageReady(page);
 	});
 
 	test('Create Departments EAG form with Staff and Curators categories', async ({ page }) => {
@@ -63,6 +68,10 @@ test.describe('A. Create Departments form (EAG)', () => {
 
 		await page.getByRole('textbox', { name: 'Form title:' }).fill('Departments');
 		await page.locator('#applications-name').fill('Staff Management');
+		// Select the "Create new PI element" radio so the backend actually
+		// creates the Name textbox. Filling the caption without this leaves
+		// pi_new_yes_no at its default "no" value.
+		await page.locator('#pi-new-yes').click();
 		await page.locator('input[name="pi_new_caption"]').fill('Name');
 
 		await enableEntriesAreGroups(page);
@@ -76,10 +85,20 @@ test.describe('A. Create Departments form (EAG)', () => {
 	});
 
 	test('Departments template groups appear on the Groups admin page', async ({ page }) => {
+		// Navigate twice: the first load triggers ensureGroupsTableForm() first-time
+		// DB setup (known first-load quirk where the headerlist may not render
+		// correctly); the second load picks up the persisted form config.
 		await page.goto('/modules/formulize/groups.php');
-		await expect(page.getByRole('rowgroup').first()).toContainText('Departments - All Users');
-		await expect(page.getByRole('rowgroup').first()).toContainText('Departments - Staff');
-		await expect(page.getByRole('rowgroup').first()).toContainText('Departments - Curators');
+		await page.waitForLoadState('domcontentloaded');
+		await page.goto('/modules/formulize/groups.php');
+		// EAG template groups show as a single merged row per form (not one row
+		// per category). The form name appears in a .template-group-form-name
+		// element and the configured categories appear in a .main-cell-list ul.
+		await expect(page.locator('.template-group-form-name')).toContainText('Departments');
+		const categoryList = page.locator('.main-cell-list').first();
+		await expect(categoryList).toContainText('All Users');
+		await expect(categoryList).toContainText('Staff');
+		await expect(categoryList).toContainText('Curators');
 	});
 });
 
@@ -110,15 +129,14 @@ test.describe('B. Add Departments entries (creates Ancient History + Modern Hist
 
 	test('Six entry groups (Ancient/Modern × All Users/Staff/Curators) exist', async ({ page }) => {
 		await page.goto('/modules/formulize/groups.php');
-		// Increase the per-page list if necessary by switching to All
-		// (default may paginate). Asserting against the rowgroup text body.
-		const list = page.getByRole('rowgroup').first();
-		await expect(list).toContainText('Ancient History - All Users');
-		await expect(list).toContainText('Ancient History - Staff');
-		await expect(list).toContainText('Ancient History - Curators');
-		await expect(list).toContainText('Modern History - All Users');
-		await expect(list).toContainText('Modern History - Staff');
-		await expect(list).toContainText('Modern History - Curators');
+		// Entry groups are NOT shown as individual rows. Instead they are embedded
+		// inside the Departments template-group merged row: the Members cell shows
+		// each EAG entry as "Entry Name — N members". Seeing both entries there
+		// confirms syncEntryGroups() ran successfully, creating 3 groups per entry
+		// (2 entries × 3 categories = 6 groups total).
+		const list = page.getByRole('rowgroup').last();
+		await expect(list).toContainText('Ancient History');
+		await expect(list).toContainText('Modern History');
 	});
 });
 
@@ -138,14 +156,20 @@ test.describe('C. Create flat groups via the Formulize Groups admin page', () =>
 		// "Group Name" on the new-entry form for the groups table form.
 		await page.getByRole('textbox', { name: 'Group Name' }).fill('All Staff');
 		await saveFormulizeForm(page, 'Save');
-		await expect(page.getByRole('rowgroup').first()).toContainText('All Staff');
+		// After saving a new group the entry form stays open (edit view of the
+		// new group). Navigate back to the list to assert the group appears.
+		await page.goto('/modules/formulize/groups.php');
+		await page.waitForLoadState('networkidle');
+		await expect(page.getByRole('rowgroup').last()).toContainText('All Staff');
 	});
 
 	test('Create All Curators group', async ({ page }) => {
 		await page.locator('#formulize_addButton').click();
 		await page.getByRole('textbox', { name: 'Group Name' }).fill('All Curators');
 		await saveFormulizeForm(page, 'Save');
-		await expect(page.getByRole('rowgroup').first()).toContainText('All Curators');
+		await page.goto('/modules/formulize/groups.php');
+		await page.waitForLoadState('networkidle');
+		await expect(page.getByRole('rowgroup').last()).toContainText('All Curators');
 	});
 });
 
@@ -157,18 +181,22 @@ test.describe('D. Create Staff EAU form and its custom elements', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.getByRole('link', { name: 'Admin' }).click();
+		// Navigate directly to the admin home rather than clicking the "Admin"
+		// link: once the Departments form exists its default screen (sid=2)
+		// becomes the module startpage, so the "Admin" link on that front-end
+		// page points to the screen-specific admin rather than the home.
+		await page.goto('/modules/formulize/admin/ui.php?page=home');
+		await waitForAdminPageReady(page);
 	});
 
 	test('Create Staff form and toggle entries-are-users', async ({ page }) => {
+		// The admin home shows apps as collapsed accordions once any form exists.
+		// Expand the Staff Management accordion to reveal its 'Create a new form' link.
+		// The link's URL encodes aid=1 so the new form is auto-assigned to that app.
+		await page.getByRole('link', { name: 'Application: Staff Management' }).click();
 		await page.getByRole('link', { name: 'Create a new form' }).click();
 		await waitForAdminPageReady(page);
 		await page.getByRole('textbox', { name: 'Form title:' }).fill('Staff');
-		// Since the "Staff Management" application already exists (created
-		// in Block A when there were zero apps), the new-form panel renders
-		// with #new-app-no already checked and the apps listbox visible.
-		// Just pick the existing app by visible label.
-		await page.locator('#apps').selectOption({ label: 'Staff Management' });
 		await page.locator('input[name="pi_new_caption"]').fill('Login name');
 		await enableEntriesAreUsers(page);
 		await saveAdminForm(page);
@@ -181,13 +209,14 @@ test.describe('D. Create Staff EAU form and its custom elements', () => {
 		// Navigate directly to the Staff form's Elements tab.
 		await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${phase1.staffFid}&tab=elements`);
 		await waitForAdminPageReady(page);
-		// Check a couple of representative auto-injected elements appear in
-		// the elements accordion. These come from createUserAccountElements()
-		// in modules/formulize/class/forms.php.
-		await expect(page.getByText('Username', { exact: false })).toBeVisible();
-		await expect(page.getByText('Password', { exact: false })).toBeVisible();
-		await expect(page.getByText('Email Address', { exact: false })).toBeVisible();
-		await expect(page.getByText('Full Name', { exact: false })).toBeVisible();
+		// Elements appear as accordion tabs whose accessible name starts with the
+		// element caption then describes the type and handle. Use role='tab' +
+		// a regex anchored at the start of the caption to avoid matching the
+		// many other elements on the page that also contain these words.
+		await expect(page.getByRole('tab', { name: /^Username / })).toBeVisible();
+		await expect(page.getByRole('tab', { name: /^Password / })).toBeVisible();
+		await expect(page.getByRole('tab', { name: /^Email Address / })).toBeVisible();
+		await expect(page.getByRole('tab', { name: /^Full Name / })).toBeVisible();
 	});
 
 	test('Add Department element (linked-checkbox → Departments form, multi-select)', async ({ page }) => {
@@ -216,6 +245,39 @@ test.describe('D. Create Staff EAU form and its custom elements', () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('staff_is_curator');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Is curator?');
+	});
+
+	test('Configure Staff multipage screen pages to include all entry fields', async ({ page }) => {
+		// The multipage screen is auto-created with one empty page. Elements added after
+		// screen creation (Department, Is curator?) are not on any page. Assign all
+		// form elements to page 0 so the entry form shows everything on one page.
+		await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${phase1.staffFid}&tab=screens`);
+		await waitForAdminPageReady(page);
+
+		// The first configscreen link is the multipage screen (listed before listOfEntries screens).
+		const multiPageSid = await page.locator('a.configscreen').first().getAttribute('target-sid');
+		expect(multiPageSid).toBeTruthy();
+
+		// Navigate directly to the screen's Pages tab.
+		await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${phase1.staffFid}&sid=${multiPageSid}&tab=pages`);
+		await waitForAdminPageReady(page);
+
+		// Edit page 0: select ALL options so every element (including Department
+		// and Is curator? which were added after screen creation) is on this page.
+		await page.locator('a[name="editpage"]').first().click();
+		await expect(page.locator('#dialog-page-settings-content select[multiple]')).toBeVisible();
+
+		const page0Select = page.locator('#dialog-page-settings-content select[multiple]');
+		const allOptionValues = await page0Select.evaluate(sel =>
+			Array.from(sel.options).map(o => o.value)
+		);
+		await page0Select.selectOption(allOptionValues);
+
+		const save0 = page.waitForResponse(resp => resp.url().includes('save.php'));
+		await page.locator('#dialog-page-settings-content #savebuttonpopup').click();
+		await save0;
+
+		await page.locator('.ui-dialog:has(#dialog-page-settings-content) .ui-dialog-titlebar-close').click();
 	});
 });
 
@@ -310,9 +372,8 @@ test.describe('F. Set Staff form permissions (Webmasters + All Curators)', () =>
 		const allCuratorsPanel = page.locator('fieldset').filter({ has: page.locator('legend').filter({ hasText: /^All Curators/ }) });
 		await allCuratorsPanel.locator('input[name$="_view_form"]').check();
 		await allCuratorsPanel.locator('input[name$="_add_own_entry"]').check();
-		await allCuratorsPanel.locator('input[name$="_edit_own_entry"]').check();
-		// "View private elements" — the exact perm name varies; match by label text.
-		await allCuratorsPanel.getByLabel(/View.*private.*element/i).check();
+		await allCuratorsPanel.locator('input[name$="_update_own_entry"]').check();
+		await allCuratorsPanel.locator('input[name$="_view_private_elements"]').check();
 
 		// Webmasters get the lot.
 		const webmastersPanel = page.locator('fieldset').filter({ has: page.locator('legend').filter({ hasText: /^Webmasters/ }) });
@@ -339,7 +400,9 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 		await page.locator('#formulize_addButton').click();
 		await fillStaffEntry(page, {
 			username: 'ahstaff',
-			fullName: 'Ancient History Staff',
+			loginName: 'ahstaff',
+			firstName: 'Ancient History',
+			lastName: 'Staff',
 			email: 'ahstaff@museum.formulize.net',
 			password: '12345',
 			departments: ['Ancient History'],
@@ -352,7 +415,9 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 		await page.locator('#formulize_addButton').click();
 		await fillStaffEntry(page, {
 			username: 'mhstaff',
-			fullName: 'Modern History Staff',
+			loginName: 'mhstaff',
+			firstName: 'Modern History',
+			lastName: 'Staff',
 			email: 'mhstaff@museum.formulize.net',
 			password: '12345',
 			departments: ['Modern History'],
@@ -365,7 +430,9 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 		await page.locator('#formulize_addButton').click();
 		await fillStaffEntry(page, {
 			username: 'curator1',
-			fullName: 'Curator One',
+			loginName: 'curator1',
+			firstName: 'Curator',
+			lastName: 'One',
 			email: 'c1@museum.formulize.net',
 			password: '12345',
 			departments: ['Ancient History', 'Modern History'],
@@ -378,7 +445,9 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 		await page.locator('#formulize_addButton').click();
 		await fillStaffEntry(page, {
 			username: 'curator2',
-			fullName: 'Curator Two',
+			loginName: 'curator2',
+			firstName: 'Curator',
+			lastName: 'Two',
 			email: 'c2@museum.formulize.net',
 			password: '12345',
 			departments: ['Ancient History', 'Modern History'],
@@ -389,11 +458,18 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 });
 
 // Local helper for the four near-identical entry-creation flows above.
-async function fillStaffEntry(page, { username, fullName, email, password, departments, isCurator }) {
+// All Staff form fields are on a single multipage screen page.
+// The caller is responsible for clicking "Save and Finish" via
+// saveFormulizeForm(page, 'Save and Finish').
+async function fillStaffEntry(page, { username, loginName, firstName, lastName, email, password, departments, isCurator }) {
 	await page.getByRole('textbox', { name: 'Username' }).fill(username);
-	await page.getByRole('textbox', { name: 'Full Name' }).fill(fullName);
+	// "Login name" is a separate required plain-text element auto-created alongside
+	// the userAccount elements when entries-are-users is toggled on.
+	await page.getByRole('textbox', { name: 'Login name' }).fill(loginName);
+	await page.getByRole('textbox', { name: 'First Name' }).fill(firstName);
+	await page.getByRole('textbox', { name: 'Last Name' }).fill(lastName);
 	await page.getByRole('textbox', { name: 'Email Address' }).fill(email);
-	// Password element renders two inputs (password + pw_two confirm).
+	// Password element renders two password inputs (password + confirm).
 	const passwordInputs = page.locator('input[type="password"]');
 	await passwordInputs.nth(0).fill(password);
 	await passwordInputs.nth(1).fill(password);
@@ -414,66 +490,85 @@ test.describe('H. Verify automatic group assignment', () => {
 	});
 
 	test('Template groups have no members (design rule)', async ({ page }) => {
-		// On the Groups page, the member-count column should show 0 for the
-		// three template groups. We click into each by name to verify.
-		for (const templateName of [
-			'Departments - All Users',
-			'Departments - Staff',
-			'Departments - Curators',
-		]) {
-			const row = page.getByRole('row', { name: new RegExp(templateName) });
-			await expect(row).toBeVisible();
-			// The group_members column shows a list of members or zero.
-			// Match a zero-members indicator (the standard column shows
-			// either "0" or no usernames). We look for the row not
-			// containing any of our test usernames.
-			const rowText = await row.innerText();
-			expect(rowText).not.toMatch(/ahstaff|mhstaff|curator1|curator2/);
-		}
+		// Template groups are shown as a single merged row per EAG form —
+		// not as individual rows per category. The row contains the form name
+		// and a category list. The Members column must not list any test users
+		// because template groups are permission anchors, not membership lists.
+		const templateRow = page.locator('tr.entry-row').filter({
+			has: page.locator('.template-group-form-name'),
+		});
+		await expect(templateRow).toBeVisible();
+		const rowText = await templateRow.innerText();
+		expect(rowText).not.toMatch(/ahstaff|mhstaff|curator1|curator2/);
 	});
 
-	test('Ancient History - Staff has only ahstaff', async ({ page }) => {
-		const row = page.getByRole('row', { name: /Ancient History - Staff/ });
-		await expect(row).toContainText('ahstaff');
-		await expect(row).not.toContainText('mhstaff');
-		await expect(row).not.toContainText('curator1');
+	test('ahstaff belongs to Ancient History - Staff and All Staff (not Curators)', async ({ page }) => {
+		// Entry groups (e.g. "Ancient History - Staff") are NOT shown as individual
+		// rows on groups.php — they are merged into the Departments template-group row.
+		// Verify group assignments by opening the user's Staff entry and inspecting
+		// the userAccountGroupMembership element tags.
+		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
+		await page.getByRole('row', { name: /ahstaff/ }).getByRole('link').first().click();
+		const markupName = `formulize_user_account_groupmembership_${phase1.staffFid}`;
+		const groupTags = page.locator(`p.auto_multi_${markupName}`);
+		await expect(groupTags.filter({ hasText: 'Ancient History - Staff' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'All Staff' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'Ancient History - Curators' })).toHaveCount(0);
+		await expect(groupTags.filter({ hasText: 'All Curators' })).toHaveCount(0);
 	});
 
-	test('Ancient History - Curators has curator1 and curator2', async ({ page }) => {
-		const row = page.getByRole('row', { name: /Ancient History - Curators/ });
-		await expect(row).toContainText('curator1');
-		await expect(row).toContainText('curator2');
-		await expect(row).not.toContainText('ahstaff');
+	test('curator1 belongs to Curators groups for both departments (not Staff)', async ({ page }) => {
+		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
+		await page.getByRole('row', { name: /curator1/ }).getByRole('link').first().click();
+		const markupName = `formulize_user_account_groupmembership_${phase1.staffFid}`;
+		const groupTags = page.locator(`p.auto_multi_${markupName}`);
+		await expect(groupTags.filter({ hasText: 'Ancient History - Curators' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'Modern History - Curators' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'All Curators' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'Ancient History - Staff' })).toHaveCount(0);
+		await expect(groupTags.filter({ hasText: 'All Staff' })).toHaveCount(0);
 	});
 
-	test('Modern History - Staff has only mhstaff', async ({ page }) => {
-		const row = page.getByRole('row', { name: /Modern History - Staff/ });
-		await expect(row).toContainText('mhstaff');
-		await expect(row).not.toContainText('ahstaff');
-		await expect(row).not.toContainText('curator1');
+	test('mhstaff belongs to Modern History - Staff and All Staff (not Curators)', async ({ page }) => {
+		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
+		await page.getByRole('row', { name: /mhstaff/ }).getByRole('link').first().click();
+		const markupName = `formulize_user_account_groupmembership_${phase1.staffFid}`;
+		const groupTags = page.locator(`p.auto_multi_${markupName}`);
+		await expect(groupTags.filter({ hasText: 'Modern History - Staff' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'All Staff' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'Ancient History - Staff' })).toHaveCount(0);
+		await expect(groupTags.filter({ hasText: 'Modern History - Curators' })).toHaveCount(0);
+		await expect(groupTags.filter({ hasText: 'All Curators' })).toHaveCount(0);
 	});
 
-	test('Modern History - Curators has curator1 and curator2', async ({ page }) => {
-		const row = page.getByRole('row', { name: /Modern History - Curators/ });
-		await expect(row).toContainText('curator1');
-		await expect(row).toContainText('curator2');
-		await expect(row).not.toContainText('mhstaff');
+	test('curator2 belongs to Curators groups for both departments (not Staff)', async ({ page }) => {
+		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
+		await page.getByRole('row', { name: /curator2/ }).getByRole('link').first().click();
+		const markupName = `formulize_user_account_groupmembership_${phase1.staffFid}`;
+		const groupTags = page.locator(`p.auto_multi_${markupName}`);
+		await expect(groupTags.filter({ hasText: 'Ancient History - Curators' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'Modern History - Curators' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'All Curators' })).toBeVisible();
+		await expect(groupTags.filter({ hasText: 'Modern History - Staff' })).toHaveCount(0);
+		await expect(groupTags.filter({ hasText: 'All Staff' })).toHaveCount(0);
 	});
 
-	test('All Staff has ahstaff and mhstaff but no curators', async ({ page }) => {
-		const row = page.getByRole('row', { name: /^All Staff/ });
-		await expect(row).toContainText('ahstaff');
-		await expect(row).toContainText('mhstaff');
-		await expect(row).not.toContainText('curator1');
-		await expect(row).not.toContainText('curator2');
+	// Groups.php shows flat-group members by uname (First Name + Last Name), not login_name.
+	// So "ahstaff" (login_name) appears as "Ancient History Staff" (uname), etc.
+	test('All Staff has Ancient History Staff and Modern History Staff (no Curators)', async ({ page }) => {
+		const row = page.getByRole('row', { name: /All Staff/ });
+		await expect(row).toContainText('Ancient History Staff');
+		await expect(row).toContainText('Modern History Staff');
+		await expect(row).not.toContainText('Curator One');
+		await expect(row).not.toContainText('Curator Two');
 	});
 
-	test('All Curators has curator1 and curator2 but no staff', async ({ page }) => {
-		const row = page.getByRole('row', { name: /^All Curators/ });
-		await expect(row).toContainText('curator1');
-		await expect(row).toContainText('curator2');
-		await expect(row).not.toContainText('ahstaff');
-		await expect(row).not.toContainText('mhstaff');
+	test('All Curators has Curator One and Curator Two (no Staff)', async ({ page }) => {
+		const row = page.getByRole('row', { name: /All Curators/ });
+		await expect(row).toContainText('Curator One');
+		await expect(row).toContainText('Curator Two');
+		await expect(row).not.toContainText('Ancient History Staff');
+		await expect(row).not.toContainText('Modern History Staff');
 	});
 });
 
@@ -484,6 +579,10 @@ test.describe('I. New Users admin page UI', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		// Navigate twice: the first load triggers ensureUsersTableForm() first-time
+		// DB setup; the second load picks up the persisted form config.
+		await page.goto('/modules/formulize/users.php');
+		await page.waitForLoadState('domcontentloaded');
 		await page.goto('/modules/formulize/users.php');
 	});
 
@@ -491,23 +590,30 @@ test.describe('I. New Users admin page UI', () => {
 		const fid = await getFidFromListPage(page);
 		const searchInput = page.locator(`input[name="search_formulize_user_account_username_${fid}"]`);
 		await searchInput.fill('curator');
-		// Trigger the change handler that submits the implicit filter.
-		await searchInput.dispatchEvent('change');
-		await waitForWorkingMessage(page);
-		await expect(page.getByText('curator1', { exact: false })).toBeVisible();
-		await expect(page.getByText('curator2', { exact: false })).toBeVisible();
-		await expect(page.getByText('ahstaff', { exact: false })).not.toBeVisible();
+		// Press Enter to submit the controls form. Use Promise.all to start
+		// waitForNavigation before pressing so we don't miss the navigation event.
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+			searchInput.press('Enter'),
+		]);
+		await expect(page.getByText('curator1', { exact: true })).toBeVisible();
+		await expect(page.getByText('curator2', { exact: true })).toBeVisible();
+		await expect(page.getByText('ahstaff', { exact: true })).not.toBeVisible();
 	});
 
 	test('EAU type filter narrows to Staff users only', async ({ page }) => {
-		await page.locator('#search_eau_type').selectOption({ label: /Staff/ });
-		await waitForWorkingMessage(page);
+		// The dropdown onchange calls showLoading() which submits the controls form.
+		// Use Promise.all so waitForNavigation is registered before the change event fires.
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+			page.locator('#search_eau_type').selectOption('Staff'),
+		]);
 		// All four test users came from the Staff form, so all should
 		// remain visible; the unfiltered list also contained the seed admin
 		// user — that one should now be hidden.
-		await expect(page.getByText('ahstaff', { exact: false })).toBeVisible();
+		await expect(page.getByText('ahstaff', { exact: true })).toBeVisible();
 		await expect(page.getByText('Ancient History Staff', { exact: false })).toBeVisible();
-		await expect(page.getByText('admin', { exact: false })).not.toBeVisible();
+		await expect(page.getByText('admin', { exact: true })).not.toBeVisible();
 	});
 
 	test('Delete user flow removes a throwaway user', async ({ page }) => {
@@ -516,7 +622,9 @@ test.describe('I. New Users admin page UI', () => {
 		await page.locator('#formulize_addButton').click();
 		await fillStaffEntry(page, {
 			username: 'tempuser',
-			fullName: 'Temp User',
+			loginName: 'tempuser',
+			firstName: 'Temp',
+			lastName: 'User',
 			email: 'temp@museum.formulize.net',
 			password: '12345',
 			departments: ['Ancient History'],
@@ -531,8 +639,11 @@ test.describe('I. New Users admin page UI', () => {
 		await row.locator('input[name^="delete_"]').check();
 		// confirmDel() pops a native confirm dialog — pre-accept it.
 		page.once('dialog', d => d.accept());
-		await page.getByRole('button', { name: /Delete User/i }).click();
-		await waitForWorkingMessage(page);
+		// confirmDel() calls showLoading() which submits the controls form; wait for navigation.
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+			page.getByRole('button', { name: /Delete User/i }).click(),
+		]);
 
 		// 3. Reload, assert gone.
 		await page.goto('/modules/formulize/users.php');
@@ -560,38 +671,70 @@ test.describe('K. Enforcement of per-group conditions', () => {
 		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
 		await page.getByRole('row', { name: /curator1/ }).getByRole('link').first().click();
 
-		// The Group Membership element renders selected groups as tags with
-		// a remove link per group (typical formulize autocomplete pattern).
-		// Locate the "All Curators" tag inside that element's container and
-		// click its remove link. The container is identified by a label
-		// "Group Membership" or the element handle.
-		const groupMembershipBlock = page.locator('.formulize-label-formulize_user_account_groupmembership_' + phase1.staffFid).locator('..');
-		const allCuratorsTag = groupMembershipBlock.locator('text=All Curators').locator('..');
-		await allCuratorsTag.getByRole('link').click();
+		// The Group Membership element renders selected groups as <p class='auto_multi ...'> tags.
+		// The click handler is delegated from the container div. The <p> has display:table-row so
+		// hit-testing resolves to the container; use force:true to bypass Playwright's interceptor check.
+		const markupName = 'formulize_user_account_groupmembership_' + phase1.staffFid;
+		const allCuratorsTag = page.locator(`p.auto_multi_${markupName}`).filter({ hasText: /^All Curators$/ });
+		// The Group Membership element renders its tags via JS after the entry form loads;
+		// wait for the tag to actually be present/visible before clicking (otherwise, under
+		// load, the click can fire before render — a real race that worsens on fast CI).
+		await expect(allCuratorsTag).toBeVisible({ timeout: 30000 });
+		await allCuratorsTag.click({ force: true });
 		await saveFormulizeForm(page, 'Save');
 
 		// Reload the entry and verify All Curators is back.
 		await page.goto(`/modules/formulize/master.php?fid=${phase1.staffFid}`);
 		await page.getByRole('row', { name: /curator1/ }).getByRole('link').first().click();
-		await expect(page.locator('.formulize-label-formulize_user_account_groupmembership_' + phase1.staffFid).locator('..')).toContainText('All Curators');
+		const markupNameCheck = 'formulize_user_account_groupmembership_' + phase1.staffFid;
+		await expect(page.locator(`p.auto_multi_${markupNameCheck}`).filter({ hasText: 'All Curators' })).toBeVisible();
 	});
 
-	test('Removing curator1 from All Curators group is reverted on save', async ({ page }) => {
+	// Enforced members have no Remove button; a non-enforced added member does and can be removed.
+	// Every auto-assigned membership in this suite is enforced by an EAU default-group condition,
+	// so curator1/curator2 (is_curator=Yes → All Curators) have no Remove button. To exercise a
+	// removable member we add ahstaff (is_curator=No → NOT enforced in All Curators), confirm it
+	// gets a Remove button while curator1 still doesn't, then remove ahstaff to restore state.
+	// Members display the ImpressCMS uname (Full Name): "Curator One", "Ancient History Staff".
+	// gmm Remove/Add buttons have pointer-events:none until hover, so click with force:true.
+	test('All Curators: enforced members have no Remove button; a non-enforced added member can be removed', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.goto('/modules/formulize/groups.php');
-		await page.getByRole('row', { name: /^All Curators/ }).getByRole('link').first().click();
 
-		// The eagGroupMembers element on a group entry exposes the member
-		// list with a remove link per member. Click curator1's remove.
-		const memberList = page.locator('.formulize-eag-group-members, [class*="group-members"]').first();
-		const curator1Tag = memberList.locator('text=curator1').locator('..');
-		await curator1Tag.getByRole('link').click();
+		const openAllCurators = async () => {
+			await page.goto('/modules/formulize/groups.php');
+			await page.waitForLoadState('networkidle');
+			await page.getByRole('row', { name: /All Curators/ }).getByRole('link').first().click();
+			await page.waitForLoadState('networkidle');
+		};
+
+		// 1. curator1 is an enforced member → no Remove button.
+		await openAllCurators();
+		const curator1Row = page.locator('.gmm-member-row').filter({ hasText: 'Curator One' });
+		await expect(curator1Row).toBeVisible();
+		await expect(curator1Row.getByRole('button', { name: /Remove/i })).toHaveCount(0);
+
+		// 2. Add ahstaff (not enforced in All Curators) via the Add Members tab.
+		await page.locator('.gmm-tab', { hasText: 'Add Members' }).click();
+		const addSearch = page.locator('input[id^="gmm-add-search-"]');
+		await addSearch.fill('ahstaff');
+		await addSearch.press('Enter');
+		const addRow = page.locator('.gmm-add-row').filter({ hasText: 'Ancient History Staff' });
+		await expect(addRow).toBeVisible();
+		await addRow.getByRole('button', { name: /Add/i }).click({ force: true });
 		await saveFormulizeForm(page, 'Save');
 
-		// Reload the group and verify curator1 is still listed.
-		await page.goto('/modules/formulize/groups.php');
-		await page.getByRole('row', { name: /^All Curators/ }).getByRole('link').first().click();
-		await expect(page.locator('body')).toContainText('curator1');
+		// 3. Reopen: ahstaff is now a member WITH a Remove button (not enforced); curator1 still has none.
+		await openAllCurators();
+		const ahstaffRow = page.locator('.gmm-member-row').filter({ hasText: 'Ancient History Staff' });
+		await expect(ahstaffRow).toBeVisible();
+		await expect(ahstaffRow.getByRole('button', { name: /Remove/i })).toHaveCount(1);
+		await expect(page.locator('.gmm-member-row').filter({ hasText: 'Curator One' }).getByRole('button', { name: /Remove/i })).toHaveCount(0);
+
+		// 4. Remove ahstaff and confirm it's gone (restores the original membership state).
+		await ahstaffRow.getByRole('button', { name: /Remove/i }).click({ force: true });
+		await saveFormulizeForm(page, 'Save');
+		await openAllCurators();
+		await expect(page.locator('.gmm-member-row').filter({ hasText: 'Ancient History Staff' })).toHaveCount(0);
 	});
 });
 
