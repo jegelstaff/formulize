@@ -143,7 +143,8 @@ $(document).ready(function() {
 
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
 <{if isset($adminPage.addElementLink)}>
-<div id="add-element-toolbar"><h2><a href="" onclick="showAddElementOptions();return false;"><img src="../images/filenew2.png"> Add another element</a></h2></div>
+<{* h2 is used purely for its visual styling (to match the form Elements page link); role=presentation keeps it out of the heading semantics so it doesn't register as a page heading *}>
+<div id="add-element-toolbar"><h2 role="presentation"><a href="" onclick="showAddElementOptions();return false;"><img src="../images/filenew2.png"> Add another element</a></h2></div>
 <{/if}>
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
