@@ -1655,6 +1655,32 @@ input[name=delete-link-button] {
   margin-left: 165px;
   margin-bottom: 0; }
 
+/* Floating "Add an element" section — mirrors the save toolbar's float behaviour but pinned to the right */
+/* margin-top:0 aligns its bottom edge with the Save button so the gap below both is equal */
+#add-element-toolbar {
+  float: right;
+  margin: 0 0 1em;
+  background-color: #FFF; }
+
+#add-element-toolbar h2 {
+  margin: 0; }
+
+#add-element-toolbar h2 img {
+  vertical-align: middle;
+  margin-right: 0.3em; }
+
+/* The exact right offset is set live in JS (see ui.html scroll handler) so it tracks the content */
+/* area's right edge with no hard-coded margin. The 39px here is only a fallback for if that JS is */
+/* absent — it matches the default admin theme's content right margin, so it still lands correctly. */
+#add-element-toolbar.toolbar_fixed {
+  position: fixed;
+  top: 0;
+  right: 39px;
+  z-index: 100;
+  margin: 0;
+  padding: 1.5em;
+  border: solid 1px #1D65A5; }
+
 /* Develop a consistent style for forms */
 /* form > fieldset > ol > li > fieldset or input or select */
 /* Using http://www.alistapart.com/articles/prettyaccessibleforms/ */

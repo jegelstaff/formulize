@@ -378,6 +378,29 @@ $adminPage['pagetitle'] = "Element: ".$elementName;
 $adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type).")";
 $adminPage['needsave'] = true;
 
+// data for the shared "Add an element" dialog, so admins can add another element without going back up to the form page
+// get a list of all the custom element types that are present (mirrors the scan in form.php)
+$addElementCustomElements = array();
+$addElementCustomIndex = 0;
+foreach(scandir(XOOPS_ROOT_PATH."/modules/formulize/class/") as $thisFile) {
+	if (substr($thisFile, -11) == "Element.php") {
+		$customType = substr($thisFile, 0, strpos($thisFile, "Element.php"));
+		$customElementHandler = xoops_getmodulehandler($customType."Element", "formulize");
+		$customElementObject = $customElementHandler->create();
+		if (!$customElementObject->isSystemElement) {
+			$addElementCustomElements[$addElementCustomIndex]['type'] = $customType;
+			$addElementCustomElements[$addElementCustomIndex]['name'] = $customElementObject->name;
+			$addElementCustomIndex++;
+		}
+	}
+}
+$adminPage['addElementLink'] = array(
+	'fid' => $fid,
+	'aid' => $aid,
+	'customElements' => $addElementCustomElements,
+	'standardTypes' => formulizeHandler::getStandardElementTypes(),
+);
+
 $breadcrumbtrail[1]['url'] = "page=home";
 $breadcrumbtrail[1]['text'] = "Home";
 $breadcrumbtrail[2]['url'] = "page=application&aid=$aid&tab=forms";

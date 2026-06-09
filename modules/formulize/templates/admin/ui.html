@@ -67,9 +67,25 @@ $(document).ready(function() {
 		if (offset && offset.top<scrollTop <{$allowFloatingSave}>) {
 		  $('#admin_toolbar').addClass('toolbar_fixed');
 		  $('#admin_toolbar').addClass('ui-corner-all');
+		  $('#add-element-toolbar').addClass('toolbar_fixed');
+		  $('#add-element-toolbar').addClass('ui-corner-all');
+		  // Keep the floating "Add an element" box in line with the content area's right edge.
+		  // Derived from the live layout (no hard-coded margin) so it stays correct across themes,
+		  // zoom levels, resolutions and font sizes. The save button stays at its left edge for free
+		  // via its static position; the right edge needs this because a fixed element's auto right
+		  // offset resolves to the left instead.
+		  var $content = $('.admin-ui');
+		  if ($content.length) {
+		    var rightGap = $(window).width() - ($content.offset().left + $content.outerWidth());
+		    if (rightGap < 0) { rightGap = 0; }
+		    $('#add-element-toolbar').css('right', rightGap + 'px');
+		  }
 		} else {
 		  $('#admin_toolbar').removeClass('toolbar_fixed');
 		  $('#admin_toolbar').removeClass('ui-corner-all');
+		  $('#add-element-toolbar').removeClass('toolbar_fixed');
+		  $('#add-element-toolbar').removeClass('ui-corner-all');
+		  $('#add-element-toolbar').css('right', '');
 		};
 	  });
 
@@ -126,6 +142,9 @@ $(document).ready(function() {
 <{/if}>
 
 <!-- modified by Freeform Solutions, S.Gray, April 11, 2011 -->
+<{if isset($adminPage.addElementLink)}>
+<div id="add-element-toolbar"><h2><a href="" onclick="showAddElementOptions();return false;"><img src="../images/filenew2.png"> Add another element</a></h2></div>
+<{/if}>
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
 <div id=savebutton>
@@ -160,6 +179,10 @@ $(document).ready(function() {
 <div id="dialog-relationship-create-connection" title="Create Connection" style="display:none">
 	<div id="dialog-relationship-create-connection-content"></div>
 </div>
+
+<{if isset($adminPage.addElementLink)}>
+<{include file="db:admin/add_element_dialog.html" fid=$adminPage.addElementLink.fid aid=$adminPage.addElementLink.aid customElements=$adminPage.addElementLink.customElements standardTypes=$adminPage.addElementLink.standardTypes}>
+<{/if}>
 
 </div><!-- End admin-ui -->
 
