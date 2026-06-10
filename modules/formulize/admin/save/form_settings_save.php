@@ -242,6 +242,13 @@ if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_PO
 	formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, $screenIdsAndPagesForAdding, dataType: $dataType, pi: true);
 }
 
+// Determine whether the application context the page is being viewed under is still one of the form's
+// applications. Uses a strict, integer-based check so that "Forms with no app" (appid 0) is handled
+// correctly - a falsy 0 was previously skipped, so moving a form from no-app to an app did not reload
+// the page and the breadcrumbs kept showing "forms that don't belong to an application".
+$currentAppContext = intval(isset($_POST['application_url_id']) ? $_POST['application_url_id'] : 0);
+$appContextNoLongerValid = !in_array($currentAppContext, array_map('intval', $applicationIds), true);
+
 // if the form name was changed, etc, then force a reload of the page...
 if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
 	OR ($formObject->getVar('entries_are_users') && $oldEntriesAreUsers === 0)
@@ -250,9 +257,9 @@ if((isset($_POST['reload_settings']) AND $_POST['reload_settings'] == 1)
 	OR (!$formObject->getVar('entries_are_groups') && $oldEntriesAreGroups === 1)
 	OR $formulize_altered_form_handle OR $newAppObject OR $singularPluralChanged
 	OR $newGroupCategoriesCreated
-	OR ($_POST['application_url_id'] AND !in_array($_POST['application_url_id'], $applicationIds))) {
+	OR $appContextNoLongerValid) {
 
-  if(!in_array($_POST['application_url_id'], $applicationIds)) {
+  if($appContextNoLongerValid) {
     $appidToUse = count($applicationIds) > 0 ? intval($applicationIds[0]) : 0;
   } else {
     $appidToUse = intval($_POST['application_url_id']);

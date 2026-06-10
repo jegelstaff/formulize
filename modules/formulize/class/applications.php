@@ -591,31 +591,214 @@ class formulizeApplicationsHandler {
 	}
 
 	/**
-	 * Move all menu links associated with a form from one application to another
-	 * @param int fromAppId The application id to move the links from
-	 * @param int toAppId The application id to move the links to
-	 * @param int fid The form id of the form whose links should be moved
+	 * Relocate a form's menu links to follow the form as it moves between applications.
+	 * Only acts when the form was removed from at least one application. The form's links in the
+	 * removed-from applications are deduplicated by reference (so multiple identical links collapse
+	 * to one), then moved into the first added-to application and copied into any others. If the form
+	 * was not added to any new application, the orphaned links are deleted.
+	 * @param array $removedFromApps Application ids the form was removed from
+	 * @param array $addedToApps Application ids the form was added to
+	 * @param int $fid The form id whose links should follow it
 	 * @return bool True on success
-	 * @throws Exception if the SQL query fails
+	 * @throws Exception if any of the underlying SQL queries fail
 	 */
-	function moveMenuLinksBetweenApplications($fromAppId, $toAppId, $fid) {
+	function relocateMenuLinksForForm($removedFromApps, $addedToApps, $fid) {
 		global $xoopsDB;
-		$fromAppId = intval($fromAppId);
-		$toAppId = intval($toAppId);
-		if($fromAppId > 0 AND $toAppId > 0 AND $fid > 0) {
-			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			$screensOfForm = $screen_handler->getScreensForForm($fid);
-			$screenIds = array_keys($screensOfForm);
-			$screenIdsSQL = "";
-			foreach($screenIds as $thisScreenId) {
-				$screenIdsSQL .= " OR screen = 'sid=".intval($thisScreenId)."' ";
+		$fid = intval($fid);
+		if($fid <= 0 OR empty($removedFromApps)) {
+			return true;
+		}
+		// appid 0 ("Forms with no app") is a valid container, so keep it - only drop negatives/non-numeric
+		$addedToApps = array_values(array_filter(array_map('intval', (array) $addedToApps), function($appId) { return $appId >= 0; }));
+
+		// 1. Identify all the form's menu links across the applications the form is leaving
+		$menuIds = array();
+		foreach((array) $removedFromApps as $removedApp) {
+			$menuIds = array_merge($menuIds, $this->getMenuLinkIdsForForm($fid, $removedApp));
+		}
+		if(empty($menuIds)) {
+			return true;
+		}
+
+		// 2. Deduplicate by reference: keep one survivor per distinct screen/url, mark the rest for deletion
+		$survivors = array(); // referenceKey => menu_id
+		$duplicates = array(); // menu_ids that duplicate a survivor's reference
+		$sql = "SELECT menu_id, screen, url FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE menu_id IN (".implode(",", $menuIds).")";
+		if($result = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchArray($result)) {
+				$referenceKey = $row['screen']."|".$row['url'];
+				if(isset($survivors[$referenceKey])) {
+					$duplicates[] = intval($row['menu_id']);
+				} else {
+					$survivors[$referenceKey] = intval($row['menu_id']);
+				}
 			}
-			$sql = "UPDATE `".$xoopsDB->prefix("formulize_menu_links")."` SET appid = ".$toAppId." WHERE appid = ".$fromAppId." AND (screen = 'fid=".intval($fid)."' $screenIdsSQL);";
-			if(!$result = $xoopsDB->query($sql)) {
-				throw new Exception("Error moving menu links between applications. SQL dump:\n" . $sql . "\n".$xoopsDB->error());
+		}
+		$survivorIds = array_values($survivors);
+
+		// remove the duplicate links (and their permissions) so each reference survives only once
+		foreach($duplicates as $duplicateMenuId) {
+			$this->deleteMenuLinkById($duplicateMenuId);
+		}
+
+		// 3. If the form was not added to any new application, the survivors are now orphaned, so delete them
+		if(empty($addedToApps)) {
+			foreach($survivorIds as $survivorMenuId) {
+				$this->deleteMenuLinkById($survivorMenuId);
+			}
+			return true;
+		}
+
+		// 4. Move the survivors into the first added application, then copy them into any others
+		$firstApp = array_shift($addedToApps);
+		$this->moveMenuLink($survivorIds, $firstApp);
+		foreach($addedToApps as $additionalApp) {
+			foreach($survivorIds as $survivorMenuId) {
+				$this->copyMenuLink($survivorMenuId, $additionalApp);
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Get the menu_ids of the links in a given application that point to a given form.
+	 * A link belongs to the form if either its screen or url column references the form directly
+	 * (fid=X) or references one of the form's screens (sid=Y, resolved back to the form). This is the
+	 * single place that interprets how a link's target is stored.
+	 * @param int $fid The form id to match
+	 * @param int $appid The application id to search within
+	 * @return array An array of menu_ids belonging to the form in that application
+	 */
+	function getMenuLinkIdsForForm($fid, $appid) {
+		global $xoopsDB;
+		$fid = intval($fid);
+		$appid = intval($appid);
+		$menuIds = array();
+		if($fid <= 0 OR $appid < 0) { // appid 0 is the "Forms with no app" container, so it is valid
+			return $menuIds;
+		}
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$sql = "SELECT menu_id, screen, url FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE appid = ".$appid;
+		if($result = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchArray($result)) {
+				if($this->menuLinkReferencesForm($row['screen'], $row['url'], $fid, $screen_handler)) {
+					$menuIds[] = intval($row['menu_id']);
+				}
+			}
+		}
+		return $menuIds;
+	}
+
+	/**
+	 * Determine whether a menu link's screen/url references a given form.
+	 * @param string $screen The link's screen column value (e.g. 'fid=5' or 'sid=12')
+	 * @param string $url The link's url column value (may also contain an abbreviated fid=/sid= reference)
+	 * @param int $fid The form id to match
+	 * @param object $screen_handler The screen handler, for resolving sid= references back to a form
+	 * @return bool True if the link references the form
+	 */
+	function menuLinkReferencesForm($screen, $url, $fid, $screen_handler) {
+		$fid = intval($fid);
+		foreach(array($screen, $url) as $reference) {
+			if(!$reference) {
+				continue;
+			}
+			// direct form reference: fid=X
+			if(preg_match('/fid=(\d+)/', $reference, $matches) AND intval($matches[1]) === $fid) {
+				return true;
+			}
+			// screen reference: sid=Y, resolve the screen back to its form
+			if(preg_match('/sid=(\d+)/', $reference, $matches)) {
+				$screenObject = $screen_handler->get(intval($matches[1]));
+				if(is_object($screenObject) AND intval($screenObject->getVar('fid')) === $fid) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Move menu links to a different application by changing their appid. The menu_id is preserved,
+	 * so the associated permission rows (keyed on menu_id) travel with the links automatically.
+	 * @param array|int $menuIds A menu_id or array of menu_ids to move
+	 * @param int $toAppId The application id to move the links into
+	 * @return bool True on success
+	 * @throws Exception if the SQL query fails
+	 */
+	function moveMenuLink($menuIds, $toAppId) {
+		global $xoopsDB;
+		$toAppId = intval($toAppId);
+		$menuIds = array_values(array_filter(array_map('intval', (array) $menuIds)));
+		if(empty($menuIds) OR $toAppId < 0) { // appid 0 ("Forms with no app") is a valid target
+			return true;
+		}
+		$sql = "UPDATE ".$xoopsDB->prefix("formulize_menu_links")." SET appid = ".$toAppId." WHERE menu_id IN (".implode(",", $menuIds).")";
+		if(!$result = $xoopsDB->query($sql)) {
+			throw new Exception("Error moving menu links. SQL dump:\n" . $sql . "\n".$xoopsDB->error());
+		}
+		return true;
+	}
+
+	/**
+	 * Copy a menu link into a different application, duplicating the link row with a new appid and
+	 * cloning its permission rows (which are keyed on the new menu_id). The default_screen flag lives
+	 * inside those permission rows, so it is preserved by the clone.
+	 * @param int $menuId The menu_id of the link to copy
+	 * @param int $toAppId The application id to copy the link into
+	 * @return int|bool The new menu_id on success, or false if the source link could not be read
+	 * @throws Exception if any insert fails
+	 */
+	function copyMenuLink($menuId, $toAppId) {
+		global $xoopsDB;
+		$menuId = intval($menuId);
+		$toAppId = intval($toAppId);
+		if($menuId <= 0 OR $toAppId < 0) { // appid 0 ("Forms with no app") is a valid target
+			return false;
+		}
+		// read the source link row
+		$sql = "SELECT screen, url, link_text, note FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE menu_id = ".$menuId;
+		if(!$result = $xoopsDB->query($sql) OR !$row = $xoopsDB->fetchArray($result)) {
+			return false;
+		}
+		// determine the next rank in the target application
+		$rank = 1;
+		if($rankResult = $xoopsDB->query("SELECT MAX(`rank`) as maxrank FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE appid = ".$toAppId)) {
+			$rankRow = $xoopsDB->fetchArray($rankResult);
+			$rank = intval($rankRow['maxrank']) + 1;
+		}
+		// insert the new link row
+		$insertSql = "INSERT INTO ".$xoopsDB->prefix("formulize_menu_links")." (`appid`, `screen`, `rank`, `url`, `link_text`, `note`) VALUES (";
+		$insertSql .= $toAppId.", '".formulize_db_escape($row['screen'])."', ".$rank.", '".formulize_db_escape($row['url'])."', '".formulize_db_escape($row['link_text'])."', '".formulize_db_escape($row['note'])."')";
+		if(!$xoopsDB->query($insertSql)) {
+			throw new Exception("Error copying menu link. SQL dump:\n" . $insertSql . "\n".$xoopsDB->error());
+		}
+		$newMenuId = $xoopsDB->getInsertId();
+		// clone the permission rows so the copy carries the same group access and default_screen flags
+		if($permResult = $xoopsDB->query("SELECT group_id, default_screen FROM ".$xoopsDB->prefix("formulize_menu_permissions")." WHERE menu_id = ".$menuId)) {
+			while($permRow = $xoopsDB->fetchArray($permResult)) {
+				$permInsert = "INSERT INTO ".$xoopsDB->prefix("formulize_menu_permissions")." (`menu_id`, `group_id`, `default_screen`) VALUES (".intval($newMenuId).", ".intval($permRow['group_id']).", ".intval($permRow['default_screen']).")";
+				if(!$xoopsDB->query($permInsert)) {
+					throw new Exception("Error copying menu link permissions. SQL dump:\n" . $permInsert . "\n".$xoopsDB->error());
+				}
+			}
+		}
+		return $newMenuId;
+	}
+
+	/**
+	 * Delete a menu link and its permission rows by menu_id.
+	 * @param int $menuId The menu_id of the link to delete
+	 * @return void
+	 */
+	function deleteMenuLinkById($menuId) {
+		global $xoopsDB;
+		$menuId = intval($menuId);
+		if($menuId <= 0) {
+			return;
+		}
+		$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("formulize_menu_links")." WHERE menu_id = ".$menuId);
+		$xoopsDB->query("DELETE FROM ".$xoopsDB->prefix("formulize_menu_permissions")." WHERE menu_id = ".$menuId);
 	}
 
 	// added Oct 2013 W.R.

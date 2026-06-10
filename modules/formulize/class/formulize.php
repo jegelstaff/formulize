@@ -1269,9 +1269,22 @@ class formulizeHandler {
 				}
 			}
 
-			// if the form was removed from *one* application and added to *one* other, move the menu links to the new application
-			if(count($removedFromApps) == 1 AND count($addedToApps) == 1) {
-				$application_handler->moveMenuLinksBetweenApplications($removedFromApps[0], $addedToApps[0], $fid);
+			// Relocate menu links so they follow the form. "No application" (appid 0) is treated as a
+			// first-class container - the "Forms with no app" category has its own menu links - so links
+			// move into appid 0 when a form leaves all real applications, and out of appid 0 when a form
+			// that had no application is added to one.
+			$hadRealAppBefore = !empty($assignedAppsForThisForm);
+			$hasRealAppAfter = count(array_filter(array_map('intval', $applicationIds))) > 0;
+			$removedContainers = $removedFromApps;
+			$addedContainers = $addedToApps;
+			if(!$hasRealAppAfter AND $hadRealAppBefore) {
+				$addedContainers[] = 0; // the form moved into the "no app" container
+			}
+			if(!$hadRealAppBefore AND $hasRealAppAfter) {
+				$removedContainers[] = 0; // the form moved out of the "no app" container
+			}
+			if(!empty($removedContainers)) {
+				$application_handler->relocateMenuLinksForForm($removedContainers, $addedContainers, $fid);
 			}
 
 		}
