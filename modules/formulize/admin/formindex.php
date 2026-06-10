@@ -100,8 +100,8 @@ function patch40() {
      *
      * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
 
-    $checkThisTable = 'formulize_id';
-    $checkThisField = 'parent_perm_fid';
+    $checkThisTable = 'tfa_codes';
+    $checkThisField = 'created';
     $checkThisProperty = false;
     $checkPropertyForValue = false;
 
@@ -570,6 +570,7 @@ function patch40() {
 				$sql['add_parent_perm_fid'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_id"). " ADD `parent_perm_fid` int(5) NOT NULL default 0";
 				$sql['add_tfa_attempts'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `attempts` smallint(5) unsigned NOT NULL default 0";
 				$sql['add_tfa_last_attempt'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `last_attempt` int(11) unsigned NOT NULL default 0";
+				$sql['add_tfa_created'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `created` int(11) unsigned NOT NULL default 0";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -736,7 +737,7 @@ function patch40() {
 									print "singleentry column already converted to text. result: OK<br>";
 								} elseif($key === "add_parent_perm_fid") {
 									print "parent_perm_fid field already added to formulize_id table. result: OK<br>";
-								} elseif($key === "add_tfa_attempts" OR $key === "add_tfa_last_attempt") {
+								} elseif($key === "add_tfa_attempts" OR $key === "add_tfa_last_attempt" OR $key === "add_tfa_created") {
 									print "2FA attempt-limiting fields already added. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
