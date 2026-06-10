@@ -269,12 +269,12 @@ function formulize_getAppearanceFont() {
 
 /**
  * The folder where the uploaded logo is stored. Inside the trust path, so the
- * file sits outside the web root (and the codebase) and is served by logo.php.
+ * file sits outside the web root (and the codebase), served by download.php.
  *
  * @return string filesystem path of the logo folder, no trailing slash
  */
 function formulize_getAppearanceLogoDir() {
-    return XOOPS_TRUST_PATH . '/modules/formulize/appearance';
+    return XOOPS_TRUST_PATH . '/uploads/appearance';
 }
 
 /**
@@ -292,7 +292,7 @@ function formulize_getAppearanceLogoPath() {
 }
 
 /**
- * The URL of the uploaded custom logo, if any. Served through logo.php since
+ * The URL of the uploaded custom logo, if any. Served through download.php since
  * the file itself lives in the trust path, outside the web root. The file's
  * modification time is included for cache busting.
  *
@@ -301,7 +301,7 @@ function formulize_getAppearanceLogoPath() {
 function formulize_getAppearanceLogoUrl() {
     $path = formulize_getAppearanceLogoPath();
     if ($path) {
-        return XOOPS_URL . '/modules/formulize/logo.php?v=' . filemtime($path);
+        return XOOPS_URL . '/modules/formulize/download.php?file=appearance/' . rawurlencode(basename($path)) . '&inline=1&v=' . filemtime($path);
     }
     return '';
 }
