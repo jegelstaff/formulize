@@ -161,7 +161,7 @@ foreach($fontMap as $key => $font) {
 
 $logoFile = basename($currentValues['appearance_logo']);
 $logoPath = formulize_getAppearanceLogoDir() . '/' . $logoFile;
-$logoUrl = ($logoFile AND file_exists($logoPath)) ? XOOPS_URL . '/modules/formulize/logo.php?v=' . filemtime($logoPath) : '';
+$logoUrl = ($logoFile AND file_exists($logoPath)) ? XOOPS_URL . '/modules/formulize/download.php?file=appearance/' . rawurlencode($logoFile) . '&inline=1&v=' . filemtime($logoPath) : '';
 
 $adminPage['colours'] = $colours;
 $adminPage['fonts'] = $fonts;
