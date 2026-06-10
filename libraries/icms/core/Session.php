@@ -213,7 +213,7 @@ class icms_core_Session {
 						'domain' => '',
 						'secure' => ($secure ? true : false),
 						'httponly' => true,
-						'samesite' => 'None' // None || Lax  || Strict
+						'samesite' => ($secure ? 'None' : 'Lax') // None requires Secure for cross-site embeds; fall back to Lax on non-HTTPS so the cookie isn't dropped
 						);
 					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
 				}
@@ -401,7 +401,7 @@ class icms_core_Session {
             'domain' => '',
             'secure' => ($secure ? true : false),
             'httponly' => true,
-            'samesite' => 'None' // None || Lax  || Strict
+            'samesite' => ($secure ? 'None' : 'Lax') // None requires Secure for cross-site embeds; fall back to Lax on non-HTTPS so the cookie isn't dropped
             );
         setcookie($session_name, $session_id, $arr_cookie_options);
 	}

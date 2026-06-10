@@ -105,7 +105,15 @@ if (false != $user) {
 	$_SESSION['xoopsUserId'] = $user->getVar('uid');
 	$_SESSION['xoopsUserGroups'] = $user->getGroups();
 	if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
-		setcookie($icmsConfig['session_name'], session_id(), time()+(60 * $icmsConfig['session_expire']), '/',  '', 0);
+		$session_secure = substr(ICMS_URL, 0, 5) == 'https';
+		setcookie($icmsConfig['session_name'], session_id(), array(
+			'expires' => time() + (60 * $icmsConfig['session_expire']),
+			'path' => '/',
+			'domain' => '',
+			'secure' => $session_secure,
+			'httponly' => true,
+			'samesite' => ($session_secure ? 'None' : 'Lax')
+		));
 	}
 	$_SESSION['xoopsUserLastLogin'] = $user->getVar('last_login');
 	if (!$member_handler->updateUserByField($user, 'last_login', time())) {
@@ -150,10 +158,23 @@ if (false != $user) {
 	if($icms_cookie_path == ICMS_URL) $icms_cookie_path = '/';
 	if (!empty($_POST['rememberme'])) {
 		$expire = time() + (defined('ICMS_AUTOLOGIN_LIFETIME') ? ICMS_AUTOLOGIN_LIFETIME : 604800) ; // 1 week default
-		setcookie('autologin_uname', $user->getVar('login_name'), $expire, $icms_cookie_path, '', $secure, 0);
+		setcookie('autologin_uname', $user->getVar('login_name'), array(
+			'expires' => $expire,
+			'path' => $icms_cookie_path,
+			'domain' => '',
+			'secure' => (bool)$secure,
+			'httponly' => true,
+			'samesite' => 'Lax'
+		));
 		$Ynj = date('Y-n-j') ;
-		setcookie('autologin_pass', $Ynj . ':' . md5($user->getVar('pass') . ICMS_DB_PASS . ICMS_DB_PREFIX . $Ynj),
-				$expire, $icms_cookie_path, '', $secure, 0);
+		setcookie('autologin_pass', $Ynj . ':' . md5($user->getVar('pass') . ICMS_DB_PASS . ICMS_DB_PREFIX . $Ynj), array(
+			'expires' => $expire,
+			'path' => $icms_cookie_path,
+			'domain' => '',
+			'secure' => (bool)$secure,
+			'httponly' => true,
+			'samesite' => 'Lax'
+		));
 	}
 	// end of autologin hack V3.1 GIJ
 
