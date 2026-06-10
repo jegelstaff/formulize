@@ -230,4 +230,6 @@ define('_MI_formulize_COPY_GROUP_PERMS', 'Copy Group Permissions');
 define('_MI_formulize_SYNCHRONIZE', 'Synchronize With Another System');
 define('_MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS', 'Manage Account Creation Tokens');
 define('_MI_formulize_SYSTEM_LOG_VIEWER', 'System Log Viewer');
+define('_MI_formulize_APPEARANCE', 'Appearance');
+define('_MI_formulize_APPEARANCE_SETTING', 'Appearance setting (edited on the Appearance page in the Formulize admin UI)');
 define('_MI_formulize_MANAGE_FORM_ACCESS', 'Manage Access to Forms');
