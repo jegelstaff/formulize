@@ -104,21 +104,43 @@ function validateCode($code, $uid=false) {
     }
     $uid = $uid ? $uid : $xoopsUser->getVar('uid');
     //$sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
-    $sql = 'SELECT method, code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
+    $maxAttempts = 5;       // failed guesses allowed before a cooldown kicks in
+    $lockoutSeconds = 900;  // 15 minute cooldown once the limit is reached
+    $sql = 'SELECT code_id, method, code, attempts, last_attempt FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
     $res = $xoopsDB->query($sql);
     while($data = $xoopsDB->fetchArray($res)) {
-        if($data['method'] == TFA_APP) {
-			$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
-			if($tfa->verifyCode($data['code'], $code)) {
-				return true;
-			}
-        } else {
-            if($data['code'] == trim($code)) {
-                $sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
-                $xoopsDB->queryF($sql);
-                return true;
+
+        // Rate limiting: once a code has hit the attempt limit, refuse to check it until the
+        // cooldown has elapsed. After that, reset the counter and allow checking to resume.
+        if($data['attempts'] >= $maxAttempts) {
+            if((time() - intval($data['last_attempt'])) < $lockoutSeconds) {
+                continue; // still locked out - skip this code without checking it
             }
+            $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = 0 WHERE code_id = '.intval($data['code_id']));
+            $data['attempts'] = 0;
         }
+
+        $codeIsValid = false;
+        if($data['method'] == TFA_APP) {
+            $tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
+            $codeIsValid = $tfa->verifyCode($data['code'], $code);
+        } else {
+            $codeIsValid = ($data['code'] == trim($code));
+        }
+
+        if($codeIsValid) {
+            if($data['method'] == TFA_APP) {
+                // persistent seed: clear the failed-attempt counter on success
+                $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = 0, last_attempt = 0 WHERE code_id = '.intval($data['code_id']));
+            } else {
+                // single-use code: remove it (which also clears its counter)
+                $xoopsDB->queryF('DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid));
+            }
+            return true;
+        }
+
+        // wrong code: record the failed attempt against this code
+        $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = attempts + 1, last_attempt = '.time().' WHERE code_id = '.intval($data['code_id']));
     }
     return false;
 }
