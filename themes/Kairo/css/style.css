@@ -895,6 +895,25 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 .fz-table--cozy        tbody td { height: var(--row-h-cozy); }
 .fz-table--comfortable tbody td { height: var(--row-h-comfortable); white-space: normal; line-height: var(--lh-snug); }
 
+/* Filter / search row.
+   The table uses auto layout, where a column's width is the widest content in any of
+   its cells. Left unstyled, the search controls render at their intrinsic widths and,
+   when the filter row is toggled on, force their columns wider — shifting the whole
+   table. Constraining the controls to fill their cell (width:100%) with min-width:0
+   removes them from the column-width calculation, so columns stay sized to the data
+   and toggling the filters produces no horizontal layout shift. */
+.fz-search-row .main-cell-div {
+  min-width: 0;
+}
+
+.fz-search-row input:not([type="checkbox"]):not([type="radio"]),
+.fz-search-row select,
+.fz-search-row textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 /* Checkbox / controls column */
 .fz-table .fz-cb {
   width: 52px;

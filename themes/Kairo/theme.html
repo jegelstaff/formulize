@@ -15,10 +15,6 @@
     <meta name="copyright" content="<{$icms_meta_copyright}>" />
     <meta name="generator" content="Formulize" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
-
     <{$icms_module_header}>
 
     <link rel="shortcut icon" type="image/ico" href="<{$icms_imageurl}>icons/favicon.ico" />
@@ -26,10 +22,15 @@
 
     <{php}>
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
     $cssVersion = formulize_get_file_version('/themes/Kairo/' . $rtlPath . 'css/style.css');
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/reset.css?v=' . $cssVersion . '" />';
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
+    // user-configured colours, font, and logo, from the Appearance page in the Formulize admin UI
+    echo formulize_renderAppearanceHead();
+    $appearanceLogoUrl = formulize_getAppearanceLogoUrl();
+    $this->assign('appearance_logo_url', $appearanceLogoUrl ? $appearanceLogoUrl : $this->_tpl_vars['icms_imageurl'] . 'images/logo.png');
     <{/php}>
 </head>
 
@@ -68,7 +69,7 @@ if ($xoopsUser) {
       </button>
       <{/if}>
       <a class="fz-header__brand" href="<{$logo_url}>">
-        <img src="<{$icms_imageurl}>images/logo.png" alt="<{$icms_sitename}>">
+        <img src="<{$appearance_logo_url}>" alt="<{$icms_sitename}>">
       </a>
     </div>
 
