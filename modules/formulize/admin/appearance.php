@@ -69,8 +69,8 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         // reset everything to defaults, including removing any uploaded logo
         if(isset($configItems['appearance_logo'])) {
             $oldLogo = basename($configItems['appearance_logo']->getConfValueForOutput());
-            if($oldLogo AND file_exists(formulize_getAppearanceLogoDir() . '/' . $oldLogo)) {
-                unlink(formulize_getAppearanceLogoDir() . '/' . $oldLogo);
+            if($oldLogo AND file_exists(formulize_getAppearanceUploadDir() . '/' . $oldLogo)) {
+                unlink(formulize_getAppearanceUploadDir() . '/' . $oldLogo);
             }
         }
         foreach(formulize_appearanceConfigNames() as $name) {
@@ -103,8 +103,8 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
         $currentLogo = isset($configItems['appearance_logo']) ? basename($configItems['appearance_logo']->getConfValueForOutput()) : '';
         $newUpload = (isset($_FILES['appearance_logo_file']) AND $_FILES['appearance_logo_file']['error'] == UPLOAD_ERR_OK);
         if((isset($_POST['appearance_logo_remove']) OR $newUpload) AND $currentLogo) {
-            if(file_exists(formulize_getAppearanceLogoDir() . '/' . $currentLogo)) {
-                unlink(formulize_getAppearanceLogoDir() . '/' . $currentLogo);
+            if(file_exists(formulize_getAppearanceUploadDir() . '/' . $currentLogo)) {
+                unlink(formulize_getAppearanceUploadDir() . '/' . $currentLogo);
             }
             formulize_saveAppearanceConfig('appearance_logo', '', $configItems, $errors);
         }
@@ -119,13 +119,13 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
             $mimeType = mime_content_type($_FILES['appearance_logo_file']['tmp_name']);
             if(isset($allowedTypes[$mimeType])) {
                 $fileName = 'formulize-appearance-logo-' . time() . '.' . $allowedTypes[$mimeType];
-                if(!is_dir(formulize_getAppearanceLogoDir())) {
-                    mkdir(formulize_getAppearanceLogoDir(), 0755, true);
+                if(!is_dir(formulize_getAppearanceUploadDir())) {
+                    mkdir(formulize_getAppearanceUploadDir(), 0755, true);
                 }
-                if(move_uploaded_file($_FILES['appearance_logo_file']['tmp_name'], formulize_getAppearanceLogoDir() . '/' . $fileName)) {
+                if(move_uploaded_file($_FILES['appearance_logo_file']['tmp_name'], formulize_getAppearanceUploadDir() . '/' . $fileName)) {
                     formulize_saveAppearanceConfig('appearance_logo', $fileName, $configItems, $errors);
                 } else {
-                    $errors[] = "Could not move the uploaded logo into the logo folder in the trust path. Check the folder permissions.";
+                    $errors[] = "Could not move the uploaded logo into the appearance folder in the uploads folder. Check the folder permissions.";
                 }
             } else {
                 $errors[] = "The logo must be a PNG, JPEG, GIF, SVG, or WebP image.";
@@ -141,6 +141,15 @@ if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
 $currentValues = array();
 foreach(formulize_appearanceConfigNames() as $name) {
     $currentValues[$name] = isset($configItems[$name]) ? trim($configItems[$name]->getConfValueForOutput()) : '';
+}
+
+// regenerate the appearance stylesheet whenever settings have been saved, passing
+// the just-saved values explicitly since cached config reads could be stale
+if(isset($_POST['appearance_save']) OR isset($_POST['appearance_reset'])) {
+    if(!formulize_regenerateAppearanceCss($currentValues)) {
+        $errors[] = "Could not write the appearance stylesheet to the appearance folder in the uploads folder. Check the folder permissions.";
+        $saved = false;
+    }
 }
 
 $colours = array();
@@ -160,8 +169,8 @@ foreach($fontMap as $key => $font) {
 }
 
 $logoFile = basename($currentValues['appearance_logo']);
-$logoPath = formulize_getAppearanceLogoDir() . '/' . $logoFile;
-$logoUrl = ($logoFile AND file_exists($logoPath)) ? XOOPS_URL . '/modules/formulize/download.php?file=appearance/' . rawurlencode($logoFile) . '&inline=1&v=' . filemtime($logoPath) : '';
+$logoPath = formulize_getAppearanceUploadDir() . '/' . $logoFile;
+$logoUrl = ($logoFile AND file_exists($logoPath)) ? formulize_getAppearanceUploadUrl() . '/' . rawurlencode($logoFile) . '?v=' . filemtime($logoPath) : '';
 
 $adminPage['colours'] = $colours;
 $adminPage['fonts'] = $fonts;
