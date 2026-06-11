@@ -38,65 +38,6 @@ while(ob_get_level()) {
     ob_end_clean();
 }
 
-// serve a file specified by name, optionally including subfolders, ie: file=appearance/logo.png
-// files are looked for in the web uploads folder first, then in the uploads folder in the
-// trust path, which is outside the web root so its files cannot be requested directly.
-// no permission check: anything reachable this way is considered public, such as the
-// site logo, which appears on screens shown to anonymous users like the sign in page.
-// files are sent as attachments, except known safe types when inline display is requested.
-if(isset($_GET['file'])) {
-    $relativePath = ltrim(str_replace("\\", "/", $_GET['file']), "/");
-    $filePath = false;
-    if(!strstr($relativePath, "..") AND !strstr($relativePath, "\0")) {
-        foreach(array(XOOPS_ROOT_PATH."/uploads", XOOPS_TRUST_PATH."/uploads") as $baseDir) {
-            $candidatePath = realpath($baseDir."/".$relativePath);
-            if($candidatePath AND strpos($candidatePath, realpath($baseDir).DIRECTORY_SEPARATOR) === 0 AND is_file($candidatePath)) {
-                $filePath = $candidatePath;
-                break;
-            }
-        }
-    }
-    if(!$filePath) {
-        header("HTTP/1.0 404 Not Found");
-        exit;
-    }
-    $fileDisplayName = basename($filePath);
-    $inlineContentTypes = array(
-        'png' => 'image/png',
-        'jpg' => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-        'gif' => 'image/gif',
-        'svg' => 'image/svg+xml',
-        'webp' => 'image/webp',
-        'bmp' => 'image/bmp',
-        'ico' => 'image/vnd.microsoft.icon',
-        'pdf' => 'application/pdf',
-        'txt' => 'text/plain',
-    );
-    $fileExtension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-    header('Content-Length: '.filesize($filePath));
-    if(isset($_GET['inline']) AND isset($inlineContentTypes[$fileExtension])) {
-        header('Content-Type: '.$inlineContentTypes[$fileExtension]);
-        header('Content-Disposition: inline; filename="'.$fileDisplayName.'"');
-        if(isset($_GET['v'])) {
-            header('Cache-Control: public, max-age=31536000, immutable'); // URL includes a version, so it changes when the file does
-        } else {
-            header('Cache-Control: max-age=3600');
-        }
-        header('Pragma: public');
-    } else {
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="'.$fileDisplayName.'"');
-        header('Content-Transfer-Encoding: binary');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Pragma: public');
-    }
-    readfile($filePath);
-    exit;
-}
-
 $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 
