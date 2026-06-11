@@ -612,6 +612,15 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   text-overflow: ellipsis;
 }
 
+/* Total entry count beside the title */
+.fz-list__count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-12);
+  font-feature-settings: "tnum";
+  color: var(--c-text-subtle);
+  flex-shrink: 0;
+}
+
 /* More-actions wrapper — anchors the dropdown to the "..." button */
 .fz-list__more-wrap {
   position: relative;
@@ -888,7 +897,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   z-index: 2;
 }
 
-.fz-table tbody tr:hover td { background: var(--c-surface-2); cursor: pointer; }
+.fz-table tbody tr:hover td { background: var(--c-surface-2); }
 .fz-table tbody tr[aria-selected="true"] td { background: var(--c-accent-soft); }
 
 .fz-table--compact     tbody td { height: var(--row-h-compact); }
@@ -899,11 +908,13 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
    The table uses auto layout, where a column's width is the widest content in any of
    its cells. Left unstyled, the search controls render at their intrinsic widths and,
    when the filter row is toggled on, force their columns wider — shifting the whole
-   table. Constraining the controls to fill their cell (width:100%) with min-width:0
-   removes them from the column-width calculation, so columns stay sized to the data
-   and toggling the filters produces no horizontal layout shift. */
+   table. Giving the cell wrapper width:0 removes it (and the controls inside) from
+   the intrinsic column-width calculation entirely, while min-width:100% (ignored
+   during intrinsic sizing, applied at layout) re-expands it to the final cell width.
+   Columns stay sized to the data, so toggling the filters produces no layout shift. */
 .fz-search-row .main-cell-div {
-  min-width: 0;
+  width: 0;
+  min-width: 100%;
 }
 
 .fz-search-row input:not([type="checkbox"]):not([type="radio"]),
@@ -930,6 +941,20 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   vertical-align: middle;
   display: inline-block;
   line-height: 1;
+}
+
+/* The pencil glyph comes from core formulize.css, which hardcodes white for its
+   own dark theme; recolour it like the other muted icons */
+.fz-table .loe-edit-entry::before {
+  color: var(--c-text-muted);
+}
+
+.fz-table a.loe-edit-entry:hover {
+  text-shadow: none;
+}
+
+.fz-table a.loe-edit-entry:hover::before {
+  color: var(--c-text);
 }
 
 /* Checkbox styling */
@@ -1184,6 +1209,9 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
    ============================================================ */
 
 @media (max-width: 768px) {
+
+  /* ---- Sidebar: off-canvas slide-in ---- */
+
   .fz-sidebar {
     position: fixed;
     top: var(--header-h);
@@ -1207,5 +1235,101 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
     inset: var(--header-h) 0 0 0;
     background: var(--c-overlay);
     z-index: 19;
+  }
+
+  /* ---- Header: tighter chrome ---- */
+
+  .fz-header {
+    padding: 0 var(--s-3);
+  }
+
+  .fz-header__end {
+    gap: var(--s-2);
+  }
+
+  .fz-header__brand img {
+    height: 24px;
+  }
+
+  /* ---- Right drawer fills the screen ---- */
+
+  .fz-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .fz-drawer__body {
+    padding: var(--s-4);
+  }
+
+  /* ---- List title bar: compact, actions wrap under the title ---- */
+
+  .fz-list__titlebar {
+    flex-wrap: wrap;
+    padding: var(--s-2) var(--s-3);
+    min-height: 48px;
+  }
+
+  .fz-list__title {
+    font-size: var(--fs-16);
+  }
+
+  /* count beside the title is a desktop affordance */
+  .fz-list__count {
+    display: none;
+  }
+
+  /* ---- Selection bar: one row, actions pan horizontally ---- */
+
+  .fz-selection-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: var(--s-2) var(--s-3);
+    min-height: 48px;
+  }
+
+  .fz-selection-bar__actions {
+    flex-wrap: nowrap;
+  }
+
+  /* ---- Footer / pagination: slim bar ---- */
+
+  .fz-list__footer {
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    font-size: var(--fs-12);
+  }
+
+  /* ---- Table: pan columns horizontally; the checkbox column and the
+     first data column stay pinned on the left so rows remain identifiable.
+     Horizontal scrolling comes from .fz-list__body (overflow: auto) once
+     the nowrap cells force the table wider than the viewport. ---- */
+
+  .fz-table .fz-cb,
+  .fz-table .column0 {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  /* first data column sits after the 52px checkbox column when present */
+  .fz-table .fz-cb ~ .column0 {
+    left: 52px;
+  }
+
+  /* divider shadow marks the edge of the pinned columns; cap their width
+     so long first-column content can't eat the whole viewport */
+  .fz-table .column0 {
+    box-shadow: 1px 0 0 var(--c-border);
+    max-width: 45vw;
+  }
+
+  /* pinned header cells: sticky both ways, above row headers (z 2) and
+     pinned body cells (z 1) */
+  .fz-table thead .fz-cb,
+  .fz-table thead .column0 {
+    top: 0;
+    z-index: 3;
   }
 }

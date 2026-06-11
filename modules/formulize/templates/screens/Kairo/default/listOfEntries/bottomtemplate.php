@@ -116,16 +116,6 @@ function fzSelectView(value, isStandard) {
     }
 
     function initRowDrawer() {
-        document.querySelectorAll('tr.entry-row').forEach(function (row) {
-            var link = row.querySelector('.loe-edit-entry');
-            if (!link) return;
-            row.addEventListener('click', function (e) {
-                if (e.target.closest('.fz-cb')) return;
-                var d = parseGoDetails(link);
-                openEntry(d.entryId, d.sid);
-            });
-        });
-
         // Override Formulize's goDetails so the loe-edit-entry onclick opens the drawer
         window.goDetails = function (entryId, screen) {
             openEntry(entryId, screen || '');
@@ -158,6 +148,13 @@ function fzSelectView(value, isStandard) {
         document.addEventListener('change', function (e) {
             if (e.target.classList.contains('formulize_selection_checkbox')) {
                 updateSelectionBar();
+            }
+        });
+        // Select all / Clear selection (un)check the boxes programmatically, which
+        // fires no change events, so recompute the bar after those clicks run.
+        document.addEventListener('click', function (e) {
+            if (e.target.id === 'formulize_selectAllButton' || e.target.id === 'formulize_clearSelectButton') {
+                setTimeout(updateSelectionBar, 0);
             }
         });
         initFilterToggle();
