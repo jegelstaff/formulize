@@ -51,6 +51,24 @@ if ($xoopsUser) {
 
 <div class="fz-app" id="fz-app" data-sidebar-default="<{if $xoops_requesturi|strstr:'/modules/formulize/application.php'}>open<{else}>closed<{/if}>">
 
+  <script>
+  // Apply the saved sidebar state before first paint, so restoring a closed
+  // sidebar doesn't replay the closing animation on every page load.
+  // initSidebar() in script.js re-applies the same state later (no visual
+  // change) and handles aria-expanded and the toggle behaviour.
+  (function () {
+    try {
+      var app = document.getElementById('fz-app');
+      var saved = localStorage.getItem('fz-sidebar-closed');
+      var defaultOpen = app.getAttribute('data-sidebar-default') === 'open';
+      var closed = saved !== null ? saved === 'true' : !defaultOpen;
+      if (closed && window.innerWidth > 768) {
+        app.classList.add('fz-app--sidebar-closed');
+      }
+    } catch (e) { /* ignore */ }
+  })();
+  </script>
+
   <!-- HEADER -->
   <{if !$smarty.get.fz_inline}>
   <header class="fz-header" role="banner">
