@@ -423,6 +423,9 @@ define("_MD_AM_AUTH2FAGROUPSDESC","If two-factor authentication is turned on, th
 define("_MD_AM_AUTHOKTA","Use SP-initiated Okta SAML authentication");
 define("_MD_AM_AUTHOKTADESC","If your site uses Okta as an authentication service, enter the SSO URL in this box. Only SP-initiated SAML authentication is supported. You must place a completed 'settings.php' file in the /libraries/php-saml/ directory.");
 
+define("_MD_AM_COOKIE_SAMESITE","Session cookie SameSite");
+define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the login session cookie. Lax is recommended. Use None ONLY if Formulize is embedded cross-site in an iframe (e.g. an LTI/Brightspace integration) - None also requires the site to be served over HTTPS. Strict is the most restrictive.");
+
 
 
 // added in 1.1.2

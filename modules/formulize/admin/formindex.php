@@ -450,6 +450,26 @@ function patch40() {
             }
         }
 
+        // Add the session-cookie SameSite preference (General Settings). Default Lax, except on sites
+        // using LTI/Brightspace iframe embedding (detected by the ceLTIc lti2_consumer table), where
+        // the session cookie must be SameSite=None to be sent inside the iframe.
+        $samesiteSql = 'SELECT * FROM '.$xoopsDB->prefix('config').' WHERE conf_name = "cookie_samesite"';
+        if($samesiteRes = $xoopsDB->queryF($samesiteSql) AND $xoopsDB->getRowsNum($samesiteRes)===0) {
+            $samesiteDefault = 'Lax';
+            if($ltiRes = $xoopsDB->queryF("SHOW TABLES LIKE 'lti2_consumer'") AND $xoopsDB->getRowsNum($ltiRes) > 0) {
+                $samesiteDefault = 'None';
+            }
+            $samesiteSql = 'INSERT INTO '.$xoopsDB->prefix('config').' (conf_modid, conf_catid, conf_name, conf_title, conf_value, conf_desc, conf_formtype, conf_valuetype, conf_order) VALUES (0, 1, "cookie_samesite", "_MD_AM_COOKIE_SAMESITE", "'.$samesiteDefault.'", "_MD_AM_COOKIE_SAMESITEDSC", "select", "text", 200)';
+            if($xoopsDB->queryF($samesiteSql)) {
+                $samesiteConfId = $xoopsDB->getInsertId();
+                foreach(array('Lax', 'None', 'Strict') as $samesiteOpt) {
+                    $xoopsDB->queryF('INSERT INTO '.$xoopsDB->prefix('configoption').' (confop_name, confop_value, conf_id) VALUES ("'.$samesiteOpt.'", "'.$samesiteOpt.'", '.intval($samesiteConfId).')');
+                }
+            } else {
+                print 'ERROR: could not add the Session cookie SameSite option, using this SQL:<br>'.$samesiteSql.'<BR>'.$xoopsDB->error().'<BR>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.';
+            }
+        }
+
         $sql['add_encrypt'] = "ALTER TABLE " . $xoopsDB->prefix("formulize") . " ADD `ele_encrypt` tinyint(1) NOT NULL default '0'";
         $sql['add_lockedform'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " ADD `lockedform` tinyint(1) NULL default NULL";
         $sql['drop_from_formulize_id_admin'] = "ALTER TABLE " . $xoopsDB->prefix("formulize_id") . " DROP `admin`";

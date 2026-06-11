@@ -112,7 +112,7 @@ if (false != $user) {
 			'domain' => '',
 			'secure' => $session_secure,
 			'httponly' => true,
-			'samesite' => ($session_secure ? 'None' : 'Lax')
+			'samesite' => icms_core_Session::cookieSameSite($session_secure)
 		));
 	}
 	$_SESSION['xoopsUserLastLogin'] = $user->getVar('last_login');

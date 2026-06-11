@@ -213,7 +213,7 @@ class icms_core_Session {
 						'domain' => '',
 						'secure' => ($secure ? true : false),
 						'httponly' => true,
-						'samesite' => ($secure ? 'None' : 'Lax') // None requires Secure for cross-site embeds; fall back to Lax on non-HTTPS so the cookie isn't dropped
+						'samesite' => self::cookieSameSite($secure) // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
 						);
 					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
 				}
@@ -401,9 +401,25 @@ class icms_core_Session {
             'domain' => '',
             'secure' => ($secure ? true : false),
             'httponly' => true,
-            'samesite' => ($secure ? 'None' : 'Lax') // None requires Secure for cross-site embeds; fall back to Lax on non-HTTPS so the cookie isn't dropped
+            'samesite' => self::cookieSameSite($secure) // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
             );
         setcookie($session_name, $session_id, $arr_cookie_options);
+	}
+
+	/**
+	 * Determine the SameSite attribute for the session cookie.
+	 * Configurable via the cookie_samesite preference (default Lax). SameSite=None is only valid
+	 * on a Secure cookie, so it is downgraded to Lax when the connection isn't HTTPS.
+	 * @param   bool|int $secure whether the cookie is being sent with the Secure flag
+	 * @return  string   'Lax' | 'None' | 'Strict'
+	 */
+	static public function cookieSameSite($secure) {
+		global $icmsConfig;
+		$samesite = (isset($icmsConfig['cookie_samesite']) && $icmsConfig['cookie_samesite']) ? $icmsConfig['cookie_samesite'] : 'Lax';
+		if ($samesite == 'None' && !$secure) {
+			$samesite = 'Lax'; // browsers reject SameSite=None without Secure
+		}
+		return $samesite;
 	}
 
 	/**
