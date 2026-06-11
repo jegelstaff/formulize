@@ -237,10 +237,11 @@ function formulize_sanitizeAppearanceColour($value) {
  * Resolve the Google Fonts css2 URL and the --font-sans value for the current
  * settings. Geist Mono is always requested alongside, since --font-mono uses it.
  *
+ * @param array|null $settings appearance settings to use, defaults to the saved ones
  * @return array with 'url' (string|false) and 'stack' (string|false when default)
  */
-function formulize_getAppearanceFont() {
-    $settings = formulize_getAppearanceSettings();
+function formulize_getAppearanceFont($settings = null) {
+    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings();
     $fonts = formulize_appearanceFontMap();
     $choice = isset($fonts[$settings['appearance_font']]) ? $settings['appearance_font'] : 'geist';
     $googleFamily = $fonts[$choice]['google'];
@@ -268,13 +269,23 @@ function formulize_getAppearanceFont() {
 }
 
 /**
- * The folder where the uploaded logo is stored. Inside the trust path, so the
- * file sits outside the web root (and the codebase), served by download.php.
+ * The folder where the appearance artifacts live: the uploaded logo and the
+ * generated appearance.css. Inside the web uploads folder, so both are served
+ * directly as static files.
  *
- * @return string filesystem path of the logo folder, no trailing slash
+ * @return string filesystem path of the appearance folder, no trailing slash
  */
-function formulize_getAppearanceLogoDir() {
-    return XOOPS_TRUST_PATH . '/uploads/appearance';
+function formulize_getAppearanceUploadDir() {
+    return XOOPS_ROOT_PATH . '/uploads/appearance';
+}
+
+/**
+ * The URL of the appearance folder
+ *
+ * @return string URL of the appearance folder, no trailing slash
+ */
+function formulize_getAppearanceUploadUrl() {
+    return XOOPS_URL . '/uploads/appearance';
 }
 
 /**
@@ -284,47 +295,48 @@ function formulize_getAppearanceLogoDir() {
  */
 function formulize_getAppearanceLogoPath() {
     $settings = formulize_getAppearanceSettings();
-    $file = basename($settings['appearance_logo']); // stored as a bare filename in the logo folder
-    if ($file AND file_exists(formulize_getAppearanceLogoDir() . '/' . $file)) {
-        return formulize_getAppearanceLogoDir() . '/' . $file;
+    $file = basename($settings['appearance_logo']); // stored as a bare filename in the appearance folder
+    if ($file AND file_exists(formulize_getAppearanceUploadDir() . '/' . $file)) {
+        return formulize_getAppearanceUploadDir() . '/' . $file;
     }
     return '';
 }
 
 /**
- * The URL of the uploaded custom logo, if any. Served through download.php since
- * the file itself lives in the trust path, outside the web root. The file's
- * modification time is included for cache busting.
+ * The URL of the uploaded custom logo, if any. A direct static URL, with the
+ * file's modification time included for cache busting.
  *
  * @return string URL of the logo, or '' when no custom logo is set
  */
 function formulize_getAppearanceLogoUrl() {
     $path = formulize_getAppearanceLogoPath();
     if ($path) {
-        return XOOPS_URL . '/modules/formulize/download.php?file=appearance/' . rawurlencode(basename($path)) . '&inline=1&v=' . filemtime($path);
+        return formulize_getAppearanceUploadUrl() . '/' . rawurlencode(basename($path)) . '?v=' . filemtime($path);
     }
     return '';
 }
 
 /**
- * Render the head markup a theme needs for the appearance settings: the webfont
- * link tag, and a style block overriding the design tokens that differ from the
- * defaults. Returns an empty style/font set untouched themes can safely print.
+ * The filesystem path of the generated appearance stylesheet
  *
- * @return string HTML to print in the head, after the theme stylesheet links
+ * @return string path of the generated CSS file
  */
-function formulize_renderAppearanceHead() {
-    $settings = formulize_getAppearanceSettings();
-    $html = '';
+function formulize_getAppearanceCssPath() {
+    return formulize_getAppearanceUploadDir() . '/appearance.css';
+}
 
-    $font = formulize_getAppearanceFont();
-    if ($font['url']) {
-        $html .= '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
-        $html .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
-        $html .= '<link href="' . htmlspecialchars($font['url'], ENT_QUOTES) . '" rel="stylesheet" />' . "\n";
-    }
-
+/**
+ * The CSS custom property overrides the current settings call for: the font
+ * stack when a non-default font is chosen, and the colour tokens (with their
+ * derived variants) for every colour that differs from the design defaults.
+ *
+ * @param array|null $settings appearance settings to use, defaults to the saved ones
+ * @return array CSS custom property => value
+ */
+function formulize_getAppearanceCssOverrides($settings = null) {
+    $settings = is_array($settings) ? $settings : formulize_getAppearanceSettings();
     $overrides = array();
+    $font = formulize_getAppearanceFont($settings);
     if ($font['stack']) {
         $overrides['--font-sans'] = $font['stack'];
     }
@@ -336,13 +348,56 @@ function formulize_renderAppearanceHead() {
             }
         }
     }
-    if (count($overrides) > 0) {
-        $css = '';
-        foreach ($overrides as $token => $value) {
-            $css .= $token . ': ' . $value . '; ';
-        }
-        $html .= '<style id="formulize-appearance">:root { ' . $css . '}</style>' . "\n";
-    }
+    return $overrides;
+}
 
+/**
+ * Regenerate the appearance stylesheet from the appearance.css.tpl Smarty
+ * template and write it to the appearance folder. Called when settings are
+ * saved, and lazily by formulize_renderAppearanceHead when the file is missing.
+ * The file is always generated, even with all-default settings, so themes can
+ * link it unconditionally (the default file just imports the default webfont).
+ *
+ * @param array|null $settings appearance settings to use, defaults to the saved
+ *                             ones. Pass the values explicitly when regenerating
+ *                             right after a save, to sidestep stale config caches.
+ * @return boolean whether the file was written successfully
+ */
+function formulize_regenerateAppearanceCss($settings = null) {
+    $font = formulize_getAppearanceFont($settings);
+    require_once XOOPS_ROOT_PATH . '/class/template.php';
+    $tpl = new XoopsTpl();
+    $tpl->assign('fontUrl', $font['url']);
+    $tpl->assign('overrides', formulize_getAppearanceCssOverrides($settings));
+    $css = $tpl->fetch('file:' . XOOPS_ROOT_PATH . '/modules/formulize/templates/appearance.css.tpl');
+    if (!is_dir(formulize_getAppearanceUploadDir())) {
+        mkdir(formulize_getAppearanceUploadDir(), 0755, true);
+    }
+    return file_put_contents(formulize_getAppearanceCssPath(), $css) !== false;
+}
+
+/**
+ * Render the head markup a theme needs for the appearance settings: preconnect
+ * hints for the webfont host, and the link tag for the generated stylesheet,
+ * which is regenerated first if it doesn't exist yet. Goes after the theme's
+ * own stylesheet links, so the overrides win the cascade.
+ *
+ * @return string HTML to print in the head, after the theme stylesheet links
+ */
+function formulize_renderAppearanceHead() {
+    $cssPath = formulize_getAppearanceCssPath();
+    $cssExists = file_exists($cssPath);
+    if (!$cssExists) {
+        $cssExists = formulize_regenerateAppearanceCss();
+    }
+    $html = '';
+    $font = formulize_getAppearanceFont();
+    if ($font['url']) {
+        $html .= '<link rel="preconnect" href="https://fonts.googleapis.com" />' . "\n";
+        $html .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />' . "\n";
+    }
+    if ($cssExists) {
+        $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUploadUrl() . '/appearance.css?v=' . filemtime($cssPath) . '" />' . "\n";
+    }
     return $html;
 }
