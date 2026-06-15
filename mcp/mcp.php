@@ -189,6 +189,15 @@ class FormulizeMCP
 	private function authenticateRequest(string $path, string $method)
 	{
 		global $xoopsUser, $icmsUser;
+
+		// Check for active session first (for embedded AI)
+		if ($xoopsUser) {
+			$this->authenticatedUser = $xoopsUser;
+			$this->authenticatedUid = $xoopsUser->getVar('uid');
+			$this->userGroups = $xoopsUser->getGroups();
+			return true;
+		}
+
 		// Handle CORS preflight
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 			throw new FormulizeMCPException(
