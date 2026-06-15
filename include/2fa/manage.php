@@ -349,8 +349,9 @@ function tfaLoginJS($id) {
 				event.preventDefault();
 				jQuery.ajax({
 					async: false,
-					type: 'GET',
-					url: '".XOOPS_URL."/include/2fa/challenge.php?u='+encodeURIComponent(jQuery('#$id input[name=\"uname\"]').val())+'&p='+encodeURIComponent(jQuery('#$id input[name=\"pass\"]').val()),
+					type: 'POST',
+					url: '".XOOPS_URL.TFA_CHALLENGE_URL_PATH."',
+					data: { u: jQuery('#$id input[name=\"uname\"]').val(), p: jQuery('#$id input[name=\"pass\"]').val() },
 					success: function(data) {
 						if(data) {
 							tfadialog$counter.html(data);

@@ -451,8 +451,8 @@ switch ($op) {
 					var code = jQuery('#dialog-tfacode', \$dlg).val();
 					if(!code) return;
 					\$dlg.html('<center>".$workingMessageGif."</center>');
-					jQuery.get(
-						'".XOOPS_URL."/include/2fa/validate_step1.php',
+					jQuery.post(
+						'".XOOPS_URL.TFA_VALIDATE_STEP1_URL_PATH."',
 						{
 							code:       code,
 							new_method: \$dlg.data('tfa-new-method'),
@@ -555,11 +555,11 @@ switch ($op) {
 							tfadialog.data('tfa-new-method', tfamethod);
 							tfadialog.data('tfa-new-phone', tfaphone);
 							tfadialog.data('tfa-new-email', email || '');
-							tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method=".$method."&phone=".urlencode($phoneNumber)."&selectedMethod=".$method."&email=".$emailEncoded."&twophase=1');
+							tfadialog.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: ".intval($method).", phone: ".json_encode($phoneNumber).", selectedMethod: ".intval($method).", email: ".json_encode($email).", twophase: 1 });
 						} else {
 							tfadialog.data('tfa-phase', 0);
 							methodToUse = tfamethod ? tfamethod : ".$pwChangeMethod.";
-							tfadialog.load('".XOOPS_URL."/include/2fa/confirm.php?method='+methodToUse+'&phone='+tfaphone+'&email='+(email||'')+'&selectedMethod='+tfamethod, function() {
+							tfadialog.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: methodToUse, phone: tfaphone, email: (email||''), selectedMethod: tfamethod }, function() {
 							var ct = jQuery('.tfa-confirm-token', tfadialog).val();
 							if(ct) { jQuery('#tfa-confirm-token').val(ct); }
 						});

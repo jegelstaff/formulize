@@ -33,3 +33,15 @@ if (!defined('TFA_LOCKOUT_SECONDS')) {
 if (!defined('TFA_RESEND_INTERVAL')) {
 	define('TFA_RESEND_INTERVAL', 90); // minimum gap before another email/SMS code is sent to a user's on-file contact, in seconds
 }
+
+// 2FA AJAX endpoint paths (concatenate with XOOPS_URL at the point of use). Centralised here so the
+// login, profile-edit and userAccount-element flows all reference one definition if a path changes.
+if (!defined('TFA_CONFIRM_URL_PATH')) {
+	define('TFA_CONFIRM_URL_PATH', '/include/2fa/confirm.php');
+}
+if (!defined('TFA_VALIDATE_STEP1_URL_PATH')) {
+	define('TFA_VALIDATE_STEP1_URL_PATH', '/include/2fa/validate_step1.php');
+}
+if (!defined('TFA_CHALLENGE_URL_PATH')) {
+	define('TFA_CHALLENGE_URL_PATH', '/include/2fa/challenge.php');
+}

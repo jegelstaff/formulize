@@ -326,8 +326,16 @@ define("_US_CONFIRM_PASSWORD","Confirm Password: ");
 define("_US_PASSWORD_TOO_SHORT","The password must be at least %s characters long.");
 define("_US_LOGIN_WITH_NEW_PW","You can now login with your new password");
 define("_US_INVALID_CODE","Invalid Two Factor Authentication code");
-define("_US_RESET_PW_NO_EMAIL","Erreur : votre compte n'a pas d'adresse e-mail");
-define("_US_RESET_PW_CONTACT_ADMIN", "Contactez un administrateur pour réinitialiser votre email et votre mot de passe");
+define("_US_RESET_PW_NO_CONTACT","Nous ne pouvons pas réinitialiser votre mot de passe automatiquement");
+define("_US_RESET_PW_CONTACT_ADMIN", "Désolé, cette réinitialisation de mot de passe ne peut pas être effectuée en ligne. Veuillez contacter un webmaster pour obtenir de l'aide. Nous nous excusons pour ce désagrément.");
+define("_US_RESET_PW_START_OVER", "recommencer");
+define("_US_RESET_PW_RETRY_OR_RESTART", "Vous pouvez réessayer ci-dessous, ou %s pour recevoir un nouveau code.");
+define("_US_RESET_PW_RETRY_APP", "Vous pouvez réessayer ci-dessous.");
+define("_US_2FA_ATTEMPTS_REMAINING", "(%s tentative(s) restante(s))");
+define("_US_2FA_LOCKED_OUT_SENT", "Trop de tentatives incorrectes. Veuillez %s pour recevoir un nouveau code.");
+define("_US_2FA_LOCKED_OUT_APP", "Trop de tentatives incorrectes. Veuillez patienter quelques minutes et réessayer.");
+define("_US_LOSTPASS_TITLE", "Réinitialiser votre mot de passe");
+define("_US_LOSTPASS_ENTER_CODE", "Saisissez votre code de vérification, ainsi que votre nouveau mot de passe.");
 
 define("_SESSION_TIMEOUT_AT", "Votre session expirera à ");
 define("_SESSION_TIMEOUT_UNSAVED_CHANGES", "Si vous avez des modifications non sauvegardés, sauvegarder-les maintenant.");

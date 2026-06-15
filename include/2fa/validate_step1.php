@@ -25,11 +25,11 @@ if(!$xoopsUser) {
 }
 
 $uid           = intval($xoopsUser->getVar('uid'));
-$submittedCode = isset($_GET['code']) ? trim($_GET['code']) : '';
-$confirmToken  = isset($_GET['confirm_token']) ? trim($_GET['confirm_token']) : '';
-$newMethod     = intval(isset($_GET['new_method']) ? $_GET['new_method'] : TFA_EMAIL);
-$newPhone      = preg_replace('/[^0-9]/', '', isset($_GET['new_phone']) ? $_GET['new_phone'] : '');
-$newEmail      = isset($_GET['new_email']) ? trim($_GET['new_email']) : '';
+$submittedCode = isset($_POST['code']) ? trim($_POST['code']) : '';
+$confirmToken  = isset($_POST['confirm_token']) ? trim($_POST['confirm_token']) : '';
+$newMethod     = intval(isset($_POST['new_method']) ? $_POST['new_method'] : TFA_EMAIL);
+$newPhone      = preg_replace('/[^0-9]/', '', isset($_POST['new_phone']) ? $_POST['new_phone'] : '');
+$newEmail      = isset($_POST['new_email']) ? trim($_POST['new_email']) : '';
 
 $codebox = "<br><br>Code: <input type='text' id='dialog-tfacode' value=''>";
 
