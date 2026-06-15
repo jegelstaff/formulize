@@ -32,12 +32,61 @@
 ###############################################################################
 
 /**
+ * Queue a Formulize event for delivery to the browser's localStorage on the next page render.
+ * This feeds the AI chat's cross-tab activity context independently of whether file logging is on.
+ * Called by writeToFormulizeLog() so every action point automatically contributes context.
+ *
+ * @param array $data The same $data array passed to writeToFormulizeLog() (pre-standardization)
+ */
+function formulize_enqueue_ai_context($data) {
+	$event = isset($data['formulize_event']) ? $data['formulize_event'] : '';
+
+	// Skip notification processing and error events — they are internal noise, not user actions
+	if (strpos($event, 'processing-notification') === 0 || strpos($event, 'PHP-error') === 0) {
+		return;
+	}
+
+	if (!isset($GLOBALS['formulize_ai_context_queue'])) {
+		$GLOBALS['formulize_ai_context_queue'] = array();
+	}
+
+	// searches is pre-encoded as a JSON string by callers (e.g. entriesdisplay.php); decode it so
+	// the queue can be re-encoded cleanly as a single JSON document in footer.php.
+	$searches_raw     = isset($data['searches']) ? $data['searches'] : '';
+	$searches_decoded = $searches_raw ? json_decode($searches_raw, true) : null;
+	$searches         = ($searches_decoded && count((array)$searches_decoded) > 0) ? $searches_decoded : null;
+
+	$entry = array_filter(array(
+		'type'    => 'formulize_event',
+		'event'   => $event,
+		'ts'      => (int)(microtime(true) * 1000),
+		'fid'     => isset($data['form_id'])   && $data['form_id']   !== '' ? $data['form_id']   : null,
+		'sid'     => isset($data['screen_id']) && $data['screen_id'] !== '' ? $data['screen_id'] : null,
+		'entry'   => isset($data['entry_id'])  && $data['entry_id']  !== '' ? $data['entry_id']  : null,
+		'searches' => $searches,
+		'sort'    => isset($data['sort'])  && $data['sort']  !== '' ? $data['sort']  : null,
+		'order'   => isset($data['order']) && $data['order'] !== '' ? $data['order'] : null,
+		'scope'   => isset($data['scope']) && $data['scope'] !== '' ? $data['scope'] : null,
+	), function($v) { return $v !== null; });
+
+	$GLOBALS['formulize_ai_context_queue'][] = $entry;
+
+	// Guard against unbounded growth (defensive — footer.php clears this each request)
+	if (count($GLOBALS['formulize_ai_context_queue']) > 30) {
+		array_shift($GLOBALS['formulize_ai_context_queue']);
+	}
+}
+
+/**
  * Record information in a log file. One log file per day. Log file location is a Formulize preference. Log file storage duration is a Formulize preference.
  *
  * @param array $data Key-Value pairs that should be written to the log entry
  * @return int|boolean Returns the number of bytes written to the file, or false on failure
  */
 function writeToFormulizeLog($data) {
+
+	// Always queue for AI chat context (independent of whether file logging is enabled)
+	formulize_enqueue_ai_context($data);
 
 	// initialize the configuration settings
 	static $formulizeConfig = false;

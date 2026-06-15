@@ -130,6 +130,28 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
         // set a template variable when masquerading
         $xoTheme->template->assign("masquerade_username", $xoopsUser->vars['uname']['value']);
     }
+
+	// Formulize AI chat context: activity tracker (client-side page/form events) + session queue flush (server-side action events)
+	$xoTheme->addScript(XOOPS_URL . '/modules/formulize/js/activity-tracker.js', array('type' => 'text/javascript'));
+	if (!empty($GLOBALS['formulize_ai_context_queue'])) {
+		$aiContextQueue = json_encode($GLOBALS['formulize_ai_context_queue']);
+		unset($GLOBALS['formulize_ai_context_queue']);
+		$xoTheme->addScript('', array('type' => 'text/javascript'), '
+(function(){
+	var events = ' . $aiContextQueue . ';
+	var STORAGE_KEY = "formulize_activity_log";
+	var MAX_EVENTS = 60, MAX_AGE_MS = 30 * 60 * 1000, cutoff = Date.now() - MAX_AGE_MS;
+	try {
+		var log = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+		for (var i = 0; i < events.length; i++) { log.push(events[i]); }
+		log = log.filter(function(e){ return e.ts > cutoff; });
+		if (log.length > MAX_EVENTS) log = log.slice(log.length - MAX_EVENTS);
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+	} catch(e) {}
+}());
+');
+	}
+
     $xoTheme->render();
 }
 

@@ -17,7 +17,7 @@ if (!$xoopsUser) {
 }
 ?>
 
-<div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif;">
+<div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif; display: flex; flex-direction: column;">
     <div style="background: #007cba; color: white; padding: 15px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0; color: white;">Formulize AI Assistant (PoC)</h2>
         <div id="settings-toggle" title="Toggle settings" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
@@ -56,16 +56,25 @@ if (!$xoopsUser) {
         </div>
     </div>
 
-    <div id="chat-window" style="height: 500px; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+    <div id="chat-window" style="flex: 1; min-height: 0; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
         <div class="message system" style="background: #e9ecef; padding: 10px 15px; border-radius: 10px; align-self: flex-start; max-width: 80%;">
             Welcome to the Formulize AI Assistant! Select a provider, enter your API Key, and click Save Settings to start.
             Once connected, I can help you explore your Formulize system, list forms, create entries, and more.
         </div>
     </div>
 
-    <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; border-radius: 0 0 8px 8px; display: flex; gap: 10px;">
+    <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; border-radius: 0; display: flex; gap: 10px;">
         <textarea id="user-input" placeholder="Ask me anything about Formulize..." style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
         <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Send</button>
+    </div>
+
+    <div id="activity-toggle-bar" title="Toggle activity context panel" style="background: #eef2f5; border: 1px solid #ddd; border-top: none; padding: 7px 15px; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #555; user-select: none;">
+        <span>Activity Context &nbsp;<span id="activity-count" style="background: #6c757d; color: white; padding: 1px 7px; border-radius: 10px; font-size: 0.85em;">0</span></span>
+        <span id="activity-arrow" style="font-size: 0.85em; opacity: 0.7;">▶ show what AI sees</span>
+    </div>
+    <div id="activity-panel" style="display: none; background: #fafafa; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 220px; overflow-y: auto;">
+        <div id="activity-list" style="padding: 8px 15px; font-size: 0.78em; font-family: monospace; display: flex; flex-direction: column; gap: 3px;"></div>
+        <div style="padding: 6px 15px; font-size: 0.72em; color: #888; border-top: 1px solid #eee;">Updates live from all open tabs · Last 30 min · Appended to every AI message</div>
     </div>
 </div>
 
@@ -108,6 +117,112 @@ if (!$xoopsUser) {
     const mcpStatus = document.getElementById('mcp-status');
 
     const SYSTEM_PROMPT = "You are the Formulize AI Assistant. You help users manage their data in Formulize. You have access to tools that can list forms, read entries, and modify the system. Always use the list_forms tool first to understand what is in the system. Be concise and helpful.";
+
+    function getActivityLog() {
+        try {
+            const raw = localStorage.getItem('formulize_activity_log');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    }
+
+    function describeEvent(e) {
+        const time = new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const ids = [];
+        if (e.fid)    ids.push('form #' + e.fid);
+        if (e.sid)    ids.push('screen #' + e.sid);
+        if (e.ele_id) ids.push('element #' + e.ele_id);
+        if (e.entry)  ids.push('entry #' + e.entry);
+        const detail = ids.length ? ' (' + ids.join(', ') + ')' : '';
+
+        if (e.type === 'formulize_event') {
+            let extra = '';
+            if (e.searches && typeof e.searches === 'object') {
+                const terms = Object.entries(e.searches)
+                    .filter(([, v]) => v !== '' && v !== null)
+                    .map(([k, v]) => `${k}="${v}"`)
+                    .join(', ');
+                if (terms) extra += '; searching: ' + terms;
+            }
+            if (e.sort) extra += '; sort: ' + e.sort + (e.order ? ' ' + e.order : '');
+            if (e.scope) extra += '; scope: ' + e.scope;
+            return { time, text: e.event + detail + extra, kind: 'server' };
+        }
+        if (e.type === 'admin_save') {
+            const status = e.success ? '' : ' [FAILED]';
+            return { time, text: 'Admin saved: ' + (e.handler || '?') + status + detail, kind: e.success ? 'admin' : 'error' };
+        }
+        if (e.type === 'pageview') {
+            const label = e.admin ? 'Admin page: ' + (e.title || e.url) : 'Viewed: ' + (e.title || e.url);
+            return { time, text: label + detail, kind: e.admin ? 'admin' : 'view' };
+        }
+        if (e.type === 'form_submit') {
+            return { time, text: 'Submitted: ' + (e.title || e.url) + detail, kind: 'save' };
+        }
+        return { time, text: e.type + detail, kind: 'other' };
+    }
+
+    function getActivityContext() {
+        const log = getActivityLog();
+        if (!log.length) return '';
+        const lines = log.map(e => {
+            const d = describeEvent(e);
+            return `[${d.time}] ${d.text}`;
+        });
+        return `[Recent Formulize activity across all open tabs (last 30 min):\n${lines.join('\n')}\n]`;
+    }
+
+    // --- Activity panel ---
+
+    const activityToggleBar = document.getElementById('activity-toggle-bar');
+    const activityPanel     = document.getElementById('activity-panel');
+    const activityList      = document.getElementById('activity-list');
+    const activityCount     = document.getElementById('activity-count');
+    const activityArrow     = document.getElementById('activity-arrow');
+
+    const KIND_COLORS = {
+        server: '#e8f4fd',
+        admin:  '#fff3cd',
+        view:   '#f0f0f0',
+        save:   '#d4edda',
+        error:  '#f8d7da',
+        other:  '#f8f9fa'
+    };
+
+    function refreshActivityPanel() {
+        const log = getActivityLog();
+        activityCount.textContent = log.length;
+        activityCount.style.background = log.length > 0 ? '#007cba' : '#6c757d';
+
+        activityList.innerHTML = '';
+        log.forEach(e => {
+            const d = describeEvent(e);
+            const row = document.createElement('div');
+            row.style.cssText = `padding: 2px 6px; border-radius: 3px; background: ${KIND_COLORS[d.kind] || KIND_COLORS.other}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
+            row.title = `[${d.time}] ${d.text}`;
+            row.textContent = `[${d.time}] ${d.text}`;
+            activityList.appendChild(row);
+        });
+
+        // Scroll to bottom (newest event)
+        activityList.scrollTop = activityList.scrollHeight;
+    }
+
+    activityToggleBar.addEventListener('click', () => {
+        const open = activityPanel.style.display !== 'none';
+        activityPanel.style.display = open ? 'none' : 'block';
+        activityToggleBar.style.borderRadius = open ? '0 0 8px 8px' : '0';
+        activityArrow.textContent = open ? '▶ show what AI sees' : '▼ hide';
+        if (!open) refreshActivityPanel();
+    });
+
+    // Live update from other tabs — the `storage` event fires in every tab
+    // except the one that made the change, which is exactly what we want here:
+    // the chat window refreshes when any other Formulize tab writes an event.
+    window.addEventListener('storage', e => {
+        if (e.key === 'formulize_activity_log') refreshActivityPanel();
+    });
+
+    refreshActivityPanel(); // initialize count on page load
 
     let availableTools = []; // Raw MCP tools (full list from server)
     let selectedToolNames = new Set(); // Which tools are currently active
@@ -374,7 +489,16 @@ if (!$xoopsUser) {
         userInput.value = '';
         userInput.style.height = '60px';
 
-        const loadingMsg = addMessage('AI', 'Thinking...', 'ai');
+        const loadingMsg = addMessage('AI', 'Thinking.', 'ai');
+        // Animate the dots while waiting for the response
+        const _thinkingEl = loadingMsg.querySelector('.ai-markdown') || loadingMsg.lastElementChild;
+        let _dotCount = 1;
+        const _dotsInterval = setInterval(() => {
+            _dotCount = _dotCount >= 3 ? 1 : _dotCount + 1;
+            _thinkingEl.textContent = 'Thinking' + '.'.repeat(_dotCount);
+        }, 400);
+        const _origRemove = loadingMsg.remove.bind(loadingMsg);
+        loadingMsg.remove = () => { clearInterval(_dotsInterval); _origRemove(); };
 
         try {
             if (provider === 'gemini') {
@@ -384,6 +508,7 @@ if (!$xoopsUser) {
             } else {
                 await sendClaudeMessage(text, loadingMsg);
             }
+            refreshActivityPanel(); // refresh count after send (catches same-tab events)
         } catch (error) {
             console.error('Chat error:', error);
             loadingMsg.remove();
@@ -400,7 +525,8 @@ if (!$xoopsUser) {
             return;
         }
 
-        let result = await geminiChat.sendMessage(text);
+        const context = getActivityContext();
+        let result = await geminiChat.sendMessage(context ? text + '\n\n' + context : text);
         let response = result.response;
 
         while (response.functionCalls && response.functionCalls()) {
@@ -419,13 +545,15 @@ if (!$xoopsUser) {
         }
 
         loadingMsg.remove();
-        addMessage('AI', response.text(), 'ai');
+        const geminiMsg = addMessage('AI', 'Thinking...', 'ai');
+        await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, response.text());
     }
 
     // --- Claude path ---
 
     async function sendClaudeMessage(text, loadingMsg) {
-        claudeHistory.push({ role: 'user', content: text });
+        const context = getActivityContext();
+        claudeHistory.push({ role: 'user', content: context ? text + '\n\n' + context : text });
 
         let response = await callClaude(claudeHistory);
 
@@ -454,7 +582,8 @@ if (!$xoopsUser) {
         claudeHistory.push({ role: 'assistant', content: response.content });
 
         loadingMsg.remove();
-        addMessage('AI', textContent, 'ai');
+        const claudeMsg = addMessage('AI', 'Thinking...', 'ai');
+        await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
     }
 
     async function callClaude(messages) {
@@ -486,7 +615,8 @@ if (!$xoopsUser) {
     // --- Ollama path ---
 
     async function sendOllamaMessage(text, loadingMsg) {
-        ollamaHistory.push({ role: 'user', content: text });
+        const context = getActivityContext();
+        ollamaHistory.push({ role: 'user', content: context ? text + '\n\n' + context : text });
 
         let response = await callOllama(ollamaHistory);
         let message = response.choices[0].message;
@@ -510,7 +640,8 @@ if (!$xoopsUser) {
         ollamaHistory.push({ role: 'assistant', content: message.content || '' });
 
         loadingMsg.remove();
-        addMessage('AI', message.content || '(no response)', 'ai');
+        const ollamaMsg = addMessage('AI', 'Thinking...', 'ai');
+        await typewriterEffect(ollamaMsg.querySelector('.ai-markdown') || ollamaMsg.lastElementChild, message.content || '(no response)');
     }
 
     async function callOllama(messages) {
@@ -680,6 +811,24 @@ if (!$xoopsUser) {
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
+    async function typewriterEffect(container, text) {
+        const chunks = text.match(/\S+\s*/g) || [text];
+        let displayed = '';
+        for (const chunk of chunks) {
+            displayed += chunk;
+            container.textContent = displayed;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            await new Promise(r => setTimeout(r, 20));
+        }
+        // Final pass: full markdown render
+        if (typeof marked !== 'undefined') {
+            container.innerHTML = marked.parse(text, { breaks: false });
+        } else {
+            container.textContent = text;
+        }
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
     function addMessage(sender, text, type) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${type}`;
@@ -745,6 +894,14 @@ if (!$xoopsUser) {
             userInput.style.overflowY = 'hidden';
         }
     });
+
+    function fitChatToViewport() {
+        const container = document.getElementById('ai-assistant-container');
+        const topOffset = container.getBoundingClientRect().top;
+        container.style.height = (window.innerHeight - topOffset - 20) + 'px';
+    }
+    window.addEventListener('resize', fitChatToViewport);
+    fitChatToViewport();
 </script>
 
 <?php
