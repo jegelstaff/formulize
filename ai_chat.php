@@ -861,6 +861,7 @@ window.formulizeAI.strings = {
 
         const allEvents = getDeduplicatedLog();
         const newEvents = allEvents.slice(lastGeminiActivityCount);
+        const prevActivityCount = lastGeminiActivityCount;
         lastGeminiActivityCount = allEvents.length;
         let activityContext = '';
         if (newEvents.length > 0) {
@@ -868,30 +869,36 @@ window.formulizeAI.strings = {
             activityContext = `${S.contextHeader}\n${lines.join('\n')}\n]`;
         }
 
-        let result = await geminiChat.sendMessage(activityContext ? text + '\n\n' + activityContext : text);
-        let response = result.response;
+        try {
+            let result = await geminiChat.sendMessage(activityContext ? text + '\n\n' + activityContext : text);
+            let response = result.response;
 
-        while (response.functionCalls && response.functionCalls()) {
-            const calls = response.functionCalls();
-            const toolResponses = [];
-            for (const call of calls) {
-                const toolBlock = addToolRequest(call.name, call.args);
-                const result = await executeTool(call.name, call.args);
-                addToolResponse(toolBlock, result.raw);
-                toolResponses.push({
-                    functionResponse: { name: call.name, response: { content: result.text } }
-                });
+            while (response.functionCalls && response.functionCalls()) {
+                const calls = response.functionCalls();
+                const toolResponses = [];
+                for (const call of calls) {
+                    const toolBlock = addToolRequest(call.name, call.args);
+                    const toolResult = await executeTool(call.name, call.args);
+                    addToolResponse(toolBlock, toolResult.raw);
+                    toolResponses.push({
+                        functionResponse: { name: call.name, response: { content: toolResult.text } }
+                    });
+                }
+                result = await geminiChat.sendMessage(toolResponses);
+                response = result.response;
             }
-            result = await geminiChat.sendMessage(toolResponses);
-            response = result.response;
+
+            const finalText = response.text();
+            geminiHistory.push({ role: 'assistant', content: finalText });
+
+            loadingMsg.remove();
+            const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
+        } catch (error) {
+            geminiHistory.pop();
+            lastGeminiActivityCount = prevActivityCount;
+            throw error;
         }
-
-        const finalText = response.text();
-        geminiHistory.push({ role: 'assistant', content: finalText });
-
-        loadingMsg.remove();
-        const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-        await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
     }
 
     // --- Claude path ---
@@ -909,36 +916,43 @@ window.formulizeAI.strings = {
             getContextLimit()
         );
 
-        let response = await callClaude(messagesForApi);
+        try {
+            let response = await callClaude(messagesForApi);
+            const newMessages = [];
 
-        while (response.stop_reason === 'tool_use') {
-            claudeHistory.push({ role: 'assistant', content: response.content });
+            while (response.stop_reason === 'tool_use') {
+                newMessages.push({ role: 'assistant', content: response.content });
 
-            const toolResults = [];
-            for (const block of response.content) {
-                if (block.type === 'tool_use') {
-                    const toolBlock = addToolRequest(block.name, block.input);
-                    const result = await executeTool(block.name, block.input);
-                    addToolResponse(toolBlock, result.raw);
-                    toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result.text });
+                const toolResults = [];
+                for (const block of response.content) {
+                    if (block.type === 'tool_use') {
+                        const toolBlock = addToolRequest(block.name, block.input);
+                        const result = await executeTool(block.name, block.input);
+                        addToolResponse(toolBlock, result.raw);
+                        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result.text });
+                    }
                 }
+
+                newMessages.push({ role: 'user', content: toolResults });
+                response = await callClaude([...claudeHistory, ...newMessages]);
             }
 
-            claudeHistory.push({ role: 'user', content: toolResults });
-            response = await callClaude(claudeHistory);
+            const textContent = response.content
+                .filter(b => b.type === 'text')
+                .map(b => b.text)
+                .join('\n');
+
+            newMessages.push({ role: 'assistant', content: response.content });
+            for (const m of newMessages) claudeHistory.push(m);
+
+            loadingMsg.remove();
+            const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
+            updateContextCutoffMarker(messagesForApi, claudeHistory[0]?.content);
+        } catch (error) {
+            claudeHistory.pop();
+            throw error;
         }
-
-        const textContent = response.content
-            .filter(b => b.type === 'text')
-            .map(b => b.text)
-            .join('\n');
-
-        claudeHistory.push({ role: 'assistant', content: response.content });
-
-        loadingMsg.remove();
-        const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-        await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
-        updateContextCutoffMarker(messagesForApi, claudeHistory[0]?.content);
     }
 
     async function callClaude(messages) {
@@ -982,31 +996,38 @@ window.formulizeAI.strings = {
             getContextLimit()
         );
 
-        let response = await callOllama(messagesForApi);
-        let message = response.choices[0].message;
+        try {
+            let response = await callOllama(messagesForApi);
+            let message = response.choices[0].message;
+            const newMessages = [];
 
-        while (response.choices[0].finish_reason === 'tool_calls' && message.tool_calls) {
-            ollamaHistory.push({ role: 'assistant', content: message.content || '', tool_calls: message.tool_calls });
+            while (response.choices[0].finish_reason === 'tool_calls' && message.tool_calls) {
+                newMessages.push({ role: 'assistant', content: message.content || '', tool_calls: message.tool_calls });
 
-            for (const toolCall of message.tool_calls) {
-                // Ollama returns arguments as a JSON string, not an object
-                const args = JSON.parse(toolCall.function.arguments);
-                const toolBlock = addToolRequest(toolCall.function.name, args);
-                const result = await executeTool(toolCall.function.name, args);
-                addToolResponse(toolBlock, result.raw);
-                ollamaHistory.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
+                for (const toolCall of message.tool_calls) {
+                    // Ollama returns arguments as a JSON string, not an object
+                    const args = JSON.parse(toolCall.function.arguments);
+                    const toolBlock = addToolRequest(toolCall.function.name, args);
+                    const result = await executeTool(toolCall.function.name, args);
+                    addToolResponse(toolBlock, result.raw);
+                    newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
+                }
+
+                response = await callOllama([...ollamaHistory, ...newMessages]);
+                message = response.choices[0].message;
             }
 
-            response = await callOllama(ollamaHistory);
-            message = response.choices[0].message;
+            newMessages.push({ role: 'assistant', content: message.content || '' });
+            for (const m of newMessages) ollamaHistory.push(m);
+
+            loadingMsg.remove();
+            const ollamaMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            await typewriterEffect(ollamaMsg.querySelector('.ai-markdown') || ollamaMsg.lastElementChild, message.content || '(no response)');
+            updateContextCutoffMarker(messagesForApi, ollamaHistory[0]?.content);
+        } catch (error) {
+            ollamaHistory.pop();
+            throw error;
         }
-
-        ollamaHistory.push({ role: 'assistant', content: message.content || '' });
-
-        loadingMsg.remove();
-        const ollamaMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-        await typewriterEffect(ollamaMsg.querySelector('.ai-markdown') || ollamaMsg.lastElementChild, message.content || '(no response)');
-        updateContextCutoffMarker(messagesForApi, ollamaHistory[0]?.content);
     }
 
     async function callOllama(messages) {
