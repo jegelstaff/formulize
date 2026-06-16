@@ -48,6 +48,16 @@ if (!$xoopsUser) {
             <label for="ai-api-key" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
             <input type="password" id="ai-api-key" placeholder="<?php echo _MD_FORMULIZE_AI_API_KEY_PLACEHOLDER; ?>" autocomplete="new-password" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
         </div>
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <label for="context-limit" style="font-weight: bold; font-size: 0.9em; white-space: nowrap;">History limit:</label>
+            <input type="number" id="context-limit" min="4000" step="1000"
+                   title="Maximum characters of conversation history sent per request. Reduce for local models with limited RAM."
+                   style="width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; opacity: 0.55;" disabled>
+            <span style="font-size: 0.82em; color: #555; white-space: nowrap;">chars</span>
+            <label title="Enable to override the default history limit for this provider" style="display: flex; align-items: center; gap: 4px; font-size: 0.82em; cursor: pointer; white-space: nowrap; color: #555;">
+                <input type="checkbox" id="context-limit-custom"> Custom
+            </label>
+        </div>
         <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
         <div id="tool-selection-panel" style="display: none; flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
@@ -207,6 +217,77 @@ window.formulizeAI.strings = {
 
     // Tools that write entry data (add to Read data to get Write data)
     const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
+
+    // Default history character limits per provider (conversation history only, not system prompt/tools)
+    const CONTEXT_WINDOW_DEFAULTS = { claude: 100000, gemini: 200000, ollama: 16000 };
+
+    function getContextLimit() {
+        const provider = providerSelect.value;
+        const saved = localStorage.getItem(`ai_context_limit_${provider}`);
+        return saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+    }
+
+    // Update the visual context-window cutoff marker in the chat DOM.
+    // messagesForApi is the trimmed array actually sent to the API.
+    // firstOriginalContent is claudeHistory[0] or ollamaHistory[0].content (the very first message ever sent).
+    function updateContextCutoffMarker(messagesForApi, firstOriginalContent) {
+        // Reset all message opacity
+        for (const el of chatWindow.children) {
+            if (el.id !== 'context-cutoff-marker') el.style.opacity = '';
+        }
+        const existing = document.getElementById('context-cutoff-marker');
+        if (existing) existing.remove();
+
+        // No trimming if the first in-context message is still the original first message
+        const firstContent = messagesForApi[0]?.content;
+        if (!firstContent || typeof firstContent !== 'string') return;
+        if (firstContent === firstOriginalContent) return;
+
+        // Find the DOM element for the first in-context user message via text search
+        const searchText = firstContent.slice(0, 100);
+        let cutoffEl = null;
+        for (const el of chatWindow.children) {
+            if (el.classList.contains('user') && (el.textContent || '').includes(searchText)) {
+                cutoffEl = el;
+                break;
+            }
+        }
+        if (!cutoffEl) return;
+
+        // Dim everything before the cutoff
+        for (const el of chatWindow.children) {
+            if (el === cutoffEl) break;
+            el.style.opacity = '0.35';
+        }
+
+        // Insert the cutoff notice
+        const marker = document.createElement('div');
+        marker.id = 'context-cutoff-marker';
+        marker.style.cssText = 'align-self: stretch; text-align: center; font-size: 0.75em; color: #856404; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 4px 10px; margin: 4px 0;';
+        marker.textContent = '↑ Messages above this point are outside the AI\'s active context window';
+        chatWindow.insertBefore(marker, cutoffEl);
+    }
+
+    // Trim message history to fit within maxChars. Always keeps at least the last message.
+    // Drops from the front in whole messages, ensuring history still starts with a user turn.
+    function trimHistoryToLimit(messages, maxChars) {
+        let total = messages.reduce((sum, msg) => {
+            const c = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+            return sum + c.length;
+        }, 0);
+        if (total <= maxChars) return messages;
+        const result = [...messages];
+        while (result.length > 1 && total > maxChars) {
+            const removed = result.shift();
+            total -= (typeof removed.content === 'string' ? removed.content : JSON.stringify(removed.content)).length;
+            // Keep history starting on a user message (required by Claude; good practice for Ollama)
+            while (result.length > 1 && result[0].role !== 'user') {
+                const r = result.shift();
+                total -= (typeof r.content === 'string' ? r.content : JSON.stringify(r.content)).length;
+            }
+        }
+        return result;
+    }
 
     // Returns the names of tools in the named preset group
     function getToolGroupNames(group) {
@@ -470,6 +551,24 @@ window.formulizeAI.strings = {
         modelNameInput.disabled = false;
     }
 
+    function updateContextLimitDisplay() {
+        const provider = providerSelect.value;
+        const saved = localStorage.getItem(`ai_context_limit_${provider}`);
+        const customCb = document.getElementById('context-limit-custom');
+        const limitInput = document.getElementById('context-limit');
+        if (saved) {
+            customCb.checked = true;
+            limitInput.disabled = false;
+            limitInput.style.opacity = '';
+            limitInput.value = saved;
+        } else {
+            customCb.checked = false;
+            limitInput.disabled = true;
+            limitInput.style.opacity = '0.55';
+            limitInput.value = CONTEXT_WINDOW_DEFAULTS[provider];
+        }
+    }
+
     function updateProviderHints() {
         const p = providerSelect.value;
         const isOllama = p === 'ollama';
@@ -477,6 +576,7 @@ window.formulizeAI.strings = {
         apiKeyInput.value = isOllama ? '' : (settingsForProvider(p).key || '');
         apiKeyInput.disabled = isOllama;
         apiKeyInput.style.opacity = isOllama ? '0.45' : '';
+        updateContextLimitDisplay();
         discoverModels();
     }
     providerSelect.addEventListener('change', () => {
@@ -485,6 +585,22 @@ window.formulizeAI.strings = {
     });
     apiKeyInput.addEventListener('blur', () => {
         if (apiKeyInput.value.trim()) discoverModels();
+    });
+
+    document.getElementById('context-limit-custom').addEventListener('change', function() {
+        const limitInput = document.getElementById('context-limit');
+        if (this.checked && !confirm('Changing the history limit affects how much conversation context is sent to the AI each turn.\n\nSet too low and the AI loses earlier context; set too high and requests may fail on models with smaller context windows.\n\nContinue?')) {
+            this.checked = false;
+            return;
+        }
+        limitInput.disabled = !this.checked;
+        limitInput.style.opacity = this.checked ? '' : '0.55';
+        if (!this.checked) {
+            limitInput.value = CONTEXT_WINDOW_DEFAULTS[providerSelect.value];
+            localStorage.removeItem(`ai_context_limit_${providerSelect.value}`);
+        } else {
+            limitInput.focus();
+        }
     });
     modelNameInput.addEventListener('change', updateToolCount);
     updateProviderHints(); // Apply on load — also triggers initial model discovery
@@ -515,6 +631,13 @@ window.formulizeAI.strings = {
         if (modelName && (key || provider === 'ollama')) {
             saveSettingsForProvider(provider, key, modelName);
             localStorage.setItem('ai_provider', provider);
+            const customCb = document.getElementById('context-limit-custom');
+            const limitVal = document.getElementById('context-limit').value;
+            if (customCb.checked && limitVal) {
+                localStorage.setItem(`ai_context_limit_${provider}`, limitVal);
+            } else {
+                localStorage.removeItem(`ai_context_limit_${provider}`);
+            }
             geminiChat = null;
             geminiHistory = [];
             lastGeminiActivityCount = 0;
@@ -790,11 +913,14 @@ window.formulizeAI.strings = {
         claudeHistory.push({ role: 'user', content: text });
 
         const context = getActivityContext();
-        const messagesForApi = context
-            ? claudeHistory.map((msg, i) => i === claudeHistory.length - 1
-                ? { ...msg, content: msg.content + '\n\n' + context }
-                : msg)
-            : claudeHistory;
+        const messagesForApi = trimHistoryToLimit(
+            context
+                ? claudeHistory.map((msg, i) => i === claudeHistory.length - 1
+                    ? { ...msg, content: msg.content + '\n\n' + context }
+                    : msg)
+                : claudeHistory,
+            getContextLimit()
+        );
 
         let response = await callClaude(messagesForApi);
 
@@ -825,6 +951,7 @@ window.formulizeAI.strings = {
         loadingMsg.remove();
         const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
         await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
+        updateContextCutoffMarker(messagesForApi, claudeHistory[0]?.content);
     }
 
     async function callClaude(messages) {
@@ -859,11 +986,14 @@ window.formulizeAI.strings = {
         ollamaHistory.push({ role: 'user', content: text });
 
         const context = getActivityContext();
-        const messagesForApi = context
-            ? ollamaHistory.map((msg, i) => i === ollamaHistory.length - 1
-                ? { ...msg, content: msg.content + '\n\n' + context }
-                : msg)
-            : ollamaHistory;
+        const messagesForApi = trimHistoryToLimit(
+            context
+                ? ollamaHistory.map((msg, i) => i === ollamaHistory.length - 1
+                    ? { ...msg, content: msg.content + '\n\n' + context }
+                    : msg)
+                : ollamaHistory,
+            getContextLimit()
+        );
 
         let response = await callOllama(messagesForApi);
         let message = response.choices[0].message;
@@ -889,6 +1019,7 @@ window.formulizeAI.strings = {
         loadingMsg.remove();
         const ollamaMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
         await typewriterEffect(ollamaMsg.querySelector('.ai-markdown') || ollamaMsg.lastElementChild, message.content || '(no response)');
+        updateContextCutoffMarker(messagesForApi, ollamaHistory[0]?.content);
     }
 
     async function callOllama(messages) {
