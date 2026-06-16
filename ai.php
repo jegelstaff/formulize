@@ -26,6 +26,26 @@ if (!$xoopsUser) {
     include "footer.php";
     exit();
 }
+
+// Load stored API keys for this user — decrypted server-side, injected into JS memory at page load.
+// Keys are never written to localStorage or returned via an endpoint; they only exist in this page's JS.
+$_aiServerKeys = [];
+if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
+    $_aiKeysTable = $xoopsDB->prefix('formulize_ai_keys');
+    $_aiUid       = (int)$xoopsUser->getVar('uid');
+    $_aiResult    = @$xoopsDB->query("SELECT provider, encrypted_key FROM $_aiKeysTable WHERE uid = $_aiUid");
+    if ($_aiResult) {
+        while ($_aiRow = $xoopsDB->fetchArray($_aiResult)) {
+            $_raw = base64_decode($_aiRow['encrypted_key']);
+            if (strlen($_raw) >= 17) {
+                $_dec = openssl_decrypt(substr($_raw, 16), 'AES-256-CBC', hash('sha256', XOOPS_DB_SALT, true), 0, substr($_raw, 0, 16));
+                if ($_dec !== false) {
+                    $_aiServerKeys[$_aiRow['provider']] = $_dec;
+                }
+            }
+        }
+    }
+}
 ?>
 
 <div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif; display: flex; flex-direction: column;">
@@ -122,6 +142,7 @@ if (!$xoopsUser) {
 .ai-markdown hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 <script type="text/javascript">
 window.formulizeAI = window.formulizeAI || {};
 window.formulizeAI.strings = {
@@ -173,6 +194,7 @@ window.formulizeAI.strings = {
     contextCutoffMsg:  <?php echo json_encode(_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG); ?>,
     historyLimitConfirm: <?php echo json_encode(_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM); ?>,
     apiKeyPlaceholder: <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER); ?>,
+    apiKeySaved:       <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_SAVED); ?>,
     apiKeyOllama:      <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_OLLAMA); ?>,
     toolsReadData:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_READ_DATA); ?>,
     toolsWriteData:    <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_WRITE_DATA); ?>,
@@ -187,6 +209,7 @@ window.formulizeAI.strings = {
     settingsGuideTools: <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS); ?>,
     systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
 };
+window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 </script>
 <script type="importmap">
   {
@@ -200,6 +223,8 @@ window.formulizeAI.strings = {
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
     const S = window.formulizeAI.strings;
+    // API keys injected server-side — live in JS memory only, never in localStorage.
+    const serverKeys = window.formulizeAI.serverKeys || {};
 
     // Replace {token} placeholders in a string with values from a vars object
     function t(str, vars) {
@@ -557,13 +582,21 @@ window.formulizeAI.strings = {
 
     function settingsForProvider(p) {
         return {
-            key:   localStorage.getItem(`ai_api_key_${p}`) || '',
+            key:   serverKeys[p] || '',
             model: localStorage.getItem(`ai_model_${p}`) || ''
         };
     }
 
-    function saveSettingsForProvider(p, key, model) {
-        if (key) localStorage.setItem(`ai_api_key_${p}`, key);
+    async function saveSettingsForProvider(p, key, model) {
+        if (key && p !== 'ollama') {
+            // Persist to server; update in-memory copy for this session
+            await fetch('ai_keys.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: p, key })
+            });
+            serverKeys[p] = key;
+        }
         if (model) localStorage.setItem(`ai_model_${p}`, model);
     }
 
@@ -651,8 +684,9 @@ window.formulizeAI.strings = {
     function updateProviderHints() {
         const p = providerSelect.value;
         const isOllama = p === 'ollama';
-        apiKeyInput.placeholder = isOllama ? S.apiKeyOllama : S.apiKeyPlaceholder;
-        apiKeyInput.value = isOllama ? '' : (settingsForProvider(p).key || '');
+        const hasSavedKey = !!serverKeys[p];
+        apiKeyInput.placeholder = isOllama ? S.apiKeyOllama : (hasSavedKey ? S.apiKeySaved : S.apiKeyPlaceholder);
+        apiKeyInput.value = ''; // actual key lives server-side only, never in the field
         apiKeyInput.disabled = isOllama;
         apiKeyInput.style.opacity = isOllama ? '0.45' : '';
         updateContextLimitDisplay();
@@ -693,12 +727,14 @@ window.formulizeAI.strings = {
         refreshSettingsUI(); // set initial disabled state + guide message
     }
 
-    saveSettingsBtn.addEventListener('click', () => {
+    saveSettingsBtn.addEventListener('click', async () => {
         const key = apiKeyInput.value.trim();
         const modelName = modelNameInput.value.trim();
         const provider = providerSelect.value;
-        if (modelName && (key || provider === 'ollama')) {
-            saveSettingsForProvider(provider, key, modelName);
+        // Allow saving when: a new key is typed, or a key already exists server-side, or Ollama (no key needed)
+        const hasKey = key || serverKeys[provider] || provider === 'ollama';
+        if (modelName && hasKey) {
+            await saveSettingsForProvider(provider, key, modelName);
             localStorage.setItem('ai_provider', provider);
             localStorage.setItem('ai_settings_saved', '1');
             const limitVal = parseInt(document.getElementById('context-limit').value, 10);
@@ -715,6 +751,7 @@ window.formulizeAI.strings = {
             ollamaHistory = [];
             initializeMCP();
             updateInputState();
+            updateProviderHints(); // refresh placeholder to reflect newly stored key
             refreshSettingsUI();
             addMessage(S.senderSystem, t(S.settingsSaved, { provider, model: modelName }), 'system');
         }
@@ -1397,9 +1434,11 @@ window.formulizeAI.strings = {
     }
 
     async function typewriterEffect(container, text) {
-        // Render the complete markdown upfront so formatting is correct from the first word
+        // Render the complete markdown upfront so formatting is correct from the first word.
+        // DOMPurify strips any script/event-handler injection that could arrive via prompt injection.
         if (typeof marked !== 'undefined') {
-            container.innerHTML = marked.parse(text, { breaks: false });
+            const rawHtml = marked.parse(text, { breaks: false });
+            container.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
         } else {
             container.textContent = text;
         }
@@ -1447,7 +1486,8 @@ window.formulizeAI.strings = {
         if (type === 'ai' && typeof marked !== 'undefined') {
             const contentDiv = document.createElement('div');
             contentDiv.className = 'ai-markdown';
-            contentDiv.innerHTML = marked.parse(text, { breaks: false });
+            const rawHtml = marked.parse(text, { breaks: false });
+            contentDiv.innerHTML = typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(rawHtml) : rawHtml;
             msgDiv.appendChild(contentDiv);
         } else {
             const textSpan = document.createElement('span');

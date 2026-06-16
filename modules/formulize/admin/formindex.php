@@ -422,6 +422,15 @@ function patch40() {
               ) ENGINE=InnoDB;";
         }
 
+        if (!in_array(strtolower($xoopsDB->prefix("formulize_ai_keys")), $existingTables)) {
+            $sql[] = "CREATE TABLE " . $xoopsDB->prefix("formulize_ai_keys") . " (
+                uid INT NOT NULL,
+                provider VARCHAR(20) NOT NULL,
+                encrypted_key TEXT NOT NULL,
+                PRIMARY KEY (uid, provider)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        }
+
 				// if the registered users group does not have module_admin permission, then remove all edit_form permissions they might have from time immemorial
 				$gperm_handler = xoops_gethandler('groupperm');
 				if($gperm_handler->checkRight("module_admin", getFormulizeModId(), XOOPS_GROUP_USERS, 1) === false) {

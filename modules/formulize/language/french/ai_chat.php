@@ -16,6 +16,7 @@ define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
 define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Modèle :');
 define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'Clé API :');
 define('_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER',    'Entrez votre clé API');
+define('_MD_FORMULIZE_AI_API_KEY_SAVED',          'Clé enregistrée — entrez une nouvelle clé pour modifier');
 define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'Aucune clé requise');
 define('_MD_FORMULIZE_AI_SAVE_SETTINGS_BTN',      'Enregistrer');
 define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY',     'Entrez votre clé API ci-dessus pour continuer');
