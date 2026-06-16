@@ -392,6 +392,8 @@ window.formulizeAI.strings = {
     let availableTools = []; // Raw MCP tools (full list from server)
     let selectedToolNames = new Set(); // Which tools are currently active
     let geminiChat = null;   // Gemini stateful chat object (rebuilt on Save Settings / Refresh)
+    let geminiHistory = [];  // Gemini clean conversation history (bare text, no activity context)
+    let lastGeminiActivityCount = 0; // How many deduplicated activity events Gemini has already seen
     let claudeHistory = [];  // Claude explicit conversation history
     let ollamaHistory = [];  // Ollama explicit conversation history
 
@@ -514,6 +516,8 @@ window.formulizeAI.strings = {
             saveSettingsForProvider(provider, key, modelName);
             localStorage.setItem('ai_provider', provider);
             geminiChat = null;
+            geminiHistory = [];
+            lastGeminiActivityCount = 0;
             claudeHistory = [];
             ollamaHistory = [];
             initializeMCP();
@@ -682,6 +686,7 @@ window.formulizeAI.strings = {
                 }
 
                 geminiChat = genAI.getGenerativeModel(modelConfig).startChat();
+                lastGeminiActivityCount = 0;
             }
         } catch (error) {
             console.error('MCP init error:', error);
@@ -742,8 +747,18 @@ window.formulizeAI.strings = {
             return;
         }
 
-        const context = getActivityContext();
-        let result = await geminiChat.sendMessage(context ? text + '\n\n' + context : text);
+        geminiHistory.push({ role: 'user', content: text });
+
+        const allEvents = getDeduplicatedLog();
+        const newEvents = allEvents.slice(lastGeminiActivityCount);
+        lastGeminiActivityCount = allEvents.length;
+        let activityContext = '';
+        if (newEvents.length > 0) {
+            const lines = newEvents.map(e => { const d = describeEvent(e); return `[${d.time}] ${d.text}`; });
+            activityContext = `${S.contextHeader}\n${lines.join('\n')}\n]`;
+        }
+
+        let result = await geminiChat.sendMessage(activityContext ? text + '\n\n' + activityContext : text);
         let response = result.response;
 
         while (response.functionCalls && response.functionCalls()) {
@@ -761,18 +776,27 @@ window.formulizeAI.strings = {
             response = result.response;
         }
 
+        const finalText = response.text();
+        geminiHistory.push({ role: 'assistant', content: finalText });
+
         loadingMsg.remove();
         const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-        await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, response.text());
+        await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
     }
 
     // --- Claude path ---
 
     async function sendClaudeMessage(text, loadingMsg) {
-        const context = getActivityContext();
-        claudeHistory.push({ role: 'user', content: context ? text + '\n\n' + context : text });
+        claudeHistory.push({ role: 'user', content: text });
 
-        let response = await callClaude(claudeHistory);
+        const context = getActivityContext();
+        const messagesForApi = context
+            ? claudeHistory.map((msg, i) => i === claudeHistory.length - 1
+                ? { ...msg, content: msg.content + '\n\n' + context }
+                : msg)
+            : claudeHistory;
+
+        let response = await callClaude(messagesForApi);
 
         while (response.stop_reason === 'tool_use') {
             claudeHistory.push({ role: 'assistant', content: response.content });
@@ -832,10 +856,16 @@ window.formulizeAI.strings = {
     // --- Ollama path ---
 
     async function sendOllamaMessage(text, loadingMsg) {
-        const context = getActivityContext();
-        ollamaHistory.push({ role: 'user', content: context ? text + '\n\n' + context : text });
+        ollamaHistory.push({ role: 'user', content: text });
 
-        let response = await callOllama(ollamaHistory);
+        const context = getActivityContext();
+        const messagesForApi = context
+            ? ollamaHistory.map((msg, i) => i === ollamaHistory.length - 1
+                ? { ...msg, content: msg.content + '\n\n' + context }
+                : msg)
+            : ollamaHistory;
+
+        let response = await callOllama(messagesForApi);
         let message = response.choices[0].message;
 
         while (response.choices[0].finish_reason === 'tool_calls' && message.tool_calls) {
