@@ -7,7 +7,7 @@ define('_MD_FORMULIZE_MUST_BE_LOGGED_IN',        'You must be logged in to use t
 // Header / settings panel
 define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Gwynian - The Formulize AI Assistant');
 define('_MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE',  'Toggle settings');
-define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'close ✕');
+define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'Close ✕');
 define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Provider:');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');

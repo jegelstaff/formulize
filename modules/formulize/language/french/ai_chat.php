@@ -7,7 +7,7 @@ define('_MD_FORMULIZE_MUST_BE_LOGGED_IN',        'Vous devez être connecté pou
 // En-tête / panneau de paramètres
 define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Gwynian - L\'Assistant IA Formulize');
 define('_MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE',  'Afficher/masquer les paramètres');
-define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'fermer ✕');
+define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'Fermer ✕');
 define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Fournisseur :');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
