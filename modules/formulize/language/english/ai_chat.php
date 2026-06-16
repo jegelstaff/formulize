@@ -18,6 +18,8 @@ define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'API Key:');
 define('_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER',    'Enter your API Key');
 define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'No key needed');
 define('_MD_FORMULIZE_AI_SAVE_SETTINGS_BTN',      'Save Settings');
+define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY',     'Enter your API key above to continue');
+define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS',   'Choose tools and Save Settings');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'New Conversation');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG',   'New conversation started.');
 define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Active Tools:');
@@ -30,6 +32,8 @@ define('_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS',     'Manage forms');
 // Chat input
 define('_MD_FORMULIZE_AI_CHAT_PLACEHOLDER',       'Ask me anything about Formulize...');
 define('_MD_FORMULIZE_AI_SEND_BTN',               'Send');
+define('_MD_FORMULIZE_AI_STOP_BTN',               'Stop');
+define('_MD_FORMULIZE_AI_STOPPED_MSG',            'Response stopped.');
 
 // Activity panel
 define('_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE',  'Toggle activity context panel');
@@ -57,7 +61,6 @@ define('_MD_FORMULIZE_AI_ERROR_OCCURRED',         'An error occurred: ');
 
 // Welcome (shown only on first visit / no saved settings)
 define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Welcome! I'm Gwynian, your Formulize AI Assistant! Select a provider, enter your API Key, and click Save Settings to start. Once connected, I can help you explore your Formulize system, make forms, create entries, and more.");
-define('_MD_FORMULIZE_AI_WELCOME_ALERT',          _MD_FORMULIZE_AI_WELCOME_MSG);
 
 // Chat sender labels
 define('_MD_FORMULIZE_AI_SENDER_YOU',             'You');

@@ -36,7 +36,6 @@ if (!$xoopsUser) {
             <div id="settings-toggle" title="<?php echo _MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE; ?>" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
                 <span id="mcp-status"><?php echo _MD_FORMULIZE_AI_INITIALIZING; ?></span>
                 <span style="opacity: 0.75; font-size: 1.1em;">⚙</span>
-                <span id="settings-close-label" style="display:none; opacity: 0.85;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></span>
             </div>
         </div>
     </div>
@@ -65,7 +64,6 @@ if (!$xoopsUser) {
                    title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE, ENT_QUOTES); ?>"
                    style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
         </div>
-        <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; align-self: center;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
         <div id="tool-selection-panel" style="display: none; flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                 <span style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL; ?> <span id="tool-selection-count"></span></span>
@@ -80,6 +78,11 @@ if (!$xoopsUser) {
             </div>
             <div id="tool-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 2px 16px;"></div>
         </div>
+        <div style="flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px; display: flex; gap: 8px; align-items: center;">
+            <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
+            <button id="close-settings" style="padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></button>
+            <span id="settings-guide-msg" style="font-size: 0.85em; color: #555; margin-left: 4px;"></span>
+        </div>
     </div>
 
     <div id="chat-window" style="flex: 1; min-height: 0; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;"></div>
@@ -87,6 +90,7 @@ if (!$xoopsUser) {
     <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; border-radius: 0; display: flex; gap: 10px;">
         <textarea id="user-input" placeholder="<?php echo _MD_FORMULIZE_AI_CHAT_PLACEHOLDER; ?>" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
         <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SEND_BTN; ?></button>
+        <button id="stop-btn" style="display:none; padding: 0 25px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_STOP_BTN; ?></button>
     </div>
 
     <div id="activity-toggle-bar" title="<?php echo _MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE; ?>" style="background: #eef2f5; border: 1px solid #ddd; border-top: none; padding: 7px 15px; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #555; user-select: none;">
@@ -100,6 +104,7 @@ if (!$xoopsUser) {
 </div>
 
 <style>
+#chat-window { overflow-anchor: none; }
 .ai-markdown { margin-top: 4px; }
 .ai-markdown p { margin: 0 0 8px 0; }
 .ai-markdown p:last-child { margin-bottom: 0; }
@@ -132,7 +137,6 @@ window.formulizeAI.strings = {
     geminiSaveFirst:   <?php echo json_encode(_MD_FORMULIZE_AI_GEMINI_SAVE_FIRST); ?>,
     failedInit:        <?php echo json_encode(_MD_FORMULIZE_AI_FAILED_INIT); ?>,
     errorOccurred:     <?php echo json_encode(_MD_FORMULIZE_AI_ERROR_OCCURRED); ?>,
-    welcomeAlert:      <?php echo json_encode(_MD_FORMULIZE_AI_WELCOME_ALERT); ?>,
     welcomeMsg:        <?php echo json_encode(_MD_FORMULIZE_AI_WELCOME_MSG); ?>,
     senderYou:         <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_YOU); ?>,
     senderAI:          <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_AI); ?>,
@@ -177,6 +181,10 @@ window.formulizeAI.strings = {
     openaiTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OPENAI_TIMEOUT); ?>,
     newConversationBtn: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN); ?>,
     newConversationMsg: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG); ?>,
+    stopBtn:           <?php echo json_encode(_MD_FORMULIZE_AI_STOP_BTN); ?>,
+    stoppedMsg:        <?php echo json_encode(_MD_FORMULIZE_AI_STOPPED_MSG); ?>,
+    settingsGuideKey:  <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY); ?>,
+    settingsGuideTools: <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS); ?>,
     systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
 };
 </script>
@@ -206,6 +214,11 @@ window.formulizeAI.strings = {
     const providerSelect = document.getElementById('provider-select');
     const saveSettingsBtn = document.getElementById('save-settings');
     const mcpStatus = document.getElementById('mcp-status');
+    const stopBtn = document.getElementById('stop-btn');
+
+    let isSending = false;
+    let currentAbortController = null;
+    let userStopped = false;
 
     const SYSTEM_PROMPT = S.systemPrompt;
 
@@ -242,6 +255,48 @@ window.formulizeAI.strings = {
         const provider = providerSelect.value;
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
         return saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+    }
+
+    function updateInputState() {
+        if (isSending) return;
+        if (!localStorage.getItem('ai_settings_saved')) {
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = '0.5';
+            return;
+        }
+        const provider = providerSelect.value;
+        const apiKey = settingsForProvider(provider).key || apiKeyInput.value.trim();
+        const model = modelNameInput.value.trim();
+        const ready = (provider === 'ollama' || !!apiKey) && !!model;
+        userInput.disabled = !ready;
+        sendBtn.disabled = !ready;
+        sendBtn.style.opacity = ready ? '' : '0.5';
+    }
+
+    function refreshSettingsUI() {
+        const provider = providerSelect.value;
+        const hasKey = !!(apiKeyInput.value.trim() || settingsForProvider(provider).key);
+        const ready = provider === 'ollama' || hasKey;
+        const returning = !!localStorage.getItem('ai_settings_saved');
+
+        const saveBtn = document.getElementById('save-settings');
+        const closeBtn = document.getElementById('close-settings');
+        const guideMsg = document.getElementById('settings-guide-msg');
+
+        saveBtn.disabled = !ready;
+        saveBtn.style.opacity = ready ? '' : '0.5';
+        closeBtn.disabled = !ready;
+        closeBtn.style.opacity = ready ? '' : '0.5';
+
+        if (guideMsg) {
+            guideMsg.textContent = !ready ? S.settingsGuideKey : (returning ? '' : S.settingsGuideTools);
+        }
+
+        // Trigger tool discovery once a provider is ready, but only if tools haven't loaded yet
+        if (ready && availableTools.length === 0) {
+            initializeMCP();
+        }
     }
 
     // Update the visual context-window cutoff marker in the chat DOM.
@@ -565,19 +620,24 @@ window.formulizeAI.strings = {
                         .map(m => ({ id: m.id, name: m.id }));
                 }
             } else if (provider === 'ollama') {
+                // Direct browser→Ollama fetch. Requires OLLAMA_ORIGINS to include the
+                // Formulize server origin (e.g. OLLAMA_ORIGINS=https://your-server.com).
                 const resp = await fetch('http://localhost:11434/api/tags');
                 if (resp.ok) {
                     const data = await resp.json();
                     models = (data.models || []).map(m => ({ id: m.name, name: m.name }));
+                } else {
+                    console.error('Ollama /api/tags returned', resp.status);
                 }
             }
 
             if (models.length > 0) populateModelSelect(models, savedModel);
         } catch (e) {
-            // keep the seeded fallback
+            console.error('Model discovery error:', e);
         }
 
         modelNameInput.disabled = false;
+        updateInputState();
     }
 
     function updateContextLimitDisplay() {
@@ -601,9 +661,11 @@ window.formulizeAI.strings = {
     providerSelect.addEventListener('change', () => {
         localStorage.setItem('ai_provider', providerSelect.value);
         updateProviderHints();
+        refreshSettingsUI();
     });
     apiKeyInput.addEventListener('blur', () => {
         if (apiKeyInput.value.trim()) discoverModels();
+        refreshSettingsUI();
     });
 
     let historyLimitWarningShown = false;
@@ -618,9 +680,7 @@ window.formulizeAI.strings = {
 
     document.getElementById('settings-toggle').addEventListener('click', () => {
         const panel = document.getElementById('settings-panel');
-        const open = panel.style.display === 'none';
-        panel.style.display = open ? 'flex' : 'none';
-        document.getElementById('settings-close-label').style.display = open ? '' : 'none';
+        panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
     });
 
     const savedKey = settingsForProvider(savedProvider).key;
@@ -628,11 +688,9 @@ window.formulizeAI.strings = {
         initializeMCP();
     } else {
         // First visit: open settings panel and show welcome
-        const panel = document.getElementById('settings-panel');
-        panel.style.display = 'flex';
-        document.getElementById('settings-close-label').style.display = '';
+        document.getElementById('settings-panel').style.display = 'flex';
         addMessage(S.senderSystem, S.welcomeMsg, 'system');
-        setTimeout(() => alert(S.welcomeAlert), 150);
+        refreshSettingsUI(); // set initial disabled state + guide message
     }
 
     saveSettingsBtn.addEventListener('click', () => {
@@ -642,6 +700,7 @@ window.formulizeAI.strings = {
         if (modelName && (key || provider === 'ollama')) {
             saveSettingsForProvider(provider, key, modelName);
             localStorage.setItem('ai_provider', provider);
+            localStorage.setItem('ai_settings_saved', '1');
             const limitVal = parseInt(document.getElementById('context-limit').value, 10);
             if (limitVal && limitVal !== CONTEXT_WINDOW_DEFAULTS[provider]) {
                 localStorage.setItem(`ai_context_limit_${provider}`, limitVal);
@@ -655,6 +714,8 @@ window.formulizeAI.strings = {
             openaiHistory = [];
             ollamaHistory = [];
             initializeMCP();
+            updateInputState();
+            refreshSettingsUI();
             addMessage(S.senderSystem, t(S.settingsSaved, { provider, model: modelName }), 'system');
         }
     });
@@ -688,13 +749,13 @@ window.formulizeAI.strings = {
             return;
         }
 
-        // Restore saved selection, defaulting to no tools (user must opt in)
+        // Restore saved selection; default to read-only tools on first use
         const saved = localStorage.getItem('ai_selected_tools');
         if (saved) {
             const savedNames = new Set(JSON.parse(saved));
             selectedToolNames = new Set(availableTools.map(t => t.name).filter(n => savedNames.has(n)));
         } else {
-            selectedToolNames = new Set();
+            selectedToolNames = new Set(getToolGroupNames('readData'));
         }
 
         // Build checklist
@@ -718,7 +779,7 @@ window.formulizeAI.strings = {
             const name = document.createElement('span');
             name.innerText = tool.name;
             name.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;';
-            name.title = tool.name;
+            name.title = tool.description || tool.name;
 
             label.appendChild(cb);
             label.appendChild(name);
@@ -824,6 +885,8 @@ window.formulizeAI.strings = {
                 geminiChat = genAI.getGenerativeModel(modelConfig).startChat();
                 lastGeminiActivityCount = 0;
             }
+
+            refreshSettingsUI(); // update guide message / button state now tools are loaded
         } catch (error) {
             console.error('MCP init error:', error);
             mcpStatus.innerText = S.mcpError;
@@ -861,6 +924,15 @@ window.formulizeAI.strings = {
 
     document.getElementById('new-conversation-btn').addEventListener('click', startNewConversation);
 
+    document.getElementById('close-settings').addEventListener('click', () => {
+        document.getElementById('settings-panel').style.display = 'none';
+    });
+
+    stopBtn.addEventListener('click', () => {
+        userStopped = true;
+        if (currentAbortController) currentAbortController.abort();
+    });
+
     async function sendMessage() {
         const text = userInput.value.trim();
         if (!text) return;
@@ -872,9 +944,12 @@ window.formulizeAI.strings = {
             return;
         }
 
-        sendBtn.disabled = true;
+        isSending = true;
+        userStopped = false;
+        currentAbortController = new AbortController();
+        sendBtn.style.display = 'none';
+        stopBtn.style.display = '';
         userInput.disabled = true;
-        sendBtn.style.opacity = '0.5';
 
         addMessage(S.senderYou, text, 'user');
         userInput.value = '';
@@ -906,12 +981,18 @@ window.formulizeAI.strings = {
         } catch (error) {
             console.error('Chat error:', error);
             loadingMsg.remove();
-            addMessage(S.senderError, S.errorOccurred + error.message, 'error');
+            if (userStopped) {
+                addMessage(S.senderSystem, S.stoppedMsg, 'system');
+            } else {
+                addMessage(S.senderError, S.errorOccurred + error.message, 'error');
+            }
         } finally {
-            sendBtn.disabled = false;
-            userInput.disabled = false;
-            sendBtn.style.opacity = '';
-            userInput.focus();
+            isSending = false;
+            currentAbortController = null;
+            sendBtn.style.display = '';
+            stopBtn.style.display = 'none';
+            updateInputState();
+            if (!userInput.disabled) userInput.focus();
         }
     }
 
@@ -938,6 +1019,7 @@ window.formulizeAI.strings = {
 
         try {
             let result = await geminiChat.sendMessage(activityContext ? text + '\n\n' + activityContext : text);
+            if (userStopped) throw new DOMException('User stopped', 'AbortError');
             let response = result.response;
 
             while (response.functionCalls && response.functionCalls()) {
@@ -952,6 +1034,7 @@ window.formulizeAI.strings = {
                     });
                 }
                 result = await geminiChat.sendMessage(toolResponses);
+                if (userStopped) throw new DOMException('User stopped', 'AbortError');
                 response = result.response;
             }
 
@@ -959,7 +1042,10 @@ window.formulizeAI.strings = {
             geminiHistory.push({ role: 'assistant', content: finalText });
 
             loadingMsg.remove();
+            const scrollBeforeGemini = chatWindow.scrollTop;
+            const heightBeforeGemini = chatWindow.scrollHeight;
             const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            chatWindow.scrollTop = scrollBeforeGemini + (chatWindow.scrollHeight - heightBeforeGemini);
             await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, finalText);
         } catch (error) {
             geminiHistory.pop();
@@ -1013,7 +1099,10 @@ window.formulizeAI.strings = {
             for (const m of newMessages) claudeHistory.push(m);
 
             loadingMsg.remove();
+            const scrollBeforeClaude = chatWindow.scrollTop;
+            const heightBeforeClaude = chatWindow.scrollHeight;
             const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            chatWindow.scrollTop = scrollBeforeClaude + (chatWindow.scrollHeight - heightBeforeClaude);
             await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
             updateContextCutoffMarker(messagesForApi, claudeHistory[0]?.content);
         } catch (error) {
@@ -1038,7 +1127,8 @@ window.formulizeAI.strings = {
         const response = await fetch('ai_proxy.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
+            signal: currentAbortController?.signal
         });
 
         const data = await response.json();
@@ -1070,15 +1160,22 @@ window.formulizeAI.strings = {
         const body = { model: modelName, messages: messagesWithSystem, stream: false };
         if (tools.length > 0) body.tools = tools;
 
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        const timeoutController = new AbortController();
+        const timer = setTimeout(() => timeoutController.abort(), timeoutMs);
+
+        // Combine timeout with the global stop signal if available
+        const signals = [timeoutController.signal];
+        if (currentAbortController?.signal) signals.push(currentAbortController.signal);
+        const fetchSignal = (signals.length > 1 && typeof AbortSignal.any === 'function')
+            ? AbortSignal.any(signals)
+            : timeoutController.signal;
 
         try {
             const response = await fetch(url, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(body),
-                signal: controller.signal
+                signal: fetchSignal
             });
             clearTimeout(timer);
             if (!response.ok) {
@@ -1088,7 +1185,10 @@ window.formulizeAI.strings = {
             return response.json();
         } catch (error) {
             clearTimeout(timer);
-            if (error.name === 'AbortError') throw new Error(timeoutMsg);
+            if (error.name === 'AbortError') {
+                if (userStopped) throw error; // propagate so sendMessage shows "stopped"
+                throw new Error(timeoutMsg);
+            }
             throw error;
         }
     }
@@ -1134,7 +1234,10 @@ window.formulizeAI.strings = {
             for (const m of newMessages) history.push(m);
 
             loadingMsg.remove();
+            const scrollBeforeOAI = chatWindow.scrollTop;
+            const heightBeforeOAI = chatWindow.scrollHeight;
             const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            chatWindow.scrollTop = scrollBeforeOAI + (chatWindow.scrollHeight - heightBeforeOAI);
             await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, message.content || '(no response)');
             updateContextCutoffMarker(messagesForApi, history[0]?.content);
         } catch (error) {
@@ -1329,7 +1432,6 @@ window.formulizeAI.strings = {
         // Reveal words one at a time — fully-rendered markup, just gradually visible
         for (const span of wordSpans) {
             span.style.opacity = '1';
-            chatWindow.scrollTop = chatWindow.scrollHeight;
             await new Promise(r => setTimeout(r, 65));
         }
     }

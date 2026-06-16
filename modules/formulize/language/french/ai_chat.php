@@ -18,6 +18,8 @@ define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'Clé API :');
 define('_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER',    'Entrez votre clé API');
 define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'Aucune clé requise');
 define('_MD_FORMULIZE_AI_SAVE_SETTINGS_BTN',      'Enregistrer');
+define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY',     'Entrez votre clé API ci-dessus pour continuer');
+define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS',   'Choisissez des outils et enregistrez');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'Nouvelle conversation');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG',   'Nouvelle conversation démarrée.');
 define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Outils actifs :');
@@ -30,6 +32,8 @@ define('_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS',     'Gérer les formulaires');
 // Zone de saisie
 define('_MD_FORMULIZE_AI_CHAT_PLACEHOLDER',       'Posez-moi une question sur Formulize...');
 define('_MD_FORMULIZE_AI_SEND_BTN',               'Envoyer');
+define('_MD_FORMULIZE_AI_STOP_BTN',               'Arrêter');
+define('_MD_FORMULIZE_AI_STOPPED_MSG',            'Réponse arrêtée.');
 
 // Panneau d'activité
 define('_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE',  'Afficher/masquer le panneau de contexte');
@@ -57,7 +61,6 @@ define('_MD_FORMULIZE_AI_ERROR_OCCURRED',         'Une erreur s\'est produite : 
 
 // Message de bienvenue (première visite uniquement)
 define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Bienvenue! Je suis Gwynian, votre Assistant IA Formulize ! Sélectionnez un fournisseur, entrez votre clé API et cliquez sur Enregistrer pour démarrer. Une fois connecté, je peux vous aider à explorer votre système Formulize, créer des formulaires, saisir des données, et bien plus encore.");
-define('_MD_FORMULIZE_AI_WELCOME_ALERT',          _MD_FORMULIZE_AI_WELCOME_MSG);
 
 // Étiquettes des expéditeurs
 define('_MD_FORMULIZE_AI_SENDER_YOU',             'Vous');
