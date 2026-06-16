@@ -41,8 +41,25 @@
 function formulize_enqueue_ai_context($data) {
 	$event = isset($data['formulize_event']) ? $data['formulize_event'] : '';
 
-	// Skip notification processing and error events — they are internal noise, not user actions
-	if (strpos($event, 'processing-notification') === 0 || strpos($event, 'PHP-error') === 0) {
+	// Form rendering events know the real form-screen ID, while the browser URL still shows the
+	// list-screen ID. Store the info so footer.php can patch the browser's pageview record.
+	if ($event === 'rendering-form-screen-page' || $event === 'rendering-form') {
+		$rfid   = isset($data['form_id'])   && $data['form_id']   !== '' ? (int)$data['form_id']   : null;
+		$rsid   = isset($data['screen_id']) && $data['screen_id'] !== '' ? (int)$data['screen_id'] : null;
+		$rentry = isset($data['entry_id'])  && is_numeric($data['entry_id']) ? (int)$data['entry_id'] : null;
+		$GLOBALS['formulize_rendered_form_info'] = array_filter(array(
+			'sid'   => $rsid,
+			'fid'   => $rfid,
+			'entry' => $rentry,
+		));
+	}
+
+	// Only queue the events the AI actually needs; everything else (session loads, notifications, etc.) is noise.
+	if ($event !== 'rendering-form' &&
+		$event !== 'rendering-form-screen-page' &&
+		$event !== 'gathering-data-for-list-of-entries' &&
+		$event !== 'saving-data' &&
+		$event !== 'deleting-entry') {
 		return;
 	}
 
@@ -62,11 +79,12 @@ function formulize_enqueue_ai_context($data) {
 		'ts'      => (int)(microtime(true) * 1000),
 		'fid'     => isset($data['form_id'])   && $data['form_id']   !== '' ? $data['form_id']   : null,
 		'sid'     => isset($data['screen_id']) && $data['screen_id'] !== '' ? $data['screen_id'] : null,
-		'entry'   => isset($data['entry_id'])  && $data['entry_id']  !== '' ? $data['entry_id']  : null,
+		'entry'   => isset($data['entry_id'])  && is_numeric($data['entry_id']) ? (int)$data['entry_id']  : null,
 		'searches' => $searches,
-		'sort'    => isset($data['sort'])  && $data['sort']  !== '' ? $data['sort']  : null,
-		'order'   => isset($data['order']) && $data['order'] !== '' ? $data['order'] : null,
-		'scope'   => isset($data['scope']) && $data['scope'] !== '' ? $data['scope'] : null,
+		'sort'      => isset($data['sort'])      && $data['sort']      !== '' ? $data['sort']      : null,
+		'order'     => isset($data['order'])     && $data['order']     !== '' ? $data['order']     : null,
+		'scope'     => isset($data['scope'])     && $data['scope']     !== '' ? $data['scope']     : null,
+		'new_entry' => (isset($data['additional_info']) && $data['additional_info'] === 'new_entry') ? true : null,
 	), function($v) { return $v !== null; });
 
 	$GLOBALS['formulize_ai_context_queue'][] = $entry;

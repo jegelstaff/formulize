@@ -1225,6 +1225,19 @@ function deleteEntry($entry_id, $frid, $fid, $excludeFids=array()) {
         $deletedEntries[$fid][] = $entry_id;
     } // end of if frid
 
+    // log deletions for AI context
+    global $xoopsUser;
+    foreach ($deletedEntries as $thisfid=>$entries) {
+        foreach ($entries as $ent) {
+            writeToFormulizeLog(array(
+                'formulize_event' => 'deleting-entry',
+                'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+                'form_id' => $thisfid,
+                'entry_id' => $ent,
+            ));
+        }
+    }
+
     // do notifications
     foreach ($deletedEntries as $thisfid=>$entries) {
       sendNotifications($thisfid, "delete_entry", $entries);

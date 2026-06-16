@@ -8,10 +8,17 @@
  * The API key is never stored server-side — it arrives in X-API-Key each request.
  */
 
-// Buffer everything so stray output from mainfile.php doesn't corrupt the JSON response
-ob_start();
+// Match the pattern used in admin/save.php: include bootstrap, then disable the XOOPS
+// debug logger and clear ALL output buffer levels (mainfile.php opens several, including
+// a gzip layer). Without this, XOOPS flushes debug/log output after our JSON response,
+// producing a two-line body that breaks JSON.parse in the browser.
 include_once "mainfile.php";
-ob_end_clean();
+if (isset(icms::$logger)) {
+    icms::$logger->disableLogger();
+}
+while (ob_get_level()) {
+    ob_end_clean();
+}
 
 header('Content-Type: application/json');
 
@@ -45,12 +52,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     curl_close($ch);
 
     if ($curlError) {
+        $errBody = json_encode(['error' => ['message' => 'Proxy curl error: ' . $curlError]]);
         http_response_code(502);
-        echo json_encode(['error' => ['message' => 'Proxy curl error: ' . $curlError]]);
+        header('Content-Length: ' . strlen($errBody));
+        echo $errBody;
         exit();
     }
 
     http_response_code($httpCode);
+    header('Content-Length: ' . strlen($response));
     echo $response;
     exit();
 }
@@ -58,8 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 // POST: forward chat completion request
 $body = file_get_contents('php://input');
 if (!$body) {
+    $errBody = json_encode(['error' => ['message' => 'Empty request body']]);
     http_response_code(400);
-    echo json_encode(['error' => ['message' => 'Empty request body']]);
+    header('Content-Length: ' . strlen($errBody));
+    echo $errBody;
     exit();
 }
 
@@ -78,10 +90,13 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 if ($curlError) {
+    $errBody = json_encode(['error' => ['message' => 'Proxy curl error: ' . $curlError]]);
     http_response_code(502);
-    echo json_encode(['error' => ['message' => 'Proxy curl error: ' . $curlError]]);
+    header('Content-Length: ' . strlen($errBody));
+    echo $errBody;
     exit();
 }
 
 http_response_code($httpCode);
+header('Content-Length: ' . strlen($response));
 echo $response;

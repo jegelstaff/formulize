@@ -1,13 +1,17 @@
 <?php
 /**
- * Formulize AI Assistant Proof of Concept
+ * Formulize AI Assistant
  *
- * This page provides a chat interface that integrates with Claude or Gemini AI
+ * This page provides a chat interface that integrates with Claude or Gemini AI or Ollama
  * and uses Formulize MCP tools to interact with the system.
  */
 
 include_once "mainfile.php";
 include "header.php";
+
+$_aiChatLang = isset($icmsConfig['language']) ? $icmsConfig['language'] : 'english';
+$_aiChatLangFile = XOOPS_ROOT_PATH . '/modules/formulize/language/' . $_aiChatLang . '/ai_chat.php';
+include_once (file_exists($_aiChatLangFile) ? $_aiChatLangFile : XOOPS_ROOT_PATH . '/modules/formulize/language/english/ai_chat.php');
 
 // Ensure the user is logged in for the PoC to work with session auth
 if (!$xoopsUser) {
@@ -19,62 +23,62 @@ if (!$xoopsUser) {
 
 <div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif; display: flex; flex-direction: column;">
     <div style="background: #007cba; color: white; padding: 15px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0; color: white;">Formulize AI Assistant (PoC)</h2>
-        <div id="settings-toggle" title="Toggle settings" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
-            <span id="mcp-status">Initializing...</span>
+        <h2 style="margin: 0; color: white;"><?php echo _MD_FORMULIZE_AI_PAGE_TITLE; ?></h2>
+        <div id="settings-toggle" title="<?php echo _MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE; ?>" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
+            <span id="mcp-status"><?php echo _MD_FORMULIZE_AI_INITIALIZING; ?></span>
             <span style="opacity: 0.75; font-size: 1.1em;">⚙</span>
+            <span id="settings-close-label" style="display:none; opacity: 0.85;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></span>
         </div>
     </div>
 
     <div id="settings-panel" style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; display: none; gap: 10px; align-items: center; flex-wrap: wrap;">
         <div style="display: flex; gap: 10px; align-items: center;">
-            <label for="provider-select" style="font-weight: bold; font-size: 0.9em;">Provider:</label>
+            <label for="provider-select" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_PROVIDER_LABEL; ?></label>
             <select id="provider-select" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                <option value="claude">Claude (Anthropic)</option>
-                <option value="gemini">Gemini (Google)</option>
-                <option value="ollama">Ollama (Local)</option>
+                <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
+                <option value="gemini"><?php echo _MD_FORMULIZE_AI_PROVIDER_GEMINI; ?></option>
+                <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
             </select>
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex: 2; min-width: 180px;">
-            <label for="model-name" style="font-weight: bold; font-size: 0.9em;">Model:</label>
+            <label for="model-name" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_MODEL_LABEL; ?></label>
             <select id="model-name" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></select>
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 140px;">
-            <label for="ai-api-key" style="font-weight: bold; font-size: 0.9em;">API Key:</label>
-            <input type="password" id="ai-api-key" placeholder="Enter your API Key" autocomplete="new-password" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <label for="ai-api-key" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
+            <input type="password" id="ai-api-key" placeholder="<?php echo _MD_FORMULIZE_AI_API_KEY_PLACEHOLDER; ?>" autocomplete="new-password" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
         </div>
-        <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Settings</button>
+        <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
         <div id="tool-selection-panel" style="display: none; flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-weight: bold; font-size: 0.85em;">Active Tools: <span id="tool-selection-count"></span></span>
-                <div style="display: flex; gap: 8px;">
-                    <button id="tool-select-all" style="padding: 3px 8px; font-size: 0.8em; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer;">All</button>
-                    <button id="tool-select-none" style="padding: 3px 8px; font-size: 0.8em; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">None</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                <span style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL; ?> <span id="tool-selection-count"></span></span>
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                    <button id="tool-group-read" style="padding: 3px 8px; font-size: 0.8em; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_READ_DATA; ?></button>
+                    <button id="tool-group-write" style="padding: 3px 8px; font-size: 0.8em; background: #fd7e14; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_WRITE_DATA; ?></button>
+                    <button id="tool-group-manage" style="padding: 3px 8px; font-size: 0.8em; background: #6f42c1; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS; ?></button>
+                    <span style="opacity: 0.3; font-size: 0.9em;">|</span>
+                    <button id="tool-select-all" style="padding: 3px 8px; font-size: 0.8em; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_ALL_BTN; ?></button>
+                    <button id="tool-select-none" style="padding: 3px 8px; font-size: 0.8em; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_NONE_BTN; ?></button>
                 </div>
             </div>
-            <div id="tool-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2px 16px;"></div>
+            <div id="tool-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 2px 16px;"></div>
         </div>
     </div>
 
-    <div id="chat-window" style="flex: 1; min-height: 0; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-        <div class="message system" style="background: #e9ecef; padding: 10px 15px; border-radius: 10px; align-self: flex-start; max-width: 80%;">
-            Welcome to the Formulize AI Assistant! Select a provider, enter your API Key, and click Save Settings to start.
-            Once connected, I can help you explore your Formulize system, list forms, create entries, and more.
-        </div>
-    </div>
+    <div id="chat-window" style="flex: 1; min-height: 0; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;"></div>
 
     <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; border-radius: 0; display: flex; gap: 10px;">
-        <textarea id="user-input" placeholder="Ask me anything about Formulize..." style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
-        <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Send</button>
+        <textarea id="user-input" placeholder="<?php echo _MD_FORMULIZE_AI_CHAT_PLACEHOLDER; ?>" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
+        <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SEND_BTN; ?></button>
     </div>
 
-    <div id="activity-toggle-bar" title="Toggle activity context panel" style="background: #eef2f5; border: 1px solid #ddd; border-top: none; padding: 7px 15px; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #555; user-select: none;">
-        <span>Activity Context &nbsp;<span id="activity-count" style="background: #6c757d; color: white; padding: 1px 7px; border-radius: 10px; font-size: 0.85em;">0</span></span>
-        <span id="activity-arrow" style="font-size: 0.85em; opacity: 0.7;">▶ show what AI sees</span>
+    <div id="activity-toggle-bar" title="<?php echo _MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE; ?>" style="background: #eef2f5; border: 1px solid #ddd; border-top: none; padding: 7px 15px; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #555; user-select: none;">
+        <span><?php echo _MD_FORMULIZE_AI_ACTIVITY_LABEL; ?> &nbsp;<span id="activity-count" style="background: #6c757d; color: white; padding: 1px 7px; border-radius: 10px; font-size: 0.85em;">0</span></span>
+        <span id="activity-arrow" style="font-size: 0.85em; opacity: 0.7;"><?php echo _MD_FORMULIZE_AI_ACTIVITY_SHOW; ?></span>
     </div>
     <div id="activity-panel" style="display: none; background: #fafafa; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 220px; overflow-y: auto;">
         <div id="activity-list" style="padding: 8px 15px; font-size: 0.78em; font-family: monospace; display: flex; flex-direction: column; gap: 3px;"></div>
-        <div style="padding: 6px 15px; font-size: 0.72em; color: #888; border-top: 1px solid #eee;">Updates live from all open tabs · Last 30 min · Appended to every AI message</div>
+        <div style="padding: 6px 15px; font-size: 0.72em; color: #888; border-top: 1px solid #eee;"><?php echo _MD_FORMULIZE_AI_ACTIVITY_FOOTER; ?></div>
     </div>
 </div>
 
@@ -96,6 +100,61 @@ if (!$xoopsUser) {
 .ai-markdown hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="text/javascript">
+window.formulizeAI = window.formulizeAI || {};
+window.formulizeAI.strings = {
+    activityShow:      <?php echo json_encode(_MD_FORMULIZE_AI_ACTIVITY_SHOW); ?>,
+    activityHide:      <?php echo json_encode(_MD_FORMULIZE_AI_ACTIVITY_HIDE); ?>,
+    fetchingTools:     <?php echo json_encode(_MD_FORMULIZE_AI_FETCHING_TOOLS); ?>,
+    noToolsFound:      <?php echo json_encode(_MD_FORMULIZE_AI_NO_TOOLS_FOUND); ?>,
+    mcpError:          <?php echo json_encode(_MD_FORMULIZE_AI_MCP_ERROR); ?>,
+    settingsSaved:     <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_SAVED); ?>,
+    activeToolsStatus: <?php echo json_encode(_MD_FORMULIZE_AI_ACTIVE_TOOLS_STATUS); ?>,
+    modelStatus:       <?php echo json_encode(_MD_FORMULIZE_AI_MODEL_STATUS); ?>,
+    saveFirst:         <?php echo json_encode(_MD_FORMULIZE_AI_SAVE_FIRST); ?>,
+    geminiSaveFirst:   <?php echo json_encode(_MD_FORMULIZE_AI_GEMINI_SAVE_FIRST); ?>,
+    failedInit:        <?php echo json_encode(_MD_FORMULIZE_AI_FAILED_INIT); ?>,
+    errorOccurred:     <?php echo json_encode(_MD_FORMULIZE_AI_ERROR_OCCURRED); ?>,
+    welcomeAlert:      <?php echo json_encode(_MD_FORMULIZE_AI_WELCOME_ALERT); ?>,
+    welcomeMsg:        <?php echo json_encode(_MD_FORMULIZE_AI_WELCOME_MSG); ?>,
+    senderYou:         <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_YOU); ?>,
+    senderAI:          <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_AI); ?>,
+    senderSystem:      <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_SYSTEM); ?>,
+    senderError:       <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_ERROR); ?>,
+    thinking:          <?php echo json_encode(_MD_FORMULIZE_AI_THINKING); ?>,
+    toolPending:       <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_PENDING); ?>,
+    toolOk:            <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_OK); ?>,
+    toolError:         <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_ERROR); ?>,
+    toolExpand:        <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_EXPAND); ?>,
+    toolCollapse:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_COLLAPSE); ?>,
+    toolParamsLabel:   <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_PARAMS_LABEL); ?>,
+    toolNoParams:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NO_PARAMS); ?>,
+    toolResponseLabel: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_RESPONSE_LABEL); ?>,
+    toolWaiting:       <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_WAITING); ?>,
+    toolNoOutput:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NO_OUTPUT); ?>,
+    toolResponseError: <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_RESPONSE_ERROR); ?>,
+    toolNetError:      <?php echo json_encode(_MD_FORMULIZE_AI_TOOL_NET_ERROR); ?>,
+    evtSavedNew:       <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED_NEW); ?>,
+    evtSaved:          <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SAVED); ?>,
+    evtDeleted:        <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_DELETED); ?>,
+    evtGathered:       <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_GATHERED); ?>,
+    evtSearching:      <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SEARCHING); ?>,
+    evtSort:           <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SORT); ?>,
+    evtScope:          <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SCOPE); ?>,
+    evtAdminSaved:     <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_ADMIN_SAVED); ?>,
+    evtAdminFailed:    <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_ADMIN_FAILED); ?>,
+    evtViewed:         <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_VIEWED); ?>,
+    evtAdminPage:      <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE); ?>,
+    evtSubmitted:      <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SUBMITTED); ?>,
+    contextHeader:     <?php echo json_encode(_MD_FORMULIZE_AI_CONTEXT_HEADER); ?>,
+    apiKeyPlaceholder: <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER); ?>,
+    apiKeyOllama:      <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_OLLAMA); ?>,
+    toolsReadData:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_READ_DATA); ?>,
+    toolsWriteData:    <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_WRITE_DATA); ?>,
+    toolsManageForms:  <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS); ?>,
+    systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
+};
+</script>
 <script type="importmap">
   {
     "imports": {
@@ -107,6 +166,13 @@ if (!$xoopsUser) {
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
+    const S = window.formulizeAI.strings;
+
+    // Replace {token} placeholders in a string with values from a vars object
+    function t(str, vars) {
+        return str.replace(/\{(\w+)\}/g, (_, k) => vars[k] !== undefined ? String(vars[k]) : '{' + k + '}');
+    }
+
     const chatWindow = document.getElementById('chat-window');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -116,17 +182,98 @@ if (!$xoopsUser) {
     const saveSettingsBtn = document.getElementById('save-settings');
     const mcpStatus = document.getElementById('mcp-status');
 
-    const SYSTEM_PROMPT = "You are the Formulize AI Assistant. You help users manage their data in Formulize. You have access to tools that can list forms, read entries, and modify the system. Always use the list_forms tool first to understand what is in the system. Be concise and helpful.";
+    const SYSTEM_PROMPT = S.systemPrompt;
+
+    // Tool names that should never appear in the UI or be sent to the AI
+    const EASTER_EGGS = new Set([
+        'locate_captain_picard',
+        'open_the_pod_bay_doors_hal',
+        'lets_play_global_thermonuclear_war'
+    ]);
+
+    // Tools whose output is embedded in the system prompt; removed from the tool list.
+    // The PHP MCP server registers this tool using the local server name, which defaults to 'formulize'.
+    const INIT_TOOLS = ['formulize'];
+
+    // Tools that create/update form structure (Manage forms group)
+    const FORM_MGMT_TOOLS = new Set([
+        'create_derived_value_element', 'create_form', 'create_linked_list_element',
+        'create_list_element', 'create_selector_element', 'create_subform_interface',
+        'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
+        'update_derived_value_element', 'update_linked_list_element', 'update_list_element',
+        'update_selector_element', 'update_subform_interface', 'update_table_of_elements',
+        'update_text_box_element', 'update_user_list_element'
+    ]);
+
+    // Tools that write entry data (add to Read data to get Write data)
+    const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
+
+    // Returns the names of tools in the named preset group
+    function getToolGroupNames(group) {
+        const all = availableTools.map(t => t.name);
+        if (group === 'readData')    return all.filter(n => !FORM_MGMT_TOOLS.has(n) && !ENTRY_WRITE_TOOLS.has(n));
+        if (group === 'writeData')   return all.filter(n => !FORM_MGMT_TOOLS.has(n));
+        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n));
+        return [];
+    }
+
+    // System prompt extended with initialization context after MCP connects
+    let dynamicSystemPrompt = SYSTEM_PROMPT;
 
     function getActivityLog() {
         try {
             const raw = localStorage.getItem('formulize_activity_log');
-            return raw ? JSON.parse(raw) : [];
+            const log = raw ? JSON.parse(raw) : [];
+            return log.filter(function(e) {
+                if (e.type === 'formulize_event') {
+                    // Noise: session housekeeping
+                    if (e.event === 'session-loaded-for-user') return false;
+                    // Implied by the page-title in the pageview event
+                    if (e.event === 'rendering-form' || e.event === 'rendering-form-screen-page') return false;
+                    // Plain list view with no searches/sort/scope is implied by the "Viewed:" pageview
+                    if (e.event === 'gathering-data-for-list-of-entries' && !e.searches && !e.sort && !e.scope) return false;
+                }
+                // Front-end form submits are covered by server-side saving-data events
+                if (e.type === 'form_submit' && !e.admin) return false;
+                return true;
+            });
         } catch (e) { return []; }
     }
 
+    function eventFingerprint(e) {
+        if (e.type === 'formulize_event') {
+            const searchKey = e.searches ? JSON.stringify(e.searches) : '';
+            // Include new_entry so "saved new entry" and "saved entry" for the same
+            // fid+entry are kept as distinct events (the re-save after new is non-new).
+            return [e.type, e.event, e.fid || '', e.sid || '', e.entry || '', searchKey, e.sort || '', e.scope || '', e.new_entry ? 'new' : ''].join('|');
+        }
+        if (e.type === 'pageview') {
+            // Admin pageviews are client-recorded; URL is the right differentiator.
+            // Front-end pageviews are server-recorded with authoritative sid/fid/entry.
+            // Use sid || fid so events recorded with only one of the two still dedup correctly.
+            if (e.admin) return ['pageview', e.url || ''].join('|');
+            return ['pageview', e.sid || e.fid || '', e.entry || ''].join('|');
+        }
+        if (e.type === 'admin_save') return [e.type, e.handler || '', e.fid || '', e.sid || '', e.ele_id || ''].join('|');
+        if (e.type === 'form_submit') return [e.type, e.url, e.fid || ''].join('|');
+        return e.type + '|' + e.ts;
+    }
+
+    // Deduplicate the filtered log, keeping the most recent occurrence of each fingerprint.
+    // Returns events in chronological order (oldest first).
+    function getDeduplicatedLog() {
+        const log = getActivityLog();
+        const seen = new Set();
+        const result = [];
+        for (var i = log.length - 1; i >= 0; i--) {
+            var fp = eventFingerprint(log[i]);
+            if (!seen.has(fp)) { seen.add(fp); result.unshift(log[i]); }
+        }
+        return result;
+    }
+
     function describeEvent(e) {
-        const time = new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const time = new Date(e.ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const ids = [];
         if (e.fid)    ids.push('form #' + e.fid);
         if (e.sid)    ids.push('screen #' + e.sid);
@@ -141,34 +288,45 @@ if (!$xoopsUser) {
                     .filter(([, v]) => v !== '' && v !== null)
                     .map(([k, v]) => `${k}="${v}"`)
                     .join(', ');
-                if (terms) extra += '; searching: ' + terms;
+                if (terms) extra += S.evtSearching + terms;
             }
-            if (e.sort) extra += '; sort: ' + e.sort + (e.order ? ' ' + e.order : '');
-            if (e.scope) extra += '; scope: ' + e.scope;
+            if (e.sort) extra += S.evtSort + e.sort + (e.order ? ' ' + e.order : '');
+            if (e.scope) extra += S.evtScope + e.scope;
+            if (e.event === 'saving-data') {
+                const label = e.new_entry ? S.evtSavedNew : S.evtSaved;
+                return { time, text: label + detail + extra, kind: 'save' };
+            }
+            if (e.event === 'deleting-entry') {
+                return { time, text: S.evtDeleted + detail, kind: 'delete' };
+            }
+            if (e.event === 'gathering-data-for-list-of-entries') {
+                return { time, text: S.evtGathered + detail + extra, kind: 'server' };
+            }
             return { time, text: e.event + detail + extra, kind: 'server' };
         }
         if (e.type === 'admin_save') {
-            const status = e.success ? '' : ' [FAILED]';
-            return { time, text: 'Admin saved: ' + (e.handler || '?') + status + detail, kind: e.success ? 'admin' : 'error' };
+            const status = e.success ? '' : S.evtAdminFailed;
+            return { time, text: S.evtAdminSaved + (e.handler || '?') + status + detail, kind: e.success ? 'admin' : 'error' };
         }
         if (e.type === 'pageview') {
-            const label = e.admin ? 'Admin page: ' + (e.title || e.url) : 'Viewed: ' + (e.title || e.url);
+            const label = e.admin ? S.evtAdminPage + (e.title || e.url) : S.evtViewed + (e.title || e.url);
             return { time, text: label + detail, kind: e.admin ? 'admin' : 'view' };
         }
         if (e.type === 'form_submit') {
-            return { time, text: 'Submitted: ' + (e.title || e.url) + detail, kind: 'save' };
+            return { time, text: S.evtSubmitted + (e.title || e.url) + detail, kind: 'save' };
         }
         return { time, text: e.type + detail, kind: 'other' };
     }
 
+    // For AI: deduplicated, chronological
     function getActivityContext() {
-        const log = getActivityLog();
+        const log = getDeduplicatedLog();
         if (!log.length) return '';
         const lines = log.map(e => {
             const d = describeEvent(e);
             return `[${d.time}] ${d.text}`;
         });
-        return `[Recent Formulize activity across all open tabs (last 30 min):\n${lines.join('\n')}\n]`;
+        return `${S.contextHeader}\n${lines.join('\n')}\n]`;
     }
 
     // --- Activity panel ---
@@ -184,12 +342,13 @@ if (!$xoopsUser) {
         admin:  '#fff3cd',
         view:   '#f0f0f0',
         save:   '#d4edda',
+        delete: '#fde8e8',
         error:  '#f8d7da',
         other:  '#f8f9fa'
     };
 
     function refreshActivityPanel() {
-        const log = getActivityLog();
+        const log = getDeduplicatedLog().slice().reverse(); // newest first
         activityCount.textContent = log.length;
         activityCount.style.background = log.length > 0 ? '#007cba' : '#6c757d';
 
@@ -202,16 +361,13 @@ if (!$xoopsUser) {
             row.textContent = `[${d.time}] ${d.text}`;
             activityList.appendChild(row);
         });
-
-        // Scroll to bottom (newest event)
-        activityList.scrollTop = activityList.scrollHeight;
     }
 
     activityToggleBar.addEventListener('click', () => {
         const open = activityPanel.style.display !== 'none';
         activityPanel.style.display = open ? 'none' : 'block';
         activityToggleBar.style.borderRadius = open ? '0 0 8px 8px' : '0';
-        activityArrow.textContent = open ? '▶ show what AI sees' : '▼ hide';
+        activityArrow.textContent = open ? S.activityShow : S.activityHide;
         if (!open) refreshActivityPanel();
     });
 
@@ -306,7 +462,7 @@ if (!$xoopsUser) {
     function updateProviderHints() {
         const p = providerSelect.value;
         const isOllama = p === 'ollama';
-        apiKeyInput.placeholder = isOllama ? 'No key needed' : 'Enter your API Key';
+        apiKeyInput.placeholder = isOllama ? S.apiKeyOllama : S.apiKeyPlaceholder;
         apiKeyInput.value = isOllama ? '' : (settingsForProvider(p).key || '');
         apiKeyInput.disabled = isOllama;
         apiKeyInput.style.opacity = isOllama ? '0.45' : '';
@@ -324,11 +480,22 @@ if (!$xoopsUser) {
 
     document.getElementById('settings-toggle').addEventListener('click', () => {
         const panel = document.getElementById('settings-panel');
-        panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+        const open = panel.style.display === 'none';
+        panel.style.display = open ? 'flex' : 'none';
+        document.getElementById('settings-close-label').style.display = open ? '' : 'none';
     });
 
     const savedKey = settingsForProvider(savedProvider).key;
-    if (savedKey || savedProvider === 'ollama') initializeMCP();
+    if (savedKey || savedProvider === 'ollama') {
+        initializeMCP();
+    } else {
+        // First visit: open settings panel and show welcome
+        const panel = document.getElementById('settings-panel');
+        panel.style.display = 'flex';
+        document.getElementById('settings-close-label').style.display = '';
+        addMessage(S.senderSystem, S.welcomeMsg, 'system');
+        setTimeout(() => alert(S.welcomeAlert), 150);
+    }
 
     saveSettingsBtn.addEventListener('click', () => {
         const key = apiKeyInput.value.trim();
@@ -341,7 +508,7 @@ if (!$xoopsUser) {
             claudeHistory = [];
             ollamaHistory = [];
             initializeMCP();
-            addMessage('System', `Settings saved. Provider: ${provider}, Model: ${modelName}`, 'system');
+            addMessage(S.senderSystem, t(S.settingsSaved, { provider, model: modelName }), 'system');
         }
     });
 
@@ -361,8 +528,8 @@ if (!$xoopsUser) {
         document.getElementById('tool-selection-count').innerText = `${active} / ${total}`;
         const model = modelNameInput.value.trim() || '—';
         mcpStatus.innerText = total > 0
-            ? `Active tools: ${active}/${total}  ·  Model: ${model}`
-            : `Model: ${model}`;
+            ? t(S.activeToolsStatus, { active, total, model })
+            : t(S.modelStatus, { model });
     }
 
     function renderToolPanel() {
@@ -374,13 +541,13 @@ if (!$xoopsUser) {
             return;
         }
 
-        // Restore saved selection, defaulting to all tools selected
+        // Restore saved selection, defaulting to no tools (user must opt in)
         const saved = localStorage.getItem('ai_selected_tools');
         if (saved) {
             const savedNames = new Set(JSON.parse(saved));
             selectedToolNames = new Set(availableTools.map(t => t.name).filter(n => savedNames.has(n)));
         } else {
-            selectedToolNames = new Set(availableTools.map(t => t.name));
+            selectedToolNames = new Set();
         }
 
         // Build checklist
@@ -392,6 +559,7 @@ if (!$xoopsUser) {
 
             const cb = document.createElement('input');
             cb.type = 'checkbox';
+            cb.dataset.toolName = tool.name;
             cb.checked = selectedToolNames.has(tool.name);
             cb.addEventListener('change', () => {
                 if (cb.checked) selectedToolNames.add(tool.name);
@@ -421,6 +589,22 @@ if (!$xoopsUser) {
             updateToolCount();
         };
 
+        // Group preset buttons
+        ['readData', 'writeData', 'manageForms'].forEach(group => {
+            const btnId = { readData: 'tool-group-read', writeData: 'tool-group-write', manageForms: 'tool-group-manage' }[group];
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.onclick = () => {
+                const groupSet = new Set(getToolGroupNames(group));
+                selectedToolNames = groupSet;
+                list.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                    cb.checked = groupSet.has(cb.dataset.toolName);
+                });
+                saveToolSelection();
+                updateToolCount();
+            };
+        });
+
         panel.style.display = 'block';
         updateToolCount();
     }
@@ -428,18 +612,41 @@ if (!$xoopsUser) {
     async function initializeMCP() {
         const provider = providerSelect.value;
         try {
-            mcpStatus.innerText = 'MCP: Fetching tools...';
+            mcpStatus.innerText = S.fetchingTools;
 
             const response = await fetch('mcp/index.php/capabilities');
             const data = await response.json();
 
             const capabilities = data.result?.capabilities || data.capabilities;
-            availableTools = capabilities?.tools || [];
+            const rawTools = capabilities?.tools || [];
+
+            // Strip easter eggs and find initialization tool
+            availableTools = rawTools.filter(t => !EASTER_EGGS.has(t.name));
+
+            // Call the first init tool found, embed its instructions in the system prompt, then remove it.
+            // The tool returns JSON: { instructions: "...", authenticated_user: {...} }
+            for (const initName of INIT_TOOLS) {
+                const initTool = availableTools.find(t => t.name === initName);
+                if (initTool) {
+                    const initResult = await executeTool(initName, {});
+                    const rawText = initResult.raw?.result?.content?.[0]?.text;
+                    if (rawText) {
+                        try {
+                            const parsed = JSON.parse(rawText);
+                            dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + (parsed.instructions || rawText);
+                        } catch (e) {
+                            dynamicSystemPrompt = SYSTEM_PROMPT + '\n\n' + rawText;
+                        }
+                    }
+                    availableTools = availableTools.filter(t => t.name !== initName);
+                    break;
+                }
+            }
 
             renderToolPanel();
 
             if (availableTools.length === 0) {
-                mcpStatus.innerText = 'MCP: No tools found';
+                mcpStatus.innerText = S.noToolsFound;
             }
 
             // Gemini needs a chat object initialized with the tool list
@@ -460,7 +667,7 @@ if (!$xoopsUser) {
                     }
                 }));
 
-                const modelConfig = { model: modelName, systemInstruction: SYSTEM_PROMPT };
+                const modelConfig = { model: modelName, systemInstruction: dynamicSystemPrompt };
                 if (functionDeclarations.length > 0) {
                     modelConfig.tools = [{ functionDeclarations }];
                 }
@@ -469,8 +676,8 @@ if (!$xoopsUser) {
             }
         } catch (error) {
             console.error('MCP init error:', error);
-            mcpStatus.innerText = 'MCP: Error';
-            addMessage('Error', 'Failed to initialize: ' + error.message, 'error');
+            mcpStatus.innerText = S.mcpError;
+            addMessage(S.senderError, S.failedInit + error.message, 'error');
         }
     }
 
@@ -481,21 +688,22 @@ if (!$xoopsUser) {
         const provider = providerSelect.value;
         const apiKey = settingsForProvider(provider).key;
         if (provider !== 'ollama' && !apiKey) {
-            addMessage('Error', 'Please save your settings first.', 'error');
+            addMessage(S.senderError, S.saveFirst, 'error');
             return;
         }
 
-        addMessage('You', text, 'user');
+        addMessage(S.senderYou, text, 'user');
         userInput.value = '';
         userInput.style.height = '60px';
 
-        const loadingMsg = addMessage('AI', 'Thinking.', 'ai');
+        const loadingMsg = addMessage(S.senderAI, S.thinking + '.', 'ai');
         // Animate the dots while waiting for the response
         const _thinkingEl = loadingMsg.querySelector('.ai-markdown') || loadingMsg.lastElementChild;
+        _thinkingEl.style.minWidth = '6rem'; // prevent bubble resizing as dots animate
         let _dotCount = 1;
         const _dotsInterval = setInterval(() => {
             _dotCount = _dotCount >= 3 ? 1 : _dotCount + 1;
-            _thinkingEl.textContent = 'Thinking' + '.'.repeat(_dotCount);
+            _thinkingEl.textContent = S.thinking + '.'.repeat(_dotCount);
         }, 400);
         const _origRemove = loadingMsg.remove.bind(loadingMsg);
         loadingMsg.remove = () => { clearInterval(_dotsInterval); _origRemove(); };
@@ -512,7 +720,7 @@ if (!$xoopsUser) {
         } catch (error) {
             console.error('Chat error:', error);
             loadingMsg.remove();
-            addMessage('Error', 'An error occurred: ' + error.message, 'error');
+            addMessage(S.senderError, S.errorOccurred + error.message, 'error');
         }
     }
 
@@ -521,7 +729,7 @@ if (!$xoopsUser) {
     async function sendGeminiMessage(text, loadingMsg) {
         if (!geminiChat) {
             loadingMsg.remove();
-            addMessage('Error', 'Please save your settings first to initialize Gemini.', 'error');
+            addMessage(S.senderError, S.geminiSaveFirst, 'error');
             return;
         }
 
@@ -545,7 +753,7 @@ if (!$xoopsUser) {
         }
 
         loadingMsg.remove();
-        const geminiMsg = addMessage('AI', 'Thinking...', 'ai');
+        const geminiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
         await typewriterEffect(geminiMsg.querySelector('.ai-markdown') || geminiMsg.lastElementChild, response.text());
     }
 
@@ -582,7 +790,7 @@ if (!$xoopsUser) {
         claudeHistory.push({ role: 'assistant', content: response.content });
 
         loadingMsg.remove();
-        const claudeMsg = addMessage('AI', 'Thinking...', 'ai');
+        const claudeMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
         await typewriterEffect(claudeMsg.querySelector('.ai-markdown') || claudeMsg.lastElementChild, textContent);
     }
 
@@ -596,7 +804,7 @@ if (!$xoopsUser) {
             input_schema: tool.inputSchema || { type: 'object', properties: {} }
         }));
 
-        const body = { model: modelName, max_tokens: 4096, system: SYSTEM_PROMPT, messages };
+        const body = { model: modelName, max_tokens: 4096, system: dynamicSystemPrompt, messages };
         if (claudeTools.length > 0) body.tools = claudeTools;
 
         const response = await fetch('ai_proxy.php', {
@@ -640,7 +848,7 @@ if (!$xoopsUser) {
         ollamaHistory.push({ role: 'assistant', content: message.content || '' });
 
         loadingMsg.remove();
-        const ollamaMsg = addMessage('AI', 'Thinking...', 'ai');
+        const ollamaMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
         await typewriterEffect(ollamaMsg.querySelector('.ai-markdown') || ollamaMsg.lastElementChild, message.content || '(no response)');
     }
 
@@ -658,7 +866,7 @@ if (!$xoopsUser) {
 
         // System prompt goes as the first message in OpenAI-compatible format
         const messagesWithSystem = [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: dynamicSystemPrompt },
             ...messages
         ];
 
@@ -709,10 +917,10 @@ if (!$xoopsUser) {
             });
             const raw = await response.json();
             const text = raw.result?.content?.[0]?.text
-                || (raw.error ? `Error: ${raw.error.message}` : 'No output from tool');
+                || (raw.error ? S.toolCallError + raw.error.message : S.toolNoOutput);
             return { text, raw };
         } catch (error) {
-            return { text: `Network error: ${error.message}`, raw: null };
+            return { text: S.toolNetError + error.message, raw: null };
         }
     }
 
@@ -726,11 +934,11 @@ if (!$xoopsUser) {
 
         const titleSpan = document.createElement('span');
         titleSpan.style.fontFamily = 'monospace';
-        titleSpan.innerText = '⏳ Tool: ' + name;
+        titleSpan.innerText = S.toolPending + name;
 
         const toggleSpan = document.createElement('span');
         toggleSpan.style.cssText = 'font-size: 0.85em; color: #555; white-space: nowrap;';
-        toggleSpan.innerText = '▶ expand';
+        toggleSpan.innerText = S.toolExpand;
 
         header.appendChild(titleSpan);
         header.appendChild(toggleSpan);
@@ -741,19 +949,19 @@ if (!$xoopsUser) {
 
         const paramsLabel = document.createElement('div');
         paramsLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #444;';
-        paramsLabel.innerText = 'Parameters:';
+        paramsLabel.innerText = S.toolParamsLabel;
 
         const paramsPre = document.createElement('pre');
         paramsPre.style.cssText = 'background: #f8f9fa; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 0 0 10px 0; font-size: 1em;';
-        paramsPre.textContent = args && Object.keys(args).length > 0 ? JSON.stringify(args, null, 2) : '(no parameters)';
+        paramsPre.textContent = args && Object.keys(args).length > 0 ? JSON.stringify(args, null, 2) : S.toolNoParams;
 
         const responseLabel = document.createElement('div');
         responseLabel.style.cssText = 'font-weight: bold; margin-bottom: 4px; color: #555;';
-        responseLabel.innerText = 'Response:';
+        responseLabel.innerText = S.toolResponseLabel;
 
         const responsePre = document.createElement('pre');
         responsePre.style.cssText = 'background: #f8f9fa; padding: 6px 8px; border-radius: 4px; white-space: pre-wrap; word-break: break-word; margin: 0; font-size: 1em; color: #888;';
-        responsePre.textContent = 'Waiting for response...';
+        responsePre.textContent = S.toolWaiting;
 
         body.appendChild(paramsLabel);
         body.appendChild(paramsPre);
@@ -768,7 +976,7 @@ if (!$xoopsUser) {
         header.addEventListener('click', () => {
             const expanded = body.style.display !== 'none';
             body.style.display = expanded ? 'none' : 'block';
-            toggleSpan.innerText = expanded ? '▶ expand' : '▼ collapse';
+            toggleSpan.innerText = expanded ? S.toolExpand : S.toolCollapse;
         });
 
         msgDiv.appendChild(header);
@@ -785,12 +993,12 @@ if (!$xoopsUser) {
         // Update header
         msgDiv._header.style.background = hasError ? '#fdf0f0' : '#e8f4fd';
         msgDiv._header.style.borderBottomColor = hasError ? '#f5c6cb' : '#c8dff7';
-        msgDiv._titleSpan.innerText = (hasError ? '⚠ ' : '⚙ ') + 'Tool: ' + name;
+        msgDiv._titleSpan.innerText = (hasError ? S.toolError : S.toolOk) + name;
         msgDiv.style.borderColor = hasError ? '#f5c6cb' : '#c8dff7';
 
         // Update response section
         msgDiv._responseLabel.style.color = hasError ? '#721c24' : '#155724';
-        msgDiv._responseLabel.innerText = hasError ? 'Error:' : 'Response:';
+        msgDiv._responseLabel.innerText = hasError ? S.toolResponseError : S.toolResponseLabel;
 
         const responsePre = msgDiv._responsePre;
         responsePre.style.background = hasError ? '#f8d7da' : '#d4edda';
@@ -805,28 +1013,51 @@ if (!$xoopsUser) {
         } else if (raw) {
             responsePre.textContent = JSON.stringify(raw, null, 2);
         } else {
-            responsePre.textContent = 'No output';
+            responsePre.textContent = S.toolNoOutput;
         }
 
         chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
     async function typewriterEffect(container, text) {
-        const chunks = text.match(/\S+\s*/g) || [text];
-        let displayed = '';
-        for (const chunk of chunks) {
-            displayed += chunk;
-            container.textContent = displayed;
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            await new Promise(r => setTimeout(r, 20));
-        }
-        // Final pass: full markdown render
+        // Render the complete markdown upfront so formatting is correct from the first word
         if (typeof marked !== 'undefined') {
             container.innerHTML = marked.parse(text, { breaks: false });
         } else {
             container.textContent = text;
         }
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        // Walk every text node in the rendered HTML and wrap each word in an opacity-0 span
+        const wordSpans = [];
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const textNodes = [];
+        let node;
+        while ((node = walker.nextNode())) textNodes.push(node);
+
+        for (const textNode of textNodes) {
+            const nodeText = textNode.nodeValue;
+            if (!nodeText.trim()) continue;
+            const fragment = document.createDocumentFragment();
+            for (const part of nodeText.split(/(\s+)/)) {
+                if (/^\s+$/.test(part)) {
+                    fragment.appendChild(document.createTextNode(part));
+                } else if (part) {
+                    const span = document.createElement('span');
+                    span.style.opacity = '0';
+                    span.textContent = part;
+                    fragment.appendChild(span);
+                    wordSpans.push(span);
+                }
+            }
+            textNode.parentNode.replaceChild(fragment, textNode);
+        }
+
+        // Reveal words one at a time — fully-rendered markup, just gradually visible
+        for (const span of wordSpans) {
+            span.style.opacity = '1';
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            await new Promise(r => setTimeout(r, 65));
+        }
     }
 
     function addMessage(sender, text, type) {
@@ -901,7 +1132,11 @@ if (!$xoopsUser) {
         container.style.height = (window.innerHeight - topOffset - 20) + 'px';
     }
     window.addEventListener('resize', fitChatToViewport);
-    fitChatToViewport();
+    jQuery(document).ready(function() {
+        jQuery(window).load(function() {
+            fitChatToViewport();
+        });
+    });
 </script>
 
 <?php

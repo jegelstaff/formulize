@@ -56,25 +56,29 @@
         return (el && el.value) ? el.value : null;
     }
 
-    var path    = window.location.pathname;
-    var params  = parseParams(window.location.search);
-    var isAdmin = path.indexOf('/admin/') !== -1 || path.indexOf('/admin.php') !== -1;
+    var path               = window.location.pathname;
+    var params             = parseParams(window.location.search);
+    var isAdmin            = path.indexOf('/admin/') !== -1 || path.indexOf('/admin.php') !== -1;
+    var isFormulizeFrontEnd = !isAdmin && path.indexOf('/modules/formulize/') !== -1;
 
     // Don't record visits to the AI chat page itself
     if (path.indexOf('ai_chat.php') !== -1) return;
 
-    // Record this page visit. Admin URL params (ele_id, op) add useful detail.
-    addEvent({
-        type:   'pageview',
-        url:    path + window.location.search,
-        title:  document.title,
-        fid:    params.fid    || null,
-        sid:    params.sid    || null,
-        ele_id: isAdmin && params.ele_id ? params.ele_id : null,
-        entry:  params.ve     || params.entry_id || null,
-        op:     isAdmin && params.op ? params.op : null,
-        admin:  isAdmin       || undefined
-    });
+    // For front-end Formulize pages the server is the sole authority: footer.php emits an
+    // authoritative pageview with the real fid/sid/entry from PHP. Skip client recording here.
+    if (!isFormulizeFrontEnd) {
+        addEvent({
+            type:   'pageview',
+            url:    path + window.location.search,
+            title:  document.title,
+            fid:    params.fid    || null,
+            sid:    params.sid    || null,
+            ele_id: isAdmin && params.ele_id ? params.ele_id : null,
+            entry:  params.ve     || params.entry_id || null,
+            op:     isAdmin && params.op ? params.op : null,
+            admin:  isAdmin       || undefined
+        });
+    }
 
     // Intercept form submissions (capture phase catches all forms, including those
     // that AJAX-submit — the submit event still fires before jQuery/fetch takes over).
