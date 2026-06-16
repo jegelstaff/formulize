@@ -5,13 +5,12 @@
  * GET  → forwards to /v1/models  (model discovery)
  * POST → forwards to /v1/messages (chat completion)
  *
- * The API key is never stored server-side — it arrives in X-API-Key each request.
+ * The API key is loaded server-side from the formulize_ai_keys table.
+ * An X-API-Key request header is accepted as a fallback only during initial
+ * model discovery, before the user has saved their key for the first time.
+ * After first save, the key never travels from browser to server again.
  */
 
-// Match the pattern used in admin/save.php: include bootstrap, then disable the XOOPS
-// debug logger and clear ALL output buffer levels (mainfile.php opens several, including
-// a gzip layer). Without this, XOOPS flushes debug/log output after our JSON response,
-// producing a two-line body that breaks JSON.parse in the browser.
 include_once "mainfile.php";
 if (isset(icms::$logger)) {
     icms::$logger->disableLogger();
@@ -28,10 +27,28 @@ if (!$xoopsUser) {
     exit();
 }
 
-$apiKey = isset($_SERVER['HTTP_X_API_KEY']) ? trim($_SERVER['HTTP_X_API_KEY']) : '';
+// Load Claude key from DB; fall back to X-API-Key header for initial model
+// discovery before the user has saved their key for the first time.
+$apiKey = '';
+if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
+    $uid    = (int)$xoopsUser->getVar('uid');
+    $table  = $xoopsDB->prefix('formulize_ai_keys');
+    $result = @$xoopsDB->query("SELECT encrypted_key FROM $table WHERE uid = $uid AND provider = 'claude'");
+    if ($result && ($row = $xoopsDB->fetchArray($result))) {
+        $raw = base64_decode($row['encrypted_key']);
+        if (strlen($raw) >= 17) {
+            $dec = openssl_decrypt(substr($raw, 16), 'AES-256-CBC', hash('sha256', XOOPS_DB_SALT, true), 0, substr($raw, 0, 16));
+            if ($dec !== false) $apiKey = $dec;
+        }
+    }
+}
+if (!$apiKey) {
+    $apiKey = isset($_SERVER['HTTP_X_API_KEY']) ? trim($_SERVER['HTTP_X_API_KEY']) : '';
+}
+
 if (!$apiKey) {
     http_response_code(400);
-    echo json_encode(['error' => ['message' => 'No API key provided']]);
+    echo json_encode(['error' => ['message' => 'No Claude API key configured. Please save your settings first.']]);
     exit();
 }
 

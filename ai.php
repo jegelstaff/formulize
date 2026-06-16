@@ -628,7 +628,12 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             let models = [];
 
             if (provider === 'claude' && apiKey) {
-                const resp = await fetch('ai_proxy.php', { headers: { 'X-API-Key': apiKey } });
+                // Only send the key in the header when the user has typed a new key not yet
+                // saved to the DB. For established users the proxy loads the key itself.
+                const discoverHeaders = {};
+                const typedKey = apiKeyInput.value.trim();
+                if (typedKey && !serverKeys[provider]) discoverHeaders['X-API-Key'] = typedKey;
+                const resp = await fetch('ai_proxy.php', { headers: discoverHeaders });
                 if (resp.ok) {
                     const data = await resp.json();
                     models = (data.data || []).map(m => ({ id: m.id, name: m.display_name || m.id }));
@@ -1149,7 +1154,6 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     }
 
     async function callClaude(messages) {
-        const apiKey = settingsForProvider('claude').key;
         const modelName = modelNameInput.value.trim() || 'claude-sonnet-4-6';
 
         const claudeTools = getActiveTools().map(tool => ({
@@ -1161,9 +1165,10 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         const body = { model: modelName, max_tokens: 4096, system: dynamicSystemPrompt, messages };
         if (claudeTools.length > 0) body.tools = claudeTools;
 
+        // No key header — the proxy loads the key server-side from the DB.
         const response = await fetch('ai_proxy.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
             signal: currentAbortController?.signal
         });
