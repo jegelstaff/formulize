@@ -235,6 +235,8 @@ window.formulizeAI.strings = {
                 }
                 // Front-end form submits are covered by server-side saving-data events
                 if (e.type === 'form_submit' && !e.admin) return false;
+                // Admin page loads aren't useful context — only admin saves matter
+                if (e.type === 'pageview' && e.admin) return false;
                 return true;
             });
         } catch (e) { return []; }
@@ -254,7 +256,7 @@ window.formulizeAI.strings = {
             if (e.admin) return ['pageview', e.url || ''].join('|');
             return ['pageview', e.sid || e.fid || '', e.entry || ''].join('|');
         }
-        if (e.type === 'admin_save') return [e.type, e.handler || '', e.fid || '', e.sid || '', e.ele_id || ''].join('|');
+        if (e.type === 'admin_save') return [e.type, e.fid || '', e.sid || '', e.ele_id || '', e.aid || ''].join('|');
         if (e.type === 'form_submit') return [e.type, e.url, e.fid || ''].join('|');
         return e.type + '|' + e.ts;
     }
@@ -305,8 +307,15 @@ window.formulizeAI.strings = {
             return { time, text: e.event + detail + extra, kind: 'server' };
         }
         if (e.type === 'admin_save') {
+            const parts = [];
+            if (e.fid)    parts.push('form #' + e.fid + (e.form_handle ? ' (' + e.form_handle + ')' : ''));
+            if (e.sid)    parts.push('screen #' + e.sid + (e.screen_name ? ' (' + e.screen_name + ')' : ''));
+            if (e.ele_id) parts.push('element #' + e.ele_id + (e.ele_handle ? ' (' + e.ele_handle + ')' : ''));
+            // Only show application when it's the primary entity (no form/screen/element context)
+            if (e.aid && !e.fid && !e.sid && !e.ele_id) parts.push('application #' + e.aid + (e.app_name ? ' (' + e.app_name + ')' : ''));
+            const idStr = parts.length ? ': ' + parts.join(', ') : '';
             const status = e.success ? '' : S.evtAdminFailed;
-            return { time, text: S.evtAdminSaved + (e.handler || '?') + status + detail, kind: e.success ? 'admin' : 'error' };
+            return { time, text: S.evtAdminSaved + idStr + status, kind: e.success ? 'admin' : 'error' };
         }
         if (e.type === 'pageview') {
             const label = e.admin ? S.evtAdminPage + (e.title || e.url) : S.evtViewed + (e.title || e.url);

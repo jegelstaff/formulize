@@ -1104,6 +1104,7 @@ if ($fid != "new") {
     $i++;
 }
 $adminPage['pagetitle'] = _AM_APP_FORM.$formName;
+$adminPage['ai_meta_json'] = json_encode(array('form_handle' => $form_handle));
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";

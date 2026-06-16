@@ -88,7 +88,7 @@ define('_MD_FORMULIZE_AI_EVENT_GATHERED',         'Gathered data');
 define('_MD_FORMULIZE_AI_EVENT_SEARCHING',        '; searching: ');
 define('_MD_FORMULIZE_AI_EVENT_SORT',             '; sort: ');
 define('_MD_FORMULIZE_AI_EVENT_SCOPE',            '; scope: ');
-define('_MD_FORMULIZE_AI_EVENT_ADMIN_SAVED',      'Admin saved: ');
+define('_MD_FORMULIZE_AI_EVENT_ADMIN_SAVED',      'Admin config saved');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_FAILED',     ' [FAILED]');
 define('_MD_FORMULIZE_AI_EVENT_VIEWED',           'Viewed: ');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Admin page: ');

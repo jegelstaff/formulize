@@ -88,7 +88,7 @@ define('_MD_FORMULIZE_AI_EVENT_GATHERED',         'Données collectées');
 define('_MD_FORMULIZE_AI_EVENT_SEARCHING',        ' ; recherche : ');
 define('_MD_FORMULIZE_AI_EVENT_SORT',             ' ; tri : ');
 define('_MD_FORMULIZE_AI_EVENT_SCOPE',            ' ; portée : ');
-define('_MD_FORMULIZE_AI_EVENT_ADMIN_SAVED',      'Admin enregistré : ');
+define('_MD_FORMULIZE_AI_EVENT_ADMIN_SAVED',      'Configuration admin enregistrée');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_FAILED',     ' [ÉCHEC]');
 define('_MD_FORMULIZE_AI_EVENT_VIEWED',           'Consulté : ');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Page admin : ');

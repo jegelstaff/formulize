@@ -376,6 +376,10 @@ if ($elementObject->isSystemElement == false AND ($advanced['datatypeui'] OR $ad
 
 $adminPage['pagetitle'] = "Element: ".$elementName;
 $adminPage['pagesubtitle'] = "(".convertTypeToText($ele_type).")";
+$adminPage['ai_meta_json'] = json_encode(array(
+    'form_handle' => $formObject  ? $formObject->getVar('form_handle')   : null,
+    'ele_handle'  => $elementObject ? $elementObject->getVar('ele_handle') : null,
+));
 $adminPage['needsave'] = true;
 
 // data for the shared "Add an element" dialog, so admins can add another element without going back up to the form page
