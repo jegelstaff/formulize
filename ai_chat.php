@@ -162,6 +162,7 @@ window.formulizeAI.strings = {
     evtSubmitted:      <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SUBMITTED); ?>,
     contextHeader:     <?php echo json_encode(_MD_FORMULIZE_AI_CONTEXT_HEADER); ?>,
     historyLimitTitle: <?php echo json_encode(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE); ?>,
+    historyLimitTitleOllama: <?php echo json_encode(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE_OLLAMA); ?>,
     contextCutoffMsg:  <?php echo json_encode(_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG); ?>,
     historyLimitConfirm: <?php echo json_encode(_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM); ?>,
     apiKeyPlaceholder: <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER); ?>,
@@ -227,8 +228,10 @@ window.formulizeAI.strings = {
     // Tools that write entry data (add to Read data to get Write data)
     const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
 
-    // Default history character limits per provider (conversation history only, not system prompt/tools)
-    const CONTEXT_WINDOW_DEFAULTS = { claude: 100000, gemini: 200000, openai: 128000, ollama: 16000 };
+    // Default history character limits per provider (conversation history only, not system prompt/tools).
+    // Set near each model's actual context window, leaving headroom for system prompt + tool definitions.
+    // Claude 200K tokens → 600K chars; gpt-4o 128K tokens → 400K chars; Ollama varies by model/RAM.
+    const CONTEXT_WINDOW_DEFAULTS = { claude: 600000, gemini: 2000000, openai: 400000, ollama: 128000 };
 
     function getContextLimit() {
         const provider = providerSelect.value;
@@ -575,7 +578,9 @@ window.formulizeAI.strings = {
     function updateContextLimitDisplay() {
         const provider = providerSelect.value;
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
-        document.getElementById('context-limit').value = saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+        const el = document.getElementById('context-limit');
+        el.value = saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
+        el.title = provider === 'ollama' ? S.historyLimitTitleOllama : S.historyLimitTitle;
     }
 
     function updateProviderHints() {

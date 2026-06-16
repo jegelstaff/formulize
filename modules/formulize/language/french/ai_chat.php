@@ -101,8 +101,9 @@ define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Délai d\'attente Ollama dép
 define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'Délai d\'attente de la requête OpenAI dépassé.');
 
 // Panneau de paramètres
-define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',    'Limite d\'historique (car.)');
-define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',    'Nombre maximum de caractères d\'historique de conversation envoyés par requête. Réduire pour les modèles locaux avec peu de RAM.');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',        'Limite d\'historique (car.)');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',        'Nombre maximum de caractères d\'historique de conversation envoyés par requête.');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE_OLLAMA', 'Nombre maximum de caractères d\'historique envoyés par requête. Doit correspondre à votre paramètre num_ctx d\'Ollama × 4 — ex. num_ctx 32768 = 128 000 car. Réduire si votre modèle dispose de peu de RAM.');
 define('_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG',     "↑ Les messages au-dessus de ce point sont en dehors de la fenêtre de contexte active de l'IA");
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM',  "Modifier la limite d'historique affecte la quantité de contexte envoyée à l'IA à chaque tour.\n\nTrop basse : l'IA perd le contexte antérieur ; trop haute : les requêtes peuvent échouer sur les modèles à contexte limité.");
 

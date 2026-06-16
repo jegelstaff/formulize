@@ -101,8 +101,9 @@ define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Ollama request timed out — 
 define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'OpenAI request timed out.');
 
 // Settings panel
-define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',    'History limit (chars)');
-define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',    'Maximum characters of conversation history sent per request. Reduce for local models with limited RAM.');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',        'History limit (chars)');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',        'Maximum characters of conversation history sent per request.');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE_OLLAMA', 'Maximum characters of conversation history sent per request. Should match your Ollama num_ctx setting × 4 — e.g. num_ctx 32768 = 128,000 chars. Reduce if your model has limited RAM.');
 define('_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG',     "↑ Messages above this point are outside the AI's active context window");
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM',  "Changing the history limit affects how much conversation context is sent to the AI each turn.\n\nSet too low and the AI loses earlier context; set too high and requests may fail on models with smaller context windows.");
 
