@@ -816,6 +816,10 @@ window.formulizeAI.strings = {
             return;
         }
 
+        sendBtn.disabled = true;
+        userInput.disabled = true;
+        sendBtn.style.opacity = '0.5';
+
         addMessage(S.senderYou, text, 'user');
         userInput.value = '';
         userInput.style.height = '60px';
@@ -845,6 +849,11 @@ window.formulizeAI.strings = {
             console.error('Chat error:', error);
             loadingMsg.remove();
             addMessage(S.senderError, S.errorOccurred + error.message, 'error');
+        } finally {
+            sendBtn.disabled = false;
+            userInput.disabled = false;
+            sendBtn.style.opacity = '';
+            userInput.focus();
         }
     }
 
