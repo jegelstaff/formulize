@@ -31,10 +31,13 @@ if (!$xoopsUser) {
 <div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif; display: flex; flex-direction: column;">
     <div style="background: #007cba; color: white; padding: 15px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0; color: white;"><?php echo _MD_FORMULIZE_AI_PAGE_TITLE; ?></h2>
-        <div id="settings-toggle" title="<?php echo _MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE; ?>" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
-            <span id="mcp-status"><?php echo _MD_FORMULIZE_AI_INITIALIZING; ?></span>
-            <span style="opacity: 0.75; font-size: 1.1em;">⚙</span>
-            <span id="settings-close-label" style="display:none; opacity: 0.85;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div id="new-conversation-btn" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none;"><?php echo _MD_FORMULIZE_AI_NEW_CONVERSATION_BTN; ?></div>
+            <div id="settings-toggle" title="<?php echo _MD_FORMULIZE_AI_TOGGLE_SETTINGS_TITLE; ?>" style="font-size: 0.8em; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 4px; cursor: pointer; user-select: none; display: flex; gap: 8px; align-items: center;">
+                <span id="mcp-status"><?php echo _MD_FORMULIZE_AI_INITIALIZING; ?></span>
+                <span style="opacity: 0.75; font-size: 1.1em;">⚙</span>
+                <span id="settings-close-label" style="display:none; opacity: 0.85;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></span>
+            </div>
         </div>
     </div>
 
@@ -172,6 +175,8 @@ window.formulizeAI.strings = {
     toolsManageForms:  <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS); ?>,
     ollamaTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OLLAMA_TIMEOUT); ?>,
     openaiTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OPENAI_TIMEOUT); ?>,
+    newConversationBtn: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN); ?>,
+    newConversationMsg: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG); ?>,
     systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
 };
 </script>
@@ -825,6 +830,36 @@ window.formulizeAI.strings = {
             addMessage(S.senderError, S.failedInit + error.message, 'error');
         }
     }
+
+    function startNewConversation() {
+        claudeHistory = [];
+        openaiHistory = [];
+        ollamaHistory = [];
+        geminiHistory = [];
+        lastGeminiActivityCount = 0;
+
+        // Gemini SDK holds history internally — rebuild the chat object to truly reset it
+        if (geminiChat) {
+            const apiKey = settingsForProvider('gemini').key;
+            if (apiKey) {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const modelName = modelNameInput.value.trim() || 'gemini-2.0-flash';
+                const functionDeclarations = getActiveTools().map(tool => ({
+                    name: tool.name,
+                    description: tool.description,
+                    parameters: { type: 'object', properties: tool.inputSchema?.properties || {}, required: tool.inputSchema?.required || [] }
+                }));
+                const modelConfig = { model: modelName, systemInstruction: dynamicSystemPrompt };
+                if (functionDeclarations.length > 0) modelConfig.tools = [{ functionDeclarations }];
+                geminiChat = genAI.getGenerativeModel(modelConfig).startChat();
+            }
+        }
+
+        chatWindow.innerHTML = '';
+        addMessage(S.senderSystem, S.newConversationMsg, 'system');
+    }
+
+    document.getElementById('new-conversation-btn').addEventListener('click', startNewConversation);
 
     async function sendMessage() {
         const text = userInput.value.trim();

@@ -18,6 +18,8 @@ define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'API Key:');
 define('_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER',    'Enter your API Key');
 define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'No key needed');
 define('_MD_FORMULIZE_AI_SAVE_SETTINGS_BTN',      'Save Settings');
+define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'New Conversation');
+define('_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG',   'New conversation started.');
 define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Active Tools:');
 define('_MD_FORMULIZE_AI_TOOLS_ALL_BTN',          'All');
 define('_MD_FORMULIZE_AI_TOOLS_NONE_BTN',         'None');
