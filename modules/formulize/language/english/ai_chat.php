@@ -53,8 +53,8 @@ define('_MD_FORMULIZE_AI_FAILED_INIT',            'Failed to initialize: ');
 define('_MD_FORMULIZE_AI_ERROR_OCCURRED',         'An error occurred: ');
 
 // Welcome (shown only on first visit / no saved settings)
-define('_MD_FORMULIZE_AI_WELCOME_ALERT',          "Welcome! I'm Gwynian, the Formulize AI Assistant!\n\nTo get started, select an AI provider, enter your API key in the settings panel, then click Save Settings.");
-define('_MD_FORMULIZE_AI_WELCOME_MSG',            "I'm Gwynian, your Formulize AI Assistant! Select a provider, enter your API Key, and click Save Settings to start. Once connected, I can help you explore your Formulize system, make forms, create entries, and more.");
+define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Welcome! I'm Gwynian, your Formulize AI Assistant! Select a provider, enter your API Key, and click Save Settings to start. Once connected, I can help you explore your Formulize system, make forms, create entries, and more.");
+define('_MD_FORMULIZE_AI_WELCOME_ALERT',          _MD_FORMULIZE_AI_WELCOME_MSG);
 
 // Chat sender labels
 define('_MD_FORMULIZE_AI_SENDER_YOU',             'You');
@@ -94,6 +94,12 @@ define('_MD_FORMULIZE_AI_EVENT_VIEWED',           'Viewed: ');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Admin page: ');
 define('_MD_FORMULIZE_AI_EVENT_SUBMITTED',        'Submitted: ');
 define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Recent Formulize activity across all open tabs (last 30 min):');
+
+// Settings panel
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',    'History limit (chars)');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',    'Maximum characters of conversation history sent per request. Reduce for local models with limited RAM.');
+define('_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG',     "↑ Messages above this point are outside the AI's active context window");
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM',  "Changing the history limit affects how much conversation context is sent to the AI each turn.\n\nSet too low and the AI loses earlier context; set too high and requests may fail on models with smaller context windows.");
 
 // System prompt sent to AI
 define('_MD_FORMULIZE_AI_SYSTEM_PROMPT',          'You are the Formulize AI Assistant. You help users manage their data in Formulize. You have access to tools that can interact with the Formulize data and configuration. Be concise and helpful.');

@@ -53,8 +53,8 @@ define('_MD_FORMULIZE_AI_FAILED_INIT',            'Échec de l\'initialisation :
 define('_MD_FORMULIZE_AI_ERROR_OCCURRED',         'Une erreur s\'est produite : ');
 
 // Message de bienvenue (première visite uniquement)
-define('_MD_FORMULIZE_AI_WELCOME_ALERT',          "Bienvenue ! Je suis Gwynian, l'Assistant IA Formulize !\n\nPour commencer, sélectionnez un fournisseur d'IA, entrez votre clé API dans le panneau de paramètres, puis cliquez sur Enregistrer.");
-define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Je suis Gwynian, votre Assistant IA Formulize ! Sélectionnez un fournisseur, entrez votre clé API et cliquez sur Enregistrer pour démarrer. Une fois connecté, je peux vous aider à explorer votre système Formulize, créer des formulaires, saisir des données, et bien plus encore.");
+define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Bienvenue! Je suis Gwynian, votre Assistant IA Formulize ! Sélectionnez un fournisseur, entrez votre clé API et cliquez sur Enregistrer pour démarrer. Une fois connecté, je peux vous aider à explorer votre système Formulize, créer des formulaires, saisir des données, et bien plus encore.");
+define('_MD_FORMULIZE_AI_WELCOME_ALERT',          _MD_FORMULIZE_AI_WELCOME_MSG);
 
 // Étiquettes des expéditeurs
 define('_MD_FORMULIZE_AI_SENDER_YOU',             'Vous');
@@ -94,6 +94,12 @@ define('_MD_FORMULIZE_AI_EVENT_VIEWED',           'Consulté : ');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Page admin : ');
 define('_MD_FORMULIZE_AI_EVENT_SUBMITTED',        'Soumis : ');
 define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Activité Formulize récente sur tous les onglets ouverts (30 dernières min) :');
+
+// Panneau de paramètres
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',    'Limite d\'historique (car.)');
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE',    'Nombre maximum de caractères d\'historique de conversation envoyés par requête. Réduire pour les modèles locaux avec peu de RAM.');
+define('_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG',     "↑ Les messages au-dessus de ce point sont en dehors de la fenêtre de contexte active de l'IA");
+define('_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM',  "Modifier la limite d'historique affecte la quantité de contexte envoyée à l'IA à chaque tour.\n\nTrop basse : l'IA perd le contexte antérieur ; trop haute : les requêtes peuvent échouer sur les modèles à contexte limité.");
 
 // Invite système envoyée à l'IA
 define('_MD_FORMULIZE_AI_SYSTEM_PROMPT',          'Vous êtes l\'Assistant IA Formulize. Vous aidez les utilisateurs à gérer leurs données dans Formulize. Vous avez accès à des outils permettant d\'interagir avec les données et la configuration de Formulize. Soyez concis et utile.');

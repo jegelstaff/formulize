@@ -9,6 +9,13 @@
 include_once "mainfile.php";
 include "header.php";
 
+global $xoTheme;
+if ($xoTheme) {
+    $_aiCssFull = XOOPS_ROOT_PATH . '/modules/formulize/templates/css/formulize.css';
+    $_aiCssVer  = file_exists($_aiCssFull) ? filemtime($_aiCssFull) : 0;
+    $xoTheme->addStylesheet('/modules/formulize/templates/css/formulize.css?v=' . $_aiCssVer);
+}
+
 $_aiChatLang = isset($icmsConfig['language']) ? $icmsConfig['language'] : 'english';
 $_aiChatLangFile = XOOPS_ROOT_PATH . '/modules/formulize/language/' . $_aiChatLang . '/ai_chat.php';
 include_once (file_exists($_aiChatLangFile) ? $_aiChatLangFile : XOOPS_ROOT_PATH . '/modules/formulize/language/english/ai_chat.php');
@@ -31,44 +38,40 @@ if (!$xoopsUser) {
         </div>
     </div>
 
-    <div id="settings-panel" style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; display: none; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <label for="provider-select" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_PROVIDER_LABEL; ?></label>
+    <div id="settings-panel" style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; display: none; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+            <label for="provider-select" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_PROVIDER_LABEL; ?></label>
             <select id="provider-select" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
                 <option value="gemini"><?php echo _MD_FORMULIZE_AI_PROVIDER_GEMINI; ?></option>
                 <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
             </select>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex: 2; min-width: 180px;">
-            <label for="model-name" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_MODEL_LABEL; ?></label>
-            <select id="model-name" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></select>
+        <div style="display: flex; flex-direction: column; gap: 3px; flex: 2; min-width: 180px;">
+            <label for="model-name" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_MODEL_LABEL; ?></label>
+            <select id="model-name" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></select>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 140px;">
-            <label for="ai-api-key" style="font-weight: bold; font-size: 0.9em;"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
-            <input type="password" id="ai-api-key" placeholder="<?php echo _MD_FORMULIZE_AI_API_KEY_PLACEHOLDER; ?>" autocomplete="new-password" style="flex: 1; min-width: 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 140px;">
+            <label for="ai-api-key" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_API_KEY_LABEL; ?></label>
+            <input type="password" id="ai-api-key" placeholder="<?php echo _MD_FORMULIZE_AI_API_KEY_PLACEHOLDER; ?>" autocomplete="new-password" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
         </div>
-        <div style="display: flex; gap: 6px; align-items: center;">
-            <label for="context-limit" style="font-weight: bold; font-size: 0.9em; white-space: nowrap;">History limit:</label>
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+            <label for="context-limit" style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL; ?></label>
             <input type="number" id="context-limit" min="4000" step="1000"
-                   title="Maximum characters of conversation history sent per request. Reduce for local models with limited RAM."
-                   style="width: 90px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; opacity: 0.55;" disabled>
-            <span style="font-size: 0.82em; color: #555; white-space: nowrap;">chars</span>
-            <label title="Enable to override the default history limit for this provider" style="display: flex; align-items: center; gap: 4px; font-size: 0.82em; cursor: pointer; white-space: nowrap; color: #555;">
-                <input type="checkbox" id="context-limit-custom"> Custom
-            </label>
+                   title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE, ENT_QUOTES); ?>"
+                   style="width: 120px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
         </div>
-        <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
+        <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; align-self: center;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
         <div id="tool-selection-panel" style="display: none; flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                 <span style="font-weight: bold; font-size: 0.85em;"><?php echo _MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL; ?> <span id="tool-selection-count"></span></span>
                 <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-                    <button id="tool-group-read" style="padding: 3px 8px; font-size: 0.8em; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_READ_DATA; ?></button>
-                    <button id="tool-group-write" style="padding: 3px 8px; font-size: 0.8em; background: #fd7e14; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_WRITE_DATA; ?></button>
-                    <button id="tool-group-manage" style="padding: 3px 8px; font-size: 0.8em; background: #6f42c1; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS; ?></button>
+                    <button id="tool-group-read" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_READ_DATA; ?></button>
+                    <button id="tool-group-write" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #fd7e14; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_WRITE_DATA; ?></button>
+                    <button id="tool-group-manage" class="formulize-ai-tool-group-btn" style="padding: 3px 8px; font-size: 0.8em; background: #6f42c1; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS; ?></button>
                     <span style="opacity: 0.3; font-size: 0.9em;">|</span>
-                    <button id="tool-select-all" style="padding: 3px 8px; font-size: 0.8em; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_ALL_BTN; ?></button>
-                    <button id="tool-select-none" style="padding: 3px 8px; font-size: 0.8em; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_NONE_BTN; ?></button>
+                    <button id="tool-select-all" class="formulize-ai-tool-util-btn" style="padding: 3px 8px; font-size: 0.8em; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_ALL_BTN; ?></button>
+                    <button id="tool-select-none" class="formulize-ai-tool-util-btn" style="padding: 3px 8px; font-size: 0.8em; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_TOOLS_NONE_BTN; ?></button>
                 </div>
             </div>
             <div id="tool-selection-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 2px 16px;"></div>
@@ -157,6 +160,9 @@ window.formulizeAI.strings = {
     evtAdminPage:      <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE); ?>,
     evtSubmitted:      <?php echo json_encode(_MD_FORMULIZE_AI_EVENT_SUBMITTED); ?>,
     contextHeader:     <?php echo json_encode(_MD_FORMULIZE_AI_CONTEXT_HEADER); ?>,
+    historyLimitTitle: <?php echo json_encode(_MD_FORMULIZE_AI_HISTORY_LIMIT_TITLE); ?>,
+    contextCutoffMsg:  <?php echo json_encode(_MD_FORMULIZE_AI_CONTEXT_CUTOFF_MSG); ?>,
+    historyLimitConfirm: <?php echo json_encode(_MD_FORMULIZE_AI_HISTORY_LIMIT_CONFIRM); ?>,
     apiKeyPlaceholder: <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_PLACEHOLDER); ?>,
     apiKeyOllama:      <?php echo json_encode(_MD_FORMULIZE_AI_API_KEY_OLLAMA); ?>,
     toolsReadData:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_READ_DATA); ?>,
@@ -264,7 +270,7 @@ window.formulizeAI.strings = {
         const marker = document.createElement('div');
         marker.id = 'context-cutoff-marker';
         marker.style.cssText = 'align-self: stretch; text-align: center; font-size: 0.75em; color: #856404; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 4px 10px; margin: 4px 0;';
-        marker.textContent = '↑ Messages above this point are outside the AI\'s active context window';
+        marker.textContent = S.contextCutoffMsg;
         chatWindow.insertBefore(marker, cutoffEl);
     }
 
@@ -554,19 +560,7 @@ window.formulizeAI.strings = {
     function updateContextLimitDisplay() {
         const provider = providerSelect.value;
         const saved = localStorage.getItem(`ai_context_limit_${provider}`);
-        const customCb = document.getElementById('context-limit-custom');
-        const limitInput = document.getElementById('context-limit');
-        if (saved) {
-            customCb.checked = true;
-            limitInput.disabled = false;
-            limitInput.style.opacity = '';
-            limitInput.value = saved;
-        } else {
-            customCb.checked = false;
-            limitInput.disabled = true;
-            limitInput.style.opacity = '0.55';
-            limitInput.value = CONTEXT_WINDOW_DEFAULTS[provider];
-        }
+        document.getElementById('context-limit').value = saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
     }
 
     function updateProviderHints() {
@@ -587,19 +581,11 @@ window.formulizeAI.strings = {
         if (apiKeyInput.value.trim()) discoverModels();
     });
 
-    document.getElementById('context-limit-custom').addEventListener('change', function() {
-        const limitInput = document.getElementById('context-limit');
-        if (this.checked && !confirm('Changing the history limit affects how much conversation context is sent to the AI each turn.\n\nSet too low and the AI loses earlier context; set too high and requests may fail on models with smaller context windows.\n\nContinue?')) {
-            this.checked = false;
-            return;
-        }
-        limitInput.disabled = !this.checked;
-        limitInput.style.opacity = this.checked ? '' : '0.55';
-        if (!this.checked) {
-            limitInput.value = CONTEXT_WINDOW_DEFAULTS[providerSelect.value];
-            localStorage.removeItem(`ai_context_limit_${providerSelect.value}`);
-        } else {
-            limitInput.focus();
+    let historyLimitWarningShown = false;
+    document.getElementById('context-limit').addEventListener('focus', function() {
+        if (!historyLimitWarningShown) {
+            historyLimitWarningShown = true;
+            setTimeout(() => alert(S.historyLimitConfirm), 0);
         }
     });
     modelNameInput.addEventListener('change', updateToolCount);
@@ -631,9 +617,8 @@ window.formulizeAI.strings = {
         if (modelName && (key || provider === 'ollama')) {
             saveSettingsForProvider(provider, key, modelName);
             localStorage.setItem('ai_provider', provider);
-            const customCb = document.getElementById('context-limit-custom');
-            const limitVal = document.getElementById('context-limit').value;
-            if (customCb.checked && limitVal) {
+            const limitVal = parseInt(document.getElementById('context-limit').value, 10);
+            if (limitVal && limitVal !== CONTEXT_WINDOW_DEFAULTS[provider]) {
                 localStorage.setItem(`ai_context_limit_${provider}`, limitVal);
             } else {
                 localStorage.removeItem(`ai_context_limit_${provider}`);
@@ -691,7 +676,7 @@ window.formulizeAI.strings = {
         availableTools.forEach(tool => {
             const label = document.createElement('label');
             label.title = tool.description || '';
-            label.style.cssText = 'display: flex; align-items: baseline; gap: 6px; padding: 2px 0; cursor: pointer; font-size: 0.82em;';
+            label.style.cssText = 'display: flex; align-items: baseline; gap: 6px; padding: 2px 0; cursor: pointer; font-size: 0.82em; overflow: hidden;';
 
             const cb = document.createElement('input');
             cb.type = 'checkbox';
@@ -706,6 +691,8 @@ window.formulizeAI.strings = {
 
             const name = document.createElement('span');
             name.innerText = tool.name;
+            name.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;';
+            name.title = tool.name;
 
             label.appendChild(cb);
             label.appendChild(name);
