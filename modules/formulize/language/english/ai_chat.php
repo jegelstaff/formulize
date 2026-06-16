@@ -11,6 +11,7 @@ define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'close ✕');
 define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Provider:');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
+define('_MD_FORMULIZE_AI_PROVIDER_OPENAI',        'GPT (OpenAI)');
 define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
 define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Model:');
 define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'API Key:');
@@ -94,6 +95,10 @@ define('_MD_FORMULIZE_AI_EVENT_VIEWED',           'Viewed: ');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Admin page: ');
 define('_MD_FORMULIZE_AI_EVENT_SUBMITTED',        'Submitted: ');
 define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Recent Formulize activity across all open tabs (last 30 min):');
+
+// OpenAI-compatible provider timeout messages
+define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Ollama request timed out — is Ollama running? If your page is served over HTTPS, browsers block requests to localhost (Private Network Access policy).');
+define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'OpenAI request timed out.');
 
 // Settings panel
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',    'History limit (chars)');

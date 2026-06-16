@@ -44,6 +44,7 @@ if (!$xoopsUser) {
             <select id="provider-select" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
                 <option value="gemini"><?php echo _MD_FORMULIZE_AI_PROVIDER_GEMINI; ?></option>
+                <option value="openai"><?php echo _MD_FORMULIZE_AI_PROVIDER_OPENAI; ?></option>
                 <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
             </select>
         </div>
@@ -168,6 +169,8 @@ window.formulizeAI.strings = {
     toolsReadData:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_READ_DATA); ?>,
     toolsWriteData:    <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_WRITE_DATA); ?>,
     toolsManageForms:  <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS); ?>,
+    ollamaTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OLLAMA_TIMEOUT); ?>,
+    openaiTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OPENAI_TIMEOUT); ?>,
     systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
 };
 </script>
@@ -225,7 +228,7 @@ window.formulizeAI.strings = {
     const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
 
     // Default history character limits per provider (conversation history only, not system prompt/tools)
-    const CONTEXT_WINDOW_DEFAULTS = { claude: 100000, gemini: 200000, ollama: 16000 };
+    const CONTEXT_WINDOW_DEFAULTS = { claude: 100000, gemini: 200000, openai: 128000, ollama: 16000 };
 
     function getContextLimit() {
         const provider = providerSelect.value;
@@ -482,6 +485,7 @@ window.formulizeAI.strings = {
     let geminiHistory = [];  // Gemini clean conversation history (bare text, no activity context)
     let lastGeminiActivityCount = 0; // How many deduplicated activity events Gemini has already seen
     let claudeHistory = [];  // Claude explicit conversation history
+    let openaiHistory = [];  // OpenAI explicit conversation history
     let ollamaHistory = [];  // Ollama explicit conversation history
 
     // Load settings from localStorage
@@ -500,7 +504,7 @@ window.formulizeAI.strings = {
         if (model) localStorage.setItem(`ai_model_${p}`, model);
     }
 
-    const MODEL_DEFAULTS = { claude: 'claude-sonnet-4-6', gemini: 'gemini-2.0-flash', ollama: 'llama3.2' };
+    const MODEL_DEFAULTS = { claude: 'claude-sonnet-4-6', gemini: 'gemini-2.0-flash', openai: 'gpt-4o', ollama: 'llama3.2' };
 
     function populateModelSelect(models, preferredId) {
         modelNameInput.innerHTML = '';
@@ -540,6 +544,17 @@ window.formulizeAI.strings = {
                     models = (data.models || [])
                         .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
                         .map(m => ({ id: m.name.replace('models/', ''), name: m.displayName || m.name.replace('models/', '') }));
+                }
+            } else if (provider === 'openai' && apiKey) {
+                const resp = await fetch('https://api.openai.com/v1/models', {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    models = (data.data || [])
+                        .filter(m => !/(embedding|whisper|tts|dall|moderation|instruct|audio|realtime)/i.test(m.id))
+                        .sort((a, b) => b.created - a.created)
+                        .map(m => ({ id: m.id, name: m.id }));
                 }
             } else if (provider === 'ollama') {
                 const resp = await fetch('http://localhost:11434/api/tags');
@@ -627,6 +642,7 @@ window.formulizeAI.strings = {
             geminiHistory = [];
             lastGeminiActivityCount = 0;
             claudeHistory = [];
+            openaiHistory = [];
             ollamaHistory = [];
             initializeMCP();
             addMessage(S.senderSystem, t(S.settingsSaved, { provider, model: modelName }), 'system');
@@ -839,6 +855,8 @@ window.formulizeAI.strings = {
         try {
             if (provider === 'gemini') {
                 await sendGeminiMessage(text, loadingMsg);
+            } else if (provider === 'openai') {
+                await sendOpenAIMessage(text, loadingMsg);
             } else if (provider === 'ollama') {
                 await sendOllamaMessage(text, loadingMsg);
             } else {
@@ -990,59 +1008,13 @@ window.formulizeAI.strings = {
         return data;
     }
 
-    // --- Ollama path ---
+    // --- OpenAI-compatible providers (Ollama, OpenAI) ---
 
-    async function sendOllamaMessage(text, loadingMsg) {
-        ollamaHistory.push({ role: 'user', content: text });
+    // Shared HTTP call for any OpenAI-compatible /v1/chat/completions endpoint.
+    async function callOpenAICompat(messages, { url, apiKey, defaultModel, timeoutMs, timeoutMsg }) {
+        const modelName = modelNameInput.value.trim() || defaultModel;
 
-        const context = getActivityContext();
-        const messagesForApi = trimHistoryToLimit(
-            context
-                ? ollamaHistory.map((msg, i) => i === ollamaHistory.length - 1
-                    ? { ...msg, content: msg.content + '\n\n' + context }
-                    : msg)
-                : ollamaHistory,
-            getContextLimit()
-        );
-
-        try {
-            let response = await callOllama(messagesForApi);
-            let message = response.choices[0].message;
-            const newMessages = [];
-
-            while (response.choices[0].finish_reason === 'tool_calls' && message.tool_calls) {
-                newMessages.push({ role: 'assistant', content: message.content || '', tool_calls: message.tool_calls });
-
-                for (const toolCall of message.tool_calls) {
-                    // Ollama returns arguments as a JSON string, not an object
-                    const args = JSON.parse(toolCall.function.arguments);
-                    const toolBlock = addToolRequest(toolCall.function.name, args);
-                    const result = await executeTool(toolCall.function.name, args);
-                    addToolResponse(toolBlock, result.raw);
-                    newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
-                }
-
-                response = await callOllama([...ollamaHistory, ...newMessages]);
-                message = response.choices[0].message;
-            }
-
-            newMessages.push({ role: 'assistant', content: message.content || '' });
-            for (const m of newMessages) ollamaHistory.push(m);
-
-            loadingMsg.remove();
-            const ollamaMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
-            await typewriterEffect(ollamaMsg.querySelector('.ai-markdown') || ollamaMsg.lastElementChild, message.content || '(no response)');
-            updateContextCutoffMarker(messagesForApi, ollamaHistory[0]?.content);
-        } catch (error) {
-            ollamaHistory.pop();
-            throw error;
-        }
-    }
-
-    async function callOllama(messages) {
-        const modelName = modelNameInput.value.trim() || 'llama3.2';
-
-        const ollamaTools = getActiveTools().map(tool => ({
+        const tools = getActiveTools().map(tool => ({
             type: 'function',
             function: {
                 name: tool.name,
@@ -1051,41 +1023,116 @@ window.formulizeAI.strings = {
             }
         }));
 
-        // System prompt goes as the first message in OpenAI-compatible format
-        const messagesWithSystem = [
-            { role: 'system', content: dynamicSystemPrompt },
-            ...messages
-        ];
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
+        const messagesWithSystem = [{ role: 'system', content: dynamicSystemPrompt }, ...messages];
         const body = { model: modelName, messages: messagesWithSystem, stream: false };
-        if (ollamaTools.length > 0) body.tools = ollamaTools;
+        if (tools.length > 0) body.tools = tools;
 
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 300000); // 5 minutes
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
 
         try {
-            const response = await fetch('http://localhost:11434/v1/chat/completions', {
+            const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(body),
                 signal: controller.signal
             });
-
-            clearTimeout(timeout);
-
+            clearTimeout(timer);
             if (!response.ok) {
                 const err = await response.text();
-                throw new Error(`Ollama error ${response.status}: ${err}`);
+                throw new Error(`HTTP ${response.status}: ${err}`);
             }
-
             return response.json();
         } catch (error) {
-            clearTimeout(timeout);
-            if (error.name === 'AbortError') {
-                throw new Error('Ollama request timed out — is Ollama running? If your page is served over HTTPS, browsers block requests to localhost (Private Network Access policy).');
-            }
+            clearTimeout(timer);
+            if (error.name === 'AbortError') throw new Error(timeoutMsg);
             throw error;
         }
+    }
+
+    // Shared send/tool-loop logic for any OpenAI-compatible provider.
+    // history is the provider's history array (mutated in place on success, rolled back on error).
+    // callFn is the bound call function for that provider.
+    async function sendOpenAICompatMessage(text, loadingMsg, history, callFn) {
+        history.push({ role: 'user', content: text });
+
+        const context = getActivityContext();
+        const messagesForApi = trimHistoryToLimit(
+            context
+                ? history.map((msg, i) => i === history.length - 1
+                    ? { ...msg, content: msg.content + '\n\n' + context }
+                    : msg)
+                : history,
+            getContextLimit()
+        );
+
+        try {
+            let response = await callFn(messagesForApi);
+            let message = response.choices[0].message;
+            const newMessages = [];
+
+            while (response.choices[0].finish_reason === 'tool_calls' && message.tool_calls) {
+                newMessages.push({ role: 'assistant', content: message.content || '', tool_calls: message.tool_calls });
+
+                for (const toolCall of message.tool_calls) {
+                    // OpenAI-compatible APIs return tool arguments as a JSON string
+                    const args = JSON.parse(toolCall.function.arguments);
+                    const toolBlock = addToolRequest(toolCall.function.name, args);
+                    const result = await executeTool(toolCall.function.name, args);
+                    addToolResponse(toolBlock, result.raw);
+                    newMessages.push({ role: 'tool', tool_call_id: toolCall.id, content: result.text });
+                }
+
+                response = await callFn([...history, ...newMessages]);
+                message = response.choices[0].message;
+            }
+
+            newMessages.push({ role: 'assistant', content: message.content || '' });
+            for (const m of newMessages) history.push(m);
+
+            loadingMsg.remove();
+            const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
+            await typewriterEffect(aiMsg.querySelector('.ai-markdown') || aiMsg.lastElementChild, message.content || '(no response)');
+            updateContextCutoffMarker(messagesForApi, history[0]?.content);
+        } catch (error) {
+            history.pop();
+            throw error;
+        }
+    }
+
+    // Ollama
+
+    function callOllama(messages) {
+        return callOpenAICompat(messages, {
+            url: 'http://localhost:11434/v1/chat/completions',
+            apiKey: null,
+            defaultModel: 'llama3.2',
+            timeoutMs: 300000,
+            timeoutMsg: S.ollamaTimeout
+        });
+    }
+
+    function sendOllamaMessage(text, loadingMsg) {
+        return sendOpenAICompatMessage(text, loadingMsg, ollamaHistory, callOllama);
+    }
+
+    // OpenAI
+
+    function callOpenAI(messages) {
+        return callOpenAICompat(messages, {
+            url: 'https://api.openai.com/v1/chat/completions',
+            apiKey: settingsForProvider('openai').key,
+            defaultModel: 'gpt-4o',
+            timeoutMs: 60000,
+            timeoutMsg: S.openaiTimeout
+        });
+    }
+
+    function sendOpenAIMessage(text, loadingMsg) {
+        return sendOpenAICompatMessage(text, loadingMsg, openaiHistory, callOpenAI);
     }
 
     // --- Shared MCP tool executor (same for all providers) ---

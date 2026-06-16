@@ -11,6 +11,7 @@ define('_MD_FORMULIZE_AI_SETTINGS_CLOSE',         'fermer ✕');
 define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Fournisseur :');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
+define('_MD_FORMULIZE_AI_PROVIDER_OPENAI',        'GPT (OpenAI)');
 define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
 define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Modèle :');
 define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'Clé API :');
@@ -94,6 +95,10 @@ define('_MD_FORMULIZE_AI_EVENT_VIEWED',           'Consulté : ');
 define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Page admin : ');
 define('_MD_FORMULIZE_AI_EVENT_SUBMITTED',        'Soumis : ');
 define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Activité Formulize récente sur tous les onglets ouverts (30 dernières min) :');
+
+// Messages de délai d'attente des fournisseurs compatibles OpenAI
+define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Délai d\'attente Ollama dépassé — Ollama est-il en cours d\'exécution ? Si votre page est servie via HTTPS, les navigateurs bloquent les requêtes vers localhost (politique d\'accès au réseau privé).');
+define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'Délai d\'attente de la requête OpenAI dépassé.');
 
 // Panneau de paramètres
 define('_MD_FORMULIZE_AI_HISTORY_LIMIT_LABEL',    'Limite d\'historique (car.)');
