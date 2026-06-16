@@ -48,6 +48,14 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
 }
 ?>
 
+<style>
+@keyframes fz-roll-down {
+    from { opacity: 0; transform: translateY(-10px) scaleY(0.88); transform-origin: top; }
+    to   { opacity: 1; transform: translateY(0)     scaleY(1);    transform-origin: top; }
+}
+.fz-roll-down { animation: fz-roll-down 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+</style>
+
 <div id="ai-assistant-container" style="max-width: 1000px; margin: 20px auto; font-family: sans-serif; display: flex; flex-direction: column;">
     <div style="background: #007cba; color: white; padding: 15px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0; color: white;"><?php echo _MD_FORMULIZE_AI_PAGE_TITLE; ?></h2>
@@ -101,7 +109,6 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
         <div style="flex: 0 0 100%; border-top: 1px solid #ddd; padding-top: 10px; display: flex; gap: 8px; align-items: center;">
             <button id="save-settings" style="padding: 8px 15px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SAVE_SETTINGS_BTN; ?></button>
             <button id="close-settings" style="padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;"><?php echo _MD_FORMULIZE_AI_SETTINGS_CLOSE; ?></button>
-            <span id="settings-guide-msg" style="font-size: 0.85em; color: #555; margin-left: 4px;"></span>
         </div>
     </div>
 
@@ -157,7 +164,6 @@ window.formulizeAI.strings = {
     saveFirst:         <?php echo json_encode(_MD_FORMULIZE_AI_SAVE_FIRST); ?>,
     geminiSaveFirst:   <?php echo json_encode(_MD_FORMULIZE_AI_GEMINI_SAVE_FIRST); ?>,
     failedInit:        <?php echo json_encode(_MD_FORMULIZE_AI_FAILED_INIT); ?>,
-    errorOccurred:     <?php echo json_encode(_MD_FORMULIZE_AI_ERROR_OCCURRED); ?>,
     welcomeMsg:        <?php echo json_encode(_MD_FORMULIZE_AI_WELCOME_MSG); ?>,
     senderYou:         <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_YOU); ?>,
     senderAI:          <?php echo json_encode(_MD_FORMULIZE_AI_SENDER_AI); ?>,
@@ -205,8 +211,6 @@ window.formulizeAI.strings = {
     newConversationMsg: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG); ?>,
     stopBtn:           <?php echo json_encode(_MD_FORMULIZE_AI_STOP_BTN); ?>,
     stoppedMsg:        <?php echo json_encode(_MD_FORMULIZE_AI_STOPPED_MSG); ?>,
-    settingsGuideKey:  <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY); ?>,
-    settingsGuideTools: <?php echo json_encode(_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS); ?>,
     systemPrompt:      <?php echo json_encode(_MD_FORMULIZE_AI_SYSTEM_PROMPT); ?>
 };
 window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
@@ -282,18 +286,23 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         return saved ? parseInt(saved, 10) : CONTEXT_WINDOW_DEFAULTS[provider];
     }
 
+    function slideDown(el) {
+        el.classList.remove('fz-roll-down');
+        void el.offsetWidth; // force reflow so the animation restarts each time
+        el.classList.add('fz-roll-down');
+    }
+
     function updateInputState() {
         if (isSending) return;
-        if (!localStorage.getItem('ai_settings_saved')) {
-            userInput.disabled = true;
-            sendBtn.disabled = true;
-            sendBtn.style.opacity = '0.5';
-            return;
-        }
         const provider = providerSelect.value;
         const apiKey = settingsForProvider(provider).key || apiKeyInput.value.trim();
         const model = modelNameInput.value.trim();
-        const ready = (provider === 'ollama' || !!apiKey) && !!model;
+        // For Ollama (keyless), gate on ai_settings_saved to confirm setup was done.
+        // For key-based providers, an API key present in DB (serverKeys) or typed is enough.
+        const credentialsReady = provider === 'ollama'
+            ? !!localStorage.getItem('ai_settings_saved')
+            : !!apiKey;
+        const ready = credentialsReady && !!model;
         userInput.disabled = !ready;
         sendBtn.disabled = !ready;
         sendBtn.style.opacity = ready ? '' : '0.5';
@@ -301,27 +310,17 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     function refreshSettingsUI() {
         const provider = providerSelect.value;
-        const hasKey = !!(apiKeyInput.value.trim() || settingsForProvider(provider).key);
-        const ready = provider === 'ollama' || hasKey;
-        const returning = !!localStorage.getItem('ai_settings_saved');
+        const returning = !!(serverKeys[provider] || (provider === 'ollama' && localStorage.getItem('ai_settings_saved')));
 
         const saveBtn = document.getElementById('save-settings');
         const closeBtn = document.getElementById('close-settings');
-        const guideMsg = document.getElementById('settings-guide-msg');
 
-        saveBtn.disabled = !ready;
-        saveBtn.style.opacity = ready ? '' : '0.5';
-        closeBtn.disabled = !ready;
-        closeBtn.style.opacity = ready ? '' : '0.5';
-
-        if (guideMsg) {
-            guideMsg.textContent = !ready ? S.settingsGuideKey : (returning ? '' : S.settingsGuideTools);
-        }
-
-        // Trigger tool discovery once a provider is ready, but only if tools haven't loaded yet
-        if (ready && availableTools.length === 0) {
-            initializeMCP();
-        }
+        // Save is always enabled — the handler validates before acting
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '';
+        // Close is only enabled once credentials have been confirmed saved
+        closeBtn.disabled = !returning;
+        closeBtn.style.opacity = returning ? '' : '0.5';
     }
 
     // Update the visual context-window cutoff marker in the chat DOM.
@@ -587,15 +586,14 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         };
     }
 
-    async function saveSettingsForProvider(p, key, model) {
+    function saveSettingsForProvider(p, key, model) {
         if (key && p !== 'ollama') {
-            // Persist to server; update in-memory copy for this session
-            await fetch('ai_keys.php', {
+            serverKeys[p] = key; // update in-memory immediately
+            fetch('ai_keys.php', {  // persist to server in background — no need to await
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ provider: p, key })
             });
-            serverKeys[p] = key;
         }
         if (model) localStorage.setItem(`ai_model_${p}`, model);
     }
@@ -719,27 +717,36 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     document.getElementById('settings-toggle').addEventListener('click', () => {
         const panel = document.getElementById('settings-panel');
-        panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+        if (panel.style.display === 'none') {
+            panel.style.display = 'flex';
+            slideDown(panel);
+        } else {
+            panel.style.display = 'none';
+        }
     });
 
     const savedKey = settingsForProvider(savedProvider).key;
-    if (savedKey || savedProvider === 'ollama') {
+    const ollamaReady = savedProvider === 'ollama' && !!localStorage.getItem('ai_settings_saved');
+    if (savedKey || ollamaReady) {
         initializeMCP();
     } else {
-        // First visit: open settings panel and show welcome
-        document.getElementById('settings-panel').style.display = 'flex';
+        // First visit: open settings panel and show welcome, but still pre-fetch tools in background
+        const _settingsPanel = document.getElementById('settings-panel');
+        _settingsPanel.style.display = 'flex';
+        slideDown(_settingsPanel);
         addMessage(S.senderSystem, S.welcomeMsg, 'system');
-        refreshSettingsUI(); // set initial disabled state + guide message
+        refreshSettingsUI();
+        initializeMCP(false); // silently pre-fetch; panel stays hidden until Save is clicked
     }
 
-    saveSettingsBtn.addEventListener('click', async () => {
+    saveSettingsBtn.addEventListener('click', () => {
         const key = apiKeyInput.value.trim();
         const modelName = modelNameInput.value.trim();
         const provider = providerSelect.value;
         // Allow saving when: a new key is typed, or a key already exists server-side, or Ollama (no key needed)
         const hasKey = key || serverKeys[provider] || provider === 'ollama';
         if (modelName && hasKey) {
-            await saveSettingsForProvider(provider, key, modelName);
+            saveSettingsForProvider(provider, key, modelName);  // fire-and-forget server save; in-memory update is synchronous
             localStorage.setItem('ai_provider', provider);
             localStorage.setItem('ai_settings_saved', '1');
             const limitVal = parseInt(document.getElementById('context-limit').value, 10);
@@ -748,13 +755,29 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             } else {
                 localStorage.removeItem(`ai_context_limit_${provider}`);
             }
-            geminiChat = null;
-            geminiHistory = [];
-            lastGeminiActivityCount = 0;
             claudeHistory = [];
             openaiHistory = [];
             ollamaHistory = [];
-            initializeMCP();
+            geminiHistory = [];
+            lastGeminiActivityCount = 0;
+            // Tools were already fetched at page load — no need to re-fetch.
+            // For Gemini we do need to (re-)initialize the chat object with the key+tools.
+            if (provider === 'gemini') {
+                const geminiKey = serverKeys['gemini'] || apiKeyInput.value.trim();
+                if (geminiKey && availableTools.length > 0) {
+                    const functionDeclarations = getActiveTools().map(tool => ({
+                        name: tool.name,
+                        description: tool.description,
+                        parameters: { type: 'object', properties: tool.inputSchema?.properties || {}, required: tool.inputSchema?.required || [] }
+                    }));
+                    const modelConfig = { model: modelName, systemInstruction: dynamicSystemPrompt };
+                    if (functionDeclarations.length > 0) modelConfig.tools = [{ functionDeclarations }];
+                    geminiChat = new GoogleGenerativeAI(geminiKey).getGenerativeModel(modelConfig).startChat();
+                }
+            } else {
+                geminiChat = null;
+            }
+            renderToolPanel(); // data was pre-fetched; panel appears instantly
             updateInputState();
             updateProviderHints(); // refresh placeholder to reflect newly stored key
             refreshSettingsUI();
@@ -858,13 +881,16 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         });
 
         panel.style.display = 'block';
+        slideDown(panel);
         updateToolCount();
     }
 
-    async function initializeMCP() {
+    // renderPanel = false: silently pre-fetch capabilities into availableTools without showing the panel.
+    // renderPanel = true (default): fetch and immediately render/show the tool panel.
+    async function initializeMCP(renderPanel = true) {
         const provider = providerSelect.value;
         try {
-            mcpStatus.innerText = S.fetchingTools;
+            if (renderPanel) mcpStatus.innerText = S.fetchingTools;
 
             const response = await fetch('mcp/index.php/capabilities');
             const data = await response.json();
@@ -895,15 +921,16 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
                 }
             }
 
-            renderToolPanel();
-
-            if (availableTools.length === 0) {
-                mcpStatus.innerText = S.noToolsFound;
+            if (renderPanel) {
+                renderToolPanel();
+                if (availableTools.length === 0) mcpStatus.innerText = S.noToolsFound;
             }
 
             // Gemini needs a chat object initialized with the tool list
             if (provider === 'gemini') {
-                const apiKey = apiKeyInput.value.trim();
+                // Use key from server injection (serverKeys) for returning users; fall back to
+                // typed value for the first-save case where the key just entered.
+                const apiKey = settingsForProvider('gemini').key || apiKeyInput.value.trim();
                 if (!apiKey) return;
 
                 const genAI = new GoogleGenerativeAI(apiKey);
@@ -928,10 +955,10 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
                 lastGeminiActivityCount = 0;
             }
 
-            refreshSettingsUI(); // update guide message / button state now tools are loaded
+            if (renderPanel) refreshSettingsUI();
         } catch (error) {
             console.error('MCP init error:', error);
-            mcpStatus.innerText = S.mcpError;
+            if (renderPanel) mcpStatus.innerText = S.mcpError;
             addMessage(S.senderError, S.failedInit + error.message, 'error');
         }
     }
@@ -1026,7 +1053,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             if (userStopped) {
                 addMessage(S.senderSystem, S.stoppedMsg, 'system');
             } else {
-                addMessage(S.senderError, S.errorOccurred + error.message, 'error');
+                addMessage(S.senderError, error.message, 'error');
             }
         } finally {
             isSending = false;

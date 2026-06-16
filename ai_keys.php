@@ -2,7 +2,7 @@
 /**
  * API key storage endpoint for the Formulize AI Assistant.
  *
- * POST {provider, key} — encrypt and store (or delete if key is empty).
+ * POST {provider, key} — encrypt and store. Empty key is a no-op (key can only be replaced, never deleted).
  * Keys are encrypted with AES-256-CBC using XOOPS_DB_SALT as the secret.
  * The decrypted key is only ever returned to ai.php server-side, never via this endpoint.
  */
@@ -49,19 +49,23 @@ $uid   = (int)$xoopsUser->getVar('uid');
 $table = $xoopsDB->prefix('formulize_ai_keys');
 
 if ($key === '') {
-    $xoopsDB->query("DELETE FROM $table WHERE uid = $uid AND provider = '$provider'");
+    // Empty key box means "keep existing key" — the field is always blank after first save.
+    // There is deliberately no delete path: a stored key can only be replaced with a new one.
+    echo json_encode(['ok' => true]);
+    exit();
+}
+
+$iv        = random_bytes(16);
+$encrypted = base64_encode($iv . openssl_encrypt(
+    $key, 'AES-256-CBC', hash('sha256', XOOPS_DB_SALT, true), 0, $iv
+));
+$encrypted = $xoopsDB->quoteString($encrypted);
+$existing  = $xoopsDB->query("SELECT uid FROM $table WHERE uid = $uid AND provider = '$provider'");
+if ($xoopsDB->fetchArray($existing)) {
+    $xoopsDB->query("UPDATE $table SET encrypted_key = $encrypted WHERE uid = $uid AND provider = '$provider'");
 } else {
-    $iv        = random_bytes(16);
-    $encrypted = base64_encode($iv . openssl_encrypt(
-        $key, 'AES-256-CBC', hash('sha256', XOOPS_DB_SALT, true), 0, $iv
-    ));
-    $encrypted = $xoopsDB->quoteString($encrypted);
-    $existing  = $xoopsDB->query("SELECT uid FROM $table WHERE uid = $uid AND provider = '$provider'");
-    if ($xoopsDB->fetchArray($existing)) {
-        $xoopsDB->query("UPDATE $table SET encrypted_key = $encrypted WHERE uid = $uid AND provider = '$provider'");
-    } else {
-        $xoopsDB->query("INSERT INTO $table (uid, provider, encrypted_key) VALUES ($uid, '$provider', $encrypted)");
-    }
+    $xoopsDB->query("INSERT INTO $table (uid, provider, encrypted_key) VALUES ($uid, '$provider', $encrypted)");
 }
 
 echo json_encode(['ok' => true]);
+
