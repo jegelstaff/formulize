@@ -92,8 +92,21 @@ function initDrawer() {
   const SAVE_ENDPOINT = '/modules/formulize/include/readelements.php';
   const FORM_NAME = 'formulize_drawer';
 
+  // Paging state for the currently loaded entry form. Populated from the
+  // fz-multipage-nav metadata the endpoint emits; null for single-page forms.
+  let currentEntryNav = null;
+
   function moduleBase() {
     return (window.formulize && window.formulize.xoopsUrl) || '';
+  }
+
+  // Read the paging metadata emitted by the endpoint (null when absent, i.e. a
+  // plain single-page form screen).
+  function readNavMeta() {
+    if (!bodyEl) return null;
+    const el = bodyEl.querySelector('script.fz-multipage-nav');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
   }
 
   // Load a Formulize form/entry into the drawer as an editable, elements-only form.
@@ -124,6 +137,8 @@ function initDrawer() {
         // formulizechanged when it is undefined, so reset it here to clear any value
         // left over from a previous drawer session.
         window.formulizechanged = 0;
+        currentEntryNav = readNavMeta();
+        applyDrawerMeta();
         renderEntryFooter();
       })
       .catch(function () {
@@ -161,29 +176,53 @@ function initDrawer() {
     }, Promise.resolve());
   }
 
-  // Build the drawer footer Save / Cancel controls for the loaded entry form.
+  // Build the drawer footer controls for the loaded entry form. Single-page forms get
+  // Cancel + Save; multi-page forms (per the fz-multipage-nav metadata) get Previous, a
+  // "Page X of Y" indicator, and Next or Finish (when the next step is the thanks page).
   function renderEntryFooter() {
     if (!footEl) return;
     footEl.innerHTML = '';
 
     var notice = document.createElement('span');
     notice.className = 'fz-drawer__notice js-drawer-notice';
-
-    var cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'fz-btn fz-btn--ghost';
-    cancelBtn.textContent = 'Cancel';
-    cancelBtn.addEventListener('click', closeDrawer);
-
-    var saveBtn = document.createElement('button');
-    saveBtn.type = 'button';
-    saveBtn.className = 'fz-btn fz-btn--primary';
-    saveBtn.textContent = 'Save';
-    saveBtn.addEventListener('click', saveEntryFromDrawer);
-
     footEl.appendChild(notice);
-    footEl.appendChild(cancelBtn);
-    footEl.appendChild(saveBtn);
+
+    var nav = currentEntryNav;
+    var multiPage = nav && nav.totalPages > 1;
+
+    if (!multiPage) {
+      footEl.appendChild(makeButton('Cancel', 'fz-btn fz-btn--ghost', closeEntryDrawer));
+      footEl.appendChild(makeButton('Save', 'fz-btn fz-btn--primary', saveEntryFromDrawer));
+      return;
+    }
+
+    if (nav.previousPage) {
+      footEl.appendChild(makeButton('‹ Previous', 'fz-btn fz-btn--ghost', function () {
+        goToPage(nav.previousPage);
+      }));
+    }
+
+    var indicator = document.createElement('span');
+    indicator.className = 'fz-drawer__page-indicator';
+    indicator.textContent = 'Page ' + nav.currentPage + ' of ' + nav.totalPages;
+    footEl.appendChild(indicator);
+
+    if (nav.nextIsThanks) {
+      footEl.appendChild(makeButton('Finish', 'fz-btn fz-btn--primary', finishDrawer));
+    } else {
+      footEl.appendChild(makeButton('Next ›', 'fz-btn fz-btn--primary', function () {
+        goToPage(nav.nextPage);
+      }));
+    }
+  }
+
+  function makeButton(label, className, onClick) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = className;
+    btn.textContent = label;
+    btn.addEventListener('click', onClick);
+    return btn;
   }
 
   // Briefly surface a message in the drawer footer (e.g. "No changes to save").
@@ -195,48 +234,141 @@ function initDrawer() {
     showDrawerNotice._timer = setTimeout(function () { el.textContent = ''; }, 3000);
   }
 
-  // Submit the drawer's elements-only form the standard Formulize way.
-  function saveEntryFromDrawer() {
-    if (typeof jQuery === 'undefined') return;
-    var form = bodyEl ? bodyEl.querySelector('form') : null;
-    if (!form) return;
+  // Formulize only flags a form as changed once a field is touched; mirror that so we
+  // never do a pointless no-op save (which would also bypass required-field validation,
+  // since validation only runs when something changed).
+  function formHasChanges() {
+    return !(typeof window.formulizechanged !== 'undefined' && !window.formulizechanged);
+  }
 
-    // Honour Formulize's change tracking. Formulize only runs field validation
-    // (required, format, uniqueness, etc.) once something has changed, and there is
-    // nothing to save when nothing changed — so mirror that here. This both prevents
-    // pointless no-op saves and ensures we never bypass required-field validation by
-    // saving an untouched form.
-    if (typeof window.formulizechanged !== 'undefined' && !window.formulizechanged) {
-      showDrawerNotice('No changes to save.');
-      return;
-    }
-
+  // Run the current page's validation function and flush any CKEditors. Returns false
+  // when validation fails (so the caller should stay on the page).
+  //
+  // Formulize gates its generated field validation behind `formulizechanged`, so a page
+  // that has not been touched skips all its required-field checks. For navigation we want
+  // required fields enforced regardless, so we force the flag true around the validation
+  // call only — the real change state is restored afterwards so the save decision is
+  // unaffected (an untouched page is still treated as "no changes" and not re-saved).
+  function validateCurrentForm(form) {
     var validateFn = window['xoopsFormValidate_' + form.id];
-    if (typeof validateFn === 'function' && !validateFn(form)) return;
-    if (typeof updateCKEditors === 'function') { updateCKEditors(); }
+    var ok = true;
+    if (typeof validateFn === 'function') {
+      var savedChanged = window.formulizechanged;
+      window.formulizechanged = 1;
+      try { ok = !!validateFn(form); } finally { window.formulizechanged = savedChanged; }
+    }
+    if (ok && typeof updateCKEditors === 'function') { updateCKEditors(); }
+    return ok;
+  }
 
+  // Set the drawer header from the title metadata the endpoint emits.
+  function applyDrawerMeta() {
+    if (!bodyEl || !titleEl) return;
+    var el = bodyEl.querySelector('script.fz-drawer-meta');
+    if (!el) return;
+    try {
+      var meta = JSON.parse(el.textContent);
+      if (meta && typeof meta.title === 'string') titleEl.textContent = meta.title;
+    } catch (e) { /* ignore */ }
+  }
+
+  // POST the current page's fields to readelements.php to persist them. Returns the
+  // jqXHR so callers can chain. The entry id is carried in the field names, so this
+  // works for both new and existing entries.
+  function saveCurrentPage(form) {
     // hidden inputs (tokens) must be enabled so they are included in the FormData
     form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
-
-    var fid  = form.getAttribute('data-fid') || '';
-    var frid = form.getAttribute('data-frid') || 0;
-    var saveUrl = moduleBase() + SAVE_ENDPOINT + '?fid=' + encodeURIComponent(fid) + '&frid=' + encodeURIComponent(frid);
-
-    jQuery.post({
+    var saveUrl = moduleBase() + SAVE_ENDPOINT +
+      '?fid='  + encodeURIComponent(form.getAttribute('data-fid') || '') +
+      '&frid=' + encodeURIComponent(form.getAttribute('data-frid') || 0);
+    return jQuery.post({
       url: saveUrl,
       data: new FormData(form),
       cache: false,
       contentType: false,
-      processData: false,
-      success: function () {
-        releaseEntryLocks();
-        closeDrawer();
-        // List-refresh hook — to be wired up separately.
-        if (typeof window.formulize.onEntrySaved === 'function') {
-          window.formulize.onEntrySaved();
-        }
-      }
+      processData: false
     });
+  }
+
+  // Release locks, close the drawer, and refresh the list. Used after the final save.
+  function closeAndRefresh() {
+    releaseEntryLocks();
+    closeDrawer();
+    currentEntryNav = null;
+    if (typeof window.formulize.onEntrySaved === 'function') {
+      window.formulize.onEntrySaved();
+    }
+  }
+
+  // Save a single-page entry, then close and refresh.
+  function saveEntryFromDrawer() {
+    if (typeof jQuery === 'undefined') return;
+    var form = bodyEl ? bodyEl.querySelector('form') : null;
+    if (!form) return;
+    if (!formHasChanges()) {
+      showDrawerNotice('No changes to save.');
+      return;
+    }
+    if (!validateCurrentForm(form)) return;
+    saveCurrentPage(form).then(closeAndRefresh);
+  }
+
+  // Navigate to another page of a multi-page entry form. Navigation (forwards or
+  // backwards) validates the current page first and blocks on invalid required fields,
+  // matching how Formulize behaves elsewhere. If the page has changes it is saved as
+  // part of the same request — the endpoint runs readelements.php and then renders the
+  // target page; otherwise we just fetch the target page. A new entry created on the
+  // first save is carried into later pages by the endpoint, so no id tracking is needed.
+  function goToPage(targetPage) {
+    if (typeof jQuery === 'undefined' || !currentEntryNav) return;
+    var form = bodyEl ? bodyEl.querySelector('form') : null;
+    if (!form || !validateCurrentForm(form)) return;
+
+    var changed = formHasChanges();
+    var url = moduleBase() + ENDPOINT +
+      '?sid='      + encodeURIComponent(currentEntryNav.screenId) +
+      '&fid='      + encodeURIComponent(form.getAttribute('data-fid') || '') +
+      '&frid='     + encodeURIComponent(form.getAttribute('data-frid') || 0) +
+      '&entry_id=' + encodeURIComponent(currentEntryNav.entryId || '') +
+      '&page='     + encodeURIComponent(targetPage) +
+      '&prevpage=' + encodeURIComponent(currentEntryNav.currentPage) +
+      '&formname=' + FORM_NAME;
+
+    var opts = { credentials: 'same-origin' };
+    if (changed) {
+      form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
+      var fd = new FormData(form);
+      fd.append('formulize_save', '1');
+      opts.method = 'POST';
+      opts.body = fd;
+    }
+
+    releaseEntryLocks(); // release the current page's locks before swapping it out
+    bodyEl.innerHTML = '<div class="fz-drawer__loading">Loading…</div>';
+
+    fetch(url, opts)
+      .then(function (r) { return r.text(); })
+      .then(function (html) { return injectFragment(bodyEl, html); })
+      .then(function () {
+        window.formulizechanged = 0;
+        currentEntryNav = readNavMeta();
+        applyDrawerMeta();
+        renderEntryFooter();
+        if (bodyEl) bodyEl.scrollTop = 0;
+      })
+      .catch(function () {
+        bodyEl.innerHTML = '<div class="fz-drawer__loading">Could not load page.</div>';
+      });
+  }
+
+  // Finish a multi-page entry: save the final page (if changed) then close and refresh.
+  // The thanks page is never requested — in elements-only mode it renders empty — so
+  // finishing is just a save-and-close on the last real page.
+  function finishDrawer() {
+    var form = bodyEl ? bodyEl.querySelector('form') : null;
+    if (!form || !formHasChanges()) { closeAndRefresh(); return; }
+    if (!validateCurrentForm(form)) return;
+    saveCurrentPage(form).then(closeAndRefresh);
   }
 
   // Release any entry locks acquired by the loaded form (defined by the endpoint).
@@ -249,6 +381,7 @@ function initDrawer() {
   function closeEntryDrawer() {
     releaseEntryLocks();
     if (footEl) footEl.innerHTML = '';
+    currentEntryNav = null;
     closeDrawer();
   }
 
