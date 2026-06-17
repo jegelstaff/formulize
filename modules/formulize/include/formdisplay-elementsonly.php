@@ -33,6 +33,18 @@ if(!$formname) {
     $formname = 'formulize_drawer';
 }
 
+// When no screen is supplied, fall back to the form's default form screen so the
+// entry renders through that screen's templates (via renderHandler) rather than the
+// plain displayForm() output. Callers like the list drawer only pass fid, so this
+// is where the screen gets resolved. If the form has no default screen configured,
+// $sid stays 0 and we render with displayForm() below.
+if(!$sid AND $fid) {
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    if($formObject = $form_handler->get($fid)) {
+        $sid = intval($formObject->getVar('defaultform'));
+    }
+}
+
 $screen = null;
 if($sid) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -42,6 +54,27 @@ if($sid) {
         $frid = $screenMeta->getVar('frid') ? $screenMeta->getVar('frid') : $frid;
         $renderHandler = xoops_getmodulehandler($screenMeta->getVar('type').'Screen', 'formulize');
         $screen = $renderHandler->get($screenMeta->getVar('sid'));
+    }
+}
+
+// Multi-page navigation: the drawer drives paging through this endpoint. `page` is the
+// page to render and `prevpage` is the page being left, which we encode as "page-sid"
+// the way displayFormPages expects so it honours the request even in elements-only mode.
+// When `formulize_save` is set we first save the submitted page's data via readelements.php
+// (exactly as a normal full-page load would), then render the requested page. A new entry
+// created on the first save is carried into later pages automatically by displayFormPages'
+// newEntryIds resolution, so the client never has to track the new entry id itself.
+$targetPage = isset($_REQUEST['page'])     ? intval($_REQUEST['page'])     : 0;
+$prevPage   = isset($_REQUEST['prevpage']) ? intval($_REQUEST['prevpage']) : 0;
+
+if($screen AND isset($_POST['formulize_save']) AND $_POST['formulize_save']) {
+    include XOOPS_ROOT_PATH.'/modules/formulize/include/readelements.php'; // saves the posted page, sets the saved/new entry id globals
+}
+
+if($screen AND $targetPage > 0) {
+    $_POST['formulize_currentPage'] = $targetPage.'-'.$screen->getVar('sid');
+    if($prevPage > 0) {
+        $_POST['formulize_prevPage'] = $prevPage.'-'.$screen->getVar('sid');
     }
 }
 
@@ -82,12 +115,32 @@ var FORMULIZE = {
 global $formulize_displayingSubform;
 $formulize_displayingSubform = true;
 
+// Title for the host (the drawer header). Single source for both single- and
+// multi-page renders: the screen's title, or the form's title when rendering
+// without a screen. Emitted as JSON so the host can pick it up after injecting.
+$drawerTitle = '';
+if($screen) {
+    $drawerTitle = trans($screen->getVar('title'));
+} elseif($fid) {
+    $titleFormHandler = xoops_getmodulehandler('forms', 'formulize');
+    if($titleFormObject = $titleFormHandler->get($fid)) {
+        $drawerTitle = trans($titleFormObject->getVar('title'));
+    }
+}
+print "<script type=\"application/json\" class=\"fz-drawer-meta\">".json_encode(array('title' => $drawerTitle))."</script>\n";
+
 print "<form id='".htmlspecialchars($formname, ENT_QUOTES)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'>\n";
 
 if($screen) {
-    $renderHandler->render($screen, $entry_id, null, true);
+	$screen->setVar('navstyle', 3); // turn off tabs and buttons
+	$screen->setVar('showpageselector', 1) ; // 2 is 'off'
+	// render in elements-only mode so the screen emits just the form fields. Without
+	// this the screen renders its full multi-page layout, whose pages are hidden divs
+	// driven by navigation JS that never initializes in the drawer's AJAX inject, so
+	// nothing is visible. elements_only flattens the pages and drops that chrome.
+	$renderHandler->render($screen, $entry_id, null, true);
 } else {
-    $renderResult = displayForm($fid, $entry_id, "", "", "", "", "formElementsOnly");
+	$renderResult = displayForm($fid, $entry_id, "", "", "", "", "formElementsOnly");
 }
 
 // add security token, and token for deleting entry locks
