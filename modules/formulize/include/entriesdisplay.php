@@ -1070,7 +1070,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	ob_start();
 
 	// drawInterface... renders the top template, sets up searches, many template variables including all the action buttons...
-	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, (isset($loadview) ? $loadview : null), $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector);
+	$formulize_buttonCodeArray = drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, (isset($loadview) ? $loadview : null), $loadOnlyView, $screen, $searches, $formulize_LOEPageNav, $formulize_LOEEntryCount, $messageText, $hiddenQuickSearches, $entriesPerPageSelector, $regeneratePageNumbers);
 
 	// drawEntries ... renders the openlist, list and closelist templates
 	formulize_benchmark("before entries");
@@ -1406,7 +1406,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 
 // this function draws in the interface parts of a display entries widget
 
-function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $pageNav, $entryTotals, $messageText, $hiddenQuickSearches, $entriesPerPageSelector) {
+function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $loadview, $loadOnlyView, $screen, $searches, $pageNav, $entryTotals, $messageText, $hiddenQuickSearches, $entriesPerPageSelector, $regeneratePageNumbers=false) {
 
 	global $xoopsDB;
 	global $xoopsUser;
@@ -1730,8 +1730,17 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	// scroll x and y are used to retain the scroll position after the page reloads
 	print "<input type=hidden name=formulize_scrollx id=formulize_scrollx value=\"\"></input>\n";
 	print "<input type=hidden name=formulize_scrolly id=formulize_scrolly value=\"\"></input>\n";
+	// records which page the saved scroll position belongs to. Page jumps change formulize_LOEPageStart but not this value, so on reload we can tell whether the scroll position still applies to the page we're rendering. Note: the canonical formulize_LOEPageStart is computed in displayEntries() after drawInterface() is called, so we recompute the same value here from the same inputs ($_POST and $regeneratePageNumbers).
+	$formulize_LOEPageStart = (isset($_POST['formulize_LOEPageStart']) AND !$regeneratePageNumbers) ? intval($_POST['formulize_LOEPageStart']) : 0;
+	print "<input type=hidden name=formulize_scrollPageStart id=formulize_scrollPageStart value=\"$formulize_LOEPageStart\"></input>\n";
 
-	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns'], $screen); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
+	// only restore the saved scroll position if: there is actually a scroll position to restore (otherwise we were at the top and there's nothing to do), we're rendering the same page it was captured on, and the dataset hasn't changed. A page jump, or a search/scope change (which resets us to page 1, ie: $regeneratePageNumbers), should start at the top of the list instead.
+	$restoreScrollPosition = ((!empty($_POST['formulize_scrollx']) OR !empty($_POST['formulize_scrolly']))
+		AND !$regeneratePageNumbers
+		AND isset($_POST['formulize_scrollPageStart'])
+		AND intval($_POST['formulize_scrollPageStart']) === $formulize_LOEPageStart);
+
+	interfaceJavascript($fid, $frid, $currentview, $useWorking, ($screen AND $screen->getVar('dedisplay')), $settings['lockedColumns'], $screen, $restoreScrollPosition); // must be called after form is drawn, so that the javascript which clears ventry can operate correctly (clearing is necessary to avoid displaying the form after clicking the Back button on the form and then clicking a button or doing an operation that causes a posting of the controls form).
 
 	$buttonCodeArray['quickSearches'] = $quickSearches;
 
@@ -3435,7 +3444,7 @@ $output
 
 // this function includes the javascript necessary make the interface operate properly
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null) {
+function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null, $restoreScrollPosition=false) {
 
 	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
 	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
@@ -3967,8 +3976,8 @@ function pageJump(page) {
 jQuery(window).load(function() {
 
 	<?php
-	// set the scroll position when first loading
-	if(isset($_POST['formulize_scrollx']) OR isset($_POST['formulize_scrolly'])) {
+	// set the scroll position when first loading, but only if it still applies to the page we're rendering (see $restoreScrollPosition where interfaceJavascript is called)
+	if($restoreScrollPosition) {
 		print "
 		window.addEventListener('formulize_pageShown', function () {
       jQuery('#formulize-list-of-entries').scrollTop(".intval($_POST['formulize_scrollx']).");

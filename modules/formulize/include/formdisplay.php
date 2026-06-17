@@ -2409,6 +2409,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage']));
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrollx', $formulize_scrollx);
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrolly', $formulize_scrolly);
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrollPageStart', $_POST['formulize_LOEPageStart']); // the list page this entry was opened from, so the scroll position is restored to the correct page on return
 		foreach($newHiddenElements as $nhe) {
 			$form->addElement($nhe);
 			unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
@@ -2478,6 +2479,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 				print "<input type='hidden' name='formulize_entriesPerPage' value='".intval($_POST['formulize_entriesPerPage'])."'>";
 		print "<input type='hidden' name='formulize_scrollx' value='" . $formulize_scrollx . "'>";
 		print "<input type='hidden' name='formulize_scrolly' value='" . $formulize_scrolly . "'>";
+		print "<input type='hidden' name='formulize_scrollPageStart' value='" . $_POST['formulize_LOEPageStart'] . "'>"; // the list page this entry was opened from, so the scroll position is restored to the correct page on return
 	}
 }
 
