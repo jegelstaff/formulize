@@ -315,7 +315,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				var tfa_newPhone_ro  = tfa_auto_phoneSelector ? jQuery('[name=\"' + tfa_auto_phoneSelector + '\"]').val().replace(/[^0-9]/g,'') : '';
 				var tfa_newEmail_ro  = tfa_auto_emailSelector ? (jQuery('[name=\"' + tfa_auto_emailSelector + '\"]').length > 0 ? jQuery('[name=\"' + tfa_auto_emailSelector + '\"]').val() : null) : null;
 				var tfa_needsTwoPhase_ro = (
-					(tfa_auto_currentMethod == tfa_auto_TFA_EMAIL && tfa_newMethod_ro == tfa_auto_TFA_EMAIL && tfa_newEmail_ro !== null && tfa_newEmail_ro != tfa_auto_currentEmail && tfa_auto_currentEmail != '') ||
+					((tfa_auto_currentMethod == tfa_auto_TFA_EMAIL || tfa_auto_currentMethod == tfa_auto_TFA_OFF) && (tfa_newMethod_ro == tfa_auto_TFA_EMAIL || tfa_newMethod_ro == tfa_auto_TFA_OFF) && tfa_newEmail_ro !== null && tfa_newEmail_ro != tfa_auto_currentEmail && tfa_auto_currentEmail != '') ||
 					(tfa_auto_currentMethod == tfa_auto_TFA_SMS   && tfa_newMethod_ro == tfa_auto_TFA_SMS   && tfa_newPhone_ro != tfa_auto_currentPhone && tfa_auto_currentPhone != '') ||
 					(tfa_auto_currentMethod != tfa_auto_TFA_OFF   && tfa_newMethod_ro != tfa_auto_TFA_OFF   && tfa_newMethod_ro != tfa_auto_currentMethod)
 				);
@@ -416,12 +416,13 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			: "var tfa_hasPass = false;";
 		$js[] = "var tfa_code = (myform && myform.elements['formulize_tfa_code']) ? myform.elements['formulize_tfa_code'].value : '';";
 		// Two-phase is needed in three cases:
-		// 1. Method unchanged = email, email is changing (verify old email, then new email).
+		// 1. Staying on email, email is changing (verify old email, then new email). Email is the
+		//    default 2FA contact when no method is set, so TFA_OFF is treated as email-ish here.
 		// 2. Method unchanged = SMS, phone is changing (verify old phone, then new phone).
 		// 3. Method was active (not off) and is changing to a different active method
 		//    (verify old contact via old method, then verify new contact via new method).
 		$js[] = "var tfa_needsTwoPhase = (";
-		$js[] = "    ({$currentMethodJs} == ".TFA_EMAIL." && tfa_newMethod == ".TFA_EMAIL." && tfa_newEmail !== null && tfa_newEmail != {$currentEmailJs} && {$currentEmailJs} != '') ||";
+		$js[] = "    (({$currentMethodJs} == ".TFA_EMAIL." || {$currentMethodJs} == ".TFA_OFF.") && (tfa_newMethod == ".TFA_EMAIL." || tfa_newMethod == ".TFA_OFF.") && tfa_newEmail !== null && tfa_newEmail != {$currentEmailJs} && {$currentEmailJs} != '') ||";
 		$js[] = "    ({$currentMethodJs} == ".TFA_SMS." && tfa_newMethod == ".TFA_SMS." && tfa_newPhone != {$currentPhoneJs} && {$currentPhoneJs} != '') ||";
 		$js[] = "    ({$currentMethodJs} != ".TFA_OFF." && tfa_newMethod != ".TFA_OFF." && tfa_newMethod != {$currentMethodJs})";
 		$js[] = ");";

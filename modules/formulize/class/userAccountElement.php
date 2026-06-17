@@ -685,7 +685,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$effectiveNewMethod = $rawSubmitted2faMethod !== null ? $rawSubmitted2faMethod : $old2faMethod;
 		
 		$needsValidation = (
-			($rawSubmitted2faMethod != $old2faMethod) ||
+			($effectiveNewMethod != $old2faMethod) ||
 			(($old2faMethod == TFA_SMS || $effectiveNewMethod == TFA_SMS) && $newPhone != $old2faPhone) ||
 			(($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF || $effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF) && $oldEmail && $newEmail != $oldEmail) ||
 			$passwordChanged
@@ -695,13 +695,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			return true;
 		}
 		
-		// Two-phase required in three cases:
-		// 1. Method unchanged = email, email is changing.
-		// 2. Method unchanged = SMS, phone is changing.
-		// 3. Method was active and is changing to a different active method.
+		// Two-phase (verify the OLD contact, then the NEW contact) is required in three cases:
+		// 1. Staying on email, email is changing. Email is the default 2FA contact when no method
+		//    is set, so TFA_OFF is treated as email-ish here: changing your email while 2FA is off
+		//    (or set to email) double-validates old + new email.
+		// 2. Staying on SMS, phone is changing.
+		// 3. Switching between two different active (non-off) methods.
+		$oldMethodIsEmailish = ($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF);
+		$newMethodIsEmailish = ($effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF);
 		$contactChanging = (
-			($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_EMAIL && $oldEmail && $newEmail != $oldEmail) ||
-			($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
+			($oldMethodIsEmailish && $newMethodIsEmailish && $oldEmail && $newEmail != $oldEmail) ||
+			($old2faMethod == TFA_SMS && $effectiveNewMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
 			($rawSubmitted2faMethod !== null && $old2faMethod != TFA_OFF && $rawSubmitted2faMethod != TFA_OFF && $rawSubmitted2faMethod != $old2faMethod)
 		);
 		
