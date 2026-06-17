@@ -1042,6 +1042,14 @@ $modversion['config'][] = array(
 	'default' => 0,
 );
 $modversion['config'][] = array(
+	'name' => 'formulizeAIAssistantGroups',
+	'title' => '_MI_formulize_AIASSISTANTGROUPS',
+	'description' => '_MI_formulize_AIASSISTANTGROUPS_DESC',
+	'formtype' => 'group_multi',
+	'valuetype' => 'array',
+	'default' => array(1),
+);
+$modversion['config'][] = array(
 	'name' => 'formulizeMCPServerEnabled',
 	'title' => '_MI_formulize_MCPSERVERENABLED',
 	'description' => '_MI_formulize_MCPSERVERENABLED_DESC',

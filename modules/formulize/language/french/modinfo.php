@@ -137,6 +137,9 @@ if(!$mcpEnabled) {
 define("_MI_formulize_AIASSISTANTENABLED",  _MI_formulize_PREFHEADSTART."AI"._MI_formulize_PREFHEADEND."Enable the Embedded AI Assistant, inside Formulize<br><br> Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
 define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key for an AI provider, or you will need to have a local model available through Ollama.");
 
+define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant".$hideEmbeddedAIGroups);
+define("_MI_formulize_AIASSISTANTGROUPS_DESC", "Select which groups of users are allowed to use the embedded AI assistant. If no groups are selected, no one will be able to use it.");
+
 define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP, for external AI Assistants".$mcpServerInstructions);
 define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting external AI assistants, like Claude Desktop, Copilot, etc, to Formulize. With MCP, those AI assistants can read information from Formulize and help you configure Formulize. To use AI inside Formulize without any external client, use the Embedded AI Assistant setting instead.");
 
