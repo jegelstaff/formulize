@@ -30,8 +30,10 @@ test.describe('Check that tools/list is responding', () => {
 		await loggingEnabled.check();
   	await page.getByRole('button', { name: 'Save your changes' }).click();
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
-		await expect(page.getByText('Create an API Key — Go to the')).toBeVisible();
-  	await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
+		// With MCP enabled, the preference label shows the external-assistant setup instructions.
+		// Confirming this text is visible verifies the setting was saved on.
+		await expect(page.getByText('See further setup instructions for external AI assistants')).toBeVisible();
+		await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
 		await page.getByRole('link', { name: 'API keys' }).click();
 		const apiKey = await page.locator('td[id=key-1]').innerText();
     await page.goto('/mcp/test.html');
