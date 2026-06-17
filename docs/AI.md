@@ -14,9 +14,9 @@ title: AI and Formulize
 
 ## <a name='overview'></a>Overview
 
-You can use AI assistants, like Claude, Copilot, etc, to help you work with Formulize. They can understand the way it's configured, and they can help you create data, update data, analyze data, maintain, validate and correct data...
+You can use AI assistants to help you work with Formulize. They can understand the way Formulize is configured, and they can help you create data, update data, analyze data, maintain, validate and correct data...
 
-The AI can even create forms and elements based on your prompts, or based on documents you upload, or whatever other information you can provide. The AI can connect multiple forms into useful applications, and it can update the configuration of the elements too.
+AI can even create forms and elements based on your prompts, or based on documents you upload, or whatever other information you can provide. The AI can connect multiple forms into useful applications, and it can update the configuration of the elements too.
 
 <div id='video-flex-list'>
 		<a href="https://youtu.be/Cm6yR5cMn7Y" target="_BLANK">
@@ -36,19 +36,25 @@ So, when the AI connects to Formulize, it truly gets the big picture. And when y
 
 ### But can you trust it?
 
-As with any overeager intern, AI might do the wrong thing sometimes. However, because the _Formulize <—> AI_ connection includes the entire configuration of your Formulize system, the AI does not have to guess about anything.
+As with any overeager intern, AI might do the wrong thing sometimes. However, because the _Formulize <—> AI_ connection can reference the entire configuration of your Formulize system, the AI does not have to guess about anything.
 
 The so-called _hallucinations_ that AI sometimes has, are usually when it's missing some information and it's just trying to come up with something that would be consistent with everything else it knows. With Formulize, the AI has the _complete picture_ of how your system works, so it will generally do the right thing.
 
-Also, when the AI asks Formulize for something, Formulize validates what the AI is asking for, and if something is wrong, Formulize helps the AI self-correct from any mistakes. For example, if the AI is asking about a form that doesn't exist, Formulize will suggest to the AI that it check the list of existing forms first.
+Also, when the AI asks Formulize for something, Formulize _validates what the AI is asking for_, and if something is wrong, Formulize helps the AI self-correct from any mistakes. For example, if the AI is asking about a form that doesn't exist, Formulize will suggest to the AI that it check the list of existing forms first.
 
 ---
 
 ## <a name='setup'></a>Setup
 
-You need to [follow a few steps](../ai/setup) to get Formulize working with AI. Setup is a one time thing, once you've completed the setup you don't have to do it again.
+There are two ways to use AI with Formulize:
 
-- [Setup Instructions](../ai/setup)
+### [Embedded AI Assistant](../ai/setup-embedded)
+
+Use AI right inside your Formulize system — no extra software needed. You can use a commercial AI provider, or a local language model through <a href="https://ollama.com" target="_blank">Ollama</a>. Enable the embedded AI assistant in the _Formulize Preferences_ and then click the __Use AI__ link in the menu. [Read the setup steps...](../ai/setup-embedded)
+
+### [External AI Assistant via MCP](../ai/setup-mcp)
+
+Formulize has a built in MCP server, so you can connect Claude Desktop, Copilot, or another AI assistant to Formulize using MCP (Model Context Protocol).  This gives you access to the full AI experience, including Resources and Prompts. [Read the setup steps...](../ai/setup-mcp)
 
 ---
 
@@ -109,16 +115,18 @@ If the AI is using an API key for a webmaster user, there will be some additiona
 
 The AI has access to several items which it can use to interact with your Formulize system:
 
-- **Tools**: Functions the AI assistant can call to perform actions (read data, create entries, etc.\
-You generally don't even need to know what these are, because the AI assistant will use them as it sees fit. However, it can be useful to suggest certain tools to the AI if you are doing something particularly complicated.
+- **Tools**: Functions the AI assistant can call to perform actions (read data, create entries, etc.)\
+You generally don't even need to know what these are, because the AI assistant will use them as it sees fit. However, it can be useful to suggest certain tools to the AI if you are doing something particularly complicated.\
 
 - **Resources**: Read-only information sources about your system configuration\
-Not all AI assistants have the capability to use the resources. Some will give you access to them, either for your own reference, or for including with prompts you write.
+Not all AI assistants have the capability to use the resources. Some will give you access to them, either for your own reference, or for including with prompts you write.\
+_Resources are only available when using an external AI assistant via MCP_
 
 - **Prompts**: Pre-defined templates for common tasks\
-Prompts are activated by you, the user. Not all AI assistants support prompts, and how you access them varies from assistant to assistant.
+Prompts are activated by you, the user. Not all AI assistants support prompts, and how you access them varies from assistant to assistant.\
+_Prompts are only available when using an external AI assistant via MCP_
 
-[Complete Formulize MCP Reference](../ai/mcp-reference/) - Descriptions of all {{ site.data.mcp_items.total_count }} tools, resources, and prompts available in Formulize.
+[Complete Formulize AI Reference](../ai/mcp-reference/) - Descriptions of all {{ site.data.mcp_items.total_count }} tools, resources, and prompts available in Formulize.
 
 #### More about prompts
 
@@ -136,7 +144,7 @@ Pre-defined prompts may make reference to particular tools that the AI assistant
 
 ## <a name='advanced'></a>Advanced Configuration
 
-You can connect your AI assistant to multiple Formulize instances. You can also connect with the credentials of different users.
+If you're using an external AI client, like Claude Desktop, etc, you can connect your AI assistant to multiple Formulize instances. You can also connect with the credentials of different users.
 
 - [Read more about advanced configurations](../ai/advanced-setup).
 
@@ -146,10 +154,10 @@ You can connect your AI assistant to multiple Formulize instances. You can also 
 
 ### Connection testing
 
-AI assistants connect to Formulize through a _local MCP server_ which passes requests to your Formulize system, and listens for the responses. There is a built in _test_connection_ tool in the local MCP server. You can ask your AI assistant to test the connection to Formulize and it should run the _test_connection_ tool and give you the results. This can reveal if there's a network issue, or if AI is not enabled in your Formulize system, or if your API key is wrong, and so on.
+There is a built in _test_connection_ tool which you can ask your AI assistant to use. This can reveal if there's a network issue, or if AI is not enabled in your Formulize system, or if your API key is wrong, and so on.
 
 ### Testing the tools, resources and prompts
 
 You can also test the behaviour and performance of the tools, resources and prompts themselves, through the ```mcp/test.html``` page of your Formulize system, ie: ```https://yoursite.com/mcp/test.html```
 
-The test page lets you provide an API key, and try out all the different requests that an AI assistant can send to Formulize. It also lets you inspect the results that Formulize would send to the AI, so you can see exactly what the AI would be seeing.
+The test page lets you provide a Formulize API key, and try out all the different requests that an AI assistant can send to Formulize. It also lets you inspect the results that Formulize would send to the AI, so you can see exactly what the AI would be seeing.

@@ -1,0 +1,110 @@
+---
+layout: default
+permalink: ai/setup-mcp
+title: External AI Assistant Setup (MCP)
+---
+
+# External AI Assistant Setup (MCP)
+
+1. Install an AI assistant that is capable of __local__ MCP connections. You need to have one installed locally on your computer.
+
+    We have had good results with <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, and Claude helped create the Formulize MCP server. We can recommend it as a top tier AI assistant.
+
+    However, to get the best results from Claude, you need a paid subscription. The cost may be good value for money, if Claude can save you a lot of time, which seems likely given what AI and Formulize is capable of.
+
+    Regardless, any AI assistant capable of using _local MCP connections_ should be compatible with Formulize. Please <a href='mailto:info@formulize.org'>let us know about your experience</a>.
+
+2. **Enable AI integration via MCP**. Go to the __Formulize Preferences__ page, accessible from the main Formulize admin page. Scroll down to the __AI__ section, and click _Yes_ for the _Enable AI Integration via MCP_ option.
+
+    If this option does not "stick" and reverts to _No_, then you need to make sure your server is passing through an "authorization header" to PHP. Add this code to the .htaccess file at the root of your website. Make sure to put it after any other rewrite rules.
+
+		    # Necessary for HTTP Authorization header to be passed through to the MCP server
+		    RewriteEngine On
+		    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+3. **Write some introductory notes for the AI.** When AI is enabled in Formulize, there is a preference called _System Specific Instructions for the AI Assistant_. This is a very useful and powerful feature! Everything you type in this preference, will be communicated to the AI every time it connects to your Formulize system. This is your chance to give it any unique background info it might need in order to understand your system, what it's for, and how it works. Include details. The AI loves details.
+
+4. **Create an API key _in Formulize_** for the user(s) who are going to work with AI. You create API keys on the __Manage API Keys__ page, accessible from the main Formulize admin page.
+
+5. **Share the API key _securely_**. Use a secure communication channel to distribute the API keys, or meet in person. The API keys give access to Formulize in exactly the same way as logging in with someone's username and password, so __do not send them via e-mail__ or other insecure means!
+
+6. **Configure your AI assistant**. For <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>, you can simply <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.4.0/formulize-mcp.mcpb' download='formulize-mcp.mcpb'>download the Formulize MCPB extension</a>, and install it in Claude. Unfortunately, the exact steps to install are changing regularly, and depend on which version of Claude you're using.
+
+	Other AI assistants might be compatible with MCPB extensions as well, now or in the future.
+
+6. If your AI assistant does not support MCPB extensions, you need to update the configuration of your AI assistant manually. Exactly how to do this varies from assistant to assistant:
+
+	- For Copilot in VSCode, make a file called ```mcp.json``` in the ```.vscode``` folder of your project. It should look like this
+
+	```json
+	{
+		"servers": {
+			"My Formulize MCP Server": {
+				"command": "npx",
+				"args": [
+					"-y",
+					"formulize-mcp"
+				],
+				"env": {
+					"FORMULIZE_URL": "https://<your.formulize.site.url>",
+					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
+					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+				}
+			}
+		}
+	}
+	```
+
+	- Also, in VSCode you will want to go into the preferences, and under __Chat > MCP__, make sure _discovery_ is enabled.
+
+	- For Claude Desktop, if you're not using the MCPB file, modify the file ```claude_desktop_config.json```. Where is it?\
+	Windows: ```%APPDATA%\Claude\claude_desktop_config.json```\
+	macOS: ```~/Library/Application Support/Claude/claude_desktop_config.json```\
+	\
+	The file should look like this:
+
+	```json
+	{
+		"mcpServers": {
+			"My Formulize MCP Server": {
+				"command": "npx",
+				"args": [
+					"-y",
+					"formulize-mcp"
+				],
+				"env": {
+					"FORMULIZE_URL": "https://<your.formulize.site.url>",
+					"FORMULIZE_API_KEY": "<your api key from your formulize site>",
+					"FORMULIZE_SERVER_NAME": "My Formulize MCP Server"
+				}
+			}
+		}
+	}
+	```
+
+	- The configuration for other AI assistants should be similar. You need to use ```npx``` with ```formulize-mcp```, and set the environment variables.
+
+---
+
+## Options
+
+There are five options you can configure in your AI assistant, for working with Formulize.
+
+The MCPB extension will give you a user interface to fill in with these options.
+
+If you are manually configuring through a .json file, you need to include the options as the environment variables (env).
+
+- FORMULIZE_URL - Required - The URL for your Formulize system, ie: https://myformulize.com
+- FORMULIZE_API_KEY - Required - Your API key for your Formulize system.
+- FORMULIZE_SERVER_NAME - Recommended - The name of your server. Although the name may be stated already higher up in the .json file, including the name as an environment variable will help the AI understand your system.
+- FORMULIZE_DEBUG - Optional - Either _true_ or _false_. Defaults to _false_.
+- FORMULIZE_TIMEOUT - Optional - Timeout in milliseconds. Defaults to _30000_.
+
+## Advanced Configuration
+
+You can connect your AI assistant to multiple Formulize instances. You can also connect with the credentials of different users. [Read more about these advanced configurations](../ai/advanced-setup).
+
+---
+
+- [Enable the embedded AI assistant](../ai/setup-embedded)
+- [Read more about AI and Formulize](../ai/)
