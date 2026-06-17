@@ -9965,17 +9965,31 @@ function isMCPServerEnabled() {
  * @return bool True if the AI Assistant is enabled, false otherwise
  */
 function isAIAssistantEnabled() {
-    global $xoopsModuleConfig;
+    global $xoopsUser, $xoopsModuleConfig;
 
     if (isset($xoopsModuleConfig['formulizeAIAssistantEnabled'])) {
-        return $xoopsModuleConfig['formulizeAIAssistantEnabled'] == 1;
+        $enabled = $xoopsModuleConfig['formulizeAIAssistantEnabled'] == 1;
+        $allowedGroups = isset($xoopsModuleConfig['formulizeAIAssistantGroups'])
+            ? $xoopsModuleConfig['formulizeAIAssistantGroups'] : array();
+    } else {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        $enabled = isset($formulizeConfig['formulizeAIAssistantEnabled'])
+            && $formulizeConfig['formulizeAIAssistantEnabled'] == 1;
+        $allowedGroups = isset($formulizeConfig['formulizeAIAssistantGroups'])
+            ? $formulizeConfig['formulizeAIAssistantGroups'] : array();
     }
 
-    $config_handler = xoops_gethandler('config');
-    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+    if (!$enabled) {
+        return false;
+    }
 
-    return isset($formulizeConfig['formulizeAIAssistantEnabled'])
-        && $formulizeConfig['formulizeAIAssistantEnabled'] == 1;
+    if (empty($allowedGroups)) {
+        return false;
+    }
+
+    $userGroups = $xoopsUser ? $xoopsUser->getGroups() : array();
+    return (bool) array_intersect($userGroups, $allowedGroups);
 }
 
 /**
