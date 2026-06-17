@@ -3,6 +3,7 @@
 
 // Auth
 define('_MD_FORMULIZE_MUST_BE_LOGGED_IN',        'You must be logged in to use the AI Assistant.');
+define('_MD_FORMULIZE_AI_NOT_ENABLED',           'The embedded AI Assistant is not enabled in this Formulize system.');
 
 // Header / settings panel
 define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Gwynian - The Formulize AI Assistant');
@@ -21,7 +22,7 @@ define('_MD_FORMULIZE_AI_API_KEY_OLLAMA',         'No key needed');
 define('_MD_FORMULIZE_AI_SAVE_SETTINGS_BTN',      'Save Settings');
 define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_KEY',     'Enter your API key above to continue');
 define('_MD_FORMULIZE_AI_SETTINGS_GUIDE_TOOLS',   'Choose tools and Save Settings');
-define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'New Conversation');
+define('_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN',   'Start a new Conversation');
 define('_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG',   'New conversation started.');
 define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_LABEL',     'Active Tools:');
 define('_MD_FORMULIZE_AI_TOOLS_ALL_BTN',          'All');

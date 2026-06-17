@@ -3,6 +3,7 @@
 
 // Auth
 define('_MD_FORMULIZE_MUST_BE_LOGGED_IN',        'Vous devez être connecté pour utiliser l\'Assistant IA.');
+define('_MD_FORMULIZE_AI_NOT_ENABLED',           'L\'Assistant IA intégré n\'est pas activé dans ce système Formulize.');
 
 // En-tête / panneau de paramètres
 define('_MD_FORMULIZE_AI_PAGE_TITLE',             'Gwynian - L\'Assistant IA Formulize');
