@@ -380,7 +380,7 @@ define("_US_2FA_ATTEMPTS_REMAINING", "(%s attempt(s) remaining)");
 define("_US_2FA_LOCKED_OUT_SENT", "Too many incorrect attempts. Please %s to get a new code sent to you.");
 define("_US_2FA_LOCKED_OUT_APP", "Too many incorrect attempts. Please wait a few minutes and try again.");
 define("_US_LOSTPASS_TITLE", "Reset your password");
-define("_US_LOSTPASS_ENTER_CODE", "Enter your verification code, along with your new password.");
+define("_US_LOSTPASS_ENTER_CODE", "Enter your verification code:");
 
 define("_SESSION_TIMEOUT_AT", "Your session will time out at ");
 define("_SESSION_TIMEOUT_UNSAVED_CHANGES", "If you have unsaved changes, save them now.");
