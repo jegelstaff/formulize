@@ -2,6 +2,7 @@
 
 $listFid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('fid')) : 0;
 $listFrid = (isset($screen) AND is_object($screen) AND $screen->getVar('frid')) ? intval($screen->getVar('frid')) : 0;
+$listSid  = (isset($screen) AND is_object($screen)) ? intval($screen->getVar('sid')) : 0;
 
 // total entries in the list across all pages, shown beside the title
 $listTotalCount = isset($GLOBALS['formulize_countMasterResultsForPageNumbers']) ? intval($GLOBALS['formulize_countMasterResultsForPageNumbers']) : 0;
@@ -12,7 +13,7 @@ print "
 $submitButton
 $procedureResults
 
-<div class='fz-list-screen' data-fz-fid='$listFid' data-fz-frid='$listFrid'>
+<div class='fz-list-screen' data-fz-fid='$listFid' data-fz-frid='$listFrid' data-fz-sid='$listSid'>
 
   <div class='fz-list__titlebar'>
     <div class='fz-list__titlebar-start'>
