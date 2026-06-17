@@ -67,19 +67,60 @@ function fzSelectView(value, isStandard) {
         });
     }
 
+    // Persisted filter-row visibility, keyed by screen id, in a single
+    // localStorage object: { "<sid>": true|false }. Absent/corrupt state
+    // falls back to the rendered default (filters hidden).
+    var FILTERS_KEY = 'fz-filters-shown';
+
+    function getScreenId() {
+        var screenEl = document.querySelector('.fz-list-screen');
+        var sid = screenEl ? screenEl.getAttribute('data-fz-sid') : '';
+        return (sid && sid !== '0') ? sid : '';
+    }
+
+    function readFiltersState() {
+        try {
+            return JSON.parse(localStorage.getItem(FILTERS_KEY)) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function writeFilterState(sid, shown) {
+        if (!sid) return;
+        try {
+            var state = readFiltersState();
+            state[sid] = shown;
+            localStorage.setItem(FILTERS_KEY, JSON.stringify(state));
+        } catch (e) { /* ignore */ }
+    }
+
+    function setRows(rows, shown) {
+        rows.forEach(function (row) {
+            if (shown) { row.removeAttribute('hidden'); }
+            else       { row.setAttribute('hidden', ''); }
+        });
+    }
+
     function initFilterToggle() {
         var btn  = document.getElementById('fz-filter-toggle');
         var rows = document.querySelectorAll('.fz-search-row');
         if (!btn) return;
         if (rows.length === 0) { btn.style.display = 'none'; return; }
+
+        var sid = getScreenId();
+        // Apply any remembered state for this screen; otherwise keep the default.
+        if (sid) {
+            var stored = readFiltersState()[sid];
+            if (stored !== undefined) { setRows(rows, stored); }
+        }
+
         btn.setAttribute('aria-pressed', String(!rows[0].hasAttribute('hidden')));
         btn.addEventListener('click', function () {
-            var isHidden = rows[0].hasAttribute('hidden');
-            rows.forEach(function (row) {
-                if (isHidden) { row.removeAttribute('hidden'); }
-                else          { row.setAttribute('hidden', ''); }
-            });
-            btn.setAttribute('aria-pressed', String(isHidden));
+            var willShow = rows[0].hasAttribute('hidden');
+            setRows(rows, willShow);
+            btn.setAttribute('aria-pressed', String(willShow));
+            writeFilterState(sid, willShow);
         });
     }
 
