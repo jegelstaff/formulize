@@ -6,8 +6,8 @@
  * and uses Formulize MCP tools to interact with the system.
  */
 
-include_once "mainfile.php";
-include "header.php";
+include_once "../mainfile.php";
+include "../header.php";
 
 global $xoTheme;
 if ($xoTheme) {
@@ -23,7 +23,17 @@ include_once (file_exists($_aiChatLangFile) ? $_aiChatLangFile : XOOPS_ROOT_PATH
 // Ensure the user is logged in for the PoC to work with session auth
 if (!$xoopsUser) {
     echo "<div class='errorMsg'>" . _MD_FORMULIZE_MUST_BE_LOGGED_IN . "</div>";
-    include "footer.php";
+    include "../footer.php";
+    exit();
+}
+
+// The embedded AI Assistant must be enabled in Formulize preferences. The MCP endpoint
+// enforces this too (session callers require the AI Assistant pref), but guard the page
+// itself so a disabled assistant doesn't present a chat UI whose tool calls would fail.
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+if (!isAIAssistantEnabled()) {
+    echo "<div class='errorMsg'>" . _MD_FORMULIZE_AI_NOT_ENABLED . "</div>";
+    include "../footer.php";
     exit();
 }
 
@@ -114,11 +124,16 @@ if (defined('XOOPS_DB_SALT') && XOOPS_DB_SALT) {
 
     <div id="chat-window" style="flex: 1; min-height: 0; overflow-y: auto; background: white; border: 1px solid #ddd; border-top: none; padding: 20px; display: flex; flex-direction: column; gap: 15px;"></div>
 
-    <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 15px; border-radius: 0; display: flex; gap: 10px;">
-        <textarea id="user-input" placeholder="<?php echo _MD_FORMULIZE_AI_CHAT_PLACEHOLDER; ?>" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
-        <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SEND_BTN; ?></button>
-        <button id="stop-btn" style="display:none; padding: 0 25px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_STOP_BTN; ?></button>
+    <div style="background: #f8f9fa; border: 1px solid #ddd; border-top: none; padding: 10px 15px 12px; border-radius: 0; display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; gap: 10px; align-items: stretch;">
+            <button id="attach-btn" type="button" title="Upload files" style="min-width: 42px; width: 42px; height: 42px; padding: 0; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1.3em; line-height: 1; flex-shrink: 0; align-self: center;">+</button>
+            <textarea id="user-input" placeholder="<?php echo _MD_FORMULIZE_AI_CHAT_PLACEHOLDER; ?>" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: none; height: 60px;"></textarea>
+            <button id="send-btn" style="padding: 0 25px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_SEND_BTN; ?></button>
+            <button id="stop-btn" style="display:none; padding: 0 25px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><?php echo _MD_FORMULIZE_AI_STOP_BTN; ?></button>
+        </div>
+        <div id="attachment-strip" style="display:none; flex-wrap: wrap; gap: 6px; justify-content: flex-start;"></div>
     </div>
+    <input type="file" id="file-attach-input" style="display:none" accept=".pdf,image/*" multiple>
 
     <div id="activity-toggle-bar" title="<?php echo _MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE; ?>" style="background: #eef2f5; border: 1px solid #ddd; border-top: none; padding: 7px 15px; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8em; color: #555; user-select: none;">
         <span><?php echo _MD_FORMULIZE_AI_ACTIVITY_LABEL; ?> &nbsp;<span id="activity-count" style="background: #6c757d; color: white; padding: 1px 7px; border-radius: 10px; font-size: 0.85em;">0</span></span>
@@ -244,6 +259,10 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     const saveSettingsBtn = document.getElementById('save-settings');
     const mcpStatus = document.getElementById('mcp-status');
     const stopBtn = document.getElementById('stop-btn');
+    const attachBtn = document.getElementById('attach-btn');
+    const fileAttachInput = document.getElementById('file-attach-input');
+    const attachmentStrip = document.getElementById('attachment-strip');
+    let pendingAttachments = [];
 
     let isSending = false;
     let currentAbortController = null;
@@ -349,6 +368,15 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             }
         }
         if (!cutoffEl) return;
+
+        // If nothing actually precedes the cutoff, the mismatch was from appended activity context
+        // rather than real trimming — skip to avoid a spurious marker.
+        let hasItemsBefore = false;
+        for (const el of chatWindow.children) {
+            if (el === cutoffEl) break;
+            if (el.id !== 'context-cutoff-marker') { hasItemsBefore = true; break; }
+        }
+        if (!hasItemsBefore) return;
 
         // Dim everything before the cutoff
         for (const el of chatWindow.children) {
@@ -892,7 +920,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         try {
             if (renderPanel) mcpStatus.innerText = S.fetchingTools;
 
-            const response = await fetch('mcp/index.php/capabilities');
+            const response = await fetch('../mcp/index.php/capabilities');
             const data = await response.json();
 
             const capabilities = data.result?.capabilities || data.capabilities;
@@ -1002,6 +1030,50 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         if (currentAbortController) currentAbortController.abort();
     });
 
+    attachBtn.addEventListener('click', () => fileAttachInput.click());
+
+    fileAttachInput.addEventListener('change', () => {
+        Array.from(fileAttachInput.files).forEach(file => {
+            if (file.size > 10 * 1024 * 1024) {
+                addMessage(S.senderSystem, '"' + file.name + '" exceeds the 10 MB limit and was not attached.', 'system');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                const data = dataUrl.slice(dataUrl.indexOf(',') + 1);
+                pendingAttachments.push({ name: file.name, type: file.type || 'application/octet-stream', size: file.size, data });
+                renderAttachmentStrip();
+            };
+            reader.readAsDataURL(file);
+        });
+        fileAttachInput.value = '';
+    });
+
+    function renderAttachmentStrip() {
+        attachmentStrip.innerHTML = '';
+        if (pendingAttachments.length === 0) {
+            attachmentStrip.style.display = 'none';
+            return;
+        }
+        attachmentStrip.style.display = 'flex';
+        pendingAttachments.forEach((att, i) => {
+            const chip = document.createElement('span');
+            chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;max-width:200px;overflow:hidden;background:#e8f4fd;border:1px solid #b8d9f0;border-radius:12px;padding:4px 6px 4px 10px;font-size:0.82em;';
+            const icon = att.type === 'application/pdf' ? '📄' : att.type.startsWith('image/') ? '🖼️' : '📎';
+            const label = document.createElement('span');
+            label.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            label.textContent = icon + ' ' + att.name;
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.textContent = '×';
+            rm.style.cssText = 'background:none;border:none;cursor:pointer;color:#888;font-size:1em;padding:0 2px;line-height:1;flex-shrink:0;min-width:auto';
+            rm.addEventListener('click', () => { pendingAttachments.splice(i, 1); renderAttachmentStrip(); });
+            chip.append(label, rm);
+            attachmentStrip.appendChild(chip);
+        });
+    }
+
     async function sendMessage() {
         const text = userInput.value.trim();
         if (!text) return;
@@ -1013,6 +1085,10 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             return;
         }
 
+        const attachments = [...pendingAttachments];
+        pendingAttachments = [];
+        renderAttachmentStrip();
+
         isSending = true;
         userStopped = false;
         currentAbortController = new AbortController();
@@ -1020,7 +1096,13 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         stopBtn.style.display = '';
         userInput.disabled = true;
 
-        addMessage(S.senderYou, text, 'user');
+        const userBubble = addMessage(S.senderYou, text, 'user');
+        if (attachments.length > 0) {
+            const attNote = document.createElement('div');
+            attNote.style.cssText = 'margin-top: 4px; font-size: 0.8em; opacity: 0.8;';
+            attNote.textContent = attachments.map(a => (a.type === 'application/pdf' ? '📄' : a.type.startsWith('image/') ? '🖼️' : '📎') + ' ' + a.name).join('  ');
+            userBubble.appendChild(attNote);
+        }
         userInput.value = '';
         userInput.style.height = '60px';
 
@@ -1038,13 +1120,13 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
         try {
             if (provider === 'gemini') {
-                await sendGeminiMessage(text, loadingMsg);
+                await sendGeminiMessage(text, loadingMsg, attachments);
             } else if (provider === 'openai') {
-                await sendOpenAIMessage(text, loadingMsg);
+                await sendOpenAIMessage(text, loadingMsg, attachments);
             } else if (provider === 'ollama') {
-                await sendOllamaMessage(text, loadingMsg);
+                await sendOllamaMessage(text, loadingMsg, attachments);
             } else {
-                await sendClaudeMessage(text, loadingMsg);
+                await sendClaudeMessage(text, loadingMsg, attachments);
             }
             refreshActivityPanel(); // refresh count after send (catches same-tab events)
         } catch (error) {
@@ -1067,7 +1149,7 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     // --- Gemini path ---
 
-    async function sendGeminiMessage(text, loadingMsg) {
+    async function sendGeminiMessage(text, loadingMsg, attachments = []) {
         if (!geminiChat) {
             loadingMsg.remove();
             addMessage(S.senderError, S.geminiSaveFirst, 'error');
@@ -1087,7 +1169,17 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         }
 
         try {
-            let result = await geminiChat.sendMessage(activityContext ? text + '\n\n' + activityContext : text);
+            const geminiText = activityContext ? text + '\n\n' + activityContext : text;
+            let result;
+            if (attachments.length > 0) {
+                const parts = attachments
+                    .filter(a => a.type.startsWith('image/') || a.type === 'application/pdf')
+                    .map(a => ({ inlineData: { data: a.data, mimeType: a.type } }));
+                parts.push({ text: geminiText });
+                result = await geminiChat.sendMessage(parts);
+            } else {
+                result = await geminiChat.sendMessage(geminiText);
+            }
             if (userStopped) throw new DOMException('User stopped', 'AbortError');
             let response = result.response;
 
@@ -1125,11 +1217,11 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     // --- Claude path ---
 
-    async function sendClaudeMessage(text, loadingMsg) {
+    async function sendClaudeMessage(text, loadingMsg, attachments = []) {
         claudeHistory.push({ role: 'user', content: text });
 
         const context = getActivityContext();
-        const messagesForApi = trimHistoryToLimit(
+        let messagesForApi = trimHistoryToLimit(
             context
                 ? claudeHistory.map((msg, i) => i === claudeHistory.length - 1
                     ? { ...msg, content: msg.content + '\n\n' + context }
@@ -1137,6 +1229,26 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
                 : claudeHistory,
             getContextLimit()
         );
+
+        if (attachments.length > 0) {
+            const lastIdx = messagesForApi.length - 1;
+            if (messagesForApi[lastIdx]?.role === 'user') {
+                const baseText = typeof messagesForApi[lastIdx].content === 'string'
+                    ? messagesForApi[lastIdx].content : text;
+                const parts = attachments.reduce((acc, att) => {
+                    if (att.type === 'application/pdf') {
+                        acc.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: att.data } });
+                    } else if (att.type.startsWith('image/')) {
+                        acc.push({ type: 'image', source: { type: 'base64', media_type: att.type, data: att.data } });
+                    }
+                    return acc;
+                }, []);
+                parts.push({ type: 'text', text: baseText });
+                messagesForApi = messagesForApi.map((msg, i) =>
+                    i === lastIdx ? { ...msg, content: parts } : msg
+                );
+            }
+        }
 
         try {
             let response = await callClaude(messagesForApi);
@@ -1189,18 +1301,62 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
             input_schema: tool.inputSchema || { type: 'object', properties: {} }
         }));
 
-        const body = { model: modelName, max_tokens: 4096, system: dynamicSystemPrompt, messages };
-        if (claudeTools.length > 0) body.tools = claudeTools;
+        const bodyBase = { model: modelName, max_tokens: 4096, system: dynamicSystemPrompt };
+        if (claudeTools.length > 0) bodyBase.tools = claudeTools;
+
+        // If any message block carries inline base64 file data, send the files as binary
+        // multipart parts instead of embedding them in the JSON body. Binary multipart is
+        // ~33% smaller than base64-in-JSON, keeping the browser→server request under
+        // typical server limits (e.g. Apache LimitRequestBody 8 MB). The proxy re-encodes
+        // each uploaded file to base64 before forwarding to Anthropic.
+        const hasInlineFiles = messages.some(m =>
+            Array.isArray(m.content) && m.content.some(b =>
+                (b.type === 'document' || b.type === 'image') && b.source?.type === 'base64'
+            )
+        );
+
+        let fetchInit;
+
+        if (hasInlineFiles) {
+            const fd = new FormData();
+            let fileIdx = 0;
+
+            const processedMessages = await Promise.all(messages.map(async msg => {
+                if (!Array.isArray(msg.content)) return msg;
+                const processedContent = await Promise.all(msg.content.map(async block => {
+                    if ((block.type === 'document' || block.type === 'image') && block.source?.type === 'base64') {
+                        const ref = 'file_' + fileIdx++;
+                        // Decode base64 → Blob via data URL fetch (efficient, no manual char loop)
+                        const blob = await fetch('data:' + block.source.media_type + ';base64,' + block.source.data).then(r => r.blob());
+                        fd.append(ref, blob, ref);
+                        return { type: block.type, source: { type: 'file_ref', ref, media_type: block.source.media_type } };
+                    }
+                    return block;
+                }));
+                return { ...msg, content: processedContent };
+            }));
+
+            fd.append('payload', JSON.stringify({ ...bodyBase, messages: processedMessages }));
+            // No explicit Content-Type header — browser sets multipart/form-data with the correct boundary
+            fetchInit = { method: 'POST', body: fd, signal: currentAbortController?.signal };
+        } else {
+            fetchInit = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...bodyBase, messages }),
+                signal: currentAbortController?.signal
+            };
+        }
 
         // No key header — the proxy loads the key server-side from the DB.
-        const response = await fetch('ai_proxy.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-            signal: currentAbortController?.signal
-        });
+        const response = await fetch('ai_proxy.php', fetchInit);
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (_) {
+            throw new Error(`HTTP ${response.status} — server returned a non-JSON response. If you attached a large file, try adjusting upload_max_filesize / post_max_size in PHP config, or LimitRequestBody in Apache config.`);
+        }
         if (!response.ok) {
             throw new Error(data.error?.message || `HTTP ${response.status}`);
         }
@@ -1265,11 +1421,11 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     // Shared send/tool-loop logic for any OpenAI-compatible provider.
     // history is the provider's history array (mutated in place on success, rolled back on error).
     // callFn is the bound call function for that provider.
-    async function sendOpenAICompatMessage(text, loadingMsg, history, callFn) {
+    async function sendOpenAICompatMessage(text, loadingMsg, history, callFn, attachments = []) {
         history.push({ role: 'user', content: text });
 
         const context = getActivityContext();
-        const messagesForApi = trimHistoryToLimit(
+        let messagesForApi = trimHistoryToLimit(
             context
                 ? history.map((msg, i) => i === history.length - 1
                     ? { ...msg, content: msg.content + '\n\n' + context }
@@ -1277,6 +1433,30 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
                 : history,
             getContextLimit()
         );
+
+        if (attachments.length > 0) {
+            const lastIdx = messagesForApi.length - 1;
+            if (messagesForApi[lastIdx]?.role === 'user') {
+                const baseText = typeof messagesForApi[lastIdx].content === 'string'
+                    ? messagesForApi[lastIdx].content : text;
+                const contentParts = attachments.reduce((acc, a) => {
+                    if (a.fileId) {
+                        // PDF uploaded via Files API — reference by file_id
+                        acc.push({ type: 'file', file: { file_id: a.fileId } });
+                    } else if (a.type.startsWith('image/')) {
+                        acc.push({ type: 'image_url', image_url: { url: 'data:' + a.type + ';base64,' + a.data } });
+                    }
+                    return acc;
+                }, []);
+                if (contentParts.length > 0) {
+                    messagesForApi = messagesForApi.map((msg, i) =>
+                        i === lastIdx
+                            ? { ...msg, content: [...contentParts, { type: 'text', text: baseText }] }
+                            : msg
+                    );
+                }
+            }
+        }
 
         try {
             let response = await callFn(messagesForApi);
@@ -1327,8 +1507,13 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         });
     }
 
-    function sendOllamaMessage(text, loadingMsg) {
-        return sendOpenAICompatMessage(text, loadingMsg, ollamaHistory, callOllama);
+    function sendOllamaMessage(text, loadingMsg, attachments = []) {
+        const pdfs = attachments.filter(a => a.type === 'application/pdf');
+        if (pdfs.length > 0) {
+            pdfs.forEach(a => addMessage(S.senderSystem, '"' + a.name + '" was not sent — Ollama has no file upload API. Use Claude for PDF support.', 'system'));
+            attachments = attachments.filter(a => a.type !== 'application/pdf');
+        }
+        return sendOpenAICompatMessage(text, loadingMsg, ollamaHistory, callOllama, attachments);
     }
 
     // OpenAI
@@ -1343,15 +1528,45 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
         });
     }
 
-    function sendOpenAIMessage(text, loadingMsg) {
-        return sendOpenAICompatMessage(text, loadingMsg, openaiHistory, callOpenAI);
+    async function uploadToOpenAI(att) {
+        try {
+            const res = await fetch('ai_upload.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_data: att.data, file_name: att.name, file_type: att.type })
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) {
+                addMessage(S.senderSystem, 'Upload failed for "' + att.name + '": ' + (data.error || 'Unknown error'), 'system');
+                return null;
+            }
+            return data.file_id;
+        } catch (err) {
+            addMessage(S.senderSystem, 'Upload failed for "' + att.name + '": ' + err.message, 'system');
+            return null;
+        }
+    }
+
+    async function sendOpenAIMessage(text, loadingMsg, attachments = []) {
+        // Upload PDFs to the OpenAI Files API before sending the chat message
+        if (attachments.some(a => a.type === 'application/pdf')) {
+            const processed = await Promise.all(attachments.map(async att => {
+                if (att.type === 'application/pdf') {
+                    const fileId = await uploadToOpenAI(att);
+                    return fileId ? { ...att, fileId } : null; // null = upload failed, skip
+                }
+                return att;
+            }));
+            attachments = processed.filter(Boolean);
+        }
+        return sendOpenAICompatMessage(text, loadingMsg, openaiHistory, callOpenAI, attachments);
     }
 
     // --- Shared MCP tool executor (same for all providers) ---
 
     async function executeTool(name, args) {
         try {
-            const response = await fetch('mcp/index.php/mcp', {
+            const response = await fetch('../mcp/index.php/mcp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1588,5 +1803,5 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 </script>
 
 <?php
-include "footer.php";
+include "../footer.php";
 ?>

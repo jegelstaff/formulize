@@ -11,7 +11,7 @@
  * After first save, the key never travels from browser to server again.
  */
 
-include_once "mainfile.php";
+include_once "../mainfile.php";
 if (isset(icms::$logger)) {
     icms::$logger->disableLogger();
 }
@@ -82,14 +82,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit();
 }
 
-// POST: forward chat completion request
-$body = file_get_contents('php://input');
-if (!$body) {
-    $errBody = json_encode(['error' => ['message' => 'Empty request body']]);
-    http_response_code(400);
-    header('Content-Length: ' . strlen($errBody));
-    echo $errBody;
-    exit();
+// POST: forward chat completion request.
+// Supports two request shapes:
+//   1. application/json  — full payload as JSON (no file attachments)
+//   2. multipart/form-data — 'payload' field contains JSON with file_ref placeholders;
+//      binary file fields (file_0, file_1, …) are re-encoded to base64 here before
+//      forwarding to Anthropic, reducing the browser→server transfer by ~33 %.
+$contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+
+if (strpos($contentType, 'multipart/form-data') !== false) {
+    if (empty($_POST['payload'])) {
+        $errBody = json_encode(['error' => ['message' => 'Missing payload field in multipart request']]);
+        http_response_code(400);
+        header('Content-Length: ' . strlen($errBody));
+        echo $errBody;
+        exit();
+    }
+    // Decode WITHOUT the assoc flag so PHP preserves JSON objects as stdClass.
+    // With true, empty JSON objects {} become empty PHP arrays [] and then
+    // re-encode as [], breaking Claude's schema validation (e.g. input_schema.properties).
+    $payload = json_decode($_POST['payload']);
+    if (!$payload) {
+        $errBody = json_encode(['error' => ['message' => 'Invalid payload JSON in multipart request']]);
+        http_response_code(400);
+        header('Content-Length: ' . strlen($errBody));
+        echo $errBody;
+        exit();
+    }
+
+    // Replace file_ref placeholders with base64-encoded file content.
+    // $payload->messages is a PHP array (JSON arrays stay as arrays even without assoc flag).
+    // Individual message and block objects are stdClass — object properties are modified in-place.
+    foreach ($payload->messages as $msg) {
+        if (!is_array($msg->content)) continue;
+        foreach ($msg->content as $block) {
+            if (!isset($block->source->type) || $block->source->type !== 'file_ref') continue;
+            $ref      = $block->source->ref;
+            $mimeType = $block->source->media_type;
+            if (!isset($_FILES[$ref])) continue;
+            if ($_FILES[$ref]['error'] === UPLOAD_ERR_INI_SIZE) {
+                $errBody = json_encode(['error' => ['message' =>
+                    'The attached file exceeds the server\'s upload limit. '
+                    . 'Ask your admin to increase upload_max_filesize in PHP config.']]);
+                http_response_code(413);
+                header('Content-Length: ' . strlen($errBody));
+                echo $errBody;
+                exit();
+            }
+            if ($_FILES[$ref]['error'] !== UPLOAD_ERR_OK) continue;
+            $src             = new stdClass();
+            $src->type       = 'base64';
+            $src->media_type = $mimeType;
+            $src->data       = base64_encode(file_get_contents($_FILES[$ref]['tmp_name']));
+            $block->source   = $src;
+        }
+    }
+
+    $body = json_encode($payload);
+} else {
+    $body = file_get_contents('php://input');
+    if (!$body) {
+        $errBody = json_encode(['error' => ['message' => 'Empty request body']]);
+        http_response_code(400);
+        header('Content-Length: ' . strlen($errBody));
+        echo $errBody;
+        exit();
+    }
 }
 
 $ch = curl_init('https://api.anthropic.com/v1/messages');

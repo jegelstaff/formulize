@@ -4,10 +4,10 @@
  *
  * POST {provider, key} — encrypt and store. Empty key is a no-op (key can only be replaced, never deleted).
  * Keys are encrypted with AES-256-CBC using XOOPS_DB_SALT as the secret.
- * The decrypted key is only ever returned to ai.php server-side, never via this endpoint.
+ * The decrypted key is only ever returned to ai/index.php server-side, never via this endpoint.
  */
 
-include_once "mainfile.php";
+include_once "../mainfile.php";
 if (isset(icms::$logger)) {
     icms::$logger->disableLogger();
 }
