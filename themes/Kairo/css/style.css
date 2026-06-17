@@ -341,6 +341,15 @@ body {
   color: var(--c-text-muted);
 }
 
+.fz-drawer__page-indicator {
+  align-self: center;
+  margin: 0 var(--s-1);
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
 /* ============================================================
    Loading overlay (list reloads via showLoading())
    ============================================================ */
