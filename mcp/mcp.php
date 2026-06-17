@@ -58,13 +58,13 @@ class FormulizeMCP
 		// - session-authenticated callers (the embedded AI assistant) require the AI Assistant pref
 		// - API-key callers (external MCP clients) require the MCP Server pref
 		// - unauthenticated MCP discovery endpoints (capabilities, etc.) are part of the
-		//   external client surface, so they follow the MCP Server pref (health requests are
-		//   handled separately via canBeEnabled above)
+		//   external client surface, so they follow the MCP Server pref. The auth-header
+		//   passthrough test is handled separately via canBeEnabled above.
 		if ($this->authViaSession) {
 			$this->enabled = isAIAssistantEnabled();
 		} elseif ($this->authViaApiKey) {
 			$this->enabled = isMCPServerEnabled();
-		} elseif ($this->allowUnauthenticatedRequests && !$isHealthRequest) {
+		} elseif ($this->allowUnauthenticatedRequests) {
 			$this->enabled = isMCPServerEnabled();
 		}
 
