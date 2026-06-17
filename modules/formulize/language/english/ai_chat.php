@@ -62,7 +62,7 @@ define('_MD_FORMULIZE_AI_FAILED_INIT',            'Failed to initialize: ');
 define('_MD_FORMULIZE_AI_ERROR_OCCURRED',         'An error occurred: ');
 
 // Welcome (shown only on first visit / no saved settings)
-define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Welcome! I'm Gwynian, your Formulize AI Assistant! Select a provider, enter your API Key, and click Save Settings to start. Once connected, I can help you explore your Formulize system, make forms, create entries, and more.");
+define('_MD_FORMULIZE_AI_WELCOME_MSG',            "Welcome! I'm Gwynian, and I provide sage advice and assistance with Formulize. Select a provider, enter your API Key, and click Save Settings to start. Once connected, I can help you explore your Formulize system, make forms, create entries, and more.");
 
 // Chat sender labels
 define('_MD_FORMULIZE_AI_SENDER_YOU',             'You');

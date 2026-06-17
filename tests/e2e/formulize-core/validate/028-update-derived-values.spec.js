@@ -23,11 +23,13 @@ test('Update Derived Values button triggers XHR and completes successfully', asy
 
 	await page.getByRole('button', { name: 'Update Derived Values' }).click();
 
-	// "Updating Values..." indicator should appear while the XHR runs
-	await expect(page.locator('[name="updateder_Info"]')).toBeVisible();
+	// Wait for the "Finished updating values!" message — it becomes visible when
+	// all XHR batches complete successfully and stays visible, unlike the transient
+	// "Updating Values..." spinner which may hide before Playwright can poll it.
+	await expect(page.locator('#derivedfinished')).toBeVisible({ timeout: 60000 });
 
-	// Wait for completion — controls return and indicator hides
-	await expect(page.locator('[name="updateder_controls"]')).toBeVisible({ timeout: 60000 });
+	// Controls should be restored and the spinner should be gone
+	await expect(page.locator('[name="updateder_controls"]')).toBeVisible();
 	await expect(page.locator('[name="updateder_Info"]')).not.toBeVisible();
 
 	// An alert firing would mean the XHR returned an error
