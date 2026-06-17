@@ -56,13 +56,14 @@ function block_formulizeMENU_show() {
 		$menuTexts[$i]['application'] = 0;
 	}
 
-	include_once XOOPS_ROOT_PATH . '/modules/formulize/include/usersAndGroups.php';
 	list($ugContent, $ugData) = drawUsersAndGroupsMenuSection();
+	list($aiContent, $aiData) = drawAIAssistantMenuSection();
 
 	$hasMenuEntries = count((array)$menuTexts) > 0;
 	$hasUgSection = ($ugContent !== false);
+	$hasAiSection = ($aiContent !== false);
 
-	if ($hasMenuEntries || $hasUgSection) {
+	if ($hasMenuEntries || $hasUgSection || $hasAiSection) {
 		$innerContent = "";
 		$menuData = array();
 
@@ -78,6 +79,11 @@ function block_formulizeMENU_show() {
 		if ($hasUgSection) {
 			$innerContent .= $ugContent;
 			$menuData[] = $ugData;
+		}
+
+		if ($hasAiSection) {
+			$innerContent .= $aiContent;
+			$menuData[] = $aiData;
 		}
 
 		$block['content'] = "<table cellspacing='0' border='0'><tr><td id=\"mainmenu\">" . $innerContent . "</td></tr></table>";

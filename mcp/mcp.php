@@ -27,6 +27,9 @@ class FormulizeMCP
 	private $db;
 	public $enabled = false;
 	public $canBeEnabled = false;
+	private $authViaSession = false;
+	private $authViaApiKey = false;
+	private $allowUnauthenticatedRequests = false;
 	public $tools;
 	public $resources;
 	public $prompts;
@@ -51,9 +54,18 @@ class FormulizeMCP
 			$this->canBeEnabled = true;
 		}
 
-		if (isMCPServerEnabled()) {
-			$this->enabled = true;
-			$this->canBeEnabled = true;
+		// Gate access by authentication type, so each preference controls only its own surface:
+		// - session-authenticated callers (the embedded AI assistant) require the AI Assistant pref
+		// - API-key callers (external MCP clients) require the MCP Server pref
+		// - unauthenticated MCP discovery endpoints (capabilities, etc.) are part of the
+		//   external client surface, so they follow the MCP Server pref. The auth-header
+		//   passthrough test is handled separately via canBeEnabled above.
+		if ($this->authViaSession) {
+			$this->enabled = isAIAssistantEnabled();
+		} elseif ($this->authViaApiKey) {
+			$this->enabled = isMCPServerEnabled();
+		} elseif ($this->allowUnauthenticatedRequests) {
+			$this->enabled = isMCPServerEnabled();
 		}
 
 		// Get the raw http request contents
@@ -189,6 +201,16 @@ class FormulizeMCP
 	private function authenticateRequest(string $path, string $method)
 	{
 		global $xoopsUser, $icmsUser;
+
+		// Check for active session first (for embedded AI)
+		if ($xoopsUser) {
+			$this->authViaSession = true;
+			$this->authenticatedUser = $xoopsUser;
+			$this->authenticatedUid = $xoopsUser->getVar('uid');
+			$this->userGroups = $xoopsUser->getGroups();
+			return true;
+		}
+
 		// Handle CORS preflight
 		if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 			throw new FormulizeMCPException(
@@ -198,20 +220,19 @@ class FormulizeMCP
 		}
 
 		// Only authenticate requests for mcp
-		$allowUnauthenticatedRequests = false;
 		if ($method === 'GET' && (
 			substr($path, -7) === '/health' ||
 			substr($path, -13) === '/capabilities' ||
 			substr($path, -4) === '/docs' ||
 			substr($path, -4) !== '/mcp')
 		) {
-			$allowUnauthenticatedRequests = true;
+			$this->allowUnauthenticatedRequests = true;
 		}
 
 		// Check for Authorization header
 		$authHeader = $this->getAuthorizationHeader();
 
-		if (empty($authHeader) AND !$allowUnauthenticatedRequests) {
+		if (empty($authHeader) AND !$this->allowUnauthenticatedRequests) {
 			throw new FormulizeMCPException(
 				'Missing Authorization header',
 				'authentication_error',
@@ -219,7 +240,7 @@ class FormulizeMCP
 		}
 
 		// Extract API key from "Bearer {api_key}" format
-		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches) AND !$allowUnauthenticatedRequests) {
+		if (!preg_match('/Bearer\s+(.+)/', $authHeader, $matches) AND !$this->allowUnauthenticatedRequests) {
 			throw new FormulizeMCPException(
 				'Invalid Authorization header format. Use: Bearer {api_key}',
 				'authentication_error',
@@ -229,7 +250,7 @@ class FormulizeMCP
 		// Isolate the key
 		$key = trim($matches[1]);
 
-		if (!$allowUnauthenticatedRequests || ($key && $key !== 'test-header-passthrough-check')) {
+		if (!$this->allowUnauthenticatedRequests || ($key && $key !== 'test-header-passthrough-check')) {
 			$uid = $this->getUidFromAPIKey($key);
 			if ($uid === false) {
 				throw new FormulizeMCPException(
@@ -239,6 +260,7 @@ class FormulizeMCP
 			}
 			$member_handler = xoops_gethandler('member');
 			if ($uidObject = $member_handler->getUser($uid)) {
+				$this->authViaApiKey = true;
 				$this->userGroups = $uidObject->getGroups();
 				$this->authenticatedUser = $uidObject;
 				$this->authenticatedUid = $uid;

@@ -498,3 +498,10 @@ CREATE TABLE formulize_screen_template (
   INDEX i_sid (`sid`)
 ) ENGINE=InnoDB;
 
+CREATE TABLE formulize_ai_keys (
+  uid INT NOT NULL,
+  provider VARCHAR(20) NOT NULL,
+  encrypted_key TEXT NOT NULL,
+  PRIMARY KEY (uid, provider)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

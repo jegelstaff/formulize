@@ -1225,6 +1225,19 @@ function deleteEntry($entry_id, $frid, $fid, $excludeFids=array()) {
         $deletedEntries[$fid][] = $entry_id;
     } // end of if frid
 
+    // log deletions for AI context
+    global $xoopsUser;
+    foreach ($deletedEntries as $thisfid=>$entries) {
+        foreach ($entries as $ent) {
+            writeToFormulizeLog(array(
+                'formulize_event' => 'deleting-entry',
+                'user_id' => ($xoopsUser ? $xoopsUser->getVar('uid') : 0),
+                'form_id' => $thisfid,
+                'entry_id' => $ent,
+            ));
+        }
+    }
+
     // do notifications
     foreach ($deletedEntries as $thisfid=>$entries) {
       sendNotifications($thisfid, "delete_entry", $entries);
@@ -9944,6 +9957,42 @@ function isMCPServerEnabled() {
 }
 
 /**
+ * Check if the embedded AI Assistant is enabled in Formulize preferences
+ *
+ * This preference is independent of the MCP Server preference. The embedded assistant
+ * authenticates via the user's PHP session, so it controls its own access surface.
+ *
+ * @return bool True if the AI Assistant is enabled, false otherwise
+ */
+function isAIAssistantEnabled() {
+    global $xoopsUser, $xoopsModuleConfig;
+
+    if (isset($xoopsModuleConfig['formulizeAIAssistantEnabled'])) {
+        $enabled = $xoopsModuleConfig['formulizeAIAssistantEnabled'] == 1;
+        $allowedGroups = isset($xoopsModuleConfig['formulizeAIAssistantGroups'])
+            ? $xoopsModuleConfig['formulizeAIAssistantGroups'] : array();
+    } else {
+        $config_handler = xoops_gethandler('config');
+        $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+        $enabled = isset($formulizeConfig['formulizeAIAssistantEnabled'])
+            && $formulizeConfig['formulizeAIAssistantEnabled'] == 1;
+        $allowedGroups = isset($formulizeConfig['formulizeAIAssistantGroups'])
+            ? $formulizeConfig['formulizeAIAssistantGroups'] : array();
+    }
+
+    if (!$enabled) {
+        return false;
+    }
+
+    if (empty($allowedGroups)) {
+        return false;
+    }
+
+    $userGroups = $xoopsUser ? $xoopsUser->getGroups() : array();
+    return (bool) array_intersect($userGroups, $allowedGroups);
+}
+
+/**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  *
  * @param mixed $value - the value we're working with
@@ -10618,4 +10667,38 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 	}
 
 	return $evaluationCondition;
+}
+
+/**
+ * Draw the "Use AI" menu section for the Formulize menu block.
+ *
+ * Returns both an HTML string (for non-template menu mode) and a structured data array
+ * (for template menu mode). Returns array(false, false) if the AI Assistant is not enabled.
+ *
+ * @return array Two-element array: [string|false $htmlContent, array|false $dataArray]
+ */
+function drawAIAssistantMenuSection() {
+	if (!isAIAssistantEnabled()) {
+		return array(false, false);
+	}
+
+	$aiUrl = XOOPS_URL . "/ai/";
+	$currentURL = getCurrentURL();
+
+	$isActive = strpos($currentURL, '/ai/') !== false;
+	$menuActive = $isActive ? ' menuActive' : '';
+
+	$title = 'Use AI';
+
+	$block = "<a class=\"menuMain$menuActive\" href=\"$aiUrl\">$title</a>";
+
+	$data = array(
+		'url' => $aiUrl,
+		'title' => $title,
+		'active' => ($isActive ? 1 : 0),
+		'target' => '',
+		'icon' => ''
+	);
+
+	return array($block, $data);
 }

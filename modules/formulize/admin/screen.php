@@ -748,6 +748,10 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
 
 
 $adminPage['pagetitle'] = _AM_FORM_SCREEN.$screenName;
+$adminPage['ai_meta_json'] = json_encode(array(
+    'form_handle' => (isset($formObject) && $formObject) ? $formObject->getVar('form_handle') : null,
+    'screen_name' => $screenName,
+));
 $adminPage['needsave'] = true;
 $adminPage['show_user_view'] = array("View Screen", XOOPS_URL."/modules/formulize/index.php?sid=$screen_id");
 

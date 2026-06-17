@@ -114,40 +114,34 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API".$publicAPIInstructions);
 define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/");
 
-$mcpServerInstructions = '';
-$mcpDocumentationLink = "Read more about Formulize and AI at <a href='https://formulize.org/ai' target='_blank'>https://formulize.org/ai</a>.";
+$mcpEnabled = !empty($formulizeConfig['formulizeMCPServerEnabled']);
+$aiAssistantEnabled = !empty($formulizeConfig['formulizeAIAssistantEnabled']);
+
+// Hide the System Specific Instructions setting unless at least one AI pathway is enabled
+// Hide the embedded AI groups unless the embedded assistant is enabled
 $hideSystemSpecificInstructions = '';
-foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
-	if($thisConfig == 'formulizeMCPServerEnabled' AND $thisConfigValue == 0) {
-		$mcpServerInstructions = "<br><br>To work with AI, your server needs to pass through an authorization header to PHP. On some servers, you will need to add this code to the .htaccess file at the root of your website. Make sure to put it after any other rewrite rules.
-		<blockquote style=\"font-weight: normal; font-family: monospace; white-space: nowrap;\">
-		# Necessary for HTTP Authorization header to be passed through to the MCP server<br>
-		RewriteEngine On<br>
-		RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]<br>
-		</blockquote><i>If you enabled this option, but these instructions are still here, then your web server is not yet properly configured for MCP. Check your .htaccess file and try again.</i><br><br>";
-		$hideSystemSpecificInstructions = "<script>jQuery(window).load(function() { jQuery(\"span:contains('System Specific Instructions for the AI Assistant')\").closest('tr').hide(); } );</script>";
-		break;
-	} else {
-		$mcpExampleConfigFilename = FormulizeObject::sanitize_handle_name(str_replace('.', '_', $_SERVER['HTTP_HOST']))."_mcp_example_config.json";
-		$mcpServerInstructions = "<br><br><style>
-			#xo-canvas-content ul.mcp-bullets > li { margin-bottom: 0.6em; font-weight: normal; list-style: disc;}
-			#xo-canvas-content ol.mcp-steps > li { margin-bottom: 0.6em; font-weight: normal; list-style: number; }
-		</style>
-		Next steps:
-		<ol class='mcp-steps'>
-		<li><b>Create an API Key</b> &mdash; Go to <a href='".XOOPS_URL."/modules/formulize/admin/ui.php?page=managekeys' target='_blank'>the <i>Manage API Keys</i> page</a>, and create an API key for the user(s) that will be using AI with Formulize.</li>
-		<li><b>Share the API key <i>securely</i></b> &mdash; Use a secure communication channel to distribute the API keys, or meet in person. The API keys give access to Formulize in exactly the same way as logging in with someone's username and password, so <b>do not send them via e-mail</b> or other insecure means!</li>
-		<li><b>Connect an AI assistant</b> &mdash; Use these files to connect an MCP-compatible AI assistant to Formulize:
-			<ul class='mcp-bullets'>
-				<li><b>MCPB Extension</b> &mdash; <a href='https://github.com/jegelstaff/formulize-mcp/releases/download/v1.4.0/formulize-mcp.mcpb' download='formulize-mcp.mcpb'>formulize-mcp.mcpb</a> &mdash; download this file and install it in an AI assistant that supports MCPB extensions, such as <a href='https://claude.ai/download' target='_blank'>Claude Desktop</a>.</li>
-				<li style='list-style: none;'><b>or</b></li>
-				<li><b>Manual configuration</b> &mdash; <a href='".XOOPS_URL."/mcp/example_config.php' download='$mcpExampleConfigFilename'>$mcpExampleConfigFilename</a> &mdash; download this file and save it/modify it, in the location where your AI assistant looks for MCP configuration details.</li>
-			</ul>
-		</ol>";
-	}
+$hideEmbeddedAIGroups = '';
+if(!$mcpEnabled AND !$aiAssistantEnabled) {
+	$hideSystemSpecificInstructions = "<script>jQuery(window).load(function() { jQuery(\"span:contains('System Specific Instructions for the AI Assistant')\").closest('tr').hide(); } );</script>";
 }
-define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP".$mcpServerInstructions.$mcpDocumentationLink);
-define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting AI assistants, like Claude, Copilot, etc, to Formulize. With MCP, AI assistants can read information from Formulize and help you configure Formulize.");
+if(!$aiAssistantEnabled) {
+	$hideEmbeddedAIGroups = "<script>jQuery(window).load(function() { jQuery(\"span:contains('Groups that can use the embedded AI assistant')\").closest('tr').hide(); } );</script>";
+}
+
+if(!$mcpEnabled) {
+	$mcpServerInstructions = "<br><br>If saving this setting has no effect, you need to adjust your server configuration. See <a href='https://formulize.org/ai/setup-mcp' target='_blank'>formulize.org/ai/setup-mcp</a> for more details.";
+} else {
+	$mcpServerInstructions = "<br><br>See further setup instructions for external AI assistants here: <a href='https://formulize.org/ai/setup-mcp' target='_blank'>formulize.org/ai/setup-mcp</a>";
+}
+
+define("_MI_formulize_AIASSISTANTENABLED",  _MI_formulize_PREFHEADSTART."AI"._MI_formulize_PREFHEADEND."Enable the Embedded AI Assistant, inside Formulize<br><br> Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
+define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key for an AI provider, or you will need to have a local model available through Ollama.");
+
+define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant".$hideEmbeddedAIGroups);
+define("_MI_formulize_AIASSISTANTGROUPS_DESC", "Select which groups of users are allowed to use the embedded AI assistant. If no groups are selected, no one will be able to use it.");
+
+define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP, for external AI Assistants".$mcpServerInstructions);
+define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting external AI assistants, like Claude Desktop, Copilot, etc, to Formulize. With MCP, those AI assistants can read information from Formulize and help you configure Formulize. To use AI inside Formulize without any external client, use the Embedded AI Assistant setting instead.");
 
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
 define("_MI_formulize_REVISIONSFORALLFORMS_DESC", "Normally, you can turn on revision history for each form as you see fit. If you want to turn it on for all forms always, turn this preference on, and the option will be disabled in each form's settings.");

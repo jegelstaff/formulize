@@ -52,6 +52,7 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/include/elementdisplay.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/griddisplay.php';
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/mapdisplay.php";
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/extract.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/usersAndGroups.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/customCodeForApplications.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/usersGroupsPerms.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/data.php';

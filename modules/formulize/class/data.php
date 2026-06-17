@@ -1112,6 +1112,7 @@ class formulizeDataHandler {
 	 */
 	function writeEntry($entry_id, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
 
+		$is_new_entry = ($entry_id == 'new');
 		global $xoopsDB, $xoopsUser, $formulize_existingValues;
 		$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1292,7 +1293,8 @@ class formulizeDataHandler {
 			'formulize_event' => 'saving-data',
 			'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
 			'form_id' => $this->fid,
-			'entry_id' => $entry_to_return
+			'entry_id' => $entry_to_return,
+			'additional_info' => ($is_new_entry ? 'new_entry' : ''),
 		));
 
 		// if we wrote any {ID} values to the DB that should become the entry id number of the record, update them now to match the actual entry_id

@@ -254,6 +254,7 @@ if (is_object($appObject)){
 }
 
 $adminPage['pagetitle'] = _AM_APP_APPLICATION.$appName;
+$adminPage['ai_meta_json'] = json_encode(array('app_name' => $appName));
 $adminPage['needsave'] = true;
 
 $breadcrumbtrail[1]['url'] = "page=home";

@@ -745,3 +745,11 @@ table.formulize-grid td.head {
 div.subform_button_controls div.subform-filter-search input[type=text] {
 	width: 10em;
 }
+
+/* AI Chat tool selection preset buttons */
+button.formulize-ai-tool-group-btn {
+	min-width: 185px;
+}
+button.formulize-ai-tool-util-btn {
+	min-width: 185px;
+}

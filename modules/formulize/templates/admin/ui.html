@@ -297,6 +297,33 @@ $(document).ready(function() {
     if(!ele_id) { ele_id = 0 }
     $.post("save.php?ele_id="+ele_id, $(thisformdata).serialize(), function(data) {
       saveCounter = saveCounter + 1;
+
+      // Record successful admin saves in localStorage for the AI chat activity context.
+      // Must happen before the if/else block because /* evalnowandreturn */ has an early return.
+      try {
+        var _isSuccess = !data || data.substr(0,10)=="/* eval */" || data.substr(0,13)=="/* evalnow */" || data.substr(0,22)=="/* evalnowandreturn */";
+        if (_isSuccess) {
+          var _urlp = {};
+          window.location.search.substring(1).split('&').forEach(function(p) {
+            var kv = p.split('='); if(kv.length >= 2) _urlp[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1]);
+          });
+          var _aiLog = JSON.parse(localStorage.getItem('formulize_activity_log') || '[]');
+          var _m = <{$adminPage.ai_meta_json|default:"null"}>;
+          _aiLog.push({ type: 'admin_save', ts: Date.now(), success: true,
+            fid: _urlp['fid'] || null, sid: _urlp['sid'] || null,
+            ele_id: ele_id || _urlp['ele_id'] || null,
+            aid: _urlp['aid'] || null,
+            form_handle: (_m && _m.form_handle) || null,
+            ele_handle:  (_m && _m.ele_handle)  || null,
+            screen_name: (_m && _m.screen_name) || null,
+            app_name:    (_m && _m.app_name)    || null });
+          var _cutoff = Date.now() - 30*60*1000;
+          _aiLog = _aiLog.filter(function(e){ return e.ts > _cutoff; });
+          if(_aiLog.length > 60) _aiLog = _aiLog.slice(_aiLog.length - 60);
+          localStorage.setItem('formulize_activity_log', JSON.stringify(_aiLog));
+        }
+      } catch(e) {}
+
       if(data) {
         if(data.substr(0,10)=="/* eval */") {
           redirect = data;

@@ -1032,14 +1032,22 @@ $modversion['config'][] = array(
 	'default' => 1,
 );
 
-// system config
+// AI config
 $modversion['config'][] = array(
-	'name' => 'formulizeRewriteRulesEnabled',
-	'title' => '_MI_formulize_rewriteRulesEnabled',
-	'description' => '_MI_formulize_rewriteRulesEnabledDESC',
+	'name' => 'formulizeAIAssistantEnabled',
+	'title' => '_MI_formulize_AIASSISTANTENABLED',
+	'description' => '_MI_formulize_AIASSISTANTENABLED_DESC',
 	'formtype' => 'yesno',
 	'valuetype' => 'int',
 	'default' => 0,
+);
+$modversion['config'][] = array(
+	'name' => 'formulizeAIAssistantGroups',
+	'title' => '_MI_formulize_AIASSISTANTGROUPS',
+	'description' => '_MI_formulize_AIASSISTANTGROUPS_DESC',
+	'formtype' => 'group_multi',
+	'valuetype' => 'array',
+	'default' => array(1),
 );
 $modversion['config'][] = array(
 	'name' => 'formulizeMCPServerEnabled',
@@ -1056,6 +1064,15 @@ $modversion['config'][] = array(
 	'formtype' => 'textsarea',
 	'valuetype' => 'text',
 	'default' => ''
+);
+// system config
+$modversion['config'][] = array(
+	'name' => 'formulizeRewriteRulesEnabled',
+	'title' => '_MI_formulize_rewriteRulesEnabled',
+	'description' => '_MI_formulize_rewriteRulesEnabledDESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
 );
 $modversion['config'][] = array(
 	'name' => 'validateCode',
