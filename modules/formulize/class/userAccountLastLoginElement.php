@@ -37,6 +37,7 @@ class formulizeUserAccountLastLoginElement extends formulizeUserAccountElement {
 		$this->userProperty = "last_login"; // Unix timestamp in users table
 		$this->adminCanMakeRequired = false;
 		$this->readOnly = true; // system-managed, never overwritten by Formulize
+		$this->adminOnly = true; // webmaster-only display (informational)
 	}
 
 }

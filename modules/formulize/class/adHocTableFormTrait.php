@@ -287,7 +287,7 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_value', $eleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
-			$element->setVar('ele_display', 1);
+			$element->setVar('ele_display', $this->userAccountElementTypeIsAdminOnly($type) ? ",".XOOPS_GROUP_ADMIN."," : 1);
 			$element->setVar('ele_disabled', 0);
 			$element->setVar('ele_type', $type);
 			if (!$element_handler->insert($element, force: true)) {
@@ -328,12 +328,13 @@ trait formulizeAdHocTableFormTrait {
 			if (!empty($extra['source_column'])) {
 				$extraEleVal['source_column'] = $extra['source_column'];
 			}
+			$extraType = isset($extra['typeForCaption']) ? $extra['typeForCaption'] : ($extra['type'] ?? 'text');
 			$element->setVar('ele_value', $extraEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
-			$element->setVar('ele_display', 1);
+			$element->setVar('ele_display', $this->userAccountElementTypeIsAdminOnly($extraType) ? ",".XOOPS_GROUP_ADMIN."," : 1);
 			$element->setVar('ele_disabled', 0);
-			$element->setVar('ele_type', isset($extra['typeForCaption']) ? $extra['typeForCaption'] : ($extra['type'] ?? 'text'));
+			$element->setVar('ele_type', $extraType);
 			if (!$element_handler->insert($element, force: true)) {
 				return false;
 			}
@@ -375,7 +376,7 @@ trait formulizeAdHocTableFormTrait {
 
 		// Index existing elements by handle — include ele_order, ele_value, and ele_desc so drift can be detected
 		// and source_column can be kept up to date.
-		$eleResult = $this->db->query("SELECT ele_id, ele_caption, ele_handle, ele_type, ele_order, ele_value, ele_desc FROM " . $this->db->prefix("formulize") . " WHERE id_form = " . $fid);
+		$eleResult = $this->db->query("SELECT ele_id, ele_caption, ele_handle, ele_type, ele_order, ele_value, ele_desc, ele_display FROM " . $this->db->prefix("formulize") . " WHERE id_form = " . $fid);
 		$existingByHandle = array();
 		while ($row = $this->db->fetchArray($eleResult)) {
 			$existingEleValue = @unserialize($row['ele_value']);
@@ -386,6 +387,7 @@ trait formulizeAdHocTableFormTrait {
 				'ele_order'   => intval($row['ele_order']),
 				'ele_value'   => is_array($existingEleValue) ? $existingEleValue : array(),
 				'ele_desc'    => $row['ele_desc'],
+				'ele_display' => $row['ele_display'],
 			);
 		}
 
@@ -437,6 +439,11 @@ trait formulizeAdHocTableFormTrait {
 				if ($existingByHandle[$desiredHandle]['ele_order'] !== $desiredOrder) {
 					$updates[] = "ele_order = " . intval($desiredOrder);
 				}
+				// Keep webmaster-only visibility in sync with the element class's $adminOnly property.
+				$desiredDisplay = $this->userAccountElementTypeIsAdminOnly($desiredType) ? ",".XOOPS_GROUP_ADMIN."," : '1';
+				if ((string)$existingByHandle[$desiredHandle]['ele_display'] !== (string)$desiredDisplay) {
+					$updates[] = "ele_display = " . $this->db->quoteString($desiredDisplay);
+				}
 				// Ensure source_column is stored when the handle differs from the column name.
 				if ($desiredHandle !== $columnName) {
 					$existingEleVal = $existingByHandle[$desiredHandle]['ele_value'];
@@ -468,7 +475,7 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_value', $newEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
-			$element->setVar('ele_display', 1);
+			$element->setVar('ele_display', $this->userAccountElementTypeIsAdminOnly($desiredType) ? ",".XOOPS_GROUP_ADMIN."," : 1);
 			$element->setVar('ele_disabled', 0);
 			$element->setVar('ele_type', $desiredType);
 			$element_handler->insert($element, force: true);
@@ -521,6 +528,11 @@ trait formulizeAdHocTableFormTrait {
 				if ($existingByHandle[$desiredHandle]['ele_order'] !== $desiredOrder) {
 					$updates[] = "ele_order = " . intval($desiredOrder);
 				}
+				// Keep webmaster-only visibility in sync with the element class's $adminOnly property.
+				$desiredDisplay = $this->userAccountElementTypeIsAdminOnly($desiredType) ? ",".XOOPS_GROUP_ADMIN."," : '1';
+				if ((string)$existingByHandle[$desiredHandle]['ele_display'] !== (string)$desiredDisplay) {
+					$updates[] = "ele_display = " . $this->db->quoteString($desiredDisplay);
+				}
 				$desiredDesc = isset($extra['description']) ? $extra['description'] : "";
 				if ($existingByHandle[$desiredHandle]['ele_desc'] !== $desiredDesc) {
 					$updates[] = "ele_desc = " . $this->db->quoteString($desiredDesc);
@@ -564,7 +576,7 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_value', $desiredEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
-			$element->setVar('ele_display', 1);
+			$element->setVar('ele_display', $this->userAccountElementTypeIsAdminOnly($desiredType) ? ",".XOOPS_GROUP_ADMIN."," : 1);
 			$element->setVar('ele_disabled', 0);
 			$element->setVar('ele_type', $desiredType);
 			$element_handler->insert($element, force: true);

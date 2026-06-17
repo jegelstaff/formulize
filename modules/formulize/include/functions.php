@@ -429,6 +429,40 @@ function availReports($uid, $groups=array(), $fid=0, $frid=0) {
 
 
 /**
+ * Authorize access to a system-managed ad hoc form (the Users / Groups management forms).
+ *
+ * These forms wrap a system table (users/groups) and are not subject to the Formulize form
+ * permission model (view_form, scope, entry ownership) — so security_check delegates here
+ * instead of applying that logic. Access is granted to:
+ *   - users with the right to administer user accounts (system_admin on XOOPS_SYSTEM_USER — a
+ *     permission, not webmasters-group membership), who manage all users/groups; and
+ *   - a user editing their OWN record on the system users form (self-service via edituser.php),
+ *     where entry_id IS the uid. A request for anyone else's record, or a tampered entry_id,
+ *     does not match and is denied.
+ *
+ * @param object $formObject    The system-managed form object
+ * @param int|string $entry_id  The entry being accessed
+ * @param int $user_id          The user whose access is being checked
+ * @param array $groups         That user's groups
+ * @param object $gperm_handler Group permission handler
+ * @return bool
+ */
+function formulize_systemManagedFormAccessCheck($formObject, $entry_id, $user_id, $groups, $gperm_handler) {
+    // Users with the right to administer user accounts (system_admin on the user system) manage
+    // all system users/groups (the users.php / groups.php pages).
+    if ($gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
+        return true;
+    }
+    // Self-service: a logged-in user may view/edit their own record on the system users form,
+    // where entry_id IS their uid.
+    if ($user_id AND $formObject->isSystemUsersTableForm() AND intval($entry_id) === intval($user_id)) {
+        return true;
+    }
+    return false;
+}
+
+
+/**
  * Perform security check for a form and entry
  *
  * Checks if a user has permission to access a specific form and entry.
@@ -477,6 +511,18 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                 $groups = $uidObject->getGroups();
             }
         }
+    }
+
+    // System-managed ad hoc forms (the Users / Groups management forms) are not real Formulize
+    // forms: they carry no Formulize permission metadata and have no entry ownership/scope. Their
+    // access is governed by a dedicated rule — a webmaster, or a user editing their own user
+    // record — not by view_form / scope. Delegate and return so none of the Formulize-form
+    // permission logic below applies to them.
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    if (($checkFormObject = $form_handler->get($form_id)) AND $checkFormObject->isSystemManagedForm()) {
+        $result = formulize_systemManagedFormAccessCheck($checkFormObject, $entry_id, $user_id, $groups, $gperm_handler);
+        $cachedSecurityChecks[$form_id][$entry_id] = $result;
+        return $result;
     }
 
     // For ad hoc table forms (Users/Groups management), system_admin permission was already

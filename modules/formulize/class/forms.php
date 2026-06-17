@@ -1128,6 +1128,31 @@ class formulizeFormsHandler {
 	 * Get the user account element types, based on the classes defined for them
 	 * @return array An array of element types for the user account elements
 	 */
+	/**
+	 * Is the given user-account element type webmaster-only?
+	 * Reads the $adminOnly property off the element type class. This is the single source of
+	 * truth that drives both ele_display (webmaster-only visibility) at element creation and the
+	 * server-side write guard in collectPendingUserVars().
+	 * @param string $type e.g. 'userAccountStatus'
+	 * @return bool
+	 */
+	function userAccountElementTypeIsAdminOnly($type) {
+		static $cache = array();
+		if(!isset($cache[$type])) {
+			$cache[$type] = false;
+			$file = XOOPS_ROOT_PATH.'/modules/formulize/class/'.$type.'Element.php';
+			if(file_exists($file)) {
+				require_once $file;
+				$className = 'formulize'.$type.'Element'; // PHP class names are case-insensitive
+				if(class_exists($className)) {
+					$instance = new $className();
+					$cache[$type] = !empty($instance->adminOnly);
+				}
+			}
+		}
+		return $cache[$type];
+	}
+
 	function getUserAccountElementTypes() {
 		static $userAccountElementTypes = array();
 		if(empty($userAccountElementTypes)) {
@@ -1293,7 +1318,6 @@ class formulizeFormsHandler {
 					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
 				}
 				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail', 'userAccountRegistrationDate', 'userAccountLastLogin', 'userAccountMasquerade');
-				$webmastersOnlyTypes = array('userAccountUid', 'userAccountRegistrationDate', 'userAccountLastLogin');
 				$listOnlyTypes = array('userAccountFullName');
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
@@ -1305,7 +1329,9 @@ class formulizeFormsHandler {
 					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
 					'ele_display' => 1
 				);
-				if(in_array($type, $webmastersOnlyTypes)) {
+				// Webmaster-only fields (uid, registration/last login, status, group membership,
+				// masquerade) are driven by the element class's $adminOnly property.
+				if($this->userAccountElementTypeIsAdminOnly($type)) {
 					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.",";
 					$elementObjectProperties['ele_required'] = 0;
 				}

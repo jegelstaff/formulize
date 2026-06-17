@@ -213,10 +213,21 @@ class GroupMembershipService {
 		
 		// Permission checks
 		$isUserTableForm = $formObject->isSystemUsersTableForm();
+		$gperm_handler = xoops_gethandler('groupperm');
+		$activeUserGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		$activeUserId = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+		// The authority to administer user accounts is the system_admin permission on the user
+		// system — NOT membership in the webmasters group (a non-webmaster could be granted it).
+		$canManageUsers = (bool) $gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $activeUserGroups);
 		if($isUserTableForm) {
-			$gperm_handler = xoops_gethandler('groupperm');
-			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-			if(!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
+			if(!$canManageUsers) {
+				// The system users form has no condition-driven memberships, so there is nothing
+				// for a non-administrator to process. A user editing their OWN record (edituser.php
+				// self-service) legitimately reaches here — no-op. Anyone reaching here for someone
+				// else's record without user-management rights is a genuine violation.
+				if($activeUserId && intval($entryId) === $activeUserId) {
+					return;
+				}
 				throw new Exception("You do not have permission to manage system users.");
 			}
 		} else {
@@ -235,9 +246,13 @@ class GroupMembershipService {
 		$currentGroupIds = $member_handler->getGroupsByUser($userId);
 		$submittedGroupIds = $currentGroupIds; // default to current
 		
-		// Check if group membership element was submitted
+		// Check if group membership element was submitted. The group membership element is
+		// adminOnly, so only honour a submitted value when the active user can manage users; for
+		// everyone else the submitted value is ignored and only condition-driven default groups
+		// (below) apply. Never trust the rendered form — the field may be absent from the page but
+		// a value could still be forged into POST.
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		if($groupMembershipElement = $element_handler->get('formulize_user_account_groupmembership_'.$formId)) {
+		if($canManageUsers && $groupMembershipElement = $element_handler->get('formulize_user_account_groupmembership_'.$formId)) {
 			$elementId = $groupMembershipElement->getVar('ele_id');
 			if(isset($_POST['de_'.$formId.'_'.$entryId.'_'.$elementId])) {
 				$submittedGroupIds = $_POST['de_'.$formId.'_'.$entryId.'_'.$elementId];
