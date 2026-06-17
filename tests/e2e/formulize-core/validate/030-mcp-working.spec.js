@@ -19,9 +19,17 @@ test.describe('Check that tools/list is responding', () => {
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Home' }).click();
 		await page.getByRole('link', { name: 'Preferences' }).click();
-  	await page.locator('#formulizeMCPServerEnabled-15').check();
-		await page.locator('#formulizeLoggingOnOff-9').check();
+		// Use stable name+value attributes instead of auto-generated counter-based IDs.
+		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
+		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
+		// when jGrowl fires and adds resources that delay the load event).
+		const mcpServerEnabled = page.locator('input[name="formulizeMCPServerEnabled"][value="1"]');
+		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await mcpServerEnabled.check();
+		await loggingEnabled.check();
   	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await expect(page.getByText('Create an API Key — Go to the')).toBeVisible();
   	await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
 		await page.getByRole('link', { name: 'API keys' }).click();

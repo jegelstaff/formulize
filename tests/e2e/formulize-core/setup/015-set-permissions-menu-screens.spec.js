@@ -388,10 +388,18 @@ test.describe('Set columns and elements for screens', () => {
 
 	test('Set Preferences for Rewrite Rules', async ({ page }) => {
 		await page.getByRole('link', { name: 'Preferences' }).click();
-		await page.locator('#formulizeRewriteRulesEnabled-13').check();
+		// Use stable name+value attributes instead of the auto-generated counter-based ID
+		// (#formulizeRewriteRulesEnabled-N where N shifts whenever any yesno pref is added before this one).
+		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
+		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
+		// when jGrowl fires and adds resources that delay the load event).
+		const rewriteRulesEnabled = page.locator('input[name="formulizeRewriteRulesEnabled"][value="1"]');
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await rewriteRulesEnabled.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
-		await expect(page.locator('#formulizeRewriteRulesEnabled-13')).toBeChecked();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await expect(rewriteRulesEnabled).toBeChecked();
   	await page.locator('div.CPbigTitle').getByRole('link', { name: 'Formulize', exact: true }).click();
   	await page.getByRole('link', { name: 'Application: Museum' }).click();
   	await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();

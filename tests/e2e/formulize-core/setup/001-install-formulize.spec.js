@@ -94,18 +94,34 @@ test.describe('Installation of Formulize', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.goto('/modules/formulize/admin');
 		await page.getByRole('link', { name: 'Preferences' }).click();
-		await page.locator('#formulizeLoggingOnOff-9').check();
+		// Use stable name+value attributes instead of the auto-generated counter-based ID
+		// (#formulizeLoggingOnOff-N where N shifts whenever any yesno pref is added before this one).
+		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
+		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
+		// when jGrowl fires and adds resources that delay the load event).
+		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await loggingEnabled.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
-		await expect(page.locator('#formulizeLoggingOnOff-9')).toBeChecked();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await expect(loggingEnabled).toBeChecked();
 	}),
 	test('Lock site and try to login', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
-		await page.locator('#closesite-11').check();
+		// Use stable name+value attributes instead of auto-generated counter-based IDs.
+		// value="1" = Yes (close site), value="0" = No (open site).
+		// Wait for the preferences form to become visible before interacting: it starts at opacity:0
+		// and is revealed by $(window).load, which may fire after waitForAdminPageReady resolves.
+		const closeSiteYes = page.locator('input[name="closesite"][value="1"]');
+		const closeSiteNo = page.locator('input[name="closesite"][value="0"]');
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await closeSiteYes.check();
   	await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
-		await expect(page.locator('#closesite-11')).toBeChecked();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await expect(closeSiteYes).toBeChecked();
   	await page.getByRole('link', { name: 'arrow Go to the front page' }).hover();
   	await page.getByRole('link', { name: 'Logout' }).click();
 		await expect(page.getByText('The site is currently closed for maintenance. Please come back later.')).toBeVisible();
@@ -114,10 +130,12 @@ test.describe('Installation of Formulize', () => {
 		await page.getByRole('button', { name: 'Login' }).click();
 		await expect(page.getByText('Edit Account')).toBeVisible();
 		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
-		await page.locator('#closesite-12').check();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await closeSiteNo.check();
   	await page.getByRole('button', { name: 'Save your changes' }).click();
 		await waitForAdminPageReady(page);
-		await expect(page.locator('#closesite-12')).toBeChecked();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await expect(closeSiteNo).toBeChecked();
   	await page.getByRole('link', { name: 'arrow Go to the front page' }).hover();
   	await page.getByRole('link', { name: 'Logout' }).click();
 		await expect(page.getByText('The site is currently closed for maintenance. Please come back later.')).not.toBeVisible();
