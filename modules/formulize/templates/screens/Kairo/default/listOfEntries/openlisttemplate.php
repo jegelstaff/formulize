@@ -101,12 +101,45 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
  */
 function clickableSortLink($elementHandle, $clickableContent) {
 
-	list($title, $icon) = getSortTitleAndIcon($elementHandle);
+	// only the tooltip title is reused from the shared helper; the icon it returns
+	// is FontAwesome markup, which Kairo doesn't load, so we build our own SVG below
+	list($title,) = getSortTitleAndIcon($elementHandle);
 
 	return "<a class='fz-th-sort' href='' title='" . htmlspecialchars($title) . "' onclick='sort_data(\"$elementHandle\", event.shiftKey); return false;'>"
 		. $clickableContent
-		. "<span aria-hidden='true'>$icon</span>"
+		. kairoSortIndicator($elementHandle)
 		. "</a>";
+}
+
+/**
+ * Build the inline-SVG sort indicator for a Kairo column header. Unsorted but
+ * sortable columns get a faint neutral double-arrow (revealed on hover); the
+ * active sort column gets a filled accent triangle pointing up for ascending or
+ * down for descending. When more than one column is sorted, a small badge shows
+ * this column's position in the sort order.
+ *
+ * @param string $elementHandle - the handle of the element for this column
+ * @return string The HTML markup for the sort indicator
+ */
+function kairoSortIndicator($elementHandle) {
+
+	$iconSort = "<svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'><path d='m8 4 4-2 4 2'/><path d='M12 2v20'/><path d='m8 20 4 2 4-2'/></svg>";
+	$iconAsc  = "<svg width='11' height='11' viewBox='0 0 24 24' fill='currentColor'><path d='M12 6l-7 9h14z'/></svg>";
+	$iconDesc = "<svg width='11' height='11' viewBox='0 0 24 24' fill='currentColor'><path d='M12 18l7-9H5z'/></svg>";
+
+	$sortList  = isset($_POST['sort'])  && $_POST['sort']  !== '' ? explode(',', $_POST['sort'])  : array();
+	$orderList = isset($_POST['order']) && $_POST['order'] !== '' ? explode(',', $_POST['order']) : array();
+
+	$sortPos = array_search($elementHandle, $sortList);
+	if ($sortPos === false) {
+		// not sorted, just the faint sortable hint
+		return "<span class='fz-sort-ico' aria-hidden='true'>$iconSort</span>";
+	}
+
+	$direction = (isset($orderList[$sortPos]) && $orderList[$sortPos] == 'SORT_DESC') ? $iconDesc : $iconAsc;
+	$badge = count($sortList) > 1 ? "<span class='fz-sort-badge'>" . ($sortPos + 1) . "</span>" : "";
+
+	return "<span class='fz-sort-ico fz-sort-ico--active' aria-hidden='true'>$direction$badge</span>";
 }
 
 /**

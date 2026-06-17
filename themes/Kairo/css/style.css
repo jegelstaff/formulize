@@ -1034,6 +1034,45 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 
 .fz-th-sort:hover { color: var(--c-text); }
 
+/* Sort indicator icon.
+   Unsorted columns show a faint neutral double-arrow that brightens on hover,
+   signalling the column is sortable. The active sort column shows a filled
+   accent triangle (up = ascending, down = descending) at full strength. */
+.fz-sort-ico {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-text-subtle);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.fz-sort-ico svg {
+  display: block;
+}
+
+.fz-th-sort:hover .fz-sort-ico {
+  opacity: 0.6;
+}
+
+.fz-sort-ico--active {
+  color: var(--c-accent);
+  opacity: 1;
+}
+
+.fz-th-sort:hover .fz-sort-ico--active {
+  opacity: 1;
+}
+
+/* Priority badge shown when more than one column is sorted */
+.fz-sort-badge {
+  margin-left: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--c-accent);
+  font-feature-settings: "tnum";
+}
+
 /* ============================================================
    Sidebar nav content
    ============================================================ */
