@@ -9957,6 +9957,28 @@ function isMCPServerEnabled() {
 }
 
 /**
+ * Check if the embedded AI Assistant is enabled in Formulize preferences
+ *
+ * This preference is independent of the MCP Server preference. The embedded assistant
+ * authenticates via the user's PHP session, so it controls its own access surface.
+ *
+ * @return bool True if the AI Assistant is enabled, false otherwise
+ */
+function isAIAssistantEnabled() {
+    global $xoopsModuleConfig;
+
+    if (isset($xoopsModuleConfig['formulizeAIAssistantEnabled'])) {
+        return $xoopsModuleConfig['formulizeAIAssistantEnabled'] == 1;
+    }
+
+    $config_handler = xoops_gethandler('config');
+    $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
+
+    return isset($formulizeConfig['formulizeAIAssistantEnabled'])
+        && $formulizeConfig['formulizeAIAssistantEnabled'] == 1;
+}
+
+/**
  * Takes a value and makes sure it's the correct type in PHP, either string, int or float
  *
  * @param mixed $value - the value we're working with
@@ -10631,4 +10653,38 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 	}
 
 	return $evaluationCondition;
+}
+
+/**
+ * Draw the "Use AI" menu section for the Formulize menu block.
+ *
+ * Returns both an HTML string (for non-template menu mode) and a structured data array
+ * (for template menu mode). Returns array(false, false) if the AI Assistant is not enabled.
+ *
+ * @return array Two-element array: [string|false $htmlContent, array|false $dataArray]
+ */
+function drawAIAssistantMenuSection() {
+	if (!isAIAssistantEnabled()) {
+		return array(false, false);
+	}
+
+	$aiUrl = XOOPS_URL . "/ai/";
+	$currentURL = getCurrentURL();
+
+	$isActive = strpos($currentURL, '/ai/') !== false;
+	$menuActive = $isActive ? ' menuActive' : '';
+
+	$title = 'Use AI';
+
+	$block = "<a class=\"menuMain$menuActive\" href=\"$aiUrl\">$title</a>";
+
+	$data = array(
+		'url' => $aiUrl,
+		'title' => $title,
+		'active' => ($isActive ? 1 : 0),
+		'target' => '',
+		'icon' => ''
+	);
+
+	return array($block, $data);
 }
