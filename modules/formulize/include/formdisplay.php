@@ -750,7 +750,8 @@ function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpda
 		// exclude private elements unless the user has view_private_elements permission, or update_entry permission on a one-entry-per group entry
 		$private_filter = "";
 		$view_private_elements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid);
-		if(!$view_private_elements AND $uid != $owner AND !$groupEntryWithUpdateRights) {
+		if(!$view_private_elements AND $uid != $owner AND !$groupEntryWithUpdateRights
+				AND !formulizePermHandler::isUserOwnAccountEntry($fid, $uid, $entryId)) {
 			$private_filter = " AND ele_private=0";
 		}
 

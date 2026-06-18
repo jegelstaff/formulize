@@ -227,7 +227,8 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
     }
 
 	// check if user does not have view private elements permission, and if all elements on the page are flagged as private, in which case, skip the page
-	$userCanViewPrivateElements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid);
+	$userCanViewPrivateElements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid)
+		|| formulizePermHandler::isUserOwnAccountEntry($fid, $uid, $entry);
 
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
