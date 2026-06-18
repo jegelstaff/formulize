@@ -303,7 +303,8 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 		$allowed = 1;
 	}
 
-	if($allowed AND $private AND $user_id != $owner AND !$groupEntryWithUpdateRights AND $entry_id != "new") {
+	if($allowed AND $private AND $user_id != $owner AND !$groupEntryWithUpdateRights AND $entry_id != "new"
+			AND !formulizePermHandler::isUserOwnAccountEntry($form_id, $user_id, $entry_id)) {
 		$allowed = $view_private_elements ? 1 : 0;
 	}
 
