@@ -44,14 +44,14 @@ global $xoopsConfig;
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplay.php";
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
 
-function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $thankYouLinkText="", $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
+function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions="", $introtext="", $thankstext="", $done_dest="", $thankYouLinkText="", $settings=array(), $overrideValue="", $printall=0, $screen=null, $saveAndContinueButtonText=null, $elements_only = false) { // nmc 2007.03.24 - added 'printall'
 
     formulize_benchmark("Start of displayFormPages.");
 
     global $xoopsUser;
     if(!isset($_POST['parent_entry']) AND !isset($_POST['parent_form']) AND !isset($_POST['parent_page']) AND !isset($_POST['parent_subformElementId'])
        AND isset($_POST['go_back_form']) AND $_POST['go_back_form'] AND isset($_POST['go_back_entry']) AND $_POST['go_back_entry'] AND (!isset($_POST['ventry']) OR !$_POST['ventry'])) {
-        $entry = setupParentFormValuesInPostAndReturnEntryId();
+        $entry_id = setupParentFormValuesInPostAndReturnEntryId();
     }
 
     // instantiate multipage screen handler just because we might need some functions from that file (plain functions, not methods on the class, because they're not necessarily related to handling a screen, and we might not even have a screen in effect)
@@ -162,22 +162,22 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	// if this function was called without an entry specified, then assume the identity of the entry we're editing (unless this is a new save, in which case no entry has been made yet)
 	// no handling of cookies here, so anonymous multi-page surveys will not benefit from that feature
 	// this emphasizes how we need to standardize a lot of these interfaces with a real class system
-	if(!$entry AND $_POST['entry'.$fid]) {
-		$entry = intval($_POST['entry'.$fid]);
-  } elseif(!$entry AND $_POST['form_'.$fid.'_rendered_entry']) {
-    $entry = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
-	} elseif(!$entry) { // or check getSingle to see what the real entry is
-		$entry = $single_result['flag'] ? $single_result['entry'] : 0;
+	if(!$entry_id AND $_POST['entry'.$fid]) {
+		$entry_id = intval($_POST['entry'.$fid]);
+  } elseif(!$entry_id AND $_POST['form_'.$fid.'_rendered_entry']) {
+    $entry_id = intval($_POST['form_'.$fid.'_rendered_entry'][0]);
+	} elseif(!$entry_id) { // or check getSingle to see what the real entry is
+		$entry_id = $single_result['flag'] ? $single_result['entry'] : 0;
 	}
 
 	// formulize_newEntryIds is set when saving data
-	if((!$entry OR $entry == 'new' OR $entry == 'proxy') AND isset($GLOBALS['formulize_newEntryIds'][$fid]) AND !$removeEntryValue) {
-		$entry = $GLOBALS['formulize_newEntryIds'][$fid][0];
-	} elseif(!$entry) {
-    $entry = 'new';
+	if((!$entry_id OR $entry_id == 'new' OR $entry_id == 'proxy') AND isset($GLOBALS['formulize_newEntryIds'][$fid]) AND !$removeEntryValue) {
+		$entry_id = $GLOBALS['formulize_newEntryIds'][$fid][0];
+	} elseif(!$entry_id) {
+    $entry_id = 'new';
 	}
 
-	$owner = getEntryOwner($entry, $fid);
+	$owner = getEntryOwner($entry_id, $fid);
 
     if($currentPageScreen) {
         if($screen AND $currentPageScreen == $screen->getVar('sid')) {
@@ -193,7 +193,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
 
-  $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
+  $usersCanSave = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry_id);
 
 	if($pages[$prevPage][0] !== "HTML" AND $pages[$prevPage][0] !== "PHP") { // remember prevPage is the last page the user was on, not the previous page numerically
 
@@ -201,7 +201,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 			include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
-			$entries[$fid][0] = $entry;
+			$entries[$fid][0] = $entry_id;
 
 			if($frid) {
 				$linkResults = checkForLinks($frid, array(0=>$fid), $fid, $entries);
@@ -212,23 +212,23 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			}
 
 			// if there has been no specific entry specified yet, then assume the identity of the entry that was just saved -- assumption is it will be a new save
-			// from this point forward in time, this is the only entry that should be involved, since the 'entry'.$fid condition above will put this value into $entry even if this function was called with a blank entry value
-			if(!$entry) {
-				$entry = $entries[$fid][0];
+			// from this point forward in time, this is the only entry that should be involved, since the 'entry'.$fid condition above will put this value into $entry_id even if this function was called with a blank entry value
+			if(!$entry_id) {
+				$entry_id = $entries[$fid][0];
 			}
 
             unset($_POST['form_submitted']);
 		}
 	}
 
-    // there are several points above where $entry is set, and now that we have a final value, store in ventry
-    if ($entry > 0) {
-        $settings['ventry'] = $entry;
+    // there are several points above where $entry_id is set, and now that we have a final value, store in ventry
+    if ($entry_id > 0) {
+        $settings['ventry'] = $entry_id;
     }
 
 	// check if user does not have view private elements permission, and if all elements on the page are flagged as private, in which case, skip the page
 	$userCanViewPrivateElements = $gperm_handler->checkRight("view_private_elements", $fid, $groups, $mid)
-		|| formulizePermHandler::isUserOwnAccountEntry($fid, $uid, $entry);
+		|| formulizePermHandler::isUserOwnAccountEntry($fid, $uid, $entry_id);
 
 	// check to see if there are conditions on this page, and if so are they met
 	// if the conditions are not met, move on to the next page and repeat the condition check
@@ -239,7 +239,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 		while(!$conditionsMet AND $currentPage > 0) {
 			$conditionsMet = ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$currentPage], $fid)) ? true : false;
 			if($conditionsMet AND isset($conditions[$currentPage][0]) AND count((array) $conditions[$currentPage][0])>0) { // conditions on the current page
-				$conditionsMet = pageMeetsConditions($conditions, $currentPage, $entry, $fid, $frid);
+				$conditionsMet = pageMeetsConditions($conditions, $currentPage, $entry_id, $fid, $frid);
 			}
 			if(!$conditionsMet) {
 				if($prevPageThisScreen <= $currentPage) {
@@ -350,7 +350,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					$previousButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
 			}
 			$saveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['saveButtonText'])) ? $saveAndContinueButtonText['saveButtonText'] : '';
-			if($usersCanSave AND pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry, $fid, $frid)) {
+			if($usersCanSave AND pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid)) {
 					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['finishButtonText']) ? $saveAndContinueButtonText['finishButtonText'] :  '';
 			} else {
 					$nextButtonText = (is_array($saveAndContinueButtonText) AND $saveAndContinueButtonText['nextButtonText']) ? $saveAndContinueButtonText['nextButtonText'] : '';
@@ -362,7 +362,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			$closePageButton = generatePrevNextButtonMarkup("close", $closeButtonText, $usersCanSave, $nextPage, $previousPage, $thanksPage);
 			$totalPages = count((array) $pages);
 			$skippedPageMessage = $pagesSkipped ? _formulize_DMULTI_SKIP : "";
-			$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
+			$pageSelectionList = pageSelectionList($currentPage, $totalPages, $pageTitles, "below", $conditions, $entry_id, $fid, $frid); // pageSelector can only show up once on the page, and we draw it with 'below' as the designation, since by default it shows up in the bottom templates. Used to be two versions, above and below, which allowed two copies of this to be functional in the page. Different names were required by the JS, which could be refactored to not need that. But expecting only one per page is valid and simpler for now.
 
 			$pageIndicator = $screen->getUIOption("showpageindicator") ? "<div id='page-indicator'>"._formulize_DMULTI_PAGE." $currentPage "._formulize_DMULTI_OF." $totalPages</div>" : "";
 			$pageSelector = $screen->getUIOption("showpageselector") ? "<div id='page-selector'>"._formulize_DMULTI_JUMPTO."&nbsp;&nbsp;$pageSelectionList<div>" : "";
@@ -379,7 +379,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 					'skippedPageMessage' => $skippedPageMessage,
 					'pageSelectionList' => $pageSelectionList,
 					'pageTitles' => $pageTitles,
-					'entry_id' => $entry,
+					'entry_id' => $entry_id,
 					'form_id' => $fid,
 					'owner' => $owner,
 					'saveAndLeaveText' => $saveAndContinueButtonText['leaveButtonText'],
@@ -395,7 +395,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 			$templatePageTitles = array();
 			unset($templateVariables['pageTitles'][0]);
 			foreach($templateVariables['pageTitles'] as $i=>$title) {
-					if(pageMeetsConditions($conditions, $i, $entry, $fid, $frid) AND ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$i], $fid))) {
+					if(pageMeetsConditions($conditions, $i, $entry_id, $fid, $frid) AND ($userCanViewPrivateElements OR !isPageAllPrivateElements($pages[$i], $fid))) {
 							$templatePageTitles[$i] = $title;
 					}
 			}
@@ -410,11 +410,12 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 
 			// otherwise... if there was an originally specified done destination,
 			// or the user has permission to see a list of entries, then "save and close"
-			} elseif($originalDoneDest
+			} elseif(($originalDoneDest
 				OR ($single_result['flag'] == 0 AND $xoopsUser)
 				OR $view_globalscope
 				OR ($view_groupscope AND $single_result['flag'] != "group")
-				) {
+				)
+				AND !formulizePermHandler::isUserOwnAccountEntry($fid, $uid, $entry_id) ) {
 					$templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
 
 			// else... no where for the user to go, no text
@@ -431,7 +432,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 		'user_id'=>($xoopsUser ? $xoopsUser->getVar('uid') : 0),
 		'form_id'=>$fid,
 		'screen_id'=>(is_object($screen) ? $screen->getVar('sid') : 0),
-		'entry_id'=>$entry,
+		'entry_id'=>$entry_id,
 		'form_screen_page_number'=>$currentPage
 	));
 
@@ -440,7 +441,7 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
 		if(count((array) $forminfo['elements'])==0) {
 			print "Error: there are no form elements specified for page number $currentPage. Please contact the webmaster.";
 		} else {
-			displayForm($forminfo, $entry, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
+			displayForm($forminfo, $entry_id, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
 		}
 	}
 
@@ -460,15 +461,15 @@ function displayFormPages($formframe, $entry, $mainform, $pages, $conditions="",
  * @param int $thanksPageNumber - the page number of the thanks page
  * @param array $pages - the elements for each page of the form
  * @param array $conditions - the conditions for the pages, used to determine if we need to skip any pages
- * @param int $entry - the entry id, used to determine if conditions are met
+ * @param int $entry_id - the entry id, used to determine if conditions are met
  * @param int $fid - the form id, used to determine if conditions are met
  * @param int $frid - the form framework id, used to determine if conditions are met
  * @return bool - true if the specified page or the next page that meets conditions is the thanks page, false otherwise
  */
-function pageIsThanksPageOrEquivalent($pageNumber, $activePageNumber, $thanksPageNumber, $pages, $conditions, $entry, $fid, $frid) {
+function pageIsThanksPageOrEquivalent($pageNumber, $activePageNumber, $thanksPageNumber, $pages, $conditions, $entry_id, $fid, $frid) {
 	while($pageNumber < $thanksPageNumber) {
 		if(isset($conditions[$pageNumber][0]) AND count((array) $conditions[$pageNumber][0])>0) { // conditions on the current page
-			if(pageMeetsConditions($conditions, $pageNumber, $entry, $fid, $frid) == false) {
+			if(pageMeetsConditions($conditions, $pageNumber, $entry_id, $fid, $frid) == false) {
 				// page didn't meet the conditions
 				// check if it could possibly still meet the conditions
 				// because one of the conditions is based on a derived value
