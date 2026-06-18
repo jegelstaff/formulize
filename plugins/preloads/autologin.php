@@ -95,13 +95,24 @@ class icms_AutologinEventHandler {
 			// 1 week default
 			$expire = time()
 					+ (defined('ICMS_AUTOLOGIN_LIFETIME') ? ICMS_AUTOLOGIN_LIFETIME : 604800);
-			setcookie('autologin_uname', $uname, $expire, $icms_cookie_path, '', $secure, 1);
+			setcookie('autologin_uname', $uname, array(
+				'expires' => $expire,
+				'path' => $icms_cookie_path,
+				'domain' => '',
+				'secure' => (bool)$secure,
+				'httponly' => true,
+				'samesite' => 'Lax'
+			));
 			// V3.1
 			$Ynj = date('Y-n-j');
-			setcookie(
-				'autologin_pass', $Ynj . ':' . md5($user->getVar('pass') . ICMS_DB_PASS . ICMS_DB_PREFIX . $Ynj),
-				$expire, $icms_cookie_path, '', $secure, 1
-			);
+			setcookie('autologin_pass', $Ynj . ':' . md5($user->getVar('pass') . ICMS_DB_PASS . ICMS_DB_PREFIX . $Ynj), array(
+				'expires' => $expire,
+				'path' => $icms_cookie_path,
+				'domain' => '',
+				'secure' => (bool)$secure,
+				'httponly' => true,
+				'samesite' => 'Lax'
+			));
 		} else {
 			setcookie('autologin_uname', '', time() - 3600, $icms_cookie_path, '', 0, 0);
 			setcookie('autologin_pass', '', time() - 3600, $icms_cookie_path, '', 0, 0);

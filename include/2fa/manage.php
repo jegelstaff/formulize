@@ -104,21 +104,41 @@ function validateCode($code, $uid=false) {
     }
     $uid = $uid ? $uid : $xoopsUser->getVar('uid');
     //$sql = 'SELECT method, AES_DECRYPT(code, UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))) as code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
-    $sql = 'SELECT method, code FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
+    $sql = 'SELECT code_id, method, code, attempts, last_attempt FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
     $res = $xoopsDB->query($sql);
     while($data = $xoopsDB->fetchArray($res)) {
-        if($data['method'] == TFA_APP) {
-			$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
-			if($tfa->verifyCode($data['code'], $code)) {
-				return true;
-			}
-        } else {
-            if($data['code'] == trim($code)) {
-                $sql = 'DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid);
-                $xoopsDB->queryF($sql);
-                return true;
+
+        // Rate limiting: once a code has hit the attempt limit, refuse to check it until the
+        // cooldown has elapsed. After that, reset the counter and allow checking to resume.
+        if($data['attempts'] >= TFA_MAX_ATTEMPTS) {
+            if((time() - intval($data['last_attempt'])) < TFA_LOCKOUT_SECONDS) {
+                continue; // still locked out - skip this code without checking it
             }
+            $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = 0 WHERE code_id = '.intval($data['code_id']));
+            $data['attempts'] = 0;
         }
+
+        $codeIsValid = false;
+        if($data['method'] == TFA_APP) {
+            $tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
+            $codeIsValid = $tfa->verifyCode($data['code'], $code);
+        } else {
+            $codeIsValid = ($data['code'] == trim($code));
+        }
+
+        if($codeIsValid) {
+            if($data['method'] == TFA_APP) {
+                // persistent seed: clear the failed-attempt counter on success
+                $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = 0, last_attempt = 0 WHERE code_id = '.intval($data['code_id']));
+            } else {
+                // single-use code: remove it (which also clears its counter)
+                $xoopsDB->queryF('DELETE FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid));
+            }
+            return true;
+        }
+
+        // wrong code: record the failed attempt against this code
+        $xoopsDB->queryF('UPDATE '.$xoopsDB->prefix('tfa_codes').' SET attempts = attempts + 1, last_attempt = '.time().' WHERE code_id = '.intval($data['code_id']));
     }
     return false;
 }
@@ -139,7 +159,7 @@ function generateCode($method, $uid) {
 			$tfa = new TwoFactorAuth(trans($icmsConfig['sitename']));
             $secret = $tfa->createSecret(160);
 			//$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$secret.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
-            $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', "'.$secret.'", '.intval($method).')';
+            $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method, created) VALUES ('.intval($uid).', "'.$secret.'", '.intval($method).', '.time().')';
 			$xoopsDB->queryF($sql);
 			return $secret;
         }
@@ -147,7 +167,7 @@ function generateCode($method, $uid) {
     } else {
         $code = random_int(111111,999999);
         //$sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', AES_ENCRYPT("'.$code.'", UNHEX(SHA2("'.XOOPS_DB_PASS.XOOPS_DB_PREFIX.'",512))), '.intval($method).')';
-        $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method) VALUES ('.intval($uid).', "'.$code.'", '.intval($method).')';
+        $sql = 'INSERT INTO '.$xoopsDB->prefix('tfa_codes').' (uid, code, method, created) VALUES ('.intval($uid).', "'.$code.'", '.intval($method).', '.time().')';
         $xoopsDB->queryF($sql);
         return $code;
     }
@@ -155,7 +175,7 @@ function generateCode($method, $uid) {
 
 // returns any errors so they can be displayed
 function sendCode($method=null, $uid=false, $phone_override=null, $email_override=null) {
-    global $xoopsUser, $icmsConfig;
+    global $xoopsUser, $icmsConfig, $xoopsDB;
     if(!$uid AND !$xoopsUser) {
         exit('No known user to send 2FA code to!');
     }
@@ -165,6 +185,16 @@ function sendCode($method=null, $uid=false, $phone_override=null, $email_overrid
 	$profile = $profile_handler->get($uid);
     if(!$method) {
         $method = intval($profile->getVar('2famethod'));
+    }
+
+    // Send throttle (anti-bombing): for email/SMS sent to the user's on-file contact, do not generate
+    // and send a new code if a live one was sent within TFA_RESEND_INTERVAL. The 2FA setup flow passes an
+    // explicit contact override and is exempt, so a code always reaches a newly entered address/number.
+    if(($method == TFA_EMAIL OR $method == TFA_SMS) AND !$phone_override AND !$email_override) {
+        $throttleRes = $xoopsDB->query('SELECT created FROM '.$xoopsDB->prefix('tfa_codes').' WHERE uid = '.intval($uid).' AND method != '.TFA_APP.' ORDER BY created DESC LIMIT 1');
+        if(($throttleRow = $xoopsDB->fetchArray($throttleRes)) AND (time() - intval($throttleRow['created'])) < TFA_RESEND_INTERVAL) {
+            return false; // a live code already exists for this user; do not resend (no error)
+        }
     }
 
     $code = generateCode($method, $uid);
@@ -319,8 +349,9 @@ function tfaLoginJS($id) {
 				event.preventDefault();
 				jQuery.ajax({
 					async: false,
-					type: 'GET',
-					url: '".XOOPS_URL."/include/2fa/challenge.php?u='+encodeURIComponent(jQuery('#$id input[name=\"uname\"]').val())+'&p='+encodeURIComponent(jQuery('#$id input[name=\"pass\"]').val()),
+					type: 'POST',
+					url: '".XOOPS_URL.TFA_CHALLENGE_URL_PATH."',
+					data: { u: jQuery('#$id input[name=\"uname\"]').val(), p: jQuery('#$id input[name=\"pass\"]').val() },
 					success: function(data) {
 						if(data) {
 							tfadialog$counter.html(data);

@@ -3,6 +3,9 @@ CREATE TABLE `tfa_codes` (
   `uid` int(11) unsigned DEFAULT NULL,
   `code` varchar(255) DEFAULT NULL,
   `method` tinyint(1) unsigned DEFAULT NULL,
+  `attempts` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `last_attempt` int(11) unsigned NOT NULL DEFAULT 0,
+  `created` int(11) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`code_id`),
   INDEX i_uid (`uid`)
 ) ENGINE=InnoDB;

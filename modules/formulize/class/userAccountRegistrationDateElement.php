@@ -37,6 +37,7 @@ class formulizeUserAccountRegistrationDateElement extends formulizeUserAccountEl
 		$this->userProperty = "user_regdate"; // Unix timestamp in users table
 		$this->adminCanMakeRequired = false;
 		$this->readOnly = true; // system-managed, never overwritten by Formulize
+		$this->adminOnly = true; // webmaster-only display (informational)
 	}
 
 }

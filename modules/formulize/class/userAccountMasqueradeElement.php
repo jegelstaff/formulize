@@ -23,6 +23,7 @@ class formulizeUserAccountMasqueradeElement extends formulizeUserAccountElement 
 		$this->userProperty = ''; // no DB column; uid derived from entry_id
 		$this->adminCanMakeRequired = false;
 		$this->readOnly = true;
+		$this->adminOnly = true; // only webmasters may see/use masquerade
 	}
 
 }

@@ -55,21 +55,17 @@ $eauViewEntryScreenId = 0;
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 if (!empty($_POST['ventry']) && is_numeric($_POST['ventry'])) {
 	$eauFids = getEntriesAreUsersForms();
+	// First, if there's been a user account form submission....
 	// primaryfid is written by writeHiddenSettings when displayForm renders an EAU entry.
 	// If it matches an EAU form, ventry is already the EAU entry_id — skip the uid lookup.
 	if (!empty($_POST['primaryfid']) && in_array(intval($_POST['primaryfid']), $eauFids)) {
 		if ($eauFormObj = $form_handler->get(intval($_POST['primaryfid']))) {
 			$eauViewEntryScreenId = intval($eauFormObj->getVar('defaultform'));
 		}
+
+	// Else, if we're jumping into a user from the list for the first time...
 	} else {
-		$eauMatches = findUserEauEntry(intval($_POST['ventry']));
-		if (!empty($eauMatches)) {
-			$firstMatch = $eauMatches[0];
-			$_POST['ventry'] = $firstMatch['entry_id'];
-			if ($eauFormObj = $form_handler->get($firstMatch['fid'])) {
-				$eauViewEntryScreenId = intval($eauFormObj->getVar('defaultform'));
-			}
-		}
+		list($eauFid, $_POST['ventry'], $eauViewEntryScreenId) = formulize_resolveUserAccountScreen(intval($_POST['ventry'])); // convert $_POST['ventry'] from a uid to the EAU entry_id if possible/necessary
 	}
 }
 

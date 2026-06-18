@@ -38,6 +38,7 @@ class formulizeUserAccountUidElement extends formulizeUserAccountElement {
 			$this->hasData = true;
 			$this->userProperty = "uid";
 			$this->readOnly = true; // uid is determined from first principles on submission, never written via the user property loop
+			$this->adminOnly = true; // webmaster-only display (informational)
 		}
 
 }

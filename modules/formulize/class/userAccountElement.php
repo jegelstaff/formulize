@@ -41,6 +41,12 @@ class formulizeUserAccountElement extends formulizeElement {
 	//   anything else    → column name in the users table (e.g. 'uname', 'email', 'level')
 	var $userProperty = null;
 
+	// When true, this account field is for webmasters (XOOPS_GROUP_ADMIN) only: it is created
+	// with webmaster-only ele_display (so non-webmasters never see it), and its submitted value
+	// is ignored server-side for non-webmasters (see collectPendingUserVars). This is the single
+	// source of truth that replaced the hardcoded "webmasters only" type lists in forms.php.
+	var $adminOnly = false;
+
     function __construct() {
         $this->name = "User Account Settings Base Element";
         $this->hasData = false; // set to false if this is a non-data element, like the subform or the grid
@@ -481,18 +487,37 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		}
 		global $xoopsUser;
 		if ($isUserTableForm) {
-			$gperm_handler = xoops_gethandler('groupperm');
-			$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-			if (!$gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups)) {
-				throw new Exception("You do not have permission to manage system users.");
+			if (self::activeUserCanManageUsers()) {
+				return true;
 			}
-			return true;
+			// Self-service: a logged-in user may edit their own account. For the system users
+			// form, entry_id IS the uid, so a tampered entry_id pointing at another user fails
+			// this equality check and falls through to the exception below.
+			$activeUserId = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+			if ($activeUserId && $activeUserId === intval($entryId)) {
+				return true;
+			}
+			throw new Exception("You do not have permission to manage system users.");
 		}
 		$activeUserId = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 		if(!formulizePermHandler::user_can_edit_entry($formId, $activeUserId, $entryId)) {
 			throw new Exception("You do not have permission to edit this entry");
 		}
 		return formulizeHandler::entriesAreUsersEntryMeetsBaseConditions($formId, $entryId, cacheId: 'preWrite');
+	}
+
+	/**
+	 * Does the currently logged-in user have the right to administer user accounts?
+	 * This is the system_admin permission on the user system (XOOPS_SYSTEM_USER) — a permission
+	 * that could be granted to a non-webmaster — NOT membership in the webmasters group. Used to
+	 * gate adminOnly user-account fields during submission processing.
+	 * @return bool
+	 */
+	public static function activeUserCanManageUsers() {
+		global $xoopsUser;
+		$gperm_handler = xoops_gethandler('groupperm');
+		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		return (bool) $gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $groups);
 	}
 
 	private static function setTfaValidationError($returnValue) {
@@ -554,7 +579,8 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$passwordChanged = false;
 		$cleanupAppSecret = false;
 		$unameParts = array();
-		
+		$activeUserCanManageUsers = self::activeUserCanManageUsers();
+
 		foreach($form_handler->getUserAccountElementTypes() as $userAccountElementType) {
 			$accountElement = $element_handler->get('formulize_user_account_'.strtolower(str_replace("userAccount", "", $userAccountElementType)).'_'.$formId);
 			if(!$accountElement) {
@@ -566,6 +592,9 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			
 			if($accountElement->readOnly) {
 				continue; // system-managed property
+			}
+			if(!empty($accountElement->adminOnly) && !$activeUserCanManageUsers) {
+				continue; // admin-only field; never trust the submitted value from a user without user-management rights
 			}
 			if(!isset($_POST['decue_'.$formId.'_'.$entryId.'_'.$elementId])) {
 				continue; // element not on this form/page
@@ -685,7 +714,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 		$effectiveNewMethod = $rawSubmitted2faMethod !== null ? $rawSubmitted2faMethod : $old2faMethod;
 		
 		$needsValidation = (
-			($rawSubmitted2faMethod != $old2faMethod) ||
+			($effectiveNewMethod != $old2faMethod) ||
 			(($old2faMethod == TFA_SMS || $effectiveNewMethod == TFA_SMS) && $newPhone != $old2faPhone) ||
 			(($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF || $effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF) && $oldEmail && $newEmail != $oldEmail) ||
 			$passwordChanged
@@ -695,13 +724,17 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			return true;
 		}
 		
-		// Two-phase required in three cases:
-		// 1. Method unchanged = email, email is changing.
-		// 2. Method unchanged = SMS, phone is changing.
-		// 3. Method was active and is changing to a different active method.
+		// Two-phase (verify the OLD contact, then the NEW contact) is required in three cases:
+		// 1. Staying on email, email is changing. Email is the default 2FA contact when no method
+		//    is set, so TFA_OFF is treated as email-ish here: changing your email while 2FA is off
+		//    (or set to email) double-validates old + new email.
+		// 2. Staying on SMS, phone is changing.
+		// 3. Switching between two different active (non-off) methods.
+		$oldMethodIsEmailish = ($old2faMethod == TFA_EMAIL || $old2faMethod == TFA_OFF);
+		$newMethodIsEmailish = ($effectiveNewMethod == TFA_EMAIL || $effectiveNewMethod == TFA_OFF);
 		$contactChanging = (
-			($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_EMAIL && $oldEmail && $newEmail != $oldEmail) ||
-			($rawSubmitted2faMethod == $old2faMethod && $old2faMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
+			($oldMethodIsEmailish && $newMethodIsEmailish && $oldEmail && $newEmail != $oldEmail) ||
+			($old2faMethod == TFA_SMS && $effectiveNewMethod == TFA_SMS && $old2faPhone && $newPhone != $old2faPhone) ||
 			($rawSubmitted2faMethod !== null && $old2faMethod != TFA_OFF && $rawSubmitted2faMethod != TFA_OFF && $rawSubmitted2faMethod != $old2faMethod)
 		);
 		

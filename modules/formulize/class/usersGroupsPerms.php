@@ -35,6 +35,58 @@ class formulizePermHandler {
     var $fid;                               // the form this Perm Handler object is attached to
     static $cached_permissions = array();   // permission checks are called frequently for the same entries, so cache the results
     static $formulize_module_id = null;
+    private static $ownAccountCache = array(); // cache for isUserOwnAccountEntry results
+
+
+    /**
+     * Determine whether a user is editing their own account entry, either in the system users
+     * ad hoc form (where entry_id equals uid) or in an entries-are-users form (where a uid
+     * column links the entry to the user).  Results are cached so the DB queries run at most
+     * once per (form_id, user_id, entry_id) combination per page load.
+     *
+     * @param int       $form_id  The form ID
+     * @param int       $user_id  The logged-in user ID
+     * @param int|mixed $entry_id The entry ID being rendered/saved
+     * @return bool True if this is the user's own account entry
+     */
+    public static function isUserOwnAccountEntry($form_id, $user_id, $entry_id) {
+        $form_id  = intval($form_id);
+        $user_id  = intval($user_id);
+        $entry_id = intval($entry_id);
+
+        if (!$form_id || !$user_id || !$entry_id) {
+            return false;
+        }
+
+        $cache_key = "$form_id:$user_id:$entry_id";
+        if (array_key_exists($cache_key, self::$ownAccountCache)) {
+            return self::$ownAccountCache[$cache_key];
+        }
+
+        global $xoopsDB;
+        $fi_table = $xoopsDB->prefix('formulize_id');
+
+        // System users form: entry_id IS the uid
+        $sysRes = $xoopsDB->query("SELECT id_form FROM $fi_table WHERE form_handle = '__system_users' LIMIT 1");
+        if ($sysRes && ($sysRow = $xoopsDB->fetchArray($sysRes))) {
+            if ((int)$sysRow['id_form'] === $form_id && $entry_id === $user_id) {
+                return self::$ownAccountCache[$cache_key] = true;
+            }
+        }
+
+        // EAU form: the form must have entries_are_users=1 and the entry's uid column must match
+        $eauRes = $xoopsDB->query("SELECT form_handle FROM $fi_table WHERE id_form = $form_id AND entries_are_users = 1 LIMIT 1");
+        if ($eauRes && ($eauRow = $xoopsDB->fetchArray($eauRes))) {
+            $uid_col   = 'formulize_user_account_uid_' . $form_id;
+            $data_table = $xoopsDB->prefix('formulize_' . $eauRow['form_handle']);
+            $chkRes = $xoopsDB->query("SELECT entry_id FROM $data_table WHERE entry_id = $entry_id AND `$uid_col` = $user_id LIMIT 1");
+            if ($chkRes && $xoopsDB->fetchArray($chkRes)) {
+                return self::$ownAccountCache[$cache_key] = true;
+            }
+        }
+
+        return self::$ownAccountCache[$cache_key] = false;
+    }
 
 
     function __construct($fid) {
@@ -98,6 +150,21 @@ class formulizePermHandler {
      * @return bool True if the user may update the entry
      */
     static function user_can_edit_entry($form_id, $user_id, $entry_id) {
+        if (self::isUserOwnAccountEntry($form_id, $user_id, $entry_id)) {
+            return true;
+        }
+        return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
+    }
+
+    /**
+     * Check whether a user has real Formulize form permission to edit a specific entry,
+     * without the own-account auto-grant from isUserOwnAccountEntry.
+     *
+     * Use this when own-account access should not override element-level edit decisions — e.g.
+     * to decide whether to disable non-private elements for a user viewing their own EAU entry
+     * but holding only view (not edit) rights on the form.
+     */
+    public static function user_has_formulize_edit_permission($form_id, $user_id, $entry_id) {
         return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
     }
 

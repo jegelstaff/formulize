@@ -161,7 +161,6 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			$ce_eo = $uo_eo ? $uo_eo->getVar('email') : '';
 			$psel_eo = $ph_eo ? 'de_'.$fid_eo.'_'.$entry_id.'_'.$ph_eo->getVar('ele_id') : '';
 			$esel_eo = $em_eo ? 'de_'.$fid_eo.'_'.$entry_id.'_'.$em_eo->getVar('ele_id') : '';
-			$twophaseUrl_eo = XOOPS_URL.'/include/2fa/confirm.php?method='.$cm_eo.'&phone='.rawurlencode($cp_eo).'&selectedMethod='.$cm_eo.'&email='.rawurlencode($ce_eo).'&twophase=1';
 			$autoReopenScript = "<script type='text/javascript'>
 "
 				."var tfa_auto_reopen=true,tfa_auto_safeId=".json_encode($safeId)
@@ -174,8 +173,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				.",tfa_auto_TFA_EMAIL=".TFA_EMAIL
 				.",tfa_auto_TFA_SMS=".TFA_SMS
 				.",tfa_auto_TFA_OFF=".TFA_OFF
-				.",tfa_auto_twophaseUrl=".json_encode($twophaseUrl_eo)
-				.",tfa_auto_singlephaseBaseUrl=".json_encode(XOOPS_URL.'/include/2fa/confirm.php')
+				.",tfa_auto_singlephaseBaseUrl=".json_encode(XOOPS_URL.TFA_CONFIRM_URL_PATH)
 				.";
 </script>";
 		}
@@ -229,8 +227,8 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				if(!code) return;
 				jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog').fadeTo(150, 0);
 				jQuery('#tfa-loading-{$safeId}').show();
-				jQuery.get(
-					'".XOOPS_URL."/include/2fa/validate_step1.php',
+				jQuery.post(
+					'".XOOPS_URL.TFA_VALIDATE_STEP1_URL_PATH."',
 					{
 						code: code,
 						new_method: \$dlg.data('tfa-new-method'),
@@ -317,7 +315,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				var tfa_newPhone_ro  = tfa_auto_phoneSelector ? jQuery('[name=\"' + tfa_auto_phoneSelector + '\"]').val().replace(/[^0-9]/g,'') : '';
 				var tfa_newEmail_ro  = tfa_auto_emailSelector ? (jQuery('[name=\"' + tfa_auto_emailSelector + '\"]').length > 0 ? jQuery('[name=\"' + tfa_auto_emailSelector + '\"]').val() : null) : null;
 				var tfa_needsTwoPhase_ro = (
-					(tfa_auto_currentMethod == tfa_auto_TFA_EMAIL && tfa_newMethod_ro == tfa_auto_TFA_EMAIL && tfa_newEmail_ro !== null && tfa_newEmail_ro != tfa_auto_currentEmail && tfa_auto_currentEmail != '') ||
+					((tfa_auto_currentMethod == tfa_auto_TFA_EMAIL || tfa_auto_currentMethod == tfa_auto_TFA_OFF) && (tfa_newMethod_ro == tfa_auto_TFA_EMAIL || tfa_newMethod_ro == tfa_auto_TFA_OFF) && tfa_newEmail_ro !== null && tfa_newEmail_ro != tfa_auto_currentEmail && tfa_auto_currentEmail != '') ||
 					(tfa_auto_currentMethod == tfa_auto_TFA_SMS   && tfa_newMethod_ro == tfa_auto_TFA_SMS   && tfa_newPhone_ro != tfa_auto_currentPhone && tfa_auto_currentPhone != '') ||
 					(tfa_auto_currentMethod != tfa_auto_TFA_OFF   && tfa_newMethod_ro != tfa_auto_TFA_OFF   && tfa_newMethod_ro != tfa_auto_currentMethod)
 				);
@@ -328,10 +326,10 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 					tfa_dlg_ro.data('tfa-new-method', tfa_newMethod_ro);
 					tfa_dlg_ro.data('tfa-new-phone', tfa_newPhone_ro);
 					tfa_dlg_ro.data('tfa-new-email', tfa_newEmail_ro || '');
-					tfa_dlg_ro.load(tfa_auto_twophaseUrl + '&error=1', function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); tfa_dlg_ro.data('tfa-phase1-token', ct || ''); window['tfa_recentreDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
+					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl, { method: tfa_auto_currentMethod, phone: tfa_auto_currentPhone, selectedMethod: tfa_auto_currentMethod, email: tfa_auto_currentEmail, twophase: 1, error: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); tfa_dlg_ro.data('tfa-phase1-token', ct || ''); window['tfa_recentreDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
 				} else {
 					tfa_dlg_ro.data('tfa-phase', 0);
-					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl + '?method=' + tfa_newMethod_ro + '&phone=' + encodeURIComponent(tfa_newPhone_ro) + '&email=' + encodeURIComponent(tfa_newEmail_ro || '') + '&selectedMethod=' + tfa_newMethod_ro + '&error=1', function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); if(ct) { window['tfa_form_' + tfa_auto_safeId].find('input[name=\"tfa_confirm_token\"]').val(ct); } window['tfa_recentreDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
+					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl, { method: tfa_newMethod_ro, phone: tfa_newPhone_ro, email: (tfa_newEmail_ro || ''), selectedMethod: tfa_newMethod_ro, error: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); if(ct) { window['tfa_form_' + tfa_auto_safeId].find('input[name=\"tfa_confirm_token\"]').val(ct); } window['tfa_recentreDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
 				}
 			}, 400);
 		}
@@ -418,12 +416,13 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			: "var tfa_hasPass = false;";
 		$js[] = "var tfa_code = (myform && myform.elements['formulize_tfa_code']) ? myform.elements['formulize_tfa_code'].value : '';";
 		// Two-phase is needed in three cases:
-		// 1. Method unchanged = email, email is changing (verify old email, then new email).
+		// 1. Staying on email, email is changing (verify old email, then new email). Email is the
+		//    default 2FA contact when no method is set, so TFA_OFF is treated as email-ish here.
 		// 2. Method unchanged = SMS, phone is changing (verify old phone, then new phone).
 		// 3. Method was active (not off) and is changing to a different active method
 		//    (verify old contact via old method, then verify new contact via new method).
 		$js[] = "var tfa_needsTwoPhase = (";
-		$js[] = "    ({$currentMethodJs} == ".TFA_EMAIL." && tfa_newMethod == ".TFA_EMAIL." && tfa_newEmail !== null && tfa_newEmail != {$currentEmailJs} && {$currentEmailJs} != '') ||";
+		$js[] = "    (({$currentMethodJs} == ".TFA_EMAIL." || {$currentMethodJs} == ".TFA_OFF.") && (tfa_newMethod == ".TFA_EMAIL." || tfa_newMethod == ".TFA_OFF.") && tfa_newEmail !== null && tfa_newEmail != {$currentEmailJs} && {$currentEmailJs} != '') ||";
 		$js[] = "    ({$currentMethodJs} == ".TFA_SMS." && tfa_newMethod == ".TFA_SMS." && tfa_newPhone != {$currentPhoneJs} && {$currentPhoneJs} != '') ||";
 		$js[] = "    ({$currentMethodJs} != ".TFA_OFF." && tfa_newMethod != ".TFA_OFF." && tfa_newMethod != {$currentMethodJs})";
 		$js[] = ");";
@@ -442,10 +441,10 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		$js[] = "        tfa_dlg.data('tfa-new-method', tfa_newMethod);";
 		$js[] = "        tfa_dlg.data('tfa-new-phone', tfa_newPhone);";
 		$js[] = "        tfa_dlg.data('tfa-new-email', tfa_newEmail || '');";
-		$js[] = "        tfa_dlg.load('".XOOPS_URL."/include/2fa/confirm.php?method={$currentMethodJs}&phone=' + encodeURIComponent({$currentPhoneJs}) + '&selectedMethod={$currentMethodJs}&email=' + encodeURIComponent({$currentEmailJs}) + '&twophase=1', function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); tfa_dlg.data('tfa-phase1-token', ct || ''); tfa_recentreDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
+		$js[] = "        tfa_dlg.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: {$currentMethodJs}, phone: {$currentPhoneJs}, selectedMethod: {$currentMethodJs}, email: {$currentEmailJs}, twophase: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); tfa_dlg.data('tfa-phase1-token', ct || ''); tfa_recentreDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
 		$js[] = "    } else {";
 		$js[] = "        tfa_dlg.data('tfa-phase', 0);";
-		$js[] = "        tfa_dlg.load('".XOOPS_URL."/include/2fa/confirm.php?method=' + tfa_newMethod + '&phone=' + tfa_newPhone + '&email=' + encodeURIComponent(tfa_newEmail || '') + '&selectedMethod=' + tfa_newMethod, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); if(ct) { window['tfa_form_{$safeId}'].find('input[name=\"tfa_confirm_token\"]').val(ct); } tfa_recentreDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
+		$js[] = "        tfa_dlg.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: tfa_newMethod, phone: tfa_newPhone, email: (tfa_newEmail || ''), selectedMethod: tfa_newMethod }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); if(ct) { window['tfa_form_{$safeId}'].find('input[name=\"tfa_confirm_token\"]').val(ct); } tfa_recentreDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
 		$js[] = "    }";
 		$js[] = "    return false;";
 		$js[] = "}";

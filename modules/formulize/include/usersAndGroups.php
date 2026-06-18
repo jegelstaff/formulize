@@ -315,6 +315,61 @@ function findUserEauEntry($uid) {
 }
 
 /**
+ * Resolve which form, entry, and screen should be used to render a user's account profile.
+ *
+ * If the user has an entries-are-users (EAU) form entry, that form's defaultform screen and the
+ * EAU entry are returned. Otherwise it falls back to the System Users ad hoc table form, where
+ * the entry_id IS the uid.
+ *
+ * Shared by edituser.php (self-service) and users.php (webmaster list routing).
+ *
+ * @param int  $uid                 The user ID to resolve a profile for
+ * @return array list($fid, $entry_id, $sid)
+ */
+function formulize_resolveUserAccountScreen($uid) {
+	$uid = intval($uid);
+	global $xoopsUser;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+
+	// Authority is the CURRENT (viewing) user's, not the target's. Two ways to be routed to a
+	// user's EAU entry screen:
+	//   - the current user can manage user accounts (system_admin on XOOPS_SYSTEM_USER — a
+	//     permission, e.g. a webmaster on users.php) and so may view any user's EAU profile; or
+	//   - the current user has view_form permission AND can edit the specific entry
+	//     (own-account grant via isUserOwnAccountEntry) AND can actually see the entry
+	//     (security_check). The security_check gate handles the case where a user has view_form
+	//     but cannot see their own EAU entry (e.g. entry created by an admin and the user has
+	//     neither view_globalscope nor ownership in Formulize terms) — in that case we fall
+	//     through to the system users form rather than routing somewhere that yields _NO_PERM.
+	// user_can_edit_entry does NOT auto-grant webmasters, so canManageUsers is required, not redundant.
+	$gperm_handler = xoops_gethandler('groupperm');
+	$activeUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+	$activeGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+	$canManageUsers = (bool) $gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $activeGroups);
+	$mid = getFormulizeModId();
+
+	foreach (findUserEauEntry($uid) as $match) {
+		if (
+			(
+				$canManageUsers
+				OR (
+					$gperm_handler->checkRight("view_form", $match['fid'], $activeGroups, $mid)
+					AND formulizePermHandler::user_can_edit_entry($match['fid'], $activeUid, $match['entry_id'])
+					AND security_check($match['fid'], $match['entry_id'], $activeUid, '', $activeGroups, $mid, $gperm_handler)
+				)
+			)
+			AND $eauForm = $form_handler->get($match['fid'])
+		) {
+			return array($match['fid'], $match['entry_id'], intval($eauForm->getVar('defaultform')));
+		}
+	}
+
+	$fid = ensureUsersTableForm();
+	$sysForm = $fid ? $form_handler->get($fid) : false;
+	return array($fid, $uid, $sysForm ? intval($sysForm->getVar('defaultform')) : 0);
+}
+
+/**
  * Return the form IDs of all forms that have entries_are_groups enabled.
  *
  * @return int[] Array of form IDs

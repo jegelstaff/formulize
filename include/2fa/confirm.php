@@ -38,7 +38,7 @@ $newEmailForTurnOn = null;
 $method = null;
 
 // if user is changing password
-if(intval($_GET['selectedMethod']) == intval($profile->getVar('2famethod')) AND ($_GET['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
+if(intval($_POST['selectedMethod']) == intval($profile->getVar('2famethod')) AND ($_POST['phone'] == preg_replace("/[^0-9]/", '', $profile->getVar('2faphone')) OR $profile->getVar('2famethod') != TFA_SMS)) {
     switch($pwChangeMethod) {
         case TFA_SMS:
             $sendError = sendCode(); // will return errors
@@ -51,10 +51,10 @@ if(intval($_GET['selectedMethod']) == intval($profile->getVar('2famethod')) AND 
             $sendError = sendCode(TFA_EMAIL); // will return errors
             $method = 'email';
     }
-    $scenario = !empty($_GET['twophase']) ? 'twophase_confirm' : 'change_pass';
+    $scenario = !empty($_POST['twophase']) ? 'twophase_confirm' : 'change_pass';
 // if user is turning on 2FA or changing phone number
 } else {
-    switch($_GET['method']) {
+    switch($_POST['method']) {
         case TFA_OFF:
             switch($profile->getVar('2famethod')) {
                 case TFA_SMS:
@@ -71,8 +71,8 @@ if(intval($_GET['selectedMethod']) == intval($profile->getVar('2famethod')) AND 
             $scenario = 'turn_off';
             break;
         case TFA_SMS:
-            if($_GET['phone']) {
-                $newPhoneForTurnOn = $_GET['phone'];
+            if($_POST['phone']) {
+                $newPhoneForTurnOn = $_POST['phone'];
                 sendCode(TFA_SMS, false, $newPhoneForTurnOn);
                 $method = 'texts';
                 $scenario = 'turn_on';
@@ -81,7 +81,7 @@ if(intval($_GET['selectedMethod']) == intval($profile->getVar('2famethod')) AND 
             }
             break;
         case TFA_EMAIL:
-            $newEmailForTurnOn = isset($_GET['email']) ? trim($_GET['email']) : '';
+            $newEmailForTurnOn = isset($_POST['email']) ? trim($_POST['email']) : '';
             $sendError = sendCode(TFA_EMAIL, false, null, $newEmailForTurnOn ?: null); // will return errors
             $method = 'email';
             $scenario = 'turn_on';
@@ -131,8 +131,8 @@ if($method == 'app') {
 } elseif($method == 'texts') {
     // Sent to new phone (changing-phone path) or stored phone (password-change path)
     $tokenContact = preg_replace('/[^0-9]/', '',
-        (!empty($_GET['phone']) && intval($_GET['method']) == TFA_SMS)
-            ? $_GET['phone']
+        (!empty($_POST['phone']) && intval($_POST['method']) == TFA_SMS)
+            ? $_POST['phone']
             : $profile->getVar('2faphone')
     );
 } else {
@@ -149,7 +149,7 @@ $confirmToken = icms::$security->createToken(300, $tokenContact);
 $message .= "<input type='hidden' class='tfa-confirm-token' value='"
           . htmlspecialchars($confirmToken, ENT_QUOTES) . "'>";
 
-if(!empty($_GET['error'])) {
+if(!empty($_POST['error'])) {
     $message = "<span style='color:red;font-weight:bold;'>" . _US_2FA_INVALID_CODE . "</span><br><br>" . $message;
 }
 

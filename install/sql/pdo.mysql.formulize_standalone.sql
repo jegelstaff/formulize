@@ -3,7 +3,11 @@ DELETE FROM `REPLACE_WITH_PREFIX_config` WHERE conf_modid = 0;
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (0, 7, 'auth_2fa', '_MD_AM_AUTH2FA', '1', '_MD_AM_AUTH2FADESC', 'yesno', 'int', 1),
 (0, 7, 'auth_2fa_groups', '_MD_AM_AUTH2FAGROUPS', '', '_MD_AM_AUTH2FAGROUPSDESC', 'group_multi', 'array', 1),
-(0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1);
+(0, 7, 'auth_okta', '_MD_AM_AUTHOKTA', '', '_MD_AM_AUTHOKTADESC', 'textbox', 'text', 1),
+(0, 1, 'cookie_samesite', '_MD_AM_COOKIE_SAMESITE', 'Lax', '_MD_AM_COOKIE_SAMESITEDSC', 'select', 'text', 200);
+INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Lax', 'Lax', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
+INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'None', 'None', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
+INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Strict', 'Strict', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (1, 0, 1, 'sitename', '_MD_AM_SITENAME', 'Formulize', '_MD_AM_SITENAMEDSC', 'textbox', 'text', 0),
 (2, 0, 1, 'slogan', '_MD_AM_SLOGAN', '', '_MD_AM_SLOGANDSC', 'textbox', 'text', 1),

@@ -37,6 +37,7 @@ class formulizeUserAccountGroupMembershipElement extends formulizeUserAccountEle
     function __construct() {
 			parent::__construct();
 			$this->name = "User Account Group Membership";
+			$this->adminOnly = true; // only webmasters may see/change group memberships; for end users these are condition-driven
 			$this->excludeTemplateGroups = true; // default to excluding template groups since they are not meant to be assigned to users, but this can be overridden by setting this property to false
 			// Note: no userProperty defined because group membership is stored in groups_users_link table, not on the user object
 		}

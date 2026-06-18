@@ -222,10 +222,11 @@ final class icms_core_Password {
 	static public function createSalt($slength=64) {
 		$salt = '';
 		$base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$microtime = function_exists('microtime') ? microtime() : time();
-		srand((double)$microtime * 1000000);
-		for ($i=0; $i<=$slength; $i++)
-		$salt.= substr($base, rand() % strlen($base), 1);
+		$max = strlen($base) - 1;
+		// random_int() is cryptographically secure (PHP 7+); replaces the previous srand()/rand()
+		for ($i = 0; $i < $slength; $i++) {
+			$salt .= substr($base, random_int(0, $max), 1);
+		}
 		return $salt;
 	}
 

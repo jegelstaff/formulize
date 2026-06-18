@@ -21,6 +21,7 @@ class formulizeUserAccountStatusElement extends formulizeUserAccountElement {
 		parent::__construct();
 		$this->name = "Account Status";
 		$this->userProperty = "level";
+		$this->adminOnly = true; // only webmasters may see/change account status
 	}
 
 }
