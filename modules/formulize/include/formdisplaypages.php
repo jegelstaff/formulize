@@ -408,14 +408,16 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			if($formulize_displayingSubform) {
 					$templateVariables['saveAndLeave'] = $templateVariables['saveAndGoBackText'] ? trans($templateVariables['saveAndGoBackText']) : trans(_formulize_SAVE_AND_GOBACK);
 
-			// otherwise... if there was an originally specified done destination,
-			// or the user has permission to see a list of entries, then "save and close"
+			// otherwise... Show "save and close" if there was an originally specified done destination,
+			// or the user has permission to see a list of entries,
+			// unless the screen has no leave button, and the done destination would take us back to exactly the same place
+			// (blank done destinations resolve to the applicable list screen, in determineDoneDestinationFromURL, so situations like arbitrary pages, such as edituser.php, or other cases where the current URL is not resolvable to a list screen)
 			} elseif(($originalDoneDest
 				OR ($single_result['flag'] == 0 AND $xoopsUser)
 				OR $view_globalscope
 				OR ($view_groupscope AND $single_result['flag'] != "group")
 				)
-				AND !formulizePermHandler::isUserOwnAccountEntry($fid, $uid, $entry_id) ) {
+				AND ($saveAndContinueButtonText['leaveButtonText'] !== '' OR $done_dest !== getCurrentUrl())) {
 					$templateVariables['saveAndLeave'] = $templateVariables['saveAndLeaveText'] ? trans($templateVariables['saveAndLeaveText']) : trans(_formulize_SAVE_AND_LEAVE);
 
 			// else... no where for the user to go, no text

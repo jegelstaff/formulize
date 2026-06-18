@@ -335,20 +335,25 @@ function formulize_resolveUserAccountScreen($uid) {
 	// user's EAU entry screen:
 	//   - the current user can manage user accounts (system_admin on XOOPS_SYSTEM_USER — a
 	//     permission, e.g. a webmaster on users.php) and so may view any user's EAU profile; or
-	//   - the current user can edit the specific EAU entry, which is the self-service case
-	//     (edituser.php, where $uid is the current user themselves).
-	// user_can_edit_entry is purely Formulize form-permission based and does NOT auto-grant
-	// webmasters, so the canManageUsers clause is required, not redundant.
+	//   - the current user has view_form permission on the EAU form AND can edit the specific entry
+	//     (self-service case: edituser.php, where $uid is the current user themselves).
+	// view_form is required so that users without Formulize access to the EAU form are not routed
+	// there only to fail security_check; they should fall through to the system users form instead.
+	// user_can_edit_entry does NOT auto-grant webmasters, so canManageUsers is required, not redundant.
 	$gperm_handler = xoops_gethandler('groupperm');
+	$activeUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 	$activeGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
 	$canManageUsers = (bool) $gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $activeGroups);
-	$activeUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+	$mid = getFormulizeModId();
 
 	foreach (findUserEauEntry($uid) as $match) {
 		if (
 			(
 				$canManageUsers
-				OR formulizePermHandler::user_can_edit_entry($match['fid'], $activeUid, $match['entry_id'])
+				OR (
+					$gperm_handler->checkRight("view_form", $match['fid'], $activeGroups, $mid)
+					AND formulizePermHandler::user_can_edit_entry($match['fid'], $activeUid, $match['entry_id'])
+				)
 			)
 			AND $eauForm = $form_handler->get($match['fid'])
 		) {

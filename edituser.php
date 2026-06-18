@@ -71,17 +71,19 @@ if(count($pages) == 1) {
 	$thisScreen->setVar('navstyle', 3); // buttons only
 	$thisScreen->setVar('showpageindicator', 2); // off
 	$thisScreen->setVar('showpageselector', 2); // off
-	$thisScreen->setVar('buttontext', array(
-		'thankyoulinktext'=>'',
-		'leaveButtonText'=>'',
-		'prevButtonText'=>'',
-		'saveButtonText'=>_formulize_SAVE,
-		'nextButtonText'=>'',
-		'finishButtonText'=>'',
-		'printableViewButtonText'=>'',
-		'closeButtonText'=>''
-	));
 }
+
+// limit to the Save button
+$thisScreen->setVar('buttontext', array(
+	'thankyoulinktext'=>'',
+	'leaveButtonText'=>'',
+	'prevButtonText'=>'',
+	'saveButtonText'=>_formulize_SAVE,
+	'nextButtonText'=>'',
+	'finishButtonText'=>'',
+	'printableViewButtonText'=>'',
+	'closeButtonText'=>''
+));
 
 $type_handler->render($thisScreen, $entry_id, '');
 
