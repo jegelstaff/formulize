@@ -113,8 +113,16 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$isDisabled AND !$noSave) {
-			// note that we're using the OPPOSITE of the permission because we want to know if the element should be disabled
-			$isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
+			if (formulizePermHandler::isUserOwnAccountEntry($form_id, $user_id, $entry)) {
+				// Own account entry: private (user account) elements are always editable regardless of
+				// form-level permissions. Non-private elements require real Formulize edit permission,
+				// so they stay read-only when the user has view access but no form-level edit rights.
+				if (!$element->getVar('ele_private')) {
+					$isDisabled = !formulizePermHandler::user_has_formulize_edit_permission($form_id, $user_id, $entry);
+				}
+			} else {
+				$isDisabled = !formulizePermHandler::user_can_edit_entry($form_id, $user_id, $entry);
+			}
 		}
 
 		// check whether the entry is locked, and if so, then the element will be disabled.  Set a message to say that elements were disabled due to entries being edited elsewhere (first time only).

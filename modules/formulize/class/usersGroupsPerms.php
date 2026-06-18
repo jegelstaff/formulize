@@ -156,6 +156,18 @@ class formulizePermHandler {
         return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
     }
 
+    /**
+     * Check whether a user has real Formulize form permission to edit a specific entry,
+     * without the own-account auto-grant from isUserOwnAccountEntry.
+     *
+     * Use this when own-account access should not override element-level edit decisions — e.g.
+     * to decide whether to disable non-private elements for a user viewing their own EAU entry
+     * but holding only view (not edit) rights on the form.
+     */
+    public static function user_has_formulize_edit_permission($form_id, $user_id, $entry_id) {
+        return self::user_can_modify_entry("update", $form_id, $user_id, $entry_id);
+    }
+
 
     /**
      * Check whether a user is allowed to delete a specific entry.

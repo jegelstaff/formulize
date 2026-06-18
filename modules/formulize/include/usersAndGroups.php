@@ -335,10 +335,12 @@ function formulize_resolveUserAccountScreen($uid) {
 	// user's EAU entry screen:
 	//   - the current user can manage user accounts (system_admin on XOOPS_SYSTEM_USER — a
 	//     permission, e.g. a webmaster on users.php) and so may view any user's EAU profile; or
-	//   - the current user has view_form permission on the EAU form AND can edit the specific entry
-	//     (self-service case: edituser.php, where $uid is the current user themselves).
-	// view_form is required so that users without Formulize access to the EAU form are not routed
-	// there only to fail security_check; they should fall through to the system users form instead.
+	//   - the current user has view_form permission AND can edit the specific entry
+	//     (own-account grant via isUserOwnAccountEntry) AND can actually see the entry
+	//     (security_check). The security_check gate handles the case where a user has view_form
+	//     but cannot see their own EAU entry (e.g. entry created by an admin and the user has
+	//     neither view_globalscope nor ownership in Formulize terms) — in that case we fall
+	//     through to the system users form rather than routing somewhere that yields _NO_PERM.
 	// user_can_edit_entry does NOT auto-grant webmasters, so canManageUsers is required, not redundant.
 	$gperm_handler = xoops_gethandler('groupperm');
 	$activeUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
@@ -353,6 +355,7 @@ function formulize_resolveUserAccountScreen($uid) {
 				OR (
 					$gperm_handler->checkRight("view_form", $match['fid'], $activeGroups, $mid)
 					AND formulizePermHandler::user_can_edit_entry($match['fid'], $activeUid, $match['entry_id'])
+					AND security_check($match['fid'], $match['entry_id'], $activeUid, '', $activeGroups, $mid, $gperm_handler)
 				)
 			)
 			AND $eauForm = $form_handler->get($match['fid'])
