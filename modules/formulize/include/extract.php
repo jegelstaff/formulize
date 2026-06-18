@@ -791,7 +791,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				. ", eau_profile_main.timezone AS main_eau_timezone"
 				. ", eau_profile_main.`2famethod` AS main_eau_2famethod";
 		}
-		$eauAllJoinText = $eauMainJoinText . implode("", $eauLinkedJoinTextIndex);
+		$eauLinkedJoinText = implode("", $eauLinkedJoinTextIndex);
+		$eauAllJoinText = $eauMainJoinText . $eauLinkedJoinText; // kept for reference; use the parts separately in FROM clauses
 		$eauAllSelectFields = $eauMainSelectFields . implode("", $eauLinkedSelectFieldIndex);
 
 		// FIGURE OUT THE SORT CLAUSE
@@ -1146,8 +1147,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 		$oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
 
-		$restOfTheSQL = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
-		$restOfTheSQLForExport = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauAllJoinText $joinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
+		$restOfTheSQL = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText $eauLinkedJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
+		$restOfTheSQLForExport = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText $eauLinkedJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
 		if (count((array) $linkformids) > 1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if (!$sortIsOnMain) {
 				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
