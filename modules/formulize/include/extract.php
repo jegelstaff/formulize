@@ -437,7 +437,8 @@ function getData(
 			null,
 			null,
 			null,
-			null
+			null,
+			indexCacheKey: ""
 		);
 		return $result;
 	}
@@ -464,7 +465,8 @@ function getData(
 	if ($isTableForm) {
 		$result = dataExtractionTableForm($tableform, $formHandle, $form, $filter, $andor, $limitStart, $limitSize, $sortField, $sortOrder, $resultOnly);
 	} else {
-		$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements);
+		$indexCacheKey = isset($GLOBALS['formulize_doNotCacheDataSet']) ? "" : $cacheKey;
+		$result = dataExtraction($framework, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived, $id_reqsOnly, $resultOnly, $filterElements, $indexCacheKey);
 	}
 
 	if ($cacheKey and !isset($GLOBALS['formulize_doNotCacheDataSet'])) {
@@ -509,7 +511,7 @@ function getDataCached(
 }
 
 
-function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived = false, $id_reqsOnly = false, $resultOnly = false, $filterElements = null)
+function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $limitSize, $sortField, $sortOrder, $forceQuery, $mainFormOnly, $includeArchived = false, $id_reqsOnly = false, $resultOnly = false, $filterElements = null, $indexCacheKey = "")
 {
 	global $xoopsDB;
 
@@ -1322,6 +1324,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 	formulize_benchmark("After query");
 
+	$resultData['indexCacheKey'] = $indexCacheKey;
 	return processGetDataResults($resultData);
 } // end of dataExtraction function
 
@@ -1640,6 +1643,7 @@ function processGetDataResults($resultData)
 	$frid = $resultData['frid'];
 	$linkformids = $resultData['linkFids'];
 	$isUserTableForm = isset($resultData['isUserTableForm']) ? $resultData['isUserTableForm'] : false;
+	$indexCacheKey = $resultData['indexCacheKey'] ?? "";
 
 	global $xoopsDB, $xoopsUser;
 	$masterResults = array();
@@ -1775,6 +1779,9 @@ function processGetDataResults($resultData)
 					continue;
 				}
 				$masterResults[$masterIndexer][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$elementHandle] = $value;
+				if ($indexCacheKey) {
+					$GLOBALS['formulize_entryToCacheKeys'][getFormHandle($curFormId)][$entryIdIndex[$curFormAlias]][$indexCacheKey][$masterIndexer] = true;
+				}
 			} // end of foreach field loop within a record
 		} // end of main while loop for all records
 		unset($queryRes[$queryResIndex]);
@@ -2753,6 +2760,15 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 						}
 					}
 					if (count((array) $dataToWrite) > 0) {
+						foreach ($GLOBALS['formulize_entryToCacheKeys'][$formHandle][$primary_entry_id] ?? [] as $staleCacheKey => $masterIndexes) {
+							if (isset($GLOBALS['formulize_cachedGetDataResults'][$staleCacheKey])) {
+								foreach (array_keys($masterIndexes) as $staleMasterIndex) {
+									foreach ($dataToWrite as $handle => $value) {
+										$GLOBALS['formulize_cachedGetDataResults'][$staleCacheKey][$staleMasterIndex][$formHandle][$primary_entry_id][$handle] = ($value === '{WRITEASNULL}') ? null : $value;
+									}
+								}
+							}
+						}
 						if(isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat']) AND count($GLOBALS['formulize_asynchronousFormDataInAPIFormat']) > 0) {
 							foreach($dataToWrite as $handle => $value) {
 								$GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$primary_entry_id][$handle] = $value;
