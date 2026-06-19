@@ -532,15 +532,128 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
 .fz-mono    { font-family: var(--font-mono); font-feature-settings: "tnum"; }
 
 /* ============================================================
+   Form controls — generalized input / select / textarea
+   ============================================================ */
+
+/* The design's .fz-input primitive, applied directly to the raw elements
+   Formulize core renders (they carry no classes), so the whole theme gets
+   consistent fields without per-element overrides. Buttons, checkboxes,
+   radios, and file inputs keep their own styling and are excluded here.
+   Width is intentionally left to the element/context (size attr, search-row,
+   etc.) rather than forced to 100%, so inline controls like the pagination
+   selector are not stretched. */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="month"],
+input[type="week"],
+input:not([type]),
+select,
+textarea {
+  height: 32px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: var(--fs-13);
+  font-family: var(--font-sans);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+
+input::placeholder,
+textarea::placeholder { color: var(--c-text-subtle); }
+
+input:hover:not(:disabled):not(:focus),
+select:hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus) { border-color: var(--c-text-muted); }
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--c-surface-3);
+  color: var(--c-text-subtle);
+  cursor: not-allowed;
+}
+
+/* Native select: drop the OS chrome and draw our own chevron. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* Multi-line / list controls grow with their content. */
+select[multiple],
+select[size]:not([size="1"]) {
+  height: auto;
+  padding: 6px 10px;
+  background-image: none;
+}
+
+textarea {
+  height: auto;
+  min-height: 76px;
+  width: 100%;
+  padding: 8px 10px;
+  line-height: var(--lh-base);
+  resize: vertical;
+}
+
+/* ============================================================
    List screen
    ============================================================ */
+
+/* The core list wrappers (#listofentries > form#controls) sit between .fz-main and
+   .fz-list-screen. They must carry the height through so the screen can fill the
+   main scroll area and pin its footer; otherwise height:100% resolves against an
+   auto-height parent and collapses to the content height. */
+#listofentries,
+#listofentries #controls {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 
 .fz-list-screen {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  /* fill the main scroll area so the body scrolls internally and the titlebar /
+     footer stay pinned (the V2 app-chrome layout). The flex chain that makes this
+     work lives on .fz-list__body (flex:1; overflow:auto; min-height:0). */
+  flex: 1 1 auto;
+  min-height: 0;
   position: relative;
 }
+
+/* Embedded lists have no fixed-height ancestor, so let them flow naturally
+   instead of collapsing the body to zero height. */
+.fz-inline #listofentries,
+.fz-inline #listofentries #controls,
+.fz-inline .fz-list-screen { height: auto; display: block; }
+.fz-inline .fz-list__body  { overflow: visible; }
 
 /* Title bar */
 .fz-list__titlebar {
@@ -837,7 +950,7 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   justify-content: space-between;
   gap: var(--s-4);
   padding: var(--s-3) var(--s-5);
-  background: var(--c-surface-2);
+  background: var(--c-surface);
   border-top: 1px solid var(--c-border);
   font-size: var(--fs-13);
   color: var(--c-text-muted);
@@ -854,6 +967,34 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
   display: flex;
   align-items: center;
   gap: var(--s-2);
+}
+
+/* Pagination (pageNavControls variable template): rows-per-page select +
+   chevron prev / "Page X of Y" / chevron next. */
+.fz-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.fz-pagination__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.fz-pagination__status {
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0 var(--s-1);
+}
+
+.fz-pagination__nav .fz-btn[disabled] {
+  opacity: .4;
+  cursor: default;
+  pointer-events: none;
 }
 
 /* ============================================================
@@ -1347,6 +1488,15 @@ button.fz-chip--dark.fz-chip--danger:hover { background: rgba(255,90,90,.22); bo
     gap: var(--s-2);
     padding: var(--s-2) var(--s-3);
     font-size: var(--fs-12);
+  }
+
+  /* Trim the footer to fit a phone: drop the "Showing entries:" / "Page" labels
+     (leaving just the numbers) and the hide-repeating-data toggle, so the entry
+     count and pagination stay on one line instead of wrapping. */
+  .page-navigation-total__label,
+  .fz-pagination__status-label,
+  .fz-list__footer-start label[for="toggleRepeatData"] {
+    display: none;
   }
 
   /* ---- Table: pan columns horizontally; the checkbox column and the
