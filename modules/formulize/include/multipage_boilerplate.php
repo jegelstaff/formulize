@@ -122,7 +122,7 @@ if($currentPage == $thanksPage) {
     print "</center></p></div>";
         $thankYouNav = ob_get_clean();
 
-        $entry_id = $entry;
+		$entry = $entry_id; // legacy support because there used to be a version of entry id just called entry that was in scope at this point.
 
 		if(is_array($thankstext)) {
             $thankstext[1] = undoAllHTMLChars($thankstext[1]);
@@ -141,5 +141,7 @@ if($currentPage == $thanksPage) {
                 print str_replace("{thankYouNav}", $thankYouNav, $thankstext);
             }
         }
+
+		unset($entry);
 
 }
