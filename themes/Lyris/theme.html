@@ -24,7 +24,7 @@
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
     require_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
     $rtlPath = ($this->_tpl_vars['icms_rtl'] ?? false) ? 'rtl/' : '';
-    $cssVersion = formulize_get_file_version('/themes/Kairo/' . $rtlPath . 'css/style.css');
+    $cssVersion = formulize_get_file_version('/themes/Lyris/' . $rtlPath . 'css/style.css');
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/reset.css?v=' . $cssVersion . '" />';
     echo '<link rel="stylesheet" type="text/css" media="all" href="' . $this->_tpl_vars['icms_imageurl'] . $rtlPath . 'css/style.css?v=' . $cssVersion . '" />';
     // user-configured colours, font, and logo, from the Appearance page in the Formulize admin UI
@@ -159,7 +159,7 @@ if ($xoopsUser) {
   window.formulize.xoopsUrl = '<{$smarty.const.XOOPS_URL}>';
 </script>
 <{php}>
-$jsVersion = formulize_get_file_version('/themes/Kairo/js/script.js');
+$jsVersion = formulize_get_file_version('/themes/Lyris/js/script.js');
 echo '<script src="' . $this->_tpl_vars['icms_imageurl'] . 'js/script.js?v=' . $jsVersion . '"></script>';
 <{/php}>
 
