@@ -553,7 +553,7 @@ class formulizeDataHandler {
 			));
 			return false;
 		}
-		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value, true);
+		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value);
 		if($comparisonClause === false) {
 			return false;
 		}
@@ -635,7 +635,7 @@ class formulizeDataHandler {
 						));
 						continue;
 				}
-				$clause = $this->buildSafeWhereClause($fieldName, $opp, $value, false);
+				$clause = $this->buildSafeWhereClause($fieldName, $opp, $value);
 				if($clause === false) {
 					return false; // fail closed: an invalid operator/field must not silently broaden the result set by dropping a condition
 				}
@@ -771,13 +771,12 @@ class formulizeDataHandler {
 	 * Validates the field name as a SQL identifier and normalizes the operator. Handles
 	 * NULL values, IN/NOT IN lists, LIKE wildcards, and scalar comparisons.
 	 *
-	 * @param string $fieldName          The column name (validated as a SQL identifier)
-	 * @param string $operator           SQL operator (=, !=, LIKE, IN, IS NULL, etc.)
-	 * @param mixed  $value              The comparison value (null, scalar, or comma-delimited string for IN)
-	 * @param bool   $wrapLikeWithPercents True to wrap LIKE/NOT LIKE values with % wildcards
+	 * @param string $fieldName The column name (validated as a SQL identifier)
+	 * @param string $operator  SQL operator (=, !=, LIKE, IN, IS NULL, etc.)
+	 * @param mixed  $value     The comparison value (null, scalar, or comma-delimited string for IN)
 	 * @return string|false SQL fragment like "`field` = 'value'", or false if inputs are invalid
 	 */
-	function buildSafeWhereClause($fieldName, $operator, $value, $wrapLikeWithPercents = false) {
+	function buildSafeWhereClause($fieldName, $operator, $value) {
 		$operator = self::normalizeSearchOperator($operator);
 		if($operator === false || self::validateSqlIdentifier($fieldName) === false) {
 			return false;
@@ -808,11 +807,12 @@ class formulizeDataHandler {
 
 		$escapedValue = formulize_db_escape($value);
 		if($operator === 'LIKE' || $operator === 'NOT LIKE') {
-			$likeBits = $wrapLikeWithPercents ? '%' : '';
-			return "`$fieldName` $operator \"$likeBits$escapedValue$likeBits\"";
+			$strValue = (string)$value;
+			$prefix = (substr($strValue, 0, 1) === '%' || substr($strValue, -1) === '%') ? '' : '%';
+			$escapedValue = "$prefix$escapedValue$prefix";
 		}
 
-		$quotedValue = is_numeric($value) ? $escapedValue : "\"$escapedValue\"";
+		$quotedValue = is_numeric($escapedValue) ? $escapedValue : "\"$escapedValue\"";
 		return "`$fieldName` $operator $quotedValue";
 	}
 
@@ -834,7 +834,7 @@ class formulizeDataHandler {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value, false);
+		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value);
 		if($comparisonClause === false) {
 			return false;
 		}
