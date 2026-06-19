@@ -4938,8 +4938,15 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
     $lastEntryNumber = $numberPerPage > 0 ? $numberPerPage*($userPageNumber) : $GLOBALS['formulize_countMasterResultsForPageNumbers'];
     $lastEntryNumber = $lastEntryNumber > $GLOBALS['formulize_countMasterResultsForPageNumbers'] ? $GLOBALS['formulize_countMasterResultsForPageNumbers'] : $lastEntryNumber;
     $firstEntryNumber = $GLOBALS['formulize_countMasterResultsForPageNumbers'] > 0 ? ((($userPageNumber-1)*$numberPerPage)+1) : 0;
-	$entryTotals = "<span class=\"page-navigation-total\">".
-        sprintf(_AM_FORMULIZE_LOE_TOTAL, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers'])."</span>\n";
+	// Split the leading label ("Showing entries: ") into its own span so themes can
+	// hide it on small screens and show just the numbers. The label is whatever
+	// precedes the first numeric placeholder in the language string.
+	$totalFormat = _AM_FORMULIZE_LOE_TOTAL;
+	$firstPlaceholder = strpos($totalFormat, '%d');
+	$totalLabel = $firstPlaceholder !== false ? substr($totalFormat, 0, $firstPlaceholder) : '';
+	$totalNumbersFormat = $firstPlaceholder !== false ? substr($totalFormat, $firstPlaceholder) : $totalFormat;
+	$totalNumbers = sprintf($totalNumbersFormat, $firstEntryNumber, $lastEntryNumber, $GLOBALS['formulize_countMasterResultsForPageNumbers']);
+	$entryTotals = "<span class=\"page-navigation-total\"><span class=\"page-navigation-total__label\">".$totalLabel."</span>".$totalNumbers."</span>\n";
 
     $entriesPerPageSelector = "<select name='formulize_entriesPerPage'>";
     $maxPerPage = $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 < 100 ? $GLOBALS['formulize_countMasterResultsForPageNumbers']+9 : 100;
@@ -4980,7 +4987,29 @@ function formulize_LOEbuildPageNav($screen, $regeneratePageNumbers) {
         }
 
 				$jsFunctionName = 'pageJump';
-				$pageNav = formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $formulize_LOEPageStart, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
+
+				// allow a theme/screen to fully own the pagination markup via a
+				// pageNavControls variable template, exposing the page state so it can
+				// build whatever controls it likes. Falls back to the default markup.
+				$screenOrScreenType = is_object($screen) ? $screen : 'listOfEntries';
+				$pageNavTemplateVars = array(
+					'currentPage'            => $userPageNumber,
+					'totalPages'             => $pageNumbers,
+					'numberPerPage'          => $numberPerPage,
+					'totalEntries'           => $GLOBALS['formulize_countMasterResultsForPageNumbers'],
+					'pageStart'              => $formulize_LOEPageStart,
+					'firstEntry'             => $firstEntryNumber,
+					'lastEntry'              => $lastEntryNumber,
+					'firstDisplayPage'       => $firstDisplayPage,
+					'lastDisplayPage'        => $lastDisplayPage,
+					'pageStarts'             => $allPageStarts,
+					'jsFunction'             => $jsFunctionName,
+					'entriesPerPageSelector' => $entriesPerPageSelector,
+				);
+				$rendered = renderVariableTemplate('pageNavControls', $screenOrScreenType, $pageNavTemplateVars);
+				$pageNav = ($rendered !== false)
+					? $rendered
+					: formulize_buildPageNavMarkup($jsFunctionName, $numberPerPage, $formulize_LOEPageStart, $firstDisplayPage, $lastDisplayPage, $pageNumbers, $entriesPerPageSelector);
 
     }
 
