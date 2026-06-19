@@ -1,5 +1,5 @@
 <?php
-// Pagination controls for the Kairo list footer. Receives the page state from
+// Pagination controls for the Lyris list footer. Receives the page state from
 // formulize_LOEbuildPageNav: currentPage, totalPages, numberPerPage, totalEntries,
 // pageStart, firstEntry, lastEntry, pageStarts (page=>record offset), jsFunction
 // ('pageJump', called with a record-start offset), and entriesPerPageSelector (the
