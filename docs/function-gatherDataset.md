@@ -54,7 +54,7 @@ __$limitSize__ - Optional. The value to use in a LIMIT statement as the size of 
 __$sortField__ - Optional. The element handle of the field by which the dataset should be sorted. Can be on the main form or any connected form. By default, data is sorted in creation order, oldest to newest.<br>
 __$sortOrder__ - Optional. The direction to use for sorting. Defaults to ascending order.<br>
 __$frid__ - Optional. The relationship to use for gathering the dataset. All forms in the relationship that are directly connected to the main form will be included. Defaults to the _Primary Relationship_ (-1) which is a catalogue of all the connections in the system. Specify 0 to use no relationship and only gather data from the main form.<br>
-__$bypassCache__ - Optional. Defaults to _false_. If set to true, the dataset will not be cached. Normally, datasets are cached based on the combination of parameters passed to the function, so the same operation is not repeated. If data will be changing between calls to gatherDataset, due to other operations occuring at the same time, then it is useful to set this to _true_.
+__$bypassCache__ - Optional. Defaults to _false_. If set to true, any previously cached result will be ignored and the data will always be fetched fresh from the database. Normally, datasets are cached based on the combination of parameters passed to the function, so the same operation is not repeated. If data may have changed since the last call to gatherDataset, it is useful to set this to _true_.
 
 ## Return Values
 

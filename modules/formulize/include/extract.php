@@ -344,7 +344,7 @@ function microtime_float()
  * @param string sortField - Optional. The element that should be used to sort the entries in the dataset.
  * @param string sortOrder - Optional. Either ASC or DESC to indicate the direction in which the entries should be sorted. Defaults to ASC.
  * @param int frid - Optional. The form relationship id, that defines the set of connections, as defined in the Formulize admin UI, that should be taken into account when gathering the dataset. Defaults to the Primary Relationship, which includes all connections between all forms. Only forms directly connected to the main form are included in the dataset. Set to zero to only include data from the main form itself, no connections.
- * @param bool bypassCache - Optional. If set to true, the dataset will not be cached for future calls during the same page load. This is useful if, for example, derived values or another process are changing data in other fields that will be crucial later on in the same page load.
+ * @param bool bypassCache - Optional. If set to true, any previously cached result will be ignored and the data will always be fetched fresh from the database. This is useful if, for example, derived values or another process are changing data between calls to gatherDataset on the same page load.
  * @return array Returns the dataset as an array. You can use the functions getValue and getEntryIds to work with the resulting dataset
  */
 function gatherDataset(
@@ -360,6 +360,9 @@ function gatherDataset(
 	$frid = -1,
 	$bypassCache = false) {
 		$cacheKey = $bypassCache ? 'bypass'.microtime(true) : '';
+		if ($bypassCache) {
+			$GLOBALS['formulize_doNotCacheDataSet'] = true;
+		}
 		return getData($frid, $fid, $filter, $andOr, $scope, $limitStart, $limitSize, $sortField, $sortOrder, filterElements: $elementHandles, cacheKey: $cacheKey);
 }
 
