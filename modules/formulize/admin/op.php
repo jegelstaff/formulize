@@ -32,10 +32,8 @@
 // depends on declarations in ui.php file!!
 
 // $formulizeNeedsDBPatch is set in ui.php (dbversion + structural checks) before this file is included.
-// The schema migration helpers are already loaded by ui.php; included here too for safety/standalone use.
 $opResults = isset($_uiEnvWarning) ? $_uiEnvWarning : '';
 if (!$opResults AND isset($_GET['op'])) {
-    include_once XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/001_schema_migrations.php';
     ob_start();
     switch($_GET['op']) {
         case "delete":
@@ -44,7 +42,6 @@ if (!$opResults AND isset($_GET['op'])) {
         case "patch40":
         case "patchDB":
             if (isset($_POST['patch40'])) {
-                include_once XOOPS_ROOT_PATH . '/modules/formulize/include/on_update.php';
                 $patchModuleHandler = xoops_gethandler('module');
                 $patchModule = $patchModuleHandler->getByDirname('formulize');
                 xoops_module_update_formulize(

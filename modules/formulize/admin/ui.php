@@ -32,10 +32,12 @@ include_once("admin_header.php");
 xoops_cp_header();
 define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 
+global $xoopsTpl, $xoopsDB, $xoopsUser;
+
 // include necessary Formulize files/functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/on_update.php';
 
-global $xoopsTpl, $xoopsDB, $xoopsUser;
 
 // If saveLock is turned on, exit
 /*if(saveLock) {
@@ -67,6 +69,11 @@ if (!isset($xoopsTpl)) {
     $xoopsTpl =& $xoTheme->template;
 }
 
+/**
+ * DO BASIC CHECKS TO DETERMINE IF THE ENVIRONMENT IS HEALTHY AND WHETHER AN UPDATE IS REQUIRED
+ * Depends on some functions included through on_update.php, e.g. primaryRelationshipExists() and need81ElementTypeConversion()
+ */
+
 // Environment checks — run FIRST, on every admin page load, as a fix-first step.
 // The tokens folder is fundamental to Formulize working at all, so we attempt to create/repair it
 // before anything else. If it can't be fixed, the warning becomes the opResults panel and op.php
@@ -89,27 +96,25 @@ if (file_exists(XOOPS_ROOT_PATH . '/tokens') && !is_writable(XOOPS_ROOT_PATH . '
 }
 $_uiEnvWarning = ob_get_clean();
 
-// Determine whether an update/patch is needed. This mirrors the trigger conditions at the top of
-// formulize_run_schema_migrations() so the admin is warned WHENEVER any of them are true — not only
-// when the dbversion number is behind. The helper functions (need81ElementTypeConversion,
-// codeInNeedOfConversion) live in the schema migrations file; primaryRelationshipExists() comes from
-// functions.php (loaded via common.php above).
-include_once XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/001_schema_migrations.php';
-$_uiModuleHandler = xoops_gethandler('module');
-$_uiFormulizeModule = $_uiModuleHandler->getByDirname('formulize');
-// we need to convert code if the custom_code folder exists, or if there is code in the DB that hasn't been moved to the code folder yet
-$_uiNeedCodeConversion = file_exists(XOOPS_ROOT_PATH . '/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
-$formulizeNeedsDBPatch = ($_uiFormulizeModule->getDBVersion() < intval($_uiFormulizeModule->getInfo('dbversion')))
-    OR !primaryRelationshipExists()
-    OR need81ElementTypeConversion()
-    OR $_uiNeedCodeConversion;
-unset($_uiModuleHandler, $_uiFormulizeModule, $_uiNeedCodeConversion);
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname('formulize');
+// patch needed if dbversion is out of date, or if the primary relationship doesn't exist, or there are pre-81 element types, or there is code that needs conversion to the new storage model
+$formulizeNeedsDBPatch = (
+	($formulizeModule->getDBVersion() < intval($formulizeModule->getInfo('dbversion')))
+  OR !primaryRelationshipExists()
+  OR need81ElementTypeConversion()
+  OR (file_exists(XOOPS_ROOT_PATH . '/modules/formulize/custom_code') ? true : codeInNeedOfConversion())
+);
 
 // If an update is needed and no other op is in progress, route through the patchDB op
 // so op.php shows the warning panel. The warning HTML lives in op.php in one place.
 if ($formulizeNeedsDBPatch) {
     $_GET['op'] = 'patchDB';
 }
+
+/**
+ * END OF BASIC CHECKS
+ */
 
 // handle any operations requested as part of this page load
 // sets up a template variable with the results of the op, called opResults
