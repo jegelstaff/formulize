@@ -33,7 +33,7 @@ xoops_cp_header();
 define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 
 // include necessary Formulize files/functions
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
 
 global $xoopsTpl, $xoopsDB, $xoopsUser;
 
@@ -67,9 +67,52 @@ if (!isset($xoopsTpl)) {
     $xoopsTpl =& $xoTheme->template;
 }
 
+// Environment checks — run FIRST, on every admin page load, as a fix-first step.
+// The tokens folder is fundamental to Formulize working at all, so we attempt to create/repair it
+// before anything else. If it can't be fixed, the warning becomes the opResults panel and op.php
+// will refuse to run any op (including the DB patch) until the environment is healthy.
+ob_start();
+if (!file_exists(XOOPS_ROOT_PATH . '/tokens')) {
+    if (mkdir(XOOPS_ROOT_PATH . '/tokens', 0755) === false) {
+        print '<h1>Your system is missing the ' . XOOPS_ROOT_PATH . '/tokens folder.</h1>'
+            . '<p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>';
+    } else {
+        file_put_contents(XOOPS_ROOT_PATH . '/tokens/index.html', '<script>history.go(-1);</script>');
+        file_put_contents(XOOPS_ROOT_PATH . '/tokens/.gitignore', '*');
+    }
+}
+if (file_exists(XOOPS_ROOT_PATH . '/tokens') && !is_writable(XOOPS_ROOT_PATH . '/tokens')) {
+    if (chmod(XOOPS_ROOT_PATH . '/tokens', 0755) === false) {
+        print '<h1>The ' . XOOPS_ROOT_PATH . '/tokens folder is not writable by the web server.</h1>'
+            . '<p>Formulize will not work until this folder is writable by the web server.</p>';
+    }
+}
+$_uiEnvWarning = ob_get_clean();
+
+// Determine whether an update/patch is needed. This mirrors the trigger conditions at the top of
+// formulize_run_schema_migrations() so the admin is warned WHENEVER any of them are true — not only
+// when the dbversion number is behind. The helper functions (need81ElementTypeConversion,
+// codeInNeedOfConversion) live in the schema migrations file; primaryRelationshipExists() comes from
+// functions.php (loaded via common.php above).
+include_once XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/001_schema_migrations.php';
+$_uiModuleHandler = xoops_gethandler('module');
+$_uiFormulizeModule = $_uiModuleHandler->getByDirname('formulize');
+// we need to convert code if the custom_code folder exists, or if there is code in the DB that hasn't been moved to the code folder yet
+$_uiNeedCodeConversion = file_exists(XOOPS_ROOT_PATH . '/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
+$formulizeNeedsDBPatch = ($_uiFormulizeModule->getDBVersion() < intval($_uiFormulizeModule->getInfo('dbversion')))
+    OR !primaryRelationshipExists()
+    OR need81ElementTypeConversion()
+    OR $_uiNeedCodeConversion;
+unset($_uiModuleHandler, $_uiFormulizeModule, $_uiNeedCodeConversion);
+
+// If an update is needed and no other op is in progress, route through the patchDB op
+// so op.php shows the warning panel. The warning HTML lives in op.php in one place.
+if ($formulizeNeedsDBPatch) {
+    $_GET['op'] = 'patchDB';
+}
+
 // handle any operations requested as part of this page load
 // sets up a template variable with the results of the op, called opResults
-// sets up $formulizeNeedsDBPatch boolean
 include_once "op.php";
 
 /**

@@ -176,17 +176,6 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 					if(substr(trim($value), 0, 5) != '<?php') {
 						$value = "<?php\n".$value;
 					}
-					// replace all $element_handle occurrences with "element_handle" instead, for now (future format will be to use the variable names with dollar signs)
-					// Must match $element_handle based on the allowed characters for PHP variable names, and terminate at the first non-valid character (whitespace, punctuation, etc)
-					// Must check if the element exists, and only replace if it does
-					preg_match_all('/\$([a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*)/', $value, $matches);
-					if(!empty($matches[1])) {
-						foreach($matches[1] as $possibleElementHandle) {
-							if($possibleElement = _getElementObject($possibleElementHandle)) {
-								$value = str_replace('$'.$possibleElementHandle, '"'.$possibleElementHandle.'"', $value);
-							}
-						}
-					}
 					if($parseError = formulize_validatePHPCode($value)) {
 						throw new Exception("The code provided for the derived value element cannot be parsed. $parseError. Please correct this and try again.");
 					}

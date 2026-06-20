@@ -1,150 +1,22 @@
 <?php
-###############################################################################
-##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
-###############################################################################
-##                    XOOPS - PHP Content Management System                  ##
-##                       Copyright (c) 2000 XOOPS.org                        ##
-##                          <http://www.xoops.org/>                          ##
-###############################################################################
-##  This program is free software; you can redistribute it and/or modify     ##
-##  it under the terms of the GNU General Public License as published by     ##
-##  the Free Software Foundation; either version 2 of the License, or        ##
-##  (at your option) any later version.                                      ##
-##                                                                           ##
-##  You may not change or alter any portion of this comment or credits       ##
-##  of supporting developers from this source code or any supporting         ##
-##  source code which is considered copyrighted (c) material of the          ##
-##  original comment or credit authors.                                      ##
-##                                                                           ##
-##  This program is distributed in the hope that it will be useful,          ##
-##  but WITHOUT ANY WARRANTY; without even the implied warranty of           ##
-##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            ##
-##  GNU General Public License for more details.                             ##
-##                                                                           ##
-##  You should have received a copy of the GNU General Public License        ##
-##  along with this program; if not, write to the Free Software              ##
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA ##
-###############################################################################
-##  Author of this file: Freeform Solutions and NS Tai (aka tuff) and others ##
-##  URL: http://www.brandycoke.com/                                          ##
-##  Project: Formulize                                                       ##
-###############################################################################
-
-include("admin_header.php");
-global $xoopsConfig;
-if ( file_exists("../language/".$xoopsConfig['language']."/main.php") ) {
-    include_once "../language/".$xoopsConfig['language']."/main.php";
-} else {
-    include_once "../language/english/main.php";
-}
-
-if (!isset($_GET['op']) AND !defined('_FORMULIZE_UI_PHP_INCLUDED')){
-    header('Location: '.XOOPS_URL.'/modules/formulize/admin/ui.php');
+if (!defined('XOOPS_ROOT_PATH')) {
     exit();
 }
 
-include_once XOOPS_ROOT_PATH."/modules/formulize/class/forms.php"; // form class
-include_once XOOPS_ROOT_PATH."/modules/formulize/include/extract.php";
-include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
-
-// this functions runs the SQL and returns false if it failed, also outputs error message to screen
-// returns the result object of the query if it was successful
-function formulize_DBPatchCheckSQL($sql, &$needsPatch) {
-    global $xoopsDB;
-    //print $sql."<br>";
-    if (!$needsPatchRes = $xoopsDB->queryF($sql)) {
-        print "Error: ".$xoopsDB->error()."<br>We could not determine if your Formulize database structure is up to date.  Please contact <a href=\"mailto:info@formulize.org\">info@formulize.org</a> for assistance.<br>\n";
-        return false;
-    }
-    $needsPatchRows = $xoopsDB->getRowsNum($needsPatchRes);
-    if ($needsPatchRows == 0) { // no rows returned
-        $needsPatch = true;
-    }
-    return $needsPatchRes;
-}
-
-// database patch logic for 4.0 and higher
-function patch40() {
-
-    if(!file_exists(XOOPS_ROOT_PATH.'/tokens')) {
-			if(mkdir(XOOPS_ROOT_PATH.'/tokens', 0755) === false) {
-				print "<h1>Your system is missing the ".XOOPS_ROOT_PATH."/tokens folder.</h1><p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>";
-				return;
-			} else {
-				file_put_contents(XOOPS_ROOT_PATH.'/tokens/index.html', '<script>history.go(-1);</script>');
-				file_put_contents(XOOPS_ROOT_PATH.'/tokens/.gitignore', '*');
-			}
-		}
-
-		if(!is_writable(XOOPS_ROOT_PATH.'/tokens')) {
-			if(chmod(XOOPS_ROOT_PATH.'/tokens', 0755) === false) {
-      	print "<h1>The ".XOOPS_ROOT_PATH."/tokens folder is not writable by the web server.</h1><p>Formulize will not work until this folder is writable by the web server.</p>";
-				return;
-			}
-    }
-
-    /* ======================================
-     * We must check here for the latest change, so we can tell the user whether they need to update or not!!
-     * We set needsPatch = false, and the alter to true if a patch is necessary
-     * When false, we return nothing from this function, as a cue that no patch is required
-     *
-     * To specify what to check, simply update the four variables declared below this comment.
-     * Set to false to ignore that level of checking
-     *
-     * THIS NEEDS TO BE UPDATED WHENEVER THERE IS A PATCH TO THE DATA STRUCTURE!!!
-     *
-     * IN ADDITION TO THE UPDATE HERE, THE mysql.sql FILE MUST BE UPDATED WITH THE REQUIRED CHANGES SO NEW INSTALLATIONS ARE UP TO DATE
-     *
-     * IT IS ALSO CRITICAL THAT THE PATCH PROCESS CAN BE RUN OVER AND OVER AGAIN NON-DESTRUCTIVELY */
-
-    $checkThisTable = 'tfa_codes';
-    $checkThisField = 'created';
-    $checkThisProperty = false;
-    $checkPropertyForValue = false;
-
-    /*
-    * ====================================== */
+function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 
 		global $xoopsDB, $xoopsConfig;
     $module_handler = xoops_gethandler('module');
-    $formulizeModule = $module_handler->getByDirname("formulize");
-    $metadata = $formulizeModule->getInfo();
-    $versionNumber = $metadata['version'];
-
-    $needsPatch = false;
-    $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_schema = '".SDATA_DB_NAME."' AND table_name = '".$xoopsDB->prefix(formulize_db_escape($checkThisTable)) ."'";
-    $tableCheckRes = formulize_DBPatchCheckSQL($tableCheckSql, $needsPatch); // may modify needsPatch!
-    if ($tableCheckRes AND !$needsPatch AND $checkThisField) { // table was found, and we're looking for a field in it
-        $fieldCheckSql = "SHOW COLUMNS FROM " . $xoopsDB->prefix(formulize_db_escape($checkThisTable)) ." LIKE '".formulize_db_escape($checkThisField)."'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-        $fieldCheckRes = formulize_DBPatchCheckSQL($fieldCheckSql, $needsPatch); // may modify needsPatch!
-    }
-    if ($fieldCheckRes AND !$needsPatch AND $checkPropertyForValue) {
-        $fieldCheckArray = $xoopsDB->fetchArray($fieldCheckRes);
-        if ($fieldCheckArray[$checkThisProperty] != $checkPropertyForValue) {
-            $needsPatch = true;
-        }
-    }
+    $formulizeModule = $module_handler->getByDirname('formulize');
+    $versionNumber = $formulizeModule->getInfo('version');
 
 		// we need to convert code if the custom_code folder exists, or if there is no code in the 'code' folder, but we have elements, forms, or screens that have code in them in the DB
 		$needToConvertDBCodeToCodeFolder = file_exists(XOOPS_ROOT_PATH.'/modules/formulize/custom_code') ? true : codeInNeedOfConversion();
 
-    if (!$needsPatch AND primaryRelationshipExists() AND !need81ElementTypeConversion() AND !$needToConvertDBCodeToCodeFolder AND (!isset($_GET['op']) OR ($_GET['op'] != 'patch40' AND $_GET['op'] != 'patchDB'))) {
+		if ($prev_dbversion >= $required_dbversion AND primaryRelationshipExists() AND !need81ElementTypeConversion() AND !$needToConvertDBCodeToCodeFolder) {
         return false;
     }
 
-    if (!isset($_POST['patch40'])) {
-        $additional_themes = isset($_GET['additional_themes']) ? '&additional_themes='.preg_replace("/[^,a-zA-Z0-9_-]+/", "", $_GET['additional_themes']) : '';
-        $skipRefUpdates = isset($_GET['skip_ref_updates']) ? '&skip_ref_updates=1' : '';
-        print "<h1>Your database structure is not up to date!  Click the button below to apply the necesssary patch to the database.</h1>";
-        print "<h2>Warning: this patch makes several changes to the database.  Backup your database prior to applying this patch!</h2>";
-        print "<form action=\"ui.php?op=patchDB$additional_themes$skipRefUpdates\" method=post>";
-        print "<input type = submit name=patch40 value=\"Apply Database Patch for Formulize\">";
-        print "</form>";
-				return true;
-    } else {
         // PATCH LOGIC GOES HERE
         print "<h2>Patch Results:</h2>";
 
@@ -603,7 +475,6 @@ function patch40() {
 
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
-        $needToMigrateFormScreensToMultipage = true;
         foreach($sql as $key=>$thissql) {
             if (!$result = $xoopsDB->queryF($thissql)) {
                 if ($key === "add_encrypt") {
@@ -690,13 +561,10 @@ function patch40() {
                     print "Form screen element container display type already added. result: OK<br>";
                 } elseif($key === "form_screen_multipage_displayheading") {
                     print "Multipage screens displayheading already added. result: OK<br>";
-                    $needToMigrateFormScreensToMultipage = false;
                 } elseif($key === "form_screen_multipage_reloadblank") {
                     print "Multipage screens reloadblank already added. result: OK<br>";
-                    $needToMigrateFormScreensToMultipage = false;
                 } elseif($key === "form_screen_multipage_elementdefaults") {
                     print "Multipage screens elementdefaults already added. result: OK<br>";
-                    $needToMigrateFormScreensToMultipage = false;
                 } elseif($key === "not_cons_arbitrary") {
                     print "Arbitrary email already added to notification options. result: OK<br>";
                 } elseif($key === "element_sort") {
@@ -1867,15 +1735,6 @@ NEWVERSION;
                     if($handleArray['toptemplate'] AND $handleArray['bottomtemplate'] AND $handleArray['listtemplate']) {
                         saveTemplate("// Placeholder because this older screen predates the use of the Open List Template", $handleArray['sid'], "openlisttemplate", $handleArray['theme']);
                         saveTemplate("// Placeholder because this older screen predates the use of the Close List Template", $handleArray['sid'], "closelisttemplate", $handleArray['theme']);
-                        if(isset($_GET['additional_themes'])) {
-                            foreach(explode(',',$_GET['additional_themes']) as $additional_theme) {
-                                $additional_theme = preg_replace("/[^a-zA-Z0-9_-]+/", "", $additional_theme);
-                                if($additional_theme != $handleArray['theme']) {
-                                    saveTemplate("// Placeholder because this older screen predates the use of the Open List Template", $handleArray['sid'], "openlisttemplate", $additional_theme);
-                                    saveTemplate("// Placeholder because this older screen predates the use of the Close List Template", $handleArray['sid'], "closelisttemplate", $additional_theme);
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -1901,15 +1760,6 @@ NEWVERSION;
                     if($handleArray['toptemplate'] AND $handleArray['bottomtemplate'] AND $handleArray['elementtemplate']) {
                         saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (opening)", $handleArray['sid'], "elementcontainero", $handleArray['theme']);
                         saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (closing)", $handleArray['sid'], "elementcontainerc", $handleArray['theme']);
-                        if(isset($_GET['additional_themes'])) {
-                            foreach(explode(',',$_GET['additional_themes']) as $additional_theme) {
-                                $additional_theme = preg_replace("/[^a-zA-Z0-9_-]+/", "", $additional_theme);
-                                if($additional_theme != $handleArray['theme']) {
-                                    saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (opening)", $handleArray['sid'], "elementcontainero", $additional_theme);
-                                    saveTemplate("// Placeholder because this older screen predates the use of the Element Container Template (closing)", $handleArray['sid'], "elementcontainerc", $additional_theme);
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -1917,183 +1767,6 @@ NEWVERSION;
 
         // Goes through all templates in screenpathname
         emptyTemplateFixer($screenpathname);
-
-        $formToMultipageMap = array();
-        if($needToMigrateFormScreensToMultipage) {
-            // copy form screens to multipage screens
-            // rename form screens to add (Legacy) to the end of the names/titles
-            $criteria = new Criteria('type', 'form');
-            $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-            $form_screen_handler = xoops_getmodulehandler('formScreen', 'formulize');
-            $multipage_screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-            $formScreens = $screen_handler->getObjects($criteria);
-            foreach($formScreens as $fs) {
-                $formScreenObject = $form_screen_handler->get($fs->getVar('sid'));
-                $multipageScreenObject = $multipage_screen_handler->create();
-                $sameProperties = array(
-                    'title',
-                    'fid',
-                    'frid',
-                    'useToken',
-                    'anonNeedsPasscode',
-                    'theme',
-                    'donedest',
-                    'displaycolumns',
-                    'reloadblank'
-                );
-                foreach($sameProperties as $property) {
-                    $multipageScreenObject->setVar($property, $formScreenObject->getVar($property));
-                }
-                // for compatibility with the Anari theme, single column layout should be auto-auto, two column layout should be percentage width, and auto. Take the existing column 1 width in case of 2 column layout, unless it's auto and then set to 20%.
-                if($formScreenObject->getVar('displaycolumns')==1) {
-                    $multipageScreenObject->setVar('column1width', 'auto');
-                } else {
-                    $newCol1Width = $formScreenObject->getVar('column1width') == 'auto' ? '20%' : $formScreenObject->getVar('column1width');
-                    $multipageScreenObject->setVar('column1width', $newCol1Width);
-                }
-                $multipageScreenObject->setVar('column2width', 'auto');
-
-                $multipageScreenObject->setVar('displayheading', $formScreenObject->getVar('displayheading'));
-                $multipageScreenObject->setVar('elementdefaults', serialize($formScreenObject->getVar('elementdefaults')));
-                $multipageScreenObject->setVar('type', 'multiPage');
-                $multipageScreenObject->setVar('buttontext', serialize(array(
-                    'thankyoulinktext'=>'',
-                    'leaveButtonText'=>($formScreenObject->getVar('saveandleavebuttontext') ? $formScreenObject->getVar('saveandleavebuttontext') : trans(_formulize_SAVE_AND_LEAVE)),
-                    'prevButtonText'=>trans(_formulize_DMULTI_PREV),
-                    'saveButtonText'=>($formScreenObject->getVar('savebuttontext') ? $formScreenObject->getVar('savebuttontext') : trans(_formulize_SAVE)),
-                    'nextButtonText'=>trans(_formulize_DMULTI_NEXT),
-                    'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
-                    'printableViewButtonText'=>($formScreenObject->getVar('printableviewbuttontext') ? $formScreenObject->getVar('printableviewbuttontext') : trans(_formulize_PRINTVIEW)),
-										'closeButtonText'=>trans(_formulize_DONE)
-                )));
-                $multipageScreenObject->setVar('finishisdone', 1);
-                // use the declared elements for the page, or if none that means use all so go look up all the ids
-                $elementsForPage = $formScreenObject->getVar('formelements');
-                if(!is_array($elementsForPage) OR count((array) $elementsForPage)==0) {
-                    $sql = "SELECT ele_id FROM ".$xoopsDB->prefix('formulize')." WHERE id_form = ".$formScreenObject->getVar('fid')." ORDER BY ele_order";
-                    $res = $xoopsDB->queryF($sql);
-                    $elementsForPage = array();
-                    while($row = $xoopsDB->fetchRow($res)) {
-                        $elementsForPage[] = $row[0];
-                    }
-                }
-                $multipageScreenObject->setVar('pages', serialize(array(0=>$elementsForPage)));
-                $multipageScreenObject->setVar('pagetitles', serialize(array(0=>$formScreenObject->getVar('title'))));
-                $multipageScreenObject->setVar('conditions', serialize(array(0=>array())));
-                $multipageScreenObject->setVar('printall', 0);
-                $multipageScreenObject->setVar('paraentryform', 0);
-                $multipageScreenObject->setVar('paraentryrelationship', 0);
-                $multipageScreenObject->setVar('navstyle', 1);
-                $multipageScreenObject->setVar('showpagetitles', 0);
-                $multipageScreenObject->setVar('showpageindicator', 0);
-                $multipageScreenObject->setVar('showpageselector', 0);
-
-                $_POST['toptemplate'] = $formScreenObject->getTemplate('toptemplate', $formScreenObject->getVar('theme'));
-                $_POST['elementtemplate1'] = $formScreenObject->getTemplate('elementtemplate1', $formScreenObject->getVar('theme'));
-                $_POST['elementtemplate2'] = $formScreenObject->getTemplate('elementtemplate2', $formScreenObject->getVar('theme'));
-                $_POST['bottomtemplate'] = $formScreenObject->getTemplate('bottomtemplate', $formScreenObject->getVar('theme'));
-                $_POST['elementcontainerc'] = $formScreenObject->getTemplate('elementcontainerc', $formScreenObject->getVar('theme'));
-                $_POST['elementcontainero'] = $formScreenObject->getTemplate('elementcontainero', $formScreenObject->getVar('theme'));
-                if($multiSid = $multipage_screen_handler->insert($multipageScreenObject)) {
-                    $formToMultipageMap[$fs->getVar('sid')] = $multiSid;
-                    print "New version of form screen ".$fs->getVar('sid')." created. Result: OK<br>";
-                } else {
-                    print "ERROR: could not create new version of form screen ".$fs->getVar('sid')."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
-                }
-
-                // copy to an additional theme(s) that may have been specified
-                if(isset($_GET['additional_themes'])) {
-                    $skipTheme = $formScreenObject->getVar('theme');
-                    foreach(explode(',',$_GET['additional_themes']) as $additional_theme) {
-                        $additional_theme = preg_replace("/[^a-zA-Z0-9_-]+/", "", $additional_theme);
-                        if($skipTheme != $additional_theme) {
-                            $_POST['toptemplate'] = $formScreenObject->getTemplate('toptemplate', $additional_theme);
-                            $_POST['elementtemplate1'] = $formScreenObject->getTemplate('elementtemplate1', $additional_theme);
-                            $_POST['elementtemplate2'] = $formScreenObject->getTemplate('elementtemplate2', $additional_theme);
-                            $_POST['bottomtemplate'] = $formScreenObject->getTemplate('bottomtemplate', $additional_theme);
-                            $_POST['elementcontainerc'] = $formScreenObject->getTemplate('elementcontainerc', $additional_theme);
-                            $_POST['elementcontainero'] = $formScreenObject->getTemplate('elementcontainero', $additional_theme);
-                            $multipageScreenObject->setVar('sid', $multiSid);
-                            $multipageScreenObject->setVar('theme', $additional_theme);
-                            if($multipage_screen_handler->insert($multipageScreenObject) == false) {
-                                print "ERROR: could not create new version of form screen ".$fs->getVar('sid')." for additional theme $additional_theme<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
-                            }
-                        }
-                    }
-                }
-
-                unset($_POST['toptemplate']);
-                unset($_POST['elementtemplate1']);
-                unset($_POST['elementtemplate2']);
-                unset($_POST['bottomtemplate']);
-                unset($_POST['elementcontainerc']);
-                unset($_POST['elementcontainero']);
-                $formScreenObject->setVar('title', $formScreenObject->getVar('title').' (Legacy)');
-                if($form_screen_handler->insert($formScreenObject) == false) {
-                    print "ERROR: could not update form screen ".$fs->getVar('sid')." with (Legacy) flag<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.<br>";
-                }
-
-            }
-
-            if(!isset($_GET['skip_ref_updates'])) {
-
-                // swap all subform element screen declarations
-                $criteria = new Criteria('ele_type', 'subform');
-                $element_handler = xoops_getmodulehandler('elements','formulize');
-                $subformElements = $element_handler->getObjects($criteria);
-                foreach($subformElements as $element) {
-                    $ele_value = $element->getVar('ele_value');
-                    if(isset($formToMultipageMap[$ele_value['display_screen']])) {
-                        $ele_value['display_screen'] = $formToMultipageMap[$ele_value['display_screen']];
-                        $element->setVar('ele_value', $ele_value);
-                        if($element_handler->insert($element) == false) {
-                            print "ERROR: could not update display screen for subform element ".$element->getVar('ele_id')." in form ".$element->getVar('id_form').". Legacy form screen will still be in use.<br>";
-                        }
-                    }
-                }
-
-                // swap all list of entries display screen declarations, including "default form" to actual sid
-                $criteria = new Criteria('type', 'listOfEntries');
-                $list_screen_handler = xoops_getmodulehandler('listOfEntriesScreen','formulize');
-                $listScreens = $screen_handler->getObjects($criteria);
-                foreach($listScreens as $screen) {
-                    $screen = $list_screen_handler->get($screen->getVar('sid'));
-                    $ves = $screen->getVar('viewentryscreen');
-                    $tryInsert = false;
-                    if(!$ves OR $ves === 'none') {
-                        $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                        $formObject = $form_handler->get($screen->getVar('fid'));
-                        if($formObject->getVar('defaultform') AND isset($formToMultipageMap[$formObject->getVar('defaultform')])) {
-                            $screen->setVar('viewentryscreen', $formToMultipageMap[$formObject->getVar('defaultform')]);
-                            $tryInsert = true;
-                        }
-                    } elseif(isset($formToMultipageMap[$ves])) {
-                        $screen->setVar('viewentryscreen', $formToMultipageMap[$ves]);
-                        $tryInsert = true;
-                    }
-                    if($tryInsert) {
-                        if($list_screen_handler->insert($screen) == false) {
-                            print "ERROR: could not update display screen for list of entries ".$screen->getVar('sid')." in form ".$screen->getVar('fid').". Legacy form screen will still be in use.<br>";
-                        }
-                    }
-                }
-
-            }
-
-            print "<script>alert(\"Formulize 7 introduces an all new, modern and mobile friendly theme called 'Anari'. To use the new theme, go to System -> Site Configuration -> Preferences -> General Settings and change the Default Theme to 'Anari'.\");</script>";
-
-        }
-
-        $sql = array();
-        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_listofentries DROP `toptemplate`";
-        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_listofentries DROP `listtemplate`";
-        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_listofentries DROP `bottomtemplate`";
-        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `toptemplate`";
-        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `elementtemplate`";
-        $sql[] = "ALTER TABLE " . $xoopsDB->prefix("formulize")."_screen_multipage DROP `bottomtemplate`";
-        foreach($sql as $thisSql) {
-            $xoopsDB->queryF($thisSql);
-        }
 
 				// check for ele_forcehidden elements, and flag them to the user
 				$sql = "SELECT f.form_title, e.ele_caption, e.ele_colhead FROM ".$xoopsDB->prefix("formulize")." AS e LEFT JOIN ".$xoopsDB->prefix("formulize_id")." AS f ON f.id_form = e.id_form WHERE e.ele_forcehidden = 1 AND e.ele_type != 'anonPasscode' ORDER BY f.form_title, e.ele_colhead, e.ele_caption";
@@ -2283,7 +1956,7 @@ NEWVERSION;
         }
 
         print "DB updates completed.  result: OK";
-    	}
+
 }
 
 // Fixes the format if the template is empty
@@ -2603,8 +2276,15 @@ function checkLegacySmsCredentials() {
 	return false;  // No non-empty credentials found
 }
 
-if (!defined('_FORMULIZE_UI_PHP_INCLUDED')) {
-    include "ui.php";
+// Auto-discovery entry point: called by xoops_module_update_formulize() via the patches loop.
+// Schema migrations are idempotent — safe to run on every update regardless of version.
+function formulize_patch_001_schema_migrations($prev_dbversion, $required_dbversion) {
+    // formulize_run_schema_migrations() is idempotent ("can be run over and over non-destructively"),
+    // reports problems inline, and exit()s on the few truly catastrophic cases (e.g. being unable to
+    // move the custom_code folder). It does not currently distinguish soft failures, so we return true
+    // for the normal "did the work / nothing to do" outcome. Returning true here is safe to retry because
+    // the migration is idempotent. (If granular soft-failure reporting is added later, return false from
+    // those paths to make on_update.php abort before subsequent patches run.)
+    formulize_run_schema_migrations($prev_dbversion, $required_dbversion);
+    return true;
 }
-
-

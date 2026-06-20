@@ -39,6 +39,8 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
+	'dbversion' => 2,
+	'onUpdate' => "include/on_update.php"
 );
 
 $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
