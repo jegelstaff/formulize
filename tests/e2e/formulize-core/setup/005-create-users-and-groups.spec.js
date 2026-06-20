@@ -17,6 +17,7 @@ import {
 	addConditionToPerGroupPanel,
 	getFidFromFormAdminPage,
 	getFidFromListPage,
+	clearEntryLocks,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -119,12 +120,14 @@ test.describe('B. Add Departments entries (creates Ancient History + Modern Hist
 		await page.locator('#formulize_addButton').click();
 		await page.getByRole('textbox', { name: 'Name' }).fill('Ancient History');
 		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
 	});
 
 	test('Add Modern History entry', async ({ page }) => {
 		await page.locator('#formulize_addButton').click();
 		await page.getByRole('textbox', { name: 'Name' }).fill('Modern History');
 		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
 	});
 
 	test('Six entry groups (Ancient/Modern × All Users/Staff/Curators) exist', async ({ page }) => {
@@ -409,6 +412,7 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 			isCurator: 'No',
 		});
 		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
 	});
 
 	test('Create mhstaff (Modern History Staff, is_curator=No)', async ({ page }) => {
@@ -424,6 +428,7 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 			isCurator: 'No',
 		});
 		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
 	});
 
 	test('Create curator1 (Curator One, is_curator=Yes, both departments)', async ({ page }) => {
@@ -439,6 +444,7 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 			isCurator: 'Yes',
 		});
 		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
 	});
 
 	test('Create curator2 (Curator Two, is_curator=Yes, both departments)', async ({ page }) => {
@@ -454,6 +460,7 @@ test.describe('G. Create Staff entries (= users) via the Staff EAU form', () => 
 			isCurator: 'Yes',
 		});
 		await saveFormulizeForm(page, 'Save');
+		await clearEntryLocks(page);
 	});
 });
 
@@ -515,6 +522,7 @@ test.describe('H. Verify automatic group assignment', () => {
 		await expect(groupTags.filter({ hasText: 'All Staff' })).toBeVisible();
 		await expect(groupTags.filter({ hasText: 'Ancient History - Curators' })).toHaveCount(0);
 		await expect(groupTags.filter({ hasText: 'All Curators' })).toHaveCount(0);
+		await clearEntryLocks(page);
 	});
 
 	test('curator1 belongs to Curators groups for both departments (not Staff)', async ({ page }) => {
@@ -527,6 +535,7 @@ test.describe('H. Verify automatic group assignment', () => {
 		await expect(groupTags.filter({ hasText: 'All Curators' })).toBeVisible();
 		await expect(groupTags.filter({ hasText: 'Ancient History - Staff' })).toHaveCount(0);
 		await expect(groupTags.filter({ hasText: 'All Staff' })).toHaveCount(0);
+		await clearEntryLocks(page);
 	});
 
 	test('mhstaff belongs to Modern History - Staff and All Staff (not Curators)', async ({ page }) => {
@@ -539,6 +548,7 @@ test.describe('H. Verify automatic group assignment', () => {
 		await expect(groupTags.filter({ hasText: 'Ancient History - Staff' })).toHaveCount(0);
 		await expect(groupTags.filter({ hasText: 'Modern History - Curators' })).toHaveCount(0);
 		await expect(groupTags.filter({ hasText: 'All Curators' })).toHaveCount(0);
+		await clearEntryLocks(page);
 	});
 
 	test('curator2 belongs to Curators groups for both departments (not Staff)', async ({ page }) => {
@@ -551,6 +561,7 @@ test.describe('H. Verify automatic group assignment', () => {
 		await expect(groupTags.filter({ hasText: 'All Curators' })).toBeVisible();
 		await expect(groupTags.filter({ hasText: 'Modern History - Staff' })).toHaveCount(0);
 		await expect(groupTags.filter({ hasText: 'All Staff' })).toHaveCount(0);
+		await clearEntryLocks(page);
 	});
 
 	// Groups.php shows flat-group members by uname (First Name + Last Name), not login_name.
@@ -584,6 +595,13 @@ test.describe('I. New Users admin page UI', () => {
 		await page.goto('/modules/formulize/users.php');
 		await page.waitForLoadState('domcontentloaded');
 		await page.goto('/modules/formulize/users.php');
+	});
+
+	// users.php renders System Users form elements for every listed user.
+	// Clear those admin-owned locks after each test so subsequent tests
+	// (including 007's curator1 self-edit) aren't blocked by a stale lock.
+	test.afterEach(async ({ page }) => {
+		await clearEntryLocks(page);
 	});
 
 	test('Search by username filters the user list', async ({ page }) => {
@@ -688,6 +706,7 @@ test.describe('K. Enforcement of per-group conditions', () => {
 		await page.getByRole('row', { name: /curator1/ }).getByRole('link').first().click();
 		const markupNameCheck = 'formulize_user_account_groupmembership_' + phase1.staffFid;
 		await expect(page.locator(`p.auto_multi_${markupNameCheck}`).filter({ hasText: 'All Curators' })).toBeVisible();
+		await clearEntryLocks(page);
 	});
 
 	// Enforced members have no Remove button; a non-enforced added member does and can be removed.
@@ -735,6 +754,7 @@ test.describe('K. Enforcement of per-group conditions', () => {
 		await saveFormulizeForm(page, 'Save');
 		await openAllCurators();
 		await expect(page.locator('.gmm-member-row').filter({ hasText: 'Ancient History Staff' })).toHaveCount(0);
+		await clearEntryLocks(page);
 	});
 });
 
@@ -747,6 +767,7 @@ test.describe('J. Frontend menu visibility for Users/Groups', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.goto('/modules/formulize/users.php');
 		await expect(page.locator('#formulize_addButton')).toBeVisible();
+		await clearEntryLocks(page);
 	});
 
 	test('Non-webmaster is redirected away from users.php', async ({ page }) => {

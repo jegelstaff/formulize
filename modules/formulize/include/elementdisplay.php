@@ -114,10 +114,16 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$isDisabled AND !$noSave) {
 			if (formulizePermHandler::isUserOwnAccountEntry($form_id, $user_id, $entry)) {
-				// Own account entry: private (user account) elements are always editable regardless of
-				// form-level permissions. Non-private elements require real Formulize edit permission,
-				// so they stay read-only when the user has view access but no form-level edit rights.
-				if (!$element->getVar('ele_private')) {
+				$form_handler = xoops_getmodulehandler('forms', 'formulize');
+				$formObject = $form_handler->get($form_id);
+				if ($formObject && $formObject->isSystemUsersTableForm()) {
+					// System Users table form: own-account access always grants editability.
+					// There are no Formulize permissions on this form and entries are rows in
+					// the XOOPS users table, not a real Formulize data table.
+				} elseif (!($element->isUserAccountElement && $element->getVar('ele_private'))) {
+					// User account elements marked private are always editable on own-account
+					// entries. Everything else (non-private elements of any kind, or private
+					// non-user-account elements) requires real Formulize edit permission.
 					$isDisabled = !formulizePermHandler::user_has_formulize_edit_permission($form_id, $user_id, $entry);
 				}
 			} else {
@@ -312,7 +318,7 @@ function elementIsAllowedForUserInEntry($elementObject, $entry_id, $groups = arr
 	}
 
 	if($allowed AND $private AND $user_id != $owner AND !$groupEntryWithUpdateRights AND $entry_id != "new"
-			AND !formulizePermHandler::isUserOwnAccountEntry($form_id, $user_id, $entry_id)) {
+			AND !($elementObject->isUserAccountElement AND formulizePermHandler::isUserOwnAccountEntry($form_id, $user_id, $entry_id))) {
 		$allowed = $view_private_elements ? 1 : 0;
 	}
 

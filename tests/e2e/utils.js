@@ -805,3 +805,11 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
 		`setMenuEntryGroups: "${accordionName}" did not persist groups ${JSON.stringify(groupLabels)} ` +
 		`after ${retries} attempts; last persisted selection was ${JSON.stringify(lastSelected)}`);
 }
+
+export async function clearEntryLocks(page) {
+	await page.evaluate(async () => {
+		if (typeof window.formulize_clearEntryLocks === 'function') {
+			await window.formulize_clearEntryLocks();
+		}
+	});
+}

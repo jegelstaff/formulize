@@ -7025,7 +7025,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
         $cachedJS['unload'] = "var fd = new FormData();\n";
         $cachedJS['unload'] .= "fd.append('formulize_entry_lock_token', '".$token."');\n";
         $cachedJS['unload'] .= "fd.append('formulize_entry_lock_uid', '".$uid."');\n";
-        $cachedJS['unload'] .= "navigator.sendBeacon('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', fd);\n";
+        $cachedJS['unload'] .= "return fetch('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {method:'POST', body:fd, keepalive:true});\n";
         // can do cleaner with jQuery since this runs inside the page while it exists
         $cachedJS['jQuery'] = "jQuery.post('".XOOPS_URL."/modules/formulize/formulize_deleteEntryLock.php', {\n";
         $cachedJS['jQuery'] .= "    'formulize_entry_lock_token': '".$token."',\n";

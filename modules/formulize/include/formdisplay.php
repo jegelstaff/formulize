@@ -2631,9 +2631,10 @@ window.onbeforeunload = function (e) {
     }
 };
 
-jQuery(window).on('unload', function() {
+window.formulize_clearEntryLocks = function() {
     <?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
-});
+};
+window.addEventListener('pagehide', window.formulize_clearEntryLocks);
 
 <?php
 global $codeToIncludejQueryWhenNecessary;

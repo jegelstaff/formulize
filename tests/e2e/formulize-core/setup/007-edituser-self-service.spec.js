@@ -42,7 +42,8 @@ test('legacy modules/profile/edituser.php redirects to the unified form', async 
 	await page.waitForLoadState('networkidle');
 	// The handoff is a redirect to the root self-service page.
 	await expect(page).toHaveURL(/\/edituser\.php(\?.*)?$/);
-	await expect(page.locator('#formulizeform')).toBeVisible();
+	// Wait for the inner form to be revealed by JS (it starts display:none).
+	await expect(page.locator('#formulizeform form')).toBeVisible();
 });
 
 // ---- B. Non-webmaster self-service: self-editable fields shown, ------------
@@ -52,9 +53,11 @@ test('non-webmaster sees self-editable fields but not admin-only fields', async 
 	await page.goto('/edituser.php');
 	await page.waitForLoadState('networkidle');
 
-	await expect(page.locator('#formulizeform')).toBeVisible();
+	// Wait for the inner form to be revealed by JS (it starts display:none).
+	await expect(page.locator('#formulizeform form')).toBeVisible();
 
 	// Self-editable fields are present (Email + a password field at minimum).
+	// getByRole uses the accessibility tree, which requires the form to be visible first (done above).
 	await expect(page.getByRole('textbox', { name: 'Email Address' })).toBeVisible();
 	await expect(page.locator('#formulizeform input[type="password"]').first()).toBeVisible();
 
@@ -73,7 +76,8 @@ test('webmaster self-service still shows the admin-only fields', async ({ page }
 	await page.goto('/edituser.php');
 	await page.waitForLoadState('networkidle');
 
-	await expect(page.locator('#formulizeform')).toBeVisible();
+	// Wait for the inner form to be revealed by JS (it starts display:none).
+	await expect(page.locator('#formulizeform form')).toBeVisible();
 	await expect(page.locator('#formulizeform').getByText('Account Status', { exact: false }))
 		.not.toHaveCount(0);
 });
@@ -104,13 +108,20 @@ test('self-edit does not grant webmaster access', async ({ page }) => {
 	// Perform a normal self-edit save (touch the phone field, then save).
 	await page.goto('/edituser.php');
 	await page.waitForLoadState('networkidle');
+	// Wait for the inner form to be revealed by JS (it starts display:none).
+	await expect(page.locator('#formulizeform form')).toBeVisible();
 	const phone = page.getByRole('textbox', { name: 'Phone Number' });
-	if (await phone.count()) {
+	const phoneCount = await phone.count();
+	if (phoneCount) {
 		await phone.first().fill('5551234567');
 	}
 	await saveFormulizeForm(page);
-	// expect the phone number to appear in the Phone Number field when the page reappears
-	await expect(page.getByRole('textbox', { name: 'Phone Number' }).first()).toHaveValue('5551234567');
+	// After save the form reloads; wait for it to be visible again before asserting values.
+	await expect(page.locator('#formulizeform form')).toBeVisible();
+	if (phoneCount) {
+		// expect the phone number to appear in the Phone Number field when the page reappears
+		await expect(page.getByRole('textbox', { name: 'Phone Number' }).first()).toHaveValue('555-123-4567');
+	}
 	// expect the user to be denied the users.php page
 	await usersPageDenied();
 });
