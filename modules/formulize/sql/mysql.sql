@@ -425,7 +425,8 @@ CREATE TABLE formulize (
 	ele_dynamicdefault_conditions text NULL,
   PRIMARY KEY  (`ele_id`),
   KEY `ele_order` (`ele_order`),
-  KEY `ele_display` ( `ele_display` ( 255 ) )
+  KEY `ele_display` ( `ele_display` ( 255 ) ),
+  KEY `i_ele_handle` (`ele_handle`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE formulize_entry_owner_groups (

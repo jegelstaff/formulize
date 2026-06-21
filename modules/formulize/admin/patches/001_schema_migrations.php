@@ -463,6 +463,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 				$sql['add_tfa_attempts'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `attempts` smallint(5) unsigned NOT NULL default 0";
 				$sql['add_tfa_last_attempt'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `last_attempt` int(11) unsigned NOT NULL default 0";
 				$sql['add_tfa_created'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `created` int(11) unsigned NOT NULL default 0";
+				$sql['add_ele_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize")." ADD INDEX i_ele_handle (`ele_handle`)";
 
 				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 				$adminMenuLangs = array_unique($adminMenuLangs);
@@ -627,6 +628,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 									print "parent_perm_fid field already added to formulize_id table. result: OK<br>";
 								} elseif($key === "add_tfa_attempts" OR $key === "add_tfa_last_attempt" OR $key === "add_tfa_created") {
 									print "2FA attempt-limiting fields already added. result: OK<br>";
+								} elseif($key === "add_ele_handle_index") {
+									print "ele_handle index already added. result: OK<br>";
 								} else {
                     exit("Error patching DB for Formulize $versionNumber. SQL dump:<br>" . $thissql . "<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
                 }
