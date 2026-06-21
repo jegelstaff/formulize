@@ -18,7 +18,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
     }
 
         // PATCH LOGIC GOES HERE
-        print "<h2>Patch Results:</h2>";
+        print "<h2>Data Schema Updates and Internal Changes:</h2>";
 
         // clear out the contents of the templates_c folder, just in case (some templates here are not Formulize templates, and updating the Formulize module is not sufficient to refresh them)
         $templateFiles = scandir(XOOPS_ROOT_PATH.'/templates_c');

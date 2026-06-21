@@ -47,7 +47,7 @@ define("_MD_AM_ERRORSC", "Error(s):");
 define("_MD_AM_OKINS","Module %s installed successfully.");
 define("_MD_AM_OKACT","Module %s activated successfully.");
 define("_MD_AM_OKDEACT","Module %s deactivated successfully.");
-define("_MD_AM_OKUPD","Module %s updated successfully.");
+define("_MD_AM_OKUPD","%s updated successfully.");
 define("_MD_AM_OKUNINS","Module %s uninstalled successfully.");
 define("_MD_AM_OKORDER","Module %s changed successfully.");
 
@@ -74,7 +74,7 @@ define('_MD_AM_PLUGINSFOLDER_UPDATE_TEXT', 'The new version of ImpressCMS change
 
 // Added and Changed in 1.3
 define("_MD_AM_UPDATE_FAIL","Unable to update %s.");
-define('_MD_AM_FUNCT_EXEC','Function %s is successfully executed.');
+define('_MD_AM_FUNCT_EXEC','Function completed (%s).');
 define('_MD_AM_FAIL_EXEC','Failed to execute %s.');
 define('_MD_AM_INSTALLING','Installing ');
 define('_MD_AM_SQL_NOT_FOUND', 'SQL file not found at %s');

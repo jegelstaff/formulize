@@ -42,13 +42,15 @@ if (!$opResults AND isset($_GET['op'])) {
         case "patch40":
         case "patchDB":
             if (isset($_POST['patch40'])) {
-                $patchModuleHandler = xoops_gethandler('module');
-                $patchModule = $patchModuleHandler->getByDirname('formulize');
-                xoops_module_update_formulize(
-                    $patchModule,
-                    $patchModule->getVar('version'),
-                    $patchModule->getVar('dbversion')
-                );
+                // Load the language strings used by icms_module_update() for template/block status lines.
+                icms_loadLanguageFile('system', 'modulesadmin', true);
+                icms_loadLanguageFile('system', 'blocksadmin', true);
+                // Include the core module-update function. It runs the full update cycle (templates,
+                // blocks, configs, onUpdate hook) and returns a <code>-wrapped HTML status string.
+                // The echoed output from our patch functions is captured by the ob_start() above;
+                // icms_module_update()'s returned msgs string is echoed here so it's captured too.
+                include_once ICMS_MODULES_PATH . '/system/admin/modulesadmin/modulesadmin.php';
+                echo icms_module_update('formulize');
             } else {
                 // op=patchDB in the URL but no form submission — show the warning without running anything.
                 echo '<h1>Your Formulize installation needs to be updated!</h1>'

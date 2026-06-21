@@ -85,7 +85,7 @@ test.describe('Installation of Formulize', () => {
 		await page.getByRole('link', { name: 'arrow Modules' }).click();
 		await page.locator('a[href*="fct=modulesadmin"][href*="op=update"][href*="module=formulize"]').click();
 		await page.getByRole('button', { name: 'Update' }).click();
-		await expect(page.getByText('Module Formulize updated successfully')).toBeVisible();
+		await expect(page.getByText('Formulize updated successfully')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Back to Module Administration' })).toBeVisible();
 		await page.goto('/modules/formulize/admin/');
 

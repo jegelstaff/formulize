@@ -26,6 +26,12 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion) 
     $patchesDir = XOOPS_ROOT_PATH . '/modules/formulize/admin/patches/';
     $patchFiles = glob($patchesDir . '*.php');
     $allSucceeded = true;
+
+    // Buffer all patch output so it can be returned via $module->messages. This ensures the output
+    // appears at the correct position in the page on both the core System→Modules→Update path
+    // (where icms_module_update() inserts $module->messages into its $msgs array at the right point)
+    // and the Formulize admin manual-update path (where op.php captures it via its own ob_start()).
+    ob_start();
     if ($patchFiles) {
         sort($patchFiles);
         foreach ($patchFiles as $patchFile) {
@@ -53,6 +59,10 @@ function xoops_module_update_formulize($module, $prev_version, $prev_dbversion) 
     if ($allSucceeded) {
         $xoopsDB->queryF("UPDATE " . $xoopsDB->prefix('modules') . " SET dbversion = " . $requiredDbVersion . " WHERE dirname = 'formulize'");
     }
+
+    // icms_module_update() reads $module->messages after calling this function and adds it to its
+    // $msgs array, placing our output at the correct position in the rendered page.
+    $module->messages = ob_get_clean();
 
     // Returning false tells the core module-update flow the script failed (so it reports the failure
     // and rolls the module's dbversion back to its previous value — see modules/system/admin/modulesadmin).
