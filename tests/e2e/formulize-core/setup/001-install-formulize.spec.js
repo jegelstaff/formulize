@@ -76,7 +76,7 @@ test.describe('Installation of Formulize', () => {
 		// apply DB patch if necessary
 		const isPatchVisible = await page.locator('input[name="patch40"]').isVisible();
 		if (isPatchVisible) {
-			await page.getByRole('button', { name: 'Apply Database Patch for' }).click();
+			await page.getByRole('button', { name: 'Update Formulize' }).click();
 			await expect(page.getByRole('link', { name: 'Close' })).toBeVisible();
 			await page.getByRole('link', { name: 'Close' }).click();
 		}

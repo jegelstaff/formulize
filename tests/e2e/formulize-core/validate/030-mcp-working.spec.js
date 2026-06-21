@@ -88,8 +88,6 @@ test.describe('Check that tools/list is responding', () => {
 		const aiAssistantEnabled = page.locator('input[name="formulizeAIAssistantEnabled"][value="1"]');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await aiAssistantEnabled.check();
-		// Ensure admin group (ID 1) is selected so isAIAssistantEnabled() passes for the admin user
-		await page.locator('select[name="formulizeAIAssistantGroups[]"]').selectOption('1');
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await expect(aiAssistantEnabled).toBeChecked();
