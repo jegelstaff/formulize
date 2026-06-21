@@ -1495,6 +1495,11 @@ function icms_module_update($dirname) {
 		// execute module specific update script if any
 		$update_script = $module->getInfo('onUpdate');
 		$ModName = ($module->getInfo('modname') != '') ? trim($module->getInfo('modname')) : $dirname;
+		// Track whether the module's own update script succeeded. The module record (including the new
+		// dbversion) was already saved above; if the update script reports failure we must not leave the
+		// module looking up to date, or its onUpdate logic will never run again. So on failure we roll the
+		// stored dbversion back to its previous value, allowing the administrator to retry cleanly.
+		$updateScriptSucceeded = true;
 		if (FALSE !== $update_script && trim($update_script) != '') {
 			include_once ICMS_MODULES_PATH . '/' . $dirname . '/' . trim($update_script);
 
@@ -1508,6 +1513,7 @@ function icms_module_update($dirname) {
 			if (function_exists('xoops_module_update_' . $ModName)) {
 				$func = 'xoops_module_update_' . $ModName;
 				if (!$func($module, $prev_version, $prev_dbversion)) {
+					$updateScriptSucceeded = false;
 					$msgs[] = sprintf(_MD_AM_FAIL_EXEC, '<strong>' . $func . '</strong>');
 				} else {
 					$msgs[] = $module->messages;
@@ -1516,12 +1522,21 @@ function icms_module_update($dirname) {
 			} elseif (function_exists('icms_module_update_' . $ModName)) {
 				$func = 'icms_module_update_' . $ModName;
 				if (!$func($module, $prev_version, $prev_dbversion)) {
+					$updateScriptSucceeded = false;
 					$msgs[] = sprintf(_MD_AM_FAIL_EXEC, '<strong>' . $func . '</strong>');
 				} else {
 					$msgs[] = $module->messages;
 					$msgs[] = sprintf(_MD_AM_FUNCT_EXEC, '<strong>' . $func . '</strong>');
 				}
 			}
+		}
+
+		// Roll the stored dbversion back to its previous value if the update script failed, so the update
+		// is not mistakenly considered complete and can be retried. Only the dbversion is reverted; the
+		// rest of the freshly-saved module record (version, templates, blocks, etc.) is left in place.
+		if (!$updateScriptSucceeded && $prev_dbversion != $module->getVar('dbversion')) {
+			$module->setVar('dbversion', $prev_dbversion);
+			$module_handler->insert($module, true);
 		}
 
 		$msgs[] = '</code><p>' . sprintf(_MD_AM_OKUPD, '<strong>' . $module->getVar('name') . '</strong>') . '</p>';

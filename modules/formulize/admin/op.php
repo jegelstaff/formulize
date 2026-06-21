@@ -31,26 +31,38 @@
 // included in ui.php
 // depends on declarations in ui.php file!!
 
-include_once "formindex.php";
-
-$formulizeNeedsDBPatch = false;
-ob_start();
-if (isset($_GET['op'])) {
+// $formulizeNeedsDBPatch is set in ui.php (dbversion + structural checks) before this file is included.
+$opResults = isset($_uiEnvWarning) ? $_uiEnvWarning : '';
+if (!$opResults AND isset($_GET['op'])) {
+    ob_start();
     switch($_GET['op']) {
         case "delete":
             deleteForm($_GET['fid']);
             break;
-        // patch ops are only in formindex.php, must be called by going to that URL with the patch op in the URL as a param
         case "patch40":
-        case "patchDB";
-        default:
-            patch40();
+        case "patchDB":
+            if (isset($_POST['patch40'])) {
+                $patchModuleHandler = xoops_gethandler('module');
+                $patchModule = $patchModuleHandler->getByDirname('formulize');
+                xoops_module_update_formulize(
+                    $patchModule,
+                    $patchModule->getVar('version'),
+                    $patchModule->getVar('dbversion')
+                );
+            } else {
+                // op=patchDB in the URL but no form submission — show the warning without running anything.
+                echo '<h1>Your Formulize installation needs to be updated!</h1>'
+                    . '<h2>Warning: this process makes changes to your database and files. Backup your system before proceeding.</h2>'
+                    . '<form action="' . XOOPS_URL . '/modules/formulize/admin/ui.php?op=patchDB" method="post">'
+                    . '<input type="submit" name="patch40" value="Update Formulize">'
+                    . '</form>';
+            }
             break;
     }
-} else {
-    $formulizeNeedsDBPatch = patch40(); // do this which will double check if the user needs to apply a DB patch or not!!
+    $opResults = ob_get_clean();
 }
-$xoopsTpl->assign('opResults', ob_get_clean());
+$xoopsTpl->assign('opResults', $opResults);
+$xoopsTpl->assign('showOpClose', isset($_POST['patch40']) && $opResults !== '');
 
 
 function deleteForm($fid) {

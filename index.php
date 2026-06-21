@@ -21,6 +21,19 @@ if(isset($_SESSION['google_xoops_redirect'])) {
     exit();
 }
 
+// Bounce admins to the Formulize admin if a module update is pending.
+// Skip this when index.php is being included by another page to embed a screen ($formulize_screen_id
+// is set), since header()/exit() here would terminate the host request mid-render.
+if ((!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) && $xoopsUser && $xoopsUser->isAdmin()) {
+    $_idxModHandler = xoops_gethandler('module');
+    $_idxFormulize  = $_idxModHandler->getByDirname('formulize');
+    if ($_idxFormulize && $_idxFormulize->getDBVersion() < intval($_idxFormulize->getInfo('dbversion'))) {
+        header('Location: ' . XOOPS_URL . '/modules/formulize/admin/ui.php');
+        exit();
+    }
+    unset($_idxModHandler, $_idxFormulize);
+}
+
 // See if they actually have a Formulize start page declared. If not, and they're anon, nullify the startpage since we have no where to take them and this way they can login.
 // Additionally, if there's a rewrite rule in effect for the start page, redirect to that URL (an alternative to rewriting the URL later with history API).
 if($icmsConfig['startpage'] == 'formulize') {

@@ -32,10 +32,12 @@ include_once("admin_header.php");
 xoops_cp_header();
 define('_FORMULIZE_UI_PHP_INCLUDED', 1);
 
-// include necessary Formulize files/functions
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
-
 global $xoopsTpl, $xoopsDB, $xoopsUser;
+
+// include necessary Formulize files/functions
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/on_update.php';
+
 
 // If saveLock is turned on, exit
 /*if(saveLock) {
@@ -67,9 +69,55 @@ if (!isset($xoopsTpl)) {
     $xoopsTpl =& $xoTheme->template;
 }
 
+/**
+ * DO BASIC CHECKS TO DETERMINE IF THE ENVIRONMENT IS HEALTHY AND WHETHER AN UPDATE IS REQUIRED
+ * Depends on some functions included through on_update.php, e.g. primaryRelationshipExists() and need81ElementTypeConversion()
+ */
+
+// Environment checks — run FIRST, on every admin page load, as a fix-first step.
+// The tokens folder is fundamental to Formulize working at all, so we attempt to create/repair it
+// before anything else. If it can't be fixed, the warning becomes the opResults panel and op.php
+// will refuse to run any op (including the DB patch) until the environment is healthy.
+ob_start();
+if (!file_exists(XOOPS_ROOT_PATH . '/tokens')) {
+    if (mkdir(XOOPS_ROOT_PATH . '/tokens', 0755) === false) {
+        print '<h1>Your system is missing the ' . XOOPS_ROOT_PATH . '/tokens folder.</h1>'
+            . '<p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>';
+    } else {
+        file_put_contents(XOOPS_ROOT_PATH . '/tokens/index.html', '<script>history.go(-1);</script>');
+        file_put_contents(XOOPS_ROOT_PATH . '/tokens/.gitignore', '*');
+    }
+}
+if (file_exists(XOOPS_ROOT_PATH . '/tokens') && !is_writable(XOOPS_ROOT_PATH . '/tokens')) {
+    if (chmod(XOOPS_ROOT_PATH . '/tokens', 0755) === false) {
+        print '<h1>The ' . XOOPS_ROOT_PATH . '/tokens folder is not writable by the web server.</h1>'
+            . '<p>Formulize will not work until this folder is writable by the web server.</p>';
+    }
+}
+$_uiEnvWarning = ob_get_clean();
+
+$module_handler = xoops_gethandler('module');
+$formulizeModule = $module_handler->getByDirname('formulize');
+// patch needed if dbversion is out of date, or if the primary relationship doesn't exist, or there are pre-81 element types, or there is code that needs conversion to the new storage model
+$formulizeNeedsDBPatch = (
+	($formulizeModule->getDBVersion() < intval($formulizeModule->getInfo('dbversion')))
+  OR !primaryRelationshipExists()
+  OR need81ElementTypeConversion()
+  OR (file_exists(XOOPS_ROOT_PATH . '/modules/formulize/custom_code') ? true : codeInNeedOfConversion())
+);
+
+// If an update is needed and no other op is in progress, route through the patchDB op
+// so op.php shows the warning panel. The warning HTML lives in op.php in one place.
+if ($formulizeNeedsDBPatch) {
+    $_GET['op'] = 'patchDB';
+}
+
+/**
+ * END OF BASIC CHECKS
+ */
+
 // handle any operations requested as part of this page load
 // sets up a template variable with the results of the op, called opResults
-// sets up $formulizeNeedsDBPatch boolean
 include_once "op.php";
 
 /**
