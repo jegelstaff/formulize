@@ -53,7 +53,7 @@ $rel = $link->getVar('relationship');
 $content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link);
 $content['isSaveLocked'] = sendSaveLockPrefToTemplate();
 $content['allowLinkDeletion'] = ($link->getVar('frid') != -1 OR $framework_handler->linkIsOnlyInPrimaryRelationship($link));
-$content['allowSubformInterfaceCreation'] = ($framework_handler->subformInterfaceExistsForLink($link) ? false : true);
+$content['allowSubformInterfaceCreation'] = $rel > 1 ? ($framework_handler->subformInterfaceExistsForLink($link) ? false : true) : false;
 $content['linkId'] = intval($linkId);
 $content['type'] = intval($rel);
 if($rel > 1) {
