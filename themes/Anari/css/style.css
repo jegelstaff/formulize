@@ -1221,11 +1221,6 @@ div#formulize-button-controls .col1 {
     padding: 0.5rem 0;
 }
 
-.form-container div[id^="checkbox-group"] ~ br,
-#formulize_modal div[id^="checkbox-group"] ~ br {
-    display: none;
-}
-
 .form-container input[type="range"], table.outer input[type="range"],
 #formulize_modal input[type="range"], table.outer input[type="range"] {
     width: 100%;
