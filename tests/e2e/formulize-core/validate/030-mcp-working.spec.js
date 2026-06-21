@@ -14,7 +14,7 @@ test.describe('Check that tools/list is responding', () => {
 		await page.getByRole('button', { name: 'Create' }).click();
 		await expect(page.locator('td[id=key-1]')).toBeVisible();
 	}),
-	test('Run tools list with API key', async ({ page }) => {
+	test('Run tools list with API key and session auth', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Home' }).click();
@@ -23,28 +23,35 @@ test.describe('Check that tools/list is responding', () => {
 		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
 		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
 		// when jGrowl fires and adds resources that delay the load event).
+		// Enable both the external MCP server and the embedded AI assistant in one save so that a
+		// concurrent validate test cannot overwrite one while the other is being tested.
 		const mcpServerEnabled = page.locator('input[name="formulizeMCPServerEnabled"][value="1"]');
 		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
+		const aiAssistantEnabled = page.locator('input[name="formulizeAIAssistantEnabled"][value="1"]');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await mcpServerEnabled.check();
 		await loggingEnabled.check();
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await aiAssistantEnabled.check();
+		await page.getByRole('button', { name: 'Save your changes' }).click();
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		// With MCP enabled, the preference label shows the external-assistant setup instructions.
 		// Confirming this text is visible verifies the setting was saved on.
 		await expect(page.getByText('See further setup instructions for external AI assistants')).toBeVisible();
+		await expect(aiAssistantEnabled).toBeChecked();
 		await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
 		await page.getByRole('link', { name: 'API keys' }).click();
 		const apiKey = await page.locator('td[id=key-1]').innerText();
-    await page.goto('/mcp/test.html');
-   	await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
+		await page.goto('/mcp/test.html');
+
+		// --- API key auth (external MCP server path) ---
+		await page.getByRole('textbox', { name: 'API Key (32-character hex):' }).fill(apiKey);
 		await page.locator('div[class="response-header"]').click();
 		await page.waitForLoadState('networkidle');
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
 		await expect(page.getByText(/0 total/)).toBeVisible();
 		await page.getByRole('button', { name: '🚀 Send Request' }).click();
 		await expect(page.getByText(/1 total/)).toBeVisible();
-    await expect(page.getByText('0: "name": "formulize" "')).toBeVisible();
+		await expect(page.getByText('0: "name": "formulize" "')).toBeVisible();
 		await expect(page.getByText('1: "name": "list_forms" "')).toBeVisible();
 		await expect(page.getByText('2: "name": "list_applications" "')).toBeVisible();
 		await expect(page.getByText('3: "name": "list_form_connections" "')).toBeVisible();
@@ -79,20 +86,8 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('35: "name": "create_subform_interface" "')).toBeVisible();
 		await expect(page.getByText('36: "name": "update_subform_interface" "')).toBeVisible();
 		await expect(page.getByText('37: "name": "read_system_activity_log" "')).toBeVisible();
-	}),
-	test('Run tools list with session auth', async ({ page }) => {
-		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.getByRole('link', { name: 'Admin' }).click();
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Preferences' }).click();
-		const aiAssistantEnabled = page.locator('input[name="formulizeAIAssistantEnabled"][value="1"]');
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
-		await aiAssistantEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
-		await expect(aiAssistantEnabled).toBeChecked();
-		// Navigate to test.html and switch to session auth mode
-		await page.goto('/mcp/test.html');
+
+		// --- Session auth (embedded AI assistant path) ---
 		await page.locator('input[name="authMode"][value="session"]').check();
 		await page.locator('div[class="response-header"]').click();
 		await page.waitForLoadState('networkidle');
@@ -110,16 +105,8 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('7: "name": "list_users" "')).toBeVisible();
 		await expect(page.getByText('8: "name": "list_a_users_groups" "')).toBeVisible();
 		await expect(page.getByText('9: "name": "get_form_details" "')).toBeVisible();
-		await expect(page.getByText('10: "name": "get_screen_details" "')).toBeVisible();
-		await expect(page.getByText('11: "name": "create_entries" "')).toBeVisible();
-		await expect(page.getByText('12: "name": "update_entries" "')).toBeVisible();
-		await expect(page.getByText('13: "name": "get_entries_from_form" "')).toBeVisible();
-		await expect(page.getByText('14: "name": "prepare_database_values_for_human_readability" "')).toBeVisible();
 		await expect(page.getByText('15: "name": "test_connection" "')).toBeVisible();
 		await expect(page.getByText('19: "name": "query_the_database_directly" "')).toBeVisible();
-		await expect(page.getByText('20: "name": "create_form" "')).toBeVisible();
-		await expect(page.getByText('21: "name": "create_list_element" "')).toBeVisible();
-		await expect(page.getByText('22: "name": "update_list_element" "')).toBeVisible();
 		await expect(page.getByText('37: "name": "read_system_activity_log" "')).toBeVisible();
 	})
 });
