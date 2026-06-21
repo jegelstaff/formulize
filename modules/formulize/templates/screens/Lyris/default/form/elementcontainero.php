@@ -13,6 +13,8 @@ if($width OR $display) {
     $style = "style =\"$width $display\"";
 }
 
+// `.fz-field` is the design-system field-wrapper primitive. `.form-row` is
+// retained as an additive alias so existing selectors/JS keep working.
 print "
-<div class='form-row $elementClass' $style id='$elementContainerId'>
+<div class='fz-field form-row $elementClass' $style id='$elementContainerId'>
 ";
