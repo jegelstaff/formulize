@@ -1531,3 +1531,688 @@ textarea {
     z-index: 3;
   }
 }
+
+/* ============================================================
+   Form screen — field anatomy & .fz-control primitive
+   ============================================================
+
+   These styles apply only inside `.fz-form-screen` (a wrapper added by
+   toptemplate.php / the drawer body around Formulize form output).
+   They are additive: list-screen inputs and filters keep their
+   existing 32px `.fz-input`-equivalent baseline.
+
+   Design spec (forms.css):
+     --field-h:      38px    (.fz-form default)
+     --field-pad-x:  12px
+     --field-radius: 6px
+     --field-gap:    18px    vertical gap between field rows
+     --label-gap:    6px     label-to-field gap
+     --label-text:   13px
+
+   HTML anatomy output by Lyris form templates:
+     .card > .card__header + .card__body > .form-container
+       .form-row                          ← elementcontainero.php
+         .form-label (label)              ← elementtemplate1/2.php
+         [rendered element — raw input/select/textarea]
+         .form-help-text                  ← elementtemplate1/2.php
+   ============================================================ */
+
+/* ---------- Density tokens: .fz-form + modifiers ----------
+   Ported from the design system (forms.css). `.fz-form` carries the base
+   density vars; `.fz-form--compact` / `--comfy` are modifier classes set on
+   the form container (owner decision: default container = label-top + compact).
+   `.fz-form-screen` and `.fz-drawer__body` retain the same vars as additive
+   aliases so existing markup keeps the 38px form sizing. */
+
+.fz-form,
+.fz-form-screen {
+  /* 38px control height for dedicated entry-editing screens */
+  --field-h:        38px;
+  --field-pad-x:    12px;
+  --field-pad-y:    8px;
+  --field-radius:   var(--r-2);   /* 6px */
+  --field-gap:      18px;
+  --field-text:     var(--fs-14);
+  --label-text:     var(--fs-13);
+  --label-gap:      6px;
+  --label-col-w:    220px;
+  --help-text:      var(--fs-12);
+  --required-color: var(--c-danger);
+}
+
+.fz-form--compact {
+  --field-h:     32px;
+  --field-pad-x: 10px;
+  --field-gap:   12px;
+  --field-text:  var(--fs-13);
+  --label-text:  var(--fs-12);
+  --label-gap:   4px;
+  --label-col-w: 200px;
+  --help-text:   var(--fs-11, 11px);
+}
+
+.fz-form--comfy {
+  --field-h:     44px;
+  --field-pad-x: 14px;
+  --field-gap:   24px;
+  --field-text:  var(--fs-15);
+  --label-text:  var(--fs-14);
+  --label-gap:   8px;
+  --label-col-w: 240px;
+  --help-text:   var(--fs-13);
+}
+
+/* ---------- .fz-control primitive (38px) ----------
+   Can be applied directly to an input/select/textarea element, or used
+   as a wrapper (per forms.css intent). Here we apply it as a direct class
+   AND via the contextual selectors below so raw Formulize-rendered elements
+   inside .fz-form-screen automatically get the richer form-screen sizing. */
+
+.fz-control {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: var(--field-h, 38px);
+  padding: 0 var(--field-pad-x, 12px);
+  font: inherit;
+  font-size: var(--field-text, var(--fs-14));
+  font-family: var(--font-sans);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius, var(--r-2));
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease);
+}
+
+.fz-control::placeholder { color: var(--c-text-subtle); }
+
+.fz-control:hover:not(:disabled):not(:focus) {
+  border-color: var(--c-text-muted);
+}
+
+.fz-control:focus,
+.fz-control:focus-visible {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+
+.fz-control:disabled {
+  background: var(--c-surface-3);
+  color: var(--c-text-subtle);
+  cursor: not-allowed;
+}
+
+/* select: custom chevron */
+select.fz-control {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6068' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+/* textarea: auto-height, no fixed row height */
+textarea.fz-control {
+  height: auto;
+  min-height: calc(var(--field-h, 38px) * 2.4);
+  padding: var(--field-pad-y, 8px) var(--field-pad-x, 12px);
+  line-height: var(--lh-base);
+  resize: vertical;
+}
+
+/* ---------- .fz-control variants (ported from forms.css) ----------
+   Available for future use / opt-in markup. Non-breaking: applied only when
+   the modifier class is present. */
+
+.fz-control--filled {
+  background: var(--c-surface-3);
+  border-color: transparent;
+}
+.fz-control--filled:hover:not(:disabled):not(:focus) {
+  background: var(--c-surface-2);
+  border-color: var(--c-border);
+}
+.fz-control--filled:focus { background: var(--c-surface); }
+
+.fz-control--underline {
+  border: 0;
+  border-bottom: 1px solid var(--c-border-strong);
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+}
+.fz-control--underline:focus {
+  box-shadow: none;
+  border-bottom-color: var(--c-border-focus);
+  border-bottom-width: 2px;
+}
+
+.fz-control--multiline {
+  height: auto;
+  min-height: calc(var(--field-h, 38px) * 2.4);
+  padding: 10px var(--field-pad-x, 12px);
+  line-height: var(--lh-base);
+  resize: vertical;
+}
+
+/* Prefix/suffix affix wrapper */
+.fz-control-affix {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius, var(--r-2));
+  background: var(--c-surface);
+  height: var(--field-h, 38px);
+  overflow: hidden;
+  transition: border-color var(--dur-1) var(--ease),
+              box-shadow var(--dur-1) var(--ease);
+}
+.fz-control-affix:hover:not(:focus-within) { border-color: var(--c-text-muted); }
+.fz-control-affix:focus-within {
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+.fz-control-affix .fz-control {
+  border: 0;
+  background: transparent;
+  height: 100%;
+  padding: 0 12px;
+}
+.fz-control-affix .fz-control:focus { box-shadow: none; }
+.fz-control-affix__lead,
+.fz-control-affix__trail {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: var(--field-text, var(--fs-14));
+  color: var(--c-text-subtle);
+  background: var(--c-surface-2);
+  border-right: 1px solid var(--c-border);
+  white-space: nowrap;
+  user-select: none;
+}
+.fz-control-affix__trail {
+  border-right: 0;
+  border-left: 1px solid var(--c-border);
+}
+
+/* ---------- Contextual override: raw form elements inside .fz-form-screen ----------
+   Formulize renders raw <input>, <select>, <textarea> with no class. Inside a form
+   screen these should use the 38px control sizing instead of the 32px list baseline.
+   We scope tightly so only elements directly inside form rows are affected. */
+
+.fz-form input[type="text"],
+.fz-form input[type="email"],
+.fz-form input[type="number"],
+.fz-form input[type="date"],
+.fz-form input[type="datetime-local"],
+.fz-form input[type="time"],
+.fz-form input[type="tel"],
+.fz-form input[type="url"],
+.fz-form input:not([type]),
+.fz-form select,
+.fz-form textarea,
+.fz-form-screen input[type="text"],
+.fz-form-screen input[type="email"],
+.fz-form-screen input[type="number"],
+.fz-form-screen input[type="date"],
+.fz-form-screen input[type="datetime-local"],
+.fz-form-screen input[type="time"],
+.fz-form-screen input[type="tel"],
+.fz-form-screen input[type="url"],
+.fz-form-screen input:not([type]),
+.fz-form-screen select,
+.fz-form-screen textarea {
+  height: var(--field-h);
+  padding: 0 var(--field-pad-x);
+  font-size: var(--field-text);
+  border-radius: var(--field-radius);
+  width: 100%;
+}
+
+.fz-form textarea,
+.fz-form-screen textarea {
+  height: auto;
+  min-height: calc(var(--field-h) * 2.4);
+  padding: var(--field-pad-y) var(--field-pad-x);
+}
+
+/* Selects: preserve the chevron background already set by the base rule */
+.fz-form select,
+.fz-form-screen select {
+  padding-right: 30px;
+}
+
+/* ---------- Form card surface ---------- */
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-4);   /* 10px */
+  box-shadow: var(--sh-2);
+  margin-bottom: var(--s-4);
+}
+
+.card__header {
+  padding: var(--s-4) var(--s-6);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.card__title {
+  font-size: var(--fs-15);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.005em;
+  line-height: var(--lh-snug);
+}
+
+.card__body {
+  padding: var(--s-6);
+}
+
+/* ---------- Form container & field rows ---------- */
+
+.fz-form,
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* gap controlled by .fz-field margin-bottom */
+}
+
+/* ---------- Field wrapper: .fz-field (primitive) ----------
+   `.form-row` retained as an additive alias. */
+.fz-field,
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--label-gap, 6px);
+  margin-bottom: var(--field-gap, 18px);
+  position: relative;
+}
+
+.fz-field:last-child,
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Label: .fz-field__label (primitive) ---------- */
+
+.fz-field__label,
+.form-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--label-text, var(--fs-13));
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: var(--lh-snug);
+  /* label-to-control gap supplied by the .fz-field gap */
+}
+
+/* ---------- Required indicator: .fz-field__req asterisk (primitive) ---------- */
+
+.fz-field__req {
+  color: var(--required-color, var(--c-danger));
+  font-weight: 700;
+  font-size: 0.95em;
+}
+
+/* Legacy inline red asterisk (other contexts / core fallback) — normalise. */
+.form-label span[style*="color: red"],
+.form-label span[style*="color:red"] {
+  font-weight: 700;
+  font-size: 0.95em;
+  color: var(--required-color, var(--c-danger)) !important;
+}
+
+/* ---------- Body wrapper: .fz-field__body (primitive) ---------- */
+
+.fz-field__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* ---------- Help text: .fz-field__help (primitive) ---------- */
+
+.fz-field__help,
+.form-help-text {
+  font-size: var(--help-text, var(--fs-12));
+  color: var(--c-text-muted);
+  line-height: 1.45;
+  margin: 2px 0 0;
+}
+
+/* ---------- Label modes (set on the form container) ----------
+   Default = label-top (the natural column flow above). Left-label and float
+   are ported for completeness / opt-in via the container modifier class. */
+
+.fz-form--label-left .fz-field {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--s-6, 24px);
+}
+.fz-form--label-left .fz-field__label {
+  width: var(--label-col-w, 220px);
+  flex: none;
+  padding-top: calc((var(--field-h) - var(--label-text) * 1.35) / 2);
+  justify-content: flex-start;
+}
+.fz-form--label-left .fz-field__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ---------- Two-column element template (elementtemplate2) → label-top ----------
+   elementtemplate2.php emits `.col1` (label) + `.col2` (field) with INLINE
+   `width:` styles intended for a side-by-side (label-left) layout. The owner
+   default is label-TOP, so we STACK the two columns: the row stays a flex
+   column (inherited from `.fz-field`/`.form-row`), and each column spans the
+   full width. `width: 100% !important` is required to defeat the inline
+   `width: 20%/auto` Formulize prints on the divs. */
+
+.form-row:has(.col1) {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--label-gap, 6px);
+}
+
+.col1 {
+  width: 100% !important;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.col1 .form-label {
+  margin: 0;
+}
+
+.col2 {
+  width: 100% !important;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ---------- Radio / checkbox option groups (elementtemplate2 + others) ----------
+   Formulize emits bare `<input type=radio><label>` pairs separated by `<br>`,
+   directly inside `.col2` / `.fz-field__body`. That body is a `flex-direction:
+   column` container, so each bare input/label was being STRETCHED to the full
+   column width (radio glyph floated to centre, label dropped onto its own line)
+   — that was the mis-spacing the owner saw. Switch the body to normal block
+   flow for choice content so the `<input><label><br>` pairs read as inline
+   rows: control immediately left of its label, options stacked by the `<br>`.
+   Matches the design's `.fz-choice` / `.fz-choice-group`. */
+
+.fz-form-screen .fz-field__body:has(input[type="radio"]),
+.fz-form-screen .fz-field__body:has(input[type="checkbox"]),
+.fz-form-screen .col2:has(input[type="radio"]),
+.fz-form-screen .col2:has(input[type="checkbox"]),
+.fz-drawer__body .col2:has(input[type="radio"]),
+.fz-drawer__body .col2:has(input[type="checkbox"]) {
+  display: block;
+  line-height: 1.9;        /* vertical rhythm between <br>-separated options */
+}
+
+.fz-form-screen .col2 input[type="radio"],
+.fz-form-screen .col2 input[type="checkbox"],
+.fz-form-screen .fz-field__body input[type="radio"],
+.fz-form-screen .fz-field__body input[type="checkbox"],
+.fz-drawer__body .col2 input[type="radio"],
+.fz-drawer__body .col2 input[type="checkbox"] {
+  display: inline-block;
+  width: auto !important;
+  height: auto;
+  margin: 0 8px 0 0;       /* 8px gap between control and its label */
+  vertical-align: middle;
+  accent-color: var(--c-accent);
+  cursor: pointer;
+}
+
+/* The option label sits inline next to its control with comfortable spacing. */
+.fz-form-screen .col2 input[type="radio"] + label,
+.fz-form-screen .col2 input[type="checkbox"] + label,
+.fz-form-screen .fz-field__body input[type="radio"] + label,
+.fz-form-screen .fz-field__body input[type="checkbox"] + label,
+.fz-drawer__body .col2 input[type="radio"] + label,
+.fz-drawer__body .col2 input[type="checkbox"] + label {
+  display: inline;
+  font-weight: 400;
+  font-size: var(--field-text, var(--fs-14));
+  color: var(--c-text);
+  cursor: pointer;
+  margin-right: 20px;       /* gap before next inline option */
+  vertical-align: middle;
+}
+
+/* ---------- Drawer form body — apply form-screen context ----------
+   When Formulize renders a form inside the right-drawer (.fz-drawer__body),
+   it doesn't add a .fz-form-screen class automatically. We apply the same
+   density tokens here so drawer-embedded forms also get the 38px controls. */
+
+.fz-drawer__body .form-row,
+.fz-drawer__body .form-container {
+  /* inherit tokens from the .fz-form-screen vars defined above by re-declaring */
+  --field-h:      38px;
+  --field-pad-x:  12px;
+  --field-pad-y:  8px;
+  --field-radius: var(--r-2);
+  --field-gap:    18px;
+  --field-text:   var(--fs-14);
+  --label-text:   var(--fs-13);
+  --label-gap:    6px;
+  --help-text:    var(--fs-12);
+}
+
+.fz-drawer__body input[type="text"],
+.fz-drawer__body input[type="email"],
+.fz-drawer__body input[type="number"],
+.fz-drawer__body input[type="date"],
+.fz-drawer__body input[type="datetime-local"],
+.fz-drawer__body input[type="time"],
+.fz-drawer__body input[type="tel"],
+.fz-drawer__body input[type="url"],
+.fz-drawer__body input:not([type]),
+.fz-drawer__body select,
+.fz-drawer__body textarea {
+  height: var(--field-h);
+  padding: 0 var(--field-pad-x);
+  font-size: var(--field-text);
+  border-radius: var(--field-radius);
+  width: 100%;
+}
+
+.fz-drawer__body textarea {
+  height: auto;
+  min-height: calc(var(--field-h) * 2.4);
+  padding: var(--field-pad-y) var(--field-pad-x);
+}
+
+.fz-drawer__body select {
+  padding-right: 30px;
+}
+
+/* ---------- Form-screen submit / action row ---------- */
+
+.fz-form-screen .form-actions,
+.fz-drawer__body .form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--c-border);
+  margin-top: var(--s-2);
+}
+
+/* ---------- Form-screen action buttons ----------
+   The real action bar is `#multipage-controls` holding
+   `<input type="button" class="formulize-form-submit-button" name="save|close|...">`.
+   (The prior pass targeted input[type=submit] / input[name=submit] which match
+   NOTHING here — that is why the buttons rendered as unstyled browser default.)
+   Style the bar like the design's sticky-actions row and give the buttons the
+   `.fz-btn` look: Save-family = accent primary, Close = bordered secondary. */
+
+#multipage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2, 8px);
+  padding-top: var(--s-4, 16px);
+  margin-top: var(--s-2, 8px);
+  border-top: 1px solid var(--c-border);
+}
+
+/* NOTE: Formulize core (modules/formulize/templates/css/formulize.css) styles
+   `.formulize-form-submit-button` with `background-color:#008CC4 !important`,
+   `color:white !important`, `min-width:185px` and `height:36px`. We must use
+   `!important` here to win against core without editing the core file (this is
+   a theme-scoped override). Default appearance = bordered SECONDARY (used by
+   "Close"); the Save-family override below paints them accent PRIMARY. */
+.formulizeThemeForm .formulize-form-submit-button,
+.fz-drawer__body .formulize-form-submit-button {
+  height: 34px !important;
+  min-width: 0 !important;
+  width: auto;
+  padding: 0 16px;
+  font-size: var(--fs-13);
+  font-weight: 500 !important;
+  line-height: 1;
+  border-radius: var(--r-2);
+  border: 1px solid var(--c-border-strong);
+  background-color: var(--c-surface) !important;
+  color: var(--c-text) !important;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease),
+              color var(--dur-1) var(--ease);
+}
+
+.formulizeThemeForm .formulize-form-submit-button:hover,
+.fz-drawer__body .formulize-form-submit-button:hover {
+  background-color: var(--c-surface-3) !important;
+  border-color: var(--c-text-muted);
+}
+
+.formulizeThemeForm .formulize-form-submit-button:focus-visible,
+.fz-drawer__body .formulize-form-submit-button:focus-visible {
+  outline: none;
+  box-shadow: var(--sh-focus);
+}
+
+/* Primary (accent) — the Save-family actions:
+   name="save", "save_and_close", "save_and_finish" (any name beginning "save"). */
+.formulizeThemeForm .formulize-form-submit-button[name^="save"],
+.fz-drawer__body .formulize-form-submit-button[name^="save"] {
+  background-color: var(--c-accent) !important;
+  color: var(--c-text-on-accent) !important;
+  border-color: var(--c-accent);
+}
+
+.formulizeThemeForm .formulize-form-submit-button[name^="save"]:hover,
+.fz-drawer__body .formulize-form-submit-button[name^="save"]:hover {
+  background-color: var(--c-accent-hover) !important;
+  border-color: var(--c-accent-hover);
+}
+
+/* On multi-page forms the bar also holds #prev ("Save and Close") and #next
+   ("Save and Finish"). Core paints these via ID selectors with an arrow
+   background image, `color:#fff !important`, `text-indent`, `text-shadow` and a
+   fixed 185px width — which beat the class rules above and left them as broken
+   white-on-light buttons with a stray arrow. Override by id (inside the bar) so
+   they get the same clean secondary treatment as Close. */
+#multipage-controls #prev,
+#multipage-controls #next,
+#multipage-controls .formulize-form-submit-button {
+  background-image: none !important;
+  text-indent: 0 !important;
+  text-align: center !important;
+  text-shadow: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 34px !important;
+  font-size: var(--fs-13) !important;
+  color: var(--c-text) !important;
+}
+/* Re-assert legible on-accent text for the Save-family primary after the reset. */
+#multipage-controls .formulize-form-submit-button[name^="save"] {
+  color: var(--c-text-on-accent) !important;
+}
+
+/* ---------- Admin-only "edit element" link ----------
+   Core prepends `<a class="formulize-element-edit-link">edit element</a>` as the
+   first child of every field. As a normal flow child of the (now full-width,
+   column) `.fz-field` it took its own row and inserted a large gap between every
+   field for admins/webmasters. Pull it out of flow and anchor it at the top-right
+   by the label, revealed on field hover (owner request) — so it stays out of the
+   way but is reachable where you'd look for it. */
+.fz-field { position: relative; }
+.fz-field > .formulize-element-edit-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  font-size: var(--fs-11, 11px);
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--c-accent);
+  text-decoration: none;
+  background: var(--c-surface);
+  padding: 1px 6px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-1) var(--ease);
+}
+.fz-field:hover > .formulize-element-edit-link,
+.fz-field > .formulize-element-edit-link:focus {
+  opacity: 1;
+  pointer-events: auto;
+}
+.fz-field > .formulize-element-edit-link:hover { text-decoration: underline; }
+
+/* ============================================================
+   Mobile — form screen adjustments
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .fz-form,
+  .fz-form-screen,
+  .fz-drawer__body {
+    --field-h:     44px;   /* iOS tap target */
+    --field-text:  16px;   /* prevent iOS auto-zoom */
+    --field-gap:   16px;
+  }
+
+  .card__body {
+    padding: var(--s-4);
+  }
+
+  .card__header {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  /* Left-label layout collapses to stacked on narrow screens */
+  .form-row:has(.col1) {
+    flex-direction: column;
+    gap: var(--label-gap, 6px);
+  }
+
+  .col1 {
+    min-height: auto;
+    width: 100% !important;
+  }
+
+  .col2 {
+    width: 100% !important;
+  }
+}
