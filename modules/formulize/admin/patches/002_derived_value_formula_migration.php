@@ -135,7 +135,7 @@ function formulize_patch_002_derived_value_formula_migration($prev_dbversion, $r
         echo '</p>';
     }
 
-		echo "<script>alert('Derived value changes in 8.2\n\nYou now refer to elements in derived values with $handle syntax instead of \"handle\" syntax.\n\nAlso, derived values now preserve the existing value in the database, if the formula does not explicitly set a value. Previously the existing value would be erased. THIS MIGHT CHANGE HOW YOUR SYSTEM OPERATES. Test your workflows to be sure.');</script>";
+		echo "<script>alert('Derived value changes in 8.2\n\nYou now refer to elements in derived values with \$handle syntax instead of \"handle\" syntax.\n\nAlso, derived values now preserve the existing value in the database, if the formula does not explicitly set a value. Previously the existing value would be erased. THIS MIGHT CHANGE HOW YOUR SYSTEM OPERATES. Test your workflows to be sure.');</script>";
 
     // Always report success — see the note at the top of this function. notWritable files are flagged
     // for manual migration above rather than causing a retry that would corrupt already-migrated files.
