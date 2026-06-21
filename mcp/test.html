@@ -410,6 +410,18 @@
         <div class="auth-section">
             <h3>🔒 Authentication Setup</h3>
             <div class="form-group">
+                <label>Authentication Mode:</label><br>
+                <label style="font-weight: normal; margin-right: 20px; cursor: pointer;">
+                    <input type="radio" name="authMode" value="apikey" checked onchange="updateAuthMode()">
+                    External / API Key
+                </label>
+                <label style="font-weight: normal; cursor: pointer;">
+                    <input type="radio" name="authMode" value="session" onchange="updateAuthMode()">
+                    Session / Embedded AI
+                </label>
+                <small style="display: block; margin-top: 5px; font-weight: normal;">External mode sends an API key without session cookies. Session mode uses your browser session without an API key.</small>
+            </div>
+            <div class="form-group" id="apiKeyGroup">
                 <label for="apiKey">API Key (32-character hex):</label>
                 <input type="text" id="apiKey" placeholder="Enter your Formulize API key (leave blank to test without auth)" />
                 <small>Leave blank to test server without authentication</small>
@@ -939,6 +951,8 @@
 
         async function sendRequest(requestBody, title = '', accumulate = false) {
             const apiKey = document.getElementById('apiKey').value;
+            const authMode = document.querySelector('input[name="authMode"]:checked')?.value || 'apikey';
+            const isSessionMode = authMode === 'session';
             const serverUrl = 'index.php'; // Fixed server URL
 
             const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
@@ -951,16 +965,18 @@
             try {
                 console.log('Sending request:', requestBody);
                 console.log('To MCP URL:', mcpUrl);
-                console.log('With API Key:', apiKey ? 'Present (' + apiKey.length + ' chars): ' + apiKey.substring(0, 8) + '...' : 'Missing');
+                console.log('Auth mode:', authMode);
 
                 const headers = {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache'
                 };
 
-                if (apiKey && apiKey.trim()) {
+                if (!isSessionMode && apiKey && apiKey.trim()) {
                     headers['Authorization'] = `Bearer ${apiKey}`;
                     console.log('Authorization header added:', `Bearer ${apiKey.substring(0, 8)}...`);
+                } else if (isSessionMode) {
+                    console.log('Session mode - using browser session cookie, no API key');
                 } else {
                     console.log('No API key provided - sending without Authorization header');
                 }
@@ -970,7 +986,8 @@
                 const response = await fetch(mcpUrl, {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify(requestBody),
+                    credentials: isSessionMode ? 'same-origin' : 'omit'
                 });
 
                 console.log('Response status:', response.status);
@@ -1026,6 +1043,8 @@
 
         async function testEndpoint(endpoint, method = 'GET', body = null, accumulate = false) {
             const apiKey = document.getElementById('apiKey').value;
+            const authMode = document.querySelector('input[name="authMode"]:checked')?.value || 'apikey';
+            const isSessionMode = authMode === 'session';
             const serverUrl = 'index.php'; // Fixed server URL
 
             const baseUrl = serverUrl.replace('/index.php', '').replace(/\/$/, '');
@@ -1040,7 +1059,7 @@
                     'Cache-Control': 'no-cache'
                 };
 
-                if (apiKey && apiKey.trim()) {
+                if (!isSessionMode && apiKey && apiKey.trim()) {
                     headers['Authorization'] = `Bearer ${apiKey}`;
                 }
 
@@ -1051,7 +1070,8 @@
                 const response = await fetch(fullUrl, {
                     method: method,
                     headers: headers,
-                    body: body
+                    body: body,
+                    credentials: isSessionMode ? 'same-origin' : 'omit'
                 });
 
                 const responseText = await response.text();
@@ -1519,6 +1539,16 @@
             }
         }
 
+        function updateAuthMode() {
+            const authMode = document.querySelector('input[name="authMode"]:checked').value;
+            document.getElementById('apiKeyGroup').style.display = authMode === 'session' ? 'none' : 'block';
+            availableTools = [];
+            availableResources = [];
+            availablePrompts = [];
+            fetchAvailableOptions();
+            updateTemplateSelector();
+        }
+
         // Initialize with a default request and try to fetch available options
         window.onload = function() {
             console.log('Page loaded, initializing...');
@@ -1542,7 +1572,10 @@
             } else {
                 this.type = 'text';
             }
-						refreshAvailableOptions(); // now that there's a key, we can get the lists of tools, prompts and resources
+            const authMode = document.querySelector('input[name="authMode"]:checked')?.value || 'apikey';
+            if (authMode === 'apikey') {
+                refreshAvailableOptions(); // now that there's a key, we can get the lists of tools, prompts and resources
+            }
         });
     </script>
 </body>

@@ -79,5 +79,49 @@ test.describe('Check that tools/list is responding', () => {
 		await expect(page.getByText('35: "name": "create_subform_interface" "')).toBeVisible();
 		await expect(page.getByText('36: "name": "update_subform_interface" "')).toBeVisible();
 		await expect(page.getByText('37: "name": "read_system_activity_log" "')).toBeVisible();
+	}),
+	test('Run tools list with session auth', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		await page.getByRole('link', { name: 'Admin' }).click();
+		await page.getByRole('link', { name: 'Home' }).click();
+		await page.getByRole('link', { name: 'Preferences' }).click();
+		const aiAssistantEnabled = page.locator('input[name="formulizeAIAssistantEnabled"][value="1"]');
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await aiAssistantEnabled.check();
+		// Ensure admin group (ID 1) is selected so isAIAssistantEnabled() passes for the admin user
+		await page.locator('select[name="formulizeAIAssistantGroups[]"]').selectOption('1');
+		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await expect(aiAssistantEnabled).toBeChecked();
+		// Navigate to test.html and switch to session auth mode
+		await page.goto('/mcp/test.html');
+		await page.locator('input[name="authMode"][value="session"]').check();
+		await page.locator('div[class="response-header"]').click();
+		await page.waitForLoadState('networkidle');
+		await page.getByRole('button', { name: 'Clear', exact: true }).click();
+		await expect(page.getByText(/0 total/)).toBeVisible();
+		await page.getByRole('button', { name: '🚀 Send Request' }).click();
+		await expect(page.getByText(/1 total/)).toBeVisible();
+		await expect(page.getByText('0: "name": "formulize" "')).toBeVisible();
+		await expect(page.getByText('1: "name": "list_forms" "')).toBeVisible();
+		await expect(page.getByText('2: "name": "list_applications" "')).toBeVisible();
+		await expect(page.getByText('3: "name": "list_form_connections" "')).toBeVisible();
+		await expect(page.getByText('4: "name": "list_screens" "')).toBeVisible();
+		await expect(page.getByText('5: "name": "list_groups" "')).toBeVisible();
+		await expect(page.getByText('6: "name": "list_group_members" "')).toBeVisible();
+		await expect(page.getByText('7: "name": "list_users" "')).toBeVisible();
+		await expect(page.getByText('8: "name": "list_a_users_groups" "')).toBeVisible();
+		await expect(page.getByText('9: "name": "get_form_details" "')).toBeVisible();
+		await expect(page.getByText('10: "name": "get_screen_details" "')).toBeVisible();
+		await expect(page.getByText('11: "name": "create_entries" "')).toBeVisible();
+		await expect(page.getByText('12: "name": "update_entries" "')).toBeVisible();
+		await expect(page.getByText('13: "name": "get_entries_from_form" "')).toBeVisible();
+		await expect(page.getByText('14: "name": "prepare_database_values_for_human_readability" "')).toBeVisible();
+		await expect(page.getByText('15: "name": "test_connection" "')).toBeVisible();
+		await expect(page.getByText('19: "name": "query_the_database_directly" "')).toBeVisible();
+		await expect(page.getByText('20: "name": "create_form" "')).toBeVisible();
+		await expect(page.getByText('21: "name": "create_list_element" "')).toBeVisible();
+		await expect(page.getByText('22: "name": "update_list_element" "')).toBeVisible();
+		await expect(page.getByText('37: "name": "read_system_activity_log" "')).toBeVisible();
 	})
 });
