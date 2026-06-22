@@ -2,16 +2,14 @@
 <div class="form-item recompute-derived" data-fids="<{$content.dependent_derived_fids}>" data-working="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_WORKING}>" data-done="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DONE}>">
 	<fieldset>
 		<legend><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED}></legend>
-		<div class="description">
 			<p><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DESC}></p>
 			<ul>
 				<{foreach from=$content.dependent_derived_forms item=derivedFormTitle}>
 				<li><{$derivedFormTitle}></li>
 				<{/foreach}>
 			</ul>
-		</div>
 		<p>
-			<input type="button" class="formButton recompute-derived-button" value="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED}>">
+			<input type="button" class="formButton recompute-derived-button" value="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_BUTTON}>">
 			<span class="recompute-derived-status" style="display: none;"></span>
 		</p>
 	</fieldset>
