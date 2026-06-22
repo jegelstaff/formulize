@@ -523,7 +523,7 @@ define("_AM_ELE_APPLY_DEFAULT", "Apply the default value to existing entries");
 define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY", "Apply the default value to existing entries that currently have no value");
 define("_AM_ELE_APPLY_DEFAULT_EMPTY_COUNT", "Entries with no value:");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED", "Advanced: apply to specific entries instead");
-define("_AM_ELE_APPLY_DEFAULT_MODE_BLANKS", "Update all entries with no value for this element");
+define("_AM_ELE_APPLY_DEFAULT_MODE_BLANKS", "Update all entries where this element has no value");
 define("_AM_ELE_APPLY_DEFAULT_MODE_FILTER", "Choose which entries to update by building a filter");
 define("_AM_ELE_APPLY_DEFAULT_ENTRIES", "entries");
 define("_AM_ELE_RECOMPUTE_DERIVED", "Update Derived Values");
