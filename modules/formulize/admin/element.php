@@ -298,10 +298,13 @@ if(!isset($ele_value['snapshot'])) {
 
 $options['ele_value'] = $ele_value;
 
-// count existing entries with no value for this element, so the UI can offer to backfill defaults
+// offer to apply this element's default value to existing entries. The feature appears whenever the form
+// has any existing entries (not only when there are blanks), because the advanced option can target entries
+// that already have a value. apply_default_empty_count is the number of blank entries, shown for the basic option.
 $options['apply_default_empty_count'] = 0;
-$elementHasData = ($ele_id != 'new') ? $elementObject->hasData : ($customTypeHandler && $customTypeHandler->create()->hasData);
-if ($elementHasData) {
+$options['apply_default_has_data'] = false;
+$elementTypeStoresData = ($ele_id != 'new') ? $elementObject->hasData : ($customTypeHandler && $customTypeHandler->create()->hasData);
+if ($elementTypeStoresData) {
 	global $xoopsDB;
 	$countTable = $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle'));
 	if ($ele_id != 'new') {
@@ -314,6 +317,31 @@ if ($elementHasData) {
 	}
 	if ($countResult = $xoopsDB->query($countSql)) {
 		list($options['apply_default_empty_count']) = $xoopsDB->fetchRow($countResult);
+	}
+	// the feature is offered whenever the form has any entries. If there are blanks, there are obviously entries;
+	// otherwise check the total so the advanced option is still available when every entry already has a value.
+	if ($options['apply_default_empty_count'] > 0) {
+		$options['apply_default_has_data'] = true;
+	} elseif ($totalResult = $xoopsDB->query("SELECT COUNT(*) FROM `$countTable`")) {
+		list($totalEntries) = $xoopsDB->fetchRow($totalResult);
+		$options['apply_default_has_data'] = ($totalEntries > 0);
+	}
+	// build the (non-persisted) conditions filter UI for the advanced option that lets the user
+	// target specific entries instead of only the blank ones. Rendered with the standard filter UI
+	// builder, scoped to the "applydefaultfilter" name, and refreshed via AJAX as conditions are added/removed.
+	$applyDefaultFilterFid = $formObject->getVar('id_form');
+	$options['apply_default_filter_fid'] = $applyDefaultFilterFid;
+	$options['apply_default_filter_ui'] = formulize_createFilterUI("", "applydefaultfilter", $applyDefaultFilterFid, "form-".$applyDefaultFilterFid);
+
+	// if any derived value formulas (in this form or a primary-relationship-connected form) reference this element,
+	// offer a separate, user-triggered, batched recompute as a follow-on to any bulk value change (applying a
+	// default to existing entries, or resynching list options)
+	$options['dependent_derived_forms'] = array();
+	$options['dependent_derived_fids'] = '';
+	if($options['apply_default_has_data'] AND $ele_id != 'new' AND is_object($elementObject)) {
+		$dependentDerivedForms = formulize_getFormsWithDependentDerivedValues($elementObject);
+		$options['dependent_derived_forms'] = $dependentDerivedForms;
+		$options['dependent_derived_fids'] = implode(',', array_keys($dependentDerivedForms));
 	}
 }
 

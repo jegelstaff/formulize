@@ -1,0 +1,71 @@
+<{if $content.dependent_derived_fids}>
+<div class="form-item recompute-derived" style="display: none; margin-top: 1.5em;" data-fids="<{$content.dependent_derived_fids}>" data-working="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_WORKING}>" data-progress="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_PROGRESS}>" data-done="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DONE}>">
+	<fieldset>
+		<legend><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED}></legend>
+			<p><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DESC}></p>
+			<ul>
+				<{foreach from=$content.dependent_derived_forms item=derivedFormTitle}>
+				<li><{$derivedFormTitle}></li>
+				<{/foreach}>
+			</ul>
+		<p>
+			<input type="button" class="formButton recompute-derived-button" value="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_BUTTON}>">
+			<span class="recompute-derived-status" style="display: none;"></span>
+		</p>
+	</fieldset>
+</div>
+
+<script type='text/javascript'>
+(function(){
+	// User-triggered, batched recompute of derived values that depend on this element. Offered as a follow-on after
+	// any bulk value change (applying a default to existing entries, or resynching list options). Reuses the same
+	// op=update_derived_value endpoint and 50-entries-per-request batching as the derived value element's own
+	// "update all entries" feature, looping over each affected form in the primary relationship.
+	// NOTE: the admin UI ships jQuery 1.4.2, which has no .on() - use .live() (with .die() to avoid double binding).
+	if(jQuery(".recompute-derived").length == 0) { return; }
+
+	// the recompute UI is only relevant once a value-changing save has completed. Reveal it when the apply-default
+	// or resynch-options checkbox is cleared after such a save (this fires alongside the clearing of those checkboxes).
+	// if there are no dependent derived forms, this template renders nothing, so there is simply nothing to reveal.
+	jQuery(document).unbind("formulize_admin_saved.recomputederived").bind("formulize_admin_saved.recomputederived", function(event, clearedInputs){
+		if(clearedInputs && jQuery(clearedInputs).filter("[name=apply_default_to_empty], [name=changeuservalues]").length > 0) {
+			jQuery(".recompute-derived").show();
+		}
+	});
+
+	jQuery(".recompute-derived-button").die("click").live("click", function(){
+		var $button = jQuery(this);
+		var $section = $button.closest(".recompute-derived");
+		var $status = $section.find(".recompute-derived-status");
+		var fids = String($section.attr("data-fids")).split(",");
+		var totalUpdated = 0; // running total of entries recomputed, across every batch and form
+		$button.attr("disabled", true);
+		$status.show().text($section.attr("data-working"));
+
+		function recomputeForm(formIndex, limitStart) {
+			if(formIndex >= fids.length) {
+				$status.text($section.attr("data-done"));
+				$button.attr("disabled", false);
+				return;
+			}
+			var fid = jQuery.trim(fids[formIndex]);
+			if(fid == "") { recomputeForm(formIndex + 1, 0); return; }
+			jQuery.post(window.icms_url + "/modules/formulize/formulize_xhr_responder.php?uid=" + window.icms_userid + "&op=update_derived_value&fid=" + encodeURIComponent(fid) + "&frid=-1&limitstart=" + limitStart, function(data){
+				if(!isNaN(data) && data > 0) {
+					totalUpdated += parseInt(data, 10);
+					$status.text($section.attr("data-working") + " " + $section.attr("data-progress").replace("%s", totalUpdated));
+					recomputeForm(formIndex, limitStart + parseInt(data, 10)); // more entries in this form
+				} else if(isNaN(data)) {
+					$status.text(String(data)); // server returned an error message
+					$button.attr("disabled", false);
+				} else {
+					recomputeForm(formIndex + 1, 0); // this form is done, move to the next one
+				}
+			});
+		}
+		recomputeForm(0, 0);
+		return false;
+	});
+})();
+</script>
+<{/if}>

@@ -247,6 +247,16 @@ define("_AM_ELE_DELIM_CHOICE",'Delimitation entre chaque option');
 define("_AM_ELE_TEXTFORDISPLAY_DESC","Tout texte ou code HTML entré ici apparaitra sur l'écran.  Vous pouvez utiliser du PHP, mais assurez vous qu'il contient '&#36;value = &#36;something;' et Formulize lira ce texte comme du code PHP.");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contenu du coté droit");
 define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lors de l'enregistrement des changements pour ces choix, changer aussi les valeurs faites par l'utilisateur dans le formulaire pour correspondre aux nouvelles options (ie: quand l'utilisateur a sélectionné le premier choix, version ancienne, remplacer sa sélection par le nouveau premier choix)");
+define("_AM_ELE_APPLY_DEFAULT", "Appliquer cette valeur par défaut aux entrées existantes");
+define("_AM_ELE_APPLY_DEFAULT_MODE_BLANKS", "Mettre à jour toutes les entrées sans valeur");
+define("_AM_ELE_APPLY_DEFAULT_MODE_FILTER", "Choisir quelles entrées mettre à jour en construisant un filtre");
+define("_AM_ELE_APPLY_DEFAULT_ENTRIES", "entrées");
+define("_AM_ELE_RECOMPUTE_DERIVED", "Mettre à jour les valeurs dérivées");
+define("_AM_ELE_RECOMPUTE_DERIVED_BUTTON", "Mettre à jour les valeurs dérivées dans ces formulaires");
+define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "Ces formulaires ont des valeurs dérivées qui dépendent de cet élément :");
+define("_AM_ELE_RECOMPUTE_DERIVED_WORKING", "Recalcul des valeurs dérivées, veuillez patienter...");
+define("_AM_ELE_RECOMPUTE_DERIVED_PROGRESS", "(%s mises à jour jusqu'à présent)");
+define("_AM_ELE_RECOMPUTE_DERIVED_DONE", "Valeurs dérivées recalculées.");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défense contre les attaques malveillantes par script.  Mais cela peut poser des problèmes si vous utilisez une Interface Utilisateur Ajax-based dans le Screen de la Liste des Entrées, et peut être dans d'autres types de Screens.");
 

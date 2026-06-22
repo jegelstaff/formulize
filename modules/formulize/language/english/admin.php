@@ -519,8 +519,16 @@ define("_AM_ELE_OPT_UITEXT", "The text visible to the user can be different from
 define("_AM_ELE_ADD_OPT","Add %s options");
 define("_AM_ELE_ADD_OPT_SUBMIT","Add");
 define("_AM_ELE_OPT_CHANGEUSERVALUES", "When saving changes to these options, also change the values users have made in the form to match the new options (ie: where users had selected the old first option, replace their selection with the new first option instead)");
-define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY", "Apply this default value to existing entries that currently have no value");
-define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC", "Only entries where this field is empty will be updated. Entries that already have a value will not be changed.");
+define("_AM_ELE_APPLY_DEFAULT", "Apply the default value to existing entries");
+define("_AM_ELE_APPLY_DEFAULT_MODE_BLANKS", "Update all entries where this element has no value");
+define("_AM_ELE_APPLY_DEFAULT_MODE_FILTER", "Choose which entries to update by building a filter");
+define("_AM_ELE_APPLY_DEFAULT_ENTRIES", "entries");
+define("_AM_ELE_RECOMPUTE_DERIVED", "Update Derived Values");
+define("_AM_ELE_RECOMPUTE_DERIVED_BUTTON", "Update Derived Values in these forms");
+define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "These forms have derived values that depend on this element:");
+define("_AM_ELE_RECOMPUTE_DERIVED_WORKING", "Recomputing derived values, please wait...");
+define("_AM_ELE_RECOMPUTE_DERIVED_PROGRESS", "(%s updated so far)");
+define("_AM_ELE_RECOMPUTE_DERIVED_DONE", "Derived values recomputed.");
 define("_AM_ELE_SELECTED","Selected");
 define("_AM_ELE_CHECKED","Checked");
 define("_AM_ELE_MULTIPLE","Allow multiple selections");
