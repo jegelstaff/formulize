@@ -349,6 +349,7 @@ $(document).ready(function() {
         } else {
           $(".admin-ui").fadeTo(1,1);
 					$('input[clearAfterSave=1]').removeAttr('checked');
+					$(document).trigger('formulize_admin_saved'); // let features reset any transient UI (eg: the apply-default conditions filter) after a save that did not reload the page
         }
       } else { // if there's still forms to do, then send the next one...must do sequentially to avoid race conditions
 				// ele_id is set in the eval operation passed back from the initial element save operation (names/settings tab), and then passed to the rest of the save operations. Elegant or hacky?!

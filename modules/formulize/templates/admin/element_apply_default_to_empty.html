@@ -26,9 +26,20 @@
 	// NOTE: the admin UI ships jQuery 1.4.2, which has no .on() - use .live() (with .die() to avoid double binding).
 	if(jQuery(".apply-default-advanced").length == 0) { return; }
 
+	// remember the blank conditions UI as first rendered, so we can restore it after a save
+	var blankFilterHtml = jQuery("#applydefaultfilter").html();
+
 	jQuery(".apply-default-advanced-toggle").die("click").live("click", function(){
 		jQuery(this).closest(".apply-default-to-entries").find(".apply-default-advanced").toggle();
 		return false;
+	});
+
+	// after a save that did not reload the page, clear the (non-persisted) conditions back to blank and hide the
+	// advanced section, mirroring how the "apply default" checkbox itself is cleared (clearAfterSave)
+	jQuery(document).unbind("formulize_admin_saved.applydefault").bind("formulize_admin_saved.applydefault", function(){
+		jQuery("#applydefaultfilter").html(blankFilterHtml);
+		jQuery(".applydefaultfilterdelete").val("");
+		jQuery(".apply-default-advanced").hide();
 	});
 
 	function fzRefreshApplyDefaultFilter() {
