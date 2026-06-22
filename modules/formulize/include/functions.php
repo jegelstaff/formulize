@@ -6541,7 +6541,8 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 		// setup the condition
 		$thiscondition = "($dbSource $filterOp $conditionsFilterComparisonValue)";
 		// handle any extra bracket funkiness that might be needed
-		$thiscondition = strpos($thiscondition, '-->>CLOSEEXTRABRACKET<<--') !== false ? "(".str_replace("-->>CLOSEEXTRABRACKET<<--", ")", $thiscondition) : $thiscondition; // sometimes the comparison value contains multiple parts, and we need to encapsulate some, but not others
+		$thiscondition = strpos($thiscondition, '-->>OPENONEEXTRABRACKET<<--') !== false ? "(".str_replace("-->>OPENONEEXTRABRACKET<<--", "", $thiscondition) : $thiscondition;
+		$thiscondition = strpos($thiscondition, '-->>OPENEXTRABRACKETANDCLOSEHERE<<--') !== false ? "(".str_replace("-->>OPENEXTRABRACKETANDCLOSEHERE<<--", ")", $thiscondition) : $thiscondition; // sometimes the comparison value contains multiple parts, and we need to encapsulate some, but not others
 		// possibly we need to flip the order around the LIKE operator,
 		// if the dbSource field is a single value field, and the filter comparison value is a reference to an element that is a multi value field
 		// this is a concession to the fact that it's conceptually difficult to know which side of the operator has which kind of values when specifying a comparison in the UI. Trying to help the user when things are messy.
@@ -6732,7 +6733,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 										foreach(explode(",",trim($dbValueOfTerm, ",")) as $thisFilterTermPart) {
 											$conditionsFilterComparisonValue[] = " CONCAT('$likebits', ',$thisFilterTermPart,', '$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
 										}
-										$conditionsFilterComparisonValue = implode(" -->>ADDRIGHTSIDEANDOP<<-- ", $conditionsFilterComparisonValue)." -->>CLOSEEXTRABRACKET<<--"; // need to insert the element and op in between all of these, hence the placeholder. Also, will be to encapsulate all of these minus the entry id part which will be added on later. Yuck!
+										$conditionsFilterComparisonValue = implode(" -->>ADDRIGHTSIDEANDOP<<-- ", $conditionsFilterComparisonValue)." -->>OPENEXTRABRACKETANDCLOSEHERE<<--"; // need to insert the element and op in between all of these, hence the placeholder. Also, will be to encapsulate all of these minus the entry id part which will be added on later. Yuck! OPENEXTRABRACKETANDCLOSEHERE causes the whole thing to be wrapped in an additional open bracket which then closes at the point where this flag is inserted in the query
 									// b. otherwise, just do a normal direct comparison
 									} else {
 										$conditionsFilterComparisonValue = " CONCAT('$likebits',$filterTermToUse,'$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
@@ -6888,10 +6889,24 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         // messy... if it's a checkbox, do a much more complex comparison value.
         // comparison values are prepended with "handle op" and wrapped in ( ), later in the _appendToCondition function
         // so we can build this odd comparison value that repeats the "handle op" part internally, to catch all the cases for checkboxes. Ugh.
+        $originalFilterOp = $filterOps[$filterId];
         if($multiValueSearchMetadata = mustMatchOneOfMultiplePossibleValuesInElement($filterElementObject, $filterOps[$filterId])) {
-            $useAndOr = $multiValueSearchMetadata['andOr'];
-            $filterOps[$filterId] = $multiValueSearchMetadata['operator'];
-            $conditionsFilterComparisonValue = " \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."*=+*:%\" $useAndOr ".$filterElementObject->getVar('ele_handle')." ".$filterOps[$filterId]." \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."\" ";
+					$useAndOr = $multiValueSearchMetadata['andOr'];
+          $filterOps[$filterId] = $multiValueSearchMetadata['operator'];
+          // If the original operator was already a partial match (LIKE/NOT LIKE), then we only need a simple substring search.
+          // The delimiter between stored items guarantees a substring can't span two items (a search term never contains the delimiter),
+          // so we can do a plain %term% and rely on the normal null handling lower down (createNullForComparisonValueIfNecessary at line ~6913).
+          if($originalFilterOp == "LIKE" OR $originalFilterOp == "NOT LIKE") {
+              $conditionsFilterComparisonValue = " \"%".formulize_db_escape($filterTerms[$filterId])."%\" ";
+          // Otherwise the original was an exact match (=, !=, <=>) that we swapped to LIKE/NOT LIKE above, so we need the more complex
+          // comparison that wraps the term in the delimiter on both sides to match a whole item against the delimited storage format.
+          // Each item is prefixed with *=+*: and the last item has no trailing delimiter, hence the two patterns and the inline null handling.
+          } else {
+              $conditionsFilterComparisonValue = " \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."*=+*:%\" $useAndOr ".$filterElementObject->getVar('ele_handle')." ".$filterOps[$filterId]." \"%*=+*:".formulize_db_escape($filterTerms[$filterId])."\" ";
+              if($nullClause = createNullForComparisonValueIfNecessary(formulize_db_escape($filterTerms[$filterId]), $filterOps[$filterId], $filterElementObject->getVar('ele_handle'))) {
+                  $conditionsFilterComparisonValue = "-->>OPENONEEXTRABRACKET<<--".$conditionsFilterComparisonValue.") $nullClause "; // OPENONEEXTRABRACKET causes an additional opening bracket, which we need because we're closing ahead of our OR null clause
+              }
+          }
         } else {
             $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
         }
@@ -6906,18 +6921,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         }
     }
 
-    // EXPAND EMPTY COMPARISON FILTERS TO INCLUDE IS NULL
-    if($conditionsFilterComparisonValue == "''" OR $conditionsFilterComparisonValue == '""') {
-        switch($filterOps[$filterId]) {
-            case "<=>":
-            case "=":
-                $conditionsFilterComparisonValue .= " OR `".$filterElementObject->getVar('ele_handle')."` IS NULL";
-                break;
-            case "!=":
-                $conditionsFilterComparisonValue .= " AND `".$filterElementObject->getVar('ele_handle')."` IS NOT NULL";
-                break;
-        }
-    }
+		$conditionsFilterComparisonValue .= createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterElementObject->getVar('ele_handle'));
+
 
 		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
 		if($curlyBracketINNeedsSingleQuotes) {
@@ -6929,6 +6934,66 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 }
 
+/**
+ * This function sets up a NULL comparison for the comparison value if necessary, based on the filter operator and the filter comparison value.
+ * This is used to ensure that comparisons involving empty values or explicit values include NULL in the SQL query.
+ * ie: field LIKE "" should be expanded to field LIKE "" OR field IS NULL
+ * ie: field != "xyz" should be expanded to field != "xyz" OR field IS NULL
+ * Only run once! If we've followed a path that included this, do not do the operation again
+ * We use it as a safety net, but earlier more complex paths might invoke it more selectively in which case we don't want to do it again
+ * @param string $conditionsFilterComparisonValue The comparison value for the filter condition
+ * @param string $filterOp The filter operator (e.g., '=', '!=', 'LIKE', 'NOT LIKE')
+ * @param string $filterElementHandle The handle of the filter element
+ * @return string The modified comparison value, potentially including a NULL comparison
+ */
+function createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOp, $filterElementHandle) {
+	static $hasBeenCalled = false;
+	$nullClause = "";
+	if(
+		$hasBeenCalled == false
+		AND (
+			(
+				$filterOp != "!="
+				AND $filterOp != "NOT LIKE"
+				AND (
+					$conditionsFilterComparisonValue === ""
+					OR $conditionsFilterComparisonValue == "''"
+					OR $conditionsFilterComparisonValue == '""'
+					OR $conditionsFilterComparisonValue == "%''%"
+					OR $conditionsFilterComparisonValue == '%""%'
+				)
+			)
+			OR
+			(
+				(
+					$filterOp == "!="
+					OR $filterOp == "NOT LIKE"
+				)
+				AND (
+					$conditionsFilterComparisonValue !== ""
+					AND	$conditionsFilterComparisonValue != '""'
+					AND $conditionsFilterComparisonValue != "''"
+					AND $conditionsFilterComparisonValue !== "%''%"
+					AND $conditionsFilterComparisonValue != '%""%'
+				)
+			)
+		)
+	) {
+		switch($filterOp) {
+			case "<=>":
+			case "=":
+			case "LIKE":
+				$nullClause = " OR `".$filterElementHandle."` IS NULL";
+				break;
+			case "!=":
+			case "NOT LIKE":
+				$nullClause = " OR `".$filterElementHandle."` IS NULL";
+				break;
+		}
+	}
+	$hasBeenCalled = true;
+	return $nullClause;
+}
 
 /**
  * This function draws JavaScript for XMLHttpRequest functionality. Certain defined Formulize operations will in turn trigger certain js functions when an XMLHttpRequest response of the given kind is returned. See the formulize_xhr_return function for more details on this.
@@ -9839,7 +9904,7 @@ function mustMatchOneOfMultiplePossibleValuesInElement($elementIdentifier, $oper
 		AND in_array($operator, $allowableOperators)) {
 			$returnValue = array(
 			'andOr' => (($operator == "!=" OR $operator == "NOT LIKE") ? "AND" : "OR"),
-			'operator' => ($operator == "!=" ? "NOT LIKE" : "LIKE")
+			'operator' => ($operator == "!=" ? "NOT LIKE" : (($operator == "=" OR $operator == "<=>") ? "LIKE" : $operator))
 		);
 	}
 	return $returnValue;
