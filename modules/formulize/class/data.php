@@ -1682,6 +1682,7 @@ function applyDefaultToEntries($element, $conditions = '') {
 	}
 
 	$updated = 0;
+	$updatedEntryIds = array();
 	while ($row = $xoopsDB->fetchArray($result)) {
 		$entry_id = $row['entry_id'];
 		$defaultValue = $element_handler->getDefaultValue($element, $entry_id);
@@ -1690,8 +1691,16 @@ function applyDefaultToEntries($element, $conditions = '') {
 			$updateSql = "UPDATE `$table` SET `$eleHandle` = $escapedValue WHERE `entry_id` = " . intval($entry_id);
 			if ($xoopsDB->query($updateSql)) {
 				$updated++;
+				$updatedEntryIds[] = $entry_id;
 			}
 		}
 	}
+
+	// recalculate any derived values that depend on the entries we just changed, in the context of the
+	// primary relationship (frid -1), the same way they would be updated when an entry is saved normally
+	foreach ($updatedEntryIds as $updatedEntryId) {
+		formulize_updateDerivedValues($updatedEntryId, $fid, -1);
+	}
+
 	return $updated;
 }
