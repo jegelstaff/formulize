@@ -525,8 +525,8 @@ define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC", "Only entries where this field is 
 define("_AM_ELE_APPLY_DEFAULT_EMPTY_COUNT", "Entries with no value:");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED", "Advanced: apply to specific entries instead");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED_DESC", "Build a filter to choose exactly which entries to update. This overrides the option above: every entry that matches the filter will have its value set to this default, replacing any value it currently holds. These filter conditions are used only for this one update and are not saved.");
-define("_AM_ELE_RECOMPUTE_DERIVED", "Recompute derived values that depend on this field");
-define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "Derived value formulas in the form(s) below reference this field. After changing the values of existing entries (by applying the default value above, or by resynching options), you can recompute them so they reflect the updated entries:");
+define("_AM_ELE_RECOMPUTE_DERIVED", "Update Derived Values");
+define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "These forms have derived values that depend on this element:");
 define("_AM_ELE_RECOMPUTE_DERIVED_WORKING", "Recomputing derived values, please wait...");
 define("_AM_ELE_RECOMPUTE_DERIVED_DONE", "Derived values recomputed.");
 define("_AM_ELE_SELECTED","Selected");
