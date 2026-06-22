@@ -1,3 +1,0 @@
-[mariadb]
-# Explicitly set the value to 0
-lower_case_table_names = 0
