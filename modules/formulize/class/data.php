@@ -1640,24 +1640,39 @@ function addDefaultValuesToDataToWrite($values, $fid) {
 }
 
 /**
- * For each existing entry in a form that has no value for the given element, compute and write
- * the element's default value. Called from the admin UI when saving element options.
- * Uses direct SQL (not writeEntry) to avoid triggering hooks and to preserve entry metadata.
+ * For each existing entry in a form that should receive this element's default value, compute and write that value.
+ * By default this targets entries that currently have no value for the element (the blanks). If a set of filter
+ * conditions is supplied (from the advanced option in the admin UI), it targets the entries matched by those
+ * conditions instead - overwriting whatever value they currently hold. Called from the admin UI when saving
+ * element options. Uses direct SQL (not writeEntry) to avoid triggering hooks and to preserve entry metadata.
  *
  * @param object $element - The element object to apply defaults for
+ * @param array|string $conditions - Optional. A standard Formulize conditions array (as produced by
+ *                                    parseSubmittedConditions) identifying which entries to target. When empty,
+ *                                    the entries with no value are targeted.
  * @return int Number of entries updated
  */
-function applyDefaultToEmptyEntries($element) {
+function applyDefaultToEntries($element, $conditions = '') {
 	global $xoopsDB;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	$formObject = $form_handler->get($element->getVar('id_form'));
+	$fid = $formObject->getVar('id_form');
 	$formHandle = $formObject->getVar('form_handle');
 	$eleHandle = $element->getVar('ele_handle');
 	$table = $xoopsDB->prefix("formulize_$formHandle");
 
-	// If the column doesn't exist yet (brand-new element), all entries are candidates
-	if ($form_handler->elementFieldMissing($element)) {
+	if (is_array($conditions) AND !empty($conditions[0])) {
+		// Advanced mode: target the entries matched by the filter conditions, overwriting any existing value.
+		// buildConditionsFilterSQL returns clauses that begin with " AND (...)", ready to follow a WHERE that already has a condition.
+		list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($conditions, $fid, 'new', null, $formObject, 't1');
+		if (trim((string) $conditionsfilter) === '' AND trim((string) $conditionsfilter_oom) === '') {
+			// conditions were supplied but produced no usable SQL - do nothing rather than risk targeting every entry
+			return 0;
+		}
+		$sql = "SELECT t1.`entry_id` FROM `$table` AS t1 $parentFormFrom WHERE 1 $conditionsfilter $conditionsfilter_oom";
+	} elseif ($form_handler->elementFieldMissing($element)) {
+		// If the column doesn't exist yet (brand-new element), all entries are candidates
 		$sql = "SELECT `entry_id` FROM `$table`";
 	} else {
 		$sql = "SELECT `entry_id` FROM `$table` WHERE `$eleHandle` IS NULL OR `$eleHandle` = ''";

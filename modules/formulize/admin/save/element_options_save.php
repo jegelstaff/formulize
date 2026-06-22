@@ -112,7 +112,11 @@ if(!$ele_id = $element_handler->insert($element)) {
 
 if (!empty($_POST['apply_default_to_empty'])) {
   if ($element->hasData) {
-    applyDefaultToEmptyEntries($element);
+    // gather any advanced filter conditions the user built, so we can target specific entries instead of only the blank ones.
+    // these are never persisted - they are read straight from the submission (the same fields the conditions UI builder uses)
+    $parsedApplyDefaultConditions = parseSubmittedConditions('applydefaultfilter', 'applydefaultfilterdelete');
+    $applyDefaultConditions = is_array($parsedApplyDefaultConditions) ? $parsedApplyDefaultConditions[0] : "";
+    applyDefaultToEntries($element, $applyDefaultConditions);
   }
 }
 

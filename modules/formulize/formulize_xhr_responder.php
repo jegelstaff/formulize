@@ -79,12 +79,42 @@ if($op != "check_for_unique_value"
 	 AND $op != 'get_form_screens_for_form'
 	 AND $op != 'group_member_search'
 	 AND $op != 'entry_group_search'
+	 AND $op != 'render_conditions_filter_ui'
   ) {
   exit();
 }
 
 // unpack params based on op, and do whatever we're supposed to do
 switch($op) {
+
+	case 'render_conditions_filter_ui':
+		// Re-render a standard Formulize conditions filter UI from the currently submitted condition fields,
+		// without a full page reload and without persisting anything. Reusable by any conditions filter UI:
+		// the caller posts the existing condition fields plus the parameters below, and gets back fresh HTML.
+		//   filter_ui_name       - the scope/name of the filter (same name passed to formulize_createFilterUI), letters/numbers only
+		//   filter_ui_delete_key - the name of the hidden field carrying the "delete this condition" flag
+		//   filter_ui_fid        - the id of the form whose elements populate the filter's field dropdown
+		//   filter_ui_frid       - (optional) form relationship id, to include elements from linked forms
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+		$filterName = preg_replace('/[^a-zA-Z0-9]/', '', (string) $_POST['filter_ui_name']); // no underscores/special chars (underscores break delete-index parsing)
+		$deleteKey = preg_replace('/[^a-zA-Z0-9_\-]/', '', (string) $_POST['filter_ui_delete_key']);
+		$filterFid = intval($_POST['filter_ui_fid']);
+		$filterFrid = intval($_POST['filter_ui_frid']);
+		if(!$filterName OR !$filterFid) {
+			exit();
+		}
+		// the user must be allowed to edit this form in order to build filters against its data
+		$gperm_handler = xoops_gethandler('groupperm');
+		$module_handler = xoops_gethandler('module');
+		$formulizeModule = $module_handler->getByDirname('formulize');
+		$filterGroups = is_object($xoopsUser) ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+		if(!$gperm_handler->checkRight("edit_form", $filterFid, $filterGroups, $formulizeModule->getVar('mid'))) {
+			exit();
+		}
+		$parsedFilterConditions = $deleteKey ? parseSubmittedConditions($filterName, $deleteKey) : parseSubmittedConditions($filterName);
+		$filterConditions = is_array($parsedFilterConditions) ? $parsedFilterConditions[0] : "";
+		print formulize_createFilterUI($filterConditions, $filterName, $filterFid, "form-".$filterFid, $filterFrid);
+		break;
 
 	case 'get_form_screens_for_form':
 		$screens = array();

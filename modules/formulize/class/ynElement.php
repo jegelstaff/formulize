@@ -150,6 +150,7 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	 */
 	function getDefaultValue($element, $entry_id = 'new') {
 		$ele_value = $element->getVar('ele_value');
+		$default = null; // no default configured (neither Yes nor No flagged)
     if($ele_value["_YES"] == 1) {
       $default = 1;
     } elseif($ele_value["_NO"] == 1) {

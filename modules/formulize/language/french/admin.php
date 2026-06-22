@@ -247,6 +247,12 @@ define("_AM_ELE_DELIM_CHOICE",'Delimitation entre chaque option');
 define("_AM_ELE_TEXTFORDISPLAY_DESC","Tout texte ou code HTML entré ici apparaitra sur l'écran.  Vous pouvez utiliser du PHP, mais assurez vous qu'il contient '&#36;value = &#36;something;' et Formulize lira ce texte comme du code PHP.");
 define("_AM_ELE_LEFTRIGHT_TEXT","Contenu du coté droit");
 define("_AM_ELE_OPT_CHANGEUSERVALUES", "Lors de l'enregistrement des changements pour ces choix, changer aussi les valeurs faites par l'utilisateur dans le formulaire pour correspondre aux nouvelles options (ie: quand l'utilisateur a sélectionné le premier choix, version ancienne, remplacer sa sélection par le nouveau premier choix)");
+define("_AM_ELE_APPLY_DEFAULT", "Appliquer cette valeur par défaut aux entrées existantes");
+define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY", "Appliquer cette valeur par défaut aux entrées existantes qui n'ont actuellement aucune valeur");
+define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC", "Seules les entrées où ce champ est vide seront mises à jour. Les entrées qui ont déjà une valeur ne seront pas modifiées.");
+define("_AM_ELE_APPLY_DEFAULT_EMPTY_COUNT", "Entrées sans valeur :");
+define("_AM_ELE_APPLY_DEFAULT_ADVANCED", "Avancé : appliquer plutôt à des entrées spécifiques");
+define("_AM_ELE_APPLY_DEFAULT_ADVANCED_DESC", "Construisez un filtre pour choisir exactement quelles entrées mettre à jour. Cela remplace l'option ci-dessus : chaque entrée qui correspond au filtre verra sa valeur remplacée par cette valeur par défaut, peu importe la valeur qu'elle contient actuellement. Ces conditions de filtre ne servent que pour cette mise à jour et ne sont pas enregistrées.");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défense contre les attaques malveillantes par script.  Mais cela peut poser des problèmes si vous utilisez une Interface Utilisateur Ajax-based dans le Screen de la Liste des Entrées, et peut être dans d'autres types de Screens.");
 

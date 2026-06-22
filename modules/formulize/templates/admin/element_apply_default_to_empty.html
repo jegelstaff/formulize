@@ -1,6 +1,60 @@
-<{if $content.apply_default_empty_count > 0}>
-<div class="form-item">
-	<p><label><input type="checkbox" name="apply_default_to_empty" value="1" clearAfterSave=1> <{$smarty.const._AM_ELE_APPLY_DEFAULT_TO_EMPTY}> (<{$content.apply_default_empty_count}>)</label></p>
-	<div class="description"><p><{$smarty.const._AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC}></p></div>
+<{if $content.apply_default_has_data}>
+<div class="form-item apply-default-to-entries">
+	<p><label><input type="checkbox" name="apply_default_to_empty" value="1" clearAfterSave=1> <{$smarty.const._AM_ELE_APPLY_DEFAULT}></label></p>
+	<div class="description">
+		<p><{$smarty.const._AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC}></p>
+		<p><{$smarty.const._AM_ELE_APPLY_DEFAULT_EMPTY_COUNT}> <{$content.apply_default_empty_count}></p>
+	</div>
+
+	<{if $content.apply_default_filter_ui}>
+	<p><a href="" class="apply-default-advanced-toggle"><{$smarty.const._AM_ELE_APPLY_DEFAULT_ADVANCED}></a></p>
+	<div class="apply-default-advanced" style="display: none;">
+		<div class="description"><p><{$smarty.const._AM_ELE_APPLY_DEFAULT_ADVANCED_DESC}></p></div>
+		<input type="hidden" class="applydefaultfilterdelete" name="applydefaultfilterdelete" value="">
+		<input type="hidden" class="applydefaultfilter_fid" value="<{$content.apply_default_filter_fid}>">
+		<div id="applydefaultfilter"><{$content.apply_default_filter_ui}></div>
+	</div>
+	<{/if}>
 </div>
+
+<script type='text/javascript'>
+(function(){
+	// Advanced "apply default to specific entries" conditions filter.
+	// The conditions are never persisted. They are added/removed via an AJAX round-trip to the standard
+	// conditions filter UI builder (so we reuse all the existing rendering and parsing), and they are read
+	// directly from the submission when the options tab is saved.
+	// NOTE: the admin UI ships jQuery 1.4.2, which has no .on() - use .live() (with .die() to avoid double binding).
+	if(jQuery(".apply-default-advanced").length == 0) { return; }
+
+	jQuery(".apply-default-advanced-toggle").die("click").live("click", function(){
+		jQuery(this).closest(".apply-default-to-entries").find(".apply-default-advanced").toggle();
+		return false;
+	});
+
+	function fzRefreshApplyDefaultFilter() {
+		var $container = jQuery("#applydefaultfilter");
+		var data = $container.closest("form").serialize();
+		data += "&filter_ui_name=applydefaultfilter";
+		data += "&filter_ui_delete_key=applydefaultfilterdelete";
+		data += "&filter_ui_fid=" + encodeURIComponent(jQuery(".applydefaultfilter_fid").val());
+		jQuery.post(window.icms_url + "/modules/formulize/formulize_xhr_responder.php?op=render_conditions_filter_ui&uid=" + window.icms_userid, data, function(html){
+			$container.html(html);
+			jQuery(".applydefaultfilterdelete").val(""); // the delete flag has now been consumed by the server
+		});
+	}
+
+	// the addcon button and delete links live inside #applydefaultfilter, whose contents are replaced on each
+	// refresh, so delegate with .live() scoped to that container (rebuild the UI via the server, no page reload).
+	jQuery("#applydefaultfilter input[name=addcon]").die("click").live("click", function(){
+		fzRefreshApplyDefaultFilter();
+		return false;
+	});
+
+	jQuery("#applydefaultfilter a.conditionsdelete").die("click").live("click", function(){
+		jQuery(".applydefaultfilterdelete").val(jQuery(this).attr("target"));
+		fzRefreshApplyDefaultFilter();
+		return false;
+	});
+})();
+</script>
 <{/if}>
