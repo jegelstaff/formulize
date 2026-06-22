@@ -112,8 +112,9 @@ if(!$ele_id = $element_handler->insert($element)) {
 
 if (!empty($_POST['apply_default_to_empty'])) {
   if ($element->hasData) {
-    // gather any advanced filter conditions the user built, so we can target specific entries instead of only the blank ones.
-    // these are never persisted - they are read straight from the submission (the same fields the conditions UI builder uses)
+    // target specific entries if conditions were submitted, otherwise apply to the blank entries. The UI ensures the
+    // conditions are only present when the "specific value" mode is chosen (it clears them otherwise), so we just
+    // read whatever was submitted. The conditions are never persisted - they come straight from the submission.
     $parsedApplyDefaultConditions = parseSubmittedConditions('applydefaultfilter', 'applydefaultfilterdelete');
     $applyDefaultConditions = is_array($parsedApplyDefaultConditions) ? $parsedApplyDefaultConditions[0] : "";
     applyDefaultToEntries($element, $applyDefaultConditions);

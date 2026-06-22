@@ -1,45 +1,62 @@
 <{if $content.apply_default_has_data}>
 <div class="form-item apply-default-to-entries">
-	<p><label><input type="checkbox" name="apply_default_to_empty" value="1" clearAfterSave=1> <{$smarty.const._AM_ELE_APPLY_DEFAULT}></label></p>
+	<p><label><input type="checkbox" name="apply_default_to_empty" value="1" clearAfterSave=1 class="apply-default-checkbox"> <{$smarty.const._AM_ELE_APPLY_DEFAULT}></label></p>
 	<div class="description">
 		<p><{$smarty.const._AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC}></p>
-		<p><{$smarty.const._AM_ELE_APPLY_DEFAULT_EMPTY_COUNT}> <{$content.apply_default_empty_count}></p>
 	</div>
 
-	<{if $content.apply_default_filter_ui}>
-	<p><a href="" class="apply-default-advanced-toggle"><{$smarty.const._AM_ELE_APPLY_DEFAULT_ADVANCED}></a></p>
-	<div class="apply-default-advanced" style="display: none;">
-		<div class="description"><p><{$smarty.const._AM_ELE_APPLY_DEFAULT_ADVANCED_DESC}></p></div>
-		<input type="hidden" class="applydefaultfilterdelete" name="applydefaultfilterdelete" value="">
-		<input type="hidden" class="applydefaultfilter_fid" value="<{$content.apply_default_filter_fid}>">
-		<div id="applydefaultfilter"><{$content.apply_default_filter_ui}></div>
+	<div class="apply-default-mode" style="display: none;">
+		<p><label><input type="radio" name="apply_default_mode" value="blanks" checked class="apply-default-mode-blanks"> <{$smarty.const._AM_ELE_APPLY_DEFAULT_MODE_BLANKS}> (<{$content.apply_default_empty_count}> <{$smarty.const._AM_ELE_APPLY_DEFAULT_ENTRIES}>)</label></p>
+		<{if $content.apply_default_filter_ui}>
+		<p><label><input type="radio" name="apply_default_mode" value="filter" class="apply-default-mode-filter"> <{$smarty.const._AM_ELE_APPLY_DEFAULT_MODE_FILTER}></label></p>
+		<div class="apply-default-advanced" style="display: none;">
+			<div class="description"><p><{$smarty.const._AM_ELE_APPLY_DEFAULT_ADVANCED_DESC}></p></div>
+			<input type="hidden" class="applydefaultfilterdelete" name="applydefaultfilterdelete" value="">
+			<input type="hidden" class="applydefaultfilter_fid" value="<{$content.apply_default_filter_fid}>">
+			<div id="applydefaultfilter"><{$content.apply_default_filter_ui}></div>
+		</div>
+		<{/if}>
 	</div>
-	<{/if}>
 </div>
 
 <script type='text/javascript'>
 (function(){
-	// Advanced "apply default to specific entries" conditions filter.
-	// The conditions are never persisted. They are added/removed via an AJAX round-trip to the standard
-	// conditions filter UI builder (so we reuse all the existing rendering and parsing), and they are read
-	// directly from the submission when the options tab is saved.
+	// Apply-default UI: the checkbox reveals two mode radios (blanks vs. specific value); choosing "specific value"
+	// reveals the conditions filter. The conditions are never persisted - they are built via AJAX round-trips to the
+	// standard conditions filter UI builder, and read directly from the submission when the options tab is saved.
 	// NOTE: the admin UI ships jQuery 1.4.2, which has no .on() - use .live() (with .die() to avoid double binding).
-	if(jQuery(".apply-default-advanced").length == 0) { return; }
+	if(jQuery(".apply-default-to-entries").length == 0) { return; }
 
 	// remember the blank conditions UI as first rendered, so we can restore it after a save
 	var blankFilterHtml = jQuery("#applydefaultfilter").html();
 
-	jQuery(".apply-default-advanced-toggle").die("click").live("click", function(){
-		jQuery(this).closest(".apply-default-to-entries").find(".apply-default-advanced").toggle();
-		return false;
-	});
+	// show the mode radios only when the checkbox is on, and the filter only when "specific value" is the chosen mode.
+	// when not in "specific value" mode, clear any conditions so none are submitted - this keeps the server simple:
+	// it just applies the default to whatever the conditions match, or to the blank entries when there are none.
+	function fzSyncApplyDefaultMode() {
+		var $container = jQuery(".apply-default-to-entries");
+		var checkboxOn = $container.find(".apply-default-checkbox").is(":checked");
+		var filterMode = checkboxOn && $container.find(".apply-default-mode-filter").is(":checked");
+		$container.find(".apply-default-mode").toggle(checkboxOn);
+		if(filterMode) {
+			$container.find(".apply-default-advanced").show();
+		} else {
+			$container.find(".apply-default-advanced").hide();
+			if(typeof blankFilterHtml != "undefined") {
+				jQuery("#applydefaultfilter").html(blankFilterHtml); // discard any conditions so the save targets the blank entries
+				jQuery(".applydefaultfilterdelete").val("");
+			}
+		}
+	}
 
-	// after a save that did not reload the page, clear the (non-persisted) conditions back to blank and hide the
-	// advanced section, mirroring how the "apply default" checkbox itself is cleared (clearAfterSave)
+	jQuery(".apply-default-checkbox").die("click").live("click", fzSyncApplyDefaultMode);
+	jQuery("input[name=apply_default_mode]").die("click").live("click", fzSyncApplyDefaultMode);
+
+	// after a save that did not reload the page, the checkbox is cleared (clearAfterSave) - reset the mode back to
+	// blanks and let the sync hide the now-irrelevant radios and clear the conditions
 	jQuery(document).unbind("formulize_admin_saved.applydefault").bind("formulize_admin_saved.applydefault", function(){
-		jQuery("#applydefaultfilter").html(blankFilterHtml);
-		jQuery(".applydefaultfilterdelete").val("");
-		jQuery(".apply-default-advanced").hide();
+		jQuery(".apply-default-mode-blanks").attr("checked", true);
+		fzSyncApplyDefaultMode();
 	});
 
 	function fzRefreshApplyDefaultFilter() {

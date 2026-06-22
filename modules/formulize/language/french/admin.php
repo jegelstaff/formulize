@@ -253,6 +253,9 @@ define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC", "Seules les entrées où ce champ 
 define("_AM_ELE_APPLY_DEFAULT_EMPTY_COUNT", "Entrées sans valeur :");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED", "Avancé : appliquer plutôt à des entrées spécifiques");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED_DESC", "Construisez un filtre pour choisir exactement quelles entrées mettre à jour. Cela remplace l'option ci-dessus : chaque entrée qui correspond au filtre verra sa valeur remplacée par cette valeur par défaut, peu importe la valeur qu'elle contient actuellement. Ces conditions de filtre ne servent que pour cette mise à jour et ne sont pas enregistrées.");
+define("_AM_ELE_APPLY_DEFAULT_MODE_BLANKS", "Mettre à jour toutes les entrées sans valeur");
+define("_AM_ELE_APPLY_DEFAULT_MODE_FILTER", "Choisir quelles entrées mettre à jour en construisant un filtre");
+define("_AM_ELE_APPLY_DEFAULT_ENTRIES", "entrées");
 define("_AM_ELE_RECOMPUTE_DERIVED", "Mettre à jour les valeurs dérivées");
 define("_AM_ELE_RECOMPUTE_DERIVED_BUTTON", "Mettre à jour les valeurs dérivées dans ces formulaires");
 define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "Ces formulaires ont des valeurs dérivées qui dépendent de cet élément :");
