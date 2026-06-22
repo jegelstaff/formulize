@@ -1,5 +1,5 @@
 <{if $content.dependent_derived_fids}>
-<div class="form-item recompute-derived" data-fids="<{$content.dependent_derived_fids}>" data-working="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_WORKING}>" data-progress="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_PROGRESS}>" data-done="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DONE}>">
+<div class="form-item recompute-derived" style="display: none;" data-fids="<{$content.dependent_derived_fids}>" data-working="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_WORKING}>" data-progress="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_PROGRESS}>" data-done="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DONE}>">
 	<fieldset>
 		<legend><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED}></legend>
 			<p><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DESC}></p>
@@ -23,6 +23,15 @@
 	// "update all entries" feature, looping over each affected form in the primary relationship.
 	// NOTE: the admin UI ships jQuery 1.4.2, which has no .on() - use .live() (with .die() to avoid double binding).
 	if(jQuery(".recompute-derived").length == 0) { return; }
+
+	// the recompute UI is only relevant once a value-changing save has completed. Reveal it when the apply-default
+	// or resynch-options checkbox is cleared after such a save (this fires alongside the clearing of those checkboxes).
+	// if there are no dependent derived forms, this template renders nothing, so there is simply nothing to reveal.
+	jQuery(document).unbind("formulize_admin_saved.recomputederived").bind("formulize_admin_saved.recomputederived", function(event, clearedInputs){
+		if(clearedInputs && jQuery(clearedInputs).filter("[name=apply_default_to_empty], [name=changeuservalues]").length > 0) {
+			jQuery(".recompute-derived").show();
+		}
+	});
 
 	jQuery(".recompute-derived-button").die("click").live("click", function(){
 		var $button = jQuery(this);
