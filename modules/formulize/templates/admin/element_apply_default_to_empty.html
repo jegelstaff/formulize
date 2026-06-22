@@ -1,16 +1,12 @@
 <{if $content.apply_default_has_data}>
 <div class="form-item apply-default-to-entries">
 	<p><label><input type="checkbox" name="apply_default_to_empty" value="1" clearAfterSave=1 class="apply-default-checkbox"> <{$smarty.const._AM_ELE_APPLY_DEFAULT}></label></p>
-	<div class="description">
-		<p><{$smarty.const._AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC}></p>
-	</div>
 
 	<div class="apply-default-mode" style="display: none;">
 		<p><label><input type="radio" name="apply_default_mode" value="blanks" checked class="apply-default-mode-blanks"> <{$smarty.const._AM_ELE_APPLY_DEFAULT_MODE_BLANKS}> (<{$content.apply_default_empty_count}> <{$smarty.const._AM_ELE_APPLY_DEFAULT_ENTRIES}>)</label></p>
 		<{if $content.apply_default_filter_ui}>
 		<p><label><input type="radio" name="apply_default_mode" value="filter" class="apply-default-mode-filter"> <{$smarty.const._AM_ELE_APPLY_DEFAULT_MODE_FILTER}></label></p>
 		<div class="apply-default-advanced" style="display: none;">
-			<div class="description"><p><{$smarty.const._AM_ELE_APPLY_DEFAULT_ADVANCED_DESC}></p></div>
 			<input type="hidden" class="applydefaultfilterdelete" name="applydefaultfilterdelete" value="">
 			<input type="hidden" class="applydefaultfilter_fid" value="<{$content.apply_default_filter_fid}>">
 			<div id="applydefaultfilter"><{$content.apply_default_filter_ui}></div>
