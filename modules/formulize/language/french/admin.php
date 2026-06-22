@@ -253,6 +253,10 @@ define("_AM_ELE_APPLY_DEFAULT_TO_EMPTY_DESC", "Seules les entrées où ce champ 
 define("_AM_ELE_APPLY_DEFAULT_EMPTY_COUNT", "Entrées sans valeur :");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED", "Avancé : appliquer plutôt à des entrées spécifiques");
 define("_AM_ELE_APPLY_DEFAULT_ADVANCED_DESC", "Construisez un filtre pour choisir exactement quelles entrées mettre à jour. Cela remplace l'option ci-dessus : chaque entrée qui correspond au filtre verra sa valeur remplacée par cette valeur par défaut, peu importe la valeur qu'elle contient actuellement. Ces conditions de filtre ne servent que pour cette mise à jour et ne sont pas enregistrées.");
+define("_AM_ELE_RECOMPUTE_DERIVED", "Recalculer les valeurs dérivées qui dépendent de ce champ");
+define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "Des formules de valeur dérivée dans le ou les formulaires ci-dessous font référence à ce champ. Après avoir modifié les valeurs des entrées existantes (en appliquant la valeur par défaut ci-dessus, ou en resynchronisant les options), vous pouvez les recalculer pour qu'elles reflètent les entrées mises à jour :");
+define("_AM_ELE_RECOMPUTE_DERIVED_WORKING", "Recalcul des valeurs dérivées, veuillez patienter...");
+define("_AM_ELE_RECOMPUTE_DERIVED_DONE", "Valeurs dérivées recalculées.");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défense contre les attaques malveillantes par script.  Mais cela peut poser des problèmes si vous utilisez une Interface Utilisateur Ajax-based dans le Screen de la Liste des Entrées, et peut être dans d'autres types de Screens.");
 

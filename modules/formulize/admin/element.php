@@ -332,6 +332,17 @@ if ($elementTypeStoresData) {
 	$applyDefaultFilterFid = $formObject->getVar('id_form');
 	$options['apply_default_filter_fid'] = $applyDefaultFilterFid;
 	$options['apply_default_filter_ui'] = formulize_createFilterUI("", "applydefaultfilter", $applyDefaultFilterFid, "form-".$applyDefaultFilterFid);
+
+	// if any derived value formulas (in this form or a primary-relationship-connected form) reference this element,
+	// offer a separate, user-triggered, batched recompute as a follow-on to any bulk value change (applying a
+	// default to existing entries, or resynching list options)
+	$options['dependent_derived_forms'] = array();
+	$options['dependent_derived_fids'] = '';
+	if($options['apply_default_has_data'] AND $ele_id != 'new' AND is_object($elementObject)) {
+		$dependentDerivedForms = formulize_getFormsWithDependentDerivedValues($elementObject);
+		$options['dependent_derived_forms'] = $dependentDerivedForms;
+		$options['dependent_derived_fids'] = implode(',', array_keys($dependentDerivedForms));
+	}
 }
 
 // if this is a custom element, then get any additional values that we need to send to the template
