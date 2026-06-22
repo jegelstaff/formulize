@@ -7208,7 +7208,7 @@ function convertSelectBoxToSingle($table, $column) {
 /**
  * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
  * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out, and just be happy we have an escaped string.
- * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB prases the string. Very handy lifesaver!
+ * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB parses the string. Very handy lifesaver!
  * @param mixed value - The value to run through the database quote method (PDO quote currently)
  * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
  */
