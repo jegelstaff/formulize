@@ -529,6 +529,7 @@ define("_AM_ELE_RECOMPUTE_DERIVED", "Update Derived Values");
 define("_AM_ELE_RECOMPUTE_DERIVED_BUTTON", "Update Derived Values in these forms");
 define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "These forms have derived values that depend on this element:");
 define("_AM_ELE_RECOMPUTE_DERIVED_WORKING", "Recomputing derived values, please wait...");
+define("_AM_ELE_RECOMPUTE_DERIVED_PROGRESS", "(%s updated so far)");
 define("_AM_ELE_RECOMPUTE_DERIVED_DONE", "Derived values recomputed.");
 define("_AM_ELE_SELECTED","Selected");
 define("_AM_ELE_CHECKED","Checked");

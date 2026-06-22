@@ -257,6 +257,7 @@ define("_AM_ELE_RECOMPUTE_DERIVED", "Mettre à jour les valeurs dérivées");
 define("_AM_ELE_RECOMPUTE_DERIVED_BUTTON", "Mettre à jour les valeurs dérivées dans ces formulaires");
 define("_AM_ELE_RECOMPUTE_DERIVED_DESC", "Ces formulaires ont des valeurs dérivées qui dépendent de cet élément :");
 define("_AM_ELE_RECOMPUTE_DERIVED_WORKING", "Recalcul des valeurs dérivées, veuillez patienter...");
+define("_AM_ELE_RECOMPUTE_DERIVED_PROGRESS", "(%s mises à jour jusqu'à présent)");
 define("_AM_ELE_RECOMPUTE_DERIVED_DONE", "Valeurs dérivées recalculées.");
 define("_AM_FORMULIZE_SCREEN_SECURITY", "Utiliser la securité XOOPS sur cet écran?");
 define("_AM_FORMULIZE_SCREEN_SECURITY_DESC", "La sécurité XOOPS est une défense contre les attaques malveillantes par script.  Mais cela peut poser des problèmes si vous utilisez une Interface Utilisateur Ajax-based dans le Screen de la Liste des Entrées, et peut être dans d'autres types de Screens.");

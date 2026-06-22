@@ -1,5 +1,5 @@
 <{if $content.dependent_derived_fids}>
-<div class="form-item recompute-derived" data-fids="<{$content.dependent_derived_fids}>" data-working="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_WORKING}>" data-done="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DONE}>">
+<div class="form-item recompute-derived" data-fids="<{$content.dependent_derived_fids}>" data-working="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_WORKING}>" data-progress="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_PROGRESS}>" data-done="<{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DONE}>">
 	<fieldset>
 		<legend><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED}></legend>
 			<p><{$smarty.const._AM_ELE_RECOMPUTE_DERIVED_DESC}></p>
@@ -29,6 +29,7 @@
 		var $section = $button.closest(".recompute-derived");
 		var $status = $section.find(".recompute-derived-status");
 		var fids = String($section.attr("data-fids")).split(",");
+		var totalUpdated = 0; // running total of entries recomputed, across every batch and form
 		$button.attr("disabled", true);
 		$status.show().text($section.attr("data-working"));
 
@@ -42,6 +43,8 @@
 			if(fid == "") { recomputeForm(formIndex + 1, 0); return; }
 			jQuery.post(window.icms_url + "/modules/formulize/formulize_xhr_responder.php?uid=" + window.icms_userid + "&op=update_derived_value&fid=" + encodeURIComponent(fid) + "&frid=-1&limitstart=" + limitStart, function(data){
 				if(!isNaN(data) && data > 0) {
+					totalUpdated += parseInt(data, 10);
+					$status.text($section.attr("data-working") + " " + $section.attr("data-progress").replace("%s", totalUpdated));
 					recomputeForm(formIndex, limitStart + parseInt(data, 10)); // more entries in this form
 				} else if(isNaN(data)) {
 					$status.text(String(data)); // server returned an error message
