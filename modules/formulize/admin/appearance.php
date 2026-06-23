@@ -172,6 +172,7 @@ $logoFile = basename($currentValues['appearance_logo']);
 $logoPath = formulize_getAppearanceUploadDir() . '/' . $logoFile;
 $logoUrl = ($logoFile AND file_exists($logoPath)) ? formulize_getAppearanceUploadUrl() . '/' . rawurlencode($logoFile) . '?v=' . filemtime($logoPath) : '';
 
+$adminPage['home_tabs'] = getHomeTabs('appearance');
 $adminPage['colours'] = $colours;
 $adminPage['fonts'] = $fonts;
 $adminPage['currentFont'] = $currentValues['appearance_font'] ? $currentValues['appearance_font'] : 'geist';
