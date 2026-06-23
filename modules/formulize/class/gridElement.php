@@ -109,20 +109,20 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 		if(isset($properties['initialElementId'])) {
 			$ele_value[4] = intval($properties['initialElementId']);
 		}
-		$passedRowLabels = isset($properties['rowLabels']) ? explode(",", $properties['rowLabels']) : [];
-		$passedColumnLabels = isset($properties['columnLabels']) ? explode(",", $properties['columnLabels']) : [];
-		$rowLabels = [];
-		$colLabels = [];
 		if(isset($properties['numberOfRows']) AND isset($properties['numberOfColumns'])) {
+			$passedRowLabels = isset($properties['rowLabels']) ? explode(",", $properties['rowLabels']) : [];
+			$passedColumnLabels = isset($properties['columnLabels']) ? explode(",", $properties['columnLabels']) : [];
+			$rowLabels = [];
+			$colLabels = [];
 			for($row = 0; $row < intval($properties['numberOfRows']); $row++) {
 				$rowLabels[] = isset($passedRowLabels[$row]) ? trim($passedRowLabels[$row]) : "";
 			}
 			for($col = 0; $col < intval($properties['numberOfColumns']); $col++) {
 				$colLabels[] = isset($passedColumnLabels[$col]) ? trim($passedColumnLabels[$col]) : "";
 			}
+			$ele_value[1] = implode(",", $rowLabels);
+			$ele_value[2] = implode(",", $colLabels);
 		}
-		$ele_value[1] = implode(",", $rowLabels);
-		$ele_value[2] = implode(",", $colLabels);
 		return ['ele_value' => $ele_value ];
 	}
 
