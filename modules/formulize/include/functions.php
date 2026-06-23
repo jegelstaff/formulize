@@ -4850,6 +4850,81 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
 
 
 /**
+ * Build the dropdown/checkbox filter options for a supported metadata field.
+ *
+ * Only the user metadata fields (creation_uid, mod_uid) produce options: a list of the users
+ * who created or modified entries in this form. The list is doubly restricted - first to the
+ * entries the user can see (their visibility scope), and then to the people in the group(s) the
+ * user can actually interact with - so we never surface the name of someone the user has no
+ * connection or permission with (an entry visible to the user's group could have been created by
+ * someone outside that group). The date metadata fields (creation_datetime, mod_datetime) are
+ * filtered with the date range UI instead of a dropdown, so they intentionally return no options here.
+ *
+ * @param string $metadataHandle - A metadata field handle (creation_uid, mod_uid, creation_datetime, mod_datetime)
+ * @param int $fid - The form id whose data table we read distinct values from
+ * @return array list($options, $useValue) where $options is keyed value=>label, and $useValue is 'uid' for the user fields, '' otherwise
+ */
+function formulize_getMetadataFilterOptions($metadataHandle, $fid) {
+    $options = array();
+    $useValue = "";
+    // only the user metadata fields get a dropdown/checkbox filter
+    if(!$fid OR ($metadataHandle != 'creation_uid' AND $metadataHandle != 'mod_uid')) {
+        return array($options, $useValue);
+    }
+    global $xoopsUser;
+    $gperm_handler = xoops_gethandler('groupperm');
+    $member_handler = xoops_gethandler('member');
+    $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+    $uid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+
+    // work out the entry scope, mirroring the distinct-value lookup used for regular elements:
+    // global scope sees all entries, group scope sees the interaction groups' entries, otherwise just the user's own
+    $hasGlobalScope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, getFormulizeModId());
+    $groupScopeGroups = array(); // the group(s) the user can interact with under group scope
+    $scopeUids = array();
+    if(!$hasGlobalScope) {
+        $groupScopeGroups = getGroupScopeGroups($fid, $groups);
+        if(count($groupScopeGroups)==0) {
+            $scopeUids[] = $uid;
+        }
+    }
+
+    // distinct creators/modifiers among the entries the user can actually see
+    $dataHandler = new formulizeDataHandler($fid);
+    // findAllValuesForField returns entry_id=>value for any real column, including the metadata columns
+    $uidValues = $dataHandler->findAllValuesForField($metadataHandle, 'ASC', $groupScopeGroups, $scopeUids, true);
+    $uidValues = is_array($uidValues) ? array_map('intval', array_unique(array_filter($uidValues, 'is_numeric'))) : array();
+    if(count($uidValues)==0) {
+        return array($options, $useValue);
+    }
+
+    // unless the user can see everything, intersect the creators with the people in the group(s) the
+    // user can interact with, so names of unrelated users are never exposed
+    if(!$hasGlobalScope) {
+        if(count($groupScopeGroups) > 0) {
+            $permittedUids = array_map('intval', $member_handler->getUsersByGroupLink($groupScopeGroups));
+            $permittedUids[] = $uid; // the user can always see and filter by their own entries
+        } else {
+            $permittedUids = array($uid); // own scope: only ever the user themselves
+        }
+        $uidValues = array_intersect($uidValues, $permittedUids);
+        if(count($uidValues)==0) {
+            return array($options, $useValue);
+        }
+    }
+
+    // build the options from the surviving uids
+    $criteria = new Criteria('uid', '('.implode(',', $uidValues).')', 'IN');
+    foreach($member_handler->getUsers($criteria, true) as $thisUid=>$userObject) {
+        $options[$thisUid] = $userObject->getVar('uname'); // uname is the display name in this system
+    }
+    natcasesort($options); // sort by the names users see, preserving the uid keys
+    $useValue = 'uid';
+    return array($options, $useValue);
+}
+
+
+/**
  * Build a dropdown filter that can be used in a form. Normally used to make quick search filters for a list of entries.
  *
  * The options in the filter are determined based on the options for the specified element, or the values stored in all entries in the database if the element does not have defined values (ie: if it's not a radio button series, etc)
@@ -4866,9 +4941,10 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
  * @param bool $multi - A flag used to indicate if the filter should be a series of checkboxes for supporting multi value selections. Defaults to false.
  * should be returned as a checkbox series supporting multiple values
  * @param bool $negativeFilter - A flag used to indicate if the filter should be a "negative" filter, that selects which values to exclude instead of include.
+ * @param int $metadataFid - The form id to use when $element_identifier is a metadata field (creation_uid, mod_uid, etc.), since metadata fields have no element object to derive the form from. Defaults to 0.
  * @return string HTML markup for the filter element, including necessary javascript to submit the form the filter is part of (based on formDOMid)
  */
-function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false) {
+function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false, $metadataFid=0) {
 
     static $multiCounter = -1;
     if($multi) {
@@ -4906,13 +4982,13 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeElement')) ? $element_identifier : $element_handler->get($element_identifier);
 
-		if(!$elementObject) {
+		if(!$elementObject AND !isMetaDataField($element_identifier)) {
 			throw new Exception("No element found with the identifier: ".htmlspecialchars(strip_tags((string) $element_identifier)).", in 'buildFilter' function.");
 		}
 
-    $ORSETOperator = $elementObject->canHaveMultipleValues ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly!
+    $ORSETOperator = ($elementObject AND $elementObject->canHaveMultipleValues) ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly! Metadata fields have no element object, so they use '='.
 
-		$defaultValue = parseUserAndToday($defaultValue, $elementObject->getVar('ele_handle'));
+		$defaultValue = parseUserAndToday($defaultValue, $elementObject ? $elementObject->getVar('ele_handle') : $element_identifier);
 
     if($multi) { // create the hidden field that will get the value assigned for submission
         $defaultHiddenValue = "";
@@ -4984,283 +5060,290 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
             $filter .= $multi ? " <label for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\">&nbsp;$defaultText</label><br/>\n" :"<option value=\"none\">".$defaultText."</option>\n";
         }
 
-        $ele_value = $elementObject->getVar('ele_value');
-        $ele_uitext = $elementObject->getVar('ele_uitext');
-				$switchEleType = anySelectElementType($elementObject->getVar('ele_type')) ? "select" : $elementObject->getVar('ele_type');
-        switch ($switchEleType) {
-            case "select":
-                $options = $ele_value[2];
-                break;
-            case "checkbox":
-						case "checkboxLinked":
-                $checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
-                $ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
-                $options = $ele_value[2];
-                break;
-            case "radio":
-                $options = $ele_value;
-                break;
-						case "provinceList":
-						case "provinceRadio":
-								$provinceListHandler = xoops_getmodulehandler("provinceListElement", "formulize");
-								$options = array_flip($provinceListHandler->getProvinceList()); // values we want in the filter need to be the array keys!
-								break;
-						case "yn":
-								$options = array(_YES=>1, _NO=>2);
-								break;
-            default:
-                $options = array();
-        }
-				if(is_array($options)) {
-					foreach($options as $checkThisKey=>$checkThisValue) {
-						if(strstr($checkThisKey, "{OTHER|")) {
-							unset($options[$checkThisKey]);
+        // metadata fields (creation_uid, mod_uid, etc.) have no element object behind them,
+        // so source their filter options separately and skip all the element-specific logic below
+        if(isMetaDataField($element_identifier)) {
+        	$ele_uitext = array();
+        	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid);
+        } else {
+					$ele_value = $elementObject->getVar('ele_value');
+					$ele_uitext = $elementObject->getVar('ele_uitext');
+					$switchEleType = anySelectElementType($elementObject->getVar('ele_type')) ? "select" : $elementObject->getVar('ele_type');
+					switch ($switchEleType) {
+							case "select":
+									$options = $ele_value[2];
+									break;
+							case "checkbox":
+							case "checkboxLinked":
+									$checkboxHandler = xoops_getmodulehandler("checkboxElement", "formulize");
+									$ele_value = $checkboxHandler->backwardsCompatibility($ele_value);
+									$options = $ele_value[2];
+									break;
+							case "radio":
+									$options = $ele_value;
+									break;
+							case "provinceList":
+							case "provinceRadio":
+									$provinceListHandler = xoops_getmodulehandler("provinceListElement", "formulize");
+									$options = array_flip($provinceListHandler->getProvinceList()); // values we want in the filter need to be the array keys!
+									break;
+							case "yn":
+									$options = array(_YES=>1, _NO=>2);
+									break;
+							default:
+									$options = array();
+					}
+					if(is_array($options)) {
+						foreach($options as $checkThisKey=>$checkThisValue) {
+							if(strstr($checkThisKey, "{OTHER|")) {
+								unset($options[$checkThisKey]);
+							}
 						}
 					}
-				}
-				if (empty($options)) {
-					$eleTypeForOpts  = $elementObject->getVar('ele_type');
-					$classFileForOpts = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleTypeForOpts . 'Element.php';
-					if (file_exists($classFileForOpts)) {
-						require_once $classFileForOpts;
-						$optsHandler = xoops_getmodulehandler($eleTypeForOpts . 'Element', 'formulize');
-						if ($optsHandler && method_exists($optsHandler, 'getFilterOptions')) {
-							$options = $optsHandler->getFilterOptions();
+					if (empty($options)) {
+						$eleTypeForOpts  = $elementObject->getVar('ele_type');
+						$classFileForOpts = XOOPS_ROOT_PATH . '/modules/formulize/class/' . $eleTypeForOpts . 'Element.php';
+						if (file_exists($classFileForOpts)) {
+							require_once $classFileForOpts;
+							$optsHandler = xoops_getmodulehandler($eleTypeForOpts . 'Element', 'formulize');
+							if ($optsHandler && method_exists($optsHandler, 'getFilterOptions')) {
+								$options = $optsHandler->getFilterOptions();
+							}
 						}
 					}
-				}
 
-        $useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
+					$useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
 
-        // if the $options is from a linked selectbox, then figure that out and gather the possible values
-        // only linked selectboxes have this string in their options field
-        if (is_string($options) AND strstr($options, "#*=:*")) {
-            $boxproperties = explode("#*=:*", $options);
-            $source_form_id = $boxproperties[0];
-            $source_element_handle = $boxproperties[1];
+					// if the $options is from a linked selectbox, then figure that out and gather the possible values
+					// only linked selectboxes have this string in their options field
+					if (is_string($options) AND strstr($options, "#*=:*")) {
+							$boxproperties = explode("#*=:*", $options);
+							$source_form_id = $boxproperties[0];
+							$source_element_handle = $boxproperties[1];
 
-            // process the limits
-            $limitConditionTable = "";
-            $limitConditionWhere = "";
-            // NOTE: LIMIT['ELE_ID'] MUST BE THE HANDLE OF THE ELEMENT, NOT THE ELEMENT ID...THIS OBSCURE FEATURE ONLY USED IN THE MAP SITE WAS NOT UPDATED FOR 3.1...AS LONG AS ELEMENT HANDLES ARE NOT CUSTOMIZED, THIS SHOULD NOT BE A PROBLEM
-            if (is_array($limit)) {
-                //$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
-                //$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
-                $limitOperator = isset($limit['operator']) ? $limit['operator'] : " LIKE ";
-                $likebits = (strstr($limitOperator, "LIKE") AND substr($limit['term'], 0, 1) != "%" AND substr($limit['term'], -1) != "%") ? "%" : "";
-                $limitConditionWhere = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".formulize_db_escape($limit['term'])."$likebits' ";
-            } elseif ($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join
-                $linkedSourceElementObject = $element_handler->get($linked_ele_id);
-                $linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
-                // first part will be the form id of the source form, second part will be the element handle in that form
-                $linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]);
-                $linkedFormObject = $form_handler->get($linkedSourceElementEleValueParts[0]);
-                $limitConditionTable = ", ".$xoopsDB->prefix("formulize_".$linkedFormObject->getVar('form_handle'))." as t2 ";
-                $limitConditionWhere = " WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
-            }
-            unset($options);
-            $options = array();
+							// process the limits
+							$limitConditionTable = "";
+							$limitConditionWhere = "";
+							// NOTE: LIMIT['ELE_ID'] MUST BE THE HANDLE OF THE ELEMENT, NOT THE ELEMENT ID...THIS OBSCURE FEATURE ONLY USED IN THE MAP SITE WAS NOT UPDATED FOR 3.1...AS LONG AS ELEMENT HANDLES ARE NOT CUSTOMIZED, THIS SHOULD NOT BE A PROBLEM
+							if (is_array($limit)) {
+									//$limitCondition = $limit['ele_id'] . "/**/" . $limit['term'];
+									//$limitCondition .= isset($limit['operator']) ? "/**/" . $limit['operator'] : "";
+									$limitOperator = isset($limit['operator']) ? $limit['operator'] : " LIKE ";
+									$likebits = (strstr($limitOperator, "LIKE") AND substr($limit['term'], 0, 1) != "%" AND substr($limit['term'], -1) != "%") ? "%" : "";
+									$limitConditionWhere = " WHERE t1`".$limit['ele_id']."` ".$limitOperator." '$likebits".formulize_db_escape($limit['term'])."$likebits' ";
+							} elseif ($subfilter) { // for subfilters, we're jumping back to another form to get the values, hence the join
+									$linkedSourceElementObject = $element_handler->get($linked_ele_id);
+									$linkedSourceElementEleValue = $linkedSourceElementObject->getVar('ele_value');
+									// first part will be the form id of the source form, second part will be the element handle in that form
+									$linkedSourceElementEleValueParts = explode("#*=:*", $linkedSourceElementEleValue[2]);
+									$linkedFormObject = $form_handler->get($linkedSourceElementEleValueParts[0]);
+									$limitConditionTable = ", ".$xoopsDB->prefix("formulize_".$linkedFormObject->getVar('form_handle'))." as t2 ";
+									$limitConditionWhere = " WHERE t1.`$linked_ele_id` LIKE CONCAT('%',t2.entry_id,'%') AND t2.`".$linkedSourceElementEleValueParts[1]."` LIKE '%".formulize_db_escape($_POST[$linked_data_id])."%'";
+							}
+							unset($options);
+							$options = array();
 
-            $conditionsfilter = "";
-            $conditionsfilter_oom = "";
-            $extra_clause = "";
-            if($elementFormObject = $form_handler->get($elementObject->getVar('id_form'))) {
-                global $xoopsUser;
-                $fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-                // remove any dynamic filters pointing to form elements since we're rendering without entry context
-								if(isset($ele_value[5]) AND is_array($ele_value[5]) AND isset($ele_value[5][2]) AND is_array($ele_value[5][2])) {
-									$removedAtLeastOneCondition = false;
-									foreach($ele_value[5][2] as $i=>$conditionTerm) {
-											if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
-													$termToCheck = substr($conditionTerm, 1, -1);
-													if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
-															$removedAtLeastOneCondition = true;
-															unset($ele_value[5][0][$i]);
-															unset($ele_value[5][1][$i]);
-															unset($ele_value[5][2][$i]);
-															unset($ele_value[5][3][$i]);
+							$conditionsfilter = "";
+							$conditionsfilter_oom = "";
+							$extra_clause = "";
+							if($elementFormObject = $form_handler->get($elementObject->getVar('id_form'))) {
+									global $xoopsUser;
+									$fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+									// remove any dynamic filters pointing to form elements since we're rendering without entry context
+									if(isset($ele_value[5]) AND is_array($ele_value[5]) AND isset($ele_value[5][2]) AND is_array($ele_value[5][2])) {
+										$removedAtLeastOneCondition = false;
+										foreach($ele_value[5][2] as $i=>$conditionTerm) {
+												if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
+														$termToCheck = substr($conditionTerm, 1, -1);
+														if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
+																$removedAtLeastOneCondition = true;
+																unset($ele_value[5][0][$i]);
+																unset($ele_value[5][1][$i]);
+																unset($ele_value[5][2][$i]);
+																unset($ele_value[5][3][$i]);
+														}
+												}
+										}
+										if($removedAtLeastOneCondition) {
+											// reindex the arrays, as other code expects everything to start at zero and be sequential
+											$ele_value[5][0] = array_values($ele_value[5][0]);
+											$ele_value[5][1] = array_values($ele_value[5][1]);
+											$ele_value[5][2] = array_values($ele_value[5][2]);
+											$ele_value[5][3] = array_values($ele_value[5][3]);
+										}
+									}
+									list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
+									$sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
+									list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
+									$ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
+									if(anySelectElementType($elementObject->getVar('ele_type'))) {
+										$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
+									} else {
+										$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall'], $ele_value['formlink_useonlyusersentries']);
+									}
+									$extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
+									$limitConditionWhere = substr($limitConditionWhere, 7); // cut off the WHERE in this clause, because the extra_clause already intros it
+							}
+
+							$sourceFormObject = $form_handler->get($source_form_id);
+
+							// if no extra elements are selected for display as a form element, then display the linked element
+							$linked_columns = array($boxproperties[1]);
+							if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
+									if($sourceElementObject = $element_handler->get($source_element_handle)) {
+											$form_handler = xoops_getmodulehandler('forms', 'formulize');
+											$sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
+											$linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
+											// remove empty entries, which can happen if the "use the linked field selected above" option is selected
+											$linked_columns = array_filter($linked_columns);
+									}
+							}
+
+
+							$select_column = '';
+							if(count($linked_columns)==1) {
+									$select_column = "distinct(t1.`".$linked_columns[0]."`)";
+							} else {
+									for($i=0;isset($linked_columns[$i]);$i++) {
+											$select_column .= ', t1.`'.$linked_columns[$i]."`";
+									}
+									$select_column = trim($select_column, ",");
+							}
+
+							// setup the sort order based on ele_value[12], which is an element id number
+							$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";
+							if($ele_value[12]=="none" OR !$ele_value[12]) {
+								$sortOrderClause = " ORDER BY t1.`$source_element_handle` $sortOrder";
+							} else {
+								list($sortHandle) = convertElementIdsToElementHandles(array($ele_value[12]), $sourceFormObject->getVar('id_form'));
+								$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
+							}
+
+							if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere $sortOrderClause")) {
+									$useValue = 'entryid';
+									if(count($linked_columns)>1) {
+											$linked_column_count = count((array) $linked_columns);
+											while ($dataRow = $xoopsDB->fetchRow($dataResult)) {
+													$linked_column_values = array();
+													foreach (range(0, ($linked_column_count-1)) as $linked_column_index) {
+															$linked_value = '';
+															if ($dataRow[$linked_column_index] !== "") {
+																	$linked_value = prepvalues($dataRow[$linked_column_index], $linked_columns[$linked_column_index], $dataRow[$linked_column_count]);
+																	$linked_value = $linked_value[0];
+															}
+															if($linked_value != '' OR is_numeric($linked_value)) {
+																	$linked_column_values[] = $linked_value;
+															}
+													}
+													if(count((array) $linked_column_values)>0) {
+															// set option to entry id, with the linked columns as the label
+															$concatenatedValues = implode(" | ", $linked_column_values);
+															if(!in_array($concatenatedValues, $options)) {
+																	$options[$dataRow[$linked_column_count]] = $concatenatedValues;
+															}
+													}
+											}
+									} else {
+											while($dataRow = $xoopsDB->fetchRow($dataResult)) {
+													$linked_value = prepvalues($dataRow[0], $linked_columns[0], $dataRow[1]);
+													if(!in_array($linked_value[0], $options)) {
+															$options[$dataRow[1]] = $linked_value[0];
 													}
 											}
 									}
-									if($removedAtLeastOneCondition) {
-										// reindex the arrays, as other code expects everything to start at zero and be sequential
-										$ele_value[5][0] = array_values($ele_value[5][0]);
-										$ele_value[5][1] = array_values($ele_value[5][1]);
-										$ele_value[5][2] = array_values($ele_value[5][2]);
-										$ele_value[5][3] = array_values($ele_value[5][3]);
+							}
+					}
+
+					if(!$options) {
+							// figure out the distinct values for this field, use those instead
+							// strip out HTML. Or, if there is <span class='formulize-filter-value'>Text</span> present in the value, use that marked up value instead.
+							// only show the user values that match their visibility settings
+							$gperm_handler = xoops_gethandler('groupperm');
+							global $xoopsUser;
+							$groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+							$groupScopeGroups = array();
+							$scopeUids = array();
+							if(!$view_globalscope = $gperm_handler->checkRight("view_globalscope", $elementObject->getVar('id_form'), $groups, getFormulizeModId())) {
+									$groupScopeGroups = getGroupScopeGroups($elementObject->getVar('id_form'), $groups);
+									if(count($groupScopeGroups)==0) {
+											$scopeUids[] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
 									}
-								}
-                list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
-                $sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
-                list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
-                $ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
-								if(anySelectElementType($elementObject->getVar('ele_type'))) {
-                	$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value[3], $ele_value[4], $ele_value[6], $ele_value['formlink_useonlyusersentries']);
-								} else {
-									$pgroupsfilter = prepareLinkedElementGroupFilter($source_form_id, $ele_value['formlink_scope'], $ele_value['checkbox_scopelimit'], $ele_value['checkbox_formlink_anyorall'], $ele_value['formlink_useonlyusersentries']);
-								}
-                $extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
-                $limitConditionWhere = substr($limitConditionWhere, 7); // cut off the WHERE in this clause, because the extra_clause already intros it
-            }
+							}
+							$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+							// if no groups passed and no scope uids passed, then it just gets everything
+							$options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
+							$options = is_array($options) ? array_unique($options) : array();
+							$parsedOptions = array();
+							foreach($options as $option) {
+									$option = undoAllHTMLChars($option, ENT_QUOTES);
+									if($option === "") { continue; } // skip blanks. {BLANK} is an option already.
+									if($pos = strpos($option,"formulize-filter-value")) {
+											$startPos = strpos($option, '>', $pos);
+											$endPos = strpos($option, '<', $startPos);
+											$candidateOption = 'NOQSFEQUALS'.htmlspecialchars(strip_tags(substr($option, $startPos+1, $endPos-$startPos-1)), ENT_QUOTES);
+									} else {
+											$candidateOption = htmlspecialchars(strip_tags($option), ENT_QUOTES);
+											if($candidateOption != $option) {
+													$candidateOption = 'NOQSFEQUALS'.$candidateOption;
+											}
+									}
+									if(!isset($parsedOptions[$candidateOption])) {
+											$parsedOptions[$candidateOption] = 0;
+									}
+							}
+							$options = $parsedOptions;
+					}
 
-            $sourceFormObject = $form_handler->get($source_form_id);
-
-            // if no extra elements are selected for display as a form element, then display the linked element
-            $linked_columns = array($boxproperties[1]);
-            if (is_array($ele_value[EV_MULTIPLE_FORM_COLUMNS]) AND count((array) $ele_value[EV_MULTIPLE_FORM_COLUMNS]) > 0 AND $ele_value[EV_MULTIPLE_FORM_COLUMNS][0] != 'none') {
-                if($sourceElementObject = $element_handler->get($source_element_handle)) {
-                    $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                    $sourceFormObject = $form_handler->get($sourceElementObject->getVar('id_form'));
-                    $linked_columns = convertElementIdsToElementHandles($ele_value[EV_MULTIPLE_FORM_COLUMNS], $sourceFormObject->getVar('id_form'));
-                    // remove empty entries, which can happen if the "use the linked field selected above" option is selected
-                    $linked_columns = array_filter($linked_columns);
-                }
-            }
-
-
-						$select_column = '';
-            if(count($linked_columns)==1) {
-                $select_column = "distinct(t1.`".$linked_columns[0]."`)";
-            } else {
-                for($i=0;isset($linked_columns[$i]);$i++) {
-                    $select_column .= ', t1.`'.$linked_columns[$i]."`";
-                }
-                $select_column = trim($select_column, ",");
-            }
-
-						// setup the sort order based on ele_value[12], which is an element id number
-						$sortOrder = $ele_value[15] == 2 ? " DESC" : "ASC";
-						if($ele_value[12]=="none" OR !$ele_value[12]) {
-							$sortOrderClause = " ORDER BY t1.`$source_element_handle` $sortOrder";
-						} else {
-							list($sortHandle) = convertElementIdsToElementHandles(array($ele_value[12]), $sourceFormObject->getVar('id_form'));
-							$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
-						}
-
-            if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere $sortOrderClause")) {
-                $useValue = 'entryid';
-                if(count($linked_columns)>1) {
-                    $linked_column_count = count((array) $linked_columns);
-                    while ($dataRow = $xoopsDB->fetchRow($dataResult)) {
-                        $linked_column_values = array();
-                        foreach (range(0, ($linked_column_count-1)) as $linked_column_index) {
-                            $linked_value = '';
-                            if ($dataRow[$linked_column_index] !== "") {
-                                $linked_value = prepvalues($dataRow[$linked_column_index], $linked_columns[$linked_column_index], $dataRow[$linked_column_count]);
-                                $linked_value = $linked_value[0];
-                            }
-                            if($linked_value != '' OR is_numeric($linked_value)) {
-                                $linked_column_values[] = $linked_value;
-                            }
-                        }
-                        if(count((array) $linked_column_values)>0) {
-                            // set option to entry id, with the linked columns as the label
-                            $concatenatedValues = implode(" | ", $linked_column_values);
-                            if(!in_array($concatenatedValues, $options)) {
-                                $options[$dataRow[$linked_column_count]] = $concatenatedValues;
-                            }
-                        }
-                    }
-                } else {
-                    while($dataRow = $xoopsDB->fetchRow($dataResult)) {
-                        $linked_value = prepvalues($dataRow[0], $linked_columns[0], $dataRow[1]);
-                        if(!in_array($linked_value[0], $options)) {
-                            $options[$dataRow[1]] = $linked_value[0];
-                        }
-                    }
-                }
-            }
-        }
-
-        if(!$options) {
-            // figure out the distinct values for this field, use those instead
-            // strip out HTML. Or, if there is <span class='formulize-filter-value'>Text</span> present in the value, use that marked up value instead.
-            // only show the user values that match their visibility settings
-            $gperm_handler = xoops_gethandler('groupperm');
-            global $xoopsUser;
-            $groups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
-            $groupScopeGroups = array();
-            $scopeUids = array();
-            if(!$view_globalscope = $gperm_handler->checkRight("view_globalscope", $elementObject->getVar('id_form'), $groups, getFormulizeModId())) {
-                $groupScopeGroups = getGroupScopeGroups($elementObject->getVar('id_form'), $groups);
-                if(count($groupScopeGroups)==0) {
-                    $scopeUids[] = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-                }
-            }
-            $dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
-            // if no groups passed and no scope uids passed, then it just gets everything
-            $options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
-            $options = is_array($options) ? array_unique($options) : array();
-            $parsedOptions = array();
-            foreach($options as $option) {
-                $option = undoAllHTMLChars($option, ENT_QUOTES);
-                if($option === "") { continue; } // skip blanks. {BLANK} is an option already.
-                if($pos = strpos($option,"formulize-filter-value")) {
-                    $startPos = strpos($option, '>', $pos);
-                    $endPos = strpos($option, '<', $startPos);
-                    $candidateOption = 'NOQSFEQUALS'.htmlspecialchars(strip_tags(substr($option, $startPos+1, $endPos-$startPos-1)), ENT_QUOTES);
-                } else {
-                    $candidateOption = htmlspecialchars(strip_tags($option), ENT_QUOTES);
-                    if($candidateOption != $option) {
-                        $candidateOption = 'NOQSFEQUALS'.$candidateOption;
-                    }
-                }
-                if(!isset($parsedOptions[$candidateOption])) {
-                    $parsedOptions[$candidateOption] = 0;
-                }
-            }
-            $options = $parsedOptions;
-        }
-
-        // code copied from elementrender.php to make fullnames work for Drupalcamp demo
-        if (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") {
-            if (key($options) === "{FULLNAMES}") { $nametype = "name"; }
-            if (key($options) === "{USERNAMES}") { $nametype = "uname"; }
-            $pgroups = array();
-            if ($ele_value[3]) {
-                $scopegroups = explode(",",$ele_value[3]);
-                global $xoopsUser;
-                $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-                if (!in_array("all", $scopegroups)) {
-                    // limit by users's groups
-                    if ($ele_value[4]) {
-                        // loop so we can get rid of reg users group simply
-                        foreach ($groups as $gid) {
-                            if ($gid == XOOPS_GROUP_USERS) { continue; }
-                            if (in_array($gid, $scopegroups)) {
-                                $pgroups[] = $gid;
-                            }
-                        }
-                        if (count((array) $pgroups) > 0) {
-                            unset($groups);
-                            $groups = $pgroups;
-                        } else {
-                            $groups = array();
-                        }
-                    } else {
-                        // don't limit by user's groups
-                        $groups = $scopegroups;
-                    }
-                } else {
-                    // really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
-                    if (!$ele_value[4]) {
-                        unset($groups);
-                        global $xoopsDB;
-                        $allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
-                        foreach ($allgroupsq as $thisgid) {
-                            $groups[] = $thisgid['groupid'];
-                        }
-                    }
-                }
-                $options = array();
-                $namelist = gatherNames($groups, $nametype);
-                foreach ($namelist as $auid=>$aname) {
-                    $options[$auid] = $aname;
-                }
-                $useValue = 'uid';
-                natcasesort($options);
-            }
-        }
+					// code copied from elementrender.php to make fullnames work for Drupalcamp demo
+					if (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") {
+							if (key($options) === "{FULLNAMES}") { $nametype = "name"; }
+							if (key($options) === "{USERNAMES}") { $nametype = "uname"; }
+							$pgroups = array();
+							if ($ele_value[3]) {
+									$scopegroups = explode(",",$ele_value[3]);
+									global $xoopsUser;
+									$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+									if (!in_array("all", $scopegroups)) {
+											// limit by users's groups
+											if ($ele_value[4]) {
+													// loop so we can get rid of reg users group simply
+													foreach ($groups as $gid) {
+															if ($gid == XOOPS_GROUP_USERS) { continue; }
+															if (in_array($gid, $scopegroups)) {
+																	$pgroups[] = $gid;
+															}
+													}
+													if (count((array) $pgroups) > 0) {
+															unset($groups);
+															$groups = $pgroups;
+													} else {
+															$groups = array();
+													}
+											} else {
+													// don't limit by user's groups
+													$groups = $scopegroups;
+											}
+									} else {
+											// really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
+											if (!$ele_value[4]) {
+													unset($groups);
+													global $xoopsDB;
+													$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
+													foreach ($allgroupsq as $thisgid) {
+															$groups[] = $thisgid['groupid'];
+													}
+											}
+									}
+									$options = array();
+									$namelist = gatherNames($groups, $nametype);
+									foreach ($namelist as $auid=>$aname) {
+											$options[$auid] = $aname;
+									}
+									$useValue = 'uid';
+									natcasesort($options);
+							}
+					}
+        } // end of element-specific filter option building (metadata fields handled in the branch above)
 
         $counter++;
         $anythingChecked = false;

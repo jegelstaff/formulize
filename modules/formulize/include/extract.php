@@ -2109,7 +2109,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				// SECOND: HANDLE ANY METADATA FILTER TERMS
 			} elseif ($ifParts[0] == "creation_uid" or $ifParts[0]  == "mod_uid" or $ifParts[0]  == "creation_datetime" or $ifParts[0]  == "mod_datetime") {
 				// if this is a user id field, then treat it specially
-				if (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and !is_numeric($ifParts[1])) {
+				if (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and !is_numeric($ifParts[1]) and $ifParts[1] !== "") { // blank term must NOT come here (it would match users whose uname/name is empty, eg the admin); it falls through to the else so {BLANK} compares on the column itself
 					// subquery the user table for the username or full name
 					$subQueryAndOr = "OR";
 					if(trim($operator) == '!=' OR trim($operator) == 'NOT LIKE') {
@@ -2119,19 +2119,23 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					$quotes = "";
 					$operator = " = ANY ";
 					$likebits = "";
-				} elseif (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and is_numeric($ifParts[1])) { // numeric uid query, so make operator =
-					$operator = " = ";
+				} elseif (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and is_numeric($ifParts[1])) {
+					// the term is now a concrete user id (a literal uid from the exclude/include dropdown, {USER} resolved to
+					// the current uid, or a name already resolved upstream), so we match on the id with = or !=. The incoming
+					// operator deterministically tells us which: NOT LIKE / != / <> / NOT are all negations, everything else is positive.
+					$negatingOperator = (strstr(strtoupper($operator), "NOT") or trim($operator) == "!=" or trim($operator) == "<>");
+					$operator = $negatingOperator ? " != " : " = ";
 					$quotes = "";
 					$likebits = "";
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
-				} else { // need to put mysql_real_escape_string around $ifParts[1] only when it's a date field, since that escaping requirement has been handled already in the subquery for uid filters
+				} else { // a date field, or a blank uid term ({BLANK} -> creation_uid = '' / IS NULL): escape and compare on the column directly. (text uid searches were escaped already in the subquery above)
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				}
-				$newWhereClause = "main." . $ifParts[0]  . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
+				$newWhereClause = " main." . $ifParts[0] . " $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "creator_email") {
 				$formFieldFilterMap['creator_email'] = true;
-				$newWhereClause = "usertable.email" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				$newWhereClause = "usertable.email $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 				$mappedForm = $fid;
 			} elseif($ifParts[0] == "creation_datetime" OR $ifParts[0] == "mod_datetime") {
 				$likeOperators = array('LIKE', 'NOT LIKE');
@@ -2157,11 +2161,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "entry_id") {
 				$formFieldFilterMap['entry_id'] = true;
-				$newWhereClause = "main.entry_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				$newWhereClause = " main.entry_id $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "revision_id" and is_numeric($ifParts[1])) {
 				$formFieldFilterMap['revision_id'] = true;
-				$newWhereClause = "main.revision_id" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+				$newWhereClause = " main.revision_id $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 				$mappedForm = $fid;
 
 			} elseif (strpos($ifParts[0], 'formulize_user_account_') === 0) {
@@ -2193,7 +2197,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					} elseif ($eauEntry['column'] !== null) {
 						// Direct users-table column with no handler delegation
 						$safeCol = formulize_db_escape($eauEntry['column']);
-						$newWhereClause = "{$tableAlias}.`$safeCol`" . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+						$newWhereClause = "{$tableAlias}.`$safeCol` $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 					} else {
 						$newWhereClause = "1"; // no column mapping and no delegation, skip filter
 					}
@@ -2223,7 +2227,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				// instead of doing a subquery, this could probably be redone similarly to creator_email and then we would have the "other" value in the raw query result, and then the process in prepValues would not need to requery the other table
 				if ($formFieldFilterMap[$mappedForm][$element_id]['hasother']) {
 					$subquery = "(SELECT id_req FROM " . DBPRE . "formulize_other WHERE ele_id=" . intval($element_id) . " AND other_text " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . ")";
-					$newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes . "))"; // need to look in the other box and the main field, and return values that match in either case
+					$newWhereClause = "(($elementPrefix.entry_id = ANY $subquery)OR($queryElement $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes))"; // need to look in the other box and the main field, and return values that match in either case
 
 					// HANDLE LINKED ELEMENTS
 				} elseif ($sourceMeta = $formFieldFilterMap[$mappedForm][$element_id]['islinked']) {
@@ -2232,7 +2236,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// ALSO do this if the user is searching for a numeric value with an = operator
 					// Note that $ifParts[0] gets surrounded by `` when going through prepareElementMetaData (?!)
 					if (($ifParts[1] === '' OR trim($operator) == 'IS NULL' OR trim($operator) == 'IS NOT NULL' OR (is_numeric($ifParts[1]) AND trim($operator) == '=')) AND !isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
-						$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($ifParts[1]) . $likebits . $quotes;
+						$newWhereClause = " $queryElement $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 					} else {
 						if (isset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')])) {
 							unset($GLOBALS['formulize_linkedNumericValueIsLiteral'][trim($ifParts[0], '`')]);
@@ -2321,9 +2325,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				} elseif ($listtype = $formFieldFilterMap[$mappedForm][$element_id]['isnamelist'] and $ifParts[1] !== "") {
 					if (!is_numeric($ifParts[1])) {
 						// some values might have special chars in them, because that's how we handle some kinds of search terms, ie: values pulled from the URL by a { } term
-						$preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes . " OR name " . $operator . $quotes . $likebits . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . $likebits . $quotes;  // search name and uname, since often name might be empty these days
+						$preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uname $operator $quotes$likebits" . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . "$likebits$quotes OR name $operator $quotes$likebits" . formulize_db_escape(htmlspecialchars_decode($ifParts[1], ENT_QUOTES)) . "$likebits$quotes ";  // search name and uname, since often name might be empty these days
 					} else {
-						$preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid " . $operator . $quotes . $likebits . $ifParts[1] . $likebits . $quotes;
+						$preSearch = "SELECT uid FROM " . DBPRE . "users WHERE uid $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
 					}
 					$preSearchResult = $xoopsDB->query($preSearch);
 					if ($xoopsDB->getRowsNum($preSearchResult) > 0) {
@@ -2357,7 +2361,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// $ifParts[1] is already a safe, parenthesized list from prepareValueForInOperator.
 					// Use it directly rather than the scalar search-term pipeline below, which would mangle the
 					// list via prepareLiteralTextForDB and/or re-escape it (corrupting quoted string values).
-					$newWhereClause = "$queryElement " . $operator . $ifParts[1];
+					$newWhereClause = " $queryElement $operator " . $ifParts[1] . " ";
 
 					// HANDLE ALL OTHER ELEMENT TYPES (not other box, not linked, not username/fullname list, not delegated)
 				} else {
@@ -2373,7 +2377,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 								if (!$start) {
 									$searchTermToUse .= " OR ";
 								}
-								$searchTermToUse .= "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($thisTerm) . $likebits . $quotes;
+								$searchTermToUse .= " $queryElement $operator $quotes$likebits" . formulize_db_escape($thisTerm) . "$likebits$quotes ";
 								$start = false;
 							}
 							$searchTermToUse .= ") ";
@@ -2397,7 +2401,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 								$useOp = $multiValueSearchMetadata['operator'];
 								$newWhereClause = "( $queryElement $useOp \"%*=+*:".formulize_db_escape(trim($searchTerm, "*=+*:"))."*=+*:%\" $useAndOr $queryElement $useOp \"%*=+*:".formulize_db_escape(trim($searchTerm, "*=+*:"))."\" )";
 							} else {
-								$newWhereClause = "$queryElement " . $operator . $quotes . $likebits . formulize_db_escape($searchTerm) . $likebits . $quotes;
+								$newWhereClause = " $queryElement $operator $quotes$likebits" . formulize_db_escape($searchTerm) . "$likebits$quotes ";
 							}
 							// exclude 0 from searches for empty values (because we use lazy mode in MySQL we have to do this manually Argh!!)
 							if ($searchTerm === '' AND (trim($operator) == "=" OR trim($operator) == "!=")) {
