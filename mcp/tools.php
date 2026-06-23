@@ -1943,8 +1943,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 		$dataTypeProperty = $this->isUserAWebmaster() ? [
 			'data_type' => [
 				'type' => 'string',
-				'enum' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'],
-				'description' => 'Optional. The data type to be used for the field in the database where this data will be stored. The system will default to text in most cases, but will set smart defaults if the type is specifically a number box or linked element storing foreign keys, etc. Generally this does not need to be specified, but can be used if the user has specifically stated that a certain data type must be used for a given element. For int(x), the x is the number of digits to display in MySQL when showing the number. For decimal(x,y), the x is the total number of digits, and y is the number of digits after the decimal point. For char(x) and varchar(x), the x is the maximum number of characters to store.'
+				'description' => 'Optional. The MariaDB data type to be used for the field in the database where this data will be stored. The system will default to text in most cases, but will set smart defaults if the type is specifically a number box or a linked element storing foreign keys, etc. Generally this does not need to be specified, but can be used if the user has specifically stated that a certain data type must be used for a given element. Valid types are: text, int(x), decimal(x,y), date, datetime, time, char(x), varchar(x). For int(x), the x is the number of digits to display in MariaDB when showing the number. For decimal(x,y), the x is the total number of digits, and y is the number of digits after the decimal point. For char(x) and varchar(x), the x is the maximum number of characters to store.'
 			]
 		] : [];
 
