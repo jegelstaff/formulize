@@ -900,9 +900,12 @@ class formulizeDataHandler {
     // scope_uids can be an array of user ids, which will limit the values to those created by the declared users
     // usePerGroupFilters will trigger the use of permission filters set for the user's groups
 	function findAllValuesForField($handle, $sort="", $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+		// cache is keyed by fid as well as handle, because metadata handles (creation_uid, mod_uid, etc.)
+		// are not unique across forms, so two forms on one page would otherwise share each other's values
 		static $cachedValues = array();
 		global $xoopsDB;
-		if(!isset($cachedValues[$handle]) AND $this->fid) {
+		$cacheFid = intval($this->fid);
+		if(!isset($cachedValues[$cacheFid][$handle])) {
 			if($sort=="ASC") {
 				$sort = " ORDER BY f.`$handle` ASC";
 			} elseif($sort =="DESC") {
@@ -939,15 +942,13 @@ class formulizeDataHandler {
 			$sql = "SELECT f.`$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $scope $uidFilter $perGroupFilters $sort";
 			if($res = $xoopsDB->query($sql)) {
 				while($array = $xoopsDB->fetchArray($res)) {
-					$cachedValues[$handle][$array['entry_id']] = $array[$handle];
+					$cachedValues[$cacheFid][$handle][$array['entry_id']] = $array[$handle];
 				}
 			} else {
-				$cachedValues[$handle] = false;
+				$cachedValues[$cacheFid][$handle] = false;
 			}
-		} elseif(!$this->fid) {
-			$cachedValues[$handle] = false; // fid passed into constructor was not valid!
 		}
-		return $cachedValues[$handle];
+		return $cachedValues[$cacheFid][$handle];
 	}
 
 

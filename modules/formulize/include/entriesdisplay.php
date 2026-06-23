@@ -1618,7 +1618,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
         }
     }
 
-	$quickSearches = createQuickSearches($searches, $settings, $hiddenQuickSearches, $filterHandles);
+	$quickSearches = createQuickSearches($searches, $settings, $hiddenQuickSearches, $filterHandles, $fid);
 
 	foreach($quickSearches as $handle=>$qsCode) {
 		$handle = str_replace("-","_",$handle);
@@ -2053,7 +2053,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 						if($col == "creation_uid" OR $col == "mod_uid") {
 							$userObject = $member_handler->getUser(getValue($entry, $col));
 							if($userObject) {
-								$nameToDisplay = $userObject->getVar('name') ? $userObject->getVar('name') : $userObject->getVar('uname');
+								$nameToDisplay = $userObject->getVar('uname') ? $userObject->getVar('uname') : ($userObject->getVar('name') ? $userObject->getVar('name') : _AM_TH_USER . ' ' . $userObject->getVar('uid'));
 							} else {
 								$nameToDisplay = _FORM_ANON_USER;
 							}
@@ -2318,7 +2318,7 @@ function processViewEntryLinkOverrideId($overrideId) {
 // $settings is the standard settings array that has lots of metadata about the current situation
 // $hiddenQuickSearches is an array of all the elements besides the columns that should have searches created
 // $filtersRequired is a an array of all the elements that should have more than just search boxes created, which can be an expensive operation. Passing TRUE will cause all columns to have all search/filter types of UI created
-function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(), $filtersRequired=array()) {
+function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(), $filtersRequired=array(), $fid=0) {
 	$quickSearches = array();
 
 	$pubfilters = is_array($settings['pubfilters']) ? $settings['pubfilters'] : array();
@@ -2332,39 +2332,39 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 			$boxid = "id=firstbox";
             $clear_help_javascript = "placeholder='"._formulize_DE_SEARCH_HELP."'";
 		}
-		$quickSearches[$cols[$i]] = packageSearches($cols[$i], $search_text, $filtersRequired, $boxid, $clear_help_javascript);
+		$quickSearches[$cols[$i]] = packageSearches($cols[$i], $search_text, $filtersRequired, $boxid, $clear_help_javascript, $fid);
 	}
 
 	$hiddenQuickSearchesToMake = array_merge($hiddenQuickSearches, $pubfilters); // include the published filters/searches that the user may have assigned to this screen
 	foreach($hiddenQuickSearchesToMake as $thisHQS) {
 		$search_text = isset($searches[$thisHQS]) ? strip_tags(htmlspecialchars($searches[$thisHQS], ENT_QUOTES)) : ""; // striping tags after htmlspecialchars is probably unnecessary, but can't hurt(?)
-		$quickSearches[$thisHQS] = packageSearches($thisHQS, $search_text, $filtersRequired);
+		$quickSearches[$thisHQS] = packageSearches($thisHQS, $search_text, $filtersRequired, fid: $fid);
 	}
 
 	return $quickSearches;
 }
 
 // go make all the necessary searches/filters for a given element
-function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="") {
+function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="", $fid=0) {
 	$quickSearches = array();
 	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
 	if($filtersRequired === true OR (is_array($filtersRequired) AND in_array($handle, $filtersRequired))) {
-		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text);
-		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true);
+		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text, false, false, $fid);
+		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid);
 		$quickSearches['dateRange'] = formulize_buildDateRangeFilter($handle, $search_text);
-		$quickSearches['multiFilter'] = formulize_buildQSFilterMulti($handle, $search_text);
+		$quickSearches['multiFilter'] = formulize_buildQSFilterMulti($handle, $search_text, $fid);
 	}
 	return $quickSearches;
 }
 
 // create a multi filter
-function formulize_buildQSFilterMulti($handle, $search_text) {
-	return formulize_buildQSFilter($handle, $search_text, true);
+function formulize_buildQSFilterMulti($handle, $search_text, $fid=0) {
+	return formulize_buildQSFilter($handle, $search_text, true, false, $fid);
 }
 
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
 // multi returns a checkbox set, not dropdown
-function formulize_buildQSFilter($handle, $search_text, $multi=false, $negativeFilter = false) {
+function formulize_buildQSFilter($handle, $search_text, $multi=false, $negativeFilter = false, $fid=0) {
 
     if(substr($search_text, 0, 1) == "{" AND substr($search_text, -1) == "}") {
         $requestKeyToUse = substr($search_text,1,-1);
@@ -2377,13 +2377,15 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false, $negativeF
     }
     formulize_benchmark("start of building filter");
     $elementMetaData = formulize_getElementMetaData($handle, true); // true means this is a handle
-    $id = $elementMetaData['ele_id'];
+    // metadata fields (creation_uid, mod_uid, etc.) have no element row, so pass the handle itself
+    // as the identifier and let buildFilter source the options from the metadata field
+    $id = isMetaDataField($handle) ? $handle : $elementMetaData['ele_id'];
     $qsfparts = explode("_", $search_text);
     $search_term = strstr($search_text, "_") ? $qsfparts[1] : $search_text;
     if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
       $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
     }
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi, $negativeFilter);
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi, $negativeFilter, $fid);
     return $filterHTML;
 
 }
