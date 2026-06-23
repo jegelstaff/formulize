@@ -45,8 +45,9 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 	 */
 	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
 		$validOptions = array();
-		$uiText = array();
+		$uiText = ($elementObject = _getElementObject($elementIdentifier)) ? $elementObject->getVar('ele_uitext') : [];
 		if(isset($properties['options'])) {
+			$uiText = array();
 			foreach($properties['options'] as $i => $value) {
 				if(is_string($value) OR is_numeric($value)) {
 					if(isset($properties['databaseValues']) AND is_array($properties['databaseValues']) AND isset($properties['databaseValues'][$i]) AND strlen($properties['databaseValues'][$i])) {
