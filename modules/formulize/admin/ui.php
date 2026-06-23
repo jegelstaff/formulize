@@ -199,6 +199,13 @@ function getHomeTabs($activePage = 'home') {
     );
 
     $tabs[11] = array(
+        'name' => 'Appearance',
+        'url' => 'ui.php?page=appearance',
+        'template' => 'db:admin/appearance.html',
+        'active' => ($activePage == 'appearance')
+    );
+
+    $tabs[12] = array(
         'name' => 'Preferences',
         'url' => XOOPS_URL . '/modules/system/admin.php?fct=preferences&op=showmod&mod=' . getFormulizeModId(),
         'active' => false
