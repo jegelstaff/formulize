@@ -109,13 +109,11 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		// The validateEleValuePublicAPIProperties in the base class returns processed options in key 2
 		// So, if we get back anything at key 2, ele_value and ele_uitext should be taken from the processed values
 		// Otherwise, stick with the values of the existing element
-		list($processed_ele_value, $ele_uitext, $ele_delim) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, [])); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+		list($processed_ele_value, $ele_uitext, $ele_delim) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, [], $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		if(isset($processed_ele_value[2])) {
 			$ele_value = $processed_ele_value[2];
-			$ele_uitext = $ele_uitext; // take what was passed back
 		} elseif($elementObject = _getElementObject($elementIdentifier)) {
 			$ele_value = $elementObject->getVar('ele_value');
-			$ele_uitext = $elementObject->getVar('ele_uitext');
 		}
 		return [
 			'ele_value' => $ele_value,
