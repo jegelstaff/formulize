@@ -577,6 +577,14 @@ table:first-child div.applinks h1 {
     height: 1.75rem;
 }
 
+/* Expanded section heading: when its sub-items are showing (the next sibling is a sub-item),
+   the heading acts as an inert label and you navigate via the sub-items instead. Collapsed
+   headings stay normal links. Appearance is unchanged — only the clickable behaviour differs. */
+.main-menu__item:not(.main-menu__subitem):has(+ .main-menu__subitem) .main-menu__item-link {
+    cursor: default;
+    pointer-events: none;
+}
+
 .hamburger-menu-icon {
   display: block;
   height: 20px;

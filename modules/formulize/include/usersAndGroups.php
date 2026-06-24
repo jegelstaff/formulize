@@ -1618,7 +1618,8 @@ function drawUsersAndGroupsMenuSection() {
 
 	// Sub-items
 	if ($isActive) {
-		$view = strstr(getCurrentURL(), '/modules/formulize/users.php') !== false ? 'users' : 'groups';
+		$view = strpos($currentURL, '/modules/formulize/users.php') !== false ? 'users'
+		      : (strpos($currentURL, '/modules/formulize/groups.php') !== false ? 'groups' : '');
 
 		if ($canManageUsers) {
 			$usersActive = ($view == 'users') ? ' menuSubActive' : '';
