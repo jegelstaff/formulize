@@ -1921,6 +1921,15 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$startOfficeUseOnlyHidden = true;
 
+	// The system users/groups table forms manage real account/group records, not ordinary
+	// Formulize entries (entry_id is the uid/groupid directly). Ownership/proxy "Office Use Only"
+	// controls don't apply to them, so skip this section entirely — whether edited via edituser.php
+	// or as a plain non-EAU user/group through users.php / groups.php.
+	$formObject = $form_handler->get($fid);
+	if($formObject AND ($formObject->isSystemUsersTableForm() OR $formObject->isSystemGroupsTableForm())) {
+		return $form;
+	}
+
 	if($entry_id AND $entry_id != 'new') {
 		list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
 		$entryOwner = $creation_uid;
@@ -1938,7 +1947,6 @@ function addOwnershipList($form, $groups, $member_handler, $gperm_handler, $fid,
 		$entryOwner = null;
 		$entryOwnerName = null;
 		// check if this is a single entry form, and if so, if the user has an entry already, in which case we show the proxy list by default since they have to pick someone as the owner when saving the form
-		$formObject = $form_handler->get($fid);
 		if($xoopsUser) {
 			if(($formObject->getVar('single') == "user" AND $data_handler->findFirstEntryForUsers($xoopsUser))
 				OR ($formObject->getVar('single') == "group" AND $data_handler->findFirstEntryForGroups($xoopsUser->getGroups()))) {
