@@ -106,7 +106,18 @@ function ensureUsersTableForm() {
 		include_once XOOPS_ROOT_PATH . '/modules/formulize/class/multiPageScreen.php';
 		$mp_handler    = xoops_getmodulehandler('multiPageScreen', 'formulize');
 		$formObject    = $form_handler->get($fid);
-		$allElementIds = array_values($formObject->getVar('elements'));
+		// Build the form-page element list. List-only elements (the full name, which is a
+		// convenience value of first + last for use in lists and by other forms) are kept off the
+		// editable form page — first name and last name are edited directly. Excluding it here also
+		// self-heals existing installs: the drift check below rewrites the pages without it.
+		$elementTypes  = $formObject->getVar('elementTypes'); // ele_id => ele_type
+		$allElementIds = array();
+		foreach (array_values($formObject->getVar('elements')) as $eleId) {
+			if ($form_handler->userAccountElementTypeIsListOnly($elementTypes[$eleId] ?? '')) {
+				continue;
+			}
+			$allElementIds[] = $eleId;
+		}
 		if (!$formObject->getVar('defaultform')) {
 			$newScreen = $mp_handler->create();
 			$mp_handler->setDefaultFormScreenVars($newScreen, $formObject);

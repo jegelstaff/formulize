@@ -1181,6 +1181,21 @@ class formulizeFormsHandler {
 		return true;
 	}
 
+	/**
+	 * Should the given user-account element type be kept off form screen pages (list/reference only)?
+	 *
+	 * The full name element is a convenience value (first + last) used in lists and for reference
+	 * by other forms; it must never appear on an editable form page, where first name and last name
+	 * are edited directly. Single source of truth shared by entries-are-users forms
+	 * (createUserAccountElements) and the system users ad hoc table form (ensureUsersTableForm).
+	 *
+	 * @param string $type e.g. 'userAccountFullName'
+	 * @return bool
+	 */
+	function userAccountElementTypeIsListOnly($type) {
+		return $type === 'userAccountFullName';
+	}
+
 	function getUserAccountElementTypes() {
 		static $userAccountElementTypes = array();
 		if(empty($userAccountElementTypes)) {
@@ -1345,7 +1360,6 @@ class formulizeFormsHandler {
 					$userAccountPageNumber = 1;
 					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
 				}
-				$listOnlyTypes = array('userAccountFullName');
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
 					'ele_type' => $type,
@@ -1363,12 +1377,12 @@ class formulizeFormsHandler {
 					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.",";
 				}
 				// List-only elements are created in the element set but never placed on a form screen page.
-				if(!in_array($type, $listOnlyTypes) && $userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
+				if(!$this->userAccountElementTypeIsListOnly($type) && $userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {
 					$screenIdsAndPagesForAdding = array(
 						$defaultFormSid => array($userAccountPageOrdinal)
 					);
 				}
-				$screenIdsForThisElement = in_array($type, $listOnlyTypes) ? array() : $screenIdsAndPagesForAdding;
+				$screenIdsForThisElement = $this->userAccountElementTypeIsListOnly($type) ? array() : $screenIdsAndPagesForAdding;
 				$userAccountElementObject = FormulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, screenIdsAndPagesForAdding: $screenIdsForThisElement);
 			}
 		}
