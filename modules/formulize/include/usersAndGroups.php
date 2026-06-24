@@ -115,6 +115,10 @@ function ensureUsersTableForm() {
 			if ($mp_handler->insert($newScreen, true)) {
 				$sid = intval($newScreen->getVar('sid'));
 				$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize_id") . " SET defaultform = $sid WHERE id_form = " . intval($fid));
+				// defaultform was just set via direct SQL, but $formObject is the cached instance
+				// returned by get(); keep it in sync so determineViewEntryScreen() resolves correctly
+				// on this same first page load (no extra DB re-fetch needed).
+				$formObject->setVar('defaultform', $sid);
 			}
 		} else {
 			$sid      = intval($formObject->getVar('defaultform'));
@@ -227,6 +231,10 @@ function ensureGroupsTableForm() {
 				if ($mp_handler->insert($newScreen, true)) {
 					$sid = intval($newScreen->getVar('sid'));
 					$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix("formulize_id") . " SET defaultform = $sid WHERE id_form = $fidInt");
+					// defaultform was just set via direct SQL, but $formObject is the cached instance
+					// returned by get(); keep it in sync so downstream lookups resolve correctly on
+					// this same first page load (no extra DB re-fetch needed).
+					$formObject->setVar('defaultform', $sid);
 				}
 			} else {
 				$sid      = intval($formObject->getVar('defaultform'));

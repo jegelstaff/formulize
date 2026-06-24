@@ -1153,6 +1153,34 @@ class formulizeFormsHandler {
 		return $cache[$type];
 	}
 
+	/**
+	 * Should the given user-account element type be required when auto-created on a form?
+	 *
+	 * Single source of truth for the "is required" rule shared by entries-are-users forms
+	 * (createUserAccountElements) and the system users/groups ad hoc table forms
+	 * (createAdHocTableFormElements / syncAdHocTableFormElements). Only user-account element
+	 * types are ever auto-required; all other types (group columns, plain columns, virtual
+	 * fields) return false. Among user-account types, a fixed not-required set and any
+	 * webmaster-only ($adminOnly) type are not required.
+	 *
+	 * @param string $type e.g. 'userAccountUsername'
+	 * @return bool
+	 */
+	function userAccountElementTypeIsRequired($type) {
+		if(strpos($type, 'userAccount') !== 0) {
+			return false; // only user-account element types are auto-required
+		}
+		$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail', 'userAccountRegistrationDate', 'userAccountLastLogin', 'userAccountMasquerade');
+		if(in_array($type, $notRequiredTypes)) {
+			return false;
+		}
+		// Webmaster-only fields are never required of the person filling in the form.
+		if($this->userAccountElementTypeIsAdminOnly($type)) {
+			return false;
+		}
+		return true;
+	}
+
 	function getUserAccountElementTypes() {
 		static $userAccountElementTypes = array();
 		if(empty($userAccountElementTypes)) {
@@ -1317,23 +1345,22 @@ class formulizeFormsHandler {
 					$userAccountPageNumber = 1;
 					$userAccountPageOrdinal = 0; // convert to zero-based ordinal
 				}
-				$notRequiredTypes = array('userAccountGroupMembership', 'userAccountPhone', 'userAccountEmail', 'userAccountRegistrationDate', 'userAccountLastLogin', 'userAccountMasquerade');
 				$listOnlyTypes = array('userAccountFullName');
 				$elementObjectProperties = array(
 					'ele_caption' => constant("_formulize_".strtoupper($type)),
 					'ele_type' => $type,
 					'ele_handle' => $handle,
 					'ele_private' => 1,
-					'ele_required' => in_array($type, $notRequiredTypes) ? 0 : 1,
+					'ele_required' => $this->userAccountElementTypeIsRequired($type) ? 1 : 0,
 					'fid' => $formObject->getVar('fid'),
 					'ele_order' => figureOutOrder('top', 1.1, $formObject->getVar('fid')),
 					'ele_display' => 1
 				);
 				// Webmaster-only fields (uid, registration/last login, status, group membership,
 				// masquerade) are driven by the element class's $adminOnly property.
+				// (userAccountElementTypeIsRequired already forces these to not-required above.)
 				if($this->userAccountElementTypeIsAdminOnly($type)) {
 					$elementObjectProperties['ele_display'] = ",".XOOPS_GROUP_ADMIN.",";
-					$elementObjectProperties['ele_required'] = 0;
 				}
 				// List-only elements are created in the element set but never placed on a form screen page.
 				if(!in_array($type, $listOnlyTypes) && $userAccountPageNumber && empty($screenIdsAndPagesForAdding)) {

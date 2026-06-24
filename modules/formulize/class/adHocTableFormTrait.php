@@ -54,6 +54,10 @@ trait formulizeAdHocTableFormTrait {
 			// code-defined default columns so newly added extraElements appear.
 			$this->syncAdHocTableFormElements($fid, $tableName, $options);
 			$this->setAdHocFormHeaderlist($fid, $options);
+			// Element inserts (via enforceUniqueElementHandles) and the headerlist UPDATE above
+			// can populate/leave the static form-object cache in get() out of date for this fid.
+			// Refresh it so callers this same page load see the complete, current element set.
+			$this->get($fid, false, true);
 			return $fid;
 		}
 
@@ -84,6 +88,13 @@ trait formulizeAdHocTableFormTrait {
 
 		// Set the headerlist (default visible columns)
 		$this->setAdHocFormHeaderlist($fid, $options);
+
+		// Element inserts above populate the static form-object cache in get() via
+		// enforceUniqueElementHandles BEFORE the element rows are committed, leaving a cached
+		// form object with no elements. Refresh it so callers this same page load (the
+		// multiPageScreen/headerlist/column machinery) see the complete element set — otherwise
+		// the list shows no columns until the next request.
+		$this->get($fid, false, true);
 
 		return $fid;
 	}
@@ -280,7 +291,8 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_handle', $eleHandle);
 			$element->setVar('ele_desc', "");
 			$element->setVar('ele_colhead', "");
-			$element->setVar('ele_required', 0);
+			// Apply the same required rule used for user-account elements on entries-are-users forms.
+			$element->setVar('ele_required', $this->userAccountElementTypeIsRequired($type) ? 1 : 0);
 			$element->setVar('ele_order', $element_order);
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
@@ -311,13 +323,15 @@ trait formulizeAdHocTableFormTrait {
 				$fallbackOrder += 10;
 			}
 
+			$extraType = isset($extra['typeForCaption']) ? $extra['typeForCaption'] : ($extra['type'] ?? 'text');
 			$element =& $element_handler->create();
 			$element->setVar('ele_caption', $caption);
 			$element->setVar('ele_handle', $this->_adHocCanonicalHandle(
 				isset($extra['typeForCaption']) ? $extra['typeForCaption'] : '', $fid, $extra['handle']));
 			$element->setVar('ele_desc', isset($extra['description']) ? $extra['description'] : "");
 			$element->setVar('ele_colhead', "");
-			$element->setVar('ele_required', 0);
+			// Apply the same required rule used for user-account elements on entries-are-users forms.
+			$element->setVar('ele_required', $this->userAccountElementTypeIsRequired($extraType) ? 1 : 0);
 			$element->setVar('ele_order', $element_order);
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
@@ -328,7 +342,6 @@ trait formulizeAdHocTableFormTrait {
 			if (!empty($extra['source_column'])) {
 				$extraEleVal['source_column'] = $extra['source_column'];
 			}
-			$extraType = isset($extra['typeForCaption']) ? $extra['typeForCaption'] : ($extra['type'] ?? 'text');
 			$element->setVar('ele_value', $extraEleVal);
 			$element->setVar('id_form', $fid);
 			$element->setVar('ele_private', 0);
@@ -376,18 +389,19 @@ trait formulizeAdHocTableFormTrait {
 
 		// Index existing elements by handle — include ele_order, ele_value, and ele_desc so drift can be detected
 		// and source_column can be kept up to date.
-		$eleResult = $this->db->query("SELECT ele_id, ele_caption, ele_handle, ele_type, ele_order, ele_value, ele_desc, ele_display FROM " . $this->db->prefix("formulize") . " WHERE id_form = " . $fid);
+		$eleResult = $this->db->query("SELECT ele_id, ele_caption, ele_handle, ele_type, ele_order, ele_value, ele_desc, ele_display, ele_required FROM " . $this->db->prefix("formulize") . " WHERE id_form = " . $fid);
 		$existingByHandle = array();
 		while ($row = $this->db->fetchArray($eleResult)) {
 			$existingEleValue = @unserialize($row['ele_value']);
 			$existingByHandle[$row['ele_handle']] = array(
-				'ele_id'      => $row['ele_id'],
-				'ele_caption' => $row['ele_caption'],
-				'ele_type'    => $row['ele_type'],
-				'ele_order'   => intval($row['ele_order']),
-				'ele_value'   => is_array($existingEleValue) ? $existingEleValue : array(),
-				'ele_desc'    => $row['ele_desc'],
-				'ele_display' => $row['ele_display'],
+				'ele_id'       => $row['ele_id'],
+				'ele_caption'  => $row['ele_caption'],
+				'ele_type'     => $row['ele_type'],
+				'ele_order'    => intval($row['ele_order']),
+				'ele_value'    => is_array($existingEleValue) ? $existingEleValue : array(),
+				'ele_desc'     => $row['ele_desc'],
+				'ele_display'  => $row['ele_display'],
+				'ele_required' => intval($row['ele_required']),
 			);
 		}
 
@@ -444,6 +458,12 @@ trait formulizeAdHocTableFormTrait {
 				if ((string)$existingByHandle[$desiredHandle]['ele_display'] !== (string)$desiredDisplay) {
 					$updates[] = "ele_display = " . $this->db->quoteString($desiredDisplay);
 				}
+				// Keep ele_required in sync with the shared user-account required rule (self-heals
+				// forms created before this rule existed, where everything was set to not-required).
+				$desiredRequired = $this->userAccountElementTypeIsRequired($desiredType) ? 1 : 0;
+				if ($existingByHandle[$desiredHandle]['ele_required'] !== $desiredRequired) {
+					$updates[] = "ele_required = " . $desiredRequired;
+				}
 				// Ensure source_column is stored when the handle differs from the column name.
 				if ($desiredHandle !== $columnName) {
 					$existingEleVal = $existingByHandle[$desiredHandle]['ele_value'];
@@ -468,7 +488,8 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_handle', $desiredHandle);
 			$element->setVar('ele_desc', "");
 			$element->setVar('ele_colhead', "");
-			$element->setVar('ele_required', 0);
+			// Apply the same required rule used for user-account elements on entries-are-users forms.
+			$element->setVar('ele_required', $this->userAccountElementTypeIsRequired($desiredType) ? 1 : 0);
 			$element->setVar('ele_order', $desiredOrder);
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
@@ -533,6 +554,12 @@ trait formulizeAdHocTableFormTrait {
 				if ((string)$existingByHandle[$desiredHandle]['ele_display'] !== (string)$desiredDisplay) {
 					$updates[] = "ele_display = " . $this->db->quoteString($desiredDisplay);
 				}
+				// Keep ele_required in sync with the shared user-account required rule (self-heals
+				// forms created before this rule existed, where everything was set to not-required).
+				$desiredRequired = $this->userAccountElementTypeIsRequired($desiredType) ? 1 : 0;
+				if ($existingByHandle[$desiredHandle]['ele_required'] !== $desiredRequired) {
+					$updates[] = "ele_required = " . $desiredRequired;
+				}
 				$desiredDesc = isset($extra['description']) ? $extra['description'] : "";
 				if ($existingByHandle[$desiredHandle]['ele_desc'] !== $desiredDesc) {
 					$updates[] = "ele_desc = " . $this->db->quoteString($desiredDesc);
@@ -569,7 +596,8 @@ trait formulizeAdHocTableFormTrait {
 			$element->setVar('ele_handle', $desiredHandle);
 			$element->setVar('ele_desc', isset($extra['description']) ? $extra['description'] : "");
 			$element->setVar('ele_colhead', "");
-			$element->setVar('ele_required', 0);
+			// Apply the same required rule used for user-account elements on entries-are-users forms.
+			$element->setVar('ele_required', $this->userAccountElementTypeIsRequired($desiredType) ? 1 : 0);
 			$element->setVar('ele_order', $desiredOrder);
 			$element->setVar('ele_forcehidden', 0);
 			$element->setVar('ele_uitext', "");
