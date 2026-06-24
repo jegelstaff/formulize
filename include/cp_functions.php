@@ -211,7 +211,7 @@ if (! empty( $_SESSION['redirect_message'] )) {
 		}
 		//end
 		if ($navitem['id'] == 'opsystem') {
-			$groups = icms::$user->getGroups();
+			$groups = icms::$user ? icms::$user->getGroups() : [ICMS_GROUP_ANONYMOUS];
 			$all_ok = false;
 			if (! in_array(ICMS_GROUP_ADMIN, $groups)) {
 				$sysperm_handler = icms::handler('icms_member_groupperm');
