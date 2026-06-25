@@ -212,7 +212,10 @@ class formulizePermHandler {
                 }
             } else {
                 // first check if this an entry by current user and they can edit their own entries
-                if (getEntryOwner($entry_id, $form_id) == $user_id) {
+                // for anonymous users (uid 0), ownership is not proof of identity since uid 0 is every
+                // anonymous visitor, so additionally require an unforgeable token for the entry
+                if (getEntryOwner($entry_id, $form_id) == $user_id
+                    AND ($user_id != 0 OR formulize_anonHoldsEntry($form_id, $entry_id))) {
                     // user can update entry because it is their own and they have permission to update their own entries
                     self::$cached_permissions[$cache_key] = $gperm_handler->checkRight("{$action}_own_entry", $form_id, $groups, self::$formulize_module_id);
                 }

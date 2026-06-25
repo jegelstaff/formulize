@@ -1069,10 +1069,11 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
         }
         // use cookie for registered users
         // or anon users that don't require passcodes
+        // the cookie is signed, so a spoofed/tampered value verifies to 0 and is ignored
         if( ($uid
             OR (!$screen OR $screen->getVar('anonNeedsPasscode') == false) )
-           AND isset($_COOKIE['entryid_'.$fid]) ) {
-        	$anon_override_entry = $_COOKIE['entryid_'.$fid];
+           AND ($verifiedCookieEntry = formulize_verifyAnonEntryCookie($fid)) ) {
+        	$anon_override_entry = $verifiedCookieEntry;
         }
     }
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";

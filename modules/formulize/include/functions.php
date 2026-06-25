@@ -463,6 +463,153 @@ function formulize_systemManagedFormAccessCheck($formObject, $entry_id, $user_id
 
 
 /**
+ * Derive the secret key used to sign anonymous-entry cookies.
+ *
+ * Anonymous visitors have no identity, so the only way to prove that a given form
+ * entry "belongs" to the current visitor is possession of an unforgeable token. We
+ * sign that token with a key derived (domain-separated) from the site's database salt
+ * so that the entry id stored in the cookie cannot be forged or enumerated.
+ *
+ * @return string A binary HMAC key
+ */
+function formulize_anonEntryToken_secret() {
+    $base = defined('XOOPS_DB_SALT') ? XOOPS_DB_SALT : (defined('XOOPS_DB_PASS') ? XOOPS_DB_PASS : 'formulize_anon_entry_fallback_secret');
+    // domain separation so this key is not interchangeable with any other use of the salt
+    return hash_hmac('sha256', 'formulize_anon_entry_token_v1', $base, true);
+}
+
+/**
+ * Produce the HMAC signature over the canonical signed payload for an anonymous-entry token.
+ *
+ * This is the single place the signed message is constructed, so the signer and the verifier
+ * can never drift apart in how the payload is encoded - which is the failure mode that would
+ * silently break (or weaken) the MAC. If you add another field to the payload, add it here and
+ * pass it from both callers.
+ *
+ * @param int $fid The form ID
+ * @param int $entry_id The entry ID
+ * @param int $expires Unix timestamp after which the token is no longer valid
+ * @return string The hex HMAC-SHA256 signature
+ */
+function formulize_anonEntryTokenSignature($fid, $entry_id, $expires) {
+    return hash_hmac('sha256', intval($fid).':'.intval($entry_id).':'.intval($expires), formulize_anonEntryToken_secret());
+}
+
+/**
+ * Build the signed cookie value for an anonymous entry: "<entry_id>.<expires>.<signature>".
+ *
+ * The expiry timestamp is part of the signed payload, so the cookie's lifetime is enforced
+ * cryptographically (server side) and not just by the browser. A captured cookie value cannot
+ * be kept alive past its deadline by re-setting it with a longer browser expiry, because that
+ * would not change the signed-in expiry the server checks.
+ *
+ * @param int $fid The form ID (bound into the signature so a token for one form cannot be replayed on another)
+ * @param int $entry_id The entry ID the anonymous visitor is allowed to access
+ * @param int $expires Unix timestamp after which the token is no longer valid
+ * @return string The signed cookie value
+ */
+function formulize_signAnonEntryToken($fid, $entry_id, $expires) {
+    $entry_id = intval($entry_id);
+    $expires = intval($expires);
+    $sig = formulize_anonEntryTokenSignature($fid, $entry_id, $expires);
+    return $entry_id . '.' . $expires . '.' . $sig;
+}
+
+/**
+ * Set the hardened, signed anonymous-entry cookie for a form, and update $_COOKIE so
+ * the value is available within the current request.
+ *
+ * @param int $fid The form ID
+ * @param int $entry_id The entry ID to grant the anonymous visitor access to
+ * @return void
+ */
+function formulize_setAnonEntryCookie($fid, $entry_id) {
+    $cookieName = 'entryid_'.intval($fid);
+    $expires = time()+60*60*24*7; // 7 days, sliding (refreshed each time the anon saves)
+    $cookieValue = formulize_signAnonEntryToken($fid, $entry_id, $expires);
+    $secure = (!empty($_SERVER['HTTPS']) AND strtolower($_SERVER['HTTPS']) !== 'off');
+    setcookie($cookieName, $cookieValue, array(
+        'expires' => $expires,
+        'path' => '/', // available anywhere in the domain (not just the current folder)
+        'secure' => $secure,
+        'httponly' => true, // only ever read server side
+        'samesite' => 'Lax',
+    ));
+    $_COOKIE[$cookieName] = $cookieValue;
+}
+
+/**
+ * Read and verify the signed anonymous-entry cookie for a form.
+ *
+ * Returns the entry id only if the cookie is present, unexpired, and its signature is valid
+ * for this form. A missing, malformed, expired, or tampered cookie returns 0, so a spoofed
+ * cookie cannot grant access to an arbitrary entry.
+ *
+ * @param int $fid The form ID
+ * @return int The verified entry id, or 0 if there is no valid cookie
+ */
+function formulize_verifyAnonEntryCookie($fid) {
+    $cookieName = 'entryid_'.intval($fid);
+    if(!isset($_COOKIE[$cookieName])) {
+        return 0;
+    }
+    $parts = explode('.', $_COOKIE[$cookieName]);
+    if(count($parts) !== 3) {
+        return 0;
+    }
+    list($entry_id, $expires, $sig) = $parts;
+    if(!is_numeric($entry_id) OR !is_numeric($expires)) {
+        return 0;
+    }
+    if(time() > intval($expires)) {
+        return 0; // expired - lifetime is enforced server side, not just by the browser
+    }
+    $expected = formulize_anonEntryTokenSignature($fid, $entry_id, $expires);
+    return hash_equals($expected, (string) $sig) ? intval($entry_id) : 0;
+}
+
+/**
+ * Determine whether the current anonymous visitor legitimately holds a given entry.
+ *
+ * This is the single authority for anonymous access to an entry, used by both the read
+ * path (security_check) and the write path (user_can_edit_entry). An anonymous visitor
+ * holds an entry if they have a valid passcode in session that matches the entry, or a
+ * validly-signed cookie for the entry. Bare "owned by uid 0" is NOT sufficient, since
+ * uid 0 is every anonymous visitor.
+ *
+ * @param int $form_id The form ID
+ * @param int $entry_id The entry ID being accessed
+ * @return bool True if the current anonymous visitor is entitled to this entry
+ */
+function formulize_anonHoldsEntry($form_id, $entry_id) {
+    if(empty($entry_id) OR !is_numeric($entry_id)) {
+        return false;
+    }
+    $entry_id = intval($entry_id);
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    $candidateEntries = array();
+    $sawPasscodeForForm = false; // a passcode in session for THIS form takes precedence over any cookie
+    foreach($_SESSION as $sessionVariable=>$value) {
+        if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
+            $sid = str_replace('formulize_passCode_', '', $sessionVariable);
+            $screenObject = $screen_handler->get($sid);
+            if(is_object($screenObject) AND $screenObject->getVar('fid') == $form_id) {
+                $sawPasscodeForForm = true;
+                $data_handler = new formulizeDataHandler($form_id);
+                $candidateEntries = array_merge($candidateEntries, $data_handler->findAllEntriesWithValue('anon_passcode_'.$form_id, $value));
+            }
+        }
+    }
+    if(!$sawPasscodeForForm) {
+        if($cookieEntry = formulize_verifyAnonEntryCookie($form_id)) {
+            $candidateEntries[] = $cookieEntry;
+        }
+    }
+    return in_array($entry_id, array_map('intval', $candidateEntries));
+}
+
+
+/**
  * Perform security check for a form and entry
  *
  * Checks if a user has permission to access a specific form and entry.
@@ -566,23 +713,9 @@ function security_check($form_id, $entry_id="", $user_id="", $owner="", $groups=
                 // anonymous user so ownership isn't good enough, they either need explicit groupscope
                 // or the entry needs to be one that they have rights to in virtue of a cookie or passcode on a screen on this form
                 if(!$view_groupscope = $gperm_handler->checkRight("view_groupscope", $form_id, $groups, $mid)) {
-                    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-                    $candidateEntries = array();
-                    $sid = 0;
-                    foreach($_SESSION as $sessionVariable=>$value) {
-                        if(substr($sessionVariable, 0, 19) == 'formulize_passCode_' AND is_numeric(str_replace('formulize_passCode_', '', $sessionVariable))) {
-                            $sid = str_replace('formulize_passCode_', '', $sessionVariable);
-                            $screenObject = $screen_handler->get($sid);
-                            if($screenObject->getVar('fid') == $form_id) {
-                                $data_handler = new formulizeDataHandler($form_id);
-                                $candidateEntries = array_merge($candidateEntries, $data_handler->findAllEntriesWithValue('anon_passcode_'.$form_id, $value));
-                            }
-                        }
-                    }
-                    if(!$sid AND isset($_COOKIE['entryid_'.$form_id])) {
-                        $candidateEntries[] = intval($_COOKIE['entryid_'.$form_id]);
-                    }
-                    if(in_array($entry_id, $candidateEntries)) {
+                    // anon ownership (uid 0) is not proof of identity, so require an unforgeable token:
+                    // a passcode in session that matches the entry, or a validly-signed cookie for the entry
+                    if(formulize_anonHoldsEntry($form_id, $entry_id)) {
 												$cachedSecurityChecks[$form_id][$entry_id] = true;
                         return true;
                     }

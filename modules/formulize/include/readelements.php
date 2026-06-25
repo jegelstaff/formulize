@@ -339,8 +339,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                         $notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
                         writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
                         if($creation_user == 0) { // handle cookies for anonymous users
-                            setcookie('entryid_'.$elementFid, $writtenEntryId, time()+60*60*24*7, '/');	// the slash indicates the cookie is available anywhere in the domain (not just the current folder)
-                            $_COOKIE['entryid_'.$elementFid] = $writtenEntryId;
+                            formulize_setAnonEntryCookie($elementFid, $writtenEntryId); // signed + hardened cookie so the entry id cannot be forged or enumerated
                         }
                         afterSavingLogic($values, $writtenEntryId);
                     }
