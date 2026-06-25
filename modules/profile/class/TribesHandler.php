@@ -72,8 +72,8 @@ class mod_profile_TribesHandler extends icms_ipf_Handler {
 
 		if ($uid_owner) $criteria->add(new icms_db_criteria_Item('uid_owner', (int)$uid_owner));
 		if ($tribes_id) {
-			if (!is_array($tribes_id)) $tribes_id = array((int)$tribes_id);
-			$tribes_id = '('.implode(',', $tribes_id).')';
+			if (!is_array($tribes_id)) $tribes_id = array($tribes_id);
+			$tribes_id = '('.implode(',', array_map('intval', $tribes_id)).')';
 			$criteria->add(new icms_db_criteria_Item('tribes_id', $tribes_id, 'IN'));
 		}
 		return $criteria;
@@ -151,6 +151,7 @@ class mod_profile_TribesHandler extends icms_ipf_Handler {
 	 * @return array of mod_profile_Tribes objects
 	 */
 	public function searchTribes($title) {
+		$title = icms_core_DataFilter::addSlashes($title);
 		$criteria = new icms_db_criteria_Compo();
 		$criteria->setSort('title');
 		$criteria->add(new icms_db_criteria_Item('title', '%'.$title.'%', 'LIKE'));

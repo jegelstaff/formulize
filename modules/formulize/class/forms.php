@@ -1577,7 +1577,7 @@ class formulizeFormsHandler {
 				if(in_array($entryId, $alreadyLinkedEntryIds)) {
 					continue;
 				}
-				$criteria = new Criteria($userField, $value);
+				$criteria = new Criteria($userField, formulize_db_escape($value));
 				if($userObjects = $member_handler->getUsers($criteria)
 					AND is_array($userObjects)
 					AND count($userObjects) == 1
