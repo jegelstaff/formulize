@@ -2555,9 +2555,12 @@ function getSingle($fid, $uid, $groups=null, $member_handler=null, $gperm_handle
 		);
 
 		// get the candidate entries for the user, probably just one, but could be more than one in some cases
+		// for anons, we always do blank, because user 0 is lots of different people, so we don't want to show them all the same first entry
+		// instead anons see something determined by cookie/local storage if they return to a single entry form
 		$foundEntries = array();
-		if (!$xoopsUser AND $effectiveSingle == "user") {
+		if ($xoopsUser AND $effectiveSingle == "user") {
 			$foundEntries = $data_handler->findAllEntriesForUsers($uid);
+			if (!is_array($foundEntries)) { $foundEntries = array(); } // just in case query failed or something
 		} elseif($effectiveSingle == "group") {
 			// get the first entry belonging to anyone in their groups, excluding any groups that do not have add_own_entry permission
 			$formulize_permHandler = new formulizePermHandler($fid);
