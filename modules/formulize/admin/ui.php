@@ -128,83 +128,77 @@ include_once "op.php";
 function getHomeTabs($activePage = 'home') {
     $tabs = array();
 
-    $tabs[1] = array(
+    $tabs[] = array(
         'name' => 'Apps',
         'url' => 'ui.php?page=home',
         'template' => 'db:admin/home.html',
         'active' => ($activePage == 'home')
     );
 
-    $tabs[2] = array(
-        'name' => 'Users',
-        'url' => 'ui.php?page=users',
-        'template' => 'db:admin/users.html',
-        'active' => ($activePage == 'users')
-    );
+    // Settings tabs are declared as data in include/configsettings_registry.php.
+    // Each is rendered by the generic handler admin/configsettings.php into the
+    // shared template admin/configsettings.html. To add/move/rename a settings tab
+    // or change which preferences it shows, edit the registry file only.
+    foreach(formulize_configSettingsRegistry() as $slug => $settingsTab) {
+        $tabs[] = array(
+            'name' => $settingsTab['name'],
+            'url' => 'ui.php?page=' . $slug,
+            'template' => 'db:admin/configsettings.html',
+            'active' => ($activePage == $slug)
+        );
+    }
 
-    $tabs[3] = array(
-        'name' => 'Groups',
-        'url' => 'ui.php?page=groups',
-        'template' => 'db:admin/groups.html',
-        'active' => ($activePage == 'groups')
-    );
-
-    $tabs[4] = array(
+    $tabs[] = array(
         'name' => 'API Keys',
         'url' => 'ui.php?page=managekeys',
         'template' => 'db:admin/managekeys.html',
         'active' => ($activePage == 'managekeys')
     );
 
-    $tabs[5] = array(
+    $tabs[] = array(
         'name' => 'Email Users',
         'url' => 'ui.php?page=mailusers',
         'template' => 'db:admin/mailusers.html',
         'active' => ($activePage == 'mailusers')
     );
 
-    $tabs[6] = array(
+    $tabs[] = array(
         'name' => 'Import/Export',
         'url' => 'ui.php?page=config-sync',
         'template' => 'db:admin/config_sync.html',
         'active' => ($activePage == 'config-sync')
     );
 
-    $tabs[7] = array(
+    $tabs[] = array(
         'name' => 'Synchronize',
         'url' => 'ui.php?page=synchronize',
         'template' => 'db:admin/synchronize.html',
         'active' => ($activePage == 'synchronize')
     );
 
-    $tabs[8] = array(
+    $tabs[] = array(
         'name' => 'Copy Perms',
         'url' => 'ui.php?page=managepermissions',
         'template' => 'db:admin/managepermissions.html',
         'active' => ($activePage == 'managepermissions')
     );
 
-    $tabs[9] = array(
+    $tabs[] = array(
         'name' => 'Tokens',
         'url' => 'ui.php?page=managetokens',
         'template' => 'db:admin/managetokens.html',
         'active' => ($activePage == 'managetokens')
     );
 
-    $tabs[10] = array(
+    $tabs[] = array(
         'name' => 'Log Viewer',
         'url' => 'ui.php?page=logviewer',
         'template' => 'db:admin/logviewer.html',
         'active' => ($activePage == 'logviewer')
     );
 
-    $tabs[11] = array(
-        'name' => 'Preferences',
-        'url' => XOOPS_URL . '/modules/system/admin.php?fct=preferences&op=showmod&mod=' . getFormulizeModId(),
-        'active' => false
-    );
-
-    return $tabs;
+    // ui-tabs.html expects 1-based, contiguous keys (it computes tabselected = key - 1)
+    return array_combine(range(1, count($tabs)), array_values($tabs));
 }
 
 // make the primary relationship if it doesn't exist already
@@ -244,9 +238,15 @@ $adminPage = array();
 $adminPage['show_user_view'] = ''; // will be set for screens when preparing their admin page, so user can jump to the actual screen to see it in action
 
 // include the active page file based on the 'page' parameter in the URL
-$active_page = str_replace("-", "_", isset($_GET['page']) ? $_GET['page'] : "home").'.php';
-if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/".$active_page)) {
-	$active_page = "home.php";
+$requestedPage = isset($_GET['page']) ? $_GET['page'] : "home";
+if(formulize_isConfigSettingsTab($requestedPage)) {
+	// registry-declared settings tab: rendered by the shared generic handler
+	$active_page = "configsettings.php";
+} else {
+	$active_page = str_replace("-", "_", $requestedPage).'.php';
+	if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/".$active_page)) {
+		$active_page = "home.php";
+	}
 }
 include $active_page;
 
