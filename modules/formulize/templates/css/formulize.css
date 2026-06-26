@@ -151,7 +151,7 @@
 
 
 
-.formulize_button {
+/* .formulize_button {
   text-indent: 30px;
   border-color: #0076a3;
   color: #fff !important;
@@ -159,7 +159,7 @@
   font-size: 15px;
   font-weight: bold;
   height: 36px;
-  width: 185px !important; }
+  width: 185px !important; } */
 
 .formulize_button.formulize_button_dialog {
   text-indent: 0;
@@ -330,7 +330,7 @@ a.formulize-open-close-link {
 }
 
 /*=== Formulize Boutons by Francois T ===*/
-button, input[type='submit'], input[type='button'], input[type='reset'] {
+/* button, input[type='submit'], input[type='button'], input[type='reset'] {
   background-color: #F4F9FE;
   -webkit-border-radius: 5px;
   color: #2F85DC;
@@ -342,10 +342,10 @@ button:hover, .xo-formbuttons:hover, .formButton:hover {
 
 button:focus, input[type='submit']:focus, input[type='button']:focus, input[type='reset']:focus, .xo-formbuttons:focus, .formButton:focus {
   background-color: #f4f4f4;
-  border-color: #333; }
+  border-color: #333; } */
 
 /*=== Formulize Boutons by Francois T ===*/
-#formulize_addButton, #formulize_addProxyButton {
+/* #formulize_addButton, #formulize_addProxyButton {
   text-indent: 45px;
   background: #2F85DC url("../../images/contact-new.png") no-repeat 10px;
   width: 210px !important; }
@@ -393,7 +393,7 @@ button:focus, input[type='submit']:focus, input[type='button']:focus, input[type
   background: #61A6EE url("../../images/findsave.png") no-repeat 10px; }
 
 #formulize_deleteViewButton {
-  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; }
+  background: #61A6EE url("../../images/finddel.png") no-repeat 10px; } */
 
 #formulize_saveButton {
   background-color: #61A6EE;
@@ -690,7 +690,6 @@ table.formulize-grid td.head {
 #listofentries div.main-cell-div > span,
 #listofentries div.formulize-display-element-contents > span {
 	display: block;
-	padding-bottom: 0.3em;
 }
 
 #listofentries div.main-cell-div ul.main-cell-list > li,
