@@ -384,7 +384,7 @@ function elementsInGrid($startID, $fid, $gridCount = 0, $requiredOnly = false) {
 		$limitCondition = $gridCount ? " LIMIT 0, ".intval($gridCount) : "";
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($fid);
-		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' AND id_form='$fid' AND ele_id IN (".implode(",",$formObject->getVar('elementsWithData')).") ORDER BY ele_order $limitCondition", 'ele_id', true);
+		$element_ids_result = q("SELECT ele_id FROM " . $xoopsDB->prefix("formulize") . " WHERE $required ele_order >= '$starting_order' AND id_form='$fid' AND ele_id IN (".implode(",",$formObject->getVar('elements')).") ORDER BY ele_order $limitCondition", 'ele_id', true);
 		$cachedGridElements[$fid][$startID][$gridCount][$requiredOnly] = $element_ids_result;
 	}
 	return $cachedGridElements[$fid][$startID][$gridCount][$requiredOnly];
