@@ -63,7 +63,7 @@ class formulizeUserAccountLastLoginElementHandler extends formulizeUserAccountEl
 	 * @return XoopsFormLabel
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		$displayValue = $ele_value ? date(_MEDIUMDATESTRING, intval($ele_value) + formulize_getUserUTCOffsetSecs(timestamp: intval($ele_value))) : '';
+		$displayValue = $ele_value ? date(_DATESTRING, intval($ele_value) + formulize_getUserUTCOffsetSecs(timestamp: intval($ele_value))) : '';
 		return new XoopsFormLabel($caption, htmlspecialchars($displayValue, ENT_QUOTES), $markupName);
 	}
 
@@ -76,7 +76,7 @@ class formulizeUserAccountLastLoginElementHandler extends formulizeUserAccountEl
 	 * @return string Human-readable date string, or empty string if no value
 	 */
 	function prepareDataForDataset($value, $handle, $entry_id) {
-		return ($value && is_numeric($value)) ? date(_MEDIUMDATESTRING, intval($value) + formulize_getUserUTCOffsetSecs(timestamp: intval($value))) : '';
+		return ($value && is_numeric($value)) ? date(_DATESTRING, intval($value) + formulize_getUserUTCOffsetSecs(timestamp: intval($value))) : '';
 	}
 
 	/**

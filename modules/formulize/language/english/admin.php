@@ -1058,7 +1058,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REPLACE", "Replace t
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_REMOVE", "Remove the specified value from the current value");
 define("_AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_ACTION_APPEND", "Append the specified value to the end of the current value");
 
-define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Enter Smarty html template code here. Use the <{ }> for the Smarty tags (not { } like normal). Important: make sure <a href='".XOOPS_URL."/modules/system/admin.php?fct=preferences&op=show&confcat_id=1' target='_blank'>your site preferences</a> are set to \"always check templates for modifications\" if you are editing your template code.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_TEMPLATE", "Enter Smarty html template code here. Use the <{ }> for the Smarty tags (not { } like normal). Important: while editing template code, enable the option to bypass the template cache in <a href='".XOOPS_URL."/modules/formulize/admin/ui.php?page=settings&view=advanced' target='_blank'>Advanced site settings</a> so changes take effect immediately.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATE_DESC_CUSTOM_CODE", "Enter PHP code here. Any variables defined in this code will be available in the Smarty template.");
 
 

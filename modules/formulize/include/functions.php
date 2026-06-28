@@ -7390,7 +7390,7 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
 					$time_value = strtotime($v);
 					global $xoopsUser;
 					$offset = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? formulize_getUserServerOffsetSecs(timestamp: $time_value) : 0; // no hours/mins in plain dates, but for metadata, get user offset from server timezone which DB should have used to make the dates in question
-					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _MEDIUMDATESTRING : _SHORTDATESTRING; // constants set in /language/english/global.php
+					$dateStringFormat = ($handle == "mod_datetime" OR $handle == "creation_datetime") ? _DATESTRING : _SHORTDATESTRING;
 					$v = (false === $time_value) ? "" : date($dateStringFormat, ($time_value)+$offset);
 				}
         $tag = $useList ? 'li' : 'span';

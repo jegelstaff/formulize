@@ -24,7 +24,7 @@ function editcontent($content_id = 0, $clone = false, $content_pid = false) {
 
 	if (!$clone && !$contentObj->isNew()) {
 		$contentObj->hideFieldFromForm(array('content_published_date', 'content_updated_date', 'content_makesymlink'));
-		$contentObj->setVar('content_updated_date', date(_DATESTRING));
+		$contentObj->setVar('content_updated_date', date(_DBDATESTRING));
 		icms::$module->displayAdminMenu(0, _AM_CONTENT_CONTENTS . " > " . _CO_ICMS_EDITING);
 		$sform = $contentObj->getForm(_AM_CONTENT_CONTENT_EDIT, 'addcontent');
 		$sform->assign($icmsAdminTpl);
@@ -37,7 +37,7 @@ function editcontent($content_id = 0, $clone = false, $content_pid = false) {
 		$sform->assign($icmsAdminTpl);
 	} else {
 		$contentObj->hideFieldFromForm(array('content_published_date', 'content_updated_date'));
-		$contentObj->setVar('content_published_date', date(_DATESTRING));
+		$contentObj->setVar('content_published_date', date(_DBDATESTRING));
 		if ($content_pid) {
 			$contentObj->setVar('content_pid', $content_pid);
 		}

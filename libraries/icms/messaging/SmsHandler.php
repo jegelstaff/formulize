@@ -38,8 +38,12 @@ class icms_messaging_SmsHandler {
 	 * Loads the configured SMS provider or defaults to Twilio
 	 */
 	public function __construct() {
-		// Determine which provider to use
-		$providerName = defined('SMS_PROVIDER') ? SMS_PROVIDER : 'Twilio';
+		// Determine which provider to use: config setting first, then the legacy
+		// trust-folder constant, then the Twilio default.
+		$providerName = self::getSmsConfig('sms_provider', 'SMS_PROVIDER');
+		if ($providerName === '') {
+			$providerName = 'Twilio';
+		}
 
 		// Load provider class
 		$providerClass = 'icms_messaging_sms_' . $providerName . 'Provider';
@@ -79,5 +83,38 @@ class icms_messaging_SmsHandler {
 	 */
 	public function getErrors() {
 		return $this->provider->getErrors();
+	}
+
+	/**
+	 * Resolve an SMS setting: prefer the managed config item (mailer category),
+	 * fall back to the legacy trust-folder constant, then to an empty string.
+	 * Lets sites keep using trust constants while allowing the admin UI to take over.
+	 *
+	 * @param string $configName   The conf_name of the setting (e.g. 'sms_account_sid')
+	 * @param string $constantName The legacy trust constant to fall back to (e.g. 'SMS_ACCOUNT_SID')
+	 * @return string
+	 */
+	public static function getSmsConfig($configName, $constantName = '') {
+		static $mailerConfig = null;
+		if ($mailerConfig === null) {
+			$mailerConfig = array();
+			if (class_exists('icms')) {
+				$config_handler = icms::handler('icms_config');
+				if (is_object($config_handler)) {
+					$cat = defined('ICMS_CONF_MAILER') ? ICMS_CONF_MAILER : 6;
+					$fetched = $config_handler->getConfigsByCat($cat, 0);
+					if (is_array($fetched)) {
+						$mailerConfig = $fetched;
+					}
+				}
+			}
+		}
+		if (isset($mailerConfig[$configName]) && $mailerConfig[$configName] !== '') {
+			return $mailerConfig[$configName];
+		}
+		if ($constantName !== '' && defined($constantName)) {
+			return constant($constantName);
+		}
+		return '';
 	}
 }

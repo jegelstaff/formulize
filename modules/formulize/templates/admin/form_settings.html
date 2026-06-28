@@ -882,7 +882,7 @@
 						<label for="store_revisions-1"><input type="radio" <{$content.revisionsDisabled}> id="store_revisions-1" name="forms-store_revisions" value="1" />Yes, store revision history for this form</label>
 					</div>
 					<div class="description">
-						<p>This can increase the size of your database <b>a lot</b> if you turn on revisions for a form where entries are updated very often!</p><p>You can turn this on for all forms at once, through the <a href="../../system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>">Formulize preferences</a>. If you do that, then you cannot alter it here. This option becomes disabled.</p>
+						<p>This can increase the size of your database <b>a lot</b> if you turn on revisions for a form where entries are updated very often!</p><p>You can turn this on for all forms at once, through <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=settings&view=forms">Settings &rsaquo; Forms</a>. If you do that, then you cannot alter it here. This option becomes disabled.</p>
 					</div>
 				</fieldset>
 			</div>
@@ -897,7 +897,7 @@
 						<label for="send_digests-1"><input type="radio" id="send_digests-1" name="forms-send_digests" value="1" />Yes</label>
 					</div>
 					<div class="description">
-						<p>This feature requires that you turn on the <a href="<{$xoops_url}>/modules/system/admin.php?fct=preferences&op=showmod&mod=<{$adminPage.formulizeModId}>">Formulize module Preference</a> for sending nofitications via cron job. In addition to creating a cron job for triggering 'notify.php' to process notification events, you will need to set a cron job for triggering 'digest.php' which will actually send the digest e-mails.</p>
+						<p>This feature requires that you turn on the cron-job notifications setting under <a href="<{$xoops_url}>/modules/formulize/admin/ui.php?page=settings&view=messaging">Settings &rsaquo; Messaging</a>. In addition to creating a cron job for triggering 'notify.php' to process notification events, you will need to set a cron job for triggering 'digest.php' which will actually send the digest e-mails.</p>
 					</div>
 				</fieldset>
 			</div>

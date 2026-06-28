@@ -29,7 +29,7 @@ function editaudio($audioObj, $hideForm=false) {
 		if (!$profile_audio_handler->userCanSubmit()) redirect_header(PROFILE_URL, 3, _NOPERM);
 		if (!$profile_audio_handler->checkUploadLimit()) return;
 		$audioObj->setVar('uid_owner', icms::$user->getVar('uid'));
-		$audioObj->setVar('creation_time', date(_DATESTRING));
+		$audioObj->setVar('creation_time', date(_DBDATESTRING));
 		$audioObj->hideFieldFromForm(array('creation_time', 'uid_owner'));
 		$sform = $audioObj->getSecureForm($hideForm ? '' : _MD_PROFILE_AUDIOS_SUBMIT, 'addaudio');
 		$sform->assign($icmsTpl, 'profile_audioform');

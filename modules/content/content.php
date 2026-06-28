@@ -26,7 +26,7 @@ function editcontent($contentObj) {
 			redirect_header(CONTENT_URL, 3, _NOPERM);
 		}
 		$contentObj->setVar('content_uid', icms::$user->getVar("uid"));
-		$contentObj->setVar('content_published_date', date(_DATESTRING));
+		$contentObj->setVar('content_published_date', date(_DBDATESTRING));
 		$contentObj->hideFieldFromForm(array('content_published_date', 'content_updated_date', 'content_uid', 'meta_keywords', 'meta_description', 'short_url', 'content_makesymlink', 'content_css', 'content_visibility', 'content_weight', 'content_status', 'content_cancomment', 'content_showsubs'));
 		$sform = $contentObj->getSecureForm(_MD_CONTENT_CONTENT_SUBMIT, 'addcontent');
 		$sform->assign($icmsTpl, 'content_contentform');

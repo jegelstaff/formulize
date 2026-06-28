@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 3,
+	'dbversion' => 4,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -782,6 +782,9 @@ $modversion['templates'][] = array(
 	'file' => 'admin/configsettings.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/configsubject.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/managepermissions.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -911,6 +914,40 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => '12',
 	'options' => array(_MI_formulize_TIME_FORMAT_12 => '12', _MI_formulize_TIME_FORMAT_24 => '24'),
+);
+
+// Date/time display format strings (the _DATESTRING etc. constants that live in each
+// language's global.php). Declared here as module prefs so a module update preserves
+// them. The default is the constant's current value for the active language (captured
+// at install/update time via the defined() guard, which keeps this safe even if
+// global.php hasn't been loaded yet in some bootstrap path), so the fields are
+// pre-filled with the format actually in use. Saving a non-empty value writes it to
+// the generated file global.php includes (see icms_config_Item_Handler::insert);
+// clearing a field reverts to the global.php default. Captions/labels are overridden
+// in include/configsettings_registry.php, so the titles here are just fallbacks.
+$modversion['config'][] = array(
+	'name' => 'datestring',
+	'title' => 'Date and time format',
+	'description' => '',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => defined('_DATESTRING') ? _DATESTRING : 'D M j, Y - g:ia',
+);
+$modversion['config'][] = array(
+	'name' => 'shortdatestring',
+	'title' => 'Short date format',
+	'description' => '',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => defined('_SHORTDATESTRING') ? _SHORTDATESTRING : 'Y-m-d',
+);
+$modversion['config'][] = array(
+	'name' => 'shorttimestring',
+	'title' => 'Short time format',
+	'description' => '',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => defined('_SHORTTIMESTRING') ? _SHORTTIMESTRING : 'g:ia',
 );
 
 $modversion['config'][] = array(

@@ -2294,7 +2294,7 @@ function formulize_formatDateTime($dt) {
 	if($xoopsConfig['language'] == "french") {
 		$return = setlocale(LC_TIME, "fr_FR.UTF8");
 	}
-	return _formulize_TEMP_AT . " " . strftime(dateFormatToStrftime(_MEDIUMDATESTRING), strtotime($dt)+$tzDiffSeconds);
+	return _formulize_TEMP_AT . " " . strftime(dateFormatToStrftime(_DATESTRING), strtotime($dt)+$tzDiffSeconds);
 }
 
 

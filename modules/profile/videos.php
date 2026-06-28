@@ -31,7 +31,7 @@ function editvideos($videosObj, $hideForm = false) {
 	} else {
 		if (!$profile_videos_handler->userCanSubmit()) redirect_header(PROFILE_URL, 3, _NOPERM);
 		$videosObj->setVar('uid_owner', icms::$user->getVar('uid'));
-		$videosObj->setVar('creation_time', date(_DATESTRING));
+		$videosObj->setVar('creation_time', date(_DBDATESTRING));
 		$videosObj->hideFieldFromForm(array('creation_time', 'uid_owner'));
 		$sform = $videosObj->getSecureForm($hideForm ? '' : _MD_PROFILE_VIDEOS_SUBMIT, 'addvideos');
 		$sform->assign($icmsTpl, 'profile_videosform');

@@ -10,6 +10,13 @@ if(!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
     return;
 }
 
+// Set the page chrome up front, so the several early returns below (logging off,
+// no log dir, no files) still render with the admin tabs and breadcrumb.
+$adminPage['home_tabs'] = getHomeTabs('logviewer');
+$breadcrumbtrail[1]['url'] = "page=home";
+$breadcrumbtrail[1]['text'] = "Home";
+$breadcrumbtrail[2]['text'] = "System Log Viewer";
+
 // Include necessary functions
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 
@@ -20,9 +27,8 @@ $formulizeLoggingOnOff = $formulizeConfig['formulizeLoggingOnOff'];
 $logPath = $formulizeConfig['formulizeLogFileLocation'];
 
 if(!$formulizeLoggingOnOff) {
-    $formulizeModId = getFormulizeModId();
-    $preferencesUrl = XOOPS_URL . "/modules/system/admin.php?fct=preferences&op=showmod&mod=" . $formulizeModId;
-    $adminPage['error'] = "Logging is currently disabled. Enable it in <a href=\"" . htmlspecialchars($preferencesUrl) . "\">Formulize preferences</a> to view logs.";
+    $preferencesUrl = XOOPS_URL . "/modules/formulize/admin/ui.php?page=settings&view=system";
+    $adminPage['error'] = "Logging is currently disabled. Enable it under <a href=\"" . htmlspecialchars($preferencesUrl) . "\">Settings &rsaquo; System</a> to view logs.";
     $adminPage['template'] = "db:admin/logviewer.html";
     $adminPage['sessions'] = array();
     $adminPage['log_files'] = array();
@@ -144,13 +150,6 @@ if($entries && count($entries) > 0) {
         $adminPage['info'] = "No log entries found.";
     }
 }
-
-$adminPage['home_tabs'] = getHomeTabs('logviewer');
-
-// Breadcrumb
-$breadcrumbtrail[1]['url'] = "page=home";
-$breadcrumbtrail[1]['text'] = "Home";
-$breadcrumbtrail[2]['text'] = "System Log Viewer";
 
 // ============================================================================
 // Helper Functions

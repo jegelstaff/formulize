@@ -68,12 +68,13 @@ class icms_messaging_sms_TwilioProvider implements icms_messaging_sms_ProviderIn
 	 * Supports both SMS_* (generic) and TWILIO_* (provider-specific) naming
 	 */
 	public function __construct() {
-		// Try generic SMS_* constants first, fall back to TWILIO_* for backward compatibility
-		$this->accountSid = defined('SMS_ACCOUNT_SID') ? SMS_ACCOUNT_SID : '';
+		// Read from the managed config settings first, falling back to the
+		// trust-folder SMS_* constants for backward compatibility.
+		$this->accountSid = icms_messaging_SmsHandler::getSmsConfig('sms_account_sid', 'SMS_ACCOUNT_SID');
 
-		$this->authToken = defined('SMS_AUTH_TOKEN') ? SMS_AUTH_TOKEN : '';
+		$this->authToken = icms_messaging_SmsHandler::getSmsConfig('sms_auth_token', 'SMS_AUTH_TOKEN');
 
-		$this->fromNumber = defined('SMS_FROM_NUMBER') ? SMS_FROM_NUMBER : '';
+		$this->fromNumber = icms_messaging_SmsHandler::getSmsConfig('sms_from_number', 'SMS_FROM_NUMBER');
 
 		if (!empty($this->accountSid)) {
 			$this->apiUrl = "https://api.twilio.com/2010-04-01/Accounts/{$this->accountSid}/Messages.json";

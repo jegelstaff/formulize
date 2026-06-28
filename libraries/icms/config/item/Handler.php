@@ -240,6 +240,43 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 			$conf_id = $this->db->getInsertId();
 		}
 		$config->assignVar('conf_id', $conf_id);
+
+		/**
+		 * FORMULIZE: when one of the date/time format settings is saved, regenerate
+		 * the small file that the language global.php files include, so the
+		 * _DATESTRING / _SHORTDATESTRING / _SHORTTIMESTRING constants reflect the
+		 * saved values. Kept here (the lowest persistence level) so it fires for
+		 * the Formulize admin UI and the legacy preferences page alike, with no
+		 * Formulize code needing to be loaded. Self-contained: reads the three
+		 * values straight from the config table and writes the file.
+		 * _MEDIUMDATESTRING is a backwards-compat alias for _DATESTRING defined
+		 * in global.php; it is not stored separately.
+		 */
+		$formulizeDateFormatConstants = array(
+			'datestring'      => '_DATESTRING',
+			'shortdatestring' => '_SHORTDATESTRING',
+			'shorttimestring' => '_SHORTTIMESTRING',
+		);
+		if (defined('XOOPS_ROOT_PATH') && isset($formulizeDateFormatConstants[$config->getVar('conf_name')])) {
+			$fmlzNames = "'" . implode("','", array_keys($formulizeDateFormatConstants)) . "'";
+			$fmlzRes = $this->db->query("SELECT conf_name, conf_value FROM " . $this->db->prefix('config') . " WHERE conf_name IN ($fmlzNames)");
+			if ($fmlzRes) {
+				$fmlzLines = "<?php\n";
+				while ($fmlzRow = $this->db->fetchArray($fmlzRes)) {
+					// Only write a define for a non-empty value. An empty value means
+					// "use the language's global.php default", so we leave the constant
+					// undefined here and let global.php's own fallback define it.
+					if (isset($formulizeDateFormatConstants[$fmlzRow['conf_name']]) && $fmlzRow['conf_value'] !== '') {
+						$fmlzConst = $formulizeDateFormatConstants[$fmlzRow['conf_name']];
+						$fmlzLines .= "if (!defined('" . $fmlzConst . "')) define('" . $fmlzConst . "', '" . addslashes($fmlzRow['conf_value']) . "');\n";
+					}
+				}
+				global $icmsConfig;
+				$langFolder = isset($icmsConfig['language']) ? $icmsConfig['language'] : 'english';
+				@file_put_contents(XOOPS_ROOT_PATH . '/modules/formulize/language/' . $langFolder . '/formulize_dateformats.php', $fmlzLines);
+			}
+		}
+
 		return true;
 	}
 

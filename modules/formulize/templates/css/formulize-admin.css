@@ -2267,3 +2267,127 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 .autocomplete-icon {
 	vertical-align: middle;
 }
+
+/* ===========================================================================
+   Formulize admin settings pages (registry-driven config tabs).
+   See modules/formulize/include/configsettings.php and configsettings_registry.php.
+   =========================================================================== */
+
+/* Secondary navigation (sub-tabs) within a subject tab. */
+.formulize-config-subnav {
+	list-style: none;
+	margin: 0 0 1.25em 0;
+	padding: 0 0 0.4em 0;
+	border-bottom: 1px solid #ccc;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25em 0.5em;
+}
+.formulize-config-subnav li {
+	margin: 0;
+	padding: 0;
+}
+.formulize-config-subnav a {
+	display: inline-block;
+	padding: 0.4em 0.9em;
+	border-radius: 4px 4px 0 0;
+	text-decoration: none;
+	color: #333;
+}
+.formulize-config-subnav a:hover {
+	background: #eee;
+}
+.formulize-config-subnav li.active a {
+	background: #ddd;
+	font-weight: bold;
+}
+
+/* A divider line above each section heading to delineate sections. The first
+   heading on the page has the same spacing but no line (the sub-nav above it
+   already provides the separation), and no padding-top since there is no line. */
+.formulize-config-settings .formulize-config-section, .formulize-config-settings .formulize-config-section-body {
+	margin: 1.75em 0 0.6em 0;
+}
+.formulize-config-settings .formulize-config-section {
+	padding-top: 1.5em;
+	border-top: 1px solid #ccc;
+}
+.formulize-config-settings .formulize-config-section:first-of-type {
+	padding-top: 0;
+	border-top: none;
+}
+
+/* The setting is a plain block (the element we slide/animate, so the height +
+   margin animation never has to fight a flex display value). */
+.formulize-config-settings .formulize-config-setting {
+	margin-bottom: 1.5em;
+}
+
+/* Indent the settings beneath a section heading so the headings stand out. Only
+   applied when a heading is shown (not on single-section pages). */
+.formulize-config-settings .formulize-config-indented {
+	padding-left: 1.5em;
+}
+
+/* The two-column layout lives on an inner row, untouched by the animation. */
+.formulize-config-settings .formulize-config-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 0.4em 2.5em;
+}
+.formulize-config-settings .formulize-config-text {
+	flex: 1 1 400px;
+	max-width: 768px;
+}
+.formulize-config-settings .formulize-config-input {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+.formulize-config-settings .formulize-config-caption {
+	display: block;
+	font-weight: bold;
+	margin-bottom: 0.25em;
+}
+.formulize-config-settings .formulize-config-description {
+	margin: 0;
+	font-size: 0.9em;
+	line-height: 1.4;
+	color: #555;
+}
+.formulize-config-settings .formulize-config-input select,
+.formulize-config-settings .formulize-config-input textarea,
+.formulize-config-settings .formulize-config-input input[type=text],
+.formulize-config-settings .formulize-config-input input[type=password] {
+	max-width: 100%;
+}
+.formulize-config-settings .formulize-config-preview {
+	margin-top: 0.3em;
+	font-size: 0.9em;
+	color: #777;
+	font-style: italic;
+}
+.formulize-config-settings .formulize-config-actions {
+	margin-top: 1em;
+}
+
+/* Expandable "show format codes" help inside a setting's description. */
+.formulize-config-settings .formulize-config-help {
+	margin-top: 0.4em;
+}
+.formulize-config-settings .formulize-config-help summary {
+	cursor: pointer;
+}
+.formulize-config-settings .formulize-config-help-codes {
+	margin-top: 0.4em;
+	line-height: 1.7;
+}
+
+/* Legacy-feature note banner (e.g. Copy Permissions page). */
+.formulize-legacy-note {
+	padding: 0.75em 1em;
+	background: #FEEFB3;
+	border: 1px solid #9F6000;
+	color: #9F6000;
+	border-radius: 4px;
+}

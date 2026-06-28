@@ -149,7 +149,11 @@ $(document).ready(function() {
 <{if $adminPage.needsave}>
 <div id="admin_toolbar">
 <div id=savebutton>
-<{if $adminPage.isSaveLocked}>
+<{if isset($adminPage.settingsSaveFormId) AND $adminPage.settingsSaveFormId}>
+    <{* settings pages: a submit button bound to the settings form by id, so it saves
+        that form (delegated save) rather than running the Apps element-save logic *}>
+    <input type="submit" form="<{$adminPage.settingsSaveFormId}>" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>
+<{elseif $adminPage.isSaveLocked}>
 	READ ONLY
 <{else}>
     <input type="button" class="savebutton" id="save" value="<{$smarty.const._AM_HOME_SAVECHANGES}>"/>
