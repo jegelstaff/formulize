@@ -912,9 +912,8 @@ class formulizeElementsHandler {
 				foreach((array)scandir(XOOPS_ROOT_PATH.'/modules/formulize/code/') as $file) {
 					if(strstr($file, 'derived_') !== false) {
 						$code = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file);
-						$encapsulatingCharacter1 = '"';
-						$encapsulatingCharacter2 = '"';
-						$newCode = str_replace($encapsulatingCharacter1.$original_handle.$encapsulatingCharacter2, $encapsulatingCharacter1.$ele_handle.$encapsulatingCharacter2, $code);
+						$pattern = '/\$' . preg_quote($original_handle, '/') . '(?![a-zA-Z0-9_])/';
+						$newCode = preg_replace($pattern, '\\$' . $ele_handle, $code);
 						if($newCode != $code) {
 							formulize_writeCodeToFile($file, $newCode);
 						}
