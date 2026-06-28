@@ -532,6 +532,11 @@
             startTime: Date.now()
         };
 
+        // Incremented on every Clear. showResponse() captures this at call-time and
+        // skips DOM/stat updates if it changed, preventing stale fetch callbacks
+        // (from background fetchAvailableOptions calls) from overwriting a cleared state.
+        let responseGeneration = 0;
+
         let responsePanelExpanded = true;
         let testLogs = [];
         let availableTools = [];
@@ -850,6 +855,8 @@
         }
 
         function clearResponse() {
+            responseGeneration++;
+
             document.getElementById('fixed-response').innerHTML = `
                 <div style="text-align: center; color: #666; padding: 20px;">
                     <p>🧹 Response cleared</p>
@@ -950,6 +957,12 @@
         }
 
         async function sendRequest(requestBody, title = '', accumulate = false) {
+            // Capture generation NOW (at request time). Playwright's networkidle fires
+            // when network connections close, before the browser's JS response callbacks
+            // have been scheduled. Capturing here lets us detect a Clear that happens
+            // between request dispatch and response processing.
+            const requestGeneration = responseGeneration;
+
             const apiKey = document.getElementById('apiKey').value;
             const authMode = document.querySelector('input[name="authMode"]:checked')?.value || 'apikey';
             const isSessionMode = authMode === 'session';
@@ -1007,6 +1020,8 @@
                     };
                 }
 
+                if (requestGeneration !== responseGeneration) return null;
+
                 if (!response.ok) {
                     showResponse({
                         status: 'HTTP Error',
@@ -1028,6 +1043,8 @@
 
             } catch (error) {
                 console.error('Request failed:', error);
+
+                if (requestGeneration !== responseGeneration) return null;
 
                 showResponse({
                     status: 'Network Error',

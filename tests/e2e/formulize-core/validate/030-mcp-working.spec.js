@@ -51,7 +51,7 @@ test.describe('Check that tools/list is responding', () => {
 		await page.locator('div[class="response-header"]').click();
 		await page.waitForLoadState('networkidle');
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
-		await expect(page.getByText(/0 total/)).toBeVisible();
+		await expect(page.locator('#fixed-stats')).toContainText('0 total');
 		await page.getByRole('button', { name: '🚀 Send Request' }).click();
 		// expect 1 total or 2 total or 3 total to be visible
 		await expect(page.getByText(/[1-3] total/)).toBeVisible();
@@ -139,7 +139,7 @@ test.describe('Check that tools/list is responding', () => {
 		await page.locator('div[class="response-header"]').click();
 		await page.waitForLoadState('networkidle');
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
-		await expect(page.getByText(/0 total/)).toBeVisible();
+		await expect(page.locator('#fixed-stats')).toContainText('0 total');
 		await page.getByRole('button', { name: '🚀 Send Request' }).click();
 		// expect 1 total or 2 total or 3 total to be visible
 		await expect(page.getByText(/[1-3] total/)).toBeVisible();
