@@ -532,6 +532,11 @@
             startTime: Date.now()
         };
 
+        // Incremented on every Clear. showResponse() captures this at call-time and
+        // skips DOM/stat updates if it changed, preventing stale fetch callbacks
+        // (from background fetchAvailableOptions calls) from overwriting a cleared state.
+        let responseGeneration = 0;
+
         let responsePanelExpanded = true;
         let testLogs = [];
         let availableTools = [];
@@ -755,6 +760,8 @@
         }
 
         function showResponse(data, isError = false, title = '', accumulate = false) {
+            const thisGeneration = responseGeneration;
+
             const timestamp = new Date().toISOString();
             const headerText = title ? `${title} - ${timestamp}` : timestamp;
 
@@ -773,6 +780,14 @@
                 `;
             } else {
                 responseContent = `<div class="response-details"><strong>${headerText}</strong><pre>${data}</pre></div>`;
+            }
+
+            // Bail out if Clear was clicked while this response was being processed.
+            // Playwright's networkidle fires when network connections close, before the
+            // browser's JS callbacks have run, so stale fetchAvailableOptions responses
+            // can arrive after a clear and corrupt the "0 total" state the test relies on.
+            if (thisGeneration !== responseGeneration) {
+                return;
             }
 
             const fixedElement = document.getElementById('fixed-response');
@@ -850,6 +865,8 @@
         }
 
         function clearResponse() {
+            responseGeneration++;
+
             document.getElementById('fixed-response').innerHTML = `
                 <div style="text-align: center; color: #666; padding: 20px;">
                     <p>🧹 Response cleared</p>

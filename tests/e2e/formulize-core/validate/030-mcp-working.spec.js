@@ -51,7 +51,14 @@ test.describe('Check that tools/list is responding', () => {
 		await page.locator('div[class="response-header"]').click();
 		await page.waitForLoadState('networkidle');
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
-		await expect(page.getByText(/0 total/)).toBeVisible();
+		// Use waitForFunction targeting #fixed-stats by ID instead of page.getByText(),
+		// which could match ancestor elements that also contain the text and produces
+		// ambiguous multi-element locators. Running the check inside the browser also
+		// avoids races against async re-renders between Playwright's polling ticks.
+		await page.waitForFunction(() => {
+			const el = document.getElementById('fixed-stats');
+			return el && el.style.display !== 'none' && el.innerText.includes('0 total');
+		});
 		await page.getByRole('button', { name: '🚀 Send Request' }).click();
 		// expect 1 total or 2 total or 3 total to be visible
 		await expect(page.getByText(/[1-3] total/)).toBeVisible();
@@ -139,7 +146,14 @@ test.describe('Check that tools/list is responding', () => {
 		await page.locator('div[class="response-header"]').click();
 		await page.waitForLoadState('networkidle');
 		await page.getByRole('button', { name: 'Clear', exact: true }).click();
-		await expect(page.getByText(/0 total/)).toBeVisible();
+		// Use waitForFunction targeting #fixed-stats by ID instead of page.getByText(),
+		// which could match ancestor elements that also contain the text and produces
+		// ambiguous multi-element locators. Running the check inside the browser also
+		// avoids races against async re-renders between Playwright's polling ticks.
+		await page.waitForFunction(() => {
+			const el = document.getElementById('fixed-stats');
+			return el && el.style.display !== 'none' && el.innerText.includes('0 total');
+		});
 		await page.getByRole('button', { name: '🚀 Send Request' }).click();
 		// expect 1 total or 2 total or 3 total to be visible
 		await expect(page.getByText(/[1-3] total/)).toBeVisible();
