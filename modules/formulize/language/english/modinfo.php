@@ -13,8 +13,18 @@ define("_MI_formulize_NAME","Formulize");
 define("_MI_formulize_DESC","Easily collect and organize your data — no code required. With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports. Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows.");
 
 // admin/menu.php
-define("_MI_formulize_ADMIN_HOME","Administration");
+define("_MI_formulize_ADMIN_HOME","Applications");
 define("_MI_formulize_ADMENU1","Menu");
+define("_MI_formulize_MENU_USERS","Users: User Settings");
+define("_MI_formulize_MENU_USERS_EMAIL","Users: Email Users");
+define("_MI_formulize_MENU_USERS_API_KEYS","Users: Manage API Keys");
+define("_MI_formulize_MENU_USERS_TOKENS","Users: Manage Account Creation Tokens");
+define("_MI_formulize_MENU_SETTINGS_SYSTEM","Settings: System");
+define("_MI_formulize_MENU_SETTINGS_FORMS","Settings: Forms");
+define("_MI_formulize_MENU_SETTINGS_ADVANCED","Settings: Advanced");
+define("_MI_formulize_MENU_SETTINGS_MESSAGING","Settings: Messaging");
+define("_MI_formulize_MENU_SETTINGS_AI","Settings: AI");
+define("_MI_formulize_MENU_SETTINGS_PERMISSIONS","Settings: Copy Group Permissions");
 
 // notifications
 define("_MI_formulize_NOTIFY_FORM", "Form Notifications");

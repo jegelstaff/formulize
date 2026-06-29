@@ -689,7 +689,7 @@ function impresscms_get_adminmenu() {
 		}
 		$hasconfig = $module->getVar('hasconfig');
 		$hascomments = $module->getVar('hascomments');
-		if ((isset($hasconfig) && $hasconfig == 1) || (isset($hascomments) && $hascomments == 1)) {
+		if ($module->getVar('dirname') != 'formulize' && ((isset($hasconfig) && $hasconfig == 1) || (isset($hascomments) && $hascomments == 1))) {
 			$subs = array(
 				'title' => _PREFERENCES,
 				'link' => ICMS_URL . '/modules/system/admin.php?fct=preferences&amp;op=showmod&amp;mod='
