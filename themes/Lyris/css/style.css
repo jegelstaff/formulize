@@ -2181,6 +2181,301 @@ textarea.fz-control {
 .fz-field > .formulize-element-edit-link:hover { text-decoration: underline; }
 
 /* ============================================================
+   Rich form controls — kitchen-sink element types
+   ------------------------------------------------------------
+   The text/select/textarea/radio/checkbox primitives are handled
+   above. This block brings the remaining element types up to the
+   design's KitchenSink artboard: file upload (.fz-droparea look),
+   range slider (.fz-range look), color picker (.fz-colorpicker
+   look), duration tray, and the native date/time picker chrome.
+
+   Formulize core emits raw, mostly class-less controls, so these
+   rules target the actual rendered markup (input[type=range] /
+   [type=color] / [type=file], .formulize-fileupload-element,
+   .formulize-duration-element-input) and re-skin them to match the
+   design tokens used everywhere else. Scoped to the form-screen /
+   drawer contexts so list-screen widgets are untouched.
+   ============================================================ */
+
+.fz-form-screen,
+.fz-drawer__body {
+  --field-h:      38px;
+  --field-pad-x:  12px;
+  --field-radius: var(--r-2);
+}
+
+/* ---------- File upload → drop-area look (.fz-droparea) ----------
+   Core renders a bare `<input type="file">` inside
+   `#fileUploadUI_<name>`, preceded by a `.formulize-fileupload-element`
+   status line (existing file + delete link). We can't restructure the
+   markup, but we can style the native file control to read like the
+   design's dashed drop zone, and present the status line as a file
+   chip row beneath it. */
+.fz-form-screen input[type="file"],
+.fz-drawer__body input[type="file"] {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  min-height: 84px;
+  padding: 16px;
+  font-size: var(--fs-13);
+  color: var(--c-text-muted);
+  background: var(--c-surface-2);
+  border: 1.5px dashed var(--c-border-strong);
+  border-radius: var(--field-radius);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="file"]:hover,
+.fz-drawer__body input[type="file"]:hover {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+}
+.fz-form-screen input[type="file"]:focus,
+.fz-drawer__body input[type="file"]:focus {
+  outline: none;
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+/* The native "Choose File" button → a compact secondary .fz-btn look. */
+.fz-form-screen input[type="file"]::file-selector-button,
+.fz-drawer__body input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  height: 28px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: var(--fs-13);
+  font-weight: 500;
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-2);
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="file"]::file-selector-button:hover,
+.fz-drawer__body input[type="file"]::file-selector-button:hover {
+  background: var(--c-surface-3);
+  border-color: var(--c-text-muted);
+}
+
+/* Existing-file status row → a file chip (matches .fz-fileitem). */
+.formulize-fileupload-element {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  font-size: var(--fs-13);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--field-radius);
+}
+.formulize-fileupload-element:empty {
+  display: none;       /* no border/box when there is no existing file */
+}
+.formulize-fileupload-element a {
+  color: var(--c-accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.formulize-fileupload-element a:hover { text-decoration: underline; }
+.formulize-fileupload-element .formulize_fileUploadDeleteButton {
+  margin-left: auto;
+  color: var(--c-danger);
+  font-weight: 500;
+}
+
+/* ---------- Range slider → .fz-range look ----------
+   Core renders `<nobr><input type="range"> <output id="rangeValue_*">
+   </nobr>`. Style the native track + thumb to the design's accent
+   track/fill, and present the live value as a mono bubble. */
+.fz-form-screen input[type="range"],
+.fz-drawer__body input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 420px;
+  height: 20px;
+  margin: 4px 0;
+  padding: 0;
+  vertical-align: middle;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.fz-form-screen input[type="range"]:focus,
+.fz-drawer__body input[type="range"]:focus { outline: none; }
+/* Track */
+.fz-form-screen input[type="range"]::-webkit-slider-runnable-track,
+.fz-drawer__body input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-surface-3);
+}
+.fz-form-screen input[type="range"]::-moz-range-track,
+.fz-drawer__body input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-surface-3);
+}
+.fz-form-screen input[type="range"]::-moz-range-progress,
+.fz-drawer__body input[type="range"]::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-accent);
+}
+/* Thumb */
+.fz-form-screen input[type="range"]::-webkit-slider-thumb,
+.fz-drawer__body input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -7px;          /* centre 20px thumb on 6px track */
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 2px solid var(--c-accent);
+  box-shadow: var(--sh-2);
+  cursor: grab;
+  transition: box-shadow var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="range"]::-moz-range-thumb,
+.fz-drawer__body input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 2px solid var(--c-accent);
+  box-shadow: var(--sh-2);
+  cursor: grab;
+}
+.fz-form-screen input[type="range"]:focus::-webkit-slider-thumb,
+.fz-drawer__body input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: var(--sh-focus);
+}
+.fz-form-screen input[type="range"]:focus::-moz-range-thumb,
+.fz-drawer__body input[type="range"]:focus::-moz-range-thumb {
+  box-shadow: var(--sh-focus);
+}
+/* Live value readout (the <output> beside the slider) → mono bubble. */
+.fz-form-screen output[id^="rangeValue_"],
+.fz-drawer__body output[id^="rangeValue_"] {
+  display: inline-block;
+  margin-left: 12px;
+  min-width: 34px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+  font-size: var(--fs-12);
+  text-align: center;
+  color: var(--c-text);
+  background: var(--c-surface-3);
+  border-radius: var(--r-1);
+  vertical-align: middle;
+}
+/* In the narrow right drawer the slider is width:100% of the field and the
+   value bubble sits beside it inside a non-wrapping <nobr>, so the row
+   (slider + 12px + bubble) is wider than the field and overflows, scrolling
+   the whole drawer. Lay the nobr out as a flex row capped at the field width
+   and let the slider shrink (flex, min-width:0) so the bubble always fits. */
+.fz-drawer__body nobr:has(input[type="range"]) {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+}
+.fz-drawer__body nobr:has(input[type="range"]) input[type="range"] {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.fz-drawer__body nobr:has(input[type="range"]) output[id^="rangeValue_"] {
+  flex: 0 0 auto;
+}
+
+/* ---------- Color picker → .fz-colorpicker look ----------
+   Core renders `<input type="color">`. Browsers draw a chunky default
+   swatch button; normalise it to a clean rounded swatch sized to the
+   field height, matching the design's `.fz-colorpicker__swatch`. */
+.fz-form-screen input[type="color"],
+.fz-drawer__body input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--field-h);
+  height: var(--field-h);
+  padding: 3px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--field-radius);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.fz-form-screen input[type="color"]:hover,
+.fz-drawer__body input[type="color"]:hover { border-color: var(--c-text-muted); }
+.fz-form-screen input[type="color"]:focus,
+.fz-drawer__body input[type="color"]:focus {
+  outline: none;
+  border-color: var(--c-border-focus);
+  box-shadow: var(--sh-focus);
+}
+.fz-form-screen input[type="color"]::-webkit-color-swatch-wrapper,
+.fz-drawer__body input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.fz-form-screen input[type="color"]::-webkit-color-swatch,
+.fz-drawer__body input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+.fz-form-screen input[type="color"]::-moz-color-swatch,
+.fz-drawer__body input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+
+/* ---------- Duration tray → single grouped control (.fz-duration) ----------
+   Core renders an XoopsFormElementTray of
+   `<input type="number" class="formulize-duration-element-input">`
+   segments, each prefixed by a small unit label. Pull the segment
+   inputs into a tight mono field-cluster that reads as one control. */
+.formulize-duration-element-input {
+  width: 64px !important;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+/* The tray renders each segment as a bare "Unit:&nbsp;<input>" pair with no
+   wrapper. The shared field rules make the inputs display:block inside the
+   field body's flex column, so the segments stack vertically. Lay the field
+   body containing them out as a horizontal, wrapping flex row and keep each
+   number input inline so every "label + input" pair reads as one group. */
+.fz-field__body:has(.formulize-duration-element-input) {
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.formulize-duration-element-input {
+  display: inline-block;
+}
+
+/* ---------- Native date / time picker chrome ----------
+   Date/time inputs already pick up the shared text-field box rules
+   above; here we just tidy the native calendar/clock indicator. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--dur-1) var(--ease);
+}
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="time"]:hover::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator { opacity: 0.85; }
+input[type="date"].icms-date-box,
+input[type="time"] { font-family: var(--font-sans); }
+
+/* ============================================================
    Mobile — form screen adjustments
    ============================================================ */
 
