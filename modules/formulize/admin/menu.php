@@ -57,3 +57,6 @@ $adminmenu[] = array(
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_SYSTEM_LOG_VIEWER,
 	'link'	=> 'admin/ui.php?page=logviewer');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_APPEARANCE,
+	'link'	=> 'admin/ui.php?page=appearance');

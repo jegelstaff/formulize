@@ -1,0 +1,18 @@
+
+<{if $lcr=='l'}><{assign var=lcr value='left_admin'}>
+<{elseif $lcr=='r'}><{assign var=lcr value='right_admin'}>
+<{else}><{assign var=lcr value='center_admin'}>
+<{/if}>
+
+<{assign var=zone value="page_$topbottom$lcr"}>
+	
+<{if $xoBlocks[$zone]}>
+	<div class="xo-blockszone x2-secondary" id="xo-page-<{$topbottom}><{$lcr}>blocks">
+	<{foreach from=$xoBlocks[$zone] item=block}>
+	<div class="xo-block <{$block.module}>">
+		<{if $block.title}><div class="xo-blocktitle"><h3><{$block.title}></h3></div><{/if}>
+		<div class="xo-blockcontent"><{$block.content}></div>
+	</div>
+	<{/foreach}>
+	</div>
+<{/if}>
