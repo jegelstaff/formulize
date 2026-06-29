@@ -168,12 +168,13 @@ return array(
                         array('name' => 'server_TZ', 'scope' => 'system', 'caption' => 'Database timezone'),
                     ),
                     'Date & time formats' => array(
+                        '_section_help' => "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>",
                         array('name' => 'datestring', 'scope' => 'formulize', 'caption' => 'Date &amp; time format', 'preview' => 'datetime',
                             'description' => 'Used for date-and-time display throughout Formulize.'),
                         array('name' => 'shortdatestring', 'scope' => 'formulize', 'caption' => 'Short date format', 'preview' => 'datetime',
                             'description' => 'Used for short date display.'),
                         array('name' => 'shorttimestring', 'scope' => 'formulize', 'caption' => 'Short time format', 'preview' => 'datetime',
-                            'description' => "Used for short time display.<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>"),
+                            'description' => 'Used for short time display.'),
                     ),
                     'Availability' => array(
                         array('name' => 'closesite', 'scope' => 'system', 'caption' => 'Take the site offline'),

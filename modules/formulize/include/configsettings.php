@@ -607,7 +607,12 @@ function formulize_renderConfigSettingsForm($sections, $redirectUrl) {
 
     foreach ($sections as $heading => $settings) {
         $sectionHtml = '';
-        foreach ((array) $settings as $setting) {
+        $headingHelp = '';
+        foreach ((array) $settings as $key => $setting) {
+            if ($key === '_section_help') {
+                $headingHelp = $setting;
+                continue;
+            }
             $normalized = formulize_normalizeConfigSetting($setting);
             if (!$normalized) {
                 $label = is_string($setting) ? $setting : (is_array($setting) && isset($setting['name']) ? $setting['name'] : 'unknown');
@@ -649,7 +654,7 @@ function formulize_renderConfigSettingsForm($sections, $redirectUrl) {
             $renderedAny = true;
         }
         if ($sectionHtml !== '') {
-            $renderedSections[] = array('heading' => $heading, 'html' => $sectionHtml);
+            $renderedSections[] = array('heading' => $heading, 'html' => $sectionHtml, 'heading_help' => $headingHelp);
         }
     }
 
@@ -659,9 +664,13 @@ function formulize_renderConfigSettingsForm($sections, $redirectUrl) {
     $showHeadings = (count($renderedSections) > 1);
     foreach ($renderedSections as $rs) {
         $heading = $rs['heading'];
+        $headingHelp = isset($rs['heading_help']) ? $rs['heading_help'] : '';
         $bodyClass = 'formulize-config-indented formulize-config-section-body';
         if ($showHeadings && !is_int($heading) && $heading !== '') {
-            $body .= "<h2 class='formulize-config-section'>" . htmlspecialchars($heading, ENT_QUOTES) . "</h2>\n";
+            $body .= "<div class='formulize-config-section-header'>"
+                   . "<h2 class='formulize-config-section'>" . htmlspecialchars($heading, ENT_QUOTES) . "</h2>"
+                   . $headingHelp
+                   . "</div>\n";
             $bodyClass .= 'formulize-config-indented';
         }
         $body .= "<div class='$bodyClass'>\n" . $rs['html'] . "</div>\n";

@@ -2302,19 +2302,31 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 	font-weight: bold;
 }
 
-/* A divider line above each section heading to delineate sections. The first
-   heading on the page has the same spacing but no line (the sub-nav above it
-   already provides the separation), and no padding-top since there is no line. */
-.formulize-config-settings .formulize-config-section, .formulize-config-settings .formulize-config-section-body {
+/* Section header: wraps the h2 and any inline action (e.g. "show format codes"
+   help) beside it. Carries the top divider and spacing so the h2 itself stays
+   margin/border-free. :first-child removes the divider on the first section
+   (the sub-nav above it already provides separation). */
+.formulize-config-settings .formulize-config-section-header {
+	display: flex;
+	align-items: baseline;
+	gap: 1em;
 	margin: 1.75em 0 0.6em 0;
-}
-.formulize-config-settings .formulize-config-section {
 	padding-top: 1.5em;
 	border-top: 1px solid #ccc;
 }
-.formulize-config-settings .formulize-config-section:first-of-type {
+.formulize-config-settings .formulize-config-section-header:first-child {
 	padding-top: 0;
 	border-top: none;
+}
+.formulize-config-settings .formulize-config-section-body {
+	margin: 1.75em 0 0.6em 0;
+}
+.formulize-config-settings .formulize-config-section {
+	margin: 0;
+}
+.formulize-config-settings .formulize-config-section-header .formulize-config-help {
+	margin-top: 0;
+	font-size: 0.85em;
 }
 
 /* The setting is a plain block (the element we slide/animate, so the height +
