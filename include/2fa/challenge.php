@@ -6,6 +6,7 @@
  * return challenge ui if user needs it, return nothing if not
  */
 
+$xoopsOption['ignore_closed_site'] = true; // challenge endpoint must be reachable when site is closed
 include_once "../../mainfile.php";
 
 icms::$logger->disableLogger();
