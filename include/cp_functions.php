@@ -199,7 +199,7 @@ if (! empty( $_SESSION['redirect_message'] )) {
 			foreach ( $navitem ['menu'] as $item ) {
 				$module = $module_handler->getByDirname($item['dir']);
 				if (null != $module) {
-					$admin_perm = $moduleperm_handler->checkRight('module_admin', $module->getVar('mid'), icms::$user->getGroups());
+					$admin_perm = $moduleperm_handler->checkRight('module_admin', $module->getVar('mid'), (icms::$user ? icms::$user->getGroups() : [ICMS_GROUP_ANONYMOUS]));
 					if ($admin_perm) {
 						if ($item['dir'] != 'system') {
 							$perm_itens[] = $item;
