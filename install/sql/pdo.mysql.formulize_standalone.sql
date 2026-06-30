@@ -10,11 +10,12 @@ INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Strict', 'Strict', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
 -- SMS messaging settings (mailer category). Mirrors patch 003_sms_settings.php so fresh
 -- installs have them too; the SMS providers read these (falling back to trust constants).
+-- conf_title and conf_desc must be PHP constant names (resolved by the preferences UI).
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
-(0, 6, 'sms_provider', 'SMS provider', 'Twilio', 'The service used to send text messages (SMS).', 'select', 'text', 201),
-(0, 6, 'sms_account_sid', 'SMS account SID / API key', '', 'Account SID (Twilio) or API key (Vonage/Nexmo).', 'textbox', 'text', 202),
-(0, 6, 'sms_auth_token', 'SMS auth token / API secret', '', 'Auth token (Twilio) or API secret (Vonage/Nexmo).', 'password', 'text', 203),
-(0, 6, 'sms_from_number', 'SMS from number / sender ID', '', 'The phone number or sender ID that text messages are sent from.', 'textbox', 'text', 204);
+(0, 6, 'sms_provider', '_MD_AM_SMS_PROVIDER', 'Twilio', '_MD_AM_SMS_PROVIDER_DSC', 'select', 'text', 201),
+(0, 6, 'sms_account_sid', '_MD_AM_SMS_ACCOUNT_SID', '', '_MD_AM_SMS_ACCOUNT_SID_DSC', 'textbox', 'text', 202),
+(0, 6, 'sms_auth_token', '_MD_AM_SMS_AUTH_TOKEN', '', '_MD_AM_SMS_AUTH_TOKEN_DSC', 'password', 'text', 203),
+(0, 6, 'sms_from_number', '_MD_AM_SMS_FROM_NUMBER', '', '_MD_AM_SMS_FROM_NUMBER_DSC', 'textbox', 'text', 204);
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Twilio', 'Twilio', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'sms_provider';
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Nexmo (Vonage)', 'Nexmo', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'sms_provider';
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES

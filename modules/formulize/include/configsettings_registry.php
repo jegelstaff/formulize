@@ -55,8 +55,9 @@
  *
  * showWhen (visibility dependencies) — equality only, deliberately not a language:
  *   array('name'=>'auth_openid', 'value'=>1)                  // show when == 1
- *   array('name'=>'x', 'value'=>array('a','b'))               // "is one of" (OR)
+ *   array('name'=>'x', 'value'=>array('a','b'))               // "is one of" (OR within one condition)
  *   array( array('name'=>..), array('name'=>..) )             // all must hold (AND)
+ *   array('op'=>'any', 'conditions'=>array(...))              // at least one must hold (OR between conditions)
  *   A condition's 'scope' defaults to the setting's own scope.
  *
  * Saving is delegated to the system preferences handler, so every side-effect and
@@ -116,14 +117,12 @@ return array(
                         array(
                             'name' => 'auth_okta',
                             'scope' => 'auth',
-                            'caption' => 'Okta SAML endpoint',
                         ),
                     ),
                     'New-user defaults' => array(
                         array(
                             'name' => 'default_TZ',
                             'scope' => 'system',
-                            'caption' => 'Default timezone for new users',
                         ),
                     ),
                 ),
@@ -151,89 +150,39 @@ return array(
         'name' => 'Settings',
         'views' => array(
 
-            'system' => array(
-                'name' => 'System',
+            'elements' => array(
+                'name' => 'Elements',
                 'type' => 'settings',
                 'sections' => array(
-                    'Identity' => array(
-                        array('name' => 'sitename', 'scope' => 'system'),
-                        array('name' => 'adminmail', 'scope' => 'system', 'caption' => 'Site email address'),
-                        array('name' => 'language', 'scope' => 'system', 'caption' => 'Default language'),
-                    ),
-                    'Appearance' => array(
-                        array('name' => 'theme_set', 'scope' => 'system', 'caption' => 'Default theme'),
-                        array('name' => 'theme_admin_set', 'scope' => 'system', 'caption' => 'Admin theme'),
-                    ),
-                    'Time' => array(
-                        array('name' => 'server_TZ', 'scope' => 'system', 'caption' => 'Database timezone'),
-                    ),
-                    'Date & time formats' => array(
-                        '_section_help' => "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>",
-                        array('name' => 'datestring', 'scope' => 'formulize', 'caption' => 'Date &amp; time format', 'preview' => 'datetime',
-                            'description' => 'Used for date-and-time display throughout Formulize.'),
-                        array('name' => 'shortdatestring', 'scope' => 'formulize', 'caption' => 'Short date format', 'preview' => 'datetime',
-                            'description' => 'Used for short date display.'),
-                        array('name' => 'shorttimestring', 'scope' => 'formulize', 'caption' => 'Short time format', 'preview' => 'datetime',
-                            'description' => 'Used for short time display.'),
-                    ),
-                    'Availability' => array(
-                        array('name' => 'closesite', 'scope' => 'system', 'caption' => 'Take the site offline'),
-                        array(
-                            'name' => 'closesite_text',
-                            'scope' => 'system',
-                            'showWhen' => array('name' => 'closesite', 'value' => 1),
-                        ),
-                        array(
-                            'name' => 'closesite_okgrp',
-                            'scope' => 'system',
-                            'showWhen' => array('name' => 'closesite', 'value' => 1),
-                        ),
-                    ),
-                    'Search engines (SEO)' => array(
-                        array('name' => 'meta_description', 'scope' => 'metafooter'),
-                        array('name' => 'meta_robots', 'scope' => 'metafooter'),
-                        array('name' => 'google_meta', 'scope' => 'metafooter', 'caption' => 'Google Search Console verification'),
-                    ),
-                    'Footer' => array(
-                        array('name' => 'footer', 'scope' => 'metafooter', 'caption' => 'Site footer'),
-                        array('name' => 'footadm', 'scope' => 'metafooter', 'caption' => 'Admin footer'),
-                    ),
-                    'Logging' => array(
-                        array('name' => 'formulizeLoggingOnOff', 'scope' => 'formulize'),
-                        array(
-                            'name' => 'formulizeLogFileLocation',
-                            'scope' => 'formulize',
-                            'showWhen' => array('name' => 'formulizeLoggingOnOff', 'value' => 1),
-                        ),
-                        array(
-                            'name' => 'formulizeLogFileStorageDurationHours',
-                            'scope' => 'formulize',
-                            'showWhen' => array('name' => 'formulizeLoggingOnOff', 'value' => 1),
-                        ),
-                    ),
-                ),
-            ),
-
-            'forms' => array(
-                'name' => 'Forms',
-                'type' => 'settings',
-                'sections' => array(
-                    'Form elements' => array(
-                        array('name' => 't_width', 'scope' => 'formulize'),
+                    'Textbox defaults' => array(
                         array('name' => 't_max', 'scope' => 'formulize'),
                         array('name' => 'ta_rows', 'scope' => 'formulize'),
-                        array('name' => 'ta_cols', 'scope' => 'formulize'),
                     ),
-                    'Numbers' => array(
+                    'Number box defaults' => array(
                         array('name' => 'number_decimals', 'scope' => 'formulize'),
                         array('name' => 'number_prefix', 'scope' => 'formulize'),
                         array('name' => 'number_suffix', 'scope' => 'formulize'),
                         array('name' => 'number_decimalsep', 'scope' => 'formulize'),
                         array('name' => 'number_sep', 'scope' => 'formulize'),
                     ),
-                    'Dates & display' => array(
+                    'Time defaults' => array(
                         array('name' => 'time_format', 'scope' => 'formulize'),
+										),
+										'Checkbox and radio button defaults' => array(
                         array('name' => 'delimeter', 'scope' => 'formulize'),
+                    ),
+								),
+						),
+
+						'forms' => array(
+								'name' => 'Forms',
+								'type' => 'settings',
+								'sections' => array(
+										'Form display' => array(
+                        array('name' => 'show_empty_elements_when_read_only', 'scope' => 'formulize'),
+                        array('name' => 'formulizeShowPrintableViewButtons', 'scope' => 'formulize'),
+                        array('name' => 'printviewStylesheets', 'scope' => 'formulize', 'showWhen' => array('name' => 'formulizeShowPrintableViewButtons', 'value' => 1)),
+                        array('name' => 'heading_help_link', 'scope' => 'formulize'),
                     ),
                     'Revision History' => array(
                         array('name' => 'formulizeRevisionsForAllForms', 'scope' => 'formulize'),
@@ -241,12 +190,6 @@ return array(
                     'Export' => array(
                         array('name' => 'downloadDefaultToExcel', 'scope' => 'formulize'),
                         array('name' => 'exportIntroChar', 'scope' => 'formulize'),
-                    ),
-                    'Form display' => array(
-                        array('name' => 'show_empty_elements_when_read_only', 'scope' => 'formulize'),
-                        array('name' => 'formulizeShowPrintableViewButtons', 'scope' => 'formulize'),
-                        array('name' => 'printviewStylesheets', 'scope' => 'formulize'),
-                        array('name' => 'heading_help_link', 'scope' => 'formulize'),
                     ),
                     'Lists' => array(
                         array('name' => 'LOE_limit', 'scope' => 'formulize'),
@@ -261,18 +204,17 @@ return array(
                     'Email delivery' => array(
                         array('name' => 'mailmethod', 'scope' => 'mailer'),
                         array('name' => 'smtphost', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
-                        array('name' => 'smtpuser', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
-                        array('name' => 'smtppass', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
+                        array('name' => 'smtpuser', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtpauth'))),
+                        array('name' => 'smtppass', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtpauth'))),
                         array('name' => 'smtpsecure', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
                         array('name' => 'smtpauthport', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
                         array('name' => 'sendmailpath', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => 'sendmail')),
-                        array('name' => 'fromname', 'scope' => 'mailer', 'caption' => 'Sender name'),
                     ),
                     'Text messages (SMS)' => array(
-                        array('name' => 'sms_provider', 'scope' => 'mailer', 'caption' => 'SMS provider'),
-                        array('name' => 'sms_account_sid', 'scope' => 'mailer', 'caption' => 'Account SID / API key'),
-                        array('name' => 'sms_auth_token', 'scope' => 'mailer', 'caption' => 'Auth token / API secret'),
-                        array('name' => 'sms_from_number', 'scope' => 'mailer', 'caption' => 'From number / sender ID'),
+                        array('name' => 'sms_provider', 'scope' => 'mailer'),
+                        array('name' => 'sms_account_sid', 'scope' => 'mailer'),
+                        array('name' => 'sms_auth_token', 'scope' => 'mailer'),
+                        array('name' => 'sms_from_number', 'scope' => 'mailer'),
                     ),
                     'Notifications' => array(
                         array('name' => 'notifyByCron', 'scope' => 'formulize'),
@@ -292,7 +234,78 @@ return array(
                             'showWhen' => array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                         ),
                         array('name' => 'formulizeMCPServerEnabled', 'scope' => 'formulize'),
-                        array('name' => 'system_specific_instructions', 'scope' => 'formulize'),
+                        array(
+                            'name' => 'system_specific_instructions',
+                            'scope' => 'formulize',
+                            'showWhen' => array(
+                                'op' => 'any',
+                                'conditions' => array(
+                                    array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
+                                    array('name' => 'formulizeMCPServerEnabled', 'value' => 1),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+
+						'system' => array(
+                'name' => 'System',
+                'type' => 'settings',
+                'sections' => array(
+                    'Identity' => array(
+                        array('name' => 'sitename', 'scope' => 'system'),
+                        array('name' => 'adminmail', 'scope' => 'system'),
+                        array('name' => 'fromuid', 'scope' => 'mailer', 'caption' => 'Sender of private messages'),
+                        array('name' => 'language', 'scope' => 'system'),
+                    ),
+										'Logging' => array(
+                        array('name' => 'formulizeLoggingOnOff', 'scope' => 'formulize'),
+                        array(
+                            'name' => 'formulizeLogFileLocation',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeLoggingOnOff', 'value' => 1),
+                        ),
+                        array(
+                            'name' => 'formulizeLogFileStorageDurationHours',
+                            'scope' => 'formulize',
+                            'showWhen' => array('name' => 'formulizeLoggingOnOff', 'value' => 1),
+                        ),
+                    ),
+										'Database' => array(
+                        array('name' => 'server_TZ', 'scope' => 'system', 'caption' => 'Timezone used by the database server', 'description' => 'This is the timezone that would be reported by <i>SELECT @@global.time_zone;</i> in MariaDB'),
+                    ),
+                    'Date & time formats' => array(
+                        '_section_help' => "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>",
+                        array('name' => 'datestring', 'scope' => 'formulize', 'preview' => 'datetime',
+                            'description' => 'Used for date-and-time display throughout Formulize.'),
+                        array('name' => 'shortdatestring', 'scope' => 'formulize', 'preview' => 'datetime',
+                            'description' => 'Used for short date display.'),
+                        array('name' => 'shorttimestring', 'scope' => 'formulize', 'preview' => 'datetime',
+                            'description' => 'Used for short time display.'),
+                    ),
+										'Search engines (SEO)' => array(
+                        array('name' => 'meta_description', 'scope' => 'metafooter'),
+                        array('name' => 'meta_robots', 'scope' => 'metafooter'),
+                    ),
+                    'Appearance' => array(
+                        array('name' => 'theme_set', 'scope' => 'system'),
+                        array('name' => 'theme_admin_set', 'scope' => 'system'),
+												array('name' => 'footer', 'scope' => 'metafooter', 'description' => 'Content for the footer of every page, if your theme supports this. HTML is allowed.'),
+                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => 'Content for the footer of every admin page, if your theme supports this. HTML is allowed.'),
+                    ),
+                    'Availability' => array(
+                        array('name' => 'closesite', 'scope' => 'system'),
+                        array(
+                            'name' => 'closesite_text',
+                            'scope' => 'system',
+                            'showWhen' => array('name' => 'closesite', 'value' => 1),
+                        ),
+                        array(
+                            'name' => 'closesite_okgrp',
+                            'scope' => 'system',
+                            'showWhen' => array('name' => 'closesite', 'value' => 1),
+                        ),
                     ),
                 ),
             ),
@@ -302,9 +315,9 @@ return array(
                 'type' => 'settings',
                 'sections' => array(
                     'Sessions & cookies' => array(
-                        array('name' => 'session_name', 'scope' => 'system', 'caption' => 'Session cookie name'),
-                        array('name' => 'session_expire', 'scope' => 'system', 'caption' => 'Session timeout (minutes)'),
-                        array('name' => 'cookie_samesite', 'scope' => 'system', 'caption' => 'Session cookie SameSite policy'),
+                        array('name' => 'session_name', 'scope' => 'system'),
+                        array('name' => 'session_expire', 'scope' => 'system'),
+                        array('name' => 'cookie_samesite', 'scope' => 'system'),
                     ),
                     'Custom URLs' => array(
                         array('name' => 'formulizeRewriteRulesEnabled', 'scope' => 'formulize'),
@@ -313,8 +326,8 @@ return array(
                         array('name' => 'formulizePublicAPIEnabled', 'scope' => 'formulize'),
                     ),
                     'Debugging' => array(
-                        array('name' => 'debug_mode', 'scope' => 'system', 'caption' => 'Debug mode'),
-                        array('name' => 'theme_fromfile', 'scope' => 'system', 'caption' => 'Bypass template cache (load templates from files every time)'),
+                        array('name' => 'debug_mode', 'scope' => 'system'),
+                        array('name' => 'theme_fromfile', 'scope' => 'system'),
                         array('name' => 'debugDerivedValues', 'scope' => 'formulize'),
                         array('name' => 'logProcedure', 'scope' => 'formulize'),
                         array('name' => 'validateCode', 'scope' => 'formulize'),

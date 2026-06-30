@@ -215,6 +215,31 @@ function formulize_configFormElementHtml($config) {
             }
             break;
 
+        case 'user':
+            require_once XOOPS_ROOT_PATH . '/modules/formulize/class/selectElement.php';
+            require_once XOOPS_ROOT_PATH . '/modules/formulize/class/selectUsersElement.php';
+            require_once XOOPS_ROOT_PATH . '/modules/formulize/class/autocompleteUsersElement.php';
+            $handler = xoops_getmodulehandler('autocompleteUsersElement', 'formulize');
+            $eleObj = $handler->create();
+            $eleValue = $handler->getDefaultEleValue();
+
+            // Pre-select the current UID by setting {SELECTEDNAMES} the same way loadValue() does,
+            // then let render() build the full user list and cache file itself.
+            $currentUid = intval($value);
+            if ($currentUid) {
+                $eleValue[ELE_VALUE_SELECT_OPTIONS]['{SELECTEDNAMES}'] = array($currentUid);
+                $eleValue[ELE_VALUE_SELECT_OPTIONS]['{OWNERGROUPS}'] = array();
+            }
+
+            $eleObj->setVar('ele_value', $eleValue);
+            $eleObj->setVar('ele_handle', $name);
+            $eleObj->setVar('ele_type', 'autocompleteUsers');
+            $eleObj->setVar('ele_display', 1);
+
+            $formEle = $handler->render($eleValue, '', $name, false, $eleObj, 'new');
+            return $formEle->render()
+                . "<script src='" . XOOPS_URL . "/modules/formulize/include/js/autocomplete.js'></script>";
+
         case 'textbox':
         default:
             $ele = new icms_form_elements_Text('', $name, 50, 255, icms_core_DataFilter::htmlSpecialChars($value));
@@ -295,29 +320,44 @@ function formulize_resolveConfigView($subject, $requestedView) {
 }
 
 /**
- * Normalize a descriptor's optional 'showWhen' into a flat list of conditions.
+ * Normalize a descriptor's optional 'showWhen' into a conditions wrapper.
  *
- * A condition is array('name'=>conf_name, 'scope'=>scope, 'values'=>array of
- * acceptable values as strings). The setting is shown only when EVERY condition
- * holds (AND); within a single condition, the controlling setting matching ANY
- * of the listed values counts as holding (OR). This is intentionally limited to
- * equality so the registry stays declarative rather than becoming a language.
+ * Returns array('op'=>'all'|'any', 'conditions'=>[...]), or array() when there
+ * are no conditions. 'op' controls how the list is evaluated: 'all' means every
+ * condition must hold (AND); 'any' means at least one must hold (OR). Within a
+ * single condition, the controlling setting matching ANY of its listed values
+ * counts as holding. This is intentionally limited to equality so the registry
+ * stays declarative rather than becoming a language.
  *
- * Accepts either a single condition (assoc array with a 'name' key) or a list of
- * conditions. Each condition's 'value' may be a scalar or an array.
+ * Input forms:
+ *   single condition  — assoc array with a 'name' key
+ *   AND list          — indexed array of conditions (default, op='all')
+ *   OR wrapper        — array('op'=>'any', 'conditions'=>[...])
+ * Each condition's 'value' may be a scalar or an array.
  *
  * @param mixed  $showWhen     The descriptor's 'showWhen' value (or null)
  * @param string $defaultScope Scope to assume for a condition that omits its own
- * @return array A list of normalized conditions (empty if none)
+ * @return array Wrapper array (empty if no conditions)
  */
 function formulize_normalizeConfigConditions($showWhen, $defaultScope) {
     if (empty($showWhen) || !is_array($showWhen)) {
         return array();
     }
-    // single condition (assoc with 'name') vs. a list of conditions
-    $list = isset($showWhen['name']) ? array($showWhen) : $showWhen;
+    if (isset($showWhen['op'])) {
+        // OR/ANY wrapper: array('op'=>'any', 'conditions'=>[...])
+        $op = ($showWhen['op'] === 'any') ? 'any' : 'all';
+        $rawList = isset($showWhen['conditions']) ? $showWhen['conditions'] : array();
+    } elseif (isset($showWhen['name'])) {
+        // single condition
+        $op = 'all';
+        $rawList = array($showWhen);
+    } else {
+        // indexed list of conditions — AND by default
+        $op = 'all';
+        $rawList = $showWhen;
+    }
     $conditions = array();
-    foreach ($list as $cond) {
+    foreach ($rawList as $cond) {
         if (!is_array($cond) || !isset($cond['name'])) {
             continue;
         }
@@ -331,38 +371,48 @@ function formulize_normalizeConfigConditions($showWhen, $defaultScope) {
             'values' => array_map('strval', $values),
         );
     }
-    return $conditions;
+    if (empty($conditions)) {
+        return array();
+    }
+    return array('op' => $op, 'conditions' => $conditions);
 }
 
 /**
- * Evaluate a normalized condition list against the current saved config values,
+ * Evaluate a conditions wrapper against the current saved config values,
  * for deciding a setting's initial server-side visibility. The same logic runs
  * client-side (see formulize_configSettingsScriptBlock) for live toggling.
  *
- * @param array $conditions List from formulize_normalizeConfigConditions()
+ * @param array $wrapper From formulize_normalizeConfigConditions(): array('op'=>..., 'conditions'=>[...])
  * @return bool True if the setting should be visible
  */
-function formulize_configConditionsPass($conditions) {
-    foreach ($conditions as $cond) {
+function formulize_configConditionsPass($wrapper) {
+    if (empty($wrapper) || !isset($wrapper['conditions'])) {
+        return true;
+    }
+    $anyMode = (isset($wrapper['op']) && $wrapper['op'] === 'any');
+    foreach ($wrapper['conditions'] as $cond) {
         $ctrl = formulize_resolveConfigItem($cond['name'], $cond['scope']);
         $current = $ctrl ? $ctrl->getConfValueForOutput() : null;
+        $hit = false;
         if (is_array($current)) {
             $current = array_map('strval', $current);
-            $hit = false;
             foreach ($cond['values'] as $v) {
                 if (in_array($v, $current, true)) {
                     $hit = true;
                     break;
                 }
             }
-            if (!$hit) {
-                return false;
-            }
-        } elseif (!in_array((string) $current, $cond['values'], true)) {
+        } else {
+            $hit = in_array((string) $current, $cond['values'], true);
+        }
+        if ($anyMode && $hit) {
+            return true;
+        }
+        if (!$anyMode && !$hit) {
             return false;
         }
     }
-    return true;
+    return !$anyMode;
 }
 
 /**
@@ -448,7 +498,9 @@ function formulize_configSettingsScriptBlock() {
         if(\$checks.length){ return \$checks.filter(':checked').val(); }
         return $('.formulize-config-settings [name="' + name + '"]').val();
     }
-    function fzConditionsPass(conditions){
+    function fzConditionsPass(wrapper){
+        var anyMode = (wrapper.op === 'any');
+        var conditions = wrapper.conditions || [];
         for(var i=0; i<conditions.length; i++){
             var cond = conditions[i];
             var current = fzGetSettingValue(cond.name);
@@ -465,9 +517,10 @@ function formulize_configSettingsScriptBlock() {
                     if(String(current) === String(values[c])){ hit = true; break; }
                 }
             }
-            if(!hit){ return false; }
+            if(anyMode && hit){ return true; }
+            if(!anyMode && !hit){ return false; }
         }
-        return true;
+        return !anyMode;
     }
     var fzDur = 250; // duration of each step (slide, fade) in ms
     // Two-step reveal: open the vertical space first (content still invisible),

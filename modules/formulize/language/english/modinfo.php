@@ -46,10 +46,10 @@ define("_MI_formulize_NOTIFY_DELENTRY_MAILSUB", "%s deleted");
 
 //	preferences
 define("_MI_formulize_TEXT_WIDTH","Default width of text boxes");
-define("_MI_formulize_TEXT_MAX","Default maximum length of text boxes");
-define("_MI_formulize_TAREA_ROWS","Default rows of text areas");
-define("_MI_formulize_TAREA_COLS","Default columns of text areas");
-define("_MI_formulize_DELIMETER","Default delimiter for check boxes and radio buttons");
+define("_MI_formulize_TEXT_MAX","Maximum number of characters in single-line text boxes");
+define("_MI_formulize_TAREA_ROWS","Number of rows in multi-line text boxes");
+define("_MI_formulize_TAREA_COLS","Number of columns in multi-line text boxes");
+define("_MI_formulize_DELIMETER","Delimiter for check boxes and radio buttons");
 if(!defined("_MI_formulize_DELIMETER_SPACE")) { define("_MI_formulize_DELIMETER_SPACE","White space"); }
 if(!defined("_MI_formulize_DELIMETER_BR")) { define("_MI_formulize_DELIMETER_BR","Line break"); }
 define("_MI_formulize_SEND_METHOD","Send method");
@@ -65,21 +65,21 @@ define("_MI_formulize_ALL_DONE_SINGLES","Should the 'Close' button appear at the
 define("_MI_formulize_SINGLESDESC","This option is overriden by the settings in Form screens. The 'Close' button is used to leave a form without saving the information in the form.  If you have made changes to the information in a form and then you click 'Close' without first clicking 'Save', you get a warning that your data has not been saved. Set this option to 'Yes' to remove the 'Close' button and turn the behaviour of the 'Save' button to 'save-and-leave-the-form-all-at-once'. This only affects Legacy Form Screens from before Formulize 7.");
 
 define("_MI_formulize_LOE_limit", "What is the maximum number of entries that should be displayed in one page of a list of entries, without confirmation from the user that they want to see all entries?");
-define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a list of entries screen can take a long time, several minutes even.  Use this preference to specify the maximum number of entries that your system should try to display at once.  If a dataset contains more entries than this limit, the user will be asked if they want to load the entire dataset or not.");
+define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a list of entries can take a long time.  Use this preference to specify the maximum number of entries that your system should try to display at once.  If a dataset contains more entries than this limit, the user will be asked if they want to load the entire dataset or not.");
 
 define("_MI_formulize_USETOKEN", "Use the security token system to validate form submissions?");
 define("_MI_formulize_USETOKENDESC", "By default, when a form is submitted, no data is saved unless Formulize can validate a unique token that was submitted with the form.  This is a partial defence against cross site scripting attacks, meant to ensure only people actually visiting your website can submit forms.  In some circumstances, depending on firewalls or other factors, the token cannot be validated even when it should be.  If this is happening to you repeatedly, you can turn off the token system for Formulize here.  <b>NOTE: you can override this global setting on a screen by screen basis.</b>");
 
-define("_MI_formulize_NUMBER_DECIMALS", "By default, how many decimal places should be displayed for numbers?");
+define("_MI_formulize_NUMBER_DECIMALS", "Number of decimal places");
 define("_MI_formulize_NUMBER_DECIMALS_DESC", "Normally, leave this as 0, unless you want every number in all forms to have a certain number of decimal places.");
-define("_MI_formulize_NUMBER_PREFIX", "By default, should any symbol be shown before numbers?");
+define("_MI_formulize_NUMBER_PREFIX", "Symbol to show in front of numbers");
 define("_MI_formulize_NUMBER_PREFIX_DESC", "For example, if your entire site only uses dollar figures in forms, then put '$' here.  Otherwise, leave it blank.");
-define("_MI_formulize_NUMBER_SUFFIX", "By default, should any symbol be shown after numbers?");
+define("_MI_formulize_NUMBER_SUFFIX", "Symbol to show after numbers");
 define("_MI_formulize_NUMBER_SUFFIX_DESC", "For example, if your entire site only uses percentage figures in forms, then put '%' here.  Otherwise, leave it blank.");
-define("_MI_formulize_NUMBER_DECIMALSEP", "By default, if decimals are used, what punctuation should separate them from the rest of the number?");
-define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used to separate thousands in numbers?");
+define("_MI_formulize_NUMBER_DECIMALSEP", "Decimal separator");
+define("_MI_formulize_NUMBER_SEP", "Thousands separator");
 
-define("_MI_formulize_TIME_FORMAT", "Default time display format");
+define("_MI_formulize_TIME_FORMAT", "Time display format");
 define("_MI_formulize_TIME_FORMAT_DESC", "Controls how times are displayed in lists and read-only fields. Individual time elements can override this setting. Defaults to 12-hour if not set.");
 define("_MI_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
 define("_MI_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
@@ -219,7 +219,7 @@ define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix with an apostrophe (for Go
 define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix with a TAB (for Excel)");
 define("_MI_formulize_EIC_PLAIN", "Never prefix (for programs that need clean, raw data)");
 
-define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', 'Enable Printable Version buttons (then you can turn them on and off per screen)');
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', 'Enable Printable Version buttons (you can turn them on and off per screen)');
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable Version buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable Version buttons will not show up on any screens.');
 
 define('_MI_formulize_EMAIL_USERS', 'Email Users');
