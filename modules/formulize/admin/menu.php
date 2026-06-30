@@ -46,34 +46,37 @@ $adminmenu[] = array(
 
 // Users tab + its sub-tabs
 $adminmenu[] = array(
-	'title'	=> _MI_formulize_MENU_USERS,
-	'link'	=> 'admin/ui.php?page=users');
-$adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_USERS_EMAIL,
 	'link'	=> 'admin/ui.php?page=users&view=email');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_USERS_API_KEYS,
 	'link'	=> 'admin/ui.php?page=users&view=apikeys');
 $adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_USERS,
+	'link'	=> 'admin/ui.php?page=users');
+$adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_USERS_TOKENS,
 	'link'	=> 'admin/ui.php?page=users&view=tokens');
 
 // Settings tab + its sub-tabs
 $adminmenu[] = array(
-	'title'	=> _MI_formulize_MENU_SETTINGS_SYSTEM,
-	'link'	=> 'admin/ui.php?page=settings&view=system');
+	'title'	=> _MI_formulize_MENU_SETTINGS_ELEMENTS,
+	'link'	=> 'admin/ui.php?page=settings&view=elements');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_SETTINGS_FORMS,
 	'link'	=> 'admin/ui.php?page=settings&view=forms');
-$adminmenu[] = array(
-	'title'	=> _MI_formulize_MENU_SETTINGS_ADVANCED,
-	'link'	=> 'admin/ui.php?page=settings&view=advanced');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_SETTINGS_MESSAGING,
 	'link'	=> 'admin/ui.php?page=settings&view=messaging');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_SETTINGS_AI,
 	'link'	=> 'admin/ui.php?page=settings&view=ai');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_SYSTEM,
+	'link'	=> 'admin/ui.php?page=settings&view=system');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_ADVANCED,
+	'link'	=> 'admin/ui.php?page=settings&view=advanced');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_MENU_SETTINGS_PERMISSIONS,
 	'link'	=> 'admin/ui.php?page=settings&view=permissions');

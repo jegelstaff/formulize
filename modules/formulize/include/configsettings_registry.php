@@ -68,17 +68,38 @@ if (!defined('XOOPS_ROOT_PATH')) {
     exit();
 }
 
+// Load user-visible strings from the active language, falling back to English.
+global $xoopsConfig;
+$_cfgLangFile = XOOPS_ROOT_PATH . '/modules/formulize/language/'
+    . (isset($xoopsConfig['language']) ? $xoopsConfig['language'] : 'english')
+    . '/configsettings_registry.php';
+if (!file_exists($_cfgLangFile)) {
+    $_cfgLangFile = XOOPS_ROOT_PATH . '/modules/formulize/language/english/configsettings_registry.php';
+}
+include_once $_cfgLangFile;
+unset($_cfgLangFile);
+
 return array(
 
     // =====================================================================
     'users' => array(
-        'name' => 'Users',
+        'name' => _AM_CFG_TAB_USERS,
         'views' => array(
-            'settings' => array(
-                'name' => 'Settings',
+            'email' => array(
+                'name' => _AM_CFG_VIEW_USERS_EMAIL,
+                'type' => 'page',
+                'page' => 'mailusers',
+            ),
+            'apikeys' => array(
+                'name' => _AM_CFG_VIEW_USERS_APIKEYS,
+                'type' => 'page',
+                'page' => 'managekeys',
+            ),
+						'settings' => array(
+                'name' => _AM_CFG_VIEW_USERS_SETTINGS,
                 'type' => 'settings',
                 'sections' => array(
-                    'Signing in' => array(
+                    _AM_CFG_SEC_SIGNING_IN => array(
                         // Two-factor settings only apply to normal username/password
                         // logins, so they hide when an external identity provider
                         // (Google or Okta) is in use. Okta is "on" when its endpoint
@@ -119,7 +140,7 @@ return array(
                             'scope' => 'auth',
                         ),
                     ),
-                    'New-user defaults' => array(
+                    _AM_CFG_SEC_NEW_USER_DEFAULTS => array(
                         array(
                             'name' => 'default_TZ',
                             'scope' => 'system',
@@ -127,18 +148,8 @@ return array(
                     ),
                 ),
             ),
-            'email' => array(
-                'name' => 'Email Users',
-                'type' => 'page',
-                'page' => 'mailusers',
-            ),
-            'apikeys' => array(
-                'name' => 'API Keys',
-                'type' => 'page',
-                'page' => 'managekeys',
-            ),
             'tokens' => array(
-                'name' => 'Account Tokens',
+                'name' => _AM_CFG_VIEW_USERS_TOKENS,
                 'type' => 'page',
                 'page' => 'managetokens',
             ),
@@ -147,61 +158,61 @@ return array(
 
     // =====================================================================
     'settings' => array(
-        'name' => 'Settings',
+        'name' => _AM_CFG_TAB_SETTINGS,
         'views' => array(
 
             'elements' => array(
-                'name' => 'Elements',
+                'name' => _AM_CFG_VIEW_SETTINGS_ELEMENTS,
                 'type' => 'settings',
                 'sections' => array(
-                    'Textbox defaults' => array(
+                    _AM_CFG_SEC_TEXTBOX_DEFAULTS => array(
                         array('name' => 't_max', 'scope' => 'formulize'),
                         array('name' => 'ta_rows', 'scope' => 'formulize'),
                     ),
-                    'Number box defaults' => array(
+                    _AM_CFG_SEC_NUMBER_BOX_DEFAULTS => array(
                         array('name' => 'number_decimals', 'scope' => 'formulize'),
                         array('name' => 'number_prefix', 'scope' => 'formulize'),
                         array('name' => 'number_suffix', 'scope' => 'formulize'),
                         array('name' => 'number_decimalsep', 'scope' => 'formulize'),
                         array('name' => 'number_sep', 'scope' => 'formulize'),
                     ),
-                    'Time defaults' => array(
+                    _AM_CFG_SEC_TIME_DEFAULTS => array(
                         array('name' => 'time_format', 'scope' => 'formulize'),
-										),
-										'Checkbox and radio button defaults' => array(
+                    ),
+                    _AM_CFG_SEC_CHECKBOX_RADIO_DEFAULTS => array(
                         array('name' => 'delimeter', 'scope' => 'formulize'),
                     ),
-								),
-						),
+                ),
+            ),
 
-						'forms' => array(
-								'name' => 'Forms',
-								'type' => 'settings',
-								'sections' => array(
-										'Form display' => array(
+            'forms' => array(
+                'name' => _AM_CFG_VIEW_SETTINGS_FORMS,
+                'type' => 'settings',
+                'sections' => array(
+                    _AM_CFG_SEC_FORM_DISPLAY => array(
                         array('name' => 'show_empty_elements_when_read_only', 'scope' => 'formulize'),
                         array('name' => 'formulizeShowPrintableViewButtons', 'scope' => 'formulize'),
                         array('name' => 'printviewStylesheets', 'scope' => 'formulize', 'showWhen' => array('name' => 'formulizeShowPrintableViewButtons', 'value' => 1)),
                         array('name' => 'heading_help_link', 'scope' => 'formulize'),
                     ),
-                    'Revision History' => array(
+                    _AM_CFG_SEC_REVISION_HISTORY => array(
                         array('name' => 'formulizeRevisionsForAllForms', 'scope' => 'formulize'),
                     ),
-                    'Export' => array(
+                    _AM_CFG_SEC_EXPORT => array(
                         array('name' => 'downloadDefaultToExcel', 'scope' => 'formulize'),
                         array('name' => 'exportIntroChar', 'scope' => 'formulize'),
                     ),
-                    'Lists' => array(
+                    _AM_CFG_SEC_LISTS => array(
                         array('name' => 'LOE_limit', 'scope' => 'formulize'),
                     ),
                 ),
             ),
 
             'messaging' => array(
-                'name' => 'Messaging',
+                'name' => _AM_CFG_VIEW_SETTINGS_MESSAGING,
                 'type' => 'settings',
                 'sections' => array(
-                    'Email delivery' => array(
+                    _AM_CFG_SEC_EMAIL_DELIVERY => array(
                         array('name' => 'mailmethod', 'scope' => 'mailer'),
                         array('name' => 'smtphost', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
                         array('name' => 'smtpuser', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtpauth'))),
@@ -210,23 +221,23 @@ return array(
                         array('name' => 'smtpauthport', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => array('smtp', 'smtpauth'))),
                         array('name' => 'sendmailpath', 'scope' => 'mailer', 'showWhen' => array('name' => 'mailmethod', 'value' => 'sendmail')),
                     ),
-                    'Text messages (SMS)' => array(
+                    _AM_CFG_SEC_TEXT_MESSAGES => array(
                         array('name' => 'sms_provider', 'scope' => 'mailer'),
                         array('name' => 'sms_account_sid', 'scope' => 'mailer'),
                         array('name' => 'sms_auth_token', 'scope' => 'mailer'),
                         array('name' => 'sms_from_number', 'scope' => 'mailer'),
                     ),
-                    'Notifications' => array(
+                    _AM_CFG_SEC_NOTIFICATIONS => array(
                         array('name' => 'notifyByCron', 'scope' => 'formulize'),
                     ),
                 ),
             ),
 
             'ai' => array(
-                'name' => 'AI',
+                'name' => _AM_CFG_VIEW_SETTINGS_AI,
                 'type' => 'settings',
                 'sections' => array(
-                    'AI' => array(
+                    _AM_CFG_SEC_AI => array(
                         array('name' => 'formulizeAIAssistantEnabled', 'scope' => 'formulize'),
                         array(
                             'name' => 'formulizeAIAssistantGroups',
@@ -249,17 +260,20 @@ return array(
                 ),
             ),
 
-						'system' => array(
-                'name' => 'System',
+            'system' => array(
+                'name' => _AM_CFG_VIEW_SETTINGS_SYSTEM,
                 'type' => 'settings',
                 'sections' => array(
-                    'Identity' => array(
+                    _AM_CFG_SEC_IDENTITY => array(
                         array('name' => 'sitename', 'scope' => 'system'),
                         array('name' => 'adminmail', 'scope' => 'system'),
-                        array('name' => 'fromuid', 'scope' => 'mailer', 'caption' => 'Sender of private messages'),
+                        array('name' => 'fromuid', 'scope' => 'mailer', 'caption' => _AM_CFG_CAP_FROMUID),
                         array('name' => 'language', 'scope' => 'system'),
                     ),
-										'Logging' => array(
+                    _AM_CFG_SEC_CUSTOM_URLS => array(
+                        array('name' => 'formulizeRewriteRulesEnabled', 'scope' => 'formulize'),
+                    ),
+                    _AM_CFG_SEC_LOGGING => array(
                         array('name' => 'formulizeLoggingOnOff', 'scope' => 'formulize'),
                         array(
                             'name' => 'formulizeLogFileLocation',
@@ -272,29 +286,29 @@ return array(
                             'showWhen' => array('name' => 'formulizeLoggingOnOff', 'value' => 1),
                         ),
                     ),
-										'Database' => array(
-                        array('name' => 'server_TZ', 'scope' => 'system', 'caption' => 'Timezone used by the database server', 'description' => 'This is the timezone that would be reported by <i>SELECT @@global.time_zone;</i> in MariaDB'),
+                    _AM_CFG_SEC_DATABASE => array(
+                        array('name' => 'server_TZ', 'scope' => 'system', 'caption' => _AM_CFG_CAP_SERVER_TZ, 'description' => _AM_CFG_DESC_SERVER_TZ),
                     ),
-                    'Date & time formats' => array(
-                        '_section_help' => "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>",
+                    _AM_CFG_SEC_DATE_TIME_FORMATS => array(
+                        '_section_help' => _AM_CFG_HELP_DATE_TIME_FORMATS,
                         array('name' => 'datestring', 'scope' => 'formulize', 'preview' => 'datetime',
-                            'description' => 'Used for date-and-time display throughout Formulize.'),
+                            'description' => _AM_CFG_DESC_DATESTRING),
                         array('name' => 'shortdatestring', 'scope' => 'formulize', 'preview' => 'datetime',
-                            'description' => 'Used for short date display.'),
+                            'description' => _AM_CFG_DESC_SHORTDATESTRING),
                         array('name' => 'shorttimestring', 'scope' => 'formulize', 'preview' => 'datetime',
-                            'description' => 'Used for short time display.'),
+                            'description' => _AM_CFG_DESC_SHORTTIMESTRING),
                     ),
-										'Search engines (SEO)' => array(
+                    _AM_CFG_SEC_SEO => array(
                         array('name' => 'meta_description', 'scope' => 'metafooter'),
                         array('name' => 'meta_robots', 'scope' => 'metafooter'),
                     ),
-                    'Appearance' => array(
+                    _AM_CFG_SEC_APPEARANCE => array(
                         array('name' => 'theme_set', 'scope' => 'system'),
                         array('name' => 'theme_admin_set', 'scope' => 'system'),
-												array('name' => 'footer', 'scope' => 'metafooter', 'description' => 'Content for the footer of every page, if your theme supports this. HTML is allowed.'),
-                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => 'Content for the footer of every admin page, if your theme supports this. HTML is allowed.'),
+                        array('name' => 'footer', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTER),
+                        array('name' => 'footadm', 'scope' => 'metafooter', 'description' => _AM_CFG_DESC_FOOTADM),
                     ),
-                    'Availability' => array(
+                    _AM_CFG_SEC_AVAILABILITY => array(
                         array('name' => 'closesite', 'scope' => 'system'),
                         array(
                             'name' => 'closesite_text',
@@ -310,29 +324,26 @@ return array(
                 ),
             ),
 
-						'advanced' => array(
-                'name' => 'Advanced',
+            'advanced' => array(
+                'name' => _AM_CFG_VIEW_SETTINGS_ADVANCED,
                 'type' => 'settings',
                 'sections' => array(
-                    'Sessions & cookies' => array(
-                        array('name' => 'session_name', 'scope' => 'system'),
-                        array('name' => 'session_expire', 'scope' => 'system'),
-                        array('name' => 'cookie_samesite', 'scope' => 'system'),
-                    ),
-                    'Custom URLs' => array(
-                        array('name' => 'formulizeRewriteRulesEnabled', 'scope' => 'formulize'),
-                    ),
-                    'Public API' => array(
+                    _AM_CFG_SEC_PUBLIC_API => array(
                         array('name' => 'formulizePublicAPIEnabled', 'scope' => 'formulize'),
                     ),
-                    'Debugging' => array(
+                    _AM_CFG_SEC_SESSIONS_COOKIES => array(
+                        array('name' => 'session_expire', 'scope' => 'system'),
+                        array('name' => 'session_name', 'scope' => 'system', 'description' => _AM_CFG_DESC_SESSION_NAME),
+                        array('name' => 'cookie_samesite', 'scope' => 'system'),
+                    ),
+                    _AM_CFG_SEC_DEBUGGING => array(
                         array('name' => 'debug_mode', 'scope' => 'system'),
                         array('name' => 'theme_fromfile', 'scope' => 'system'),
                         array('name' => 'debugDerivedValues', 'scope' => 'formulize'),
                         array('name' => 'logProcedure', 'scope' => 'formulize'),
                         array('name' => 'validateCode', 'scope' => 'formulize'),
                     ),
-                    "Basement (don't touch unless you really have to)" => array(
+                    _AM_CFG_SEC_BASEMENT => array(
                         array('name' => 'useToken', 'scope' => 'formulize'),
                         array('name' => 'useCache', 'scope' => 'formulize'),
                         array('name' => 'all_done_singles', 'scope' => 'formulize'),
@@ -345,7 +356,7 @@ return array(
             ),
 
             'permissions' => array(
-                'name' => 'Copy Permissions',
+                'name' => _AM_CFG_VIEW_SETTINGS_PERMISSIONS,
                 'type' => 'page',
                 'page' => 'managepermissions',
             ),

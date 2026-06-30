@@ -56,7 +56,7 @@ define("_MD_AM_COMMODE","Default Comment Display Mode");
 define("_MD_AM_COMORDER","Default Comments Display Order");
 define("_MD_AM_ALLOWHTML","Allow HTML tags in user comments?");
 define("_MD_AM_DEBUGMODE","Developer Dashboard");
-define("_MD_AM_DEBUGMODEDSC","Several debug options. A running website should have this turned off.");
+define("_MD_AM_DEBUGMODEDSC","A production website should have this turned off.");
 define("_MD_AM_AVATARALLOW","Allow custom avatar upload?");
 define("_MD_AM_AVATARALLOWDSC","If you allow this option, you can set more option for the avatars (with, height, size).");
 define('_MD_AM_AVATARMP','Minimum posts required');
@@ -144,8 +144,8 @@ define('_MD_AM_REGDSCLMR', 'Registration disclaimer');
 define('_MD_AM_REGDSCLMRDSC', 'Enter text to be displayed as registration disclaimer');
 define('_MD_AM_ALLOWREG', 'Allow new user registration?');
 define('_MD_AM_ALLOWREGDSC', 'Select yes to accept new user registration');
-define('_MD_AM_THEMEFILE', 'Check templates for modifications ?');
-define('_MD_AM_THEMEFILEDSC', 'If this option is enabled, modified templates will be automatically recompiled when they are displayed. You must turn this option off on a production site.');
+define('_MD_AM_THEMEFILE', 'Bypass template cache (load templates from files every time)');
+define('_MD_AM_THEMEFILEDSC', '');
 define('_MD_AM_CLOSESITE', 'Turn your site off?');
 define('_MD_AM_CLOSESITEDSC', 'Select yes to turn your site off so that only users in selected groups have access to the site. ');
 define('_MD_AM_CLOSESITEOK', 'Groups that are allowed to login while the site is turned off.');
@@ -434,7 +434,7 @@ define("_MD_AM_AUTHOKTA","Use SP-initiated Okta SAML authentication");
 define("_MD_AM_AUTHOKTADESC","If your site uses Okta as an authentication service, enter the SSO URL in this box. Only SP-initiated SAML authentication is supported. You must place a completed 'settings.php' file in the /libraries/php-saml/ directory.");
 
 define("_MD_AM_COOKIE_SAMESITE","Session cookie SameSite");
-define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the login session cookie. Lax is recommended. Use None ONLY if Formulize is embedded cross-site in an iframe (e.g. an LTI/Brightspace integration) - None also requires the site to be served over HTTPS. Strict is the most restrictive.");
+define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the session cookie. Lax is recommended. Use None ONLY if Formulize is embedded cross-site in an iframe (e.g. an LTI/Brightspace integration) - None also requires the site to be served over HTTPS. Strict is the most restrictive.");
 
 
 

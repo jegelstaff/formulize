@@ -20,6 +20,7 @@ define("_MI_formulize_MENU_USERS_EMAIL","Users: Email Users");
 define("_MI_formulize_MENU_USERS_API_KEYS","Users: Manage API Keys");
 define("_MI_formulize_MENU_USERS_TOKENS","Users: Manage Account Creation Tokens");
 define("_MI_formulize_MENU_SETTINGS_SYSTEM","Settings: System");
+define("_MI_formulize_MENU_SETTINGS_ELEMENTS","Settings: Elements");
 define("_MI_formulize_MENU_SETTINGS_FORMS","Settings: Forms");
 define("_MI_formulize_MENU_SETTINGS_ADVANCED","Settings: Advanced");
 define("_MI_formulize_MENU_SETTINGS_MESSAGING","Settings: Messaging");
