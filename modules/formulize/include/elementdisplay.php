@@ -225,7 +225,7 @@ EOF;
 
 		if(!$renderElement) {
 			return array(0=>$form_ele, 1=>$isDisabled);
-		} elseif($element->getVar('ele_type') == "ib") {
+		} elseif($element->getVar('ele_type') == "fullWidthContent") {
 				print $form_ele[0];
 				return "rendered";
 			} elseif(is_object($form_ele)) {

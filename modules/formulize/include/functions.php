@@ -2238,7 +2238,7 @@ function getAllColList($fid, $frid=0, $groups=null, $includeTextForDisplay=false
 
 		$incbreaks = "";
     if (!$includeTextForDisplay) {
-        $incbreaks = "AND (ele_type != 'ib' AND ele_type != 'areamodif')";
+        $incbreaks = "AND (ele_type != 'fullWidthContent' AND ele_type != 'captionedContent')";
     }
 
     // generate the $allcols list
@@ -6308,17 +6308,11 @@ function getAESPassword() {
  * @return string Text representation of the element type
  */
 function convertTypeToText($type) {
-    switch ($type) {
-        case "areamodif":
-            return "Text for display (caption and contents)";
-        case "ib":
-            return "Text for display (spanning the form)";
-        default:
-            // must be a custom element type
-            $customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
-            $customTypeObject = $customTypeHandler->create();
-            return $customTypeObject->name;
-    }
+    // all element types (including the fullWidthContent and captionedContent display elements)
+    // are class-based, so the readable name comes from the element class's $name property
+    $customTypeHandler = xoops_getmodulehandler($type."Element", 'formulize');
+    $customTypeObject = $customTypeHandler->create();
+    return $customTypeObject->name;
 }
 
 /**

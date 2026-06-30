@@ -229,7 +229,7 @@ print "
                 $value = ob_get_clean();
                 if($result != 'not_allowed' AND $result != 'hidden') {
                     $caption = $element->getVar('ele_caption');
-                    if($elementObject->getVar('ele_type') == 'ib') {
+                    if($elementObject->getVar('ele_type') == 'fullWidthContent') {
                         $caption = $value;
                         $value = "";
             }

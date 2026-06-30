@@ -2015,7 +2015,8 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 						'description' => 'Optional. A longer description or help text for the '.$singularCategoryName.' shown to users filling out the form.'
 					]
 				];
-			} elseif($category != 'subforms') {
+			} elseif($category != 'subforms' AND $category != 'layout') {
+				// layout (static content) elements are display-only: no column heading, required, principal identifier, data type, etc.
 				$commonDataElementPropertiesForThisCategory = recursiveReplaceInArray('REPLACEWITHSINGLUARCATEGORYNAME', $singularCategoryName, $commonDataElementProperties);
 				if($category == 'derived') {
 					unset($commonDataElementPropertiesForThisCategory['required']);

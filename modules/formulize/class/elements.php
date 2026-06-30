@@ -227,24 +227,21 @@ class formulizeElement extends FormulizeObject {
 			if("fid" == $key) {
 				parent::setVar("id_form", $value, $not_gpc);
 			}
+			// NB: the fullWidthContent and captionedContent display element types handle their own
+			// code-file read/write in their own classes (formulize{FullWidthContent,CaptionedContent}Element).
 			if($key == 'ele_value') {
 				$ele_type = $this->getVar('ele_type');
 				$valueToWrite = is_array($value) ? $value : unserialize($value);
 				$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
 
 				// check if the value is a code block, and if so write to file instead of assigning to property of object
-				if(
-					(($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value"))
-					OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default"))
-				) {
+				if($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default")) {
 					formulize_writeCodeToFile($filename, $valueToWrite[0]);
 					$valueToWrite[0] = '';
 					$value = is_array($value) ? $valueToWrite : serialize($valueToWrite);
 
 				// delete the file if it exists but the value no longer contains code, since these elements can have code or plain text values, and plain text is not written as a file
-				} elseif(
-					((($ele_type == 'ib' OR $ele_type == 'areamodif') AND strstr((string)$valueToWrite[0], "\$value") === false)
-					OR ($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default") === false))
+				} elseif($ele_type == 'textarea' AND strstr((string)$valueToWrite[0], "\$default") === false
 					AND file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
 						unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
 				}
@@ -255,20 +252,8 @@ class formulizeElement extends FormulizeObject {
 		public function getVar($key, $format = 's') {
 			$format = $key == "ele_value" ? "f" : $format;
 			$value = parent::getVar($key, $format);
-			if($key == 'ele_value') {
-				$ele_type = $this->getVar('ele_type');
-				if(($ele_type == 'ib'
-					OR $ele_type == 'areamodif')
-					AND is_array($value)) {
-						$filename = $ele_type.'_'.$this->getVar('ele_handle').'.php';
-						$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
-						$fileValue = "";
-						if(file_exists($filePath)) {
-							$fileValue = strval(file_get_contents($filePath));
-						}
-						$value[0] = $fileValue ? $fileValue : $value[0];
-				}
-			}
+			// NB: the fullWidthContent and captionedContent display element types read their own
+			// code-file contents back in their own classes (formulize{FullWidthContent,CaptionedContent}Element).
 			return $value;
 		}
 
@@ -942,7 +927,7 @@ class formulizeElementsHandler {
 					}
 				}
 				// rewrite references in text for display
-				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'areamodif' OR ele_type = 'ib')";
+				$selectElementsSQL = "SELECT ele_id, ele_value FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_value LIKE '%".$original_handle."%' AND (ele_type = 'captionedContent' OR ele_type = 'fullWidthContent')";
 				if($res = $xoopsDB->query($selectElementsSQL)) {
 						while($row = $xoopsDB->fetchRow($res)) {
 								$thisEleId = $row[0];
@@ -959,7 +944,7 @@ class formulizeElementsHandler {
 						}
 				}
 				// update element code file names
-				$elementTypes = array('ib', 'areamodif', 'text', 'textarea', 'derived');
+				$elementTypes = array('fullWidthContent', 'captionedContent', 'text', 'textarea', 'derived');
 				foreach($elementTypes as $type) {
 					$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$original_handle.'.php';
 					$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$type.'_'.$ele_handle.'.php';

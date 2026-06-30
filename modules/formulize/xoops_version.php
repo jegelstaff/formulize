@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 4,
+	'dbversion' => 5,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -563,10 +563,10 @@ $modversion['templates'][] = array(
 	'file' => 'admin/element_type_grid.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/element_type_areamodif.html',
+	'file' => 'admin/element_type_captionedContent.html',
 	'description' => '');
 $modversion['templates'][] = array(
-	'file' => 'admin/element_type_ib.html',
+	'file' => 'admin/element_type_fullWidthContent.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/element_type_radio.html',

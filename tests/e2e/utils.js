@@ -27,8 +27,8 @@ export const ElementType = {
 	'slider': 'element-slider',
 	'duration': 'element-duration',
 	'colorpick': 'element-colorpick',
-	'areadmodif': 'element-areadmodif',
-	'ib': 'element-ib',
+	'captionedContent': 'element-captionedcontent',
+	'fullWidthContent': 'element-fullwidthcontent',
 	'grid': 'element-grid',
 	'derived': 'element-derived',
 	'googleaddress': 'element-googleaddress',
@@ -144,13 +144,13 @@ const elementToContentMapping = {
 		tab: 'Selectors',
 		heading: 'Element: New element (Color Picker)'
 	},
-	'element-areadmodif': {
+	'element-captionedcontent': {
 		tab: 'Layout',
-		heading: 'Element: New element (Text for display (caption and contents))'
+		heading: 'Element: New element (Captioned Content)'
 	},
-	'element-ib': {
+	'element-fullwidthcontent': {
 		tab: 'Layout',
-		heading: 'Element: New element (Text for display (spanning the form))'
+		heading: 'Element: New element (Full Width Content)'
 	},
 	'element-grid': {
 		tab: 'Layout',
