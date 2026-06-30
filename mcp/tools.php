@@ -218,7 +218,7 @@ Examples:
 								[
 									'type' => 'array',
 									'description' =>
-'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Use multiple conditions when appropriate, to filter by multiple elements at once and narrow down the dataset returned. Multiple conditions are combined using \'and_or\' property. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for non-blank values. You can filter by elements in connected forms, if the \'relationship_id\' property is set to -1.
+'Advanced filter: Array of condition objects. Each condition has: element (field name), operator (=, >, <, >=, <=, !=, LIKE), and value (search term). Use multiple conditions when appropriate, to filter by multiple elements at once and narrow down the dataset returned. Multiple conditions are combined using \'and_or\' property. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for blank values. You can filter by elements in connected forms, if the \'relationship_id\' property is set to -1.
 Correct examples for regular elements:
 - [ { "element": "age", "operator": "=", "value": "18" } ]
 - [ { "element": "fruit_name", "operator": "LIKE", "value": "berry" }, { "element": "fruit_price", "operator": ">", "value": "5.25" } ]
@@ -242,7 +242,7 @@ Correct example for linked elements:
 											],
 											'value' => [
 												'type' => 'string',
-												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for non-blank values.'
+												'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for blank values.'
 											]
 										],
 										'required' => ['element', 'operator', 'value']
@@ -868,6 +868,18 @@ Correct example for linked elements:
 		$pi = ($arguments['principal_identifier'] ?? false) ? true : false;
 		$data_type = $arguments['data_type'] ?? false;
 		$display = isset($arguments['display']) ? ($arguments['display'] ? 1 : 0) : null;
+		// Distinguish three states for display_conditions:
+		// - absent or null => leave any existing conditions untouched
+		// - empty array    => clear all existing conditions
+		// - non-empty array => replace conditions with the provided set
+		$displayConditionsProvided = (isset($arguments['display_conditions']) AND $arguments['display_conditions'] !== null);
+		$display_conditions = array();
+		if($displayConditionsProvided) {
+			if(!is_array($arguments['display_conditions'])) {
+				throw new FormulizeMCPException('Invalid display_conditions: must be an array of condition objects. Omit the property entirely to leave existing conditions unchanged, or pass an empty array to clear them.', 'invalid_data');
+			}
+			$display_conditions = $arguments['display_conditions'];
+		}
 		$disabled = isset($arguments['disabled']) ? ($arguments['disabled'] ? 1 : 0) : null;
 
 		$makeSubformInterface = false;
@@ -904,6 +916,26 @@ Correct example for linked elements:
 			throw new FormulizeMCPException('Invalid data_type: '.$data_type, 'invalid_data', context: ['valid_data_types' => ['text', 'int(x)', 'decimal(x,y)', 'date', 'datetime', 'time', 'char(x)', 'varchar(x)'] ]);
 		}
 
+		// validate that display conditions have valid element references, operators, and types
+		$validatedDisplayConditions = [];
+		foreach($display_conditions as $condition) {
+			if(!($conditionElementObject = _getElementObject($condition['element']))) {
+				throw new FormulizeMCPException('Invalid display condition: element not found', 'invalid_data');
+			}
+			if(!in_array($condition['operator'], ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'])) {
+				throw new FormulizeMCPException('Invalid display condition: operator not valid. Valid operators are =, >, <, >=, <=, !=, LIKE, NOT LIKE, IN', 'invalid_data');
+			}
+			$conditionType = $condition['type'] ?? 'match-all'; // type is optional in the schema; default to match-all (logical AND), consistent with the admin UI
+			if(!in_array($conditionType, ['match-all', 'match-one-or-more'])) {
+				throw new FormulizeMCPException('Invalid display condition: type not valid. Valid types are match-all, match-one-or-more', 'invalid_data');
+			}
+			// store element references as IDs, the canonical format used by the admin UI and import/export (conversion is idempotent if an ID was passed)
+			$validatedDisplayConditions[0][] = $conditionElementObject->getVar('ele_id');
+			$validatedDisplayConditions[1][] = $condition['operator'];
+			$validatedDisplayConditions[2][] = $condition['value'];
+			$validatedDisplayConditions[3][] = $conditionType == 'match-all' ? 'all' : 'oom';
+		}
+
 		// put the passed in values into an array for passing to the upsert function
 		// corresponds to the fields in the formulizeElement object
 		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
@@ -918,6 +950,9 @@ Correct example for linked elements:
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
 			'ele_order' => $elementObject ? $elementObject->getVar('ele_order') : figureOutOrder('bottom', fid: $fid), // ele_order not specifiable as a property yet, so set every new element to the bottom
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
+			// when display_conditions was provided (even as an empty array, to clear), use the validated set;
+			// otherwise round-trip the existing value so it is left untouched
+			'ele_filtersettings' => $displayConditionsProvided ? $validatedDisplayConditions : ($elementObject ? $elementObject->getVar('ele_filtersettings') : array()),
 			'ele_disabled' => $disabled !== null ? $disabled : ($elementObject ? $elementObject->getVar('ele_disabled') : 0),
 		];
 
@@ -1988,6 +2023,54 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 				$dataTypePropertyForThisCategory = $dataTypeProperty;
 				$creationDataElementPropertiesForThisCategory = $creationDataElementProperties;
 			}
+
+			$displayConditions = [
+				'display_conditions' => [
+					'type' => 'array',
+					'description' =>
+						'Optional. A given form entry must meet these conditions in order for this element to be displayed. IMPORTANT: only include this property when you intend to set or clear the conditions. To leave any existing conditions unchanged, do NOT include the property at all. To clear/remove all existing display conditions (so the element is always displayed), include the property as an empty array ([]). Each condition includes an element, an operator, a value, and a \'type\' flag indicating the logical set that the condition belongs to: \'match-all\' or \'match-one-or-more\'. Multiple match-all conditions are joined with a logical AND operator. Multiple match-one-or-more conditions are joined with a logical OR operator. When setting conditions based on linked elements, do _not_ use foreign keys as values, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to match blank values.
+						Clear all existing display conditions (element will always be displayed):
+						- []
+						Correct examples for regular elements:
+						- [ { "element": "status", "operator": "=", "value": "Approved", "type": "match-all" } ]
+						- [ { "element": "award_value", "operator": ">", "value": "500", "type": "match-all" }, { "element": "award_year", "operator": "=", "value": "2026", "type": "match-all" } ]
+						Match size 40 pants OR green pants:
+						- [ { "element": "pant_size", "operator": "=", "value": "40", "type": "match-one-or-more" }, { "element": "pant_color", "operator": "=", "value": "green", "type": "match-one-or-more" } ]
+						Match incomplete orders that are due before today, and are going to either Canada or Mexico:
+						- [ { "element": "order_state", "operator": "=", "value": "incomplete", "type": "match-all" }, {"element": "order_due_date", "operator": "<", "value": "{TODAY}", "type": "match-all" }, { "element": "order_destination", "operator": "=", "value": "Canada", "type": "match-one-or-more" }, { "element": "order_destination", "operator": "=", "value": "Mexico", "type": "match-one-or-more" } ]
+						Incorrect example (don\'t use foreign key values with linked elements):
+						- [ { "element": "assigned_judge", "operator": "LIKE", "value": "509", "type": "match-all" } ]
+						- [ { "element": "participating_country", "operator": "=", "value": "79", "type": "match-all" } ]
+						Correct example for linked elements:
+						- [ { "element": "assigned_judge", "operator": "LIKE", "value": "Wapner", "type": "match-all" } ]
+						- [ { "element": "participating_country", "operator": "=", "value": "Japan", "type": "match-all" } ]',
+					'items' => [
+						'type' => 'object',
+						'properties' => [
+							'element' => [
+								'type' => 'string',
+								'description' => 'Element handle to check the value against (get from get_form_details).'
+							],
+							'operator' => [
+								'type' => 'string',
+								'enum' => ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'],
+								'description' => 'Comparison operator. Use LIKE for partial text matches.'
+							],
+							'value' => [
+								'type' => 'string',
+								'description' => 'Value to compare against. For dates use YYYY-MM-DD format. For times, use hh:mm format. For duration elements, use minutes as an integer. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. Use the special value "{BLANK}" (without quotes) to filter for blank values.'
+							],
+							'type' => [
+								'type' => 'string',
+								'enum' => ['match-all', 'match-one-or-more'],
+								'description' => 'Optional. Whether this condition is part of the match-all set (logical AND) or the match-one-or-more set (logical OR). Defaults to match-all if not specified.'
+							]
+						],
+						'required' => ['element', 'operator', 'value']
+					]
+				]
+			];
+
 			$formElementTools[] = [
 				'name' => 'create_'.str_replace(' ', '_', strtolower($singularCategoryName)),
 				'description' => $creationDescription,
@@ -2012,7 +2095,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types.",
 								'additionalProperties' => true
 							],
-						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $dataTypePropertyForThisCategory,
+						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $displayConditions + $dataTypePropertyForThisCategory,
 					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
 			];
@@ -2055,7 +2138,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 							'type' => 'boolean',
 							'description' => "Optional. Whether the $singularCategoryName is displayed in the form or hidden. Default: true."
 						]
-					] + $dataTypePropertyForThisCategory,
+					] + $displayConditions + $dataTypePropertyForThisCategory,
 				'required' => ['element_identifier']
 				]
 			];

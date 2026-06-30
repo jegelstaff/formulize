@@ -349,6 +349,28 @@ class formulizeElementsHandler {
 		if($properties['ele_caption'] == "") {
 			throw new Exception("You must use a caption when working with an element");
 		}
+
+		if(isset($properties['ele_filtersettings']) AND is_array($properties['ele_filtersettings']) AND count($properties['ele_filtersettings']) > 0) {
+			$elements = $properties['ele_filtersettings'][0];
+			$operators = $properties['ele_filtersettings'][1];
+			$types = $properties['ele_filtersettings'][3];
+			foreach($elements as $i => $element) {
+				if(!($conditionElementObject = _getElementObject($element))) {
+					throw new Exception("You have specified an invalid element in display conditions");
+				}
+				if(!in_array($operators[$i], array('=', '!=', 'NOT', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE', 'IN'))) {
+					throw new Exception("You have specified an invalid operator in display conditions");
+				}
+				if(!in_array($types[$i], array('all', 'oom'))) {
+					throw new Exception("You have specified an invalid type in display conditions");
+				}
+				// store element references as IDs, the canonical format used by the admin UI and import/export (conversion is idempotent if an ID was passed)
+				$properties['ele_filtersettings'][0][$i] = $conditionElementObject->getVar('ele_id');
+			}
+		} else {
+			$properties['ele_filtersettings'] = "";
+		}
+
 		$properties['ele_colhead'] = trim($properties['ele_colhead']);
 		$properties['ele_handle'] = trim($properties['ele_handle']);
 		$properties['ele_desc'] = trim($properties['ele_desc']);
