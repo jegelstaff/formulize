@@ -92,19 +92,16 @@ test.describe('Installation of Formulize', () => {
 	}),
 	test('Enable Formulize Logging', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.goto('/modules/formulize/admin');
-		await page.getByRole('link', { name: 'Preferences' }).click();
-		// Use stable name+value attributes instead of the auto-generated counter-based ID
-		// (#formulizeLoggingOnOff-N where N shifts whenever any yesno pref is added before this one).
-		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
-		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
-		// when jGrowl fires and adds resources that delay the load event).
+		// Logging is now under Settings → System in the Formulize admin UI.
+		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=system');
+		// Use stable name+value attributes instead of the auto-generated counter-based ID.
+		// Wait for the settings form to become visible: the admin-ui wrapper starts with
+		// display:none and is revealed by $(window).load in formulize-admin.js.
 		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await loggingEnabled.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
-		await waitForAdminPageReady(page);
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(loggingEnabled).toBeChecked();
 	}),
 	test('Lock site and try to login', async ({ page }) => {

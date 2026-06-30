@@ -387,20 +387,19 @@ test.describe('Set columns and elements for screens', () => {
 	})
 
 	test('Set Preferences for Rewrite Rules', async ({ page }) => {
-		await page.getByRole('link', { name: 'Preferences' }).click();
-		// Use stable name+value attributes instead of the auto-generated counter-based ID
-		// (#formulizeRewriteRulesEnabled-N where N shifts whenever any yesno pref is added before this one).
-		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
-		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
-		// when jGrowl fires and adds resources that delay the load event).
+		// Rewrite rules setting is now under Settings → System in the Formulize admin UI.
+		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=system');
+		// Use stable name+value attributes instead of the auto-generated counter-based ID.
+		// Wait for the settings form to become visible: the admin-ui wrapper starts with
+		// display:none and is revealed by $(window).load in formulize-admin.js.
 		const rewriteRulesEnabled = page.locator('input[name="formulizeRewriteRulesEnabled"][value="1"]');
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await rewriteRulesEnabled.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
-		await waitForAdminPageReady(page);
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(rewriteRulesEnabled).toBeChecked();
-  	await page.locator('div.CPbigTitle').getByRole('link', { name: 'Formulize', exact: true }).click();
+		// Navigate back to the Apps tab to find the Museum application.
+		await page.goto('/modules/formulize/admin/');
   	await page.getByRole('link', { name: 'Application: Museum' }).click();
   	await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();

@@ -5,9 +5,9 @@ import { login } from '../../utils';
 test.describe('Check that tools/list is responding', () => {
 	test('Create API Key', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.getByRole('link', { name: 'Admin' }).click();
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'API Keys' }).click();
+		// API Keys are now under Users → API Keys in the Formulize admin UI.
+		await page.goto('/modules/formulize/admin/ui.php?page=users&view=apikeys');
+		await page.locator('.admin-ui').waitFor({ state: 'visible' });
 		await page.getByRole('textbox').fill('admin');
 		await page.getByRole('button', { name: 'Search' }).click();
 		await page.getByRole('radio', { name: 'admin' }).check();
@@ -16,30 +16,31 @@ test.describe('Check that tools/list is responding', () => {
 	}),
 	test('Run tools list with API key and session auth', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.getByRole('link', { name: 'Admin' }).click();
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Preferences' }).click();
-		// Use stable name+value attributes instead of auto-generated counter-based IDs.
-		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
-		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
-		// when jGrowl fires and adds resources that delay the load event).
-		// Enable both the external MCP server and the embedded AI assistant in one save so that a
-		// concurrent validate test cannot overwrite one while the other is being tested.
+		// AI settings (MCP server and AI assistant) are now under Settings → AI in the Formulize admin UI.
+		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=ai');
+		// Wait for the settings form to become visible: the admin-ui wrapper starts with
+		// display:none and is revealed by $(window).load in formulize-admin.js.
 		const mcpServerEnabled = page.locator('input[name="formulizeMCPServerEnabled"][value="1"]');
-		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
 		const aiAssistantEnabled = page.locator('input[name="formulizeAIAssistantEnabled"][value="0"]');
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await mcpServerEnabled.check();
-		await loggingEnabled.check();
 		await aiAssistantEnabled.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
-		// With MCP enabled, the preference label shows the external-assistant setup instructions.
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
+		// With MCP enabled, the preference description shows the external-assistant setup instructions.
 		// Confirming this text is visible verifies the setting was saved on.
 		await expect(page.getByText('See further setup instructions for external AI assistants')).toBeVisible();
 		await expect(mcpServerEnabled).toBeChecked();
-		await page.locator('#formulize-prefs-hide-on-load').getByRole('link', { name: 'Formulize', exact: true }).click();
-		await page.getByRole('link', { name: 'API keys' }).click();
+		// Logging is under Settings → System.
+		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=system');
+		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
+		await loggingEnabled.check();
+		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
+		// API Keys are under Users → API Keys.
+		await page.goto('/modules/formulize/admin/ui.php?page=users&view=apikeys');
+		await page.locator('.admin-ui').waitFor({ state: 'visible' });
 		const apiKey = await page.locator('td[id=key-1]').innerText();
 		await page.goto('/user.php?op=logout');
 		await page.goto('/mcp/test.html');
@@ -112,24 +113,14 @@ test.describe('Check that tools/list is responding', () => {
 		await page.waitForLoadState('networkidle');
 		await expect(page.getByText(/httpStatus\": 503/).first()).toBeVisible();
 
-		// --- login again and enable assistant ---
-		await page.goto('/');
-		await page.getByRole('link', { name: 'Admin' }).click();
-		await page.getByRole('link', { name: 'Home' }).click();
-		await page.getByRole('link', { name: 'Preferences' }).click();
-		// Use stable name+value attributes instead of auto-generated counter-based IDs.
-		// Also wait for the preferences form to become visible: it starts at opacity:0 and is revealed
-		// by $(window).load, which may fire after waitForAdminPageReady resolves (especially on retry
-		// when jGrowl fires and adds resources that delay the load event).
-		// Enable both the external MCP server and the embedded AI assistant in one save so that a
-		// concurrent validate test cannot overwrite one while the other is being tested.
+		// --- enable assistant ---
+		// Navigate to Settings → AI to enable the embedded AI assistant.
+		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=ai');
 		const aiAssistantEnabled2 = page.locator('input[name="formulizeAIAssistantEnabled"][value="1"]');
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await aiAssistantEnabled2.check();
 		await page.getByRole('button', { name: 'Save your changes' }).click();
-		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
-		// With MCP enabled, the preference label shows the external-assistant setup instructions.
-		// Confirming this text is visible verifies the setting was saved on.
+		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(page.getByText('Learn more: https://formulize.org/ai/setup-embedded')).toBeVisible();
 		await expect(aiAssistantEnabled2).toBeChecked();
 		await page.goto('/mcp/test.html');
