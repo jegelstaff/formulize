@@ -8,6 +8,16 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_modid`, `conf_catid`, `conf_name
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Lax', 'Lax', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'None', 'None', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
 INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Strict', 'Strict', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'cookie_samesite';
+-- SMS messaging settings (mailer category). Mirrors patch 003_sms_settings.php so fresh
+-- installs have them too; the SMS providers read these (falling back to trust constants).
+-- conf_title and conf_desc must be PHP constant names (resolved by the preferences UI).
+INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
+(0, 6, 'sms_provider', '_MD_AM_SMS_PROVIDER', 'Twilio', '_MD_AM_SMS_PROVIDER_DSC', 'select', 'text', 201),
+(0, 6, 'sms_account_sid', '_MD_AM_SMS_ACCOUNT_SID', '', '_MD_AM_SMS_ACCOUNT_SID_DSC', 'textbox', 'text', 202),
+(0, 6, 'sms_auth_token', '_MD_AM_SMS_AUTH_TOKEN', '', '_MD_AM_SMS_AUTH_TOKEN_DSC', 'password', 'text', 203),
+(0, 6, 'sms_from_number', '_MD_AM_SMS_FROM_NUMBER', '', '_MD_AM_SMS_FROM_NUMBER_DSC', 'textbox', 'text', 204);
+INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Twilio', 'Twilio', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'sms_provider';
+INSERT INTO `REPLACE_WITH_PREFIX_configoption` (`confop_name`, `confop_value`, `conf_id`) SELECT 'Nexmo (Vonage)', 'Nexmo', `conf_id` FROM `REPLACE_WITH_PREFIX_config` WHERE `conf_name` = 'sms_provider';
 INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`, `conf_name`, `conf_title`, `conf_value`, `conf_desc`, `conf_formtype`, `conf_valuetype`, `conf_order`) VALUES
 (1, 0, 1, 'sitename', '_MD_AM_SITENAME', 'Formulize', '_MD_AM_SITENAMEDSC', 'textbox', 'text', 0),
 (2, 0, 1, 'slogan', '_MD_AM_SLOGAN', '', '_MD_AM_SLOGANDSC', 'textbox', 'text', 1),
@@ -28,7 +38,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (17, 0, 1, 'anonymous', '_MD_AM_ANONNAME', 'Anonymous', '_MD_AM_ANONNAMEDSC', 'textbox', 'text', 16),
 (18, 0, 1, 'gzip_compression', '_MD_AM_USEGZIP', '0', '_MD_AM_USEGZIPDSC', 'yesno', 'int', 17),
 (19, 0, 1, 'usercookie', '_MD_AM_USERCOOKIE', 'icms_user', '_MD_AM_USERCOOKIEDSC', 'textbox', 'text', 18),
-(20, 0, 1, 'use_mysession', '_MD_AM_USEMYSESS', '0', '_MD_AM_USEMYSESSDSC', 'yesno', 'int', 19),
+(20, 0, 1, 'use_mysession', '_MD_AM_USEMYSESS', '1', '_MD_AM_USEMYSESSDSC', 'yesno', 'int', 19),
 (21, 0, 1, 'session_name', '_MD_AM_SESSNAME', 'icms_session', '_MD_AM_SESSNAMEDSC', 'textbox', 'text', 20),
 (22, 0, 1, 'session_expire', '_MD_AM_SESSEXPIRE', '15', '_MD_AM_SESSEXPIREDSC', 'textbox', 'int', 21),
 (23, 0, 1, 'debug_mode', '_MD_AM_DEBUGMODE', '0', '_MD_AM_DEBUGMODEDSC', 'select', 'int', 22),

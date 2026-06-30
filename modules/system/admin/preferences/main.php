@@ -698,6 +698,14 @@ switch ($op) {
 		}
 
 		icms::$preload->triggerEvent('afterSaveSystemAdminPreferencesItems', $saved_config_items);
+
+		// If session_name was saved with a non-empty value, keep use_mysession = 1.
+		// session_name requires use_mysession to be enabled in order to work.
+		if (!empty($saved_config_items[ICMS_CONF]['session_name'][1])) {
+			global $xoopsDB;
+			$xoopsDB->queryF("UPDATE " . $xoopsDB->prefix('config') . " SET conf_value = '1' WHERE conf_modid = 0 AND conf_name = 'use_mysession'");
+		}
+
 		unset($saved_config_items);
 
 		if (! empty($use_mysession) && $icmsConfig['use_mysession'] == 0 && $session_name != '') {

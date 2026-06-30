@@ -166,10 +166,17 @@ define('_DAYS', '%s days');
 define('_WEEK', '1 week');
 define('_MONTH', '1 month');
 
-define("_DATESTRING","Y-m-d G:i:s");
-define("_MEDIUMDATESTRING","D M j, Y - g:ia");
-define("_SHORTDATESTRING","Y-m-d"); // ALTERED BY FREEFORM SOLUTIONS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS DATE FORMATS
-define("_SHORTTIMESTRING","g:ia");
+// Date/time display formats are editable in the Formulize admin UI (Site → Basic
+// Settings → Date & time formats). The chosen values are written to a generated
+// file that is included here; the defaults below apply until/unless it overrides them.
+if (defined('XOOPS_ROOT_PATH') AND file_exists(XOOPS_ROOT_PATH . '/modules/formulize/language/english/formulize_dateformats.php')) {
+	include XOOPS_ROOT_PATH . '/modules/formulize/language/english/formulize_dateformats.php';
+}
+if (!defined("_DATESTRING")) define("_DATESTRING","D M j, Y - g:ia");
+if (!defined("_MEDIUMDATESTRING")) define("_MEDIUMDATESTRING", _DATESTRING);
+if (!defined("_DBDATESTRING")) define("_DBDATESTRING","Y-m-d G:i:s");
+if (!defined("_SHORTDATESTRING")) define("_SHORTDATESTRING","Y-m-d"); // ALTERED BY FREEFORM SOLUTIONS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS DATE FORMATS
+if (!defined("_SHORTTIMESTRING")) define("_SHORTTIMESTRING","g:ia");
 /*
  The following characters are recognized in the format string:
  a - "am" or "pm"

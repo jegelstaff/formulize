@@ -91,7 +91,7 @@ class mod_profile_AudioHandler extends icms_ipf_Handler {
 	 * @return bool true
 	 */
 	protected function beforeUpdate(&$obj) {
-		$obj->setVar('creation_time', date(_DATESTRING));
+		$obj->setVar('creation_time', date(_DBDATESTRING));
 		return true;
 	}
 

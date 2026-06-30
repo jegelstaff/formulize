@@ -80,7 +80,7 @@ function edittribes($tribesObj, $hideForm=false) {
 	} else {
 		if (!$profile_tribes_handler->userCanSubmit()) redirect_header(PROFILE_URL, 3, _NOPERM);
 		$tribesObj->setVar('uid_owner', icms::$user->getVar('uid'));
-		$tribesObj->setVar('creation_time', date(_DATESTRING));
+		$tribesObj->setVar('creation_time', date(_DBDATESTRING));
 		$tribesObj->hideFieldFromForm(array('creation_time', 'uid_owner', 'meta_keywords', 'meta_description', 'short_url'));
 		$sform = $tribesObj->getSecureForm($hideForm ? '' : _MD_PROFILE_TRIBES_SUBMIT, 'addtribes');
 		$sform->assign($icmsTpl, 'profile_tribesform');
@@ -118,7 +118,7 @@ function edittribepost($tribetopic_id, $tribepost_id, $tribesObj, $hideForm = fa
 		}
 		$tribepostObj->setVar('tribes_id', $tribesObj->getVar('tribes_id'));
 		$tribepostObj->setVar('poster_uid', icms::$user->getVar('uid'));
-		$tribepostObj->setVar('post_time', date(_DATESTRING));
+		$tribepostObj->setVar('post_time', date(_DBDATESTRING));
 
 		$tribepostObj->hideFieldFromForm(array('meta_keywords', 'meta_description', 'short_url'));
 		if (icms::$user->getVar('attachsig')) {

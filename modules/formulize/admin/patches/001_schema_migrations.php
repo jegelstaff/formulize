@@ -465,15 +465,6 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 				$sql['add_tfa_created'] = "ALTER TABLE ".$xoopsDB->prefix("tfa_codes"). " ADD `created` int(11) unsigned NOT NULL default 0";
 				$sql['add_ele_handle_index'] = "ALTER TABLE ".$xoopsDB->prefix("formulize")." ADD INDEX i_ele_handle (`ele_handle`)";
 
-				$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
-				$adminMenuLangs = array_unique($adminMenuLangs);
-				foreach($adminMenuLangs as $lang) {
-					$adminMenuFile = XOOPS_ROOT_PATH.'/cache/adminmenu_'.$lang.'.php';
-					if (file_exists($adminMenuFile)) {
-						unlink($adminMenuFile);
-					}
-				}
-
         $needToSetSaveAndLeave = true;
         $needToSetPrintableView = true;
         foreach($sql as $key=>$thissql) {

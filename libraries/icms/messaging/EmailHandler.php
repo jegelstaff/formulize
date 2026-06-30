@@ -124,10 +124,10 @@ class icms_messaging_EmailHandler extends PHPMailer\PHPMailer\PHPMailer {
 	 */
 	public function __construct() {
 		global $icmsConfig, $icmsConfigMailer;
-		$this->From = $icmsConfigMailer['from'];
-		if ($this->From == '') {
-			$this->From = $icmsConfig['adminmail'];
-		}
+		// The site email address (adminmail) is the single source for the From
+		// address; the $icmsConfigMailer['from'] setting is no longer used (it duplicated
+		// adminmail and was overridden by it across most transactional emails).
+		$this->From = $icmsConfig['adminmail'];
 		$this->Sender = $this->From;
 
 		if ($icmsConfigMailer["mailmethod"] == "smtpauth") {

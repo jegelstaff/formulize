@@ -134,7 +134,7 @@ if(!$mcpEnabled) {
 	$mcpServerInstructions = "<br><br>See further setup instructions for external AI assistants here: <a href='https://formulize.org/ai/setup-mcp' target='_blank'>formulize.org/ai/setup-mcp</a>";
 }
 
-define("_MI_formulize_AIASSISTANTENABLED",  _MI_formulize_PREFHEADSTART."AI"._MI_formulize_PREFHEADEND."Enable the Embedded AI Assistant, inside Formulize<br><br> Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
+define("_MI_formulize_AIASSISTANTENABLED",  "Enable the Embedded AI Assistant, inside Formulize<br><br> Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
 define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key for an AI provider, or you will need to have a local model available through Ollama.");
 
 define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant".$hideEmbeddedAIGroups);

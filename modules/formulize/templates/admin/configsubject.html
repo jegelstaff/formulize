@@ -1,0 +1,11 @@
+<{if isset($adminPage.subnav) AND $adminPage.subnav}>
+<ul class="formulize-config-subnav">
+    <{foreach from=$adminPage.subnav item=sub}>
+    <li<{if $sub.active}> class="active"<{/if}>><a href="<{$sub.url}>"><{$sub.name}></a></li>
+    <{/foreach}>
+</ul>
+<{/if}>
+
+<{if isset($adminPage.subview_template) AND $adminPage.subview_template}>
+<{include file=$adminPage.subview_template}>
+<{/if}>

@@ -33,27 +33,61 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// This flyout mirrors the admin homepage's top-level tabs and their sub-tabs (see
+// getHomeTabs() in admin/ui.php and the settings registry in
+// include/configsettings_registry.php). The admin flyout is a single flat level,
+// so the hierarchy is conveyed by order and labels: each subject tab is followed
+// by its sub-views.
+
+// Apps — the forms dashboard
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_ADMIN_HOME,
 	'link'	=> 'admin/ui.php');
+
+// Users tab + its sub-tabs
 $adminmenu[] = array(
-	'title'	=> _MI_formulize_EMAIL_USERS,
-	'link'	=> 'admin/ui.php?page=mailusers');
+	'title'	=> _MI_formulize_MENU_USERS_EMAIL,
+	'link'	=> 'admin/ui.php?page=users&view=email');
 $adminmenu[] = array(
-	'title'	=> _MI_formulize_MANAGE_API_KEYS,
-	'link'	=> 'admin/ui.php?page=managekeys');
+	'title'	=> _MI_formulize_MENU_USERS_API_KEYS,
+	'link'	=> 'admin/ui.php?page=users&view=apikeys');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_USERS,
+	'link'	=> 'admin/ui.php?page=users');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_USERS_TOKENS,
+	'link'	=> 'admin/ui.php?page=users&view=tokens');
+
+// Settings tab + its sub-tabs
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_ELEMENTS,
+	'link'	=> 'admin/ui.php?page=settings&view=elements');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_FORMS,
+	'link'	=> 'admin/ui.php?page=settings&view=forms');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_MESSAGING,
+	'link'	=> 'admin/ui.php?page=settings&view=messaging');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_AI,
+	'link'	=> 'admin/ui.php?page=settings&view=ai');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_SYSTEM,
+	'link'	=> 'admin/ui.php?page=settings&view=system');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_ADVANCED,
+	'link'	=> 'admin/ui.php?page=settings&view=advanced');
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_MENU_SETTINGS_PERMISSIONS,
+	'link'	=> 'admin/ui.php?page=settings&view=permissions');
+
+// Standalone tool tabs
+$adminmenu[] = array(
+	'title'	=> _MI_formulize_SYSTEM_LOG_VIEWER,
+	'link'	=> 'admin/ui.php?page=logviewer');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_IMPORT_EXPORT,
 	'link'	=> 'admin/ui.php?page=config-sync');
 $adminmenu[] = array(
 	'title'	=> _MI_formulize_SYNCHRONIZE,
 	'link'	=> 'admin/ui.php?page=synchronize');
-$adminmenu[] = array(
-	'title'	=> _MI_formulize_COPY_GROUP_PERMS,
-	'link'	=> 'admin/ui.php?page=managepermissions');
-$adminmenu[] = array(
-	'title'	=> _MI_formulize_MANAGE_ACCOUNT_CREATION_TOKENS,
-	'link'	=> 'admin/ui.php?page=managetokens');
-$adminmenu[] = array(
-	'title'	=> _MI_formulize_SYSTEM_LOG_VIEWER,
-	'link'	=> 'admin/ui.php?page=logviewer');

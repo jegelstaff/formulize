@@ -55,7 +55,7 @@ function icms_module_update_content($module) {
 			$obj->setVar('content_tags', $row['content_tags']);
 			$obj->setVar('content_visibility', $row['content_visibility']);
 			$obj->setVar('content_published_date', (int)$row['content_created']);
-			$obj->setVar('content_updated_date', date(_DATESTRING));
+			$obj->setVar('content_updated_date', date(_DBDATESTRING));
 			$obj->setVar('content_weight', $row['content_weight']);
 			$obj->setVar('short_url', $row['content_menu']);
 			$obj->setVar('counter', $row['content_reads']);

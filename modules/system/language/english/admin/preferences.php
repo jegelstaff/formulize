@@ -7,16 +7,16 @@ if (!defined('_AM_DBUPDATED')) {define("_AM_DBUPDATED","Database Updated Success
 define("_MD_AM_SITEPREF","Site Preferences");
 define("_MD_AM_SITENAME","Site name");
 define("_MD_AM_SLOGAN","Slogan for your site");
-define("_MD_AM_ADMINML","Admin mail address");
-define('_MD_AM_ADMINMLDSC','All informations will be send by this E-mail address. We recomend an address from your Web-Domain.');
+define("_MD_AM_ADMINML","Site email address");
+define('_MD_AM_ADMINMLDSC','All email sent by the site will use this as the <i>from</i> address. You need to setup proper SPF records, etc, for this email address.');
 define("_MD_AM_LANGUAGE","Default language");
-define("_MD_AM_LANGUAGEDSC","Select your main language. If you activated the multilanguage, you can choice a language. And if you set in the multilanguage the language of your browser, than ImpressCMS will ignore this option.");
+define("_MD_AM_LANGUAGEDSC","Select the default language used in the site.");
 define("_MD_AM_STARTPAGE","Module or Page for your start page");
 define("_MD_AM_NONE","None");
 define("_MD_CONTENTMAN","Content Manager");
 define("_MD_AM_SERVERTZ","Server timezone");
 define("_MD_AM_DEFAULTTZ","Default timezone");
-define("_MD_AM_DTHEME","Default theme");
+define("_MD_AM_DTHEME","User theme");
 define("_MD_AM_THEMESET","Theme Set");
 define("_MD_AM_ANONNAME","Username for anonymous users");
 define("_MD_AM_MINPASS","Minimum length of password required");
@@ -56,7 +56,7 @@ define("_MD_AM_COMMODE","Default Comment Display Mode");
 define("_MD_AM_COMORDER","Default Comments Display Order");
 define("_MD_AM_ALLOWHTML","Allow HTML tags in user comments?");
 define("_MD_AM_DEBUGMODE","Developer Dashboard");
-define("_MD_AM_DEBUGMODEDSC","Several debug options. A running website should have this turned off.");
+define("_MD_AM_DEBUGMODEDSC","A production website should have this turned off.");
 define("_MD_AM_AVATARALLOW","Allow custom avatar upload?");
 define("_MD_AM_AVATARALLOWDSC","If you allow this option, you can set more option for the avatars (with, height, size).");
 define('_MD_AM_AVATARMP','Minimum posts required');
@@ -144,14 +144,14 @@ define('_MD_AM_REGDSCLMR', 'Registration disclaimer');
 define('_MD_AM_REGDSCLMRDSC', 'Enter text to be displayed as registration disclaimer');
 define('_MD_AM_ALLOWREG', 'Allow new user registration?');
 define('_MD_AM_ALLOWREGDSC', 'Select yes to accept new user registration');
-define('_MD_AM_THEMEFILE', 'Check templates for modifications ?');
-define('_MD_AM_THEMEFILEDSC', 'If this option is enabled, modified templates will be automatically recompiled when they are displayed. You must turn this option off on a production site.');
+define('_MD_AM_THEMEFILE', 'Bypass template cache (load templates from files every time)');
+define('_MD_AM_THEMEFILEDSC', '');
 define('_MD_AM_CLOSESITE', 'Turn your site off?');
 define('_MD_AM_CLOSESITEDSC', 'Select yes to turn your site off so that only users in selected groups have access to the site. ');
-define('_MD_AM_CLOSESITEOK', 'Select groups that are allowed to access while the site is turned off.');
-define('_MD_AM_CLOSESITEOKDSC', 'Users in the default webmasters group are always granted access.');
-define('_MD_AM_CLOSESITETXT', 'Reason for turning off the site');
-define('_MD_AM_CLOSESITETXTDSC', 'The text that is presented when the site is closed.');
+define('_MD_AM_CLOSESITEOK', 'Groups that are allowed to login while the site is turned off.');
+define('_MD_AM_CLOSESITEOKDSC', 'Users in the webmasters group are always granted access.');
+define('_MD_AM_CLOSESITETXT', 'The text that is presented when the site is closed');
+define('_MD_AM_CLOSESITETXTDSC', '');
 define('_MD_AM_SITECACHE', 'Site-wide Cache');
 define('_MD_AM_SITECACHEDSC', 'Caches whole contents of the site for a specified amount of time to enhance performance. Setting site-wide cache will override module-level cache, block-level cache, and module item level cache if any.');
 define('_MD_AM_MODCACHE', 'Module-wide Cache');
@@ -172,17 +172,17 @@ define("_MD_AM_MAILFROMNAME","FROM name");
 define("_MD_AM_MAILFROMNAMEDESC","");
 // RMV-NOTIFY
 define("_MD_AM_MAILFROMUID","FROM user");
-define("_MD_AM_MAILFROMUIDDESC","When the system sends a private message, which user should appear to have sent it?");
+define("_MD_AM_MAILFROMUIDDESC","For messages going to a user's inbox within the site (not email), who should appear to have sent it?");
 define("_MD_AM_MAILERMETHOD","Mail delivery method");
-define("_MD_AM_MAILERMETHODDESC","Method used to deliver mail. Default is \"mail\", use others only if that makes trouble.");
+define("_MD_AM_MAILERMETHODDESC","");
 define("_MD_AM_SMTPHOST","SMTP host(s)");
 define("_MD_AM_SMTPHOSTDESC","List of SMTP servers to try to connect to.");
 define("_MD_AM_SMTPUSER","SMTPAuth username");
-define("_MD_AM_SMTPUSERDESC","Username to connect to an SMTP host with SMTPAuth.");
+define("_MD_AM_SMTPUSERDESC","");
 define("_MD_AM_SMTPPASS","SMTPAuth password");
-define("_MD_AM_SMTPPASSDESC","Password to connect to an SMTP host with SMTPAuth.");
-define("_MD_AM_SENDMAILPATH","Path to sendmail");
-define("_MD_AM_SENDMAILPATHDESC","Path to the sendmail program (or substitute) on the webserver.");
+define("_MD_AM_SMTPPASSDESC","");
+define("_MD_AM_SENDMAILPATH","Path to sendmail on the web server");
+define("_MD_AM_SENDMAILPATHDESC","");
 define("_MD_AM_THEMEOK","Selectable themes");
 define("_MD_AM_THEMEOKDSC","Choose themes that users can select as the default theme");
 
@@ -414,6 +414,16 @@ define("_MD_AM_GOOGLEONLYDSC","Select Yes to turn off regular authentication and
 define("_MD_AM_USE_GOOGLE_ANA"," Enable Google Analytics?");
 define("_MD_AM_USE_GOOGLE_ANA_DESC","");
 
+// SMS messaging settings
+define("_MD_AM_SMS_PROVIDER", "SMS provider");
+define("_MD_AM_SMS_PROVIDER_DSC", "The service used to send text messages (SMS).");
+define("_MD_AM_SMS_ACCOUNT_SID", "SMS account SID / API key");
+define("_MD_AM_SMS_ACCOUNT_SID_DSC", "Account SID (Twilio) or API key (Vonage/Nexmo).");
+define("_MD_AM_SMS_AUTH_TOKEN", "SMS auth token / API secret");
+define("_MD_AM_SMS_AUTH_TOKEN_DSC", "Auth token (Twilio) or API secret (Vonage/Nexmo).");
+define("_MD_AM_SMS_FROM_NUMBER", "SMS from number / sender ID");
+define("_MD_AM_SMS_FROM_NUMBER_DSC", "The phone number or sender ID that text messages are sent from.");
+
 define("_MD_AM_AUTH2FA","Use Two-Factor Authentication");
 define("_MD_AM_AUTH2FADESC","Turn this on to give users a choice in their user profile of two-factor authentication methods");
 
@@ -424,7 +434,7 @@ define("_MD_AM_AUTHOKTA","Use SP-initiated Okta SAML authentication");
 define("_MD_AM_AUTHOKTADESC","If your site uses Okta as an authentication service, enter the SSO URL in this box. Only SP-initiated SAML authentication is supported. You must place a completed 'settings.php' file in the /libraries/php-saml/ directory.");
 
 define("_MD_AM_COOKIE_SAMESITE","Session cookie SameSite");
-define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the login session cookie. Lax is recommended. Use None ONLY if Formulize is embedded cross-site in an iframe (e.g. an LTI/Brightspace integration) - None also requires the site to be served over HTTPS. Strict is the most restrictive.");
+define("_MD_AM_COOKIE_SAMESITEDSC","Controls the SameSite attribute on the session cookie. Lax is recommended. Use None ONLY if Formulize is embedded cross-site in an iframe (e.g. an LTI/Brightspace integration) - None also requires the site to be served over HTTPS. Strict is the most restrictive.");
 
 
 
@@ -501,11 +511,11 @@ define('_MD_AM_NUMINITSRCHRSLTS', "Number of initial search results: (for 'shall
 define('_MD_AM_NUMINITSRCHRSLTSDSC', "'Shallow' searches are made quicker by limiting the results that are returned for each module on the initial search page.");
 define('_MD_AM_NUMMDLSRCHRESULTS', "Number of search results per page:");
 define('_MD_AM_NUMMDLSRCHRESULTSDSC', "This determines how many hits per page are shown after drilling down into a particular module's search results.");
-define('_MD_AM_ADMIN_DTHEME', 'Admin Theme');
-define('_MD_AM_ADMIN_DTHEME_DESC', '');
+define('_MD_AM_ADMIN_DTHEME', 'Admin theme');
+define('_MD_AM_ADMIN_DTHEME_DESC', 'Webmaster users will view the site using this theme. If the User theme is highly customized for consuming information, it can be useful for webmasters to work in a standard theme designed for regular Formulize use.');
 define('_MD_AM_CUSTOMRED', 'Use Ajaxed redirection method?');
 define('_MD_AM_CUSTOMREDDSC', '');
-define('_MD_AM_DTHEMEDSC','Default theme used to show your site.');
+define('_MD_AM_DTHEMEDSC','The set of page templates to use for displaying information in the site.');
 
 // Added in 1.2
 
@@ -683,7 +693,7 @@ define("_MD_AM_SRCEDITOR_DEFAULT_DESC","Select the default Editor for editing so
 define("_MD_AM_SMTPSECURE","SMTP Secure Method");
 define("_MD_AM_SMTPSECUREDESC","Authentication Method used for SMTPAuthentication. (default is ssl)");
 define("_MD_AM_SMTPAUTHPORT","SMTP Port");
-define("_MD_AM_SMTPAUTHPORTDESC","The Port use by your SMTP Mail server (default is 465)");
+define("_MD_AM_SMTPAUTHPORTDESC","");
 
 // added in 1.3
 define("_MD_AM_PURIFIER_OUTPUT_FLASHCOMPAT","Enable IE Flash Compatibility");

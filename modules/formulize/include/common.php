@@ -1,9 +1,7 @@
 <?php
 ###############################################################################
 ##     Formulize - ad hoc form creation and reporting module for XOOPS       ##
-##                    Copyright (c) 2004 Freeform Solutions                  ##
-##                Portions copyright (c) 2003 NS Tai (aka tuff)              ##
-##                       <http://www.brandycoke.com/>                        ##
+##                Copyright (c) 2026 Formulize Incorporated                  ##
 ###############################################################################
 ##                    XOOPS - PHP Content Management System                  ##
 ##                       Copyright (c) 2000 XOOPS.org                        ##
@@ -44,6 +42,7 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/class/frameworks.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementrenderer.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/constants.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions.php';
+include_once XOOPS_ROOT_PATH . '/modules/formulize/include/configsettings.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/formdisplay.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/entriesdisplay.php';
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/graphdisplay.php';

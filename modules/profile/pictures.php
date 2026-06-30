@@ -33,7 +33,7 @@ function editpictures($picturesObj, $hideForm=false) {
 		if (!$profile_pictures_handler->userCanSubmit()) redirect_header(PROFILE_URL, 3, _NOPERM);
 		if (!$profile_pictures_handler->checkUploadLimit()) return;
 		$picturesObj->setVar('uid_owner', icms::$user->getVar('uid'));
-		$picturesObj->setVar('creation_time', date(_DATESTRING));
+		$picturesObj->setVar('creation_time', date(_DBDATESTRING));
 		$picturesObj->hideFieldFromForm(array('creation_time', 'uid_owner'));
 		$sform = $picturesObj->getSecureForm($hideForm ? '' : _MD_PROFILE_PICTURES_SUBMIT, 'addpictures');
 		$sform->assign($icmsTpl, 'profile_picturesform');

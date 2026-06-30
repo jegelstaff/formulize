@@ -128,83 +128,53 @@ include_once "op.php";
 function getHomeTabs($activePage = 'home') {
     $tabs = array();
 
-    $tabs[1] = array(
+    // Apps is a plain page tab: the forms dashboard (admin/home.php), unchanged.
+    $tabs[] = array(
         'name' => 'Apps',
         'url' => 'ui.php?page=home',
         'template' => 'db:admin/home.html',
         'active' => ($activePage == 'home')
     );
 
-    $tabs[2] = array(
-        'name' => 'Users',
-        'url' => 'ui.php?page=users',
-        'template' => 'db:admin/users.html',
-        'active' => ($activePage == 'users')
-    );
+    // Subject tabs (Users / Settings) are declared as data in
+    // include/configsettings_registry.php. Each is rendered by the generic handler
+    // admin/configsubject.php into the shared wrapper admin/configsubject.html,
+    // which draws the subject's secondary navigation and its active sub-view. To
+    // add/move/rename a subject, its sub-views, or which preferences appear, edit
+    // the registry file only.
+    foreach(formulize_configSettingsRegistry() as $slug => $subject) {
+        $tabs[] = array(
+            'name' => $subject['name'],
+            'url' => 'ui.php?page=' . $slug,
+            'template' => 'db:admin/configsubject.html',
+            'active' => ($activePage == $slug)
+        );
+    }
 
-    $tabs[3] = array(
-        'name' => 'Groups',
-        'url' => 'ui.php?page=groups',
-        'template' => 'db:admin/groups.html',
-        'active' => ($activePage == 'groups')
-    );
-
-    $tabs[4] = array(
-        'name' => 'API Keys',
-        'url' => 'ui.php?page=managekeys',
-        'template' => 'db:admin/managekeys.html',
-        'active' => ($activePage == 'managekeys')
-    );
-
-    $tabs[5] = array(
-        'name' => 'Email Users',
-        'url' => 'ui.php?page=mailusers',
-        'template' => 'db:admin/mailusers.html',
-        'active' => ($activePage == 'mailusers')
-    );
-
-    $tabs[6] = array(
-        'name' => 'Import/Export',
-        'url' => 'ui.php?page=config-sync',
-        'template' => 'db:admin/config_sync.html',
-        'active' => ($activePage == 'config-sync')
-    );
-
-    $tabs[7] = array(
-        'name' => 'Synchronize',
-        'url' => 'ui.php?page=synchronize',
-        'template' => 'db:admin/synchronize.html',
-        'active' => ($activePage == 'synchronize')
-    );
-
-    $tabs[8] = array(
-        'name' => 'Copy Perms',
-        'url' => 'ui.php?page=managepermissions',
-        'template' => 'db:admin/managepermissions.html',
-        'active' => ($activePage == 'managepermissions')
-    );
-
-    $tabs[9] = array(
-        'name' => 'Tokens',
-        'url' => 'ui.php?page=managetokens',
-        'template' => 'db:admin/managetokens.html',
-        'active' => ($activePage == 'managetokens')
-    );
-
-    $tabs[10] = array(
+    // Standalone tool tabs (each its own controller + template, unchanged).
+    $tabs[] = array(
         'name' => 'Log Viewer',
         'url' => 'ui.php?page=logviewer',
         'template' => 'db:admin/logviewer.html',
         'active' => ($activePage == 'logviewer')
     );
 
-    $tabs[11] = array(
-        'name' => 'Preferences',
-        'url' => XOOPS_URL . '/modules/system/admin.php?fct=preferences&op=showmod&mod=' . getFormulizeModId(),
-        'active' => false
+    $tabs[] = array(
+        'name' => 'Import/Export',
+        'url' => 'ui.php?page=config-sync',
+        'template' => 'db:admin/config_sync.html',
+        'active' => ($activePage == 'config-sync')
     );
 
-    return $tabs;
+    $tabs[] = array(
+        'name' => 'Synchronize',
+        'url' => 'ui.php?page=synchronize',
+        'template' => 'db:admin/synchronize.html',
+        'active' => ($activePage == 'synchronize')
+    );
+
+    // ui-tabs.html expects 1-based, contiguous keys (it computes tabselected = key - 1)
+    return array_combine(range(1, count($tabs)), array_values($tabs));
 }
 
 // make the primary relationship if it doesn't exist already
@@ -244,9 +214,20 @@ $adminPage = array();
 $adminPage['show_user_view'] = ''; // will be set for screens when preparing their admin page, so user can jump to the actual screen to see it in action
 
 // include the active page file based on the 'page' parameter in the URL
-$active_page = str_replace("-", "_", isset($_GET['page']) ? $_GET['page'] : "home").'.php';
-if(!file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/".$active_page)) {
-	$active_page = "home.php";
+$requestedPage = isset($_GET['page']) ? $_GET['page'] : "home";
+if(formulize_isConfigSubject($requestedPage)) {
+	// registry-declared subject tab (Apps/Users/Site): rendered by the shared
+	// subject handler, which draws the secondary nav and the active sub-view
+	$active_page = "configsubject.php";
+} else {
+	$candidate = str_replace("-", "_", $requestedPage).'.php';
+	if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/admin/".$candidate)) {
+		// a standalone tool page (Copy Perms, Import/Export, Synchronize, Log Viewer)
+		$active_page = $candidate;
+	} else {
+		// unknown page: fall back to the Apps dashboard
+		$active_page = "home.php";
+	}
 }
 include $active_page;
 
@@ -281,7 +262,7 @@ $xoopsTpl->assign('version', $metadata['version']);
 $xoopsTpl->assign('adminPage', $adminPage);
 if (isset($breadcrumbtrail))
     $xoopsTpl->assign('breadcrumbtrail', $breadcrumbtrail);
-$xoopsTpl->assign('scrollx', (isset($_POST['scrollx']) ? intval($_POST['scrollx']) : 0));
+$xoopsTpl->assign('scrollx', (isset($_POST['scrollx']) ? intval($_POST['scrollx']) : (isset($_GET['scrollx']) ? intval($_GET['scrollx']) : 0)));
 $accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_active'] !== "" AND $_POST['accordion_active'] !== "false") ? intval($_POST['accordion_active']) : "false";
 $xoopsTpl->assign('accordion_active', $accordion_active);
 

@@ -76,7 +76,7 @@ class mod_profile_VisitorsHandler extends icms_ipf_Handler {
 			$newVisitor = $this->get(0);
 			$newVisitor->setVar('uid_owner', $uid_owner);
 			$newVisitor->setVar('uid_visitor', icms::$user->getVar('uid'));
-			$newVisitor->setVar('visit_time', date(_DATESTRING));
+			$newVisitor->setVar('visit_time', date(_DBDATESTRING));
 			return $newVisitor->store(true);
 		} else {
 			return false;

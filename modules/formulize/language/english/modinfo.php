@@ -13,8 +13,19 @@ define("_MI_formulize_NAME","Formulize");
 define("_MI_formulize_DESC","Easily collect and organize your data — no code required. With Formulize, you can create web-based forms, connect them together to make unique apps, and publish the data with interactive reports. Formulize is quickly configured, and reconfigured, so it adapts as your needs change and your data grows.");
 
 // admin/menu.php
-define("_MI_formulize_ADMIN_HOME","Administration");
+define("_MI_formulize_ADMIN_HOME","Applications");
 define("_MI_formulize_ADMENU1","Menu");
+define("_MI_formulize_MENU_USERS","Users: User Settings");
+define("_MI_formulize_MENU_USERS_EMAIL","Users: Email Users");
+define("_MI_formulize_MENU_USERS_API_KEYS","Users: Manage API Keys");
+define("_MI_formulize_MENU_USERS_TOKENS","Users: Manage Account Creation Tokens");
+define("_MI_formulize_MENU_SETTINGS_SYSTEM","Settings: System");
+define("_MI_formulize_MENU_SETTINGS_ELEMENTS","Settings: Elements");
+define("_MI_formulize_MENU_SETTINGS_FORMS","Settings: Forms");
+define("_MI_formulize_MENU_SETTINGS_ADVANCED","Settings: Advanced");
+define("_MI_formulize_MENU_SETTINGS_MESSAGING","Settings: Messaging");
+define("_MI_formulize_MENU_SETTINGS_AI","Settings: AI");
+define("_MI_formulize_MENU_SETTINGS_PERMISSIONS","Settings: Copy Group Permissions");
 
 // notifications
 define("_MI_formulize_NOTIFY_FORM", "Form Notifications");
@@ -35,14 +46,11 @@ define("_MI_formulize_NOTIFY_DELENTRY_DESC", "A notification option that alerts 
 define("_MI_formulize_NOTIFY_DELENTRY_MAILSUB", "%s deleted");
 
 //	preferences
-define("_MI_formulize_PREFHEADSTART", "</span><h1>");
-define("_MI_formulize_PREFHEADEND", "</h1></td><td class='even'></td></tr><tr><td class='head'><div class='xoops-form-element-caption'><span class='caption-text'>");
-
-define("_MI_formulize_TEXT_WIDTH",_MI_formulize_PREFHEADSTART."Form Element Defaults"._MI_formulize_PREFHEADEND."Default width of text boxes");
-define("_MI_formulize_TEXT_MAX","Default maximum length of text boxes");
-define("_MI_formulize_TAREA_ROWS","Default rows of text areas");
-define("_MI_formulize_TAREA_COLS","Default columns of text areas");
-define("_MI_formulize_DELIMETER","Default delimiter for check boxes and radio buttons");
+define("_MI_formulize_TEXT_WIDTH","Default width of text boxes");
+define("_MI_formulize_TEXT_MAX","Maximum number of characters in single-line text boxes");
+define("_MI_formulize_TAREA_ROWS","Number of rows in multi-line text boxes");
+define("_MI_formulize_TAREA_COLS","Number of columns in multi-line text boxes");
+define("_MI_formulize_DELIMETER","Delimiter for check boxes and radio buttons");
 if(!defined("_MI_formulize_DELIMETER_SPACE")) { define("_MI_formulize_DELIMETER_SPACE","White space"); }
 if(!defined("_MI_formulize_DELIMETER_BR")) { define("_MI_formulize_DELIMETER_BR","Line break"); }
 define("_MI_formulize_SEND_METHOD","Send method");
@@ -57,27 +65,27 @@ define("_MI_formulize_PROFILEFORM","Which form is to be used as part of the regi
 define("_MI_formulize_ALL_DONE_SINGLES","Should the 'Close' button appear at the bottom of Legacy Form Screens? (Deprecated - use Form Screen settings)");
 define("_MI_formulize_SINGLESDESC","This option is overriden by the settings in Form screens. The 'Close' button is used to leave a form without saving the information in the form.  If you have made changes to the information in a form and then you click 'Close' without first clicking 'Save', you get a warning that your data has not been saved. Set this option to 'Yes' to remove the 'Close' button and turn the behaviour of the 'Save' button to 'save-and-leave-the-form-all-at-once'. This only affects Legacy Form Screens from before Formulize 7.");
 
-define("_MI_formulize_LOE_limit", _MI_formulize_PREFHEADSTART."List Settings"._MI_formulize_PREFHEADEND."What is the maximum number of entries that should be displayed in one page of a list of entries, without confirmation from the user that they want to see all entries?");
-define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a list of entries screen can take a long time, several minutes even.  Use this preference to specify the maximum number of entries that your system should try to display at once.  If a dataset contains more entries than this limit, the user will be asked if they want to load the entire dataset or not.");
+define("_MI_formulize_LOE_limit", "What is the maximum number of entries that should be displayed in one page of a list of entries, without confirmation from the user that they want to see all entries?");
+define("_MI_formulize_LOE_limit_DESC", "If a dataset is very large, displaying a list of entries can take a long time.  Use this preference to specify the maximum number of entries that your system should try to display at once.  If a dataset contains more entries than this limit, the user will be asked if they want to load the entire dataset or not.");
 
-define("_MI_formulize_USETOKEN", _MI_formulize_PREFHEADSTART."The Basement (don't go here unless you have to)"._MI_formulize_PREFHEADEND."Use the security token system to validate form submissions?");
+define("_MI_formulize_USETOKEN", "Use the security token system to validate form submissions?");
 define("_MI_formulize_USETOKENDESC", "By default, when a form is submitted, no data is saved unless Formulize can validate a unique token that was submitted with the form.  This is a partial defence against cross site scripting attacks, meant to ensure only people actually visiting your website can submit forms.  In some circumstances, depending on firewalls or other factors, the token cannot be validated even when it should be.  If this is happening to you repeatedly, you can turn off the token system for Formulize here.  <b>NOTE: you can override this global setting on a screen by screen basis.</b>");
 
-define("_MI_formulize_NUMBER_DECIMALS", "By default, how many decimal places should be displayed for numbers?");
+define("_MI_formulize_NUMBER_DECIMALS", "Number of decimal places");
 define("_MI_formulize_NUMBER_DECIMALS_DESC", "Normally, leave this as 0, unless you want every number in all forms to have a certain number of decimal places.");
-define("_MI_formulize_NUMBER_PREFIX", "By default, should any symbol be shown before numbers?");
+define("_MI_formulize_NUMBER_PREFIX", "Symbol to show in front of numbers");
 define("_MI_formulize_NUMBER_PREFIX_DESC", "For example, if your entire site only uses dollar figures in forms, then put '$' here.  Otherwise, leave it blank.");
-define("_MI_formulize_NUMBER_SUFFIX", "By default, should any symbol be shown after numbers?");
+define("_MI_formulize_NUMBER_SUFFIX", "Symbol to show after numbers");
 define("_MI_formulize_NUMBER_SUFFIX_DESC", "For example, if your entire site only uses percentage figures in forms, then put '%' here.  Otherwise, leave it blank.");
-define("_MI_formulize_NUMBER_DECIMALSEP", "By default, if decimals are used, what punctuation should separate them from the rest of the number?");
-define("_MI_formulize_NUMBER_SEP", "By default, what punctuation should be used to separate thousands in numbers?");
+define("_MI_formulize_NUMBER_DECIMALSEP", "Decimal separator");
+define("_MI_formulize_NUMBER_SEP", "Thousands separator");
 
-define("_MI_formulize_TIME_FORMAT", "Default time display format");
+define("_MI_formulize_TIME_FORMAT", "Time display format");
 define("_MI_formulize_TIME_FORMAT_DESC", "Controls how times are displayed in lists and read-only fields. Individual time elements can override this setting. Defaults to 12-hour if not set.");
 define("_MI_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
 define("_MI_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
 
-define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', _MI_formulize_PREFHEADSTART."Form Settings"._MI_formulize_PREFHEADEND."Show empty form elements when displaying them as read-only?");
+define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY', "Show empty form elements when displaying them as read-only?");
 define('_MI_formulize_SHOW_EMPTY_ELEMENTS_WHEN_READ_ONLY_DESC', "When form elements are rendered in read-only mode, and there is no value to display, the element is skipped by default and not shown. If you want to show all elements even empty ones when users cannot edit the entry, turn this setting on.");
 
 define('_MI_formulize_VALIDATECODE', 'Check code blocks for syntax errors?');
@@ -89,7 +97,7 @@ define("_MI_formulize_HEADING_HELP_LINK_DESC", "The help link provides a popup w
 define("_MI_formulize_USECACHE", "Use caching to speed up Procedures?");
 define("_MI_formulize_USECACHEDESC", "By default, caching is on.");
 
-define("_MI_formulize_DOWNLOADDEFAULT", _MI_formulize_PREFHEADSTART."Exporting Data"._MI_formulize_PREFHEADEND."When users are exporting data, use a compatibility trick for some versions of Excel by default?");
+define("_MI_formulize_DOWNLOADDEFAULT", "When users are exporting data, use a compatibility trick for some versions of Excel by default?");
 define("_MI_formulize_DOWNLOADDEFAULT_DESC", "When users export data, they can check a box on the download page that adds a special code to the file which is necessary to make accented characters appear properly in some versions of Microsoft Excel.  This option controls whether that checkbox is checked by default or not.  You should experiment with your installation to see if exports work best with or without this option turned on.");
 
 define("_MI_formulize_LOGPROCEDURE", "Use logging to monitor Procedures and parameters?");
@@ -116,7 +124,7 @@ define("_MI_formulize_F7MENUTEMPLATEDESC", "If you have upgraded from an older v
 define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITING", "Use the old method of writing effects for custom buttons");
 define("_MI_formulize_USEOLDCUSTOMBUTTONEFFECTWRITINGDESC", "This should always be \"No\" unless this is an older installation that already has custom buttons that are dependent on the old method, which was based on the declaring human readable values, instead of the database values for elements.");
 
-define("_MI_formulize_FORMULIZELOGGINGONOFF", _MI_formulize_PREFHEADSTART."Logging"._MI_formulize_PREFHEADEND."Record Formulize activity in a log file");
+define("_MI_formulize_FORMULIZELOGGINGONOFF", "Record Formulize activity in a log file");
 define("_MI_formulize_FORMULIZELOGGINGONOFFDESC", "If you are recording logs, you can specify the location to store them below, and the duration of logs to keep. Logs will contain information about user activity in JSON format and can be ingested by Grafana or other tools.");
 define("_MI_formulize_FORMULIZELOGFILELOCATION", "Location to store Formulize log files");
 define("_MI_formulize_FORMULIZELOGFILELOCATIONDESC", "Formulize generates log files that contain the history of user actions, such as logging in and saving data. You can specify the full path to the folder where the log files are stored. Logging will not function if the path is empty or not valid.");
@@ -137,8 +145,8 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		break;
 	}
 }
-define("_MI_formulize_rewriteRulesEnabled", _MI_formulize_PREFHEADSTART."Core Formulize Configuration"._MI_formulize_PREFHEADEND."Enable alternate URLs for screens".$rewriteRuleInstructions);
-define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.");
+define("_MI_formulize_rewriteRulesEnabled", "Enable alternate URLs for screens");
+define("_MI_formulize_rewriteRulesEnabledDESC", "When this is enabled, you can specify alternate, clean URLs for accessing screens, instead of the default /modules/formulize/index.php?sid=1 style URLs.".$rewriteRuleInstructions);
 
 $publicAPIInstructions = '';
 foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
@@ -155,8 +163,8 @@ foreach($formulizeConfig as $thisConfig=>$thisConfigValue) {
 		break;
 	}
 }
-define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API".$publicAPIInstructions);
-define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/");
+define("_MI_formulize_PUBLICAPIENABLED", "Enable the Public API");
+define("_MI_formulize_PUBLICAPIENABLED_DESC", "When this is enabled, you can use the Public API documented at https://formulize.org/developers/public-api/".$publicAPIInstructions);
 
 // Hide the System Specific Instructions setting unless at least one AI pathway is enabled
 // Hide the embedded AI groups unless the embedded assistant is enabled
@@ -177,20 +185,20 @@ if(!$mcpEnabled) {
 	$mcpServerInstructions = "<br><br>See further setup instructions for external AI assistants here: <a href='https://formulize.org/ai/setup-mcp' target='_blank'>formulize.org/ai/setup-mcp</a>";
 }
 
-define("_MI_formulize_AIASSISTANTENABLED",  _MI_formulize_PREFHEADSTART."AI"._MI_formulize_PREFHEADEND."Enable the Embedded AI Assistant, inside Formulize<br><br> Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
-define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key for an AI provider, or you will need to have a local model available through Ollama.");
+define("_MI_formulize_AIASSISTANTENABLED",  "Enable the Embedded AI Assistant, inside Formulize");
+define("_MI_formulize_AIASSISTANTENABLED_DESC", "Enable an embedded AI Assistant, so that you can use AI right inside this Formulize system without Claude Desktop or any other external tool. When this is on, a <i>Use AI</i> link appears in the Formulize menu.<br><br>To use AI in this way, you will need an API key for an AI provider, or you will need to have a local model available through Ollama.<br><br>Learn more: <a href='https://formulize.org/ai/setup-embedded' target='_blank'>https://formulize.org/ai/setup-embedded</a>");
 
 define("_MI_formulize_AIASSISTANTGROUPS", "Groups that can use the embedded AI assistant".$hideEmbeddedAIGroups);
 define("_MI_formulize_AIASSISTANTGROUPS_DESC", "Select which groups of users are allowed to use the embedded AI assistant. If no groups are selected, no one will be able to use it.");
 
-define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP, for external AI Assistants".$mcpServerInstructions);
-define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting external AI assistants, like Claude Desktop, Copilot, etc, to Formulize. With MCP, those AI assistants can read information from Formulize and help you configure Formulize. To use AI inside Formulize without any external client, use the Embedded AI Assistant setting instead.");
+define("_MI_formulize_MCPSERVERENABLED", "Enable AI integration via MCP, for external AI Assistants");
+define("_MI_formulize_MCPSERVERENABLED_DESC", "MCP (Model Context Protocol) is a way of connecting external AI assistants, like Claude Desktop, Copilot, etc, to Formulize. With MCP, those AI assistants can read information from Formulize and help you configure Formulize. To use AI inside Formulize without any external client, use the Embedded AI Assistant setting instead.".$mcpServerInstructions);
 
-define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "<br>Examples:<ul class='mcp-bullets'><li><b>HR System:</b> <span style='font-weight: normal;'>This system manages employee records, time tracking, and performance reviews. Managers have access to see all their employees' records.</span></li><li><b>Research Lab:</b> <span style='font-weight: normal;'>Scientists use this system to track experiments, log results, and manage equipment reservations. Reports are automatically generated based on the logged data.</span></li><li><b>Event Management:</b> <span style='font-weight: normal;'>This system handles event registrations, venue bookings, and attendee communications. Regular users see only their own events, admins see all events.</span></li><li><b>Project Management:</b> <span style='font-weight: normal;'>Teams use this system to track project milestones, resource allocation, and client communications. Notifications go out regularly about deadlines, new tasks, etc.</span></li><li><b>Student Management:</b> <span style='font-weight: normal;'>This Formulize system is used for managing student registrations and course enrollments. Forms are used to collect student information, course preferences, and payment details. The system is integrated with a payment gateway for processing fees.</span></li></ul><b>Note:</b> You can use <a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Markdown formatting</a> in this field to make it easier to read.");
-define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS", "System Specific Instructions for the AI Assistant<br><br>You can provide specific context to the AI assistant about what your Formulize system is used for and how it is configured. Basic concepts like forms, elements, screens, users, groups, etc, have already been explained to the AI assistant. This is your chance to provide more specific context about the purpose and workflows of your system, to help the AI assistant help you better.<br><br><style>
+define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS", "System Specific Instructions for the AI Assistant");
+define("_MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC", "You can provide specific context to the AI assistant about what your Formulize system is used for and how it is configured. Basic concepts like forms, elements, screens, users, groups, etc, have already been explained to the AI assistant. This is your chance to provide more specific context about the purpose and workflows of your system, to help the AI assistant help you better.<style>
 	#xo-canvas-content ul.mcp-bullets > li { margin-bottom: 0.6em; font-weight: normal; list-style: disc;}
 	#xo-canvas-content span.helptext ul.mcp-bullets > li { color: white; }
-</style><a style='cursor: pointer;' 'href='' onclick='jQuery(\"#mcp-ssi-examples\").toggle(); return false;'>Show/Hide Examples</a><div id='mcp-ssi-examples' style='display:none;'>"._MI_formulize_SYSTEM_SPECIFIC_INSTRUCTIONS_DESC."</div>".$hideSystemSpecificInstructions);
+</style><br>Examples:<ul class='mcp-bullets'><li><b>HR System:</b> <span style='font-weight: normal;'>This system manages employee records, time tracking, and performance reviews. Managers have access to see all their employees' records.</span></li><li><b>Research Lab:</b> <span style='font-weight: normal;'>Scientists use this system to track experiments, log results, and manage equipment reservations. Reports are automatically generated based on the logged data.</span></li><li><b>Event Management:</b> <span style='font-weight: normal;'>This system handles event registrations, venue bookings, and attendee communications. Regular users see only their own events, admins see all events.</span></li><li><b>Project Management:</b> <span style='font-weight: normal;'>Teams use this system to track project milestones, resource allocation, and client communications. Notifications go out regularly about deadlines, new tasks, etc.</span></li><li><b>Student Management:</b> <span style='font-weight: normal;'>This Formulize system is used for managing student registrations and course enrollments. Forms are used to collect student information, course preferences, and payment details. The system is integrated with a payment gateway for processing fees.</span></li></ul><b>Note:</b> You can use <a href='https://www.markdownguide.org/cheat-sheet/' target='_blank'>Markdown formatting</a> in this field to make it easier to read.");
 
 define("_MI_formulize_REVISIONSFORALLFORMS", "Turn on revision history for all forms");
 define("_MI_formulize_REVISIONSFORALLFORMS_DESC", "Normally, you can turn on revision history for each form as you see fit. If you want to turn it on for all forms always, turn this preference on, and the option will be disabled in each form's settings.");
@@ -212,7 +220,7 @@ define("_MI_formulize_EIC_ALWAYSAPOS", "Always prefix with an apostrophe (for Go
 define("_MI_formulize_EIC_ALWAYSTAB", "Always prefix with a TAB (for Excel)");
 define("_MI_formulize_EIC_PLAIN", "Never prefix (for programs that need clean, raw data)");
 
-define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', _MI_formulize_PREFHEADSTART."Printable Version Buttons"._MI_formulize_PREFHEADEND.'Enable Printable Version buttons (then you can turn them on and off per screen)');
+define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS', 'Enable Printable Version buttons (you can turn them on and off per screen)');
 define('_MI_formulize_SHOWPRINTABLEVIEWBUTTONS_DESC', 'If this is on, then the Printable Version buttons are available on all form screens and can be turned on and off in the usual way through the screen settings. If this is off, Printable Version buttons will not show up on any screens.');
 
 define('_MI_formulize_EMAIL_USERS', 'Email Users');

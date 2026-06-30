@@ -6,7 +6,9 @@
 <title><{$xoops_sitename}></title>
 <link rel="stylesheet" type="text/css" media="all" href="<{$icms_style}>" />
 <link rel="stylesheet" type="text/css" media="all" href="<{$icms_themecss}>" />
-
+<link rel="stylesheet" type="text/css" media="screen" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 </head>
 <body>
 <div id="xo-canvas"<{if $columns_layout}> class="<{$columns_layout}>"<{/if}>>
@@ -34,10 +36,14 @@
     <{$lang_password}><input type="password" name="pass" size="21" maxlength="32" /><br />
         	<input type="hidden" name="xoops_redirect" value="<{$xoops_requesturi}>" />
         	<input type="hidden" name="xoops_login" value="1" />
+        	<input type="hidden" id="tfacode" name="tfacode" value="" />
+        	<input type="hidden" id="tfaremember" name="tfaremember" value="" />
+        	<input type="hidden" name="tfa_login_token" value="" />
         <br />
         	<input type="submit" value="<{$lang_login}>" />
-</div> 
+</div>
  </form>
+<{php}>include_once XOOPS_ROOT_PATH.'/include/2fa/manage.php';print tfaLoginJS('xo-canvas-content');<{/php}>
 <br />
 </div>
 </center>

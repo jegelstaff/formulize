@@ -31,7 +31,7 @@ function editfriendship($friendshipObj, $uid=false, $hideForm=false) {
 
 		$friendshipObj->setVar('friend1_uid', icms::$user->getVar('uid'));
 		$friendshipObj->setVar('friend2_uid', $uid);
-		$friendshipObj->setVar('creation_time', date(_DATESTRING));
+		$friendshipObj->setVar('creation_time', date(_DBDATESTRING));
 		$friendshipObj->hideFieldFromForm(array('creation_time', 'friend2_uid', 'friend1_uid', 'status'));
 		$sform = $friendshipObj->getSecureForm($hideForm ? '' : _MD_PROFILE_FRIENDSHIP_ADD, 'addfriendship');
 		$sform->assign($icmsTpl, 'profile_friendshipform');

@@ -73,9 +73,11 @@ class icms_messaging_sms_NexmoProvider implements icms_messaging_sms_ProviderInt
 	 * Loads credentials from generic SMS_* constants
 	 */
 	public function __construct() {
-		$this->apiKey = defined('SMS_ACCOUNT_SID') ? SMS_ACCOUNT_SID : '';
-		$this->apiSecret = defined('SMS_AUTH_TOKEN') ? SMS_AUTH_TOKEN : '';
-		$this->fromNumber = defined('SMS_FROM_NUMBER') ? SMS_FROM_NUMBER : '';
+		// Read from the managed config settings first, falling back to the
+		// trust-folder SMS_* constants for backward compatibility.
+		$this->apiKey = icms_messaging_SmsHandler::getSmsConfig('sms_account_sid', 'SMS_ACCOUNT_SID');
+		$this->apiSecret = icms_messaging_SmsHandler::getSmsConfig('sms_auth_token', 'SMS_AUTH_TOKEN');
+		$this->fromNumber = icms_messaging_SmsHandler::getSmsConfig('sms_from_number', 'SMS_FROM_NUMBER');
 	}
 
 	/**
