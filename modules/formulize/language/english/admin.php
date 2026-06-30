@@ -246,7 +246,7 @@ define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CREATION_CONDITIONAL","Only entries 
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_CONDITIONS_DESC","By default, every entry in the form can have a user account associated with it. Optionally, set conditions here to restrict which entries can be associated with user accounts. For example, if you have a Referrals form, and the form has a dropdown list with the options \"Pending,\" \"Approved,\" and \"Rejected,\" you could set a condition here so that only entries with the \"Approved\" status can have user accounts created for them.");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_TITLE","Group Memberships");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_DESC","User accounts created from entries in this form will always be assigned to these groups:");
-define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC","Users in the %s form will always be members of certain groups %s");
+define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC","Users in the %s form will always be members of certain groups: %s");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_SHOW","show details");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_HIDE","hide details");
 define("_AM_SETTINGS_FORM_ENTRIES_ARE_USERS_DEFAULT_GROUPS_ELEMENT_DESC_CONDITIONAL",' if %s');
