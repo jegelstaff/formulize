@@ -30,11 +30,10 @@ title: Roadmap
 - **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 30 }}{% endif %}
 {% endfor %}
 
-### Features still under development
 {% endif %}
 
 {% if release.open and release.open.size > 0 %}
-
+### Features still under development
 {% for issue in release.open %}
 - **[{{ issue.title }}]({{ issue.html_url }})** — {% if issue.body %}{{ issue.body | strip_html | truncatewords: 30 }}{% endif %}
 {% endfor %}
