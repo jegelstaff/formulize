@@ -1292,7 +1292,8 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$title = "";
 
 		$fidsToRender = $fids; // default to all fids
-		if($screen AND is_array($elements_allowed) AND count($elements_allowed) > 0) {
+		// $elements_allowed is usually a series of element ids, but could be a string of content to display instead, so we need to verify that with the is_numeric check below
+		if($screen AND is_array($elements_allowed) AND count(array_filter($elements_allowed, 'is_numeric')) > 0) {
 			// determine the order of fids in $elements_allowed and go by that.
 			// currently we don't generally finesse the order in $elements_allowed, but this will be sort of ready for controlling the order if we ever do??
 			// compile elements probably needs a really big refactor, actually
