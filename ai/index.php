@@ -283,13 +283,21 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
 
     // Tools that create/update form structure (Manage forms group)
     const FORM_MGMT_TOOLS = new Set([
-        'create_derived_value_element', 'create_form', 'create_linked_list_element',
-        'create_list_element', 'create_selector_element', 'create_subform_interface',
+        'change_form_screen_page_order',
+        'create_derived_value_element', 'create_form', 'create_form_screen',
+        'create_linked_list_element', 'create_list_element', 'create_selector_element',
+        'create_static_content_element', 'create_subform_interface',
         'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
-        'update_derived_value_element', 'update_linked_list_element', 'update_list_element',
-        'update_selector_element', 'update_subform_interface', 'update_table_of_elements',
+        'get_screen_details',
+        'update_derived_value_element', 'update_form_screen', 'update_linked_list_element',
+        'update_list_element', 'update_selector_element', 'update_static_content_element',
+        'update_subform_interface', 'update_table_of_elements',
         'update_text_box_element', 'update_user_list_element'
     ]);
+
+    // Tools included in every preset group — the AI needs to know what forms exist and their
+    // field/element structure regardless of whether it's reading data, writing data, or managing forms
+    const FORM_INSPECT_TOOLS = new Set(['get_form_details', 'list_forms']);
 
     // Tools that write entry data (add to Read data to get Write data)
     const ENTRY_WRITE_TOOLS = new Set(['create_entries', 'update_entries']);
@@ -416,9 +424,9 @@ window.formulizeAI.serverKeys = <?php echo json_encode($_aiServerKeys); ?>;
     // Returns the names of tools in the named preset group
     function getToolGroupNames(group) {
         const all = availableTools.map(t => t.name);
-        if (group === 'readData')    return all.filter(n => !FORM_MGMT_TOOLS.has(n) && !ENTRY_WRITE_TOOLS.has(n));
-        if (group === 'writeData')   return all.filter(n => !FORM_MGMT_TOOLS.has(n));
-        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n));
+        if (group === 'readData')    return all.filter(n => (!FORM_MGMT_TOOLS.has(n) && !ENTRY_WRITE_TOOLS.has(n)) || FORM_INSPECT_TOOLS.has(n));
+        if (group === 'writeData')   return all.filter(n => !FORM_MGMT_TOOLS.has(n) || FORM_INSPECT_TOOLS.has(n));
+        if (group === 'manageForms') return all.filter(n => FORM_MGMT_TOOLS.has(n) || FORM_INSPECT_TOOLS.has(n));
         return [];
     }
 
