@@ -62,6 +62,10 @@ class icms_form_elements_Date extends icms_form_elements_Text {
 		} else {
 			$ele_value = $this->getValue(false);
 		}
+		// convert to HTML 5 spec value if necessary
+		if($ele_value == 'YYYY-mm-dd' OR $ele_value == 'AAAA-mm-jj') {
+			$ele_value = 'yyyy-MM-dd';
+		}
 		$result = "<input type='date' name='".$ele_name."' id='".$ele_name."' class=\"icms-date-box\" size='".$this->getSize()."' maxlength='".$this->getMaxlength()."' value='".$ele_value."' ".$this->getExtra()." aria-describedby='".$ele_name."-help-text' />";
         return $result;
     }
