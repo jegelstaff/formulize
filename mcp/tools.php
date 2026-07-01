@@ -881,6 +881,7 @@ Correct example for linked elements:
 			$display_conditions = $arguments['display_conditions'];
 		}
 		$disabled = isset($arguments['disabled']) ? ($arguments['disabled'] ? 1 : 0) : null;
+		$order = $arguments['order'] ?? null;
 
 		$makeSubformInterface = false;
 		$elementObject = null;
@@ -939,6 +940,34 @@ Correct example for linked elements:
 		// put the passed in values into an array for passing to the upsert function
 		// corresponds to the fields in the formulizeElement object
 		$fid = $form_id ? $form_id : ($elementObject ? $elementObject->getVar('fid') : 0);
+
+		// resolve the order argument
+		$resolvedOrderArg = null;
+		if($order !== null) {
+			if($order === 'top' OR $order === 'bottom') {
+				$resolvedOrderArg = $order;
+			} else {
+				// handle string or integer ID — resolve to element object for validation and ID extraction
+				$afterElement = _getElementObject($order);
+				$safeOrderForMessage = substr(FormulizeObject::sanitize_handle_name($order), 0, 64);
+				if(!$afterElement) {
+					throw new FormulizeMCPException('Invalid order: element not found for: '.$safeOrderForMessage, 'invalid_data');
+				}
+				if($afterElement->getVar('fid') != $fid) {
+					throw new FormulizeMCPException('Invalid order: element "'.$safeOrderForMessage.'" belongs to a different form', 'invalid_data');
+				}
+				$resolvedOrderArg = $afterElement->getVar('ele_id');
+			}
+		} elseif($isCreate) {
+			$resolvedOrderArg = 'bottom';
+		}
+		// for updates without an order argument, $resolvedOrderArg stays null and ele_order is left unchanged
+
+		$oldOrderForFigureOutOrder = $elementObject ? $elementObject->getVar('ele_order') : 0;
+		$eleOrder = $resolvedOrderArg !== null
+			? figureOutOrder($resolvedOrderArg, $oldOrderForFigureOutOrder, $fid)
+			: $oldOrderForFigureOutOrder;
+
 		$elementObjectProperties = [
 			'fid' => $fid,
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
@@ -948,7 +977,7 @@ Correct example for linked elements:
 			'ele_colhead' => $column_heading ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
 			'ele_desc' => $description ? $description : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
-			'ele_order' => $elementObject ? $elementObject->getVar('ele_order') : figureOutOrder('bottom', fid: $fid), // ele_order not specifiable as a property yet, so set every new element to the bottom
+			'ele_order' => $eleOrder,
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
 			// when display_conditions was provided (even as an empty array, to clear), use the validated set;
 			// otherwise round-trip the existing value so it is left untouched
@@ -1974,6 +2003,22 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 			]
 		];
 
+		// for creating and updating — applies to all element categories
+		$orderProperty = [
+			'order' => [
+				'oneOf' => [
+					[
+						'type' => 'string',
+						'description' => 'Use "top" to place first in the form, "bottom" to place last (default for new elements), or an element handle to place this element immediately after that element. Get handles from get_form_details. For updates, omit to leave the position unchanged.'
+					],
+					[
+						'type' => 'integer',
+						'description' => 'The element ID to place this element immediately after.'
+					]
+				]
+			]
+		];
+
 		// presently only webmasters get these tools at all, but in case that changes, only webmasters will be able to muck with the data_type property
 		$dataTypeProperty = $this->isUserAWebmaster() ? [
 			'data_type' => [
@@ -2096,7 +2141,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 								'description' => "Required. Additional configuration settings for the $singularCategoryName. The available properties depend on the element type. See the tool description for examples of what properties are needed for different element types.",
 								'additionalProperties' => true
 							],
-						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $displayConditions + $dataTypePropertyForThisCategory,
+						] + $commonDataElementPropertiesForThisCategory + $creationDataElementPropertiesForThisCategory + $displayConditions + $orderProperty + $dataTypePropertyForThisCategory,
 					'required' => ['form_id', 'type', 'caption', 'properties']
 				]
 			];
@@ -2139,7 +2184,7 @@ private function validateFilter($filter, $form_ids, $andOr = 'AND') {
 							'type' => 'boolean',
 							'description' => "Optional. Whether the $singularCategoryName is displayed in the form or hidden. Default: true."
 						]
-					] + $displayConditions + $dataTypePropertyForThisCategory,
+					] + $displayConditions + $orderProperty + $dataTypePropertyForThisCategory,
 				'required' => ['element_identifier']
 				]
 			];

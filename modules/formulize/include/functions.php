@@ -10517,7 +10517,7 @@ function getAssociatedElementMatchingText($text, $associatedElementId, $textWidt
  * Also moves subsequent elements down if necessary
  *
  * @param mixed $orderChoice The order choice made by the user. Can be "top", "bottom", or an element id to place after
- * @param int|float $oldOrder The old order value of the element that is being placed, if any. Not required for new elements going to the bottom. A float is necessary for cloned elements created out of nowhere, but positioned as if they had a real place. ie: 3.1, will be treated as 3, but will trigger reordering of everything currently in the third position and above, so the cloned element slots into the desired spot properly.
+ * @param int|float $oldOrder The old order value of the element that is being placed, if any. Pass 0 (the default) for new elements. For cloned elements a float such as originalOrder+1.1 is passed; the fractional part guarantees $oldOrder !== $orderValue so the shift always fires even when they would otherwise be equal.
  * @param int $fid The form id the element belongs to. Required.
  * @return int The order value to use for the element
  * @throws Exception if invalid parameters are passed in
@@ -10547,7 +10547,7 @@ function figureOutOrder($orderChoice, $oldOrder=0, $fid=0) {
 		}
 	}
 	$orderValue = intval($orderChoice + 1);
-	if($oldOrder AND $oldOrder != $orderValue) {
+	if($oldOrder != $orderValue) {
 		// if there is already an element this order value, then we need to reorder all the elements equal to and higher than the current element
 		$sql = "SELECT ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE ele_order = $orderValue AND id_form = $fid";
 		$res = $xoopsDB->query($sql);
